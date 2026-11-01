@@ -104,4 +104,7 @@ go run ./scripts/check-architecture
 - [x] 根冻结[真实授权](c0-authority-contract.md)，替换旧三参Attest/maintenanceStage/裸VerifyTx候选，保留T1历史边界。
 - [x] 实现同Snapshot一次Permit、完整history/manifest、真实身份、新鲜统计、完整前驱、Init全账户锁与撤销接线。
 - [x] 汇合T2真实PG/race、ordinary各profile的成功或拒绝边界、genuine sandbox、私有判定层与golden、独立审阅；make check与指定专库make verify-mvp已通过，见[集成记录](../../docs/verification/maintenance-authority-integration.md)。远端交付以Git精确commit/ref核对为准。
-- [ ] T3 ReadLease与独立全来源、basis、epoch封闭写入、全资金路径、C1/C2/C3及后续阶段继续按依赖推进。
+- [x] T3首片：真实ReadLease、ledger/PB维护reader与局部结果已实现，真实PG及旧reader回归通过；精确范围见[专项](../../docs/verification/maintenance-read-lease.md)。
+- [ ] T3独立全来源与完整组合、basis、epoch封闭写入、全资金路径、C1/C2/C3及后续阶段继续按依赖推进。
+
+2026-11-02 T3已冻结[读取租约与两个维护reader](c0-read-lease-contract.md)：根集成Snapshot/Permit撤销和真实PG验证，独立实现ReadLease封闭出口及纯测试、ledger单core与维护结果、PB单core/维护资源profile与诚实三态。ReadLease及两reader已实现，专库全包race104顶层/876父子PASS、两个真实消费者及9项资源边界通过；旧reader专项34顶层/85父子PASS。整仓及发布另见[集成记录](../../docs/verification/maintenance-read-lease-integration.md)；全部source coverage、basis、epoch与生产CLI不因局部读取接线而视为完成。

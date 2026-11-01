@@ -1,0 +1,1057 @@
+{
+  "format": "moni-aigate-maintenance-read-lease-verification/v1",
+  "recorded_at": "2026-11-02",
+  "slice": "022-C0-T3 first slice: real ReadLease and local ledger/PB maintenance readers",
+  "status": "PASS for the final recorded local PostgreSQL/race and pure test scopes; complete-source verification, whole-repository integration and independent post-run audit are separate",
+  "contract": "specs/022-self-service-payments/c0-read-lease-contract.md",
+  "final_command": {
+    "path": ".local/c0-read-lease-verification/full-final.jsonl",
+    "sha256": "abeab3da7ea24b864a095c88e8a346c7d9b01e2dcaeac7d636cb5daf97075a13",
+    "bytes": 925604,
+    "json_records": 3508,
+    "top_level": {
+      "pass": 104,
+      "skip": 0,
+      "fail": 0
+    },
+    "parent_and_children": {
+      "pass": 876,
+      "skip": 0,
+      "fail": 0
+    },
+    "test_run_count": 876,
+    "run_terminal_one_to_one": true,
+    "package_terminal": [
+      {
+        "Time": "2026-11-02T05:24:57.63063+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "Elapsed": 387.029
+      }
+    ],
+    "command": "go test -race ./internal/maintenancetrust -count=1 -timeout 600s -json",
+    "command_evidence": "exact invocation supplied by coordinator",
+    "failed_tests": [],
+    "skipped_tests": [],
+    "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted",
+    "coordinator_reported_process_exit_code": 0
+  },
+  "final_scope_runs": [
+    {
+      "path": ".local/c0-read-lease-verification/consumers-first.jsonl",
+      "sha256": "3814cb0095a3928c3ada6442010a84b7d2997e5d729b7e75d13a957eda9e6045",
+      "bytes": 3605,
+      "json_records": 16,
+      "top_level": {
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 3,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 3,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:56:56.604031+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Elapsed": 50.907
+        }
+      ],
+      "command": "go test -race ./scripts/maintenance-scan-qa -run '^TestMaintenanceConsumersPostgresFundedSnapshot$' -count=1 -timeout 300s -json",
+      "command_evidence": "exact invocation supplied by coordinator",
+      "failed_tests": [],
+      "skipped_tests": [],
+      "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted"
+    },
+    {
+      "path": ".local/c0-read-lease-verification/resources-repaired.jsonl",
+      "sha256": "9f345bdb373165c0d3fbed13510925659a56f75a2f7a066141ea5906773e62f7",
+      "bytes": 12777,
+      "json_records": 52,
+      "top_level": {
+        "pass": 3,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 12,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 12,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:16:21.947486+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Elapsed": 166.914
+        }
+      ],
+      "command": "go test -race ./scripts/maintenance-scan-qa -run '^TestMaintenancePeriodicResourcesPostgres' -count=1 -parallel=1 -timeout 600s -json",
+      "command_evidence": "exact invocation supplied by coordinator",
+      "failed_tests": [],
+      "skipped_tests": [],
+      "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted"
+    },
+    {
+      "path": ".local/c0-read-lease-verification/cancel-repaired.jsonl",
+      "sha256": "90f93683f031651ac879edd6b743ab2829dcada77eba423f57bce2ff270aedf1",
+      "bytes": 5726,
+      "json_records": 24,
+      "top_level": {
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 5,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 5,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:09:24.640593+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 31.021
+        }
+      ],
+      "command": "go test -race ./internal/maintenancetrust -run '^TestReadLeasePostgresCancellationAndExitRuntime$' -count=1 -timeout 180s -json",
+      "command_evidence": "exact invocation supplied by coordinator",
+      "failed_tests": [],
+      "skipped_tests": [],
+      "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted"
+    },
+    {
+      "path": ".local/c0-read-lease-verification/proof-cancel-final-pure.jsonl",
+      "sha256": "7b07038405576eca93852adb0268a7a69166db4f34af80bb780ae3ae79405963",
+      "bytes": 23406,
+      "json_records": 96,
+      "top_level": {
+        "pass": 11,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 23,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 23,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:09:26.184927+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 17.586
+        }
+      ],
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -race -json ./internal/maintenancetrust -run '^TestReadLease(Codec|Rows|RowExactly|Cancellation|Cleanup|Completed|Zero|Rejected)' -count=1",
+      "command_evidence": "Exact invocation confirmed by executing descriptor_integration_review agent and independently relayed by cost_ui_review; not inferred from test names.",
+      "failed_tests": [],
+      "skipped_tests": []
+    }
+  ],
+  "counts_semantics": "Each row is a separate invocation. Parent-and-child totals include top-level tests; overlapping reruns are not added into one unique coverage count. Every non-empty log was independently parsed and every test run had exactly one terminal event.",
+  "production_api_added": [
+    "(*Permit).BeginScan(context.Context,ScanKind) (*ReadLease,error)",
+    "ReadLease.Require/Query/QueryRow/Finish/Abort/Deadline/Done/Err",
+    "Rows.Next/Scan/Err/Close and Row.Scan with closed ownership/codec",
+    "(*ScanProof).Verify(*Permit,ScanKind) error",
+    "billing.VerifyLedgerMaintenance(*ReadLease) (*MaintenanceLedgerResult,error)",
+    "periodicbudget.VerifyMaintenance(*ReadLease) (*MaintenanceResult,error)"
+  ],
+  "production_dependency_edges_added": [
+    "internal/billing -> internal/maintenancetrust",
+    "internal/periodicbudget -> internal/maintenancetrust"
+  ],
+  "layers": {
+    "public_ordinary_read_lease": {
+      "fixture": "original named-minimal actual LOGIN profile, original 001-022/provision plus frozen ordinary C0 DDL/ACL",
+      "chain": [
+        "Acquire",
+        "BeginPlan or BeginInit",
+        "VerifyInstallation",
+        "Attest",
+        "BeginScan",
+        "Rows or QueryRow",
+        "Finish",
+        "ScanProof.Verify",
+        "Rollback",
+        "Close"
+      ],
+      "tests": [
+        "TestReadLeasePostgresPlanInitRowsAndProof",
+        "TestReadLeasePostgresBusyOwnershipAndOmissions",
+        "TestReadLeasePostgresRejectsRawConnectionCallbacks",
+        "TestReadLeasePostgresCancellationAndExitRuntime"
+      ],
+      "observations": [
+        "original PID/top xid/RR and access mode",
+        "kind once, original Permit binding, copied proof revocation",
+        "busy refusals send zero SQL",
+        "missing EOF/Err/Close and unsafe targets fail closed",
+        "actual QueryRewriter/RowScanner callbacks remain at zero invocations",
+        "CPU cancellation, blocked SQL cancellation, concurrent Abort and exit runtime connection"
+      ]
+    },
+    "public_genuine_sandbox_consumers": {
+      "fixture": "original funded paymentsandboxqa.CreateApplication v1, frozen C0 DDL/ACL, real moni_test actual LOGIN and exact genuine pins",
+      "test": "TestMaintenanceConsumersPostgresFundedSnapshot",
+      "modes": [
+        "Plan: ledger then PB",
+        "Init: PB then ledger"
+      ],
+      "observations": [
+        "only public production APIs used",
+        "caller installation wrapper zeroed without replacing internally owned proof",
+        "same original Permit validates both results",
+        "unrelated Permit refused",
+        "copy and original revoked by original snapshot rollback",
+        "funded nonempty ledger rows retained",
+        "original and legacy funding digests unchanged"
+      ]
+    },
+    "public_sandbox_resource_boundaries": {
+      "fixture": "independent fixed 19-relation/146-field scalar oracle; legal original-owner INSERT of ordinary nonfinancial audit rows",
+      "chain": "Acquire -> BeginPlan -> VerifyInstallation -> Attest -> BeginScan(ScanPeriodicBudget) -> VerifyMaintenance",
+      "cases": {
+        "single_field_utf8_bytes": [
+          65535,
+          65536,
+          65537
+        ],
+        "total_utf8_bytes": [
+          16777215,
+          16777216,
+          16777217
+        ],
+        "total_rows": [
+          99999,
+          100000,
+          100001
+        ]
+      },
+      "all_nine_cases_pass": true,
+      "observations": [
+        "below and at accepted; over returns nil result and ErrVerifyExecution",
+        "multibyte Chinese payload proves UTF8 bytes rather than rune count",
+        "all audit rows counted independently from PB business-audit filter",
+        "genuine complete 22-entry history counted in total rows and bytes",
+        "over totals would fall below limits if history were excluded",
+        "rejected scan revokes original Permit and its backend/locks disappear before explicit Close",
+        "post-setup funding snapshot retained after all legal audit setup and compared after scan"
+      ],
+      "history_limit": "No oversized or extra migration row was made to pass T2; immutable expected names/checksums stay genuine. This is aggregate coverage of real history, not a giant-history public-chain test."
+    },
+    "pure_mock_layer": {
+      "tests": "lease codec/Rows protocol/callback/owned-copy/CPU binding and local reader core script oracles",
+      "proof_boundary": "Private test fixtures can exercise predicates and ownership, but cannot replace the public authority issuer or establish genuine installation/complete-source coverage. Ledger/PB core script tests are recorded with the separate original-reader regression/integration.",
+      "cancellation_regression": "TestReadLeaseCompletedProofSeesSuccessorCancellationBeforeCallback has caller and private-context cases, GOMAXPROCS(1), completed original and copied proofs, healthy successor then cancellation before queued callback; both failed before production fix and pass after."
+    },
+    "earlier_profile_regression": "full-final also reruns existing T0/T1/T2 named-image, public-minimal/image, NOLOGIN/SET ROLE refusal and genuine sandbox authority matrices. These earlier authority profile tests do not independently imply a new ReadLease scan in every profile."
+  },
+  "resource_and_lifecycle_contract": {
+    "lease": "single original raw transaction, fixed kind once per Permit, original Gate busy for complete lease, fixed at most 30 seconds with earlier caller/Snapshot deadline, full original authority verification on entry and exit",
+    "codec": "exact audited builtin parameters and targets, no custom callbacks/pgx control arguments, owned copies; at most 1024 arguments and 16 MiB logical argument bytes including per-string length framing",
+    "rows": "each Next true consumed once, genuine EOF plus Err plus explicit Close; QueryRow exactly one row; pending handles prevent Finish",
+    "result_scope": [
+      "supplied_ledger_rows",
+      "periodic_budget_rows"
+    ],
+    "proof": "opaque completion binding to original Permit/Snapshot/lease nonce, fixed kind; no SQL on Verify; revoked on original failure/cancellation/terminal state",
+    "pb_maintenance_guard": "19 relations and all 146 declared fields; all audits/history; <=100000 rows, <=65536 UTF8 bytes per text-cast field, <=16777216 total bytes; scalar eligibility only before original SQL core",
+    "memory_limit": "Logical input/retention boundary only. Not PostgreSQL sort/CTE/array_agg memory, Go heap/RSS, or arbitrary driver DataRow memory claim."
+  },
+  "corrections": [
+    {
+      "id": "cancel-observation",
+      "failed_log": "lease-targeted.jsonl",
+      "fixed_log": "cancel-repaired.jsonl",
+      "kind": "test observation and explicit documented server-I/O boundary; original raw-close behavior retained",
+      "detail": "Initial test treated immediate client raw-close as immediate backend/advisory disappearance during long server SQL. Final real SQL uses pg_sleep(1) with independent PgSleep barrier, verifies captured wire.closed within 500ms and original SQL owner safe return within 3s, then observes exact PID/backend_start/locks naturally gone. No pg_terminate_backend, server client_connection_check_interval change, drain from another goroutine, or budget extension."
+    },
+    {
+      "id": "resource-oracle-sql-type",
+      "failed_logs": [
+        "resources-first.jsonl",
+        "resources-diagnostic.jsonl"
+      ],
+      "fixed_log": "resources-repaired.jsonl",
+      "kind": "test-only oracle correction",
+      "detail": "Schema-qualified bigint is not the catalog type name. SQLSTATE 42704 position29 identified ::pg_catalog.bigint; corrected independent oracle casts to ::pg_catalog.int8. Production PB guard, frozen SQL/ACL/history and thresholds unchanged."
+    },
+    {
+      "id": "completed-proof-successor-cancel",
+      "failed_log": "proof-cancel-before-fix.jsonl",
+      "fixed_logs": [
+        "proof-cancel-final-pure.jsonl",
+        "full-final.jsonl"
+      ],
+      "kind": "production cancellation binding fix with deterministic two-case pure regression",
+      "detail": "ScanProof.Verify now checks current non-stopped permitCall caller/private-context cancellation under original lock, before queued AfterFunc can record global revocation. It deliberately ignores normal cancellation of the old successfully finished child call."
+    },
+    {
+      "id": "busy-cleanup-ack",
+      "kind": "implemented ownership invariant with pure barrier regression",
+      "detail": "closeCall retains operation/Gate busy through stop/callback acknowledgement, call cancellation and budgetCancel; only afterwards clears activeLease/permitCall and releases busy. TestReadLeaseCleanupKeepsBusyThroughCallbackAcknowledgement confirms successor cannot enter and no driver method is invoked by concurrent cleanup."
+    }
+  ],
+  "all_attempts": [
+    {
+      "path": ".local/c0-read-lease-verification/full-final.jsonl",
+      "sha256": "abeab3da7ea24b864a095c88e8a346c7d9b01e2dcaeac7d636cb5daf97075a13",
+      "bytes": 925604,
+      "json_records": 3508,
+      "top_level": {
+        "pass": 104,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 876,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 876,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:24:57.63063+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 387.029
+        }
+      ],
+      "command": "go test -race ./internal/maintenancetrust -count=1 -timeout 600s -json",
+      "command_evidence": "exact invocation supplied by coordinator",
+      "failed_tests": [],
+      "skipped_tests": [],
+      "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted"
+    },
+    {
+      "path": ".local/c0-read-lease-verification/consumers-first.jsonl",
+      "sha256": "3814cb0095a3928c3ada6442010a84b7d2997e5d729b7e75d13a957eda9e6045",
+      "bytes": 3605,
+      "json_records": 16,
+      "top_level": {
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 3,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 3,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:56:56.604031+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Elapsed": 50.907
+        }
+      ],
+      "command": "go test -race ./scripts/maintenance-scan-qa -run '^TestMaintenanceConsumersPostgresFundedSnapshot$' -count=1 -timeout 300s -json",
+      "command_evidence": "exact invocation supplied by coordinator",
+      "failed_tests": [],
+      "skipped_tests": [],
+      "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted"
+    },
+    {
+      "path": ".local/c0-read-lease-verification/resources-repaired.jsonl",
+      "sha256": "9f345bdb373165c0d3fbed13510925659a56f75a2f7a066141ea5906773e62f7",
+      "bytes": 12777,
+      "json_records": 52,
+      "top_level": {
+        "pass": 3,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 12,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 12,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:16:21.947486+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Elapsed": 166.914
+        }
+      ],
+      "command": "go test -race ./scripts/maintenance-scan-qa -run '^TestMaintenancePeriodicResourcesPostgres' -count=1 -parallel=1 -timeout 600s -json",
+      "command_evidence": "exact invocation supplied by coordinator",
+      "failed_tests": [],
+      "skipped_tests": [],
+      "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted"
+    },
+    {
+      "path": ".local/c0-read-lease-verification/cancel-repaired.jsonl",
+      "sha256": "90f93683f031651ac879edd6b743ab2829dcada77eba423f57bce2ff270aedf1",
+      "bytes": 5726,
+      "json_records": 24,
+      "top_level": {
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 5,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 5,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:09:24.640593+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 31.021
+        }
+      ],
+      "command": "go test -race ./internal/maintenancetrust -run '^TestReadLeasePostgresCancellationAndExitRuntime$' -count=1 -timeout 180s -json",
+      "command_evidence": "exact invocation supplied by coordinator",
+      "failed_tests": [],
+      "skipped_tests": [],
+      "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated test database; value omitted"
+    },
+    {
+      "path": ".local/c0-read-lease-verification/proof-cancel-before-fix.jsonl",
+      "sha256": "1222d3aa89a5210e23243473e5b34e1543e6a62220fc4ca1ae6d05736e9601ed",
+      "bytes": 4712,
+      "json_records": 18,
+      "top_level": {
+        "pass": 0,
+        "skip": 0,
+        "fail": 1
+      },
+      "parent_and_children": {
+        "pass": 0,
+        "skip": 0,
+        "fail": 3
+      },
+      "test_run_count": 3,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:07:45.842125+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 16.033
+        }
+      ],
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -race -json ./internal/maintenancetrust -run '^TestReadLeaseCompletedProofSeesSuccessorCancellationBeforeCallback$' -count=1",
+      "command_evidence": "Exact invocation confirmed by executing descriptor_integration_review agent and independently relayed by cost_ui_review; not inferred from test names.",
+      "failed_tests": [
+        "TestReadLeaseCompletedProofSeesSuccessorCancellationBeforeCallback/caller",
+        "TestReadLeaseCompletedProofSeesSuccessorCancellationBeforeCallback/private-context",
+        "TestReadLeaseCompletedProofSeesSuccessorCancellationBeforeCallback"
+      ],
+      "skipped_tests": [],
+      "failure_diagnostics": [
+        {
+          "test": "TestReadLeaseCompletedProofSeesSuccessorCancellationBeforeCallback/caller",
+          "message": "lease_rows_test.go:369: cancelled successor escaped pure completion binding: <nil>"
+        },
+        {
+          "test": "TestReadLeaseCompletedProofSeesSuccessorCancellationBeforeCallback/private-context",
+          "message": "lease_rows_test.go:369: cancelled successor escaped pure completion binding: <nil>"
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-read-lease-verification/proof-cancel-final-pure.jsonl",
+      "sha256": "7b07038405576eca93852adb0268a7a69166db4f34af80bb780ae3ae79405963",
+      "bytes": 23406,
+      "json_records": 96,
+      "top_level": {
+        "pass": 11,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 23,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 23,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:09:26.184927+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 17.586
+        }
+      ],
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -race -json ./internal/maintenancetrust -run '^TestReadLease(Codec|Rows|RowExactly|Cancellation|Cleanup|Completed|Zero|Rejected)' -count=1",
+      "command_evidence": "Exact invocation confirmed by executing descriptor_integration_review agent and independently relayed by cost_ui_review; not inferred from test names.",
+      "failed_tests": [],
+      "skipped_tests": []
+    },
+    {
+      "path": ".local/c0-read-lease-verification/lease-targeted.jsonl",
+      "sha256": "f5bcaad123e8db4d96c8edf2d5b640d9936c37dab287569aaeafe06e56206d89",
+      "bytes": 22334,
+      "json_records": 90,
+      "top_level": {
+        "pass": 3,
+        "skip": 0,
+        "fail": 1
+      },
+      "parent_and_children": {
+        "pass": 18,
+        "skip": 0,
+        "fail": 3
+      },
+      "test_run_count": 21,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:54:44.057802+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 103.649
+        }
+      ],
+      "command": null,
+      "command_evidence": "not reconstructed from log test names",
+      "failed_tests": [
+        "TestReadLeasePostgresCancellationAndExitRuntime/sql-cancel",
+        "TestReadLeasePostgresCancellationAndExitRuntime/concurrent-abort",
+        "TestReadLeasePostgresCancellationAndExitRuntime"
+      ],
+      "skipped_tests": [],
+      "failure_diagnostics": [
+        {
+          "test": "TestReadLeasePostgresCancellationAndExitRuntime/sql-cancel",
+          "message": "lease_integration_test.go:287: backend cleanup observation"
+        },
+        {
+          "test": "TestReadLeasePostgresCancellationAndExitRuntime/concurrent-abort",
+          "message": "lease_integration_test.go:287: original backend or advisory locks survived physical closure"
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-read-lease-verification/resources-first.jsonl",
+      "sha256": "9d0121a571cfa20406bcf49230686272e71b30f3f4d86f0666e84bcce3944de2",
+      "bytes": 15895,
+      "json_records": 61,
+      "top_level": {
+        "pass": 0,
+        "skip": 0,
+        "fail": 3
+      },
+      "parent_and_children": {
+        "pass": 0,
+        "skip": 0,
+        "fail": 12
+      },
+      "test_run_count": 12,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:11:42.808712+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Elapsed": 124.904
+        }
+      ],
+      "command": null,
+      "command_evidence": "not reconstructed from log test names",
+      "failed_tests": [
+        "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/below",
+        "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/at",
+        "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/over",
+        "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes",
+        "TestMaintenancePeriodicResourcesPostgresTotalBytes/below",
+        "TestMaintenancePeriodicResourcesPostgresTotalBytes/at",
+        "TestMaintenancePeriodicResourcesPostgresTotalBytes/over",
+        "TestMaintenancePeriodicResourcesPostgresTotalBytes",
+        "TestMaintenancePeriodicResourcesPostgresTotalRows/below",
+        "TestMaintenancePeriodicResourcesPostgresTotalRows/at",
+        "TestMaintenancePeriodicResourcesPostgresTotalRows/over",
+        "TestMaintenancePeriodicResourcesPostgresTotalRows"
+      ],
+      "skipped_tests": [],
+      "failure_diagnostics": [
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/below",
+          "message": "periodic_resources_test.go:134: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/at",
+          "message": "periodic_resources_test.go:134: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/over",
+          "message": "periodic_resources_test.go:134: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresTotalBytes/below",
+          "message": "periodic_resources_test.go:163: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresTotalBytes/at",
+          "message": "periodic_resources_test.go:163: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresTotalBytes/over",
+          "message": "periodic_resources_test.go:163: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresTotalRows/below",
+          "message": "periodic_resources_test.go:211: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresTotalRows/at",
+          "message": "periodic_resources_test.go:211: independent resource inventory measurement failed: periodic_budget_controls"
+        },
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresTotalRows/over",
+          "message": "periodic_resources_test.go:211: independent resource inventory measurement failed: periodic_budget_controls"
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-read-lease-verification/resources-diagnostic.jsonl",
+      "sha256": "e4b0a4ba43c33199c49645c3526ab8157284f83b78b620ae3443bfb9de6c680c",
+      "bytes": 3115,
+      "json_records": 13,
+      "top_level": {
+        "pass": 0,
+        "skip": 0,
+        "fail": 1
+      },
+      "parent_and_children": {
+        "pass": 0,
+        "skip": 0,
+        "fail": 2
+      },
+      "test_run_count": 2,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:12:33.177184+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Elapsed": 27.762
+        }
+      ],
+      "command": null,
+      "command_evidence": "not reconstructed from log test names",
+      "failed_tests": [
+        "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/below",
+        "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes"
+      ],
+      "skipped_tests": [],
+      "failure_diagnostics": [
+        {
+          "test": "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/below",
+          "message": "periodic_resources_test.go:139: independent resource inventory measurement failed: periodic_budget_controls SQLSTATE=42704 position=29"
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-read-lease-verification/proof-cancel-after-fix.jsonl",
+      "sha256": "a2dc7d214ee7f158f53288b5a1293f91c1b2878776d4a3b742bf9534bff5e166",
+      "bytes": 28260,
+      "json_records": 116,
+      "top_level": {
+        "pass": 11,
+        "skip": 4,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 23,
+        "skip": 4,
+        "fail": 0
+      },
+      "test_run_count": 27,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:08:22.494748+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 16.96
+        }
+      ],
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -race -json ./internal/maintenancetrust -run '^TestReadLease' -count=1",
+      "command_evidence": "Exact invocation confirmed by executing descriptor_integration_review agent and independently relayed by cost_ui_review; not inferred from test names.",
+      "failed_tests": [],
+      "skipped_tests": [
+        "TestReadLeasePostgresPlanInitRowsAndProof",
+        "TestReadLeasePostgresBusyOwnershipAndOmissions",
+        "TestReadLeasePostgresRejectsRawConnectionCallbacks",
+        "TestReadLeasePostgresCancellationAndExitRuntime"
+      ]
+    },
+    {
+      "path": ".local/c0-read-lease-verification/resources-one-repaired.jsonl",
+      "sha256": "50a3cf93d9e94168ce1834ee28c39f1ed101b8f88021e1d618cf1662d4bafb36",
+      "bytes": 2720,
+      "json_records": 12,
+      "top_level": {
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "parent_and_children": {
+        "pass": 2,
+        "skip": 0,
+        "fail": 0
+      },
+      "test_run_count": 2,
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T05:13:22.934132+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Elapsed": 33.902
+        }
+      ],
+      "command": null,
+      "command_evidence": "not reconstructed from log test names",
+      "failed_tests": [],
+      "skipped_tests": []
+    }
+  ],
+  "final_source_snapshot": {
+    "semantics": "Frozen source and tests at the original T3 evidence generation, before the later integration startup fix and design addendum. Historical hashes are retained unchanged; integration verification records subsequent source changes and regression results. Earlier failed/repaired logs were not necessarily compiled from this snapshot; per-attempt historical source trees were not reconstructed. Full-final binds the recorded maintenancetrust package verification; log hashes bind other observed attempts.",
+    "files": [
+      {
+        "path": "go.mod",
+        "sha256": "6aa7c8cf309a2da1364d8081db3648cb27a9140b26a4bf9dd78a411e51619b12"
+      },
+      {
+        "path": "go.sum",
+        "sha256": "6e636cc27f42ca16248d1542f6ff3bd91ad4c3d2b2d440fb615ee24f9f245fb0"
+      },
+      {
+        "path": "internal/billing/funding_ledger_maintenance.go",
+        "sha256": "077c7c7919120105c219b142d0be9b4b1bf06f271d7914f017c30ead44326f7f"
+      },
+      {
+        "path": "internal/billing/funding_ledger_maintenance_test.go",
+        "sha256": "e99fece6f9375d29e6852b7aaa39a5ec52ec48c6b2aea7f49f88d9a0af575ba1"
+      },
+      {
+        "path": "internal/billing/funding_ledger_query.go",
+        "sha256": "eed9520ab295f575d73b17b535c7aae60a11e12f00ade69bec3d23590d6216b1"
+      },
+      {
+        "path": "internal/billing/funding_ledger_read.go",
+        "sha256": "463fb0efd49fb1aa6eabf573bbd164e20302352002d902e0f23d54830f77339a"
+      },
+      {
+        "path": "internal/billing/funding_ledger_read_integration_test.go",
+        "sha256": "c10013c5b5c5c992e5d5f176114a6e682b6f618bd897bd88f305928dbfab8f01"
+      },
+      {
+        "path": "internal/billing/funding_ledger_read_test.go",
+        "sha256": "02fbb43fac000d43f6cd59aa70dbc7249c0d10c6e6757b9cb15a9eb6e3f3a0e5"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_accounts.go",
+        "sha256": "04b1f06826875c337d689ef3f8bdf2686f98bb007bbb178b350a5af07162adce"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_accounts_test.go",
+        "sha256": "08c0e73da80bf89829803dd11a75cb9af223ab2128f0ddfec7ef9752e4ea7c2c"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_budget_integration_test.go",
+        "sha256": "2ef3086ca31be53ace5c854dcbe1ddf5324ed06efc1599746bcd502ce5160389"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_identity.go",
+        "sha256": "318fb64bff18999fd6c5232275f4b8adae15cedd7500ed20d90fbe31240f3eb5"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_identity_test.go",
+        "sha256": "d86d4b153d35fc805a738f97429a81285f1d838743fb4f04997332147bd4fbef"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_manifest.go",
+        "sha256": "8102c312df814f95fd3a611470369b08d4a2cb7e35b02244335f72971c3bd91b"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_manifest_test.go",
+        "sha256": "2d6ac55991c2baf0cbbaac0aa2399001d698aaff021106acb9427e0135fa6c63"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_profiles_integration_test.go",
+        "sha256": "0c922536d82a8430e363bd92d102160e0a5adc4e33103a83684c0d3899f6c2ea"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_sandbox_fixture_test.go",
+        "sha256": "0fb401abdcd32c8b69e30a43d96e0d180d0733a1071a96c1745907cbd064a09c"
+      },
+      {
+        "path": "internal/maintenancetrust/authority_sandbox_integration_test.go",
+        "sha256": "b29279449fb827ac0dc5f9eec4e22e9e1c43688a689c35206d11fb1c77341faf"
+      },
+      {
+        "path": "internal/maintenancetrust/gate.go",
+        "sha256": "d09101c56222794224aec59b5b426661101f030c990b9f511f1461d6a5c4cc11"
+      },
+      {
+        "path": "internal/maintenancetrust/gate_integration_test.go",
+        "sha256": "243a11a09851781268ba5578a1a0412993ff1b828b68c966a7dd1109fb9f3e6a"
+      },
+      {
+        "path": "internal/maintenancetrust/gate_test.go",
+        "sha256": "014d7323ff0d9f5f0243ca600367e3e952cc92fee3dcaa5d7012bfabbbd0eb0a"
+      },
+      {
+        "path": "internal/maintenancetrust/identity.go",
+        "sha256": "20567bab4adb61eb99456d4de44a40f6b3d1b2d1e2068cfad30a63c71eeb8df4"
+      },
+      {
+        "path": "internal/maintenancetrust/lease.go",
+        "sha256": "49abd89ef3a84d568aea7a54b7e36410cbda9dde0f772272509e47fbb31d3bbe"
+      },
+      {
+        "path": "internal/maintenancetrust/lease_codec.go",
+        "sha256": "2eea1848b649dbcaa14a01ae23789809169a509b754f3dae2e3772ea06ec7e7c"
+      },
+      {
+        "path": "internal/maintenancetrust/lease_codec_test.go",
+        "sha256": "30c1982b0dfe1036d09d780eb361b2bfd048f790c1ed0a8fa1dee949f1576195"
+      },
+      {
+        "path": "internal/maintenancetrust/lease_integration_test.go",
+        "sha256": "5d9a0809cecf1e33daeb63757fddff3898cd546bde6c24f903c42f12742833de"
+      },
+      {
+        "path": "internal/maintenancetrust/lease_rows.go",
+        "sha256": "2e06d096edf36b3b54ea6741595c79e3ee07a4be98ae3d85774240b054ca8063"
+      },
+      {
+        "path": "internal/maintenancetrust/lease_rows_test.go",
+        "sha256": "c3951512cdb50e30f16c01026ccdb985f030f70b72f015dcf79294b5240b1f16"
+      },
+      {
+        "path": "internal/maintenancetrust/lease_test.go",
+        "sha256": "7b7cecb264e22877b3e670c86411d2a1e5e2d3b2e250a11a3033b4c6f8081453"
+      },
+      {
+        "path": "internal/maintenancetrust/permit.go",
+        "sha256": "664cf17d04b3338df1411f54a1acd49203e06102cb47643a8d71b7e4828f11b0"
+      },
+      {
+        "path": "internal/maintenancetrust/permit_integration_test.go",
+        "sha256": "331d766cbed20522937984d333b7a8e38d60b7134ae5415a8083daf4f749b2d2"
+      },
+      {
+        "path": "internal/maintenancetrust/permit_test.go",
+        "sha256": "1aa30f453b5b1e47a188b888b1b8c1c2b6204115755da7773065b3a06bda6deb"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor.go",
+        "sha256": "450459cdc85a0d23371a724174f01af99bbccf3b7fea0b76ca863385b565d47b"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor_codec.go",
+        "sha256": "7aa1ff8206abb8477b2001ad0cf1dbd48c68cbbdad22b69906f39e235ab95246"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor_codec_test.go",
+        "sha256": "86d63a9c16d2a60d043fef328b4c52b7161f825eddf9b17d873780d2637a340a"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor_postgres_test.go",
+        "sha256": "eb32f42cb46373e1e5bfb67d012a3d81ccb974eefce0cf858da5ab42ba0c8de9"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor_rows.go",
+        "sha256": "2d47cc058c065197d8fc67f7100742e6d2b250ecfaeab1affc202b126bf2a61c"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor_rows_test.go",
+        "sha256": "ab297c99fbbe62cedfda99ecce698b0ad0c02b5b5af7de58db28d18eaa240a05"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor_sql.go",
+        "sha256": "84c9d806e80c1ac832b13ed377c3bd174e87f6c914ffe1f82ce3a3be8d492b90"
+      },
+      {
+        "path": "internal/maintenancetrust/predecessor_sql_test.go",
+        "sha256": "d3e72b95f51ba4e8c0c1574ca566ce9b810a6e44e2725c9d9a646ec3db5ba6e6"
+      },
+      {
+        "path": "internal/maintenancetrust/sandbox_export_test.go",
+        "sha256": "73f8b1a2517168daaf7099e903120fdd901c2cdda792710042aff6f635eede2b"
+      },
+      {
+        "path": "internal/maintenancetrust/sandbox_external_test.go",
+        "sha256": "b7de4144070c1291a073910760a9d4609b9a7b50bbdec771a7e80d5467c31509"
+      },
+      {
+        "path": "internal/maintenancetrust/snapshot.go",
+        "sha256": "4c26b4d02c4d9fe384f0461392d95adcf853b4c776fb5965677532ba8e96aa2b"
+      },
+      {
+        "path": "internal/maintenancetrust/snapshot_fixture_test.go",
+        "sha256": "43103c30fc86b1fbd1778dc38c4d7a9aeb341b623173ce65dd4d5d5ec749824e"
+      },
+      {
+        "path": "internal/maintenancetrust/snapshot_integration_test.go",
+        "sha256": "0e7092fc48366746620e717060460df4fc23364f0405cabd1e56b146b778c1e0"
+      },
+      {
+        "path": "internal/maintenancetrust/snapshot_tables.go",
+        "sha256": "bc6eacd2b7d5e9dd307bff4aafef0e6d70c1b052175b85c8ec199fb2b47d22de"
+      },
+      {
+        "path": "internal/maintenancetrust/snapshot_tables_test.go",
+        "sha256": "afad10b012ece7accdc538be4c9550ee9fb447d5736b8f90b49d6722e6edb765"
+      },
+      {
+        "path": "internal/maintenancetrust/snapshot_test.go",
+        "sha256": "66e9a6ebe58cd96630a4ecfcf397d5e527852f4680a7a95c532e942720e93df0"
+      },
+      {
+        "path": "internal/paymentsandboxqa/application.go",
+        "sha256": "b0d28048b9fa3d856b83e494d319158ad4c3937eb745dde88674536496254f33"
+      },
+      {
+        "path": "internal/paymentsandboxqa/environment.go",
+        "sha256": "24f1cf53fe014274010bee9d68119c270a14f9c55510f3ee3e53ea3f525747b8"
+      },
+      {
+        "path": "internal/paymentsandboxqa/install.go",
+        "sha256": "dd0ac0d67bbe9b6e400f11ccff14479a9c156779b5fc2079ee24c7c830e18888"
+      },
+      {
+        "path": "internal/paymentsandboxschema/mock_inventory.json",
+        "sha256": "3f5e926b8ed9152d6bf9ff757400ab3119241629cb3b00cdbd40974d9f818234"
+      },
+      {
+        "path": "internal/paymentsandboxschema/mock_v1.sql",
+        "sha256": "3942a0af2577bdad4e841f2b1fa3f0502a3a0db898d6f050fbaf2da45e7e0127"
+      },
+      {
+        "path": "internal/paymentsandboxschema/receiver_inventory.json",
+        "sha256": "73be5ea3231cd8eb3504d1e1b8b269fab6b92f10be6b8128e7feafa569b662d8"
+      },
+      {
+        "path": "internal/paymentsandboxschema/receiver_v1.sql",
+        "sha256": "3c1a4956b55ef058ad6a927e678bf026017a4f3d23bc60d19cb02640e98f433e"
+      },
+      {
+        "path": "internal/periodicbudget/verifier.go",
+        "sha256": "5629e7833c1bdb54e1f12591c3beb6c65bd3b475f351d96d2c55dd49f6cb770a"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_configuration.go",
+        "sha256": "d9e4ec174036efb66035b9ce1a6ce0e4940623a6c48c1cee58298eb27e4f87a8"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_events.go",
+        "sha256": "e8e537832e0aad238c0b35a0a5002a643eded3cbfab569868bbc3066ff9166d0"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_integration_test.go",
+        "sha256": "9ee30751d90e4aa3be69ddb257405daa75d36051ab9f0645adf96b16579bf05f"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_maintenance.go",
+        "sha256": "0351a676cdbe3a44b9e8f5593988a3cd3e5b36b1802e8e7aa4fae7dcbb06e33a"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_maintenance_test.go",
+        "sha256": "c9428890850ad8f03465e51f9c23cf9bb881c1611882208ebc38fa1b9936a6a8"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_operations.go",
+        "sha256": "4eeeaca1a7f91bc81e03b8fe742c5ff10abe713f9b80e8ef7f95699535d976f4"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_projections.go",
+        "sha256": "3effa03cb901e41a4af3965fd09d822dc3722085f4d60113265d5d91194ca47f"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_sources.go",
+        "sha256": "af109961b8bfb98e9fa1143e09e010ded381d9962db4a88453c002b7c2b1558a"
+      },
+      {
+        "path": "internal/periodicbudget/verifier_test.go",
+        "sha256": "6f590d9631fb2ccd793dd75c3bcef15ebbbc82edc718098bce456624f17e11ba"
+      },
+      {
+        "path": "scripts/maintenance-scan-qa/maintenance_integration_test.go",
+        "sha256": "9d0ab53ff063359be800f0ba3d48a02597171363e320c73de37d48851208f90a"
+      },
+      {
+        "path": "scripts/maintenance-scan-qa/periodic_resources_test.go",
+        "sha256": "43f3064ddf043f452cffa35cc255d0295875b2e87712e427bf906548d7387724"
+      },
+      {
+        "path": "specs/022-self-service-payments/c0-ordinary-permissions.sql",
+        "sha256": "864a3e5b19a9e7d21d98b6557abf1d4903ca6ced438f1ec0259e786582b0d74e"
+      },
+      {
+        "path": "specs/022-self-service-payments/c0-production-permissions.sql",
+        "sha256": "9ddeecca3c2e9ec9d26f77bea80c92e4505e07f0f2a4c4bdc75d9e09b02876ae"
+      },
+      {
+        "path": "specs/022-self-service-payments/c0-production-schema.sql",
+        "sha256": "e61eb57ec2697fce94be6bac4dd306c86f8b05a339541339dd0fd554f3632047"
+      },
+      {
+        "path": "specs/022-self-service-payments/c0-read-lease-contract.md",
+        "sha256": "84c0e17e84f0772a988fdf16755ea9fafe2d93de19d7dc996abcab02d5878c8d"
+      }
+    ]
+  },
+  "test_only_qa_factory": {
+    "files": [
+      "internal/maintenancetrust/sandbox_export_test.go",
+      "internal/maintenancetrust/sandbox_external_test.go"
+    ],
+    "reason": "billing now imports maintenancetrust; old internal-test import of paymentsandboxqa would form test-only cycle",
+    "scope": "only _test.go DTO and registration delegates exact original CreateApplication/OpenPool/Close/VerifyLegacyFundingUnchanged with cloned role/schema maps; real installation/pins/private authority oracles retained",
+    "not_added": [
+      "production factory or registration",
+      "replaceable proof/Permit issuer",
+      "raw transaction escape",
+      "production dependency on QA factory"
+    ]
+  },
+  "separate_records": {
+    "old_reader_and_core_regression": "docs/verification/maintenance-read-lease-integration.md",
+    "whole_repository_checks_and_architecture": "docs/verification/maintenance-read-lease-integration.md",
+    "post_run_cleanup_audit": "Coordinator will append independent read-only audit evidence after all PostgreSQL work; no success is claimed here before that evidence is recorded."
+  },
+  "not_completed": [
+    "independent complete Funding/Key/procurement/B-source/lot scanners and bidirectional full-source composition",
+    "full-source CoverageComplete authority",
+    "basis/epoch/genesis writer and cutover",
+    "production maintenance CLI/main/HTTP assembly",
+    "all production PostgreSQL/1Panel profiles",
+    "arbitrary long server SQL immediate PID/advisory release guarantee",
+    "formal provider/model usage or real PSP certification"
+  ],
+  "production_preview_58123_touched": false,
+  "real_model_or_psp_calls": 0
+}

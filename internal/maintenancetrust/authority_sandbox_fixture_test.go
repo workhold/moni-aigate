@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
-	"github.com/moni-ai/moni-aigate/internal/paymentsandboxqa"
 )
 
 // This fixture starts with the genuine immutable v1 QA installer, including
@@ -19,7 +18,7 @@ import (
 // Only the two fixed reviewed C0 sources are appended. No catalog expected
 // value, original SQL, production hook, public ACL or database ACL is changed.
 type authoritySandboxFixture struct {
-	env          *paymentsandboxqa.ApplicationEnvironment
+	env          *SandboxQAEnvironmentForTest
 	admin        *pgx.Conn
 	cfg          *pgx.ConnConfig
 	pins         fundinglotcatalog.Pins
@@ -65,7 +64,10 @@ func newAuthoritySandboxFixture(t *testing.T) *authoritySandboxFixture {
 	}
 	// Normalize only the already-validated dedicated test DSN. Never emit it.
 	u := url.URL{Scheme: "postgres", Host: "127.0.0.1:55439", Path: "/moni_test", User: url.UserPassword(cfg.User, cfg.Password), RawQuery: "sslmode=disable"}
-	f.env, err = paymentsandboxqa.CreateApplication(ctx, u.String(), t.TempDir())
+	if sandboxQAFactoryForTest == nil {
+		t.Fatal("sandbox authority genuine QA factory missing")
+	}
+	f.env, err = sandboxQAFactoryForTest(ctx, u.String(), t.TempDir())
 	if err != nil || f.env == nil {
 		t.Fatal("sandbox authority genuine v1 installation")
 	}

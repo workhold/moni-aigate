@@ -284,38 +284,6 @@ func (b *fundingLedgerBudget) add(fields ...string) error {
 	return nil
 }
 
-func fundingLedgerPages(ctx context.Context, tx pgx.Tx, query string, scan func(pgx.Rows) (string, error)) error {
-	hasCursor, cursor := false, ""
-	for {
-		rows, err := tx.Query(ctx, query, !hasCursor, cursor)
-		if err != nil {
-			return fundingLedgerFailure(ctx)
-		}
-		count, last := 0, cursor
-		for rows.Next() {
-			key, err := scan(rows)
-			if err != nil {
-				rows.Close()
-				return err
-			}
-			if count >= 128 || (hasCursor || count > 0) && key <= last {
-				rows.Close()
-				return fundingLedgerReadExecution
-			}
-			last = key
-			count++
-		}
-		rows.Close()
-		if rows.Err() != nil {
-			return fundingLedgerFailure(ctx)
-		}
-		if count < 128 {
-			return nil
-		}
-		hasCursor, cursor = true, last
-	}
-}
-
 // This private reader preserves the caller's RR and returns raw facts, not a
 // full-source report or proof. The future composer must authorize its own tx.
 func readFundingLedgerSnapshotTx(ctx context.Context, tx pgx.Tx) (fundingLedgerSnapshot, error) {
@@ -341,71 +309,9 @@ func readFundingLedgerSnapshotTx(ctx context.Context, tx pgx.Tx) (fundingLedgerS
 	if err = migrations.VerifySnapshotTx(ctx, tx); err != nil {
 		return fundingLedgerSnapshot{}, fundingLedgerFailure(ctx)
 	}
-	var out fundingLedgerSnapshot
-	var budget fundingLedgerBudget
-	err = fundingLedgerPages(ctx, tx, fundingLedgerPageSQL(id.schema, "ledger_accounts"), func(rows pgx.Rows) (string, error) {
-		var row fundinglotverify.LedgerAccountRow
-		if err := rows.Scan(&row.ID, &row.TenantID, &row.Kind, &row.Balance); err != nil {
-			return "", fundingLedgerFailure(ctx)
-		}
-		fields := []string{row.ID, row.Kind, row.Balance}
-		if row.TenantID != nil {
-			fields = append(fields, *row.TenantID)
-		}
-		if err := budget.add(fields...); err != nil {
-			return "", err
-		}
-		out.rows.Accounts = append(out.rows.Accounts, row)
-		return row.ID, nil
-	})
+	out, err := readFundingLedgerCore(ctx, fundingLedgerRawQuery{ctx: ctx, tx: tx}, id.schema)
 	if err != nil {
 		return fundingLedgerSnapshot{}, err
-	}
-	err = fundingLedgerPages(ctx, tx, fundingLedgerPageSQL(id.schema, "journals"), func(rows pgx.Rows) (string, error) {
-		var row fundingLedgerJournalFacts
-		if err := rows.Scan(&row.ID, &row.TenantID, &row.OperationID, &row.Kind, &row.Reference, &row.Actor, &row.Currency, &row.CreatedTXID, &row.CreatedAt); err != nil {
-			return "", fundingLedgerFailure(ctx)
-		}
-		if err := budget.add(row.ID, row.TenantID, row.OperationID, row.Kind, row.Reference, row.Actor, row.Currency, row.CreatedTXID); err != nil {
-			return "", err
-		}
-		xid, err := strconv.ParseInt(row.CreatedTXID, 10, 64)
-		row.CreatedAt = row.CreatedAt.UTC()
-		if err != nil || xid <= 0 || strconv.FormatInt(xid, 10) != row.CreatedTXID || row.CreatedAt.IsZero() ||
-			row.CreatedAt.Year() < 1 || row.CreatedAt.Year() > 9999 || row.CreatedAt.Nanosecond()%1000 != 0 {
-			return "", fundingLedgerReadExecution
-		}
-		out.journals = append(out.journals, row)
-		out.rows.Journals = append(out.rows.Journals, fundinglotverify.LedgerJournalRow{ID: row.ID, TenantID: row.TenantID, OperationID: row.OperationID, Currency: row.Currency})
-		return row.ID, nil
-	})
-	if err != nil {
-		return fundingLedgerSnapshot{}, err
-	}
-	err = fundingLedgerPages(ctx, tx, fundingLedgerPageSQL(id.schema, "journal_lines"), func(rows pgx.Rows) (string, error) {
-		var row fundinglotverify.LedgerLineRow
-		if err := rows.Scan(&row.ID, &row.JournalID, &row.AccountID, &row.SignedDelta); err != nil {
-			return "", fundingLedgerFailure(ctx)
-		}
-		if err := budget.add(row.ID, row.JournalID, row.AccountID, row.SignedDelta); err != nil {
-			return "", err
-		}
-		out.rows.Lines = append(out.rows.Lines, row)
-		return row.ID, nil
-	})
-	if err != nil {
-		return fundingLedgerSnapshot{}, err
-	}
-	out.check, err = fundinglotverify.CheckLedgerRows(ctx, out.rows)
-	if err != nil {
-		switch err {
-		case fundinglotverify.ErrLedgerRowsResource:
-			return fundingLedgerSnapshot{}, fundingLedgerReadResource
-		case fundinglotverify.ErrLedgerRowsCanceled:
-			return fundingLedgerSnapshot{}, fundingLedgerReadCanceled
-		default:
-			return fundingLedgerSnapshot{}, fundingLedgerReadExecution
-		}
 	}
 	after, err := fundingLedgerIdentityTx(ctx, tx)
 	if err != nil {

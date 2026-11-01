@@ -20,6 +20,6 @@ verify-mvp:
 	go run ./scripts/check-architecture
 	npm --prefix web test
 	npm --prefix web run build
-	go test -race ./... -count=1 -timeout 600s
+	go test -race -p 1 ./... -count=1 -timeout 600s
 	go vet ./...
 	go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate

@@ -32,10 +32,11 @@ type authorityStage struct {
 }
 
 type permitState struct {
-	snapshot  *snapshotState
-	authority *authorityStage
-	nonce     *permitNonce
-	revoked   bool
+	snapshot      *snapshotState
+	authority     *authorityStage
+	nonce         *permitNonce
+	revoked       bool
+	scanAttempted uint8
 }
 
 func (Permit) String() string               { return "maintenance_permit_redacted" }
@@ -43,6 +44,7 @@ func (Permit) GoString() string             { return "maintenance_permit_redacte
 func (Permit) MarshalJSON() ([]byte, error) { return []byte(`{"permit":"redacted"}`), nil }
 
 func (st *snapshotState) revokeAuthorityLocked() {
+	st.revokeReadLeaseLocked()
 	if st.activeAuthority != nil {
 		st.activeAuthority.active = false
 	}

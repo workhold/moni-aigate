@@ -743,12 +743,22 @@ CI新增的动态顶层测试分区与临时PG时区只影响测试执行环境�
 
 唯一内置VerifyInstallation在同rawTx调用真实catalog issuer并重核proof/pins，保存与返回分离的opaque wrapper。整个stage占busy，终结/Close/第二stage并发直接拒绝；绝对期限约束所有stage并在idle/CPU间隙强制raw-close，watcher不并发pgx。Commit明确COMMIT、服务器明确回滚和未确认分别记录Committed/RolledBack/Unknown；pgx.ErrTxClosed或任意driver error不当作已回滚。Rollback独立最多5秒，Close不替未终结Snapshot提交或回滚。重复同终结返回首次结果，不同终结拒绝且不变Outcome。
 
-新增[真实PG/race](../verification/maintenance-snapshot.md)115.412秒、124终态全PASS；T0旧记录保留原范围。[完整前驱合同](../../specs/022-self-service-payments/c0-predecessor-contract.md)列App19字段、M/Q真实列与各自本地值、ordinary-off21表/mandatory FK/policy/6旁路，候选SQL须在返回客户端前作scalar长度闸门；T2已按根冻结实现真实Permit，新增[专库race专项](../verification/maintenance-authority.md)已通过。后续ReadLease须先有真实authority，原pgx.Tx reader通过独立query seam等价迁移，禁止假Conn适配或移除原actual LOGIN/owner检查。
+新增[真实PG/race](../verification/maintenance-snapshot.md)115.412秒、124终态全PASS；T0旧记录保留原范围。[完整前驱合同](../../specs/022-self-service-payments/c0-predecessor-contract.md)列App19字段、M/Q真实列与各自本地值、ordinary-off21表/mandatory FK/policy/6旁路，候选SQL须在返回客户端前作scalar长度闸门；T2已按根冻结实现真实Permit，新增[专库race专项](../verification/maintenance-authority.md)已通过。T1阶段规定ReadLease必须先具备真实authority，原pgx.Tx reader通过独立query seam等价迁移，禁止假Conn适配或移除原actual LOGIN/owner检查；当前T3首片实现及范围见§39。
 
 ## 38. 真实维护授权（022-C0-T2）
 
 按[根冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)实现库级二参Attest与Permit.Verify。Snapshot owned installation是唯一输入；完整history先scalar guard再原helper，manifest来自22项固定embed；实际LOGIN/owner与PB六表owner、sandbox字面专库例外、全runtime新鲜clear→sample、16表重新全空、完整ordinary/v1前驱、仅Init全部账户锁与出口重核后一次发证。原busy/总期限/私有rawTx贯穿CPU/SQL，错误或终结撤销全部副本，watcher只短锁状态与raw-close，不并发pgx。
 
-前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T3 ReadLease/全来源、basis、epoch/writer、生产CLI与资金接线仍未实现。
+前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与两个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
 
-此前[第三轮CI](../verification/github-ci-third-run.md)十组通过只覆盖f64b56f精确源码；不把opt-in跳过项与T2新代码计为已验。
+此前[第三轮CI](../verification/github-ci-third-run.md)保留f64b56f范围；随后[T2发布CI](../verification/github-ci-authority-run.md)在精确46f25e0源码十组success。未开专用C0的跳过项不计专项通过，也不覆盖本轮T3。
+
+## 39. 受控读取租约（022-C0-T3 首片）
+
+精确API、状态、数据出口与验收按[根冻结合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)。BeginScan至Finish/Abort持续持原gate.busy，每kind仅一次；snapshotState保存activeLease，原revokeAuthorityLocked同步撤销。ScanProof绑定原Permit/lease nonce与Snapshot生命周期，不因正常Finish关闭本lease取消视图而立即失效。所有权分为scan、query和每次method；Abort/watchers只撤销与raw-close，正在使用pgx的方法返回后才可ack并释放busy。
+
+Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF、Err已观察及Close，提前关闭或遗漏对象不能完成。QueryRow严格恰一行。参数禁止QueryRewriter/pgx控制值，Scan禁止RowScanner/自定义Scanner与借用内存目标，内部owned decode后复制；无Values、裸context/tx/conn或回调。ledger纯CPU通过只读Deadline/Done/Err私有适配观察取消，SQL无caller context。PB原public前置与三态保持，维护scalar guard仅新增兼容边界，不宣称PG排序/CTE内存有界。实现及验证按[专项记录](../verification/maintenance-read-lease.md)和[集成记录](../verification/maintenance-read-lease-integration.md)分层记录，尚无全来源或写入能力。
+
+正常Finish由唯一cleanup owner先stop、ack/cancel再清activeLease/permitCall并释放busy；其他goroutine不能提前使用pgx。ScanProof纯绑定同锁核当前未stopped permitCall的caller/ctx取消，关闭后继取消回调尚未调度的窗口；不检查旧成功call的正常cancel。参数[]string每项另计8字节框架。SQL取消分别验本地wire物理关闭与服务器自然退出，不将raw-close声明为任意长服务器SQL即时中断；测试采用短PgSleep并独立观察PID/start/锁。仅_test.go外包装配原QA factory解决测试依赖环，不增加生产注册或替代proof。
+
+新增billing/PB→maintenancetrust→fundinglotcatalog会使主程序及测试child执行静态root初始化。原60秒CLI、12秒恢复helper、main等待与catalog五秒预算保持；expected专用raw parser保留原Token接受语义、decoded key查重、UTF8/数值/EOF、值节点/深度/文本/数组/总字节全部界及owned树，escaped string委托标准库；actual/candidate strictJSONNodes不变。静态缓存从已完整认证且逐字节等于原root的私有canonical编码取封闭路径span，digest命中后仍bytes.Equal，再共享原私有expected对象。固定record/attribute字段描述仅预编译为有序字段表，全部逐字段类型/枚举检查保留。详见[缓存合同](../../specs/022-self-service-payments/c0-read-lease-contract.md#6-集成启动开销与静态缓存合同)与[本轮集成验证](../verification/maintenance-read-lease-integration.md)。

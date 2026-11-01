@@ -4,11 +4,11 @@
 
 当前源码要求完整 **001–022** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染已验证，容器、1Panel 和正式供应商仍按目标环境分别验收。
 
-022-C0 的停服维护已增加库级二参 `Attest(ctx, snapshot)` 与 `Permit.Verify(ctx)`，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；本轮 T2 [真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，范围限既定专库profile。该库尚未接入普通 `main`、Compose 或 1Panel，没有生产维护 CLI、全来源重放、basis 或 epoch 开账入口，也没有新增正式应用迁移。部署继续使用当前 001–022；C0 规格 SQL 不属于本手册的安装或升级步骤。范围见[维护授权合同](../../specs/022-self-service-payments/c0-authority-contract.md)和[开发边界](development.md#资金来源维护库022-c0)。
+022-C0 的停服维护已增加库级二参 `Attest(ctx, snapshot)` 与 `Permit.Verify(ctx)`，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；T2 [真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，范围限既定专库profile。普通 `main` 未调用维护证明或扫描 API，但 billing/PB 的传递依赖已引入 maintenancetrust 与 fundinglotcatalog 初始化；Compose 和 1Panel 没有生产维护入口。当前没有生产维护 CLI、全来源重放、basis 或 epoch 开账入口，也没有新增正式应用迁移。部署继续使用当前 001–022；C0 规格 SQL 不属于本手册的安装或升级步骤。范围见[维护授权合同](../../specs/022-self-service-payments/c0-authority-contract.md)和[开发边界](development.md#资金来源维护库022-c0)。
 
 ## 首次安装
 
-使用专用服务器/目录保存仓库，安装Docker Compose v2。生成环境后配置HTTPS域名，文件权限保持0600；运行密钥与日常数据库访问权限分开保管。备份脚本会生成包含明文keyring的受保护完整包，必须存放于加密介质，详见恢复手册。
+使用专用服务器/目录检出完整仓库，安装Docker Compose v2，以下命令均在仓库根目录执行。`migrate`使用 `build: .` 构建本地镜像，`provision`和app复用该镜像，因此需要根 `Dockerfile`、Go/Web源码及 `deploy/init-roles.sh`，仅保存Compose文件和脚本不足以首次构建；当前流程不假定存在已发布的预构建镜像。生成环境后配置HTTPS域名，文件权限保持0600；运行密钥与日常数据库访问权限分开保管。备份脚本会生成包含明文keyring的受保护完整包，必须存放于加密介质，详见恢复手册。
 
 ```sh
 go run ./cmd/moni-aigate init-env --out .env
@@ -27,7 +27,7 @@ docker compose run --rm -T app bootstrap --email admin@example.com --password-st
 
 不带数据库URL的Compose配置会在容器内部建立owner/app/projection连接。`deploy/init-roles.sh`仅在全新PG卷初始化运行；已有卷改密码须通过数据库角色维护同步，不能只改.env。数据库不映射公网端口，app仅映射宿主机127.0.0.1。若机器不安装Go，可在有Go的开发机构建/生成私有env后安全传入；本项目不把示例MASTER_KEY当作可用秘密。
 
-1Panel可使用“容器→编排”导入compose.yaml，确保相对挂载路径`deploy/init-roles.sh`存在；先在测试目录验证`.env`变量注入与依赖条件，再使用正式卷。当前没有声称已上架1Panel应用商店或修改1Panel本体。
+1Panel可使用“容器→编排”导入根 `compose.yaml`，编排项目目录与 `build: .` 的构建上下文均须指向完整仓库根目录；若导入界面把YAML保存到其他目录，须先将完整检出放入实际项目目录或按目标1Panel版本正确指定源目录，不能只复制YAML和初始化脚本。确认相对挂载路径 `deploy/init-roles.sh`、根Dockerfile/源码及私有 `.env` 均可被解析，先在测试目录验证变量注入、构建和依赖条件，再使用正式卷。当前容器运行与1Panel实装仍待目标环境验收，没有声称已上架1Panel应用商店或修改1Panel本体。
 
 在1Panel网站/OpenResty建立HTTPS反向代理到127.0.0.1:8080，合并[nginx.conf](../../deploy/nginx.conf)。SSE需`proxy_buffering off`，`proxy_next_upstream off`，超时覆盖300s总deadline并留排空余量。其他CDN/负载均衡也应关闭生成POST自动重试，避免网关之外重复生成。安全Cookie和Origin必须与最终访问域名一致。
 

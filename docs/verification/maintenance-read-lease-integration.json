@@ -1,0 +1,269 @@
+{
+  "format": "moni-aigate-maintenance-read-lease-integration/v1",
+  "date": "2026-11-02",
+  "scope": "T3 first slice, two local readers and initialization integration; no complete source coverage or financial write authority",
+  "initial_repository_failure": {
+    "command": "make verify-mvp",
+    "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+    "exit_code": 2,
+    "elapsed_seconds": 354.342,
+    "log_sha256": "f6ca0c3a0c060bc00e76023d4eee2b883d521fcd4d66c5ec7537fe722e422cf2"
+  },
+  "initial_failure_test_parents": [
+    "TestPeriodicVerificationCLIPostgres",
+    "TestMVPPostgresSIGKILLRecoveryNeverReplaysGeneration",
+    "TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery",
+    "TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay"
+  ],
+  "completed_regressions": [
+    {
+      "log_path": ".local/c0-read-lease-verification/original-readers-final.jsonl",
+      "sha256": "a6ef85d362f4d1cd9500db9f3ef805862521b69c8df36766cef95282a530f82f",
+      "top_level": {
+        "pass": 34
+      },
+      "parent_and_children": {
+        "pass": 85
+      },
+      "unique_terminal_per_run": true,
+      "package_terminals": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "action": "pass",
+          "elapsed": 23.05
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+          "action": "pass",
+          "elapsed": 20.924
+        }
+      ],
+      "skipped_tests": []
+    },
+    {
+      "log_path": ".local/c0-read-lease-verification/process-regressions-final.log",
+      "sha256": "7df7870c3808dfc233ec39eb3333ca04835bff9cce93003af71d84df5b27424d",
+      "top_level": {
+        "pass": 4
+      },
+      "parent_and_children": {
+        "pass": 9
+      },
+      "unique_terminal_per_run": true,
+      "package_terminals": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+          "action": "pass",
+          "elapsed": 54.694
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "action": "pass",
+          "elapsed": 53.882
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/server",
+          "action": "pass",
+          "elapsed": 108.684
+        }
+      ],
+      "skipped_tests": [],
+      "invocation": {
+        "command": [
+          "go",
+          "test",
+          "-race",
+          "-p",
+          "1",
+          "./cmd/moni-aigate",
+          "./internal/billing",
+          "./internal/server",
+          "-run",
+          "^(TestPeriodicVerificationCLIPostgres|TestMVPPostgresSIGKILLRecoveryNeverReplaysGeneration|TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery|TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay)$",
+          "-count=1",
+          "-timeout",
+          "600s",
+          "-json"
+        ],
+        "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+        "exit_code": 0,
+        "elapsed_seconds": 227.427,
+        "log_path": ".local/c0-read-lease-verification/process-regressions-final.log",
+        "log_sha256": "7df7870c3808dfc233ec39eb3333ca04835bff9cce93003af71d84df5b27424d"
+      }
+    },
+    {
+      "log_path": ".local/c0-read-lease-verification/catalog-regression-final.log",
+      "sha256": "68f90f3383b361952032d90ae681e7d866edd1e4302e8a2b70e65b184f0dab6c",
+      "top_level": {
+        "pass": 56,
+        "skip": 5
+      },
+      "parent_and_children": {
+        "pass": 211,
+        "skip": 5
+      },
+      "unique_terminal_per_run": true,
+      "package_terminals": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+          "action": "pass",
+          "elapsed": 226.365
+        }
+      ],
+      "skipped_tests": [
+        "TestExpectedRawJSONLargeBounds",
+        "TestCatalogPeerCaptureReviewMetadata",
+        "TestCatalogPeerReadTimings",
+        "TestOrdinaryVariantCandidateReproducibility",
+        "TestOrdinaryVariantLegacyProjection"
+      ],
+      "invocation": {
+        "command": [
+          "go",
+          "test",
+          "-race",
+          "./internal/fundinglotcatalog",
+          "-count=1",
+          "-timeout",
+          "600s",
+          "-json"
+        ],
+        "environment": "All three test variables fixed dedicated PostgreSQL; catalog and maintenance opt-in enabled",
+        "exit_code": 0,
+        "elapsed_seconds": 227.302,
+        "log_path": ".local/c0-read-lease-verification/catalog-regression-final.log",
+        "log_sha256": "68f90f3383b361952032d90ae681e7d866edd1e4302e8a2b70e65b184f0dab6c"
+      }
+    },
+    {
+      "log_path": ".local/c0-read-lease-verification/lease-regression-final.log",
+      "sha256": "afd24b97cba69c563c3a84c9db4b7f26b05bbaf758c00606a16b16b1d031a8ff",
+      "top_level": {
+        "pass": 15
+      },
+      "parent_and_children": {
+        "pass": 44
+      },
+      "unique_terminal_per_run": true,
+      "package_terminals": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "action": "pass",
+          "elapsed": 57.305
+        }
+      ],
+      "skipped_tests": [],
+      "invocation": {
+        "command": [
+          "go",
+          "test",
+          "-race",
+          "./internal/maintenancetrust",
+          "-run",
+          "^TestReadLease",
+          "-count=1",
+          "-timeout",
+          "600s",
+          "-json"
+        ],
+        "environment": "All three test variables fixed dedicated PostgreSQL; catalog and maintenance opt-in enabled",
+        "exit_code": 0,
+        "elapsed_seconds": 59.996,
+        "log_path": ".local/c0-read-lease-verification/lease-regression-final.log",
+        "log_sha256": "afd24b97cba69c563c3a84c9db4b7f26b05bbaf758c00606a16b16b1d031a8ff"
+      }
+    },
+    {
+      "log_path": ".local/c0-read-lease-verification/consumers-regression-final.log",
+      "sha256": "f7a2bb7536403e532f5daa5512ec0b9ca8851644a252b192f2ebb76ad0f1d91c",
+      "top_level": {
+        "pass": 1
+      },
+      "parent_and_children": {
+        "pass": 3
+      },
+      "unique_terminal_per_run": true,
+      "package_terminals": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "action": "pass",
+          "elapsed": 41.134
+        }
+      ],
+      "skipped_tests": [],
+      "invocation": {
+        "command": [
+          "go",
+          "test",
+          "-race",
+          "./scripts/maintenance-scan-qa",
+          "-run",
+          "^TestMaintenanceConsumersPostgresFundedSnapshot$",
+          "-count=1",
+          "-timeout",
+          "600s",
+          "-json"
+        ],
+        "environment": "All three test variables fixed dedicated PostgreSQL; catalog and maintenance opt-in enabled",
+        "exit_code": 0,
+        "elapsed_seconds": 42.36,
+        "log_path": ".local/c0-read-lease-verification/consumers-regression-final.log",
+        "log_sha256": "f7a2bb7536403e532f5daa5512ec0b9ca8851644a252b192f2ebb76ad0f1d91c"
+      }
+    }
+  ],
+  "startup_record": "docs/verification/catalog-startup.json",
+  "architecture_record": "docs/verification/architecture-maintenance-read-lease.json",
+  "historical_source_identity": "Original maintenance-read-lease.json source hashes remain historical. Initialization source and integration regressions are recorded separately. catalog-startup.json retains its historical SDD contract SHA from before the -p 1 execution policy; production parser/cache/root source hashes remain unchanged.",
+  "final_repository_check": {
+    "command": [
+      "make",
+      "check"
+    ],
+    "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+    "exit_code": 0,
+    "elapsed_seconds": 6.178,
+    "log_path": ".local/c0-read-lease-verification/make-check-post-serial.log",
+    "log_sha256": "4d4f8f11c7baee9b8f62b83424496c106edb78d474afbd1d49fc70525a79bd32"
+  },
+  "final_repository_verify": {
+    "command": [
+      "make",
+      "verify-mvp"
+    ],
+    "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+    "exit_code": 0,
+    "elapsed_seconds": 1172.881,
+    "log_path": ".local/c0-read-lease-verification/make-verify-mvp-serial.log",
+    "log_sha256": "bceddd2f291e59c8711a4bb558dc0de93be6f746c3a4419ebf8b62ee87496b31",
+    "go_pass_packages": 39,
+    "go_no_test_packages": 4,
+    "frontend_tests_passed": 286,
+    "go_package_scheduling": "-p 1; internal concurrency and original deadlines unchanged",
+    "limits": "C0 opt-in unset; package summary does not enumerate skipped tests; dedicated C0 coverage remains in separate records. This is not concurrent startup or gateway performance certification."
+  },
+  "final_post_run_audit": {
+    "record": "docs/verification/maintenance-read-lease-post-serial-audit.json",
+    "sha256": "4c675b02bf303f4c27cc0d2d74ca017a8bc26bd9f2cf24a14123560b40e335e1",
+    "result": "All observed fixture schema/role/database/backend/advisory aggregate counts and other parent backends zero; parent public owner/ACL and PG configuration reported; read-only post-run observation, no inferred before/after baseline."
+  },
+  "publication": {
+    "repository": "https://github.com/workhold/moni-aigate",
+    "branch": "codex/initial-mvp",
+    "verification_boundary": "This evidence is finalized before committing. Actual publication commit/ref/tree and README byte identity are verified after push and reported with delivery; no publication outcome asserted by this pre-publication file."
+  },
+  "second_repository_failure": {
+    "command": [
+      "make",
+      "verify-mvp"
+    ],
+    "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+    "exit_code": 2,
+    "elapsed_seconds": 359.245,
+    "log_path": ".local/c0-read-lease-verification/make-verify-mvp-final.log",
+    "log_sha256": "20891063d96cd97dd5e57a707ad9b73bcc3581df306abe2f52f67390382891a6",
+    "remaining_test": "TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery",
+    "interpretation": "Original serial regression passed; default whole-repository concurrency still exceeded the unchanged ten-second rejection observation. No DATA RACE or panic observed; no success inferred."
+  }
+}

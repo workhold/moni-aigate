@@ -168,17 +168,81 @@ func (v *Verifier) Verify(ctx context.Context) (Verification, error) {
 		}
 		return Verification{}, ErrVerifySchema
 	}
-	var at time.Time
-	if err = tx.QueryRow(ctx, `SELECT pg_catalog.clock_timestamp()`).Scan(&at); err != nil {
+	out, err = readVerification(publicVerifierQuery{tx: tx, ctx: ctx}, verifierRenderer(schema))
+	if err != nil {
 		return Verification{}, verifyFailure(ctx, err)
+	}
+	if err = tx.Commit(ctx); err != nil {
+		return Verification{}, verifyFailure(ctx, err)
+	}
+	committed = true
+	return out, nil
+}
+
+// verifierQuery is an internal reading seam, never a transaction or a public
+// provider. The two wrappers retain their separate authority and lifecycles.
+type verifierQuery interface {
+	Query(string, ...any) (verifierRows, error)
+	QueryRow(string, ...any) verifierRow
+	Check() error
+}
+type verifierRow interface{ Scan(...any) error }
+type verifierRows interface {
+	Next() (bool, error)
+	Scan(...any) error
+	Err() error
+	Close() error
+}
+
+type publicVerifierQuery struct {
+	tx  pgx.Tx
+	ctx context.Context
+}
+
+func (q publicVerifierQuery) Check() error { return q.ctx.Err() }
+func (q publicVerifierQuery) Query(sql string, args ...any) (verifierRows, error) {
+	rows, err := q.tx.Query(q.ctx, sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	return publicVerifierRows{rows: rows}, nil
+}
+func (q publicVerifierQuery) QueryRow(sql string, args ...any) verifierRow {
+	return q.tx.QueryRow(q.ctx, sql, args...)
+}
+
+type publicVerifierRows struct{ rows pgx.Rows }
+
+func (r publicVerifierRows) Next() (bool, error) {
+	if r.rows.Next() {
+		return true, nil
+	}
+	return false, r.rows.Err()
+}
+func (r publicVerifierRows) Scan(dest ...any) error { return r.rows.Scan(dest...) }
+func (r publicVerifierRows) Err() error             { return r.rows.Err() }
+func (r publicVerifierRows) Close() error           { r.rows.Close(); return nil }
+
+// readVerification shares only the independent SQL and receipt algorithm. It
+// does not authenticate, begin, change settings, commit or issue authority.
+func readVerification(q verifierQuery, render verifierRender) (Verification, error) {
+	var out Verification
+	if err := q.Check(); err != nil {
+		return out, err
+	}
+	var at time.Time
+	if err := q.QueryRow(`SELECT pg_catalog.clock_timestamp()`).Scan(&at); err != nil {
+		return Verification{}, err
 	}
 	out.AsOf = at.UTC().Format(utc6Layout)
 	if !ValidUTC6(out.AsOf) {
 		return Verification{}, ErrVerifyExecution
 	}
-	render := verifierRenderer(schema)
-	if err = verifierScan(ctx, tx, render, &out.Scanned); err != nil {
-		return Verification{}, verifyFailure(ctx, err)
+	if err := q.Check(); err != nil {
+		return Verification{}, err
+	}
+	if err := verifierScan(q, render, &out.Scanned); err != nil {
+		return Verification{}, err
 	}
 	m, g := &out.Mismatches, &out.Unproven
 	queries := []struct {
@@ -192,18 +256,17 @@ func (v *Verifier) Verify(ctx context.Context) (Verification, error) {
 		{verifierVersionsSQL, []any{&m.ConfigurationMismatches, &m.VersionMismatches}},
 		{verifierAuditsSQL, []any{&m.AuditMismatches}},
 	}
-	for _, q := range queries {
-		if err = tx.QueryRow(ctx, render(q.sql)).Scan(q.dest...); err != nil {
-			return Verification{}, verifyFailure(ctx, err)
+	for _, query := range queries {
+		if err := q.Check(); err != nil {
+			return Verification{}, err
+		}
+		if err := q.QueryRow(render(query.sql)).Scan(query.dest...); err != nil {
+			return Verification{}, err
 		}
 	}
-	if err = verifierOperations(ctx, tx, render, &out); err != nil {
-		return Verification{}, verifyFailure(ctx, err)
+	if err := verifierOperations(q, render, &out); err != nil {
+		return Verification{}, err
 	}
-	if err = tx.Commit(ctx); err != nil {
-		return Verification{}, verifyFailure(ctx, err)
-	}
-	committed = true
 	out.SchemaVersion = 1
 	out.CoverageComplete = g.LegacyMembershipUnproven == 0 && g.LegacyEffectBoundaryUnproven == 0 && g.OperationSnapshotPrefixUnproven == 0
 	out.Status = VerificationBalanced
@@ -213,6 +276,9 @@ func (v *Verifier) Verify(ctx context.Context) (Verification, error) {
 		out.Status = VerificationIndeterminate
 	}
 	out.Balanced = out.Status == VerificationBalanced
+	if err := q.Check(); err != nil {
+		return Verification{}, err
+	}
 	return out, nil
 }
 
@@ -281,6 +347,6 @@ func verifierAuthority(ctx context.Context, tx pgx.Tx, schema, authenticatedUser
 	return nil
 }
 
-func verifierScan(ctx context.Context, tx pgx.Tx, render verifierRender, s *VerificationScan) error {
-	return tx.QueryRow(ctx, render(`SELECT (SELECT count(*) FROM @controls@),(SELECT count(*) FROM @windows@),(SELECT count(*) FROM @allocations@),(SELECT count(*) FROM @events@),(SELECT count(*) FROM @requests@),(SELECT count(*) FROM @procurement@),(SELECT count(*) FROM @pe@),(SELECT count(*) FROM @versions@),(SELECT count(*) FROM @operations@),(SELECT count(*) FROM @audits@ WHERE action='periodic_budget.configured')`)).Scan(&s.Controls, &s.Windows, &s.Allocations, &s.Events, &s.CustomerSources, &s.SupplierSources, &s.ProcurementEvents, &s.ConfigurationVersions, &s.Operations, &s.Audits)
+func verifierScan(q verifierQuery, render verifierRender, s *VerificationScan) error {
+	return q.QueryRow(render(`SELECT (SELECT count(*) FROM @controls@),(SELECT count(*) FROM @windows@),(SELECT count(*) FROM @allocations@),(SELECT count(*) FROM @events@),(SELECT count(*) FROM @requests@),(SELECT count(*) FROM @procurement@),(SELECT count(*) FROM @pe@),(SELECT count(*) FROM @versions@),(SELECT count(*) FROM @operations@),(SELECT count(*) FROM @audits@ WHERE action='periodic_budget.configured')`)).Scan(&s.Controls, &s.Windows, &s.Allocations, &s.Events, &s.CustomerSources, &s.SupplierSources, &s.ProcurementEvents, &s.ConfigurationVersions, &s.Operations, &s.Audits)
 }

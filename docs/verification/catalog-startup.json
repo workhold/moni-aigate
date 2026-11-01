@@ -1,0 +1,495 @@
+{
+  "schema_version": 1,
+  "recorded_date": "2026-11-02",
+  "scope": "expected-root eager startup optimization; no PostgreSQL or whole-repository acceptance in this record",
+  "toolchain": "go1.27.2 darwin/arm64",
+  "status": "expected raw parser integrated; production pure race tests pass; original real-process PG regressions and final whole-repository acceptance remain with integrator",
+  "contract": "specs/022-self-service-payments/c0-read-lease-contract.md#6-集成启动开销与静态缓存合同",
+  "source_sha256": {
+    "internal/fundinglotcatalog/canonical.go": "700faa1a08abd07a3ac002bf1e516ad15c3fac924e547807c0393438aa3b2918",
+    "internal/fundinglotcatalog/descriptor.go": "819c8535a8b7f5dd3b61a207d5fe6153ae0fac2d72c190b99c7011514c787d81",
+    "internal/fundinglotcatalog/descriptor_fields.go": "825c5ed7eabcbaf7c28d3f05b4bac0997cb42d07ef06c62a9245eef963107302",
+    "internal/fundinglotcatalog/descriptor_types.go": "a2678c4428c9b3c5565a3b93e541a609378bd4f51abe2a4dfe0c043ca764d179",
+    "internal/fundinglotcatalog/descriptor_validate.go": "da55c6af38fb2adac9133c45c136f4e6528107df257734ec9554af6c18e1fc79",
+    "internal/fundinglotcatalog/expected.go": "9e9b9ef4e43e8f302b62a5eb6c9f1289ebc0bcd06f7bf8f3adb795d67849f666",
+    "internal/fundinglotcatalog/expected_embedded.go": "b3b6f313e666003725ddd2cd002d7ace766285f06e82ff677f3a84684302ee99",
+    "internal/fundinglotcatalog/expected_raw_parser.go": "e5036038786bac2a6e5593406425173a0b225ac0103be6b825f5b94ba690861d",
+    "internal/fundinglotcatalog/expected_raw_parser_test.go": "738c97da3e3613587b7f8534517f3d6b4f437c994b0e27fdfee0702b621259b2",
+    "internal/fundinglotcatalog/expected_spans.go": "8567056430408d978b72f3f2b25c398e8ef6bbfff437202bd1e6266a9ce0a727",
+    "internal/fundinglotcatalog/expected_spans_test.go": "10c0cca7fc9d7b3a683d874719944f9547dac39513113b4fc5b490150f1ae141",
+    "internal/fundinglotcatalog/collector_pure_test.go": "b08ba1b41fa02a69a40d5248be7930cbd76afc2df8b5b5cf627731255a8d2dc8",
+    "internal/fundinglotcatalog/expected/ordinary-v1.json": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+    "internal/fundinglotcatalog/expected/sandbox-v1.json": "a3a7f855a5ac58ee583dce071c02707499c2a9e3d4bd2ec8b7b1b60228d55c4f",
+    "specs/022-self-service-payments/c0-read-lease-contract.md": "652226fd0a34770479ff07fe137b59cf8044cc2e94c877f8a1fcff552c9dbede"
+  },
+  "source_scope": "Critical changed parser/cache and validation files plus exact immutable embedded root bytes; not a complete repository fingerprint",
+  "candidate_snapshot_sha256": {
+    ".local/c0-read-lease-verification/raw-parser-candidate/frozen-expected.go": "005925a2f4601e98c4efc89f7566fb51d71bd8dd93a6ff13cd44ca94edde4569",
+    ".local/c0-read-lease-verification/raw-parser-candidate/frozen-expected_spans.go": "8567056430408d978b72f3f2b25c398e8ef6bbfff437202bd1e6266a9ce0a727",
+    ".local/c0-read-lease-verification/raw-parser-candidate/frozen-descriptor_types.go": "a2678c4428c9b3c5565a3b93e541a609378bd4f51abe2a4dfe0c043ca764d179",
+    ".local/c0-read-lease-verification/raw-parser-candidate/clean-candidate-expected.go": "9e9b9ef4e43e8f302b62a5eb6c9f1289ebc0bcd06f7bf8f3adb795d67849f666",
+    ".local/c0-read-lease-verification/raw-parser-candidate/expected_raw_parser.go": "02a60ceaf4ac90b59f33a555fc0c9cc8810fe5e5b78fba8b15c1e391cb3a24c5",
+    ".local/c0-read-lease-verification/raw-parser-candidate/expected_raw_parser_test.go": "c764b343a0688878c00dd5ba578ba7d38a1e13031dd62a2573f3991ad94a7187",
+    ".local/c0-read-lease-verification/raw-parser-candidate/baseline-race.test": "4147ac78d12f096076d8e3fa7941152c9c49182660796fadb545da6489fbcb5d",
+    ".local/c0-read-lease-verification/raw-parser-candidate/candidate-race.test": "a039ff81ba5e679e086dbd9516eb8807e80671678c67c20d06b1d286f6cb9529",
+    ".local/c0-read-lease-verification/raw-parser-candidate/baseline-overlay.json": "4883270e6856d6bed4ef7016f66749fb0bebe54226816b2f482bcf1c1857e11c",
+    ".local/c0-read-lease-verification/raw-parser-candidate/candidate-overlay.json": "65b1b9959b8a0e2f96b39ebe3a4a16c99897b2522ddd7d1d5c7d066c40baf47e",
+    ".local/c0-read-lease-verification/raw-parser-candidate/test-overlay.json": "9b855d2a765e4f11821f217c2fe23c76cbbff16c2f71c2897adcbc11e19f5c5d"
+  },
+  "cold_start": {
+    "binary": "prebuilt fundinglotcatalog race test binaries; -test.run=^$; fresh process each sample",
+    "environment_unset": [
+      "C0_MAINTENANCE_DATABASE_URL",
+      "C0_CATALOG_DATABASE_URL",
+      "TEST_DATABASE_URL",
+      "DATABASE_URL"
+    ],
+    "environment_set": {
+      "GORACE": "atexit_sleep_ms=0"
+    },
+    "no_pprof": true,
+    "order": "baseline then candidate, three sequential rounds; other agents paused CPU verification",
+    "baseline": "span cache + compiled fixed field schemas + original Token expected parser",
+    "candidate": "same frozen sources, expected-only bounded raw parser",
+    "samples": [
+      {
+        "name": "baseline",
+        "run": 1,
+        "wall_seconds": 9.525000291,
+        "exit": 0,
+        "stdout": "PASS\n",
+        "stderr": "testing: warning: no tests to run\n"
+      },
+      {
+        "name": "candidate",
+        "run": 1,
+        "wall_seconds": 7.064226874999999,
+        "exit": 0,
+        "stdout": "PASS\n",
+        "stderr": "testing: warning: no tests to run\n"
+      },
+      {
+        "name": "baseline",
+        "run": 2,
+        "wall_seconds": 9.27460125,
+        "exit": 0,
+        "stdout": "PASS\n",
+        "stderr": "testing: warning: no tests to run\n"
+      },
+      {
+        "name": "candidate",
+        "run": 2,
+        "wall_seconds": 6.987905750000003,
+        "exit": 0,
+        "stdout": "PASS\n",
+        "stderr": "testing: warning: no tests to run\n"
+      },
+      {
+        "name": "baseline",
+        "run": 3,
+        "wall_seconds": 9.229425416000005,
+        "exit": 0,
+        "stdout": "PASS\n",
+        "stderr": "testing: warning: no tests to run\n"
+      },
+      {
+        "name": "candidate",
+        "run": 3,
+        "wall_seconds": 7.153661958000001,
+        "exit": 0,
+        "stdout": "PASS\n",
+        "stderr": "testing: warning: no tests to run\n"
+      }
+    ],
+    "median_seconds": {
+      "baseline": 9.27460125,
+      "candidate": 7.064226874999999
+    },
+    "median_wall_reduction_percent": 23.83255425671266,
+    "inittrace": {
+      "baseline": {
+        "local_log": ".local/c0-read-lease-verification/raw-parser-candidate/baseline-inittrace.log",
+        "sha256": "5881b6d3650f16e91077191f32e4bb490687725a19ef16fbdef5bcca5b3c4cd5",
+        "fundinglotcatalog_line": "init github.com/moni-ai/moni-aigate/internal/fundinglotcatalog @3.1 ms, 9241 ms clock, 1332116856 bytes, 17089971 allocs"
+      },
+      "candidate": {
+        "local_log": ".local/c0-read-lease-verification/raw-parser-candidate/candidate-inittrace.log",
+        "sha256": "a5369492cd0b35e499cda38612729168e2d2afd280b92cf3c67a0438c2dc704d",
+        "fundinglotcatalog_line": "init github.com/moni-ai/moni-aigate/internal/fundinglotcatalog @3.3 ms, 7099 ms clock, 1331472080 bytes, 14347812 allocs"
+      }
+    },
+    "measurement_limits": [
+      "Local race process initialization only; no gateway first-byte, model first-token or throughput claim",
+      "GORACE removes the common one-second race shutdown sleep, not package initialization",
+      "No PostgreSQL connections or application listeners in this measurement",
+      "These cold-start binaries predate the production test/function naming cleanup; production pure tests are recorded separately",
+      "Initial competing sample set retained locally but excluded from stable comparison"
+    ]
+  },
+  "test_runs": [
+    {
+      "name": "differential.log",
+      "local_log": ".local/c0-read-lease-verification/raw-parser-candidate/differential.log",
+      "sha256": "1042bb8e81244fde3f690f6a403d62f704c6f6630697775a7f954e49fe5dd89c",
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -overlay .local/c0-read-lease-verification/raw-parser-candidate/test-overlay.json ./internal/fundinglotcatalog -run '^TestRawCandidate(Corpus|TextAndArrayBounds|OwnedStrings|RandomDifferential)$' -count=1 -json",
+      "top_level_tests": 4,
+      "terminal_test_events": 4,
+      "terminal_counts": {
+        "pass": 4
+      },
+      "package_result": {
+        "Time": "2026-11-02T05:55:53.396432+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "Elapsed": 2.323
+      },
+      "tests": [
+        {
+          "name": "TestRawCandidateCorpus",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestRawCandidateTextAndArrayBounds",
+          "result": "pass",
+          "elapsed_seconds": 0.04
+        },
+        {
+          "name": "TestRawCandidateOwnedStrings",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestRawCandidateRandomDifferential",
+          "result": "pass",
+          "elapsed_seconds": 0.21
+        }
+      ]
+    },
+    {
+      "name": "race-correctness.log",
+      "local_log": ".local/c0-read-lease-verification/raw-parser-candidate/race-correctness.log",
+      "sha256": "2e252730cced856a3d22bee04c8b0f527259ab6eca1a535b2b5179ff32776d2d",
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -race -overlay .local/c0-read-lease-verification/raw-parser-candidate/test-overlay.json ./internal/fundinglotcatalog -run '^(TestRawCandidate(Corpus|TextAndArrayBounds|OwnedStrings|RandomDifferential|FullRoots|CompleteGates)|TestCatalog(StrictJSONRejectsAmbiguousAndUnboundedInputs|ClosedReferenceTypesAndCanonicalOIDs|ScalarContractsRejectReferenceSubstitution|TemplatesUseOnlyRegisteredExpectedDeparseFields|BudgetsRejectOverflowWithoutMutation|CanonicalIdentityPreservesDependencyMultiplicity|StaticQueriesBoundChildInputsAndQualifyOperators|ExpectedEnvelopeRejectsUnknownAndMixedProfiles|OwnershipDependencyAndPrivilegeVectorContracts|EmbeddedExpectedRootsAreClosedAndCached|NormalizedMultisetReusesIdentityWithoutHidingAliases|OwnedNormalizationPreservesBorrowedSymbolsAndLiteralBytes|ExpectedCategoryInterningUsesCompleteContent|CompleteComparisonRejectsMalformedActualAgainstClosedExpected|ComparisonTemplateTraversalPreservesFieldBoundary|PGJSONRuntimeBoundsRetainStrictScalarRules|StaticJSONBObjectKeysAreUniqueLiterals))$' -count=1 -json",
+      "top_level_tests": 23,
+      "terminal_test_events": 25,
+      "terminal_counts": {
+        "pass": 25
+      },
+      "package_result": {
+        "Time": "2026-11-02T06:00:47.502475+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "Elapsed": 42.503
+      },
+      "tests": [
+        {
+          "name": "TestCatalogPGJSONRuntimeBoundsRetainStrictScalarRules",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogStaticJSONBObjectKeysAreUniqueLiterals",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogStrictJSONRejectsAmbiguousAndUnboundedInputs",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogClosedReferenceTypesAndCanonicalOIDs",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogScalarContractsRejectReferenceSubstitution",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogTemplatesUseOnlyRegisteredExpectedDeparseFields",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogBudgetsRejectOverflowWithoutMutation",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogCanonicalIdentityPreservesDependencyMultiplicity",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogStaticQueriesBoundChildInputsAndQualifyOperators",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogExpectedEnvelopeRejectsUnknownAndMixedProfiles",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogOwnershipDependencyAndPrivilegeVectorContracts",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogEmbeddedExpectedRootsAreClosedAndCached",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogNormalizedMultisetReusesIdentityWithoutHidingAliases",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogOwnedNormalizationPreservesBorrowedSymbolsAndLiteralBytes",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogExpectedCategoryInterningUsesCompleteContent",
+          "result": "pass",
+          "elapsed_seconds": 0.17
+        },
+        {
+          "name": "TestCatalogCompleteComparisonRejectsMalformedActualAgainstClosedExpected",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogComparisonTemplateTraversalPreservesFieldBoundary",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestRawCandidateCorpus",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestRawCandidateTextAndArrayBounds",
+          "result": "pass",
+          "elapsed_seconds": 0.44
+        },
+        {
+          "name": "TestRawCandidateOwnedStrings",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestRawCandidateRandomDifferential",
+          "result": "pass",
+          "elapsed_seconds": 2.79
+        },
+        {
+          "name": "TestRawCandidateFullRoots/1",
+          "result": "pass",
+          "elapsed_seconds": 13.95
+        },
+        {
+          "name": "TestRawCandidateFullRoots/2",
+          "result": "pass",
+          "elapsed_seconds": 4.18
+        },
+        {
+          "name": "TestRawCandidateFullRoots",
+          "result": "pass",
+          "elapsed_seconds": 18.13
+        },
+        {
+          "name": "TestRawCandidateCompleteGates",
+          "result": "pass",
+          "elapsed_seconds": 11.34
+        }
+      ]
+    },
+    {
+      "name": "large-bounds.log",
+      "local_log": ".local/c0-read-lease-verification/raw-parser-candidate/large-bounds.log",
+      "sha256": "0d1be755af3fa54623559d06a43002b73f285f85e021e588b1f7e21a735f923b",
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL RUN_RAW_LARGE=1 go test -overlay .local/c0-read-lease-verification/raw-parser-candidate/test-overlay.json ./internal/fundinglotcatalog -run '^TestRawCandidateLargeBounds$' -count=1 -json",
+      "top_level_tests": 1,
+      "terminal_test_events": 1,
+      "terminal_counts": {
+        "pass": 1
+      },
+      "package_result": {
+        "Time": "2026-11-02T06:01:15.51851+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "Elapsed": 4.236
+      },
+      "tests": [
+        {
+          "name": "TestRawCandidateLargeBounds",
+          "result": "pass",
+          "elapsed_seconds": 2.19
+        }
+      ]
+    },
+    {
+      "name": "fuzz.log",
+      "local_log": ".local/c0-read-lease-verification/raw-parser-candidate/fuzz.log",
+      "sha256": "0a5ea9fdb9e15a9e3edcc3228c43125ef6e86c6314a37b350ac1185598bb7203",
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -overlay .local/c0-read-lease-verification/raw-parser-candidate/test-overlay.json ./internal/fundinglotcatalog -run '^$' -fuzz '^FuzzRawCandidateDifferential$' -fuzztime=15s -parallel=1 -json",
+      "top_level_tests": 1,
+      "terminal_test_events": 1,
+      "terminal_counts": {
+        "pass": 1
+      },
+      "package_result": {
+        "Time": "2026-11-02T06:01:49.441649+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "Elapsed": 18.571
+      },
+      "tests": [
+        {
+          "name": "FuzzRawCandidateDifferential",
+          "result": "pass",
+          "elapsed_seconds": 16.01
+        }
+      ]
+    },
+    {
+      "name": "production-race-correctness.log",
+      "local_log": ".local/c0-read-lease-verification/raw-parser-candidate/production-race-correctness.log",
+      "sha256": "a68e708693d00f45476bd6c673e39d605c730d0d1bb49b439262d3a69e5f0d51",
+      "command": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -race ./internal/fundinglotcatalog -run '^(TestExpectedRawJSON(Corpus|TextAndArrayBounds|OwnedStrings|RandomDifferential|FullRoots|CompleteGates)|TestCatalog(StrictJSONRejectsAmbiguousAndUnboundedInputs|ClosedReferenceTypesAndCanonicalOIDs|ScalarContractsRejectReferenceSubstitution|TemplatesUseOnlyRegisteredExpectedDeparseFields|ExpectedEnvelopeRejectsUnknownAndMixedProfiles|EmbeddedExpectedRootsAreClosedAndCached|ExpectedCategoryInterningUsesCompleteContent|CompleteComparisonRejectsMalformedActualAgainstClosedExpected))$' -count=1 -json",
+      "top_level_tests": 14,
+      "terminal_test_events": 16,
+      "terminal_counts": {
+        "pass": 16
+      },
+      "package_result": {
+        "Time": "2026-11-02T06:04:03.865819+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "Elapsed": 42.637
+      },
+      "tests": [
+        {
+          "name": "TestCatalogStrictJSONRejectsAmbiguousAndUnboundedInputs",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogClosedReferenceTypesAndCanonicalOIDs",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogScalarContractsRejectReferenceSubstitution",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogTemplatesUseOnlyRegisteredExpectedDeparseFields",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogExpectedEnvelopeRejectsUnknownAndMixedProfiles",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogEmbeddedExpectedRootsAreClosedAndCached",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestCatalogExpectedCategoryInterningUsesCompleteContent",
+          "result": "pass",
+          "elapsed_seconds": 0.16
+        },
+        {
+          "name": "TestCatalogCompleteComparisonRejectsMalformedActualAgainstClosedExpected",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestExpectedRawJSONCorpus",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestExpectedRawJSONTextAndArrayBounds",
+          "result": "pass",
+          "elapsed_seconds": 0.43
+        },
+        {
+          "name": "TestExpectedRawJSONOwnedStrings",
+          "result": "pass",
+          "elapsed_seconds": 0
+        },
+        {
+          "name": "TestExpectedRawJSONRandomDifferential",
+          "result": "pass",
+          "elapsed_seconds": 2.74
+        },
+        {
+          "name": "TestExpectedRawJSONFullRoots/1",
+          "result": "pass",
+          "elapsed_seconds": 14.16
+        },
+        {
+          "name": "TestExpectedRawJSONFullRoots/2",
+          "result": "pass",
+          "elapsed_seconds": 4.27
+        },
+        {
+          "name": "TestExpectedRawJSONFullRoots",
+          "result": "pass",
+          "elapsed_seconds": 18.42
+        },
+        {
+          "name": "TestExpectedRawJSONCompleteGates",
+          "result": "pass",
+          "elapsed_seconds": 11.52
+        }
+      ]
+    }
+  ],
+  "fuzz": {
+    "duration_requested_seconds": 15,
+    "reported_elapsed_seconds": 16.01,
+    "executions": 37147,
+    "workers": 1,
+    "input_byte_cap": 1048576,
+    "result": "PASS; no differential mismatch; execution count stopped growing after 6 seconds and bounded run terminated normally"
+  },
+  "coverage_notes": [
+    "Original strictJSONNodes remains the differential oracle and actual/candidate metadata parser",
+    "Decoded object keys preserve original semantics; only decoded string values have 65536-byte/NUL restrictions",
+    "Generated differential uses 20000 legal inputs and 20000 mutations with deterministic seed20261102",
+    "Full-root tests compare original/new owned trees and then run complete expected SHA/DTO/template/canonical/cache gates",
+    "Resource differential covers raw bytes64MiB and64MiB+1, value nodes3999999/4000000/4000001, arrays99999/100000/100001, text65535/65536/65537, depths63/64/65, canonical number bounds and malformed JSON",
+    "Production large/fuzz names are renamed copies of validated candidate logic; this record ran production targeted race but did not repeat large/fuzz under their production names"
+  ],
+  "original_integration_failure": {
+    "local_log": ".local/c0-read-lease-verification/make-verify-mvp.log",
+    "sha256": "f6ca0c3a0c060bc00e76023d4eee2b883d521fcd4d66c5ec7537fe722e422cf2",
+    "result": "make verify-mvp exit2; CLI60s, SIGKILL helper12s, main readiness/role rejection10s failed before startup optimization",
+    "candidate_cause": "Eager expected catalog authentication precedes main/Test helper; startup overhead was reproduced independently. Passing original process regressions still required.",
+    "not_claimed": "No claim that all original failures are resolved solely by pure cold-start measurement"
+  },
+  "production_reproduction_commands": {
+    "targeted_race": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test -race ./internal/fundinglotcatalog -run '^(TestExpectedRawJSON(Corpus|TextAndArrayBounds|OwnedStrings|RandomDifferential|FullRoots|CompleteGates)|TestCatalog(StrictJSONRejectsAmbiguousAndUnboundedInputs|ClosedReferenceTypesAndCanonicalOIDs|ScalarContractsRejectReferenceSubstitution|TemplatesUseOnlyRegisteredExpectedDeparseFields|ExpectedEnvelopeRejectsUnknownAndMixedProfiles|EmbeddedExpectedRootsAreClosedAndCached|ExpectedCategoryInterningUsesCompleteContent|CompleteComparisonRejectsMalformedActualAgainstClosedExpected))$' -count=1 -json",
+    "large_bounds": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL C0_EXPECTED_RAW_LARGE_TEST=1 go test ./internal/fundinglotcatalog -run '^TestExpectedRawJSONLargeBounds$' -count=1 -json",
+    "fuzz": "env -u C0_MAINTENANCE_DATABASE_URL -u C0_CATALOG_DATABASE_URL -u TEST_DATABASE_URL -u DATABASE_URL go test ./internal/fundinglotcatalog -run '^$' -fuzz '^FuzzExpectedRawJSONDifferential$' -fuzztime=15s -parallel=1 -json"
+  },
+  "outstanding": [
+    "Integrator runs original CLI/SIGKILL/main PostgreSQL process regressions serially with unchanged deadlines",
+    "Integrator completes architecture synchronization and final whole-repository checks",
+    "Target-environment startup, provider certification and gateway capacity acceptance remain separate"
+  ],
+  "history_policy": "Independent new record; no prior T0/T1/T2/T3 result source SHA overwritten"
+}

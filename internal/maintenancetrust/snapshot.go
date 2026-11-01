@@ -83,6 +83,7 @@ type snapshotState struct {
 	activeAuthority    *authorityStage
 	permit             *permitState
 	permitCall         *snapshotCall
+	activeLease        *leaseState
 	terminal           terminalMethod
 	terminalDone       bool
 	terminalErr        error

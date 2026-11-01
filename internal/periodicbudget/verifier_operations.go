@@ -1,11 +1,8 @@
 package periodicbudget
 
 import (
-	"context"
 	"strconv"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 // JSON remains bytes until strict pure decoding. No JSON text is cast to an SQL
@@ -44,12 +41,17 @@ type verifierOperation struct {
 	zeroHeld                                                            bool
 }
 
-func verifierOperations(ctx context.Context, tx pgx.Tx, render verifierRender, out *Verification) error {
-	rows, err := tx.Query(ctx, render(verifierOperationsSQL))
+func verifierOperations(q verifierQuery, render verifierRender, out *Verification) error {
+	rows, err := q.Query(render(verifierOperationsSQL))
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	closed := false
+	defer func() {
+		if !closed {
+			_ = rows.Close()
+		}
+	}()
 	var lastID string
 	var operationBad, snapshotBad, prefixGap bool
 	flush := func() {
@@ -65,7 +67,17 @@ func verifierOperations(ctx context.Context, tx pgx.Tx, render verifierRender, o
 			out.Unproven.OperationSnapshotPrefixUnproven++
 		}
 	}
-	for rows.Next() {
+	for {
+		if err = q.Check(); err != nil {
+			return err
+		}
+		next, nextErr := rows.Next()
+		if nextErr != nil {
+			return nextErr
+		}
+		if !next {
+			break
+		}
 		var o verifierOperation
 		if err = rows.Scan(&o.id, &o.kind, &o.actor, &o.scope, &o.target, &o.resource, &o.revision, &o.fingerprint, &o.input, &o.snapshot, &o.at,
 			&o.control, &o.controlScope, &o.scopeID, &o.tenant, &o.period, &o.tracking, &o.effective,
@@ -73,7 +85,13 @@ func verifierOperations(ctx context.Context, tx pgx.Tx, render verifierRender, o
 			&o.window, &o.windowStart, &o.windowEnd, &o.zeroHeld); err != nil {
 			return err
 		}
+		if err = q.Check(); err != nil {
+			return err
+		}
 		badOperation, badSnapshot, gap := o.check()
+		if err = q.Check(); err != nil {
+			return err
+		}
 		if o.id != lastID {
 			flush()
 			lastID = o.id
@@ -86,8 +104,16 @@ func verifierOperations(ctx context.Context, tx pgx.Tx, render verifierRender, o
 	if err = rows.Err(); err != nil {
 		return err
 	}
+	err = rows.Close()
+	closed = true
+	if err != nil {
+		return err
+	}
+	if err = q.Check(); err != nil {
+		return err
+	}
 	flush()
-	return nil
+	return q.Check()
 }
 
 func (o verifierOperation) check() (badOperation, badSnapshot, gap bool) {

@@ -11,7 +11,48 @@ go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate
 ./bin/moni-aigate init-env --out .env
 ```
 
-生成文件权限0600，不覆盖已有文件。补充数据库URL；URL中的密码须百分号转义。`DATABASE_URL`是受限`moni_app`，`PROJECTION_DATABASE_URL`为单独`moni_projection`；`MIGRATION_DATABASE_URL`使用owner，仅迁移/配置权限时临时使用。自定义schema/角色可用operations.ProvisionFor嵌入集成，标准CLI使用public/moni_app/moni_projection。
+生成文件权限0600，不覆盖已有文件。`init-env`只生成配置和随机秘密，不创建外部数据库或LOGIN角色。先按下节初始化独立空库，再补充三个数据库URL。自定义schema/角色可用operations.ProvisionFor嵌入集成，标准CLI使用public/moni_app/moni_projection。
+
+## 建立本地数据库与角色
+
+以下步骤仅用于 PostgreSQL 16 的专用空环境，要求 `moni` 数据库和三个同名角色尚不存在。若名称已存在，先核实环境及所有权，不覆盖、删除或复用现有业务库。使用安装 PostgreSQL 时已有的初始化管理身份连接；下例 `postgres`、主机和端口须按实际安装替换。该身份负责建库/建角色，运行应用时不使用它；三个项目角色均不授予 `CREATEDB`、`CREATEROLE` 或其他高权属性。
+
+```sh
+psql -X -W -h 127.0.0.1 -p 5432 -U postgres -d postgres
+```
+
+`-W`提示输入管理密码，不将密码写入命令参数或shell历史。进入psql后逐行执行；`\password`会交互提示并确认密码，不把明文写入SQL或psql历史。分别保存三个角色的独立强密码。
+
+```sql
+\set ON_ERROR_STOP on
+CREATE ROLE moni_owner LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+CREATE ROLE moni_app LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+CREATE ROLE moni_projection LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+\password moni_owner
+\password moni_app
+\password moni_projection
+CREATE DATABASE moni OWNER moni_owner;
+\connect moni
+SELECT datname, pg_get_userbyid(datdba) AS owner FROM pg_database WHERE datname = current_database();
+SELECT nspname, pg_get_userbyid(nspowner) AS owner, nspacl FROM pg_namespace WHERE nspname = 'public';
+\quit
+```
+
+使用具有创建角色、创建数据库及指定新数据库owner所需权限的管理身份，例如新安装时的数据库超级用户；不要为通过初始化而提高 `moni_owner`、app或projection的属性，也不授予三者相互成员关系。标准新建 PostgreSQL 16 数据库的 `public` schema由 `pg_database_owner`拥有，数据库owner `moni_owner`通过其隐含成员身份管理该schema并创建迁移对象；保留这一所有权关系。默认PUBLIC有USAGE、没有CREATE。若实例模板被定制或来自旧版升级，先核实schema所有权与ACL；不能以向app/projection授予schema CREATE或改为它们所有来绕过核验。
+
+用安全编辑器将下面三行补入私有 `.env`，把占位符换成对应角色密码的URL百分号编码值；文件权限保持0600，不提交到Git，也不在shell命令中输入真实URL。这里的 `sslmode=disable`仅用于本机开发，远程数据库按环境配置TLS。
+
+```dotenv
+DATABASE_URL=postgres://moni_app:APP_PASSWORD_URL_ENCODED@127.0.0.1:5432/moni?sslmode=disable
+PROJECTION_DATABASE_URL=postgres://moni_projection:PROJECTION_PASSWORD_URL_ENCODED@127.0.0.1:5432/moni?sslmode=disable
+MIGRATION_DATABASE_URL=postgres://moni_owner:OWNER_PASSWORD_URL_ENCODED@127.0.0.1:5432/moni?sslmode=disable
+```
+
+`DATABASE_URL`仅使用受限app角色，`PROJECTION_DATABASE_URL`使用独立projection角色；owner连接仅用于离线迁移及 `provision`。`migrate`建立当前完整schema后，`provision`再授予并核验表/列等所需权限，同时撤销PUBLIC的schema CREATE。不要手工给app或projection广泛授权替代这一步。
+
+## 迁移、初始化管理员与启动
+
+完成数据库初始化与私有配置后，在仓库根目录执行：
 
 ```sh
 set -a
@@ -23,7 +64,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 ./bin/moni-aigate serve
 ```
 
-`bootstrap`从stdin读一行密码，长度12–72字节；只允许空用户库创建首次管理员。交互运行时输入不会被此程序隐藏，建议通过密码管理器/权限0600临时文件的stdin提供，不在命令参数或shell历史写密码。先在owner连接下建立LOGIN角色并设置强密码，参考[部署](deployment.md)；应用不具有建表/改迁移权限。
+`bootstrap`从stdin读一行密码，长度12–72字节；只允许空用户库创建首次管理员。交互运行时输入不会被此程序隐藏，建议通过密码管理器/权限0600临时文件的stdin提供，不在命令参数或shell历史写密码。数据库角色须先按[建立本地数据库与角色](#建立本地数据库与角色)由初始化管理身份创建；应用不具有建表/改迁移权限。Compose/1Panel使用独立安装流程，见[部署](deployment.md#首次安装)。
 
 升级已有数据库时，先停止接单、排空并停止旧实例，再使用新程序执行`migrate`及`provision`，完成后才启动`serve`。011新增007模型发现迁移，012新增008凭据池迁移及版本创建封口，013新增009渠道管理revision/批量回执迁移，015新增010 Key来源策略/配置版本及不可变请求来源，016新增011运行限额/独立版本，017新增012基本配置独立版本，018新增013成本策略/两维上限与报价发布同步，019新增014共享采购账户与预算，020新增015公开目录标记/独立版本，021新增016自助身份/初始化/证明与邮件outbox；022追加017共同入账/双审券，023-A追加018单租户价格组/精确域唯一性/不可变请求快照；023-A阶段迁移范围为001–018。`migrate`从`MIGRATION_DATABASE_URL`选择owner连接，`provision`也须显式使用owner连接为新表/字段配置最小权限：
 
@@ -62,7 +103,9 @@ make check
 make verify-mvp
 ```
 
-直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境及四类包归属、十组执行合同见[CI 验证](../verification/github-ci-profile.md)，第三轮精确源码结果见[独立记录](../verification/github-ci-third-run.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
+`make verify-mvp` 的Go阶段以 `-p 1` 按包串行使用同一专用数据库，完整执行所有包、race与包内显式并发，保留原测试期限和skip条件。它会比跨包并发执行更久；通过不代表并发启动余量或容量验收。`make test` 与CI独立runner继续使用各自执行合同，不能由本地串行结果推断远端状态。
+
+直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境及四类包归属、十组执行合同见[CI 验证](../verification/github-ci-profile.md)，第三轮与T2发布精确源码结果分别见[第三轮记录](../verification/github-ci-third-run.md)、[T2发布记录](../verification/github-ci-authority-run.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
 
 项目没有内置管理员账号、默认密码或自动演示余额。各开发环境应使用自己的私有配置和独立测试数据库；不要将账号、恢复码、Key 或数据库文件提交到仓库。
 
@@ -72,7 +115,9 @@ make verify-mvp
 
 T0/T1 的历史专项结果见[Gate](../verification/maintenance-gate.md)和[Snapshot](../verification/maintenance-snapshot.md)；本轮 T2 的[真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，333.879秒、89顶层/832父子终态全部PASS；第三轮CI仍只证明其精确旧源码。专项使用独立 `C0_MAINTENANCE_DATABASE_URL` 显式选择上述专库；ordinary public profile 会创建并精确清理随机数据库，不使用父库的 public 作为安装目标。
 
-当前普通 `main`、Compose 与 1Panel 没有接入该库，也没有生产维护 CLI、全来源重放、basis 或 epoch 开账入口；规格目录中的 C0 SQL 尚非已追加的应用迁移，常规安装继续执行完整 001–022 与 `provision`。后续能力须分别设计、接线和验收。
+当前普通 `main` 未调用维护证明或扫描 API，但 billing/PB 的传递依赖已引入 maintenancetrust 与 fundinglotcatalog 初始化；Compose 与 1Panel 没有生产维护入口，也没有生产维护 CLI、全来源重放、basis 或 epoch 开账入口。规格目录中的 C0 SQL 尚非已追加的应用迁移，常规安装继续执行完整 001–022 与 `provision`。后续能力须分别设计、接线和验收。
+
+T3首片新增 `Permit.BeginScan`、封闭 `ReadLease` 与账本/PB维护reader；两个结果仅为 `supplied_ledger_rows` 和 `periodic_budget_rows`。它们不发行全来源或开账许可。独立专项使用同一专库的 `C0_MAINTENANCE_DATABASE_URL`，重PG测试必须串行；默认 `make verify-mvp` 不自动打开此专项。实际命令及取消/资源边界见[T3专项](../verification/maintenance-read-lease.md)，整仓结果见[集成记录](../verification/maintenance-read-lease-integration.md)。当前没有可调用的生产维护CLI，请勿据这些库接口自行跳过完整来源/basis/epoch门禁。
 
 ## 客户Key来源策略（015）
 

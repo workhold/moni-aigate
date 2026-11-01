@@ -29,6 +29,32 @@ var recordValueTypes = map[string]string{
 	"default_acl":          "owner:ref namespace:?ref object_type:char entries:acls",
 }
 
+type valueTypeField struct{ name, kind string }
+
+// The closed schema is compiled once in its original field order. No actual
+// record or validation result enters these tables.
+func compileValueTypeFields(schema string) []valueTypeField {
+	fields := strings.Fields(schema)
+	out := make([]valueTypeField, 0, len(fields))
+	for _, field := range fields {
+		parts := strings.SplitN(field, ":", 2)
+		out = append(out, valueTypeField{name: parts[0], kind: parts[1]})
+	}
+	return out
+}
+
+var compiledRecordValueTypes = func() map[string][]valueTypeField {
+	out := make(map[string][]valueTypeField, len(recordValueTypes))
+	for name, schema := range recordValueTypes {
+		out[name] = compileValueTypeFields(schema)
+	}
+	return out
+}()
+
+const attributeValueTypes = "attnum:int name:text type:?ref typmod:int collation:?ref not_null:bool dropped:bool identity:char0 generated:char0 storage:char compression:char0 statistics:int options:?texts default:?text"
+
+var compiledAttributeValueTypes = compileValueTypeFields(attributeValueTypes)
+
 func canonicalNumberText(v any) (string, bool) {
 	switch x := v.(type) {
 	case json.Number:
@@ -86,13 +112,12 @@ func oidNumber(v any, zero bool) bool {
 	return e == nil && (zero || n != 0)
 }
 func validateRecordValues(m object, category string) error {
-	fields, ok := recordValueTypes[category]
+	fields, ok := compiledRecordValueTypes[category]
 	if !ok {
 		return ErrCatalog
 	}
-	for _, field := range strings.Fields(fields) {
-		p := strings.SplitN(field, ":", 2)
-		if validateValueType(m[p[0]], p[1]) != nil {
+	for _, field := range fields {
+		if validateValueType(m[field.name], field.kind) != nil {
 			return ErrCatalog
 		}
 	}
@@ -275,15 +300,13 @@ func validateAttribute(v any) error {
 	if !ok || !exactKeys(m, "attnum", "name", "type", "typmod", "collation", "not_null", "dropped", "identity", "generated", "storage", "compression", "statistics", "options", "default") {
 		return ErrCatalog
 	}
-	fields := "attnum:int name:text type:?ref typmod:int collation:?ref not_null:bool dropped:bool identity:char0 generated:char0 storage:char compression:char0 statistics:int options:?texts default:?text"
-	for _, f := range strings.Fields(fields) {
-		p := strings.SplitN(f, ":", 2)
-		if p[1] == "char0" {
-			s, ok := m[p[0]].(string)
+	for _, field := range compiledAttributeValueTypes {
+		if field.kind == "char0" {
+			s, ok := m[field.name].(string)
 			if !ok || len(s) > 1 {
 				return ErrCatalog
 			}
-		} else if validateValueType(m[p[0]], p[1]) != nil {
+		} else if validateValueType(m[field.name], field.kind) != nil {
 			return ErrCatalog
 		}
 	}

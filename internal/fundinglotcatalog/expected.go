@@ -1,7 +1,6 @@
 package fundinglotcatalog
 
 import (
-	"bytes"
 	"context"
 	"sync"
 
@@ -63,7 +62,7 @@ func decodeExpected(raw []byte, sha string, mode Mode) (*descriptorSet, error) {
 	if len(sha) != 64 || digest(raw) != sha {
 		return nil, ErrCatalog
 	}
-	v, e := strictJSONNodes(raw, 4000000)
+	v, e := strictExpectedRawJSONNodes(raw, 4000000)
 	if e != nil {
 		return nil, ErrCatalog
 	}
@@ -123,7 +122,7 @@ func decodeExpected(raw []byte, sha string, mode Mode) (*descriptorSet, error) {
 	if e != nil || string(canonicalBytes) != string(raw) {
 		return nil, ErrCatalog
 	}
-	if cacheVariantDocuments(&out) != nil {
+	if cacheAuthenticatedVariantDocuments(&out, canonicalBytes) != nil {
 		return nil, ErrCatalog
 	}
 	out.bounds, e = deriveCategoryBounds(&out)
@@ -147,83 +146,4 @@ func init() {
 	for _, m := range []Mode{Ordinary, Sandbox} {
 		_, _, _ = loadExpected(Pins{Mode: m})
 	}
-}
-
-// Only already authenticated and closed static documents enter this cache.
-// Equal variants share immutable maps and canonical bytes; actual metadata can
-// neither populate nor change the cache.
-func cacheVariantDocuments(d *descriptorSet) error {
-	type cached struct {
-		doc   document
-		bytes []byte
-	}
-	schemas, roles := map[string]cached{}, map[string]cached{}
-
-	type categoryCached struct {
-		value any
-		bytes []byte
-	}
-	categories := map[string]categoryCached{}
-	// Category values are interned only after complete canonical byte equality.
-	// All maps/arrays here belong to authenticated static roots, never actual.
-	for i := range d.Variants {
-		v := &d.Variants[i]
-		for _, family := range []document{v.Schema, v.Roles} {
-			for _, value := range family {
-				doc, ok := value.(object)
-				if !ok {
-					return ErrCatalog
-				}
-				for name, value := range doc {
-					if _, ok := value.([]any); !ok {
-						continue
-					}
-					raw, e := canonical(value)
-					if e != nil {
-						return ErrCatalog
-					}
-					key := digest(raw)
-					if old, ok := categories[key]; ok {
-						if !bytes.Equal(raw, old.bytes) {
-							return ErrCatalog
-						}
-						doc[name] = old.value
-					} else {
-						categories[key] = categoryCached{value: value, bytes: raw}
-					}
-				}
-			}
-		}
-	}
-
-	save := func(doc document, cache map[string]cached) (cached, error) {
-		raw, e := canonical(doc)
-		if e != nil {
-			return cached{}, ErrCatalog
-		}
-		key := digest(raw)
-		if old, ok := cache[key]; ok {
-			if !bytes.Equal(raw, old.bytes) {
-				return cached{}, ErrCatalog
-			}
-			return old, nil
-		}
-		value := cached{doc: doc, bytes: raw}
-		cache[key] = value
-		return value, nil
-	}
-	for i := range d.Variants {
-		v := &d.Variants[i]
-		s, e := save(v.Schema, schemas)
-		if e != nil {
-			return ErrCatalog
-		}
-		r, e := save(v.Roles, roles)
-		if e != nil {
-			return ErrCatalog
-		}
-		v.Schema, v.schemaCanonical = s.doc, s.bytes
-		v.Roles, v.rolesCanonical = r.doc, r.bytes
-	}
-	return nil
 }

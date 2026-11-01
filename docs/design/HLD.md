@@ -411,6 +411,14 @@ T1已按[根冻结生命周期](../../specs/022-self-service-payments/c0-snapsho
 
 按[根冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)实现库级二参Attest与Permit.Verify。Snapshot owned installation是唯一输入；完整history先scalar guard再原helper，manifest来自22项固定embed；实际LOGIN/owner与PB六表owner、sandbox字面专库例外、全runtime新鲜clear→sample、16表重新全空、完整ordinary/v1前驱、仅Init全部账户锁与出口重核后一次发证。原busy/总期限/私有rawTx贯穿CPU/SQL，错误或终结撤销全部副本，watcher只短锁状态与raw-close，不并发pgx。
 
-前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T3 ReadLease/全来源、basis、epoch/writer、生产CLI与资金接线仍未实现。
+前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与两个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
 
-此前[第三轮CI](../verification/github-ci-third-run.md)十组通过只覆盖f64b56f精确源码；不把opt-in跳过项与T2新代码计为已验。
+此前[第三轮CI](../verification/github-ci-third-run.md)保留f64b56f范围；随后[T2发布CI](../verification/github-ci-authority-run.md)在精确46f25e0源码十组success。未开专用C0的跳过项不计专项通过，也不覆盖本轮T3。
+
+## 37. 受控读取与独立来源核验（022-C0-T3 首片）
+
+按[读取租约根冻结](../../specs/022-self-service-payments/c0-read-lease-contract.md)继续T3。ReadLease从真实Permit发行，整个扫描期间占原busy和总期限，另用query/method所有权封闭Rows与并发；参数和Scan目标使用exact类型白名单，拒绝pgx QueryRewriter/RowScanner泄漏真实连接。正常EOF、Err观察、显式Close与出口完整授权核验后才发行ScanProof；该proof只证明这一lease正常结束，不代表来源覆盖或资金许可。
+
+ledger与PB抽取单一读取核心，各自原入口身份与事务规则保留，新增维护入口消费原Snapshot的真实lease。ledger保留全部三表与journal额外事实、大整数核算及原资源界；PB维护新增19关系146字段的服务器scalar资源前置，三类旧历史缺证仍为indeterminate。资金、Key、采购、B来源及lot全图仍须独立逐列核验与组合，ReadLease和两个局部结果不能批准basis/epoch/init。ReadLease与两个reader已实现；[专项记录](../verification/maintenance-read-lease.md)和[集成记录](../verification/maintenance-read-lease-integration.md)分别保留实际执行范围，不沿用T2或旧CI结果。
+
+这条库级依赖使静态catalog初始化进入普通main与测试子进程，但尚未开放生产证明发行或维护CLI。完整认证仍在启动时执行；expected专用严格解析保持原Token解析器的接受/拒绝和资源语义，并以逐树差分验证，actual/candidate原解析不变。静态缓存只在固定SHA、有界严格解析、完整DTO/模板和全root规范字节验证后复用私有片段，固定字段schema预编译保持全部约束，避免重复编码。启动回归修复与原超时/预算的验收按[合同§6](../../specs/022-self-service-payments/c0-read-lease-contract.md#6-集成启动开销与静态缓存合同)记录，不扩大为首字节或供应商性能结论。

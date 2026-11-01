@@ -29,7 +29,9 @@ sandbox完整检查app/mock/receiver的对象正文、类型与自动TOAST/RI关
 
 opaque证明保存具体事务wrapper、连接、backend PID/start、top xid与深拷贝全pins；`VerifyTx`只重核同一事务身份，不反复执行全catalog比较。它不能抵御受信DDL owner在受控维护之外自行修改对象，因此DDL/GRANT仍由停服维护路径管理。提交、回滚、出错、断连或换事务后旧证明失效。Installation的“发行时全空”在受审init写入后仍是原时点证据；维护Permit必须自行防止二次发行，不能从这份证明推导资金权限。
 
-本catalog包依赖只允许标准库、pgx和受控静态expected。离线安装及来源交叉核验只在test中引用operations/migrations；普通main没有调用本包。T2 [维护基础设施](maintenance-gate.md)已在原Snapshot同rawTx消费完整InstallationProof并实现二参[Attest/Permit.Verify](../../internal/maintenancetrust/permit.go)，[T2真实PG/race专项](../verification/maintenance-authority.md)已通过；T0/T1和catalog历史验证不因此扩张。旧v1 checker、SQL/ACL pins与证明字节保持原规则。ReadLease、epoch开账、全源/lot重放、在线资金helper及完整RuntimeProof仍后续。
+本catalog包依赖只允许标准库、pgx和受控静态expected。离线安装及来源交叉核验只在test中引用operations/migrations；普通main尚未调用本包的证明发行API，但T3新增billing/PB→maintenancetrust依赖已将其初始化带入主程序及测试子进程。T2 [维护基础设施](maintenance-gate.md)已在原Snapshot同rawTx消费完整InstallationProof并实现二参[Attest/Permit.Verify](../../internal/maintenancetrust/permit.go)，[T2真实PG/race专项](../verification/maintenance-authority.md)已通过；T0/T1和catalog历史验证不因此扩张。T3首片已实现ReadLease与ledger/PB两个局部维护reader，见[专项与边界](../verification/maintenance-read-lease.md)。旧v1 checker、SQL/ACL pins与证明字节保持原规则；epoch开账、全源/lot重放、在线资金helper及完整RuntimeProof仍后续。
+
+静态root在包初始化时完成固定SHA、严格有界解析、完整DTO/模板和全root canonical字节校验。expected专用raw parser与原Token树作完整差分并保留其资源/数值/UTF8/重复key/EOF语义；actual/candidate原strictJSONNodes不改。随后私有缓存仅使用同一已认证root的规范JSON片段与完整字节相等共享expected，固定record/attribute字段表预编译，减少重复编码和分配；不从actual建立或修复expected，不推迟认证到五秒发行事务中。T3集成发现的子进程启动回归及修复验证单独见[初始化记录](../verification/catalog-startup.md)、[集成记录](../verification/maintenance-read-lease-integration.md)和[缓存合同](../../specs/022-self-service-payments/c0-read-lease-contract.md#6-集成启动开销与静态缓存合同)，不视作首字节性能验收。
 
 两runtime（ordinary）或五runtime（sandbox）的database级CREATE与CREATE/CONNECT/TEMPORARY grant option均须为false；默认PUBLIC CONNECT/TEMPORARY可保留。namespace权限不能替代这一database闭包。当前expected仅实证PG16.15/Homebrew initdb profile、UTF8/C/C；PL/pgSQL language OID14038属于本profile的安装分配。其他集群、locale、1Panel及生产部署需要独立profile认证或后续语言/扩展符号合同，不能由major16或同名对象推断兼容。
 

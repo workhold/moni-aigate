@@ -35,8 +35,8 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 自助身份与兑换券 | 已实现，限定本地验收 | 邮件证明、密码恢复、双审赠额券；注册、邮件和新券发行默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
-| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
-| 停服维护授权 | 库级已实现，专库专项通过 | Gate、单次 Snapshot、二参 Attest 与 Permit.Verify；尚无生产维护 CLI、全来源重放、basis 或 epoch 开账 |
+| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；库级 ledger/PB 维护读取器已经接入真实 ReadLease，完整来源追踪、维护切换、原路退款/拒付仍在推进 |
+| 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；两个读取结果仅证明局部核验完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
@@ -81,6 +81,8 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
+停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，ledger 和周期预算两个读取器共用原读取算法；整个扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。ScanProof 与两个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，实际验证分别见[T3 专项](docs/verification/maintenance-read-lease.md)和[集成记录](docs/verification/maintenance-read-lease-integration.md)，不扩大历史 T2 的通过范围。
+
 ## 本地启动
 
 需要 **Go ≥1.26、Node 22、PostgreSQL 16**。首次运行请使用专用数据库。
@@ -95,7 +97,7 @@ make build
 `init-env` 生成随机秘密，文件权限为 `0600`，不覆盖已有文件。它不会替你建立外部 PostgreSQL 数据库或 LOGIN 角色。
 继续启动前：
 
-1. 建立 `moni` 数据库、迁移 owner，以及独立的 `moni_app` / `moni_projection` LOGIN 角色。
+1. 按[建立本地数据库与角色](docs/runbooks/development.md#建立本地数据库与角色)建立空 `moni` 数据库、迁移 owner，以及独立的 `moni_app` / `moni_projection` LOGIN 角色。初始化管理身份执行建库/建角色，三个项目角色均不授予 `CREATEDB` / `CREATEROLE`。
 2. 编辑私有 `.env`，补全 `DATABASE_URL`、`PROJECTION_DATABASE_URL`、`MIGRATION_DATABASE_URL`，格式见 [.env.example](.env.example)。URL 密码须百分号转义。
 3. 本机 HTTP 使用 `PUBLIC_ORIGIN=http://localhost:8080`、`COOKIE_SECURE=false`、`LISTEN_ADDR=127.0.0.1:8080`。
 4. 在仓库外准备权限 `0600` 的初始管理员密码文件，密码长度为 12–72 字节；将下方私有路径替换为实际路径。
@@ -119,7 +121,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 ## Docker Compose / 1Panel
 
 仓库提供 [Dockerfile](Dockerfile)、[compose.yaml](compose.yaml) 和 [Nginx 示例](deploy/nginx.conf)。以下为待目标环境验收的部署路径，容器实际构建/运行与 1Panel 实装尚未验证。
-在新的部署目录中生成私有配置；已有 `.env` 时跳过生成步骤：
+先将完整仓库检出到部署目录，以下命令均在仓库根目录执行，再生成私有配置；已有 `.env` 时跳过生成步骤：
 
 ```sh
 go run ./cmd/moni-aigate init-env --out .env
@@ -131,7 +133,7 @@ docker compose run --rm -T app bootstrap --email admin@example.com --password-st
 ```
 
 Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。
-1Panel 可从“容器 → 编排”导入根 `compose.yaml`，保留相对挂载脚本，再配置 HTTPS 反向代理到 `127.0.0.1:8080`。
+1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录和构建上下文须指向完整仓库根目录：`migrate` 使用 `build: .`，需要 `Dockerfile`、Go/Web 源码和 `deploy/init-roles.sh`，仅复制 YAML 与初始化脚本不足以构建。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理到 `127.0.0.1:8080`；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
 SSE 须关闭代理缓冲和生成 POST 自动重试，显式设置可信代理 CIDR；不要直接信任客户端转发头。
 
 升级须先排空并停止旧实例，再执行迁移/授权后启动新实例。生产配置、密钥轮换、单活与反代约束见[部署手册](docs/runbooks/deployment.md)，恢复演练见[备份恢复](docs/runbooks/backup-restore.md)。
@@ -198,7 +200,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付；[维护 Gate / Snapshot](docs/architecture/maintenance-gate.md) 的 T0/T1 专项已完成，[T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)已实现库级二参 `Attest(ctx, snapshot)` 与 `Permit.Verify(ctx)`，新增真实 PostgreSQL race 专项已通过，见[验证记录](docs/verification/maintenance-authority.md)；生产维护 CLI、全来源重放、basis 与 epoch 开账仍后续。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。[维护架构](docs/architecture/maintenance-gate.md)的 T0/T1 与 [T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)保留各自验证范围；[T3 首片](specs/022-self-service-payments/c0-read-lease-contract.md)已实现真实 ReadLease、ledger/PB 两个库级维护读取器及绑定原 Permit 的局部结果，实际执行见[T3 专项](docs/verification/maintenance-read-lease.md)和[集成记录](docs/verification/maintenance-read-lease-integration.md)。下一步是独立全来源 scanner 与完整组合；生产维护 CLI、basis 与 epoch 开账仍后续。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

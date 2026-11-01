@@ -1425,3 +1425,130 @@ T2最终专库race与整仓check/verify-mvp均通过；独立复核修正HLD账�
 - modified `specs/022-self-service-payments/plan.md`
 
 </details>
+
+## 2026-11-01T21:32:20Z · ae71944e6849
+
+汇合T3真实ReadLease、ledger/PB同快照局部reader、封闭codec与取消清理；根及独立审阅已校准模块依赖/EOF生命周期/proof后继取消和长SQL边界，专项与旧入口真实PG通过，完整全源/basis/epoch及生产CLI仍后续
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1207 个源文件；本次 38 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-maintenance-read-lease.json`
+- added `docs/verification/assets/architecture-maintenance-read-lease-application.png`
+- added `docs/verification/assets/architecture-maintenance-read-lease-detail.png`
+- added `docs/verification/github-ci-authority-run.json`
+- added `docs/verification/github-ci-authority-run.md`
+- added `docs/verification/maintenance-read-lease-cleanup.json`
+- added `docs/verification/maintenance-read-lease-integration.md`
+- added `docs/verification/maintenance-read-lease.json`
+- added `docs/verification/maintenance-read-lease.md`
+- added `internal/billing/funding_ledger_maintenance.go`
+- added `internal/billing/funding_ledger_maintenance_test.go`
+- added `internal/billing/funding_ledger_query.go`
+- modified `internal/billing/funding_ledger_read.go`
+- modified `internal/maintenancetrust/authority_sandbox_fixture_test.go`
+- added `internal/maintenancetrust/lease.go`
+- added `internal/maintenancetrust/lease_codec.go`
+- added `internal/maintenancetrust/lease_codec_test.go`
+- added `internal/maintenancetrust/lease_integration_test.go`
+- added `internal/maintenancetrust/lease_rows.go`
+- added `internal/maintenancetrust/lease_rows_test.go`
+- added `internal/maintenancetrust/lease_test.go`
+- modified `internal/maintenancetrust/permit.go`
+- added `internal/maintenancetrust/sandbox_export_test.go`
+- added `internal/maintenancetrust/sandbox_external_test.go`
+- modified `internal/maintenancetrust/snapshot.go`
+- modified `internal/periodicbudget/verifier.go`
+- added `internal/periodicbudget/verifier_maintenance.go`
+- added `internal/periodicbudget/verifier_maintenance_test.go`
+- modified `internal/periodicbudget/verifier_operations.go`
+- added `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `scripts/maintenance-scan-qa/periodic_resources_test.go`
+- added `specs/022-self-service-payments/c0-read-lease-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T22:20:15Z · 6724078ee9c7
+
+T3真实ReadLease与ledger/PB维护读取器、私有静态catalog启动优化；根汇合独立审阅、完整PG回归、原进程超时回归与19图，保留局部结果及全来源后续边界；补齐README源码与1Panel部署说明
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1214 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/funding-lot-catalog.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/architecture-maintenance-read-lease.json`
+- added `docs/verification/catalog-startup.json`
+- added `docs/verification/catalog-startup.md`
+- added `docs/verification/maintenance-read-lease-integration.json`
+- modified `docs/verification/maintenance-read-lease-integration.md`
+- modified `docs/verification/maintenance-read-lease.json`
+- modified `internal/fundinglotcatalog/descriptor_types.go`
+- modified `internal/fundinglotcatalog/expected.go`
+- added `internal/fundinglotcatalog/expected_raw_parser.go`
+- added `internal/fundinglotcatalog/expected_raw_parser_test.go`
+- added `internal/fundinglotcatalog/expected_spans.go`
+- added `internal/fundinglotcatalog/expected_spans_test.go`
+- modified `specs/022-self-service-payments/c0-read-lease-contract.md`
+
+</details>
+
+## 2026-11-01T22:36:04Z · 9e7869b58366
+
+根汇合T3/静态启动优化及两轮失败证据；专库整仓按包串行保留所有测试race与原期限，统一架构及19图已重新复核，独立审阅通过
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1214 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Makefile`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/architecture-maintenance-read-lease.json`
+- modified `docs/verification/maintenance-read-lease-integration.json`
+- modified `docs/verification/maintenance-read-lease-integration.md`
+- modified `specs/022-self-service-payments/c0-read-lease-contract.md`
+
+</details>
+
+## 2026-11-01T22:57:22Z · 5a0817e5dcb1
+
+T3最终独立语义复核：维护API未接入main但传递初始化已生效；LLD历史与当前首片边界一致；按包串行全仓race/vet/build通过，追加后置只读PG审计；未增加生产入口或资金权限
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1215 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/LLD.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/maintenance-read-lease-integration.json`
+- modified `docs/verification/maintenance-read-lease-integration.md`
+- added `docs/verification/maintenance-read-lease-post-serial-audit.json`
+
+</details>
+
+## 2026-11-01T22:57:44Z · a1366cff4007
+
+追加最终make check成功日志身份与1172.881秒串行全仓证据，所有并行审阅已汇合；仅文档证据收口，生产代码与19图正文未再变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1215 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/maintenance-read-lease-integration.json`
+- modified `docs/verification/maintenance-read-lease-integration.md`
+
+</details>

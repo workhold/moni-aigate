@@ -1,0 +1,1493 @@
+{
+  "run_id": 41347278123,
+  "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+  "conclusion": "success",
+  "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123",
+  "jobs": [
+    {
+      "name": "contracts (server-3)",
+      "conclusion": "success",
+      "id": 124969698553,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698553",
+      "started_at": "2026-11-01T20:31:25Z",
+      "completed_at": "2026-11-01T20:35:10Z"
+    },
+    {
+      "name": "contracts (identity)",
+      "conclusion": "success",
+      "id": 124969698641,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698641",
+      "started_at": "2026-11-01T20:31:25Z",
+      "completed_at": "2026-11-01T20:39:23Z"
+    },
+    {
+      "name": "contracts (other)",
+      "conclusion": "success",
+      "id": 124969698664,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698664",
+      "started_at": "2026-11-01T20:31:26Z",
+      "completed_at": "2026-11-01T20:49:02Z"
+    },
+    {
+      "name": "contracts (billing-0)",
+      "conclusion": "success",
+      "id": 124969698717,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698717",
+      "started_at": "2026-11-01T20:31:25Z",
+      "completed_at": "2026-11-01T20:34:23Z"
+    },
+    {
+      "name": "contracts (billing-2)",
+      "conclusion": "success",
+      "id": 124969698719,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698719",
+      "started_at": "2026-11-01T20:31:25Z",
+      "completed_at": "2026-11-01T20:35:48Z"
+    },
+    {
+      "name": "contracts (server-2)",
+      "conclusion": "success",
+      "id": 124969698756,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698756",
+      "started_at": "2026-11-01T20:31:26Z",
+      "completed_at": "2026-11-01T20:36:21Z"
+    },
+    {
+      "name": "contracts (billing-3)",
+      "conclusion": "success",
+      "id": 124969698784,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698784",
+      "started_at": "2026-11-01T20:31:26Z",
+      "completed_at": "2026-11-01T20:35:16Z"
+    },
+    {
+      "name": "contracts (billing-1)",
+      "conclusion": "success",
+      "id": 124969698800,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698800",
+      "started_at": "2026-11-01T20:31:26Z",
+      "completed_at": "2026-11-01T20:34:53Z"
+    },
+    {
+      "name": "contracts (server-1)",
+      "conclusion": "success",
+      "id": 124969698817,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698817",
+      "started_at": "2026-11-01T20:31:26Z",
+      "completed_at": "2026-11-01T20:35:19Z"
+    },
+    {
+      "name": "contracts (server-0)",
+      "conclusion": "success",
+      "id": 124969698823,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41347278123/job/124969698823",
+      "started_at": "2026-11-01T20:31:25Z",
+      "completed_at": "2026-11-01T20:36:06Z"
+    }
+  ],
+  "packages": {
+    "sizes": [
+      1,
+      1,
+      1,
+      39
+    ],
+    "union_matches_all": true,
+    "pairwise_disjoint": true,
+    "total": 42
+  },
+  "inventory_match": true,
+  "top_level": {
+    "pass": 1066,
+    "skip": 69
+  },
+  "parent_and_children": {
+    "pass": 3555,
+    "skip": 109
+  },
+  "shards": {
+    "go-tests-billing-0": {
+      "top": {
+        "pass": 40
+      },
+      "all": {
+        "pass": 98
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 98,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 129.191
+        }
+      ],
+      "skips": [],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "0e274c12b20e47474cc30e91d94a5aa120530bd84ead334783b5e6a867d017ca"
+    },
+    "go-tests-billing-1": {
+      "top": {
+        "pass": 39
+      },
+      "all": {
+        "pass": 94
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 94,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 155.699
+        }
+      ],
+      "skips": [],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "8914ea3791fbe2bfe39f886e044136b458fb2f18aa9e266025f7cf668dfdd931"
+    },
+    "go-tests-billing-2": {
+      "top": {
+        "pass": 38,
+        "skip": 1
+      },
+      "all": {
+        "pass": 110,
+        "skip": 1
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 111,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 216.275
+        }
+      ],
+      "skips": [
+        "TestMVPBillingCrashHelperProcess"
+      ],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "8a2057d4ea5c0e8383c2ba6c671360c469a5229c852d60e276ca96de787831e1"
+    },
+    "go-tests-billing-3": {
+      "top": {
+        "pass": 39
+      },
+      "all": {
+        "pass": 97
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 97,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 185.27
+        }
+      ],
+      "skips": [],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "a25422beece09465e70a8302df7d95ea3936f13fa37c5cc0aa56fbd35865a0d1"
+    },
+    "go-tests-identity": {
+      "top": {
+        "pass": 57
+      },
+      "all": {
+        "pass": 90
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 90,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/identity",
+          "Action": "pass",
+          "Elapsed": 437.174
+        }
+      ],
+      "skips": [],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "1bed1a5dfa9f77dba801a4e58b9eff673de5b86160d3b9b87efa3da86d6e5abb"
+    },
+    "go-tests-other": {
+      "top": {
+        "pass": 649,
+        "skip": 67
+      },
+      "all": {
+        "pass": 2602,
+        "skip": 107
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 2709,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-payment-sandbox",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+          "Action": "pass",
+          "Elapsed": 7.341
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+          "Action": "pass",
+          "Elapsed": 1.034
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alerts",
+          "Action": "pass",
+          "Elapsed": 111.855
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/config",
+          "Action": "pass",
+          "Elapsed": 1.037
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/catalog",
+          "Action": "pass",
+          "Elapsed": 147.547
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+          "Action": "pass",
+          "Elapsed": 1.9609999999999999
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+          "Action": "pass",
+          "Elapsed": 1.1
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+          "Action": "pass",
+          "Elapsed": 1.089
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+          "Action": "pass",
+          "Elapsed": 90.652
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/metering",
+          "Action": "pass",
+          "Elapsed": 1.693
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+          "Action": "pass",
+          "Elapsed": 27.289
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Action": "pass",
+          "Elapsed": 106.082
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+          "Action": "pass",
+          "Elapsed": 1.657
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+          "Action": "pass",
+          "Elapsed": 6.145
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+          "Action": "pass",
+          "Elapsed": 4.37
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+          "Action": "pass",
+          "Elapsed": 13.666
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/payments",
+          "Action": "pass",
+          "Elapsed": 199.711
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/operations",
+          "Action": "pass",
+          "Elapsed": 281.16
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+          "Action": "pass",
+          "Elapsed": 1.07
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+          "Action": "pass",
+          "Elapsed": 73.594
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/pricing",
+          "Action": "pass",
+          "Elapsed": 35.619
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "Action": "pass",
+          "Elapsed": 1.018
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/provider",
+          "Action": "pass",
+          "Elapsed": 8.462
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+          "Action": "pass",
+          "Elapsed": 1.031
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/routing",
+          "Action": "pass",
+          "Elapsed": 1.1179999999999999
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/security",
+          "Action": "pass",
+          "Elapsed": 1.039
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+          "Action": "pass",
+          "Elapsed": 1.041
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+          "Action": "pass",
+          "Elapsed": 8.74
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/migrations",
+          "Action": "pass",
+          "Elapsed": 18.541
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+          "Action": "pass",
+          "Elapsed": 1.1
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+          "Action": "pass",
+          "Elapsed": 1.221
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/export-native-sdk-fixtures",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+          "Action": "pass",
+          "Elapsed": 1.099
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+          "Action": "pass",
+          "Elapsed": 1.031
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+          "Action": "pass",
+          "Elapsed": 49.689
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/web",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+          "Action": "pass",
+          "Elapsed": 270.511
+        }
+      ],
+      "skips": [
+        "TestCatalogRawPreflightRejectsBeforeDeparse",
+        "TestCatalogPrivilegeArraysPreserveFullPeerVectors",
+        "TestCatalogDependencySemijoinsPreserveRowsAndPlan",
+        "TestCatalogPeerCaptureReviewMetadata",
+        "TestCatalogPeerBaselineAndActualLogins",
+        "TestCatalogPeerRejectsForeignPrivilegesMembershipAndOwnership",
+        "TestCatalogPeerPublicAPIs",
+        "TestCatalogPeerPublicAPIRejectsSameRRPeerDrift",
+        "TestCatalogOrdinaryRuntimeOwnerOutsideProtectedSchemaRejected",
+        "TestCatalogOrdinaryDatabasePrivilegeElevationRejected",
+        "TestCatalogSandboxDatabasePrivilegeElevationRejected",
+        "TestCatalogPeerReadTimings",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-isolated",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-minimal-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-image-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/public-minimal-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/public-image-login",
+        "TestCatalogCanceledAbortedAndDisconnectedTransactions",
+        "TestCatalogRejectsSameTransactionDriftWithoutCommitting",
+        "TestCatalogInstallationEmptinessIsAnIssueFact",
+        "TestCatalogRejectsWrongPinsAndAuthentication",
+        "TestOrdinaryVariantsInstallExactACL/named-isolated",
+        "TestOrdinaryVariantsInstallExactACL/named-minimal-login",
+        "TestOrdinaryVariantsInstallExactACL/named-image-login",
+        "TestOrdinaryVariantsInstallExactACL/public-minimal-login",
+        "TestOrdinaryVariantsInstallExactACL/public-image-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-isolated",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-minimal-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-image-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/public-minimal-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/public-image-login",
+        "TestOrdinaryVariantCandidateReproducibility",
+        "TestOrdinaryVariantLegacyProjection",
+        "TestAuthorityPostgresPredecessorCPUBudgetClosesOriginalSocket",
+        "TestAuthorityPostgresOrdinaryImageProfile",
+        "TestAuthorityPostgresPublicOwnerProfiles/public-minimal-login",
+        "TestAuthorityPostgresPublicOwnerProfiles/public-image-login",
+        "TestAuthorityPostgresNOLOGINOwnerAndSetRoleRejected",
+        "TestAuthoritySandboxPostgresPlanInitAndOriginalV1",
+        "TestAuthoritySandboxPostgresFiveFreshRuntimeRoles",
+        "TestAuthoritySandboxPostgresPredecessorContentRefusals",
+        "TestGatePostgresAcquireAndReverseClose",
+        "TestGatePostgresWaitsForSecondLock",
+        "TestGatePostgresPartialCancellation/parent_deadline",
+        "TestGatePostgresPartialCancellation/explicit_cancel",
+        "TestGatePostgresThirtySecondEntranceBudget",
+        "TestGatePostgresUnknownLockReplyPhysicallyCloses",
+        "TestGatePostgresUnknownUnlockReplyPhysicallyCloses",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/extra",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/lost",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/shared",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/two_int",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/nonidle",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/database_oid",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/schema_oid",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/owner_oid",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/owner_name",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/current_schema",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/null_schema",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/system_schema",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/config_login_mapping",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/session_auth_mapping",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/existing_lock",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/actual_ip",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/actual_port",
+        "TestGatePostgresConcurrentCloseRejectsWithoutSQL",
+        "TestGatePostgresCleanupUsesIndependentFiveSecondBudget",
+        "TestGatePostgresOrdinaryDNSAndNonOwnerAreOnlyPreflight",
+        "TestGatePostgresPublicEffectiveOwnerTargetBinding",
+        "TestAuthorityPostgresOrdinaryPlanInitAndTerminalRevocation",
+        "TestAuthorityPostgresFreshRuntimeSampling",
+        "TestAuthorityPostgresHistoryGuardAndSameSnapshot",
+        "TestAuthorityPostgresAllAccountLocksAndPlanNoLocks",
+        "TestAuthorityPostgresBusyCancellationAndExitRuntime",
+        "TestPredecessorPostgresPrivateOrdinaryAllHistoryAndBypasses",
+        "TestPredecessorPostgresPrivateOrdinaryForeignKeyAndPolicy",
+        "TestPredecessorPostgresPrivateOriginalMockSafeProjectionAndFinite",
+        "TestPredecessorPostgresPrivateSentinelsEOFAndResources",
+        "TestSnapshotPostgresOptionsFixedOrderAndOriginalProof",
+        "TestSnapshotPostgresWriterBarrierCreatesSnapshotAfterLockWait",
+        "TestSnapshotPostgresAllTablesStopWritesButPermitSelect",
+        "TestSnapshotPostgresMissingLateTableClosesPartialBegin",
+        "TestSnapshotPostgresCatalogRejectsDriftBeforeBusinessReads/rls",
+        "TestSnapshotPostgresCatalogRejectsDriftBeforeBusinessReads/incoming_inheritance",
+        "TestSnapshotPostgresEvidenceBusyRejectsWithoutSQL",
+        "TestSnapshotPostgresParentCancellationClosesIdleAndActiveSQL/idle_CPU_gap",
+        "TestSnapshotPostgresParentCancellationClosesIdleAndActiveSQL/catalog_SQL_reply",
+        "TestSnapshotPostgresEarlierDeadlineAndShortBudgetReject",
+        "TestSnapshotPostgresDefaultThirtySecondIdleDeadline",
+        "TestSnapshotPostgresCommitConfirmedAndDeferredRollback",
+        "TestSnapshotPostgresCommitLostReplyIsUnknownWithoutRetry",
+        "TestSnapshotPostgresRollbackLostReplyAbandons",
+        "TestSnapshotPostgresCloseOpenSnapshotAbandonsWithoutRollback",
+        "TestSnapshotPostgresCallerCancellationCannotBeIgnored",
+        "TestSnapshotPostgresRollbackIndependentFiveSecondBudget",
+        "TestSnapshotPostgresCommitCallerAlreadyCancelledSendsNothing",
+        "TestSnapshotPostgresCommitReplyCancellationRetainsUnknown",
+        "TestCandidateWalletGraph",
+        "TestCandidateOldZeroOpening",
+        "TestCandidateSavepointTopXID",
+        "TestCandidatePermissions",
+        "TestCandidateLegacyRefundCumulative",
+        "TestMailLifecycleRealMainRecovery",
+        "TestBrowserQARealMainLifecycle",
+        "TestBrowserQAFailedBootstrapCleansOwnedResources",
+        "TestRealDescriptorReproducibility",
+        "TestRealFailureCleanup"
+      ],
+      "fail_events": [],
+      "expected_packages": 39,
+      "package_terminal_match": true,
+      "jsonl_sha256": "777059e54e8c2618de3ee17b4f54fe936b1e3bb7b6c44779f65dc1fc31f5a6b5"
+    },
+    "go-tests-server-0": {
+      "top": {
+        "pass": 52
+      },
+      "all": {
+        "pass": 110
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 110,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 198.811
+        }
+      ],
+      "skips": [],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "b18caa1c3e6f287974190512a4bfd7ae5f52a330d8fd17051a75d1bc511895b8"
+    },
+    "go-tests-server-1": {
+      "top": {
+        "pass": 50,
+        "skip": 1
+      },
+      "all": {
+        "pass": 90,
+        "skip": 1
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 91,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 150.712
+        }
+      ],
+      "skips": [
+        "TestCapacityConcurrentStreams"
+      ],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "d1486ab4f807b501042481abc86de1b1dba48bb18be9766dbf4b16782a326ce1"
+    },
+    "go-tests-server-2": {
+      "top": {
+        "pass": 51
+      },
+      "all": {
+        "pass": 126
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 126,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 211.491
+        }
+      ],
+      "skips": [],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "2d6131afb20733db1d13a9b4702128ecd652e0a6fb246b7b032c9e95a2059733"
+    },
+    "go-tests-server-3": {
+      "top": {
+        "pass": 51
+      },
+      "all": {
+        "pass": 138
+      },
+      "run_terminal_match": true,
+      "run_and_terminal_unique": true,
+      "started_tests": 138,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 150.495
+        }
+      ],
+      "skips": [],
+      "fail_events": [],
+      "expected_packages": 1,
+      "package_terminal_match": true,
+      "jsonl_sha256": "9a942bb148b8e6156eee0ca50abc6e659bd5a70eabb515e38aabdd1de8a64946"
+    }
+  },
+  "pg_readiness": [
+    {
+      "job": "contracts (server-3)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (identity)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (other)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-0)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-2)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (server-2)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-3)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-1)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (server-1)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (server-0)",
+      "status": [
+        "success"
+      ]
+    }
+  ],
+  "frontend_summary": [
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T20:32:13.1008460Z # tests 286",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T20:32:13.1009906Z # pass 286",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T20:32:13.1010550Z # fail 0",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T20:32:13.1011168Z # cancelled 0",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T20:32:13.1011827Z # skipped 0"
+  ],
+  "complete_run_log_sha256": "1e3609a86f0cb3fccee583e08e33d932734ca075884d68bb94506283a007d285",
+  "other_skip_reasons": [
+    {
+      "count": 1,
+      "lines": [
+        "collector_preflight_test.go:27: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "collector_privilege_plan_test.go:46: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "collector_query_plan_test.go:16: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_capture_test.go:29: offline candidate metadata capture is explicitly opt-in"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:344: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:376: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:475: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:513: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:568: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:678: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:683: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_timing_test.go:18: explicit catalog performance diagnostic only"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "proof_integration_test.go:39: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:106: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:151: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:196: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:227: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "variants_fixture_test.go:500: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "variants_fixture_test.go:567: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "variants_fixture_test.go:740: explicit metadata candidate export only; formal expected is never auto-accepted"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "variants_fixture_test.go:825: requires explicit previously verified four-role descriptor directory; no live runtime filtering"
+      ]
+    },
+    {
+      "count": 28,
+      "lines": [
+        "snapshot_fixture_test.go:62: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 2,
+      "lines": [
+        "authority_profiles_integration_test.go:298: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "authority_sandbox_integration_test.go:18: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "authority_sandbox_integration_test.go:102: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "authority_sandbox_integration_test.go:158: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:388: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:428: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 2,
+      "lines": [
+        "gate_integration_test.go:494: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:546: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:576: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:614: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "gate_integration_test.go:650: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 12,
+      "lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:765: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:791: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:830: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:861: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "permit_integration_test.go:220: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "predecessor_postgres_test.go:116: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:439: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:33: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:97: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:107: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:151: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "legacy_fixture_test.go:14: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "mail_lifecycle_test.go:381: explicit isolated mail real-main opt-in required"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:203: explicit isolated main lifecycle opt-in required"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:410: explicit PostgreSQL lifecycle opt-in required"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:267: requires explicit dedicated database; no descriptor acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:307: requires explicit dedicated database"
+      ]
+    }
+  ],
+  "scope": "This CI run verifies only committed head 46f25e01fa6522c6962321aa71718ee755c931c8. Dedicated C0 catalog/maintenance/candidate and real-main/capacity opt-ins were not enabled; their skips are not specialized acceptance. This does not cover uncommitted T3 ReadLease/reader changes, production, real suppliers or payments.",
+  "provenance": {
+    "run_attempt": 1,
+    "event": "push",
+    "head_branch": "codex/initial-mvp",
+    "created_at": "2026-11-01T20:31:23Z",
+    "updated_at": "2026-11-01T20:49:03Z",
+    "read_api_reconfirmed": true,
+    "read_api_command": "gh api repos/workhold/moni-aigate/actions/runs/41347278123 --jq ...",
+    "read_api_mutations": false,
+    "downloaded_sources": {
+      "ci-run.json": "074e8b2f88c080030c317d96160d97eb696a6637d892ea9468718f6510981394",
+      "ci-jobs.json": "34699b0766afcb5d5ff255e717a7d66405764a5f24d107ff672da16fa4d56b7c",
+      "ci-full.log": "1e3609a86f0cb3fccee583e08e33d932734ca075884d68bb94506283a007d285",
+      "ci-authority-artifact-metadata.json": "9d2163985f393f37fcb700dfc8dc034720e9c57c3e14c34a2e98d71f6a619472"
+    },
+    "workflow_at_head_sha256": "cda1cd3aa3f65cf96ad11893f0ee0d8e9c2f2fa55fcb42fb674d91df2d3b98f9",
+    "artifact_metadata": [
+      {
+        "created_at": "2026-11-01T20:48:59Z",
+        "digest": "sha256:9c2f1a0dac272965e05411232a2945b2fea1455b16d14af22782a85d1c817eae",
+        "expired": false,
+        "id": 13100302829,
+        "name": "go-tests-other",
+        "size_in_bytes": 183503,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:36:03Z",
+        "digest": "sha256:55ec63235ad075b13b308865c7f480abe71ff0c35214f0eaa97fa4bcc0a6c0cc",
+        "expired": false,
+        "id": 13100291042,
+        "name": "go-tests-server-0",
+        "size_in_bytes": 32016,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:35:16Z",
+        "digest": "sha256:bf5eba1210c0d4dd542984a92f3f8e7af58d8be554905f804d4d4691b18385dc",
+        "expired": false,
+        "id": 13100236086,
+        "name": "go-tests-server-1",
+        "size_in_bytes": 30878,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:35:44Z",
+        "digest": "sha256:5c834ecb9eb1317f032730fc8bd15596af41ecbdc44bcc615af2cb538c6f0360",
+        "expired": false,
+        "id": 13100051903,
+        "name": "go-tests-billing-2",
+        "size_in_bytes": 27035,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:36:18Z",
+        "digest": "sha256:51f7a5b5d19529deaa7aac2285113bc99e33fff9106e9cfe4606ef3a661ad848",
+        "expired": false,
+        "id": 13099733965,
+        "name": "go-tests-server-2",
+        "size_in_bytes": 33276,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:35:07Z",
+        "digest": "sha256:a415f8a2956fbe38bf04a34e9e97d19be2829fd17dfafcb08f648e2d8ddd2947",
+        "expired": false,
+        "id": 13099602958,
+        "name": "go-tests-server-3",
+        "size_in_bytes": 33684,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:35:12Z",
+        "digest": "sha256:ca8e5fb5004b3b6a9e8236e96ab8459a46cc3dfdfa818c5977c59f9ad374e9a0",
+        "expired": false,
+        "id": 13099534741,
+        "name": "go-tests-billing-3",
+        "size_in_bytes": 26378,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:39:20Z",
+        "digest": "sha256:b82c01609233a001eb4275bd348e7e4d683a9b4890fb28b7fabd76b00e5d349d",
+        "expired": false,
+        "id": 13099403686,
+        "name": "go-tests-identity",
+        "size_in_bytes": 9957,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:34:49Z",
+        "digest": "sha256:0c85744d55384e19137dacf62946c21f86f82ee887c90a514f5c95e7a1a3d35f",
+        "expired": false,
+        "id": 13099278450,
+        "name": "go-tests-billing-1",
+        "size_in_bytes": 26159,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      },
+      {
+        "created_at": "2026-11-01T20:34:18Z",
+        "digest": "sha256:140af71e959eeb5e7c1964c154f6b190845f6e6b529071c1b951ff218a804a20",
+        "expired": false,
+        "id": 13099103808,
+        "name": "go-tests-billing-0",
+        "size_in_bytes": 26128,
+        "workflow_run": {
+          "head_branch": "codex/initial-mvp",
+          "head_repository_id": 1438642774,
+          "head_sha": "46f25e01fa6522c6962321aa71718ee755c931c8",
+          "id": 41347278123,
+          "repository_id": 1438642774
+        }
+      }
+    ],
+    "artifact_files_sha256": {
+      "go-tests-billing-0": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-billing-0.txt": "36cb4c41a7dd5771edd75f43f3bd901032862193d8c0a687ab5bc7f51aecb7f4",
+        "ci-tests-billing-1.txt": "1085fc37e758b9ac73c36ab30679b20eeecf21f2b69f274746b5ec43133f32c0",
+        "ci-tests-billing-2.txt": "d6b06e38409813d19d15addec5b355cb65be68c0d40d5db963407421b94db957",
+        "ci-tests-billing-3.txt": "41bf620761652c6eea57c29a2828415323431da34ab6bf7f4a136ea24ddc8bc9",
+        "ci-tests-billing-actual.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-all.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-discovery.txt": "b51975f3127f8e9ed3f31738609f2271dbf0473c6b708c48d6d830aa418f0f47",
+        "ci-tests-billing-unsorted.txt": "7b017aa8e75833fd7bfae760cf2e380618682b771e3e50001d9da58eaeded0f1",
+        "go-tests-billing-0.jsonl": "0e274c12b20e47474cc30e91d94a5aa120530bd84ead334783b5e6a867d017ca"
+      },
+      "go-tests-billing-1": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-billing-0.txt": "36cb4c41a7dd5771edd75f43f3bd901032862193d8c0a687ab5bc7f51aecb7f4",
+        "ci-tests-billing-1.txt": "1085fc37e758b9ac73c36ab30679b20eeecf21f2b69f274746b5ec43133f32c0",
+        "ci-tests-billing-2.txt": "d6b06e38409813d19d15addec5b355cb65be68c0d40d5db963407421b94db957",
+        "ci-tests-billing-3.txt": "41bf620761652c6eea57c29a2828415323431da34ab6bf7f4a136ea24ddc8bc9",
+        "ci-tests-billing-actual.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-all.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-discovery.txt": "f5261c7147f0134eea997cd1b2b7c4621711c2dd94734aa08f047349f94b60e2",
+        "ci-tests-billing-unsorted.txt": "7b017aa8e75833fd7bfae760cf2e380618682b771e3e50001d9da58eaeded0f1",
+        "go-tests-billing-1.jsonl": "8914ea3791fbe2bfe39f886e044136b458fb2f18aa9e266025f7cf668dfdd931"
+      },
+      "go-tests-billing-2": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-billing-0.txt": "36cb4c41a7dd5771edd75f43f3bd901032862193d8c0a687ab5bc7f51aecb7f4",
+        "ci-tests-billing-1.txt": "1085fc37e758b9ac73c36ab30679b20eeecf21f2b69f274746b5ec43133f32c0",
+        "ci-tests-billing-2.txt": "d6b06e38409813d19d15addec5b355cb65be68c0d40d5db963407421b94db957",
+        "ci-tests-billing-3.txt": "41bf620761652c6eea57c29a2828415323431da34ab6bf7f4a136ea24ddc8bc9",
+        "ci-tests-billing-actual.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-all.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-discovery.txt": "223036d81a80790a2899ae6c540ed2aa2e2223cda81bcfa0c9b8a7acf3fddab9",
+        "ci-tests-billing-unsorted.txt": "7b017aa8e75833fd7bfae760cf2e380618682b771e3e50001d9da58eaeded0f1",
+        "go-tests-billing-2.jsonl": "8a2057d4ea5c0e8383c2ba6c671360c469a5229c852d60e276ca96de787831e1"
+      },
+      "go-tests-billing-3": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-billing-0.txt": "36cb4c41a7dd5771edd75f43f3bd901032862193d8c0a687ab5bc7f51aecb7f4",
+        "ci-tests-billing-1.txt": "1085fc37e758b9ac73c36ab30679b20eeecf21f2b69f274746b5ec43133f32c0",
+        "ci-tests-billing-2.txt": "d6b06e38409813d19d15addec5b355cb65be68c0d40d5db963407421b94db957",
+        "ci-tests-billing-3.txt": "41bf620761652c6eea57c29a2828415323431da34ab6bf7f4a136ea24ddc8bc9",
+        "ci-tests-billing-actual.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-all.txt": "424b3b74fc1e8f164647ff6ba2dfa8808db6eedd5629e107969d5415296b1947",
+        "ci-tests-billing-discovery.txt": "d4e8a8161e17f6b4471a44531b828a5fa7247573104bcc65530586ada9b21fed",
+        "ci-tests-billing-unsorted.txt": "7b017aa8e75833fd7bfae760cf2e380618682b771e3e50001d9da58eaeded0f1",
+        "go-tests-billing-3.jsonl": "a25422beece09465e70a8302df7d95ea3936f13fa37c5cc0aa56fbd35865a0d1"
+      },
+      "go-tests-identity": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "go-tests-identity.jsonl": "1bed1a5dfa9f77dba801a4e58b9eff673de5b86160d3b9b87efa3da86d6e5abb"
+      },
+      "go-tests-other": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "go-tests-other.jsonl": "777059e54e8c2618de3ee17b4f54fe936b1e3bb7b6c44779f65dc1fc31f5a6b5"
+      },
+      "go-tests-server-0": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-server-0.txt": "ca791e7c61f1b183dfc03f80c8a36f83e125fd2b60d640f1df58513c3bfab200",
+        "ci-tests-server-1.txt": "22cb0997c933ed124dea0269eba56877dd0be5ef2ba05f3536404ed6e0b9257e",
+        "ci-tests-server-2.txt": "315b13c81bd9f032c4d0514b8e828d44225bf9b77f961226d4858af2cda918e5",
+        "ci-tests-server-3.txt": "f40c716311f0032fa672a14bcccacaa678056a95a635d70ecdfbdd9c3c1c0c0b",
+        "ci-tests-server-actual.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-all.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-discovery.txt": "ee97290ddbc6d5a0633771b574cd8e2886dd8bea6cb849c27ce848468eabffae",
+        "ci-tests-server-unsorted.txt": "26e53a0208dd27c8d295202b71f6ef31a5efefa4ec5dcadfe3c57b7c79747931",
+        "go-tests-server-0.jsonl": "b18caa1c3e6f287974190512a4bfd7ae5f52a330d8fd17051a75d1bc511895b8"
+      },
+      "go-tests-server-1": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-server-0.txt": "ca791e7c61f1b183dfc03f80c8a36f83e125fd2b60d640f1df58513c3bfab200",
+        "ci-tests-server-1.txt": "22cb0997c933ed124dea0269eba56877dd0be5ef2ba05f3536404ed6e0b9257e",
+        "ci-tests-server-2.txt": "315b13c81bd9f032c4d0514b8e828d44225bf9b77f961226d4858af2cda918e5",
+        "ci-tests-server-3.txt": "f40c716311f0032fa672a14bcccacaa678056a95a635d70ecdfbdd9c3c1c0c0b",
+        "ci-tests-server-actual.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-all.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-discovery.txt": "6a478a24d8c547b9bd22adf7fe4ff94f0769f0c78fa0e530954ac1aa04301fc3",
+        "ci-tests-server-unsorted.txt": "26e53a0208dd27c8d295202b71f6ef31a5efefa4ec5dcadfe3c57b7c79747931",
+        "go-tests-server-1.jsonl": "d1486ab4f807b501042481abc86de1b1dba48bb18be9766dbf4b16782a326ce1"
+      },
+      "go-tests-server-2": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-server-0.txt": "ca791e7c61f1b183dfc03f80c8a36f83e125fd2b60d640f1df58513c3bfab200",
+        "ci-tests-server-1.txt": "22cb0997c933ed124dea0269eba56877dd0be5ef2ba05f3536404ed6e0b9257e",
+        "ci-tests-server-2.txt": "315b13c81bd9f032c4d0514b8e828d44225bf9b77f961226d4858af2cda918e5",
+        "ci-tests-server-3.txt": "f40c716311f0032fa672a14bcccacaa678056a95a635d70ecdfbdd9c3c1c0c0b",
+        "ci-tests-server-actual.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-all.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-discovery.txt": "94279f7816f0ccd65d42f7d28c7eeb0a5dd00ef35972cac4cf6e12430dfe2f43",
+        "ci-tests-server-unsorted.txt": "26e53a0208dd27c8d295202b71f6ef31a5efefa4ec5dcadfe3c57b7c79747931",
+        "go-tests-server-2.jsonl": "2d6131afb20733db1d13a9b4702128ecd652e0a6fb246b7b032c9e95a2059733"
+      },
+      "go-tests-server-3": {
+        "ci-packages-actual.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-all.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-billing.txt": "439061e2d134703e30922555b153722388d733f377975b3d85564ddf62233414",
+        "ci-packages-expected.txt": "ba5ee9e68f3545294c8f142bc25deec61ea9b2953a1e7a4f9916bc2562e58c80",
+        "ci-packages-identity.txt": "5b558dd46279af54dc9da4f4576b2cfe91b25f7323b0827b31bbbc6a8d16ef78",
+        "ci-packages-other.txt": "6d7fda6bcaef8424dd55e82de0085f04a114b5d7b529d516cfd36d5e8a10c951",
+        "ci-packages-server.txt": "dac50c7798fab3b137082dee690fb5ea45117551f505c87fa9b257fbd261675b",
+        "ci-tests-server-0.txt": "ca791e7c61f1b183dfc03f80c8a36f83e125fd2b60d640f1df58513c3bfab200",
+        "ci-tests-server-1.txt": "22cb0997c933ed124dea0269eba56877dd0be5ef2ba05f3536404ed6e0b9257e",
+        "ci-tests-server-2.txt": "315b13c81bd9f032c4d0514b8e828d44225bf9b77f961226d4858af2cda918e5",
+        "ci-tests-server-3.txt": "f40c716311f0032fa672a14bcccacaa678056a95a635d70ecdfbdd9c3c1c0c0b",
+        "ci-tests-server-actual.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-all.txt": "17e1762ad646a15aff830b563e133f821ba0d1f3c668e3ca78892dce2cd4cde5",
+        "ci-tests-server-discovery.txt": "b3ef76a647e54285d9950929422566770069f9b20bfb60beaee038e2c3f3a842",
+        "ci-tests-server-unsorted.txt": "26e53a0208dd27c8d295202b71f6ef31a5efefa4ec5dcadfe3c57b7c79747931",
+        "go-tests-server-3.jsonl": "9a942bb148b8e6156eee0ca50abc6e659bd5a70eabb515e38aabdd1de8a64946"
+      }
+    }
+  },
+  "partition_checks": {
+    "every_artifact_inventory": [
+      {
+        "artifact": "go-tests-billing-0",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      },
+      {
+        "artifact": "go-tests-billing-1",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      },
+      {
+        "artifact": "go-tests-billing-2",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      },
+      {
+        "artifact": "go-tests-billing-3",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      },
+      {
+        "artifact": "go-tests-identity",
+        "complete_package_inventory_matches": true
+      },
+      {
+        "artifact": "go-tests-other",
+        "complete_package_inventory_matches": true
+      },
+      {
+        "artifact": "go-tests-server-0",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      },
+      {
+        "artifact": "go-tests-server-1",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      },
+      {
+        "artifact": "go-tests-server-2",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      },
+      {
+        "artifact": "go-tests-server-3",
+        "complete_package_inventory_matches": true,
+        "top_level_partition_union_matches": true,
+        "top_level_partition_pairwise_disjoint": true,
+        "discovery_matches": true
+      }
+    ],
+    "unique_global_top_level_count": 1135,
+    "billing": {
+      "top_level": 157,
+      "shard_sizes": [
+        40,
+        39,
+        39,
+        39
+      ],
+      "mutually_exclusive": true,
+      "exhaustive": true,
+      "actual_runs_match_each_selected_inventory": true
+    },
+    "server": {
+      "top_level": 205,
+      "shard_sizes": [
+        52,
+        51,
+        51,
+        51
+      ],
+      "mutually_exclusive": true,
+      "exhaustive": true,
+      "actual_runs_match_each_selected_inventory": true
+    }
+  },
+  "other_checks": [
+    {
+      "step": "Run go run ./scripts/check-architecture",
+      "conclusion": "success",
+      "job": "contracts (other)"
+    },
+    {
+      "step": "Run npm ci && npm test && npm run build",
+      "conclusion": "success",
+      "job": "contracts (other)"
+    },
+    {
+      "step": "Run go vet ./...",
+      "conclusion": "success",
+      "job": "contracts (other)"
+    },
+    {
+      "step": "Run go build -trimpath ./cmd/moni-aigate",
+      "conclusion": "success",
+      "job": "contracts (other)"
+    }
+  ],
+  "architecture_summary": [
+    "contracts (other)\tRun go run ./scripts/check-architecture\t2026-11-01T20:31:56.0532494Z architecture snapshot verified: 1181 files, 6dbccf9ebe60"
+  ],
+  "postgresql_scope": {
+    "image": "postgres:16-alpine",
+    "database": "moni_test",
+    "host": "127.0.0.1",
+    "port": 55439,
+    "timezone": "Asia/Shanghai",
+    "max_connections": 200,
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "full_page_writes": "on",
+    "readiness_proof": "All ten readiness steps succeeded; the exact-head workflow exits successfully only after its SQL CASE returns ready for these settings.",
+    "authentication": "Dedicated disposable CI fixture uses trust; this is not evidence of production password authentication."
+  }
+}
