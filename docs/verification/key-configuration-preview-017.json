@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-31",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "migration": "012_key_configuration.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "Revalidated PID 49646, listener 127.0.0.1:58123, binary and workspace cwd; SIGTERM exited 0 and listener closed before migration.",
+  "pid": 7168,
+  "binary_sha256": "f2a63cb2584f42b68f428a3d018fbe06280558ef800f4d5111e57074c36e7e1f",
+  "index_sha256": "d58cea7a9989a5aa899a2b82ed1428a1cc0cd9b3de204cc8577c13073642ebba",
+  "index_exact_match": true,
+  "assets_exact_match_count": 28,
+  "asset_sha256": {
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "KeysView-BNJdrixS.js": "0188de5c6cd95cfe6476128cdcdbd4fd0c3105aa8f1880aa8aa058cdafc0ba61",
+    "KeysView-DGB_doro.css": "d89b2663b9478837efacd2de14b5a00003e218a0d48f3c54c00d12b81da12966",
+    "LoginView-CPtMk_bw.js": "d66c54535a210136bd8535111b0f14c60b8a6f416e8b17d2deb71762878f44f4",
+    "MembersView-DUAh94kD.js": "4de36b00af7157f42f2e9abe5c94b2f7c50c0a032b5a2e8121cc7c3a80862a9b",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-8_CJCq5j.js": "d24a1a4a8c4322f9641f8f023585237bce452a8e247e023dfb8e03501466fb9e",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-C1GJlA_P.js": "e55850e8d5b73a4f3c8087a9da30330ebef7714c73b3d191b9ae79365d5724df",
+    "OverviewView-DYaVx-92.js": "c90680c7127e677d141df59967b58c2d954f06d5c3f30173173a12d349378b62",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-C9MHg-9R.js": "c0c43761355d7f43aad67dbecfa8051b9f894762e4aebca044a8214cb8998f5c",
+    "PlatformView-DA6vsIHk.css": "f1c9d7f9900d2b3f7fa25bc80a2e85a67e55f47c20b1ea7d904e0b1937e631e7",
+    "PlaygroundView-ByOZsrAi.js": "237a7df405a408fee6f158d852f16878cadd7555349ed73fbcea4faf14faa44c",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "RecoveryView-HsLkRsgh.js": "5cbd78716556bd8c3303825eb660676527d160f55710e05f1f2fbeb878716df7",
+    "ReportsView-C30dF4fp.js": "092e87bce8637a6b00770e3001edeb5b594afffb7f354af21b384afa3c52ff03",
+    "RequestsView-iDw5Tn6O.js": "6239c4cf56d3628e40c7a87fa4de6bbf5ba6b306fa059583d2613886a4a4e474",
+    "RouteAttempts-DrhrORRG.css": "09bae98f8fde6452b96936a48cd452a557ba9602418c711888fa41cff4d032f1",
+    "RouteAttempts-uRF3k8PF.js": "460cdd3d266f22ff286d6c53cdba1632476f52a2428a69923d2215a1c9a42605",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "SecurityView-CxSHNGV3.js": "4f1506b264a32007e9fce4078b3fbde42fa8eb253560b518f0ef6a4540ec2bd2",
+    "WalletView-C6H1tMRd.js": "26385a56a830b519a1649a4cf6fdb84bcf64eb2f77dac236b5be404d91e9eb2f",
+    "_plugin-vue_export-helper-DlAUqK2U.js": "cb85b0f263dbe24e857338301c0627076592e9f1f1a5662929f86d2c126444aa",
+    "elements-DmDn0__c.js": "1a2b9d0d6e16b6d3d848a624cd48140d62f3d2801e1cbbd53053293b2732afc1",
+    "index-0pPivQ3D.css": "144d9054130f1e871521207137f4ef98df04e1c0b1b13ec06799fb45dc867ec6",
+    "index-B2Q1wBcx.js": "038004280d1eea7a5fa4077a9915bf27d55c91b764f38013a7eb45718877bd2c",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "regions_read": true,
+      "migration_012": true,
+      "owns_key_table": false,
+      "migration_count": 12,
+      "configuration_revision_read": true
+    },
+    "projection": {
+      "superuser": false,
+      "key_select": false,
+      "regions_read": false,
+      "configuration_revision_read": false
+    }
+  },
+  "browser_login_page": "127.0.0.1 login rendered; warn/error empty; no account operation",
+  "localhost_session_observation": "localhost/login redirected through an existing session to the workbench; read-only observation only, temporary tab closed without account or MFA action"
+}

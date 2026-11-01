@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-01",
+  "fixture_only": true,
+  "binary_sha256": "997a421130fb42f98d3c18302d1e8663259f36d3cc193dc722e512a22114b126",
+  "authoritative_postgresql": {
+    "users": 4,
+    "audits": 11,
+    "outbox": [
+      {
+        "state": "sent",
+        "attempt": 1,
+        "generation": 1,
+        "lease_cleared": true,
+        "payload_erased": true
+      },
+      {
+        "state": "sent",
+        "attempt": 1,
+        "generation": 1,
+        "lease_cleared": true,
+        "payload_erased": true
+      }
+    ],
+    "proofs": [
+      {
+        "purpose": "registration",
+        "consumed": true,
+        "registration_secret_erased": true
+      },
+      {
+        "purpose": "password_reset",
+        "consumed": true,
+        "registration_secret_erased": true
+      }
+    ],
+    "members": [
+      {
+        "role": "owner",
+        "allow_all_models": false
+      }
+    ],
+    "tenants": 1,
+    "api_keys": 0,
+    "journals": 0,
+    "new_user": {
+      "role": "none",
+      "mfa_enabled": false,
+      "email_verified": true,
+      "password_revision": "2"
+    },
+    "settlements": 0,
+    "reservations": 0,
+    "credit_orders": 0,
+    "journal_lines": 0,
+    "live_families": 2,
+    "member_grants": 0,
+    "tenant_grants": 0,
+    "request_records": 0,
+    "revoked_families": 2,
+    "upstream_attempts": 0,
+    "procurement_accounts": 0,
+    "procurement_reservations": 0
+  },
+  "http_checks": {
+    "get_link_no_mutation": {
+      "users": 3,
+      "proofs": 1,
+      "tenants": 0,
+      "consumed": 0
+    },
+    "registration_complete_no_cookie": true,
+    "registration_replay_rejected": true,
+    "password_reset_no_cookie": true,
+    "old_session_revoked": true,
+    "old_password_rejected": true,
+    "new_password_accepted": true,
+    "reset_proof_replay_rejected": true
+  },
+  "ui_boundary": "Request email, GET proof display/URL clearing and login verified in browser; creation/password change executed via isolated HTTP, not claimed as UI submission.",
+  "browser_checks": {
+    "email_requests_accepted": 2,
+    "registration_fragment_removed": true,
+    "reset_fragment_removed": true,
+    "registration_get_did_not_create_or_consume": true,
+    "login_before_and_after_reset": true,
+    "zero_entitlements_and_no_authorized_models_visible": true,
+    "explicit_login_clears_cached_identity": true,
+    "responsive": {
+      "width": 390,
+      "height": 844,
+      "body": 390,
+      "main": 390
+    },
+    "console_warn_error_count": 0,
+    "history_and_storage_boundary": "Unit/source tests; restricted browser read-only DOM scope does not expose history/storage APIs.",
+    "new_credential_creation_or_change_in_browser": false,
+    "existing_credentials_used_for_login_only": true
+  },
+  "diagnostic_log_secret_scan": {
+    "files": 1,
+    "raw_passwords_or_tokens_found": 0
+  }
+}

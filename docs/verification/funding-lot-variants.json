@@ -1,0 +1,228 @@
+{
+  "format_version": 1,
+  "recorded_date": "2026-11-02",
+  "scope": "local_postgresql_metadata_only",
+  "artifact_kind": "unreviewed_descriptor_candidate",
+  "candidate_directory": ".local/c0-catalog-candidates/five-variants-20261102-final01",
+  "candidate_summary_sha256": "c7d49597402033d291ff0ce8339fa649f1ece532352f37f204b0901ec5457f91",
+  "formal_expected_accepted_by_this_slice": false,
+  "production_accepted": false,
+  "installation_proof_issued": false,
+  "epoch_issued": false,
+  "runtime_proof_issued": false,
+  "postgres": {
+    "major": 16,
+    "version": "16.15 (Homebrew)",
+    "database": "moni_test",
+    "host": "127.0.0.1",
+    "port": 55439
+  },
+  "variants": [
+    "named-isolated",
+    "named-minimal-login",
+    "named-image-login",
+    "public-minimal-login",
+    "public-image-login"
+  ],
+  "independent_rounds_per_variant": 2,
+  "installations_cleaned_before_publish": 10,
+  "tests": [
+    {
+      "scope": "five_variant_real_install_acl_and_injected_ddl_failure",
+      "race": true,
+      "exit": 0,
+      "package_seconds": 6.157
+    },
+    {
+      "scope": "old_full_schema_and_exact_worker_projection",
+      "race": true,
+      "exit": 0,
+      "package_seconds": 11.933
+    },
+    {
+      "scope": "ten_installation_reproducible_export_with_stable_package_source_pins",
+      "race": true,
+      "exit": 0,
+      "test_seconds": 50.34,
+      "package_seconds": 52.029
+    },
+    {
+      "scope": "final_own_real_pg_regressions_export_opt_in_skipped_separately_run_above",
+      "race": true,
+      "exit": 0,
+      "package_seconds": 14.066
+    },
+    {
+      "scope": "go_vet_package",
+      "exit": 0
+    }
+  ],
+  "cleanup_audit": {
+    "fixture_roles": 0,
+    "fixture_schemas": 0,
+    "fixture_databases": 0,
+    "shared_public_owner": "pg_database_owner",
+    "shared_public_acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}",
+    "shared_public_relations": 0
+  },
+  "file_modes": "0600",
+  "directory_mode": "0700",
+  "files": [
+    {
+      "name": "ordinary-named-image-login-roles.json",
+      "sha256": "b1a1c15e35149789b1cba3ecb58197704b0e6c1a4c296d26efc0fbd33ee58f5f",
+      "bytes": 2540281
+    },
+    {
+      "name": "ordinary-named-image-login-schema.json",
+      "sha256": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+      "bytes": 6430551
+    },
+    {
+      "name": "ordinary-named-isolated-roles.json",
+      "sha256": "b032e7b1626df0cb1fc3160619d808fd382c966ccb66258a61cc3fb1e29b3609",
+      "bytes": 2540288
+    },
+    {
+      "name": "ordinary-named-isolated-schema.json",
+      "sha256": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+      "bytes": 6430551
+    },
+    {
+      "name": "ordinary-named-minimal-login-roles.json",
+      "sha256": "d7d632a6e77082c79a5dce0e558fe46e9d37c02c4c63702371f4dd84fbd41b62",
+      "bytes": 2540287
+    },
+    {
+      "name": "ordinary-named-minimal-login-schema.json",
+      "sha256": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+      "bytes": 6430551
+    },
+    {
+      "name": "ordinary-public-image-login-roles.json",
+      "sha256": "864d06014ceb1a5bc28bafcbf81b216dc0476abc2b2bf61fb380f7d2952173b3",
+      "bytes": 2540640
+    },
+    {
+      "name": "ordinary-public-image-login-schema.json",
+      "sha256": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+      "bytes": 6430368
+    },
+    {
+      "name": "ordinary-public-minimal-login-roles.json",
+      "sha256": "4c8037ece6c9a07569c922b31088188e30f593021413bad656ef36e356a2b644",
+      "bytes": 2540646
+    },
+    {
+      "name": "ordinary-public-minimal-login-schema.json",
+      "sha256": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+      "bytes": 6430368
+    }
+  ],
+  "capture_source_pins": [
+    {
+      "name": "internal/fundinglotcatalog/canonical.go",
+      "sha256": "700faa1a08abd07a3ac002bf1e516ad15c3fac924e547807c0393438aa3b2918"
+    },
+    {
+      "name": "internal/fundinglotcatalog/collector.go",
+      "sha256": "083b4a90f6fe8035e328c16af5ab3710673e0f38a061053d739c513832a7caea"
+    },
+    {
+      "name": "internal/fundinglotcatalog/collector_builtins.go",
+      "sha256": "9f52acb41fa9597530a64014e3a1a96442a182182252541375ac1ccecbd8ea7a"
+    },
+    {
+      "name": "internal/fundinglotcatalog/collector_normal.go",
+      "sha256": "9b8611d8046e6503069a499ad4c7e72536a6984407ada63a55d54530c76577d2"
+    },
+    {
+      "name": "internal/fundinglotcatalog/collector_preflight.go",
+      "sha256": "0944c34525fc0ba0b809afa434cefd33b28bdaf7fc65930e4f7c94d08d819aa4"
+    },
+    {
+      "name": "internal/fundinglotcatalog/collector_pure_test.go",
+      "sha256": "804f691f96c411f93e6f99987a0e4e3b78973f24040bb18ff02c20c2ac6fa540"
+    },
+    {
+      "name": "internal/fundinglotcatalog/collector_queries.go",
+      "sha256": "4ae5866f79f382d6cb646f7cd4d3d860ebdce94010d79dea8606d51a206487f1"
+    },
+    {
+      "name": "internal/fundinglotcatalog/collector_resolve.go",
+      "sha256": "ef55b741fd892fb59885fe0901b08e773cdb3bef68a83cce1f44f22a0de619e4"
+    },
+    {
+      "name": "internal/fundinglotcatalog/descriptor.go",
+      "sha256": "a252815add6a0ace1d9526dd5393d17193fed0ae8884be17de4517928d0e1a98"
+    },
+    {
+      "name": "internal/fundinglotcatalog/descriptor_compare.go",
+      "sha256": "ea694877656b86dd23dc8183b178c3fa5510a5af37f54e27ec12c2916229a415"
+    },
+    {
+      "name": "internal/fundinglotcatalog/descriptor_fields.go",
+      "sha256": "825c5ed7eabcbaf7c28d3f05b4bac0997cb42d07ef06c62a9245eef963107302"
+    },
+    {
+      "name": "internal/fundinglotcatalog/descriptor_types.go",
+      "sha256": "12bcb2bba6f2056b3f7d44aa3c81ba650e895794c26819dae04233ccdfb42742"
+    },
+    {
+      "name": "internal/fundinglotcatalog/descriptor_validate.go",
+      "sha256": "da55c6af38fb2adac9133c45c136f4e6528107df257734ec9554af6c18e1fc79"
+    },
+    {
+      "name": "internal/fundinglotcatalog/expected.go",
+      "sha256": "dda7f65e8bdbd8fd4df099a63a2bf340bd1cc78b33678389604c9660adf8a1e4"
+    },
+    {
+      "name": "internal/fundinglotcatalog/identity.go",
+      "sha256": "aaeb616d86cfa56ebcfe84401592e7c8f75fe6ec812e8ca96e7bc94c5e2f45a8"
+    },
+    {
+      "name": "internal/fundinglotcatalog/peer_capture_test.go",
+      "sha256": "d698ba4cb86e7028d15525838b416d6db12fbc85aaacd92889a1d8321a8d49dc"
+    },
+    {
+      "name": "internal/fundinglotcatalog/peer_fixture_test.go",
+      "sha256": "84a2607a90695ba9e5602c895e16f5fe931e86ace59baa62f2f33f61f12193d5"
+    },
+    {
+      "name": "internal/fundinglotcatalog/peers.go",
+      "sha256": "2ed0ceae1f26b2cfb56175d37bde04cdcc31ff14b899ac2ca6066ff0ea4ced72"
+    },
+    {
+      "name": "internal/fundinglotcatalog/proof.go",
+      "sha256": "c88bd7e1d06e85d9df55ae4db95f9d2531f3911fb2256b26c81652ad76defa4b"
+    },
+    {
+      "name": "internal/fundinglotcatalog/proof_integration_test.go",
+      "sha256": "83050fbb3281d2631bd52881390b6d62bf34d75669436eab0bb5fbaca4e9ba8b"
+    },
+    {
+      "name": "internal/fundinglotcatalog/proof_test.go",
+      "sha256": "fd82cd5135c5ad5784cfd135d5c5b6157736c7de9e29353f55076e79fa3acde7"
+    },
+    {
+      "name": "internal/fundinglotcatalog/types.go",
+      "sha256": "f39db7853fca1e9962da2d2c00c813f3ee4753609ecc959cb7f389627faf81ea"
+    },
+    {
+      "name": "internal/fundinglotcatalog/variants_fixture_test.go",
+      "sha256": "3c92e8fcb6808afa5df82f3d0d7f12a0f3b82fd81f30cb6b5afcd32d50d9ee31"
+    }
+  ],
+  "capture_source_pin_scope": "all package Go sources identical before and after capture; subsequent root acceptance/embed changes are separately reviewed",
+  "ddl_sha256": "e61eb57ec2697fce94be6bac4dd306c86f8b05a339541339dd0fd554f3632047",
+  "ordinary_acl_sha256": "864a3e5b19a9e7d21d98b6557abf1d4903ca6ced438f1ec0259e786582b0d74e",
+  "reviewed_variant_differences": {
+    "named_schema_equal_across_three_owner_profiles": true,
+    "public_schema_equal_across_two_owner_profiles": true,
+    "named_minimal_roles_vs_isolated": "application_owner.login false to true only",
+    "image_roles_vs_isolated": "application_owner seven boolean role flags false to true only",
+    "public_schema_vs_named": "namespace owner builtin pg_database_owner OID6171; one namespace pg_shdepend owner edge absent (6848 to 6847), no other schema change",
+    "public_roles_additional_change": "schema ACL builtin owner/grantor/default entries and retained PUBLIC USAGE; no PUBLIC CREATE",
+    "all_other_role_categories_identical": true
+  }
+}

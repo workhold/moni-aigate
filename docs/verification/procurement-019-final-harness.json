@@ -1,0 +1,41 @@
+{
+  "run_id": "cc4a68ba-8d29-4423-9129-16fd631101b6",
+  "status": "stopped",
+  "created_at": "2026-10-31T17:59:23.025747Z",
+  "app_origin": "http://127.0.0.1:62167",
+  "mock_origin": "http://127.0.0.1:62173",
+  "harness_pid": 70880,
+  "serve_pid": 70888,
+  "binary": "/Users/liminghan/Documents/moni-aigate/bin/moni-aigate",
+  "binary_sha256": "d62e42931573442fd50eb71962d4bc6c251308652dd56e8c3626eb571bdc7400",
+  "schema": "browser_qa_9ee07db2596842a2",
+  "database": "moni_test",
+  "app_role": "bqa_app_9ee07db2596842a2",
+  "projection_role": "bqa_projection_9ee07db2596842a2",
+  "mock_counts": {
+    "directory_gets": 0,
+    "chat_posts": 1,
+    "chat_json_posts": 0,
+    "chat_sse_posts": 1,
+    "auth_rejected": 0,
+    "unsupported": 0
+  },
+  "business_counts": {
+    "platform_probe_attempts": 0,
+    "customer_upstream_attempts": 1,
+    "customer_requests": 1,
+    "settlements": 1
+  },
+  "counter_source": "mock counts are actual authenticated HTTP requests; platform/customer attempt counts come from separate authoritative PostgreSQL tables",
+  "counter_read_valid": true,
+  "counter_read_at": "2026-10-31T18:00:52.758827Z",
+  "serve_shutdown": "graceful",
+  "cleanup_verified": {
+    "roles_remaining": 0,
+    "schema_remaining": 0,
+    "listeners_closed": true,
+    "custom_private_file_removed": true,
+    "manifest_no_passwords": true,
+    "manifest_no_provider_secret": true
+  }
+}

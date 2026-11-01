@@ -1,0 +1,933 @@
+{
+  "tables": [
+    {
+      "name": "receiver_conflicts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "inbox_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "observed_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "delivery_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "delivery_time",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "signing_key_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "receiver_environment",
+      "columns": [
+        {
+          "name": "singleton",
+          "type": "boolean",
+          "default": "true",
+          "not_null": true
+        },
+        {
+          "name": "environment_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "merchant_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "database_oid",
+          "type": "oid",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_schema_name",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_schema_oid",
+          "type": "oid",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_owner",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_runtime",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "state_directory_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "nonce_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "callback_url",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "protocol_version",
+          "type": "integer",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "receiver_inbox",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "environment_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "merchant_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "event_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "business_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "canonical_body",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "first_delivery_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "delivery_time",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "signing_key_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "verified_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "receiver_receipts",
+      "columns": [
+        {
+          "name": "inbox_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receipt_id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        },
+        {
+          "name": "receipt_data",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receipt_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "receiver_schema_migrations",
+      "columns": [
+        {
+          "name": "version",
+          "type": "integer",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "sha256",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "applied_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "receiver_signing_keys",
+      "columns": [
+        {
+          "name": "key_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "key_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "not_before",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "not_after",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        }
+      ]
+    }
+  ],
+  "indexes": [
+    {
+      "name": "receiver_conflicts_inbox_id_delivery_id_observed_digest_key",
+      "table": "receiver_conflicts",
+      "definition": "CREATE UNIQUE INDEX receiver_conflicts_inbox_id_delivery_id_observed_digest_key ON __SCHEMA__.receiver_conflicts USING btree (inbox_id, delivery_id, observed_digest)"
+    },
+    {
+      "name": "receiver_conflicts_pkey",
+      "table": "receiver_conflicts",
+      "definition": "CREATE UNIQUE INDEX receiver_conflicts_pkey ON __SCHEMA__.receiver_conflicts USING btree (id)"
+    },
+    {
+      "name": "receiver_environment_environment_id_key",
+      "table": "receiver_environment",
+      "definition": "CREATE UNIQUE INDEX receiver_environment_environment_id_key ON __SCHEMA__.receiver_environment USING btree (environment_id)"
+    },
+    {
+      "name": "receiver_environment_environment_id_merchant_id_key",
+      "table": "receiver_environment",
+      "definition": "CREATE UNIQUE INDEX receiver_environment_environment_id_merchant_id_key ON __SCHEMA__.receiver_environment USING btree (environment_id, merchant_id)"
+    },
+    {
+      "name": "receiver_environment_pkey",
+      "table": "receiver_environment",
+      "definition": "CREATE UNIQUE INDEX receiver_environment_pkey ON __SCHEMA__.receiver_environment USING btree (singleton)"
+    },
+    {
+      "name": "receiver_inbox_environment_id_merchant_id_event_id_key",
+      "table": "receiver_inbox",
+      "definition": "CREATE UNIQUE INDEX receiver_inbox_environment_id_merchant_id_event_id_key ON __SCHEMA__.receiver_inbox USING btree (environment_id, merchant_id, event_id)"
+    },
+    {
+      "name": "receiver_inbox_pkey",
+      "table": "receiver_inbox",
+      "definition": "CREATE UNIQUE INDEX receiver_inbox_pkey ON __SCHEMA__.receiver_inbox USING btree (id)"
+    },
+    {
+      "name": "receiver_receipts_pkey",
+      "table": "receiver_receipts",
+      "definition": "CREATE UNIQUE INDEX receiver_receipts_pkey ON __SCHEMA__.receiver_receipts USING btree (inbox_id)"
+    },
+    {
+      "name": "receiver_receipts_receipt_id_key",
+      "table": "receiver_receipts",
+      "definition": "CREATE UNIQUE INDEX receiver_receipts_receipt_id_key ON __SCHEMA__.receiver_receipts USING btree (receipt_id)"
+    },
+    {
+      "name": "receiver_schema_migrations_pkey",
+      "table": "receiver_schema_migrations",
+      "definition": "CREATE UNIQUE INDEX receiver_schema_migrations_pkey ON __SCHEMA__.receiver_schema_migrations USING btree (version)"
+    },
+    {
+      "name": "receiver_signing_keys_key_digest_key",
+      "table": "receiver_signing_keys",
+      "definition": "CREATE UNIQUE INDEX receiver_signing_keys_key_digest_key ON __SCHEMA__.receiver_signing_keys USING btree (key_digest)"
+    },
+    {
+      "name": "receiver_signing_keys_pkey",
+      "table": "receiver_signing_keys",
+      "definition": "CREATE UNIQUE INDEX receiver_signing_keys_pkey ON __SCHEMA__.receiver_signing_keys USING btree (key_id)"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "function": "receiver_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "receiver_complete",
+      "type": 5,
+      "table": "receiver_conflicts",
+      "deferred": true,
+      "function": "receiver_complete_guard",
+      "deferrable": true
+    },
+    {
+      "name": "receiver_input",
+      "type": 7,
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "function": "receiver_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "receiver_environment",
+      "deferred": false,
+      "function": "receiver_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "owner_insert",
+      "type": 7,
+      "table": "receiver_environment",
+      "deferred": false,
+      "function": "receiver_owner_insert",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "receiver_inbox",
+      "deferred": false,
+      "function": "receiver_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "receiver_complete",
+      "type": 5,
+      "table": "receiver_inbox",
+      "deferred": true,
+      "function": "receiver_complete_guard",
+      "deferrable": true
+    },
+    {
+      "name": "receiver_input",
+      "type": 7,
+      "table": "receiver_inbox",
+      "deferred": false,
+      "function": "receiver_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "receiver_receipts",
+      "deferred": false,
+      "function": "receiver_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "receiver_complete",
+      "type": 5,
+      "table": "receiver_receipts",
+      "deferred": true,
+      "function": "receiver_complete_guard",
+      "deferrable": true
+    },
+    {
+      "name": "receiver_input",
+      "type": 7,
+      "table": "receiver_receipts",
+      "deferred": false,
+      "function": "receiver_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "receiver_schema_migrations",
+      "deferred": false,
+      "function": "receiver_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "owner_insert",
+      "type": 7,
+      "table": "receiver_schema_migrations",
+      "deferred": false,
+      "function": "receiver_owner_insert",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "receiver_signing_keys",
+      "deferred": false,
+      "function": "receiver_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "owner_insert",
+      "type": 7,
+      "table": "receiver_signing_keys",
+      "deferred": false,
+      "function": "receiver_owner_insert",
+      "deferrable": false
+    }
+  ],
+  "functions": [
+    {
+      "name": "receiver_complete_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "e3b98cd0a7793e02a8f51780782b40f49aa9970d49262661a93b0664d77b60c1"
+    },
+    {
+      "name": "receiver_fields",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "j jsonb, required text[]",
+      "volatility": "i",
+      "source_sha256": "b9f84bf8dd229bcfb320ad8ef2e541d0b3b21bc2d3149bd0ade25c47e0ed9962"
+    },
+    {
+      "name": "receiver_hash",
+      "strict": true,
+      "returns": "text",
+      "language": "sql",
+      "arguments": "v bytea",
+      "volatility": "i",
+      "source_sha256": "19bb5d0a2d0136e0c55a4eaff303bde9720b38b9faed9f62da3d375acf5621ae"
+    },
+    {
+      "name": "receiver_immutable",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "affa5167f32cdef7285b97e2373be806727f606d00b8c31c19a7090276b44011"
+    },
+    {
+      "name": "receiver_input_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "0ad118c6abf29ae80fd159deb87a3914443fdbb672def96037ccc9eab503ddd5"
+    },
+    {
+      "name": "receiver_json",
+      "strict": true,
+      "returns": "jsonb",
+      "language": "sql",
+      "arguments": "v bytea",
+      "volatility": "i",
+      "source_sha256": "8a07b00053bbef7e570c86e46595fd00be5a0a54e4ed792b3db01f008385009b"
+    },
+    {
+      "name": "receiver_owner_insert",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "960e636ab232fad6cb9bc6f6e9c03140c707a83cf6ba311f516a1c0987f37dff"
+    },
+    {
+      "name": "receiver_ref",
+      "strict": true,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "v text",
+      "volatility": "i",
+      "source_sha256": "f6904f466854613d6d727eba21edffccf7969e3c9e24a93a48920aa3df7b61b5"
+    },
+    {
+      "name": "receiver_strings",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "j jsonb, names text[]",
+      "volatility": "i",
+      "source_sha256": "228f89eb9b17de97d44f4e4d37a2f7bbb4828ffbb8d7686711b6dfc3fb2682b9"
+    },
+    {
+      "name": "receiver_uuid",
+      "strict": true,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "v text",
+      "volatility": "i",
+      "source_sha256": "727462888983f40b562685077fcf6553e8354b296b58d68f3d350e2b8326110c"
+    }
+  ],
+  "constraints": [
+    {
+      "name": "receiver_complete",
+      "type": "t",
+      "table": "receiver_conflicts",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "receiver_conflicts_delivery_id_check",
+      "type": "c",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_uuid(delivery_id))"
+    },
+    {
+      "name": "receiver_conflicts_delivery_time_check",
+      "type": "c",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((delivery_time >= 0) AND (delivery_time <= '253402300799'::bigint)))"
+    },
+    {
+      "name": "receiver_conflicts_id_check",
+      "type": "c",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_uuid(id))"
+    },
+    {
+      "name": "receiver_conflicts_inbox_id_delivery_id_observed_digest_key",
+      "type": "u",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (inbox_id, delivery_id, observed_digest)"
+    },
+    {
+      "name": "receiver_conflicts_inbox_id_fkey",
+      "type": "f",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (inbox_id) REFERENCES receiver_inbox(id)"
+    },
+    {
+      "name": "receiver_conflicts_observed_digest_check",
+      "type": "c",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((observed_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "receiver_conflicts_pkey",
+      "type": "p",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "receiver_conflicts_signing_key_id_fkey",
+      "type": "f",
+      "table": "receiver_conflicts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (signing_key_id) REFERENCES receiver_signing_keys(key_id)"
+    },
+    {
+      "name": "receiver_environment_environment_id_check",
+      "type": "c",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_uuid(environment_id))"
+    },
+    {
+      "name": "receiver_environment_environment_id_key",
+      "type": "u",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (environment_id)"
+    },
+    {
+      "name": "receiver_environment_environment_id_merchant_id_key",
+      "type": "u",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (environment_id, merchant_id)"
+    },
+    {
+      "name": "receiver_environment_merchant_id_check",
+      "type": "c",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_ref(merchant_id))"
+    },
+    {
+      "name": "receiver_environment_nonce_digest_check",
+      "type": "c",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((nonce_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "receiver_environment_pkey",
+      "type": "p",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (singleton)"
+    },
+    {
+      "name": "receiver_environment_protocol_version_check",
+      "type": "c",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((protocol_version = 1))"
+    },
+    {
+      "name": "receiver_environment_singleton_check",
+      "type": "c",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (singleton)"
+    },
+    {
+      "name": "receiver_environment_state_directory_id_check",
+      "type": "c",
+      "table": "receiver_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_uuid(state_directory_id))"
+    },
+    {
+      "name": "receiver_complete",
+      "type": "t",
+      "table": "receiver_inbox",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "receiver_inbox_business_digest_check",
+      "type": "c",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((business_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "receiver_inbox_canonical_body_check",
+      "type": "c",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(canonical_body) >= 1) AND (octet_length(canonical_body) <= 65536)))"
+    },
+    {
+      "name": "receiver_inbox_check",
+      "type": "c",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((business_digest = receiver_hash(canonical_body)))"
+    },
+    {
+      "name": "receiver_inbox_delivery_time_check",
+      "type": "c",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((delivery_time >= 0) AND (delivery_time <= '253402300799'::bigint)))"
+    },
+    {
+      "name": "receiver_inbox_environment_id_merchant_id_event_id_key",
+      "type": "u",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (environment_id, merchant_id, event_id)"
+    },
+    {
+      "name": "receiver_inbox_environment_id_merchant_id_fkey",
+      "type": "f",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (environment_id, merchant_id) REFERENCES receiver_environment(environment_id, merchant_id)"
+    },
+    {
+      "name": "receiver_inbox_event_id_check",
+      "type": "c",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_ref(event_id))"
+    },
+    {
+      "name": "receiver_inbox_first_delivery_id_check",
+      "type": "c",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_uuid(first_delivery_id))"
+    },
+    {
+      "name": "receiver_inbox_id_check",
+      "type": "c",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_uuid(id))"
+    },
+    {
+      "name": "receiver_inbox_pkey",
+      "type": "p",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "receiver_inbox_signing_key_id_fkey",
+      "type": "f",
+      "table": "receiver_inbox",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (signing_key_id) REFERENCES receiver_signing_keys(key_id)"
+    },
+    {
+      "name": "receiver_complete",
+      "type": "t",
+      "table": "receiver_receipts",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "receiver_receipts_check",
+      "type": "c",
+      "table": "receiver_receipts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((receipt_digest = receiver_hash(receipt_data)))"
+    },
+    {
+      "name": "receiver_receipts_inbox_id_fkey",
+      "type": "f",
+      "table": "receiver_receipts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (inbox_id) REFERENCES receiver_inbox(id)"
+    },
+    {
+      "name": "receiver_receipts_pkey",
+      "type": "p",
+      "table": "receiver_receipts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (inbox_id)"
+    },
+    {
+      "name": "receiver_receipts_receipt_data_check",
+      "type": "c",
+      "table": "receiver_receipts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(receipt_data) >= 1) AND (octet_length(receipt_data) <= 8192)))"
+    },
+    {
+      "name": "receiver_receipts_receipt_digest_check",
+      "type": "c",
+      "table": "receiver_receipts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((receipt_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "receiver_receipts_receipt_id_check",
+      "type": "c",
+      "table": "receiver_receipts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (receiver_uuid(receipt_id))"
+    },
+    {
+      "name": "receiver_receipts_receipt_id_key",
+      "type": "u",
+      "table": "receiver_receipts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (receipt_id)"
+    },
+    {
+      "name": "receiver_schema_migrations_pkey",
+      "type": "p",
+      "table": "receiver_schema_migrations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (version)"
+    },
+    {
+      "name": "receiver_schema_migrations_sha256_check",
+      "type": "c",
+      "table": "receiver_schema_migrations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "receiver_schema_migrations_version_check",
+      "type": "c",
+      "table": "receiver_schema_migrations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((version = 1))"
+    },
+    {
+      "name": "receiver_signing_keys_check",
+      "type": "c",
+      "table": "receiver_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((not_before <= not_after) AND (not_before >= '0001-01-01 08:05:43+08:05:43'::timestamp with time zone) AND (not_after < '10000-01-01 08:00:00+08'::timestamp with time zone) AND (not_before <> '0001-01-01 08:05:43+08:05:43'::timestamp with time zone) AND (not_after <> '0001-01-01 08:05:43+08:05:43'::timestamp with time zone)))"
+    },
+    {
+      "name": "receiver_signing_keys_key_digest_check",
+      "type": "c",
+      "table": "receiver_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((key_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "receiver_signing_keys_key_digest_key",
+      "type": "u",
+      "table": "receiver_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (key_digest)"
+    },
+    {
+      "name": "receiver_signing_keys_key_id_check",
+      "type": "c",
+      "table": "receiver_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((key_id ~ '^[A-Za-z0-9_-]{1,32}$'::text))"
+    },
+    {
+      "name": "receiver_signing_keys_pkey",
+      "type": "p",
+      "table": "receiver_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (key_id)"
+    }
+  ],
+  "sql_sha256": "3c1a4956b55ef058ad6a927e678bf026017a4f3d23bc60d19cb02640e98f433e"
+}

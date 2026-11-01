@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-31T06:30:22.083047+00:00",
+  "scope": "014 isolated browser QA harness, synthetic local fixtures only",
+  "browser_run": {
+    "run_id": "eeb621b8-7cd3-4eea-82b0-d0a67f56b80f",
+    "status": "stopped",
+    "application_binary_sha256": "a75d1a8d976ad7f875be530fd8a163ab0695958be9d7b3d26e86a09dd41c8f08",
+    "harness_runtime": "Started before the final harness source revision; the browser run and final-source lifecycle tests are separate evidence.",
+    "mock_counts": {
+      "directory_gets": 1,
+      "chat_json_posts": 1,
+      "chat_sse_posts": 2,
+      "auth_rejected": 0,
+      "unsupported": 0
+    },
+    "database_counts": {
+      "platform_probe_attempts": 0,
+      "customer_upstream_attempts": 3,
+      "customer_requests": 3,
+      "settlements": 3
+    },
+    "counter_basis": "The original runtime counts authenticated successfully decoded Chat JSON and SSE requests. It does not expose an independent total POST counter or shutdown-outcome field. The three successful Chat forms agree with three persisted customer attempts/requests/settlements; no platform probes occurred.",
+    "shutdown": {
+      "requested_signal": "SIGTERM",
+      "harness_exit_code": 0,
+      "explicit_serve_shutdown_outcome_in_old_manifest": false,
+      "own_schema_and_roles_absent": true,
+      "synthetic_credential_fields_removed_from_final_manifest": true
+    }
+  },
+  "final_source": {
+    "sha256": {
+      "scripts/browser-qa/main.go": "6c1585cd6fc4f41ab1cdb019f1a5048c41bc5693c9798fe15079d4795404e9f3",
+      "scripts/browser-qa/main_test.go": "5d261c15c9204f19751154dc16f657d2ab067bb66aa4c73815bf9e9271f4d0bc"
+    },
+    "application_binary_sha256": "a75d1a8d976ad7f875be530fd8a163ab0695958be9d7b3d26e86a09dd41c8f08"
+  },
+  "final_source_validation": {
+    "command": "BROWSER_QA_REAL_MAIN_TEST=1 BROWSER_QA_ERROR_TEST=1 go test -race ./scripts/browser-qa -count=1 -v",
+    "explicit_loopback_test_database": true,
+    "result": "PASS",
+    "package_seconds": 10.632,
+    "normal_actual_main_cycles": 2,
+    "normal_cycle_assertions": {
+      "actual_final_binary_bootstrap_and_serve": true,
+      "actual_non_owner_app_and_projection_login_roles": true,
+      "formal_migrations_and_minimal_role_provisioning": true,
+      "synthetic_identity_count": 3,
+      "preseeded_tenants": 0,
+      "preseeded_keys": 0,
+      "preseeded_credits": 0,
+      "preseeded_requests": 0,
+      "ready_and_non_recovery": true,
+      "serve_sigterm_exit_graceful": true,
+      "mock_and_application_listeners_closed": true,
+      "own_schema_and_roles_removed": true,
+      "final_counter_snapshot_valid": true,
+      "synthetic_credential_fields_removed": true
+    },
+    "startup_failure_cleanup": "PASS: a synthetic failing bootstrap command before serve; own schema and roles removed.",
+    "tests_passed": [
+      "TestBrowserQARejectsNonTestOrNonLocalDatabase",
+      "TestBrowserQARejectsReviewPortAndCreatesPrivateFiles",
+      "TestBrowserQAChildOutputIsBoundedAndCannotReflectSecrets",
+      "TestBrowserQAMockRealProviderJSONSSEAndProbeUsage",
+      "TestBrowserQARealMainLifecycle",
+      "TestBrowserQAFailedBootstrapCleansOwnedResources"
+    ],
+    "vet_command": "go vet ./scripts/browser-qa",
+    "vet_result": "PASS",
+    "initial_test_correction": "Stopped JSON was unmarshalled into a previously populated ready struct, causing a test-only stale-field false positive. Resetting the target struct fixed the assertion; credential fields were absent from the stopped file."
+  },
+  "final_cleanup": {
+    "remaining_harness_schemas": 0,
+    "remaining_harness_roles": 0,
+    "review_instance_port_excluded_by_listener_contract": 58123
+  },
+  "limits": [
+    "No formal supplier or paid-call certification",
+    "No real customer or reviewer identity changes",
+    "No production deployment, network-partition, offsite recovery or performance qualification"
+  ]
+}

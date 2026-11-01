@@ -1,0 +1,32 @@
+{
+  "run_id": "b90500fc-a0e6-4d8d-b2ca-d6cb5dfb6cb0",
+  "status": "stopped",
+  "app_origin": "http://127.0.0.1:60907",
+  "mock_origin": "http://127.0.0.1:60912",
+  "binary_sha256": "6721ece544ff3a81d057856186f31961e65ac91eb71a7067ddf0d338a40fc28e",
+  "mock_counts": {
+    "directory_gets": 0,
+    "chat_posts": 2,
+    "chat_json_posts": 1,
+    "chat_sse_posts": 1,
+    "auth_rejected": 0,
+    "unsupported": 0
+  },
+  "business_counts": {
+    "platform_probe_attempts": 0,
+    "customer_upstream_attempts": 2,
+    "customer_requests": 2,
+    "settlements": 2
+  },
+  "counter_read_valid": true,
+  "serve_shutdown": "graceful",
+  "database_resources_absent": true,
+  "listeners_closed": {
+    "app_origin": true,
+    "mock_origin": true
+  },
+  "manifest_credentials_cleared": true,
+  "extra_private_file_removed": true,
+  "browser_session_logged_out_and_closed": true,
+  "tool_credentials_cleared": true
+}

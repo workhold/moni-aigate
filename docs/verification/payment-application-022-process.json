@@ -1,0 +1,118 @@
+{
+  "artifact": "022-B3 ordinary main and mock process acceptance",
+  "date": "2026-11-01",
+  "pass": true,
+  "scope": "Dedicated PostgreSQL, isolated local payment sandbox, final embedded web bundle; no live PSP",
+  "command": "go run ./scripts/payment-application-qa --require-database --process --browser-hold",
+  "runner": "scripts/payment-application-qa",
+  "contract": "specs/022-self-service-payments/b3-application-qa-contract.md",
+  "database": {
+    "host": "127.0.0.1",
+    "port": 55439,
+    "name": "moni_test",
+    "isolation": "Three randomly named schemas, three NOLOGIN owners and five actual runtime LOGINs; original nonempty 019 manual funding retained before current migration upgrade",
+    "ordinary_main_instance_lock_window": "Exclusively assigned by the root integrator; released after final cleanup"
+  },
+  "final_binaries": {
+    "ordinary_main_sha256": "c8ee58158d2f5818a2ab26de4cfc645dce32458820387c5965d679dbf54fe236",
+    "mock_sha256": "37ca0557811327e1b012cfd887b18e0b63489420101e873845ba67d9f24f9e32",
+    "built_from_current_source": true,
+    "final_web_dist_embedded": true
+  },
+  "actual_pass_stages": [
+    "current_source_process_builds",
+    "real_main_mock_http_readiness",
+    "second_main_refused_by_instance_lock",
+    "real_cookie_csrf_admin_owner_optional_mfa",
+    "http_publish_activate_sku_and_policy",
+    "real_callback_worker_unique_funding_duplicate_ack_operation_replay",
+    "recovery_real_query_only_no_mutation_no_evidence_funding",
+    "provider_commit_http_reply_drop_original_command_query_recovery",
+    "actual_worker_query_frozen_replay_and_original_a_unchanged",
+    "attested_off_historical_capture_closed_new_orders_refused",
+    "sigterm_drain_sigkill_after_confirmed_commit_same_funding_identity",
+    "ordinary_off_with_sandbox_history_refused_before_listener_worker",
+    "browser_window_ready",
+    "retained_a_funding_unchanged",
+    "exact_eight_role_environment_cleanup"
+  ],
+  "process_evidence": {
+    "readiness": "Ordinary main /health/ready and both mock listeners' real HTTP authorization refusals, with child exit observation",
+    "second_instance_refusal_reason": "another active instance holds the service lock",
+    "authentication": "Random offline QA users, bcrypt passwords, actual HTTP login cookie and CSRF token; no MFA binding or bypass endpoint",
+    "funding": {
+      "captured_order_count_before_browser_window": 4,
+      "amount_per_order_in_ledger_units": "250",
+      "wallet_available_in_ledger_units": "1000",
+      "wallet_total_credited_in_ledger_units": "1000",
+      "unique_per_order": [
+        "payment capture",
+        "funding receipt",
+        "journal",
+        "credited projection outbox event",
+        "payment.capture.credited audit"
+      ],
+      "journal_line_count_per_order": 2,
+      "source_and_journal_graph_validators_passed": true
+    },
+    "recovery": "Real signed query and incoming capture evidence persisted; observed for three seconds with no provider mutation issuance and no processing of the pending capture into money; HTTP mutation rejected",
+    "provider_reply_loss": "Mock was first stopped to produce a genuine network submission_unknown. After APP exited, a fault was armed for the original command. Recovery queried not_seen without issuing it. Sandbox then resumed the same command; provider committed and dropped the HTTP reply, and a signed query closed it. One provider command/order/transition and consumed fault were verified",
+    "query_replay": "Replayed an actual APP worker child request twice against PSP; exact verified snapshot bytes and signatures remained valid",
+    "attested_off": "An existing ready order captured while APP was stopped was credited by the attested off process; new orders were refused",
+    "ordinary_off": "Without manifests, the actual isolated schema containing marker/history caused service construction refusal before listener/worker startup",
+    "shutdown_scope": "Normal SIGTERM exited successfully, worker/projector connections reached zero, and confirmed funding identities survived restart. SIGKILL was applied only after confirmed commits",
+    "admission": "Only definite 429 with Retry-After=1 was retried, using identical payload and original operation identifier"
+  },
+  "browser_evidence": {
+    "final_browser": "payment-application-022-browser.json",
+    "native_indexeddb_and_two_tab_checks": "payment-application-022-indexeddb.json",
+    "screenshots": [
+      "assets/payment-application-022-platform.png",
+      "assets/payment-application-022-owner.png",
+      "assets/payment-application-022-mobile.png"
+    ],
+    "held_by_the_qa_process": true,
+    "stop_file_observed": true,
+    "credentials_source": "Local 0600 temporary browser state, removed during final cleanup; no credential values retained in this evidence"
+  },
+  "cleanup": {
+    "script_exit_code": 0,
+    "all_owned_children_joined": true,
+    "owned_runtime_login_connections_after_join": 0,
+    "original_nonempty_a_funding_fingerprint_unchanged": true,
+    "exact_schema_count_removed": 3,
+    "exact_role_count_removed": 8,
+    "environment_close_passed": true,
+    "entire_private_root_absent_by_external_filesystem_check": true,
+    "removed_private_material": [
+      "application and worker manifests and secrets",
+      "mock and receiver manifests and secrets",
+      "random QA browser credentials",
+      "subprocess logs",
+      "temporary binaries"
+    ],
+    "ordinary_main_instance_lock_window_released": true,
+    "user_preview_port_58123_untouched": true
+  },
+  "actual_skip_stages": [
+    {
+      "stage": "database_commit_reply_loss_no_wire_fault_facility",
+      "reason": "No genuine database COMMIT reply-loss fault facility was installed; provider HTTP reply loss is a distinct tested boundary"
+    }
+  ],
+  "not_run": [
+    {
+      "scenario": "Actual ordinary-main Guard ownership loss during an in-flight operation",
+      "reason": "Requires a separate exact failure harness; second-instance refusal does not establish ownership-loss behavior"
+    },
+    {
+      "scenario": "SIGTERM during a long in-flight network call",
+      "reason": "This process run proves normal graceful exit, connection drain and confirmed-commit persistence; it does not claim that additional timing window"
+    },
+    {
+      "scenario": "Live PSP and real payment collection",
+      "reason": "Out of local sandbox acceptance scope"
+    }
+  ],
+  "secret_values_retained": false
+}

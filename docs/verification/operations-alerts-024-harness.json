@@ -1,0 +1,51 @@
+{
+  "identity_fixture": false,
+  "voucher_fixture": false,
+  "alerts_fixture": true,
+  "mail_accepted": 0,
+  "mailbox_removed": false,
+  "run_id": "63611465-8014-4a71-9bb1-65719a2ea0b4",
+  "status": "stopped",
+  "created_at": "2026-10-31T21:03:28.614346Z",
+  "app_origin": "http://127.0.0.1:57533",
+  "mock_origin": "http://127.0.0.1:57540",
+  "harness_pid": 70838,
+  "serve_pid": 70858,
+  "binary": "/Users/liminghan/Documents/moni-aigate/bin/moni-aigate",
+  "binary_sha256": "46e01f86f55f1a23bba8613943dfe0a8f5507ca6ab264f3393ea7d931108561b",
+  "schema": "browser_qa_fb8c066ddd43443f",
+  "database": "moni_test",
+  "app_role": "bqa_app_fb8c066ddd43443f",
+  "projection_role": "bqa_projection_fb8c066ddd43443f",
+  "mock_counts": {
+    "directory_gets": 0,
+    "chat_posts": 0,
+    "chat_json_posts": 0,
+    "chat_sse_posts": 0,
+    "auth_rejected": 0,
+    "unsupported": 0
+  },
+  "business_counts": {
+    "platform_probe_attempts": 0,
+    "customer_upstream_attempts": 0,
+    "customer_requests": 0,
+    "settlements": 0,
+    "credit_orders": 0,
+    "funding_receipts": 0,
+    "voucher_redemptions": 0,
+    "commerce_commands": 0,
+    "alert_rules": 2,
+    "alert_episodes": 3,
+    "alert_events": 6,
+    "alert_commands": 5
+  },
+  "counter_source": "mock counts are actual authenticated HTTP requests; platform/customer attempt counts come from separate authoritative PostgreSQL tables",
+  "counter_read_valid": true,
+  "counter_read_at": "2026-10-31T21:12:02.887025Z",
+  "serve_shutdown": "graceful",
+  "resources_remaining": {
+    "schemas": 0,
+    "roles": 0
+  },
+  "private_credentials_cleared": true
+}

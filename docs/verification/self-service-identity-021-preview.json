@@ -1,0 +1,91 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "identity_capabilities": {
+    "email_delivery_configured": false,
+    "registration": {
+      "available": false,
+      "reason": "feature_disabled"
+    },
+    "password_reset": {
+      "available": false,
+      "reason": "mail_not_configured"
+    }
+  },
+  "migration": "016_self_service_identity.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "Revalidated PID 85387, workspace cwd and listener; SIGTERM exited 0 and listener closed before final artifact restart.",
+  "pid": 4350,
+  "binary_sha256": "997a421130fb42f98d3c18302d1e8663259f36d3cc193dc722e512a22114b126",
+  "index_sha256": "e89e7d1869d8fe20ac807a9c707d69517eba593c6b783d7ffb2a2f2f24f066b4",
+  "index_exact_match": true,
+  "assets_exact_match_count": 40,
+  "asset_sha256": {
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "IdentityCompleteView-BqESibB2.js": "447e0fb0d93035ab4fe686655af641465a4a9ae38c88816308c5d063c82d8e66",
+    "IdentityRequestView-CxpA8Bx7.js": "3ca81cfbd14e52be12031080cf4cfd51c5d0b75f194717a19f4ed547f0783e0a",
+    "KeysView-BfFwRsQ_.js": "24104ebe575b29722972bb55efab2414bc48b1b8a41623693032ef1f562ff75d",
+    "KeysView-DGB_doro.css": "d89b2663b9478837efacd2de14b5a00003e218a0d48f3c54c00d12b81da12966",
+    "LoginView-CgiAUHlb.js": "3767abc36d2b7ddf2b381d15dfa40831087693940883840297412416314d36d2",
+    "LoginView-eLJQw0oC.css": "2b1c5c89d6ff89031ba7881d2877da9072288a75d3f8e4371254c8db76b6ab9a",
+    "MembersView-CeZrSuCu.js": "49ab1801be93a89e384bb8580ea0707b882cf3cdbc3f7da27ea07d2ad7a7fe34",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-_Y-7PADt.js": "1ea70de530ae5e12ba0cabbc6b1c8b796af928baa0765ade00aee14365355567",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-C8WbTyKZ.js": "5b07d4935779dbcab6ef554da1cbf8e055ecf6af0d4cecf3f738b6991c413ffb",
+    "OverviewView-DNPGHphf.js": "b9d740bdac5ea99f57b6b421c25ffa93308077b335401d4c1d9aa473ae0742a6",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-3EXijhed.css": "7d2bdd9f81c26e62fb8ba441034d4c2c21050bb773639d03a3adda9221bc49c0",
+    "PlatformView-fbZ4nwiT.js": "f6593efdc1f5f86404711fd5feb69cf7225ec4d24226b083329a36414295c4ea",
+    "PlaygroundView-CL6HZiW7.js": "45f6fd5c757bb6b05b7beedeb0b1c4ca2428f02baf7e0fb1cdbec82e318996c7",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "PricingView-BIMiY-Hs.js": "714cfeaa9cc97097a769ba74b54af428c7254625dc98c727f01872ac73795488",
+    "PricingView-D7_4oVEi.css": "4bf2ce148dc0f1d33c04b0a50e438c6b8462750d5b81b70d0d43cf6131c7e6ee",
+    "ProcurementView-BTlc-W-6.js": "74b55a92f6b0db1697a4a37bbcdd0df403a5c26db6f55bc12be331855e06f654",
+    "ProcurementView-OwQXo4Hy.css": "7a3f1c0b957f2cd6b4127b6a6f89ad673225226af4261d3da461efae9851da17",
+    "RecoveryView-DXKBBEFU.js": "804f038c30794fa70983bfce2cb75d625929dc147335af1d9c88ac20c2d6bff9",
+    "ReportsView-DqPpyAqI.js": "018ecdbce9b5fa00c16cc065c7dd9a2c70fa199f65746efbee3d0f96ce426e3c",
+    "RequestsView-ofXaqb2D.js": "03390f0c5f8048013c8ead6f3c8cd61873ff65936e2b45237f606a8437382565",
+    "RouteAttempts-BiZpLfkV.css": "287e44ef3518101fe535b9bf15a062ef4cc3b95a86cfb4ae311c32a316dd42a2",
+    "RouteAttempts-Uu--aqtP.js": "3417813f13f2df5ceebdf0e0953546265422f721b1a0fbdbb451f24df98f961f",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "SecurityView-nmgZQTOR.js": "a939c2ea553e4460c0650cb52e6e740a6ad123824a70a0e00619886b61fe6c91",
+    "WalletView-C75zTHRe.js": "8abb3a8906794155f15130480e699c863781b0d88e4451e0ac1c660ed423568a",
+    "credential-pool-BG3qebJJ.js": "6ef9540bcd1f136e1e40d9bd2ae926445a9f4cc7a5f3d12f89e478f406c87ab5",
+    "elements-mufc-W6E.js": "de8804d6bfe89bd216f609825e7186f419098b0cc51663494d7496e0ce788dbc",
+    "identity-public-CtgrUQzc.js": "4f9ace2821ca57cd25cb6c8885809b87dec31056d57f6b1379715937b9af9093",
+    "identity-public-state-CEMeDPRb.css": "d1124b35a5272ecbefda174eaa7368ac1b79e4a24111db0c5f67039699bf6fdf",
+    "identity-public-state-ypJBYQZ_.js": "6d030e63a0a459cefa235d6d656974a10840e11f46f0b668f4ce1d1dac2832f3",
+    "index-BMkuXS-r.css": "6d3e3382fe7119f430f41a164fc87ef6efdcc2d47b31f6d8d7b981d625167762",
+    "index-ikwJg3PE.js": "9d9ad105bca088e1dc67b190416c2c7623c911962677cb177176cfacabd686a0",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "key-access-policy-SwrgvJWj.js": "be807eaf88e309b5a534db3fc94fd2737a127cba6601435ca57b53cec4277aa0",
+    "public-catalog-state-sDLsqA4S.js": "7677cb8a150f677e78f188577ec487299b2622db6515222abab33e4a5403d038",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "identity_read": true,
+      "migration_016": true,
+      "cost_caps_read": true,
+      "migration_count": 16,
+      "owns_route_table": false,
+      "procurement_read": true,
+      "publication_read": true,
+      "identity_payload_update": true,
+      "identity_subject_insert": true
+    },
+    "projection": {
+      "superuser": false,
+      "identity_read": false,
+      "cost_caps_read": false,
+      "procurement_read": false,
+      "publication_read": false
+    }
+  }
+}

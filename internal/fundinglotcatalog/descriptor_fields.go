@@ -1,0 +1,35 @@
+package fundinglotcatalog
+
+var schemaRecordFields = map[string][]string{
+	"casts":        {},
+	"collations":   {},
+	"constraints":  {"columns", "deferrable", "deferred", "delete_action", "delete_set_columns", "domain", "equality_operators", "expression", "fk_equality_operators", "foreign_columns", "foreign_relation", "identity", "index", "inherit_count", "kind", "local", "match", "no_inherit", "parent", "pk_equality_operators", "relation", "update_action", "validated"},
+	"conversions":  {},
+	"dependencies": {"catalog", "kind", "multiplicity", "object", "referenced"},
+	"extensions":   {},
+	"functions":    {"aggregate", "all_argument_types", "argument_defaults", "argument_modes", "argument_names", "argument_types", "cost", "default_count", "definer", "identity", "kind", "language", "leakproof", "owner", "parallel", "probin", "proconfig", "prosqlbody", "prosrc", "result", "retset", "rows", "source_sha256", "strict", "support", "transform_types", "variadic", "volatility"},
+	"indexes":      {"attribute_count", "check_xmin", "clustered", "collations", "exclusion", "expressions", "identity", "immediate", "key_count", "keys", "live", "nulls_not_distinct", "opclasses", "options", "predicate", "primary", "ready", "relation", "replica_identity", "unique", "valid"},
+	"namespace":    {"identity", "owner"},
+	"opclasses":    {},
+	"operators":    {},
+	"opfamilies":   {},
+	"policies":     {},
+	"relations":    {"am", "attributes", "force_row_security", "identity", "inherits", "kind", "options", "owner", "partition", "partition_bound", "partition_key", "persistence", "replica_identity", "row_security", "row_type", "tablespace", "toast"},
+	"rules":        {},
+	"statistics":   {},
+	"text_search":  {},
+	"triggers":     {"argument_count", "arguments", "columns", "constraint", "constraint_index", "constraint_relation", "deferrable", "deferred", "enabled", "function", "identity", "internal", "new_table", "old_table", "relation", "type", "when"},
+	"types":        {"alignment", "analyze", "array", "base", "by_value", "category", "collation", "default", "default_expression", "defined", "delimiter", "dimensions", "element", "enum_labels", "identity", "input", "length", "not_null", "output", "owner", "preferred", "range", "receive", "relation", "send", "storage", "subscript", "type", "typmod", "typmod_in", "typmod_out"},
+}
+var roleRecordFields = map[string][]string{
+	"acl_dependencies":     {"catalog", "kind", "multiplicity", "object", "role"},
+	"column_acl":           {"acl_is_null", "default_entries", "entries", "object"},
+	"default_acl":          {"owner", "namespace", "object_type", "entries"},
+	"effective_privileges": {"grant_options", "kind", "object", "privileges", "role"},
+	"function_acl":         {"acl_is_null", "default_entries", "entries", "object"},
+	"memberships":          {"role", "member", "grantor", "admin", "inherit", "set"},
+	"relation_acl":         {"acl_is_null", "default_entries", "entries", "object"},
+	"roles":                {"bypass_rls", "config", "connection_limit", "create_db", "create_role", "identity", "inherit", "login", "replication", "superuser", "valid_until"},
+	"schema_acl":           {"acl_is_null", "default_entries", "entries", "object"},
+	"type_acl":             {"acl_is_null", "default_entries", "entries", "object"},
+}

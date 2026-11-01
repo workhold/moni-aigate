@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:50881",
+  "scope": "final UI targeted follow-up; separate from full lifecycle run",
+  "ui_observed": {
+    "old_details_cleared_after_save": true,
+    "new_editor_remains_open_and_independent": true,
+    "unsubmitted_new_rule_discarded": true
+  },
+  "rules": [
+    {
+      "id": "6a868f05-cbdf-4ee9-a7e4-8cbd320fdece",
+      "kind": "channel_quarantined",
+      "scope_type": "channel",
+      "scope_id": "572a6a93-7a01-42e4-9cc5-49229c3b8abb",
+      "label": "最终编辑器补验已更新",
+      "state": "disabled",
+      "parameters": {},
+      "configuration_revision": "2",
+      "created_by": "b91cb2ef-8926-4725-b763-e27dc0b1d342",
+      "updated_by": "b91cb2ef-8926-4725-b763-e27dc0b1d342",
+      "created_at": "2026-10-31T21:32:21.039564Z",
+      "updated_at": "2026-10-31T21:35:44.482536Z",
+      "retired_at": null,
+      "runtime": {
+        "next_evaluation_at": null,
+        "last_attempt_at": null,
+        "last_success_at": null,
+        "evaluated_revision": null,
+        "last_sample": null,
+        "last_error_code": null,
+        "current_episode_id": null,
+        "freshness": "disabled",
+        "observed_at": "2026-10-31T21:37:26.546596Z"
+      }
+    }
+  ],
+  "episodes": [],
+  "original_create_receipt": {
+    "operation_id": "52ec4c9a-6c80-4b4d-ad76-942eedb902da",
+    "kind": "rule_create",
+    "status": "applied",
+    "reason": "",
+    "resource_id": "6a868f05-cbdf-4ee9-a7e4-8cbd320fdece",
+    "result_revision": "1",
+    "created_at": "2026-10-31T21:32:21.035536Z"
+  },
+  "screenshot": "assets/operations-alerts-024-final-ui.png"
+}

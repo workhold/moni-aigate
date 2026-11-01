@@ -1,0 +1,296 @@
+{
+  "scope": "016 synthetic browser QA; HTTP API prepares business configuration and simulated dual-approval credit; customer Key and calls use browser controls",
+  "app_origin": "http://127.0.0.1:60907",
+  "mock_origin": "http://127.0.0.1:60912",
+  "rejection": {
+    "status": 429,
+    "code": "rate_limited",
+    "request_id": "38894c73-3fd1-46c8-9b63-134be4652baa",
+    "before": {
+      "key": {
+        "id": "77b77658-39c5-45a1-bb74-7d2fcaaef6e5",
+        "held": 0,
+        "spent": 20,
+        "scopes": [
+          "728b2cce-2f50-456e-88d3-211ff2981ced"
+        ],
+        "owner_id": "597d7dc5-39d0-401f-b475-45d29c6dbc91",
+        "rpm_limit": 1,
+        "burst_limit": 1,
+        "lifetime_limit": 1000000,
+        "limit_revision": "1",
+        "concurrency_limit": 1,
+        "allowed_client_cidrs": [
+          "127.0.0.1/32"
+        ],
+        "access_policy_revision": "1"
+      },
+      "charged": 20,
+      "sources": [
+        "127.0.0.1"
+      ],
+      "attempts": 1,
+      "credited": 1234567,
+      "requests": 1,
+      "held_total": 0,
+      "idempotency": 0,
+      "settlements": 1,
+      "ledger_total": 0,
+      "reservations": 1,
+      "finalizations": 1,
+      "policy_audits": [],
+      "request_facts": [
+        {
+          "id": "2e7338d5-bd00-408d-82a0-63dd6a39d523",
+          "source": "127.0.0.1",
+          "status": "succeeded",
+          "charged": 20,
+          "billing_status": "settled"
+        }
+      ],
+      "runtime_audits": [],
+      "available_total": 1234547,
+      "policy_audit_count": 0,
+      "runtime_audit_count": 0,
+      "unbalanced_journals": 0
+    },
+    "after": {
+      "key": {
+        "id": "77b77658-39c5-45a1-bb74-7d2fcaaef6e5",
+        "held": 0,
+        "spent": 20,
+        "scopes": [
+          "728b2cce-2f50-456e-88d3-211ff2981ced"
+        ],
+        "owner_id": "597d7dc5-39d0-401f-b475-45d29c6dbc91",
+        "rpm_limit": 1,
+        "burst_limit": 1,
+        "lifetime_limit": 1000000,
+        "limit_revision": "1",
+        "concurrency_limit": 1,
+        "allowed_client_cidrs": [
+          "127.0.0.1/32"
+        ],
+        "access_policy_revision": "1"
+      },
+      "charged": 20,
+      "sources": [
+        "127.0.0.1"
+      ],
+      "attempts": 1,
+      "credited": 1234567,
+      "requests": 1,
+      "held_total": 0,
+      "idempotency": 0,
+      "settlements": 1,
+      "ledger_total": 0,
+      "reservations": 1,
+      "finalizations": 1,
+      "policy_audits": [],
+      "request_facts": [
+        {
+          "id": "2e7338d5-bd00-408d-82a0-63dd6a39d523",
+          "source": "127.0.0.1",
+          "status": "succeeded",
+          "charged": 20,
+          "billing_status": "settled"
+        }
+      ],
+      "runtime_audits": [],
+      "available_total": 1234547,
+      "policy_audit_count": 0,
+      "runtime_audit_count": 0,
+      "unbalanced_journals": 0
+    },
+    "all_snapshot_fields_equal": true
+  },
+  "after_first_runtime_edit_and_same_value_save": {
+    "key": {
+      "id": "77b77658-39c5-45a1-bb74-7d2fcaaef6e5",
+      "held": 0,
+      "spent": 40,
+      "scopes": [
+        "728b2cce-2f50-456e-88d3-211ff2981ced"
+      ],
+      "owner_id": "597d7dc5-39d0-401f-b475-45d29c6dbc91",
+      "rpm_limit": 6000,
+      "burst_limit": 200,
+      "lifetime_limit": 1000000,
+      "limit_revision": "2",
+      "concurrency_limit": 2,
+      "allowed_client_cidrs": [
+        "127.0.0.1/32"
+      ],
+      "access_policy_revision": "1"
+    },
+    "charged": 40,
+    "sources": [
+      "127.0.0.1",
+      "127.0.0.1"
+    ],
+    "attempts": 2,
+    "credited": 1234567,
+    "requests": 2,
+    "held_total": 0,
+    "idempotency": 0,
+    "settlements": 2,
+    "ledger_total": 0,
+    "reservations": 2,
+    "finalizations": 2,
+    "policy_audits": [],
+    "request_facts": [
+      {
+        "id": "2e7338d5-bd00-408d-82a0-63dd6a39d523",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      },
+      {
+        "id": "674d2802-c3d6-4186-b934-22f6b0aa4c18",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      }
+    ],
+    "runtime_audits": [
+      {
+        "after": {
+          "rpm_limit": 6000,
+          "burst_limit": 200,
+          "limit_revision": "2",
+          "concurrency_limit": 2
+        },
+        "before": {
+          "rpm_limit": 1,
+          "burst_limit": 1,
+          "limit_revision": "1",
+          "concurrency_limit": 1
+        }
+      }
+    ],
+    "available_total": 1234527,
+    "policy_audit_count": 0,
+    "runtime_audit_count": 1,
+    "unbalanced_journals": 0
+  },
+  "final": {
+    "key": {
+      "id": "77b77658-39c5-45a1-bb74-7d2fcaaef6e5",
+      "held": 0,
+      "spent": 40,
+      "scopes": [
+        "728b2cce-2f50-456e-88d3-211ff2981ced"
+      ],
+      "owner_id": "597d7dc5-39d0-401f-b475-45d29c6dbc91",
+      "rpm_limit": 6000,
+      "burst_limit": 200,
+      "lifetime_limit": 1000000,
+      "limit_revision": "3",
+      "concurrency_limit": 3,
+      "allowed_client_cidrs": [
+        "127.0.0.1/32",
+        "192.0.2.0/24"
+      ],
+      "access_policy_revision": "2"
+    },
+    "charged": 40,
+    "sources": [
+      "127.0.0.1",
+      "127.0.0.1"
+    ],
+    "attempts": 2,
+    "credited": 1234567,
+    "requests": 2,
+    "held_total": 0,
+    "idempotency": 0,
+    "settlements": 2,
+    "ledger_total": 0,
+    "reservations": 2,
+    "finalizations": 2,
+    "policy_audits": [
+      {
+        "after": {
+          "allowed_client_cidrs": [
+            "127.0.0.1/32",
+            "192.0.2.0/24"
+          ],
+          "access_policy_revision": "2"
+        },
+        "before": {
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1"
+        }
+      }
+    ],
+    "request_facts": [
+      {
+        "id": "2e7338d5-bd00-408d-82a0-63dd6a39d523",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      },
+      {
+        "id": "674d2802-c3d6-4186-b934-22f6b0aa4c18",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      }
+    ],
+    "runtime_audits": [
+      {
+        "after": {
+          "rpm_limit": 6000,
+          "burst_limit": 200,
+          "limit_revision": "2",
+          "concurrency_limit": 2
+        },
+        "before": {
+          "rpm_limit": 1,
+          "burst_limit": 1,
+          "limit_revision": "1",
+          "concurrency_limit": 1
+        }
+      },
+      {
+        "after": {
+          "rpm_limit": 6000,
+          "burst_limit": 200,
+          "limit_revision": "3",
+          "concurrency_limit": 3
+        },
+        "before": {
+          "rpm_limit": 6000,
+          "burst_limit": 200,
+          "limit_revision": "2",
+          "concurrency_limit": 2
+        }
+      }
+    ],
+    "available_total": 1234527,
+    "policy_audit_count": 1,
+    "runtime_audit_count": 2,
+    "unbalanced_journals": 0
+  },
+  "ui": {
+    "blank_number_rejected": true,
+    "one_time_key_closed": true,
+    "same_key_used": true,
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "document_width": 390
+    },
+    "console_warn_error": [],
+    "logout_verified": true
+  },
+  "limits": {
+    "browser_no_token_gift_claim": false,
+    "note": "The post-edit call ran more than one minute after the first success; it proves continued use and settlement, not the absence of bonus tokens. Deterministic clock tests cover that invariant. Concurrent reconfiguration and five other protocols were verified by HTTP/PG tests, not browser."
+  }
+}

@@ -1,0 +1,958 @@
+{
+  "scope": "017 synthetic browser QA; HTTP API prepares models/channels/grants and simulated dual-approval credit; browser creates Key, edits and calls",
+  "app_origin": "http://127.0.0.1:60724",
+  "mock_origin": "http://127.0.0.1:60730",
+  "first_success": {
+    "key": {
+      "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+      "held": 0,
+      "name": "017 配置验收",
+      "spent": 20,
+      "scopes": [
+        "3089e12d-80b1-4743-9f72-f460f136c9a2"
+      ],
+      "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+      "rpm_limit": 60,
+      "expires_at": null,
+      "burst_limit": 20,
+      "lifetime_limit": 1000000,
+      "limit_revision": "1",
+      "allowed_regions": [
+        "global"
+      ],
+      "concurrency_limit": 16,
+      "allowed_client_cidrs": [
+        "127.0.0.1/32"
+      ],
+      "access_policy_revision": "1",
+      "configuration_revision": "1"
+    },
+    "charged": 20,
+    "sources": [
+      "127.0.0.1"
+    ],
+    "attempts": 1,
+    "credited": 1234567,
+    "requests": 1,
+    "held_total": 0,
+    "idempotency": 0,
+    "settlements": 1,
+    "ledger_total": 0,
+    "reservations": 1,
+    "finalizations": 1,
+    "policy_audits": [],
+    "request_facts": [
+      {
+        "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      }
+    ],
+    "runtime_audits": [],
+    "available_total": 1234547,
+    "policy_audit_count": 0,
+    "runtime_audit_count": 0,
+    "unbalanced_journals": 0,
+    "configuration_audits": [],
+    "configuration_audit_count": 0
+  },
+  "rejections": {
+    "low_budget_edit": {
+      "status": 409,
+      "code": "key_budget_below_usage",
+      "before": {
+        "key": {
+          "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+          "held": 0,
+          "name": "017 商业应用 Key",
+          "spent": 20,
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+          "rpm_limit": 60,
+          "expires_at": "2030-01-02T03:04:05.123456+08:00",
+          "burst_limit": 20,
+          "lifetime_limit": 500000,
+          "limit_revision": "1",
+          "allowed_regions": [
+            "global"
+          ],
+          "concurrency_limit": 16,
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1",
+          "configuration_revision": "2"
+        },
+        "charged": 20,
+        "sources": [
+          "127.0.0.1"
+        ],
+        "attempts": 1,
+        "credited": 1234567,
+        "requests": 1,
+        "held_total": 0,
+        "idempotency": 0,
+        "settlements": 1,
+        "ledger_total": 0,
+        "reservations": 1,
+        "finalizations": 1,
+        "policy_audits": [],
+        "request_facts": [
+          {
+            "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+            "source": "127.0.0.1",
+            "status": "succeeded",
+            "charged": 20,
+            "billing_status": "settled"
+          }
+        ],
+        "runtime_audits": [],
+        "available_total": 1234547,
+        "policy_audit_count": 0,
+        "runtime_audit_count": 0,
+        "unbalanced_journals": 0,
+        "configuration_audits": [
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            },
+            "before": {
+              "name": "017 配置验收",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": null,
+              "lifetime_limit": "1000000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "1"
+            }
+          }
+        ],
+        "configuration_audit_count": 1
+      },
+      "after": {
+        "key": {
+          "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+          "held": 0,
+          "name": "017 商业应用 Key",
+          "spent": 20,
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+          "rpm_limit": 60,
+          "expires_at": "2030-01-02T03:04:05.123456+08:00",
+          "burst_limit": 20,
+          "lifetime_limit": 500000,
+          "limit_revision": "1",
+          "allowed_regions": [
+            "global"
+          ],
+          "concurrency_limit": 16,
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1",
+          "configuration_revision": "2"
+        },
+        "charged": 20,
+        "sources": [
+          "127.0.0.1"
+        ],
+        "attempts": 1,
+        "credited": 1234567,
+        "requests": 1,
+        "held_total": 0,
+        "idempotency": 0,
+        "settlements": 1,
+        "ledger_total": 0,
+        "reservations": 1,
+        "finalizations": 1,
+        "policy_audits": [],
+        "request_facts": [
+          {
+            "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+            "source": "127.0.0.1",
+            "status": "succeeded",
+            "charged": 20,
+            "billing_status": "settled"
+          }
+        ],
+        "runtime_audits": [],
+        "available_total": 1234547,
+        "policy_audit_count": 0,
+        "runtime_audit_count": 0,
+        "unbalanced_journals": 0,
+        "configuration_audits": [
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            },
+            "before": {
+              "name": "017 配置验收",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": null,
+              "lifetime_limit": "1000000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "1"
+            }
+          }
+        ],
+        "configuration_audit_count": 1
+      },
+      "all_snapshot_fields_equal": true
+    },
+    "budget_call": {
+      "status": 402,
+      "code": "key_budget_exceeded",
+      "before": {
+        "key": {
+          "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+          "held": 0,
+          "name": "017 商业应用 Key",
+          "spent": 20,
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+          "rpm_limit": 60,
+          "expires_at": "2030-01-02T03:04:05.123456+08:00",
+          "burst_limit": 20,
+          "lifetime_limit": 20,
+          "limit_revision": "1",
+          "allowed_regions": [
+            "global"
+          ],
+          "concurrency_limit": 16,
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1",
+          "configuration_revision": "3"
+        },
+        "charged": 20,
+        "sources": [
+          "127.0.0.1"
+        ],
+        "attempts": 1,
+        "credited": 1234567,
+        "requests": 1,
+        "held_total": 0,
+        "idempotency": 0,
+        "settlements": 1,
+        "ledger_total": 0,
+        "reservations": 1,
+        "finalizations": 1,
+        "policy_audits": [],
+        "request_facts": [
+          {
+            "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+            "source": "127.0.0.1",
+            "status": "succeeded",
+            "charged": 20,
+            "billing_status": "settled"
+          }
+        ],
+        "runtime_audits": [],
+        "available_total": 1234547,
+        "policy_audit_count": 0,
+        "runtime_audit_count": 0,
+        "unbalanced_journals": 0,
+        "configuration_audits": [
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            },
+            "before": {
+              "name": "017 配置验收",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": null,
+              "lifetime_limit": "1000000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "1"
+            }
+          },
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "20",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "3"
+            },
+            "before": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            }
+          }
+        ],
+        "configuration_audit_count": 2
+      },
+      "after": {
+        "key": {
+          "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+          "held": 0,
+          "name": "017 商业应用 Key",
+          "spent": 20,
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+          "rpm_limit": 60,
+          "expires_at": "2030-01-02T03:04:05.123456+08:00",
+          "burst_limit": 20,
+          "lifetime_limit": 20,
+          "limit_revision": "1",
+          "allowed_regions": [
+            "global"
+          ],
+          "concurrency_limit": 16,
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1",
+          "configuration_revision": "3"
+        },
+        "charged": 20,
+        "sources": [
+          "127.0.0.1"
+        ],
+        "attempts": 1,
+        "credited": 1234567,
+        "requests": 1,
+        "held_total": 0,
+        "idempotency": 0,
+        "settlements": 1,
+        "ledger_total": 0,
+        "reservations": 1,
+        "finalizations": 1,
+        "policy_audits": [],
+        "request_facts": [
+          {
+            "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+            "source": "127.0.0.1",
+            "status": "succeeded",
+            "charged": 20,
+            "billing_status": "settled"
+          }
+        ],
+        "runtime_audits": [],
+        "available_total": 1234547,
+        "policy_audit_count": 0,
+        "runtime_audit_count": 0,
+        "unbalanced_journals": 0,
+        "configuration_audits": [
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            },
+            "before": {
+              "name": "017 配置验收",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": null,
+              "lifetime_limit": "1000000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "1"
+            }
+          },
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "20",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "3"
+            },
+            "before": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            }
+          }
+        ],
+        "configuration_audit_count": 2
+      },
+      "all_snapshot_fields_equal": true,
+      "request_id": "3a894c75-c406-414d-97eb-208c446999c3"
+    },
+    "region_call": {
+      "status": 503,
+      "code": "no_available_channel",
+      "before": {
+        "key": {
+          "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+          "held": 0,
+          "name": "017 商业应用 Key",
+          "spent": 20,
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+          "rpm_limit": 60,
+          "expires_at": "2030-01-02T03:04:05.123456+08:00",
+          "burst_limit": 20,
+          "lifetime_limit": 500000,
+          "limit_revision": "1",
+          "allowed_regions": [
+            "another-region"
+          ],
+          "concurrency_limit": 16,
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1",
+          "configuration_revision": "4"
+        },
+        "charged": 20,
+        "sources": [
+          "127.0.0.1"
+        ],
+        "attempts": 1,
+        "credited": 1234567,
+        "requests": 1,
+        "held_total": 0,
+        "idempotency": 0,
+        "settlements": 1,
+        "ledger_total": 0,
+        "reservations": 1,
+        "finalizations": 1,
+        "policy_audits": [],
+        "request_facts": [
+          {
+            "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+            "source": "127.0.0.1",
+            "status": "succeeded",
+            "charged": 20,
+            "billing_status": "settled"
+          }
+        ],
+        "runtime_audits": [],
+        "available_total": 1234547,
+        "policy_audit_count": 0,
+        "runtime_audit_count": 0,
+        "unbalanced_journals": 0,
+        "configuration_audits": [
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            },
+            "before": {
+              "name": "017 配置验收",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": null,
+              "lifetime_limit": "1000000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "1"
+            }
+          },
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "20",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "3"
+            },
+            "before": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            }
+          },
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "another-region"
+              ],
+              "configuration_revision": "4"
+            },
+            "before": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "20",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "3"
+            }
+          }
+        ],
+        "configuration_audit_count": 3
+      },
+      "after": {
+        "key": {
+          "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+          "held": 0,
+          "name": "017 商业应用 Key",
+          "spent": 20,
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+          "rpm_limit": 60,
+          "expires_at": "2030-01-02T03:04:05.123456+08:00",
+          "burst_limit": 20,
+          "lifetime_limit": 500000,
+          "limit_revision": "1",
+          "allowed_regions": [
+            "another-region"
+          ],
+          "concurrency_limit": 16,
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1",
+          "configuration_revision": "4"
+        },
+        "charged": 20,
+        "sources": [
+          "127.0.0.1"
+        ],
+        "attempts": 1,
+        "credited": 1234567,
+        "requests": 1,
+        "held_total": 0,
+        "idempotency": 0,
+        "settlements": 1,
+        "ledger_total": 0,
+        "reservations": 1,
+        "finalizations": 1,
+        "policy_audits": [],
+        "request_facts": [
+          {
+            "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+            "source": "127.0.0.1",
+            "status": "succeeded",
+            "charged": 20,
+            "billing_status": "settled"
+          }
+        ],
+        "runtime_audits": [],
+        "available_total": 1234547,
+        "policy_audit_count": 0,
+        "runtime_audit_count": 0,
+        "unbalanced_journals": 0,
+        "configuration_audits": [
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            },
+            "before": {
+              "name": "017 配置验收",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": null,
+              "lifetime_limit": "1000000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "1"
+            }
+          },
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "20",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "3"
+            },
+            "before": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "2"
+            }
+          },
+          {
+            "after": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "500000",
+              "allowed_regions": [
+                "another-region"
+              ],
+              "configuration_revision": "4"
+            },
+            "before": {
+              "name": "017 商业应用 Key",
+              "scopes": [
+                "3089e12d-80b1-4743-9f72-f460f136c9a2"
+              ],
+              "expires_at": "2030-01-01T19:04:05.123456Z",
+              "lifetime_limit": "20",
+              "allowed_regions": [
+                "global"
+              ],
+              "configuration_revision": "3"
+            }
+          }
+        ],
+        "configuration_audit_count": 3
+      },
+      "all_snapshot_fields_equal": true,
+      "request_id": "3356cc05-8cec-46c7-aa72-f49b71b54f6f"
+    }
+  },
+  "final": {
+    "key": {
+      "id": "163f195a-e96b-41a9-b3eb-abb9f22356e7",
+      "held": 0,
+      "name": "017 商业应用 Key",
+      "spent": 60,
+      "scopes": [
+        "*"
+      ],
+      "owner_id": "70d2ca15-f0b2-4eb8-9908-37c9f617ac15",
+      "rpm_limit": 6000,
+      "expires_at": null,
+      "burst_limit": 200,
+      "lifetime_limit": null,
+      "limit_revision": "2",
+      "allowed_regions": [
+        "global"
+      ],
+      "concurrency_limit": 3,
+      "allowed_client_cidrs": [
+        "127.0.0.1/32",
+        "192.0.2.0/24"
+      ],
+      "access_policy_revision": "2",
+      "configuration_revision": "5"
+    },
+    "charged": 60,
+    "sources": [
+      "127.0.0.1",
+      "127.0.0.1",
+      "127.0.0.1"
+    ],
+    "attempts": 3,
+    "credited": 1234567,
+    "requests": 3,
+    "held_total": 0,
+    "idempotency": 0,
+    "settlements": 3,
+    "ledger_total": 0,
+    "reservations": 3,
+    "finalizations": 3,
+    "policy_audits": [
+      {
+        "after": {
+          "allowed_client_cidrs": [
+            "127.0.0.1/32",
+            "192.0.2.0/24"
+          ],
+          "access_policy_revision": "2"
+        },
+        "before": {
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1"
+        }
+      }
+    ],
+    "request_facts": [
+      {
+        "id": "7b7e3f87-6d27-43d5-9d21-ab16b4ba6893",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      },
+      {
+        "id": "846d1e38-4471-47a0-bd6c-922011e32f36",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      },
+      {
+        "id": "9b652848-4d0f-4c81-bed5-8d32efca6923",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      }
+    ],
+    "runtime_audits": [
+      {
+        "after": {
+          "rpm_limit": 6000,
+          "burst_limit": 200,
+          "limit_revision": "2",
+          "concurrency_limit": 3
+        },
+        "before": {
+          "rpm_limit": 60,
+          "burst_limit": 20,
+          "limit_revision": "1",
+          "concurrency_limit": 16
+        }
+      }
+    ],
+    "available_total": 1234507,
+    "policy_audit_count": 1,
+    "runtime_audit_count": 1,
+    "unbalanced_journals": 0,
+    "configuration_audits": [
+      {
+        "after": {
+          "name": "017 商业应用 Key",
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "expires_at": "2030-01-01T19:04:05.123456Z",
+          "lifetime_limit": "500000",
+          "allowed_regions": [
+            "global"
+          ],
+          "configuration_revision": "2"
+        },
+        "before": {
+          "name": "017 配置验收",
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "expires_at": null,
+          "lifetime_limit": "1000000",
+          "allowed_regions": [
+            "global"
+          ],
+          "configuration_revision": "1"
+        }
+      },
+      {
+        "after": {
+          "name": "017 商业应用 Key",
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "expires_at": "2030-01-01T19:04:05.123456Z",
+          "lifetime_limit": "20",
+          "allowed_regions": [
+            "global"
+          ],
+          "configuration_revision": "3"
+        },
+        "before": {
+          "name": "017 商业应用 Key",
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "expires_at": "2030-01-01T19:04:05.123456Z",
+          "lifetime_limit": "500000",
+          "allowed_regions": [
+            "global"
+          ],
+          "configuration_revision": "2"
+        }
+      },
+      {
+        "after": {
+          "name": "017 商业应用 Key",
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "expires_at": "2030-01-01T19:04:05.123456Z",
+          "lifetime_limit": "500000",
+          "allowed_regions": [
+            "another-region"
+          ],
+          "configuration_revision": "4"
+        },
+        "before": {
+          "name": "017 商业应用 Key",
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "expires_at": "2030-01-01T19:04:05.123456Z",
+          "lifetime_limit": "20",
+          "allowed_regions": [
+            "global"
+          ],
+          "configuration_revision": "3"
+        }
+      },
+      {
+        "after": {
+          "name": "017 商业应用 Key",
+          "scopes": [
+            "*"
+          ],
+          "expires_at": null,
+          "lifetime_limit": null,
+          "allowed_regions": [
+            "global"
+          ],
+          "configuration_revision": "5"
+        },
+        "before": {
+          "name": "017 商业应用 Key",
+          "scopes": [
+            "3089e12d-80b1-4743-9f72-f460f136c9a2"
+          ],
+          "expires_at": "2030-01-01T19:04:05.123456Z",
+          "lifetime_limit": "500000",
+          "allowed_regions": [
+            "another-region"
+          ],
+          "configuration_revision": "4"
+        }
+      }
+    ],
+    "configuration_audit_count": 4
+  },
+  "browser": {
+    "desktop_breakpoint": [
+      1280,
+      960
+    ],
+    "mobile_breakpoint": [
+      390,
+      844
+    ],
+    "mobile_document_width": 390,
+    "console_warn_error": [],
+    "logged_out_and_closed": true,
+    "tool_credentials_cleared": true,
+    "viewport_reset": true
+  }
+}

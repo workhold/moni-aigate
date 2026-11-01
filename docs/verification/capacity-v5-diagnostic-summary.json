@@ -1,0 +1,1195 @@
+{
+  "purpose": "005 after single diagnostic; observer costs mean this is not a performance acceptance run",
+  "profile_sha256": "bfab5ee59385060e3694b80aca6d9b6322a3015d5a52e15b657d44e37ea343fe",
+  "observer_warning": "diagnostic only: tracer mutex/allocations, 2ms pg_stat_activity sampling and full mutex/block profiling add cost; prepare is nested in query; batch gaps are callback intervals, not server SQL timings; batch internal prepare is not reported by pgx PrepareTracer; first_seen is a connection/SQL observation, not proof of prepare; explicitly prepared comparison is warm-only and cannot replace the cold score",
+  "active_backend_samples": {
+    "admission:::account_init": 2,
+    "admission:::account_lock": 1,
+    "admission:::attempt_insert": 11,
+    "admission:::commit": 3,
+    "admission:::cost_lookup": 2,
+    "admission:::database_clock_or_deadline": 18,
+    "admission:::fresh_grant_check": 6,
+    "admission:::other_read": 63,
+    "admission:::other_write": 25,
+    "admission:::parent_share_lock": 4,
+    "admission:::request_insert": 8,
+    "admission:::reservation_lock": 2,
+    "admission:Client:ClientRead:account_init": 2,
+    "admission:Client:ClientRead:attempt_insert": 1,
+    "admission:Client:ClientRead:commit": 8,
+    "admission:Client:ClientRead:cost_lookup": 2,
+    "admission:Client:ClientRead:database_clock_or_deadline": 5,
+    "admission:Client:ClientRead:fresh_grant_check": 3,
+    "admission:Client:ClientRead:key_share_lock": 1,
+    "admission:Client:ClientRead:key_update_lock": 1,
+    "admission:Client:ClientRead:other_read": 10,
+    "admission:Client:ClientRead:other_update_lock": 2,
+    "admission:Client:ClientRead:other_write": 8,
+    "admission:Client:ClientRead:parent_share_lock": 3,
+    "admission:Client:ClientRead:request_lookup": 2,
+    "admission:Client:ClientRead:transaction_settings": 2,
+    "admission:IO:DataFileExtend:other_write": 3,
+    "admission:IO:DataFileExtend:request_insert": 1,
+    "admission:IO:WALWrite:commit": 8,
+    "admission:LWLock:BufferContent:other_write": 1,
+    "admission:LWLock:LockManager:commit": 1,
+    "admission:LWLock:LockManager:cost_lookup": 1,
+    "admission:LWLock:LockManager:database_clock_or_deadline": 2,
+    "admission:LWLock:LockManager:other_write": 1,
+    "admission:LWLock:LockManager:request_insert": 2,
+    "admission:LWLock:WALWrite:commit": 16,
+    "admission:Lock:transactionid:account_init": 11,
+    "admission:Lock:transactionid:account_lock": 2,
+    "completion:::account_init": 2,
+    "completion:::account_lock": 7,
+    "completion:::commit": 4,
+    "completion:::database_clock_or_deadline": 1,
+    "completion:::journal_insert": 2,
+    "completion:::key_update_lock": 8,
+    "completion:::other_read": 15,
+    "completion:::other_write": 32,
+    "completion:::parent_share_lock": 6,
+    "completion:::request_lookup": 10,
+    "completion:::reservation_lock": 6,
+    "completion:Client:ClientRead:account_init": 1,
+    "completion:Client:ClientRead:account_lock": 2,
+    "completion:Client:ClientRead:commit": 6,
+    "completion:Client:ClientRead:database_clock_or_deadline": 2,
+    "completion:Client:ClientRead:other_read": 9,
+    "completion:Client:ClientRead:other_write": 16,
+    "completion:Client:ClientRead:request_lookup": 4,
+    "completion:Client:ClientRead:reservation_lock": 1,
+    "completion:Client:ClientRead:transaction_settings": 4,
+    "completion:IO:DataFileExtend:other_write": 5,
+    "completion:IO:WALWrite:commit": 9,
+    "completion:IO:WALWrite:other_write": 3,
+    "completion:LWLock:LockManager:account_lock": 1,
+    "completion:LWLock:LockManager:key_update_lock": 1,
+    "completion:LWLock:LockManager:other_read": 1,
+    "completion:LWLock:LockManager:other_write": 1,
+    "completion:LWLock:LockManager:reservation_lock": 2,
+    "completion:LWLock:WALInsert:commit": 1,
+    "completion:LWLock:WALWrite:commit": 9,
+    "completion:Lock:extend:other_write": 2,
+    "completion:Lock:transactionid:account_init": 41,
+    "completion:Lock:transactionid:account_lock": 162,
+    "completion:Lock:transactionid:key_update_lock": 687,
+    "completion:Lock:transactionid:parent_share_lock": 1,
+    "completion:Lock:tuple:account_lock": 356,
+    "completion:Lock:tuple:key_update_lock": 859,
+    "completion:Lock:tuple:parent_share_lock": 1
+  },
+  "summary": {
+    "batch_result_gap_not_sql_execution:finalization:key_update_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.002792,
+        "min_ms": 0.000333,
+        "p50_ms": 0.000625,
+        "p95_ms": 0.0015,
+        "p99_ms": 0.001959
+      },
+      "total_ms": 0.07516300000000005
+    },
+    "batch_result_gap_not_sql_execution:finalization:parent_share_lock": {
+      "count": 300,
+      "first_seen_connection_sql": 105,
+      "latency": {
+        "max_ms": 15.307542,
+        "min_ms": 0.000333,
+        "p50_ms": 0.001667,
+        "p95_ms": 8.113958,
+        "p99_ms": 10.534
+      },
+      "total_ms": 433.00367100000005
+    },
+    "batch_result_gap_not_sql_execution:finalization:reservation_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.015333,
+        "min_ms": 0.000833,
+        "p50_ms": 0.00175,
+        "p95_ms": 0.005,
+        "p99_ms": 0.009625
+      },
+      "total_ms": 0.23228399999999985
+    },
+    "batch_result_gap_not_sql_execution:prepare_dispatch:key_share_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.016375,
+        "min_ms": 0.001334,
+        "p50_ms": 0.002708,
+        "p95_ms": 0.006541,
+        "p99_ms": 0.015958
+      },
+      "total_ms": 0.3341249999999999
+    },
+    "batch_result_gap_not_sql_execution:prepare_dispatch:other_write": {
+      "count": 200,
+      "first_seen_connection_sql": 20,
+      "latency": {
+        "max_ms": 0.424292,
+        "min_ms": 0.000375,
+        "p50_ms": 0.006958,
+        "p95_ms": 0.24475,
+        "p99_ms": 0.371542
+      },
+      "total_ms": 15.159533000000007
+    },
+    "batch_result_gap_not_sql_execution:prepare_dispatch:parent_share_lock": {
+      "count": 400,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.447083,
+        "min_ms": 0.000334,
+        "p50_ms": 0.002167,
+        "p95_ms": 0.208333,
+        "p99_ms": 0.335583
+      },
+      "total_ms": 17.654705
+    },
+    "batch_result_gap_not_sql_execution:record_attempt:key_update_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.004833,
+        "min_ms": 0.000333,
+        "p50_ms": 0.000584,
+        "p95_ms": 0.003,
+        "p99_ms": 0.003625
+      },
+      "total_ms": 0.08921200000000006
+    },
+    "batch_result_gap_not_sql_execution:record_attempt:parent_share_lock": {
+      "count": 400,
+      "first_seen_connection_sql": 59,
+      "latency": {
+        "max_ms": 0.625583,
+        "min_ms": 0.000292,
+        "p50_ms": 0.001125,
+        "p95_ms": 0.227959,
+        "p99_ms": 0.4455
+      },
+      "total_ms": 20.020184999999973
+    },
+    "batch_result_gap_not_sql_execution:record_attempt:reservation_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.005375,
+        "min_ms": 0.00075,
+        "p50_ms": 0.001667,
+        "p95_ms": 0.003459,
+        "p99_ms": 0.003958
+      },
+      "total_ms": 0.1857929999999999
+    },
+    "batch_result_gap_not_sql_execution:reserve:journal_insert": {
+      "count": 100,
+      "first_seen_connection_sql": 30,
+      "latency": {
+        "max_ms": 1.938333,
+        "min_ms": 0.141417,
+        "p50_ms": 0.263833,
+        "p95_ms": 1.386583,
+        "p99_ms": 1.836333
+      },
+      "total_ms": 41.069872
+    },
+    "batch_result_gap_not_sql_execution:reserve:key_update_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.011542,
+        "min_ms": 0.001334,
+        "p50_ms": 0.002792,
+        "p95_ms": 0.008209,
+        "p99_ms": 0.010458
+      },
+      "total_ms": 0.34579999999999966
+    },
+    "batch_result_gap_not_sql_execution:reserve:other_write": {
+      "count": 900,
+      "first_seen_connection_sql": 40,
+      "latency": {
+        "max_ms": 1.041083,
+        "min_ms": 0.00025,
+        "p50_ms": 0.00075,
+        "p95_ms": 0.195458,
+        "p99_ms": 0.615167
+      },
+      "total_ms": 25.977493999999908
+    },
+    "batch_result_gap_not_sql_execution:reserve:parent_share_lock": {
+      "count": 400,
+      "first_seen_connection_sql": 50,
+      "latency": {
+        "max_ms": 0.796208,
+        "min_ms": 0.000375,
+        "p50_ms": 0.00225,
+        "p95_ms": 0.221584,
+        "p99_ms": 0.620833
+      },
+      "total_ms": 21.224839999999986
+    },
+    "batch_result_gap_not_sql_execution:reserve:request_insert": {
+      "count": 100,
+      "first_seen_connection_sql": 20,
+      "latency": {
+        "max_ms": 1.754792,
+        "min_ms": 0.110875,
+        "p50_ms": 0.211,
+        "p95_ms": 1.492,
+        "p99_ms": 1.627333
+      },
+      "total_ms": 35.14269900000001
+    },
+    "batch_result_gap_not_sql_execution:settle:journal_insert": {
+      "count": 100,
+      "first_seen_connection_sql": 63,
+      "latency": {
+        "max_ms": 1.893208,
+        "min_ms": 0.146416,
+        "p50_ms": 0.264541,
+        "p95_ms": 1.274375,
+        "p99_ms": 1.385958
+      },
+      "total_ms": 46.83111700000001
+    },
+    "batch_result_gap_not_sql_execution:settle:key_update_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.027,
+        "min_ms": 0.000333,
+        "p50_ms": 0.000541,
+        "p95_ms": 0.002292,
+        "p99_ms": 0.004625
+      },
+      "total_ms": 0.09858200000000004
+    },
+    "batch_result_gap_not_sql_execution:settle:other_write": {
+      "count": 600,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.011583,
+        "min_ms": 0.000208,
+        "p50_ms": 0.000416,
+        "p95_ms": 0.000875,
+        "p99_ms": 0.00275
+      },
+      "total_ms": 0.32517599999999924
+    },
+    "batch_result_gap_not_sql_execution:settle:parent_share_lock": {
+      "count": 300,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 77.181167,
+        "min_ms": 0.000333,
+        "p50_ms": 0.001292,
+        "p95_ms": 47.606583,
+        "p99_ms": 62.737042
+      },
+      "total_ms": 2733.1681690000023
+    },
+    "batch_result_gap_not_sql_execution:settle:reservation_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.010125,
+        "min_ms": 0.001083,
+        "p50_ms": 0.001667,
+        "p95_ms": 0.003584,
+        "p99_ms": 0.00575
+      },
+      "total_ms": 0.20291999999999982
+    },
+    "batch_total:finalization:parent_share_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 105,
+      "latency": {
+        "max_ms": 15.312792,
+        "min_ms": 0.082458,
+        "p50_ms": 4.062125,
+        "p95_ms": 10.000333,
+        "p99_ms": 11.34025
+      },
+      "total_ms": 435.6081259999999
+    },
+    "batch_total:prepare_dispatch:other_write": {
+      "count": 100,
+      "first_seen_connection_sql": 20,
+      "latency": {
+        "max_ms": 0.425625,
+        "min_ms": 0.065709,
+        "p50_ms": 0.129083,
+        "p95_ms": 0.309042,
+        "p99_ms": 0.374584
+      },
+      "total_ms": 15.620870000000005
+    },
+    "batch_total:prepare_dispatch:parent_share_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.523708,
+        "min_ms": 0.0765,
+        "p50_ms": 0.17475,
+        "p95_ms": 0.352541,
+        "p99_ms": 0.4745
+      },
+      "total_ms": 19.537086000000002
+    },
+    "batch_total:record_attempt:parent_share_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 59,
+      "latency": {
+        "max_ms": 0.658542,
+        "min_ms": 0.074292,
+        "p50_ms": 0.183125,
+        "p95_ms": 0.450375,
+        "p99_ms": 0.591083
+      },
+      "total_ms": 21.683752000000002
+    },
+    "batch_total:reserve:journal_insert": {
+      "count": 100,
+      "first_seen_connection_sql": 30,
+      "latency": {
+        "max_ms": 1.943708,
+        "min_ms": 0.143917,
+        "p50_ms": 0.270167,
+        "p95_ms": 1.401583,
+        "p99_ms": 1.838666
+      },
+      "total_ms": 42.27886800000003
+    },
+    "batch_total:reserve:other_write": {
+      "count": 100,
+      "first_seen_connection_sql": 40,
+      "latency": {
+        "max_ms": 1.045125,
+        "min_ms": 0.077417,
+        "p50_ms": 0.203584,
+        "p95_ms": 0.71275,
+        "p99_ms": 0.798583
+      },
+      "total_ms": 26.35367
+    },
+    "batch_total:reserve:parent_share_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 50,
+      "latency": {
+        "max_ms": 0.817375,
+        "min_ms": 0.096125,
+        "p50_ms": 0.171542,
+        "p95_ms": 0.599833,
+        "p99_ms": 0.723875
+      },
+      "total_ms": 22.884123999999996
+    },
+    "batch_total:reserve:request_insert": {
+      "count": 100,
+      "first_seen_connection_sql": 20,
+      "latency": {
+        "max_ms": 1.755958,
+        "min_ms": 0.112792,
+        "p50_ms": 0.2165,
+        "p95_ms": 1.494333,
+        "p99_ms": 1.630291
+      },
+      "total_ms": 35.860577
+    },
+    "batch_total:settle:journal_insert": {
+      "count": 100,
+      "first_seen_connection_sql": 63,
+      "latency": {
+        "max_ms": 1.900125,
+        "min_ms": 0.150125,
+        "p50_ms": 0.270708,
+        "p95_ms": 1.2785,
+        "p99_ms": 1.390791
+      },
+      "total_ms": 47.391744999999965
+    },
+    "batch_total:settle:parent_share_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 77.185792,
+        "min_ms": 0.063958,
+        "p50_ms": 28.473584,
+        "p95_ms": 56.862292,
+        "p99_ms": 64.735875
+      },
+      "total_ms": 2734.6236239999994
+    },
+    "explicit_prepare_nested_in_query::account_init": {
+      "count": 31,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.312292,
+        "min_ms": 0.066584,
+        "p50_ms": 0.109917,
+        "p95_ms": 0.274125,
+        "p99_ms": 0.312292
+      },
+      "total_ms": 4.404044000000001
+    },
+    "explicit_prepare_nested_in_query::account_lock": {
+      "count": 31,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.14725,
+        "min_ms": 0.034833,
+        "p50_ms": 0.067833,
+        "p95_ms": 0.129125,
+        "p99_ms": 0.14725
+      },
+      "total_ms": 2.2658750000000007
+    },
+    "explicit_prepare_nested_in_query::attempt_insert": {
+      "count": 10,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.196417,
+        "min_ms": 0.095,
+        "p50_ms": 0.156708,
+        "p95_ms": 0.196417,
+        "p99_ms": 0.196417
+      },
+      "total_ms": 1.5691260000000002
+    },
+    "explicit_prepare_nested_in_query::cost_lookup": {
+      "count": 10,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.158417,
+        "min_ms": 0.081292,
+        "p50_ms": 0.112416,
+        "p95_ms": 0.158417,
+        "p99_ms": 0.158417
+      },
+      "total_ms": 1.212957
+    },
+    "explicit_prepare_nested_in_query::database_clock_or_deadline": {
+      "count": 73,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 3.41225,
+        "min_ms": 0.021709,
+        "p50_ms": 0.099542,
+        "p95_ms": 3.255084,
+        "p99_ms": 3.41225
+      },
+      "total_ms": 44.549252
+    },
+    "explicit_prepare_nested_in_query::fresh_grant_check": {
+      "count": 10,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.400459,
+        "min_ms": 0.127917,
+        "p50_ms": 0.198792,
+        "p95_ms": 0.400459,
+        "p99_ms": 0.400459
+      },
+      "total_ms": 2.333168
+    },
+    "explicit_prepare_nested_in_query::other_read": {
+      "count": 319,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 1.884125,
+        "min_ms": 0.039833,
+        "p50_ms": 0.115125,
+        "p95_ms": 0.64425,
+        "p99_ms": 1.762708
+      },
+      "total_ms": 69.1183029999999
+    },
+    "explicit_prepare_nested_in_query::other_update_lock": {
+      "count": 10,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.139834,
+        "min_ms": 0.053291,
+        "p50_ms": 0.086666,
+        "p95_ms": 0.139834,
+        "p99_ms": 0.139834
+      },
+      "total_ms": 0.9218329999999999
+    },
+    "explicit_prepare_nested_in_query::other_write": {
+      "count": 383,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.483375,
+        "min_ms": 0.024583,
+        "p50_ms": 0.052833,
+        "p95_ms": 0.142375,
+        "p99_ms": 0.246625
+      },
+      "total_ms": 25.496632000000005
+    },
+    "explicit_prepare_nested_in_query::parent_share_lock": {
+      "count": 11,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.129958,
+        "min_ms": 0.061458,
+        "p50_ms": 0.091709,
+        "p95_ms": 0.129958,
+        "p99_ms": 0.129958
+      },
+      "total_ms": 1.0322920000000002
+    },
+    "explicit_prepare_nested_in_query::price_lookup": {
+      "count": 10,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.86075,
+        "min_ms": 0.2605,
+        "p50_ms": 0.678708,
+        "p95_ms": 0.86075,
+        "p99_ms": 0.86075
+      },
+      "total_ms": 6.637332000000001
+    },
+    "explicit_prepare_nested_in_query::request_lookup": {
+      "count": 62,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.511875,
+        "min_ms": 0.042792,
+        "p50_ms": 0.102125,
+        "p95_ms": 0.20075,
+        "p99_ms": 0.511875
+      },
+      "total_ms": 7.865502999999999
+    },
+    "explicit_prepare_nested_in_query::reservation_lock": {
+      "count": 10,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.134917,
+        "min_ms": 0.056083,
+        "p50_ms": 0.093625,
+        "p95_ms": 0.134917,
+        "p99_ms": 0.134917
+      },
+      "total_ms": 0.945083
+    },
+    "guard::queue_plus_ping": {
+      "count": 200,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 2.493417,
+        "min_ms": 0.027333,
+        "p50_ms": 0.160917,
+        "p95_ms": 2.481167,
+        "p99_ms": 2.487333
+      },
+      "total_ms": 99.00071300000002
+    },
+    "pool::pool_acquire": {
+      "count": 900,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 112.3115,
+        "min_ms": 8.3e-05,
+        "p50_ms": 2.302333,
+        "p95_ms": 82.398458,
+        "p99_ms": 107.6815
+      },
+      "total_ms": 10855.736927
+    },
+    "query::database_clock_or_deadline": {
+      "count": 125,
+      "first_seen_connection_sql": 32,
+      "latency": {
+        "max_ms": 5.190458,
+        "min_ms": 0.098541,
+        "p50_ms": 0.519333,
+        "p95_ms": 4.3875,
+        "p99_ms": 5.161042
+      },
+      "total_ms": 159.258957
+    },
+    "query::other_read": {
+      "count": 200,
+      "first_seen_connection_sql": 62,
+      "latency": {
+        "max_ms": 5.109709,
+        "min_ms": 0.256,
+        "p50_ms": 0.667792,
+        "p95_ms": 4.358125,
+        "p99_ms": 4.913334
+      },
+      "total_ms": 259.10158500000006
+    },
+    "query::other_write": {
+      "count": 100,
+      "first_seen_connection_sql": 31,
+      "latency": {
+        "max_ms": 0.658041,
+        "min_ms": 0.069792,
+        "p50_ms": 0.16425,
+        "p95_ms": 0.4405,
+        "p99_ms": 0.612375
+      },
+      "total_ms": 20.476374000000007
+    },
+    "query:finalization:begin": {
+      "count": 100,
+      "first_seen_connection_sql": 21,
+      "latency": {
+        "max_ms": 2.31075,
+        "min_ms": 0.036584,
+        "p50_ms": 0.094083,
+        "p95_ms": 2.102667,
+        "p99_ms": 2.308209
+      },
+      "total_ms": 64.96074899999996
+    },
+    "query:finalization:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 21,
+      "latency": {
+        "max_ms": 0.905792,
+        "min_ms": 0.089875,
+        "p50_ms": 0.258958,
+        "p95_ms": 0.626333,
+        "p99_ms": 0.814833
+      },
+      "total_ms": 30.059420000000003
+    },
+    "query:finalization:other_read": {
+      "count": 400,
+      "first_seen_connection_sql": 124,
+      "latency": {
+        "max_ms": 0.951333,
+        "min_ms": 0.03725,
+        "p50_ms": 0.1155,
+        "p95_ms": 0.535291,
+        "p99_ms": 0.735791
+      },
+      "total_ms": 73.82282400000008
+    },
+    "query:finalization:other_write": {
+      "count": 400,
+      "first_seen_connection_sql": 124,
+      "latency": {
+        "max_ms": 1.264292,
+        "min_ms": 0.048375,
+        "p50_ms": 0.151208,
+        "p95_ms": 0.540541,
+        "p99_ms": 0.949875
+      },
+      "total_ms": 82.12075499999987
+    },
+    "query:finalization:request_lookup": {
+      "count": 200,
+      "first_seen_connection_sql": 42,
+      "latency": {
+        "max_ms": 1.166334,
+        "min_ms": 0.0495,
+        "p50_ms": 0.113667,
+        "p95_ms": 0.89625,
+        "p99_ms": 1.0895
+      },
+      "total_ms": 40.31983900000002
+    },
+    "query:finalization:transaction_settings": {
+      "count": 100,
+      "first_seen_connection_sql": 21,
+      "latency": {
+        "max_ms": 1.300791,
+        "min_ms": 0.04625,
+        "p50_ms": 0.110833,
+        "p95_ms": 1.008292,
+        "p99_ms": 1.20275
+      },
+      "total_ms": 30.88358
+    },
+    "query:prepare_dispatch:begin": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.176792,
+        "min_ms": 0.033792,
+        "p50_ms": 0.071209,
+        "p95_ms": 0.119833,
+        "p99_ms": 0.1685
+      },
+      "total_ms": 7.449214999999999
+    },
+    "query:prepare_dispatch:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 2.074584,
+        "min_ms": 0.058542,
+        "p50_ms": 0.194125,
+        "p95_ms": 0.941792,
+        "p99_ms": 1.8225
+      },
+      "total_ms": 28.875751000000005
+    },
+    "query:prepare_dispatch:database_clock_or_deadline": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.303125,
+        "min_ms": 0.025958,
+        "p50_ms": 0.065708,
+        "p95_ms": 0.185042,
+        "p99_ms": 0.256292
+      },
+      "total_ms": 8.250458999999998
+    },
+    "query:prepare_dispatch:fresh_grant_check": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.560042,
+        "min_ms": 0.0345,
+        "p50_ms": 0.095375,
+        "p95_ms": 0.171209,
+        "p99_ms": 0.360584
+      },
+      "total_ms": 10.798170000000002
+    },
+    "query:prepare_dispatch:other_read": {
+      "count": 300,
+      "first_seen_connection_sql": 21,
+      "latency": {
+        "max_ms": 0.451334,
+        "min_ms": 0.026625,
+        "p50_ms": 0.088459,
+        "p95_ms": 0.229834,
+        "p99_ms": 0.412167
+      },
+      "total_ms": 33.00825400000002
+    },
+    "query:prepare_dispatch:other_update_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.326458,
+        "min_ms": 0.029667,
+        "p50_ms": 0.085416,
+        "p95_ms": 0.20275,
+        "p99_ms": 0.228083
+      },
+      "total_ms": 9.536417999999998
+    },
+    "query:prepare_dispatch:parent_share_lock": {
+      "count": 200,
+      "first_seen_connection_sql": 11,
+      "latency": {
+        "max_ms": 0.450417,
+        "min_ms": 0.028208,
+        "p50_ms": 0.084583,
+        "p95_ms": 0.204791,
+        "p99_ms": 0.329833
+      },
+      "total_ms": 19.54649500000001
+    },
+    "query:prepare_dispatch:reservation_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.379875,
+        "min_ms": 0.032958,
+        "p50_ms": 0.097666,
+        "p95_ms": 0.235708,
+        "p99_ms": 0.271833
+      },
+      "total_ms": 11.267454999999998
+    },
+    "query:prepare_dispatch:transaction_settings": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.259583,
+        "min_ms": 0.04275,
+        "p50_ms": 0.089417,
+        "p95_ms": 0.171,
+        "p99_ms": 0.222125
+      },
+      "total_ms": 9.966960000000004
+    },
+    "query:record_attempt:attempt_insert": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 1.043375,
+        "min_ms": 0.083792,
+        "p50_ms": 0.196458,
+        "p95_ms": 0.587584,
+        "p99_ms": 1.012291
+      },
+      "total_ms": 24.358960999999994
+    },
+    "query:record_attempt:begin": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.419625,
+        "min_ms": 0.020625,
+        "p50_ms": 0.079667,
+        "p95_ms": 0.165291,
+        "p99_ms": 0.368125
+      },
+      "total_ms": 9.055496999999997
+    },
+    "query:record_attempt:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 1.45175,
+        "min_ms": 0.074958,
+        "p50_ms": 0.192125,
+        "p95_ms": 0.805708,
+        "p99_ms": 1.439042
+      },
+      "total_ms": 27.678706999999996
+    },
+    "query:record_attempt:cost_lookup": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.401916,
+        "min_ms": 0.034334,
+        "p50_ms": 0.083667,
+        "p95_ms": 0.30825,
+        "p99_ms": 0.394333
+      },
+      "total_ms": 10.957835000000006
+    },
+    "query:record_attempt:database_clock_or_deadline": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.25675,
+        "min_ms": 0.030334,
+        "p50_ms": 0.076583,
+        "p95_ms": 0.164625,
+        "p99_ms": 0.223125
+      },
+      "total_ms": 8.486705000000002
+    },
+    "query:record_attempt:other_read": {
+      "count": 200,
+      "first_seen_connection_sql": 19,
+      "latency": {
+        "max_ms": 0.31525,
+        "min_ms": 0.03075,
+        "p50_ms": 0.0985,
+        "p95_ms": 0.21725,
+        "p99_ms": 0.2625
+      },
+      "total_ms": 22.064003
+    },
+    "query:record_attempt:request_lookup": {
+      "count": 200,
+      "first_seen_connection_sql": 20,
+      "latency": {
+        "max_ms": 0.430125,
+        "min_ms": 0.025542,
+        "p50_ms": 0.095083,
+        "p95_ms": 0.203875,
+        "p99_ms": 0.256667
+      },
+      "total_ms": 21.859960999999995
+    },
+    "query:record_attempt:transaction_settings": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.349542,
+        "min_ms": 0.041,
+        "p50_ms": 0.086583,
+        "p95_ms": 0.159542,
+        "p99_ms": 0.20275
+      },
+      "total_ms": 9.519212000000001
+    },
+    "query:reserve:account_init": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 3.406625,
+        "min_ms": 0.062459,
+        "p50_ms": 0.123458,
+        "p95_ms": 0.78,
+        "p99_ms": 3.406375
+      },
+      "total_ms": 31.78353899999999
+    },
+    "query:reserve:account_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 1.098417,
+        "min_ms": 0.047708,
+        "p50_ms": 0.104167,
+        "p95_ms": 0.326916,
+        "p99_ms": 0.813667
+      },
+      "total_ms": 14.843663
+    },
+    "query:reserve:begin": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.258042,
+        "min_ms": 0.035833,
+        "p50_ms": 0.094334,
+        "p95_ms": 0.23175,
+        "p99_ms": 0.253709
+      },
+      "total_ms": 11.314628000000004
+    },
+    "query:reserve:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 2.150541,
+        "min_ms": 0.096584,
+        "p50_ms": 0.235542,
+        "p95_ms": 0.934292,
+        "p99_ms": 1.059625
+      },
+      "total_ms": 36.03666300000002
+    },
+    "query:reserve:fresh_grant_check": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.700125,
+        "min_ms": 0.044042,
+        "p50_ms": 0.094166,
+        "p95_ms": 0.629833,
+        "p99_ms": 0.698333
+      },
+      "total_ms": 14.844419999999994
+    },
+    "query:reserve:price_lookup": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 1.052625,
+        "min_ms": 0.03975,
+        "p50_ms": 0.096417,
+        "p95_ms": 0.909667,
+        "p99_ms": 1.027291
+      },
+      "total_ms": 17.982498000000007
+    },
+    "query:reserve:transaction_settings": {
+      "count": 100,
+      "first_seen_connection_sql": 10,
+      "latency": {
+        "max_ms": 0.438292,
+        "min_ms": 0.044084,
+        "p50_ms": 0.111875,
+        "p95_ms": 0.179792,
+        "p99_ms": 0.287125
+      },
+      "total_ms": 12.034839999999994
+    },
+    "query:settle:account_init": {
+      "count": 100,
+      "first_seen_connection_sql": 21,
+      "latency": {
+        "max_ms": 4.495541,
+        "min_ms": 0.050125,
+        "p50_ms": 0.660625,
+        "p95_ms": 2.62125,
+        "p99_ms": 3.164791
+      },
+      "total_ms": 95.665165
+    },
+    "query:settle:account_lock": {
+      "count": 100,
+      "first_seen_connection_sql": 21,
+      "latency": {
+        "max_ms": 40.387083,
+        "min_ms": 0.090959,
+        "p50_ms": 8.267791,
+        "p95_ms": 25.469208,
+        "p99_ms": 32.075583
+      },
+      "total_ms": 1056.3888809999999
+    },
+    "query:settle:begin": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.17375,
+        "min_ms": 0.022834,
+        "p50_ms": 0.056208,
+        "p95_ms": 0.1365,
+        "p99_ms": 0.163166
+      },
+      "total_ms": 6.409121000000002
+    },
+    "query:settle:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.455625,
+        "min_ms": 0.07325,
+        "p50_ms": 0.148125,
+        "p95_ms": 0.411375,
+        "p99_ms": 0.453542
+      },
+      "total_ms": 19.262665000000002
+    },
+    "query:settle:database_clock_or_deadline": {
+      "count": 200,
+      "first_seen_connection_sql": 21,
+      "latency": {
+        "max_ms": 0.173833,
+        "min_ms": 0.021375,
+        "p50_ms": 0.049542,
+        "p95_ms": 0.102584,
+        "p99_ms": 0.131083
+      },
+      "total_ms": 10.582247999999995
+    },
+    "query:settle:other_read": {
+      "count": 300,
+      "first_seen_connection_sql": 93,
+      "latency": {
+        "max_ms": 0.682208,
+        "min_ms": 0.038791,
+        "p50_ms": 0.076959,
+        "p95_ms": 0.281917,
+        "p99_ms": 0.461292
+      },
+      "total_ms": 34.02528500000001
+    },
+    "query:settle:other_write": {
+      "count": 800,
+      "first_seen_connection_sql": 228,
+      "latency": {
+        "max_ms": 0.370708,
+        "min_ms": 0.029292,
+        "p50_ms": 0.062666,
+        "p95_ms": 0.177167,
+        "p99_ms": 0.232875
+      },
+      "total_ms": 66.14509899999997
+    },
+    "query:settle:request_lookup": {
+      "count": 200,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.235291,
+        "min_ms": 0.027042,
+        "p50_ms": 0.065958,
+        "p95_ms": 0.145084,
+        "p99_ms": 0.187
+      },
+      "total_ms": 15.551213999999995
+    },
+    "query:settle:transaction_settings": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 0.310917,
+        "min_ms": 0.035958,
+        "p50_ms": 0.062292,
+        "p95_ms": 0.151209,
+        "p99_ms": 0.238
+      },
+      "total_ms": 7.767703999999999
+    },
+    "transaction:finalization:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 22.275458,
+        "min_ms": 1.609833,
+        "p50_ms": 7.506834,
+        "p95_ms": 15.401208,
+        "p99_ms": 18.666792
+      },
+      "total_ms": 772.1348299999997
+    },
+    "transaction:prepare_dispatch:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 3.311958,
+        "min_ms": 0.632083,
+        "p50_ms": 1.672875,
+        "p95_ms": 2.831041,
+        "p99_ms": 3.135583
+      },
+      "total_ms": 180.41625100000005
+    },
+    "transaction:record_attempt:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 3.411709,
+        "min_ms": 0.8785,
+        "p50_ms": 1.428417,
+        "p95_ms": 3.17825,
+        "p99_ms": 3.367208
+      },
+      "total_ms": 162.87862100000007
+    },
+    "transaction:reserve:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 10.954042,
+        "min_ms": 1.128541,
+        "p50_ms": 1.993917,
+        "p95_ms": 7.576959,
+        "p99_ms": 10.848875
+      },
+      "total_ms": 275.270505
+    },
+    "transaction:settle:commit": {
+      "count": 100,
+      "first_seen_connection_sql": 0,
+      "latency": {
+        "max_ms": 86.300667,
+        "min_ms": 7.6825,
+        "p50_ms": 40.908917,
+        "p95_ms": 73.1365,
+        "p99_ms": 85.967542
+      },
+      "total_ms": 4100.701041000001
+    }
+  },
+  "wal_before": {
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "track_wal_io_timing": "off",
+    "wal_sync": 0,
+    "wal_sync_ms": 0,
+    "wal_write": 67535,
+    "wal_write_ms": 0
+  },
+  "wal_after": {
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "track_wal_io_timing": "off",
+    "wal_sync": 0,
+    "wal_sync_ms": 0,
+    "wal_write": 67535,
+    "wal_write_ms": 0
+  }
+}

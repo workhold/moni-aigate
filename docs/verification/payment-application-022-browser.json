@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-01",
+  "browser": "isolated headless Google Chrome",
+  "artifact": "final embedded production bundle",
+  "real_http": {
+    "password_login_no_mfa_required": true,
+    "delayed_initial_me_preserves_redirect": true,
+    "admin_publish_and_activate": true,
+    "owner_create_and_cancel": true,
+    "operation_receipts_strictly_rendered": true,
+    "order_detail": true,
+    "three_funding_sources": true,
+    "billing_viewer_read_only": true,
+    "finance_read_only": true,
+    "local_simulation_labels": true,
+    "no_checkout_link": true
+  },
+  "pending": {
+    "absent_operation_404_retained": true,
+    "actual_reload_restored": true,
+    "second_reload_retained": true,
+    "qa_namespace_removed": true
+  },
+  "desktop": {
+    "width": 1440,
+    "scroll": 1440
+  },
+  "mobile": {
+    "width": 390,
+    "scroll": 390
+  },
+  "ordinary_main_sha256": "c8ee58158d2f5818a2ab26de4cfc645dce32458820387c5965d679dbf54fe236",
+  "new_unfunded_browser_order": true,
+  "pass": true
+}

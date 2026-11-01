@@ -1,0 +1,298 @@
+{
+  "artifact_schema_version": 1,
+  "scope": "C1-P pure wire/digest/signature synthetic vectors; no DB/network/funding authority",
+  "generator": "scripts/verification/payment-refund-v2-golden.py",
+  "generator_version": 1,
+  "synthetic_only": true,
+  "keys": {
+    "v1_ascii": "SYNTHETIC_V1_KEY_ONLY_0000000000",
+    "v2_ascii": "SYNTHETIC_V2_KEY_ONLY_0000000000",
+    "v1_key_id": "synthetic_v1_key_01",
+    "v2_key_id": "synthetic_v2_key_01",
+    "not_before": "2025-01-01T00:00:00.000000Z",
+    "not_after": "2030-01-01T00:00:00.000000Z"
+  },
+  "environment": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "merchant_id": "商户:测试_α/01"
+  },
+  "received_at": "2026-01-02T03:04:07.000000Z",
+  "v1_bridge": {
+    "checkout": {
+      "canonical": "{\"schema_version\":1,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_id\":\"00000001-0001-0001-0001-000000000001\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"amount\":\"1000000\",\"currency\":\"CNY\",\"created_at\":\"2026-01-02T03:00:00.000000Z\",\"expires_at\":\"2026-01-02T03:15:00.000000Z\"}",
+      "utf8_bytes": 387,
+      "raw_sha256": "704cbcda85adc89e162a2e57eca080dff1e392409d86d7f36b93cc8a8172b1cb"
+    },
+    "query_request": {
+      "canonical": "{\"schema_version\":1,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"query_id\":\"00000002-0002-0002-0002-000000000002\",\"command_id\":\"00000001-0001-0001-0001-000000000001\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"command_kind\":\"checkout\",\"parameter_digest\":\"704cbcda85adc89e162a2e57eca080dff1e392409d86d7f36b93cc8a8172b1cb\"}",
+      "utf8_bytes": 427,
+      "raw_sha256": "4322c385fe563190e677faa90fd0b6ebdd4ca18c2113d9b043c55ff4fe4dce66"
+    },
+    "notification": {
+      "canonical": "{\"schema_version\":1,\"event_id\":\"synthetic:capture/0001\",\"event_type\":\"capture.confirmed\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"order_id\":\"22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"amount\":\"1000000\",\"currency\":\"CNY\",\"occurred_at\":\"2026-01-02T03:04:05.123456Z\",\"provider_order_revision\":\"3\"}",
+      "utf8_bytes": 387,
+      "raw_sha256": "8ce6593b641c8deb51165d817427aa124c855844ccfc4d54bb4f641267fca381",
+      "headers": {
+        "key_id": "synthetic_v1_key_01",
+        "delivery_id": "88888888-8888-8888-8888-888888888888",
+        "delivery_time": "1767323047",
+        "signature": "a48ea5b696db9f0ba6585b752713039cf355229c5b10dc3f17c2c4ee4ea2bb01"
+      }
+    },
+    "query_reply": {
+      "canonical": "{\"schema_version\":1,\"query_id\":\"00000002-0002-0002-0002-000000000002\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"command_id\":\"00000001-0001-0001-0001-000000000001\",\"command_kind\":\"checkout\",\"parameter_digest\":\"704cbcda85adc89e162a2e57eca080dff1e392409d86d7f36b93cc8a8172b1cb\",\"command_state\":\"completed\",\"provider_order_revision\":\"3\",\"result\":{\"status\":\"captured\",\"checkout_ref\":null,\"failure_code\":null,\"capture\":{\"provider_transaction_id\":\"交易:合成/001\",\"amount\":\"1000000\",\"currency\":\"CNY\",\"occurred_at\":\"2026-01-02T03:04:05.123456Z\",\"provider_order_revision\":\"3\"},\"closed_at\":null}}",
+      "utf8_bytes": 741,
+      "raw_sha256": "2be813cb6fa28a700c12671990a8075ff8b9a41fc92478f678c05a83b7d0455a",
+      "headers": {
+        "key_id": "synthetic_v1_key_01",
+        "delivery_id": "88888888-8888-8888-8888-888888888888",
+        "delivery_time": "1767323047",
+        "signature": "d81a0bb85448ef59862efee7de4308320dfda8183e837d00011047d9e63d7ff0"
+      }
+    },
+    "expected_capture": {
+      "canonical": "{\"capture_protocol_version\":1,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"amount\":\"1000000\",\"currency\":\"CNY\",\"occurred_at\":\"2026-01-02T03:04:05.123456Z\",\"provider_order_revision\":\"3\"}",
+      "utf8_bytes": 379,
+      "raw_sha256": "c86fdf83f15efd4948362a3ad0c7af5a3f4e72c7b3205b32b619af2e9c4966af",
+      "digest_domain": "moni-aigate/payment-refund-capture/v2",
+      "framed_digest": "85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e"
+    },
+    "notification_and_query_capture_digest_equal": true
+  },
+  "commands": {
+    "confirmed": {
+      "canonical": "{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"}",
+      "utf8_bytes": 547,
+      "raw_sha256": "f1645aa72e1ceda1a9f562a9908a41c1ba9aefa3f7bfe2ddc9ed38ae576a389a",
+      "digest_domain": "moni-aigate/payment-refund-command/v2",
+      "framed_digest": "01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5"
+    },
+    "final_no_effect": {
+      "canonical": "{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"}",
+      "utf8_bytes": 547,
+      "raw_sha256": "760aef64752b5c31778ba2a88882ade0b2585c5720420cace9a1921174bf8785",
+      "digest_domain": "moni-aigate/payment-refund-command/v2",
+      "framed_digest": "a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3"
+    }
+  },
+  "queries": {
+    "confirmed": {
+      "canonical": "{\"schema_version\":2,\"query_id\":\"55555555-5555-5555-5555-555555555555\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\"}",
+      "utf8_bytes": 740,
+      "raw_sha256": "6eb7ec26f922f408d4f63226ff8bf48a0909e95aca5364c5a244c73814c9d769",
+      "digest_domain": "moni-aigate/payment-refund-query/v2",
+      "framed_digest": "4e691df99579fa3a0218d6b64bfd15881648af3b77032ba5c49273e242a07604"
+    },
+    "final_no_effect": {
+      "canonical": "{\"schema_version\":2,\"query_id\":\"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\"}",
+      "utf8_bytes": 740,
+      "raw_sha256": "de96f25f516760d481556e36842edde608f686685c5770af662a691761f51d7f",
+      "digest_domain": "moni-aigate/payment-refund-query/v2",
+      "framed_digest": "ca0493a623985203bcf12a65aaad7242cecb6f3d306cf22387836bbf5c2d6265"
+    }
+  },
+  "facts": {
+    "confirmed": {
+      "canonical": "{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}",
+      "utf8_bytes": 827,
+      "raw_sha256": "d659848a5d5fdaf3ae47759ce95006e2bb078f9ab3bf571d21c8dd5eb4788437",
+      "digest_domain": "moni-aigate/payment-refund-fact/v2",
+      "framed_digest": "29ee62abb95e318c02ccab8524e8f2d571a9ffa3b55628ffc4a865c12d19be0c"
+    },
+    "final_no_effect": {
+      "canonical": "{\"schema_version\":2,\"fact_id\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"final_no_effect\",\"provider_refund_reference\":null,\"failure_code\":\"refund_policy_rejected\",\"capture_refund_revision\":\"2\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}",
+      "utf8_bytes": 834,
+      "raw_sha256": "8e86d608876e6fe2db21fb5f417830cb40fffb32235aebd0ca0e91892ba5d7e3",
+      "digest_domain": "moni-aigate/payment-refund-fact/v2",
+      "framed_digest": "e9b42d49e8b44fc29aebf8b20c2223bd8c4a3c7ddb58d87e06b926a996b02952"
+    }
+  },
+  "signed_vectors": [
+    {
+      "name": "command_confirmed",
+      "kind": "command_reply",
+      "command_vector": "confirmed",
+      "query_vector": null,
+      "canonical": "{\"schema_version\":2,\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_body": "{\"schema_version\":2,\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_utf8_bytes": 1529,
+      "raw_sha256": "3930502e89288d054741520f35f3c044fd7eb0e318e4720e96415bfca243c933",
+      "context_digest": "01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5",
+      "signature_domain": "moni-aigate/payment-refund-command-reply/v2",
+      "framed_signing_input_hex": "000000000000002b6d6f6e692d6169676174652f7061796d656e742d726566756e642d636f6d6d616e642d7265706c792f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f3031000000000000004030316230633538643732313134613762646234333636393637656237333765393139373363383532373533346664313435353530383761633336656234316235000000000000002438383838383838382d383838382d383838382d383838382d383838383838383838383838000000000000000a31373637333233303437000000000000004033393330353032653839323838643035343734313532306633356633633034346664376562306533313865343732306539363431356266636132343363393333",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "88888888-8888-8888-8888-888888888888",
+        "delivery_time": "1767323047",
+        "signature": "f4b27ecc90e598d30eb05991a60ea037629940d66bd40d6a5a925ddccf5f5790"
+      },
+      "expected_fact_digest": "29ee62abb95e318c02ccab8524e8f2d571a9ffa3b55628ffc4a865c12d19be0c"
+    },
+    {
+      "name": "query_confirmed",
+      "kind": "query_reply",
+      "command_vector": "confirmed",
+      "query_vector": "confirmed",
+      "canonical": "{\"schema_version\":2,\"query_id\":\"55555555-5555-5555-5555-555555555555\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_body": "{\"schema_version\":2,\"query_id\":\"55555555-5555-5555-5555-555555555555\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_utf8_bytes": 1605,
+      "raw_sha256": "31b8466e7898e35b1472dbda47e709f788c85330aae448e79e67ed28f3279152",
+      "context_digest": "4e691df99579fa3a0218d6b64bfd15881648af3b77032ba5c49273e242a07604",
+      "signature_domain": "moni-aigate/payment-refund-query-reply/v2",
+      "framed_signing_input_hex": "00000000000000296d6f6e692d6169676174652f7061796d656e742d726566756e642d71756572792d7265706c792f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f3031000000000000004034653639316466393935373966613361303231386436623634626664313538383136343861663362373730333262613563343932373365323432613037363034000000000000002438383838383838382d383838382d383838382d383838382d383838383838383838383838000000000000000a31373637333233303437000000000000004033316238343636653738393865333562313437326462646134376537303966373838633835333330616165343438653739653637656432386633323739313532",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "88888888-8888-8888-8888-888888888888",
+        "delivery_time": "1767323047",
+        "signature": "9679f2039ed8b236a7925fd0db1158c30d33f0e519866b57cbd45b95878be4bc"
+      },
+      "expected_fact_digest": "29ee62abb95e318c02ccab8524e8f2d571a9ffa3b55628ffc4a865c12d19be0c"
+    },
+    {
+      "name": "notification_confirmed",
+      "kind": "notification",
+      "command_vector": null,
+      "query_vector": null,
+      "canonical": "{\"schema_version\":2,\"event_id\":\"77777777-7777-7777-7777-777777777777\",\"event_type\":\"refund.confirmed\",\"fact\":{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_body": "{\"schema_version\":2,\"event_id\":\"77777777-7777-7777-7777-777777777777\",\"event_type\":\"refund.confirmed\",\"fact\":{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_utf8_bytes": 937,
+      "raw_sha256": "261484b618e5b1d61bdf2f04b975f81674752181063c1f8315c0573709535395",
+      "context_digest": "",
+      "signature_domain": "moni-aigate/payment-refund-notification/v2",
+      "framed_signing_input_hex": "000000000000002a6d6f6e692d6169676174652f7061796d656e742d726566756e642d6e6f74696669636174696f6e2f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f30310000000000000000000000000000002438383838383838382d383838382d383838382d383838382d383838383838383838383838000000000000000a31373637333233303437000000000000004032363134383462363138653562316436316264663266303462393735663831363734373532313831303633633166383331356330353733373039353335333935",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "88888888-8888-8888-8888-888888888888",
+        "delivery_time": "1767323047",
+        "signature": "f799b76a25789480329dcd712ff1c111a0823373ba05cb8a6c97cec7099d2e78"
+      },
+      "expected_fact_digest": "29ee62abb95e318c02ccab8524e8f2d571a9ffa3b55628ffc4a865c12d19be0c"
+    },
+    {
+      "name": "command_final_no_effect",
+      "kind": "command_reply",
+      "command_vector": "final_no_effect",
+      "query_vector": null,
+      "canonical": "{\"schema_version\":2,\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"final_no_effect\",\"provider_refund_reference\":null,\"failure_code\":\"refund_policy_rejected\",\"capture_refund_revision\":\"2\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_body": "{\"schema_version\":2,\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"final_no_effect\",\"provider_refund_reference\":null,\"failure_code\":\"refund_policy_rejected\",\"capture_refund_revision\":\"2\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_utf8_bytes": 1536,
+      "raw_sha256": "c0626091655b0d3d6b93cc3e92430c06d73fe9d75f2d12bf811a01ddaed187e9",
+      "context_digest": "a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3",
+      "signature_domain": "moni-aigate/payment-refund-command-reply/v2",
+      "framed_signing_input_hex": "000000000000002b6d6f6e692d6169676174652f7061796d656e742d726566756e642d636f6d6d616e642d7265706c792f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f3031000000000000004061323737386466626436626134623666326536613334336439336364383638303430653436366461613162326166303565633262383863303437316330306333000000000000002465656565656565652d656565652d656565652d656565652d656565656565656565656565000000000000000a31373637333233303437000000000000004063303632363039313635356230643364366239336363336539323433306330366437336665396437356632643132626638313161303164646165643138376539",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+        "delivery_time": "1767323047",
+        "signature": "e3aa25552c58e59fd01b5032a2c6681cc9c9e7a10ad59f71c49f2d2dc46ad813"
+      },
+      "expected_fact_digest": "e9b42d49e8b44fc29aebf8b20c2223bd8c4a3c7ddb58d87e06b926a996b02952"
+    },
+    {
+      "name": "query_final_no_effect",
+      "kind": "query_reply",
+      "command_vector": "final_no_effect",
+      "query_vector": "final_no_effect",
+      "canonical": "{\"schema_version\":2,\"query_id\":\"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"final_no_effect\",\"provider_refund_reference\":null,\"failure_code\":\"refund_policy_rejected\",\"capture_refund_revision\":\"2\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_body": "{\"schema_version\":2,\"query_id\":\"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"command_state\":\"completed\",\"result\":{\"schema_version\":2,\"fact_id\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"final_no_effect\",\"provider_refund_reference\":null,\"failure_code\":\"refund_policy_rejected\",\"capture_refund_revision\":\"2\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_utf8_bytes": 1612,
+      "raw_sha256": "b512b984d59a5feed1b6faf15f8ad9fe908d68ddef68e2711b57f6e93f0df083",
+      "context_digest": "ca0493a623985203bcf12a65aaad7242cecb6f3d306cf22387836bbf5c2d6265",
+      "signature_domain": "moni-aigate/payment-refund-query-reply/v2",
+      "framed_signing_input_hex": "00000000000000296d6f6e692d6169676174652f7061796d656e742d726566756e642d71756572792d7265706c792f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f3031000000000000004063613034393361363233393835323033626366313261363561616164373234326365636236663364333036636632323338373833366262663563326436323635000000000000002465656565656565652d656565652d656565652d656565652d656565656565656565656565000000000000000a31373637333233303437000000000000004062353132623938346435396135666565643162366661663135663861643966653930386436386464656636386532373131623537663665393366306466303833",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+        "delivery_time": "1767323047",
+        "signature": "9d70e2f98c70a5e553ecf9394e9e060f52ef823ffc9f1a89ff21202e5a869522"
+      },
+      "expected_fact_digest": "e9b42d49e8b44fc29aebf8b20c2223bd8c4a3c7ddb58d87e06b926a996b02952"
+    },
+    {
+      "name": "notification_final_no_effect",
+      "kind": "notification",
+      "command_vector": null,
+      "query_vector": null,
+      "canonical": "{\"schema_version\":2,\"event_id\":\"dddddddd-dddd-dddd-dddd-dddddddddddd\",\"event_type\":\"refund.final_no_effect\",\"fact\":{\"schema_version\":2,\"fact_id\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"final_no_effect\",\"provider_refund_reference\":null,\"failure_code\":\"refund_policy_rejected\",\"capture_refund_revision\":\"2\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_body": "{\"schema_version\":2,\"event_id\":\"dddddddd-dddd-dddd-dddd-dddddddddddd\",\"event_type\":\"refund.final_no_effect\",\"fact\":{\"schema_version\":2,\"fact_id\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\"command_id\":\"99999999-9999-9999-9999-999999999999\",\"parameter_digest\":\"a2778dfbd6ba4b6f2e6a343d93cd868040e466daa1b2af05ec2b88c0471c00c3\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"final_no_effect\",\"provider_refund_reference\":null,\"failure_code\":\"refund_policy_rejected\",\"capture_refund_revision\":\"2\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_utf8_bytes": 950,
+      "raw_sha256": "5fd32b1d9d2b0812e87d48bd50720a470bcbaf39d91e5b0b8bc6426991d97b63",
+      "context_digest": "",
+      "signature_domain": "moni-aigate/payment-refund-notification/v2",
+      "framed_signing_input_hex": "000000000000002a6d6f6e692d6169676174652f7061796d656e742d726566756e642d6e6f74696669636174696f6e2f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f30310000000000000000000000000000002465656565656565652d656565652d656565652d656565652d656565656565656565656565000000000000000a31373637333233303437000000000000004035666433326231643964326230383132653837643438626435303732306134373062636261663339643931653562306238626336343236393931643937623633",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+        "delivery_time": "1767323047",
+        "signature": "1d037aa3110bb2ed6300af7b871d509b0335c5bd9ab29e67ab56916c7e154c20"
+      },
+      "expected_fact_digest": "e9b42d49e8b44fc29aebf8b20c2223bd8c4a3c7ddb58d87e06b926a996b02952"
+    },
+    {
+      "name": "command_in_progress",
+      "kind": "command_reply",
+      "command_vector": "confirmed",
+      "query_vector": null,
+      "canonical": "{\"schema_version\":2,\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"in_progress\",\"result\":null}",
+      "raw_body": "{\"schema_version\":2,\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"in_progress\",\"result\":null}",
+      "raw_utf8_bytes": 708,
+      "raw_sha256": "a31d93fd4a044647cf79cd2e25bafe5e13fd412ff864199ba1a75cf54e48670c",
+      "context_digest": "01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5",
+      "signature_domain": "moni-aigate/payment-refund-command-reply/v2",
+      "framed_signing_input_hex": "000000000000002b6d6f6e692d6169676174652f7061796d656e742d726566756e642d636f6d6d616e642d7265706c792f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f3031000000000000004030316230633538643732313134613762646234333636393637656237333765393139373363383532373533346664313435353530383761633336656234316235000000000000002438383838383838382d383838382d383838382d383838382d383838383838383838383838000000000000000a31373637333233303437000000000000004061333164393366643461303434363437636637396364326532356261666535653133666434313266663836343139396261316137356366353465343836373063",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "88888888-8888-8888-8888-888888888888",
+        "delivery_time": "1767323047",
+        "signature": "0c7805ceb37e4293582430c3ab55a4f4058c63fb68723cb9a8009c8f686d0be8"
+      },
+      "expected_fact_digest": null
+    },
+    {
+      "name": "query_not_seen",
+      "kind": "query_reply",
+      "command_vector": "confirmed",
+      "query_vector": "confirmed",
+      "canonical": "{\"schema_version\":2,\"query_id\":\"55555555-5555-5555-5555-555555555555\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"not_seen\",\"result\":null}",
+      "raw_body": "{\"schema_version\":2,\"query_id\":\"55555555-5555-5555-5555-555555555555\",\"mutation_generation\":\"7\",\"command\":{\"schema_version\":2,\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"command_kind\":\"refund\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\"},\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"command_state\":\"not_seen\",\"result\":null}",
+      "raw_utf8_bytes": 781,
+      "raw_sha256": "f6c5ab494ff80bb2c9fd3c5d0c3f7d92a7cb7153d615a0d34a7099606946d965",
+      "context_digest": "4e691df99579fa3a0218d6b64bfd15881648af3b77032ba5c49273e242a07604",
+      "signature_domain": "moni-aigate/payment-refund-query-reply/v2",
+      "framed_signing_input_hex": "00000000000000296d6f6e692d6169676174652f7061796d656e742d726566756e642d71756572792d7265706c792f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f3031000000000000004034653639316466393935373966613361303231386436623634626664313538383136343861663362373730333262613563343932373365323432613037363034000000000000002438383838383838382d383838382d383838382d383838382d383838383838383838383838000000000000000a31373637333233303437000000000000004066366335616234393466663830626232633966643363356430633366376439326137636237313533643631356130643334613730393936303639343664393635",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "88888888-8888-8888-8888-888888888888",
+        "delivery_time": "1767323047",
+        "signature": "a40d17658047e52789103d1e35c5876cfe7b9b0bf21f2448523b17a35c025a43"
+      },
+      "expected_fact_digest": null
+    },
+    {
+      "name": "notification_confirmed_pretty_redelivery",
+      "kind": "notification",
+      "command_vector": null,
+      "query_vector": null,
+      "canonical": "{\"schema_version\":2,\"event_id\":\"77777777-7777-7777-7777-777777777777\",\"event_type\":\"refund.confirmed\",\"fact\":{\"schema_version\":2,\"fact_id\":\"66666666-6666-6666-6666-666666666666\",\"environment_id\":\"11111111-1111-1111-1111-111111111111\",\"merchant_id\":\"商户:测试_α/01\",\"local_refund_id\":\"44444444-4444-4444-4444-444444444444\",\"command_id\":\"33333333-3333-3333-3333-333333333333\",\"parameter_digest\":\"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\"merchant_order_id\":\"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\"provider_transaction_id\":\"交易:合成/001\",\"original_capture_amount\":\"1000000\",\"capture_digest\":\"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\"amount\":\"125000\",\"currency\":\"CNY\",\"outcome\":\"confirmed\",\"provider_refund_reference\":\"synthetic:refund/0001\",\"failure_code\":null,\"capture_refund_revision\":\"1\",\"completed_at\":\"2026-01-02T03:04:06.123456Z\"}}",
+      "raw_body": "{\n  \"schema_version\": 2,\n  \"event_id\": \"77777777-7777-7777-7777-777777777777\",\n  \"event_type\": \"refund.confirmed\",\n  \"fact\": {\n    \"schema_version\": 2,\n    \"fact_id\": \"66666666-6666-6666-6666-666666666666\",\n    \"environment_id\": \"11111111-1111-1111-1111-111111111111\",\n    \"merchant_id\": \"\\u5546\\u6237:\\u6d4b\\u8bd5_\\u03b1/01\",\n    \"local_refund_id\": \"44444444-4444-4444-4444-444444444444\",\n    \"command_id\": \"33333333-3333-3333-3333-333333333333\",\n    \"parameter_digest\": \"01b0c58d72114a7bdb4366967eb737e91973c8527534fd14555087ac36eb41b5\",\n    \"merchant_order_id\": \"mps1.11111111-1111-1111-1111-111111111111.22222222-2222-2222-2222-222222222222\",\n    \"provider_transaction_id\": \"\\u4ea4\\u6613:\\u5408\\u6210/001\",\n    \"original_capture_amount\": \"1000000\",\n    \"capture_digest\": \"85cb1f00740897c784dca57b92234173d2ca32849517fdfe182fd466856b673e\",\n    \"amount\": \"125000\",\n    \"currency\": \"CNY\",\n    \"outcome\": \"confirmed\",\n    \"provider_refund_reference\": \"synthetic:refund/0001\",\n    \"failure_code\": null,\n    \"capture_refund_revision\": \"1\",\n    \"completed_at\": \"2026-01-02T03:04:06.123456Z\"\n  }\n}\n",
+      "raw_utf8_bytes": 1094,
+      "raw_sha256": "9ee130c1932c6e9704724f1e546e5501d23894a87ea828e97bf91238837d1002",
+      "context_digest": "",
+      "signature_domain": "moni-aigate/payment-refund-notification/v2",
+      "framed_signing_input_hex": "000000000000002a6d6f6e692d6169676174652f7061796d656e742d726566756e642d6e6f74696669636174696f6e2f7632000000000000001373796e7468657469635f76325f6b65795f3031000000000000002431313131313131312d313131312d313131312d313131312d3131313131313131313131310000000000000013e59586e688b73ae6b58be8af955fceb12f30310000000000000000000000000000002466666666666666662d666666662d666666662d666666662d666666666666666666666666000000000000000a31373637333233303437000000000000004039656531333063313933326336653937303437323466316535343665353530316432333839346138376561383238653937626639313233383833376431303032",
+      "headers": {
+        "key_id": "synthetic_v2_key_01",
+        "delivery_id": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        "delivery_time": "1767323047",
+        "signature": "65f44286f13d6913696cabbfe22607ac96ee63a19d1f0946721c67f57c0c5bf7"
+      },
+      "expected_fact_digest": "29ee62abb95e318c02ccab8524e8f2d571a9ffa3b55628ffc4a865c12d19be0c"
+    }
+  ],
+  "fact_equivalence": {
+    "confirmed_wrapper_count": 4,
+    "confirmed_digest": "29ee62abb95e318c02ccab8524e8f2d571a9ffa3b55628ffc4a865c12d19be0c",
+    "final_no_effect_wrapper_count": 3,
+    "final_no_effect_digest": "e9b42d49e8b44fc29aebf8b20c2223bd8c4a3c7ddb58d87e06b926a996b02952"
+  }
+}

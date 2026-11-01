@@ -1,0 +1,293 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:57533",
+  "source_setup": "application HTTP; synthetic channel and procurement budget, no inference/funding",
+  "final": {
+    "capabilities": {
+      "deployment_enabled": true,
+      "recovery_mode": false,
+      "evaluation_available": true,
+      "reason": "available",
+      "max_enabled_rules": "64",
+      "evaluation_interval_seconds": "60",
+      "stale_after_seconds": "180",
+      "observed_at": "2026-10-31T21:11:50.762197Z"
+    },
+    "rules": [
+      {
+        "id": "16961e5d-0aaf-46ae-a34a-c7e602b27850",
+        "kind": "procurement_budget_low",
+        "scope_type": "procurement_account",
+        "scope_id": "15d4f047-f4b2-473d-923a-7bbd0c23ce03",
+        "label": "合成采购预算观察",
+        "state": "enabled",
+        "parameters": {
+          "threshold_amount": "1000000",
+          "recovery_amount": "2000000"
+        },
+        "configuration_revision": "1",
+        "created_by": "7d842471-1ddd-4cfe-8a23-c1865ccec5a6",
+        "updated_by": "7d842471-1ddd-4cfe-8a23-c1865ccec5a6",
+        "created_at": "2026-10-31T21:10:41.692796Z",
+        "updated_at": "2026-10-31T21:10:41.692796Z",
+        "retired_at": null,
+        "runtime": {
+          "next_evaluation_at": "2026-10-31T21:12:42.268015Z",
+          "last_attempt_at": "2026-10-31T21:11:42.268015Z",
+          "last_success_at": "2026-10-31T21:11:42.268015Z",
+          "evaluated_revision": "1",
+          "last_sample": {
+            "kind": "procurement_budget_low",
+            "as_of": "2026-10-31T21:11:42.268015Z",
+            "account_state": "active",
+            "limit_amount": "1000000",
+            "held_amount": "0",
+            "spent_amount": "0",
+            "available_amount": "1000000",
+            "currency": "CNY"
+          },
+          "last_error_code": null,
+          "current_episode_id": "5ae3aecb-cd17-4e55-8de8-4c7371abfc38",
+          "freshness": "fresh",
+          "observed_at": "2026-10-31T21:11:50.760098Z"
+        }
+      },
+      {
+        "id": "8304e440-e3e3-40bb-ab09-ddf5c06c742a",
+        "kind": "channel_quarantined",
+        "scope_type": "channel",
+        "scope_id": "e10204aa-a148-497b-9998-c85e41c06202",
+        "label": "合成渠道隔离观察",
+        "state": "retired",
+        "parameters": {},
+        "configuration_revision": "3",
+        "created_by": "7d842471-1ddd-4cfe-8a23-c1865ccec5a6",
+        "updated_by": "7d842471-1ddd-4cfe-8a23-c1865ccec5a6",
+        "created_at": "2026-10-31T21:04:18.371985Z",
+        "updated_at": "2026-10-31T21:07:49.546021Z",
+        "retired_at": "2026-10-31T21:07:49.546021Z",
+        "runtime": {
+          "next_evaluation_at": null,
+          "last_attempt_at": null,
+          "last_success_at": null,
+          "evaluated_revision": null,
+          "last_sample": null,
+          "last_error_code": null,
+          "current_episode_id": null,
+          "freshness": "retired",
+          "observed_at": "2026-10-31T21:11:50.760098Z"
+        }
+      }
+    ],
+    "episodes": [
+      {
+        "id": "5ae3aecb-cd17-4e55-8de8-4c7371abfc38",
+        "rule_id": "16961e5d-0aaf-46ae-a34a-c7e602b27850",
+        "generation": "1",
+        "rule_revision": "1",
+        "rule_snapshot": {
+          "kind": "procurement_budget_low",
+          "scope_type": "procurement_account",
+          "scope_id": "15d4f047-f4b2-473d-923a-7bbd0c23ce03",
+          "label": "合成采购预算观察",
+          "parameters": {
+            "threshold_amount": "1000000",
+            "recovery_amount": "2000000"
+          }
+        },
+        "status": "open",
+        "action_revision": "1",
+        "opened_at": "2026-10-31T21:10:42.141351Z",
+        "initial_sample": {
+          "kind": "procurement_budget_low",
+          "as_of": "2026-10-31T21:10:42.141351Z",
+          "account_state": "active",
+          "limit_amount": "1000000",
+          "held_amount": "0",
+          "spent_amount": "0",
+          "available_amount": "1000000",
+          "currency": "CNY"
+        },
+        "last_seen_at": "2026-10-31T21:11:42.268015Z",
+        "latest_sample": {
+          "kind": "procurement_budget_low",
+          "as_of": "2026-10-31T21:11:42.268015Z",
+          "account_state": "active",
+          "limit_amount": "1000000",
+          "held_amount": "0",
+          "spent_amount": "0",
+          "available_amount": "1000000",
+          "currency": "CNY"
+        },
+        "acknowledged_by": null,
+        "acknowledged_at": null,
+        "resolved_at": null,
+        "resolve_reason": null,
+        "evaluation_freshness": "fresh",
+        "observed_at": "2026-10-31T21:11:50.761072Z"
+      },
+      {
+        "id": "a240cdf2-5530-4bf4-929f-d7024cc5324c",
+        "rule_id": "8304e440-e3e3-40bb-ab09-ddf5c06c742a",
+        "generation": "2",
+        "rule_revision": "1",
+        "rule_snapshot": {
+          "kind": "channel_quarantined",
+          "scope_type": "channel",
+          "scope_id": "e10204aa-a148-497b-9998-c85e41c06202",
+          "label": "合成渠道隔离观察",
+          "parameters": {}
+        },
+        "status": "resolved",
+        "action_revision": "2",
+        "opened_at": "2026-10-31T21:06:19.546436Z",
+        "initial_sample": {
+          "kind": "channel_quarantined",
+          "as_of": "2026-10-31T21:06:19.546436Z",
+          "enabled": false,
+          "quarantined": true
+        },
+        "last_seen_at": "2026-10-31T21:06:19.546436Z",
+        "latest_sample": {
+          "kind": "channel_quarantined",
+          "as_of": "2026-10-31T21:06:19.546436Z",
+          "enabled": false,
+          "quarantined": true
+        },
+        "acknowledged_by": null,
+        "acknowledged_at": null,
+        "resolved_at": "2026-10-31T21:07:05.644075Z",
+        "resolve_reason": "rule_disabled",
+        "evaluation_freshness": "retired",
+        "observed_at": "2026-10-31T21:11:50.761072Z"
+      },
+      {
+        "id": "c2acebf3-a852-420f-ba8d-523d2b5f7c6f",
+        "rule_id": "8304e440-e3e3-40bb-ab09-ddf5c06c742a",
+        "generation": "1",
+        "rule_revision": "1",
+        "rule_snapshot": {
+          "kind": "channel_quarantined",
+          "scope_type": "channel",
+          "scope_id": "e10204aa-a148-497b-9998-c85e41c06202",
+          "label": "合成渠道隔离观察",
+          "parameters": {}
+        },
+        "status": "resolved",
+        "action_revision": "3",
+        "opened_at": "2026-10-31T21:04:19.246226Z",
+        "initial_sample": {
+          "kind": "channel_quarantined",
+          "as_of": "2026-10-31T21:04:19.246226Z",
+          "enabled": false,
+          "quarantined": true
+        },
+        "last_seen_at": "2026-10-31T21:05:19.389421Z",
+        "latest_sample": {
+          "kind": "channel_quarantined",
+          "as_of": "2026-10-31T21:05:19.389421Z",
+          "enabled": true,
+          "quarantined": false
+        },
+        "acknowledged_by": "7d842471-1ddd-4cfe-8a23-c1865ccec5a6",
+        "acknowledged_at": "2026-10-31T21:05:00.352451Z",
+        "resolved_at": "2026-10-31T21:05:19.389421Z",
+        "resolve_reason": "recovered",
+        "evaluation_freshness": "retired",
+        "observed_at": "2026-10-31T21:11:50.761072Z"
+      }
+    ],
+    "events": {
+      "5ae3aecb-cd17-4e55-8de8-4c7371abfc38": [
+        {
+          "id": "5d0771c9-0e54-4b71-939a-1572bd7182e2",
+          "episode_id": "5ae3aecb-cd17-4e55-8de8-4c7371abfc38",
+          "action_revision": "1",
+          "type": "opened",
+          "actor": "system",
+          "observed_at": "2026-10-31T21:10:42.141351Z",
+          "safe_sample": {
+            "kind": "procurement_budget_low",
+            "as_of": "2026-10-31T21:10:42.141351Z",
+            "account_state": "active",
+            "limit_amount": "1000000",
+            "held_amount": "0",
+            "spent_amount": "0",
+            "available_amount": "1000000",
+            "currency": "CNY"
+          },
+          "created_at": "2026-10-31T21:10:42.141351Z"
+        }
+      ],
+      "a240cdf2-5530-4bf4-929f-d7024cc5324c": [
+        {
+          "id": "73a11252-0e57-4e04-a524-9d83cf15a04d",
+          "episode_id": "a240cdf2-5530-4bf4-929f-d7024cc5324c",
+          "action_revision": "2",
+          "type": "rule_disabled",
+          "actor": "7d842471-1ddd-4cfe-8a23-c1865ccec5a6",
+          "observed_at": "2026-10-31T21:07:05.644075Z",
+          "safe_sample": null,
+          "created_at": "2026-10-31T21:07:05.644075Z"
+        },
+        {
+          "id": "40fcb3ad-071d-4404-ac94-2ae1fc4b7bdc",
+          "episode_id": "a240cdf2-5530-4bf4-929f-d7024cc5324c",
+          "action_revision": "1",
+          "type": "opened",
+          "actor": "system",
+          "observed_at": "2026-10-31T21:06:19.546436Z",
+          "safe_sample": {
+            "kind": "channel_quarantined",
+            "as_of": "2026-10-31T21:06:19.546436Z",
+            "enabled": false,
+            "quarantined": true
+          },
+          "created_at": "2026-10-31T21:06:19.546436Z"
+        }
+      ],
+      "c2acebf3-a852-420f-ba8d-523d2b5f7c6f": [
+        {
+          "id": "10bdcb99-8a6c-407a-8327-d2ad05b9c548",
+          "episode_id": "c2acebf3-a852-420f-ba8d-523d2b5f7c6f",
+          "action_revision": "3",
+          "type": "recovered",
+          "actor": "system",
+          "observed_at": "2026-10-31T21:05:19.389421Z",
+          "safe_sample": {
+            "kind": "channel_quarantined",
+            "as_of": "2026-10-31T21:05:19.389421Z",
+            "enabled": true,
+            "quarantined": false
+          },
+          "created_at": "2026-10-31T21:05:19.389421Z"
+        },
+        {
+          "id": "c7ec7a05-a7a6-490a-a288-3dfd5df3ac75",
+          "episode_id": "c2acebf3-a852-420f-ba8d-523d2b5f7c6f",
+          "action_revision": "2",
+          "type": "acknowledged",
+          "actor": "7d842471-1ddd-4cfe-8a23-c1865ccec5a6",
+          "observed_at": "2026-10-31T21:05:00.352451Z",
+          "safe_sample": null,
+          "created_at": "2026-10-31T21:05:00.352451Z"
+        },
+        {
+          "id": "7767250b-1638-44ae-b8ae-9ce2126669a3",
+          "episode_id": "c2acebf3-a852-420f-ba8d-523d2b5f7c6f",
+          "action_revision": "1",
+          "type": "opened",
+          "actor": "system",
+          "observed_at": "2026-10-31T21:04:19.246226Z",
+          "safe_sample": {
+            "kind": "channel_quarantined",
+            "as_of": "2026-10-31T21:04:19.246226Z",
+            "enabled": false,
+            "quarantined": true
+          },
+          "created_at": "2026-10-31T21:04:19.246226Z"
+        }
+      ]
+    }
+  }
+}

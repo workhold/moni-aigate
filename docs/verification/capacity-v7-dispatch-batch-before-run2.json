@@ -1,0 +1,155 @@
+{
+  "content_observations": 100,
+  "database": {
+    "lock_sampling_interval_ms": 10,
+    "max_query_age_while_waiting_ms": 21.754,
+    "max_simultaneous_lock_waiters": 8,
+    "monitor_error": "",
+    "pool_acquire_count": 900,
+    "pool_acquire_duration_ms": 485.190674,
+    "pool_empty_acquires": 279,
+    "samples": 17,
+    "samples_with_lock_waiters": 9,
+    "sum_waiters_across_samples": 64
+  },
+  "environment": {
+    "application_db_pool": 32,
+    "arch": "arm64",
+    "dedicated_instance_connections": 1,
+    "go": "go1.27.2",
+    "gomaxprocs": 18,
+    "instance_guard": "operations.Instance.Check: dedicated session ping at API entry and before provider dispatch",
+    "logical_cpus": 18,
+    "max_transaction_connections": 31,
+    "measurement_scope": "gateway+load-client+mock-upstream in one go test process; PostgreSQL is a separate local process",
+    "os": "darwin",
+    "postgres_version": "16.15 (Homebrew)",
+    "race_build_setting": "not_reported",
+    "target_environment_verified": false
+  },
+  "excluded_mock_barrier_wait": {
+    "max_ms": 46.256291,
+    "min_ms": 0.057375,
+    "p50_ms": 22.345834,
+    "p95_ms": 42.189458,
+    "p99_ms": 45.910875
+  },
+  "excluded_mock_wait_to_content": {
+    "max_ms": 46.266083,
+    "min_ms": 0.061875,
+    "p50_ms": 22.354084,
+    "p95_ms": 42.272333,
+    "p99_ms": 45.924833
+  },
+  "latency_client_first_byte_to_first_content": {
+    "max_ms": 0.842708,
+    "min_ms": 0.001959,
+    "p50_ms": 0.006916,
+    "p95_ms": 0.604334,
+    "p99_ms": 0.816958
+  },
+  "latency_client_to_first_content_including_mock_waits": {
+    "max_ms": 77.117125,
+    "min_ms": 71.453125,
+    "p50_ms": 75.511584,
+    "p95_ms": 77.0435,
+    "p99_ms": 77.095
+  },
+  "latency_client_to_upstream_admission": {
+    "max_ms": 73.70975,
+    "min_ms": 28.093125,
+    "p50_ms": 49.732375,
+    "p95_ms": 70.664459,
+    "p99_ms": 71.753166
+  },
+  "latency_extra_first_byte": {
+    "max_ms": 74.717959,
+    "min_ms": 28.729667,
+    "p50_ms": 51.892249,
+    "p95_ms": 71.624666,
+    "p99_ms": 73.937999
+  },
+  "latency_extra_first_content": {
+    "max_ms": 74.718375,
+    "min_ms": 28.716416,
+    "p50_ms": 51.893832,
+    "p95_ms": 71.631083,
+    "p99_ms": 73.936291
+  },
+  "latency_full_including_barrier": {
+    "max_ms": 173.400791,
+    "min_ms": 82.535667,
+    "p50_ms": 133.016542,
+    "p95_ms": 170.291458,
+    "p99_ms": 172.63325
+  },
+  "latency_mock_content_to_client_first_content": {
+    "max_ms": 3.230541,
+    "min_ms": 0.291666,
+    "p50_ms": 1.972167,
+    "p95_ms": 2.965375,
+    "p99_ms": 3.199792
+  },
+  "latency_mock_ready_to_client_first_byte": {
+    "max_ms": 3.228958,
+    "min_ms": 0.237458,
+    "p50_ms": 1.964709,
+    "p95_ms": 2.886875,
+    "p99_ms": 3.163458
+  },
+  "load": {
+    "barrier_timeout": false,
+    "concurrency_per_key": 10,
+    "concurrency_per_tenant": 20,
+    "concurrent_clients": 100,
+    "keys_per_tenant": 2,
+    "mock_generation_delay_ms": 0,
+    "mock_stream_shape": "role-only event, optional content delay, content event, finish, usage, DONE",
+    "request_bytes_max": 148,
+    "request_bytes_min": 147,
+    "requests": 100,
+    "tenants": 5
+  },
+  "measurement_version": 2,
+  "memory": {
+    "allocated_during_load_bytes": 27171696,
+    "gc_cycles": 7,
+    "heap_after_bytes": 18812832,
+    "heap_before_bytes": 2178040,
+    "rss_after_bytes": 55689216,
+    "rss_before_bytes": 26034176,
+    "sampled_peak_go_sys_bytes": 47171848,
+    "sampled_peak_goroutines": 877,
+    "sampled_peak_heap_bytes": 18812832,
+    "sampled_peak_rss_bytes": 55689216,
+    "scope": "entire test process, sampled every 10ms; RSS every 250ms"
+  },
+  "metric_definitions": {
+    "extra_first_byte": "client first body byte - client start - (mock role emission - upstream arrival); excludes barrier only",
+    "extra_first_content": "client first complete useful SSE event - client start - (mock content emission - upstream arrival); excludes mock barrier and simulated generation wait",
+    "first_content": "client start to first complete SSE event with nonempty text/refusal or tool function name/arguments; role, heartbeat, usage-only and empty delta excluded; not a real model/tokenizer TTFT"
+  },
+  "results": {
+    "acceptance_rate": 1,
+    "accepted": 100,
+    "burst_completions_per_second": 568.6994898174129,
+    "charged_microcurrency": 2000,
+    "key_remaining_hold_microcurrency": 0,
+    "key_spent_microcurrency": 2000,
+    "ledger_balanced": true,
+    "network_errors": 0,
+    "peak_upstream_concurrency": 100,
+    "rejections": {},
+    "remaining_admission_lanes": 0,
+    "remaining_admission_tickets": 0,
+    "remaining_hold_microcurrency": 0,
+    "remaining_runtime_permits": 0,
+    "remaining_streams": 0,
+    "sampled_peak_gateway_permits": 100,
+    "settlements": 100,
+    "successful_done": 100,
+    "upstream_posts": 100,
+    "wall_ms": 175.839792
+  },
+  "run_at_utc": "2026-10-30T10:06:40.227127Z"
+}

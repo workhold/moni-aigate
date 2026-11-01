@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-01",
+  "fixture_only": true,
+  "binary_sha256": "ef012655a667f662f865731ab69ba3948e24d45e493ce7c58e541fd4e7b19801",
+  "postgresql": {
+    "batches": [
+      {
+        "count": 2,
+        "state": "active"
+      }
+    ],
+    "attempts": 0,
+    "credited": 1,
+    "journals": 1,
+    "receipts": 1,
+    "requests": 0,
+    "redemptions": 1,
+    "grant_amount": "1250000",
+    "credit_orders": 0
+  },
+  "ui_checks": {
+    "default_db_policy_off": true,
+    "admin_policy_enabled": true,
+    "finance_issuance_one_time_codes": true,
+    "closed_codes_erased": true,
+    "independent_approval": true,
+    "owner_redemption_1250000": true,
+    "duplicate_rejected_without_funding": true,
+    "wallet_source_and_redemption_detail": true,
+    "mobile_390px": true
+  },
+  "ledger": {
+    "balances": {
+      "AVAILABLE": "1250000",
+      "OPERATING_GRANT_CLEARING": "-1250000"
+    },
+    "terminal_statuses": [
+      {
+        "reason": "accepted",
+        "status": "accepted"
+      },
+      {
+        "reason": "accepted",
+        "status": "accepted"
+      },
+      {
+        "reason": "accepted",
+        "status": "accepted"
+      },
+      {
+        "reason": "voucher_unavailable",
+        "status": "rejected"
+      }
+    ],
+    "unbalanced_journals": 0
+  }
+}

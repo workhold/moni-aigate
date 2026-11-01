@@ -1,0 +1,274 @@
+{
+  "verification": "022-C0-metadata-descriptor-generator",
+  "date": "2026-11-01",
+  "status": "passed_isolated_metadata_export_only",
+  "contract": "specs/022-self-service-payments/c0-schema-check-contract.md#9-根冻结窄片metadata-only-离线-descriptor-生成器",
+  "artifact_kind": "unreviewed_descriptor_candidate",
+  "server_version_num": 160015,
+  "command": "C0_DESCRIPTOR_DATABASE_URL=<dedicated database supplied only in process environment> go test -race -count=1 -v ./scripts/funding-lot-descriptor -timeout 300s",
+  "go_test_exit_code": 0,
+  "go_test_seconds": "115.415",
+  "test_count": 13,
+  "pure_test_count": 11,
+  "reproducibility_seconds": "101.33",
+  "injected_ddl_failure_cleanup_seconds": "12.07",
+  "without_database_race_seconds": "2.292",
+  "without_database_race_exit_code": 0,
+  "without_database_real_tests_skipped": 2,
+  "vet_exit_code": 0,
+  "candidate_directories": [
+    ".local/c0-descriptor-candidates/qa-one-c8dec693633e6e5d3e6bf49995a7d0df",
+    ".local/c0-descriptor-candidates/qa-two-e9602ed236fffabfc050f5c0489548e7"
+  ],
+  "files": [
+    {
+      "name": "base-roles-ordinary.json",
+      "sha256": "d2c240b0c84fd84b8b745eeaaca9118c7384095824334cbd931a52073d692d2c",
+      "bytes": 2490753
+    },
+    {
+      "name": "base-roles-sandbox.json",
+      "sha256": "6d6d01f5f1d586b1acc79055e169bffdeeab9b39c052aea35e96d191846790f8",
+      "bytes": 2523773
+    },
+    {
+      "name": "base-schema.json",
+      "sha256": "3102e766536c2d9df7806573dcac26bfcbf42a655295e0ad56ba97a27eb477a3",
+      "bytes": 5283303
+    },
+    {
+      "name": "c0-role-deltas.json",
+      "sha256": "14d82cf6c23d67416e4f34f0069fff9233e701474d5dfd5cb1dc623efe481ca0",
+      "bytes": 1074072
+    },
+    {
+      "name": "c0-roles-ordinary.json",
+      "sha256": "46bd077f1071dc9d6be4b61028826ccc87c3602758497ca2b2a85bbd1cf12887",
+      "bytes": 3015287
+    },
+    {
+      "name": "c0-roles-sandbox.json",
+      "sha256": "f4566cbb3f8a24060aaeda25eaac9798c0c26dfd6fb68f6d1741f31e142470a0",
+      "bytes": 3048307
+    },
+    {
+      "name": "c0-schema-delta.json",
+      "sha256": "6359fb46f6284d31fd732972277efb65667bdf1387e3bf34c90da526b54eaca1",
+      "bytes": 1155170
+    },
+    {
+      "name": "c0-schema.json",
+      "sha256": "dbacb259fcb1d9f1e222203ad7e090d6d7a5e4e1cce2311c94650756318683c0",
+      "bytes": 6430535
+    },
+    {
+      "name": "provenance.json",
+      "sha256": "cced2f5a8f0b16e53f27cf40cb1fa3d39c0b969a8c63e8a2ebbfcf01cc2940f3",
+      "bytes": 4288
+    },
+    {
+      "name": "summary.json",
+      "sha256": "4ff2dbfd2419842e2b3dab5194e716c48fb11e85de350502a2cbaddfad9034b6",
+      "bytes": 1804
+    }
+  ],
+  "counts": {
+    "base": {
+      "automatic_relations": 212,
+      "columns": 976,
+      "constraints": 924,
+      "functions": 156,
+      "indexes": 274,
+      "tables": 109,
+      "types": 218,
+      "user_triggers": 206
+    },
+    "c0": {
+      "automatic_relations": 244,
+      "columns": 1145,
+      "constraints": 1142,
+      "functions": 197,
+      "indexes": 331,
+      "tables": 125,
+      "types": 252,
+      "user_triggers": 255
+    }
+  },
+  "source_sha256": {
+    "canonical.go": "cdb2dbf37c06987e84de8f2b9424075cb7f88f101d1a755d0aada79f0b8ffaa3",
+    "catalog.go": "e19080482939776bf8de5c5b0e439b8b3cb7f203500ab78ce1a22df81760faf0",
+    "dto.go": "9c272aef9f971d7f12c281143c233af08de6a2be5ac024ebfd4c7d61a7bd9630",
+    "inputs.go": "e7d5b8790695e0cd67cdf1e892703779d49bc992d8b54043c85a9512aee41dc5",
+    "install.go": "b400eb670337e12f2b4a5dd7cea1c8e1e07dc9b887512bc96b68f36a5478a0c5",
+    "main.go": "40335bd5869bd22042def680e7835201325048e5cc35d39d1c6402e65f9b4dca",
+    "main_test.go": "93ee542f5d4fe8615090e4db28142df5761d79d7c2ae9d02ea7ded1f0f7e71de"
+  },
+  "input_pins": {
+    "manifest_sha256": "ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de",
+    "ddl_sha256": "e61eb57ec2697fce94be6bac4dd306c86f8b05a339541339dd0fd554f3632047",
+    "acl_sha256": "9ddeecca3c2e9ec9d26f77bea80c92e4505e07f0f2a4c4bdc75d9e09b02876ae",
+    "provision_sources": [
+      {
+        "name": "internal/operations/operations.go",
+        "sha256": "8ca51f8c3f5aee042fc28e8ede6fb450e4f0bff9650723eeb83b0560c00d9d79"
+      },
+      {
+        "name": "internal/operations/alert_roles.go",
+        "sha256": "3bdfd12de87c72d326813983d447fc5de82c97f8e3a85b00ee086801145e5073"
+      },
+      {
+        "name": "internal/operations/periodic_roles.go",
+        "sha256": "79ab556316fc2c366a97d897ab58c736c0e815de396f9904828b7abd65a4640d"
+      },
+      {
+        "name": "internal/operations/payment_roles.go",
+        "sha256": "966ad915a7ea277ed1ce13a76ca093342ad389166679cdfb8ac48b522907b8d2"
+      },
+      {
+        "name": "internal/operations/payment_roles_functions.go",
+        "sha256": "4307a70cc13890c4a2fe92d2306fd2efd68c75129808daac9309f6f368de9cb6"
+      },
+      {
+        "name": "migrations/embed.go",
+        "sha256": "915164219bb6490fc4570986a39a93696018f4d61e6465e0c1f6ec7532975b74"
+      }
+    ]
+  },
+  "artifact_audit": {
+    "all_ten_identical": true,
+    "tool_sources_current": true,
+    "all_file_permissions_0600": true,
+    "random_names_dsn_absent": true
+  },
+  "schema_delta": {
+    "removed_records": 0,
+    "changed_record_categories": {
+      "relations": 1
+    },
+    "changed_relation": "tenants",
+    "new_stamp_column": "fl_created_xid",
+    "old_function_oid_and_prosrc_preserved": true,
+    "checksum_and_application_objects_have_application_owner": true
+  },
+  "dependency_and_role_audit": {
+    "base": {
+      "symbolic_edges": 5640,
+      "raw_edges": 5652,
+      "duplicate_groups": 12,
+      "raw_multiplicity_by_catalog": {
+        "pg_depend": {
+          "1": 5362,
+          "2": 12
+        },
+        "pg_shdepend": {
+          "1": 266
+        }
+      }
+    },
+    "c0": {
+      "symbolic_edges": 6848,
+      "raw_edges": 6860,
+      "duplicate_groups": 12,
+      "raw_multiplicity_by_catalog": {
+        "pg_depend": {
+          "1": 6512,
+          "2": 12
+        },
+        "pg_shdepend": {
+          "1": 324
+        }
+      }
+    },
+    "ordinary": {
+      "base_acl_raw": 220,
+      "c0_acl_raw": 437,
+      "tenant_app_columns": {
+        "INSERT": [
+          "allowed_regions",
+          "created_at",
+          "id",
+          "name",
+          "price_group_id",
+          "pricing_operation_id",
+          "pricing_revision",
+          "status"
+        ],
+        "UPDATE": [
+          "allowed_regions",
+          "name",
+          "price_group_id",
+          "pricing_operation_id",
+          "pricing_revision",
+          "status"
+        ]
+      },
+      "placeholder_effective_true": {
+        "schema": 0,
+        "table": 0,
+        "column": 0,
+        "function": 113,
+        "type": 218
+      }
+    },
+    "sandbox": {
+      "base_acl_raw": 298,
+      "c0_acl_raw": 515,
+      "tenant_app_columns": {
+        "INSERT": [
+          "allowed_regions",
+          "created_at",
+          "id",
+          "name",
+          "price_group_id",
+          "pricing_operation_id",
+          "pricing_revision",
+          "status"
+        ],
+        "UPDATE": [
+          "allowed_regions",
+          "name",
+          "price_group_id",
+          "pricing_operation_id",
+          "pricing_revision",
+          "status"
+        ]
+      }
+    }
+  },
+  "raw_dependency_evidence_basis": "The export path checks full raw catalog/endpoint/kind identity before symbolic grouping and all normalized non-multiplicity fields before grouping; counts are from these successful checked exports. No separate raw GROUP BY SQL audit was run.",
+  "automatic_type_metadata": {
+    "new_type_count": 34,
+    "projector_usage_true_automatic_row_and_array_types": 32,
+    "projector_usage_false_named_types": [
+      "fl_source_proof",
+      "_fl_source_proof"
+    ],
+    "usage_is_not_table_select_or_function_execute": true
+  },
+  "post_run_read_only_cleanup_audit": {
+    "remaining_descriptor_schemas": 0,
+    "remaining_descriptor_roles": 0,
+    "remaining_descriptor_backends": 0
+  },
+  "implemented_safety_regressions": [
+    "new/missing/modified pinned input files in a temporary source mirror",
+    "database endpoint and configuration allowlist",
+    "canonical keys and literal preservation",
+    "stable object identity change classification",
+    "role delta before/after canonical SHA binding",
+    "same raw dependency multiplicity and conflicting contents",
+    "distinct raw references deliberately aliased to one symbol rejected before grouping",
+    "invalid subobject identities and injective symbol registration",
+    "invalid/existing/symlink output targets"
+  ],
+  "formal_expected_created": false,
+  "catalog_checker_implemented": false,
+  "epoch_issued": false,
+  "runtime_proof_issued": false,
+  "production_migrations_or_business_changed": false,
+  "actual_runtime_app_login_business_acceptance": false,
+  "public_namespace_branch_validated": false,
+  "unknown_create_reply_network_fault_injected": false,
+  "external_provider_or_payment_certified": false,
+  "credentials_or_business_rows_exported": false
+}

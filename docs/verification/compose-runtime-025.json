@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-01",
+  "scope": "025-C isolated Docker engine prerequisite only",
+  "status": "environment_unavailable",
+  "compose_config_render": "PASS: compose-render-025.json",
+  "engine": "new dedicated Colima profile only; activate=false, 2 CPUs, 4 GiB, 12 GiB data disk, workspace mount",
+  "direct_official_image_download": "failed resolving GitHub release redirect: timeout",
+  "official_api_asset_retry": "bounded download failed; no image executed",
+  "official_image_version": "colima-core v0.10.4",
+  "official_image_sha256": "1fc0354f4f99734ce3886628cc7af8b0437c1a1d391b126bd09cba0df35ee53f",
+  "owned_failed_profile_deleted": true,
+  "profile_list_confirmed_no_qa_vm": true,
+  "partial_download_deleted": true,
+  "existing_vm_profiles_started_or_modified": false,
+  "docker_build": "NOT RUN",
+  "containers_or_project_volumes_created": false,
+  "onepanel_and_tls_long_stream": "NOT RUN",
+  "user_dotenv_or_credentials_read": false
+}

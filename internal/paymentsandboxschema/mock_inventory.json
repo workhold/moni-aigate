@@ -1,0 +1,3000 @@
+{
+  "tables": [
+    {
+      "name": "mock_captures",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "merchant_order_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "provider_transaction_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "amount",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "currency",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "provider_order_revision",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "control_operation_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_command_processing",
+      "columns": [
+        {
+          "name": "command_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "held_by_control_id",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "released_by_control_id",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        },
+        {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": false
+        }
+      ]
+    },
+    {
+      "name": "mock_command_results",
+      "columns": [
+        {
+          "name": "command_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "result_body",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "result_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "provider_order_revision",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_commands",
+      "columns": [
+        {
+          "name": "command_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "merchant_order_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "kind",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "parameter_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "canonical_parameters",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "initial_reply",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "initial_reply_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_controls",
+      "columns": [
+        {
+          "name": "operation_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "scenario",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "target_reference",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "parameter_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "canonical_parameters",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "result_body",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_delivery_attempts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "event_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "generation",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "attempt_no",
+          "type": "integer",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "delivery_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "delivery_time",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "signing_key_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "body_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "lease_until",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_delivery_observations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "event_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "generation",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "outcome",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "http_status",
+          "type": "integer",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "error_code",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "receipt_data",
+          "type": "bytea",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_environment",
+      "columns": [
+        {
+          "name": "singleton",
+          "type": "boolean",
+          "default": "true",
+          "not_null": true
+        },
+        {
+          "name": "environment_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "state_directory_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "database_oid",
+          "type": "oid",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "app_schema_name",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "app_schema_oid",
+          "type": "oid",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "app_owner",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "app_runtime",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "app_projector",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "mock_schema_name",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "mock_schema_oid",
+          "type": "oid",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "mock_owner",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "mock_runtime",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_schema_name",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_schema_oid",
+          "type": "oid",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_owner",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "receiver_runtime",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "merchant_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "payee_label",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "nonce_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "api_token_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "control_token_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "api_origin",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "control_origin",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "callback_url",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "protocol_version",
+          "type": "integer",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_fault_plans",
+      "columns": [
+        {
+          "name": "control_operation_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "boundary",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "target_kind",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "target_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "remaining",
+          "type": "integer",
+          "default": "1",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        },
+        {
+          "name": "consumed_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": false
+        }
+      ]
+    },
+    {
+      "name": "mock_notification_delivery",
+      "columns": [
+        {
+          "name": "event_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "default": "'pending'::text",
+          "not_null": true
+        },
+        {
+          "name": "generation",
+          "type": "bigint",
+          "default": "0",
+          "not_null": true
+        },
+        {
+          "name": "attempt_count",
+          "type": "integer",
+          "default": "0",
+          "not_null": true
+        },
+        {
+          "name": "next_attempt_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        },
+        {
+          "name": "lease_until",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "last_error_code",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "delivered_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_notification_events",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "event_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "merchant_order_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "event_type",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "canonical_body",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "business_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "control_operation_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "canonical_capture_id",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_order_transitions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": "(gen_random_uuid())::text",
+          "not_null": true
+        },
+        {
+          "name": "merchant_order_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "revision",
+          "type": "bigint",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "kind",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "command_id",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "control_operation_id",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "fact_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_orders",
+      "columns": [
+        {
+          "name": "merchant_order_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "order_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "environment_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "merchant_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "amount",
+          "type": "bigint",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "currency",
+          "type": "text",
+          "default": "'CNY'::text",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "revision",
+          "type": "bigint",
+          "default": "1",
+          "not_null": true
+        },
+        {
+          "name": "checkout_ref",
+          "type": "text",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": false
+        },
+        {
+          "name": "created_locally_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_queries",
+      "columns": [
+        {
+          "name": "query_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "command_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "merchant_order_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "command_kind",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "expected_parameter_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "request_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "canonical_parameters",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "snapshot_body",
+          "type": "bytea",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "snapshot_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_schema_migrations",
+      "columns": [
+        {
+          "name": "version",
+          "type": "integer",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "sha256",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "applied_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    },
+    {
+      "name": "mock_signing_keys",
+      "columns": [
+        {
+          "name": "key_id",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "key_digest",
+          "type": "text",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "not_before",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "not_after",
+          "type": "timestamp with time zone",
+          "default": "",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "clock_timestamp()",
+          "not_null": true
+        }
+      ]
+    }
+  ],
+  "indexes": [
+    {
+      "name": "mock_captures_control_operation_id_key",
+      "table": "mock_captures",
+      "definition": "CREATE UNIQUE INDEX mock_captures_control_operation_id_key ON __SCHEMA__.mock_captures USING btree (control_operation_id)"
+    },
+    {
+      "name": "mock_captures_merchant_order_id_key",
+      "table": "mock_captures",
+      "definition": "CREATE UNIQUE INDEX mock_captures_merchant_order_id_key ON __SCHEMA__.mock_captures USING btree (merchant_order_id)"
+    },
+    {
+      "name": "mock_captures_pkey",
+      "table": "mock_captures",
+      "definition": "CREATE UNIQUE INDEX mock_captures_pkey ON __SCHEMA__.mock_captures USING btree (id)"
+    },
+    {
+      "name": "mock_captures_provider_transaction_id_key",
+      "table": "mock_captures",
+      "definition": "CREATE UNIQUE INDEX mock_captures_provider_transaction_id_key ON __SCHEMA__.mock_captures USING btree (provider_transaction_id)"
+    },
+    {
+      "name": "mock_command_processing_pkey",
+      "table": "mock_command_processing",
+      "definition": "CREATE UNIQUE INDEX mock_command_processing_pkey ON __SCHEMA__.mock_command_processing USING btree (command_id)"
+    },
+    {
+      "name": "mock_command_results_pkey",
+      "table": "mock_command_results",
+      "definition": "CREATE UNIQUE INDEX mock_command_results_pkey ON __SCHEMA__.mock_command_results USING btree (command_id)"
+    },
+    {
+      "name": "mock_commands_command_id_merchant_order_id_kind_parameter_d_key",
+      "table": "mock_commands",
+      "definition": "CREATE UNIQUE INDEX mock_commands_command_id_merchant_order_id_kind_parameter_d_key ON __SCHEMA__.mock_commands USING btree (command_id, merchant_order_id, kind, parameter_digest)"
+    },
+    {
+      "name": "mock_commands_pkey",
+      "table": "mock_commands",
+      "definition": "CREATE UNIQUE INDEX mock_commands_pkey ON __SCHEMA__.mock_commands USING btree (command_id)"
+    },
+    {
+      "name": "mock_controls_pkey",
+      "table": "mock_controls",
+      "definition": "CREATE UNIQUE INDEX mock_controls_pkey ON __SCHEMA__.mock_controls USING btree (operation_id)"
+    },
+    {
+      "name": "mock_delivery_attempts_delivery_id_key",
+      "table": "mock_delivery_attempts",
+      "definition": "CREATE UNIQUE INDEX mock_delivery_attempts_delivery_id_key ON __SCHEMA__.mock_delivery_attempts USING btree (delivery_id)"
+    },
+    {
+      "name": "mock_delivery_attempts_event_id_attempt_no_key",
+      "table": "mock_delivery_attempts",
+      "definition": "CREATE UNIQUE INDEX mock_delivery_attempts_event_id_attempt_no_key ON __SCHEMA__.mock_delivery_attempts USING btree (event_id, attempt_no)"
+    },
+    {
+      "name": "mock_delivery_attempts_event_id_generation_key",
+      "table": "mock_delivery_attempts",
+      "definition": "CREATE UNIQUE INDEX mock_delivery_attempts_event_id_generation_key ON __SCHEMA__.mock_delivery_attempts USING btree (event_id, generation)"
+    },
+    {
+      "name": "mock_delivery_attempts_pkey",
+      "table": "mock_delivery_attempts",
+      "definition": "CREATE UNIQUE INDEX mock_delivery_attempts_pkey ON __SCHEMA__.mock_delivery_attempts USING btree (id)"
+    },
+    {
+      "name": "mock_delivery_due",
+      "table": "mock_notification_delivery",
+      "definition": "CREATE INDEX mock_delivery_due ON __SCHEMA__.mock_notification_delivery USING btree (next_attempt_at, event_id) WHERE (state = ANY (ARRAY['pending'::text, 'retry_wait'::text]))"
+    },
+    {
+      "name": "mock_delivery_expired",
+      "table": "mock_notification_delivery",
+      "definition": "CREATE INDEX mock_delivery_expired ON __SCHEMA__.mock_notification_delivery USING btree (lease_until, event_id) WHERE (state = 'leased'::text)"
+    },
+    {
+      "name": "mock_delivery_observations_event_id_generation_key",
+      "table": "mock_delivery_observations",
+      "definition": "CREATE UNIQUE INDEX mock_delivery_observations_event_id_generation_key ON __SCHEMA__.mock_delivery_observations USING btree (event_id, generation)"
+    },
+    {
+      "name": "mock_delivery_observations_pkey",
+      "table": "mock_delivery_observations",
+      "definition": "CREATE UNIQUE INDEX mock_delivery_observations_pkey ON __SCHEMA__.mock_delivery_observations USING btree (id)"
+    },
+    {
+      "name": "mock_environment_environment_id_key",
+      "table": "mock_environment",
+      "definition": "CREATE UNIQUE INDEX mock_environment_environment_id_key ON __SCHEMA__.mock_environment USING btree (environment_id)"
+    },
+    {
+      "name": "mock_environment_environment_id_merchant_id_key",
+      "table": "mock_environment",
+      "definition": "CREATE UNIQUE INDEX mock_environment_environment_id_merchant_id_key ON __SCHEMA__.mock_environment USING btree (environment_id, merchant_id)"
+    },
+    {
+      "name": "mock_environment_pkey",
+      "table": "mock_environment",
+      "definition": "CREATE UNIQUE INDEX mock_environment_pkey ON __SCHEMA__.mock_environment USING btree (singleton)"
+    },
+    {
+      "name": "mock_fault_one_active_target",
+      "table": "mock_fault_plans",
+      "definition": "CREATE UNIQUE INDEX mock_fault_one_active_target ON __SCHEMA__.mock_fault_plans USING btree (target_kind, target_id) WHERE (remaining = 1)"
+    },
+    {
+      "name": "mock_fault_plans_pkey",
+      "table": "mock_fault_plans",
+      "definition": "CREATE UNIQUE INDEX mock_fault_plans_pkey ON __SCHEMA__.mock_fault_plans USING btree (control_operation_id)"
+    },
+    {
+      "name": "mock_notification_delivery_pkey",
+      "table": "mock_notification_delivery",
+      "definition": "CREATE UNIQUE INDEX mock_notification_delivery_pkey ON __SCHEMA__.mock_notification_delivery USING btree (event_id)"
+    },
+    {
+      "name": "mock_notification_events_canonical_capture_id_key",
+      "table": "mock_notification_events",
+      "definition": "CREATE UNIQUE INDEX mock_notification_events_canonical_capture_id_key ON __SCHEMA__.mock_notification_events USING btree (canonical_capture_id)"
+    },
+    {
+      "name": "mock_notification_events_event_id_key",
+      "table": "mock_notification_events",
+      "definition": "CREATE UNIQUE INDEX mock_notification_events_event_id_key ON __SCHEMA__.mock_notification_events USING btree (event_id)"
+    },
+    {
+      "name": "mock_notification_events_pkey",
+      "table": "mock_notification_events",
+      "definition": "CREATE UNIQUE INDEX mock_notification_events_pkey ON __SCHEMA__.mock_notification_events USING btree (id)"
+    },
+    {
+      "name": "mock_order_transitions_merchant_order_id_revision_key",
+      "table": "mock_order_transitions",
+      "definition": "CREATE UNIQUE INDEX mock_order_transitions_merchant_order_id_revision_key ON __SCHEMA__.mock_order_transitions USING btree (merchant_order_id, revision)"
+    },
+    {
+      "name": "mock_order_transitions_pkey",
+      "table": "mock_order_transitions",
+      "definition": "CREATE UNIQUE INDEX mock_order_transitions_pkey ON __SCHEMA__.mock_order_transitions USING btree (id)"
+    },
+    {
+      "name": "mock_orders_order_id_key",
+      "table": "mock_orders",
+      "definition": "CREATE UNIQUE INDEX mock_orders_order_id_key ON __SCHEMA__.mock_orders USING btree (order_id)"
+    },
+    {
+      "name": "mock_orders_pkey",
+      "table": "mock_orders",
+      "definition": "CREATE UNIQUE INDEX mock_orders_pkey ON __SCHEMA__.mock_orders USING btree (merchant_order_id)"
+    },
+    {
+      "name": "mock_queries_pkey",
+      "table": "mock_queries",
+      "definition": "CREATE UNIQUE INDEX mock_queries_pkey ON __SCHEMA__.mock_queries USING btree (query_id)"
+    },
+    {
+      "name": "mock_schema_migrations_pkey",
+      "table": "mock_schema_migrations",
+      "definition": "CREATE UNIQUE INDEX mock_schema_migrations_pkey ON __SCHEMA__.mock_schema_migrations USING btree (version)"
+    },
+    {
+      "name": "mock_signing_keys_key_digest_key",
+      "table": "mock_signing_keys",
+      "definition": "CREATE UNIQUE INDEX mock_signing_keys_key_digest_key ON __SCHEMA__.mock_signing_keys USING btree (key_digest)"
+    },
+    {
+      "name": "mock_signing_keys_pkey",
+      "table": "mock_signing_keys",
+      "definition": "CREATE UNIQUE INDEX mock_signing_keys_pkey ON __SCHEMA__.mock_signing_keys USING btree (key_id)"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_captures",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_captures",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_command_processing",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_processing_guard",
+      "type": 31,
+      "table": "mock_command_processing",
+      "deferred": false,
+      "function": "mock_processing_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_command_results",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_command_results",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_commands",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_commands",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_input",
+      "type": 7,
+      "table": "mock_commands",
+      "deferred": false,
+      "function": "mock_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_controls",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_controls",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_input",
+      "type": 7,
+      "table": "mock_controls",
+      "deferred": false,
+      "function": "mock_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_delivery_attempts",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_input",
+      "type": 7,
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "function": "mock_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_delivery_observations",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_input",
+      "type": 7,
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "function": "mock_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_environment",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "owner_insert",
+      "type": 7,
+      "table": "mock_environment",
+      "deferred": false,
+      "function": "mock_owner_insert",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_fault_plans",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_fault_guard",
+      "type": 31,
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "function": "mock_fault_guard",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_notification_delivery",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_delivery_guard",
+      "type": 31,
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "function": "mock_delivery_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_notification_events",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_notification_events",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_input",
+      "type": 7,
+      "table": "mock_notification_events",
+      "deferred": false,
+      "function": "mock_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_order_transitions",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_complete",
+      "type": 21,
+      "table": "mock_orders",
+      "deferred": true,
+      "function": "mock_graph_guard",
+      "deferrable": true
+    },
+    {
+      "name": "mock_order_guard",
+      "type": 31,
+      "table": "mock_orders",
+      "deferred": false,
+      "function": "mock_order_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_queries",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "mock_input",
+      "type": 7,
+      "table": "mock_queries",
+      "deferred": false,
+      "function": "mock_input_guard",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_schema_migrations",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "owner_insert",
+      "type": 7,
+      "table": "mock_schema_migrations",
+      "deferred": false,
+      "function": "mock_owner_insert",
+      "deferrable": false
+    },
+    {
+      "name": "immutable_history",
+      "type": 27,
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "function": "mock_immutable",
+      "deferrable": false
+    },
+    {
+      "name": "owner_insert",
+      "type": 7,
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "function": "mock_owner_insert",
+      "deferrable": false
+    }
+  ],
+  "functions": [
+    {
+      "name": "mock_capture_complete",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "cid text",
+      "volatility": "s",
+      "source_sha256": "f223039f3083eadf8886c14ab8945498ee994f55a35e290d16a3924795746402"
+    },
+    {
+      "name": "mock_command_complete",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "cid text",
+      "volatility": "s",
+      "source_sha256": "1e7600005ebeeddab46b0ecae3f0e58d196c198eae49077e2044b3c0648d33b0"
+    },
+    {
+      "name": "mock_command_matches",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "cid text, body bytea, final boolean",
+      "volatility": "s",
+      "source_sha256": "69020f79d1e9024479cd994a58c0b08efdbc436c39f44f2eaffef00d01b667b0"
+    },
+    {
+      "name": "mock_control_complete",
+      "strict": false,
+      "returns": "boolean",
+      "language": "plpgsql",
+      "arguments": "cid text",
+      "volatility": "s",
+      "source_sha256": "93b7425e85497a05f5f80793996f88bf5aa75c0db1bf831eab2e0ad6c904410b"
+    },
+    {
+      "name": "mock_delivery_complete",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "eid text",
+      "volatility": "s",
+      "source_sha256": "1d0c41e75d04cbbffd80f3938d9169aab7d8d3a8c158b4dea52ffd4f9e48192f"
+    },
+    {
+      "name": "mock_delivery_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "b41cf836d601563e71f2575bf5f2cfa3bac49cebd950a2e9a21baa054c1b3f66"
+    },
+    {
+      "name": "mock_fault_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "dbbfee86dcacad5b0ab4caf33795fdb342fdf87f923ec9ef844a9f720ed9df34"
+    },
+    {
+      "name": "mock_fields",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "j jsonb, required text[]",
+      "volatility": "i",
+      "source_sha256": "bae1eccf5a54a2eb247ebaf475edf2c55e1720e3ecb2e545189cd7ba1776ce73"
+    },
+    {
+      "name": "mock_graph_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "26062627c2f2d6d45d3868cd7f592a7b488fc925ffa26d96248e25e7de5460c6"
+    },
+    {
+      "name": "mock_hash",
+      "strict": true,
+      "returns": "text",
+      "language": "sql",
+      "arguments": "v bytea",
+      "volatility": "i",
+      "source_sha256": "19bb5d0a2d0136e0c55a4eaff303bde9720b38b9faed9f62da3d375acf5621ae"
+    },
+    {
+      "name": "mock_immutable",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "1c079da77a21d25ff722ba181014dbe5f1059484662bad04e340d8917477ee08"
+    },
+    {
+      "name": "mock_input_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "5d0cde89c6b162ee67c91e1cd9d8697c0f7bf2c3b2d740d813844e589b065a08"
+    },
+    {
+      "name": "mock_json",
+      "strict": true,
+      "returns": "jsonb",
+      "language": "sql",
+      "arguments": "v bytea",
+      "volatility": "i",
+      "source_sha256": "8a07b00053bbef7e570c86e46595fd00be5a0a54e4ed792b3db01f008385009b"
+    },
+    {
+      "name": "mock_merchant_order",
+      "strict": true,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "v text",
+      "volatility": "i",
+      "source_sha256": "220a88ad0821f9fdf4ad9a89f944ec5865230c7d9ba95dd292a0f67576f74407"
+    },
+    {
+      "name": "mock_order_complete",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "oid text",
+      "volatility": "s",
+      "source_sha256": "5468c0db91f6ef2836b368a7c8b435d5261d665ad2b859fc4bc2cbe6ca33f9cd"
+    },
+    {
+      "name": "mock_order_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "b852ab05e3d09414a36018256c7c121fe3f20aaddc6c1a45b502ecbbf411fe3b"
+    },
+    {
+      "name": "mock_owner_insert",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "ecfac60603739b2af998b8c0c0f8bd63c5dbd29bd6d9663b8167d52495db3d77"
+    },
+    {
+      "name": "mock_positive",
+      "strict": true,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "v text",
+      "volatility": "i",
+      "source_sha256": "629a80e7ccc7f943598c8bf95e8934fae068583ad8bff3beaa2399557628b7fe"
+    },
+    {
+      "name": "mock_processing_guard",
+      "strict": false,
+      "returns": "trigger",
+      "language": "plpgsql",
+      "arguments": "",
+      "volatility": "v",
+      "source_sha256": "84d06e05896ba804852bf148ddb29a9cfff0deeacaee1a1cd8f00896dadbe123"
+    },
+    {
+      "name": "mock_ref",
+      "strict": true,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "v text",
+      "volatility": "i",
+      "source_sha256": "8063f24c7c9d4416bf1d68e4023ee2f133c4ddf6ef9d138d137fdfb44d10e7d2"
+    },
+    {
+      "name": "mock_reply_valid",
+      "strict": false,
+      "returns": "boolean",
+      "language": "plpgsql",
+      "arguments": "j jsonb, is_query boolean",
+      "volatility": "s",
+      "source_sha256": "0584502d69f863a5750c82a5cef49012ddc93fc6dcf5965ae45fbf6228e00df5"
+    },
+    {
+      "name": "mock_result_effect",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "cid text, body bytea, revision bigint",
+      "volatility": "s",
+      "source_sha256": "15f76004ad15a5b4da2c51b1468aa7c82fe0c6671ed93de213d19d6a83f28333"
+    },
+    {
+      "name": "mock_result_valid",
+      "strict": false,
+      "returns": "boolean",
+      "language": "plpgsql",
+      "arguments": "j jsonb, kind text, revision text",
+      "volatility": "i",
+      "source_sha256": "2407ad875b477ec2553f39325ba36f7db977fde074c4de20d11f31bd92115620"
+    },
+    {
+      "name": "mock_strings",
+      "strict": false,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "j jsonb, names text[]",
+      "volatility": "i",
+      "source_sha256": "b9988fe38044c0e2f1f8f9dd72a92f6704e62c1c2a67377f002192e2bcc9d73a"
+    },
+    {
+      "name": "mock_time",
+      "strict": true,
+      "returns": "boolean",
+      "language": "plpgsql",
+      "arguments": "v text",
+      "volatility": "i",
+      "source_sha256": "e4c8299fce8903e20d55e522930eaae913d8eef04517f2dab15970f9d3fd009b"
+    },
+    {
+      "name": "mock_transition_digest",
+      "strict": false,
+      "returns": "text",
+      "language": "sql",
+      "arguments": "order_ref text, rev bigint, kind text, command text, control text, occurred timestamp with time zone",
+      "volatility": "i",
+      "source_sha256": "203cca4a324bda07067295bcf3ebe5360147d89788b1f0239fc35e3bfdd1850c"
+    },
+    {
+      "name": "mock_uuid",
+      "strict": true,
+      "returns": "boolean",
+      "language": "sql",
+      "arguments": "v text",
+      "volatility": "i",
+      "source_sha256": "cafff88c975ba966a5f15d54dc1c7a881e9166031724bba10217904709e1ee88"
+    }
+  ],
+  "constraints": [
+    {
+      "name": "mock_captures_amount_check",
+      "type": "c",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((amount > 0))"
+    },
+    {
+      "name": "mock_captures_control_operation_id_fkey",
+      "type": "f",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (control_operation_id) REFERENCES mock_controls(operation_id)"
+    },
+    {
+      "name": "mock_captures_control_operation_id_key",
+      "type": "u",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (control_operation_id)"
+    },
+    {
+      "name": "mock_captures_currency_check",
+      "type": "c",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((currency = 'CNY'::text))"
+    },
+    {
+      "name": "mock_captures_id_check",
+      "type": "c",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(id))"
+    },
+    {
+      "name": "mock_captures_merchant_order_id_fkey",
+      "type": "f",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (merchant_order_id) REFERENCES mock_orders(merchant_order_id)"
+    },
+    {
+      "name": "mock_captures_merchant_order_id_key",
+      "type": "u",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (merchant_order_id)"
+    },
+    {
+      "name": "mock_captures_pkey",
+      "type": "p",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "mock_captures_provider_order_revision_check",
+      "type": "c",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((provider_order_revision = 2))"
+    },
+    {
+      "name": "mock_captures_provider_transaction_id_check",
+      "type": "c",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_ref(provider_transaction_id))"
+    },
+    {
+      "name": "mock_captures_provider_transaction_id_key",
+      "type": "u",
+      "table": "mock_captures",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (provider_transaction_id)"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_captures",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_command_processing_check",
+      "type": "c",
+      "table": "mock_command_processing",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((state = 'completed'::text) = (completed_at IS NOT NULL)))"
+    },
+    {
+      "name": "mock_command_processing_check1",
+      "type": "c",
+      "table": "mock_command_processing",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((released_by_control_id IS NULL) OR ((state = 'completed'::text) AND (held_by_control_id IS NOT NULL))))"
+    },
+    {
+      "name": "mock_command_processing_command_id_fkey",
+      "type": "f",
+      "table": "mock_command_processing",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (command_id) REFERENCES mock_commands(command_id)"
+    },
+    {
+      "name": "mock_command_processing_held_by_control_id_fkey",
+      "type": "f",
+      "table": "mock_command_processing",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (held_by_control_id) REFERENCES mock_fault_plans(control_operation_id)"
+    },
+    {
+      "name": "mock_command_processing_pkey",
+      "type": "p",
+      "table": "mock_command_processing",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (command_id)"
+    },
+    {
+      "name": "mock_command_processing_released_by_control_id_fkey",
+      "type": "f",
+      "table": "mock_command_processing",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (released_by_control_id) REFERENCES mock_controls(operation_id)"
+    },
+    {
+      "name": "mock_command_processing_state_check",
+      "type": "c",
+      "table": "mock_command_processing",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((state = ANY (ARRAY['held'::text, 'completed'::text])))"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_command_processing",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_command_results_check",
+      "type": "c",
+      "table": "mock_command_results",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((result_digest = mock_hash(result_body)))"
+    },
+    {
+      "name": "mock_command_results_command_id_fkey",
+      "type": "f",
+      "table": "mock_command_results",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (command_id) REFERENCES mock_commands(command_id)"
+    },
+    {
+      "name": "mock_command_results_pkey",
+      "type": "p",
+      "table": "mock_command_results",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (command_id)"
+    },
+    {
+      "name": "mock_command_results_provider_order_revision_check",
+      "type": "c",
+      "table": "mock_command_results",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((provider_order_revision > 0))"
+    },
+    {
+      "name": "mock_command_results_result_body_check",
+      "type": "c",
+      "table": "mock_command_results",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(result_body) >= 1) AND (octet_length(result_body) <= 65536)))"
+    },
+    {
+      "name": "mock_command_results_result_digest_check",
+      "type": "c",
+      "table": "mock_command_results",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((result_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_command_results",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_commands_canonical_parameters_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(canonical_parameters) >= 1) AND (octet_length(canonical_parameters) <= 8192)))"
+    },
+    {
+      "name": "mock_commands_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((parameter_digest = mock_hash(canonical_parameters)))"
+    },
+    {
+      "name": "mock_commands_check1",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((initial_reply_digest = mock_hash(initial_reply)))"
+    },
+    {
+      "name": "mock_commands_command_id_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(command_id))"
+    },
+    {
+      "name": "mock_commands_command_id_merchant_order_id_kind_parameter_d_key",
+      "type": "u",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (command_id, merchant_order_id, kind, parameter_digest)"
+    },
+    {
+      "name": "mock_commands_initial_reply_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(initial_reply) >= 1) AND (octet_length(initial_reply) <= 65536)))"
+    },
+    {
+      "name": "mock_commands_initial_reply_digest_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((initial_reply_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_commands_kind_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((kind = ANY (ARRAY['checkout'::text, 'cancel'::text])))"
+    },
+    {
+      "name": "mock_commands_merchant_order_id_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_merchant_order(merchant_order_id))"
+    },
+    {
+      "name": "mock_commands_parameter_digest_check",
+      "type": "c",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((parameter_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_commands_pkey",
+      "type": "p",
+      "table": "mock_commands",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (command_id)"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_commands",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_controls",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_controls_action_check",
+      "type": "c",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((action = ANY (ARRAY['capture_order'::text, 'emit_test_event'::text, 'release_command'::text, 'arm_fault'::text])))"
+    },
+    {
+      "name": "mock_controls_canonical_parameters_check",
+      "type": "c",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(canonical_parameters) >= 1) AND (octet_length(canonical_parameters) <= 8192)))"
+    },
+    {
+      "name": "mock_controls_check",
+      "type": "c",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((parameter_digest = mock_hash(canonical_parameters)))"
+    },
+    {
+      "name": "mock_controls_check1",
+      "type": "c",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((((action = 'capture_order'::text) AND (scenario = 'normal'::text)) OR ((action = 'release_command'::text) AND (scenario = 'normal'::text)) OR ((action = 'emit_test_event'::text) AND (scenario = ANY (ARRAY['capture_at_created'::text, 'capture_before_created_1us'::text, 'capture_before_expiry_1us'::text, 'capture_at_expiry'::text, 'capture_future_6s'::text, 'amount_plus_one'::text, 'duplicate_capture_other_transaction'::text, 'same_revision_conflict'::text, 'refund_unsupported'::text, 'dispute_unsupported'::text]))) OR ((action = 'arm_fault'::text) AND (scenario = ANY (ARRAY['before_command_commit_disconnect_once'::text, 'after_command_commit_drop_reply_once'::text, 'after_query_snapshot_commit_drop_reply_once'::text, 'hold_checkout_before_effect'::text, 'hold_cancel_before_effect'::text, 'before_callback_send_once'::text])))))"
+    },
+    {
+      "name": "mock_controls_operation_id_check",
+      "type": "c",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(operation_id))"
+    },
+    {
+      "name": "mock_controls_parameter_digest_check",
+      "type": "c",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((parameter_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_controls_pkey",
+      "type": "p",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (operation_id)"
+    },
+    {
+      "name": "mock_controls_result_body_check",
+      "type": "c",
+      "table": "mock_controls",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(result_body) >= 1) AND (octet_length(result_body) <= 65536)))"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_delivery_attempts",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_delivery_attempts_attempt_no_check",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((attempt_no >= 1) AND (attempt_no <= 20)))"
+    },
+    {
+      "name": "mock_delivery_attempts_body_digest_check",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((body_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_delivery_attempts_check",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((generation = attempt_no))"
+    },
+    {
+      "name": "mock_delivery_attempts_check1",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((lease_until = (claimed_at + '00:01:00'::interval)))"
+    },
+    {
+      "name": "mock_delivery_attempts_delivery_id_check",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(delivery_id))"
+    },
+    {
+      "name": "mock_delivery_attempts_delivery_id_key",
+      "type": "u",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (delivery_id)"
+    },
+    {
+      "name": "mock_delivery_attempts_delivery_time_check",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((delivery_time >= 0) AND (delivery_time <= '253402300799'::bigint)))"
+    },
+    {
+      "name": "mock_delivery_attempts_event_id_attempt_no_key",
+      "type": "u",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (event_id, attempt_no)"
+    },
+    {
+      "name": "mock_delivery_attempts_event_id_fkey",
+      "type": "f",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (event_id) REFERENCES mock_notification_events(id)"
+    },
+    {
+      "name": "mock_delivery_attempts_event_id_generation_key",
+      "type": "u",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (event_id, generation)"
+    },
+    {
+      "name": "mock_delivery_attempts_generation_check",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((generation >= 1) AND (generation <= 20)))"
+    },
+    {
+      "name": "mock_delivery_attempts_id_check",
+      "type": "c",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(id))"
+    },
+    {
+      "name": "mock_delivery_attempts_pkey",
+      "type": "p",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "mock_delivery_attempts_signing_key_id_fkey",
+      "type": "f",
+      "table": "mock_delivery_attempts",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (signing_key_id) REFERENCES mock_signing_keys(key_id)"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_delivery_observations",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_delivery_observations_check",
+      "type": "c",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((((outcome = 'ack'::text) AND (http_status = ANY (ARRAY[200, 202])) AND (error_code IS NULL) AND (receipt_data IS NOT NULL)) OR ((outcome = 'failed'::text) AND (error_code IS NOT NULL) AND (error_code = ANY (ARRAY['network'::text, 'timeout'::text, 'auth'::text, 'protocol'::text, 'environment'::text, 'temporary'::text, 'permanent'::text])) AND (receipt_data IS NULL))) IS TRUE))"
+    },
+    {
+      "name": "mock_delivery_observations_event_id_generation_fkey",
+      "type": "f",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (event_id, generation) REFERENCES mock_delivery_attempts(event_id, generation)"
+    },
+    {
+      "name": "mock_delivery_observations_event_id_generation_key",
+      "type": "u",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (event_id, generation)"
+    },
+    {
+      "name": "mock_delivery_observations_http_status_check",
+      "type": "c",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((http_status >= 100) AND (http_status <= 599)))"
+    },
+    {
+      "name": "mock_delivery_observations_id_check",
+      "type": "c",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(id))"
+    },
+    {
+      "name": "mock_delivery_observations_outcome_check",
+      "type": "c",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((outcome = ANY (ARRAY['ack'::text, 'failed'::text])))"
+    },
+    {
+      "name": "mock_delivery_observations_pkey",
+      "type": "p",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "mock_delivery_observations_receipt_data_check",
+      "type": "c",
+      "table": "mock_delivery_observations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(receipt_data) >= 1) AND (octet_length(receipt_data) <= 8192)))"
+    },
+    {
+      "name": "mock_environment_api_token_digest_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((api_token_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_environment_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((app_schema_oid <> mock_schema_oid) AND (app_schema_oid <> receiver_schema_oid) AND (mock_schema_oid <> receiver_schema_oid)))"
+    },
+    {
+      "name": "mock_environment_check1",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((api_token_digest <> control_token_digest))"
+    },
+    {
+      "name": "mock_environment_control_token_digest_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((control_token_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_environment_environment_id_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(environment_id))"
+    },
+    {
+      "name": "mock_environment_environment_id_key",
+      "type": "u",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (environment_id)"
+    },
+    {
+      "name": "mock_environment_environment_id_merchant_id_key",
+      "type": "u",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (environment_id, merchant_id)"
+    },
+    {
+      "name": "mock_environment_merchant_id_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_ref(merchant_id))"
+    },
+    {
+      "name": "mock_environment_nonce_digest_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((nonce_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_environment_payee_label_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((((octet_length(payee_label) >= 1) AND (octet_length(payee_label) <= 100)) AND (payee_label !~ '[[:cntrl:]]'::text) AND (POSITION(('://'::text) IN (payee_label)) = 0)))"
+    },
+    {
+      "name": "mock_environment_pkey",
+      "type": "p",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (singleton)"
+    },
+    {
+      "name": "mock_environment_protocol_version_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((protocol_version = 1))"
+    },
+    {
+      "name": "mock_environment_singleton_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (singleton)"
+    },
+    {
+      "name": "mock_environment_state_directory_id_check",
+      "type": "c",
+      "table": "mock_environment",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(state_directory_id))"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_fault_plans",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_fault_plans_boundary_check",
+      "type": "c",
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((boundary = ANY (ARRAY['before_command_commit_disconnect_once'::text, 'after_command_commit_drop_reply_once'::text, 'after_query_snapshot_commit_drop_reply_once'::text, 'hold_checkout_before_effect'::text, 'hold_cancel_before_effect'::text, 'before_callback_send_once'::text])))"
+    },
+    {
+      "name": "mock_fault_plans_check",
+      "type": "c",
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((remaining = 0) = (consumed_at IS NOT NULL)))"
+    },
+    {
+      "name": "mock_fault_plans_check1",
+      "type": "c",
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((((boundary = 'after_query_snapshot_commit_drop_reply_once'::text) AND (target_kind = 'query'::text) AND mock_uuid(target_id)) OR ((boundary = 'before_callback_send_once'::text) AND (target_kind = 'callback'::text) AND mock_ref(target_id)) OR ((boundary <> ALL (ARRAY['after_query_snapshot_commit_drop_reply_once'::text, 'before_callback_send_once'::text])) AND (target_kind = 'command'::text) AND mock_uuid(target_id))))"
+    },
+    {
+      "name": "mock_fault_plans_control_operation_id_fkey",
+      "type": "f",
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (control_operation_id) REFERENCES mock_controls(operation_id)"
+    },
+    {
+      "name": "mock_fault_plans_pkey",
+      "type": "p",
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (control_operation_id)"
+    },
+    {
+      "name": "mock_fault_plans_remaining_check",
+      "type": "c",
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((remaining = ANY (ARRAY[0, 1])))"
+    },
+    {
+      "name": "mock_fault_plans_target_kind_check",
+      "type": "c",
+      "table": "mock_fault_plans",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((target_kind = ANY (ARRAY['command'::text, 'query'::text, 'callback'::text])))"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_notification_delivery",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_notification_delivery_attempt_count_check",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((attempt_count >= 0) AND (attempt_count <= 20)))"
+    },
+    {
+      "name": "mock_notification_delivery_check",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((generation = attempt_count))"
+    },
+    {
+      "name": "mock_notification_delivery_check1",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((state = 'leased'::text) = (lease_until IS NOT NULL)))"
+    },
+    {
+      "name": "mock_notification_delivery_check2",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((state = 'delivered'::text) = (delivered_at IS NOT NULL)))"
+    },
+    {
+      "name": "mock_notification_delivery_check3",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((state <> 'review_required'::text) OR ((attempt_count = 20) AND (last_error_code = 'attempts_exhausted'::text))))"
+    },
+    {
+      "name": "mock_notification_delivery_event_id_fkey",
+      "type": "f",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (event_id) REFERENCES mock_notification_events(id)"
+    },
+    {
+      "name": "mock_notification_delivery_generation_check",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((generation >= 0) AND (generation <= 20)))"
+    },
+    {
+      "name": "mock_notification_delivery_last_error_code_check",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((last_error_code IS NULL) OR (last_error_code = ANY (ARRAY['network'::text, 'timeout'::text, 'auth'::text, 'protocol'::text, 'environment'::text, 'temporary'::text, 'permanent'::text, 'attempts_exhausted'::text]))))"
+    },
+    {
+      "name": "mock_notification_delivery_pkey",
+      "type": "p",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (event_id)"
+    },
+    {
+      "name": "mock_notification_delivery_state_check",
+      "type": "c",
+      "table": "mock_notification_delivery",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((state = ANY (ARRAY['pending'::text, 'retry_wait'::text, 'leased'::text, 'delivered'::text, 'review_required'::text])))"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_notification_events",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_notification_events_business_digest_check",
+      "type": "c",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((business_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_notification_events_canonical_body_check",
+      "type": "c",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(canonical_body) >= 1) AND (octet_length(canonical_body) <= 65536)))"
+    },
+    {
+      "name": "mock_notification_events_canonical_capture_id_fkey",
+      "type": "f",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (canonical_capture_id) REFERENCES mock_captures(id)"
+    },
+    {
+      "name": "mock_notification_events_canonical_capture_id_key",
+      "type": "u",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (canonical_capture_id)"
+    },
+    {
+      "name": "mock_notification_events_check",
+      "type": "c",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((business_digest = mock_hash(canonical_body)))"
+    },
+    {
+      "name": "mock_notification_events_control_operation_id_fkey",
+      "type": "f",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (control_operation_id) REFERENCES mock_controls(operation_id)"
+    },
+    {
+      "name": "mock_notification_events_event_id_check",
+      "type": "c",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_ref(event_id))"
+    },
+    {
+      "name": "mock_notification_events_event_id_key",
+      "type": "u",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (event_id)"
+    },
+    {
+      "name": "mock_notification_events_event_type_check",
+      "type": "c",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((event_type = ANY (ARRAY['capture.confirmed'::text, 'checkout.failed'::text, 'refund.confirmed'::text, 'refund.failed'::text, 'dispute.opened'::text, 'chargeback.debited'::text, 'chargeback.reversed'::text])))"
+    },
+    {
+      "name": "mock_notification_events_id_check",
+      "type": "c",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(id))"
+    },
+    {
+      "name": "mock_notification_events_merchant_order_id_check",
+      "type": "c",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_merchant_order(merchant_order_id))"
+    },
+    {
+      "name": "mock_notification_events_pkey",
+      "type": "p",
+      "table": "mock_notification_events",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_order_transitions",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_order_transitions_check",
+      "type": "c",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((command_id IS NULL) <> (control_operation_id IS NULL)))"
+    },
+    {
+      "name": "mock_order_transitions_check1",
+      "type": "c",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((fact_digest = mock_transition_digest(merchant_order_id, revision, kind, command_id, control_operation_id, occurred_at)))"
+    },
+    {
+      "name": "mock_order_transitions_command_id_fkey",
+      "type": "f",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (command_id) REFERENCES mock_commands(command_id)"
+    },
+    {
+      "name": "mock_order_transitions_control_operation_id_fkey",
+      "type": "f",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (control_operation_id) REFERENCES mock_controls(operation_id)"
+    },
+    {
+      "name": "mock_order_transitions_fact_digest_check",
+      "type": "c",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((fact_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_order_transitions_id_check",
+      "type": "c",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(id))"
+    },
+    {
+      "name": "mock_order_transitions_kind_check",
+      "type": "c",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((kind = ANY (ARRAY['ready'::text, 'captured'::text, 'closed'::text])))"
+    },
+    {
+      "name": "mock_order_transitions_merchant_order_id_fkey",
+      "type": "f",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (merchant_order_id) REFERENCES mock_orders(merchant_order_id)"
+    },
+    {
+      "name": "mock_order_transitions_merchant_order_id_revision_key",
+      "type": "u",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (merchant_order_id, revision)"
+    },
+    {
+      "name": "mock_order_transitions_pkey",
+      "type": "p",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "mock_order_transitions_revision_check",
+      "type": "c",
+      "table": "mock_order_transitions",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((revision = ANY (ARRAY[(1)::bigint, (2)::bigint])))"
+    },
+    {
+      "name": "mock_complete",
+      "type": "t",
+      "table": "mock_orders",
+      "deferred": true,
+      "deferrable": true,
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "mock_orders_amount_check",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((amount > 0))"
+    },
+    {
+      "name": "mock_orders_check",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((merchant_order_id = ((('mps1.'::text || environment_id) || '.'::text) || order_id)))"
+    },
+    {
+      "name": "mock_orders_check1",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((((amount IS NULL) AND (created_at IS NULL) AND (expires_at IS NULL) AND (checkout_ref IS NULL) AND (state = 'closed'::text) AND (revision = 1)) OR ((amount IS NOT NULL) AND (created_at IS NOT NULL) AND (expires_at IS NOT NULL) AND (expires_at = (created_at + '00:15:00'::interval)) AND (checkout_ref IS NOT NULL) AND (checkout_ref ~ '^checkout:[0-9a-f-]{36}$'::text) AND mock_uuid(substr(checkout_ref, 10)))) IS TRUE))"
+    },
+    {
+      "name": "mock_orders_check2",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((created_at IS NULL) OR ((created_at >= '0001-01-01 08:05:43+08:05:43'::timestamp with time zone) AND (expires_at < '10000-01-01 08:00:00+08'::timestamp with time zone))))"
+    },
+    {
+      "name": "mock_orders_check3",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((state = 'closed'::text) = (closed_at IS NOT NULL)))"
+    },
+    {
+      "name": "mock_orders_currency_check",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((currency = 'CNY'::text))"
+    },
+    {
+      "name": "mock_orders_environment_id_merchant_id_fkey",
+      "type": "f",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "FOREIGN KEY (environment_id, merchant_id) REFERENCES mock_environment(environment_id, merchant_id)"
+    },
+    {
+      "name": "mock_orders_merchant_order_id_check",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_merchant_order(merchant_order_id))"
+    },
+    {
+      "name": "mock_orders_order_id_check",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(order_id))"
+    },
+    {
+      "name": "mock_orders_order_id_key",
+      "type": "u",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (order_id)"
+    },
+    {
+      "name": "mock_orders_pkey",
+      "type": "p",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (merchant_order_id)"
+    },
+    {
+      "name": "mock_orders_revision_check",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((revision = ANY (ARRAY[(1)::bigint, (2)::bigint])))"
+    },
+    {
+      "name": "mock_orders_state_check",
+      "type": "c",
+      "table": "mock_orders",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((state = ANY (ARRAY['ready'::text, 'captured'::text, 'closed'::text])))"
+    },
+    {
+      "name": "mock_queries_canonical_parameters_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(canonical_parameters) >= 1) AND (octet_length(canonical_parameters) <= 8192)))"
+    },
+    {
+      "name": "mock_queries_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((request_digest = mock_hash(canonical_parameters)))"
+    },
+    {
+      "name": "mock_queries_check1",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((snapshot_digest = mock_hash(snapshot_body)))"
+    },
+    {
+      "name": "mock_queries_command_id_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(command_id))"
+    },
+    {
+      "name": "mock_queries_command_kind_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((command_kind = ANY (ARRAY['checkout'::text, 'cancel'::text])))"
+    },
+    {
+      "name": "mock_queries_expected_parameter_digest_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((expected_parameter_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_queries_merchant_order_id_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_merchant_order(merchant_order_id))"
+    },
+    {
+      "name": "mock_queries_pkey",
+      "type": "p",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (query_id)"
+    },
+    {
+      "name": "mock_queries_query_id_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (mock_uuid(query_id))"
+    },
+    {
+      "name": "mock_queries_request_digest_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((request_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_queries_snapshot_body_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((octet_length(snapshot_body) >= 1) AND (octet_length(snapshot_body) <= 65536)))"
+    },
+    {
+      "name": "mock_queries_snapshot_digest_check",
+      "type": "c",
+      "table": "mock_queries",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((snapshot_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_schema_migrations_pkey",
+      "type": "p",
+      "table": "mock_schema_migrations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (version)"
+    },
+    {
+      "name": "mock_schema_migrations_sha256_check",
+      "type": "c",
+      "table": "mock_schema_migrations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_schema_migrations_version_check",
+      "type": "c",
+      "table": "mock_schema_migrations",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((version = 1))"
+    },
+    {
+      "name": "mock_signing_keys_check",
+      "type": "c",
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((not_before <= not_after))"
+    },
+    {
+      "name": "mock_signing_keys_check1",
+      "type": "c",
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((not_before >= '0001-01-01 08:05:43+08:05:43'::timestamp with time zone) AND (not_after < '10000-01-01 08:00:00+08'::timestamp with time zone)))"
+    },
+    {
+      "name": "mock_signing_keys_check2",
+      "type": "c",
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK (((not_before <> '0001-01-01 08:05:43+08:05:43'::timestamp with time zone) AND (not_after <> '0001-01-01 08:05:43+08:05:43'::timestamp with time zone)))"
+    },
+    {
+      "name": "mock_signing_keys_key_digest_check",
+      "type": "c",
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((key_digest ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "name": "mock_signing_keys_key_digest_key",
+      "type": "u",
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "UNIQUE (key_digest)"
+    },
+    {
+      "name": "mock_signing_keys_key_id_check",
+      "type": "c",
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "CHECK ((key_id ~ '^[A-Za-z0-9_-]{1,32}$'::text))"
+    },
+    {
+      "name": "mock_signing_keys_pkey",
+      "type": "p",
+      "table": "mock_signing_keys",
+      "deferred": false,
+      "deferrable": false,
+      "definition": "PRIMARY KEY (key_id)"
+    }
+  ],
+  "sql_sha256": "3942a0af2577bdad4e841f2b1fa3f0502a3a0db898d6f050fbaf2da45e7e0127"
+}

@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-01",
+  "browser": "isolated headless Google Chrome",
+  "origin": "ephemeral Vite local source origin",
+  "native_helper": {
+    "nativeIndexedDB": true,
+    "concurrentTargetUnique": true,
+    "transactionCompleteBeforeSend": true,
+    "durableReopen": true,
+    "actorIsolation": true,
+    "lateIDCannotDelete": true,
+    "epochAbortPreservesPending": true,
+    "abortAdmissionNeverSucceeds": true,
+    "quota128": true,
+    "corruptFailsClosed": true,
+    "allNamespaceSuffixesChecked": true
+  },
+  "actual_two_tabs": {
+    "unique_target": true,
+    "same_original_id": true,
+    "late_id_cannot_delete": true,
+    "actual_reload_retains_original": true,
+    "terminal_cleanup_visible": true,
+    "broadcast_hint": true
+  },
+  "cleanup": {
+    "random_namespaces_only": true,
+    "journal_connections_closed": true,
+    "isolated_profile_removed": true
+  },
+  "source_sha256": {
+    "web/src/payments-journal.ts": "7c4186bbc91bde88bdfc4ae0e777e2749b68b956e512ad72fa7e0b43c4dcb9cc",
+    "web/src/payments.ts": "70585b15aa1a681d8e8b95979642a010e17d02d7ed45116bc37723ca6df39c6e",
+    "web/tests/payments-indexeddb.browser.mjs": "ee79930571ac8bac4ecb22f88aa48a16d83a1654bc5a35e399e802389ee26e8b"
+  },
+  "pass": true
+}

@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "migration": "015_public_catalog.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "Revalidated PID 70862, workspace cwd and listener; SIGTERM exited 0 and listener closed before final artifact restart.",
+  "pid": 85387,
+  "binary_sha256": "5530671707b03ab90f355a073676c7405b106bc2be944e0c8cac0ac8f97127a4",
+  "index_sha256": "46eda84a70c9606794af83f93254f68e2f341b061b2983e81d4074e265acb762",
+  "index_exact_match": true,
+  "assets_exact_match_count": 35,
+  "asset_sha256": {
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "KeysView-B7FWy6N1.js": "f2cdb7fc7c69554bbe6167aa2a38eab2fcb0f34a12ca07714f5b877932418afc",
+    "KeysView-DGB_doro.css": "d89b2663b9478837efacd2de14b5a00003e218a0d48f3c54c00d12b81da12966",
+    "LoginView-BIXMir_H.css": "ee500b6de1178232d5c81b21ff40bd9f245afd788aee24f9f2acc055c5ebbb87",
+    "LoginView-CrS_EA0T.js": "04a8ba6b935f86e7043d7c7cf8a85ebba90f21a30cc56af489dbda6a819b22a5",
+    "MembersView-B4sDXuHD.js": "114666bac6b8d3954af5255acf55347af4601f763f42fd9e0ea6b3d5dd17fe7c",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-GyurkUDw.js": "da5b0b9dc2846acad73bb36ecd5409dd01ca3d1727a97cd282412aae9edf05ee",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-CrEIOLPa.js": "92121a879748752010d9f7f808973a90bfff4b125d32193412eee481bbe04f6d",
+    "OverviewView-DZiuMGE-.js": "e7fc58385cda7dbd39b28e884369087ef01d08bf77ff6d8426b3bd4576f216c0",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-3EXijhed.css": "7d2bdd9f81c26e62fb8ba441034d4c2c21050bb773639d03a3adda9221bc49c0",
+    "PlatformView-BucpyhPH.js": "43631c92ebda49ecdf3f3e8ab3c0b80af153f72f2b1c32652bf0d2acec581892",
+    "PlaygroundView-BlcRmSMi.js": "38fb361c0ecbc8bcd0670afb50498aca23eb74fc2eb7eb1d515cb76a5fbd1197",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "PricingView-D7_4oVEi.css": "4bf2ce148dc0f1d33c04b0a50e438c6b8462750d5b81b70d0d43cf6131c7e6ee",
+    "PricingView-sMk-zHM9.js": "0db2f1ecffda9f14fef56aaf7614165f4b903038c864ce73c576d2ac1a5783c7",
+    "ProcurementView-DF5-1Oyy.js": "9709114f1689bdb7a9f616daab94964cab24bbda40b7ade3a50a839d3ae9d782",
+    "ProcurementView-OwQXo4Hy.css": "7a3f1c0b957f2cd6b4127b6a6f89ad673225226af4261d3da461efae9851da17",
+    "RecoveryView-D1rE6U8g.js": "4cdd11775973c62aa09ce55432f07e02bbd8d9753ce55f9651bea5143ae50a2f",
+    "ReportsView-vjZFpliI.js": "04daf79411e161dd2c324379031576142d43512676533f40934c9a5e53791ff5",
+    "RequestsView-Br-Kz6Qx.js": "8c1409f8643d1014a98706353c3d716872f5b7bf18a1d45d414e6b907639f2c2",
+    "RouteAttempts-BiZpLfkV.css": "287e44ef3518101fe535b9bf15a062ef4cc3b95a86cfb4ae311c32a316dd42a2",
+    "RouteAttempts-DVxtNqZ_.js": "289c8d3f620620e2e178ee3e361321d43e93ed90dde66b2c083114f6f7300c4e",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "SecurityView-oV8pwnmJ.js": "86f9b5002a2a86e3e3ff7cd1c90a55b11b5d8e6faf2f2f0d36bf4d04f486a0f3",
+    "WalletView-BD-UcN5_.js": "9bd96dc6bb7f0baf1c432a24866d12047f7b4dadd659a4b5473611863d617b7e",
+    "credential-pool-BG3qebJJ.js": "6ef9540bcd1f136e1e40d9bd2ae926445a9f4cc7a5f3d12f89e478f406c87ab5",
+    "elements-mufc-W6E.js": "de8804d6bfe89bd216f609825e7186f419098b0cc51663494d7496e0ce788dbc",
+    "index-ClVglE9M.js": "50cdac0f4b4153262013712c53dc8d01489af818a6b7dc848af5c8a62e45c055",
+    "index-WJW_AaI-.css": "588948d6ebc5fe8cb6d31471bff92557149221cebe174bd1f02c597d3ae88387",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "key-access-policy-k09pNUDn.js": "ccf3fa55f3c6a02f3d2d5ff4c4a52a578ac4a2215d43aef7bfbc50fdc1266df2",
+    "public-catalog-state-Bi_UpIti.js": "e3a6cd0a5fe728317a75991c2f07c568bc2cacbab052fa47c0762307f1e6ce35",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "migration_015": true,
+      "cost_caps_read": true,
+      "migration_count": 15,
+      "owns_route_table": false,
+      "procurement_read": true,
+      "publication_read": true
+    },
+    "projection": {
+      "superuser": false,
+      "cost_caps_read": false,
+      "procurement_read": false,
+      "publication_read": false
+    }
+  }
+}

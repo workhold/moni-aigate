@@ -1,0 +1,11 @@
+{
+  "origin": "http://localhost:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "matched_asset_count": 27,
+  "index_sha256": "0f97b350a6ed86dfd5a79f42d2680a2cba87b5ba719f324c08093263d6c0c112",
+  "binary_sha256": "a75d1a8d976ad7f875be530fd8a163ab0695958be9d7b3d26e86a09dd41c8f08",
+  "notes": "014 final build; owner migrate/provision then restricted serve; no review account operations"
+}

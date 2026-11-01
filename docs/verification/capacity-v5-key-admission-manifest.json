@@ -1,0 +1,23 @@
+{
+  "scope": "005 local burst comparison, not formal target-environment or continuous throughput acceptance",
+  "build_command": "go test -c -o <temporary-binary> ./internal/server; no race, no profile",
+  "order": [
+    "before1",
+    "after1",
+    "before2",
+    "after2",
+    "before3",
+    "after3"
+  ],
+  "binaries": {
+    "before": "cb75617e22690551641bdc6e19d077938accca1ed9f1399dce2210897155e87f",
+    "after": "0aaef95e9fceb8772888753b99d80fbb82482cd8093d40f1ae4ec982a4c0735f"
+  },
+  "final_source_sha256": {
+    "internal/server/gateway.go": "832032d6bf4b3260a21f55bc14713260377fc8c57f6fd344d2a6bd5bcf975f1e",
+    "internal/server/server.go": "5910f0d4a61db2e94c720c97b7385e19e85bc12537d2a41461004f43cf4ef630",
+    "internal/server/admission_queue.go": "de3bbc5ccd719223e8ef836decfa9485c82da3d701015d261c5504c646548c6d",
+    "internal/server/capacity_test.go": "bcdefc0557a80bddff4cf5c8c3026452e2c10eb9bdd750ce4334713fdb577181",
+    "internal/routing/routing.go": "f187223d7fdac9542721d5c5b3bf9bca3882f0fb00a8a33c0c10bf65f0f194ed"
+  }
+}

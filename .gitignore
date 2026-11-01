@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.local/
+node_modules/
+.vite/
+web/dist/*
+!web/dist/.gitkeep
+coverage.out
+bin/
+/moni-aigate
+/moni-payment-sandbox
+*.test
+*.log
+.DS_Store

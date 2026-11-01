@@ -1,0 +1,45 @@
+name: verify
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    env:
+      TEST_DATABASE_URL: postgres://moni_test:test-only-password@127.0.0.1:55439/moni_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      # The sandbox proves the actual PostgreSQL port, not a mapped client port.
+      # Keep its server and host ports identical to the frozen local QA target.
+      - name: Start dedicated PostgreSQL for financial and sandbox tests
+        run: |
+          docker run --detach --name moni-aigate-test-pg \
+            --env POSTGRES_USER=moni_test --env POSTGRES_DB=moni_test \
+            --env POSTGRES_PASSWORD=test-only-password \
+            --publish 127.0.0.1:55439:55439 \
+            postgres:16-alpine postgres -p 55439
+          for attempt in $(seq 1 60); do
+            if docker exec moni-aigate-test-pg pg_isready -h 127.0.0.1 -p 55439 -U moni_test -d moni_test; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go run ./scripts/check-architecture
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci && npm test && npm run build
+        working-directory: web
+      - run: go test -race ./...
+      - run: go vet ./...
+      - run: go build -trimpath ./cmd/moni-aigate
+      - name: Stop isolated database
+        if: always()
+        run: docker rm --force moni-aigate-test-pg

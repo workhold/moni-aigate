@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "identity_capabilities": {
+    "email_delivery_configured": false,
+    "registration": {
+      "available": false,
+      "reason": "feature_disabled"
+    },
+    "password_reset": {
+      "available": false,
+      "reason": "mail_not_configured"
+    }
+  },
+  "operations_alerts_enabled": false,
+  "upgrade": {
+    "date": "2026-11-01",
+    "migration": "020_periodic_budgets.sql",
+    "identity_and_financial_facts_unchanged": true,
+    "compared_tables": 29,
+    "old_pid": 92956,
+    "old_process_drained": true
+  },
+  "pid": 63688,
+  "binary_sha256": "95d14e337c35347085bddc7041a3c5d62a7b36c3f50f01697565d9a0a43d5913",
+  "index_sha256": "b1c2ce6749e4f0406b3525a77d2753225a3820b821bae58703635966ccdf7f36",
+  "index_exact_match": true,
+  "assets_exact_match_count": 52,
+  "asset_sha256": {
+    "AlertsView-C3i7N6XX.js": "3afaf388de1179e3eb14c172bdb370e8abf3aab7560342a3fa6dba15f77facd5",
+    "AlertsView-C7R-n4Xa.css": "54b8cc4e833f3e1d8af8ab0b8458914869fda9f99f959cc017fec30f46c7845f",
+    "CommerceCommands-C0ImUzlM.js": "180047e430472f17bdd95f302c0b934828bdefafb4afb21ccc92e4f49031807a",
+    "CommerceCommands-ttWRjO9C.css": "a4ba66a093e6bc15064e44d22fef25bdb0dcbb04e8510e02b5d16a9c08934d2c",
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "IdentityCompleteView-CCS6RYye.js": "d4d46c469555acee231222f8a360e078191838ef3791cd7df8fd4b1fcf7030d7",
+    "IdentityRequestView-jxeOhw-M.js": "98eaac69f3aca2c442168f93b57367ad249f3bb78230d79fcdda60f6f9eecf00",
+    "KeysView-Dn3XVVu4.css": "c2e4dc0fc2da66ee5e777d4c40a0e66144732668676086cb1425254b5156933e",
+    "KeysView-MFKuMWds.js": "747ce69fc0b10071fa09f22e5dc99571cdfe64d05a0132aa299fb9d43b44a7c8",
+    "LoginView-BfRr07Wq.js": "bea7cbcbbc88de400fa664d9917a594da2a9a95f64504b033bf26b638e7fb6e9",
+    "LoginView-eLJQw0oC.css": "2b1c5c89d6ff89031ba7881d2877da9072288a75d3f8e4371254c8db76b6ab9a",
+    "MembersView-fIsMkP0W.js": "30fc024ef69d6fc8f6664f93080c82b9dcce452b12a46bfef91209ff0f409f3d",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-BGZ3tgdp.js": "d1d216a148987efb05522b24d74f5b450ebce02abce56117d1420434a97a1f3c",
+    "ModelsView-D35ftx6s.js": "3128bdaa015fc8f5c2070018c2aa496d8a16d77f64b8c7fff453196f1e520737",
+    "ModelsView-Dj1-RO8y.css": "8dcaed6581eaa7fbf4228215957e3d1ad3a638a9cf7433663613f209081d741b",
+    "OverviewView-BlRmz4p8.js": "9a22c89b9777cb6dd46c3c6cf1f8acc1ff5a2b29b9582dccb47a0cfa5067207f",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PeriodicBudgetView-DCE11DBh.js": "9b6e55c82c7452893d3335e8267e87608ddcf34204f0d380d165eeab1e5d7f71",
+    "PeriodicBudgetView-DxoG-nAJ.css": "fab6a6b897f2466fd6e4e1fb2e561286bbb162460dfb8740824ac080a633326d",
+    "PlatformView-3EXijhed.css": "7d2bdd9f81c26e62fb8ba441034d4c2c21050bb773639d03a3adda9221bc49c0",
+    "PlatformView-DydTVS_w.js": "9b63e7a1c24b1f5f40c2884394f003bc69c7492c5635f13aadc94d19f8eceaf6",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "PlaygroundView-_uyaxTVQ.js": "4013b0d46f2161f5e3e0b9e167d6262131afdd2e1c16521bea3009976f37eff5",
+    "PriceGroupsView-C9KBX_XD.js": "e67cccc23016eb616e50e28ebcc2a4cfe8c0f60ad0955e0d0ac5e0fa1dbc9d18",
+    "PriceGroupsView-CB28yoIH.css": "6c021c02a27fb04ba09d378f3c42cdec4da03a5f19bc1e834ad9cfc05b181760",
+    "PricingView-DFv5rJIT.js": "e7ef8201a3658cca418c424d07388cca013ddde9f665ef2ea3988fe32a0f6f67",
+    "PricingView-Dfs1ie_6.css": "16fae4d00505cdb7cb40f14b2332d09fa408697313e87bcc70c1863dd1510bf4",
+    "ProcurementView-CMaDN79s.css": "bc40953f341b349060fdb945c87b084383ae1c7616f4e0a6d32858f87b2b58c2",
+    "ProcurementView-CS53ZRgh.js": "b208b31f876f8896468ab763201789c07a4c4ccc5f423b6bd1170e78bd2cbe0d",
+    "RecoveryView-BFM51Gef.js": "8cf2e36ce19a5ddb455121230216f0153f173344da158f954bf335e15ec3d2a5",
+    "ReportsView-C-G23Alr.js": "5c67817a8e1c223138174079a926f424113173b532fcadfac225b6427830aa2f",
+    "RequestsView-DumF3M3k.js": "8b0d637e44ff1b6043617e9c3e200081f9819648ed36943d5c956f0e17afe00a",
+    "RouteAttempts-BiZpLfkV.css": "287e44ef3518101fe535b9bf15a062ef4cc3b95a86cfb4ae311c32a316dd42a2",
+    "RouteAttempts-DYLWPynF.js": "2665b164b4be7ad143b2b8cb644f0309793139561071537c842c88bfe8055561",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "SecurityView-BtncLkvv.js": "9032969bdef36521c02c2f0ffe517a63333ae0c33681eb384021ce18acfc7069",
+    "VouchersView-C-rSDbHR.css": "c0fdd554e9cc74b5b637acc5d97b294278c215ac47324e44c4d12b679b5097cf",
+    "VouchersView-DhxehDFq.js": "ebb5a9da4568c3b10da856c3158ee688160ed5d95e2a0aeb51209be5d1d34ce2",
+    "WalletView-6Af5CZwB.css": "f542e10a6a934cb8ee684d05e30a5b3f35589e7fee6e67a27ab834904e14ac71",
+    "WalletView-BYIM1adi.js": "e3eae888ce1f3fc98d9868fcc199a997010759e6deabd89de7c3a169490fef0d",
+    "credential-pool-BG3qebJJ.js": "6ef9540bcd1f136e1e40d9bd2ae926445a9f4cc7a5f3d12f89e478f406c87ab5",
+    "elements-mufc-W6E.js": "de8804d6bfe89bd216f609825e7186f419098b0cc51663494d7496e0ce788dbc",
+    "identity-public-C7S5WSaD.js": "37a995e6b70798f8c41f1c2f402df426f07b00356626344651fcd08681139594",
+    "identity-public-state-CEMeDPRb.css": "d1124b35a5272ecbefda174eaa7368ac1b79e4a24111db0c5f67039699bf6fdf",
+    "identity-public-state-DekKRmG0.js": "1af00a7baf7d5373f1436d8ec7ddac764adcc709fafbb295bf2d1a4477c320d6",
+    "index-C7xFsMNX.js": "d2381e94244a226d257e7f9bdd0b68157fc52bf76e36f0dd0898c3a04cf4779f",
+    "index-DsLi5xot.css": "25ca9db9ffb36f47ef3b3f080e57303b9cbed0e5a4e79b441e2db820d8a55425",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "key-access-policy-ZmhaTqFq.js": "bd82e87737ca3c0686a0b73083691315f21358ce48d9710ee3b49d0e10aa7d85",
+    "pricing-state-B4OJ-APL.js": "e0928d49dab8c300b7813fa23579ede4bb992f558f335ea37f2c082510a164ce",
+    "public-catalog-state-KSGNkoUg.js": "a827956afcf5c8c2dc1e4b546c178c5e8dbd4a0b26560e9f23d871ce79568223",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "event_update": false,
+      "limit_update": true,
+      "budget_insert": true,
+      "budget_select": true,
+      "control_owner": false,
+      "migration_020": true,
+      "migration_count": 20,
+      "operation_delete": false,
+      "configured_controls": 0,
+      "control_identity_update": false
+    },
+    "projection": {
+      "superuser": false,
+      "budget_read": false,
+      "events_read": false,
+      "events_insert": false
+    }
+  },
+  "effective_role_startup_check": "passed before listeners and workers"
+}

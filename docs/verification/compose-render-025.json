@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-01",
+  "scope": "025-A0 actual Compose CLI config rendering only",
+  "pass": true,
+  "compose_version": "5.6.1",
+  "distribution": "Homebrew official arm64_tahoe GHCR bottle",
+  "bottle_sha256": "8a9fae90e8999f01d164cd359b70f7be7e30662738ba649b395ee59c056e0292",
+  "binary_sha256": "9e3817c6de68d2bea3f697ea39dce6b1a2b2f490420208016d76c56a0172401b",
+  "compose_yaml_sha256": "984a5753206ba948e3f56caa160a001eb8d3ddb442a31d07ef45332d7bcf6d86",
+  "cases": [
+    {
+      "case": "defaults",
+      "config_quiet": "PASS",
+      "rendered_json_and_nine_fields": "PASS",
+      "role_smtp_isolation": "PASS",
+      "loopback_320s_readonly_and_payment_off": "PASS"
+    },
+    {
+      "case": "synthetic_override",
+      "config_quiet": "PASS",
+      "rendered_json_and_nine_fields": "PASS",
+      "role_smtp_isolation": "PASS",
+      "loopback_320s_readonly_and_payment_off": "PASS"
+    }
+  ],
+  "user_env_or_docker_credentials_read": false,
+  "isolated_environment_and_nonexistent_daemon_socket": true,
+  "rendered_secrets_persisted": false,
+  "private_files_removed": true,
+  "docker_build_and_container_start": "NOT RUN: no running isolated engine",
+  "onepanel_and_real_smtp": "NOT RUN",
+  "prior_direct_github_download": "timed out; no binary executed"
+}

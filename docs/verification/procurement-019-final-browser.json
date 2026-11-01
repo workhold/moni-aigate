@@ -1,0 +1,137 @@
+{
+  "facts": [
+    {
+      "cost": 22,
+      "status": "succeeded",
+      "charged": 20,
+      "decisions": [
+        {
+          "reason": "selected",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "f2e79574-02b5-4515-8df9-0579f161954e",
+          "version_id": "200289c2-73d0-4926-ae7d-619f69879d79"
+        }
+      ],
+      "cost_basis": "contract",
+      "request_id": "81d1e28d-5635-4184-8aec-26ab3bab39d4",
+      "cost_status": "contract",
+      "billing_status": "settled",
+      "delivery_state": "completed",
+      "route_revision": 1,
+      "cost_input_rate": 2000000,
+      "cost_output_rate": 7000000,
+      "selected_channel": "Synthetic policy fixture",
+      "retail_input_rate": 2000000,
+      "retail_output_rate": 6000000
+    }
+  ],
+  "audits": [
+    {
+      "diff": {},
+      "action": "route.publish"
+    },
+    {
+      "diff": {},
+      "action": "cost.version"
+    }
+  ],
+  "routes": [
+    {
+      "mode": "manual",
+      "unknown": "allow",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 1
+    }
+  ],
+  "charged": 20,
+  "attempts": 1,
+  "credited": 1234567,
+  "key_held": 0,
+  "requests": 1,
+  "key_spent": 20,
+  "held_total": 0,
+  "known_cost": 22,
+  "settlements": 1,
+  "ledger_total": 0,
+  "finalizations": 1,
+  "unknown_costs": 0,
+  "available_total": 1234547,
+  "unbalanced_journals": 0,
+  "final_binary_sha256": "d62e42931573442fd50eb71962d4bc6c251308652dd56e8c3626eb571bdc7400",
+  "fixture_only": true,
+  "checks": {
+    "final_unknown_balance_label_browser": true,
+    "manual_unknown_observation": true,
+    "customer_sse_via_direct_http": true,
+    "procurement_spent": 22,
+    "procurement_held": 0,
+    "console_warnings_errors": 0
+  },
+  "procurement": {
+    "account": {
+      "id": "23db86ca-546f-42e8-905f-87b74179a9c3",
+      "label": "Synthetic shared procurement QA",
+      "provider": "Local mock aggregator",
+      "state": "active",
+      "limit_amount": "1000000",
+      "held_amount": "0",
+      "spent_amount": "22",
+      "revision": "1",
+      "created_at": "2026-10-31T17:59:41.694248Z"
+    },
+    "reservations": [
+      {
+        "account_id": "23db86ca-546f-42e8-905f-87b74179a9c3",
+        "anomaly": false,
+        "attempt_id": "da2be814-615e-4bc1-8446-b20b7f3d76c9",
+        "binding_id": "19d37a67-641e-40bb-beb9-6df6e5685344",
+        "channel_id": "f2e79574-02b5-4515-8df9-0579f161954e",
+        "created_at": "2026-10-31T18:00:06.177286Z",
+        "held_amount": "0",
+        "id": "da2be814-615e-4bc1-8446-b20b7f3d76c9",
+        "input_bound": "128",
+        "output_bound": "16",
+        "request_id": "81d1e28d-5635-4184-8aec-26ab3bab39d4",
+        "revision": "3",
+        "spent_amount": "22",
+        "state": "settled",
+        "tenant_id": "d6014afc-e3d1-4360-a9a0-d7163a0b194a",
+        "updated_at": "2026-10-31T18:00:06.186311Z",
+        "upper_amount": "368"
+      }
+    ],
+    "events": [
+      {
+        "account_id": "23db86ca-546f-42e8-905f-87b74179a9c3",
+        "attempt_id": "da2be814-615e-4bc1-8446-b20b7f3d76c9",
+        "created_at": "2026-10-31T18:00:06.186418Z",
+        "event_key": "settle:da2be814-615e-4bc1-8446-b20b7f3d76c9",
+        "evidence_ref": "f94262f4-c563-4a02-8da6-8ed1994e2566",
+        "held_delta": "-368",
+        "id": "773ee608-09f6-41e3-b5a4-9b49aa94ee3b",
+        "spent_delta": "22",
+        "type": "cost_confirmed"
+      },
+      {
+        "account_id": "23db86ca-546f-42e8-905f-87b74179a9c3",
+        "attempt_id": "da2be814-615e-4bc1-8446-b20b7f3d76c9",
+        "created_at": "2026-10-31T18:00:06.178281Z",
+        "event_key": "reserve:da2be814-615e-4bc1-8446-b20b7f3d76c9",
+        "evidence_ref": "",
+        "held_delta": "368",
+        "id": "543e4d4c-004a-4e9d-9d1d-3741a42f0343",
+        "spent_delta": "0",
+        "type": "reserved"
+      }
+    ]
+  }
+}

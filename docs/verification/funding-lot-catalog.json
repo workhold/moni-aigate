@@ -1,0 +1,376 @@
+{
+  "format_version": 1,
+  "date": "2026-11-02",
+  "scope": "local_static_catalog_checker_and_same_transaction_proofs",
+  "status": "local_leaf_and_whole_repository_checks_pass",
+  "final_leaf_race": {
+    "log": ".local/c0-catalog-verification/final-race-closed-compare.jsonl",
+    "log_sha256": "635d4562cedafbd01b685d6a28f813b078c2d2748eefb24b934daab2dc526056",
+    "status": "pass",
+    "package_seconds": 217.14,
+    "terminal_scenarios": 179,
+    "top_level_tests": 47,
+    "passed": 176,
+    "failed": [],
+    "skipped": [
+      "TestCatalogPeerCaptureReviewMetadata",
+      "TestCatalogPeerReadTimings",
+      "TestOrdinaryVariantCandidateReproducibility"
+    ]
+  },
+  "prior_leaf_failures_retained": [
+    {
+      "log": ".local/c0-catalog-verification/final-race.jsonl",
+      "log_sha256": "26808bf33b92badd7b6ef93fd3e5a4a1851838f05d161d80fdf5d23262468b0b",
+      "status": "fail",
+      "package_seconds": 165.277,
+      "terminal_scenarios": 164,
+      "top_level_tests": 40,
+      "passed": 151,
+      "failed": [
+        "TestCatalogPeerPublicAPIs",
+        "TestCatalogPeerPublicAPIRejectsSameRRPeerDrift",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-isolated",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-minimal-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-image-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings",
+        "TestCatalogCanceledAbortedAndDisconnectedTransactions",
+        "TestCatalogRejectsSameTransactionDriftWithoutCommitting/function_source",
+        "TestCatalogRejectsSameTransactionDriftWithoutCommitting",
+        "TestCatalogInstallationEmptinessIsAnIssueFact"
+      ],
+      "skipped": [
+        "TestCatalogPeerCaptureReviewMetadata",
+        "TestCatalogPeerReadTimings",
+        "TestOrdinaryVariantCandidateReproducibility"
+      ]
+    },
+    {
+      "log": ".local/c0-catalog-verification/final-race-optimized.jsonl",
+      "log_sha256": "51e69a69828cb72d54379df86b1bcbbc660502fb362cf07b718afe133c99c9eb",
+      "status": "fail",
+      "package_seconds": 225.665,
+      "terminal_scenarios": 177,
+      "top_level_tests": 45,
+      "passed": 173,
+      "failed": [
+        "TestCatalogPeerPublicAPIs"
+      ],
+      "skipped": [
+        "TestCatalogPeerCaptureReviewMetadata",
+        "TestCatalogPeerReadTimings",
+        "TestOrdinaryVariantCandidateReproducibility"
+      ]
+    }
+  ],
+  "database_opt_in": "C0_CATALOG_DATABASE_URL; dedicated local PG16.15 only",
+  "command": "C0_CATALOG_DATABASE_URL=<dedicated-local-test-dsn> C0_CATALOG_LEGACY_REFERENCE=.local/c0-descriptor-candidates/qa-one-c8dec693633e6e5d3e6bf49995a7d0df go test -race ./internal/fundinglotcatalog -count=1 -timeout 600s -json",
+  "five_second_issuing_budget_unchanged": true,
+  "roots": [
+    {
+      "file": "internal/fundinglotcatalog/expected/ordinary-v1.json",
+      "bytes": 44854845,
+      "sha256": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2"
+    },
+    {
+      "file": "internal/fundinglotcatalog/expected/sandbox-v1.json",
+      "bytes": 13533215,
+      "sha256": "a3a7f855a5ac58ee583dce071c02707499c2a9e3d4bd2ec8b7b1b60228d55c4f"
+    }
+  ],
+  "source_sha256": {
+    "internal/fundinglotcatalog/canonical.go": "700faa1a08abd07a3ac002bf1e516ad15c3fac924e547807c0393438aa3b2918",
+    "internal/fundinglotcatalog/collector.go": "34f8a4b3a9662eecc05318fe91ec126c698fd6c425751ef81bb8b8871ca30514",
+    "internal/fundinglotcatalog/collector_bounds.go": "045a9aafa75d1dc70a509ed469b8b1e2d99f806e51fa6a203bf2bbfe0216eeaa",
+    "internal/fundinglotcatalog/collector_bounds_test.go": "f48a8bbf9c00c19ec3de24cb6f3ad870009fb00d0f9de63349dc509d4e203e73",
+    "internal/fundinglotcatalog/collector_builtins.go": "3b97bde1c4984b0d2bdde05cbd4f1da90dc0bd541ede731d41213a33e6f6d98a",
+    "internal/fundinglotcatalog/collector_decode.go": "44944fc5982882a2e1d946ae3044cb4bb2f6b487833b46f28e81b28902e07e45",
+    "internal/fundinglotcatalog/collector_normal.go": "480e9f0c742e45e7f4754eaaa711e25d67ce51e58e528f936592694b7d90a4dd",
+    "internal/fundinglotcatalog/collector_preflight.go": "0944c34525fc0ba0b809afa434cefd33b28bdaf7fc65930e4f7c94d08d819aa4",
+    "internal/fundinglotcatalog/collector_preflight_test.go": "850026d595e77e1711f67c4215dc86679cd16e617ba205a1e14f07c0614720c5",
+    "internal/fundinglotcatalog/collector_privilege_plan_test.go": "196533d1c572f38b9ff07641536d547e2aa60e20c3f5efb73e9f3efecf3276fb",
+    "internal/fundinglotcatalog/collector_pure_test.go": "b08ba1b41fa02a69a40d5248be7930cbd76afc2df8b5b5cf627731255a8d2dc8",
+    "internal/fundinglotcatalog/collector_queries.go": "56d638a30be057961c95022715c96422b1f35469a86b09c02d15627c6bbfcc2b",
+    "internal/fundinglotcatalog/collector_query_plan_test.go": "dd2ae876dedeaafe26241787a22c9208cb51296efac9c6e571eed73ddb9e2393",
+    "internal/fundinglotcatalog/collector_resolve.go": "e63f58d66173bc78055112aa0a27537ab3ff96c111486e8cd8c610c20ed6308f",
+    "internal/fundinglotcatalog/descriptor.go": "819c8535a8b7f5dd3b61a207d5fe6153ae0fac2d72c190b99c7011514c787d81",
+    "internal/fundinglotcatalog/descriptor_compare.go": "e45a784313b60e6a5a4052c8b08581b0ec1d218b358f2671d9fc3601ce726733",
+    "internal/fundinglotcatalog/descriptor_compare_test.go": "a87f12055b883fd70223af18867d80cfa18a037b42b4467f4dacdf9f3bd6cdc4",
+    "internal/fundinglotcatalog/descriptor_fields.go": "825c5ed7eabcbaf7c28d3f05b4bac0997cb42d07ef06c62a9245eef963107302",
+    "internal/fundinglotcatalog/descriptor_types.go": "12bcb2bba6f2056b3f7d44aa3c81ba650e895794c26819dae04233ccdfb42742",
+    "internal/fundinglotcatalog/descriptor_validate.go": "da55c6af38fb2adac9133c45c136f4e6528107df257734ec9554af6c18e1fc79",
+    "internal/fundinglotcatalog/expected.go": "a0b4eaf07f67058c5e922cd467969750bae8c34f18ecf97baf7407b382b8efc4",
+    "internal/fundinglotcatalog/expected_embedded.go": "b3b6f313e666003725ddd2cd002d7ace766285f06e82ff677f3a84684302ee99",
+    "internal/fundinglotcatalog/identity.go": "129d1a675e16331966ad61b0e317d6f993825ea14cf67ac856789ef4b87abf5a",
+    "internal/fundinglotcatalog/peer_capture_test.go": "d698ba4cb86e7028d15525838b416d6db12fbc85aaacd92889a1d8321a8d49dc",
+    "internal/fundinglotcatalog/peer_fixture_test.go": "8e8e5a0e80540eed197ebbdb8cf2f36758f16d5fc6c77150e84e5944e50160e6",
+    "internal/fundinglotcatalog/peer_timing_test.go": "d1673101d2ca377ae6e8d0cd73cb568cc659888c286d2127af1a4cf6deadd0b7",
+    "internal/fundinglotcatalog/peers.go": "8e06412c574950a8fe1bfaa25fe5516d14bc6866e9a07501bfb3b984cc4f70f0",
+    "internal/fundinglotcatalog/proof.go": "c88bd7e1d06e85d9df55ae4db95f9d2531f3911fb2256b26c81652ad76defa4b",
+    "internal/fundinglotcatalog/proof_integration_test.go": "a4f0af73699d99b0b566a8d13583966afd62de82fb98ccc802888d3ea516fb70",
+    "internal/fundinglotcatalog/proof_test.go": "fd82cd5135c5ad5784cfd135d5c5b6157736c7de9e29353f55076e79fa3acde7",
+    "internal/fundinglotcatalog/types.go": "f39db7853fca1e9962da2d2c00c813f3ee4753609ecc959cb7f389627faf81ea",
+    "internal/fundinglotcatalog/variants_fixture_test.go": "3c92e8fcb6808afa5df82f3d0d7f12a0f3b82fd81f30cb6b5afcd32d50d9ee31"
+  },
+  "old_exporter_and_provision_pins_unchanged": true,
+  "fixed_sql_acl": [
+    {
+      "file": "specs/022-self-service-payments/c0-production-schema.sql",
+      "sha256": "e61eb57ec2697fce94be6bac4dd306c86f8b05a339541339dd0fd554f3632047"
+    },
+    {
+      "file": "specs/022-self-service-payments/c0-production-permissions.sql",
+      "sha256": "9ddeecca3c2e9ec9d26f77bea80c92e4505e07f0f2a4c4bdc75d9e09b02876ae"
+    },
+    {
+      "file": "specs/022-self-service-payments/c0-ordinary-permissions.sql",
+      "sha256": "864a3e5b19a9e7d21d98b6557abf1d4903ca6ced438f1ec0259e786582b0d74e"
+    }
+  ],
+  "cleanup_audit": {
+    "roles": 0,
+    "schemas": 0,
+    "backends": 0,
+    "encoding": "UTF8",
+    "lc_ctype": "C",
+    "databases": 0,
+    "lc_collate": "C",
+    "public_acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}",
+    "plpgsql_oid": "14038",
+    "database_acl": null,
+    "public_owner": "pg_database_owner",
+    "database_owner": "moni_test",
+    "server_version": "16.15 (Homebrew)",
+    "public_relations": 0
+  },
+  "cleanup_audit_sha256": "eee7582cedca9bf97e3b89d553e9b5ccbdaca272de12997b9db8e932463a9876",
+  "ordinary_variants": [
+    "named-isolated",
+    "named-minimal-login",
+    "named-image-login",
+    "public-minimal-login",
+    "public-image-login"
+  ],
+  "sandbox": {
+    "schemas": 3,
+    "roles": 8,
+    "actual_runtime_logins": 5,
+    "cross_domain_directions": 10
+  },
+  "independent_read_reviews": [
+    "formal_roots_and_old_pins",
+    "identity_and_opaque_binding",
+    "pre_deparse_type_io_and_bounds",
+    "alias_multiplicity_and_owned_normalization",
+    "closed_expected_comparison_equivalence",
+    "sql_dependency_semijoins_and_privilege_arrays"
+  ],
+  "not_completed": [
+    "maintenance_gate_and_permit",
+    "epoch_and_closed_init",
+    "full_source_and_lot_runtime_proof",
+    "all_money_paths",
+    "refund_dispute_subscription",
+    "extension_ha_and_final_performance",
+    "other_postgresql_profiles_1panel_production",
+    "official_provider_payment_certification"
+  ],
+  "main_integration": false,
+  "production_migration": false,
+  "preview_58123_upgraded": false,
+  "external_paid_requests": 0,
+  "whole_repository_checks": {
+    "make-check": {
+      "command": "make check",
+      "exit_code": 0,
+      "seconds": 7.546,
+      "log": ".local/c0-catalog-verification/make-check.log",
+      "log_sha256": "bfa2420ba7f38ceaf794da0da9b27707487c9ec6d5a759c98bf43f92a9760f4e"
+    },
+    "make-verify-mvp": {
+      "command": "TEST_DATABASE_URL=<dedicated-local-test-dsn> make verify-mvp",
+      "exit_code": 0,
+      "seconds": 340.981,
+      "log": ".local/c0-catalog-verification/make-verify-mvp.log",
+      "catalog_opt_in_executed_separately": "final-race-closed-compare.jsonl",
+      "catalog_opt_in_not_reopened_in_global_suite": true,
+      "log_sha256": "bc105867061c0a4e226f3ddb8a2c68e56f37df585ef92bbe6c697aff28b7bb7c"
+    }
+  },
+  "whole_repository_frontend": {
+    "tests": 286,
+    "pass": 286,
+    "fail": 0,
+    "strict_typescript_vite_build": true
+  },
+  "whole_repository_go_packages": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+      "seconds": 6.711
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/alerts",
+      "seconds": 43.841
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+      "seconds": 1.595
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/billing",
+      "seconds": 217.715
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/catalog",
+      "seconds": 51.413
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/config",
+      "seconds": 4.048
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "seconds": 27.173
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+      "seconds": 2.824
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/identity",
+      "seconds": 258.062
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+      "seconds": 7.08
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+      "seconds": 4.502
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/metering",
+      "seconds": 4.997
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+      "seconds": 17.495
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/operations",
+      "seconds": 83.831
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+      "seconds": 7.511
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+      "seconds": 10.632
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+      "seconds": 8.27
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+      "seconds": 13.474
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/payments",
+      "seconds": 74.39
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+      "seconds": 39.544
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+      "seconds": 6.685
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "seconds": 93.594
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/pricing",
+      "seconds": 27.072
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+      "seconds": 5.246
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/provider",
+      "seconds": 7.021
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "seconds": 5.349
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/routing",
+      "seconds": 5.211
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/security",
+      "seconds": 3.268
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/server",
+      "seconds": 321.035
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+      "seconds": 3.759
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+      "seconds": 9.498
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/migrations",
+      "seconds": 38.068
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "seconds": 4.45
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+      "seconds": 4.517
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+      "seconds": 4.932
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+      "seconds": 3.992
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+      "seconds": 9.133
+    }
+  ],
+  "binary_sha256": "25843e4526aa4a92ff67dc936434634b820d1137f305eaf74f23b5efdafb36c4",
+  "separately_verified_opt_ins": [
+    "docs/verification/funding-lot-variants.json",
+    "docs/verification/funding-lot-catalog-collector.json",
+    "docs/verification/funding-lot-catalog-peers.md"
+  ],
+  "test_entry_architecture": {
+    "files": 1114,
+    "snapshot_sha256": "529d53dc048b669ad850dac8561e4839c4d78ab0c4b6cbc5d77d3f6871c200a5",
+    "source_unchanged_during_whole_checks": true,
+    "post_test_documentation_only": true
+  },
+  "architecture_render": {
+    "file": "docs/verification/architecture-c0-catalog.json",
+    "sha256": "9f37be4441b81c632179cb5f35c102d9f2c6aa386a74cad54cf84fe4a3d70813",
+    "diagrams": 17,
+    "pass": true,
+    "module_image": "docs/verification/assets/architecture-c0-catalog-application.png",
+    "detail_image": "docs/verification/assets/architecture-c0-catalog-detail.png"
+  }
+}

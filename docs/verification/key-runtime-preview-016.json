@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-31",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "migration": "011_key_runtime_limits.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "No process listened on 58123 at upgrade; historical PID was absent. No unrelated process terminated.",
+  "pid": 49646,
+  "binary_sha256": "6721ece544ff3a81d057856186f31961e65ac91eb71a7067ddf0d338a40fc28e",
+  "index_sha256": "dfbf53529bc23c8d1994932f0120a3e46379b4189c7d89af2c379aa42f4114d6",
+  "index_exact_match": true,
+  "assets_exact_match_count": 28,
+  "asset_sha256": {
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "KeysView-DCNgnS7v.js": "5babe59cee49371a23a4f224571bc43b645c23f4fdf5578774c139eced4be692",
+    "KeysView-_Vh3Zp9R.css": "79c3e71880e25fbaf729f87e44332c79034992e0d88725e500443e514f510fb4",
+    "LoginView-DrdoqOZm.js": "700c0c6f04293c6b8230731b95a5e902a9fb4298082cc4c514ffdb96fc95b46c",
+    "MembersView-Cdapo4QS.js": "c42e0d89ed3ff06a390f5d0fe58209caf0bfebf15d4463cba33bb48c5a02d324",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-vm8tpaV8.js": "57fb1a06355a943eeb9377d25f44175d87e2604bbd37de69ebf7464f705f4024",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-CFafqJbj.js": "fa075df6bc6433343a9d8c1a11ec902cb79297e2f35df8139a98a219d869f3bb",
+    "OverviewView-DJuCZ6A-.js": "8ca88de4d8f57e2e0c6fa7a38f0b6e1a7490809ce4cc19a9bc5a900796e73a34",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-DA6vsIHk.css": "f1c9d7f9900d2b3f7fa25bc80a2e85a67e55f47c20b1ea7d904e0b1937e631e7",
+    "PlatformView-zWbtHKkT.js": "08aa6dd6e1a818aad255027eae9f124a80cc6b4be7700240320e7487fcc3cc38",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "PlaygroundView-CpIRpCpK.js": "b3b43fa349526738b099301da7872982ec3db2bd36715311f0aea46b2f19fcd2",
+    "RecoveryView-B0NEqnBp.js": "438a2445477fc0481f6b6acb62e75832cec19d062cce6309b58ee5631d8bebdd",
+    "ReportsView-CiLrcUbx.js": "9f72e75ef2df5f5b34d9e01f320419ddcc85df58e4929637ba1ca2e9e2f5a438",
+    "RequestsView-BHvWwBUy.js": "99942da3a790e3d1da8cc3d5e304d8487a9e566254d71aadd5014b0802b60229",
+    "RouteAttempts-DrhrORRG.css": "09bae98f8fde6452b96936a48cd452a557ba9602418c711888fa41cff4d032f1",
+    "RouteAttempts-IThnyc2-.js": "d5d1b0354c0fdaad8bf73628abc6880ea31a32bbe1a2a66ff98d2bbaef00899d",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "SecurityView-DbYitJ7U.js": "9cf87fd2df4b2ece61ff98ecb41dc616e5f6598926b294c06c2b697c3e919ebb",
+    "WalletView-DiIAM0G0.js": "6e5aa946d5fcf60dacab282e64758495b264e81151844495922d168c5b3c937b",
+    "_plugin-vue_export-helper-DlAUqK2U.js": "cb85b0f263dbe24e857338301c0627076592e9f1f1a5662929f86d2c126444aa",
+    "elements-DmDn0__c.js": "1a2b9d0d6e16b6d3d848a624cd48140d62f3d2801e1cbbd53053293b2732afc1",
+    "index-0pPivQ3D.css": "144d9054130f1e871521207137f4ef98df04e1c0b1b13ec06799fb45dc867ec6",
+    "index-BS1ifKxk.js": "6b253e3aed4e42e3a5e7d77c114fc26426e1310b5e5b49cfd2376a62254cd5d4",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "rpm_read": true,
+      "superuser": false,
+      "migration_011": true,
+      "owns_key_table": false,
+      "migration_count": 11,
+      "limits_revision_read": true
+    },
+    "projection": {
+      "rpm_read": false,
+      "superuser": false,
+      "key_select": false,
+      "limits_revision_read": false
+    }
+  },
+  "browser_login_page": "rendered; no account operation; warn/error empty"
+}

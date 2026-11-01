@@ -1,0 +1,139 @@
+{
+  "verification": "022-C0-V0-R",
+  "date": "2026-11-01",
+  "status": "passed_isolated_reader_only",
+  "contract": "specs/022-self-service-payments/c0-ledger-reader-contract.md",
+  "command": "TEST_DATABASE_URL=<dedicated database only in process environment> go test -race -count=1 -run '^(TestFundingLedgerRead|TestPostgresFundingLedgerRead)' -v ./internal/billing -timeout 240s",
+  "go_test_exit_code": 0,
+  "go_test_seconds": "8.548",
+  "top_level_tests": 15,
+  "pure_top_level_tests": 5,
+  "real_postgres_top_level_tests": 10,
+  "vet_command": "go vet ./internal/billing",
+  "vet_exit_code": 0,
+  "source_sha256": {
+    "internal/billing/funding_ledger_read.go": "cd34617fb4214d8c397c057803cb9edf22950b0a1b563f26e14a6179c67ec88f",
+    "internal/billing/funding_ledger_read_test.go": "02fbb43fac000d43f6cd59aa70dbc7249c0d10c6e6757b9cb15a9eb6e3f3a0e5",
+    "internal/billing/funding_ledger_read_integration_test.go": "00731fb1ffb2336945e445b10fd7b8487484c5c0feb1239609d961d05b5a4eee"
+  },
+  "transaction_acceptance": {
+    "actual_restricted_app_login": true,
+    "config_user_equals_current_and_session": true,
+    "repeatable_read_read_only": true,
+    "repeatable_read_read_write": true,
+    "caller_sentinel_not_committed": true,
+    "caller_can_query_and_rollback": true,
+    "same_rr_preserves_original_data": true,
+    "new_rr_observes_later_journal": true,
+    "non_rr_serializable_closed_aborted_set_role_rejected": true
+  },
+  "raw_enumeration": {
+    "table_rows_each": [
+      0,
+      1,
+      128,
+      129,
+      256,
+      300
+    ],
+    "actual_page_count_per_table": "floor(n/128)+1",
+    "empty_primary_key_preserved": true,
+    "unicode_primary_key_preserved": true,
+    "null_account_tenant_preserved": true,
+    "cross_page_consistent_journals": 300,
+    "all_three_tables_read_to_eof_before_check": true,
+    "extra_journal_fields_preserved": true
+  },
+  "catalog_and_history_refusals": [
+    "RLS",
+    "forced RLS",
+    "view substitution",
+    "inheritance",
+    "builtin column replaced by domain",
+    "missing migration",
+    "bad checksum",
+    "pg_temp history shadow",
+    "missing primary key",
+    "deferrable primary key"
+  ],
+  "helper_function_preexecution_refusals": [
+    "current_setting exact text signature",
+    "to_regclass exact text signature",
+    "current_setting default-argument overload",
+    "to_regclass variadic overload"
+  ],
+  "shadow_proof": {
+    "sequence_is_called_false": true,
+    "sentinel_unchanged": true,
+    "caller_tx_still_active": true,
+    "custom_functions_not_executed": true
+  },
+  "paging_builtin_shadow_probe": {
+    "same_schema_text_domain": true,
+    "same_schema_C_collation": true,
+    "same_schema_greater_and_less_operators_raise_if_called": true,
+    "actual_false_cursor_page_fully_consumed": true
+  },
+  "canonical_extra_facts": {
+    "empty_kind_reference_actor_allowed": true,
+    "nonUTC_driver_location_converted_to_UTC": true,
+    "microseconds_preserved": true,
+    "zero_negative_created_txid_rejected": true,
+    "zero_overflow_infinite_created_at_rejected": true
+  },
+  "owner_controlled_bad_rows": {
+    "missing_accounts": 1,
+    "missing_journals": 1,
+    "cross_tenant_lines": 2,
+    "duplicate_operation_groups": 1,
+    "duplicate_journal_account_groups": 1,
+    "unbalanced_journals": 1,
+    "account_balance_mismatches": 1,
+    "all_six_lines_retained": true
+  },
+  "resource_and_errors": {
+    "pure_exact_rows": 100000,
+    "pure_exact_bytes": 16777216,
+    "actual_rows_100001_rejected_as_resource": true,
+    "actual_extra_journal_16MiB_rejected_as_resource": true,
+    "resource_fixture_only_temporary_C_index": true,
+    "production_indexes_added": false,
+    "actual_query_lock_wait_observed_before_cancel": true,
+    "query_cancel_returns_canceled_and_zero_snapshot": true,
+    "pure_late_rows_error_returns_execution": true,
+    "all_failure_snapshots_entire_zero": true,
+    "driver_errors_unwrapped_or_exported": false
+  },
+  "explain": {
+    "table": "ledger_accounts",
+    "rows_in_fixture": 300,
+    "has_cursor": true,
+    "resource_fixture_C_index_absent": true,
+    "observed_plan": [
+      "Limit (cost=26.42..26.74 rows=128 width=160)",
+      "Sort (cost=26.42..26.93 rows=203 width=160)",
+      "Sort Key: id COLLATE \"C\"",
+      "Seq Scan on ledger_accounts (cost=0.00..18.64 rows=203 width=160)",
+      "Filter: ((id)::text > '000127'::text COLLATE \"C\")"
+    ],
+    "production_large_ledger_performance_certified": false,
+    "gateway_p95_claimed": false
+  },
+  "cleanup": {
+    "every_fixture_exact_role_backend_count_zero": true,
+    "every_fixture_exact_roles_absent": true,
+    "every_fixture_exact_schema_absent": true,
+    "all_rows_closed_and_caller_transactions_rolled_back": true,
+    "restricted_pools_closed": true,
+    "post_run_read_only_reader_roles": 0,
+    "post_run_read_only_reader_role_backends": 0,
+    "prefix_used_for_deletion": false
+  },
+  "ordinary_main_or_billing_public_api_wired": false,
+  "old_verify_ledger_or_funding_changed": false,
+  "migrations_or_provision_sources_changed": false,
+  "permission_or_opaque_proof_issued": false,
+  "complete_source_or_lot_verification_claimed": false,
+  "financial_write_authority_granted": false,
+  "credentials_or_business_ids_exported": false
+}

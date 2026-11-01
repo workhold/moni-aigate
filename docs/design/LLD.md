@@ -1,0 +1,736 @@
+# LLD：moni-aigate 商业 API 网关
+
+状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-01（022-B3生命周期、C0纯算法/RR核验、024计量纯层及025配置渲染/邮件进程）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+
+## 1. 工程布局与模块依赖
+
+实际目录（r4对齐）：
+
+```text
+cmd/moni-aigate/      启动、迁移/引导/维护CLI、实例保护、排空
+internal/server/     HTTP鉴权/错误/分页、生成/检索协议生命周期编排与handlers
+internal/identity/   用户、租户、成员、会话/MFA、Key生命周期
+internal/catalog/    模型profile、不可变渠道/路由/售价版本
+internal/billing/    同tx账本、核款/退款、预占/证据/结算/恢复/投影
+internal/provider/   Chat/Responses/Messages、SSE、无重放客户端、出口安全
+internal/routing/    候选、优先级权重、容量、健康与attempt预算
+internal/security/   bcrypt、HMAC、TOTP、身份绑定AES-GCM
+internal/telemetry/  有界元数据异步日志
+internal/operations/ DB角色、主密钥重包、实例保护、恢复门禁
+migrations/          嵌入式checksum迁移与只读校验
+web/                 Vue3/TS/Element Plus控制台与嵌入式静态资源
+specs/001-commercial-mvp/contracts/  API/领域契约
+scripts/ deploy/     备份恢复、Compose、反向代理示例
+```
+
+测试与对应包相邻，真实PG使用独立schema，真实HTTP/TCP上游均为本地Mock。本版用显式参数化pgx SQL而未引入sqlc，见[ADR-002](../decisions/ADR-002-implementation-refinements.md)。
+
+Gateway 编排依赖各领域接口；Provider 不依赖 Billing、数据库或 HTTP handler。跨领域写操作由明确的应用服务事务协调，避免多次“保存成功”拼成一个资金操作。
+
+## 2. 公共接口与认证
+
+| 接口 | 身份 | 语义 |
+|---|---|---|
+| `GET /v1/models` | 客户 API Key | 仅返回可用且获授权的逻辑模型 |
+| `POST /v1/chat/completions` | 客户 API Key | 文本/基础工具调用，非流与 SSE；固定 `n=1` |
+| `POST /v1/responses` | 客户 API Key | 无状态文本/基础函数工具，原生 JSON/SSE |
+| `POST /v1/messages` | 客户 API Key | 文本/基础函数工具，原生 Messages JSON/SSE |
+| `POST /api/auth/login`、`POST /api/auth/logout` | 管理/客户会话 | 安全 Cookie，会话轮换；登录限速 |
+| `POST /api/auth/mfa/verify` | 待完成 MFA 的会话 | 已启用MFA的账号须完成第二因子；未绑定平台账号是否须先绑定由`MFA_ENFORCE_PLATFORM`决定 |
+| `GET /api/me` | 会话 | 用户、有效租户和能力；租户切换须重新校验成员关系 |
+| `GET/POST /api/keys`、`DELETE /api/keys/{id}` | 租户 owner/受限成员 | 创建一次性可见 Key、只读元数据、撤销 |
+| `GET /api/wallet`、`GET /api/journals` | owner/billing viewer | 本租户可用、冻结、净入账与消费；游标分页 |
+| `GET /api/requests`、`GET /api/requests/{id}` | 租户会话 | 本租户请求和收费状态，隐藏供应商秘密 |
+| `GET /api/models`、`GET /api/prices` | 租户会话 | 能力/售价版本/生效时间 |
+| `POST /api/platform/tenants` | 平台管理员 | 邀请开户，创建租户及 owner |
+| `POST /api/platform/channels`、`PATCH .../{id}` | 平台管理员 | 平台渠道与凭据，返回值不含密钥 |
+| `POST /api/platform/channels/{id}/probe` | 平台管理员 | 受相同出口安全策略约束的探测 |
+| `PUT /api/platform/models/{id}/bindings` | 平台管理员 | 原子替换账号池映射，需配置 revision 防覆盖 |
+| `POST /api/platform/price-versions` | 平台管理员 | 创建未来生效售价，不能原地修改生效版本 |
+| `POST /api/platform/credits`、`POST .../{id}/approve` | 财务制单/审批 | 记录已核款充值，审批入账；不同账号 |
+| `POST /api/platform/refunds`、`POST .../{id}/approve` | 财务制单/审批 | 退回平台钱包，绑定原结算及原因 |
+| `POST /api/platform/reconciliations/{id}/resolve` | 财务操作员/审批员 | 申请有证据结算，或审批员直接释放；理由必填、完整审计 |
+| `POST /api/platform/reconciliations/{id}/approve` | 不同财务审批账号 | 核对新增客户收费的证据并审批，仍受R与deadline约束 |
+| `GET /health/live`、`GET /health/ready` | 探针 | live 与数据库/初始化 ready 分开 |
+| `GET /metrics` | 仅运维网络 | 不公开租户信息或凭据 |
+
+客户推理接受 `Authorization: Bearer ...`；Messages也可单独使用 `x-api-key`，两类同时提供、重复header或空凭据均拒绝。其他推理端点仍只接受Bearer，不支持 URL 参数放 Key。会话 Cookie 设置 `HttpOnly; Secure; SameSite=Lax`，写操作校验 CSRF 与 Origin。平台 API 与客户 Key 认证互不通用。
+
+Key 验证返回内部结构化判定：`invalid/expired/revoked/forbidden/rate_limited/budget_exceeded/system_unavailable`，由传输层映射公开错误。前三类对外统一 401，权限 403，速率/并发 429，Key 花费预算不足 402 `key_budget_exceeded`，钱包不足 402 `insufficient_balance`，系统故障 503；不通过错误消息暴露某把 Key 是否存在。内部判定只记录非秘密 ID、阶段与原因，不记录提交的凭据。tenant_id 从验证结果注入，忽略客户端身份声明 header；追踪 header 也不能授予任何权限。
+
+管理 API 成功返回 `{data, request_id, next_cursor?}`；错误返回 `{error:{code,message},request_id}`，不泄漏 SQL、供应商凭据。Chat/Responses推理错误遵循 `{error:{message,type,param,code}}`；Messages使用原生 `{type:"error",error:{type,message}}`。同时输出 `X-Request-ID`。典型状态：401 Key 无效，403 模型未授权，402 `insufficient_balance`，409 幂等冲突，429 并发/速率满额，503 无可用渠道/资金服务不可用。
+
+`Idempotency-Key` 对入账/退款强制要求；推理可选。作用域为 `(tenant_id, operation, key)`；保存请求摘要。相同 key 不同摘要返回 409。推理同 key 已运行/已完成/结果未知统一返回 409 和原 request_id，**不自动再次生成，也不重播 SSE**；v0.1 不存完整回答以供重放。本版推理幂等记录不自动清理，持久保留；未来如引入TTL须先公开窗口与超期再次执行语义；资金单据的业务唯一键永久保留。请求摘要采用服务端 HMAC，避免对正文作可离线猜测的裸哈希。
+
+## 3. 推理能力契约
+
+- 支持文本 `messages`，基础 `tools/tool_calls`；拒绝媒体 content、远程文件抓取、`n != 1` 和未知计费扩展。
+- 验证角色、消息长度、工具 schema 深度和 JSON 大小。请求体默认上限 1MiB；超限返回 413。
+- `max_tokens` 或 `max_completion_tokens` 必须落在模型能力上限；两者同时出现时拒绝歧义；省略时按目录公布的默认值填入并约束上游。
+- 路由候选须有同一逻辑模型、所需上下文与工具能力、usage 能力及允许地域。不得自动把高级模型换为不同质量档。
+- 未知参数或当前 profile 无法兑现的参数在转发前明确拒绝；不得静默删除 tools、输出上限或改变计费的字段。逻辑模型别名只解析为已发布目录项，不解析客户端任意供应商/部署后缀。
+- 有些供应商没有可靠 usage 或无法约束输出；这类模型 v0.1 不向付费客户开放。
+- 首版按已确认 input/output Token 收费。cached input 是 input 子集，只记一次；不把 reasoning 字段与已包含它的 output 再叠加。各渠道 capability profile 明确字段映射，通过 fixture 确认后才能启用。
+
+### 3.1 能力 profile 与工具调用边界
+
+profile 按协议、供应商、endpoint、上游模型/版本发布，至少声明支持的参数集合、上下文规则、默认/最大输出、限制字段映射、计费维度、usage字段来源/累计语义、流终止条件及可信无消费拒绝分类；证据含官方约定和fixture版本。`GET /v1/models` 仍保持标准目录结构，扩展能力/限制在客户控制台和 `GET /api/models` 展示。兼容某个供应商的Chat接口不等于兼容其所有模型。
+
+首版基础函数调用只处理客户端 `tools[].type=function`、`tool_choice`、assistant tool_calls与客户端回传的tool结果；网关不执行函数、不抓取URL、不自动开展下一轮生成。`parallel_tool_calls` 仅在profile声明支持时接受。托管web search/code execution/file search、按次收费内置工具、媒体及其隐藏费用不透传。工具schema和tool结果计入输入上界；工具参数增量属于输出，不能因没有自然语言文本就记为零输出；`finish_reason=tool_calls` 为一次合法生成终止。
+
+### 3.2 用量的完整性与存在性
+
+内部 usage 带 `status=confirmed_final|provisional|estimated|missing|conflicting`、profile版本和来源。先区分字段不存在/null与显式整数0；不能以 `tokens>0` 作为唯一有效性判断。仅完整、非负、未溢出且满足profile关系的 `confirmed_final` 可直接进入自动客户计价；cached≤input、reasoning≤output，total按该profile定义校验。只有中途累计量、互相矛盾的最终量或估算不当作最终账单，按§7处理。
+
+OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_options.include_usage` 只控制下游是否附加usage chunk，不能关闭内部计量。省略/false时不额外发usage-only chunk，true且可信最终usage可用时在正常结束前恰好发送一次。缺失/冲突时不伪造0或估算chunk，按§9以billing_pending错误结束而不发成功DONE；上游协议完成与下游响应失败可以同时成立。累计快照替换而非相加；字段缺失的保留、显式零的替换也必须经profile确认，不用通用的“最大值/非零合并”猜账。估算可作诊断，不能作客户扣款证据。
+
+## 4. 核心数据模型
+
+下表为领域关系，实际字段、约束与trigger以[migrations](../../migrations/001_core.sql)以及后续002–006迁移为准。r4新增`session_families`、`delivery_observations`、`platform_probe_attempts`、`recovery_gate`、`route_binding_isolations`，006补充不可变attempt选路解释。恢复gate按epoch冻结提案并双人批准；明确模型配置错误只隔离精确渠道版本/上游模型，历史隔离不可修改，恢复需创建新版本并发布。实例接管先等待旧执行窗口，恢复只读进程可立即启动，退出恢复须重启后再按付费准入执行窗口检查。
+
+所有金额为 `BIGINT` 微元（1 CNY = 1,000,000 微元），时间为 UTC `timestamptz`，前端按用户时区展示；数据库时钟决定价格生效和期限。JSON 中金额用十进制字符串，前端不能用 JS Number 运算资金。
+
+| 表 | 核心字段 / 约束 |
+|---|---|
+| tenants | id, name, status；暂停后不接受新调用 |
+| users / memberships | user_id, tenant_id, role, status；membership 复合唯一 |
+| api_keys | id, tenant_id, owner_id, prefix, digest, scopes, expires_at, revoked_at, lifetime_limit, spent, held；tenant+owner 复合外键；spent/held 非负 |
+| idempotency_records / recovery_jobs | tenant_id, operation, key, request_hmac, resource_id；唯一作用域；恢复任务独立认领并先提交，不能倒置资金锁顺序 |
+| models / model_capability_versions | id, public_name 唯一, context_limit, output_limit, supported_features, enabled；请求保存能力版本 |
+| tenant_model_grants / member_model_grants / key_model_grants | 显式授权；空集合拒绝，allow_all 须明确标志；Key 有效权限再受所属成员授权约束 |
+| channels / channel_versions / channel_credentials | 平台域channel id及可变停用状态；不可变版本固定provider、base_url、network_profile、capability_profile、data_region、region_evidence_ref与credential_version引用；凭据存ciphertext/nonce/key_version及撤销状态，秘密不进快照/客户API |
+| tenant_region_policies / key_region_policies | tenant_id、key_id、allowed_regions、revision；平台最大地域集合内再收紧，下层未配置表示继承，显式空集合表示拒绝；成员限制首版仅模型授权 |
+| model_bindings | route_policy_version_id, model_id, channel_id, channel_version_id, upstream_model, priority, weight, max_inflight；随策略版本不可变，版本内候选唯一 |
+| route_policy_versions / active_route_policies | model_id, revision, max_attempts, total_timeout_ms, retry_after_cap_ms, allowed_regions；不可变版本；活动指针以expected revision原子切换 |
+| price_versions | id, model_id, currency, input_rate, output_rate, effective_at, created_by；单价为微元/百万 Token；同模型+生效时间唯一；记录不可修改 |
+| cost_versions | id, channel_id, upstream_model, input_rate, output_rate, basis, effective_at；首版仅 CNY 成本，未知不记零 |
+| ledger_accounts | id, tenant_id（客户账户）, kind, balance；客户 AVAILABLE/HELD 非负；平台账户显式属于平台域 |
+| journals / journal_lines | kind, reference, idempotency_key, actor；每笔 line 有 account_id 与 signed_delta；同币种总和为 0；已提交后不可修改/删除 |
+| reservations | id, tenant_id, request_id, amount, status, deadline, price_version_id；每请求最多一个预占；amount 非负 |
+| request_records | id, tenant_id, key_id, model_id, snapshot_ids, status, protocol_outcome, transport_end_reason, delivery_stage, finish_reason, billing_status, request_hmac, policy_version, timestamps（accepted/first_byte/first_content/end）；tenant+key 复合外键 |
+| upstream_attempts | id, request_id, tenant_id, sequence, channel_id, delivery_state, result, usage, cost_version_id, cost_snapshot, cost_basis, cost_status；request+sequence 唯一 |
+| metering_events / finalization_records | event身份/来源/schema/request/attempt/发生与接收时间、usage状态/规范量及evidence_ref；终结记录固定协议/传输/本地写入事实和billing_policy版本，关联恢复任务；只保存最终/异常/修正事实，不逐Token写库 |
+| projection_outbox / projection_receipts | event_id, tenant_id, operation_id, kind, schema_version, sanitized_payload, created_at；与资金事务同写；消费回执以(consumer,event_id)唯一，投影更新与回执同事务 |
+| settlements | id, request_id, tenant_id, usage_snapshot, raw_retail_amount, charged_amount, waived_retail_amount, refunded_amount, basis；每请求唯一，退款累计封顶 |
+| credit_orders / refund_orders | tenant_id, business_ref, amount, state, requester, approver, proof_ref, journal_id；业务号唯一、申请人不可审批 |
+| reconciliation_cases | request_id, reason, evidence_ref, deadline, proposed_usage, requester, approver, resolution；每请求最多一个活动核对项 |
+| audit_events | actor, tenant_scope, action, target, sanitized_diff, request_id, created_at；应用角色只追加 |
+
+跨租户关系通过 `(tenant_id,id)` 唯一键与复合外键保证，例如 `request_records(tenant_id,key_id)` 指向 `api_keys(tenant_id,id)`。平台共享渠道通过单独的模型绑定引用，不借用“tenant_id 为空”等于全局可见的隐式规则。所有客户查询仍必须带有效 tenant_id；外键不能替代查询授权。
+
+建议索引：请求 `(tenant_id, created_at DESC, id)`；尝试 `(request_id, sequence)`；未完结预占 `(status, deadline)`；流水 `(tenant_id, created_at DESC, id)`；审计 `(target_type,target_id,created_at)`。模型、渠道、价格和流水历史使用停用/版本化，不级联删除财务引用。
+
+## 5. 资金模型与计价
+
+### 5.1 内部平衡流水
+
+采用平衡的业务账本：每笔 journal 的 `signed_delta` 总和等于 0，不代表已接入法定会计总账。余额缓存与分录在同一事务更新；数据库约束触发器在提交时校验平衡，只允许经受控账本写入口追加。应用角色不能 UPDATE/DELETE 已提交分录。
+
+| 事件 | 分录（单位：微元） |
+|---|---|
+| 人工收款审批入账 X | 客户 AVAILABLE +X；平台 FUNDING_CLEARING -X |
+| 冻结 R | 客户 AVAILABLE -R；客户 HELD +R |
+| 消费 A 并释放剩余 | 客户 HELD -R；平台 REVENUE +A；客户 AVAILABLE +(R-A) |
+| 全部释放 | 客户 HELD -R；客户 AVAILABLE +R |
+| 退回钱包 F | 平台 REVENUE -F；客户 AVAILABLE +F |
+
+客户账户不能为负；平台清算/收益账户允许相应方向余额，不能把所有账户统一做“余额非负”校验。供应商成本不直接修改客户钱包。
+
+不变量：
+
+1. 客户可用/冻结余额非负；所有已提交分录按 journal 与币种平衡。
+2. 余额投影等于分录合计，日核对发现差异必须报警；不能静默修余额。
+3. 一个 request 只有一个最终客户 settlement；一个 reservation 最终只消费或释放一次。
+4. 理论零售费用为 A_raw，实际客户收费 A=min(A_raw,R)；豁免的零售差额 W=A_raw-A 独立记录，不作为供应商成本。供应商成本 C 始终按渠道计量独立记录。越界触发模型暂停/核对。
+5. 累计消费退款不超过原消费额；充值重复审批不重复增款。
+6. Key 的 `spent + held <= lifetime_limit`（配置上限时），与钱包预占/结算同事务；多个 Key 共享同一租户钱包不能各花完整余额。spent 为原始收费累计，退款不自动恢复 Key lifetime 上限，钱包退款仍可由其他有额度的 Key 使用。
+
+### 5.2 金额精度与价格快照
+
+单价单位为微元/百万 Token：
+
+```text
+amount_micro = ceil((input_tokens * input_rate + output_tokens * output_rate) / 1_000_000)
+```
+
+对整次请求合并后向上取整一次，避免每 SSE 分片取整。乘加用带溢出检查的整数或大整数，最终验证 BIGINT 范围；金额/Token 必须非负。例：input_rate=2,000,000、output_rate=8,000,000，input=1,000、output=500，结果为 6,000 微元，即 ¥0.006。
+
+请求在预占事务按 DB 当前时间选中最新生效售价，保存价格 ID 与完整数值快照。上下文上限、默认输出限制、计费政策同样版本化。跨日、改价、渠道切换都不得改变历史快照。
+
+### 5.3 预占上界
+
+`R` 用输入 Token 的**可证明上界**与受控输出上限计算。能验证精确计量的渠道使用对应 Token 规则；只提供近似 tokenizer 时不能把估计值当硬上界。缺少独立输入强制上限时，使用供应商确认的完整上下文窗口作为输入界，不用`context-最大输出`推断。输入/输出独立最大值各不超过context，二者最大值的和可以大于共享context；`R`据此保守过预占，最终按实际可信量结算，见[004](../../specs/004-conservative-bounds/spec.md)。代价是冻结较多余额和更易拒绝请求；前端说明冻结与实际消费的差异。
+
+这里的严格预占是moni的产品选择，不等同New API的估算预扣/授信策略。profile必须给出包含messages、工具定义和协议开销的输入边界及全部计费输出约束；共享上下文窗口与独立input/output上限分开建模，不能将上下文窗口误认为默认输出额度。目录发布 `reservation_strategy`、默认/最大输出和冻结说明；运营需评估保守冻结导致的小余额拒绝率，不能以近似tokenizer“优化”掉资金边界。失败响应不向普通推理Key泄漏整个租户钱包金额。
+
+输出可能包含推理 Token，必须确认渠道对 max_completion_tokens 等参数的约束覆盖全部计费输出。没有可靠上界/usage 契约的模型不开放收费。若异常 usage 超出上界，计算 A_raw 并将客户收费封顶 R，记录零售豁免差额 W、告警并停用该 profile，不临时从其他可用余额追扣。供应商成本 C 独立计算；不能把 W 加到 C 上再算一次亏损。
+
+## 6. 原子事务协议
+
+### T0：人工入账
+
+锁定 credit_order → 确认待审批、真实业务号唯一、审批人不同且有角色 → 锁定相关 ledger_accounts（account_id 排序）→ 写平衡 journal 与余额 → 单据标记 approved 并引用 journal → 写审计 → commit。重放返回原结果；同业务号不同金额报冲突。凭证仅存受控引用，不在普通日志里存财务附件。
+
+### T1：接受并预占
+
+校验请求/授权并取得平台/租户/Key并发许可；生成 request_id，读取路由配置快照。在短事务内：
+
+1. 先用唯一键插入/认领幂等业务根；冲突时检查摘要与原请求，不重新派发。之后按固定顺序锁定 tenant、membership、Key；重新验证停用/撤销/到期、有效授权与版本。
+2. 固定生效售价和能力版本，计算 R；按 account_id 排序锁定账户。
+3. 验证 AVAILABLE≥R、Key spent+held+R≤limit；失败不创建上游尝试。
+4. 创建 request、reservation、冻结 journal及对应projection_outbox，增加 Key held；提交。
+
+锁顺序统一为：本操作业务根（幂等记录/核款单/退款单）→ tenant → membership → api_key → model → channel → credential → reservation → settlement → ledger_accounts；同类多行按ID排序。不涉及的层跳过，T0/T3 也沿用该顺序，不得先锁账户再取业务根。策略收紧/停用操作沿用相同对象锁序，不在取得channel锁后反取tenant锁。资金 journal 使用唯一事件键作为最终幂等保护。死锁有限次重试仅发生于数据库事务，不能因此重复发上游。
+
+所有资金/预算/审计/outbox helper 显式接收同一个 `pgx.Tx`，事务内禁止另取全局pool开启独立写事务或异步提交余额。`settlement`尚不存在时不能靠锁不存在的行去重，须先锁现有reservation并使用request唯一约束。数据库角色和独立迁移角色分开；消费者的只读资金权限通过独立连接角色落实，不能仅靠Go接口约定。租户/平台账户行会串行化部分写入，容量验收需报告锁等待和事务耗时。
+
+授权子表的增删与派发检查共享父行同步点：租户模型授权/地域/停用锁tenant，成员状态/模型授权锁membership，Key scope/地域/撤销锁api_key，平台模型限制/当前能力指针锁model，渠道/凭据停用锁对应channel/credential。先锁父行再读/改子表，空授权集合也不例外；多对象按统一顺序。派发查权只读主库并以DB时钟检查过期，不能用SWR缓存或只读副本代替。锁超时/权限查询error均拒绝派发。
+
+T1/T1.5固定使用 `READ COMMITTED`：派发先按序取得父行 `FOR SHARE`，**取得锁后的后续SQL语句**再读取grants/有效策略；变更端先取得同一父行 `FOR UPDATE` 再改子表，不能也用兼容的SHARE锁。不得在REPEATABLE READ旧快照中等待后沿用旧授权；若未来改隔离级别须重做撤销竞态证明。
+
+### T1.5：尝试边界
+
+向上游发送前，先持久化 attempt（`delivery_state=prepared`），固定该渠道的成本版本、数值快照与计量来源。在短事务内按统一顺序检查当前租户/成员/Key状态与权限收回，再检查model/channel/credential停用和地域/出口限制收紧；相关有效状态行持有 `FOR SHARE` 锁至提交，撤销/收紧必须更新或锁定同一对象状态行，不能只靠无锁快照。租户/Key地域变更分别锁tenant/Key，平台/模型地域收紧锁受影响model行。成功后标记 `sending` 并提交；提交后才调用网络。该检查是本次attempt的派发准入点：撤销先提交则禁止派发，撤销后提交不能保证取消已获准的网络调用。数据库与上游不共享事务，不承诺“撤销按钮后绝无任何在途请求”。
+
+首attempt在准入点被拒且本进程能证明尚未发上游时，走T2释放冻结并返回相应认证/授权/不可用错误；之前若已尝试，仍按已有usage和消费证据处理，不因撤销抹掉费用。每次尝试独立固定成本版本，调价/换渠道不能覆盖历史；供应商最终账单用附加核对记录修正，不改原合同快照。发送过程的确定性证明只用于当前活进程的传输结果；崩溃后 prepared/sending 不得推定“从未发送”。上游调用不在数据库事务内。
+
+### T1.9：持久化终结依据
+
+上游结束后，以短事务幂等保存最终/异常usage证据、协议终态、传输原因、本地已写内容/提交阶段及恢复任务，再执行T2；允许已存在同一证据时直接引用。它只保存事实，不更新钱包。T2失败/进程在两阶段间退出时Worker可根据已持久事实重试结算，不重发上游。若证据事务失败，只能保留预占并进入恢复/核对；崩溃前未落库的最终usage仍可能丢失，不能承诺恢复所有外部事实。
+
+终结证据不是预先批准收费。T1记录客户请求的剩余deadline（与24h资金截止分开）；T2取得资金锁后重新裁决当前终止原因和资金期限。单实例Worker不接管仍在本进程活动表中的请求；请求退出/旧启动实例遗留后按恢复模式处理。终结证据追加、活请求终态更新和T2裁决均经相同reservation行同步，不能无锁改写一个已据此收费的结果。
+
+### T2：结算 / 释放
+
+按统一顺序锁定 tenant、membership、Key、reservation、settlement 与账户，验证 reservation 尚未终结；按固定收费政策裁决T1.9证据及当前活请求/恢复模式，插入唯一 settlement并引用usage，写journal与余额；Key held 减 R、spent 加 A；reservation 标终态；更新 request.billing_status；commit。成员或Key已停用不阻止此前已接受请求结算。重复执行只返回现有结果。
+
+正常活请求可在完整响应已校验、最终量可信且T2决策检查时尚未超请求deadline时收费；该决策提交后不因后续网络失败自动反转。若T2决策前已因平台超时失败且无有效输出，只释放；恢复模式下即使有completed证据，若尚无settlement且证据明确为无有效输出，也按平台中断免收，不替一个已经消失的非流请求补收生成费用。部分输出/客户主动取消则继续按§7.1裁决；交付事实不明保留核对，不凭completed标记猜测。T2已提交但确认丢失时先查询原settlement，绝不能误当未结算免收或再扣。
+
+所有自动及人工结算都必须在取得资金行锁后、写分录前以数据库 `clock_timestamp()` 检查 deadline，不能只依赖 Worker 是否按时运行。本版以**实际结算事务的截止判定时刻**为准：到期尚未结算时只能释放客户冻结，后到 usage 仅修正平台成本；不存在“Worker停机所以延长客户冻结”的例外。结算与释放并发时通过相同行锁/终态条件保证只有一方生效；已在期限前合法结算的记录不因后来到期而自动退款。
+
+资金事实在同一事务提交；控制台统计可以异步投影。连接失败/数据库提交结果未知时先查询 request 唯一 settlement，不盲目重做扣款。任何事务失败均回滚，不许部分更新后继续上游转发。
+
+### T2.1：计量身份与统计投影
+
+`metering_events` 是结算证据，不是 trace：采用内部 `source` 和有命名空间的 `source_event_id`，同时保留发生时间与接收时间，关联 request/attempt 和 schema 版本。供应商没有事件 ID 时，内部按 attempt 与事件语义分配稳定 ID；最终 usage 是累计量则不得把重复累计快照相加。相同身份不同内容进入冲突核对，不能覆盖原证据。首版只接收本进程受信适配器/核对流程的事件，不信任客户声明的用量或金额。
+
+数据库对 `(tenant_id,source,source_event_id)` 去重；outbox另以 `(operation_id,kind)` 唯一并分配稳定event_id，不能把schema升级当新收费事件。每次真实成本更正使用新的业务operation并关联原事实；相同operation/kind不同payload报冲突，不静默覆盖。consumer回执与投影更新同事务，不得先标记消费成功再更新统计。
+
+T2 在资金事务中关联所用持久证据，保存settlement和projection_outbox；T0/T1/T3 也在对应事务写出已提交业务事实，覆盖入账、冻结、结算/释放和退款。进入报表的供应商成本/修正等非资金事实也与对应持久化同事务写待投影事件。metering event_id、attempt_id、资金 operation/idempotency key 各司其职，事件去重到期不能解除资金永久唯一约束。迟到事件仍受 T2 截止政策限制；供应商成本更正追加并引用原 attempt/成本事实，不改原合同快照。
+
+证据本身也用字段白名单：标准化usage、供应商请求/账单标识、计量来源、校验信息及受控财务凭证引用；不保存推理正文、明文凭据、完整URL、原始headers或上游错误body，不能借evidence_ref绕过隐私边界。线下收款凭证另按财务角色与留存策略受控存储，不向普通请求日志/客户视图公开。
+
+Worker 至少一次处理 outbox，按 `(consumer,event_id)` 在投影更新事务内去重；进程在更新后崩溃再处理也不重复累计。钱包可用/冻结和交易详情始终读同步账本/业务事实，不能用延迟统计决定准入或显示权威余额。outbox中的最小报表事实按相应财务保留期保存，不能在发送成功后删除，也不随30天请求诊断记录清理；保留范围内可完整重放，保留期之外不承诺恢复已删除明细。
+
+首版只提供维护窗口内的离线全量重建：统一维护门禁暂停所有资金及报表源事实写入口/Worker，停止新收费调用并排空在途写入；确认门禁后从保留的已提交事件建立新投影版本/consumer命名空间，不复用旧回执。校验聚合与账本一致后事务切换活动投影，再恢复写入口及消费者。重建期间新调用明确503，不声称在线无停机；失败保持旧投影并恢复服务，不能半切换。恢复后新事件进入新consumer，包含重建完成后才提交的迟到成本/核对事实。
+
+报表消费者无资金写权限，不能经重放调用预占/结算或重发上游。首版 outbox 只服务内部统计投影；未来外部通知从已提交事实发送并独立幂等，不在本版增加通知产品或消息中间件。
+
+### T3：消费退款
+
+先锁退款单，再按统一顺序锁原 settlement 与账户；验证累计 refund+F≤charge，审批人不同；追加退款 journal、更新 refunded_amount/退款单并写审计。退款释放为可用钱包金额；已消费历史不删除，净消费由消费减退款得到。
+
+### 崩溃与数据库故障
+
+预占前崩溃无消费；预占后、上游阶段崩溃一律恢复为待核对，不自动重发。由于请求发送与数据库无法共同提交，v0.1 不承诺 exactly-once 上游执行。恢复 Worker 可在独立短事务中用 `FOR UPDATE SKIP LOCKED` 认领任务，然后先提交释放认领锁，再按统一顺序执行 T2；不得持 reservation 行锁回头获取 tenant/Key 锁。认领超时只允许重新处理任务，不意味着可释放资金或重发上游；金额正确性依赖行锁/唯一约束，与 Worker 是否重复运行无关。
+
+已有流产生usage：若T1.9已提交，T2失败可由持久任务继续处理；若证据尚未提交就崩溃且供应商不支持查询，精确usage仍可能丢失。有限重试并告警，保留持久预占和核对期限。结算/证据清理使用独立、最长5秒的后台context，不复用已取消的客户context；超时交给持久Worker，不能无限挂住连接或丢弃预占。正常响应最终完成标记仍受请求剩余deadline约束，超时后不再给客户伪造成功。
+
+## 7. 请求、尝试和财务状态机
+
+三个维度分开：
+
+| 维度 | 状态 |
+|---|---|
+| 请求 | accepted → dispatching → streaming（可选）→ succeeded / failed / cancelled |
+| 尝试 | prepared → sending → rejected_no_consumption / completed_known_usage / failed_known_usage / unknown |
+| 资金 | reserved → settled / released / pending_reconciliation → settled / released |
+
+```mermaid
+stateDiagram-v2
+    [*] --> reserved: 事务预占
+    reserved --> settled: 可靠 usage + 计费条件满足
+    reserved --> released: 确定未消费或平台承担
+    reserved --> pending_reconciliation: 超时 / 中断 / 崩溃且结果未知
+    pending_reconciliation --> settled: 期限内可信用量且计费条件满足
+    pending_reconciliation --> released: 无依据 / 24h 截止
+    settled --> [*]
+    released --> [*]
+```
+
+客户收费由独立的版本化政策裁决，不能由HTTP200、是否收到[DONE]或某个error字段直接决定。下表是本轮校准后的**r3 收费政策基线**，供应商成本始终独立记账。
+
+### 7.1 协议、交付与收费矩阵
+
+`protocol_outcome`、`transport_end_reason`、`usage.status`、`delivery_stage`分别保存。delivery只描述网关观察到的Write/Flush进展，不证明客户应用实际收到；write错误也不能证明对端收到0字节。“有效内容”包括文本/拒绝说明及tool call增量，不包括心跳、role-only和usage-only事件。
+
+| 情形 | 请求/协议结果 | 客户资金处理 |
+|---|---|---|
+| 正常stop、length或tool_calls终止，最终usage可信 | completed，保留finish_reason；不自动续写/执行工具 | 按固定售价结算≤R；length不是免费失败 |
+| 合法content_filter/refusal终止且最终usage可信 | 记录业务拒绝，不算渠道健康故障 | 按公布的已消耗Token收费；不得承诺回答一定有用 |
+| 上游/平台失败，计费责任点前尚未写出有效内容 | failed；只有心跳或role不算有效输出 | 客户免收并释放；供应商成本未知时仅成本侧待核对 |
+| 已写出部分有效内容，随后上游错误/平台超时，最终usage可信 | failed/partial，不能伪装完整成功 | 按可信usage结算；平台故障补偿另走可追溯退款，不静默删账 |
+| 客户取消且最终usage可信（包括尚无输出） | cancelled，已生成部分仍有成本 | 按可信usage结算；取消不证明未消费 |
+| 部分输出/客户取消/正常结束但缺少可信最终usage | partial/cancelled或协议已结束、账单待核对 | 保留冻结待证据；不按估算、临时累计量或R扣款，仍受24h截止 |
+| 非流完整有界响应已校验，T2提交后下游写失败；或流T2提交后末尾标记写失败 | delivery_failed/unknown，可与protocol completed并存 | 保留已提交收费，不自动重生成/冲正；客户争议走原消费退款流程 |
+| T1.9后、T2前平台超时/崩溃，尚无settlement且证据明确无有效输出 | 生成可能完成，但平台交付中断 | 恢复模式免收并释放，不只凭completed自动收费；部分/不明交付按前述规则处理 |
+
+非流计费责任点为完整响应已校验并完成T2；正常流为协议及最终usage已确认并完成T2。T2与网络交付不能原子提交：不能宣称“保证收到答案才扣款”，也不能因最后一次write失败自动退款。责任点前的无输出失败优先免收，不能再按“未知usage一律冻结”覆盖它；进程崩溃后无法确认本地交付事实的情况仍待核对。上述客户体验/平台风险取舍须随收费条款确认。
+
+待核对默认期限从accepted_at起24小时，不因重试Worker重置。资金截止判定时尚未结算则一律释放，即使可信usage早已保存、只是Worker延后；按原因标记 `released_unverifiable` 或 `released_deadline`。后到供应商费用仅修正平台成本，不能自动再扣客户。重复取消/未知用量滥用触发人工风控或停用Key；不能靠不透明收费防滥用。
+
+人工核对如会新增客户收费，必须申请/复核分离：保存可信usage证据和提案，由不同财务账号批准后进入T2，仍遵守截止时间和收费上界。释放未消费冻结不增加客户净入账，可由审批员带理由执行；已经结算的退款仍走T3双人审批，不能用resolve绕过退款流程。
+
+## 8. 路由、健康与重试
+
+候选过滤顺序：模型授权 → 能力/地域/usage profile 匹配 → binding/channel 启用 → 熔断/健康 → 可用并发。每次从尚未尝试的有效候选选择最高优先级池，在池内按正权重随机；主池无剩余候选才降至下一优先级。请求保存route_revision，attempt关联不可变binding的priority/weight与channel/credential版本，平台可查询实际尝试及每个已准入attempt的候选选择/排除理由。未准入attempt的完整失败池解释仍未持久化，旧attempt不补造历史理由；该解释面为部分完成。全部无可用候选快速返回503，不无限排队；不能为了满足重试次数重用已尝试channel。
+
+首版每请求最多两次尝试，第二次只能选择同逻辑模型兼容候选。以下可重试：传输能证明 HTTP 请求未写出；或渠道契约明确该错误为未处理、无消费（如已验证的限流拒绝）。普通 5xx、发送后读超时、连接重置、未知消费默认不可透明重试；“没收到首个字节”不足以证明安全。
+
+attempt预算覆盖Gateway、适配器、SDK、HTTP客户端和外层反向代理，不能每层各重试两次。首版生成POST使用无自动重放的客户端配置，禁用SDK/Transport可配置的隐式重试、重定向与代理重试；不透传客户 `Idempotency-Key` 使底层擅自将生成POST视为可重试。每次重新派发生成请求都先取得统一attempt额度并持久化；拨号失败数另计，不把一次拨号等同一次供应商消费。必须用真实HTTP Mock与失效连接池回归核实库实际行为，不能仅检查配置名。
+
+策略配置独立版本化，首版持久契约为 `route_policy={model_id, revision, bindings[]}`。运行限制固定为 `max_attempts=2,total_timeout_ms=300000,retry_after_cap_ms=2000`，尚无逐策略修改这些限制的入口；binding保存priority、weight、channel_id与并发上限。允许重试的状态码集合必须与已验证渠道profile的“无消费拒绝”集合取交集，不能让管理员任填5xx就绕过资金安全。请求保留 `attempted_channel_ids` 防止同一逻辑调用循环fallback；重试等待遵守总deadline和ctx取消。不实现递归策略DSL或任意脚本插件。
+
+配置发布遵循“完整构建→校验→持久不可变版本→CAS切换活动指针”。校验拒绝空候选、重复channel（即使upstream_model不同也不允许）、悬空引用、非正权重/并发、非法超时和能力/地域不匹配；旧 revision 并发提交返回409。停服通过显式模型/channel状态完成，不发布空池代替停服。读取者只获取一个完整 revision；该版本引用不可变channel_version，固定endpoint、provider、地域、profile及credential版本引用，不能在下次attempt临时读取新的base_url；凭据值不入快照。更新渠道需要新建版本并发布引用它的新策略，旧引用在在途请求结束前保留，但撤销凭据可立即阻止后续准入。历史配置回滚也需重新校验并发布新 revision，不能绕过当前安全限制。
+
+硬约束为平台限制∩租户限制∩成员/Key授权∩模型能力/地域，先过滤再按优先级/权重选择；性能排序是偏好，不能让不可授权的候选因更快而复活。每次 attempt 再检查紧急停用/撤销与约束收紧，不能沿用旧快照绕过安全收回；中途新增授权或新候选不扩展当前请求快照。新请求Key撤销即拒绝；已接受请求的Key撤销默认不终止已有流，但后续attempt不再派发，按既有计费规则结束。运行时健康与容量是可变准入状态，不修改已发布策略历史。
+
+地域候选取平台/模型策略、租户地域策略、Key可选收紧集合的交集，再匹配channel_version的已核实data_region；成员仅通过模型授权限制，不暗示首版已有成员地域配置。地域未核实的endpoint不得用于有地域要求的请求；无地域限定也不代表零留存或存储/处理都在该地。平台登记供应商处理地域声明、endpoint及处理/留存约定的证据来源，不能根据域名/IP推断或靠字符串标签提供合同保证。出口安全检查取快照限制与当前限制交集，配置放宽不扩大在途调用权限。
+
+有请求体写出后就保守视为可能被处理，除非渠道契约给出可信拒绝证据。已经向下游写出 SSE 绝不透明重试。安全重试的已知失败不向客户收费；供应商若另有费用仍记平台成本。
+
+基础健康采用 `closed/open/half_open/quarantined`：连续3次可归因渠道的网络/服务故障后open 30秒，半开仅授予一个受正常收费准入保护的请求；可信成功关闭，可归因渠道故障重新打开，中性结果（客户取消/慢读、本地拒绝等）仅归还半开令牌并保持half_open，不加故障数。显式probe独立低频执行并记录平台成本，不重放客户请求。401/403只有规范化原因为供应商凭据失效/权限配置错误时才隔离相关credential/channel，不能仅凭状态码禁掉整个供应商；429区分速率冷却和余额/额度耗尽。业务拒绝、上下文超限、客户取消/慢读、本地余额/并发拒绝不计为渠道故障。健康动作与是否安全重试是两套判定，熔断不授予重放权。
+
+同一channel的不同模型可分别记录能力/失败；凭据失效作用于凭据，模型不存在或上下文错误作用于binding/profile。首版以明确错误分类与作用域为准，不引入未经验证的全局成功率自适应。模型/凭据隔离在重启时不得因内存熔断窗口重置自动解除；短暂open/cooldown可重置，运营隔离状态须持久化并审计恢复。
+
+依赖失败矩阵：权限/撤销/有效配置查询、凭据解密、资金服务不可用均503且不派发；明确权限拒绝403、余额/Key预算不足402、RPM/并发超限429。RPM/并发实现自身error返回503，不能按“没有限额”放行；单实例窗口重启重置不属于依赖error。日志/指标失败仅有界丢弃并计数。必须在实际调用者验证这些分支，不能仅因某个限流函数fail-closed就认为HTTP入口也fail-closed。
+
+RPM 与并发按平台/租户/Key/渠道分层。先检查速率再取平台/租户/Key许可，满额直接429且不预占。T1提交后选中账号并取得渠道许可；若全部渠道无容量且尚未发送，走T2释放冻结并503；不能把渠道稍后满额的情况假装成没有发生过预占。安全重试更换渠道时释放原渠道许可，再获取新渠道许可。按固定顺序取许可，失败释放已取许可；请求最终结束释放一次。撤销 Key 在T1与每个attempt派发准入点查数据库，v0.1 不缓存 Key 有效性；阻断新请求和尚未获准的attempt，已有流默认继续并结算。成员停用/移除或收回模型授权同样在T1和派发准入点重新校验；既有账单保留成员快照，不因移除成员级联删除 Key/结算历史。主动中断既有流的紧急管理动作后置，不在首版暗示存在该入口。
+
+## 9. 流式协议与超时
+
+```mermaid
+sequenceDiagram
+    participant C as 客户
+    participant G as Gateway
+    participant B as PostgreSQL账本
+    participant U as 上游
+    C->>G: Chat + Key
+    G->>B: T1 记录请求并冻结 R
+    B-->>G: commit
+    G->>B: 持久化 attempt
+    G->>U: 转换请求，申请 stream usage
+    U-->>G: SSE delta
+    G-->>C: SSE delta（背压、有界缓冲）
+    U-->>G: final usage / done
+    G->>B: T1.9 持久终结证据与恢复任务
+    G->>B: T2 唯一结算 A，释放 R-A
+    B-->>G: commit
+    G-->>C: 最终 usage 与完成标记
+```
+
+适配器按SSE event增量解析，不假设TCP读取或单data行是一条JSON；支持UTF-8字符/前缀/分隔符跨读取、LF/CRLF/CR、注释、多data行与多event同读。单个完整/未完整event都≤1MiB，超限中止、标记协议异常，不能像观测framer那样丢掉超限事件后继续当完整计量。上游响应头≤32KiB，非流响应解压后≤8MiB；超限在普通JSON成功响应之前拒绝，输出缓冲有界。上游压缩也按解压后字节计限；不缓存整条流式回答。
+
+只有profile规定的终止条件成立才标记协议completed，`[DONE]`不是usage；裸EOF、尾部残缺JSON、流内error以及终止后error都不能合成正常成功。[DONE]后不再读取为新生成；若此前已有error，marker不能洗掉错误。usage-only事件 `choices=[]` 不丢弃，早到usage不代表后续不会出错。保留语义finish与传输终止两个事实，严格profile所需终止/最终usage缺失时进入对应失败/核对路径。
+
+先取得并验证可转发的上游事件再提交下游SSE；首个事件前不预发200、心跳或flush headers。`downstream_committed` 在headers实际提交或任意body写出时置位，包括role-only或心跳；它不是TTFT。提交后不透明重试、不改HTTP状态；流内只发送契约化的通用error事件后关闭且不发成功[DONE]，不追加第二段JSON。确实无法写出错误时直接关闭，用X-Request-ID/账单查询定位。usage返回偏好见§3.2。
+
+默认connect 5s、首个有效协议事件60s、上游字节idle 60s、无有效协议进展60s、总时长300s；每次下游Write/Flush限10s且不得越过总deadline。总时限从网关接收并开始处理请求起覆盖鉴权/预占、全部attempt、等待、响应读取和客户端写入；每步取剩余预算，不因换渠道重置。注释/心跳可证明连接活跃，但不延长有效进展时限或总deadline。DB短事务配置语句/锁超时并受剩余预算约束，超时只重试DB事务，不重发生成请求。HTTP server和反向代理需配合，不统一用过短WriteTimeout；清理/核对的独立5s context不是延长客户请求时限的通道。
+
+计时口径：首协议事件可为合法role/content/tool/usage/terminal/error对象，注释或空event不算；有效进展计时器仅由非空文本/拒绝说明、真实tool增量，或profile确认发生前进的累计usage重置。重复usage、role-only、空chunk、心跳均不重置；usage-only不记TTFT。terminal/error直接进入终结，不用来延长等待。持续role-only流即使连接不断有字节，也必须在无有效进展期限结束。
+
+正常完成先处理最终 usage 与结算，再发送末尾完成标记；若资金库故障，流中不能再改成普通 JSON 500，应使用支持的流式错误或结束连接，并用 request_id 标识“收费核对中”。应用不能在失败结算时凭空重发上游。
+
+客户端断开立即传播取消、关闭上游body，等待已启动的读取/写入协程退出，再释放本地许可一次；已取得的可信最终usage仍按§7结算，临时累计量/估算不当作最终量。取消不证明供应商没有消费，也不保证供应商立即停止计费。首版不为追usage在断连后继续完整生成；若供应商支持账单查询，走独立核对。异步清理不能捕获已被Gin复用的Context；Worker只接收不可变ID/值，不持请求对象。
+
+指标区分客户端首字节TTFB、首个有效文本/工具delta的TTFT和总时长；心跳、role-only事件和空chunk不能算有效内容。按请求与attempt分别记时，未来自适应调度可据此评估，不把供应商首chunk直接当首Token。
+
+性能迭代将上述客户端首有效内容事件明确命名为TTFC；它可作协议层TTFT的操作口径，但不等于模型内部tokenizer计时。本地旧容量报告只测首正文byte。v2分别识别完整有用事件，逐请求扣除mock等待后再聚合；对照版本、公式、派发前观测/优化不变量见 [性能LLD补充](../../specs/002-performance-parity/plan.md)。
+
+### 9.1 观测字段、资源上限与资金隔离
+
+日志/指标使用字段白名单：request_id、attempt_id、阶段、非秘密版本ID、状态/内部错误码、耗时和Token统计；租户/Key标识只进入授权日志查询，不作Prometheus高基数标签。禁止自动附加body、完整headers、供应商错误正文或完整URL。对需展示的endpoint只输出受控channel_id；诊断URL经过统一净化，遮盖query、fragment、userinfo和可能含秘密的路径，解析失败也不得回退输出原串。嵌套错误与大小写/重复query须使用相同策略。
+
+资金分录、结算usage证据、核款/退款及成功敏感业务变更的审计100%持久化，不受观测采样影响；管理/权限/资金变更与审计同事务，无法持久审计则不提交变更。登录失败、恶意请求拒绝等安全信号使用独立有界日志/计数，不承诺DB全故障时仍逐条永久保存；丢弃/故障计数可见，不能把这类信号与财务审计混为一谈。首版不做trace采样或外部导出；后续引入时，同request的所有attempt共享稳定采样决定与版本，采样率0也不能删财务证据。
+
+日志默认单条净化后≤16KiB、字符串字段≤2KiB；队列同时限制≤1,024条与≤8MiB，先净化再截断普通文本字段，仍超限则整条丢弃并计数，不截断/降级财务事实。单writer隔离，支持deadline的sink设100ms写超时；不支持deadline的stdout管道仍只用一个独立writer，阻塞时队列满即丢弃，不能不断创建新写协程。首版可下调限额，扩大上限需容量验证。生产者不在SSE热路径等待外部日志；审计和财务走持久事务，数据库资金故障仍按fail-closed处理。
+
+公共错误响应是第三个独立出口，不能以“关闭日志/正文trace”代替：只输出本地错误码、通用消息、受控param和request_id；不透传供应商error body、URL、stack、headers或原始exception/status描述。上游headers不批量复制，响应仅允许本地Content-Type/Cache-Control/X-Request-ID及验证过的Retry-After等契约字段；Set-Cookie/Location/认证头/任意供应商调试头均不透传。客户端headers同样按名单构造，客户Key、Cookie、tenant header与内部运营凭据不能送往供应商。
+
+### 9.2 后续路由实验门槛（不在首版）
+
+同模型自适应策略先在不影响真实选择的影子模式评估，再对照确定性基线小流量验证；注明测量点、冷启动、样本老化和探索上限。跨模型语义路由须另建显式 `auto` SKU和公布计价规则，selector只提候选，商业准入仍有最终否决权。使用经授权的数据集，按任务、多轮、工具场景分层，校准/验证样本分离；记录数据集、模型对、路由器、阈值与策略版本，并比较质量、全程延迟、客户费用及平台全部成本。
+
+会话绑定按 `(tenant_id,session_id)` 隔离；完整上下文重送、缓存损失、工具/推理状态兼容和额外路由/embedding成本纳入评估。达不到质量门槛或路由器不可用时执行事先公布的固定策略，不能默默降低客户购买的模型档位。无独立评估数据时不发布“省钱不降质”的承诺。
+
+## 10. 密钥、权限与出口安全
+
+网关 Key 采用至少 256bit 随机熵，形如 `mg_live_<id>_<secret>`；数据库存 SHA-256 摘要和非敏感 prefix，恒定时间比较。因随机秘密足够强，摘要不作为人类密码算法替代；用户密码采用 Argon2id 或合适参数的 bcrypt。Key 仅创建响应展示一次；重置即新建并撤销旧 Key。
+
+上游凭据用 AES-256-GCM 等认证加密，nonce 随机唯一，AAD 绑定 credential_id+平台域+key_version；主密钥由只读挂载文件提供，不进镜像/数据库/Git。轮换保持旧版可解密，后台重新加密后移除旧版。备份恢复必须同时拿到相应版本的密钥。
+
+两种轮换分开：更新供应商秘密创建新credential版本并发布新channel/route revision，旧请求仍引用旧版本；紧急撤销另有准入门禁。加密主密钥轮换仅重包同一credential版本的密文，保持供应商秘密语义；先部署可解旧/新的密钥集再重加密。旧主密钥的在线退役与备份所需的安全归档分开，旧备份尚依赖它时不得同时销毁归档。发布前校验引用及解密材料可用，禁止运行时拼接旧endpoint与“最新Key”。
+
+管理操作的敏感字段只记录脱敏 diff；禁止明文 Key、密码、Cookie、Prompt 进入日志。`MFA_ENFORCE_PLATFORM`缺省为false：未启用MFA的账号密码通过后可进入业务；true时未绑定的平台/财务账号只可访问me、绑定/验证MFA、密码再认证及登出，须先绑定。所有已主动启用MFA的账号，不论该配置值，都须在密码后验证动态码或一次性恢复码；切换配置不修改用户绑定、恢复码或验证状态。TOTP步骤防重放、失败限速，恢复码一次性且仅存摘要；二维码仅在浏览器本地生成，不传第三方。登录及完成MFA时轮换session，绝对有效期12小时；管理写操作仍须10分钟内近期密码再认证，已启用MFA时一并验证该因素。邀请令牌一次性、24小时有效，不含默认密码。MFA重置须独立身份核验和双人记录并撤销全部会话/恢复码，不能靠关闭强制策略绕过。2026-10-30开发者明确要求默认可选，取代先前强制基线，见[ADR-003](../decisions/ADR-003-optional-mfa.md)与[身份合同](../../specs/001-commercial-mvp/contracts/identity.md)。
+
+SSRF 防护覆盖主调用、探测、模型发现：限制 scheme/port、拒绝 userinfo，规范 IPv4/IPv6；每次建连解析并验证实际 IP，再连接到该验证地址，HTTPS 保留正确 SNI。默认禁止 redirect；永远阻断云元数据、链路本地、环回和未授权网段。私网 vLLM 须显式 network_profile/CIDR 允许列表。环境代理不隐式继承，代理出口也须满足网络策略。首版不主动下载客户媒体 URL。
+
+审计和保留期建议：运营请求元数据 30 天、聚合用量 12 个月、业务账本及入账凭证引用按适用经营要求确定并在上线前配置。不能通过删除请求日志删除资金历史；客户数据删除与法定留存冲突时采用明确流程，本稿不预设具体法律结论。
+
+## 11. 控制台信息架构与关键页面
+
+平台导航：运营概览 / 客户租户 / 模型与售价 / 渠道账号池 / 请求与路由 / 资金与核对 / 审计 / 系统。
+
+客户导航：模型目录 / API Keys / 调用记录 / 钱包流水 / 成员权限 / 接入说明。运营指标与客户指标分开，客户不接触渠道秘密。
+
+```text
+平台 / 请求详情                                       request_id: req_...
+──────────────────────────────────────────────────────────────────────
+请求：失败     收费：待核对     客户：tenant_A     模型：chat-standard
+授权版本 / 售价版本 / 能力版本 / 时间 / 已交付状态
+路由：优先级池 → 健康/并发过滤 → 账号B；原因可解释
+尝试：1 账号A（确定限流拒绝） → 2 账号B（发送后断开，消费未知）
+资金：冻结 ¥0.020000 / 已收费 — / 核对期限 2026-10-31 ...
+成本：未知（不可当作0）     [查看核对依据] [申请释放/结算]
+审计：谁操作、何时、依据；审批按钮按角色和再认证显示
+```
+
+以上为低保真信息草图，不是成品 UI。金额分列显示可用/冻结，不能只显示一个让客户误以为已消费的余额；未知显示“待核对”，不能用 0 代替。Key 创建页必须醒目提示仅显示一次。人工入账页必须显示“已核实线下收款”，不能模拟在线支付成功。
+
+可选Open WebUI接入单独标为未验证集成；它可能额外生成标题/标签等任务，每个实际推理请求单独收费。客户自有实例应配置本租户受限Key并按需关闭未支持功能；平台代管跨客户共享聊天实例需另立身份与凭据隔离规格。
+
+## 12. 设计限制与实施前补全项
+
+- 当前单实例限流重启会重置；单实例本身不满足高可用要求。
+- 持久预占可保住资金边界，不能恢复没有任何外部证据的精确 usage；到期释放策略让平台承担不确定性。
+- 独立实现方向已确认，具体发布许可证未定；不混入上游实现后再宣称独立闭源。
+- 编码切片需要生成并审阅管理 OpenAPI、精确 SQL migrations、Provider fixture、MFA/邀请/会话恢复契约；它们是本 LLD 的后续细化产物，不是假定已经存在。
+- 验收点见 [acceptance](../../specs/001-commercial-mvp/acceptance.md)。
+
+## 13. 003 原生协议与联调实现
+
+`Profile.protocol` 空值兼容 `openai_chat`；新增 `openai_responses` / `anthropic_messages`。`provider.Parse(protocol, raw, profile)` 在任何资金预占前验证端点与能力匹配。渠道 base URL 包含供应商的 `/v1` 等版本前缀，`Request.EndpointSuffix()` 只追加 `/chat/completions`、`/responses` 或 `/messages`。供应商凭据由不可变绑定读取，不转发客户 Authorization、beta header 或任意header。
+
+三种协议共用 Reserve → RecordAttempt → PrepareDispatch → Provider → Finalization → Settle。原生非流响应先验证/净化，再完成证据与结算后输出；SSE文本/工具增量可先输出，`response.completed` / 可计量 `response.incomplete` / `message_stop` 保留到结算成功后。原生失败输出 `event: error`，不发送Chat DONE。Flush穿过Gin的void包装层读取底层FlushError，本地写入失败只补交付观察，不回滚已结算收费。
+
+Responses input/output/total需自洽，cached/reasoning是子集；Messages输入计费量包括base+cache_read+cache_creation，保持原生usage字段含义并按统一输入单价收费。临时累计量单调合并，不相加累计值；缺失/null、矛盾或未知非零收费维度不能确认最终量。完整请求/响应范围见[003](../../specs/003-native-protocols/spec.md)及provider fixture。
+
+每次成功准入的选路在Engine同一把锁内生成候选解释，作为 `upstream_attempts.route_decisions` 与attempt同一INSERT持久化：只含channel/version/priority/weight和受控reason，不存URL/秘密/正文。静态停用、隔离、撤凭据、地域，以及动态容量、熔断、已尝试、低优先级和权重未选均可区分。历史字段不可修改；仅平台attempt接口返回。无可用候选而未准入attempt的请求，仍返回明确不可用错误并按001释放，暂不持久完整失败池解释；旧attempt为空数组。
+
+Playground按获授权模型协议生成同源请求，Key只在组件内存，`credentials:omit`，不自动重试。取消通过AbortController关闭真实reader，请求ID可转调用明细；平台角色可查“路由与尝试”，普通客户不请求平台接口。无租户账号显示接入步骤，不伪造模型授权或账单。
+
+## 14. 005/006 按Key调度短数据库阶段
+
+请求持有原global100/tenant32/key16运行许可后，按已认证Key ID加入进程内有界FIFO，每Key至多16票、空lane回收。首次票据覆盖Reserve→RecordAttempt→PrepareDispatch→fresh Guard，Plan.Start返回即放票，再进行上游I/O；安全重试重新到队尾。等票时不借数据库连接或占新渠道，遇无渠道仍快速失败。Reserve错误也先放票，再写客户端响应。
+
+完成阶段在原独立5s业务cleanup上下文内取同一Key票据，先RecordFinalization事务提交，再Settle独立事务，返回时放票，之后才写成功JSON/流终态。此处仍保留原执行渠道许可到真实收尾，不声称等完成票时没有渠道占用。交付观察不改变收费，不持票等待客户端写入。所有原数据库锁、获锁后的权限复核、资金/证据/审计/outbox和恢复规则继续生效；本地票据只调度，不是授权或消费证据。
+
+取消与票据交接由同一mutex处理，已授予但取消的票据交还，重复release安全且不能影响同Key新lane。函数退出用defer归还当前票据；Plan.Start在未转交执行lease前发生panic也中性归还channel/half-open，不增加attempt。若清理等待耗尽5s且最终量未持久，仍为原未知消费恢复/核对政策，不凭RAM或队列造量收费。运行中的上游与客户端I/O均不持调度票据，人工财务/probe/worker继续由数据库保护。
+
+排队包含在TTFB/TTFC和cleanup预算中，不能从测量减掉。规格见[005](../../specs/005-key-admission/spec.md)/[006](../../specs/006-completion-scheduling/spec.md)，控制与代价见[实际记录](../verification/key-scheduling.md)。
+
+## 15. 007 派发读取与账户锁批次
+
+RecordAttempt取得原request父锁、渠道及reservation锁并独立刷新request/finalization后，按isolation→published binding（revision>0）→冻结版本成员身份（012新增）→数据库deadline→安全重试证据（sequence=2）→可选cost的顺序批量读取。按同一顺序裁决错误；缺少成本行保留NULL/unknown，成功后才单独执行原INSERT RETURNING。唯一冲突后仍另发新语句读取已存在attempt，不能用同语句CTE fallback。
+
+PrepareDispatch完整保留lockPrincipal的父锁批次与随后独立grants/profile block查询。其后第一batch依次为channel SHARE→新语句isolation→credential SHARE→不可变version地区；验证通过后，第二batch为reservation UPDATE→新语句clock_timestamp→attempt UPDATE。数据库时钟在reservation等锁结束后执行，deadline错误优先于attempt状态；全部batch排空、校验通过后才执行原sending/dispatching写批次。
+
+lockAccounts的初始化INSERT ON CONFLICT与ORDER BY id FOR UPDATE为同batch中的两条独立语句，初始化冲突结束后锁查询取新快照。Rows消费/关闭后再关闭BatchResults，完整性、余额、溢出与记账检查保持不变。所有早期领域错误、缺行、取消与晚到数据库错误用closeBatch合并并回滚，不因优化提交部分状态。拒绝路径排空可能取得后续只读锁，仍受原超时约束。
+
+本切片无schema/API变更、不修改三个准入COMMIT、fresh Guard或005/006票据生命周期。规格见[007](../../specs/007-dispatch-read-batches/spec.md)，真实PG屏障与固定binary前后实验见[验证记录](../verification/dispatch-read-batches.md)。
+
+## 16. 009 输入计费协议
+
+`openai_embeddings`使用`/v1/embeddings`与上游`/embeddings`，`jina_rerank`使用`/v1/rerank`与上游`/rerank`。Bearer鉴权及原inference编排共用，不创建另一套资金服务。`Profile.InputOnly()`仅识别这两个协议；output/default均0、输出字段为空、工具关闭，售价output_rate必须0。Catalog在发布时校验，Reserve在原锁内重读profile与价格后再次校验；生成协议仍拒绝请求零输出。无迁移，历史版本不可变。
+
+R=`ceil(input_token_upper_bound × input_rate / 10^6)`；该input硬界覆盖整个请求聚合计费量，≤context_limit。token数组可直接知道总长度时，Parse额外拒绝超界；文本/文档的供应商聚合计费上界须正式认证，不以本地token估算替代。可信usage统一input=T/output=0/total=T，沿原Finalization/Settle结算；超界封顶R、豁免差额并隔离profile。
+
+请求与结果合同见[009](../../specs/009-retrieval-protocols/spec.md)。Embeddings最多128项、8192维，float或base64 little-endian float32，索引完整唯一且维度一致。Rerank只支持Jina token用量与字符串文档，最多128项，索引合法唯一、分数0..1非升序且数量符合top_n；返回文档从原请求按index重建。响应≤8MiB，使用白名单输出与公开model，不透传供应商调试字段。所有stream字段（含false）、工具、生成上限及未知字段先拒绝。
+
+结果结构与用量证据分开判断。结构有效但usage缺失/冲突时，Provider仍记录protocol=completed、DecodeJSON不返回结构错误；UsageMissing/Conflicting让非流编排留置预占并返回503 billing_pending，不交付向量或排名。不得将其降级为failed/no-output再释放。真正结构错误沿原无交付失败政策释放，且不重发上游。平台probe仅在协议与可信usage都通过时ok=true，独立审计/成本，不动客户钱包。
+
+Playground按协议构造文本/批次或query/documents请求，隐藏生成输出与SSE选项，curl使用同一请求构造；只预览有限向量/排名与可信usage。平台创建模型及发布价格自动使用零输出约束。验收见[009记录](../verification/retrieval-protocols.md)。008性能方案后移，009不沿用007性能数字声称新协议达标。
+
+## 17. 010 Gemini 原生文本
+
+`gemini_generate_content`公开`/v1beta/models/<public>:generateContent`与`:streamGenerateContent?alt=sse`。URL中的model/action由server先校验，再调用`ParseGemini(raw, profile, stream)`；不往原生body注入model/stream。`inferenceNamed`复用原Reserve→RecordAttempt→PrepareDispatch→Provider→Finalization→Settle。幂等HMAC将protocol/public model/action与raw body一起绑定；相同body跨模型/动作是冲突，不冒充原请求。
+
+`ValidGeminiModel`只允许1..100 ASCII单段名且禁止`..`；Catalog创建/发布时检查公开名与映射。`EndpointSuffixForModel`使用不可变上游映射构造`/models/<upstream>:<action>`，渠道base含`/v1beta`。原网络校验继续禁止任意query；Client通过校验后为流固定添加alt=sse、只发x-goog-api-key，不转发客户header或URL凭据。`/v1beta/`与`/v1/`共用300s、ready/Guard/恢复门禁与受控错误；客户只接受唯一Bearer。
+
+profile默认字段maxOutputTokens、usage cumulative、tools/parallel=false，生成输出始终为正；上游generationConfig强制实际maxOutputTokens与candidateCount1。输入涵盖contents/systemInstruction与协议开销，输出要求覆盖可见与thinking的聚合计费量；这些供应商保证独立认证，不由API字段名推断。规范usage I=P、O=C+H、T=I+O、reasoning=H、cached=K≤I，cache不再加量，thinking按输出价收费。实际金额超过R沿原封顶/豁免/profileblock合同；本切片不改Settle或schema。
+
+Provider使用独立Gemini状态机。正文只转发单candidate的可见text，清除thought/签名/调试字段，modelVersion重写公开名。JSON/SSE的根usage重复、内部重复、未知收费维度、非TEXT明细或托管工具证据都保持completed并将用量标为不确定，走原pending路径，不能误走failed/no-output释放。累计各原始计数均不能回退（包括C单独回退而H增长的情形）。
+
+SSE无DONE；finish与text同帧时先发送去掉finish/usage的文本，保留无正文终帧，继续读尾量。仅有合法finish、finish帧或之后的完整最终usage与完整帧边界EOF才可确认收费；早到量不替代final。缺量仍completed/pending；裸EOF、残帧、error、冲突finish和finish后内容不伪成功。原framer、事件/响应上限、超时/进展/取消约束不放宽。最终终态仍由server在资金提交后发送，最后文本不重复。
+
+平台probe发原生ping且独立审计/供应商成本、不扣客户钱包。Playground六协议共用请求编排；`inferenceHTTP`让curl与真实fetch使用相同动态URL/native body，Gemini仅文本及可选systemInstruction。模型切换清旧结果，密钥留当前页面。规格见[010](../../specs/010-gemini-native/spec.md)，直接验收见[记录](../verification/gemini-native.md)。
+
+## 18. 011 模型发现与差异预览
+
+渠道管理面使用`POST /api/platform/channels/:id/discover-models`，仅接收`format`与`expected_version`；历史列表/详情均为同渠道下的GET且显式要求admin。原session/CSRF、MFA策略、近期再认证、恢复/实例门禁继续生效。每渠道分钟一次，发现与probe共享4许可并占一个global100许可，不进入客户准入/资金/推理健康状态机。
+
+`Catalog.BeginModelDiscovery`按渠道SHARE→实际credential SHARE固定身份和状态，012起按当前池position选择首个未撤销成员；使用单SQL稳定排序快照已发布绑定（含暂停模型及enabled/revision）。开始事实与审计同事务提交；再次Guard/Recheck后才进行目录GET，HTTP不占事务。007迁移新增不可变`channel_model_discoveries`及唯一终态`channel_model_discovery_results`，复合外键约束channel/version/credential完整身份，012改为指向版本成员关系。两表应用角色仅SELECT/INSERT，projection角色无权限；owner同样不能绕过不可变触发器改历史。
+
+`Provider.DiscoverModels`复用原实际dial出口校验，仅请求base下`/models`。OpenAI/Anthropic/Gemini使用各自唯一供应商认证，分页只编码为内部固定参数且始终同源。全部10s、每页1MiB/全部4MiB（读取至边界外一个字节即可拒绝）、10页/1000原始条目；失败清空部分目录。仅返回排序去重安全ID，不保存描述、游标、原始错误或URL。不调用生成、重试、健康更新、凭据自动撤销或模型隔离。
+
+收尾用独立5s上下文追加result+审计，完全相同终态重放幂等、冲突拒绝；写入失败返回`discovery_pending`及`discovery_id`。无result的开始事实30s后在读取时显示interrupted，不自动恢复GET。completed才计算unbound/present/missing，失败/中断保持空差异；空目录只表示此次读取无条目。已有绑定的上游名称保留旧合同纯文本，不强套发现ID规则。stale在同一读取语句中比较当前渠道/凭据可用性及同shape的已发布绑定快照，不回写事实。
+
+```mermaid
+sequenceDiagram
+  participant UI as 管理员控制台
+  participant App as 管理接口
+  participant DB as PostgreSQL
+  participant Up as 供应商目录
+  UI->>App: 格式 + expected_version
+  App->>DB: 固定渠道/凭据/绑定快照 + 开始审计
+  DB-->>App: COMMIT
+  App->>Up: 受控 GET /models + 有界分页
+  Up-->>App: 模型ID列表或失败
+  App->>DB: 唯一净化结果 + 终态审计
+  DB-->>App: COMMIT
+  App-->>UI: 差异、历史ID、动态stale
+```
+
+控制台不直连供应商、不保存秘密、不轮询；异步epoch/lane与选择世代防止渠道切换/关闭/刷新晚回覆盖新选择。目录只作人工候选，随后仍需核实profile/硬界、创建售价/授权并按原完整bindings+expected_revision发布。自动同步和供应商余额查询仍未提供；凭据池由下节012扩展，目录合同与直接证据见[011](../../specs/011-model-discovery/spec.md)和[验收](../verification/model-discovery.md)。
+
+## 19. 012 不可变渠道凭据池
+
+### 19.1 数据身份与封口
+
+008迁移新增`channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight)`。版本内成员和position分别唯一；position为1..32，名称1..64字节有界纯文本，成员weight为1..1000000，并发1..1000。版本/channel与credential/channel分别用复合外键约束。`channel_versions.credential_id`继续作为primary兼容字段，以延迟到提交检查的复合外键保证primary确实属于该版本。历史单成员回填position=1、label=primary、weight=1、并发1000。
+
+`channel_versions.credential_pool_creation_xid`为数据库事务stamp。BEFORE INSERT触发器无条件写`pg_current_xact_id()`，调用方不能提交其他stamp。成员INSERT先要求版本stamp等于当前顶层事务，再证明版本tuple创建于该事务：普通事务/active子事务以当前backend对xmin事务的`pg_locks ExclusiveLock`确认；`RELEASE SAVEPOINT`已释放子事务锁时，以匹配的顶层stamp、当前MVCC可见tuple及其完整子xid仍为`in progress`确认。完整子xid按顶层epoch重建并处理32位wrap，必须晚于顶层xid；committed、未来或无效xid均拒绝。这样兼容savepoint，又不因跨库恢复后的历史stamp偶合授予追加权。版本和全部成员必须在同事务内创建，提交后不能晚追加，UPDATE/DELETE继续由不可变触发器拒绝。应用角色对成员表仅SELECT/INSERT，projection无权操作；owner正常SQL同样受触发器约束。该stamp用于创建封口，不是API版本、路由revision或可跨数据库比较的业务标识。
+
+`upstream_attempts`、`platform_probe_attempts`与`channel_model_discoveries`均以`(channel_version_id,channel_id,credential_id)`复合外键指向成员表。秘密仍只保存在`channel_credentials`的原AAD密文中，池表及审计不存秘密、密文或秘密前缀。主密钥重包原ID/AAD不变。完整dump恢复先装载数据再建立post-data触发器；已建schema的data-only导入须用同一事务，并先插入版本再插入成员，见[恢复手册](../runbooks/backup-restore.md)。
+
+### 19.2 完整池管理与撤销
+
+`GET /api/platform/channels/:id/credential-pool[?version_id=...]`返回安全当前/历史池，history version必须属于channel。`PUT`仅接受`expected_version`与完整`members`，每项`credential_id`或新`secret`二选一，并带label/weight/max_inflight；第一项为primary。未知/重复JSON字段、空池、超32成员、重复身份/秘密、同秘密另起身份及已撤销秘密重新录入均拒绝；秘密1..4096字节且禁止空白/控制字符。
+
+更新按channel UPDATE→credential ID稳定顺序SHARE锁，比较CAS，再校验同channel及未撤销。新密文、channel_version、完整members、current_version切换及审计同事务，失败整体回滚。旧expected_version重放409；成功只更新渠道配置，须通过原完整bindings+expected_revision发布路由才用于新准入。普通元数据/状态更新复制全部成员及ID；旧单secret更新仅允许单成员池，多成员走完整池接口。
+
+`DELETE /api/platform/channels/:id/credentials/:credentialID`按channel UPDATE→实际credential UPDATE永久撤销同channel身份；重复删除幂等且不重复成功审计。它不移除历史成员、不恢复秘密；移出新池也不替代撤销旧版本中的身份。会话、CSRF、admin、近期再认证、可选MFA、Guard及恢复门禁沿用原控制面合同。
+
+### 19.3 两阶段调度、容量与派发
+
+Catalog按固定route/version与成员position展开候选，停用、撤销及隔离成员不解密；地域约束在选路前硬过滤，不授予派发权限。Routing同channel候选必须有不同非空credential ID，version/model/region/priority/渠道weight/渠道MaxInflight一致；最多1000渠道，每池最多32成员，渠道与成员权重分别检查溢出。旧fixture的CredentialWeight=0按1、CredentialMaxInflight=0按渠道MaxInflight冻结，负并发拒绝。
+
+Engine先过滤成员，再以每渠道一个权重票选最高优先级渠道，最后按该渠道可用成员的CredentialWeight选择实际凭据。渠道总并发和credential ID跨模型/版本共享并发在同mutex取得与归还；legacy空凭据使用独立渠道fallback命名空间，避免碰撞真实ID。健康仍按credential+model，选中成员才占半开probe；取消、admission失败/panic、重复Finish和旧generation完成均保持原清理保护。`route_decisions`仍每渠道一条、最多1000条/256KiB及原5个安全字段；无可用成员时按冻结顺序首个排除理由汇总，不增加逐成员诊断数组。
+
+Plan.tried仍按channel，最多两次生成尝试，不在同channel换Key重试。RecordAttempt在原有批次内验证冻结成员；PrepareDispatch按原锁序锁channel和实际credential，读取当前撤销状态并验证该version成员/地区后，才把attempt改为sending。所有早退照常排空批次并回滚，不能用当前池替换旧attempt。客户授权、售价、独立硬预占、最终证据、唯一收费及pending/到期释放均沿用原合同。
+
+### 19.4 探测、发现与控制台
+
+Probe在已有事务连接读取一个完整已发布绑定及其冻结池，通过同Routing.Plan单次选成员，持有同渠道/成员容量及原probes4/global100许可；admit对实际credential SHARE锁后，用独立语句复查成员/撤销，保存实际ID和审计并commit，再发HTTP。供应商退出后释放两层容量，结果带实际credential_id；成功仅代表该成员本次协议和可信usage，不替全池认证，不动客户钱包。
+
+发现继续固定当前渠道版本，按position取首个未撤销成员，锁实际身份后复查再提交开始事实；只发目录GET，不参与成员加权调度或生成重试。stale比较原版本、实际credential和绑定快照，primary撤销而实际secondary仍有效不会凭primary身份伪判结果。控制台历史池只读，当前池完整CAS提交，可调顺序/primary及一次添加移除多个成员；新secret仅当前组件内存，提交成功、关闭或切渠道即清除。平台attempt/probe/发现展示实际ID，客户无池信息权限。本轮不实现后台自动轮换、定时探测、供应商全局额度/余额或跨渠道批量运营，规格见[012](../../specs/012-credential-pools/spec.md)。
+
+## 20. 013 跨渠道批量启停与回执
+
+### 20.1 数据与接口
+
+009新增`channels.management_revision BIGINT NOT NULL DEFAULT 1 CHECK(>0)`。BEFORE INSERT强制1，每次UPDATE无条件写OLD+1，调用者不能伪造；包括原SaveChannel入口及恢复原状态的UPDATE。API始终以规范十进制字符串传输正int64，不用JS Number转换。渠道current_version与模型active_revision各有原含义，不混用管理revision。
+
+`channel_batch_operations`以operation_id为主键，保存actor外键、action、SHA256规范输入摘要、applied/rejected、target_count/changed_count、items JSONB和数据库时间。items整行封口、最多100项/256KiB；数据库白名单验证ID/字段、状态与原因、before/after、revision递增、计数和排序唯一性。owner普通SQL也受不可变触发器约束；app仅SELECT/INSERT、projection无访问权。`channel.batch.apply/reject`审计target有部分唯一索引。事实不存URL、供应商秘密、请求正文或原始错误。
+
+| 接口 | 合同 |
+|---|---|
+| `POST /api/platform/channel-operations/preflight` | `{action,targets}`；单SQL快照返回can_apply、changed_count及逐项ready/unchanged/blocked；无锁、审计、回执、网络或资金写入 |
+| `POST /api/platform/channel-operations` | 额外operation_id；整批applied或rejected持久回执；同ID同actor+规范摘要返回原决定，异内容/actor为409 |
+| `GET /api/platform/channel-operations` | 原50条安全游标分页，只返回摘要，不含items/digest |
+| `GET /api/platform/channel-operations/:operationID` | 原完整历史回执，后来状态不覆盖before/after；无记录404不能证明没有并发未提交事务 |
+
+targets为`{channel_id,expected_version,expected_revision}`，1..100项，规范小写UUID、唯一channel ID、正int64字符串，按ID排序后摘要。请求≤64KiB，严格精确字段及递归重复检查，拒大小写/Unicode别名、未知字段或尾JSON。四个接口均admin；原session/可选MFA、实例Guard/ready保持，POST额外CSRF、近期再认证及恢复门禁，重放也不例外。GET历史无需近期再认证。
+
+### 20.2 原子决定与锁顺序
+
+专用READ COMMITTED事务：operation advisory xact锁→新语句查历史→存在的channel按全局ID顺序FOR UPDATE→这些channel当前池全部credential按全局ID顺序FOR SHARE→新语句重读状态/撤销/CAS。后续读取只认实际锁住的channel集合，缺失ID即使并发插入也不会变成无锁更新。不再锁model，避免与原发布model→channel顺序反转。自动隔离可能只锁credential，因此不能只依赖channel锁；等锁之后的新语句才能看到已提交撤销。
+
+expected_version或expected_revision失配均阻断；enable还要求非quarantined、当前池至少一个未撤销成员，已有enabled也须验证这些条件。disable允许零可用凭据且保持隔离。全部当前已发布绑定及其中旧版本绑定数包含暂停模型，仅为影响提示，不是模型/供应商可调用证明。
+
+任一blocked则零渠道更新，ready项变not_applied、unchanged保留，写rejected回执和唯一reject审计。全部通过只UPDATE确有enabled变化的行，RETURNING保存after及实际revision；no-op不UPDATE、不增加revision，写applied回执和唯一apply审计。渠道变更/完整回执/审计一次COMMIT；SQL或审计失败全回滚。未知提交结果不自动重试事务或生成新ID。重放在读取原回执后返回，不重校验旧CAS、不触碰当前渠道。
+
+### 20.3 控制台与恢复
+
+管理员渠道页仅选当前页最多50项；刷新/分页/筛选/resource变化清selection并失效预检。列表epoch防止晚回覆盖新页。预检冻结目标和action；已提交命令与预检分开管理，按actor在模块内保留安全ID，无秘密及浏览器持久存储。关闭/切页仍可查原ID，历史入口可输入ID；结果未确认只GET，不自动重复POST。界面区分applied、rejected及待确认，绑定旧路由的恢复影响先展示。
+
+停用在资金准入前阻断新调用，已RecordAttempt但未PrepareDispatch的尝试保留实际锁屏障；停用不逆转已发上游的消费或结算。enable不清除quarantine、credential撤销或binding隔离。恢复到旧备份时revision可能回退且备份点后回执可能缺失，旧预检和未知ID不能自动重播；本版不提供跨恢复epoch的命令重放服务。生产恢复仍用原锁存/双人核对，详见[恢复手册](../runbooks/backup-restore.md)、[013规格](../../specs/013-channel-batch-operations/spec.md)与[验证](../verification/channel-operations.md)。
+
+## 21. 014 首次接入与验证运行器
+
+### 21.1 地域默认值
+
+`web/src/channel-defaults.json`供真实渠道表单读取默认region=global。新租户与Key原本只授权global，三处保持精确标签语义，gateway/Billing地域硬筛选不改。跨层PG/HTTP测试直接读取该表单数据建立渠道，验证默认客户/Key成功且零残留冻结；另发布cn版本后拒绝且无网络/新增资金事实。需要cn等地域的经营者仍须配置对应客户与Key授权，不以通配规避。
+
+### 21.2 反代身份
+
+Config.Load解析`TRUSTED_PROXY_CIDRS`：缺省空、最多32个逗号分隔CIDR/4096字节，去重规范化，拒地址/主机名/空项、全网和IPv4-mapped前缀；错误信息不反射原值。Engine设置TrustedProxies名单且RemoteIPHeaders仅X-Real-IP。loginClientIP对重复X-Real-IP或逗号链直接回退RemoteIP，单一头仍须Gin校验peer在受信名单且IP合法；XFF不参与登录身份。原每客户端burst5/每12秒补1和4096有界bucket保持。
+
+nginx在可信边缘覆盖`X-Real-IP $remote_addr`并清XFF，配置应用实际看到的代理CIDR；不默认信任环回/容器网段。metrics使用`RemoteIP`，不允许来自外部peer的伪造环回头；若代理peer本身环回，必须保持nginx的metrics403规则。该配置不改变Origin、CSRF、会话/MFA、再认证和客户权限。多个代理/CDN的可信真实IP还原属于目标环境部署配置，不能直接使用客户提交的头。
+
+### 21.3 QA与真实进程排空
+
+`scripts/browser-qa`仅显式本机moni_test，随机schema/最小LOGIN app与projector及合成账号，正式迁移/Verify和实际bin serve；私有manifest与日志留`.local`，无生产调试API。浏览器操作与API准备、数据库只读核查分别记录。信号或错误路径必须先等待本次应用退出再删除schema/角色，不能触及评审数据库或其它进程；正常结束清理私有凭据。
+
+`TestMVPPostgresActualMainSIGTERM`另外使用同一专用PG实例内独立临时数据库，避免数据库级实例锁与其他测试相撞。真实main接入本机可控SSE，首内容后SIGTERM验证listener关闭、在途继续、唯一最终证据/结算与held归零；重启用原幂等键不得新增POST/收费，实际投影worker恢复统计。精确范围与发布缺口见[014规格](../../specs/014-mvp-release-qualification/spec.md)。
+
+## 22. 015 Key 来源访问策略
+
+`security.NormalizeClientCIDRs`限制32个原始项/4096字节，支持纯IP和CIDR，trim、mask、排序去重；拒全网/0、空项、主机名/端口/zone、IPv4-mapped配置。`NormalizeClientIP`规范实际来源并unmap，未知返回空。`ClientIPAllowed`空策略兼容旧行为，非空必须有合法来源且全部持久前缀合法canonical，任何畸形fail closed。来源初筛复用014的单X-Real-IP/受信peer规则，metrics仍使用实际传输peer。
+
+010增加`api_keys.allowed_client_cidrs TEXT[]`、`access_policy_revision BIGINT`以及`request_records.client_ip INET`。数据库验证数组canonical/合法/无NULL/大小，触发器只在CIDR实际变化时递增revision；直接写revision不能跳过计数。请求来源列创建后不可变。旧Key缺省空、旧请求来源NULL；公共请求与资金投影不增加client_ip。
+
+| 接口 | 合同 |
+|---|---|
+| POST /api/keys | 原有创建字段加allowed_client_cidrs；遗漏/null为空，严格JSON，响应额外安全策略与字符串版本，原一次性秘密语义保持 |
+| GET /api/keys | 当前安全列表加策略/字符串版本，不含digest或请求来源 |
+| GET /api/keys/:id/access-policy | 当前安全三字段：id/allowed_client_cidrs/access_policy_revision；当前active身份检查、列表visibility，允许读撤销/过期Key |
+| PUT /api/keys/:id/access-policy | expected_revision为正int64十进制字符串，allowed_client_cidrs必须数组；完整替换，仅owner/member且不允许编辑撤销Key，敏感再认证/CSRF/MFA/Guard/恢复门禁保持 |
+
+PUT锁序tenant SHARE→actor membership SHARE→actor user SHARE→Key UPDATE。锁后角色/Key身份/CAS重查；成功变更与key.access_policy.update审计同事务，审计仅before/after及revision。同内容/当前rev是no-op，不写审计；旧rev仍冲突。无持久命令回执，未知提交不能自动重放或靠GET证明actor归因。控制台固定目标Key/rev，按账号/租户/角色和对话epoch屏蔽晚回，关闭/卸载清除明文及输入。
+
+HTTP初筛捕获`identity.Principal.ClientIP`，gateway只把该值传给billing.Principal，Reserve校验并持久化。`lockPrincipal`在Key锁SELECT后检查当前CIDR，覆盖Reserve和PrepareDispatch。`lockRequest`只读取来源，不应用新策略，以保持完成路径；RecordAttempt在Key锁后新语句读取策略单独检查。PrepareDispatch从请求保存的来源构造principal，不能由调用者重新传入来源绕过。已提交sending后的网络行为沿原语义，来源收紧不阻断后续财务收尾。具体故障和并发判据见[015规格](../../specs/015-key-access-policy/spec.md)。
+
+
+## 23. 016 Key 动态运行限额
+
+011为api_keys增加rpm_limit INTEGER 1..6000 default60、burst_limit INTEGER 1..200 default20、concurrency_limit INTEGER 1..16 default16、limit_revision BIGINT正值default1；触发器仅三元组实际变化递增，不能伪造，来源及资金计数与此版本互不干扰。创建遗漏默认、null非法，GET/PUT /api/keys/:id/runtime-limits供独立五字段安全投影与完整CAS替换，PUT审计key.runtime_limits.update同事务。
+
+管理锁序沿015：tenant→actor membership→actor user→Key UPDATE；WithKeyRuntimeLimits按tenant→owner membership→owner user→Key SHARE读取最新当前身份及配置，并在持锁事务内调用纯内存准入。不得在持Server.mu时访问数据库。commit失败归还已授并发，已扣速率令牌不回滚，不进入Reserve。
+
+Server.keyRuntime独立有界4096 Key状态，保存最新版本、单调lastObserved与同一rate.Limiter；同一mu内将反序采样钳制到lastObserved，防止桶时钟回退重复累计，再保护限额观察/令牌+Key租户全局许可，旧revision或同版本不同三元组fail closed。重配在同一now先SetLimitAt推进旧速率，再SetBurstAt和AllowN；桶余额不因加大容量补满。并发降低保留当前值，低于新上限才新增；permit release用once且沿真实生命周期结束，safe retry不再扣Key令牌。通用登录/平台/租户桶原行为不改。
+
+Key桶不TTL驱逐；新Key超状态容量503，已记录Key继续。重启满桶的非持久速率边界明确展示，原单实例与财务恢复门禁保持。来源与限额编辑器分别保存CAS/unknown及epoch，旧GET/list分别合并较新revision，不互相覆盖。详见[016规格](../../specs/016-key-runtime-limits/spec.md)和[验收记录](../verification/key-runtime-limits.md)。
+
+
+## 24. 017 Key 基本配置编辑
+
+名称、模型范围、地域、累计上限和有效期共享独立configuration_revision，来源与运行限额各自版本保持。GET仅安全九字段，完整PUT在tenant→actor membership→actor user→Key UPDATE锁下校验当前权限、CAS和最新spent+held下限；变更和before/after审计同事务。过期可明确续期/移除期限，撤销不可恢复，历史未改字段保留。012仅添加版本触发器，不以新CHECK阻断旧行财务收尾。
+
+运行侧保留原锁序，Reserve读取当前预算/范围；RecordAttempt在已有锁之后单独复查Key范围/地域/到期，不能在共用收尾锁helper拒绝新策略。PrepareDispatch取得最后锁后使用新数据库时钟校验到期与deadline，sending提交后在途和资金收尾继续。三种编辑器独立CAS/unknown与版本合并，金额用精确字符串、日期保留原微秒，禁止自动重放未知写。完整合同见[017规格](../../specs/017-key-configuration/spec.md)。
+
+## 25. 018 采购单价门禁、精确比价与报价同步
+
+2026-11-01实施合同，018实现完成并通过限定本地验收，状态及证据见[018清单](../../specs/018-cost-aware-routing/acceptance.md)与[执行记录](../verification/cost-aware-routing.md)。013迁移追加`route_policy_versions.cost_mode/unknown_cost_policy`和binding两维nullable BIGINT上限；旧版本默认manual/allow。完整路由版本CAS发布，策略和binding上限共同不可变，不新增可漂移的mutable策略。HTTP输入/输出单价上限与成本费率均为规范int64字符串或null，前端CNY转换使用字符串/BigInt。
+
+成本管控条件为cost_first、unknown=deny或任一cap非null。管控候选须有contract/invoice且两维完整的非负报价；已知0合法。两维分别比较cap，0上限与无上限不同。最高priority池内按`S=boundIn*rateIn+boundOut*rateOut`无损大整数比较，先不除百万、不舍入；仅最小S参与原渠道权重，再选成员。manual排序保持。健康/容量失败可使更低priority或更高成本候选成为新的可选池，不跳过硬限制，不因池大小提高渠道概率。
+
+CandidateSnapshot固定当前quote。报价查询使用同一数据库时刻，`ORDER BY effective_at DESC,created_at DESC,id DESC`；历史同刻多版本按确定序读，不改写旧事实，新同刻发布拒绝。成本INSERT触发器先UPDATE锁channel，与派发SHARE串行，并递增management_revision；管理员POST还比较expected_channel_revision。计划生效不会产生UPDATE，故revision不能代替运行时重新查询。
+
+RecordAttempt持原父行/Key/model/channel/reservation锁后，读取request.route_revision对应策略与binding上限；成本管控要求调用者传入的完整CostQuote与锁后当前报价一致，再复核门禁，attempt冻结同一version/rates/basis。manual/allow无cap兼容旧内部调用，在attempt创建时冻结当时成本。PrepareDispatch按原锁序取得credential、reservation、attempt等最后锁后，以新语句新时钟读取当前quote，与attempt快照比较并复核策略，再更新sending。匹配失败503 cost_quote_stale，禁止Provider.Do与自动重新报价；准入已创建attempt但未调用Provider.Do时保存not_sent证据，成本可信0，再走原Release。不存在新attempt时不能给上一轮attempt伪造未发送事实。
+
+报价检查的锁内时刻是018同步点；已配置未来版本若在此时尚未生效，该次仍按旧quote获准，之后的供应商/网络时间不作实时改价。sending之后不撤回、不重算原attempt单价。finalization、Settle、Release、Refund和Recover不调用新成本门禁，避免运营调价锁住客户资金。平台probe/目录发现保持各自合同，客户不见采购报价。
+
+019另设计采购账户及共享预占，见[详细设计](procurement-accounts.md)。统一架构文档与内容清单覆盖模块和规格变化；刷新必须有reviewed声明和具体reason，CI只检查，不自动刷新，详见[架构入口](../architecture/README.md)。
+
+## 26. 采购资金事务（019已实现，限定本地验收）
+
+以[冻结合同](../../specs/019-procurement-accounts/contract.md)取代讨论稿锁序。客户reservation→attempt→account统一排序；account仅更新非键字段，使用FOR NO KEY UPDATE，采购reservation在account锁后建立外键引用。管理账户不返回前层，绑定从channel UPDATE开始。报价和全部时限在采购account等待结束后用新语句重新检查。证据保留spent并在冲突时恢复保守held、暂停账户；超采购硬界只暂停账户，不在持account时升级model锁。采购事务提交后才允许客户独立结算。客户共用Settle/Release/Refund不访问采购账户；独立恢复对未许可prepared可释放，对sending仅保留unknown，禁止生成网络请求。
+
+019实现与限定本地验收见[采购账户记录](../verification/procurement-accounts.md)。020公开目录已通过限定本地验收；021注册/邮箱恢复已完成限定本地验收，022-A已完成限定本地验收；B0-P/M/Q及B2第三来源已实现并通过各自专项，B3已接线、整链验收中，C仍后续，后续依赖见[交付计划](delivery-plan.md)。
+
+## 27. 匿名资料与选价（020已实现，限定本地验收）
+
+015追加`models.public_visible=false/public_revision=1`与部分C排序索引。触发器仅在公开标记实际变化时递增revision，启停、路由和直接伪造revision不会改变该版本。管理GET/PUT以当前actor user SHARE验证active admin，PUT再锁model UPDATE，比较expected并用锁后新语句验证profile；同值no-op不写审计，真实变更与唯一安全审计同事务。只更新公开列，停用预设公开状态与enabled互不覆盖。
+
+`catalog.PublicModels/PublicModel`返回强类型白名单，SQL在传回应用前约束profile≤16KiB以及名称/ID长度；坏公开行使本次503，不跳过坏行或输出内部材料。生成与输入计费协议分别表达streaming/tools/input_only和输出上界；缺当前价为完整null/unavailable，已知0仍为规范金额字符串。列表一次SQL使用物化DB时钟，空页也保留as_of，按名称/ID的C序读取50+1；游标绑定归一筛选，每页重新执行公开/启用谓词，不提供跨页历史快照。
+
+`Reserve`与既有`modelSelect`统一`effective_at<=instant.at`，序为`effective_at DESC,created_at DESC,id DESC`；001已有的同模型同生效时刻唯一约束保留。选价在原授权/model锁后完成，之后钱包等待不重新定价；历史request价格快照与客户/采购收尾不改。平台模型列表额外显示公开状态及字符串revision，客户模型DTO仍沿原字段。
+
+独立匿名限流20rps/burst40、每可信来源2rps/burst8、最多4096来源，Guard前取得最多4个在途许可、满额不排队，2秒总context含pool等待及rows关闭。恢复模式只对原本ready且Guard有效实例允许只读；公开布局不请求私有会话、不触发MFA弹窗，管理写继续遵守原门禁。[020验收](../verification/public-catalog.md)记录最终catalog/server PG race及前端156项/strict构建；较早全Go race不冒充最后SQL修订后的全量复测。[运行器](../verification/public-catalog-020-harness.json)、[浏览器](../verification/public-catalog-020-browser.json)和[015预览](../verification/public-catalog-020-preview.json)分别保留无生成/资金事实、390px与冲突核查、受限权限及35资源一致性证据。
+
+## 28. 自助身份与邮件（021）
+
+[021冻结合同](../../specs/021-self-service-identity/contract.md)已实现：默认关闭注册与邮件，Bootstrap持久标志、邮箱证明后最小权限开户、当前MFA下密码恢复、所有session family原子撤销及加密outbox。公开四条路由不依赖私有session，fragment在Router之前移除；成功不自动登录，API Key独立管理。注册不送资金或模型权限。
+
+reset按user→subject→challenge→MFA→全部family ID序，全部锁后取DB时钟校验TTL；password_revision由DB按实际hash变更递增。SMTP独立worker只按2个空闲槽claim，60秒lease、25秒发送余量、20秒网络上限和5次有限重试，generation CAS防旧ACK；SMTP接受与ACK不原子，可能重复邮件但证明只消费一次。关闭/恢复只暂停，有效Guard下继续失效秘密清理；正常退出取消邮件IO，已开始Guard独立最长1秒完成，不误伤HTTP排空。维护密文重包仅owner、projector无身份读取。
+
+详细DDL、锁图、权限、故障语义及源码入口见[设计](self-service-identity.md)和[统一架构](../architecture/README.md#自助身份与邮件链路021)。真实PG race、186项前端/strict、真实main+本地SMTP/浏览器及016预览升级完成限定本地验收，见[证据](../verification/self-service-identity.md)。正式SMTP收件与生产反滥用、022支付、023订阅、024媒体和025 HA继续独立验收。
+
+
+## 29. 共同入账与双审兑换券（022-A）
+
+022-A0已追加017九表、严格历史预检与人工receipt回填，共同ApplyFundingTx唯一拥有source到journal/receipt/credited的资金写入；manual与voucher赠额分开清算，不增加重复投影事件。VerifyFunding/VerifyLedger/Rebuild逐来源与精确分录核验，app列级写权限/projector无新增source读权。原钱包六字段保持，累计入账读取全部receipts。
+
+A1独立HMAC keyring、六命令/当前授权、父锁后savepoint、未知COMMIT不重试与一次codes、严格HTTP/有界准入、控制台安全journal/来源摘要均已实现。全Go真实PG race、209项前端/strict、隔离真实main生命周期/浏览器及017默认off预览完成限定本地验收。B0-P标准库纯协议已实现并通过race/vet/fuzz，独立PG模拟器/接收器已按M/Q合同实现并通过真实进程短程，旧版本20代长程已完成，最新补丁/精确故障另验；B1核心设计/SQL与B2第三来源已冻结并实施相应切片，B3运行接线和C来源lot/原路退款继续独立收口。023-A按018精确接口/DDL与锁图已实现并通过[限定本地验收](../verification/tenant-pricing.md)，B核心/HTTP/UI、隔离浏览器和020预览已完成限定验收，独立只读核验器专项已通过，C商品/订阅继续；024-A0站内告警精确合同已冻结019；隔离DDL/权限/行为/源查询EXPLAIN原型通过，生产领域/worker/HTTP/UI已接通，真实进程/浏览器/全量race与019预览均通过，架构只读检查和make check通过；025已补独立草案，媒体/异步/长连接/外部身份、共享许可/HA和真实生产条件均不得标为已完成。源码入口、数据图和阶段证据见[统一架构](../architecture/README.md#共同入账022-a0)与[A验证](../verification/funding-vouchers.md)。
+
+
+## 30. 客户价格域与请求事实（023-A）
+
+价格组独立于tenant隔离、授权、预算与采购账户。组内缺价不回落默认。Reserve依tenant→membership→user→Key→model→group SHARE选精确域，单SQL DB时刻在钱包等待前冻结version/两维费率/组/归属revision/观察时刻。旧请求新增证据全NULL为legacy。后续派发及历史收尾不锁当前组或重算零售价。
+
+组编辑NO KEY UPDATE；调组tenant NO KEY UPDATE→actor SHARE→目标group SHARE，兼容登录session FK KEY SHARE。pricing_operations保存不可变原result；018以NULLS NOT DISTINCT保护同域同effective唯一，app无历史/快照UPDATE，projector无新表权限。客户报价/历史仅当前域与当前授权，匿名和旧admin价入口固定默认。完整接口、锁图、DDL与权限见[合同](../../specs/023-periodic-products/a-contract.md)，运行证据见[023-A验证](../verification/tenant-pricing.md)。
+
+
+## 31. 站内经营告警（024-A，限定本地验收通过）
+
+迁移019与`internal/alerts`、独立双槽worker、平台HTTP及`/platform/alerts`已接通；真实PG/HTTP/主进程故障、最终bundle浏览器、全量race/vet和019预览均通过，架构只读检查和make check通过。四种固定来源只做MVCC观察，逻辑scope无业务FK，不锁商业根、不发模型/邮件/资金动作。admin管理、三平台角色读取/第一ACK；当前角色在领域事务复验，规则与原命令/事件/审计同事务。部署默认false暂停观察，历史与配置仍可用；恢复只读。
+
+规则配置revision、episode行动revision、runtime内部写revision独立。完整事件链、唯一未结束发生记录、不可变快照、原命令关联及失败双CAS由019保护。双槽使用专用双连接，Guard与取消join后关闭pool；单评估2秒、源1.5秒、正常60秒/失败30秒、180秒stale。HTTP读写独立有界准入，严格嵌套JSON、字符串金额/计数/版本、UTC六位微秒、50+1/null游标及256KiB整次响应边界。
+
+详细锁图、源码/观察时序及数据权限见[统一架构](../architecture/README.md#站内经营告警024-a)、[冻结合同](../../specs/024-extension-platform/a-contract.md)与[验证记录](../verification/operations-alerts.md)。023-B已新增[精确合同工作稿](../../specs/023-periodic-products/b-contract.md)，核心/命令/权限SQL及真实PG原型已形成，独立审查修正初占与派发时刻边界，现已冻结020核心接线；024-B–F、025与最后性能继续各自门禁。
+
+022-M/Q已落公共paymentruntime/schema版本1、mock仓储/双槽回调、receiver/HTTP、独立CLI与paymentsandboxqa。callback target gate先于delivery行锁，网络无事务；第20代过期转review并保留stale ACK、禁止21次是实现合同，旧版本真实20代调度已完成，最新补丁及精确故障另验。after成功提交至故障消费间崩溃只按原ID恢复结果；未知COMMIT不重发effect或IO。Receiver在同tx DB时刻对exact raw验P签名，以私有verifiedEnvelope写inbox+receipt，先确认COMMIT再ACK。全部服务排空后才释放ownership，M/Q独立运行边界保持；普通main/订单/worker由B3另接APP专用证明，应用021与B2第三来源的独立实施及证据见§32。精确API/私密文件/attestation/清理见[运行合同](../../specs/022-self-service-payments/b-runtime-contract.md)和[限定验证](../verification/payment-sandbox.md)。
+
+023-B纯DTO/cursor、Tx helper、Reader/Commander已按各自精确合同实施；020按[核心接线](../../specs/023-periodic-products/b-integration-contract.md)追加预算表、source/派发guard与固定namespace，从billing接入客户R、逐attempt采购U、原窗口收尾及同At派发，operations/main验证有效APP/projector角色。HTTP/UI专项与隔离真实main浏览器已通过，最终020相关回归与预览升级通过，独立三态只读核验器和CLI专项通过，交叉回归继续，见[023-B记录](../verification/periodic-budgets.md)。022-B1[核心合同](../../specs/022-self-service-payments/b1-contract.md)与SQL隔离LOGIN原型已冻结，通过双向资金/身份/代次验证；[B2第三来源合同](../../specs/022-self-service-payments/b2-funding-contract.md)已冻结，已追加021、实现Go第三来源与三角色核验，真实PG专项通过；领域/worker/HTTP已由B3接线，真实主进程验收另见[应用支付记录](../verification/payment-application.md)。离线历史fixture使用显式001–019前缀，普通服务始终要求最新迁移。
+
+023-B管理HTTP按已冻结[接口合同](../../specs/023-periodic-products/b-http-contract.md)接入Reader/Commander，main在listener前初始化，独立32总读/8核查/8写与actor4/1/1及5/10秒工作期限。控制台从四类资源进入独立预算页，以IndexedDB单readwrite事务complete原子持久pending后才发命令；未知结果只核查原operation，原回执与当前预算分开展示。核心已通过全Go真实PG race，新增HTTP专项、270项前端/strict、真实多tab和隔离main浏览器已通过；020最终相关回归与预览升级通过，独立三态只读核验器和CLI专项通过；当前源码交叉回归继续；不将代码接线等同商品/订阅交付。
+
+
+## 32. 只读预算核验与支付第三来源
+
+独立Verifier在同一RR READ ONLY连接核验完整当前迁移、六表owner和来源SELECT，再扫描19方向异常、10类行数及3类缺证。SQL按typed对象去重，金额全用NUMERIC，显式拒NaN/非有限值；operation严格解码且不按当前动态窗口覆盖历史。只有只读COMMIT确认才返回完整报告；超时/未确认事务销毁有界清理。CLI分支早于serve配置和实例锁，固定安全错误，三态退出0/2/3、执行失败1，详见[合同](../../specs/023-periodic-products/b-verifier-contract.md)。
+
+021保留funding_journal_valid/funding_fact_guard的原OID并静态分离A/B谓词；billing helper三个显式分支，sandbox定位键在RC实际worker事务每次完整重验，锁账户后再次核代次/租约/源，不回锁订单/身份/租户。账户overflow由checkedAdd确认，在Processor资金savepoint内回滚，身份/首selection保留并同代review；缺audit/最终CAS不能提交。十方向资金核验及Rebuild保持reports-v1，摘要严格六字段/三来源，前端BigInt合计与模拟来源单列。
+
+operations从审定021静态SQL提取43函数expected，APP全族、worker31明示EXECUTE、projector零；先撤表及逐列ACL，再grant。runtime实际LOGIN，离线owner三角色和marker核验；projector runtime仅用catalog验证零权限，不能读marker。APP运行证明与订单/Processor/Runner/通知HTTP已由B3接线，真实主进程/浏览器限定本地整链验收已通过、真实在途SIGTERM与Guard失权补验已通过；不改写021追加DDL，不把本地P证据fixture当作正式PSP或生产支付验收。当前长期预览固定020已验包，见[架构](../architecture/README.md)。
+
+
+022-B3已按[运行合同§10](../../specs/022-self-service-payments/b3-runtime-contract.md#10-根冻结与精确追加ddl2026-11-01)冻结同进程独立worker、双manifest与typed OID/双nonce/canonical proof。追加022仅建不可变默认空attestation，APP/worker只读、projector零权；23表权限与原43函数/worker31 EXECUTE并行保留。普通public schema把内建pg_database_owner解析为当前数据库实际owner来核迁移对象，仍拒无关owner。Processor已冻结exact QueryWork与order-first mutation expiry、共享两网络槽/四证据槽及Recovery只query；领域/runtime/Processor已进入正式internal/payments，普通main/支付HTTP及UI已装配；真实PG完整包race通过，真实主进程和浏览器已按[分层证据](../verification/payment-application.md)完成限定本地整链验收，真实在途SIGTERM与Guard失权补验已通过。详细当前状态和数据关系见[统一架构](../architecture/README.md#支付资金第三来源022-b2)。C0来源lot候选已审全部钱包路径，新增lot等待必须先于request INSERT固定周期源时刻；FIFO跨lot历史prefix证明、正式SQL/权限和维护切换尚未冻结，不注册原路退款/拒付。
+
+## 33. 应用支付装配与故障（022-B3）
+
+生产装配先验证两个文件Options、共同proof、三条DSN和listener，再连接APP并取得Instance；绑定同一Lifecycle后构造Service和独立OpenProcessor，完成projector权限核验才创建Engine/ready。APP/worker仅SELECT默认空且不可变的022证明表，projector零权限；23表、43静态函数和worker31项支付EXECUTE保持，worker仅额外依赖funding_uuid叶子校验。
+
+人类命令先claim/父锁/当前授权和语义决策，再开启效果savepoint；拒绝仍持父锁到COMMIT。Create accepted提交后安全订单读取失败只能返回OutcomeUnknown；观察按logical order UUID展示unknown-order历史，不追溯改旧review。通知先独立准入，保留exact raw验签，同事务持久inbox/evidence并确认COMMIT后ACK。HTTP写5秒包含body读取，128KiB响应、8KiB ACK，金额/版本字符串与UTC6。
+
+opaque lease/work/response绑定Processor实例seal、原ID/代数/canonical body。mutation10次、query/evidence20次；两个网络slot/四证据slot完成后等完整1秒，无预取；独立回收有界。Guard检查最多3秒，与caller正常取消分开；短事务预算不够完整3秒时本地退出。SIGTERM并行HTTP Shutdown与Runner.Close，join后关worker pool，最后释放Instance。浏览器journal在readwrite transaction complete后允许POST，精确actor+scope全命名空间检查、128上限，epoch同步取消晚回和IDB删除；原编号只作GET核查，policy未知需显式开始新意图。精确合同及分层证据见[运行](../../specs/022-self-service-payments/b3-runtime-contract.md)、[HTTP/UI](../../specs/022-self-service-payments/b3-http-ui-contract.md)、[web](../../specs/022-self-service-payments/b3-web-contract.md)与[验证](../verification/payment-application.md)。
+
+最终普通main/mock两轮与浏览器均已完成限定本地整链验收；真实Guard/在途SIGTERM已按精确物理屏障合同独立验收，数据库COMMIT丢回包未注入。C0窄切片的package-private纯算法只对传入副本按时刻/UUID排序、NUMERIC等价总和校验、原allocation顺序收费和逆原charged顺序退回；测试覆盖MAX、分次等价和非法原边，见[证据](../verification/funding-lot-planners.md)。输入不是可信能力，生产helper仍须在同一事务持有原账户/lot锁、核完整source/journal和全钱包seq；独立Verifier不得调用runtime planner作自身证明。C0候选SQL/维护/资金入口尚未冻结或装配。
+
+## 34. 独立计量、维护接缝和后续候选
+
+024-B0-P的`internal/metering`已按[精确合同](../../specs/024-extension-platform/b0-pure-contract.md)实现八个闭合收费维度、两侧完整schema绑定、末尾一次ceil、硬界与actual区分、域分离摘要和旧token等价adapter。它只依赖标准库，尚无生产import、DB/网络/资金权限；subset/diagnostic及媒体端点不在本片，见[证据](../verification/metering-vectors.md)。
+
+C0新增[VerifySnapshotTx](../../specs/022-self-service-payments/c0-snapshot-contract.md)只在调用方RR事务核完整latest迁移history；写事务可核自身可见修改，失败统一固定错误，原VerifyReadOnlyTx不变。它不授maintenance permit或验证对象/来源。C0生产lot/全序/维护仍候选，需旧tenant含零opening、保护出生事务、逐源同事务与退款累计、全路径接线及独立重放全部通过。
+
+[C1退款](../../specs/022-self-service-payments/c1-refund-contract.md)、[023-C商品](../../specs/023-periodic-products/c-contract.md)、[024计量接线](../../specs/024-extension-platform/b0-metering-contract.md)与[025共享执行](../../specs/025-production-ha/b0-shared-execution-contract.md)均保留未实现边界。退款调度耗尽不能解冻Q，no_effect须具最终拒绝语义；商品价值/权益分账；共享执行不得凭TTL回收sending/running，仍保持单活。025-A0仅[Compose配置透传](../../specs/025-production-ha/a0-compose-config-contract.md)静态及[隔离Compose实际渲染](../verification/compose-render-025.json)已验，容器/1Panel/真实邮件仍未验。业务、生产与最终性能继续按[交付计划](delivery-plan.md)执行。
+
+C0候选SQL已补旧tenant含零opening、新tenant出生stamp、逐退款累计及新钱包operation与完整journal同top-xid，隔离APP/worker/旧退款/SAVEPOINT专项见[记录](../verification/funding-lot-candidate.md)；它不等于生产迁移或Go接线。独立[重放候选](../../specs/022-self-service-payments/c0-verifier-contract.md)尚未实现。[C2](../../specs/022-self-service-payments/c2-dispute-contract.md)将风险屏障与资金阶段分开，原来源回收/偿付及反转独立核对；[C3](../../specs/022-self-service-payments/c3-cross-recovery-contract.md)要求完整外部最终事实、原operation恢复与离库checkpoint，未达门槛保持review/Recovery。025[A1-M](../../specs/025-production-ha/a1-mail-process-contract.md)只扩展隔离QA，无生产hook或重放权限。
+
+025-A1-M[邮件真实进程恢复](../verification/mail-lifecycle-025.md)已通过两个SIGKILL窗口：保留原60秒lease与同proof，自然恢复至generation2；SMTP全程上界小于9秒，FinishMail物理屏障放行至进程退出/零连接小于4.5秒。变更仅在隔离QA运行器，产品邮件语义、权限和单活模型保持原合同。
+
+C0候选的[版本化直接SQL回归](../../specs/022-self-service-payments/c0-candidate-regression-contract.md)已覆盖实际APP/worker/projector、含零开账、SAVEPOINT top-xid、FIFO/逆原边消费退款及失败回滚；五项真实PG/race均通过。APP tenant INSERT原八列、UPDATE原六列，worker原锁权限保持；[测试代码](../../internal/qa/c0candidate)不进入普通main，未替代正式helper、独立Verifier或维护切换。
+
+022-C1-P的`internal/paymentrefundproto`已按[精确协议](../../specs/022-self-service-payments/c1-protocol-v2-contract.md)实现；v1 capture桥保留原环境，完整environment/request/query绑定与raw-body认证后才能发行私有opaque。六DTO拒绝重复/未知字段及非规范值；confirmed/final_no_effect是仅有终局，in_progress/not_seen不产生VerifiedRefundFact。uint64大端分帧、四摘要域和三签名用途经[独立Python固定向量](../verification/payment-refund-v2-golden.json)验证，专项race/vet/fuzz通过；[记录](../verification/payment-refund-protocol-v2.md)区分纯层与待实现M/S/I。v2不改写现有v1证明，不替代C0来源资格、P永久拒绝墓碑、运行授权或唯一资金效果。
+
+C0-V0-L的`fundinglotverify.CheckLedgerRows`已按[V0-L合同](../../specs/022-self-service-payments/c0-verifier-contract.md#12-首个有界实施片-v0-l原始账本行独立纯重放根冻结)实现。NULL/空TEXT分离、canonical signed int64输入、独立big.Int中间和、孤儿仍参与可归属的算术；重复PK/错误字面值、resource和取消各返回固定错误与零结果。十方向结果只含RowsConsistent与安全计数，无Balanced/CoverageComplete/proof；race/vet/短fuzz通过，[原纯层证据](../verification/funding-ledger-rows.md)保留当期无DB/import范围。后续[caller-owned RR reader](../../internal/billing/funding_ledger_read.go)已按[冻结合同](../../specs/022-self-service-payments/c0-ledger-reader-contract.md)实现并通过真实PG/race专项：四表窄shape/PK/heap、history表及两函数名全部path重载前置、三表128keyset完整EOF、原journal额外字段、30秒/100000行/16MiB及四种安全错误，见[读取验证](../verification/funding-ledger-reader.md)。现无运行入口，完整source及证明组合仍后续。
+
+C0离线metadata导出已按[§9](../../specs/022-self-service-payments/c0-schema-check-contract.md#9-根冻结窄片metadata-only-离线-descriptor-生成器)实现于[`scripts/funding-lot-descriptor`](../../scripts/funding-lot-descriptor/main.go)：001–022及候选DDL/ACL/provision/工具源码绑定固定摘要，ordinary/sandbox分别安装、原provision之后追加C0，before/after的结构与ACL分别编码。prosrc原字节与SHA保留，随机OID仅在结构字段符号化；每profile精确关闭Rows/连接并清理，全部profile清理后才写0600候选产物。双轮十文件同bytes、注入坏DDL清理与13项真实PG/race通过；[证据](../verification/funding-lot-descriptor.md)区分raw/default/effective ACL和自动row/array USAGE，未生成正式expected或运行证明，未应用生产DDL/角色变更。
+
+## 35. C0正式静态catalog与opaque事务证明
+
+[`fundinglotcatalog`](../../internal/fundinglotcatalog)按[冻结合同§10](../../specs/022-self-service-payments/c0-schema-check-contract.md#10-根冻结完整静态检查器的实现与正式期望启用)实现Snapshot/Installation/Runtime三个caller-owned RR入口。Pins区分namespace/object owner，入口先deep copy并重解actual LOGIN/endpoint/wrapper/Conn/PID/backend_start/top xid，末尾再核；Runtime必须实际选定角色且RR RO。Installation私有保存原identity，Catalog返回新wrapper，赋值不能替换empty-at-issue证据；结束、错误或换wrapper/连接均拒绝。
+
+固定SHA的expected初始化严格解析一次并私有缓存；ordinary五个完整variant，sandbox唯一full-sandbox，不从actual删除未知条目求通过。raw nodes及safe type I/O先预检，静态SQL输出PG jsonb逐record有界解码，scalar/资源/符号/alias/multiplicity核验保留。公开链对同一已认证variant的Schema与Roles作完整逐节点比较，同时继承expected的封闭字段、shape、枚举和值类型；metadata-only observer另保留完整DTO验证，不提供skip开关。标识模板只渲染受审expected位置，actual/prosrc不替换。依赖raw multiplicity与distinct分别核静态上界；全调用100000 raw rows/64MiB、单record64KiB、五秒不按query重置。
+
+旧SQL/provision/v1 checker不改。数据库CREATE与CREATE/CONNECT/TEMPORARY的grant option对runtime拒绝，PUBLIC默认CONNECT/TEMPORARY可保留；十跨域负权和全局runtime无owner独立核。最终完整leaf race217.140秒通过、保留原五秒预算；旧source pins与专用资源零遗留见[最终证据](../verification/funding-lot-catalog.md)及[细化架构](../architecture/funding-lot-catalog.md)。PG16.15 initdb OID/default collation profile未认证其它部署；本包无main、Permit或资金调用者。
+
+
+## 36. 维护Gate生命周期（022-C0-T0）
+
+`maintenancetrust.Acquire(ctx,*pgx.ConnConfig,fundinglotcatalog.Pins)`只返回`*Gate`或固定安全错误。配置须由pgx.ParseConfig构造，nil fallback在Copy前拒绝；配置和Pins深拷贝，专用连接捕获底层net.Conn。预检绑定配置/实际TCP/SQL endpoint、current_user=session_user=Config.User及真实LOGIN、DB/schema/raw owner OID/current_schema；此处不代替未来T2维护授权。
+
+双bigint session锁固定782193402→782193401，明确false每50ms等待，明确true每把只取一次，核本PID全部advisory的DB/mode/classid/objsubid/granted及无额外锁。工作context贯穿连接、预检及两锁，采用父deadline与30秒的较早值。`Close(ctx)`忽略caller取消，独立background共用5秒，先完整核锁、401→402逐把明确true、末尾零锁再关闭。副本共态，TryLock并发返回maintenance_gate_busy，重复返回首次cleanup结果。
+
+unknown/非idle异常先原子封闭私有socket registry并关闭已捕获连接，再有界pgx.Close；pgx异步CancelRequest使用同copied DialFunc，晚到socket立即关闭。不能只凭pgx已标closed或本地Close返回断言远端锁已释放，PG测试独立观察PID/backend_start。生产无hooks、BEGIN、事务控制或业务SQL；String/GoString/JSON固定redacted，不unwrap driver。合同与专项范围见[T0§10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)和[验证](../verification/maintenance-gate.md)。

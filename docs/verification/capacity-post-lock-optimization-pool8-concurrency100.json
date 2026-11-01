@@ -1,0 +1,100 @@
+{
+  "database": {
+    "lock_sampling_interval_ms": 10,
+    "max_query_age_while_waiting_ms": 9.369,
+    "max_simultaneous_lock_waiters": 7,
+    "monitor_error": "",
+    "pool_acquire_count": 900,
+    "pool_acquire_duration_ms": 19587.87677,
+    "pool_empty_acquires": 881,
+    "samples": 23,
+    "samples_with_lock_waiters": 19,
+    "sum_waiters_across_samples": 78
+  },
+  "environment": {
+    "application_db_pool": 8,
+    "arch": "arm64",
+    "go": "go1.27.2",
+    "gomaxprocs": 18,
+    "logical_cpus": 18,
+    "measurement_scope": "gateway+load-client+mock-upstream in one go test process; PostgreSQL is a separate local process",
+    "os": "darwin",
+    "postgres_version": "16.15 (Homebrew)",
+    "race_build_setting": "not_reported",
+    "target_environment_verified": false
+  },
+  "excluded_mock_barrier_wait": {
+    "max_ms": 21.577875,
+    "min_ms": 0.052292,
+    "p50_ms": 10.433292,
+    "p95_ms": 20.675417
+  },
+  "latency_client_to_upstream_admission": {
+    "max_ms": 102.007667,
+    "min_ms": 79.961166,
+    "p50_ms": 91.799375,
+    "p95_ms": 100.312958
+  },
+  "latency_extra_first_byte": {
+    "max_ms": 104.889583,
+    "min_ms": 81.458333,
+    "p50_ms": 93.171458,
+    "p95_ms": 101.934125
+  },
+  "latency_full_including_barrier": {
+    "max_ms": 234.905292,
+    "min_ms": 224.93475,
+    "p50_ms": 230.139542,
+    "p95_ms": 232.866542
+  },
+  "latency_mock_ready_to_client_first_byte": {
+    "max_ms": 3.136416,
+    "min_ms": 0.448792,
+    "p50_ms": 2.311,
+    "p95_ms": 3.029458
+  },
+  "load": {
+    "barrier_timeout": false,
+    "concurrency_per_key": 10,
+    "concurrency_per_tenant": 20,
+    "concurrent_clients": 100,
+    "keys_per_tenant": 2,
+    "mock_generation_delay_ms": 0,
+    "request_bytes_max": 148,
+    "request_bytes_min": 147,
+    "requests": 100,
+    "tenants": 5
+  },
+  "memory": {
+    "allocated_during_load_bytes": 23571232,
+    "gc_cycles": 7,
+    "heap_after_bytes": 17353120,
+    "heap_before_bytes": 1559592,
+    "rss_after_bytes": 52936704,
+    "rss_before_bytes": 24510464,
+    "sampled_peak_go_sys_bytes": 43403528,
+    "sampled_peak_goroutines": 850,
+    "sampled_peak_heap_bytes": 17353120,
+    "sampled_peak_rss_bytes": 52936704,
+    "scope": "entire test process, sampled every 10ms; RSS every 250ms"
+  },
+  "results": {
+    "acceptance_rate": 1,
+    "accepted": 100,
+    "burst_completions_per_second": 425.2245318410787,
+    "charged_microcurrency": 2000,
+    "key_remaining_hold_microcurrency": 0,
+    "key_spent_microcurrency": 2000,
+    "ledger_balanced": true,
+    "network_errors": 0,
+    "peak_upstream_concurrency": 100,
+    "rejections": {},
+    "remaining_hold_microcurrency": 0,
+    "sampled_peak_gateway_permits": 100,
+    "settlements": 100,
+    "successful_done": 100,
+    "upstream_posts": 100,
+    "wall_ms": 235.169875
+  },
+  "run_at_utc": "2026-10-30T05:03:58.019112Z"
+}

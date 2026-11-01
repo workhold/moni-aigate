@@ -1,0 +1,244 @@
+package billing
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/moni-ai/moni-aigate/internal/routing"
+)
+
+func managedCostRequest(t *testing.T, f *fixture) (Reservation, AttemptInput) {
+	t.Helper()
+	policy := uuid.NewString()
+	for _, q := range []struct {
+		sql  string
+		args []any
+	}{
+		{`INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,1,'cost_first','deny')`, []any{policy, f.model}},
+		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,4)`, []any{policy, f.channel, f.version}},
+		{`UPDATE models SET active_revision=1 WHERE id=$1`, []any{f.model}},
+	} {
+		if _, err := f.pool.Exec(f.ctx, q.sql, q.args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	in := f.input()
+	in.RouteRevision = 1
+	r, err := f.store.Reserve(f.ctx, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { f.store.EndRequest(r.RequestID) })
+	var q routing.CostQuote
+	if err = f.pool.QueryRow(f.ctx, currentAttemptCostSQL, f.channel, "upstream").Scan(&q.VersionID, &q.InputRate, &q.OutputRate, &q.Basis); err != nil {
+		t.Fatal(err)
+	}
+	a := dispatchBatchAttemptInput(f, r)
+	a.CostQuote = &q
+	return r, a
+}
+
+func TestPostgresManagedAttemptRequiresExactSelectedQuote(t *testing.T) {
+	for _, kind := range []string{"missing", "version", "rate", "basis", "valid"} {
+		t.Run(kind, func(t *testing.T) {
+			f := integration(t)
+			r, in := managedCostRequest(t, f)
+			switch kind {
+			case "missing":
+				in.CostQuote = nil
+			case "version":
+				in.CostQuote.VersionID = uuid.NewString()
+			case "rate":
+				v := int64(1)
+				in.CostQuote.OutputRate = &v
+			case "basis":
+				in.CostQuote.Basis = "invoice"
+			}
+			a, err := f.store.RecordAttempt(f.ctx, in)
+			if kind == "valid" {
+				if err != nil || a.DeliveryState != "prepared" {
+					t.Fatal(a, err)
+				}
+				if err = f.store.PrepareDispatch(f.ctx, DispatchInput{TenantID: f.tenant, AttemptID: a.ID}); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				assertCode(t, err, "cost_quote_stale")
+				var count int
+				if err = f.pool.QueryRow(f.ctx, "SELECT count(*) FROM upstream_attempts").Scan(&count); err != nil || count != 0 {
+					t.Fatal("stale quote inserted attempt", count, err)
+				}
+				keyConfigurationRelease(t, f, r)
+			}
+		})
+	}
+}
+
+func TestPostgresCostPublicationWaitersSeeNewQuote(t *testing.T) {
+	for _, boundary := range []string{"attempt", "dispatch"} {
+		t.Run(boundary, func(t *testing.T) {
+			f := integration(t)
+			dispatchBatchSingleConnectionStore(t, f)
+			r, in := managedCostRequest(t, f)
+			var a Attempt
+			var err error
+			if boundary == "dispatch" {
+				a, err = f.store.RecordAttempt(f.ctx, in)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			blocker, err := f.pool.Begin(f.ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer blocker.Rollback(context.Background())
+			var pid int
+			if err = blocker.QueryRow(f.ctx, "SELECT pg_backend_pid()").Scan(&pid); err != nil {
+				t.Fatal(err)
+			}
+			// INSERT itself must hold the common channel UPDATE barrier.
+			if _, err = blocker.Exec(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'upstream',9000000,9000000,'contract')`, f.channel); err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(f.ctx, 5*time.Second)
+			defer cancel()
+			done := make(chan error, 1)
+			go func() {
+				if boundary == "attempt" {
+					_, e := f.store.RecordAttempt(ctx, in)
+					done <- e
+				} else {
+					done <- f.store.PrepareDispatch(ctx, DispatchInput{TenantID: f.tenant, AttemptID: a.ID})
+				}
+			}()
+			waitForBatchBlocker(t, f, pid)
+			if err = blocker.Commit(f.ctx); err != nil {
+				t.Fatal(err)
+			}
+			assertCode(t, dispatchBatchAwait(t, done), "cost_quote_stale")
+			var sending int
+			if err = f.pool.QueryRow(f.ctx, "SELECT count(*) FROM upstream_attempts WHERE delivery_state<>'prepared'").Scan(&sending); err != nil || sending != 0 {
+				t.Fatal("stale quote became sending", sending, err)
+			}
+			keyConfigurationRelease(t, f, r)
+		})
+	}
+}
+
+func TestPostgresScheduledCostActivationAfterAllDispatchLockWaits(t *testing.T) {
+	for _, tc := range []struct{ boundary, lock string }{
+		{"attempt", "channel"}, {"attempt", "reservation"},
+		{"dispatch", "key"}, {"dispatch", "model"}, {"dispatch", "channel"},
+		{"dispatch", "credential"}, {"dispatch", "reservation"}, {"dispatch", "attempt"},
+	} {
+		t.Run(tc.boundary+"/"+tc.lock, func(t *testing.T) {
+			f := integration(t)
+			dispatchBatchSingleConnectionStore(t, f)
+			r, in := managedCostRequest(t, f)
+			var a Attempt
+			var err error
+			if tc.boundary == "dispatch" {
+				a, err = f.store.RecordAttempt(f.ctx, in)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			var effective time.Time
+			if err = f.pool.QueryRow(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,'upstream',3000000,4000000,'invoice',clock_timestamp()+interval '300 milliseconds') RETURNING effective_at`, f.channel).Scan(&effective); err != nil {
+				t.Fatal(err)
+			}
+			blocker, err := f.pool.Begin(f.ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer blocker.Rollback(context.Background())
+			var pid int
+			if err = blocker.QueryRow(f.ctx, "SELECT pg_backend_pid()").Scan(&pid); err != nil {
+				t.Fatal(err)
+			}
+			sql, id := "", ""
+			switch tc.lock {
+			case "key":
+				sql, id = "SELECT id FROM api_keys WHERE id=$1 FOR UPDATE", f.key
+			case "model":
+				sql, id = "SELECT id FROM models WHERE id=$1 FOR UPDATE", f.model
+			case "channel":
+				sql, id = "SELECT id FROM channels WHERE id=$1 FOR UPDATE", f.channel
+			case "credential":
+				sql, id = "SELECT id FROM channel_credentials WHERE id=$1 FOR UPDATE", f.credential
+			case "reservation":
+				sql, id = "SELECT id FROM reservations WHERE id=$1 FOR UPDATE", r.ID
+			case "attempt":
+				sql, id = "SELECT id FROM upstream_attempts WHERE id=$1 FOR UPDATE", a.ID
+			}
+			var ignored string
+			if err = blocker.QueryRow(f.ctx, sql, id).Scan(&ignored); err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(f.ctx, 5*time.Second)
+			defer cancel()
+			done := make(chan error, 1)
+			go func() {
+				if tc.boundary == "attempt" {
+					_, e := f.store.RecordAttempt(ctx, in)
+					done <- e
+				} else {
+					done <- f.store.PrepareDispatch(ctx, DispatchInput{TenantID: f.tenant, AttemptID: a.ID})
+				}
+			}()
+			waitForBatchBlocker(t, f, pid)
+			for {
+				var active bool
+				if err = f.pool.QueryRow(ctx, "SELECT clock_timestamp()>=$1", effective).Scan(&active); err != nil {
+					t.Fatal(err)
+				}
+				if active {
+					break
+				}
+				select {
+				case <-ctx.Done():
+					t.Fatal("scheduled cost did not activate")
+				case <-time.After(5 * time.Millisecond):
+				}
+			}
+			if err = blocker.Rollback(f.ctx); err != nil {
+				t.Fatal(err)
+			}
+			assertCode(t, dispatchBatchAwait(t, done), "cost_quote_stale")
+			keyConfigurationRelease(t, f, r)
+		})
+	}
+}
+
+func TestPostgresCostChangeAfterSendingKeepsFrozenCostAndSettlement(t *testing.T) {
+	f := integration(t)
+	r, in := managedCostRequest(t, f)
+	a, err := f.store.RecordAttempt(f.ctx, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = f.store.PrepareDispatch(f.ctx, DispatchInput{TenantID: f.tenant, AttemptID: a.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.pool.Exec(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,basis) VALUES($1,'upstream','unknown')`, f.channel); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.store.RecordFinalization(f.ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "adapter", SourceEventID: a.ID + ":final", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		if _, err = f.store.Settle(f.ctx, SettleInput{TenantID: f.tenant, RequestID: r.RequestID}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var cost, basis, version string
+	var settlements int
+	if err = f.pool.QueryRow(f.ctx, `SELECT cost_amount::text,cost_basis,cost_version_id,(SELECT count(*) FROM settlements WHERE request_id=$2) FROM upstream_attempts WHERE id=$1`, a.ID, r.RequestID).Scan(&cost, &basis, &version, &settlements); err != nil || cost != "30" || basis != "contract" || version != in.CostQuote.VersionID || settlements != 1 {
+		t.Fatal("later cost configuration changed history", cost, basis, version, settlements, err)
+	}
+	f.wallet(t, 985, 0)
+	f.check(t)
+}

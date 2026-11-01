@@ -1,0 +1,140 @@
+{
+  "facts": [
+    {
+      "cost": 22,
+      "status": "succeeded",
+      "charged": 20,
+      "decisions": [
+        {
+          "reason": "selected",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "7cffc0cf-637b-4821-be75-ce5edeeda5b2",
+          "version_id": "6283350e-7956-441f-b482-50ad76cc65aa"
+        },
+        {
+          "reason": "cost_limit_exceeded",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "cd5ead1d-9ab0-4c9b-b187-1c0fb5e56ac7",
+          "version_id": "f4e166f9-ac2d-46fc-9297-1e32e2f75604"
+        }
+      ],
+      "cost_basis": "contract",
+      "request_id": "b5342df7-00d0-4e9f-9da6-9657b21622fd",
+      "cost_status": "contract",
+      "billing_status": "settled",
+      "delivery_state": "completed",
+      "route_revision": 3,
+      "cost_input_rate": 3000000,
+      "cost_output_rate": 5000000,
+      "selected_channel": "Synthetic policy fixture",
+      "retail_input_rate": 2000000,
+      "retail_output_rate": 6000000
+    }
+  ],
+  "audits": [
+    {
+      "diff": {},
+      "action": "route.publish"
+    },
+    {
+      "diff": {},
+      "action": "cost.version"
+    },
+    {
+      "diff": {},
+      "action": "route.publish"
+    },
+    {
+      "diff": {},
+      "action": "cost.version"
+    },
+    {
+      "diff": {},
+      "action": "route.publish"
+    }
+  ],
+  "routes": [
+    {
+      "mode": "manual",
+      "unknown": "allow",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 1
+    },
+    {
+      "mode": "cost_first",
+      "unknown": "deny",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic cheaper upstream",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        },
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "mode": "cost_first",
+      "unknown": "deny",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic cheaper upstream",
+          "priority": 0,
+          "input_cap": 500000,
+          "output_cap": null
+        },
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 3
+    }
+  ],
+  "charged": 20,
+  "attempts": 1,
+  "credited": 1234567,
+  "key_held": 0,
+  "requests": 1,
+  "key_spent": 20,
+  "held_total": 0,
+  "known_cost": 22,
+  "settlements": 1,
+  "ledger_total": 0,
+  "finalizations": 1,
+  "unknown_costs": 0,
+  "available_total": 1234547,
+  "unbalanced_journals": 0,
+  "final_binary_sha256": "f265da8aa330b0221ff8e0531565eb4c31fbe56bc6eea9135aa298adf7eb503a",
+  "fixture_only": true,
+  "checks": {
+    "legacy_partial_quote_readonly_browser": true,
+    "incomplete_new_quote_rejected_browser": true,
+    "complete_quote_and_full_route_published_browser": true,
+    "console_warnings_errors": 0,
+    "generation_via_direct_http_sse": true,
+    "final_funds_reconciled": true
+  }
+}

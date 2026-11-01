@@ -1,0 +1,200 @@
+{
+  "facts": [
+    {
+      "cost": 8,
+      "status": "succeeded",
+      "charged": 20,
+      "decisions": [
+        {
+          "reason": "higher_cost",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "365a428d-9f85-4bb5-9b43-256d1bc69ea8",
+          "version_id": "4a0ded9b-9868-4766-acc8-6cc6dec810c8"
+        },
+        {
+          "reason": "selected",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "ed0e2614-90cc-470f-865b-665a950d37d5",
+          "version_id": "791cc620-a20c-40af-94a9-de3dcc8679e7"
+        }
+      ],
+      "cost_basis": "contract",
+      "request_id": "54d89d17-90c1-4b2d-aae7-d9386859db3b",
+      "cost_status": "contract",
+      "billing_status": "settled",
+      "delivery_state": "completed",
+      "route_revision": 2,
+      "cost_input_rate": 1000000,
+      "cost_output_rate": 2000000,
+      "selected_channel": "Synthetic cheaper upstream",
+      "retail_input_rate": 2000000,
+      "retail_output_rate": 6000000
+    },
+    {
+      "cost": 22,
+      "status": "succeeded",
+      "charged": 20,
+      "decisions": [
+        {
+          "reason": "selected",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "365a428d-9f85-4bb5-9b43-256d1bc69ea8",
+          "version_id": "4a0ded9b-9868-4766-acc8-6cc6dec810c8"
+        },
+        {
+          "reason": "cost_limit_exceeded",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "ed0e2614-90cc-470f-865b-665a950d37d5",
+          "version_id": "791cc620-a20c-40af-94a9-de3dcc8679e7"
+        }
+      ],
+      "cost_basis": "contract",
+      "request_id": "a2cbcd48-2868-4cf2-8e03-6804bad9b1dc",
+      "cost_status": "contract",
+      "billing_status": "settled",
+      "delivery_state": "completed",
+      "route_revision": 4,
+      "cost_input_rate": 3000000,
+      "cost_output_rate": 5000000,
+      "selected_channel": "Synthetic policy fixture",
+      "retail_input_rate": 2000000,
+      "retail_output_rate": 6000000
+    }
+  ],
+  "audits": [
+    {
+      "diff": {},
+      "action": "route.publish"
+    },
+    {
+      "diff": {},
+      "action": "cost.version"
+    },
+    {
+      "diff": {},
+      "action": "cost.version"
+    },
+    {
+      "diff": {},
+      "action": "route.publish"
+    },
+    {
+      "diff": {},
+      "action": "route.publish"
+    },
+    {
+      "diff": {},
+      "action": "route.publish"
+    }
+  ],
+  "routes": [
+    {
+      "mode": "manual",
+      "unknown": "allow",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 1
+    },
+    {
+      "mode": "cost_first",
+      "unknown": "deny",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic cheaper upstream",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        },
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "mode": "cost_first",
+      "unknown": "deny",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic cheaper upstream",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        },
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 3
+    },
+    {
+      "mode": "cost_first",
+      "unknown": "deny",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic cheaper upstream",
+          "priority": 0,
+          "input_cap": 500000,
+          "output_cap": null
+        },
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 4
+    }
+  ],
+  "charged": 40,
+  "attempts": 2,
+  "credited": 1234567,
+  "key_held": 0,
+  "requests": 2,
+  "key_spent": 40,
+  "held_total": 0,
+  "known_cost": 30,
+  "settlements": 2,
+  "ledger_total": 0,
+  "finalizations": 2,
+  "unknown_costs": 0,
+  "available_total": 1234527,
+  "unbalanced_journals": 0,
+  "fixture_only": true,
+  "checks": {
+    "cas_conflict_readonly_review": true,
+    "mobile_viewport": {
+      "width": 390,
+      "height": 844,
+      "horizontal_overflow": false,
+      "cap_and_footer_reachable": true
+    },
+    "browser_console_errors": 0,
+    "retail_prices_unchanged": true,
+    "funds_reconciled": true
+  }
+}

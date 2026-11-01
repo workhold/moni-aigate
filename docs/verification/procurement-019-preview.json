@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "migration": "014_procurement_accounts.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "Revalidated PID 39966, workspace cwd and listener; SIGTERM exited 0 and listener closed before final artifact restart.",
+  "pid": 70862,
+  "binary_sha256": "d62e42931573442fd50eb71962d4bc6c251308652dd56e8c3626eb571bdc7400",
+  "index_sha256": "28655a2bf7f63c6d3f79b75300403e677b3f67c551c0e477d042e2379c1e88bd",
+  "index_exact_match": true,
+  "assets_exact_match_count": 32,
+  "asset_sha256": {
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "KeysView-CipV9VzG.js": "e39d7c3643096c31f3b5be7e407aa9ba80a87711772e42e5c0d7d66a2365fa56",
+    "KeysView-DGB_doro.css": "d89b2663b9478837efacd2de14b5a00003e218a0d48f3c54c00d12b81da12966",
+    "LoginView-BaLkyb2q.js": "628c14d219dae8821eb46aa5fe3309cb3a5990f4d048b3b61024ed66a98b5f71",
+    "MembersView-Bwho_wKM.js": "39cf24c8743abf056607e194351310cdb8758eff4fd900d3af64b5de23ba0294",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-BEAXarWs.js": "54c6fcd70eb8b4b9c9ef4e3b976f62e03fbeb431ac98cdf4b37cd4cd7b872341",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-Cji3DqPt.js": "19bcf16048945ea5eef84a53d09d818025017a0dab595fdbb5339a0bb13d51fe",
+    "OverviewView-BWV8OvrV.js": "856bc8a1f1da7418aee9da7cf95a670159f9c3b6c0cd9fd2202b9be12e057119",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-CcIa9raS.js": "eb9a6b6cf8a000f4d05c83caa492b66c793899a28bb4845240cd1074441f63aa",
+    "PlatformView-DHRdmnFq.css": "f35caeb7f2ad9f41073815150cb833c96d405eb6a03703066c312158d4a8488c",
+    "PlaygroundView-BNg8vvuc.js": "67191b322f6ba73ef4af071241e18dff65b4b860fdffe319fad95c152445d357",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "ProcurementView-NZs6vreX.js": "4ed3ccb13b0d2b9c9fcb9ffe597f2642a12ddb7c704e4f656c9a356f4c4b1b98",
+    "ProcurementView-OwQXo4Hy.css": "7a3f1c0b957f2cd6b4127b6a6f89ad673225226af4261d3da461efae9851da17",
+    "RecoveryView-SSY0bC9h.js": "89b3557f9d195553d1e57758b10a9df5ade5ce1332507398097fdb49a4d8c553",
+    "ReportsView-DSpXBWuP.js": "aa61ae6a3f7a7f16d4654b0580bdf648d3d154020efbdb10bd21bad9e342e8bb",
+    "RequestsView-CQLZ2zVt.js": "eaa5071591db8cfc409dcadf3a3627884a15c420c234af83c9388431596cabb9",
+    "RouteAttempts-BiZpLfkV.css": "287e44ef3518101fe535b9bf15a062ef4cc3b95a86cfb4ae311c32a316dd42a2",
+    "RouteAttempts-BkGkrC5m.js": "80f4718223cc926ce884dd25a744e77dc2776419aca64368e0a71d70f1639d74",
+    "SecurityView-Bf8AM9uq.js": "143eafbc5ff083668ceafa189e4d3095290d7f318e8f6a24fe5c86d1d799c3e7",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "WalletView-DZVHMq-_.js": "cd141cf459f30eeed73a4c12455182f5bc4b90b2e3aee08b357e483e3e4d4ec6",
+    "_plugin-vue_export-helper-DlAUqK2U.js": "cb85b0f263dbe24e857338301c0627076592e9f1f1a5662929f86d2c126444aa",
+    "credential-pool-BG3qebJJ.js": "6ef9540bcd1f136e1e40d9bd2ae926445a9f4cc7a5f3d12f89e478f406c87ab5",
+    "elements-DmDn0__c.js": "1a2b9d0d6e16b6d3d848a624cd48140d62f3d2801e1cbbd53053293b2732afc1",
+    "index-0pPivQ3D.css": "144d9054130f1e871521207137f4ef98df04e1c0b1b13ec06799fb45dc867ec6",
+    "index-DMWSWRXi.js": "c8682acff4dbe970ca7a112360801ad661c085a5dfb6cbde41db10b46d7a9aca",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "key-access-policy-BbZIp60O.js": "7fb602a253c6811819873a911b8eab5bfd6ac719a395f79ba3f011fd2524ee5d",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "migration_014": true,
+      "cost_caps_read": true,
+      "migration_count": 14,
+      "owns_route_table": false,
+      "procurement_read": true
+    },
+    "projection": {
+      "superuser": false,
+      "cost_caps_read": false,
+      "procurement_read": false
+    }
+  }
+}

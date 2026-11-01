@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "migration": "013_cost_aware_routing.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "Revalidated PID 7168, workspace cwd and listener; SIGTERM exited 0 and listener closed before migration.",
+  "pid": 28955,
+  "binary_sha256": "09e75d40daf32bef1231023d7bcaed01a9e87d38c543373287651ad166f27ef5",
+  "index_sha256": "f36a8c9c5078eb26b0115a8db4c64756e17d8e0baaa9ceb9b28af17d59e95463",
+  "index_exact_match": true,
+  "assets_exact_match_count": 29,
+  "asset_sha256": {
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "KeysView-BX2JEv8S.js": "ac9c21f969da8ab8f67eecb40ef286ae745b286828c32bc4b9b2467f72a71444",
+    "KeysView-DGB_doro.css": "d89b2663b9478837efacd2de14b5a00003e218a0d48f3c54c00d12b81da12966",
+    "LoginView-BRaeftPd.js": "a7f45b1ded6f4cffd61244bd719c016ea313baeb1e9607f98e28846426af505b",
+    "MembersView-DQDBOoGG.js": "abaff669bff9b62facc809252f499d12a1503dcb3ff1e9dca2c5394770dfa2ad",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-e9d9FhJN.js": "89e6b7a01fcbe8f615da62dfc66e77d8763b3cda5ebd380b26e64e7191eb2b1f",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-DtMmwtaN.js": "8b8d07b0c09ca2d30678959d5f1e503f63270d1acc9ca5d542c141a76c1112fe",
+    "OverviewView-DiwZJcXe.js": "ed6a0a099742590ed77b386491d79ea67223f45c5cb29931c56fb54156463dec",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-B7idA5Se.js": "415848042e39ce13782e739130c47c289cb45e914ad4d6a20ec51c633e856132",
+    "PlatformView-DHRdmnFq.css": "f35caeb7f2ad9f41073815150cb833c96d405eb6a03703066c312158d4a8488c",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "PlaygroundView-j-r8Kmni.js": "0d3e4f521347961e266b2ec1c6ca3c1cd04038b7ccf086cbad0f3d11a7834bfa",
+    "RecoveryView-CF_NN1_T.js": "9d94d62971aeee0f6f4e3f8f43372c4262a3c190ed8e2312937146b9c97e2808",
+    "ReportsView-DfQSURsP.js": "e614e8203d28f9d28e810576332b26271045b27f0e6442d257b551fd5f425e1c",
+    "RequestsView-AHSbWiYH.js": "a3abf80ea9a0d13b916d2aacc8dac857d57841d7447decc56dcb4db21169bc02",
+    "RouteAttempts-CdSoei3g.js": "d1008362faaf9ff8873ad613bee6df9e4457d9b3d917b4794dc044dd4044e85d",
+    "RouteAttempts-DrhrORRG.css": "09bae98f8fde6452b96936a48cd452a557ba9602418c711888fa41cff4d032f1",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "SecurityView-C5a_H9lK.js": "df9da1df72002b6f1bc9e5a634a639949c33b186bca16a3ddb9654a01f36274c",
+    "WalletView-BbIDUZoP.js": "2d0fdee0ced2b3b3934b33bd702a0958f00f3c04ad929098aa91fd54e9733a2d",
+    "_plugin-vue_export-helper-DlAUqK2U.js": "cb85b0f263dbe24e857338301c0627076592e9f1f1a5662929f86d2c126444aa",
+    "elements-DmDn0__c.js": "1a2b9d0d6e16b6d3d848a624cd48140d62f3d2801e1cbbd53053293b2732afc1",
+    "index-0pPivQ3D.css": "144d9054130f1e871521207137f4ef98df04e1c0b1b13ec06799fb45dc867ec6",
+    "index-Cch4_z4w.js": "0f442e8fcf32a3931fe93fec098f629471186024566a073fd390f94430ee7108",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "key-access-policy-CshWcgGS.js": "23a305c9d848981b1a90e89a28e71f46471bf102062544b050ba7df1eaca6de1",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "migration_013": true,
+      "cost_caps_read": true,
+      "migration_count": 13,
+      "cost_policy_read": true,
+      "owns_route_table": false
+    },
+    "projection": {
+      "superuser": false,
+      "cost_caps_read": false,
+      "cost_policy_read": false
+    }
+  },
+  "browser_login_page": "127.0.0.1 login rendered; warn/error empty; no account operation"
+}

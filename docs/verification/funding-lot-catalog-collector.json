@@ -1,0 +1,193 @@
+{
+  "scope": "022-C0 formal leaf collector and immutable expected loading; not runtime permit or money acceptance",
+  "date": "2026-11-02",
+  "status": "specialized_checks_and_revised_sandbox_public_api_race_passed_root_final_whole_race_pending",
+  "checks": [
+    {
+      "name": "10 pure collector boundaries including embedded roots",
+      "command": "go test -race ./internal/fundinglotcatalog -run 'TestCatalog(StrictJSON|ClosedReference|ScalarContracts|Templates|Budgets|CanonicalIdentity|StaticQueries|ExpectedEnvelope|OwnershipDependency|EmbeddedExpected)' -count=1",
+      "result": "passed",
+      "package_seconds": 11.815
+    },
+    {
+      "name": "real PostgreSQL raw rejection before any deparser",
+      "command": "C0_CATALOG_DATABASE_URL=<dedicated-local-test-database> go test -race ./internal/fundinglotcatalog -run '^TestCatalogRawPreflightRejectsBeforeDeparse$' -count=1",
+      "result": "passed",
+      "package_seconds": 6.226
+    },
+    {
+      "name": "vet",
+      "command": "go vet ./internal/fundinglotcatalog",
+      "result": "passed"
+    },
+    {
+      "name": "static category bounds and trusted PostgreSQL JSONB decoder",
+      "command": "go test -race ./internal/fundinglotcatalog -run 'TestCatalog(StaticCategoryBounds|PGJSONRuntimeBounds|StaticJSONBObjectKeys|EmbeddedExpected)' -count=1",
+      "result": "passed",
+      "package_seconds": 11.55
+    },
+    {
+      "name": "Sandbox public APIs, diagnostic and optimization ownership guards",
+      "command": "C0_CATALOG_DATABASE_URL=<dedicated-local-test-database> C0_CATALOG_PEER_TIMINGS=1 go test -race ./internal/fundinglotcatalog -run '^(TestCatalogPeerPublicAPIs|TestCatalogPeerReadTimings|TestCatalogExpectedCategoryInterningUsesCompleteContent|TestCatalogNormalizedMultisetReusesIdentityWithoutHidingAliases|TestCatalogOwnedNormalizationPreservesBorrowedSymbolsAndLiteralBytes)$' -count=1 -v",
+      "result": "passed",
+      "package_seconds": 47.674,
+      "public_api_scenarios_total_seconds_including_fixture": 23.95,
+      "public_api_common_deadline_seconds_unchanged": 5,
+      "diagnostic_only": {
+        "metadata_total_seconds": 4.614,
+        "query_rows_close_seconds": 2.984,
+        "normalization_comparison_seconds": 1.63,
+        "dependencies_seconds": 0.425,
+        "effective_privileges_seconds": 1.011
+      }
+    },
+    {
+      "name": "Revised public complete closed comparison and explicit privilege vectors",
+      "command": "C0_CATALOG_DATABASE_URL=<dedicated-local-test-database> C0_CATALOG_PEER_TIMINGS=1 go test -race ./internal/fundinglotcatalog -run '^(TestCatalogPeerPublicAPIs|TestCatalogPeerReadTimings|TestCatalogCompleteComparisonRejectsMalformedActualAgainstClosedExpected)$' -count=1 -v",
+      "result": "passed",
+      "package_seconds": 46.436,
+      "public_api_scenarios_total_seconds_including_fixture": 22.54,
+      "public_api_common_deadline_seconds_unchanged": 5,
+      "diagnostic_only": {
+        "metadata_total_seconds": 4.233,
+        "query_rows_close_seconds": 2.941,
+        "normalization_comparison_seconds": 1.292,
+        "dependencies_seconds": 0.407,
+        "effective_privileges_seconds": 0.991
+      }
+    },
+    {
+      "name": "final_root_leaf_race",
+      "status": "PASS",
+      "seconds": 217.14,
+      "top_level_tests": 47,
+      "terminal_scenarios": 179,
+      "passed": 176,
+      "skipped_opt_in": 3,
+      "failures": 0,
+      "log_sha256": "635d4562cedafbd01b685d6a28f813b078c2d2748eefb24b934daab2dc526056",
+      "record": "docs/verification/funding-lot-catalog.json",
+      "issuing_budget_seconds": 5
+    }
+  ],
+  "limits": {
+    "global_catalog_rows": 100000,
+    "global_raw_plus_emitted_bytes": 67108864,
+    "single_emitted_record_bytes": 65536,
+    "single_raw_text_bytes": 65536,
+    "attribute_and_relation_child_limit": 1600,
+    "function_argument_limit": 100,
+    "raw_acl_cardinality": 256,
+    "acl_child_input_limit_plus_one": 257,
+    "other_child_input_limit_plus_one": 1601,
+    "runtime_json_nodes": 1000000,
+    "static_expected_json_nodes": 4000000,
+    "json_depth": 64,
+    "issuer_common_deadline_seconds": 5,
+    "per_category": "fixed authenticated expected max+1, reject overflow before Scan; dependency raw multiplicity separately bounds normalized distinct"
+  },
+  "profile_portability": {
+    "postgres_major": 16,
+    "reviewed_server_version": "16.15",
+    "not_proven": "arbitrary PG16 clusters, production/1Panel deployment, alternate locale/collation profiles",
+    "specific_builtin": "plpgsql language OID 14038 is initdb profile specific; unknown profiles fail closed"
+  },
+  "builtin_registry": {
+    "types": 19,
+    "objects": 31,
+    "peer_extra_objects": 0,
+    "peer_extra_types": 0,
+    "fixed_extraction_sources": {
+      ".local/c0-descriptor-candidates/qa-one-c8dec693633e6e5d3e6bf49995a7d0df/c0-schema.json": "dbacb259fcb1d9f1e222203ad7e090d6d7a5e4e1cce2311c94650756318683c0",
+      ".local/c0-descriptor-candidates/qa-one-c8dec693633e6e5d3e6bf49995a7d0df/c0-roles-ordinary.json": "46bd077f1071dc9d6be4b61028826ccc87c3602758497ca2b2a85bbd1cf12887",
+      ".local/c0-descriptor-candidates/qa-one-c8dec693633e6e5d3e6bf49995a7d0df/c0-roles-sandbox.json": "f4566cbb3f8a24060aaeda25eaac9798c0c26dfd6fb68f6d1741f31e142470a0"
+    }
+  },
+  "source_sha256": {
+    "internal/fundinglotcatalog/canonical.go": "700faa1a08abd07a3ac002bf1e516ad15c3fac924e547807c0393438aa3b2918",
+    "internal/fundinglotcatalog/collector.go": "34f8a4b3a9662eecc05318fe91ec126c698fd6c425751ef81bb8b8871ca30514",
+    "internal/fundinglotcatalog/collector_bounds.go": "045a9aafa75d1dc70a509ed469b8b1e2d99f806e51fa6a203bf2bbfe0216eeaa",
+    "internal/fundinglotcatalog/collector_bounds_test.go": "f48a8bbf9c00c19ec3de24cb6f3ad870009fb00d0f9de63349dc509d4e203e73",
+    "internal/fundinglotcatalog/collector_builtins.go": "3b97bde1c4984b0d2bdde05cbd4f1da90dc0bd541ede731d41213a33e6f6d98a",
+    "internal/fundinglotcatalog/collector_decode.go": "44944fc5982882a2e1d946ae3044cb4bb2f6b487833b46f28e81b28902e07e45",
+    "internal/fundinglotcatalog/collector_normal.go": "480e9f0c742e45e7f4754eaaa711e25d67ce51e58e528f936592694b7d90a4dd",
+    "internal/fundinglotcatalog/collector_preflight.go": "0944c34525fc0ba0b809afa434cefd33b28bdaf7fc65930e4f7c94d08d819aa4",
+    "internal/fundinglotcatalog/collector_preflight_test.go": "850026d595e77e1711f67c4215dc86679cd16e617ba205a1e14f07c0614720c5",
+    "internal/fundinglotcatalog/collector_privilege_plan_test.go": "196533d1c572f38b9ff07641536d547e2aa60e20c3f5efb73e9f3efecf3276fb",
+    "internal/fundinglotcatalog/collector_pure_test.go": "b08ba1b41fa02a69a40d5248be7930cbd76afc2df8b5b5cf627731255a8d2dc8",
+    "internal/fundinglotcatalog/collector_queries.go": "56d638a30be057961c95022715c96422b1f35469a86b09c02d15627c6bbfcc2b",
+    "internal/fundinglotcatalog/collector_query_plan_test.go": "dd2ae876dedeaafe26241787a22c9208cb51296efac9c6e571eed73ddb9e2393",
+    "internal/fundinglotcatalog/collector_resolve.go": "e63f58d66173bc78055112aa0a27537ab3ff96c111486e8cd8c610c20ed6308f",
+    "internal/fundinglotcatalog/descriptor.go": "819c8535a8b7f5dd3b61a207d5fe6153ae0fac2d72c190b99c7011514c787d81",
+    "internal/fundinglotcatalog/descriptor_compare.go": "e45a784313b60e6a5a4052c8b08581b0ec1d218b358f2671d9fc3601ce726733",
+    "internal/fundinglotcatalog/descriptor_compare_test.go": "a87f12055b883fd70223af18867d80cfa18a037b42b4467f4dacdf9f3bd6cdc4",
+    "internal/fundinglotcatalog/descriptor_fields.go": "825c5ed7eabcbaf7c28d3f05b4bac0997cb42d07ef06c62a9245eef963107302",
+    "internal/fundinglotcatalog/descriptor_types.go": "12bcb2bba6f2056b3f7d44aa3c81ba650e895794c26819dae04233ccdfb42742",
+    "internal/fundinglotcatalog/descriptor_validate.go": "da55c6af38fb2adac9133c45c136f4e6528107df257734ec9554af6c18e1fc79",
+    "internal/fundinglotcatalog/expected.go": "a0b4eaf07f67058c5e922cd467969750bae8c34f18ecf97baf7407b382b8efc4",
+    "internal/fundinglotcatalog/expected_embedded.go": "b3b6f313e666003725ddd2cd002d7ace766285f06e82ff677f3a84684302ee99"
+  },
+  "expected_sha256": {
+    "ordinary": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+    "sandbox": "a3a7f855a5ac58ee583dce071c02707499c2a9e3d4bd2ec8b7b1b60228d55c4f"
+  },
+  "dependency_semijoin_rewrite": {
+    "command": "C0_CATALOG_DATABASE_URL=<dedicated-local-test-database> go test ./internal/fundinglotcatalog -run '^TestCatalogDependencySemijoinsPreserveRowsAndPlan$' -count=1 -v",
+    "result": "passed",
+    "package_seconds": 5.83,
+    "same_caller_repeatable_read": true,
+    "full_raw_multiset_canonical_bytes_equal": true,
+    "expected_named_raw_rows": 6860,
+    "expected_named_distinct_records": 6848,
+    "original": {
+      "query_sha256": "071f00f95ef04f76eb3511767ceb8c366e6b43f0bc5a26eb03ae5b2b91686eec",
+      "explain_analyze_execution_ms": 1407.933,
+      "hashed_subplan": false
+    },
+    "proposed": {
+      "query_sha256": "53053d9ecff7fa2c17df5f54142a61d4749a7364ac855b545b4bafeac9e56e02",
+      "explain_analyze_execution_ms": 29.828,
+      "hashed_subplan": true
+    },
+    "not_a_public_api_budget_test": true
+  },
+  "verification_interruptions": [
+    {
+      "kind": "compile_failed_tests_not_started",
+      "reason": "no space left on device while writing temporary Go archive",
+      "recovery": "removed 1283 MiB of confirmed task-generated obsolete package cache and two temporary profile test binaries; kept source, CPU profiles, raw logs, candidate and embedded roots",
+      "same_target_retry": "passed"
+    }
+  ],
+  "privilege_array_rewrite": {
+    "command": "C0_CATALOG_DATABASE_URL=<dedicated-local-test-database> go test ./internal/fundinglotcatalog -run '^TestCatalogPrivilegeArraysPreserveFullPeerVectors$' -count=1 -v",
+    "result": "passed",
+    "package_seconds": 3.961,
+    "same_caller_repeatable_read": true,
+    "all_table_column_function_type_schema_bits_and_grant_options_preserved": true,
+    "function_and_privilege_order_unchanged": true,
+    "legacy_query_sha256": "73c8be20799eb12fc964007260f90ab0ef296d4067ef518c654a42d648d60807",
+    "explicit_query_sha256": "900316f1195cc68a8f3d51bcbb288a6da9100ed59576e1c85a05767f8bc77142",
+    "scopes": {
+      "application": {
+        "raw_rows": 13760,
+        "legacy_execution_ms": 56.061,
+        "explicit_execution_ms": 47.97,
+        "legacy_and_explicit_canonical_rows_sha256": "14d20c8665761c810e999f64b05b1893b0a2403276d3972b268c98f4012c0c7a"
+      },
+      "mock": {
+        "raw_rows": 1768,
+        "legacy_execution_ms": 11.036,
+        "explicit_execution_ms": 11.808,
+        "legacy_and_explicit_canonical_rows_sha256": "fc9a3ba474faf47c0673b2aec6c9e49cb1eb05f45b1808e88d2bbf61d4e71361"
+      },
+      "receiver": {
+        "raw_rows": 568,
+        "legacy_execution_ms": 8.528,
+        "explicit_execution_ms": 7.009,
+        "legacy_and_explicit_canonical_rows_sha256": "a7b1c75942368edef1a737e2ef1b9605716706928605ab3fe62fee7b3f9b6267"
+      }
+    },
+    "random_oid_row_digests_only_compare_within_same_transaction": true
+  }
+}

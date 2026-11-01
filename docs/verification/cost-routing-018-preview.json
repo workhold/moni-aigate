@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "migration": "013_cost_aware_routing.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "Revalidated PID 28955, workspace cwd and listener; SIGTERM exited 0 and listener closed before final artifact restart.",
+  "pid": 39966,
+  "binary_sha256": "f265da8aa330b0221ff8e0531565eb4c31fbe56bc6eea9135aa298adf7eb503a",
+  "index_sha256": "76b9dc721a812fbcbca7d159b11b99e19913c8b7d6e29b177ad3e2da5ce838dd",
+  "index_exact_match": true,
+  "assets_exact_match_count": 29,
+  "asset_sha256": {
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "KeysView-C_qwTejj.js": "18fc7821455f19dda966765b641ed3928be982ebd90fc030c12699c70ecfd989",
+    "KeysView-DGB_doro.css": "d89b2663b9478837efacd2de14b5a00003e218a0d48f3c54c00d12b81da12966",
+    "LoginView-4cgstEzA.js": "9435ec4d3d270e6b5c812d6a7873044498607342d9d16689e0b4b2ee68fd42a9",
+    "MembersView-B4MbTwDZ.js": "84daee1a238445f11e14ca35913c0f3eaa0cde9029157d043dc4a22807e9a001",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-DHGy9Vtn.js": "4ab0a78805521310fec437ddfa54c689c01426d34c016432b019bebe0024ad3b",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-s1ftq3PN.js": "5168058ff20de02ac03d5ef62bb93b7391ff50c07af32c7a05809f478d43de02",
+    "OverviewView-C-YZj8bL.js": "d13e163a63fcc8fa0f0f9d76c9825f62196c93733b785ad99ac77eb57a7135b3",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-CclZ7Ny4.js": "99903dc93b1c8c8d3e96d4c7d72f4e922466688d7f90b1f82bc689e32b83a75a",
+    "PlatformView-DHRdmnFq.css": "f35caeb7f2ad9f41073815150cb833c96d405eb6a03703066c312158d4a8488c",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "PlaygroundView-HY68y6u8.js": "0946704fdb825d687270e0eafb68acb005f5647209529cda321f36fefc2b00d3",
+    "RecoveryView-5Hbdr7HW.js": "2616a16f8ab96a5985da3c6b35caa3d97e88321367d493fbf220175143317132",
+    "ReportsView-DPUD4MQi.js": "afc093e3f7ebbc28f6cb6000153500d0b24d2e385eaef70bd044c80dd134fc59",
+    "RequestsView-lbWozQL-.js": "d4233390f81acfc450a343c6ecf2363ca9b76ac595f8bc7d862f1ed23a9fb579",
+    "RouteAttempts-DrhrORRG.css": "09bae98f8fde6452b96936a48cd452a557ba9602418c711888fa41cff4d032f1",
+    "RouteAttempts-yTpmwC7Z.js": "0287e37763a0b2a7ea21ca699367decf67b74d26e32319318db69805c5ef5f1f",
+    "SecurityView-BUXCBWOH.js": "b8256b1b909a5e4030d704ec518910ea23caf604014404db966a8900cac1b7c6",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "WalletView-BhLdUamb.js": "b16e40fa54a6aac81b56b03d50fb9110b91331840d9c73c938f630eec32a2371",
+    "_plugin-vue_export-helper-DlAUqK2U.js": "cb85b0f263dbe24e857338301c0627076592e9f1f1a5662929f86d2c126444aa",
+    "elements-DmDn0__c.js": "1a2b9d0d6e16b6d3d848a624cd48140d62f3d2801e1cbbd53053293b2732afc1",
+    "index-0pPivQ3D.css": "144d9054130f1e871521207137f4ef98df04e1c0b1b13ec06799fb45dc867ec6",
+    "index-CQwHtgKE.js": "ff8241a72d5d72104bb889a0cc199bffa377d556c3da574234e661f387198a85",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "key-access-policy-DZWiKYLt.js": "43455f54bef2f500f1bf826c0a201a79699a6ede22b2809abfe2427b02085cb2",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "migration_013": true,
+      "cost_caps_read": true,
+      "migration_count": 13,
+      "cost_policy_read": true,
+      "owns_route_table": false
+    },
+    "projection": {
+      "superuser": false,
+      "cost_caps_read": false,
+      "cost_policy_read": false
+    }
+  },
+  "browser_login_page": "127.0.0.1 login rendered from final artifact; warn/error empty; no account operation"
+}

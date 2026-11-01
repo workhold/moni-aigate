@@ -1,0 +1,122 @@
+{
+  "recorded_at": "2026-11-02",
+  "slice": "022-C0-T0 dedicated maintenance Gate only",
+  "contract": "specs/022-self-service-payments/c0-permit-contract.md#10",
+  "status": "PASS within isolated local test scope",
+  "production_api": [
+    "Acquire",
+    "Gate.Close"
+  ],
+  "new_package": "internal/maintenancetrust",
+  "production_dependencies": [
+    "standard library",
+    "github.com/jackc/pgx/v5",
+    "internal/fundinglotcatalog.Pins only"
+  ],
+  "source_files": [
+    {
+      "path": "internal/maintenancetrust/gate.go",
+      "sha256": "89230302f01bced160a8000e2885f7abc7bbd78f56fb475579cc60f63abee6bd"
+    },
+    {
+      "path": "internal/maintenancetrust/gate_integration_test.go",
+      "sha256": "243a11a09851781268ba5578a1a0412993ff1b828b68c966a7dd1109fb9f3e6a"
+    },
+    {
+      "path": "internal/maintenancetrust/gate_test.go",
+      "sha256": "014d7323ff0d9f5f0243ca600367e3e952cc92fee3dcaa5d7012bfabbbd0eb0a"
+    },
+    {
+      "path": "internal/maintenancetrust/identity.go",
+      "sha256": "20567bab4adb61eb99456d4de44a40f6b3d1b2d1e2068cfad30a63c71eeb8df4"
+    }
+  ],
+  "final_command": {
+    "command": "go test -json -race ./internal/maintenancetrust -count=1 -timeout=150s",
+    "opt_in_environment": "C0_MAINTENANCE_DATABASE_URL (value intentionally omitted)",
+    "exit_code": 0,
+    "package_elapsed_seconds": 54.205,
+    "top_level_tests": 17,
+    "test_terminal_outcomes": {
+      "pass": 53,
+      "fail": 0,
+      "skip": 0
+    },
+    "log_path": ".local/c0-maintenance-verification/final-race-source-pinned.jsonl",
+    "log_sha256": "158f1e90a906c218a44bf7a26bdc848b1e1baf12beecc96447754d70c6c2faff"
+  },
+  "vet": {
+    "command": "go vet ./internal/maintenancetrust",
+    "exit_code": 0
+  },
+  "environment": {
+    "postgres_major": 16,
+    "literal_local_test_endpoint": "127.0.0.1:55439/moni_test",
+    "test_config_login": "moni_test",
+    "credentials_logged_or_committed": false,
+    "runtime_preview_58123_touched": false,
+    "model_or_psp_network_calls": 0
+  },
+  "tested_invariants": [
+    "new dedicated actual LOGIN and actual backend PID/start",
+    "402 then 401; each successful key acquired once; exact same-session/database lock metadata",
+    "second lock false waits 50ms; first lock independently visible; no partial Gate returned",
+    "parent deadline, explicit cancellation, original actual 30-second entrance budget",
+    "reverse 401 then 402 unlock; explicit true and final no advisory locks",
+    "nil/cancelled Close uses independent original actual 5-second total cleanup budget",
+    "extra/lost/shared/two-int advisory lock and nonidle transaction fail closed",
+    "copied/zero/busy/idempotent lifecycle and fixed redacted/error encoding",
+    "config fallback and Pins structure preflight input rejection",
+    "actual DB/schema/namespace-owner name/OID, LOGIN mapping, current_schema and socket endpoint negatives",
+    "ordinary DNS, non-owner LOGIN Gate-only boundary and public effective target owner name/OID",
+    "pgx async CancelRequest socket registry concurrent seal and late-dial closure; pure peers must yield EOF",
+    "every fixture exact created schema/role/session cleanup; public owner/ACL/relations and DB ACL unchanged"
+  ],
+  "unknown_faults": {
+    "test_only_transport": "cfg.DialFunc wraps original real TCP socket and forwards original RemoteAddr; fixed simple-protocol Q/response barriers; no endpoint proxy",
+    "lock_401_reply_loss": "independent actual PID/backend_start pg_locks proves both keys granted before wrapper drops only the driver reply",
+    "unlock_401_reply_loss": "independent actual PID/backend_start pg_locks proves 401 absent and 402 present before wrapper drops only driver reply",
+    "fixture_closes_original_socket_to_pass": false,
+    "production_forces_raw_socket_close_before_pgx_cleanup": true,
+    "backend_and_locks_disappearance_observed_before_fixture_cleanup": true,
+    "unknown_lock_or_unlock_retried_or_compensated": false
+  },
+  "independent_post_run_read_audit": {
+    "schemas": 0,
+    "roles": 0,
+    "backends": 0,
+    "advisory_locks": 0,
+    "public_builtin_owner": true,
+    "public_relations": 0,
+    "database_acl_null": true
+  },
+  "review": {
+    "independent_read_review": "descriptor_integration_review; socket registry race found and fixed, final public/transport review passed",
+    "architecture_refresh_by_this_slice": false,
+    "whole_repository_checks": "root integrator owns after all concurrent changes"
+  },
+  "not_implemented_or_claimed": [
+    "Snapshot",
+    "Permit",
+    "top-level RR/125-table locks",
+    "maintenance authority",
+    "v1 predecessor verification",
+    "full source/lot scanner",
+    "epoch/init/RuntimeProof",
+    "main/CLI/HTTP wiring",
+    "financial or network permission",
+    "production acceptance"
+  ],
+  "earlier_runs": [
+    {
+      "scope": "initial acquisition and both real reply-loss faults",
+      "race_elapsed_seconds": 19.647,
+      "exit_code": 0
+    },
+    {
+      "scope": "full prior source before public-owner and cleanup-audit additions",
+      "race_elapsed_seconds": 54.705,
+      "exit_code": 0
+    }
+  ]
+}

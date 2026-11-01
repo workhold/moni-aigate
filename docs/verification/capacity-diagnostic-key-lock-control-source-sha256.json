@@ -1,0 +1,6 @@
+{
+  "internal/billing/evidence.go": "e18095f852832c60577e7b08c036332a76411a6518d026be794d056dc53fa728",
+  "internal/operations/instance.go": "310dc135a4d9010929a837086db70865861ed77993fdc5143a56eb40b03b938f",
+  "internal/billing/reserve.go": "41b1fa03953b3dddc3b872e1669397c9f045f1f409a63ee54f21588e026878de",
+  "internal/server/capacity_test.go": "6580684e41d5c1de8e814ff4b6790d237ae5ff470f01ab69154920a35271d1b9"
+}

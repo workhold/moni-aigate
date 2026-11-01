@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-01",
+  "origin": "http://127.0.0.1:58123",
+  "ready": {
+    "recovery_mode": false,
+    "status": "ready"
+  },
+  "identity_capabilities": {
+    "email_delivery_configured": false,
+    "registration": {
+      "available": false,
+      "reason": "feature_disabled"
+    },
+    "password_reset": {
+      "available": false,
+      "reason": "mail_not_configured"
+    }
+  },
+  "migration": "017_funding_vouchers.sql",
+  "migration_owner_and_provision": "pass",
+  "restricted_serve_verify": "pass (startup successful)",
+  "previous_preview_process": "Revalidated PID 4350, workspace cwd and listener; SIGTERM exited 0 and listener closed before final artifact restart.",
+  "pid": 36238,
+  "binary_sha256": "ef012655a667f662f865731ab69ba3948e24d45e493ce7c58e541fd4e7b19801",
+  "index_sha256": "0abba6ec0a95579e61a6feabc6a4d9d31245a24f79bcb5c73b62905650f32653",
+  "index_exact_match": true,
+  "assets_exact_match_count": 45,
+  "asset_sha256": {
+    "CommerceCommands-DgLob6TF.js": "dc153eb1ed9c896286dab3cea2e4c2a468341a56241c6606d69156bb16a811f1",
+    "CommerceCommands-ttWRjO9C.css": "a4ba66a093e6bc15064e44d22fef25bdb0dcbb04e8510e02b5d16a9c08934d2c",
+    "ErrorNotice.vue_vue_type_script_setup_true_lang-Xb-ipRWz.js": "6ee85c317b5be23e6d9a43dfc8eb27ea6539df9ce0c29a97fb063ffa91d65f7e",
+    "IdentityCompleteView-D2xYc5mn.js": "3fdc6be16b0bd05c5bf65020e5aae835a28efc8114fae92dd4839d603dcf5a86",
+    "IdentityRequestView-CBP93lg2.js": "0e391817a4c29161152722dbf2a0e35daed707c6d9140655e47aa8ee18d1f2b6",
+    "KeysView-BY8iNUWJ.js": "b880f0b6916ce6636ce321e0005b791e4118d4824e7849457c5a96aa4489c4c7",
+    "KeysView-DGB_doro.css": "d89b2663b9478837efacd2de14b5a00003e218a0d48f3c54c00d12b81da12966",
+    "LoginView-D8ZZmLh5.js": "6a2f55eb784d45977f0e93410e8c66d4651667f45e4116ab9555dcd0a0536d24",
+    "LoginView-eLJQw0oC.css": "2b1c5c89d6ff89031ba7881d2877da9072288a75d3f8e4371254c8db76b6ab9a",
+    "MembersView-zILSQbbs.js": "dd1238a2a98b70be2d0c5fd1a7a53d88e3be2bbebeb28366ae88c73a37543439",
+    "MetricMoney.vue_vue_type_script_setup_true_lang-Cx_XqtVK.js": "774f28e1a78bbfca586aa9b551ba8fc89bdc07c4c6d313340e43cc3c3c403c54",
+    "ModelsView-BXeTIhOA.css": "5174887a43a0e5922aa1c6fdbcceea289a201f4aec30a25ff947debb06fce6cb",
+    "ModelsView-Crm2Ac3d.js": "7cc5bc348a4dd49d3707ace8578a9e5b4ce2d0c8dc11b8d3410529ab3bf37ee8",
+    "OverviewView-Dirg4fMF.js": "e1a6c7909593437a6f5c5e0f438b3fc21d9ce78d3a3e48d34618f37508215e84",
+    "PageHeader.vue_vue_type_script_setup_true_lang-B5UUmoT1.js": "fb5a50d1137c28eb841a221216a5ce128397bd7820fa8ec4c3bb838a7507a7e8",
+    "PlatformView-3EXijhed.css": "7d2bdd9f81c26e62fb8ba441034d4c2c21050bb773639d03a3adda9221bc49c0",
+    "PlatformView-CBQU5MYJ.js": "22539e00e167eae95e70d5b2399c84a71bdcf034ac1df196f09433263d7e417d",
+    "PlaygroundView-CNT_838l.css": "1f0c99a6171ae19c5d8df3bc10ab3e324ae90a5bae7566b3cb62a8f01a059789",
+    "PlaygroundView-CiHwoT_Q.js": "560eb7d27f76fe59cf2f4879647dacc677f23a53840107cf79188fb986ce6588",
+    "PricingView-BiGgSK20.js": "ccdfb39cd0d7e659630acee071904e1f678b211de603d076ff126a87f2e73d24",
+    "PricingView-D7_4oVEi.css": "4bf2ce148dc0f1d33c04b0a50e438c6b8462750d5b81b70d0d43cf6131c7e6ee",
+    "ProcurementView-CK6t-NVB.js": "6f068e6505365693d7d5929e1491c507a4eec0daa2e52fc0e8dc7aeed8547124",
+    "ProcurementView-OwQXo4Hy.css": "7a3f1c0b957f2cd6b4127b6a6f89ad673225226af4261d3da461efae9851da17",
+    "RecoveryView-W-dI_kxI.js": "8b0097edec5a42926cf2c86e131164813c66592df53ec0c6f64a57f95e687799",
+    "ReportsView-DgF2s1ms.js": "ebd26aef66689e737d2a1ff3e1e422630c085f64e2cb7ec3b1d176765da563f2",
+    "RequestsView-IdxQ46rw.js": "44dfcd482ba7b515f449a71de78280771cdd3919cdbf7dfdd37536010fb1b9b9",
+    "RouteAttempts-BiZpLfkV.css": "287e44ef3518101fe535b9bf15a062ef4cc3b95a86cfb4ae311c32a316dd42a2",
+    "RouteAttempts-YMslwP_6.js": "2f2e9764f894a66d25dccf291b264afabe2da79ee1ed7b22165c0cf31b286e70",
+    "SecurityView-AOOdaW4k.js": "a9c624a25ee990da68a85c1e7f6fe53c820b4bc804f5dba59766c49b552cd9aa",
+    "SecurityView-BmT_mhJy.css": "1640045aa94b012aef7b18c44fc3df53115af43348b89d87cc3868406d7f892e",
+    "VouchersView-C-rSDbHR.css": "c0fdd554e9cc74b5b637acc5d97b294278c215ac47324e44c4d12b679b5097cf",
+    "VouchersView-uNMG5eHg.js": "7fe56ae3a001ed669314ab94809fdc5ffece227dcf5348bf2457907fe806f6ec",
+    "WalletView-6Af5CZwB.css": "f542e10a6a934cb8ee684d05e30a5b3f35589e7fee6e67a27ab834904e14ac71",
+    "WalletView-DO23boea.js": "995894d3830f6a9280135f03f4c8bfdd654f847ea30984b5d18901c8b0cca4a9",
+    "credential-pool-BG3qebJJ.js": "6ef9540bcd1f136e1e40d9bd2ae926445a9f4cc7a5f3d12f89e478f406c87ab5",
+    "elements-mufc-W6E.js": "de8804d6bfe89bd216f609825e7186f419098b0cc51663494d7496e0ce788dbc",
+    "identity-public-MOtzYcaF.js": "2966b6bb7c09b5598fd10215bea5048fff895f64342e72c90e5d116d427dd9f9",
+    "identity-public-state-CEMeDPRb.css": "d1124b35a5272ecbefda174eaa7368ac1b79e4a24111db0c5f67039699bf6fdf",
+    "identity-public-state-DC34jChc.js": "44465f5cba854db379f5ef094ef7e4ad57b4f8c9d6254cbfc7fa5b51123d8ecf",
+    "index-CqipHDa3.js": "52a3024ec69f0451044af2fa8ab849d8ffad23bff3c76691ec061a85a5eb5d70",
+    "index-DTvt1dMD.css": "db6ebe22e2d7aaf1f7f8b8ecd5e5c9bec5b2cf36522ac1ba1a4ff5c0366140ba",
+    "inference-CzWM9b8d.js": "16ff7b8f71dfd0840b699e21498d7b8f7cb34cce63de258986fe97257e2afee8",
+    "key-access-policy-EguWL407.js": "be944c68f80e0c17bb9c026d46517ecc5bb9645c08916e0cbd49c238e05bb805",
+    "public-catalog-state-CtqIZOJV.js": "f85886a860954fbc685c3c7d0022af8fcc993c4f58dbcbda51fe278018a988a0",
+    "vue-Bh6as168.js": "d41b3098a52682e2c08da9f262741752fb6d85ddd717ad46e257df60dcaf5426"
+  },
+  "actual_database_permissions": {
+    "app": {
+      "superuser": false,
+      "funding_read": true,
+      "voucher_read": true,
+      "identity_read": true,
+      "migration_017": true,
+      "cost_caps_read": true,
+      "migration_count": 17,
+      "owns_route_table": false,
+      "procurement_read": true,
+      "publication_read": true,
+      "voucher_policy_enabled": false,
+      "identity_payload_update": true,
+      "identity_subject_insert": true
+    },
+    "projection": {
+      "superuser": false,
+      "funding_read": false,
+      "identity_read": false,
+      "cost_caps_read": false,
+      "procurement_read": false,
+      "publication_read": false
+    }
+  }
+}

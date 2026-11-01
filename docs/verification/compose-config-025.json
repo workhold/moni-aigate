@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-01",
+  "scope": "025-A0 static Compose identity and SMTP passthrough",
+  "pass": true,
+  "yaml_parse": "PASS",
+  "closed_environment_declaration_count": 9,
+  "default_and_synthetic_explicit_override": "PASS for reviewed literal declarations only",
+  "migration_and_provision_smtp_isolation": "PASS",
+  "payment_manifest_not_forwarded": "PASS",
+  "existing_role_port_drain_rootfs_boundaries": "PASS",
+  "docker_compose_config": "NOT RUN: installed Docker CLI has no compose subcommand",
+  "docker_build_and_container_start": "NOT RUN",
+  "onepanel_and_real_smtp": "NOT RUN",
+  "user_env_or_secrets_read": false
+}

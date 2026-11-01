@@ -1,0 +1,46 @@
+{
+  "active_service_backup_rejected": true,
+  "actual_main_process_recovery_http": {
+    "create_credit": 503,
+    "paid_api": 503
+  },
+  "backup_seconds": 0.225259625,
+  "checkpoint_at": "2026-10-30T05:45:30.285624Z",
+  "checkpoint_wallet": {
+    "tenant_id": "ef6d4bd9-1b3b-4aff-bfee-467440e57098",
+    "available": "875",
+    "held": "120"
+  },
+  "container_deployment_executed": false,
+  "date": "2026-10-30T05:45:32Z",
+  "effective_recovery_mode": true,
+  "env_recovery_mode": false,
+  "ledger": {
+    "balanced": true,
+    "account_mismatches": 0,
+    "unbalanced_journals": 0
+  },
+  "main_process_graceful_shutdown": true,
+  "nonempty_target_rejected": true,
+  "old_master_key_required_and_verified": true,
+  "persistent_recovery_required": true,
+  "post_snapshot_credit_excluded_micro": "100",
+  "postgresql": "16.15",
+  "recovered_point": "quiesced snapshot before deliberately omitted post-backup credit",
+  "recovery_http_status": {
+    "approve_credit": 503,
+    "approve_refund": 503,
+    "create_credit": 503,
+    "create_refund": 503,
+    "paid_api": 503,
+    "wallet_read": 200
+  },
+  "restore_to_verified_recovery_http_seconds": 1.3713521659999999,
+  "restored_wallet": {
+    "tenant_id": "ef6d4bd9-1b3b-4aff-bfee-467440e57098",
+    "available": "875",
+    "held": "120"
+  },
+  "tampered_bundle_rejected": true,
+  "writes_during_recovery_blocked": true
+}

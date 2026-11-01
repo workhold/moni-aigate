@@ -1,0 +1,143 @@
+{
+  "facts": [
+    {
+      "cost": 22,
+      "status": "succeeded",
+      "charged": 20,
+      "decisions": [
+        {
+          "reason": "selected",
+          "weight": 1,
+          "priority": 0,
+          "channel_id": "4d19e9ee-f9dd-4c08-bce0-11fb3a3b1a44",
+          "version_id": "6f042da6-ddd6-4c8a-83df-3dfafbb12c70"
+        }
+      ],
+      "cost_basis": "contract",
+      "request_id": "82e72fab-7cd3-46ab-84fe-fc5800a94e93",
+      "cost_status": "contract",
+      "billing_status": "settled",
+      "delivery_state": "completed",
+      "route_revision": 1,
+      "cost_input_rate": 2000000,
+      "cost_output_rate": 7000000,
+      "selected_channel": "Synthetic policy fixture",
+      "retail_input_rate": 2000000,
+      "retail_output_rate": 6000000
+    }
+  ],
+  "audits": [
+    {
+      "diff": {},
+      "action": "route.publish"
+    },
+    {
+      "diff": {},
+      "action": "cost.version"
+    },
+    {
+      "diff": {},
+      "action": "cost.version"
+    }
+  ],
+  "routes": [
+    {
+      "mode": "manual",
+      "unknown": "allow",
+      "bindings": [
+        {
+          "model": "qa-chat",
+          "channel": "Synthetic policy fixture",
+          "priority": 0,
+          "input_cap": null,
+          "output_cap": null
+        }
+      ],
+      "revision": 1
+    }
+  ],
+  "charged": 20,
+  "attempts": 1,
+  "credited": 1234567,
+  "key_held": 0,
+  "requests": 1,
+  "key_spent": 20,
+  "held_total": 0,
+  "known_cost": 22,
+  "settlements": 1,
+  "ledger_total": 0,
+  "finalizations": 1,
+  "unknown_costs": 0,
+  "available_total": 1234547,
+  "unbalanced_journals": 0,
+  "first_binary_sha256": "c1afec200be621090e314252c68e5176e62ae929c622e4b0dc0552217ff0d987",
+  "fixture_only": true,
+  "checks": {
+    "persistent_cas_conflict_receipt": true,
+    "explicit_new_edit": true,
+    "manual_unknown_observation": true,
+    "customer_sse_via_browser": true,
+    "procurement_spent": 22,
+    "procurement_held": 0,
+    "responsive_width": 390,
+    "console_warnings_errors": 0
+  },
+  "procurement": {
+    "account": {
+      "id": "1e939fe5-3897-4bf5-b289-8d3d2cc8fe7b",
+      "label": "Synthetic procurement browser verified",
+      "provider": "Local mock aggregator",
+      "state": "active",
+      "limit_amount": "1000001",
+      "held_amount": "0",
+      "spent_amount": "22",
+      "revision": "3",
+      "created_at": "2026-10-31T17:48:04.103943Z"
+    },
+    "reservations": [
+      {
+        "account_id": "1e939fe5-3897-4bf5-b289-8d3d2cc8fe7b",
+        "anomaly": false,
+        "attempt_id": "1868c5ad-b9c5-4427-9fbf-c68867920a4a",
+        "binding_id": "e39bf85b-7d88-4127-94bc-d715b408769a",
+        "channel_id": "4d19e9ee-f9dd-4c08-bce0-11fb3a3b1a44",
+        "created_at": "2026-10-31T17:56:34.565163Z",
+        "held_amount": "0",
+        "id": "1868c5ad-b9c5-4427-9fbf-c68867920a4a",
+        "input_bound": "128",
+        "output_bound": "16",
+        "request_id": "82e72fab-7cd3-46ab-84fe-fc5800a94e93",
+        "revision": "3",
+        "spent_amount": "22",
+        "state": "settled",
+        "tenant_id": "6bf03d89-4000-4d28-b3dd-ce40a7c22e8a",
+        "updated_at": "2026-10-31T17:56:34.574458Z",
+        "upper_amount": "368"
+      }
+    ],
+    "events": [
+      {
+        "account_id": "1e939fe5-3897-4bf5-b289-8d3d2cc8fe7b",
+        "attempt_id": "1868c5ad-b9c5-4427-9fbf-c68867920a4a",
+        "created_at": "2026-10-31T17:56:34.574591Z",
+        "event_key": "settle:1868c5ad-b9c5-4427-9fbf-c68867920a4a",
+        "evidence_ref": "40837e1a-edc4-4ea6-8dc8-de08e7dd8421",
+        "held_delta": "-368",
+        "id": "b5e31a8d-2bc8-4916-bdf2-df953cbec252",
+        "spent_delta": "22",
+        "type": "cost_confirmed"
+      },
+      {
+        "account_id": "1e939fe5-3897-4bf5-b289-8d3d2cc8fe7b",
+        "attempt_id": "1868c5ad-b9c5-4427-9fbf-c68867920a4a",
+        "created_at": "2026-10-31T17:56:34.565818Z",
+        "event_key": "reserve:1868c5ad-b9c5-4427-9fbf-c68867920a4a",
+        "evidence_ref": "",
+        "held_delta": "368",
+        "id": "d230d2ef-6c92-4577-9117-8c4041cf4e68",
+        "spent_delta": "0",
+        "type": "reserved"
+      }
+    ]
+  }
+}

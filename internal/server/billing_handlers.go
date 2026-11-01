@@ -1,0 +1,252 @@
+package server
+
+import (
+	"encoding/json"
+	"errors"
+	"github.com/gin-gonic/gin"
+	"github.com/moni-ai/moni-aigate/internal/billing"
+	"net/http"
+	"strings"
+)
+
+func billingError(c *gin.Context, s *Server, e error) bool {
+	var be *billing.Error
+	if !errors.As(e, &be) {
+		return false
+	}
+	status := http.StatusBadRequest
+	switch be.Code {
+	case "insufficient_balance", "key_budget_exceeded", "periodic_budget_exceeded":
+		status = 402
+	case "forbidden", "key_ip_forbidden":
+		status = 403
+	case "invalid_credentials", "key_invalid", "key_revoked", "invalid_key":
+		status = 401
+	case "idempotency_conflict", "request_in_progress", "request_exists", "request_finished", "already_approved", "self_approval", "refund_exceeds_charge", "revision_conflict", "route_changed", "procurement_approval_required", "procurement_inflight", "procurement_evidence_stale", "supplier_refund_evidence_required":
+		status = 409
+	case "procurement_not_found":
+		status = 404
+	case "procurement_periodic_budget_exceeded", "periodic_clock_regression", "periodic_budget_invariant", "periodic_budget_unavailable", "channel_unavailable", "profile_blocked", "no_price", "price_unavailable", "cost_quote_stale", "cost_unknown", "cost_limit_exceeded", "procurement_paused", "procurement_budget_exceeded", "procurement_binding_changed", "procurement_bound_invalid", "procurement_invariant":
+		status = 503
+	}
+	if strings.Contains(be.Code, "conflict") {
+		status = 409
+	}
+	if be.ResourceID != "" {
+		c.Header("X-Original-Request-ID", be.ResourceID)
+	}
+	s.fail(c, status, be.Code, "操作未完成，请检查权限、余额、状态及 request_id")
+	return true
+}
+func (s *Server) financialKey(c *gin.Context) bool {
+	key := c.GetHeader("Idempotency-Key")
+	if len(key) < 1 || len(key) > 200 {
+		s.fail(c, 400, "idempotency_key_required", "资金操作需要 Idempotency-Key")
+		return false
+	}
+	return true
+}
+func (s *Server) wallet(c *gin.Context) {
+	tid, ok := s.tenant(c)
+	if !ok {
+		return
+	}
+	if sessionOf(c).Tenant.Role == "member" {
+		s.fail(c, 403, "forbidden", "钱包仅对owner或账单查看员开放")
+		return
+	}
+	v, e := s.Billing.Wallet(c.Request.Context(), billing.Query{TenantID: tid})
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	totals, e := s.query(c.Request.Context(), `SELECT coalesce((SELECT sum(amount)::text FROM funding_receipts WHERE tenant_id=$1),'0') AS total_credited,coalesce((SELECT sum(charged_amount)::text FROM settlements WHERE tenant_id=$1),'0') AS total_charged,coalesce((SELECT sum(refunded_amount)::text FROM settlements WHERE tenant_id=$1),'0') AS total_refunded`, tid)
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	data := gin.H{"tenant_id": v.TenantID, "available": v.Available, "held": v.Held}
+	for k, value := range totals[0] {
+		data[k] = value
+	}
+	s.ok(c, data)
+}
+func (s *Server) journals(c *gin.Context) {
+	tid, ok := s.tenant(c)
+	if !ok {
+		return
+	}
+	if sessionOf(c).Tenant.Role == "member" {
+		s.fail(c, 403, "forbidden", "账本仅对owner或账单查看员开放")
+		return
+	}
+	s.page(c, `SELECT j.id,j.kind,j.reference,j.created_at,CASE WHEN j.kind='settled' THEN coalesce((SELECT sum(l.signed_delta)::text FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id WHERE l.journal_id=j.id AND a.kind='REVENUE'),'0') ELSE coalesce((SELECT max(abs(l.signed_delta::numeric))::text FROM journal_lines l WHERE l.journal_id=j.id),'0') END AS amount FROM journals j WHERE j.tenant_id=$1`, tid)
+}
+func requestSQL() string {
+	return `SELECT r.id,r.model_id,r.price_version_id,r.input_rate,r.output_rate,r.pricing_group_id,r.tenant_pricing_revision::text AS tenant_pricing_revision,pricing_time(r.retail_priced_at) AS retail_priced_at,CASE WHEN r.tenant_pricing_revision IS NULL THEN 'legacy' ELSE 'recorded' END AS retail_snapshot_status,m.public_name AS model_name,r.status,r.billing_status,r.created_at,s.id AS settlement_id,s.charged_amount,v.amount AS reserved_amount,f.protocol_outcome,f.transport_end_reason,f.delivery_stage,f.finish_reason,d.stage AS final_local_delivery,e.normalized_usage->>'status' AS usage_status,CASE WHEN e.normalized_usage->>'status'='confirmed_final' THEN (e.normalized_usage->>'input_tokens')::bigint ELSE NULL END AS input_tokens,CASE WHEN e.normalized_usage->>'status'='confirmed_final' THEN (e.normalized_usage->>'output_tokens')::bigint ELSE NULL END AS output_tokens FROM request_records r JOIN models m ON m.id=r.model_id JOIN reservations v ON v.request_id=r.id LEFT JOIN settlements s ON s.request_id=r.id LEFT JOIN finalization_records f ON f.id=r.latest_finalization_id LEFT JOIN metering_events e ON e.id=f.event_id LEFT JOIN LATERAL(SELECT stage FROM delivery_observations WHERE request_id=r.id ORDER BY created_at DESC LIMIT 1)d ON true`
+}
+func (s *Server) requests(c *gin.Context) {
+	tid, ok := s.tenant(c)
+	if !ok {
+		return
+	}
+	s.page(c, requestSQL()+` WHERE r.tenant_id=$1 AND ($2<>'member' OR r.owner_id=$3)`, tid, sessionOf(c).Tenant.Role, sessionOf(c).User.ID)
+}
+func (s *Server) request(c *gin.Context) {
+	tid, ok := s.tenant(c)
+	if !ok {
+		return
+	}
+	v, e := s.query(c.Request.Context(), requestSQL()+` WHERE r.tenant_id=$1 AND r.id=$2 AND ($3<>'member' OR r.owner_id=$4)`, tid, c.Param("id"), sessionOf(c).Tenant.Role, sessionOf(c).User.ID)
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	if len(v) == 0 {
+		s.fail(c, 404, "not_found", "请求不存在")
+		return
+	}
+	s.ok(c, v[0])
+}
+func (s *Server) credits(c *gin.Context) {
+	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.business_ref,o.amount,o.state,o.requester,o.approver,o.created_at FROM credit_orders o JOIN tenants t ON t.id=o.tenant_id`)
+}
+func (s *Server) createCredit(c *gin.Context) {
+	if !s.financial(c, false) || !s.financialKey(c) {
+		return
+	}
+	var in billing.CreditInput
+	if !s.bind(c, &in) {
+		return
+	}
+	in.ActorID = sessionOf(c).User.ID
+	in.IdempotencyKey = c.GetHeader("Idempotency-Key")
+	in.RequestHMAC = s.digestInput(struct {
+		TenantID, BusinessRef, ProofRef string
+		Amount                          billing.Money
+	}{in.TenantID, in.BusinessRef, in.ProofRef, in.Amount})
+	v, e := s.Billing.CreateCredit(c.Request.Context(), in)
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	s.ok(c, v)
+}
+func (s *Server) approveCredit(c *gin.Context) {
+	if !s.financial(c, true) || !s.financialKey(c) {
+		return
+	}
+	var tid string
+	if e := s.Pool.QueryRow(c.Request.Context(), "SELECT tenant_id FROM credit_orders WHERE id=$1", c.Param("id")).Scan(&tid); e != nil {
+		s.error(c, e)
+		return
+	}
+	v, e := s.Billing.ApproveCredit(c.Request.Context(), billing.ApprovalInput{TenantID: tid, OrderID: c.Param("id"), ActorID: sessionOf(c).User.ID})
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	s.ok(c, v)
+}
+func (s *Server) refunds(c *gin.Context) {
+	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.settlement_id,o.business_ref,o.amount,o.reason,o.state,o.requester,o.approver,o.created_at FROM refund_orders o JOIN tenants t ON t.id=o.tenant_id`)
+}
+func (s *Server) createRefund(c *gin.Context) {
+	if !s.financial(c, false) || !s.financialKey(c) {
+		return
+	}
+	var in billing.RefundInput
+	if !s.bind(c, &in) {
+		return
+	}
+	in.ActorID = sessionOf(c).User.ID
+	if in.BusinessRef == "" {
+		in.BusinessRef = "refund:" + in.TenantID + ":" + s.Config.Secrets.Digest(c.GetHeader("Idempotency-Key"))
+	}
+	in.IdempotencyKey = c.GetHeader("Idempotency-Key")
+	in.RequestHMAC = s.digestInput(struct {
+		TenantID, SettlementID, BusinessRef, Reason string
+		Amount                                      billing.Money
+	}{in.TenantID, in.SettlementID, in.BusinessRef, in.Reason, in.Amount})
+	v, e := s.Billing.CreateRefund(c.Request.Context(), in)
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	s.ok(c, v)
+}
+func (s *Server) approveRefund(c *gin.Context) {
+	if !s.financial(c, true) || !s.financialKey(c) {
+		return
+	}
+	var tid string
+	if e := s.Pool.QueryRow(c.Request.Context(), "SELECT tenant_id FROM refund_orders WHERE id=$1", c.Param("id")).Scan(&tid); e != nil {
+		s.error(c, e)
+		return
+	}
+	v, e := s.Billing.ApproveRefund(c.Request.Context(), billing.ApprovalInput{TenantID: tid, OrderID: c.Param("id"), ActorID: sessionOf(c).User.ID})
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	s.ok(c, v)
+}
+func (s *Server) reconciliations(c *gin.Context) {
+	s.page(c, `SELECT x.id,x.request_id,x.tenant_id,x.reason,x.state,x.state AS status,x.proposed_usage,x.requester,x.approver,x.created_at,v.deadline FROM reconciliation_cases x JOIN reservations v ON v.request_id=x.request_id`)
+}
+func (s *Server) resolve(c *gin.Context) {
+	if !s.financialKey(c) {
+		return
+	}
+	var in struct {
+		Action       string `json:"action"`
+		Reason       string `json:"reason"`
+		InputTokens  int64  `json:"input_tokens"`
+		OutputTokens int64  `json:"output_tokens"`
+		EvidenceRef  string `json:"evidence_ref"`
+	}
+	if !s.bind(c, &in) {
+		return
+	}
+	if in.Action == "release" {
+		if !s.financial(c, true) {
+			return
+		}
+	} else if !s.financial(c, false) {
+		return
+	}
+	if in.Action == "settle" {
+		in.Action = "propose"
+	}
+	var tid, rid string
+	if e := s.Pool.QueryRow(c.Request.Context(), "SELECT tenant_id,request_id FROM reconciliation_cases WHERE id=$1", c.Param("id")).Scan(&tid, &rid); e != nil {
+		s.error(c, e)
+		return
+	}
+	v, e := s.Billing.Reconcile(c.Request.Context(), billing.ReconcileInput{TenantID: tid, RequestID: rid, ActorID: sessionOf(c).User.ID, Action: in.Action, Reason: in.Reason, EvidenceRef: in.EvidenceRef, Usage: billing.Usage{Status: "confirmed_final", InputTokens: in.InputTokens, OutputTokens: in.OutputTokens, TotalTokens: in.InputTokens + in.OutputTokens}})
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	s.ok(c, v)
+}
+func (s *Server) approveResolve(c *gin.Context) {
+	if !s.financial(c, true) || !s.financialKey(c) {
+		return
+	}
+	var tid, rid string
+	if e := s.Pool.QueryRow(c.Request.Context(), "SELECT tenant_id,request_id FROM reconciliation_cases WHERE id=$1", c.Param("id")).Scan(&tid, &rid); e != nil {
+		s.error(c, e)
+		return
+	}
+	v, e := s.Billing.Reconcile(c.Request.Context(), billing.ReconcileInput{TenantID: tid, RequestID: rid, ActorID: sessionOf(c).User.ID, Action: "approve"})
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	s.ok(c, v)
+}
+func (s *Server) digestInput(v any) string {
+	b, _ := json.Marshal(v)
+	return s.Config.Secrets.Digest(string(b))
+}

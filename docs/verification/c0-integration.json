@@ -1,0 +1,194 @@
+{
+  "verification": "022-C0-descriptor-reader-integration",
+  "date": "2026-11-01",
+  "status": "passed_local_integration_only",
+  "command": "make verify-mvp",
+  "database": "explicit TEST_DATABASE_URL: dedicated 127.0.0.1:55439/moni_test",
+  "exit_code": 0,
+  "elapsed_seconds": "359.526",
+  "initial_reviewed_snapshot_sha256": "8fcfb390d20b588f0358f8e8e70d77eb47b177ce39e3c20f4e87bfda98e76358",
+  "source_and_design_files_at_test_entry": 1064,
+  "frontend": {
+    "tests": 286,
+    "passed": 286,
+    "failed": 0,
+    "strict_typescript_vite_build": true
+  },
+  "go": {
+    "command": "go test -race ./... -count=1 -timeout 600s",
+    "exit_code": 0,
+    "packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+        "seconds": "4.522"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alerts",
+        "seconds": "46.891"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+        "seconds": "4.083"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/billing",
+        "seconds": "237.832"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/catalog",
+        "seconds": "64.140"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/config",
+        "seconds": "6.676"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+        "seconds": "2.470"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/identity",
+        "seconds": "270.946"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+        "seconds": "2.811"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+        "seconds": "4.632"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/metering",
+        "seconds": "6.348"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+        "seconds": "19.416"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/operations",
+        "seconds": "103.505"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+        "seconds": "8.643"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+        "seconds": "11.282"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+        "seconds": "9.422"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+        "seconds": "8.997"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/payments",
+        "seconds": "87.347"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+        "seconds": "41.088"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+        "seconds": "8.825"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+        "seconds": "111.166"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/pricing",
+        "seconds": "30.554"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+        "seconds": "8.557"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/provider",
+        "seconds": "8.909"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+        "seconds": "7.427"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/routing",
+        "seconds": "6.138"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/security",
+        "seconds": "6.205"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/server",
+        "seconds": "334.379"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+        "seconds": "5.249"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+        "seconds": "12.466"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/migrations",
+        "seconds": "44.293"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+        "seconds": "4.721"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+        "seconds": "4.498"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+        "seconds": "4.716"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+        "seconds": "5.422"
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+        "seconds": "11.660"
+      }
+    ],
+    "vet_exit_code": 0
+  },
+  "build": {
+    "path": "bin/moni-aigate",
+    "sha256": "25843e4526aa4a92ff67dc936434634b820d1137f305eaf74f23b5efdafb36c4",
+    "exit_code": 0
+  },
+  "reader_source_sha256": {
+    "internal/billing/funding_ledger_read.go": "cd34617fb4214d8c397c057803cb9edf22950b0a1b563f26e14a6179c67ec88f",
+    "internal/billing/funding_ledger_read_test.go": "02fbb43fac000d43f6cd59aa70dbc7249c0d10c6e6757b9cb15a9eb6e3f3a0e5",
+    "internal/billing/funding_ledger_read_integration_test.go": "00731fb1ffb2336945e445b10fd7b8487484c5c0feb1239609d961d05b5a4eee"
+  },
+  "independent_opt_in_evidence": {
+    "descriptor": "docs/verification/funding-lot-descriptor.json",
+    "reader": "docs/verification/funding-ledger-reader.json",
+    "candidate": "docs/verification/funding-lot-candidate.md"
+  },
+  "scope": {
+    "full_go_command_uses_dedicated_database": true,
+    "special_opt_in_descriptor_candidate_mail_process_and_application_browser_harnesses_not_reenabled": true,
+    "their_prior_evidence_retained_separately": true,
+    "production_main_wiring_added": false,
+    "preview_upgraded": false,
+    "real_paid_supplier_or_psp_called": false,
+    "performance_benchmark_run": false,
+    "formal_expected_checker_or_runtime_proof_issued": false
+  },
+  "post_test_changes": "documentation and architecture evidence only; final reviewed manifest refreshed after aggregation"
+}

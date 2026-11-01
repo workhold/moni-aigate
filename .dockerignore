@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+.local
+bin
+web/node_modules
+web/dist
+*.log
+coverage.out

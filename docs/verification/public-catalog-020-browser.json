@@ -1,0 +1,148 @@
+{
+  "models": [
+    {
+      "id": "f023c746-dcff-4048-952b-7e48ae303246",
+      "name": "qa-public-chat",
+      "enabled": true,
+      "visible": true,
+      "revision": "6"
+    },
+    {
+      "id": "2ddb47c8-adee-4711-a443-e587aef91ac8",
+      "name": "qa-public-embeddings",
+      "enabled": true,
+      "visible": true,
+      "revision": "2"
+    },
+    {
+      "id": "714811a4-75ab-4647-967b-50f3cbb7d420",
+      "name": "qa-public-private",
+      "enabled": true,
+      "visible": false,
+      "revision": "1"
+    },
+    {
+      "id": "fa2c124a-a57c-4609-ac07-06ca3f59b405",
+      "name": "qa-public-unpriced",
+      "enabled": true,
+      "visible": true,
+      "revision": "2"
+    }
+  ],
+  "api_keys": 0,
+  "journals": 0,
+  "settlements": 0,
+  "reservations": 0,
+  "credit_orders": 0,
+  "journal_lines": 0,
+  "request_records": 0,
+  "upstream_attempts": 0,
+  "publication_audits": 7,
+  "procurement_accounts": 0,
+  "procurement_reservations": 0,
+  "date": "2026-11-01",
+  "binary_sha256": "5530671707b03ab90f355a073676c7405b106bc2be944e0c8cac0ac8f97127a4",
+  "fixture_only": true,
+  "public_snapshot": {
+    "as_of": "2026-10-31T18:25:56.580111Z",
+    "data": [
+      {
+        "id": "f023c746-dcff-4048-952b-7e48ae303246",
+        "public_name": "qa-public-chat",
+        "protocol": "openai_chat",
+        "capabilities": {
+          "streaming": true,
+          "tools": true,
+          "input_only": false,
+          "text_only": true
+        },
+        "limits": {
+          "context_tokens": 1024,
+          "input_token_upper_bound": 512,
+          "max_output_tokens": 32,
+          "default_output_tokens": 16
+        },
+        "pricing": {
+          "status": "available",
+          "currency": "CNY",
+          "unit": "micro_cny_per_million_tokens",
+          "price_version_id": "b90f7a52-15f3-4f6f-92de-3b0a4d4ea6cb",
+          "input_rate": "9007199254740993",
+          "output_rate": "2000000",
+          "effective_at": "2026-10-31T18:18:23.907242Z"
+        }
+      },
+      {
+        "id": "2ddb47c8-adee-4711-a443-e587aef91ac8",
+        "public_name": "qa-public-embeddings",
+        "protocol": "openai_embeddings",
+        "capabilities": {
+          "streaming": false,
+          "tools": false,
+          "input_only": true,
+          "text_only": true
+        },
+        "limits": {
+          "context_tokens": 1024,
+          "input_token_upper_bound": 512,
+          "max_output_tokens": 0,
+          "default_output_tokens": 0
+        },
+        "pricing": {
+          "status": "available",
+          "currency": "CNY",
+          "unit": "micro_cny_per_million_tokens",
+          "price_version_id": "e4f98491-5630-4e04-9c43-95b92a59e157",
+          "input_rate": "0",
+          "output_rate": "0",
+          "effective_at": "2026-10-31T18:18:23.909601Z"
+        }
+      },
+      {
+        "id": "fa2c124a-a57c-4609-ac07-06ca3f59b405",
+        "public_name": "qa-public-unpriced",
+        "protocol": "openai_chat",
+        "capabilities": {
+          "streaming": true,
+          "tools": true,
+          "input_only": false,
+          "text_only": true
+        },
+        "limits": {
+          "context_tokens": 1024,
+          "input_token_upper_bound": 512,
+          "max_output_tokens": 32,
+          "default_output_tokens": 16
+        },
+        "pricing": {
+          "status": "unavailable",
+          "currency": "CNY",
+          "unit": "micro_cny_per_million_tokens",
+          "price_version_id": null,
+          "input_rate": null,
+          "output_rate": null,
+          "effective_at": null
+        }
+      }
+    ],
+    "next_cursor": "",
+    "request_id": "eec3b4b7-2c3e-4a61-b925-5e37696ed06c"
+  },
+  "checks": {
+    "default_private_empty": true,
+    "browser_stale_revision_conflict": true,
+    "readonly_then_explicit_new_edit": true,
+    "exact_large_integer_price": true,
+    "zero_vs_unavailable": true,
+    "prefix_filter": true,
+    "hide_two_show_three": true,
+    "responsive_viewport": {
+      "width": 390,
+      "height": 844,
+      "body": 390,
+      "main": 390
+    },
+    "console_warnings_errors": 0,
+    "billable_generation_requests": 0
+  }
+}

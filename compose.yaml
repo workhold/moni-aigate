@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: moni_owner
+      POSTGRES_DB: moni
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?generate .env first}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?generate .env first}
+      PROJECTION_DB_PASSWORD: ${PROJECTION_DB_PASSWORD:?generate .env first}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/init-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U moni_owner -d moni]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: .
+    image: moni-aigate:local
+    command: [migrate]
+    environment: &migration-env
+      DATABASE_URL: postgres://moni_owner:${POSTGRES_PASSWORD}@postgres:5432/moni?sslmode=disable
+      MASTER_KEY: ${MASTER_KEY:?generate .env first}
+      MASTER_KEY_ID: ${MASTER_KEY_ID:-primary}
+      MASTER_KEYS_JSON: ${MASTER_KEYS_JSON:-}
+      AUTH_SECRET: ${AUTH_SECRET:?generate .env first}
+    depends_on:
+      postgres:
+        condition: service_healthy
+  provision:
+    image: moni-aigate:local
+    command: [provision]
+    environment: *migration-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+  app:
+    image: moni-aigate:local
+    environment:
+      DATABASE_URL: postgres://moni_app:${APP_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
+      PROJECTION_DATABASE_URL: postgres://moni_projection:${PROJECTION_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
+      MASTER_KEY: ${MASTER_KEY:?generate .env first}
+      MASTER_KEY_ID: ${MASTER_KEY_ID:-primary}
+      MASTER_KEYS_JSON: ${MASTER_KEYS_JSON:-}
+      AUTH_SECRET: ${AUTH_SECRET:?generate .env first}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:8080}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      MFA_ENFORCE_PLATFORM: ${MFA_ENFORCE_PLATFORM:-false}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      LISTEN_ADDR: 0.0.0.0:8080
+      RECOVERY_MODE: ${RECOVERY_MODE:-false}
+      AUTH_REGISTRATION_ENABLED: ${AUTH_REGISTRATION_ENABLED:-false}
+      AUTH_PASSWORD_RESET_ENABLED: ${AUTH_PASSWORD_RESET_ENABLED:-true}
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-disabled}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_TLS_MODE: ${SMTP_TLS_MODE:-starttls}
+      VOUCHERS_ENABLED: ${VOUCHERS_ENABLED:-false}
+      OPERATIONS_ALERTS_ENABLED: ${OPERATIONS_ALERTS_ENABLED:-false}
+      PAYMENTS_MODE: ${PAYMENTS_MODE:-off}
+      VOUCHER_HMAC_ACTIVE_KEY: ${VOUCHER_HMAC_ACTIVE_KEY:-}
+      VOUCHER_HMAC_KEYS: ${VOUCHER_HMAC_KEYS:-}
+    ports:
+      - "127.0.0.1:${PORT:-8080}:8080"
+    depends_on:
+      provision:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    stop_grace_period: 320s
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+volumes:
+  postgres-data:

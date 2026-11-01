@@ -1,0 +1,122 @@
+{
+  "run_id": "eeb621b8-7cd3-4eea-82b0-d0a67f56b80f",
+  "source": "read-only PostgreSQL verification after browser actions",
+  "unit": "micro-CNY",
+  "facts": {
+    "key": {
+      "held": 0,
+      "count": 1,
+      "spent": 60,
+      "regions": [
+        [
+          "global"
+        ]
+      ],
+      "lifetime_limit": 1000000
+    },
+    "roles": {
+      "count": 2,
+      "login": true,
+      "no_super_or_create": true
+    },
+    "usage": [
+      {
+        "status": "confirmed_final",
+        "input_tokens": 4,
+        "total_tokens": 6,
+        "cached_tokens": 0,
+        "output_tokens": 2,
+        "reasoning_tokens": 0
+      },
+      {
+        "status": "confirmed_final",
+        "input_tokens": 4,
+        "total_tokens": 6,
+        "cached_tokens": 0,
+        "output_tokens": 2,
+        "reasoning_tokens": 0
+      },
+      {
+        "status": "confirmed_final",
+        "input_tokens": 4,
+        "total_tokens": 6,
+        "cached_tokens": 0,
+        "output_tokens": 2,
+        "reasoning_tokens": 0
+      }
+    ],
+    "credit": {
+      "count": 1,
+      "amount": 1234567,
+      "approved": true,
+      "different_actors": true
+    },
+    "refund": {
+      "count": 1,
+      "amount": 20,
+      "approved": true,
+      "different_actors": true
+    },
+    "wallet": {
+      "HELD": 0,
+      "AVAILABLE": 1234527
+    },
+    "channel": {
+      "count": 1,
+      "enabled": true,
+      "revision": 4,
+      "unquarantined": true
+    },
+    "attempts": {
+      "count": 3,
+      "completed": true,
+      "unique_requests": 3
+    },
+    "requests": {
+      "count": 3,
+      "settled": 3,
+      "streaming": 2,
+      "successful": 3,
+      "blocked_request_absent": true
+    },
+    "projection": [
+      {
+        "charged": 60,
+        "credited": 1234567,
+        "refunded": 20,
+        "requests": 3
+      }
+    ],
+    "discoveries": 1,
+    "settlements": {
+      "count": 3,
+      "charge": 60,
+      "refund": 20,
+      "each_charge_20": true
+    },
+    "batch_audits": 2,
+    "reservations": {
+      "count": 3,
+      "settled": true,
+      "each_amount_352": true
+    },
+    "finalizations": {
+      "count": 3,
+      "unique_requests": 3
+    },
+    "batch_receipts": {
+      "count": 2,
+      "applied": true,
+      "changed": 2,
+      "unique_operations": 2
+    },
+    "probe_attempts": 0,
+    "route_revisions": [
+      1
+    ],
+    "channel_versions": 2,
+    "unbalanced_journals": 0,
+    "current_pool_members": 2,
+    "ledger_account_total": 0
+  }
+}

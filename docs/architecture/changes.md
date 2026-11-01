@@ -1,0 +1,1251 @@
+# 架构演化记录
+
+本记录由 `scripts/check-architecture --refresh --reviewed --reason ...` 追加，与统一架构正文及机器清单一起交付。记录表示执行人已复核本次变化的架构影响；SHA-256 不能代替语义与验收复核。首次基线由集成人在并行实现稳定后建立，后续记录包含增量源文件路径。
+
+## 2026-10-31T16:50:11Z · 481769819a46
+
+018成本感知路由与013迁移落地：复核候选报价冻结、最高优先级比价、attempt与sending锁内校验、控制台CAS和资金收尾；建立五图源码映射与持续同步基线，019明确为未冻结设计，校准本地验收和生产边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 442 个源文件；首次建立基线，完整路径与摘要见机器清单。
+
+## 2026-10-31T16:51:45Z · 9862f017efa7
+
+归档018最终验收与检查通过记录：make check已验证442文件基线、vet和strict构建；复核源码及五图无结构变化，019仍未冻结未实现
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 442 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/architecture-sync.md`
+- modified `docs/verification/cost-aware-routing.md`
+- modified `specs/018-cost-aware-routing/acceptance.md`
+- modified `specs/018-cost-aware-routing/plan.md`
+
+</details>
+
+## 2026-10-31T17:02:09Z · 81aef18e4558
+
+最终构建与源码一致性收口：归档历史报价只读和分页校验补验、最终SSE资金与清理、预览摘要；复核模块时序及资金边界无结构变化，保留首轮与最终产物各自证据
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 447 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/architecture-sync.md`
+- added `docs/verification/assets/cost-legacy-read-final-018.png`
+- added `docs/verification/assets/cost-versions-final-018.png`
+- modified `docs/verification/cost-aware-routing.md`
+- added `docs/verification/cost-routing-018-final-browser.json`
+- added `docs/verification/cost-routing-018-final-harness.json`
+- added `docs/verification/cost-routing-018-preview-initial.json`
+- modified `docs/verification/cost-routing-018-preview.json`
+
+</details>
+
+## 2026-10-31T18:05:44Z · c0289713ec9f
+
+019共享采购账户累计预算、永久凭据归属、逐attempt预占与独立unknown恢复/证据双审、人工余额观察及控制台；已复核五图/锁序/权限/源码映射，并同步真实PG与两轮隔离QA、014预览最终产物证据；020仅冻结设计，021/022仅待审设计，生产与性能门禁仍独立
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 493 个源文件；本次 73 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/procurement-accounts.md`
+- added `docs/design/public-catalog.md`
+- added `docs/design/self-service-identity.md`
+- added `docs/design/self-service-payments.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/architecture-019.png`
+- added `docs/verification/assets/procurement-cas-019.png`
+- added `docs/verification/assets/procurement-mobile-019.png`
+- added `docs/verification/assets/procurement-observation-final-019.png`
+- added `docs/verification/assets/procurement-settled-019.png`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/procurement-019-browser.json`
+- added `docs/verification/procurement-019-final-browser.json`
+- added `docs/verification/procurement-019-final-harness.json`
+- added `docs/verification/procurement-019-harness.json`
+- added `docs/verification/procurement-019-preview.json`
+- added `docs/verification/procurement-accounts.md`
+- modified `internal/billing/cost_policy.go`
+- modified `internal/billing/evidence.go`
+- added `internal/billing/procurement.go`
+- added `internal/billing/procurement_integration_test.go`
+- added `internal/billing/procurement_review_integration_test.go`
+- modified `internal/billing/recovery.go`
+- modified `internal/billing/route_decisions.go`
+- modified `internal/catalog/cost_policy_integration_test.go`
+- modified `internal/catalog/credential_pool.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- added `internal/operations/procurement_integration_test.go`
+- added `internal/procurement/store.go`
+- added `internal/procurement/types.go`
+- added `internal/procurement/types_test.go`
+- added `internal/routing/procurement.go`
+- added `internal/routing/procurement_test.go`
+- modified `internal/routing/routing.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/gateway.go`
+- added `internal/server/procurement_handlers.go`
+- added `internal/server/procurement_handlers_test.go`
+- added `internal/server/procurement_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/014_procurement_accounts.sql`
+- modified `specs/019-procurement-accounts/acceptance.md`
+- added `specs/019-procurement-accounts/contract.md`
+- modified `specs/019-procurement-accounts/plan.md`
+- modified `specs/019-procurement-accounts/spec.md`
+- added `specs/020-public-catalog/acceptance.md`
+- added `specs/020-public-catalog/contracts.md`
+- added `specs/020-public-catalog/plan.md`
+- added `specs/020-public-catalog/spec.md`
+- added `specs/021-self-service-identity/acceptance.md`
+- added `specs/021-self-service-identity/contract.md`
+- added `specs/021-self-service-identity/plan.md`
+- added `specs/021-self-service-identity/spec.md`
+- added `specs/022-self-service-payments/acceptance.md`
+- added `specs/022-self-service-payments/contract.md`
+- added `specs/022-self-service-payments/plan.md`
+- added `specs/022-self-service-payments/spec.md`
+- modified `web/src/App.vue`
+- added `web/src/components/ProcurementWriter.vue`
+- modified `web/src/components/RouteAttempts.vue`
+- added `web/src/procurement-state.ts`
+- added `web/src/procurement.ts`
+- modified `web/src/router.ts`
+- added `web/src/views/ProcurementView.vue`
+- added `web/tests/procurement-state.test.mjs`
+- added `web/tests/procurement.test.mjs`
+
+</details>
+
+## 2026-10-31T18:39:50Z · 4496279f07cb
+
+020公开目录完成：同步匿名访客/安全投影、独立准入、确定售价、公开CAS、015数据权限与浏览器/零资金/预览验收；五图渲染复核通过。021仅SMTP配置传输基础已实现，身份/outbox尚未接线；022-A补齐源码校准合同仍待冻结，未写成实现。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 522 个源文件；本次 60 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/public-catalog.md`
+- modified `docs/design/self-service-identity.md`
+- modified `docs/design/self-service-payments.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/architecture-020.png`
+- added `docs/verification/assets/public-catalog-conflict-020.png`
+- added `docs/verification/assets/public-catalog-desktop-020.png`
+- added `docs/verification/assets/public-catalog-mobile-020.png`
+- added `docs/verification/assets/public-catalog-private-020.png`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/public-catalog-020-browser.json`
+- added `docs/verification/public-catalog-020-harness.json`
+- added `docs/verification/public-catalog-020-preview.json`
+- added `docs/verification/public-catalog.md`
+- modified `internal/billing/reserve.go`
+- added `internal/billing/retail_price_integration_test.go`
+- added `internal/catalog/public_catalog.go`
+- added `internal/catalog/public_catalog_integration_test.go`
+- added `internal/catalog/public_catalog_test.go`
+- modified `internal/config/config.go`
+- added `internal/config/mail.go`
+- added `internal/config/mail_test.go`
+- added `internal/maildeliver/smtp.go`
+- added `internal/maildeliver/smtp_test.go`
+- added `internal/server/public_catalog.go`
+- added `internal/server/public_catalog_admission.go`
+- added `internal/server/public_catalog_integration_test.go`
+- added `internal/server/public_catalog_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- added `migrations/015_public_catalog.sql`
+- modified `specs/020-public-catalog/acceptance.md`
+- modified `specs/020-public-catalog/contracts.md`
+- modified `specs/020-public-catalog/plan.md`
+- modified `specs/020-public-catalog/spec.md`
+- modified `specs/021-self-service-identity/acceptance.md`
+- modified `specs/021-self-service-identity/contract.md`
+- modified `specs/021-self-service-identity/plan.md`
+- modified `specs/021-self-service-identity/spec.md`
+- added `specs/022-self-service-payments/a-contract.md`
+- modified `specs/022-self-service-payments/acceptance.md`
+- modified `specs/022-self-service-payments/contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+- modified `specs/022-self-service-payments/spec.md`
+- modified `web/src/App.vue`
+- added `web/src/components/ModelPublicationEditor.vue`
+- added `web/src/public-catalog-state.ts`
+- added `web/src/public-catalog.ts`
+- modified `web/src/router.ts`
+- modified `web/src/views/LoginView.vue`
+- modified `web/src/views/PlatformView.vue`
+- added `web/src/views/PricingView.vue`
+- added `web/tests/public-catalog-state.test.mjs`
+- added `web/tests/public-catalog.test.mjs`
+
+</details>
+
+## 2026-10-31T19:16:30Z · f53504f4da05
+
+021自助身份实现及限定本地验收：同步公开身份链路、初始化与密码版本、加密邮件outbox和独立worker、角色/退出语义与016预览证据；022-A/A0设计冻结及023未冻结草案明确列为规划，未宣称支付或生产完成
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 567 个源文件；本次 80 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/main_test.go`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- added `docs/design/periodic-products.md`
+- modified `docs/design/self-service-identity.md`
+- modified `docs/design/self-service-payments.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/architecture-021.png`
+- added `docs/verification/assets/identity-disabled-021.png`
+- added `docs/verification/assets/identity-mobile-021.png`
+- added `docs/verification/assets/identity-password-proof-021.png`
+- added `docs/verification/assets/identity-registration-proof-021.png`
+- added `docs/verification/assets/identity-zero-entitlements-021.png`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/self-service-identity-021-browser.json`
+- added `docs/verification/self-service-identity-021-harness.json`
+- added `docs/verification/self-service-identity-021-preview.json`
+- added `docs/verification/self-service-identity.md`
+- modified `internal/config/mail.go`
+- modified `internal/config/mail_test.go`
+- added `internal/identity/mail_outbox.go`
+- added `internal/identity/mail_outbox_cleanup.go`
+- added `internal/identity/mail_outbox_integration_test.go`
+- added `internal/identity/mail_outbox_types.go`
+- added `internal/identity/self_service.go`
+- added `internal/identity/self_service_integration_test.go`
+- added `internal/identity/self_service_issuance_integration_test.go`
+- added `internal/identity/self_service_test.go`
+- modified `internal/identity/store.go`
+- added `internal/mailworker/worker.go`
+- added `internal/mailworker/worker_test.go`
+- modified `internal/operations/credential_pool_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/operations_integration_test.go`
+- added `internal/operations/self_service_identity_integration_test.go`
+- added `internal/server/self_service_handlers.go`
+- added `internal/server/self_service_integration_test.go`
+- added `internal/server/self_service_test.go`
+- modified `internal/server/server.go`
+- added `migrations/016_self_service_identity.sql`
+- added `scripts/browser-qa/mail_fixture.go`
+- added `scripts/browser-qa/mail_fixture_test.go`
+- modified `scripts/browser-qa/main.go`
+- modified `scripts/browser-qa/main_test.go`
+- modified `specs/021-self-service-identity/acceptance.md`
+- modified `specs/021-self-service-identity/contract.md`
+- modified `specs/021-self-service-identity/plan.md`
+- modified `specs/021-self-service-identity/spec.md`
+- modified `specs/022-self-service-payments/a-contract.md`
+- added `specs/022-self-service-payments/a-domain-contract.md`
+- modified `specs/022-self-service-payments/acceptance.md`
+- modified `specs/022-self-service-payments/contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+- modified `specs/022-self-service-payments/spec.md`
+- added `specs/023-periodic-products/acceptance.md`
+- added `specs/023-periodic-products/contract.md`
+- added `specs/023-periodic-products/plan.md`
+- added `specs/023-periodic-products/spec.md`
+- modified `web/src/App.vue`
+- modified `web/src/api.ts`
+- added `web/src/components/IdentityLayout.vue`
+- added `web/src/identity-proof.ts`
+- added `web/src/identity-public-state.ts`
+- added `web/src/identity-public.ts`
+- added `web/src/public-layout.ts`
+- modified `web/src/router.ts`
+- modified `web/src/session.ts`
+- added `web/src/views/IdentityCompleteView.vue`
+- added `web/src/views/IdentityRequestView.vue`
+- modified `web/src/views/LoginView.vue`
+- added `web/tests/identity-proof.test.mjs`
+- added `web/tests/identity-public-state.test.mjs`
+- added `web/tests/identity-public.test.mjs`
+- modified `web/tests/public-catalog.test.mjs`
+- added `web/tests/session.test.mjs`
+
+</details>
+
+## 2026-10-31T19:17:36Z · a7c1c0e49ab1
+
+021收口补记最终架构六图/只读检查证据，并纳入已审查的022-A1内部接口（待A0专项出口）；正文保持023仅草案、正式SMTP/支付/生产与性能外部门禁未完成
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 567 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/self-service-identity.md`
+- modified `specs/022-self-service-payments/a-domain-contract.md`
+
+</details>
+
+## 2026-10-31T19:34:59Z · 87079a5ebea3
+
+022-A0共同入账017九表、严格历史回填与source-journal-receipt-credited双向保护、人工钱包与reports兼容和最小角色；同步021审计验收边界、023根复核、022-B及024/025未冻结草案，A1入口仍待实施
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 585 个源文件；本次 38 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/design/extension-platform.md`
+- added `docs/verification/funding-vouchers.md`
+- modified `docs/verification/self-service-identity.md`
+- modified `internal/billing/account_batch_integration_test.go`
+- added `internal/billing/funding.go`
+- added `internal/billing/funding_integration_test.go`
+- added `internal/billing/funding_verify.go`
+- modified `internal/billing/orders.go`
+- modified `internal/billing/query.go`
+- modified `internal/billing/rebuild.go`
+- modified `internal/billing/store.go`
+- added `internal/operations/funding_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/self_service_identity_integration_test.go`
+- modified `internal/server/billing_handlers.go`
+- added `internal/server/funding_integration_test.go`
+- added `migrations/017_funding_vouchers.sql`
+- modified `specs/021-self-service-identity/acceptance.md`
+- modified `specs/022-self-service-payments/a-contract.md`
+- modified `specs/022-self-service-payments/a-domain-contract.md`
+- modified `specs/022-self-service-payments/acceptance.md`
+- added `specs/022-self-service-payments/b-contract.md`
+- modified `specs/022-self-service-payments/contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+- modified `specs/022-self-service-payments/spec.md`
+- added `specs/023-periodic-products/review.md`
+- added `specs/024-extension-platform/acceptance.md`
+- added `specs/024-extension-platform/contract.md`
+- added `specs/024-extension-platform/plan.md`
+- added `specs/024-extension-platform/spec.md`
+- added `specs/025-production-ha/acceptance.md`
+- added `specs/025-production-ha/contract.md`
+- added `specs/025-production-ha/plan.md`
+- added `specs/025-production-ha/spec.md`
+
+</details>
+
+## 2026-10-31T19:35:10Z · 96190b67b486
+
+补记022-A0最终完整PG race：billing74.705s、operations17.656s；旧021分阶段fixture仅追加017以匹配当前provision，未改身份实现或架构结构
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 585 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/funding-vouchers.md`
+
+</details>
+
+## 2026-10-31T20:08:26Z · 0197b6fad96c
+
+022-A0/A1最终限定本地验收与017预览交付：复核共同入账、双审券六命令、HMAC、未知提交、来源查询、权限/生命周期和源码证据；023-A0与022-B0-P仅冻结合同，024-A0仅DDL应用检查，M/Q及其余后续仍待冻结实现
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 621 个源文件；本次 68 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- modified `compose.yaml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/periodic-products.md`
+- modified `docs/design/self-service-payments.md`
+- modified `docs/runbooks/deployment.md`
+- added `docs/verification/assets/voucher-active-022.png`
+- added `docs/verification/assets/voucher-mobile-022.png`
+- added `docs/verification/assets/voucher-mobile-sources-022.png`
+- added `docs/verification/assets/voucher-rejected-022.png`
+- added `docs/verification/assets/voucher-wallet-022.png`
+- added `docs/verification/funding-vouchers-022-browser.json`
+- added `docs/verification/funding-vouchers-022-harness.json`
+- added `docs/verification/funding-vouchers-022-preview.json`
+- modified `docs/verification/funding-vouchers.md`
+- added `internal/billing/voucher_commands.go`
+- added `internal/billing/voucher_fault_integration_test.go`
+- added `internal/billing/voucher_integration_test.go`
+- added `internal/billing/voucher_query.go`
+- added `internal/billing/voucher_query_integration_test.go`
+- added `internal/billing/voucher_roles_integration_test.go`
+- added `internal/billing/voucher_types.go`
+- modified `internal/config/config.go`
+- added `internal/config/voucher_test.go`
+- added `internal/security/voucher.go`
+- added `internal/security/voucher_test.go`
+- added `internal/server/commerce_admission.go`
+- added `internal/server/commerce_handlers.go`
+- added `internal/server/commerce_input.go`
+- added `internal/server/commerce_input_test.go`
+- added `internal/server/commerce_integration_test.go`
+- modified `internal/server/server.go`
+- modified `scripts/browser-qa/main.go`
+- modified `scripts/browser-qa/main_test.go`
+- modified `specs/022-self-service-payments/a-contract.md`
+- modified `specs/022-self-service-payments/a-domain-contract.md`
+- modified `specs/022-self-service-payments/acceptance.md`
+- added `specs/022-self-service-payments/b-domain-contract.md`
+- modified `specs/022-self-service-payments/contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+- modified `specs/022-self-service-payments/spec.md`
+- added `specs/023-periodic-products/a-contract.md`
+- modified `specs/023-periodic-products/acceptance.md`
+- modified `specs/023-periodic-products/contract.md`
+- modified `specs/023-periodic-products/plan.md`
+- modified `specs/023-periodic-products/review.md`
+- modified `specs/023-periodic-products/spec.md`
+- added `specs/024-extension-platform/a-contract.md`
+- modified `web/src/App.vue`
+- added `web/src/commerce-state.ts`
+- added `web/src/commerce.ts`
+- added `web/src/components/CommerceCommands.vue`
+- added `web/src/components/CommerceWriter.vue`
+- added `web/src/components/FundingPanel.vue`
+- added `web/src/components/VoucherPolicy.vue`
+- modified `web/src/format.ts`
+- modified `web/src/router.ts`
+- modified `web/src/views/ReportsView.vue`
+- added `web/src/views/VouchersView.vue`
+- modified `web/src/views/WalletView.vue`
+- added `web/tests/commerce-state.test.mjs`
+- added `web/tests/commerce-transport.test.mjs`
+- added `web/tests/commerce.test.mjs`
+
+</details>
+
+## 2026-10-31T20:42:48Z · 77a4fcaee595
+
+023-A实现与限定本地验收：018精确价格域、catalog原回执与当前权限、Reserve不可变快照、客户与匿名投影及UI；真实PG分包/并发/COMMIT故障、227前端、真实main/浏览器与48资源预览核对。022-B0-P纯协议已实现；M独立SQL和024告警仅隔离设计原型，后续资金/周期/生产门禁保持未完成。已复核模块/链路/数据关系/锁/角色和HLD/LLD/验证状态，所有并行写入停稳后刷新。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 672 个源文件；本次 95 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/extension-platform.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/periodic-products.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/tenant-pricing-023-desktop.png`
+- added `docs/verification/assets/tenant-pricing-023-mobile.png`
+- modified `docs/verification/funding-vouchers.md`
+- added `docs/verification/tenant-pricing-023-browser.json`
+- added `docs/verification/tenant-pricing-023-harness.json`
+- added `docs/verification/tenant-pricing-023-preview.json`
+- added `docs/verification/tenant-pricing.md`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/retrieval_integration_test.go`
+- added `internal/billing/retrieval_legacy_integration_test.go`
+- modified `internal/billing/store.go`
+- added `internal/billing/tenant_pricing_concurrency_integration_test.go`
+- added `internal/billing/tenant_pricing_integration_test.go`
+- modified `internal/billing/types.go`
+- added `internal/catalog/pricing_commands.go`
+- added `internal/catalog/pricing_concurrency_integration_test.go`
+- added `internal/catalog/pricing_integration_test.go`
+- added `internal/catalog/pricing_queries.go`
+- added `internal/catalog/pricing_types.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_integration_test.go`
+- added `internal/catalog/public_catalog_legacy_integration_test.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/key_policy_integration_test.go`
+- modified `internal/operations/operations.go`
+- added `internal/operations/pricing_roles_integration_test.go`
+- modified `internal/operations/procurement_integration_test.go`
+- modified `internal/operations/self_service_identity_integration_test.go`
+- added `internal/paymentproto/fuzz_test.go`
+- added `internal/paymentproto/json.go`
+- added `internal/paymentproto/notification.go`
+- added `internal/paymentproto/protocol_test.go`
+- added `internal/paymentproto/replies.go`
+- added `internal/paymentproto/requests.go`
+- added `internal/paymentproto/signing.go`
+- added `internal/paymentproto/signing_test.go`
+- added `internal/paymentproto/types.go`
+- added `internal/paymentproto/values.go`
+- added `internal/pricing/pricing.go`
+- added `internal/pricing/pricing_integration_test.go`
+- modified `internal/server/billing_handlers.go`
+- added `internal/server/pricing_admission.go`
+- added `internal/server/pricing_handlers.go`
+- added `internal/server/pricing_input.go`
+- added `internal/server/pricing_integration_test.go`
+- added `internal/server/pricing_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- added `migrations/018_tenant_pricing.sql`
+- modified `specs/022-self-service-payments/acceptance.md`
+- modified `specs/022-self-service-payments/b-domain-contract.md`
+- added `specs/022-self-service-payments/b-mock-schema-prototype.sql`
+- added `specs/022-self-service-payments/b-mock-sql-contract.md`
+- added `specs/022-self-service-payments/b-receiver-schema-prototype.sql`
+- added `specs/022-self-service-payments/b-sandbox-grants-prototype.sql`
+- added `specs/022-self-service-payments/b-sandbox-roles-prototype.sql`
+- added `specs/022-self-service-payments/b-sql-prototype-check.py`
+- added `specs/022-self-service-payments/b-sql-prototype-evidence.json`
+- modified `specs/022-self-service-payments/contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+- modified `specs/022-self-service-payments/spec.md`
+- modified `specs/023-periodic-products/a-contract.md`
+- modified `specs/023-periodic-products/acceptance.md`
+- modified `specs/023-periodic-products/contract.md`
+- modified `specs/023-periodic-products/plan.md`
+- modified `specs/023-periodic-products/review.md`
+- modified `specs/023-periodic-products/spec.md`
+- modified `specs/024-extension-platform/a-contract.md`
+- modified `specs/024-extension-platform/acceptance.md`
+- modified `specs/024-extension-platform/contract.md`
+- modified `specs/024-extension-platform/plan.md`
+- modified `specs/024-extension-platform/spec.md`
+- modified `web/src/App.vue`
+- added `web/src/components/PricingCommands.vue`
+- added `web/src/components/PricingWriter.vue`
+- added `web/src/components/TenantPricing.vue`
+- added `web/src/customer-pricing.ts`
+- added `web/src/pricing-state.ts`
+- added `web/src/pricing.ts`
+- modified `web/src/router.ts`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/PlatformView.vue`
+- added `web/src/views/PriceGroupsView.vue`
+- modified `web/src/views/PricingView.vue`
+- added `web/tests/pricing-state.test.mjs`
+- added `web/tests/pricing-transport.test.mjs`
+- added `web/tests/pricing.test.mjs`
+
+</details>
+
+## 2026-10-31T21:45:49Z · ecc47ee07aab
+
+024-A站内告警完整实现与019迁移、有效角色核验、独立双槽及HTTP/UI，真实PG/浏览器/主进程故障和最终全量race/019预览证据收口；023-B精确SQL和HTTP设计仍未冻结，022-M/Q精确SQL与运行合同冻结待实施；复核模块、链路、内部ER、权限、默认开关和能力状态，保留外部门禁
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 724 个源文件；本次 83 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `Makefile`
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- modified `compose.yaml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/extension-platform.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/operations-alerts-024-budget.png`
+- added `docs/verification/assets/operations-alerts-024-desktop.png`
+- added `docs/verification/assets/operations-alerts-024-final-ui.png`
+- added `docs/verification/assets/operations-alerts-024-mobile.png`
+- added `docs/verification/operations-alerts-024-browser.json`
+- added `docs/verification/operations-alerts-024-final-ui-harness.json`
+- added `docs/verification/operations-alerts-024-final-ui.json`
+- added `docs/verification/operations-alerts-024-harness.json`
+- added `docs/verification/operations-alerts-024-preview.json`
+- added `docs/verification/operations-alerts.md`
+- added `internal/alerts/alerts_integration_test.go`
+- added `internal/alerts/commands.go`
+- added `internal/alerts/concurrency_integration_test.go`
+- added `internal/alerts/evaluate.go`
+- added `internal/alerts/fault_integration_test.go`
+- added `internal/alerts/guards_integration_test.go`
+- added `internal/alerts/queries.go`
+- added `internal/alerts/source_integration_test.go`
+- added `internal/alerts/source_sql.go`
+- added `internal/alerts/store.go`
+- added `internal/alerts/types.go`
+- added `internal/alerts/values.go`
+- added `internal/alerts/values_test.go`
+- added `internal/alertworker/worker.go`
+- added `internal/alertworker/worker_test.go`
+- added `internal/config/alerts_test.go`
+- modified `internal/config/config.go`
+- added `internal/operations/alert_roles.go`
+- added `internal/operations/alert_roles_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/self_service_identity_integration_test.go`
+- added `internal/server/alert_admission.go`
+- added `internal/server/alert_handlers.go`
+- added `internal/server/alert_input.go`
+- added `internal/server/alert_integration_test.go`
+- added `internal/server/alert_main_integration_test.go`
+- added `internal/server/alert_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/019_operations_alerts.sql`
+- modified `scripts/browser-qa/main.go`
+- modified `scripts/browser-qa/main_test.go`
+- modified `specs/022-self-service-payments/b-domain-contract.md`
+- modified `specs/022-self-service-payments/b-mock-schema-prototype.sql`
+- modified `specs/022-self-service-payments/b-mock-sql-contract.md`
+- added `specs/022-self-service-payments/b-runtime-contract.md`
+- modified `specs/022-self-service-payments/b-sql-prototype-check.py`
+- modified `specs/022-self-service-payments/b-sql-prototype-evidence.json`
+- modified `specs/022-self-service-payments/plan.md`
+- added `specs/023-periodic-products/b-commands.sql`
+- added `specs/023-periodic-products/b-contract.md`
+- added `specs/023-periodic-products/b-core.sql`
+- added `specs/023-periodic-products/b-http-contract.md`
+- added `specs/023-periodic-products/b-permissions.sql`
+- added `specs/023-periodic-products/b-verification.md`
+- modified `specs/024-extension-platform/a-contract.md`
+- modified `specs/024-extension-platform/acceptance.md`
+- modified `specs/024-extension-platform/plan.md`
+- modified `specs/024-extension-platform/spec.md`
+- modified `web/src/App.vue`
+- added `web/src/alerts-json.ts`
+- added `web/src/alerts-state.ts`
+- added `web/src/alerts-transport.ts`
+- added `web/src/alerts.ts`
+- added `web/src/components/AlertCommands.vue`
+- added `web/src/components/AlertRuleEditor.vue`
+- added `web/src/components/AlertSample.vue`
+- modified `web/src/router.ts`
+- added `web/src/views/AlertsView.vue`
+- added `web/tests/alerts-state.test.mjs`
+- added `web/tests/alerts.test.mjs`
+
+</details>
+
+## 2026-10-31T21:46:30Z · c6bd2869f3d4
+
+024-A限定本地验收收口：实际全量race/vet、251项前端、真实main故障/浏览器、019排空预览与make check均通过；仅同步最终能力状态和证据，模块/链路/ER/权限无新增结构；022-M/Q独立运行合同冻结待实施、023-B保持未冻结
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 724 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/extension-platform.md`
+- modified `docs/verification/operations-alerts.md`
+- modified `specs/024-extension-platform/a-contract.md`
+- modified `specs/024-extension-platform/acceptance.md`
+- modified `specs/024-extension-platform/plan.md`
+- modified `specs/024-extension-platform/spec.md`
+
+</details>
+
+## 2026-11-01T15:00:55Z · 8fcfb390d20b
+
+汇合022-B3生命周期、023周期核验、024纯计量及025配置/邮件证据；新增C0离线descriptor与同RR账本reader，精确校准type权限，复核16图/HLD/LLD/源码状态；仅排除.vite生成缓存，正式checker/全资金接线/HA/性能仍后续
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1064 个源文件；本次 407 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `.github/workflows/ci.yml`
+- modified `.gitignore`
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/payment_startup.go`
+- added `cmd/moni-aigate/payment_startup_test.go`
+- added `cmd/moni-aigate/periodic_verify.go`
+- added `cmd/moni-aigate/periodic_verify_integration_test.go`
+- added `cmd/moni-aigate/periodic_verify_test.go`
+- added `cmd/moni-payment-sandbox/main.go`
+- modified `compose.yaml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/extension-platform.md`
+- modified `docs/design/new-api-roadmap.md`
+- added `docs/design/provider-qualification-plan.md`
+- modified `docs/runbooks/deployment.md`
+- added `docs/verification/architecture-c0-reader.json`
+- modified `docs/verification/architecture-sync.md`
+- added `docs/verification/assets/architecture-b2-verifier.png`
+- added `docs/verification/assets/architecture-b3-application.png`
+- added `docs/verification/assets/architecture-c0-reader-application.png`
+- added `docs/verification/assets/architecture-payment-proof.png`
+- added `docs/verification/assets/payment-application-022-mobile.png`
+- added `docs/verification/assets/payment-application-022-owner.png`
+- added `docs/verification/assets/payment-application-022-platform.png`
+- added `docs/verification/assets/payment-sandbox-architecture.png`
+- added `docs/verification/assets/periodic-budget-023-desktop.png`
+- added `docs/verification/assets/periodic-budget-023-mobile.png`
+- added `docs/verification/compose-config-025.json`
+- added `docs/verification/compose-render-025.json`
+- added `docs/verification/compose-runtime-025.json`
+- added `docs/verification/funding-ledger-reader.json`
+- added `docs/verification/funding-ledger-reader.md`
+- added `docs/verification/funding-ledger-rows.md`
+- added `docs/verification/funding-lot-candidate.md`
+- added `docs/verification/funding-lot-descriptor.json`
+- added `docs/verification/funding-lot-descriptor.md`
+- added `docs/verification/funding-lot-planners.md`
+- added `docs/verification/mail-lifecycle-025.json`
+- added `docs/verification/mail-lifecycle-025.md`
+- added `docs/verification/metering-vectors.md`
+- added `docs/verification/migration-snapshot.md`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/payment-application-022-browser.json`
+- added `docs/verification/payment-application-022-indexeddb.json`
+- added `docs/verification/payment-application-022-lifecycle.json`
+- added `docs/verification/payment-application-022-process.json`
+- added `docs/verification/payment-application.md`
+- added `docs/verification/payment-funding.md`
+- added `docs/verification/payment-refund-protocol-v2.md`
+- added `docs/verification/payment-refund-v2-golden.json`
+- added `docs/verification/payment-sandbox.md`
+- added `docs/verification/periodic-budget-023-preview.json`
+- added `docs/verification/periodic-budgets.md`
+- modified `internal/billing/cost_policy.go`
+- added `internal/billing/deadline_fixture_test.go`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/funding.go`
+- added `internal/billing/funding_ledger_read.go`
+- added `internal/billing/funding_ledger_read_integration_test.go`
+- added `internal/billing/funding_ledger_read_test.go`
+- added `internal/billing/funding_sandbox.go`
+- added `internal/billing/funding_sandbox_integration_test.go`
+- modified `internal/billing/funding_verify.go`
+- added `internal/billing/lot_plan.go`
+- added `internal/billing/lot_plan_test.go`
+- added `internal/billing/periodic_budget.go`
+- modified `internal/billing/process_failure_integration_test.go`
+- modified `internal/billing/procurement.go`
+- modified `internal/billing/procurement_integration_test.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/settle.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_types.go`
+- modified `internal/config/config.go`
+- added `internal/config/payments.go`
+- added `internal/config/payments_test.go`
+- added `internal/fundinglotverify/ledger.go`
+- added `internal/fundinglotverify/ledger_fuzz_test.go`
+- added `internal/fundinglotverify/ledger_test.go`
+- added `internal/metering/amount.go`
+- added `internal/metering/digest.go`
+- added `internal/metering/fuzz_test.go`
+- added `internal/metering/json.go`
+- added `internal/metering/legacy.go`
+- added `internal/metering/metering_test.go`
+- added `internal/metering/parse.go`
+- added `internal/metering/types.go`
+- added `internal/mockpsp/config.go`
+- added `internal/mockpsp/http.go`
+- added `internal/mockpsp/input.go`
+- added `internal/mockpsp/input_test.go`
+- added `internal/mockpsp/repo_base.go`
+- added `internal/mockpsp/repo_base_test.go`
+- added `internal/mockpsp/repo_commands.go`
+- added `internal/mockpsp/repo_controls.go`
+- added `internal/mockpsp/repo_delivery.go`
+- added `internal/mockpsp/repo_delivery_integration_test.go`
+- added `internal/mockpsp/repo_delivery_test.go`
+- added `internal/mockpsp/repo_events.go`
+- added `internal/mockpsp/repo_events_test.go`
+- added `internal/mockpsp/repo_faults.go`
+- added `internal/mockpsp/repo_integration_test.go`
+- added `internal/mockpsp/repo_locks.go`
+- added `internal/mockpsp/repo_locks_test.go`
+- added `internal/mockpsp/repo_observations.go`
+- added `internal/mockpsp/repo_observations_test.go`
+- added `internal/mockpsp/repo_queries.go`
+- added `internal/mockpsp/runner.go`
+- added `internal/mockpsp/runner_integration_test.go`
+- added `internal/mockpsp/server.go`
+- added `internal/mockpsp/types.go`
+- added `internal/mockpsp/types_test.go`
+- modified `internal/operations/key_policy_integration_test.go`
+- added `internal/operations/metadata_fixture_test.go`
+- modified `internal/operations/operations.go`
+- added `internal/operations/payment_attestation_test.go`
+- added `internal/operations/payment_roles.go`
+- added `internal/operations/payment_roles_functions.go`
+- added `internal/operations/payment_roles_test.go`
+- added `internal/operations/periodic_roles.go`
+- added `internal/operations/periodic_roles_test.go`
+- modified `internal/operations/procurement_integration_test.go`
+- added `internal/paymentreceiver/http.go`
+- added `internal/paymentreceiver/http_test.go`
+- added `internal/paymentreceiver/repository.go`
+- added `internal/paymentreceiver/repository_integration_test.go`
+- added `internal/paymentreceiver/server.go`
+- added `internal/paymentreceiver/types.go`
+- added `internal/paymentreceiver/types_test.go`
+- added `internal/paymentrefundproto/capture.go`
+- added `internal/paymentrefundproto/capture_test.go`
+- added `internal/paymentrefundproto/codec.go`
+- added `internal/paymentrefundproto/facts.go`
+- added `internal/paymentrefundproto/fuzz_test.go`
+- added `internal/paymentrefundproto/golden_test.go`
+- added `internal/paymentrefundproto/protocol_test.go`
+- added `internal/paymentrefundproto/replies.go`
+- added `internal/paymentrefundproto/requests.go`
+- added `internal/paymentrefundproto/signing.go`
+- added `internal/paymentrefundproto/signing_test.go`
+- added `internal/paymentrefundproto/types.go`
+- added `internal/paymentrefundproto/values.go`
+- added `internal/paymentruntime/catalog.go`
+- added `internal/paymentruntime/dsn.go`
+- added `internal/paymentruntime/files.go`
+- added `internal/paymentruntime/json.go`
+- added `internal/paymentruntime/load.go`
+- added `internal/paymentruntime/load_test.go`
+- added `internal/paymentruntime/open.go`
+- added `internal/paymentruntime/ownership.go`
+- added `internal/paymentruntime/runtime_integration_test.go`
+- added `internal/paymentruntime/state.go`
+- added `internal/paymentruntime/types.go`
+- added `internal/payments/assembly.go`
+- added `internal/payments/assembly_test.go`
+- added `internal/payments/processor_adapter.go`
+- added `internal/payments/processor_adapter_test.go`
+- added `internal/payments/processor_claim.go`
+- added `internal/payments/processor_evidence.go`
+- added `internal/payments/processor_expiry_test.go`
+- added `internal/payments/processor_mutation.go`
+- added `internal/payments/processor_query.go`
+- added `internal/payments/processor_query_safety_test.go`
+- added `internal/payments/processor_safety_test.go`
+- added `internal/payments/processor_test.go`
+- added `internal/payments/processor_types.go`
+- added `internal/payments/runner.go`
+- added `internal/payments/runner_test.go`
+- added `internal/payments/runtime_catalog.go`
+- added `internal/payments/runtime_check.go`
+- added `internal/payments/runtime_codec.go`
+- added `internal/payments/runtime_dsn.go`
+- added `internal/payments/runtime_files.go`
+- added `internal/payments/runtime_integration_test.go`
+- added `internal/payments/runtime_load.go`
+- added `internal/payments/runtime_test.go`
+- added `internal/payments/runtime_transport.go`
+- added `internal/payments/runtime_types.go`
+- added `internal/payments/service_base.go`
+- added `internal/payments/service_commands.go`
+- added `internal/payments/service_fault_test.go`
+- added `internal/payments/service_fixture_test.go`
+- added `internal/payments/service_funding_read_test.go`
+- added `internal/payments/service_notification.go`
+- added `internal/payments/service_query.go`
+- added `internal/payments/service_test.go`
+- added `internal/payments/service_types.go`
+- added `internal/paymentsandboxqa/application.go`
+- added `internal/paymentsandboxqa/application_funding.go`
+- added `internal/paymentsandboxqa/application_manifest.go`
+- added `internal/paymentsandboxqa/application_test.go`
+- added `internal/paymentsandboxqa/application_users.go`
+- added `internal/paymentsandboxqa/application_wire.go`
+- added `internal/paymentsandboxqa/environment.go`
+- added `internal/paymentsandboxqa/environment_test.go`
+- added `internal/paymentsandboxqa/funding.go`
+- added `internal/paymentsandboxqa/install.go`
+- added `internal/paymentsandboxqa/manifest.go`
+- added `internal/paymentsandboxschema/mock_inventory.json`
+- added `internal/paymentsandboxschema/mock_v1.sql`
+- added `internal/paymentsandboxschema/receiver_inventory.json`
+- added `internal/paymentsandboxschema/receiver_v1.sql`
+- added `internal/paymentsandboxschema/schema.go`
+- added `internal/paymentsandboxschema/schema_test.go`
+- added `internal/periodicbudget/billing_dispatch_integration_test.go`
+- added `internal/periodicbudget/billing_integration_test.go`
+- added `internal/periodicbudget/billing_procurement_integration_test.go`
+- added `internal/periodicbudget/billing_recovery_integration_test.go`
+- added `internal/periodicbudget/commander.go`
+- added `internal/periodicbudget/commander_auth.go`
+- added `internal/periodicbudget/commander_configure.go`
+- added `internal/periodicbudget/commander_fault_test.go`
+- added `internal/periodicbudget/commander_integration_test.go`
+- added `internal/periodicbudget/commander_limits_test.go`
+- added `internal/periodicbudget/commander_receipt.go`
+- added `internal/periodicbudget/cursor.go`
+- added `internal/periodicbudget/cursor_test.go`
+- added `internal/periodicbudget/fingerprint.go`
+- added `internal/periodicbudget/fingerprint_test.go`
+- added `internal/periodicbudget/input.go`
+- added `internal/periodicbudget/input_test.go`
+- added `internal/periodicbudget/reader.go`
+- added `internal/periodicbudget/reader_auth.go`
+- added `internal/periodicbudget/reader_integration_test.go`
+- added `internal/periodicbudget/reader_json.go`
+- added `internal/periodicbudget/reader_operations.go`
+- added `internal/periodicbudget/reader_pages.go`
+- added `internal/periodicbudget/reader_test.go`
+- added `internal/periodicbudget/tx_customer.go`
+- added `internal/periodicbudget/tx_customer_test.go`
+- added `internal/periodicbudget/tx_dispatch.go`
+- added `internal/periodicbudget/tx_effects.go`
+- added `internal/periodicbudget/tx_fixture_test.go`
+- added `internal/periodicbudget/tx_identity_integration_test.go`
+- added `internal/periodicbudget/tx_locks.go`
+- added `internal/periodicbudget/tx_sources.go`
+- added `internal/periodicbudget/tx_supplier.go`
+- added `internal/periodicbudget/tx_supplier_test.go`
+- added `internal/periodicbudget/tx_types.go`
+- added `internal/periodicbudget/tx_unit_test.go`
+- added `internal/periodicbudget/types.go`
+- added `internal/periodicbudget/types_test.go`
+- added `internal/periodicbudget/values.go`
+- added `internal/periodicbudget/values_test.go`
+- added `internal/periodicbudget/verifier.go`
+- added `internal/periodicbudget/verifier_configuration.go`
+- added `internal/periodicbudget/verifier_events.go`
+- added `internal/periodicbudget/verifier_integration_test.go`
+- added `internal/periodicbudget/verifier_operations.go`
+- added `internal/periodicbudget/verifier_projections.go`
+- added `internal/periodicbudget/verifier_sources.go`
+- added `internal/periodicbudget/verifier_test.go`
+- modified `internal/pricing/pricing_integration_test.go`
+- added `internal/qa/c0candidate/candidate_test.go`
+- added `internal/qa/c0candidate/fixture_test.go`
+- added `internal/qa/c0candidate/legacy_fixture_test.go`
+- added `internal/qa/c0candidate/wallet_fixture_test.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/commerce_handlers.go`
+- added `internal/server/payment_admission.go`
+- added `internal/server/payment_handlers.go`
+- added `internal/server/payment_handlers_test.go`
+- added `internal/server/payment_input.go`
+- added `internal/server/periodic_budget_admission.go`
+- added `internal/server/periodic_budget_handlers.go`
+- added `internal/server/periodic_budget_input.go`
+- added `internal/server/periodic_budget_integration_test.go`
+- added `internal/server/periodic_budget_test.go`
+- modified `internal/server/server.go`
+- added `internal/testsupport/funding019/query.go`
+- added `internal/testsupport/funding019/verify.go`
+- added `internal/testsupport/funding019/verify_test.go`
+- added `migrations/020_periodic_budgets.sql`
+- added `migrations/021_payment_sandbox.sql`
+- added `migrations/022_payment_runtime_attestation.sql`
+- modified `migrations/embed.go`
+- added `migrations/embed_test.go`
+- added `migrations/verify_readonly.go`
+- added `migrations/verify_readonly_test.go`
+- added `migrations/verify_snapshot.go`
+- added `migrations/verify_snapshot_test.go`
+- added `scripts/browser-qa/lifecycle_seams.go`
+- added `scripts/browser-qa/mail_barrier.go`
+- added `scripts/browser-qa/mail_barrier_test.go`
+- modified `scripts/browser-qa/mail_fixture.go`
+- added `scripts/browser-qa/mail_lifecycle_test.go`
+- modified `scripts/browser-qa/main.go`
+- modified `scripts/check-architecture/main.go`
+- modified `scripts/check-architecture/main_test.go`
+- added `scripts/funding-lot-descriptor/canonical.go`
+- added `scripts/funding-lot-descriptor/catalog.go`
+- added `scripts/funding-lot-descriptor/dto.go`
+- added `scripts/funding-lot-descriptor/inputs.go`
+- added `scripts/funding-lot-descriptor/install.go`
+- added `scripts/funding-lot-descriptor/main.go`
+- added `scripts/funding-lot-descriptor/main_test.go`
+- added `scripts/payment-application-qa/README.md`
+- added `scripts/payment-application-qa/exercise.go`
+- added `scripts/payment-application-qa/exercise_lifecycle.go`
+- added `scripts/payment-application-qa/exercise_lifecycle_test.go`
+- added `scripts/payment-application-qa/http.go`
+- added `scripts/payment-application-qa/main.go`
+- added `scripts/payment-application-qa/main_test.go`
+- added `scripts/payment-application-qa/process.go`
+- added `scripts/payment-sandbox-qa/http.go`
+- added `scripts/payment-sandbox-qa/long.go`
+- added `scripts/payment-sandbox-qa/main.go`
+- added `scripts/payment-sandbox-qa/main_test.go`
+- added `scripts/payment-sandbox-qa/process.go`
+- added `scripts/payment-sandbox-qa/short.go`
+- added `scripts/verification/payment-refund-v2-golden.py`
+- modified `specs/021-self-service-identity/contract.md`
+- modified `specs/022-self-service-payments/acceptance.md`
+- added `specs/022-self-service-payments/b-processor-contract.md`
+- modified `specs/022-self-service-payments/b-runtime-contract.md`
+- added `specs/022-self-service-payments/b1-contract.md`
+- added `specs/022-self-service-payments/b1-core.sql`
+- added `specs/022-self-service-payments/b1-permissions.sql`
+- added `specs/022-self-service-payments/b1-verification.md`
+- added `specs/022-self-service-payments/b2-funding-contract.md`
+- added `specs/022-self-service-payments/b3-application-qa-contract.md`
+- added `specs/022-self-service-payments/b3-http-ui-contract.md`
+- added `specs/022-self-service-payments/b3-runtime-contract.md`
+- added `specs/022-self-service-payments/b3-web-contract.md`
+- added `specs/022-self-service-payments/c0-candidate-regression-contract.md`
+- added `specs/022-self-service-payments/c0-core-prototype.sql`
+- added `specs/022-self-service-payments/c0-ledger-reader-contract.md`
+- added `specs/022-self-service-payments/c0-lot-contract.md`
+- added `specs/022-self-service-payments/c0-maintenance-contract.md`
+- added `specs/022-self-service-payments/c0-permissions-prototype.sql`
+- added `specs/022-self-service-payments/c0-permit-contract.md`
+- added `specs/022-self-service-payments/c0-production-permissions.sql`
+- added `specs/022-self-service-payments/c0-production-schema.sql`
+- added `specs/022-self-service-payments/c0-runtime-helper-contract.md`
+- added `specs/022-self-service-payments/c0-schema-check-contract.md`
+- added `specs/022-self-service-payments/c0-sequence-contract.md`
+- added `specs/022-self-service-payments/c0-snapshot-contract.md`
+- added `specs/022-self-service-payments/c0-verifier-contract.md`
+- added `specs/022-self-service-payments/c1-protocol-v2-contract.md`
+- added `specs/022-self-service-payments/c1-refund-contract.md`
+- added `specs/022-self-service-payments/c2-dispute-contract.md`
+- added `specs/022-self-service-payments/c3-cross-recovery-contract.md`
+- modified `specs/022-self-service-payments/contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+- modified `specs/022-self-service-payments/spec.md`
+- added `specs/023-periodic-products/b-commander-contract.md`
+- modified `specs/023-periodic-products/b-contract.md`
+- modified `specs/023-periodic-products/b-core.sql`
+- modified `specs/023-periodic-products/b-http-contract.md`
+- added `specs/023-periodic-products/b-integration-contract.md`
+- added `specs/023-periodic-products/b-reader-contract.md`
+- added `specs/023-periodic-products/b-tx-contract.md`
+- modified `specs/023-periodic-products/b-verification.md`
+- added `specs/023-periodic-products/b-verifier-contract.md`
+- added `specs/023-periodic-products/c-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+- added `specs/024-extension-platform/b0-metering-contract.md`
+- added `specs/024-extension-platform/b0-pure-contract.md`
+- modified `specs/024-extension-platform/plan.md`
+- added `specs/025-production-ha/a0-compose-config-contract.md`
+- added `specs/025-production-ha/a1-mail-process-contract.md`
+- modified `specs/025-production-ha/acceptance.md`
+- added `specs/025-production-ha/b0-shared-execution-contract.md`
+- modified `specs/025-production-ha/contract.md`
+- added `specs/025-production-ha/migration-prefix-contract.md`
+- modified `specs/025-production-ha/plan.md`
+- modified `specs/025-production-ha/spec.md`
+- modified `web/src/App.vue`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/FundingPanel.vue`
+- added `web/src/components/PaymentsPage.vue`
+- added `web/src/components/PaymentsPanel.vue`
+- added `web/src/components/PeriodicBudgetPanel.vue`
+- added `web/src/components/PeriodicBudgetWriter.vue`
+- modified `web/src/format.ts`
+- modified `web/src/main.ts`
+- added `web/src/payments-journal.ts`
+- added `web/src/payments-json.ts`
+- added `web/src/payments-state.ts`
+- added `web/src/payments-transport.ts`
+- added `web/src/payments.ts`
+- added `web/src/periodic-budget-journal.ts`
+- added `web/src/periodic-budget-json.ts`
+- added `web/src/periodic-budget-state.ts`
+- added `web/src/periodic-budget-transport.ts`
+- added `web/src/periodic-budget.ts`
+- modified `web/src/router.ts`
+- modified `web/src/views/KeysView.vue`
+- added `web/src/views/PeriodicBudgetView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/ProcurementView.vue`
+- modified `web/src/views/WalletView.vue`
+- modified `web/tests/commerce.test.mjs`
+- added `web/tests/payments-indexeddb.browser.mjs`
+- added `web/tests/payments-state.test.mjs`
+- added `web/tests/payments-transport.test.mjs`
+- added `web/tests/payments.test.mjs`
+- added `web/tests/periodic-budget-indexeddb.browser.mjs`
+- added `web/tests/periodic-budget-state.test.mjs`
+- added `web/tests/periodic-budget-transport.test.mjs`
+- added `web/tests/periodic-budget.test.mjs`
+
+</details>
+
+## 2026-11-01T15:09:21Z · 25a8c9e3361e
+
+补记最终make verify-mvp通过与36包race/286前端证据，更新C0/reader父合同和交付状态；源码不变，16图/类型权限/源码链接复核完成，正式checker及全部后续阶段继续保留
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1065 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/architecture-sync.md`
+- added `docs/verification/c0-integration.json`
+- modified `docs/verification/mvp-status.md`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T17:04:48Z · 529d53dc048b
+
+022-C0正式静态catalog叶子及两套固定profile expected完成；复核五ordinary/完整sandbox、同RR opaque证明、类型I/O与完整权限边界、SQL等值优化和五秒预算；同步HLD/LLD/SDD/MVP及17图证据，维护Permit/epoch/全资金链仍未接线
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1114 个源文件；本次 57 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/architecture/funding-lot-catalog.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/architecture-c0-catalog.json`
+- modified `docs/verification/architecture-sync.md`
+- added `docs/verification/assets/architecture-c0-catalog-application.png`
+- added `docs/verification/assets/architecture-c0-catalog-detail.png`
+- added `docs/verification/funding-lot-catalog-collector.json`
+- added `docs/verification/funding-lot-catalog-collector.md`
+- added `docs/verification/funding-lot-catalog-peer-template-positions.json`
+- added `docs/verification/funding-lot-catalog-peers.md`
+- added `docs/verification/funding-lot-catalog.json`
+- added `docs/verification/funding-lot-catalog.md`
+- added `docs/verification/funding-lot-variants.json`
+- added `docs/verification/funding-lot-variants.md`
+- modified `docs/verification/mvp-status.md`
+- added `internal/fundinglotcatalog/canonical.go`
+- added `internal/fundinglotcatalog/collector.go`
+- added `internal/fundinglotcatalog/collector_bounds.go`
+- added `internal/fundinglotcatalog/collector_bounds_test.go`
+- added `internal/fundinglotcatalog/collector_builtins.go`
+- added `internal/fundinglotcatalog/collector_decode.go`
+- added `internal/fundinglotcatalog/collector_normal.go`
+- added `internal/fundinglotcatalog/collector_preflight.go`
+- added `internal/fundinglotcatalog/collector_preflight_test.go`
+- added `internal/fundinglotcatalog/collector_privilege_plan_test.go`
+- added `internal/fundinglotcatalog/collector_pure_test.go`
+- added `internal/fundinglotcatalog/collector_queries.go`
+- added `internal/fundinglotcatalog/collector_query_plan_test.go`
+- added `internal/fundinglotcatalog/collector_resolve.go`
+- added `internal/fundinglotcatalog/descriptor.go`
+- added `internal/fundinglotcatalog/descriptor_compare.go`
+- added `internal/fundinglotcatalog/descriptor_compare_test.go`
+- added `internal/fundinglotcatalog/descriptor_fields.go`
+- added `internal/fundinglotcatalog/descriptor_types.go`
+- added `internal/fundinglotcatalog/descriptor_validate.go`
+- added `internal/fundinglotcatalog/expected.go`
+- added `internal/fundinglotcatalog/expected/ordinary-v1.json`
+- added `internal/fundinglotcatalog/expected/sandbox-v1.json`
+- added `internal/fundinglotcatalog/expected_embedded.go`
+- added `internal/fundinglotcatalog/identity.go`
+- added `internal/fundinglotcatalog/peer_capture_test.go`
+- added `internal/fundinglotcatalog/peer_fixture_test.go`
+- added `internal/fundinglotcatalog/peer_timing_test.go`
+- added `internal/fundinglotcatalog/peers.go`
+- added `internal/fundinglotcatalog/proof.go`
+- added `internal/fundinglotcatalog/proof_integration_test.go`
+- added `internal/fundinglotcatalog/proof_test.go`
+- added `internal/fundinglotcatalog/types.go`
+- added `internal/fundinglotcatalog/variants_fixture_test.go`
+- added `specs/022-self-service-payments/c0-ordinary-permissions.sql`
+- added `specs/022-self-service-payments/c0-ordinary-public-contract.md`
+- modified `specs/022-self-service-payments/c0-permit-contract.md`
+- added `specs/022-self-service-payments/c0-sandbox-catalog-contract.md`
+- modified `specs/022-self-service-payments/c0-schema-check-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T17:14:31Z · 648d1ff60c77
+
+022-C0最终整leaf真实PG race217.140秒及make check/verify-mvp340.981秒通过；源码未改，补齐两次失败与最终日志/SHA、清理审计、阶段状态和17图Runtime前置角色顺序证据，复核main/Permit/epoch/全资金链及PG生产认证边界仍未开放
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1114 个源文件；本次 9 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/funding-lot-catalog.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/architecture-c0-catalog.json`
+- modified `docs/verification/architecture-sync.md`
+- modified `docs/verification/assets/architecture-c0-catalog-detail.png`
+- modified `docs/verification/funding-lot-catalog.json`
+- modified `docs/verification/funding-lot-catalog.md`
+- modified `docs/verification/mvp-status.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T17:35:47Z · 64e465981e80
+
+022-C0-T0新增独立维护Gate、专用连接身份预检与固定双session锁/unknown物理清理，已复核无Snapshot/Permit/main或资金授权；同步模块/阶段图、细化架构、HLD/LLD与专项证据；GitHub README和通用部署入口整理、忽略构建产物，无线上行为或迁移变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1124 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.gitignore`
+- modified `README.md`
+- added `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-maintenance-gate.json`
+- added `docs/verification/assets/architecture-maintenance-gate-application.png`
+- added `docs/verification/assets/architecture-maintenance-gate-detail.png`
+- added `docs/verification/maintenance-gate.json`
+- added `docs/verification/maintenance-gate.md`
+- modified `docs/verification/mvp-status.md`
+- added `internal/maintenancetrust/gate.go`
+- added `internal/maintenancetrust/gate_integration_test.go`
+- added `internal/maintenancetrust/gate_test.go`
+- added `internal/maintenancetrust/identity.go`
+- modified `specs/022-self-service-payments/c0-permit-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T17:50:19Z · 22e62acdf9ff
+
+汇合T0最终真实PG/race与代码审阅、GitHub README/通用部署入口和19图渲染；B0按冻结§10.3仅校准网络槽测试与独立多连接Prepare竞争测试，已复核生产pool/调度/权限/资金/预算均无变化；保留首轮整仓失败并准备最终复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1126 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/architecture-maintenance-gate.json`
+- added `docs/verification/github-initial-delivery.json`
+- added `docs/verification/github-initial-delivery.md`
+- modified `internal/mockpsp/repo_delivery_integration_test.go`
+- modified `internal/mockpsp/runner_integration_test.go`
+- modified `specs/022-self-service-payments/b-runtime-contract.md`
+
+</details>
+
+## 2026-11-01T17:57:17Z · 93d6c0a4821e
+
+最终集成收口：T0专用Gate真实PG/race53场景通过，B0仅测试oracle修正与多连接竞争专项通过；根make check及verify-mvp全通过，补齐可追溯原失败/最终证据和交付状态。已语义复核19图、模块/数据/权限/资金边界及README部署入口；本轮不接main、不改生产SQL/资金/预算，后续阶段保持未完成
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1126 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/github-initial-delivery.json`
+- modified `docs/verification/github-initial-delivery.md`
+- modified `docs/verification/mvp-status.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>

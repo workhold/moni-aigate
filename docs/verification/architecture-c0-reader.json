@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-01",
+  "mermaid_version": "12.2.0",
+  "architecture_sha256": "a7fba48341263544f331739fc1a1a4a9da6a34959df265688a8128fa1cf74996",
+  "diagrams": [
+    {
+      "diagram": 1,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 2,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 3,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 4,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 5,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 6,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 7,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 8,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 9,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 10,
+      "type": "er",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 11,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 12,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 13,
+      "type": "er",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 14,
+      "type": "er",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 15,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true
+    },
+    {
+      "diagram": 16,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true
+    }
+  ],
+  "module_image_sha256": "c9853ef39d6491a689762c96651abd6219b836971cfff8f9652bcbc34fd6d078",
+  "module_size": {
+    "width": 4036,
+    "height": 2583
+  },
+  "pass": true
+}

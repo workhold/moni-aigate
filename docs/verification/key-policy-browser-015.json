@@ -1,0 +1,232 @@
+{
+  "date": "2026-10-31",
+  "scope": "015 isolated real-main browser representative acceptance",
+  "binary_sha256": "75141f81d924722320692339911ac9877464ec4d406125a502d60648aa5a5827",
+  "app_origin": "http://127.0.0.1:65255",
+  "preparation": "Harness synthetic platform identities; HTTP API creates model/channel/route/price/customer and double-approved synthetic credit. Key creation, changes and inference are actual browser controls. No production account, real money or paid provider.",
+  "browser_operations": [
+    "Create restricted Key with duplicate loopback entries canonicalized to 127.0.0.1/32 revision 1",
+    "SSE succeeds with confirmed usage 4/2 and charge 20",
+    "Edit to 192.0.2.8/24 becomes 192.0.2.0/24 revision 2",
+    "Same Key SSE rejected HTTP403 key_ip_forbidden before any additional financial facts",
+    "Clear explicit empty list becomes unrestricted revision 3",
+    "Save identical empty list is no-op revision 3 without audit",
+    "Same Key JSON succeeds and charges exactly 20",
+    "Key list and policy editor at 390x844 have document width 390",
+    "Logout returns login page; temporary tool credentials cleared"
+  ],
+  "denied_request_id": "f165055d-b249-4cda-b360-92c20f9017fb",
+  "before_denied": {
+    "key": {
+      "id": "efb340b3-0af7-4593-b0d7-561512801bce",
+      "held": 0,
+      "spent": 20,
+      "scopes": [
+        "ec713a16-7a0a-4b97-985d-b52b405bedb6"
+      ],
+      "owner_id": "6a80997a-3647-42a6-8440-dbbe5e7348e4",
+      "revision": "2",
+      "lifetime_limit": 1000000,
+      "allowed_client_cidrs": [
+        "192.0.2.0/24"
+      ]
+    },
+    "charged": 20,
+    "sources": [
+      "127.0.0.1"
+    ],
+    "attempts": 1,
+    "credited": 1234567,
+    "requests": 1,
+    "idempotency": 0,
+    "settlements": 1,
+    "ledger_total": 0,
+    "reservations": 1,
+    "finalizations": 1,
+    "policy_audits": [
+      {
+        "after": {
+          "allowed_client_cidrs": [
+            "192.0.2.0/24"
+          ],
+          "access_policy_revision": "2"
+        },
+        "before": {
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1"
+        }
+      }
+    ],
+    "request_facts": [
+      {
+        "id": "3c270edb-1b13-4054-bb18-456bedb30eed",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      }
+    ],
+    "policy_audit_count": 1,
+    "unbalanced_journals": 0
+  },
+  "after_denied": {
+    "key": {
+      "id": "efb340b3-0af7-4593-b0d7-561512801bce",
+      "held": 0,
+      "spent": 20,
+      "scopes": [
+        "ec713a16-7a0a-4b97-985d-b52b405bedb6"
+      ],
+      "owner_id": "6a80997a-3647-42a6-8440-dbbe5e7348e4",
+      "revision": "2",
+      "lifetime_limit": 1000000,
+      "allowed_client_cidrs": [
+        "192.0.2.0/24"
+      ]
+    },
+    "charged": 20,
+    "sources": [
+      "127.0.0.1"
+    ],
+    "attempts": 1,
+    "credited": 1234567,
+    "requests": 1,
+    "idempotency": 0,
+    "settlements": 1,
+    "ledger_total": 0,
+    "reservations": 1,
+    "finalizations": 1,
+    "policy_audits": [
+      {
+        "after": {
+          "allowed_client_cidrs": [
+            "192.0.2.0/24"
+          ],
+          "access_policy_revision": "2"
+        },
+        "before": {
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1"
+        }
+      }
+    ],
+    "request_facts": [
+      {
+        "id": "3c270edb-1b13-4054-bb18-456bedb30eed",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      }
+    ],
+    "policy_audit_count": 1,
+    "unbalanced_journals": 0
+  },
+  "final": {
+    "key": {
+      "id": "efb340b3-0af7-4593-b0d7-561512801bce",
+      "held": 0,
+      "spent": 40,
+      "scopes": [
+        "ec713a16-7a0a-4b97-985d-b52b405bedb6"
+      ],
+      "owner_id": "6a80997a-3647-42a6-8440-dbbe5e7348e4",
+      "revision": "3",
+      "lifetime_limit": 1000000,
+      "allowed_client_cidrs": []
+    },
+    "charged": 40,
+    "sources": [
+      "127.0.0.1",
+      "127.0.0.1"
+    ],
+    "attempts": 2,
+    "credited": 1234567,
+    "requests": 2,
+    "held_total": 0,
+    "idempotency": 0,
+    "settlements": 2,
+    "ledger_total": 0,
+    "reservations": 2,
+    "finalizations": 2,
+    "policy_audits": [
+      {
+        "after": {
+          "allowed_client_cidrs": [
+            "192.0.2.0/24"
+          ],
+          "access_policy_revision": "2"
+        },
+        "before": {
+          "allowed_client_cidrs": [
+            "127.0.0.1/32"
+          ],
+          "access_policy_revision": "1"
+        }
+      },
+      {
+        "after": {
+          "allowed_client_cidrs": [],
+          "access_policy_revision": "3"
+        },
+        "before": {
+          "allowed_client_cidrs": [
+            "192.0.2.0/24"
+          ],
+          "access_policy_revision": "2"
+        }
+      }
+    ],
+    "request_facts": [
+      {
+        "id": "3c270edb-1b13-4054-bb18-456bedb30eed",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      },
+      {
+        "id": "046345d7-71c1-427e-be3e-c8dc006cfb26",
+        "source": "127.0.0.1",
+        "status": "succeeded",
+        "charged": 20,
+        "billing_status": "settled"
+      }
+    ],
+    "available_total": 1234527,
+    "policy_audit_count": 2,
+    "unbalanced_journals": 0
+  },
+  "mock_counts": {
+    "directory_gets": 0,
+    "chat_posts": 2,
+    "chat_json_posts": 1,
+    "chat_sse_posts": 1,
+    "auth_rejected": 0,
+    "unsupported": 0
+  },
+  "business_counts": {
+    "platform_probe_attempts": 0,
+    "customer_upstream_attempts": 2,
+    "customer_requests": 2,
+    "settlements": 2
+  },
+  "browser_console_warn_error": [],
+  "browser_console_scope": "Application warn/error snapshot after calls and request explorer",
+  "mobile": {
+    "viewport_width": 390,
+    "document_width": 390,
+    "height": 844
+  },
+  "not_browser_tested": [
+    "Concurrent CAS conflict",
+    "Unknown network write result",
+    "Role change during open dialog",
+    "Other five inference protocols",
+    "In-flight SSE tightening (real PG HTTP tests cover it)"
+  ]
+}

@@ -1,0 +1,423 @@
+{
+  "date": "2026-11-01",
+  "run_id": "34c9614e-b32a-4a11-a34a-238b3c2fb361",
+  "app_origin": "http://127.0.0.1:51689",
+  "scope": "isolated real main, synthetic tenant and loopback provider; no paid supplier or actual payment",
+  "browser_checks": {
+    "group_create_receipt_validated": true,
+    "missing_price_preview": true,
+    "explicit_assignment_impact_confirmation": true,
+    "publish_cny_to_micro_exact": true,
+    "retire_and_disallow_publish": true,
+    "current_assignment_returned_default_revision": "3",
+    "desktop": {
+      "width": 1365,
+      "document_scroll_width": 1365
+    },
+    "mobile": {
+      "width": 390,
+      "document_scroll_width": 390
+    }
+  },
+  "http_checks": {
+    "default-inspect": {
+      "http_status": 200,
+      "requests": [
+        {
+          "billing_status": "settled",
+          "charged_amount": "8",
+          "created_at": "2026-10-31T20:32:06.663221Z",
+          "delivery_stage": "none",
+          "final_local_delivery": "complete_local_write",
+          "finish_reason": "stop",
+          "id": "a2d37a71-197c-4322-a4f3-070fc867e5b0",
+          "input_rate": "1000000",
+          "input_tokens": 4,
+          "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+          "model_name": "qa-priced-model",
+          "output_rate": "2000000",
+          "output_tokens": 2,
+          "price_version_id": "8decf794-0c5e-4a43-adb9-70d2e1a04f30",
+          "pricing_group_id": null,
+          "protocol_outcome": "completed",
+          "reserved_amount": "136",
+          "retail_priced_at": "2026-10-31T20:32:06.662841Z",
+          "retail_snapshot_status": "recorded",
+          "settlement_id": "81fa7158-9102-4db4-8b81-ebf83dc63066",
+          "status": "succeeded",
+          "tenant_pricing_revision": "1",
+          "transport_end_reason": "done",
+          "usage_status": "confirmed_final"
+        }
+      ],
+      "wallet": {
+        "available": "999992",
+        "held": "0",
+        "tenant_id": "bdae8c66-9872-40aa-b082-af139af18638",
+        "total_charged": "8",
+        "total_credited": "1000000",
+        "total_refunded": "0"
+      },
+      "quote": {
+        "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+        "source": "default",
+        "status": "available",
+        "price_group_id": null,
+        "price_version_id": "8decf794-0c5e-4a43-adb9-70d2e1a04f30",
+        "currency": "CNY",
+        "input_rate": "1000000",
+        "output_rate": "2000000",
+        "effective_at": "2026-01-01T00:00:00.000000Z",
+        "as_of": "2026-10-31T20:32:20.981334Z"
+      }
+    },
+    "missing-call": {
+      "http_status": 503,
+      "requests": [
+        {
+          "billing_status": "settled",
+          "charged_amount": "8",
+          "created_at": "2026-10-31T20:32:06.663221Z",
+          "delivery_stage": "none",
+          "final_local_delivery": "complete_local_write",
+          "finish_reason": "stop",
+          "id": "a2d37a71-197c-4322-a4f3-070fc867e5b0",
+          "input_rate": "1000000",
+          "input_tokens": 4,
+          "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+          "model_name": "qa-priced-model",
+          "output_rate": "2000000",
+          "output_tokens": 2,
+          "price_version_id": "8decf794-0c5e-4a43-adb9-70d2e1a04f30",
+          "pricing_group_id": null,
+          "protocol_outcome": "completed",
+          "reserved_amount": "136",
+          "retail_priced_at": "2026-10-31T20:32:06.662841Z",
+          "retail_snapshot_status": "recorded",
+          "settlement_id": "81fa7158-9102-4db4-8b81-ebf83dc63066",
+          "status": "succeeded",
+          "tenant_pricing_revision": "1",
+          "transport_end_reason": "done",
+          "usage_status": "confirmed_final"
+        }
+      ],
+      "wallet": {
+        "available": "999992",
+        "held": "0",
+        "tenant_id": "bdae8c66-9872-40aa-b082-af139af18638",
+        "total_charged": "8",
+        "total_credited": "1000000",
+        "total_refunded": "0"
+      },
+      "quote": {
+        "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+        "source": "group",
+        "status": "unavailable",
+        "price_group_id": "fff43699-7761-45af-9ca1-2294921916cf",
+        "price_version_id": null,
+        "currency": "CNY",
+        "input_rate": null,
+        "output_rate": null,
+        "effective_at": null,
+        "as_of": "2026-10-31T20:32:37.411329Z"
+      }
+    },
+    "group-call": {
+      "http_status": 200,
+      "requests": [
+        {
+          "billing_status": "settled",
+          "charged_amount": "20",
+          "created_at": "2026-10-31T20:33:05.393651Z",
+          "delivery_stage": "none",
+          "final_local_delivery": "complete_local_write",
+          "finish_reason": "stop",
+          "id": "f3171f73-9c5f-4ad2-9921-4850823dbe84",
+          "input_rate": "3000000",
+          "input_tokens": 4,
+          "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+          "model_name": "qa-priced-model",
+          "output_rate": "4000000",
+          "output_tokens": 2,
+          "price_version_id": "96bc5a7a-c8d6-41f6-a135-1aac34edd307",
+          "pricing_group_id": "fff43699-7761-45af-9ca1-2294921916cf",
+          "protocol_outcome": "completed",
+          "reserved_amount": "400",
+          "retail_priced_at": "2026-10-31T20:33:05.393398Z",
+          "retail_snapshot_status": "recorded",
+          "settlement_id": "fef23a45-f16c-4eaa-8cd8-a87b7c2100c8",
+          "status": "succeeded",
+          "tenant_pricing_revision": "2",
+          "transport_end_reason": "done",
+          "usage_status": "confirmed_final"
+        },
+        {
+          "billing_status": "settled",
+          "charged_amount": "8",
+          "created_at": "2026-10-31T20:32:06.663221Z",
+          "delivery_stage": "none",
+          "final_local_delivery": "complete_local_write",
+          "finish_reason": "stop",
+          "id": "a2d37a71-197c-4322-a4f3-070fc867e5b0",
+          "input_rate": "1000000",
+          "input_tokens": 4,
+          "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+          "model_name": "qa-priced-model",
+          "output_rate": "2000000",
+          "output_tokens": 2,
+          "price_version_id": "8decf794-0c5e-4a43-adb9-70d2e1a04f30",
+          "pricing_group_id": null,
+          "protocol_outcome": "completed",
+          "reserved_amount": "136",
+          "retail_priced_at": "2026-10-31T20:32:06.662841Z",
+          "retail_snapshot_status": "recorded",
+          "settlement_id": "81fa7158-9102-4db4-8b81-ebf83dc63066",
+          "status": "succeeded",
+          "tenant_pricing_revision": "1",
+          "transport_end_reason": "done",
+          "usage_status": "confirmed_final"
+        }
+      ],
+      "wallet": {
+        "available": "999972",
+        "held": "0",
+        "tenant_id": "bdae8c66-9872-40aa-b082-af139af18638",
+        "total_charged": "28",
+        "total_credited": "1000000",
+        "total_refunded": "0"
+      },
+      "quote": {
+        "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+        "source": "group",
+        "status": "available",
+        "price_group_id": "fff43699-7761-45af-9ca1-2294921916cf",
+        "price_version_id": "96bc5a7a-c8d6-41f6-a135-1aac34edd307",
+        "currency": "CNY",
+        "input_rate": "3000000",
+        "output_rate": "4000000",
+        "effective_at": "2026-01-01T00:00:00.000000Z",
+        "as_of": "2026-10-31T20:33:05.408886Z"
+      }
+    },
+    "retired-call": {
+      "http_status": 200,
+      "requests": [
+        {
+          "billing_status": "settled",
+          "charged_amount": "20",
+          "created_at": "2026-10-31T20:33:47.561071Z",
+          "delivery_stage": "none",
+          "final_local_delivery": "complete_local_write",
+          "finish_reason": "stop",
+          "id": "525c9957-8e9a-450f-9ee4-90f56b84be60",
+          "input_rate": "3000000",
+          "input_tokens": 4,
+          "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+          "model_name": "qa-priced-model",
+          "output_rate": "4000000",
+          "output_tokens": 2,
+          "price_version_id": "96bc5a7a-c8d6-41f6-a135-1aac34edd307",
+          "pricing_group_id": "fff43699-7761-45af-9ca1-2294921916cf",
+          "protocol_outcome": "completed",
+          "reserved_amount": "400",
+          "retail_priced_at": "2026-10-31T20:33:47.560957Z",
+          "retail_snapshot_status": "recorded",
+          "settlement_id": "188dd82a-4154-4ff1-a7b6-bd754f33051d",
+          "status": "succeeded",
+          "tenant_pricing_revision": "2",
+          "transport_end_reason": "done",
+          "usage_status": "confirmed_final"
+        },
+        {
+          "billing_status": "settled",
+          "charged_amount": "20",
+          "created_at": "2026-10-31T20:33:05.393651Z",
+          "delivery_stage": "none",
+          "final_local_delivery": "complete_local_write",
+          "finish_reason": "stop",
+          "id": "f3171f73-9c5f-4ad2-9921-4850823dbe84",
+          "input_rate": "3000000",
+          "input_tokens": 4,
+          "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+          "model_name": "qa-priced-model",
+          "output_rate": "4000000",
+          "output_tokens": 2,
+          "price_version_id": "96bc5a7a-c8d6-41f6-a135-1aac34edd307",
+          "pricing_group_id": "fff43699-7761-45af-9ca1-2294921916cf",
+          "protocol_outcome": "completed",
+          "reserved_amount": "400",
+          "retail_priced_at": "2026-10-31T20:33:05.393398Z",
+          "retail_snapshot_status": "recorded",
+          "settlement_id": "fef23a45-f16c-4eaa-8cd8-a87b7c2100c8",
+          "status": "succeeded",
+          "tenant_pricing_revision": "2",
+          "transport_end_reason": "done",
+          "usage_status": "confirmed_final"
+        },
+        {
+          "billing_status": "settled",
+          "charged_amount": "8",
+          "created_at": "2026-10-31T20:32:06.663221Z",
+          "delivery_stage": "none",
+          "final_local_delivery": "complete_local_write",
+          "finish_reason": "stop",
+          "id": "a2d37a71-197c-4322-a4f3-070fc867e5b0",
+          "input_rate": "1000000",
+          "input_tokens": 4,
+          "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+          "model_name": "qa-priced-model",
+          "output_rate": "2000000",
+          "output_tokens": 2,
+          "price_version_id": "8decf794-0c5e-4a43-adb9-70d2e1a04f30",
+          "pricing_group_id": null,
+          "protocol_outcome": "completed",
+          "reserved_amount": "136",
+          "retail_priced_at": "2026-10-31T20:32:06.662841Z",
+          "retail_snapshot_status": "recorded",
+          "settlement_id": "81fa7158-9102-4db4-8b81-ebf83dc63066",
+          "status": "succeeded",
+          "tenant_pricing_revision": "1",
+          "transport_end_reason": "done",
+          "usage_status": "confirmed_final"
+        }
+      ],
+      "wallet": {
+        "available": "999952",
+        "held": "0",
+        "tenant_id": "bdae8c66-9872-40aa-b082-af139af18638",
+        "total_charged": "48",
+        "total_credited": "1000000",
+        "total_refunded": "0"
+      },
+      "quote": {
+        "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+        "source": "group",
+        "status": "available",
+        "price_group_id": "fff43699-7761-45af-9ca1-2294921916cf",
+        "price_version_id": "96bc5a7a-c8d6-41f6-a135-1aac34edd307",
+        "currency": "CNY",
+        "input_rate": "3000000",
+        "output_rate": "4000000",
+        "effective_at": "2026-01-01T00:00:00.000000Z",
+        "as_of": "2026-10-31T20:33:47.576692Z"
+      }
+    },
+    "final-http": {
+      "original_create_receipt": {
+        "operation": {
+          "operation_id": "ec8909c3-6a7d-4a1e-bdcc-59184055e368",
+          "kind": "price_group.create",
+          "scope": "platform",
+          "actor": "fdb5a2d0-8a41-49d7-9587-3c7a848da773",
+          "target": "/api/platform/price-groups",
+          "input_fingerprint": "9f8088f64cd77985f83729a7d0ee3e6c2635352ddad67cf92e3a4215bb0f11a4",
+          "resource_id": "fff43699-7761-45af-9ca1-2294921916cf",
+          "revision": "1",
+          "created_at": "2026-10-31T20:27:32.943848Z"
+        },
+        "result": {
+          "id": "fff43699-7761-45af-9ca1-2294921916cf",
+          "label": "QA 商业客户组",
+          "state": "active",
+          "revision": "1",
+          "created_at": "2026-10-31T20:27:32.943848Z"
+        }
+      },
+      "retired_publish_status": 409,
+      "retired_publish_code": "price_group_retired",
+      "anonymous": {
+        "id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+        "public_name": "qa-priced-model",
+        "protocol": "openai_chat",
+        "capabilities": {
+          "streaming": true,
+          "tools": false,
+          "input_only": false,
+          "text_only": true
+        },
+        "limits": {
+          "context_tokens": 256,
+          "input_token_upper_bound": 128,
+          "max_output_tokens": 64,
+          "default_output_tokens": 16
+        },
+        "pricing": {
+          "status": "available",
+          "currency": "CNY",
+          "unit": "micro_cny_per_million_tokens",
+          "price_version_id": "8decf794-0c5e-4a43-adb9-70d2e1a04f30",
+          "input_rate": "1000000",
+          "output_rate": "2000000",
+          "effective_at": "2026-01-01T00:00:00Z"
+        }
+      },
+      "assignment_and_replay_identical": true,
+      "assignment": {
+        "operation": {
+          "operation_id": "c6aa138a-9a42-4f6b-bc96-5c793b13ee30",
+          "kind": "tenant_pricing.assign",
+          "scope": "bdae8c66-9872-40aa-b082-af139af18638",
+          "actor": "fdb5a2d0-8a41-49d7-9587-3c7a848da773",
+          "target": "/api/platform/tenants/bdae8c66-9872-40aa-b082-af139af18638/pricing",
+          "input_fingerprint": "14bced6174e1fe692a55a73ebb7a87ff84a435c1a74da0836feec5a20ffc8cff",
+          "resource_id": "bdae8c66-9872-40aa-b082-af139af18638",
+          "revision": "3",
+          "created_at": "2026-10-31T20:34:38.704296Z"
+        },
+        "result": {
+          "tenant_id": "bdae8c66-9872-40aa-b082-af139af18638",
+          "price_group_id": null,
+          "pricing_revision": "3"
+        }
+      },
+      "quote": {
+        "model_id": "e980190c-38e7-4b79-983d-6d5cfd050780",
+        "source": "default",
+        "status": "available",
+        "price_group_id": null,
+        "price_version_id": "8decf794-0c5e-4a43-adb9-70d2e1a04f30",
+        "currency": "CNY",
+        "input_rate": "1000000",
+        "output_rate": "2000000",
+        "effective_at": "2026-01-01T00:00:00.000000Z",
+        "as_of": "2026-10-31T20:34:52.239708Z"
+      },
+      "historical_requests_unchanged": true
+    }
+  },
+  "database": {
+    "costs": [
+      {
+        "attempt": "1f020b41-04c1-43a1-9327-9dfa86a20dc4",
+        "cost_amount": "12",
+        "cost_status": "contract",
+        "cost_input_rate": "2000000",
+        "cost_output_rate": "2000000"
+      },
+      {
+        "attempt": "9105a37f-c789-4e12-b298-942be123a4ab",
+        "cost_amount": "12",
+        "cost_status": "contract",
+        "cost_input_rate": "2000000",
+        "cost_output_rate": "2000000"
+      },
+      {
+        "attempt": "2ba49b9c-354c-45f3-b0e5-aec19aa8c48b",
+        "cost_amount": "12",
+        "cost_status": "contract",
+        "cost_input_rate": "2000000",
+        "cost_output_rate": "2000000"
+      }
+    ],
+    "operations": 5,
+    "charged_sum": "48",
+    "settlements": 3,
+    "request_count": 3,
+    "new_snapshot_count": 3,
+    "unbalanced_journals": 0
+  },
+  "screenshots": [
+    "assets/tenant-pricing-023-desktop.png",
+    "assets/tenant-pricing-023-mobile.png"
+  ]
+}

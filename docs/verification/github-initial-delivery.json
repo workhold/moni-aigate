@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-02",
+  "scope": "initial GitHub candidate verification; no production acceptance",
+  "maintenance_gate_evidence": "docs/verification/maintenance-gate.json",
+  "callback_oracle": {
+    "slice": "022-B0 callback test oracle only, frozen b-runtime-contract §10.3",
+    "production_changes": false,
+    "budgets_or_leases_changed": false,
+    "source_files": [
+      {
+        "path": "internal/mockpsp/runner_integration_test.go",
+        "sha256": "88a8d070e2e91ea8516bb1521dada5c902a989809a1667223e934e90f90a3fe1"
+      },
+      {
+        "path": "internal/mockpsp/repo_delivery_integration_test.go",
+        "sha256": "c62ad2f684e23fb35bbd58b80fff470f38c5165e3be7fc228bec076235815016"
+      }
+    ],
+    "commands": [
+      {
+        "command": "go test -json -race ./internal/mockpsp -run 'TestPostgresCallbackRunnerTwoSlotsNoLocksDuringHTTP|TestRepositoryDeliveryPGPrepareContentionPreservesLease' -count=8 -timeout=180s",
+        "test_environment": "TEST_DATABASE_URL: exact literal local moni_test; value omitted",
+        "exit_code": 0,
+        "elapsed_seconds": 10.14,
+        "top_level_pass_executions": 16,
+        "test_outcomes": {
+          "pass": 16,
+          "fail": 0,
+          "skip": 0
+        },
+        "log": ".local/github-release-verification/callback-oracle-targeted-final-race.jsonl",
+        "sha256": "5a24fd5a336fc0b9f74188848b0c46adc2fca52462b5d1e08f85a48ec3ba98ec"
+      },
+      {
+        "command": "go test -json -race ./internal/mockpsp -count=1 -timeout=240s",
+        "test_environment": "TEST_DATABASE_URL: exact literal local moni_test; value omitted",
+        "exit_code": 0,
+        "elapsed_seconds": 5.768,
+        "top_level_pass_executions": 35,
+        "test_outcomes": {
+          "pass": 137,
+          "fail": 0,
+          "skip": 0
+        },
+        "log": ".local/github-release-verification/callback-oracle-package-final-race.jsonl",
+        "sha256": "6b0d1dc86c8ef103dd5ddd35b96a8c471f2e78cc880006958eb62740e4e3da44"
+      }
+    ],
+    "vet_exit_code": 0,
+    "independent_read_audit": {
+      "qa_schemas": 0,
+      "qa_roles": 0,
+      "qa_backends": 0,
+      "qa_advisory_locks": 0,
+      "public_builtin_owner": true,
+      "public_relations": 0,
+      "database_acl_null": true
+    },
+    "review": "descriptor_integration_review read review; explicit unique attempt row-count checks adopted"
+  },
+  "aggregate_verification": {
+    "status": "PASS",
+    "commands": [
+      {
+        "command": "make check",
+        "exit_code": 0,
+        "elapsed_seconds": 6.767,
+        "log_sha256": "96dbb28d7ac8155dba418743a582cfee6e6d556249586990b8a326ff0e9098b2",
+        "database": "dedicated local test database; DSN omitted",
+        "c0_maintenance_opt_in": "separately passed 54.205s; not reopened in aggregate command",
+        "c0_catalog_opt_in": "separately passed 217.140s; not reopened in aggregate command"
+      },
+      {
+        "command": "make verify-mvp",
+        "exit_code": 0,
+        "elapsed_seconds": 339.394,
+        "log_sha256": "6e0e01545832a6b4b6ea27d090ac1d3831fd6876d8da29e7447c7bc703c6a982",
+        "database": "dedicated local test database; DSN omitted",
+        "c0_maintenance_opt_in": "separately passed 54.205s; not reopened in aggregate command",
+        "c0_catalog_opt_in": "separately passed 217.140s; not reopened in aggregate command"
+      }
+    ],
+    "frontend_tests": 286,
+    "go_race": "all default package tests using explicit dedicated test DB; additional opt-in scopes documented separately",
+    "vet": "PASS",
+    "embedded_build": "PASS",
+    "architecture_snapshot_at_command_entry": {
+      "files": 1126,
+      "digest_prefix": "22e62acdf9ff"
+    },
+    "post_validation_changes": "verification/state documentation only; final read-only architecture check follows"
+  },
+  "previous_failed_aggregate": {
+    "command": "make verify-mvp",
+    "exit_code": 2,
+    "elapsed_seconds": 330.631,
+    "log_sha256": "a87556f4859479353c8184ccba7dcd8ae4e95416e6a503446ec540762e5d58c8",
+    "database": "dedicated local test database; DSN omitted",
+    "c0_maintenance_opt_in": "separately passed 54.205s; not reopened in aggregate command",
+    "c0_catalog_opt_in": "separately passed 217.140s; not reopened in aggregate command"
+  },
+  "previous_callback_test_sources": {
+    "internal/mockpsp/runner_integration_test.go": "c2a29180f9d7c4c2460d960344bf53238a23f949bde14a0ee52650e2a46c3da7",
+    "internal/mockpsp/repo_delivery_integration_test.go": "905dbdb6f1d70be219a587a985dd56e93e04a1db85be5793643a052ebfdddb84"
+  },
+  "readme_and_runbook_links_checked": 89,
+  "verification_images_reviewed": 64,
+  "mermaid_diagrams_rendered": 19,
+  "private_config_and_build_outputs_excluded": true,
+  "license_selected": false,
+  "precommit_binary_sha256": "25843e4526aa4a92ff67dc936434634b820d1137f305eaf74f23b5efdafb36c4",
+  "separate_catalog_evidence": "docs/verification/funding-lot-catalog.json",
+  "generated_architecture_images_visually_reviewed": 2
+}
