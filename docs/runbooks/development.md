@@ -115,9 +115,11 @@ make verify-mvp
 
 T0/T1 的历史专项结果见[Gate](../verification/maintenance-gate.md)和[Snapshot](../verification/maintenance-snapshot.md)；本轮 T2 的[真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，333.879秒、89顶层/832父子终态全部PASS；第三轮CI仍只证明其精确旧源码。专项使用独立 `C0_MAINTENANCE_DATABASE_URL` 显式选择上述专库；ordinary public profile 会创建并精确清理随机数据库，不使用父库的 public 作为安装目标。
 
-当前普通 `main` 未调用维护证明或扫描 API，但 billing/PB 的传递依赖已引入 maintenancetrust 与 fundinglotcatalog 初始化；Compose 与 1Panel 没有生产维护入口，也没有生产维护 CLI、全来源重放、basis 或 epoch 开账入口。规格目录中的 C0 SQL 尚非已追加的应用迁移，常规安装继续执行完整 001–022 与 `provision`。后续能力须分别设计、接线和验收。
+维护装配位于独立 `internal/maintenancescan`，单向依赖billing、periodicbudget及maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不依赖维护或catalog，依赖门禁同时检查生产与测试图。真正维护消费者仍在初始化时完整认证固定catalog，普通服务不为未调用的维护能力支付初始化成本。Compose与1Panel没有维护装配，也没有生产维护CLI、全来源重放、basis或epoch开账入口；规格目录中的C0 SQL尚非已追加的应用迁移，常规安装继续执行完整001–022与`provision`。
 
-T3首片新增 `Permit.BeginScan`、封闭 `ReadLease` 与账本/PB维护reader；两个结果仅为 `supplied_ledger_rows` 和 `periodic_budget_rows`。它们不发行全来源或开账许可。独立专项使用同一专库的 `C0_MAINTENANCE_DATABASE_URL`，重PG测试必须串行；默认 `make verify-mvp` 不自动打开此专项。实际命令及取消/资源边界见[T3专项](../verification/maintenance-read-lease.md)，整仓结果见[集成记录](../verification/maintenance-read-lease-integration.md)。当前没有可调用的生产维护CLI，请勿据这些库接口自行跳过完整来源/basis/epoch门禁。
+T3首片提供`Permit.BeginScan`、封闭`ReadLease`与账本/PB维护reader。领域包保留原public入口及唯一固定读取算法；窄raw-facts接缝只返回不可信局部事实，不接受或发行authority。maintenancescan仅接受真实`*ReadLease`，私有adapter执行Require→固定schema SELECT与算法→Finish后才构造绑定原Permit的私有结果，不接收外部provider、报告或通过位。两个摘要仍仅为`supplied_ledger_rows`和`periodic_budget_rows`，不发行全来源或开账许可。独立专项使用同一专库的`C0_MAINTENANCE_DATABASE_URL`，重PG测试必须串行；默认`make verify-mvp`不自动打开此专项。实际命令及取消/资源边界见[T3专项](../verification/maintenance-read-lease.md)，整仓结果见[集成记录](../verification/maintenance-read-lease-integration.md)。当前没有可调用的生产维护CLI，请勿据这些库接口自行跳过完整来源/basis/epoch门禁。
+
+依赖隔离按[SDD§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)修复远端启动回归。此前本地串行整仓1172.881秒成功保留原版本；精确f572bbd/CI run 41359784155在billing-0原12秒helper、server-2/3原10秒main和other周期核验CLI原60秒观察失败，不能用本地通过替代。原进程、真实双reader/资源界、无权威core、整仓和新精确提交CI须重新验收；本次不修改固定root、SQL/ACL、五秒issuer预算、原测试期限或skip条件。
 
 ## 客户Key来源策略（015）
 

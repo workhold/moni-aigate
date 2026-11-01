@@ -35,7 +35,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 自助身份与兑换券 | 已实现，限定本地验收 | 邮件证明、密码恢复、双审赠额券；注册、邮件和新券发行默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
-| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；库级 ledger/PB 维护读取器已经接入真实 ReadLease，完整来源追踪、维护切换、原路退款/拒付仍在推进 |
+| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；独立维护集成复用 ledger/PB 算法并消费真实 ReadLease，完整来源追踪、维护切换、原路退款/拒付仍在推进 |
 | 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；两个读取结果仅证明局部核验完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
@@ -81,7 +81,7 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，ledger 和周期预算两个读取器共用原读取算法；整个扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。ScanProof 与两个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，实际验证分别见[T3 专项](docs/verification/maintenance-read-lease.md)和[集成记录](docs/verification/maintenance-read-lease-integration.md)，不扩大历史 T2 的通过范围。
+停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，独立 `internal/maintenancescan` 通过私有适配复用账本和周期预算的固定读取算法；整个扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。普通 billing/PB/main 及领域测试不依赖维护或静态 catalog；真正维护消费者仍在初始化时完整认证固定 catalog。领域读取接缝只返回不可信局部事实，只有集成包消费真实租约并正常 Finish 后才能保存私有 ScanProof 结果，不接收外部报告或 provider。ScanProof 与两个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，历史专项与本次隔离修复验收分别见[T3 专项](docs/verification/maintenance-read-lease.md)和[集成记录](docs/verification/maintenance-read-lease-integration.md)，不扩大历史 T2 的通过范围。
 
 ## 本地启动
 
@@ -176,6 +176,7 @@ make verify-mvp
 `make check` 执行只读架构检查、Go vet 和前端构建。
 `make verify-mvp` 强制要求测试库配置，并运行前端测试/构建、Go race 测试、vet 和构建；未配置数据库而跳过的测试不能作为商业验收完成。
 本地验证与生产门禁分别记录在 [MVP 状态](docs/verification/mvp-status.md)和[发布验收](docs/verification/mvp-release-qualification.md)。
+维护集成与普通服务的依赖隔离由可执行门禁检查。启动回归、维护读取专项、整仓检查和每轮 CI 均保留精确版本身份，详见[集成隔离验证](docs/verification/maintenance-integration-isolation.md)。
 
 当前优先完善能力，再推进性能专项。网关额外首字节延迟与模型首 token 时间分开衡量；历史 Mock 结果不能代表当前版本或真实供应商。
 尚未完成 Rust LiteLLM / Bifrost 同条件实跑对比，不宣称性能相近。方法与固定参考见[性能规格](specs/002-performance-parity/spec.md)、[容量方法](docs/verification/capacity.md)和[研究记录](docs/research/performance-references.md)。

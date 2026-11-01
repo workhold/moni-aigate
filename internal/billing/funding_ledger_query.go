@@ -9,7 +9,7 @@ import (
 )
 
 // SQL uses the adapter-owned context. The CPU context cannot replace it.
-// This private seam is shared only by the two fixed ledger entry points.
+// This raw-facts seam is shared by fixed readers; it carries no authority.
 type fundingLedgerQuery interface {
 	Query(string, ...any) (fundingLedgerRows, error)
 }

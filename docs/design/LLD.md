@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（维护单次RR与首次快照、T2前驱矩阵及阶段边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3真实读取、局部证明边界与CI启动回归后的维护依赖隔离）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -12,6 +12,10 @@ internal/server/     HTTP鉴权/错误/分页、生成/检索协议生命周期�
 internal/identity/   用户、租户、成员、会话/MFA、Key生命周期
 internal/catalog/    模型profile、不可变渠道/路由/售价版本
 internal/billing/    同tx账本、核款/退款、预占/证据/结算/恢复/投影
+internal/periodicbudget/ 周期预算领域、原public核验与无权威固定事实算法
+internal/maintenancescan/ 独立维护集成，单向复用领域算法与真实ReadLease
+internal/maintenancetrust/ Gate、私有Snapshot、Attest、Permit与ReadLease
+internal/fundinglotcatalog/ 固定expected与同RR静态对象/权限证明
 internal/provider/   Chat/Responses/Messages、SSE、无重放客户端、出口安全
 internal/routing/    候选、优先级权重、容量、健康与attempt预算
 internal/security/   bcrypt、HMAC、TOTP、身份绑定AES-GCM
@@ -25,7 +29,7 @@ scripts/ deploy/     备份恢复、Compose、反向代理示例
 
 测试与对应包相邻，真实PG使用独立schema，真实HTTP/TCP上游均为本地Mock。本版用显式参数化pgx SQL而未引入sqlc，见[ADR-002](../decisions/ADR-002-implementation-refinements.md)。
 
-Gateway 编排依赖各领域接口；Provider 不依赖 Billing、数据库或 HTTP handler。跨领域写操作由明确的应用服务事务协调，避免多次“保存成功”拼成一个资金操作。
+Gateway编排依赖各领域接口；Provider不依赖Billing、数据库或HTTP handler。maintenancescan单向依赖billing/PB与maintenancetrust→catalog，普通领域/main及领域测试不反向依赖维护；领域raw-facts接口不授authority。跨领域写操作由明确的应用服务事务协调，避免多次“保存成功”拼成一个资金操作。
 
 ## 2. 公共接口与认证
 
@@ -761,4 +765,8 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 
 正常Finish由唯一cleanup owner先stop、ack/cancel再清activeLease/permitCall并释放busy；其他goroutine不能提前使用pgx。ScanProof纯绑定同锁核当前未stopped permitCall的caller/ctx取消，关闭后继取消回调尚未调度的窗口；不检查旧成功call的正常cancel。参数[]string每项另计8字节框架。SQL取消分别验本地wire物理关闭与服务器自然退出，不将raw-close声明为任意长服务器SQL即时中断；测试采用短PgSleep并独立观察PID/start/锁。仅_test.go外包装配原QA factory解决测试依赖环，不增加生产注册或替代proof。
 
-新增billing/PB→maintenancetrust→fundinglotcatalog会使主程序及测试child执行静态root初始化。原60秒CLI、12秒恢复helper、main等待与catalog五秒预算保持；expected专用raw parser保留原Token接受语义、decoded key查重、UTF8/数值/EOF、值节点/深度/文本/数组/总字节全部界及owned树，escaped string委托标准库；actual/candidate strictJSONNodes不变。静态缓存从已完整认证且逐字节等于原root的私有canonical编码取封闭路径span，digest命中后仍bytes.Equal，再共享原私有expected对象。固定record/attribute字段描述仅预编译为有序字段表，全部逐字段类型/枚举检查保留。详见[缓存合同](../../specs/022-self-service-payments/c0-read-lease-contract.md#6-集成启动开销与静态缓存合同)与[本轮集成验证](../verification/maintenance-read-lease-integration.md)。
+维护装配按[依赖隔离合同§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)集中到`internal/maintenancescan`，单向依赖billing、periodicbudget和maintenancetrust→fundinglotcatalog。普通billing/PB/main及领域测试不得导入维护或catalog，依赖门禁同时核生产与测试图。领域只导出internal范围的窄raw-facts query/rows接缝及唯一固定算法，不接受或发行Permit/ScanProof；假query只能返回不可信局部事实，没有外部provider、回调注册、通过位或FromFacts构造器。集成入口仅接受真实`*ReadLease`，自行构造私有adapter，Require→固定schema SELECT与领域core→Finish全部成功后才构造私有结果；Verify/Summary/Report仍绑定原Permit及kind。schema不从调用方传入，取消适配只提供Deadline/Done/Err，不转发Value；任意错误整个零结果。
+
+账本原actual LOGIN/owner/窄shape/history/RRRO与完整三表分页、大整数核算保持；[LedgerFactQuery/Rows、LedgerFacts与ReadLedgerFacts](../../internal/billing/funding_ledger_facts.go)只描述事实，LocalSummary不授authority。[VerifyLedgerMaintenance](../../internal/maintenancescan/ledger.go)消费真实租约后才封装结果。PB原public Verifier仍自行RR READ ONLY、核actual LOGIN/六表owner/history/SET/Commit；[VerificationQuery/Rows/Row](../../internal/periodicbudget/verifier.go)为固定核验提供窄接缝，[ReadBoundedVerificationRows](../../internal/periodicbudget/verifier_maintenance.go)先执行19关系146字段scalar资源guard，再调用原唯一业务SQL/receipt算法，该guard不加入旧普通入口；[VerifyMaintenance](../../internal/maintenancescan/periodic_budget.go)负责真实租约绑定。真正维护消费者仍eager完整认证固定catalog；普通main不再支付无关初始化成本。expected专用raw parser保留原Token接受语义、全部资源界与owned树，escaped string委托标准库；actual/candidate strictJSONNodes不变，固定SHA、DTO/模板、全root canonical与owned span/digest后完整bytes.Equal及字段预编译均保留。
+
+此前本地串行整仓1172.881秒成功仅属于原版本；精确f572bbd/CI run 41359784155在billing-0原12秒helper及server-2/3原10秒main观察失败。依赖隔离不放宽60/12/10/600秒期限或catalog五秒预算。新修复的原失败进程、真实双reader/资源界、无权威core、完整整仓与新精确提交CI须另行验收；[历史初始化](../verification/catalog-startup.md)和[集成记录](../verification/maintenance-read-lease-integration.md)保留各自代码身份，不据旧结果声明本次通过。

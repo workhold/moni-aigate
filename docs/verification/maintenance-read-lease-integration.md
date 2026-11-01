@@ -1,5 +1,7 @@
 # T3 首片集成与架构验证
 
+本记录保留精确提交 `f572bbd` 发布前的源码与执行身份；其远端 CI 后来失败，不能据本地串行结果声明该提交 CI 通过。当前维护集成隔离及重新验收见[隔离修复记录](maintenance-integration-isolation.md)。
+
 2026-11-02。本记录将 ReadLease、账本/PB 两个维护 reader 的专项与整仓验证分开；本片不包含完整全来源组合、basis、epoch、生产维护 CLI 或资金写入。生产能力和精确专项证据见[读取租约验证](maintenance-read-lease.md)。
 
 根串行执行原 reader 回归：设置专用 TEST_DATABASE_URL 后，`go test -race -p 1 ./internal/billing ./internal/periodicbudget -run '^(TestPostgresFundingLedgerRead|TestFundingLedger(Read|Maintenance)|TestVerifier)' -count=1 -timeout 600s -json` 退出0；34顶层、85父子终态全部PASS，零SKIP/FAIL。billing 23.050秒、periodicbudget 20.924秒；完整日志SHA-256为 `a6ef85d362f4d1cd9500db9f3ef805862521b69c8df36766cef95282a530f82f`。这包括原实际LOGIN/owner/RRRO前置、history/解析、账本完整分页/资源/取消，以及PB非空资金与历史缺证回归。

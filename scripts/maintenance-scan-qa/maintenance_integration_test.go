@@ -15,8 +15,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
+	"github.com/moni-ai/moni-aigate/internal/maintenancescan"
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 	"github.com/moni-ai/moni-aigate/internal/paymentsandboxqa"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
@@ -55,14 +55,14 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			if err != nil || permit == nil {
 				t.Fatal("genuine funded predecessor attestation failed")
 			}
-			var ledger *billing.MaintenanceLedgerResult
-			var budget *periodicbudget.MaintenanceResult
+			var ledger *maintenancescan.MaintenanceLedgerResult
+			var budget *maintenancescan.MaintenanceResult
 			readLedger := func() {
 				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanLedger)
 				if e != nil {
 					t.Fatal("real ledger lease failed")
 				}
-				ledger, e = billing.VerifyLedgerMaintenance(lease)
+				ledger, e = maintenancescan.VerifyLedgerMaintenance(lease)
 				if e != nil || ledger == nil {
 					t.Fatal("real maintenance ledger scan failed")
 				}
@@ -72,7 +72,7 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 				if e != nil {
 					t.Fatal("real periodic budget lease failed")
 				}
-				budget, e = periodicbudget.VerifyMaintenance(lease)
+				budget, e = maintenancescan.VerifyMaintenance(lease)
 				if e != nil || budget == nil {
 					t.Fatal("real maintenance periodic budget scan failed")
 				}

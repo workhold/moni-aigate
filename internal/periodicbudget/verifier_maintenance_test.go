@@ -1,7 +1,6 @@
 package periodicbudget
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -231,25 +230,46 @@ func TestVerifierMaintenanceGuardCoversWholeFrozenInventory(t *testing.T) {
 	}
 }
 
-func TestVerifierMaintenanceResultZeroAndEncodingDoNotConferAuthority(t *testing.T) {
-	for _, r := range []*MaintenanceResult{nil, {}, {report: Verification{SchemaVersion: 1, Balanced: true, CoverageComplete: true}}} {
-		if r.Verify(nil) == nil {
-			t.Fatal("unissued result valid")
-		}
-		if got, err := r.Report(nil); err == nil || got != (Verification{}) {
-			t.Fatal("unissued report returned")
-		}
-		if got, err := r.Summary(nil); err == nil || got != (MaintenanceSummary{}) {
-			t.Fatal("unissued summary returned")
+func TestReadBoundedVerificationRowsRejectsInvalidInputBeforeQuery(t *testing.T) {
+	if got, err := ReadBoundedVerificationRows(nil, "fixed"); !errors.Is(err, ErrVerifyInput) || got != (Verification{}) {
+		t.Fatal("nil raw reader accepted", got, err)
+	}
+	for _, schema := range []string{"", "pg_catalog", "pg_temp", "pg_temp_1", "bad\x00schema"} {
+		q := verifierTestCoreQuery()
+		if got, err := ReadBoundedVerificationRows(q, schema); !errors.Is(err, ErrVerifySchema) || got != (Verification{}) || len(q.sql) != 0 {
+			t.Fatal("invalid raw schema accepted or queried", schema, got, err)
 		}
 	}
-	r := MaintenanceResult{report: Verification{AsOf: "private-row-value"}}
-	raw, err := json.Marshal(r)
-	if err != nil || string(raw) != `{"periodic_budget_maintenance":"redacted"}` || strings.Contains(fmt.Sprintf("%v %#v", r, r), "private-row-value") {
-		t.Fatal("opaque result leaked")
+}
+
+func TestReadBoundedVerificationRowsGuardsBeforeOriginalCore(t *testing.T) {
+	for _, eligible := range []bool{false, true} {
+		q := verifierTestCoreQuery()
+		q.rows = append([]*verifierTestRow{{values: []any{eligible}}}, q.rows...)
+		got, err := ReadBoundedVerificationRows(q, `schema"quoted`)
+		if !eligible {
+			if !errors.Is(err, ErrVerifyExecution) || got != (Verification{}) || len(q.sql) != 1 || q.operations.closed != 0 {
+				t.Fatal("ineligible raw facts reached core or returned result", got, err)
+			}
+			continue
+		}
+		if err != nil || got.SchemaVersion != 1 || !got.Balanced || len(q.sql) != 10 || q.index != 9 || q.operations.closed != 1 {
+			t.Fatal("bounded raw entry changed original core", got, err)
+		}
+		if q.sql[0] != verifierRenderer(`schema"quoted`)(maintenanceVerifierResourcesSQL) || q.sql[1] != `SELECT pg_catalog.clock_timestamp()` {
+			t.Fatal("resource guard did not precede original algorithm")
+		}
 	}
-	var decoded MaintenanceResult
-	if json.Unmarshal([]byte(`{"report":{"schema_version":1,"balanced":true},"proof":{}}`), &decoded) != nil || decoded.Verify(nil) == nil {
-		t.Fatal("JSON minted result")
+	fault := errors.New("opaque-raw-facts-driver-error")
+	q := verifierTestCoreQuery()
+	q.checkErr = fault
+	if got, err := ReadBoundedVerificationRows(q, "fixed"); !errors.Is(err, fault) || got != (Verification{}) || len(q.sql) != 0 {
+		t.Fatal("raw check failure lost or queried", got, err)
+	}
+	q = verifierTestCoreQuery()
+	q.rows = append([]*verifierTestRow{{values: []any{true}}}, q.rows...)
+	q.rows[4].err = fault
+	if got, err := ReadBoundedVerificationRows(q, "fixed"); !errors.Is(err, fault) || got != (Verification{}) {
+		t.Fatal("bounded raw core returned partial report", got, err)
 	}
 }

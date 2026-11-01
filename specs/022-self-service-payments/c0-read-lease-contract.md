@@ -76,7 +76,7 @@ Funding、Key、采购、B sources及lot全图仍须独立逐列scanner、双向
 
 物理客户端socket关闭不保证PostgreSQL立即中断任意长CPU/等待SQL。取消验收分别检查独立wire.closed及时触发、原SQL owner安全返回，并以短且真实PgSleep屏障的语句观察服务器自然下次I/O后的PID/start/锁消失；不修改服务端client_connection_check_interval、不主动terminate、不延业务预算。长SQL中断与目标部署的服务器参数前提须另行冻结和验收。
 
-## 6. 集成启动开销与静态缓存合同
+## 6. 集成启动开销与静态缓存合同（首片历史，当前依赖以§7为准）
 
 新增billing/PB到maintenancetrust的生产依赖也会在普通main及其子进程中初始化fundinglotcatalog。整仓首次执行暴露CLI、SIGKILL恢复helper和真实main启动超时；无数据库的race空跑确认两个固定root的完整初始化约14.8秒，主要开销为重复canonical编码和缓存构建。不能以放宽既有60秒CLI、12秒helper、main等待或五秒catalog发行预算解决。
 
@@ -93,3 +93,13 @@ expected专用严格解析接缝允许独立实现等价的bounded raw递归构�
 新parser的生产启用须先完成原Token parser逐树差分：固定合法/非法语料、decoded重复key、数字与EOF、UTF8/控制符/代理项、文本/数组/深度/node/64MiB临界、完整两root、生成合法JSON及变异、独立fuzz；接受差异或树值差异均阻断。纯测/启动测量不替代原catalog真实PG及CLI/SIGKILL/main回归，相关正式源码必须再整仓验证。
 
 第二轮默认跨包并发整仓仅剩真实main的10秒角色拒绝观察超时，而同一源码四项原失败进程在串行专库回归全部通过。根与独立审阅者冻结本地 `make verify-mvp` 的Go包调度为 `go test -race -p 1 ./... -count=1 -timeout 600s`：同一个专库按包串行，不删包/用例、不改选择器/skip、race、GOMAXPROCS、包内goroutine/多连接并发或原10/12/60/600秒期限及业务预算。总wall可能增长，串行通过不授并发启动余量或容量结论；CI独立runner/数据库与make test的执行合同不因此改变。未落地的strip/key-intern微优化仅保留.local，不作为发布实现或通过证据。
+
+## 7. CI 启动回归后的维护集成隔离（根冻结）
+
+精确提交 f572bbd 的 CI run 41359784155 暴露普通服务和 billing 测试子进程的 catalog eager 初始化超过原 10/12 秒观察期限；本地串行通过不替代该失败。修复采用独立 `internal/maintenancescan` 集成包：它单向依赖 billing、periodicbudget 与 maintenancetrust，普通 billing/PB/main 及其测试不得反向导入该包或 maintenancetrust/fundinglotcatalog。catalog 包仍在真正维护消费者中 eager 完整认证，不改固定 root、pins、SQL、五秒发行预算或任何原测试期限。
+
+两个原领域包保留唯一固定 SELECT/分页/receipt 核验算法和原 public reader 的 actual LOGIN/owner/RRRO/history/SET/Commit。仅导出仓库 internal 范围的窄 raw-facts query/rows 接缝及固定算法入口，供集成包复用；它们只返回不可信的局部原始事实/描述，不接受或发行 Permit/ScanProof，不提供任意 SQL 执行入口、通过位、回调注册或外部结果转 proof 的构造器。PB 的 19 关系/146 字段维护资源 guard 仍由固定算法先执行；原普通入口不新增该 guard。调用方可实现假的 query 至多得到无权威局部数据，不能铸造可信维护结果。
+
+maintenancescan 的公开维护入口仅接受真实 `*ReadLease`，自行构造私有 adapter，执行 Require→固定领域算法→Finish，结果以私有字段保存此次 raw facts 与真实 ScanProof；禁止接收 caller 预计算报告或自定义 provider，Verify/Summary/Report 仍绑定原 Permit 与固定 kind。读取 schema 仍来自租约中的固定 SELECT，禁止维护入口外部指定 schema。取消视图仅 Deadline/Done/Err，无 Value 转发。错误必须整个零结果，所有 authority 和 scope 边界保持。
+
+原 lease/result/redaction/取消适配测试移到集成包；领域 core 的故障传播测试改用无维护依赖的 opaque sentinel，全部断言保留。真实 Plan/Init 双读取器与资源边界工具改用新集成包。增加可执行依赖图门禁，检查普通生产和 billing/PB 测试依赖不含维护/catalog，防止仅移动生产文件但测试仍触发 eager 初始化。修复后先验证原失败进程、真实双 reader/资源边界和无权威 core，再完整整仓及新精确 commit CI；历史失败/成功记录保留原身份。

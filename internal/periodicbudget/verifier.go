@@ -179,20 +179,30 @@ func (v *Verifier) Verify(ctx context.Context) (Verification, error) {
 	return out, nil
 }
 
-// verifierQuery is an internal reading seam, never a transaction or a public
-// provider. The two wrappers retain their separate authority and lifecycles.
-type verifierQuery interface {
-	Query(string, ...any) (verifierRows, error)
-	QueryRow(string, ...any) verifierRow
+// VerificationQuery is a narrow raw-facts reading seam for the fixed periodic
+// budget algorithm. Implementing it does not confer maintenance authority.
+// The public Verifier retains its own transaction and authentication lifecycle.
+type VerificationQuery interface {
+	Query(string, ...any) (VerificationRows, error)
+	QueryRow(string, ...any) VerificationRow
 	Check() error
 }
-type verifierRow interface{ Scan(...any) error }
-type verifierRows interface {
+
+// VerificationRow exposes only typed scalar scanning to the fixed algorithm.
+type VerificationRow interface{ Scan(...any) error }
+
+// VerificationRows exposes only the fixed algorithm's row lifecycle.
+type VerificationRows interface {
 	Next() (bool, error)
 	Scan(...any) error
 	Err() error
 	Close() error
 }
+
+// Private aliases keep the single original reading algorithm unchanged.
+type verifierQuery = VerificationQuery
+type verifierRow = VerificationRow
+type verifierRows = VerificationRows
 
 type publicVerifierQuery struct {
 	tx  pgx.Tx

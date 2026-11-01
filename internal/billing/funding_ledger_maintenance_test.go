@@ -2,8 +2,7 @@ package billing
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotverify"
-	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 )
 
 // The old pagination tests continue to exercise the one shared paging loop.
@@ -135,11 +133,11 @@ func TestFundingLedgerMaintenanceSharedCoreErrorsReturnEntireZero(t *testing.T) 
 			case "scan":
 				q.pages[0].rows.scanErr = fundingLedgerReadExecution
 			case "next":
-				q.pages[0].rows.nextErr = maintenancetrust.ErrGateBusy
+				q.pages[0].rows.nextErr = errors.New("test-next-opaque")
 			case "err":
 				q.pages[0].rows.err = fundingLedgerReadCanceled
 			case "close":
-				q.pages[0].rows.closeErr = maintenancetrust.ErrTransaction
+				q.pages[0].rows.closeErr = errors.New("test-close-opaque")
 			case "order":
 				q.pages[0].rows.values[1][0] = "a"
 			case "xid":
@@ -165,10 +163,10 @@ func TestFundingLedgerMaintenanceReadPagesObservesBothTerminalMethods(t *testing
 	for _, mode := range []string{"healthy", "err", "close"} {
 		rows := &fundingLedgerScriptRows{index: -1}
 		if mode == "err" {
-			rows.err = maintenancetrust.ErrExecution
+			rows.err = errors.New("test-rows-opaque")
 		}
 		if mode == "close" {
-			rows.closeErr = maintenancetrust.ErrTransaction
+			rows.closeErr = errors.New("test-close-opaque")
 		}
 		q := &fundingLedgerScriptQuery{pages: []fundingLedgerScriptPage{{table: "ledger_accounts", rows: rows}}}
 		err := fundingLedgerReadPages(q, fundingLedgerPageSQL("schema", "ledger_accounts"), func(fundingLedgerRows) (string, error) { t.Fatal("unexpected row"); return "", nil })
@@ -177,31 +175,49 @@ func TestFundingLedgerMaintenanceReadPagesObservesBothTerminalMethods(t *testing
 		}
 	}
 }
-func TestFundingLedgerMaintenanceInputZeroResultAndRedaction(t *testing.T) {
-	if result, err := VerifyLedgerMaintenance(nil); result != nil || err != fundingLedgerReadInput {
-		t.Fatal("nil lease accepted")
+
+func TestLedgerFactsRemainDescriptiveAndRedacted(t *testing.T) {
+	q := fundingLedgerCoreFixture()
+	facts, err := ReadLedgerFacts(context.Background(), q, "schema")
+	if err != nil || facts.LocalSummary().Scope != "supplied_ledger_rows" || !facts.LocalSummary().RowsConsistent {
+		t.Fatal("fixed local facts algorithm changed")
 	}
-	if result, err := VerifyLedgerMaintenance(&maintenancetrust.ReadLease{}); result != nil || err == nil {
-		t.Fatal("zero lease accepted")
+	if len(facts.snapshot.journals) != 1 || facts.snapshot.journals[0].Actor != "actor" || facts.snapshot.journals[0].Reference != "ref" {
+		t.Fatal("complete private journal facts discarded")
 	}
-	for _, result := range []*MaintenanceLedgerResult{nil, {}, {snapshot: fundingLedgerSnapshot{journals: []fundingLedgerJournalFacts{{ID: "private-id", Actor: "private-actor"}}}}} {
-		if result.Verify(&maintenancetrust.Permit{}) == nil {
-			t.Fatal("result without exact lease proof accepted")
-		}
-		got, err := result.Summary(&maintenancetrust.Permit{})
-		if err == nil || got != (fundinglotverify.LedgerRowsCheck{}) {
-			t.Fatal("invalid result leaked local summary")
-		}
-		if result != nil {
-			raw, err := json.Marshal(result)
-			rendered := fmt.Sprintf("%v %#v %s", result, result, raw)
-			if err != nil || strings.Contains(rendered, "private-") || !strings.Contains(rendered, "redacted") {
-				t.Fatal("result exposes private ledger facts")
+	raw, err := facts.MarshalJSON()
+	if err != nil || string(raw) != `{"ledger_facts":"redacted"}` || facts.String() != "ledger_facts_redacted" || facts.GoString() != "ledger_facts_redacted" {
+		t.Fatal("raw facts formatting leaked")
+	}
+}
+
+func TestLedgerFactsFailureReturnsZeroAndPreservesOpaqueError(t *testing.T) {
+	fault := errors.New("opaque-query-failure")
+	for _, stage := range []string{"next", "err", "close"} {
+		t.Run(stage, func(t *testing.T) {
+			q := fundingLedgerCoreFixture()
+			switch stage {
+			case "next":
+				q.pages[0].rows.nextErr = fault
+			case "err":
+				q.pages[0].rows.err = fault
+			case "close":
+				q.pages[0].rows.closeErr = fault
 			}
+			facts, err := ReadLedgerFacts(context.Background(), q, "schema")
+			if !errors.Is(err, fault) || !reflect.DeepEqual(facts, LedgerFacts{}) {
+				t.Fatal("partial facts or replaced error")
+			}
+		})
+	}
+	for _, schema := range []string{"", "pg_catalog", "information_schema", "pg_temp_1", string([]byte{'s', 0})} {
+		q := fundingLedgerCoreFixture()
+		facts, err := ReadLedgerFacts(context.Background(), q, schema)
+		if err != ErrLedgerFactsInput || !reflect.DeepEqual(facts, LedgerFacts{}) || q.calls != 0 {
+			t.Fatal("invalid schema queried")
 		}
 	}
-	c := fundingLedgerLeaseContext{lease: &maintenancetrust.ReadLease{}}
-	if c.Value("secret") != nil || c.Value(nil) != nil {
-		t.Fatal("lease context forwards values")
+	if facts, err := ReadLedgerFacts(context.Background(), nil, "schema"); err != ErrLedgerFactsInput || !reflect.DeepEqual(facts, LedgerFacts{}) {
+		t.Fatal("nil query accepted")
 	}
 }

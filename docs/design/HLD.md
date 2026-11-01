@@ -1,6 +1,6 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（维护单次RR与首次快照、T2前驱矩阵及阶段边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3真实读取、局部证明边界与CI启动回归后的维护依赖隔离）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 目标、前提与边界
 
@@ -419,6 +419,6 @@ T1已按[根冻结生命周期](../../specs/022-self-service-payments/c0-snapsho
 
 按[读取租约根冻结](../../specs/022-self-service-payments/c0-read-lease-contract.md)继续T3。ReadLease从真实Permit发行，整个扫描期间占原busy和总期限，另用query/method所有权封闭Rows与并发；参数和Scan目标使用exact类型白名单，拒绝pgx QueryRewriter/RowScanner泄漏真实连接。正常EOF、Err观察、显式Close与出口完整授权核验后才发行ScanProof；该proof只证明这一lease正常结束，不代表来源覆盖或资金许可。
 
-ledger与PB抽取单一读取核心，各自原入口身份与事务规则保留，新增维护入口消费原Snapshot的真实lease。ledger保留全部三表与journal额外事实、大整数核算及原资源界；PB维护新增19关系146字段的服务器scalar资源前置，三类旧历史缺证仍为indeterminate。资金、Key、采购、B来源及lot全图仍须独立逐列核验与组合，ReadLease和两个局部结果不能批准basis/epoch/init。ReadLease与两个reader已实现；[专项记录](../verification/maintenance-read-lease.md)和[集成记录](../verification/maintenance-read-lease-integration.md)分别保留实际执行范围，不沿用T2或旧CI结果。
+ledger与PB保留单一固定读取核心，各自原入口身份与事务规则不变；独立`internal/maintenancescan`单向依赖两个领域包与maintenancetrust→fundinglotcatalog，只有集成入口接受真实`*ReadLease`，通过私有adapter执行Require→固定算法→Finish。领域窄raw-facts接缝不接受或发行authority，假的query只能得到不可信局部事实，不能通过外部provider、报告或FromFacts构造可信结果。ledger保留全部三表与journal额外事实、大整数核算及原资源界；PB维护保留19关系146字段的服务器scalar资源前置，原public入口不新增该guard，三类旧历史缺证仍为indeterminate。schema仍从lease内固定SELECT读取。ReadLease与两个局部reader的原能力已实现；集成包在正常Finish后私有保存本次事实与真实ScanProof，Verify/Summary/Report仍绑定原Permit及kind。资金、Key、采购、B来源及lot全图仍须独立逐列核验与组合，两个局部结果不能批准basis/epoch/init；本次依赖隔离验收与历史[专项](../verification/maintenance-read-lease.md)/[集成](../verification/maintenance-read-lease-integration.md)分别记录，不沿用T2或旧CI结果。
 
-这条库级依赖使静态catalog初始化进入普通main与测试子进程，但尚未开放生产证明发行或维护CLI。完整认证仍在启动时执行；expected专用严格解析保持原Token解析器的接受/拒绝和资源语义，并以逐树差分验证，actual/candidate原解析不变。静态缓存只在固定SHA、有界严格解析、完整DTO/模板和全root规范字节验证后复用私有片段，固定字段schema预编译保持全部约束，避免重复编码。启动回归修复与原超时/预算的验收按[合同§6](../../specs/022-self-service-payments/c0-read-lease-contract.md#6-集成启动开销与静态缓存合同)记录，不扩大为首字节或供应商性能结论。
+普通billing/PB/main及其领域测试不再依赖维护集成、maintenancetrust或catalog，避免无关业务进程执行完整静态root初始化；真正维护消费者仍eager认证，尚无普通main维护API或生产维护CLI。expected专用严格解析保持原Token解析器的接受/拒绝和资源语义，并以逐树差分验证，actual/candidate原解析不变；固定SHA、完整DTO/模板、全root规范字节及之后的owned span/digest后完整bytes.Equal、固定字段预编译全部保留。此前本地串行1172.881秒成功是历史范围，精确f572bbd/CI run 41359784155仍在billing-0原12秒helper、server-2/3原10秒main及other周期核验CLI原60秒观察超时。按[合同§6–§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)隔离依赖并加入生产及领域测试依赖门禁，不改原期限或五秒issuer预算；原失败进程、真实双reader、全仓与新精确提交CI须重新验收，不能扩大为首字节或供应商性能结论。

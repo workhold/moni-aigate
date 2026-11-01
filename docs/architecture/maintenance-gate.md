@@ -29,11 +29,15 @@ flowchart TD
 入口出口完整authority重核 / 最多30秒]
     Codec[封闭exact参数与Scan目标 / owned复制
 拒绝回调与pgx控制参数 / 无Conn或Context]
-    Ledger[billing.VerifyLedgerMaintenance
+    Integration[maintenancescan独立集成
+仅真实ReadLease / 私有adapter
+Require→固定算法→Finish]
+    Ledger[billing固定raw-facts算法
 同三表C序分页core / 完整EOF
-独立大整数CheckLedgerRows]
-    Budget[periodicbudget.VerifyMaintenance
-19表scalar资源guard / 原业务SQL与三态]
+独立大整数CheckLedgerRows / 无authority]
+    Budget[periodicbudget固定raw-facts算法
+19表scalar资源guard / 原业务SQL与三态
+不接受或发行维护proof]
     ScanFinish[Finish / 零pending Row或Rows
 EOF与Err及显式Close全部观察 / 出口重核]
     Result[私有ScanProof与两个局部结果
@@ -56,8 +60,9 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Authority -->|Init| Accounts --> Permit
     Permit --> Finish --> Cleanup
     Permit -->|BeginScan| Lease --> Codec
-    Codec -->|ScanLedger| Ledger --> ScanFinish
-    Codec -->|ScanPeriodicBudget| Budget --> ScanFinish
+    Codec --> Integration
+    Integration -->|ScanLedger| Ledger --> ScanFinish
+    Integration -->|ScanPeriodicBudget| Budget --> ScanFinish
     ScanFinish --> Result
     Result -->|原Snapshot显式终结即全部撤销| Finish
     Begin -->|失败| Destroy
@@ -119,10 +124,12 @@ Permit所有字段私有，复制共享撤销；Verify使用新受控call持原b
 
 ## 两个实际reader与证明范围
 
-新增生产依赖是billing→maintenancetrust与periodicbudget→maintenancetrust。[billing.VerifyLedgerMaintenance](../../internal/billing/funding_ledger_maintenance.go)要求ScanLedger，使用原T2前置和lease内current_schema，同一[私有query core](../../internal/billing/funding_ledger_query.go)读取三表完整C序128条分页、保留journal额外事实，EOF/Err/Close后对整份原始行运行独立大整数CheckLedgerRows；原caller-owned RR入口仍保留自身实际LOGIN/窄shape/history前置。100000行、16MiB逻辑输入和共用期限保留。MaintenanceLedgerResult只在正常Finish后私有保存完整snapshot和ScanProof，Summary仍为`supplied_ledger_rows`，不提供原始driver或资金能力。
+维护装配集中到独立[`maintenancescan`](../../internal/maintenancescan)：它单向依赖billing、periodicbudget与maintenancetrust→fundinglotcatalog。普通billing/PB/main及领域测试不导入集成包、维护库或catalog；只有真正维护消费者承担catalog完整eager认证。[LedgerFactQuery/Rows与ReadLedgerFacts](../../internal/billing/funding_ledger_facts.go)复用[唯一固定query core](../../internal/billing/funding_ledger_query.go)，不接受authority，只返回私有保存snapshot的LedgerFacts；LocalSummary仅描述无权威局部结果。[maintenancescan.VerifyLedgerMaintenance](../../internal/maintenancescan/ledger.go)要求真实`*ReadLease`和ScanLedger，自行构造私有adapter，使用原T2前置与lease内current_schema，读取三表完整C序128条分页、保留journal额外事实，完整EOF/Err/Close后对整份原始行运行独立大整数CheckLedgerRows。原caller-owned RR入口仍保留实际LOGIN/窄shape/history前置，100000行、16MiB和共用期限保持。Require→固定core→Finish全部成功后，集成包才构造私有MaintenanceLedgerResult并保存本次完整snapshot与真实ScanProof，Summary仍为`supplied_ledger_rows`。
 
-[periodicbudget.VerifyMaintenance](../../internal/periodicbudget/verifier_maintenance.go)要求ScanPeriodicBudget，复用原业务SQL、声明列及receipt核验core；原public Verifier仍自行取得RR READ ONLY，执行actual LOGIN、六表owner、完整history/SET和Commit规则。维护入口先在同lease内只读scalar资源guard：固定19关系/146声明字段，全量audits与schema_migrations均计入，最多100000行、每非NULL字段cast text后的UTF8 bytes最多65536、累计16MiB，超界固定ErrVerifyExecution及零结果。该界限制返回客户端与保留的逻辑输入，不宣称界定PG排序/CTE/array_agg内存或Go堆/RSS。MaintenanceResult私有保存原Verification与ScanProof，Summary明确`periodic_budget_rows`；三类历史缺证仍为indeterminate，不因T2维护授权消失。
+[`maintenancescan.VerifyMaintenance`](../../internal/maintenancescan/periodic_budget.go)要求真实`*ReadLease`和ScanPeriodicBudget，复用[PB固定业务SQL、声明列及receipt核验core](../../internal/periodicbudget/verifier_maintenance.go)；原public Verifier仍自行取得RR READ ONLY，执行actual LOGIN、六表owner、完整history/SET和Commit规则。固定ReadBoundedVerificationRows先执行维护专用scalar guard：19关系/146声明字段，全量audits与schema_migrations均计入，最多100000行、每非NULL字段cast text后的UTF8 bytes最多65536、累计16MiB，超界固定ErrVerifyExecution及零结果。该界限制返回客户端与保留的逻辑输入，不宣称界定PG排序/CTE/array_agg内存或Go堆/RSS。集成包从租约内固定SELECT取得schema，在Require→固定算法→Finish成功后才保存私有MaintenanceResult及真实ScanProof；Summary明确`periodic_budget_rows`，三类历史缺证仍为indeterminate。领域接缝无Permit/ScanProof、通过位或任意SQL入口；假的query至多得到无权威局部数据。两个维护入口不接收外部schema、provider或预计算报告，也不提供FromFacts/结果转proof构造器；Verify/Summary/Report继续绑定原Permit和固定kind，所有错误整个零结果。
 
 ScanProof只证明固定kind的lease正常完成；两个局部结果不能授予完整来源`CoverageComplete`、资金写入或init/basis/epoch就绪条件。Funding、Key、采购、B来源与lot全图仍需独立逐列scanner、双向sweep、coverage清单与完整组合器，不复用写侧funding_valid或PB局部SQL充当全源证明。验证分别见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)，不能沿用T2计数或把本地fixture通过扩大为正式供应商/生产验收。
 
 完成证明的纯绑定还同锁检查当前未stopped permitCall的caller/context取消，防止后继lease取消后、异步回调调度前旧结果短暂通过；旧成功call的正常cancel不影响proof。客户端captured socket及时关闭与服务器会话退出分开验收：raw-close不保证即时中断任意长服务器SQL，服务器通常在下一次I/O发现断线；不由此推定服务器端锁已即时消失。
+
+依赖隔离按[合同§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)实施，并以可执行依赖图门禁同时检查普通生产与billing/PB测试。此前本地串行1172.881秒成功只覆盖原版本；`f572bbd`的CI run 41359784155仍在billing-0原12秒helper、server-2/3原10秒main和other周期核验CLI原60秒观察失败。固定catalog的raw parser、span缓存与完整eager认证保留在真实维护消费者，普通main移除不必要依赖；不延长任何原期限或五秒issuer预算。隔离修改的原失败进程、真实双reader/资源界、完整整仓和新精确提交CI尚须独立验收，不沿用历史成功。

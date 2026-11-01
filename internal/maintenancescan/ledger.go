@@ -1,10 +1,11 @@
-package billing
+package maintenancescan
 
 import (
 	"context"
 	"strings"
 	"time"
 
+	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotverify"
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 )
@@ -12,8 +13,8 @@ import (
 // MaintenanceLedgerResult retains local ledger facts from one completed lease.
 // Its proof establishes lease completion, never full-source coverage or funds.
 type MaintenanceLedgerResult struct {
-	snapshot fundingLedgerSnapshot
-	proof    *maintenancetrust.ScanProof
+	facts billing.LedgerFacts
+	proof *maintenancetrust.ScanProof
 }
 
 func (MaintenanceLedgerResult) String() string   { return "maintenance_ledger_result_redacted" }
@@ -24,7 +25,7 @@ func (MaintenanceLedgerResult) MarshalJSON() ([]byte, error) {
 
 func (r *MaintenanceLedgerResult) Verify(permit *maintenancetrust.Permit) error {
 	if r == nil || r.proof == nil {
-		return fundingLedgerReadInput
+		return billing.ErrLedgerFactsInput
 	}
 	return r.proof.Verify(permit, maintenancetrust.ScanLedger)
 }
@@ -33,7 +34,7 @@ func (r *MaintenanceLedgerResult) Summary(permit *maintenancetrust.Permit) (fund
 	if err := r.Verify(permit); err != nil {
 		return fundinglotverify.LedgerRowsCheck{}, err
 	}
-	return r.snapshot.check, nil
+	return r.facts.LocalSummary(), nil
 }
 
 // The pure arithmetic observes cancellation without exposing or replacing the
@@ -49,7 +50,7 @@ var _ context.Context = fundingLedgerLeaseContext{}
 
 type fundingLedgerLeaseQuery struct{ lease *maintenancetrust.ReadLease }
 
-func (q fundingLedgerLeaseQuery) Query(sql string, args ...any) (fundingLedgerRows, error) {
+func (q fundingLedgerLeaseQuery) Query(sql string, args ...any) (billing.LedgerFactRows, error) {
 	return q.lease.Query(sql, args...)
 }
 
@@ -58,7 +59,7 @@ func (q fundingLedgerLeaseQuery) Query(sql string, args ...any) (fundingLedgerRo
 // A local RowsConsistent result must not be used as a full-source ready flag.
 func VerifyLedgerMaintenance(lease *maintenancetrust.ReadLease) (*MaintenanceLedgerResult, error) {
 	if lease == nil {
-		return nil, fundingLedgerReadInput
+		return nil, billing.ErrLedgerFactsInput
 	}
 	defer lease.Abort()
 	if err := lease.Require(maintenancetrust.ScanLedger); err != nil {
@@ -69,9 +70,9 @@ func VerifyLedgerMaintenance(lease *maintenancetrust.ReadLease) (*MaintenanceLed
 		return nil, err
 	}
 	if schema == "" || schema == "pg_catalog" || schema == "information_schema" || strings.HasPrefix(schema, "pg_") {
-		return nil, fundingLedgerReadExecution
+		return nil, billing.ErrLedgerFactsExecution
 	}
-	snapshot, err := readFundingLedgerCore(fundingLedgerLeaseContext{lease: lease}, fundingLedgerLeaseQuery{lease: lease}, schema)
+	snapshot, err := billing.ReadLedgerFacts(fundingLedgerLeaseContext{lease: lease}, fundingLedgerLeaseQuery{lease: lease}, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -79,5 +80,5 @@ func VerifyLedgerMaintenance(lease *maintenancetrust.ReadLease) (*MaintenanceLed
 	if err != nil {
 		return nil, err
 	}
-	return &MaintenanceLedgerResult{snapshot: snapshot, proof: proof}, nil
+	return &MaintenanceLedgerResult{facts: snapshot, proof: proof}, nil
 }

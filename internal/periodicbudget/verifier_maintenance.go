@@ -1,117 +1,27 @@
 package periodicbudget
 
 import (
-	"errors"
+	"github.com/jackc/pgx/v5"
 	"sort"
 	"strings"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 )
 
-// MaintenanceResult proves completion of this package's periodic-budget scan,
-// not coverage of the wallet, payment, funding, key or complete C0 source graph.
-// Its report preserves all three existing historical coverage gaps.
-type MaintenanceResult struct {
-	report Verification
-	proof  *maintenancetrust.ScanProof
-}
-
-// MaintenanceSummary is a descriptive copy, never maintenance authority.
-type MaintenanceSummary struct {
-	Scope        string       `json:"scope"`
-	Verification Verification `json:"verification"`
-}
-
-func (r *MaintenanceResult) Verify(permit *maintenancetrust.Permit) error {
-	if r == nil || r.proof == nil || r.report.SchemaVersion != 1 {
-		return ErrVerifyInput
+// ReadBoundedVerificationRows returns only untrusted local periodic-budget
+// facts from the fixed guard and reading algorithm. It neither authenticates
+// a maintenance lease nor issues a proof or complete-source authority.
+// The ordinary Verifier keeps its original independent entry and no new guard.
+func ReadBoundedVerificationRows(q VerificationQuery, schema string) (Verification, error) {
+	if q == nil {
+		return Verification{}, ErrVerifyInput
 	}
-	if err := r.proof.Verify(permit, maintenancetrust.ScanPeriodicBudget); err != nil {
-		if errors.Is(err, maintenancetrust.ErrTimeout) {
-			return ErrVerifyTimeout
-		}
-		return ErrVerifyAuthority
-	}
-	return nil
-}
-
-// Report returns only the original local periodic-budget report. A caller must
-// not treat Balanced or CoverageComplete as proof about any other source.
-func (r *MaintenanceResult) Report(permit *maintenancetrust.Permit) (Verification, error) {
-	if err := r.Verify(permit); err != nil {
-		return Verification{}, err
-	}
-	return r.report, nil
-}
-func (r *MaintenanceResult) Summary(permit *maintenancetrust.Permit) (MaintenanceSummary, error) {
-	report, err := r.Report(permit)
-	if err != nil {
-		return MaintenanceSummary{}, err
-	}
-	return MaintenanceSummary{Scope: "periodic_budget_rows", Verification: report}, nil
-}
-func (MaintenanceResult) String() string   { return "periodic_budget_maintenance_redacted" }
-func (MaintenanceResult) GoString() string { return "periodic_budget_maintenance_redacted" }
-func (MaintenanceResult) MarshalJSON() ([]byte, error) {
-	return []byte(`{"periodic_budget_maintenance":"redacted"}`), nil
-}
-
-type maintenanceVerifierQuery struct{ lease *maintenancetrust.ReadLease }
-
-func (q maintenanceVerifierQuery) Check() error { return q.lease.Err() }
-func (q maintenanceVerifierQuery) Query(sql string, args ...any) (verifierRows, error) {
-	return q.lease.Query(sql, args...)
-}
-func (q maintenanceVerifierQuery) QueryRow(sql string, args ...any) verifierRow {
-	return q.lease.QueryRow(sql, args...)
-}
-
-func maintenanceVerificationFailure(lease *maintenancetrust.ReadLease, err error) error {
-	if errors.Is(err, maintenancetrust.ErrTimeout) || lease != nil && errors.Is(lease.Err(), maintenancetrust.ErrTimeout) {
-		return ErrVerifyTimeout
-	}
-	if errors.Is(err, maintenancetrust.ErrInput) {
-		return ErrVerifyInput
-	}
-	return ErrVerifyExecution
-}
-
-// VerifyMaintenance reads exactly the authorized lease's existing snapshot. It
-// never starts or finishes a transaction, changes settings or borrows a pool.
-// The public Verifier retains its separate actual LOGIN/owner/RRRO checks.
-func VerifyMaintenance(lease *maintenancetrust.ReadLease) (*MaintenanceResult, error) {
-	if lease == nil {
-		return nil, ErrVerifyInput
-	}
-	defer lease.Abort()
-	if err := lease.Require(maintenancetrust.ScanPeriodicBudget); err != nil {
-		return nil, maintenanceVerificationFailure(lease, err)
-	}
-	q := maintenanceVerifierQuery{lease: lease}
-	var schema string
-	if err := q.QueryRow(`SELECT pg_catalog.current_schema()::pg_catalog.text`).Scan(&schema); err != nil {
-		return nil, maintenanceVerificationFailure(lease, err)
-	}
-	if schema == "" || schema == "pg_catalog" || strings.HasPrefix(schema, "pg_temp") {
-		return nil, ErrVerifySchema
+	if schema == "" || schema == "pg_catalog" || strings.HasPrefix(schema, "pg_temp") || strings.IndexByte(schema, 0) >= 0 {
+		return Verification{}, ErrVerifySchema
 	}
 	render := verifierRenderer(schema)
 	if err := verifyMaintenanceResources(q, render); err != nil {
-		return nil, maintenanceVerificationFailure(lease, err)
+		return Verification{}, err
 	}
-	report, err := readVerification(q, render)
-	if err != nil {
-		return nil, maintenanceVerificationFailure(lease, err)
-	}
-	proof, err := lease.Finish()
-	if err != nil {
-		return nil, maintenanceVerificationFailure(lease, err)
-	}
-	if proof == nil {
-		return nil, ErrVerifyExecution
-	}
-	return &MaintenanceResult{report: report, proof: proof}, nil
+	return readVerification(q, render)
 }
 
 const (

@@ -1552,3 +1552,70 @@ T3最终独立语义复核：维护API未接入main但传递初始化已生效�
 - modified `docs/verification/maintenance-read-lease-integration.md`
 
 </details>
+
+## 2026-11-01T23:25:16Z · faadb01a7849
+
+SDD§7隔离维护集成依赖；独立审阅确认原reader/SQL/guard和授权无变化；原失败进程及真实双reader/九项资源界通过，19图重渲染，完整整仓待本轮执行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1225 个源文件；本次 29 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/funding-lot-catalog.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-maintenance-integration-isolation.json`
+- added `docs/verification/assets/architecture-maintenance-integration-isolation-application.png`
+- added `docs/verification/assets/architecture-maintenance-integration-isolation-detail.png`
+- added `docs/verification/maintenance-integration-isolation.json`
+- added `docs/verification/maintenance-integration-isolation.md`
+- modified `docs/verification/maintenance-read-lease-integration.md`
+- added `internal/billing/funding_ledger_facts.go`
+- deleted `internal/billing/funding_ledger_maintenance.go`
+- modified `internal/billing/funding_ledger_maintenance_test.go`
+- modified `internal/billing/funding_ledger_query.go`
+- added `internal/maintenancescan/ledger.go`
+- added `internal/maintenancescan/ledger_test.go`
+- added `internal/maintenancescan/periodic_budget.go`
+- added `internal/maintenancescan/periodic_budget_test.go`
+- modified `internal/periodicbudget/verifier.go`
+- modified `internal/periodicbudget/verifier_maintenance.go`
+- modified `internal/periodicbudget/verifier_maintenance_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- modified `scripts/maintenance-scan-qa/periodic_resources_test.go`
+- added `scripts/online-dependency-qa/dependencies_test.go`
+- modified `specs/022-self-service-payments/c0-read-lease-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T23:42:24Z · 15e899eb9658
+
+T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九边界及934秒整仓/vet/build通过，更新post-audit/证据并重渲染19图；无能力权限扩张
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1226 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/maintenance-integration-isolation-post-audit.json`
+- modified `docs/verification/maintenance-integration-isolation.json`
+- modified `docs/verification/maintenance-integration-isolation.md`
+
+</details>
+
+## 2026-11-01T23:43:17Z · ac1bfa065df5
+
+追加最终make check验证日志身份及集成文档，所有代码语义审阅已完成；清单保持覆盖1226个源/设计文件
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1226 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/maintenance-integration-isolation.json`
+- modified `docs/verification/maintenance-integration-isolation.md`
+
+</details>

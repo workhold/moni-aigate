@@ -1,0 +1,70 @@
+{
+  "format": "c0-read-lease-post-run-audit/v1",
+  "mode": "read-only transaction and SELECT catalog aggregates; no cleanup, DDL, business write, pg_terminate_backend, or other database connection",
+  "post_run_observation": {
+    "activity": {
+      "parent_advisory_locks": 0,
+      "fixture_backends_cluster": 0,
+      "fixed_c0_gate_locks_parent": 0,
+      "fixture_advisory_locks_cluster": 0,
+      "other_parent_database_backends": 0,
+      "fixed_c0_gate_locks_fixture_databases": 0
+    },
+    "identity": {
+      "database": "moni_test",
+      "read_only": "on",
+      "server_port": 55439,
+      "current_user": "moni_test",
+      "session_user": "moni_test",
+      "server_address": "127.0.0.1",
+      "default_read_only": "on",
+      "server_version_num": "160015",
+      "actual_login_superuser_database_owner": true
+    },
+    "schema_counts": {
+      "gate": 0,
+      "sandbox": 0,
+      "snapshot": 0,
+      "public_profile_in_parent": 0
+    },
+    "parent_catalog": {
+      "public_acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}",
+      "database_acl": null,
+      "public_owner": "pg_database_owner",
+      "database_owner": "moni_test",
+      "public_relations": 0,
+      "public_builtin_owner": true
+    },
+    "captured_at_utc": "2026-11-01T23:41:28.803826Z",
+    "role_counts_cluster": {
+      "gate": 0,
+      "sandbox": 0,
+      "public_profile": 0
+    },
+    "postgres_configuration": {
+      "fsync": "on",
+      "TimeZone": "Asia/Shanghai",
+      "lc_ctype": "C",
+      "wal_level": "replica",
+      "lc_collate": "C",
+      "plpgsql_oid": "14038",
+      "server_version": "16.15 (Homebrew)",
+      "max_connections": "200",
+      "server_encoding": "UTF8",
+      "full_page_writes": "on",
+      "synchronous_commit": "on",
+      "shared_preload_libraries": "",
+      "client_connection_check_interval": "0"
+    },
+    "database_counts_cluster": {
+      "public_profile": 0,
+      "all_fixture_prefixes": 0
+    }
+  },
+  "limits": {
+    "prefix_counts": "Naming-family aggregate observation only; not an independently exported exact fixture creation ledger.",
+    "baseline": "No pre-run baseline is inferred. Compare only a separately captured baseline when one exists; per-fixture tests retain their own exact-ID and shared ACL checks.",
+    "long_server_sql": "Client raw-close does not prove immediate server PID/advisory release during arbitrary long SQL; this audit only observes final state.",
+    "other_databases": "No connection to moni_review or any other database. Cluster-wide role/database/activity/lock aggregates are read from the fixed moni_test connection."
+  }
+}

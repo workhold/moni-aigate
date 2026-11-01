@@ -1,0 +1,1511 @@
+{
+  "format": "moni-aigate-maintenance-integration-isolation/v1",
+  "date": "2026-11-02",
+  "scope": "Offline integration package isolation; no new source coverage or financial authority",
+  "prior_commit": "f572bbd17944de2653d7eb7b82fd85f3a0c3ed28",
+  "prior_ci": {
+    "conclusion": "failure",
+    "headSha": "f572bbd17944de2653d7eb7b82fd85f3a0c3ed28",
+    "jobs": [
+      {
+        "completedAt": "2026-11-01T23:02:42Z",
+        "conclusion": "success",
+        "databaseId": 125007513792,
+        "name": "contracts (billing-1)",
+        "startedAt": "2026-11-01T22:58:43Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:11Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:34Z",
+            "conclusion": "success",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:34Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:02:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:34Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:02:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:35Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:02:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:38Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:02:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:39Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:02:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:39Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:02:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:39Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:02:39Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007513792"
+      },
+      {
+        "completedAt": "2026-11-01T23:03:29Z",
+        "conclusion": "failure",
+        "databaseId": 125007513942,
+        "name": "contracts (billing-0)",
+        "startedAt": "2026-11-01T22:58:43Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:12Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:23Z",
+            "conclusion": "failure",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:23Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:03:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:23Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:03:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:24Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:03:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:25Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:03:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:25Z",
+            "conclusion": "skipped",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:03:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:25Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:03:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:25Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:03:25Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007513942"
+      },
+      {
+        "completedAt": "2026-11-01T23:04:24Z",
+        "conclusion": "success",
+        "databaseId": 125007513952,
+        "name": "contracts (billing-3)",
+        "startedAt": "2026-11-01T22:58:43Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:07Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:19Z",
+            "conclusion": "success",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:19Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:04:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:19Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:04:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:19Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:04:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:20Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:04:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:22Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:04:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:22Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:04:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:22Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:04:22Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007513952"
+      },
+      {
+        "completedAt": "2026-11-01T23:04:41Z",
+        "conclusion": "success",
+        "databaseId": 125007513954,
+        "name": "contracts (server-0)",
+        "startedAt": "2026-11-01T22:58:43Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:45Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:47Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:05Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:36Z",
+            "conclusion": "success",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:36Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:04:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:36Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:04:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:36Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:04:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:37Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:04:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:39Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:04:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:39Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:04:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:39Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:04:39Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007513954"
+      },
+      {
+        "completedAt": "2026-11-01T23:15:04Z",
+        "conclusion": "failure",
+        "databaseId": 125007514010,
+        "name": "contracts (other)",
+        "startedAt": "2026-11-01T22:58:43Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:05Z",
+            "conclusion": "success",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:06Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:59:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:36Z",
+            "conclusion": "success",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:59:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:47Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:59:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:14:59Z",
+            "conclusion": "failure",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:14:59Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:14:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:14:59Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:14:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:15:00Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:14:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:15:01Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:15:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:15:01Z",
+            "conclusion": "skipped",
+            "name": "Post Run actions/setup-node@v4",
+            "number": 22,
+            "startedAt": "2026-11-01T23:15:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:15:01Z",
+            "conclusion": "skipped",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:15:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:15:01Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:15:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:15:01Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:15:01Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007514010"
+      },
+      {
+        "completedAt": "2026-11-01T23:04:47Z",
+        "conclusion": "failure",
+        "databaseId": 125007514012,
+        "name": "contracts (server-3)",
+        "startedAt": "2026-11-01T22:58:43Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:45Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:07Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:43Z",
+            "conclusion": "failure",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:43Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:04:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:43Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:04:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:43Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:04:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:44Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:04:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:44Z",
+            "conclusion": "skipped",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:04:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:45Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:04:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:45Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:04:45Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007514012"
+      },
+      {
+        "completedAt": "2026-11-01T23:02:31Z",
+        "conclusion": "success",
+        "databaseId": 125007514024,
+        "name": "contracts (billing-2)",
+        "startedAt": "2026-11-01T22:58:44Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:56Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:10Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:22Z",
+            "conclusion": "success",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:22Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:02:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:22Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:02:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:22Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:02:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:23Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:02:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:28Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:02:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:28Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:02:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:02:28Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:02:28Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007514024"
+      },
+      {
+        "completedAt": "2026-11-01T23:07:08Z",
+        "conclusion": "success",
+        "databaseId": 125007514051,
+        "name": "contracts (identity)",
+        "startedAt": "2026-11-01T22:58:44Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:47Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:49Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:00Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:00Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:59:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:00Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:59:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:00Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:59:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:14Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:59:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:01Z",
+            "conclusion": "success",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:01Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:07:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:01Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:07:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:01Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:07:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:02Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:07:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:04Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:07:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:04Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:07:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:07:04Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:07:04Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007514051"
+      },
+      {
+        "completedAt": "2026-11-01T23:04:58Z",
+        "conclusion": "failure",
+        "databaseId": 125007514180,
+        "name": "contracts (server-2)",
+        "startedAt": "2026-11-01T22:58:43Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:45Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:07Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:55Z",
+            "conclusion": "failure",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:55Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:04:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:55Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:04:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:55Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:04:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:56Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:04:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:56Z",
+            "conclusion": "skipped",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:04:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:57Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:04:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:04:57Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:04:57Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007514180"
+      },
+      {
+        "completedAt": "2026-11-01T23:03:08Z",
+        "conclusion": "success",
+        "databaseId": 125007514431,
+        "name": "contracts (server-1)",
+        "startedAt": "2026-11-01T22:58:44Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-01T22:58:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-01T22:58:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:48Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-01T22:58:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-go@v5",
+            "number": 3,
+            "startedAt": "2026-11-01T22:58:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run go run ./scripts/check-architecture",
+            "number": 4,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run actions/setup-node@v4",
+            "number": 5,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:58:57Z",
+            "conclusion": "skipped",
+            "name": "Run npm ci && npm test && npm run build",
+            "number": 6,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T22:59:12Z",
+            "conclusion": "success",
+            "name": "Start dedicated PostgreSQL for financial and sandbox tests",
+            "number": 7,
+            "startedAt": "2026-11-01T22:58:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:01Z",
+            "conclusion": "success",
+            "name": "Verify complete package and top-level test partitions and run Go tests",
+            "number": 8,
+            "startedAt": "2026-11-01T22:59:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:01Z",
+            "conclusion": "skipped",
+            "name": "Run go vet ./...",
+            "number": 9,
+            "startedAt": "2026-11-01T23:03:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:01Z",
+            "conclusion": "skipped",
+            "name": "Run go build -trimpath ./cmd/moni-aigate",
+            "number": 10,
+            "startedAt": "2026-11-01T23:03:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:01Z",
+            "conclusion": "success",
+            "name": "Stop isolated database",
+            "number": 11,
+            "startedAt": "2026-11-01T23:03:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:03Z",
+            "conclusion": "success",
+            "name": "Preserve Go test timing and complete package and test partitions",
+            "number": 12,
+            "startedAt": "2026-11-01T23:03:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:04Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-go@v5",
+            "number": 23,
+            "startedAt": "2026-11-01T23:03:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:04Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 24,
+            "startedAt": "2026-11-01T23:03:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-01T23:03:05Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-11-01T23:03:04Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155/job/125007514431"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/workhold/moni-aigate/actions/runs/41359784155"
+  },
+  "runs": [
+    {
+      "label": "isolated-process-regressions",
+      "invocation": {
+        "command": [
+          "go",
+          "test",
+          "-race",
+          "-p",
+          "1",
+          "./cmd/moni-aigate",
+          "./internal/billing",
+          "./internal/server",
+          "-run",
+          "^(TestPeriodicVerificationCLIPostgres|TestMVPPostgresSIGKILLRecoveryNeverReplaysGeneration|TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery|TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay)$",
+          "-count=1",
+          "-timeout",
+          "600s",
+          "-json"
+        ],
+        "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+        "exit_code": 0,
+        "elapsed_seconds": 49.177,
+        "log_path": ".local/c0-read-lease-verification/isolated-process-regressions.log",
+        "log_sha256": "9f2d734cf5ce5d153bd6c482a16994939654b5e8b425511fcf88c2a88641559b"
+      },
+      "top_level": {
+        "pass": 4
+      },
+      "parent_and_children": {
+        "pass": 9
+      },
+      "package_terminals": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+          "Action": "pass",
+          "Elapsed": 4.668
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 11.218
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 25.632
+        }
+      ],
+      "skipped_tests": [],
+      "unique_terminal_per_run": true
+    },
+    {
+      "label": "isolated-core-regressions",
+      "invocation": {
+        "command": [
+          "go",
+          "test",
+          "-race",
+          "-p",
+          "1",
+          "./internal/billing",
+          "./internal/periodicbudget",
+          "./internal/maintenancescan",
+          "./scripts/online-dependency-qa",
+          "-run",
+          "^(TestFundingLedgerMaintenance|TestLedgerFacts|TestVerifierMaintenance|TestOnlineDependencies)",
+          "-count=1",
+          "-timeout",
+          "120s",
+          "-json"
+        ],
+        "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+        "exit_code": 0,
+        "elapsed_seconds": 15.541,
+        "log_path": ".local/c0-read-lease-verification/isolated-core-regressions.log",
+        "log_sha256": "ba6e91b78a730cebaa1956f4bf1906f8226fd05e004ba0e4127b0bc9d62f4e88"
+      },
+      "top_level": {
+        "pass": 13
+      },
+      "parent_and_children": {
+        "pass": 33
+      },
+      "package_terminals": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 1.373
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+          "Action": "pass",
+          "Elapsed": 1.38
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancescan",
+          "Action": "pass",
+          "Elapsed": 9.013
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/online-dependency-qa",
+          "Action": "pass",
+          "Elapsed": 1.661
+        }
+      ],
+      "skipped_tests": [],
+      "unique_terminal_per_run": true
+    },
+    {
+      "label": "isolated-maintenance-consumers",
+      "invocation": {
+        "command": [
+          "go",
+          "test",
+          "-race",
+          "./scripts/maintenance-scan-qa",
+          "-count=1",
+          "-timeout",
+          "600s",
+          "-json"
+        ],
+        "environment": "All three test variables fixed dedicated PostgreSQL; catalog and maintenance opt-in enabled",
+        "exit_code": 0,
+        "elapsed_seconds": 194.261,
+        "log_path": ".local/c0-read-lease-verification/isolated-maintenance-consumers.log",
+        "log_sha256": "f8ee7c9d6b8d35583bdea171a6936109350c2c849ceea1e74dbbd253cf46fbc2"
+      },
+      "top_level": {
+        "pass": 4
+      },
+      "parent_and_children": {
+        "pass": 15
+      },
+      "package_terminals": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Action": "pass",
+          "Elapsed": 193.011
+        }
+      ],
+      "skipped_tests": [],
+      "unique_terminal_per_run": true
+    }
+  ],
+  "final_repository_verify": {
+    "command": [
+      "make",
+      "verify-mvp"
+    ],
+    "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+    "exit_code": 0,
+    "elapsed_seconds": 933.969,
+    "log_path": ".local/c0-read-lease-verification/make-verify-mvp-isolated.log",
+    "log_sha256": "5db05aa79612158cbc2354352e37010a601fd38e58860c194cedbc6b70f7b552",
+    "go_pass_packages": 41,
+    "go_no_test_packages": 4,
+    "frontend_tests_passed": 286,
+    "go_package_scheduling": "-p 1; internal concurrency and original deadlines unchanged",
+    "limits": "C0 opt-in unset; dedicated maintenance coverage is independently recorded; serial success is not cross-package concurrency or gateway performance certification."
+  },
+  "final_repository_check": {
+    "command": [
+      "make",
+      "check"
+    ],
+    "environment": "TEST_DATABASE_URL fixed dedicated PostgreSQL; C0 opt-in unset",
+    "exit_code": 0,
+    "elapsed_seconds": 6.187,
+    "log_path": ".local/c0-read-lease-verification/make-check-isolated.log",
+    "log_sha256": "71e05f23d6b497182e2a6867e34ff7a3d8641973e7ffcc22e3b9e0909b7f349c"
+  },
+  "final_post_run_audit": {
+    "record": "docs/verification/maintenance-integration-isolation-post-audit.json",
+    "sha256": "cec5245d83bda5f8563308f92f2e4be06e1c25fdd0008e86359d60bba44ae3bc",
+    "result": "Observed fixture schema/role/database/backend/advisory aggregate counts and other parent backends are zero; read-only observation on fixed moni_test only, no cleanup and no inferred before/after baseline."
+  },
+  "publication_boundary": "Publication identity is verified after committing; current file does not assert a new remote or CI outcome.",
+  "publication": "Post-publication commit/ref/tree and README byte identity will be verified after this evidence commit."
+}

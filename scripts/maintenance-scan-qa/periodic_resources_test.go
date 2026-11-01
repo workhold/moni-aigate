@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moni-ai/moni-aigate/internal/maintenancescan"
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 )
@@ -271,7 +272,7 @@ func runPeriodicResourcePublicScan(t *testing.T, f *consumerFixture, totals peri
 	if err != nil || lease == nil {
 		t.Fatal("resource real periodic budget lease failed")
 	}
-	result, scanErr := periodicbudget.VerifyMaintenance(lease)
+	result, scanErr := maintenancescan.VerifyMaintenance(lease)
 	if accepted {
 		if scanErr != nil || result == nil || result.Verify(permit) != nil {
 			t.Fatal("resource boundary rejected an eligible public scan")

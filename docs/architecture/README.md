@@ -85,7 +85,7 @@ flowchart TD
     MaintenanceGate[maintenancetrust\nGate / 私有Snapshot / Attest / Permit]
     MaintenanceLease[maintenancetrust.ReadLease\n同rawTx / 单生命周期busy / 封闭codec]
     MaintenanceProof[ScanProof\n仅原Permit绑定的固定kind完成凭据]
-    PeriodicMaintenance[periodicbudget.VerifyMaintenance\n维护资源guard / 原三态核验core]
+    MaintenanceScan[maintenancescan\n独立维护集成 / Require core Finish\n私有结果绑定真实ScanProof]
     MaintenanceManifest[migrations\n固定embed22项 / 完整history helper]
     MaintenanceCaller[库级调用方\nGate成功只表示持锁]
     Routing[routing\n候选、采购比价与容量租约]
@@ -98,7 +98,7 @@ flowchart TD
     Alerts[alerts\n四种观察 / 规则 / 发生与历史]
     Security[security / telemetry / config]
     PG[(PostgreSQL)]
-    LedgerReader[billing ledger reader\ncaller-owned RR或真实ReadLease / 三表完整EOF]
+    LedgerReader[billing ledger reader\n原RR入口 / 无权威raw facts core\n三表完整EOF]
     subgraph PureModules[纯基础层：已实现，尚未接入资金或媒体运行链]
       LotPlanner[billing lot_plan\nFIFO / 原收费分配 / 逆原来源退回]
       Metering[metering\n八维完整向量 / 精确费率 / 上界与摘要]
@@ -108,10 +108,10 @@ flowchart TD
     RefundProto -->|仅已验证capture值的只读桥| PaymentProto
     LedgerReader -->|读取后整份独立核算| LedgerRows
     LedgerReader -->|三表显式读取 / 原RR入口前置保持| PG
-    Billing -->|VerifyLedgerMaintenance生产依赖| MaintenanceLease
-    PeriodicBudget -->|VerifyMaintenance生产依赖| MaintenanceLease
-    LedgerReader -->|维护入口复用同一读取core| MaintenanceLease
-    PeriodicMaintenance -->|19表资源资格及同一业务core| MaintenanceLease
+    MaintenanceScan -->|真实ReadLease / 私有adapter| MaintenanceLease
+    MaintenanceScan -->|固定账本算法 / 不可信raw facts| LedgerReader
+    MaintenanceScan -->|固定PB算法及19表资源guard| PeriodicBudget
+    MaintenanceScan -->|单向领域依赖| Billing
     CLI --> HTTP
     CLI --> Operations
     CLI --> Billing
@@ -146,8 +146,7 @@ flowchart TD
     MaintenanceGate -->|固定manifest与原history核验| MaintenanceManifest
     MaintenanceGate -->|原v1 SQL版本与摘要叶子| SandboxSchema
     MaintenanceGate -->|Permit.BeginScan / 入口出口完整重核| MaintenanceLease
-    MaintenanceCaller -->|库级两个维护reader| LedgerReader
-    MaintenanceCaller -->|库级维护PB reader| PeriodicMaintenance
+    MaintenanceCaller -->|库级两个维护reader| MaintenanceScan
     MaintenanceLease -->|原快照内固定SELECT / EOF Err Close| PG
     MaintenanceLease -->|正常Finish / 无悬挂查询| MaintenanceProof
     AlertWorker --> Alerts
@@ -178,17 +177,17 @@ flowchart TD
     HTTP -. 公共支撑 .-> Security
 ```
 
-图中实线表示主要装配、调用或存储关系，不代表每一条 Go import。`provider` 不写财务状态、不自动重试生成请求；`routing` 管理内存健康与容量，不替代数据库的最新准入；`server` 将各阶段串联，网络调用始终在数据库事务之外。
+图中实线表示主要装配、调用或存储关系，不代表每一条Go import。维护集成的单向依赖由[合同§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)和可执行依赖门禁另外约束：普通业务与领域测试不得反向导入维护/catalog。`provider`不写财务状态、不自动重试生成请求；`routing`管理内存健康与容量，不替代数据库最新准入；`server`将各阶段串联，网络调用始终在数据库事务之外。
 
 本轮GitHub入口交付将根README、首次启动和部署路径统一到当前001–022。首次远端CI发现SCRAM与旧无密码LOGIN fixture、Docker bridge与固定SQL loopback endpoint不符，以及时间内部表示/远端退出观察竞态；原四组修订保留[历史证据](../verification/github-ci-profile.md)。第二轮身份组通过，billing/server仍耗尽累计600秒，支付模拟器另因UTC反解析文本与固定Shanghai库存不符被严格拒绝。按[CI合同](../verification/ci-profile-contract.md)将两个大包各按实际完整顶层名单分四组，加identity/other共十个独立runner/数据库；临时PG显式Asia/Shanghai及真实loopback，就绪SQL核验，全部子测、race、各进程10分钟及业务期限保留。相同临时fixture原始Open在UTC拒绝、Shanghai两组件均成功，证据和新远端边界见[第二轮记录](../verification/github-ci-second-run.md)。前端、架构、vet、嵌入构建仍执行，不把配置修订视作新远端通过。最终本地make check及指定专库make verify-mvp均通过，286项前端/全默认Go race/vet/build见[集成记录](../verification/maintenance-snapshot-integration.md)。B0回调测试按[冻结oracle](../../specs/022-self-service-payments/b-runtime-contract.md#103-根冻结双网络槽与prepare竞争的独立测试oracle)区分双HTTP槽与合法保守lease：网络槽测试仅在fixture使用同实际LOGIN单连接pool，另以标准多连接真实gate竞争证明Prepare deferred不改原租约/attempt或制造IO证据。生产pool、两槽调度、Guard和全部预算保持原合同；整仓结果与原失败见[本轮集成记录](../verification/github-initial-delivery.md)。
 
 独立纯基础层没有连接到当前请求链；LotPlanner只处理候选快照，Metering只处理完整已知向量，RefundProto只验证封闭退款协议及原capture绑定，LedgerRows只核调用方传入的三类账本行。它们不证明数据库已读全、来源、授权、真实外部退款或供应商计量，不授资金写入能力。C0生产来源、C1原路退款、023-C商品和024-B0-I媒体接线仍须各自完成SQL/权限、全路径与真实验收。
 
-LedgerReader是独立核验的读取依赖，保留私有caller-owned RR入口，新增库级`VerifyLedgerMaintenance(*ReadLease)`入口；两者复用同一显式列、完整EOF读取和独立LedgerRows核算core。维护入口真正消费原T2 Permit发行的ReadLease，不借pool或新建事务。PB另有库级`VerifyMaintenance(*ReadLease)`，与原public Verifier共用业务SQL及三态算法；原public实际LOGIN/owner/history/RRRO边界保持。两个维护入口均无普通main、HTTP或生产维护CLI装配，局部结果不证明完整资金来源。
+LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与ReadLedgerFacts](../../internal/billing/funding_ledger_facts.go)及PB的[VerificationQuery/Rows/Row](../../internal/periodicbudget/verifier.go)提供无维护依赖的窄raw-facts接缝，复用各自唯一固定算法。LedgerFacts私有保存snapshot，LocalSummary仅描述局部结果；普通入口的actual LOGIN、owner、history、RRRO与事务规则保持。独立[`maintenancescan`](../../internal/maintenancescan)单向依赖两个领域包与maintenancetrust，通过私有adapter消费真实`*ReadLease`，执行Require→固定算法→Finish，才构造保存本次事实与ScanProof的私有结果。领域接缝不发行authority，调用方伪造query至多得到不可信局部数据；没有外部provider、FromFacts或结果转proof的构造器。两个维护入口均无普通main、HTTP或生产维护CLI装配，局部结果不证明完整资金来源。
 
 `fundinglotcatalog`是另一个只读叶子模块：固定expected先作SHA/封闭解析，三个公开API在同一RR核完整schema、角色和ACL并发行同事务证明。ordinary真实无worker，sandbox完整三schema八角色；Installation只额外证明发行时十六表全空。T2维护授权通过原Snapshot内部owned installation消费其证明，当前仍没有普通main或资金调用边。详见[细化架构](funding-lot-catalog.md)。
 
-`maintenancetrust`在T0双锁基础上提供T1私有单次Snapshot及T2真实维护授权。T3新增真实ReadLease：单次扫描全程持原busy，入口/出口重核原authority，固定至多30秒并受原Snapshot和caller更早期限约束；封闭参数/Scan目标、完整EOF/Err/Close和CPU取消共同控制读取生命周期。新增生产依赖为billing→maintenancetrust及periodicbudget→maintenancetrust。T1历史真实PG/race115.412秒、124终态PASS保持原范围；T2与T3证据分别记录，尚无普通main、完整全来源或资金接线，详见[细化架构](maintenance-gate.md)。
+`maintenancetrust`在T0双锁基础上提供T1私有单次Snapshot及T2真实维护授权。T3新增真实ReadLease：单次扫描全程持原busy，入口/出口重核原authority，固定至多30秒并受原Snapshot和caller更早期限约束；封闭参数/Scan目标、完整EOF/Err/Close和CPU取消共同控制读取生命周期。当前依赖方向是maintenancescan→billing/periodicbudget与maintenancescan→maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不得反向依赖维护集成或catalog，避免无关eager初始化。T1历史真实PG/race115.412秒、124终态PASS保持原范围；T2/T3历史与本次隔离修复验收分别记录，尚无普通main维护API、完整全来源或资金接线，详见[细化架构](maintenance-gate.md)。
 
 | 模块 | 负责什么 | 源码与合同 |
 | --- | --- | --- |
@@ -214,7 +213,7 @@ LedgerReader是独立核验的读取依赖，保留私有caller-owned RR入口�
 | C0正式静态检查与事务证明 | 固定PG16.15 profile、ordinary五变体/无worker、sandbox三schema八角色；Snapshot/Installation/Runtime三入口与同tx opaque证据，最终leaf真实PG race已通过；不授维护或资金权限 | [API](../../internal/fundinglotcatalog/types.go)、[核验与证明](../../internal/fundinglotcatalog/proof.go)、[固定root](../../internal/fundinglotcatalog/expected_embedded.go)、[细化图](funding-lot-catalog.md)、[冻结合同§10](../../specs/022-self-service-payments/c0-schema-check-contract.md#10-根冻结完整静态检查器的实现与正式期望启用) |
 | 维护双锁Gate与快照（022-C0-T0/T1） | T0真实PG/race已验；T1私有单次RR、ONLY125/固定catalog stage、总期限及终结状态，历史真实PG/race124终态全PASS；T0/T1历史片不含Permit、main或资金接线 | [Gate](../../internal/maintenancetrust/gate.go)、[身份](../../internal/maintenancetrust/identity.go)、[冻结合同§10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)、[细化图](maintenance-gate.md)、[T0验证](../verification/maintenance-gate.md)、[T1验证](../verification/maintenance-snapshot.md) |
 | 真实维护授权（022-C0-T2） | 同原Snapshot发行一次Permit；实际身份、完整history/前驱、新鲜停服及仅Init账户锁；T2专库专项通过，不授资金写入 | [Attest/Verify](../../internal/maintenancetrust/permit.go)、[冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)、[T2证据](../verification/maintenance-authority.md) |
-| 受控维护读取与两个局部reader（022-C0-T3首片） | ReadLease、封闭codec、完整Rows生命周期、原authority入口/出口重核；ledger/PB真实维护入口与原core复用已实现，验证范围单独记录；无全源coverage/basis/epoch/生产CLI | [lease](../../internal/maintenancetrust/lease.go)、[Rows](../../internal/maintenancetrust/lease_rows.go)、[codec](../../internal/maintenancetrust/lease_codec.go)、[ledger](../../internal/billing/funding_ledger_maintenance.go)、[PB](../../internal/periodicbudget/verifier_maintenance.go)、[合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[T3专项](../verification/maintenance-read-lease.md)、[集成记录](../verification/maintenance-read-lease-integration.md) |
+| 受控维护读取与两个局部reader（022-C0-T3首片） | ReadLease、封闭codec、完整Rows生命周期、原authority入口/出口重核；独立maintenancescan复用ledger/PB固定事实算法，领域和main无维护依赖；本次隔离修复待新验收，不扩大历史专项；无全源coverage/basis/epoch/生产CLI | [lease](../../internal/maintenancetrust/lease.go)、[Rows](../../internal/maintenancetrust/lease_rows.go)、[codec](../../internal/maintenancetrust/lease_codec.go)、[集成包](../../internal/maintenancescan)、[ledger core](../../internal/billing/funding_ledger_query.go)、[PB core/guard](../../internal/periodicbudget/verifier_maintenance.go)、[合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[T3专项](../verification/maintenance-read-lease.md)、[集成记录](../verification/maintenance-read-lease-integration.md) |
 | 退款v2纯协议（022-C1-P） | v1已验capture只读桥、严格六种DTO、四摘要域与三用途HMAC、不可变opaque；独立Python向量及race/vet/fuzz通过，无运行接线 | [纯包](../../internal/paymentrefundproto)、[精确合同](../../specs/022-self-service-payments/c1-protocol-v2-contract.md)、[独立向量](../verification/payment-refund-v2-golden.json)、[验证](../verification/payment-refund-protocol-v2.md) |
 | 通用向量计量纯层（024-B0-P） | 闭合八维、两侧完整schema绑定、有理率总和一次ceil、上界/actual区分、规范摘要和旧token等价adapter；专项race/vet/fuzz通过，尚未被网关运行模块调用 | [纯模块](../../internal/metering)、[冻结合同](../../specs/024-extension-platform/b0-pure-contract.md)、[证据](../verification/metering-vectors.md) |
 | 采购资金 | 平台共享账户、永久凭据绑定、累计预算、逐attempt预占、未知占用、双人更正与人工观察 | [procurement](../../internal/procurement)、[采购账务](../../internal/billing/procurement.go)、[019合同](../../specs/019-procurement-accounts/contract.md)、[014迁移](../../migrations/014_procurement_accounts.sql) |
@@ -251,7 +250,7 @@ Acquire本身仍不发BEGIN。T1按[根冻结生命周期](../../specs/022-self-
 
 [私有reader](../../internal/billing/funding_ledger_read.go)保持调用方的Repeatable Read事务、连接、backend、top xid、DB/schema及真实LOGIN身份；既不提交，也不取得维护或资金许可。它先核四表的permanent heap/owner/RLS/继承、所用builtin列和单列主键，再核history表解析与helper两个函数名的完整搜索路径重载集合，拒绝同名/default/variadic覆盖后才调用原迁移helper。
 
-三张账本表分别显式投影、128条C序keyset至真实EOF；完整收集后只调用独立`fundinglotverify.CheckLedgerRows`一次。额外journal原列保留在同snapshot，不以JOIN过滤孤儿行，不以逐页AND代替全局算术。100000行/16MiB是整份逻辑输入硬界，30秒为全部读取共用deadline；私有RR入口失败仍返回原四个固定错误及整个零snapshot。T3[维护入口](../../internal/billing/funding_ledger_maintenance.go)经真实ReadLease调用同一[读取core](../../internal/billing/funding_ledger_query.go)，入口前置由原T2承担，Finish后才保存私有snapshot和ScanProof。成功摘要仍仅`supplied_ledger_rows`，不声称全部来源/Key/采购/周期/支付/lot图已核验。
+三张账本表分别显式投影、128条C序keyset至真实EOF；完整收集后只调用独立`fundinglotverify.CheckLedgerRows`一次。额外journal原列保留在同snapshot，不以JOIN过滤孤儿行，不以逐页AND代替全局算术。100000行/16MiB是整份逻辑输入硬界，30秒为全部读取共用deadline；私有RR入口失败仍返回原四个固定错误及整个零snapshot。T3[独立维护集成](../../internal/maintenancescan)经真实ReadLease调用同一[读取core](../../internal/billing/funding_ledger_query.go)，入口前置由原T2承担，Require与固定算法成功并正常Finish后才保存私有snapshot和ScanProof。领域窄query/rows接缝及算法只返回不可信事实，不接受Permit/ScanProof或外部报告，不发行authority。成功摘要仍仅`supplied_ledger_rows`，不声称全部来源/Key/采购/周期/支付/lot图已核验。
 
 ### 独立本地支付沙箱（022-B0）
 
@@ -593,7 +592,7 @@ erDiagram
 
 [Rows生命周期](../../internal/maintenancetrust/lease_rows.go)要求每次Next true恰好Scan一次，真实EOF后同时观察Err和显式Close；跳行、重复Scan、提前Close、未消费Row或悬挂Rows使Finish失败并物理撤销。QueryRow.Scan核恰好一行、EOF、Err及Close。没有pending对象且出口重核成功才返回私有共态`ScanProof`。proof只绑定原Permit/Snapshot/lease nonce与固定kind的正常完成；原Snapshot终结、失败或到期即全部复制proof失效，零值、JSON或同摘要不能重绑。纯Verify可以在另一lease持busy时做绑定核验，不发SQL。
 
-[ledger维护reader](../../internal/billing/funding_ledger_maintenance.go)实际调用同三表分页与独立大整数核算core，私有`MaintenanceLedgerResult`保留完整snapshot与proof，Summary仍为`supplied_ledger_rows`。[PB维护reader](../../internal/periodicbudget/verifier_maintenance.go)复用原业务SQL/列与操作receipt核验，维护专用scalar guard先累计19关系全部声明字段、全量audit与history，最多100000行、单字段cast text后的UTF8 bytes最多65536、累计16MiB；超界零结果。PB结果的Summary明确`periodic_budget_rows`，原三类历史缺证继续indeterminate，原public Verifier的独立LOGIN/owner/history/RRRO规则未放宽。资源profile限制客户端返回与保留的逻辑输入，不证明PG排序/CTE/array_agg内存或Go RSS界。
+两个维护入口是[`maintenancescan.VerifyLedgerMaintenance`](../../internal/maintenancescan/ledger.go)与[`VerifyMaintenance`](../../internal/maintenancescan/periodic_budget.go)，只接受真实`*ReadLease`，在包内构造私有adapter并依次Require→固定领域算法→Finish。账本入口通过[billing.ReadLedgerFacts](../../internal/billing/funding_ledger_facts.go)调用[共享core](../../internal/billing/funding_ledger_query.go)的三表分页与独立大整数核算；PB入口调用[ReadBoundedVerificationRows与guard](../../internal/periodicbudget/verifier_maintenance.go)，先累计19关系全部声明字段、全量audit与history，最多100000行、单字段cast text后的UTF8 bytes最多65536、累计16MiB，再执行原业务SQL/列与操作receipt核验，超界整个零结果。schema仅来自租约内固定SELECT，不由维护调用方指定。私有`MaintenanceLedgerResult`/`MaintenanceResult`只在正常Finish后保存本次事实与真实ScanProof，Summary分别为`supplied_ledger_rows`和`periodic_budget_rows`；Verify/Report/Summary继续绑定原Permit和固定kind。领域raw-facts接口不接受或发行authority；维护入口不接受外部provider或预计算通过位，假的query只能生成无权威局部描述，不能铸造维护结果。原三类历史缺证继续indeterminate，原public Verifier的独立LOGIN/owner/history/RRRO/SET/Commit规则未放宽。资源profile限制客户端返回与保留的逻辑输入，不证明PG排序/CTE/array_agg内存或Go RSS界。
 
 这两个局部结果与ScanProof均不授全来源`CoverageComplete`、资金写入或生产运行权，不能成为init/basis/epoch就绪条件。Funding、Key、采购、B来源及lot全图仍需独立逐列读取、双向sweep、coverage清单与完整组合器；basis、epoch、封闭writer和生产维护CLI尚未完成。[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)单独记录实际执行范围，不沿用T2通过计数。
 
@@ -877,9 +876,9 @@ flowchart TB
 
 C0[静态检查](../../specs/022-self-service-payments/c0-schema-check-contract.md)、[维护身份](../../specs/022-self-service-payments/c0-permit-contract.md)、[运行helper](../../specs/022-self-service-payments/c0-runtime-helper-contract.md)和[独立重放](../../specs/022-self-service-payments/c0-verifier-contract.md)是分别审阅的合同；维护事务中的核验不冒充APP启动时的新只读事务证明。资金写入、迁移及共享源码由指定负责人串行修改；纯退款协议、只读审查、控制台合同和隔离部署准备可以并行。占用专用库InstanceLock的真实main验收串行执行，不能同时升级长期预览。
 
-T3新增billing/PB→maintenancetrust依赖同时将固定catalog初始化带入普通main及测试子进程；普通main尚未调用维护证明发行API。启动仍完整认证固定SHA、严格有界expected、DTO/模板及全root canonical字节；expected专用raw parser保持原Token接受语义并作逐树差分，actual/candidate原parser不变。只有全部成功后才从私有owned canonical bytes取span缓存，digest命中后仍完整bytes.Equal；固定字段类型描述仅一次预编译。实现与纯测/冷启动观察见[独立记录](../verification/catalog-startup.md)，原进程与整仓回归见[T3集成](../verification/maintenance-read-lease-integration.md)。既有CLI/helper/main期限和五秒发行预算保持；初始化测量不代表网关首字节或目标容量。
+T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入普通main和领域测试child。当前按[隔离合同§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)改为maintenancescan单向依赖billing/PB及maintenancetrust→fundinglotcatalog，普通生产与billing/PB测试依赖图不得包含维护/catalog；可执行依赖门禁防止测试重新引入。独立维护消费者仍eager完成固定SHA、严格有界expected、完整DTO/模板及全root canonical字节认证，expected raw parser、owned span缓存、digest后完整bytes.Equal和固定字段预编译全部保留。普通main不再为未使用的维护模块支付初始化成本。既有CLI/helper/main期限、600秒包期限和五秒发行预算不变；历史[启动测量](../verification/catalog-startup.md)仍只证明catalog自身优化，不能当作本次隔离或网关首字节验收。
 
-本地 `make verify-mvp` 使用 `go test -race -p 1` 按包串行访问同一专库，保留全部包/测试、包内显式并发及原期限；解决跨包资源争用的验收调度，不改变生产模块、权限或资金行为，也不替代并发容量与独立CI结果。
+本地 `make verify-mvp` 使用 `go test -race -p 1` 按包串行访问同一专库，保留全部包/测试、包内显式并发及原期限；这是专库验收调度，不授并发容量或远端CI结论。此前本地串行整仓1172.881秒成功保留原版本身份，精确提交`f572bbd`的[CI run 41359784155](https://github.com/workhold/moni-aigate/actions/runs/41359784155)仍在billing-0原12秒helper、server-2/3原10秒main与other周期核验CLI原60秒观察失败；普通路径不必要的eager初始化是本次隔离要移除的依赖问题。本次修改后的原失败进程、真实双reader/资源界、无权威core、完整整仓及新精确提交CI均须重新验收，结果由[隔离修复记录](../verification/maintenance-integration-isolation.md)，不借用此前本地或T2 CI通过。
 
 ## 当前能力与后续边界
 
@@ -934,7 +933,7 @@ make architecture-check
 
 默认检查不会修改任何文件，CI 只运行默认检查；不能用自动 refresh 掩盖缺失的设计。覆盖 `cmd/internal/migrations/scripts/deploy/.github/web`、`specs`、`docs/design/runbooks/verification/decisions`、`docs/architecture` 下后续支持文档/图和根级依赖/构建/部署配置；新目录中的常见代码与配置扩展名也自动纳入，避免新增模块漏检。排除 `.git`、`.local`、`bin`、依赖缓存、`node_modules`、精确 `.vite` 缓存目录组件、`web/dist` 等产物、架构写入临时文件和私密 `.env*`（保留 `.env.example`），不以修改时间判断。正文要求主要架构章节与至少三张 Mermaid 图，并检查本地链接没有失效或越出仓库；正文、演化记录也有独立摘要。
 
-主架构十六张、[C0细化视图](funding-lot-catalog.md)、[维护Gate、Snapshot、Permit与ReadLease细化视图](maintenance-gate.md)及根README概览各一张，共十九张Mermaid图。T2版本使用官方npm Mermaid12.2.0解析及独立临时浏览器实际渲染，原[渲染证据](../verification/architecture-maintenance-authority.json)仅绑定当时四份正文SHA；本轮T3修改模块/依赖图与维护细化图，十九图使用同版官方Mermaid与独立临时浏览器重新实际渲染，见[本轮图证据](../verification/architecture-maintenance-read-lease.json)及[T3集成记录](../verification/maintenance-read-lease-integration.md)。此前十六图与检查器race/vet保留原[架构同步验证](../verification/architecture-sync.md)。每轮内容快照均由集成人汇总全部文档后显式刷新，交付前确认只读检查通过。
+主架构十六张、[C0细化视图](funding-lot-catalog.md)、[维护Gate、Snapshot、Permit与ReadLease细化视图](maintenance-gate.md)及根README概览各一张，共十九张Mermaid图。T2版本使用官方npm Mermaid12.2.0解析及独立临时浏览器实际渲染，原[渲染证据](../verification/architecture-maintenance-authority.json)仅绑定当时四份正文SHA；T3首片十九图也曾使用同版官方Mermaid与独立临时浏览器实际渲染，见[历史T3图证据](../verification/architecture-maintenance-read-lease.json)及[T3集成记录](../verification/maintenance-read-lease-integration.md)。本次维护集成隔离再次修改依赖图，使用同版Mermaid与独立临时浏览器重新解析并渲染十九图，精确正文与PNG身份见[隔离图证据](../verification/architecture-maintenance-integration-isolation.json)，不覆盖旧图记录。此前十六图与检查器race/vet保留原[架构同步验证](../verification/architecture-sync.md)。每轮内容快照均由集成人汇总全部文档后显式刷新，交付前确认只读检查通过。
 
 工具可以发现“源代码或设计已经变化，但架构快照尚未复核”，不能证明自然语言与实现语义一致。`--reviewed` 是执行人的明确复核声明；需要阅读代码、图与验证边界，不能机械刷新。修改覆盖策略也属于代码变更，必须解释原因并复核本文件。机器清单本身不参与自己的哈希，演化记录只引用源快照摘要，避免循环依赖。
 
