@@ -153,33 +153,33 @@ LotCheck新增 `WalletSequenceMismatches, WalletSourceMismatches, FIFOAllocation
 
 plan/init各自有一个外层维护事务，不能复用两个命令之间的snapshot；两个命令重算同一规范化basis。plan RR READ ONLY；init RR写。二者均先在事务外取真实exclusive instance session gate、确认全部handler/worker/network cleanup停稳，并按已有迁移gate顺序。仅设置MAINTENANCE_MODE不算排空。
 
-init在第一次业务SELECT前按**已受审静态表名清单**获取全部业务写表SHARE ROW EXCLUSIVE锁，按schema/table排序；再全部账户ID锁。RR snapshot从锁后首次源查询固定。plan不得用表锁写模式冒称READ ONLY；它依赖同一维护gate与角色停用，且init必重算basis。catalog/schema/migration digest属于basis。
+Init已实现的T1/T2前置为：固定SET后、第一次任何SELECT（包括catalog/身份查询）前，按**已受审125表静态清单**取得一条ONLY/全限定/C序SHARE ROW EXCLUSIVE锁；随后catalog及Attest内history/真实身份/前驱通过，才在同authority busy内锁全部账户，出口复核后发行Permit。RR首次数据快照在完整表锁之后固定。Plan不取写型表锁或账户行锁，依赖真实维护gate和停服边界；全来源及basis重算仍待T3/T4，catalog/schema/migration digest须纳入未来basis。
 
 全源basis不只AVAILABLE：原ledger账户/全部journal+lines、tenant/user/member/Key与held、request/reservation/settlement/approved与pending refund、usage/finalization/attempt与recovery/reconciliation、三来源receipt/credited/audit及A人工/券命令、B environment/identity/revision/selection/order/notification/processing/audit/command/lease、采购account/binding/reservation/events/corrections、PB controls/windows/allocations/events/operation/version、active projection/outbox/report状态均在同一RR读取核验。使用§10的代码内静态名称与冻结列列表，不运行时按前缀猜；追加迁移新增表时basis清单与角色证明一并更新。敏感字段可作为内存规范化hash输入但不得输出正文，输出仅digest/计数。
 
 规范化hash使用固定域/version、schema/database OID、按表/主键C序的有类型长度前缀字段；NULL与空字串、数值文本与时间UTC6明确区分。不能直接 `row_to_json`/不稳定默认格式或只hash总额。候选直接编码为受审builtin列的 `pg_catalog.record_send(ROW(冻结列列表))` 二进制，表名/列名/类型OID/attnum及每行长度/count前缀一并入hash；按主键对应record_send的hex字节C序排序，复合主键不会串接歧义。该候选把PostgreSQL major/version和type send函数OID/摘要绑定basis，禁止调用未知自定义send函数；不导出原始行bytea。读完所有来源、运行全部核验、生成opening与旧membership后计算basis；init比较plan提供的epochID+basis再写，任一变更拒绝而不是补差。
 
-### 7.1 PB 的 actual LOGIN 接缝（两种明确环境，候选）
+### 7.1 PB 的 actual LOGIN 接缝（T2授权已实现，T3维护scanner候选）
 
 当前 [Verifier.Verify](../../internal/periodicbudget/verifier.go) 自行Begin RR READ ONLY，且 `verifierAuthority` 要求actual LOGIN拥有六张PB事实表；不能由APP调用，也不能用另连接结果拼进init。B3的app/mock/receiver由三个NOLOGIN owner拥有，安装连接通过SET ROLE安装，故不能要求安装LOGIN本身拥有六表；改变其owner又会破坏既有proof。新维护入口分两条受审信任路径，**不弱化原Verifier**：
 
 ```go
-func VerifyMaintenanceTx(ctx context.Context, tx pgx.Tx,
-    permit *maintenancetrust.Permit) (Verification, error)
+// T3候选：ReadLease及本入口均未实现，不接收裸tx或另一个caller context。
+func VerifyMaintenance(lease *maintenancetrust.ReadLease) (Verification, error)
 ```
 
 1. **普通生产维护**：连接Config().User=session_user=current_user，真实LOGIN且实际拥有六张PB表与目标schema；非SET ROLE、不是runtime APP。沿原owner检查，并核schema/完整对象摘要与manifest。此路径不要求superuser，不扩大在线权限。
 2. **仅B3本机沙箱例外**：仅在固定TCP `127.0.0.1:55439`、数据库名`moni_test`、当前实际dbOID/endpoint与既有sandbox proof完全相符时，允许实际authenticated LOGIN `moni_test`，其`rolsuper=true`且database.datdba正好是该LOGIN OID、Config().User=session_user=current_user、未SET ROLE。三schema owner必须仍是proof固定OID的NOLOGIN角色；完整八角色无继承/成员/SET/ADMIN提升、全部schema/table/function/trigger/ACL/正文摘要和immutable attestation先按既有proof独立验证。不是只看用户名或superuser就通过。remote socket/localhost别名、其他数据库/端口/LOGIN、非DB owner superuser都拒绝。这个例外仅用于专用测试沙箱，不提供任意installer用户名或可配置trusted role。
 
-`internal/maintenancetrust`仅依赖pgx/catalog，不import billing/payments/periodicbudget，避免循环。导出的Permit类型**全部字段私有**、nil/零值永不有效；`AttestTx(ctx,tx,observedConnection)`构造器自己执行上述catalog/proof/维护gate检查，不接受trusted bool、任意username或skip flag。虽可由其他包调用，在线APP身份绝不能得到有效permit。调用方观察到的连接信息还须与 `tx.Conn().Config()`/数据库实际会话重核，不能把struct自报当认证。
+`internal/maintenancetrust`依赖标准库、pgx/catalog及T2允许的migrations/paymentsandboxschema叶子，不import billing/payments/periodicbudget，避免循环。[T2根冻结](c0-authority-contract.md)已实现唯一二参 `Attest(ctx, snapshot)` 与 `Permit.Verify(ctx)`，全部字段私有、nil/零值永不有效；Snapshot内部owned installation为唯一安装输入，不接受caller proof、裸tx、observedConnection、trusted bool或skip flag。实际会话与配置由固定内部stage读取，不把struct自报当认证；[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过。
 
-permit绑定原pgx.Tx wrapper/conn指针、backend PID、top xid、dbOID/schemaOID、permit mode及完整proof digest；entry调用permit.VerifyTx再次核全部绑定、active RR（plan只读/init可写）、不是nested savepoint。不接外部字面JSON、可伪造字段，不跨事务缓存；Rollback/Commit后即失效。gate attestation必须核本backend实际持有约定session advisory lock（held by PID且granted/exclusive/正确lock keys），不能信环境变量。所有进入Permit的schema/角色pin来自受审proof与实际catalog匹配，不能把新参数当授权名单。
+Permit绑定原pgx.Tx wrapper/conn指针、backend PID、top xid、dbOID/schemaOID、mode及完整proof事实；`Permit.Verify(ctx)`在新受控busy调用内再次核全部绑定和active RR（plan只读/init可写）。后续T3 scanner须全程持ReadLease，不能仅靠入口/出口两次Verify取得裸tx或绕过原总期限。Permit不接外部字面JSON、可伪造字段，不跨事务缓存；取消、失败和终结开始即共态撤销。gate attestation核本backend实际持有约定session advisory lock，不信环境变量。Init全部accounts锁在发行Permit之前完成；来源扫描、basis和epoch仍后续。
 
 PB维护入口沿现有独立scanner/queries重用，不依赖runtime Reader/trigger、不Begin/Commit；通用核验core不内置宽松权限分支。原Verifier仍执行原actual LOGIN真owner规则，原APP失败的测试必须继续失败。普通serve没有permit构造入口/沙箱管理员DSN；维护凭据不保存在runtime proof或日志。更通用的非superuser installer授权闭包留后续，C0不设计新installer角色。
 
 必要负例：APP/worker/projector即使全SELECT也拒绝；SET ROLE owner拒绝；superuser非DB owner/错误name/endpoint/dbOID/schemaOID拒绝；把三NOLOGIN owner换为LOGIN或同名新OID拒绝；任何八角色membership、grant option/函数正文/search_path/trigger/ACL改变拒绝；permit复用另一conn/PID/tx/保存点或commit后拒绝；原Verifier在B3 installer上仍拒绝而新的维护路径在完整proof下成功。plan/init全部核验同一RR的证据不能由这组身份测试替代。
 
-维护core的migrations检验也需允许RR写：候选 `migrations.VerifySnapshotTx(ctx,tx, SnapshotRequirement{ReadOnly:false})`，仍核caller已有RR并复用当前readHistory/validateHistory的closed checksum manifest。对象/函数/trigger/列合同由独立维护attestation核验，不能误称当前VerifyReadOnlyTx已经核完整对象。现有 `VerifyReadOnlyTx`保留强只读语义，不通过改名弱化它。ledger/funding/lot、B完整性和采购等所有核验同样是caller-owned tx seam，不能各自开pool事务。init插入C0前运行pre-epoch源核验，写后运行完整lot/genesis核验；不要求未发行epoch时旧VerifyLots balanced。
+已实现的 `migrations.VerifySnapshotTx(ctx, tx)`接受caller已有RR只读或读写事务并核完整checksum history；没有SnapshotRequirement参数。T2先服务端scalar guard再调用该helper，并从固定embed绑定manifest。对象/函数/trigger/列另由静态checker核验，不能误称旧VerifyReadOnlyTx已经核完整对象；后者强只读语义保持。未来ledger/funding/lot、B完整性和采购维护扫描须经同Snapshot的T3 ReadLease，不能各自开pool事务。pre-epoch源核验、post-init完整lot/genesis与basis均未实现，不要求未发行epoch时旧VerifyLots balanced。
 
 维护身份只在离线命令持有，不由serve持有；普通APP VerifyLots不调用此入口，不获得PB owner/DDL权。B普通off的APP/projector/worker权限与role fingerprint不顺便扩张。新C0独立模式启动证明须另审。完整B3 proof目前含latest migration/权限摘要，追加C0必更换受审proof生成与校验版本；不能给旧proof一个ignore新表/新函数通道，也不能修改旧immutable attestation假装是原对象。追加版本/epoch的exact binding须随生产DDL冻结。
 

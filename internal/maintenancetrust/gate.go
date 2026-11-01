@@ -175,6 +175,7 @@ func (g *Gate) Close(_ context.Context) error {
 	unfinished := false
 	ss := s.snapshot
 	if ss != nil {
+		ss.revokeAuthorityLocked()
 		unfinished = !ss.terminalDone || ss.outcome != OutcomeCommitted && ss.outcome != OutcomeRolledBack
 		if !ss.terminalDone {
 			ss.terminal = terminalClose

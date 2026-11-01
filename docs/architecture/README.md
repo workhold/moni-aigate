@@ -82,7 +82,8 @@ flowchart TD
     CatalogRR[调用方持有的RR\n静态库接口，尚无main装配]
     LotCatalog[fundinglotcatalog\n全对象/权限与事务opaque证明]
     CatalogExpected[固定expected / PG16.15 profile\nordinary五变体 / 完整sandbox]
-    MaintenanceGate[maintenancetrust\n专用连接 / 双锁 / 私有单次RR快照]
+    MaintenanceGate[maintenancetrust\nGate / 私有Snapshot / Attest / Permit]
+    MaintenanceManifest[migrations\n固定embed22项 / 完整history helper]
     MaintenanceCaller[库级调用方\nGate成功只表示持锁]
     Routing[routing\n候选、采购比价与容量租约]
     Provider[provider\n协议、usage、SSE、网络]
@@ -133,8 +134,10 @@ flowchart TD
     CatalogExpected --> LotCatalog
     LotCatalog -->|只读catalog / Installation发行时空集| PG
     MaintenanceCaller --> MaintenanceGate
-    MaintenanceGate -->|预检 / 双锁 / ONLY125 / 事务及物理清理| PG
+    MaintenanceGate -->|双锁 / ONLY125 / 真实身份与前驱 / accounts锁及清理| PG
     MaintenanceGate -->|固定内置stage / 同rawTx安装证明| LotCatalog
+    MaintenanceGate -->|固定manifest与原history核验| MaintenanceManifest
+    MaintenanceGate -->|原v1 SQL版本与摘要叶子| SandboxSchema
     AlertWorker --> Alerts
     Mail --> Identity
     CLI --> Web
@@ -171,9 +174,9 @@ flowchart TD
 
 私有LedgerReader是独立核验的读取依赖，尚无普通main、HTTP、Store公共方法或CLI调用。它在调用方同一RR读取完整三表，再调用LedgerRows；图中的数据库边表示已实现的读取代码，不表示已经接入客户请求或取得完整资金来源证明。其独立验收状态见下表。
 
-`fundinglotcatalog`是另一个只读叶子模块：固定expected先作SHA/封闭解析，三个公开API在同一RR核完整schema、角色和ACL并发行同事务证明。ordinary真实无worker，sandbox完整三schema八角色；Installation只额外证明发行时十六表全空。当前没有普通main、维护Permit或资金调用边。详见[细化架构](funding-lot-catalog.md)。
+`fundinglotcatalog`是另一个只读叶子模块：固定expected先作SHA/封闭解析，三个公开API在同一RR核完整schema、角色和ACL并发行同事务证明。ordinary真实无worker，sandbox完整三schema八角色；Installation只额外证明发行时十六表全空。T2维护授权通过原Snapshot内部owned installation消费其证明，当前仍没有普通main或资金调用边。详见[细化架构](funding-lot-catalog.md)。
 
-`maintenancetrust`在T0双锁基础上增加T1私有单次Snapshot：Plan RR RO；Init RR RW在首次SELECT前锁定ONLY125表，再由固定内置stage调用同rawTx的InstallationProof。全程stage busy和绝对期限覆盖idle/CPU间隙，提交未知保持Unknown并物理关连接。T1最终真实PG/race115.412秒、124终态全部PASS；没有普通main、Permit、账户行锁、来源或资金接线，详见[细化架构](maintenance-gate.md)。
+`maintenancetrust`在T0双锁基础上增加T1私有单次Snapshot：Plan RR RO；Init RR RW在首次SELECT前锁定ONLY125表，再由固定内置stage调用同rawTx的InstallationProof。全程stage busy和绝对期限覆盖idle/CPU间隙，提交未知保持Unknown并物理关连接。T1最终真实PG/race115.412秒、124终态全部PASS；T1没有Permit或账户行锁；T2的真实授权见下文，仍无普通main、全来源或资金接线，详见[细化架构](maintenance-gate.md)。
 
 | 模块 | 负责什么 | 源码与合同 |
 | --- | --- | --- |
@@ -228,13 +231,13 @@ C0新增16表及41函数，表/列数据权限和函数EXECUTE对projector/PUBLI
 
 [Gate](../../internal/maintenancetrust/gate.go)与[非权威身份预检](../../internal/maintenancetrust/identity.go)按[根冻结T0](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)实施。专用连接不从pool借还；取得前、每次明确true及释放前后核本PID的完整advisory集合。入口共用父期限与30秒的较早值；只有明确false每50ms轮询，失回复不重发或补偿解锁。Close使用独立最多5秒，401→402明确成功并最终无锁；异常立即封闭socket registry、关闭真实底层连接，再有界清理pgx，防其异步取消晚到dial漏关。副本共态、busy拒绝及首次cleanup结果保持幂等。
 
-Acquire本身仍不发BEGIN。T1按[根冻结生命周期](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)建立唯一顶层RR，rawTx/Conn/context不导出；固定SET后Init第一条SELECT之前一次取得ONLY125全局C序SRE。唯一内置catalog stage保留原五秒issuer预算，stage全程独占；总期限watcher只标失效并立即关原始socket，不并发pgx。Commit/Rollback/Close保留Committed/RolledBack/Unknown/Abandoned及首次结果。账户行锁必须在未来完整Attest后，T1没有账户业务SELECT、Permit或epoch。sandbox真实super/datdba身份、可信manifest与[完整v1前驱候选](../../specs/022-self-service-payments/c0-predecessor-contract.md)继续T2；来源lease及独立结果继续T3/T4。T0历史验收保留原范围，新增T1真实PG/race115.412秒、46顶层/124终态全部PASS，见[新验证](../verification/maintenance-snapshot.md)，详见[细化架构](maintenance-gate.md)。
+Acquire本身仍不发BEGIN。T1按[根冻结生命周期](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)建立唯一顶层RR，rawTx/Conn/context不导出；固定SET后Init第一条SELECT之前一次取得ONLY125全局C序SRE。唯一内置catalog stage保留原五秒issuer预算，stage全程独占；总期限watcher只标失效并立即关原始socket，不并发pgx。Commit/Rollback/Close保留Committed/RolledBack/Unknown/Abandoned及首次结果。账户行锁由T2在完整认证后执行，T1没有账户业务SELECT、Permit或epoch。sandbox真实super/datdba身份、可信manifest与[完整v1前驱](../../specs/022-self-service-payments/c0-predecessor-contract.md)已按T2根冻结实现；来源lease及独立结果继续T3/T4。T0历史验收保留原范围，新增T1真实PG/race115.412秒、46顶层/124终态全部PASS，见[新验证](../verification/maintenance-snapshot.md)，详见[细化架构](maintenance-gate.md)。
 
 ### 同RR原始账本读取
 
 [私有reader](../../internal/billing/funding_ledger_read.go)保持调用方的Repeatable Read事务、连接、backend、top xid、DB/schema及真实LOGIN身份；既不提交，也不取得维护或资金许可。它先核四表的permanent heap/owner/RLS/继承、所用builtin列和单列主键，再核history表解析与helper两个函数名的完整搜索路径重载集合，拒绝同名/default/variadic覆盖后才调用原迁移helper。
 
-三张账本表分别显式投影、128条C序keyset至真实EOF；完整收集后只调用独立`fundinglotverify.CheckLedgerRows`一次。额外journal原列保留在同snapshot，不以JOIN过滤孤儿行，不以逐页AND代替全局算术。100000行/16MiB是整份逻辑输入硬界，30秒为全部读取共用deadline；失败只返回四个固定错误及整个零snapshot。成功结果仍是`supplied_ledger_rows`，不声称全部来源/Key/采购/周期/支付/lot图已核验，后续组合器与Permit仍须完成。
+三张账本表分别显式投影、128条C序keyset至真实EOF；完整收集后只调用独立`fundinglotverify.CheckLedgerRows`一次。额外journal原列保留在同snapshot，不以JOIN过滤孤儿行，不以逐页AND代替全局算术。100000行/16MiB是整份逻辑输入硬界，30秒为全部读取共用deadline；失败只返回四个固定错误及整个零snapshot。成功结果仍是`supplied_ledger_rows`，不声称全部来源/Key/采购/周期/支付/lot图已核验。T2已实现同Snapshot维护Permit，后续ReadLease与独立全来源组合器仍须完成。
 
 ### 独立本地支付沙箱（022-B0）
 
@@ -562,6 +565,12 @@ erDiagram
 [B3运行合同](../../specs/022-self-service-payments/b3-runtime-contract.md#10-根冻结与精确追加ddl2026-11-01)与[Processor执行合同](../../specs/022-self-service-payments/b-processor-contract.md)已由根冻结：同serve进程的独立真实worker LOGIN/连接池、两网络槽/四证据槽、Guard与正常取消区分、Recovery仅query、原QueryWork绑定、mutation到期order-first锁序。真实PG库级专项、两轮普通main/mock及最终浏览器已通过[限定本地验收](../verification/payment-application.md)；完整唯一资金、原command的HTTP丢回包恢复、Recovery/off、IDB重载和资源清理均有分层证据，真实Guard/在途SIGTERM独立真实进程补验通过，数据库COMMIT回包丢失仍SKIP。C0全资金路径/历史cutover与[全钱包操作序列](../../specs/022-self-service-payments/c0-sequence-contract.md)保持生产候选；已冻结并实现的在线算法仅纯分配层，不写DB、不授资金能力；迁移history窄核验和仅测试候选回归另见下文，见[验证](../verification/funding-lot-planners.md)。原路退款/拒付继续依赖C0整体通过。
 
 
+### 私有维护授权（022-C0-T2）
+
+[真实授权合同](../../specs/022-self-service-payments/c0-authority-contract.md)冻结并实现唯一二参`Attest(ctx, snapshot)`与`Permit.Verify(ctx)`，只消费原Snapshot内部owned installation。完整固定链为history scalar guard与原helper、编译manifest、实际维护LOGIN/有效owner、两条独立SQL clear→新鲜全runtime采样、16表重空、完整ordinary/v1前驱、仅Init全部账户C序锁、出口复核。全程保留原busy/绝对期限与rawTx，失败/取消/终结开始撤销所有副本并关原socket；没有裸Tx/Conn/context或SQL回调。前驱完整列与安全投影、有限typed时间、262行/1MiB及累计5秒；账户ID按原无限长TEXT语义流式长度前缀摘要。实现见[细化架构](maintenance-gate.md)，新增[专库PG/race](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS；整仓回归单独记录。T3 ReadLease、全来源重放、basis、epoch与生产维护CLI仍后续，不授资金写入或生产运行权。
+
+源码入口：[一次发行与Verify](../../internal/maintenancetrust/permit.go)、[真实身份与新鲜停服](../../internal/maintenancetrust/authority_identity.go)、[manifest与完整history](../../internal/maintenancetrust/authority_manifest.go)、[完整accounts锁](../../internal/maintenancetrust/authority_accounts.go)、[前驱编排](../../internal/maintenancetrust/predecessor.go)、[v1规范编码](../../internal/maintenancetrust/predecessor_codec.go)、[typed rows与资源记账](../../internal/maintenancetrust/predecessor_rows.go)、[服务端有界投影](../../internal/maintenancetrust/predecessor_sql.go)。
+
 ### 资金来源、退款与后续经营设计
 
 [C0生产候选](../../specs/022-self-service-payments/c0-production-schema.sql)以lot三桶和tenant全钱包连续序列连接全部来源、Reserve、finish及消费退款；[列权限](../../specs/022-self-service-payments/c0-production-permissions.sql)和[维护/proof v2](../../specs/022-self-service-payments/c0-maintenance-contract.md)尚在审查，不是生产迁移。旧tenant含零可用opening、新tenant的受保护出生事务、非genesis operation与完整新journal同top-xid及逐settlement退款累计已补入候选SQL。APP tenant INSERT收敛为原八列，UPDATE保留原六列，不授UPDATE(id,created_at)；worker原锁权限保留。五项版本化真实PG/race回归全部实际运行通过，见[候选验证](../verification/funding-lot-candidate.md)、[冻结测试范围](../../specs/022-self-service-payments/c0-candidate-regression-contract.md)及[仅测试源码](../../internal/qa/c0candidate)。测试通过不发行维护许可、不启动main、不分配生产迁移号。[独立重放候选](../../specs/022-self-service-payments/c0-verifier-contract.md)仍未实现；不能只靠正常业务代码或总额守恒证明来源。纯分配算法通过不代表这些接线已经完成。
@@ -807,8 +816,8 @@ flowchart TB
     Base[当前商业网关与本地应用支付\n已实现，限定本地验收]
     Source[C0 来源追踪\n候选DDL与直接SQL回归已验]
     Catalog[C0 静态对象和最小权限\n固定profile expected / 同RR checker已实现]
-    Gate[C0-T0/T1 双锁与私有单次RR\nONLY125与固定catalog stage / 无维护授权]
-    Permit[C0 停服维护与Permit\nT2–T4后续 / 真实身份及全源核验]
+    Gate[C0-T0/T1 双锁与私有单次RR\nONLY125与固定catalog stage]
+    Permit[C0-T2 维护Permit已实现\n实际身份与前驱 / 全源及epoch后续]
     Replay[C0 独立全源与来源重放\n不调用写侧planner或SQL谓词自证]
     Init[C0 basis与开账切换\n精确旧集合、提交未知只查原ID]
     Online[C0 全资金路径接线\n来源、预占、收尾、消费退款]
@@ -847,7 +856,7 @@ C0[静态检查](../../specs/022-self-service-payments/c0-schema-check-contract.
 | 商业闭环 | 已实现，限定本地验收 | 人工双人入账 → 客户授权/Key → 六协议调用 → 预占/结算 → 报表/成本/退款；[014](../verification/mvp-release-qualification.md) |
 | 模型/渠道经营 | 已实现 | 不可变版本、三格式发现、1..32 成员池、跨渠道整批启停；[011](../verification/model-discovery.md)、[012](../verification/credential-pools.md)、[013](../verification/channel-operations.md) |
 | Key 经营 | 已实现 | 来源策略、动态运行限额、模型/地域/预算/期限三版本独立编辑；[017 验证](../verification/key-configuration.md) |
-| 来源追踪核验基础 | C0部分依赖已实现，尚未进入完整资金链 | 纯分配/账本行检查、[离线metadata候选](../verification/funding-lot-descriptor.md)、[同RR完整账本读取](../verification/funding-ledger-reader.md)、[正式静态checker](funding-lot-catalog.md)、[维护双锁Gate](maintenance-gate.md)；Permit、全源/lot核验和全资金接线仍后续，PG安装profile/生产推广另验 |
+| 来源追踪核验基础 | C0部分依赖已实现，尚未进入完整资金链 | 纯分配/账本行检查、[离线metadata候选](../verification/funding-lot-descriptor.md)、[同RR完整账本读取](../verification/funding-ledger-reader.md)、[正式静态checker](funding-lot-catalog.md)、[维护双锁Gate](maintenance-gate.md)；T2库级Permit已实现，[专库race专项](../verification/maintenance-authority.md)通过；全源/lot核验和全资金接线仍后续，PG安装profile/生产推广另验 |
 | 上游模型成本 | 已实现 | 每渠道精确上游模型的输入/输出单价、生效版本、每attempt快照及unknown；受控采购更正双人审批，尚无自动供应商账单同步 |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
 | 共享采购账户/预算 | 019已实现，限定本地验收通过 | [冻结合同](../../specs/019-procurement-accounts/contract.md)；跨渠道/Key/租户共享累计预算、逐attempt预占、未知占用和双人更正；周期硬预算已由023-B扩展；余额仅人工证据，供应商余额/账单自动同步待后续 |
@@ -893,10 +902,12 @@ make architecture-check
 
 默认检查不会修改任何文件，CI 只运行默认检查；不能用自动 refresh 掩盖缺失的设计。覆盖 `cmd/internal/migrations/scripts/deploy/.github/web`、`specs`、`docs/design/runbooks/verification/decisions`、`docs/architecture` 下后续支持文档/图和根级依赖/构建/部署配置；新目录中的常见代码与配置扩展名也自动纳入，避免新增模块漏检。排除 `.git`、`.local`、`bin`、依赖缓存、`node_modules`、精确 `.vite` 缓存目录组件、`web/dist` 等产物、架构写入临时文件和私密 `.env*`（保留 `.env.example`），不以修改时间判断。正文要求主要架构章节与至少三张 Mermaid 图，并检查本地链接没有失效或越出仓库；正文、演化记录也有独立摘要。
 
-主架构十六张、[C0细化视图](funding-lot-catalog.md)、[维护Gate与Snapshot细化视图](maintenance-gate.md)及根README概览各一张，共十九张Mermaid图使用官方npm Mermaid12.2.0解析及独立临时浏览器实际渲染；[本轮渲染证据](../verification/architecture-maintenance-snapshot.json)记录四份正文SHA，模块/ER/发送顺序/部署/worker/恢复及静态proof边界由根语义复核。此前十六图与检查器race/vet保留原[架构同步验证](../verification/architecture-sync.md)。每轮内容快照均由集成人汇总全部文档后显式刷新，交付前确认只读检查通过。
+主架构十六张、[C0细化视图](funding-lot-catalog.md)、[维护Gate、Snapshot与Permit细化视图](maintenance-gate.md)及根README概览各一张，共十九张Mermaid图使用官方npm Mermaid12.2.0解析及独立临时浏览器实际渲染；[本轮渲染证据](../verification/architecture-maintenance-authority.json)记录四份正文SHA，模块/ER/发送顺序/部署/worker/恢复及静态proof边界由根语义复核。此前十六图与检查器race/vet保留原[架构同步验证](../verification/architecture-sync.md)。每轮内容快照均由集成人汇总全部文档后显式刷新，交付前确认只读检查通过。
 
 工具可以发现“源代码或设计已经变化，但架构快照尚未复核”，不能证明自然语言与实现语义一致。`--reviewed` 是执行人的明确复核声明；需要阅读代码、图与验证边界，不能机械刷新。修改覆盖策略也属于代码变更，必须解释原因并复核本文件。机器清单本身不参与自己的哈希，演化记录只引用源快照摘要，避免循环依赖。
 
 022-M/Q本轮新增独立CLI、paymentruntime/schema、mockpsp/receiver与离线QA；模块图/独立通知时序/数据分组/角色边界和源码入口已同步。B0独立进程证据只覆盖原M/Q链路，B3普通main新增的订单/通知/资金与worker另行验收；B0验证范围见[运行证据](../verification/payment-sandbox.md)，不能将已编码或专项PG等同尚未执行的长程和生产验收。
 
 023-B核心已按[冻结接线合同](../../specs/023-periodic-products/b-integration-contract.md)追加020并从billing调用；请求、数据和权限图同步更新，产品HTTP/UI已接并通过专项/多tab/隔离main浏览器，020最终相关回归与预览已通过，独立三态核验器和CLI专项通过，当前源码交叉回归继续。022-B1[核心设计](../../specs/022-self-service-payments/b1-contract.md)及[SQL验证](../../specs/022-self-service-payments/b1-verification.md)已冻结，B2新增[第三来源冻结合同](../../specs/022-self-service-payments/b2-funding-contract.md)，已追加021、实现Go第三来源与三角色核验，真实PG专项通过；领域/worker/HTTP/UI/main现由B3接线，真实主进程/浏览器限定本地验收及未验边界另记。
+
+2026-11-02第三轮[GitHub CI](../verification/github-ci-third-run.md)在精确f64b56f源码上十组全部success：1036顶层PASS、54明确SKIP，web286全PASS，架构/vet/build通过。专用C0与真实main opt-in仍未开启，不覆盖本轮T2新增代码或生产环境。

@@ -8,7 +8,7 @@
 
 核验器从真实来源与不可变序列独立推导应有状态，再比较 lot、事件、分配和缓存。禁止调用 `planReserveFundingLots`、`planFinishFundingLots`、`planRefundFundingLots`，禁止把 `fl_check_*`、`fl_validate_*`、`fl_source_*`、`funding_journal_valid`、`payment_*_valid` 等数据库写侧谓词的返回值作为业务正确性 oracle。可以读其受审定义进行对象完整性验证，但业务结论必须来自独立静态读取和 Go 判断。不得 import provider、HTTP、SMTP 或支付 mutation adapter。
 
-受审共享设施只限：pgx 类型/静态标识符引用、完整迁移清单核验、固定安全错误/UTC6格式和未来不可伪造的维护 Permit。金额运算使用独立 `math/big.Int` 表达式；不共用写侧分配函数或写侧 SQL 聚合结果。读到的 `before/after/delta/event_count/revision/last_event` 都是待核声明，不是重放输入的真值。
+受审共享设施只限：pgx 类型/静态标识符引用、完整迁移清单核验、固定安全错误/UTC6格式和[T2已实现的维护Permit](c0-authority-contract.md)；后续维护scanner仍须经待冻结的T3 ReadLease，不取得裸tx。T2[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，不扩大本核验器的实现范围。金额运算使用独立 `math/big.Int` 表达式；不共用写侧分配函数或写侧 SQL 聚合结果。读到的 `before/after/delta/event_count/revision/last_event` 都是待核声明，不是重放输入的真值。
 
 本合同证明 C0 epoch 起的来源资格与全部钱包分配。cutover 前缺少 allocation 的真实消费历史只核原财务来源、journal、终态、已退累计及精确维护集合；不声称恢复其历史 FIFO 或支付可退资格。保守 `nonrefundable` opening 是已经声明的范围边界；完整维护证据成立时，它本身不构成 coverage 缺口。缺失旧集合、未知 cutover 身份或无法证明旧新互斥，必须显式计为缺口或确定不符，不能以保守资格掩盖。
 
@@ -24,12 +24,10 @@ func (s *Store) VerifyLots(ctx context.Context, tenantID string) (LotCheck, erro
 func verifyLotsTx(ctx context.Context, tx pgx.Tx, tenantID string) (LotCheck, error)
 
 // 未来维护入口；不要求调用方把 pool 或自报身份交给 scanner。
-func VerifyLotsMaintenanceTx(ctx context.Context, tx pgx.Tx,
-    permit *maintenancetrust.Permit) (LotCheck, error)
+func VerifyLotsMaintenance(lease *maintenancetrust.ReadLease) (LotCheck, error)
 
 // init 写 C0 facts 前的全局原源核验；结果不冒称 lot 已建立。
-func VerifyFundingSourcesMaintenanceTx(ctx context.Context, tx pgx.Tx,
-    permit *maintenancetrust.Permit) (LotSourceCheck, error)
+func VerifyFundingSourcesMaintenance(lease *maintenancetrust.ReadLease) (LotSourceCheck, error)
 ```
 
 `tenantID=""` 为全局，否则按原 TEXT 身份精确匹配一个已存在 tenant，不 trim、大小写改写或把历史身份强制转 UUID；拒绝无效 UTF8/NUL、不存在的范围及 nil/失效 context。此内部核验入口不是新增 HTTP API，租户身份不由请求参数绕过原授权。
@@ -38,7 +36,7 @@ func VerifyFundingSourcesMaintenanceTx(ctx context.Context, tx pgx.Tx,
 
 所有 `*Tx` 入口只使用传入的有效 RR，允许 READ ONLY 或 READ WRITE，不 Begin/Commit/Rollback、换连接、写表/临时表、执行 SET ROLE、SAVEPOINT 或取得业务/维护锁。它们不修改调用方 GUC；调用方负责在第一条扫描前设定 `statement_timeout/lock_timeout` 与整个 context deadline，内部静态查询全限定 schema。成功或确定数据不符后 caller 仍拥有原事务；数据库异常后的事务失败沿 PostgreSQL 规则处理，不偷建新快照或自动修复。tx 已关闭、RC/Serializable、取消/执行/权限失败均为安全错误和零结果。
 
-普通私有接缝只接受同 RR 内完成的静态 runtime C0 schema/role/epoch 核验，不能因 APP 有 SELECT 就承认 maintenance 权限。维护两个入口必须每次调用 `Permit.VerifyTx`，绑定原顶层 wrapper、conn/PID、top xid、DB/schema、模式、proof 与实际 gate；nil/零值、另 Tx/保存点 wrapper、提交后复用均拒绝。Permit 不存在时不提供临时 trusted bool、任意角色名单或 owner fallback。维护入口只允许全局，不能用单租户结果批准整库 init。
+普通私有接缝只接受同 RR 内完成的静态 runtime C0 schema/role/epoch 核验，不能因 APP 有 SELECT 就承认 maintenance 权限。T2当前唯一公开校验是 `Permit.Verify(ctx)`，绑定原私有Snapshot的顶层wrapper、conn/PID、top xid、DB/schema、模式、proof与实际gate；不接收tx。上述维护入口及ReadLease均是T3候选，实施时必须全程保有原busy与总期限、入口/出口重核原Permit，不得用两次Verify代替执行期间所有权。nil/零值、另tx/保存点wrapper、提交后复用均拒绝；不提供trusted bool、任意角色名单或owner fallback。维护入口只允许全局，不能用单租户结果批准整库init。
 
 `migrations.VerifyReadOnlyTx` 仍保持 RR READ ONLY；RR 写维护仅用 `VerifySnapshotTx` 检查完整当前嵌入 history。两者都不替代对象正文、权限、角色闭包、Permit 或源图证明。C0 schema 缺失、epoch 未发行、proof 无效时 `VerifyLots` 返回固定错误；pre-epoch 原源入口不会为缺 epoch 返回伪造空 lot balanced。
 
@@ -180,9 +178,9 @@ func scanWalletLotsTx(context.Context, *lotReadSession) (LotCheck, *lotScanCompl
 
 这些记录只是组合函数的内部工作状态，**没有签名、序列化、公共FromReport/FromDigest/Trusted构造器或跨调用复用能力**。现有`CatalogProof/InstallationProof/Permit/RuntimeProof`的职责保持；不能为扫描再建一套可由调用方装配的permission/proof。issuer自己按固定调用图执行core并核完成记录，外部API不接受这些记录或任意`Balanced/CoverageComplete`参数。纯层§12返回的结果也不能转成完成记录。
 
-`lotReadSession`只能在§2现有受审入口内部建立：runtime入口先核actual APP、同RR RO的CatalogProof和严格v2/epoch；maintenance入口先核同Snapshot.Tx的Permit及phase。构造时保存精确pgx.Tx wrapper、Conn/PgConn、PID/backend_start、top xid、DB/schema OID、current/session实际role OID、RR access mode、原catalog/epoch或installation摘要、phase、scope和总deadline。每个core进入与返回前重核同一wrapper/连接/活跃事务/context及原opaque证据；失败返回整个零结果。保存的xid只是绑定本次核验事务，不要求历史journal.xid等于当前xid。
+`lotReadSession`只能在§2候选入口根冻结后内部建立：runtime入口先核actual APP、同RR RO的CatalogProof和严格v2/epoch；maintenance入口须经未来T3 ReadLease绑定原私有Snapshot的Permit及phase，没有Snapshot.Tx导出口。维护scanner不得取得可自行换context或终结的裸tx；精确查询接缝与core抽取须T3另冻。内部事实须绑定精确wrapper、Conn/PgConn、PID/backend_start、top xid、DB/schema OID、实际role、RR access、原proof、phase、scope和原总deadline。每个core进入与返回前重核原绑定，失败返回整个零结果。保存的xid只是绑定本次核验事务，不要求历史journal.xid等于当前xid。
 
-runtime issuer仍按[schema合同§7.1](c0-schema-check-contract.md#71-完整-runtimeproof-的独立组合层)只在actual APP RR RO中调用私有core；maintenance post-init只在原Permit的RR RW中调用相同只读core。后者能看到本事务刚写入的epoch/lot，但结果永远不是APP RuntimeProof；init COMMIT后APP必须新开RR RO再核全部内容。维护Permit的VerifyTx不能因写后C0表不再空而失效，原InstallationProof不重复要求空集，依据[Permit合同](c0-permit-contract.md)。scanner不发行Permit，不扩worker/projector读权。
+未来runtime issuer仍按[schema合同§7.1](c0-schema-check-contract.md#71-完整-runtimeproof-的独立组合层)只在actual APP RR RO中调用私有core；maintenance post-init只经原Permit的T3 ReadLease在同RR RW读取。后者可见本事务刚写入的epoch/lot，但结果永远不是APP RuntimeProof；init COMMIT后APP须新开RR RO再核全部内容。T2 `Permit.Verify(ctx)`与原InstallationProof的同tx绑定不因写后C0表不再空而失效；十六表重空只属于一次Attest发行阶段，依据[真实授权合同](c0-authority-contract.md)。post-init scanner/writer及epoch尚未实现，scanner不发行Permit，不扩worker/projector读权。
 
 内部完成记录逐项保存实际已执行的固定reader ID、每个reader已检查Rows.Err且读到EOF的事实、scanned数量和双向关系sweep完成位；这些位只由reader自身推进，caller不能传“已读全”。同一session的单项结果只使用一次，不能拿tenant A、另一个RR、另一phase或早前成功运行的记录补齐当前扫描。并发scanner/结束事务均禁止；不以`AsOf`或摘要相同判断同tx。
 

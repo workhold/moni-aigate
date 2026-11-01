@@ -724,12 +724,12 @@ C0离线metadata导出已按[§9](../../specs/022-self-service-payments/c0-schem
 
 固定SHA的expected初始化严格解析一次并私有缓存；ordinary五个完整variant，sandbox唯一full-sandbox，不从actual删除未知条目求通过。raw nodes及safe type I/O先预检，静态SQL输出PG jsonb逐record有界解码，scalar/资源/符号/alias/multiplicity核验保留。公开链对同一已认证variant的Schema与Roles作完整逐节点比较，同时继承expected的封闭字段、shape、枚举和值类型；metadata-only observer另保留完整DTO验证，不提供skip开关。标识模板只渲染受审expected位置，actual/prosrc不替换。依赖raw multiplicity与distinct分别核静态上界；全调用100000 raw rows/64MiB、单record64KiB、五秒不按query重置。
 
-旧SQL/provision/v1 checker不改。数据库CREATE与CREATE/CONNECT/TEMPORARY的grant option对runtime拒绝，PUBLIC默认CONNECT/TEMPORARY可保留；十跨域负权和全局runtime无owner独立核。最终完整leaf race217.140秒通过、保留原五秒预算；旧source pins与专用资源零遗留见[最终证据](../verification/funding-lot-catalog.md)及[细化架构](../architecture/funding-lot-catalog.md)。PG16.15 initdb OID/default collation profile未认证其它部署；本包无main、Permit或资金调用者。
+旧SQL/provision/v1 checker不改。数据库CREATE与CREATE/CONNECT/TEMPORARY的grant option对runtime拒绝，PUBLIC默认CONNECT/TEMPORARY可保留；十跨域负权和全局runtime无owner独立核。最终完整leaf race217.140秒通过、保留原五秒预算；旧source pins与专用资源零遗留见[最终证据](../verification/funding-lot-catalog.md)及[细化架构](../architecture/funding-lot-catalog.md)。PG16.15 initdb OID/default collation profile未认证其它部署；catalog本包无main或资金调用者，T2仅消费其opaque证明。
 
 
 ## 36. 维护Gate生命周期（022-C0-T0）
 
-`maintenancetrust.Acquire(ctx,*pgx.ConnConfig,fundinglotcatalog.Pins)`只返回`*Gate`或固定安全错误。配置须由pgx.ParseConfig构造，nil fallback在Copy前拒绝；配置和Pins深拷贝，专用连接捕获底层net.Conn。预检绑定配置/实际TCP/SQL endpoint、current_user=session_user=Config.User及真实LOGIN、DB/schema/raw owner OID/current_schema；此处不代替未来T2维护授权。
+`maintenancetrust.Acquire(ctx,*pgx.ConnConfig,fundinglotcatalog.Pins)`只返回`*Gate`或固定安全错误。配置须由pgx.ParseConfig构造，nil fallback在Copy前拒绝；配置和Pins深拷贝，专用连接捕获底层net.Conn。预检绑定配置/实际TCP/SQL endpoint、current_user=session_user=Config.User及真实LOGIN、DB/schema/raw owner OID/current_schema；此处不代替T2维护授权。
 
 双bigint session锁固定782193402→782193401，明确false每50ms等待，明确true每把只取一次，核本PID全部advisory的DB/mode/classid/objsubid/granted及无额外锁。工作context贯穿连接、预检及两锁，采用父deadline与30秒的较早值。`Close(ctx)`忽略caller取消，独立background共用5秒，先完整核锁、401→402逐把明确true、末尾零锁再关闭。副本共态，TryLock并发返回maintenance_gate_busy，重复返回首次cleanup结果。
 
@@ -743,4 +743,12 @@ CI新增的动态顶层测试分区与临时PG时区只影响测试执行环境�
 
 唯一内置VerifyInstallation在同rawTx调用真实catalog issuer并重核proof/pins，保存与返回分离的opaque wrapper。整个stage占busy，终结/Close/第二stage并发直接拒绝；绝对期限约束所有stage并在idle/CPU间隙强制raw-close，watcher不并发pgx。Commit明确COMMIT、服务器明确回滚和未确认分别记录Committed/RolledBack/Unknown；pgx.ErrTxClosed或任意driver error不当作已回滚。Rollback独立最多5秒，Close不替未终结Snapshot提交或回滚。重复同终结返回首次结果，不同终结拒绝且不变Outcome。
 
-新增[真实PG/race](../verification/maintenance-snapshot.md)115.412秒、124终态全PASS；T0旧记录保留原范围。[完整前驱候选](../../specs/022-self-service-payments/c0-predecessor-contract.md)列App19字段、M/Q真实列与各自本地值、ordinary-off21表/mandatory FK/policy/6旁路，候选SQL须在返回客户端前作scalar长度闸门；T2尚未发行Permit。后续ReadLease须先有真实authority，原pgx.Tx reader通过独立query seam等价迁移，禁止假Conn适配或移除原actual LOGIN/owner检查。
+新增[真实PG/race](../verification/maintenance-snapshot.md)115.412秒、124终态全PASS；T0旧记录保留原范围。[完整前驱合同](../../specs/022-self-service-payments/c0-predecessor-contract.md)列App19字段、M/Q真实列与各自本地值、ordinary-off21表/mandatory FK/policy/6旁路，候选SQL须在返回客户端前作scalar长度闸门；T2已按根冻结实现真实Permit，新增[专库race专项](../verification/maintenance-authority.md)已通过。后续ReadLease须先有真实authority，原pgx.Tx reader通过独立query seam等价迁移，禁止假Conn适配或移除原actual LOGIN/owner检查。
+
+## 38. 真实维护授权（022-C0-T2）
+
+按[根冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)实现库级二参Attest与Permit.Verify。Snapshot owned installation是唯一输入；完整history先scalar guard再原helper，manifest来自22项固定embed；实际LOGIN/owner与PB六表owner、sandbox字面专库例外、全runtime新鲜clear→sample、16表重新全空、完整ordinary/v1前驱、仅Init全部账户锁与出口重核后一次发证。原busy/总期限/私有rawTx贯穿CPU/SQL，错误或终结撤销全部副本，watcher只短锁状态与raw-close，不并发pgx。
+
+前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T3 ReadLease/全来源、basis、epoch/writer、生产CLI与资金接线仍未实现。
+
+此前[第三轮CI](../verification/github-ci-third-run.md)十组通过只覆盖f64b56f精确源码；不把opt-in跳过项与T2新代码计为已验。

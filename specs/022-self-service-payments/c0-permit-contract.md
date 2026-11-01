@@ -1,12 +1,12 @@
-# 022-C0-T：离线维护 Permit、真实身份与同快照 gate（精确候选）
+# 022-C0-T：离线维护 Permit、真实身份与同快照 gate
 
-2026-11-01，**仅候选，待根冻结；本稿没有实现、生产授权、运行通过或 epoch 已发行声明**。细化[维护合同 §4](c0-maintenance-contract.md#4-私有-maintenance-permit-与同一rr核验)，配合[静态 schema/角色检查](c0-schema-check-contract.md)、[独立来源核验](c0-verifier-contract.md)、[迁移 snapshot 接缝](c0-snapshot-contract.md)与[运行时 helper](c0-runtime-helper-contract.md)。C0 安装、维护身份、业务来源、完整运行证明是不同证据；任何一项通过不代替其他项。
+2026-11-02。T0/T1已实现并保留各自验证范围；T2按[真实授权根冻结合同](c0-authority-contract.md)已实现唯一二参Attest与Permit.Verify，[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过。T3/T4、全部来源、basis与epoch仍是后续设计，无生产授权或epoch已发行声明。配合[静态schema/角色检查](c0-schema-check-contract.md)、[独立来源核验](c0-verifier-contract.md)、[迁移snapshot接缝](c0-snapshot-contract.md)与[运行时helper](c0-runtime-helper-contract.md)。C0安装、维护身份、业务来源、完整运行证明是不同证据；任何一项通过不代替其他项。
 
 本片只允许停服的 `plan` / 首次 `init` 维护链。它不安装迁移、不 provision/GRANT、不取得模型或支付网络能力，不变更原 [PB Verifier](../../internal/periodicbudget/verifier.go) 的 ordinary actual LOGIN 真 owner 规则。当前不存在的完整 C0 epoch proof 不能成为首次开账的循环前置。
 
 ## 1. 包、API 与生命周期所有权
 
-候选包 `internal/maintenancetrust` 是封闭维护基础设施，只依赖标准库、pgx 与静态 `internal/fundinglotcatalog`；不 import billing、periodicbudget、payments、operations 或任何网络 mutation adapter。CLI 维护协调器可以调用其固定 API，scanner 只接收 caller-owned tx 与 Permit。所有导出类型字段私有；零值无效，复制值仍共用私有状态，不能复制出第二份权限。String/GoString/JSON 仅返回固定 redacted 形状，不编码连接配置或 proof 原文。
+包 `internal/maintenancetrust` 是封闭维护基础设施，只依赖标准库、pgx、静态 `internal/fundinglotcatalog` 与 T2 明确允许的 `migrations` / `paymentsandboxschema` 叶子包；不 import billing、periodicbudget、payments、operations 或网络 mutation adapter。CLI 维护协调器仍后续，T3 scanner 的封闭 ReadLease 仍待另冻，当前不暴露 caller-owned tx。所有导出类型字段私有；零值无效，复制值仍共用私有状态，不能复制出第二份权限。String/GoString/JSON 仅返回固定 redacted 形状，不编码连接配置或 proof 原文。
 
 ```go
 type Gate struct { /* private shared state, dedicated *pgx.Conn */ }
@@ -18,16 +18,17 @@ func Acquire(ctx context.Context, cfg *pgx.ConnConfig,
 func (g *Gate) BeginPlan(ctx context.Context) (*Snapshot, error)
 func (g *Gate) BeginInit(ctx context.Context) (*Snapshot, error)
 
-// T2 候选；T1 不提供 Permit 或裸 tx 访问。
-func Attest(ctx context.Context, snapshot *Snapshot,
-    proof *fundinglotcatalog.InstallationProof) (*Permit, error)
+func (s *Snapshot) VerifyInstallation(ctx context.Context) (*fundinglotcatalog.InstallationProof, error)
+// T2 仅接受原 Snapshot 内 owned proof，不接受 caller proof 或裸 tx。
+func Attest(ctx context.Context, snapshot *Snapshot) (*Permit, error)
+func (p *Permit) Verify(ctx context.Context) error
 
 func (s *Snapshot) Commit(ctx context.Context) error
 func (s *Snapshot) Rollback(ctx context.Context) error
 func (g *Gate) Close(ctx context.Context) error
 ```
 
-`Acquire`深复制配置与pins（包括Worker/Sandbox等指针及所有嵌套值）后新建且独占一条物理连接，不从 serve/runtime pool 借连接，不接受 caller 提交的“已持锁”连接。pins仅是未受信的比对目标；Acquire/preflight通过不把它升级成身份或catalog证明。连接失败不返回半 Gate。该连接只用于本次固定维护命令；Snapshot 不公开 Tx/Conn/context；固定内置 stage 使用私有原始顶层 wrapper，后续 scanner 采用尚待 T2/T3 冻结的窄 ReadLease，不进入 HTTP、插件或任意回调。受审 Go 代码仍能调用 pgx；这些 token 不声称抵御恶意 owner 或任意 Go 代码。
+`Acquire`深复制配置与pins（包括Worker/Sandbox等指针及所有嵌套值）后新建且独占一条物理连接，不从 serve/runtime pool 借连接，不接受 caller 提交的“已持锁”连接。pins仅是未受信的比对目标；Acquire/preflight通过不把它升级成身份或catalog证明。连接失败不返回半 Gate。该连接只用于本次固定维护命令；Snapshot 不公开 Tx/Conn/context；固定内置 stage 使用私有原始顶层 wrapper，后续 scanner 采用尚待 T3 冻结的窄 ReadLease，不进入 HTTP、插件或任意回调。受审 Go 代码仍能调用 pgx；这些 token 不声称抵御恶意 owner 或任意 Go 代码。
 
 Gate 只发行一个 Snapshot、一个 Permit；不能在同 Gate 先 plan 再 init，不能 Commit 后 Begin 第二事务。`plan`与`init`是分别取得新 gate、新 RR 的独立命令。Permit不公开 Reset、Extend、Clone、FromJSON、FromDigest、AcceptRole/AlreadyLocked、Trusted 或测试跳过口。
 
@@ -39,7 +40,7 @@ Acquire 总预算为父 deadline 与30秒的较早值。每条 SQL 均受该剩�
 
 依次调用 `pg_try_advisory_lock(782193402::bigint)`、`pg_try_advisory_lock(782193401::bigint)`：前者是 instance gate，后者是 migration gate。每50ms有界轮询 false；只有收到明确 true 才记为该 key 成功取得一次。不得先取401，不使用 shared/xact/two-int 版本，不再次申请已持有的 key，不调用迁移 apply 或另开连接取得其中一把锁。迁移尚未安装必须在本命令之外完成；本片不会一边持401一边调用会重入401的 installer。
 
-每次取得后与每次 Permit.VerifyTx 都以静态 pg_locks 查询核对：本 backend PID、实际 database OID、`locktype='advisory'`、granted、`mode='ExclusiveLock'`、`classid=0`、objid分别为782193402/782193401、`objsubid=1`；两把各恰一条，无额外 advisory key或 shared同 key。pg_locks不暴露重入计数，故“恰取得一次”由新专用连接、固定两个请求及私有状态共同保证，不能只凭两条 catalog 行声称无重入。
+每次取得后与每次 Permit.Verify 都以静态 pg_locks 查询核对：本 backend PID、实际 database OID、`locktype='advisory'`、granted、`mode='ExclusiveLock'`、`classid=0`、objid分别为782193402/782193401、`objsubid=1`；两把各恰一条，无额外 advisory key或 shared同 key。pg_locks不暴露重入计数，故“恰取得一次”由新专用连接、固定两个请求及私有状态共同保证，不能只凭两条 catalog 行声称无重入。
 
 false是尚未取得；超时/取消/连接错误或回包丢失是取得结果未知，立即 invalid 并销毁本专用连接，不继续轮询、返回池或另发相同 lock 请求。若只取得402，401未取得，则错误路径也必须清理402。锁不是跨数据库全局服务栅栏；绑定并核对的是当前 database，不能拿另一个库的同数字锁充当证明。
 
@@ -77,7 +78,7 @@ Attest仅接受本 Gate 唯一 Snapshot 私有保存的同一个顶层 wrapper�
 
 私有绑定至少包括：Gate/Snapshot共享nonce及状态、具体wrapper引用、*pgx.Conn/PgConn指针、backend PID与backend_start、规范top xid8十进制、database名/OID、schema名/OID/owner OID、实际认证role名/OID、ordinary|sandbox、RR access mode、固定purpose(plan|init)、本Snapshot总deadline、完整manifest/descriptor/expected/schema/roles摘要及原v1 predecessor摘要（ordinary为空）。摘要只来自opaque proof或本包实际验证，不提供从caller digest升级信任的构造器。
 
-每个维护scanner进入前及返回可用结果前调用 `Permit.VerifyTx(ctx,tx)`：先检查context、共享状态与精确wrapper/conn，再在同tx重读isolation/read_only、current/session LOGIN/OID、PID/backend_start、pg_current_xact_id()::text、DB/schema/owner、实际双session锁，并调用opaque proof.VerifyTx检查仍是原安装证明。top xid用于同一个顶层事务，不用xmin、SAVEPOINT子xid或tx开始时间；READ ONLY在主库也取规范top xid，standby/recovery环境不支持本维护链。任何不符返回零结果和安全错误，不能换tx重新绑定旧Permit。
+当前 Permit.Verify 是固定内置验证 stage，不接受 tx。未来 scanner 必须经另冻的 ReadLease 全程持 busy/总期限，不能仅靠入口/出口 Verify 取得裸 tx：先检查context、共享状态与精确wrapper/conn，再在同tx重读isolation/read_only、current/session LOGIN/OID、PID/backend_start、pg_current_xact_id()::text、DB/schema/owner、实际双session锁，并调用opaque proof.VerifyTx检查仍是原安装证明。top xid用于同一个顶层事务，不用xmin、SAVEPOINT子xid或tx开始时间；READ ONLY在主库也取规范top xid，standby/recovery环境不支持本维护链。任何不符返回零结果和安全错误，不能换tx重新绑定旧Permit。
 
 InstallationProof在发行时已证明16个C0表全空、epoch不存在；其VerifyTx不在Init写后反复要求全空。Attest时额外在本RR重核一次该空集及mode，且Gate没有第二次Attest入口。Permit保持“原空安装上的这一维护事务”身份，所以Init同tx写自己的C0 facts后仍可调用只读post-init scanner。它不把现在epoch存在当成允许下一次init；Commit/Rollback后旧Permit永久失效，新命令对非空C0只能走原epoch只读观察，不能取得本首发Permit。
 
@@ -97,7 +98,7 @@ B3的前epoch前驱校验在本包私有静态只读流程完成，不import pay
 
 原App marker/immutable v1 row、Mock/Receiver的静态marker和signing-key/migration关系，在本RR按冻结列列表完整读取并交叉匹配v1 pins；原M/Q对象正文与角色由InstallationProof核静态受审descriptor，原app 001–022采用静态基线+明确C0 delta，不能用旧v1拒绝新增对象的失败结果当作“关闭所以跳过”。维护只读持久摘要，不读取/输出PSP事件正文或key原始材料，不冒称已验证本机运行文件中的nonce/key实际原件；未来listener的真实私有文件重验仍是runtime装配门禁。
 
-这份私有v1 reader是必须实施和独立验收的依赖，**当前没有现成可直接复用的caller-owned维护入口**。实施不得调用现有会自己Begin/Commit的runtime constructor再声称同snapshot；固定golden须与现有v1 canonical/字段语义逐项交叉回归。若根选择抽取共享纯v1 codec，须另审等价重构后再替换此私有reader，不在本候选悄改v1行为。
+这份私有v1 reader已按[完整矩阵](c0-predecessor-contract.md)及[T2冻结](c0-authority-contract.md)实现于[reader](../../internal/maintenancetrust/predecessor.go)及[封闭codec](../../internal/maintenancetrust/predecessor_codec.go)，[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过。原runtime没有可直接复用的caller-owned维护入口；当前不调用会自己Begin/Commit的runtime constructor。固定golden与原v1 canonical/字段语义逐项交叉核对；未来抽取共享codec须另审等价重构，不悄改v1行为。
 
 Permit不消费尚不存在的完整C0 epoch proof；Init先持Permit完成原ledger/funding/采购/PB/B来源的同snapshot独立核验、CoverageComplete及basis，再创建新事实/v2 attestation/最后epoch。随后只在该维护RR RW与原Permit下执行maintenance post-init独立全图核验，并比新canonical与持久v1/v2/epoch完整关系；结果类型与RuntimeProof严格不同。不能在维护LOGIN/RR RW事务中调用仅actual APP/RR RO可发行的RuntimeProof issuer，也不能为了拿该token在init COMMIT前另开APP snapshot看尚未提交的epoch。
 
@@ -105,9 +106,9 @@ Commit确认后，startup才由actual APP在新的RR READ ONLY按schema-check §
 
 ## 7. Plan、Init与提交未知的固定编排
 
-Plan：Acquire双gate → BeginPlan RR RO → InstallationProof → AttestTx → 同tx完整history/catalog/v1/PB/ledger/funding/采购/B/pre-epoch sources → 规范basis → Permit最后VerifyTx → Snapshot.Commit确认 → 独立cleanup/release/Close → 输出安全plan。任一来源mismatch或coverage缺口不能输出可供init接受的ready plan。过程无业务写；COMMIT/清理未确认不返回成功plan。
+以下全来源编排仍是T3/T4候选，不是当前CLI或已验端到端行为。Plan：Acquire双gate → BeginPlan RR RO → InstallationProof → Attest → 未来同tx完整PB/ledger/funding/采购/B/pre-epoch sources → 规范basis → Permit.Verify(ctx) → Snapshot.Commit确认 → 独立cleanup/release/Close → 输出安全plan。任一来源mismatch或coverage缺口不能输出可供init接受的ready plan。过程无业务写；COMMIT/清理未确认不返回成功plan。
 
-Init：Acquire双gate → BeginInit RR RW及125表锁 → 同tx InstallationProof及Attest内完整history/身份/v1校验后全accounts锁 → 全部原源独立核验及basis重算 → 与输入plan精确pins核对 → 封闭写入器创建memberships/seq0/lot/events/cache → immutable v2 attestation → 最后epoch → 同tx maintenance post-init独立全图/canonical持久关系核验及Permit最后VerifyTx → Snapshot.Commit确认 → cleanup/release/Close → 输出原epoch安全回执。该链不要求/不发行APP RuntimeProof。写入器不调用在线wallet helper，不改原109表的业务数据/余额/PB/Key，不重新发行旧approved退款。
+Init：Acquire双gate → BeginInit RR RW及125表锁 → 同tx InstallationProof及Attest内完整history/身份/v1校验 → Attest内全accounts锁与出口复核 → 一次Permit → 未来全部原源独立核验及basis重算 → 与输入plan精确pins核对 → 封闭写入器创建memberships/seq0/lot/events/cache → immutable v2 attestation → 最后epoch → 同tx maintenance post-init独立全图/canonical持久关系核验及Permit.Verify(ctx) → Snapshot.Commit确认 → cleanup/release/Close → 输出原epoch安全回执。当前仅至库级Permit及事务终结已实现，来源/basis/writer/epoch仍后续。该链不要求/不发行APP RuntimeProof；未来写入器不调用在线wallet helper、不改原109表业务数据或余额/PB/Key。
 
 跨命令输入plan只是严格解析的**待比较数据**，无权限作用；至少精确匹配原epochUUID、DB/schema OID、mode/v1 predecessor、manifest/descriptor/expected/schema/roles、完整basis、来源phase与安全计数。Init自己重算全部值；CLI不能接受“skip-basis/force/changed-only”，不能用SUM、最近时间或一个balanced bool代替完整basis和CoverageComplete。旧plan因任何业务/catalog/OID变化不符即整tx回滚，需重新plan。
 
@@ -119,30 +120,30 @@ Snapshot.Commit先进入closing并撤销Permit，再发送一次COMMIT；收到�
 
 固定安全错误候选为 `maintenance_input / maintenance_gate_busy / maintenance_identity / maintenance_schema / maintenance_transaction / maintenance_timeout / maintenance_execution / maintenance_commit_unknown / maintenance_cleanup`。所有失败返回nil Permit/零结果；无driver unwrap、SQL/DSN、schema/role名、行值、proof原文或秘密文件路径。安全计数与摘要仅在确认提交/清理后按既有维护DTO输出，根协调器负责唯一最终回执。
 
-冻结后建议按以下顺序实施，文件名为候选，不据此分配生产迁移号：
+T0–T2已按各自根冻结实现，历史验收分别保存；[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过：333.879秒、89个顶层测试及含子测试832项全部PASS，零FAIL/SKIP；这是维护包专项，整仓检查另见[集成记录](../../docs/verification/maintenance-authority-integration.md)。T3/T4仍按下表候选接缝另冻，不据此分配生产迁移号：
 
 | 片 | 文件/接口 | 必须完成的验证 |
 | --- | --- | --- |
 | T0 gate | internal/maintenancetrust/gate.go、gate_test.go、gate_integration_test.go | 新专用conn、实际402→401、反序拒绝、false等待/取消/失回复、逆序有界释放/物理关闭；无遗留session/advisory锁 |
 | T1 snapshot | snapshot.go、snapshot_integration_test.go | 仅顶层RR两mode；Init第一SELECT前125表C序SRE；全accounts锁留待T2认证后；物理writer屏障证明先提交变化被Init看到；Plan RO无写型锁；不另Begin |
 | T2 authority | permit.go、predecessor.go、permit_integration_test.go | ordinary实际owner与B3字面专库DB-owner唯一例外；完整v1/opaque安装证据；错误LOGIN/SET ROLE/endpoint/OID/成员/ACL/正文/nonce绑定拒绝 |
-| T3同RR scanners | PB独立VerifyMaintenanceTx；billing独立pre-epoch/lot、ledger/funding/采购/B caller-owned接缝 | 全部入口VerifyTx，原PB公共Verifier仍拒B3 installer；原tx私有sentinel不可见、快照旧/新分歧符合MVCC；任何缺口/失败零结果，不跨库/另pool |
+| T3同RR scanners（候选） | PB/billing独立维护scanner，统一消费尚待冻结的ReadLease；无裸tx/caller context入口 | 原Permit入口/出口受控验证、全程busy/原总期限；原PB公共Verifier仍拒B3 installer；同RR与MVCC、失败零结果，不跨库/另pool |
 | T4 plan/init协调 | 另根冻固定CLI、写入器、maintenance post-init与startup RuntimeProof分型接口 | 逐行basis跨命令重算、非空原历史、空/零tenant、完整旧membership、维护post-init全图；确定rollback/真实成功COMMIT丢回复及只读原epoch确认，无重复开账；startup另用实际APP新RRRO |
 
 T0–T2的负例必须包括：全SELECT的APP/worker/projector、Config与current/session不等、NOLOGIN owner被SET ROLE、moni_test非superuser/非DB owner/别的DB owner、localhost/Unix/IPv6/坏fallback/错误实际server、role同名换OID、任一运行role membership/SET/admin/grant option、schema/func/trigger/search_path/ACL漂移、CatalogProof冒充InstallationProof、proof/Permit换wrapper/conn/PID/top xid/schema、关闭/失败/Commit后复用、复制token二次attest、额外/丢失/两int advisory锁、SAVEPOINT/nested调用图反例。所有测试只用专用测试DB隔离schema/角色，真实受限LOGIN分别验证，不用SET ROLE充当真实runtime。
 
-本稿新增测试**均尚未运行**。静态checker、private v1 reader、Permit、全部同RR来源scanner、basis与封闭init写入器、上层RuntimeProof及未知提交观察器是分别可审的依赖；其中任何一项尚缺就保留对应阻断，不以mock marker、临时trusted参数、部分PG通过或本合同替代。根冻结与统一架构状态更新后才逐片实施；本文件不触发refresh或main运行。
+T0/T1历史专项保留原证据；[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已完成，并包含本轮T0/T1回归，不追溯扩大历史通过范围。静态checker、private v1 reader、Permit、全部同RR来源scanner、basis与封闭init写入器、上层RuntimeProof及未知提交观察器是分别可审的依赖；其中任何一项尚缺就保留对应阻断，不以mock marker、临时trusted参数、部分PG通过或本合同替代。T3/T4等后续片仍须完成各自根冻结与统一架构状态更新后逐片实施；本文件不触发refresh或main运行。
 
 ## 9. 2026-11-02独立审阅后的冻结前修订项
 
-静态checker已按其§10单独实现；本维护合同仍是候选，以下四项须在T1/T2编码前冻结，不凭旧段落中的概括自行补权限：
+本节保留T1/T2冻结前的审阅问题与裁决背景。静态checker及T0–T2现已分别按根冻结实现；以下历史问题由Snapshot合同和真实授权合同取代，不能作为另一条可用API或验收声明：
 
-1. Init的第一条业务行锁不能先于目标对象认证。预定顺序须修订为：Begin/固定SET → 首次SELECT前全部125表SRE → 同RR完整catalog/history与Attest → 受Permit控制的固定init stage按全account ID C序锁行 → 全部basis/source scanner。这样既保证锁等待后的首次RR观察，又在执行ledger_accounts行锁前证明heap/id/RLS/owner。原§3/§7的“随后锁accounts”需随精确stage API一起更新，不能照旧顺序直接实现。
-2. 两次VerifyTx只证明入口/出口，不能自动覆盖scanner执行期间的busy所有权或向其传递私有总deadline。须冻结覆盖scanner全程的受控stage/lease签名、唯一tx和受限context、正常Finish与失败撤销规则；Commit/Close不能与scanner争用pgx连接。不得只让scanner使用自己的context并声称遵守Snapshot总预算。
+1. Init的第一条业务行锁不能先于目标对象认证。T2最终顺序为Begin/固定SET → 首次SELECT前ONLY125表SRE → 同RR catalog → Attest内history/身份/前驱 → 同authority busy内全accounts锁与出口复核 → 一次Permit；basis/source scanner属于T3后续。账户锁必须在Permit发行前，不能保留“返回Permit再声明锁完”的旧顺序。
+2. 两次Permit.Verify只证明入口/出口，不能自动覆盖scanner执行期间的busy所有权或向其传递私有总deadline。T3须另冻覆盖scanner全程的受控ReadLease、唯一tx和受限context、正常Finish与失败撤销规则；Commit/Close不能与scanner争用pgx连接。不得只让scanner使用自己的context并声称遵守Snapshot总预算。
 3. 完整manifest必须来自本进程固定migrations及同RR实际history核验；CatalogProof只含静态expected/schema/roles，不含迁移manifest。须明确允许叶子migrations依赖，并由Attest实际核验/绑定固定manifest，或先设计同等opaque来源。当前Attest参数不能接受caller digest/bool来补出这一证据，不能把仅返回error的旧helper结果变成任意manifest claim。
 4. 私有v1前驱reader须先冻结字段矩阵。App v1 proof不含M/Q的nonce_digest、state_directory_id、control_token_digest、active_key_id或own_schema_sql；只有原已存在共享字段可与v1逐字相等。peer迁移应对编译期固定SQL/version/SHA，peer自有字段只能按明示格式和内部持久关系核验，不能宣称认证未读取的私有文件原件。ordinary须完整保留原runtimeVerifyOrdinaryOff的21表空集、query-conflicts关系、disabled revision1及commerce/funding/ledger off规则，单凭“无marker”不足以证明关闭。
 
-上述修订不阻塞独立冻结T0专用连接/双session gate及清理机制；T0成功仍无Permit、Snapshot或资金权。T1/T2和完整scanner接缝冻结之前不开放首发init。相关测试尚未实施或运行。
+当时上述修订不阻塞T0双session gate单独冻结，T0成功本身仍无Snapshot/Permit或资金权。当前T1/T2已另冻实现并分别记录证据，完整scanner及生产首发init继续未开放；本节不追溯升级T0/T1历史结果。
 
 ## 10. 根冻结T0：专用连接、双session gate与清理
 
@@ -173,6 +174,10 @@ T0边界补充：sandbox的配置/实际LOGIN用户名也必须为字面moni_tes
 
 ## 11. 根冻结 T1 接缝与修订优先级
 
-2026-11-02。以 [Snapshot 生命周期合同](c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力) 的冻结范围实施 T1：一次顶层 RR、私有总期限、ONLY 125 表静态锁、固定内置 catalog stage、busy、提交结果与清理。删除候选 Snapshot.Tx；Attest 及 scanner 的旧裸 tx 签名被该合同 §6–7 的后续设计替代，T2/T3 未冻前不提供 stub 或兼容旁路。本文其他尚存 AttestTx/VerifyTx 表述仅指候选内部核验职责，不是可用的导出 API。
+2026-11-02。以[Snapshot生命周期合同](c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)的冻结范围实施T1：一次顶层RR、私有总期限、ONLY125表静态锁、固定catalog stage、busy、提交结果与清理。T1历史不发行Permit；后续T2由§12唯一二参API取代旧外部proof/裸tx授权签名。scanner仍待T3 ReadLease另冻，不提供兼容旁路。
 
 Init 固定次序是 Begin/SET → 首 SELECT 前 ONLY 125 表 SRE → 完整 catalog → Attest 内 history/真实身份/v1/双锁/空集 → 全 account 行锁 → Permit → sources。T1 截止在 catalog stage，不读账户、不发 Permit。§9 四项中生命周期、全程 busy/期限和账户锁顺序已在 T1 合同明确；可信 manifest 和前驱矩阵、维护身份仍须 T2 根冻结和实现。库级 RR RW 不是业务 init 写入口。
+
+## 12. T2 根冻结及旧候选替代
+
+2026-11-02。[真实授权合同](c0-authority-contract.md)唯一冻结二参 Attest / Permit.Verify；Snapshot 内 owned installation 是唯一安装输入，旧外部 proof 三参口、maintenanceStage、裸 Permit.VerifyTx 均删除。固定 history guard+原 helper、实际维护身份、新鲜 clear→sample、16表重空、完整私有前驱、Init全账户锁与出口重核均在原 busy/期限下完成；失败永久 invalid、关原 socket，复制 Permit 共撤销。后续 ReadLease/独立全源/basis/writer/epoch/生产CLI继续分别冻结，本文历史候选不得用于旁路。

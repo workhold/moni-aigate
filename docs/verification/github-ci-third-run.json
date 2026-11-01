@@ -1,0 +1,975 @@
+{
+  "run_id": 41342022443,
+  "head_sha": "f64b56feba984ceed4912c5cf06accf22b0aac88",
+  "conclusion": "success",
+  "url": "https://github.com/workhold/moni-aigate/actions/runs/41342022443",
+  "jobs": [
+    {
+      "name": "contracts (server-0)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (server-2)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (identity)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (other)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (billing-1)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (server-3)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (billing-0)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (server-1)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (billing-3)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (billing-2)",
+      "conclusion": "success"
+    }
+  ],
+  "packages": {
+    "sizes": [
+      1,
+      1,
+      1,
+      39
+    ],
+    "union_matches_all": true,
+    "pairwise_disjoint": true
+  },
+  "inventory_match": true,
+  "top_level": {
+    "pass": 1036,
+    "skip": 54
+  },
+  "parent_and_children": {
+    "pass": 2977,
+    "skip": 92
+  },
+  "shards": {
+    "go-tests-billing-0": {
+      "top": {
+        "pass": 40
+      },
+      "all": {
+        "pass": 98
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 155.192
+        }
+      ],
+      "skips": [],
+      "fail_events": []
+    },
+    "go-tests-billing-1": {
+      "top": {
+        "pass": 39
+      },
+      "all": {
+        "pass": 94
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 225.004
+        }
+      ],
+      "skips": [],
+      "fail_events": []
+    },
+    "go-tests-billing-2": {
+      "top": {
+        "pass": 38,
+        "skip": 1
+      },
+      "all": {
+        "pass": 110,
+        "skip": 1
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 181.833
+        }
+      ],
+      "skips": [
+        "TestMVPBillingCrashHelperProcess"
+      ],
+      "fail_events": []
+    },
+    "go-tests-billing-3": {
+      "top": {
+        "pass": 39
+      },
+      "all": {
+        "pass": 97
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 182.55
+        }
+      ],
+      "skips": [],
+      "fail_events": []
+    },
+    "go-tests-identity": {
+      "top": {
+        "pass": 57
+      },
+      "all": {
+        "pass": 90
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/identity",
+          "Action": "pass",
+          "Elapsed": 477.394
+        }
+      ],
+      "skips": [],
+      "fail_events": []
+    },
+    "go-tests-other": {
+      "top": {
+        "pass": 619,
+        "skip": 52
+      },
+      "all": {
+        "pass": 2024,
+        "skip": 90
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-payment-sandbox",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+          "Action": "pass",
+          "Elapsed": 9.782
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+          "Action": "pass",
+          "Elapsed": 1.024
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alerts",
+          "Action": "pass",
+          "Elapsed": 128.586
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/config",
+          "Action": "pass",
+          "Elapsed": 1.021
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/catalog",
+          "Action": "pass",
+          "Elapsed": 150.174
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+          "Action": "pass",
+          "Elapsed": 1.745
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+          "Action": "pass",
+          "Elapsed": 1.085
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+          "Action": "pass",
+          "Elapsed": 1.087
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+          "Action": "pass",
+          "Elapsed": 65.298
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/metering",
+          "Action": "pass",
+          "Elapsed": 1.471
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+          "Action": "pass",
+          "Elapsed": 25.937
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Action": "pass",
+          "Elapsed": 69.297
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+          "Action": "pass",
+          "Elapsed": 1.601
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+          "Action": "pass",
+          "Elapsed": 4.468
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+          "Action": "pass",
+          "Elapsed": 2.898
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+          "Action": "pass",
+          "Elapsed": 11.436
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/payments",
+          "Action": "pass",
+          "Elapsed": 202.572
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/operations",
+          "Action": "pass",
+          "Elapsed": 282.013
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+          "Action": "pass",
+          "Elapsed": 1.061
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+          "Action": "pass",
+          "Elapsed": 53.397
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/pricing",
+          "Action": "pass",
+          "Elapsed": 40.232
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "Action": "pass",
+          "Elapsed": 1.022
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/provider",
+          "Action": "pass",
+          "Elapsed": 5.71
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+          "Action": "pass",
+          "Elapsed": 1.039
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/routing",
+          "Action": "pass",
+          "Elapsed": 1.082
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/security",
+          "Action": "pass",
+          "Elapsed": 1.023
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+          "Action": "pass",
+          "Elapsed": 1.033
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+          "Action": "pass",
+          "Elapsed": 10.515
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/migrations",
+          "Action": "pass",
+          "Elapsed": 17.743
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+          "Action": "pass",
+          "Elapsed": 1.097
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+          "Action": "pass",
+          "Elapsed": 1.184
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/export-native-sdk-fixtures",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+          "Action": "pass",
+          "Elapsed": 1.079
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+          "Action": "pass",
+          "Elapsed": 1.026
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+          "Action": "pass",
+          "Elapsed": 37.078
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/web",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+          "Action": "pass",
+          "Elapsed": 257.915
+        }
+      ],
+      "skips": [
+        "TestCatalogRawPreflightRejectsBeforeDeparse",
+        "TestCatalogPrivilegeArraysPreserveFullPeerVectors",
+        "TestCatalogDependencySemijoinsPreserveRowsAndPlan",
+        "TestCatalogPeerCaptureReviewMetadata",
+        "TestCatalogPeerBaselineAndActualLogins",
+        "TestCatalogPeerRejectsForeignPrivilegesMembershipAndOwnership",
+        "TestCatalogPeerPublicAPIs",
+        "TestCatalogPeerPublicAPIRejectsSameRRPeerDrift",
+        "TestCatalogOrdinaryRuntimeOwnerOutsideProtectedSchemaRejected",
+        "TestCatalogOrdinaryDatabasePrivilegeElevationRejected",
+        "TestCatalogSandboxDatabasePrivilegeElevationRejected",
+        "TestCatalogPeerReadTimings",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-isolated",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-minimal-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/named-image-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/public-minimal-login",
+        "TestCatalogOrdinaryPublicIssuersAndBindings/public-image-login",
+        "TestCatalogCanceledAbortedAndDisconnectedTransactions",
+        "TestCatalogRejectsSameTransactionDriftWithoutCommitting",
+        "TestCatalogInstallationEmptinessIsAnIssueFact",
+        "TestCatalogRejectsWrongPinsAndAuthentication",
+        "TestOrdinaryVariantsInstallExactACL/named-isolated",
+        "TestOrdinaryVariantsInstallExactACL/named-minimal-login",
+        "TestOrdinaryVariantsInstallExactACL/named-image-login",
+        "TestOrdinaryVariantsInstallExactACL/public-minimal-login",
+        "TestOrdinaryVariantsInstallExactACL/public-image-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-isolated",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-minimal-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-image-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/public-minimal-login",
+        "TestOrdinaryVariantsInjectedDDLFailureCleanup/public-image-login",
+        "TestOrdinaryVariantCandidateReproducibility",
+        "TestOrdinaryVariantLegacyProjection",
+        "TestGatePostgresAcquireAndReverseClose",
+        "TestGatePostgresWaitsForSecondLock",
+        "TestGatePostgresPartialCancellation/parent_deadline",
+        "TestGatePostgresPartialCancellation/explicit_cancel",
+        "TestGatePostgresThirtySecondEntranceBudget",
+        "TestGatePostgresUnknownLockReplyPhysicallyCloses",
+        "TestGatePostgresUnknownUnlockReplyPhysicallyCloses",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/extra",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/lost",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/shared",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/two_int",
+        "TestGatePostgresRejectsLockAndTransactionAnomalies/nonidle",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/database_oid",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/schema_oid",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/owner_oid",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/owner_name",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/current_schema",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/null_schema",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/system_schema",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/config_login_mapping",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/session_auth_mapping",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/existing_lock",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/actual_ip",
+        "TestGatePostgresPreflightRejectsActualIdentityDrift/actual_port",
+        "TestGatePostgresConcurrentCloseRejectsWithoutSQL",
+        "TestGatePostgresCleanupUsesIndependentFiveSecondBudget",
+        "TestGatePostgresOrdinaryDNSAndNonOwnerAreOnlyPreflight",
+        "TestGatePostgresPublicEffectiveOwnerTargetBinding",
+        "TestSnapshotPostgresOptionsFixedOrderAndOriginalProof",
+        "TestSnapshotPostgresWriterBarrierCreatesSnapshotAfterLockWait",
+        "TestSnapshotPostgresAllTablesStopWritesButPermitSelect",
+        "TestSnapshotPostgresMissingLateTableClosesPartialBegin",
+        "TestSnapshotPostgresCatalogRejectsDriftBeforeBusinessReads/rls",
+        "TestSnapshotPostgresCatalogRejectsDriftBeforeBusinessReads/incoming_inheritance",
+        "TestSnapshotPostgresEvidenceBusyRejectsWithoutSQL",
+        "TestSnapshotPostgresParentCancellationClosesIdleAndActiveSQL/idle_CPU_gap",
+        "TestSnapshotPostgresParentCancellationClosesIdleAndActiveSQL/catalog_SQL_reply",
+        "TestSnapshotPostgresEarlierDeadlineAndShortBudgetReject",
+        "TestSnapshotPostgresDefaultThirtySecondIdleDeadline",
+        "TestSnapshotPostgresCommitConfirmedAndDeferredRollback",
+        "TestSnapshotPostgresCommitLostReplyIsUnknownWithoutRetry",
+        "TestSnapshotPostgresRollbackLostReplyAbandons",
+        "TestSnapshotPostgresCloseOpenSnapshotAbandonsWithoutRollback",
+        "TestSnapshotPostgresCallerCancellationCannotBeIgnored",
+        "TestSnapshotPostgresRollbackIndependentFiveSecondBudget",
+        "TestSnapshotPostgresCommitCallerAlreadyCancelledSendsNothing",
+        "TestSnapshotPostgresCommitReplyCancellationRetainsUnknown",
+        "TestCandidateWalletGraph",
+        "TestCandidateOldZeroOpening",
+        "TestCandidateSavepointTopXID",
+        "TestCandidatePermissions",
+        "TestCandidateLegacyRefundCumulative",
+        "TestMailLifecycleRealMainRecovery",
+        "TestBrowserQARealMainLifecycle",
+        "TestBrowserQAFailedBootstrapCleansOwnedResources",
+        "TestRealDescriptorReproducibility",
+        "TestRealFailureCleanup"
+      ],
+      "fail_events": [],
+      "expected_packages": 39,
+      "package_terminal_match": true
+    },
+    "go-tests-server-0": {
+      "top": {
+        "pass": 52
+      },
+      "all": {
+        "pass": 110
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 150.747
+        }
+      ],
+      "skips": [],
+      "fail_events": []
+    },
+    "go-tests-server-1": {
+      "top": {
+        "pass": 50,
+        "skip": 1
+      },
+      "all": {
+        "pass": 90,
+        "skip": 1
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 174.068
+        }
+      ],
+      "skips": [
+        "TestCapacityConcurrentStreams"
+      ],
+      "fail_events": []
+    },
+    "go-tests-server-2": {
+      "top": {
+        "pass": 51
+      },
+      "all": {
+        "pass": 126
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 216.433
+        }
+      ],
+      "skips": [],
+      "fail_events": []
+    },
+    "go-tests-server-3": {
+      "top": {
+        "pass": 51
+      },
+      "all": {
+        "pass": 138
+      },
+      "run_terminal_match": true,
+      "packages": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 203.543
+        }
+      ],
+      "skips": [],
+      "fail_events": []
+    }
+  },
+  "pg_readiness": [
+    {
+      "job": "contracts (server-0)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (server-2)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (identity)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (other)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-1)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (server-3)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-0)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (server-1)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-3)",
+      "status": [
+        "success"
+      ]
+    },
+    {
+      "job": "contracts (billing-2)",
+      "status": [
+        "success"
+      ]
+    }
+  ],
+  "frontend_summary": [
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T19:30:44.5454625Z # tests 286",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T19:30:44.5456408Z # pass 286",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T19:30:44.5456849Z # fail 0",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T19:30:44.5457260Z # cancelled 0",
+    "contracts (other)\tRun npm ci && npm test && npm run build\t2026-11-01T19:30:44.5457674Z # skipped 0"
+  ],
+  "complete_run_log_sha256": "938c5cdaa921cd385ce8472ce5090e9109886490ace3a0ee720d1e4bdf59e446",
+  "other_skip_reasons": [
+    {
+      "count": 1,
+      "lines": [
+        "collector_preflight_test.go:27: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "collector_privilege_plan_test.go:46: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "collector_query_plan_test.go:16: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_capture_test.go:29: offline candidate metadata capture is explicitly opt-in"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:344: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:376: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:475: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:513: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:568: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:678: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_fixture_test.go:683: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "peer_timing_test.go:18: explicit catalog performance diagnostic only"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "proof_integration_test.go:39: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:106: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:151: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:196: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "proof_integration_test.go:227: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "variants_fixture_test.go:500: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "variants_fixture_test.go:567: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "variants_fixture_test.go:740: explicit metadata candidate export only; formal expected is never auto-accepted"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "variants_fixture_test.go:825: requires explicit previously verified four-role descriptor directory; no live runtime filtering"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:388: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:428: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 2,
+      "lines": [
+        "gate_integration_test.go:494: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:546: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:576: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:614: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 5,
+      "lines": [
+        "gate_integration_test.go:650: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 12,
+      "lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:765: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:791: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:830: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "gate_integration_test.go:861: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:18: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:122: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:192: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:239: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 2,
+      "lines": [
+        "snapshot_integration_test.go:268: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:301: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 2,
+      "lines": [
+        "snapshot_integration_test.go:337: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:395: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:439: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:459: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:517: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:568: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:602: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:617: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:653: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:686: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "snapshot_integration_test.go:707: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:33: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:97: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:107: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "candidate_test.go:151: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "legacy_fixture_test.go:14: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "mail_lifecycle_test.go:381: explicit isolated mail real-main opt-in required"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:203: explicit isolated main lifecycle opt-in required"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:410: explicit PostgreSQL lifecycle opt-in required"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:267: requires explicit dedicated database; no descriptor acceptance"
+      ]
+    },
+    {
+      "count": 1,
+      "lines": [
+        "main_test.go:307: requires explicit dedicated database"
+      ]
+    }
+  ],
+  "scope": "This CI run does not enable dedicated C0 catalog/maintenance/candidate or real-main/capacity opt-ins, and does not validate production, real suppliers or payments."
+}

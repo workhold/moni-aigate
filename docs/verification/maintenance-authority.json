@@ -1,0 +1,672 @@
+{
+  "recorded_at": "2026-11-02",
+  "slice": "022-C0-T2 private maintenance authority",
+  "status": "PASS within isolated local PostgreSQL test scope; whole-repository integration recorded separately",
+  "contract": "specs/022-self-service-payments/c0-authority-contract.md",
+  "final_command": {
+    "command": "go test -race ./internal/maintenancetrust -count=1 -timeout 600s -json",
+    "opt_in_environment": "C0_MAINTENANCE_DATABASE_URL (value omitted)",
+    "exit_code": 0,
+    "elapsed_seconds": 333.879,
+    "log_path": ".local/c0-authority-verification/full-final.jsonl",
+    "log_sha256": "293f8d8814b295e07ce46c3261525a36ba2140fe43f3102a1500e7e97823e214",
+    "top_level": {
+      "pass": 89,
+      "skip": 0,
+      "fail": 0
+    },
+    "parent_and_children": {
+      "pass": 832,
+      "skip": 0,
+      "fail": 0
+    },
+    "run_terminal_one_to_one": true
+  },
+  "production_api_added": [
+    "Attest(context.Context,*Snapshot) (*Permit,error)",
+    "(*Permit).Verify(context.Context) error"
+  ],
+  "production_leaf_dependencies_added": [
+    "migrations",
+    "internal/paymentsandboxschema"
+  ],
+  "source_files": [
+    {
+      "path": "internal/maintenancetrust/authority_accounts.go",
+      "sha256": "04b1f06826875c337d689ef3f8bdf2686f98bb007bbb178b350a5af07162adce"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_accounts_test.go",
+      "sha256": "08c0e73da80bf89829803dd11a75cb9af223ab2128f0ddfec7ef9752e4ea7c2c"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_budget_integration_test.go",
+      "sha256": "2ef3086ca31be53ace5c854dcbe1ddf5324ed06efc1599746bcd502ce5160389"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_identity.go",
+      "sha256": "318fb64bff18999fd6c5232275f4b8adae15cedd7500ed20d90fbe31240f3eb5"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_identity_test.go",
+      "sha256": "d86d4b153d35fc805a738f97429a81285f1d838743fb4f04997332147bd4fbef"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_manifest.go",
+      "sha256": "8102c312df814f95fd3a611470369b08d4a2cb7e35b02244335f72971c3bd91b"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_manifest_test.go",
+      "sha256": "2d6ac55991c2baf0cbbaac0aa2399001d698aaff021106acb9427e0135fa6c63"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_profiles_integration_test.go",
+      "sha256": "0c922536d82a8430e363bd92d102160e0a5adc4e33103a83684c0d3899f6c2ea"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_sandbox_fixture_test.go",
+      "sha256": "8588dee550f7a395d47b15758b7ff91d3d94b48f429f7873357fd87cce03e49e"
+    },
+    {
+      "path": "internal/maintenancetrust/authority_sandbox_integration_test.go",
+      "sha256": "b29279449fb827ac0dc5f9eec4e22e9e1c43688a689c35206d11fb1c77341faf"
+    },
+    {
+      "path": "internal/maintenancetrust/gate.go",
+      "sha256": "d09101c56222794224aec59b5b426661101f030c990b9f511f1461d6a5c4cc11"
+    },
+    {
+      "path": "internal/maintenancetrust/gate_integration_test.go",
+      "sha256": "243a11a09851781268ba5578a1a0412993ff1b828b68c966a7dd1109fb9f3e6a"
+    },
+    {
+      "path": "internal/maintenancetrust/gate_test.go",
+      "sha256": "014d7323ff0d9f5f0243ca600367e3e952cc92fee3dcaa5d7012bfabbbd0eb0a"
+    },
+    {
+      "path": "internal/maintenancetrust/identity.go",
+      "sha256": "20567bab4adb61eb99456d4de44a40f6b3d1b2d1e2068cfad30a63c71eeb8df4"
+    },
+    {
+      "path": "internal/maintenancetrust/permit.go",
+      "sha256": "457ed18e87455a620ae51cc6c84f831a5f46ab8adac013c003b823728139d6b0"
+    },
+    {
+      "path": "internal/maintenancetrust/permit_integration_test.go",
+      "sha256": "331d766cbed20522937984d333b7a8e38d60b7134ae5415a8083daf4f749b2d2"
+    },
+    {
+      "path": "internal/maintenancetrust/permit_test.go",
+      "sha256": "1aa30f453b5b1e47a188b888b1b8c1c2b6204115755da7773065b3a06bda6deb"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor.go",
+      "sha256": "450459cdc85a0d23371a724174f01af99bbccf3b7fea0b76ca863385b565d47b"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor_codec.go",
+      "sha256": "7aa1ff8206abb8477b2001ad0cf1dbd48c68cbbdad22b69906f39e235ab95246"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor_codec_test.go",
+      "sha256": "86d63a9c16d2a60d043fef328b4c52b7161f825eddf9b17d873780d2637a340a"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor_postgres_test.go",
+      "sha256": "eb32f42cb46373e1e5bfb67d012a3d81ccb974eefce0cf858da5ab42ba0c8de9"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor_rows.go",
+      "sha256": "2d47cc058c065197d8fc67f7100742e6d2b250ecfaeab1affc202b126bf2a61c"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor_rows_test.go",
+      "sha256": "ab297c99fbbe62cedfda99ecce698b0ad0c02b5b5af7de58db28d18eaa240a05"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor_sql.go",
+      "sha256": "84c9d806e80c1ac832b13ed377c3bd174e87f6c914ffe1f82ce3a3be8d492b90"
+    },
+    {
+      "path": "internal/maintenancetrust/predecessor_sql_test.go",
+      "sha256": "d3e72b95f51ba4e8c0c1574ca566ce9b810a6e44e2725c9d9a646ec3db5ba6e6"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot.go",
+      "sha256": "d81e21471137215111d22104d57aa957600487722fed41fb288c8a2ce6ad9452"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_fixture_test.go",
+      "sha256": "43103c30fc86b1fbd1778dc38c4d7a9aeb341b623173ce65dd4d5d5ec749824e"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_integration_test.go",
+      "sha256": "0e7092fc48366746620e717060460df4fc23364f0405cabd1e56b146b778c1e0"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_tables.go",
+      "sha256": "bc6eacd2b7d5e9dd307bff4aafef0e6d70c1b052175b85c8ec199fb2b47d22de"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_tables_test.go",
+      "sha256": "afad10b012ece7accdc538be4c9550ee9fb447d5736b8f90b49d6722e6edb765"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_test.go",
+      "sha256": "66e9a6ebe58cd96630a4ecfcf397d5e527852f4680a7a95c532e942720e93df0"
+    },
+    {
+      "path": "internal/payments/runtime_predecessor_golden_test.go",
+      "sha256": "963702a38eb188303fb29503bcd53861976a231c31150a99c8fac7bee4d6804a"
+    },
+    {
+      "path": "internal/paymentsandboxqa/application_predecessor_golden_test.go",
+      "sha256": "2cde412b1175f0e4160911832ccab15e2ca2a2c56f44e8ad1e68cfa26b555a0f"
+    },
+    {
+      "path": "internal/maintenancetrust/testdata/predecessor_v1.json",
+      "sha256": "1a6c1815c400ddf7b051c0c12f0fe203ff43484251aabd34d8f9361ab704b67c"
+    },
+    {
+      "path": "internal/maintenancetrust/testdata/predecessor_v1.sha256",
+      "sha256": "ac633a6064ab10a84032017fb51e304edc18445460834ce3bcdef732236c24f5"
+    }
+  ],
+  "all_attempts": [
+    {
+      "path": ".local/c0-authority-verification/accounts-repaired.jsonl",
+      "sha256": "1b8e34e45fd50472314f258b987b91c8421d5407a28e88fe20e8960513dd0538",
+      "top_level": {
+        "pass": 1
+      },
+      "parent_and_children": {
+        "pass": 3
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T03:51:15.20268+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 23.89
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/budgets-first.jsonl",
+      "sha256": "2facc29de76df7334d5f195b644af219efd1bb721b47cbec973b9418aa397867",
+      "top_level": {
+        "pass": 2
+      },
+      "parent_and_children": {
+        "pass": 7
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T03:58:57.203928+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 41.253
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/full-final.jsonl",
+      "sha256": "293f8d8814b295e07ce46c3261525a36ba2140fe43f3102a1500e7e97823e214",
+      "top_level": {
+        "pass": 89
+      },
+      "parent_and_children": {
+        "pass": 832
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:14:09.342367+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 333.879
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/golden-cross-final.jsonl",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "top_level": {},
+      "parent_and_children": {},
+      "run_terminal_one_to_one": true,
+      "package_terminal": []
+    },
+    {
+      "path": ".local/c0-authority-verification/nologin-diagnostic.jsonl",
+      "sha256": "1b18940b6def3d9a7f42ae8125239c07629ee246006099e06054d478259e0409",
+      "top_level": {
+        "fail": 1
+      },
+      "parent_and_children": {
+        "fail": 1
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:03:10.267167+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 21.698
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/ordinary-first.jsonl",
+      "sha256": "75c651c2250040a0b3494045aeef38b78f0461d15a51ddf0d3b959683623d357",
+      "top_level": {
+        "pass": 1
+      },
+      "parent_and_children": {
+        "pass": 7
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T03:47:36.4552+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 33.468
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/ordinary-matrix-first.jsonl",
+      "sha256": "c0e08eff1a9fd40fdfe492374abaf9c7a22692f3876f95a40977569f9b14b868",
+      "top_level": {
+        "pass": 2,
+        "fail": 2
+      },
+      "parent_and_children": {
+        "pass": 13,
+        "fail": 3
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T03:49:14.684035+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 49.103
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/ordinary-matrix-repaired.jsonl",
+      "sha256": "5faead7f2c6b66d81528ac3211ea44e52e813c759cd7f9b87846b1a300827c4d",
+      "top_level": {
+        "pass": 1,
+        "fail": 1
+      },
+      "parent_and_children": {
+        "pass": 7,
+        "fail": 2
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T03:50:31.346494+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 34.754
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/predecessor-pg-first.jsonl",
+      "sha256": "cd43cd55f28b08c02a9bb449e1b3c95680e0b6f395272cf8261b72cb7e36e513",
+      "top_level": {
+        "fail": 2,
+        "pass": 2
+      },
+      "parent_and_children": {
+        "pass": 46,
+        "fail": 22
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:02:26.559679+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 18.351
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/predecessor-pg-repaired.jsonl",
+      "sha256": "6bf7bfdabea79e6a31cda887606b73b5e2533d732c6c03c12a26ed54f84c6616",
+      "top_level": {
+        "pass": 4
+      },
+      "parent_and_children": {
+        "pass": 68
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:07:13.537239+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 18.913
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/profiles-first.jsonl",
+      "sha256": "bae214e872aa26fcb5271fd889d3cf4cb20b8b885317df5b1c59f8ff66c97ccc",
+      "top_level": {
+        "pass": 2,
+        "fail": 1
+      },
+      "parent_and_children": {
+        "pass": 10,
+        "fail": 1
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T03:59:46.813155+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 35.747
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/sandbox-first.jsonl",
+      "sha256": "a9ee7668f358269f18bc8f059f5da0ee7117ea30d46106d97bf9cb698f13402c",
+      "top_level": {
+        "fail": 1
+      },
+      "parent_and_children": {
+        "fail": 1
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:01:38.298402+08:00",
+          "Action": "fail",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 30.239
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/sandbox-matrix-first.jsonl",
+      "sha256": "3a70feef4237645d474012390d11d4e25b3c347933a188c2518046627fa62f22",
+      "top_level": {
+        "pass": 2
+      },
+      "parent_and_children": {
+        "pass": 22
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:06:38.013659+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 123.95
+        }
+      ]
+    },
+    {
+      "path": ".local/c0-authority-verification/sandbox-second.jsonl",
+      "sha256": "9afd11775e734a1d9fda1016afab81ca1afd7bf6450f64a2027931fb9620af19",
+      "top_level": {
+        "pass": 1
+      },
+      "parent_and_children": {
+        "pass": 3
+      },
+      "run_terminal_one_to_one": true,
+      "package_terminal": [
+        {
+          "Time": "2026-11-02T04:04:21.72203+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 37.836
+        }
+      ]
+    }
+  ],
+  "evidence_layers": {
+    "public_authority": "ordinary named-minimal/image and public-minimal/image real LOGIN Plan/Init; genuine sandbox Plan/Init; fresh all-runtime sampling; seven sandbox content refusals; history guard; full Init account row locks and Plan no account locks; busy, cancellation, shared revocation and original socket closure",
+    "private_postgres_predicates": "ordinary21 tables, six bypasses, mandatory FK and policy; full sandbox persisted fields, safe CASE projection, finite typed timestamps, sentinel/EOF/resources; relaxed fixture rows in rolled-back owner transactions are not a valid public installation",
+    "golden_and_pure": "independent Python vector, original payments private codec, QA writer and new private codec; typed columns and resource predicates; no proof of public SQL execution from pure tests"
+  },
+  "golden": {
+    "path": "internal/maintenancetrust/testdata/predecessor_v1.json",
+    "bytes": 1786,
+    "sha256": "1a6c1815c400ddf7b051c0c12f0fe203ff43484251aabd34d8f9361ab704b67c"
+  },
+  "failed_attempts_preserved": true,
+  "fixture_corrections": [
+    "history large-name fixture constrained to legal PostgreSQL primary-key index size, still over manifest name bound",
+    "business account history created under original001-022 before appending fixed C0 epoch guard",
+    "Plan no-row-lock proof uses real competing FOR UPDATE NOWAIT instead of epoch-blocked UPDATE",
+    "NOLOGIN SET ROLE accepts safe maintenance_execution due to masked backend_start or maintenance_identity, requires original backend gone",
+    "original sandbox QA SET ROLE owner observed by independent administrator, not masked current-user activity",
+    "private predicate fixture preserves PostgreSQL trigger constraints; typed year10000 test uses binary decoding while product simple protocol still fails closed"
+  ],
+  "independent_reviews": [
+    "payment_b2_review production predecessor and permit read review",
+    "descriptor_integration_review source/evidence and final JSONL identity audit",
+    "root semantic integration review"
+  ],
+  "non_blocking_observation": "At exact child deadline boundary safe error can be maintenance_execution or maintenance_identity before watcher records maintenance_timeout; nil evidence and physical failure closure remain enforced. No timeout-extension or authorization gap observed.",
+  "not_delivered": [
+    "T3 ReadLease and independent complete source replay",
+    "basis, epoch, writers and all funding paths",
+    "production maintenance coordinator and main/CLI wiring",
+    "C1 refunds, C2 chargeback/debt, C3 recovery integration",
+    "arbitrary PostgreSQL catalog profile or 1Panel acceptance",
+    "real model/provider or PSP calls"
+  ],
+  "preview_58123_touched": false,
+  "model_or_psp_calls": 0,
+  "independent_post_run_audit": {
+    "path": ".local/c0-authority-verification/post-run-audit.json",
+    "sha256": "d0cff508aa1c0cc441ff48e41163411077d63d53af40d42cce76261dd4b46a2d",
+    "result": {
+      "format": "c0-authority-post-run-audit/v1",
+      "mode": "read-only; no DROP, pg_terminate_backend, DDL, business write, or other database connection performed",
+      "scope": {
+        "connected_database": "moni_test",
+        "other_database_connections": 0,
+        "untouched": "moni_review and long-lived preview environments",
+        "catalog_scope": "pg_namespace/public relations in parent database; roles/databases/backend/lock aggregates cluster-wide"
+      },
+      "test_run": {
+        "path": ".local/c0-authority-verification/full-final.jsonl",
+        "sha256": "293f8d8814b295e07ce46c3261525a36ba2140fe43f3102a1500e7e97823e214",
+        "package_terminal": {
+          "Time": "2026-11-02T04:14:09.342367+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Elapsed": 333.879
+        },
+        "pass_test_terminal_count": 832,
+        "fail_terminal_count": 0,
+        "skip_terminal_count": 0
+      },
+      "post_run_observation": {
+        "activity": {
+          "fixed_c0_gate_locks_parent": 0,
+          "other_parent_database_backends": 0,
+          "parent_database_advisory_locks": 0,
+          "fixed_c0_gate_locks_fixture_databases": 0
+        },
+        "identity": {
+          "database": "moni_test",
+          "read_only": "on",
+          "server_port": 55439,
+          "current_user": "moni_test",
+          "session_user": "moni_test",
+          "server_address": "127.0.0.1",
+          "server_version_num": "160015"
+        },
+        "prefix_counts": {
+          "gate_schemas": 0,
+          "sandbox_schemas": 0,
+          "gate_roles_cluster": 0,
+          "snapshot_qa_schemas": 0,
+          "sandbox_roles_cluster": 0,
+          "fixture_backends_cluster": 0,
+          "public_profile_roles_cluster": 0,
+          "fixture_advisory_locks_cluster": 0,
+          "public_profile_databases_cluster": 0,
+          "public_profile_schemas_in_parent": 0
+        },
+        "parent_catalog": {
+          "public_acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}",
+          "database_acl": null,
+          "public_owner": "pg_database_owner",
+          "database_owner": "moni_test",
+          "public_relations": 0,
+          "public_builtin_owner": true
+        },
+        "captured_at_utc": "2026-11-01T20:16:53.250224Z",
+        "postgres_configuration": {
+          "fsync": "on",
+          "lc_ctype": "C",
+          "wal_level": "replica",
+          "lc_collate": "C",
+          "plpgsql_oid": "14038",
+          "server_version": "16.15 (Homebrew)",
+          "max_connections": "200",
+          "server_encoding": "UTF8",
+          "full_page_writes": "on",
+          "synchronous_commit": "on",
+          "shared_preload_libraries": ""
+        }
+      },
+      "cleanup_evidence": {
+        "prefix_statistics": "Post-run counts by naming families only. Zero counts are an independent final catalog observation, not an exact per-fixture creation ledger or proof of a before/after invariant.",
+        "exact_ids": "Exact random names and PID/backend_start/database tuples are retained only inside test fixtures. This audit did not reconstruct or query an independently exported exact-ID ledger.",
+        "test_assertions": {
+          "gate": "cleanup uses madeSchema/madeRoles plus exact schema, role and application_name absence; sharedReadSQL compares each fixture own public owner/ACL/relation count and database ACL baseline",
+          "public_profile": "cleanup verifies captured PID/backend_start/datid and advisory absence, drops only own intended database and 3 roles, verifies those exact names absent and own sharedReadSQL before/after equal",
+          "sandbox": "cleanup first verifies observed original backend tuples and exact 5 runtime roles absent, then original QA Environment.Close drops only its recorded schemas/roles; sharedReadSQL before/after checked",
+          "snapshot_qa": "sentinel cleanup checks exact generated mts_ schema absent"
+        },
+        "representative_passing_top_level_tests": [
+          {
+            "test": "TestAuthorityPostgresPublicOwnerProfiles",
+            "pass": true
+          },
+          {
+            "test": "TestAuthoritySandboxPostgresPlanInitAndOriginalV1",
+            "pass": true
+          },
+          {
+            "test": "TestAuthoritySandboxPostgresFiveFreshRuntimeRoles",
+            "pass": true
+          },
+          {
+            "test": "TestAuthoritySandboxPostgresPredecessorContentRefusals",
+            "pass": true
+          },
+          {
+            "test": "TestGatePostgresAcquireAndReverseClose",
+            "pass": true
+          },
+          {
+            "test": "TestSnapshotPostgresOptionsFixedOrderAndOriginalProof",
+            "pass": true
+          }
+        ],
+        "source_sha256": {
+          "internal/maintenancetrust/gate_integration_test.go": "243a11a09851781268ba5578a1a0412993ff1b828b68c966a7dd1109fb9f3e6a",
+          "internal/maintenancetrust/snapshot_fixture_test.go": "43103c30fc86b1fbd1778dc38c4d7a9aeb341b623173ce65dd4d5d5ec749824e",
+          "internal/maintenancetrust/authority_profiles_integration_test.go": "0c922536d82a8430e363bd92d102160e0a5adc4e33103a83684c0d3899f6c2ea",
+          "internal/maintenancetrust/authority_sandbox_fixture_test.go": "8588dee550f7a395d47b15758b7ff91d3d94b48f429f7873357fd87cce03e49e",
+          "internal/paymentsandboxqa/environment.go": "24f1cf53fe014274010bee9d68119c270a14f9c55510f3ee3e53ea3f525747b8",
+          "internal/paymentsandboxqa/application.go": "b0d28048b9fa3d856b83e494d319158ad4c3937eb745dde88674536496254f33"
+        }
+      },
+      "baseline_limits": {
+        "this_run_external_pre_audit_available": false,
+        "claim": "No independent external pre-run baseline was captured for this audit. Parent ACL/config values below are present observations; per-fixture tests provide their own in-process comparisons. Older audit files are context only, not proof that this authority run preserved every catalog or configuration field.",
+        "older_observations": [
+          {
+            "path": ".local/c0-snapshot-verification/post-run-audit.json",
+            "sha256": "370f94a56f47cd35cb050fb87f9ebed1b395ea50948f4eeda1cfd1e028499af4",
+            "kind": "older post-run observation; not a pre-run baseline for this authority execution",
+            "observation": {
+              "schemas": 0,
+              "roles": 0,
+              "backends": 0,
+              "advisory_locks": 0,
+              "public_builtin_owner": true,
+              "public_relations": 0,
+              "fsync": "on",
+              "synchronous_commit": "on",
+              "full_page_writes": "on",
+              "max_connections": "200",
+              "server_version": "16.15 (Homebrew)"
+            }
+          },
+          {
+            "path": ".local/c0-catalog-verification/cleanup-audit.json",
+            "sha256": "eee7582cedca9bf97e3b89d553e9b5ccbdaca272de12997b9db8e932463a9876",
+            "kind": "older post-run observation; not a pre-run baseline for this authority execution",
+            "observation": {
+              "roles": 0,
+              "schemas": 0,
+              "backends": 0,
+              "encoding": "UTF8",
+              "lc_ctype": "C",
+              "databases": 0,
+              "lc_collate": "C",
+              "public_acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}",
+              "plpgsql_oid": "14038",
+              "database_acl": null,
+              "public_owner": "pg_database_owner",
+              "database_owner": "moni_test",
+              "server_version": "16.15 (Homebrew)",
+              "public_relations": 0
+            }
+          }
+        ]
+      }
+    }
+  },
+  "golden_cross_final": {
+    "command": "go test -race ./internal/maintenancetrust ./internal/payments ./internal/paymentsandboxqa -run Predecessor -count=1 -timeout 180s -json",
+    "exit_code": 0,
+    "sha256": "29a2fbdce0be07de24fabaddd7f2b5fe41c75764cd0cc9f228e3e49c0707d2a0",
+    "package_terminal": [
+      {
+        "Time": "2026-11-02T04:15:39.91467+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+        "Elapsed": 1.704
+      },
+      {
+        "Time": "2026-11-02T04:15:40.381886+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/payments",
+        "Elapsed": 2.172
+      },
+      {
+        "Time": "2026-11-02T04:15:56.726711+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "Elapsed": 18.516
+      }
+    ],
+    "all_test_terminal": {
+      "pass": 541,
+      "skip": 6
+    },
+    "note": "C0 opt-in unset: private PostgreSQL predicates explicitly skip here; final full-final command separately ran them. This command independently rechecks all three original/new codec test bridges."
+  }
+}

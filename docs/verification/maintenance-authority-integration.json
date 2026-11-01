@@ -1,0 +1,201 @@
+{
+  "recorded_at": "2026-11-02",
+  "slice": "022-C0-T2 integration and documentation",
+  "make_check": {
+    "command": "make check",
+    "exit_code": 0,
+    "log_path": ".local/c0-authority-verification/make-check.log",
+    "log_sha256": "1b942432a5279df63c77be3729d643c5ae5f1b0b8ba9e240599306f27fd93ce5",
+    "checks": [
+      "read-only architecture",
+      "go vet ./...",
+      "web strict TypeScript and Vite build"
+    ]
+  },
+  "make_verify_mvp": {
+    "command": "make verify-mvp",
+    "exit_code": 0,
+    "elapsed_seconds": 331.487,
+    "log_path": ".local/c0-authority-verification/make-verify-mvp.log",
+    "log_sha256": "3af281f03a3c7bc7a8dbdc2cc9795d57eefd24ad75ddd495ccbc049062ce02b1",
+    "TEST_DATABASE_URL": "dedicated local PostgreSQL16; value omitted",
+    "C0_MAINTENANCE_DATABASE_URL": "unset; dedicated full-final race recorded separately"
+  },
+  "web": {
+    "tests": 286,
+    "pass": 286,
+    "fail": 0,
+    "skip": 0
+  },
+  "go_packages": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+      "elapsed_seconds": 7.137
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/alerts",
+      "elapsed_seconds": 52.033
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+      "elapsed_seconds": 5.683
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/billing",
+      "elapsed_seconds": 203.265
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/catalog",
+      "elapsed_seconds": 57.716
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/config",
+      "elapsed_seconds": 6.075
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "elapsed_seconds": 20.921
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+      "elapsed_seconds": 8.788
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/identity",
+      "elapsed_seconds": 254.185
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+      "elapsed_seconds": 2.132
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+      "elapsed_seconds": 6.55
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "elapsed_seconds": 33.351
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/metering",
+      "elapsed_seconds": 8.459
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+      "elapsed_seconds": 21.248
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/operations",
+      "elapsed_seconds": 85.228
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+      "elapsed_seconds": 3.83
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+      "elapsed_seconds": 2.336
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+      "elapsed_seconds": 3.637
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+      "elapsed_seconds": 12.233
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/payments",
+      "elapsed_seconds": 75.467
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+      "elapsed_seconds": 39.308
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+      "elapsed_seconds": 8.309
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "elapsed_seconds": 88.869
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/pricing",
+      "elapsed_seconds": 27.143
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+      "elapsed_seconds": 7.197
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/provider",
+      "elapsed_seconds": 8.864
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "elapsed_seconds": 6.57
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/routing",
+      "elapsed_seconds": 6.764
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/security",
+      "elapsed_seconds": 3.82
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/server",
+      "elapsed_seconds": 307.663
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+      "elapsed_seconds": 2.987
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+      "elapsed_seconds": 9.663
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/migrations",
+      "elapsed_seconds": 38.379
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "elapsed_seconds": 3.409
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+      "elapsed_seconds": 3.799
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+      "elapsed_seconds": 3.442
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+      "elapsed_seconds": 2.037
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+      "elapsed_seconds": 8.588
+    }
+  ],
+  "go_race": "default whole repository with dedicated TEST_DATABASE_URL; opt-ins not enabled",
+  "dedicated_c0_authority": "docs/verification/maintenance-authority.json; 333.879s,89 top-level/832 parent-child PASS,0SKIP/FAIL",
+  "binary": {
+    "path": "bin/moni-aigate",
+    "sha256": "8ae2aa22b173b595111dbaca86de18d1c30f9f47b46ac7b85044c564ab5ecb54"
+  },
+  "architecture_entry_snapshot": "1180 files/a866a4e98917; documentation-only closure followed by separately reviewed refresh",
+  "render_report": "docs/verification/architecture-maintenance-authority.json",
+  "source_change_after_tests": "none; remaining edits are documentation and verification records only",
+  "remote_ci": "previous third run success on exact f64b56f only; current push evaluated separately",
+  "not_delivered": [
+    "ReadLease/full-source replay",
+    "basis/epoch/writers/all funding paths",
+    "production maintenance CLI",
+    "formal PSP/provider/1Panel acceptance"
+  ],
+  "preview_58123_touched": false
+}

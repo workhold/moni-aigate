@@ -1,6 +1,6 @@
-# 022-C0-T2：同 RR 的 v1 前驱及 ordinary-off reader（精确候选）
+# 022-C0-T2：同 RR 的 v1 前驱及 ordinary-off reader（T2根冻结实施）
 
-2026-11-02。**本稿为设计候选，未根冻结、未实现、未运行新增测试，不发行 Permit/epoch/RuntimeProof。** 对应[维护合同 §6、§9](c0-permit-contract.md#6-安装证明v1前驱与完整runtime-proof的分层)。只有 [T0 Gate](c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理) 已实施；本稿不改变其依赖或 API。T1 顶层 RR、bootstrap/stage 的 busy/deadline、实际维护身份与根冻结先完成，本 reader 再接入 T2；不以 reader 代替这些依赖。
+2026-11-02。**本稿逐字段矩阵由[真实授权合同](c0-authority-contract.md)根冻结并已实现，[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过。前驱自身不发行 Permit/epoch/RuntimeProof。** 对应[维护合同 §6](c0-permit-contract.md#6-安装证明v1前驱与完整runtime-proof的分层)。T0 Gate与T1私有Snapshot已实施并保留原历史验收范围。T2仅增加受审叶子依赖，原顶层RR、busy/deadline与实际身份仍是前置，不以reader代替这些依赖。
 
 ## 1. 来源、证据种类与不可扩张边界
 
@@ -23,27 +23,26 @@ mode 来自已验证 InstallationProof 与 Gate Pins 的完整匹配，caller �
 
 ## 2. 同事务私有 API、依赖与状态
 
-拟在 `internal/maintenancetrust/predecessor*.go` 实现，**只允许包内调用**：
+在 `internal/maintenancetrust/predecessor*.go` 实现，**只允许包内调用**：
 
 ```go
-// 以下名称和签名均为候选；maintenanceStage 尚须随 T1 根冻结。
+// authorityStage由真实Attest私有发行，不接受外部tx/proof。
 type predecessorEvidence struct { /* private immutable identity and values */ }
-func readPredecessorStage(stage *maintenanceStage,
-    installed *fundinglotcatalog.InstallationProof) (*predecessorEvidence, error)
-func (p *predecessorEvidence) verifyStage(stage *maintenanceStage) error
+func readPredecessorAuthority(stage *authorityStage) (*predecessorEvidence, error)
+func (p *predecessorEvidence) verifyAuthority(stage *authorityStage) error
 ```
 
-stage 是本 Gate/Snapshot 内部发行、覆盖 reader **全程**的 bootstrap stage，包含不可替换的顶层 tx、受限 context、nonce/purpose、busy 所有权和 Snapshot 绝对 deadline。它由 Attest 内部在真实维护身份、双 gate、完整 catalog/history 已认证后开启；不能先要求 Permit 再发行前驱而产生循环。没有公开 `Read(tx,pins,digest,bool)`、裸 ctx/tx 替换器、`FromJSON`、`Trusted`、`AcceptExisting` 或回调 SQL。stage 的 Go 类型/进入退出和故障撤销须由 T1/T2 合同根冻结后才能编码，不在本稿添加 stub。
+stage 是本 Gate/Snapshot 内部发行、覆盖 reader **全程**的 bootstrap stage，包含不可替换的顶层 tx、受限 context、nonce/purpose、busy 所有权和 Snapshot 绝对 deadline。它由 Attest 内部在真实维护身份、双 gate、完整 catalog/history 已认证后开启；不能先要求 Permit 再发行前驱而产生循环。没有公开 `Read(tx,pins,digest,bool)`、裸 ctx/tx 替换器、`FromJSON`、`Trusted`、`AcceptExisting` 或回调 SQL。stage 的 Go 类型/进入退出和故障撤销以T2根冻结为准，不添加stub。
 
 reader 进入及交出结果前重验 stage 身份、相同顶层 wrapper/*pgx.Conn/PgConn/PID/backend_start/top xid、RR access/purpose/原 deadline、双 session 锁，调用原 `installed.VerifyTx` 并以 `installed.Catalog().MatchesPins(snapshot.copiedPins)` 比较完整目标。`VerifyTx` 不在 init 写入后重新要求 16 表为空；reader 只在 Attest 的唯一 bootstrap 阶段发行，不能在 init 后重发。
 
 私有 evidence 保存原 stage/Snapshot nonce、同 tx/conn 绑定、mode、安装版本与 expected/schema/roles 摘要、固定 manifest bytes/digest、完整深拷贝的规范前驱值。sandbox 的 `v1SHA256` **恰为原 `proof_sha256`**；ordinary 为 `""`，不能用 64 个零、空 JSON 或自己拼的 peer 摘要冒充 v1。peer 未进入 v1 的值单独保存在私有完整 rows snapshot，不改 v1 canonical/摘要。后续 v2 若需要把它们纳入外部承诺，须在 v2 canonical 精确合同另列独立字段，不能悄悄替换 predecessor digest。
 
-`verifyStage` 只在相同仍有效 Snapshot/stage 中复核私有绑定及原 installation evidence，不能将字符串摘要升级为授权；关闭、Commit/Rollback 开始、阶段失败、context 到期或换 tx 后永久失效。复制对象共用状态；输出无导出字段，String/GoString/JSON 固定 redacted。reader 无 BEGIN/COMMIT/ROLLBACK、SET、SAVEPOINT、DDL、行锁、pool、文件或网络动作。
+`verifyAuthority` 只复核不可变私有归属与完整内容；实际活动状态/SQL绑定由根 authorityStage.verify 与 Permit.Verify 负责，不能将字符串摘要升级为授权；关闭、Commit/Rollback 开始、阶段失败、context 到期或换 tx 后永久失效。复制对象共用状态；输出无导出字段，String/GoString/JSON 固定 redacted。reader 无 BEGIN/COMMIT/ROLLBACK、SET、SAVEPOINT、DDL、行锁、pool、文件或网络动作。
 
-### 2.1 候选依赖的明确增加
+### 2.1 T2根冻结允许的叶子依赖
 
-T0 只依赖 std/pgx/fundinglotcatalog.Pins。T2 拟新增两个无运行网络/资金回调的叶子依赖，须随本稿根冻结后才允许 import：
+T0 只依赖 std/pgx/fundinglotcatalog.Pins。T2 根冻结明确新增两个无运行网络/资金回调的叶子依赖：
 
 1. `migrations`：在同 stage/同 tx 调用 `VerifySnapshotTx`；另从 `migrations.Files` 编译期 SQL 形成已有 [schema-check §9 manifest 规范](c0-schema-check-contract.md#9-根冻结窄片metadata-only-离线-descriptor-生成器) 的 `(name,sha256)` 数组。按文件名 ASCII/C 序、键序 name/sha256、UTF-8 无空白/换行/BOM；完整最新集合与同 RR 实际 history 精确相等才私有绑定。不能用 caller digest、CatalogProof 摘要或仅“helper 返回 nil”代替固定 manifest 来源。
 2. `paymentsandboxschema`：只用编译期 `Version`/`Digest`（见 §6）；不执行 `SQL`，不从 actual marker 反推 expected。
@@ -112,7 +111,7 @@ T0 只依赖 std/pgx/fundinglotcatalog.Pins。T2 拟新增两个无运行网络/
 | proof_sha256 | 恰64小写hex且等于原canonical的SHA；作为sandbox predecessor digest保存 |
 | created_at | finite、非zero、UTC year1..9999；不接受infinity，也不把当前clock与历史created_at比较 |
 
-对各 created/applied 时刻的完整读取及 finite/year 检查是本候选新增的明确 scalar 边界；原App runtime只读取 attestation.created_at，peer旧state不读取所有这些时刻。不能声称旧代码已经核过未读列，也不按此候选悄改旧v1启动行为。根冻结前需确认对已安装异常历史的失败关闭策略。
+对各created/applied时刻的完整读取及finite/year检查已按T2根冻结实现，已安装异常历史在此维护reader中失败关闭。原App runtime只读取attestation.created_at，peer旧state不读取所有这些时刻；本次不把新增检查追溯为旧代码已核过的边界，也不修改旧v1启动行为。
 
 ## 5. Peer 两套 marker/key：逐列分类，不假造 v1 字段
 
@@ -233,16 +232,16 @@ ordinary 从原 `runtimeVerifyOrdinaryOff` 语义独立实现，只在已认证�
 
 ## 8. SQL、资源、错误与失败撤销
 
-候选reader stage总预算最多5秒且不超过Snapshot剩余deadline；由stage发行方一次收紧，**不按query/表/分支重置**，不沿用T0已结束Acquire的子context。此5秒不是放宽旧runtime startup的5秒，也不能据此延长Snapshot。root冻结stage后才能编码预算传递。
+reader已按根冻结实现累计最多5秒的subcall预算，且不超过Snapshot剩余deadline；由原stageContext一次收紧，**不按query/表/分支重置**，不沿用T0已结束Acquire的子context。CPU与SQL阶段均沿原watcher执行raw-close；成功路径先stop/ack，再cancel子context。该预算不放宽旧runtime startup的5秒，也不延长Snapshot总期限。
 
 - 所有SQL只读、固定SELECT，关系名只来自已核pins/编译期静态表名，经Identifier全限定。不调用App/peer自定义校验函数，不经views、不执行event canonical SQL，不读支付原始消息/收据正文。
 - 在任何可能很大的 TEXT/bytea 返回客户端之前，由固定 SQL 以 `pg_catalog.octet_length` 检查全部投影标量，返回明确资格位；不合格分支使用 `CASE` 返回 NULL/固定短值，整个 reader 随即失败。不能先 SELECT 完整字段再 Scan/len，也不能只靠 WHERE 丢掉不合格行而伪装缺行或 EOF。此要求包括 proof_canonical 及 peer 的 schema/role/origin/callback 等原 SQL 未设长度 CHECK 的字段；各 scalar 与总量预算约束传输/解码后的安全投影，而非声称限制数据库已存储行的物理大小。
 - 规范proof最大65536 bytes；keys每peer最多128且以第129行作为越界拒绝，单例表读最多2行以识别多行，单行所有标量先按封闭类型/上界验（名字≤63、UUID36、hash64、keyID32、label/ref≤100、既定loopback URL≤128 bytes）。schema/version/布尔/OID不接收NULL。Created/applied和key区间typed读取，拒无穷/非finite/zero/year越界。
-- sandbox最多6张单例/单迁移行+256条key行=262业务记录；ordinary为21个空集判断、一个结构证明、一行policy、6个旁路判断。候选整个reader累计原始数据上界1MiB，所有Rows逐项检查Rows.Err并关闭；超界不输出部分证据。完整catalog/history开销由各自阶段限额承担，不将它们的计数偷算成此处262业务记录。
+- sandbox最多6张单例/单迁移行+256条key行=262业务记录；ordinary为21个空集判断、一个结构证明、一行policy、6个旁路判断。已实现整个reader累计安全投影字段上界1MiB，按实际返回字段字节及primitive固定宽度计入，包含哨兵已返回字段；该计数不表示数据库物理存储大小。所有Rows逐项检查Rows.Err并关闭；超界不输出部分证据。完整catalog/history开销由各自阶段限额承担，不将它们的计数偷算成此处262业务记录。
 - 使用 `maintenance_input / maintenance_gate_busy / maintenance_identity / maintenance_schema / maintenance_transaction / maintenance_timeout / maintenance_execution` 固定安全错误，分别归属输入、busy、认证/前驱值不符、static/schema失败、tx绑定、期限和执行/资源失败；不返回driver/SQLSTATE/DSN/role/schema/字段值或proof原文，不unwrap。
 - 任何错误返回nil evidence，撤销整个bootstrap/后续Permit发行；不自动retry、不切换普通/沙箱路径、不另开pool补读。按Snapshot已冻结的失败清理处理，reader自己不接管事务；本片没有COMMIT，不产生maintenance_commit_unknown。
 
-## 9. Golden、同RR与真实PG验收候选
+## 9. Golden、同RR与真实PG验收合同
 
 ### 9.1 纯canonical与字段矩阵
 
@@ -273,7 +272,7 @@ ordinary 从原 `runtimeVerifyOrdinaryOff` 语义独立实现，只在已认证�
 - 真实RR RW自己可见修改及维护后post-init上下文分别验证；不调用APP-only RuntimeProof、不要求新的首发安装证明，不能把post-init proof升级为startup许可。
 - 原v1 source、SQL、ACL/provision SHA及APP/worker/projector跨schema零权限保持；仅维护LOGIN按合同读peer。fixture进程/连接/角色/schema精确清理，独立backend/锁观察；资金摘要前后相同。先相关真实PG/race，再集成人架构复核/refresh/整仓检查。
 
-## 10. 根冻结前必须裁决的清单
+## 10. 根冻结前审阅清单（历史，不扩大验收）
 
 1. T1/T2 bootstrap stage的唯一Go API、busy覆盖、Snapshot期限传递和真实维护身份先于reader；不能只靠两个VerifyTx围住任意caller ctx。
 2. 允许上述两个叶子import，固定manifest来源及原schema-check规范；不修改现有v1 codec/SQL/权限来打破循环。
@@ -281,4 +280,8 @@ ordinary 从原 `runtimeVerifyOrdinaryOff` 语义独立实现，只在已认证�
 4. peer本地stateDir/nonce/control值只按格式/真实内部关系核，不假绑定App v1；active key与秘密原件保持未认证。若需要新跨peer承诺另设计v2，不修改旧v1。
 5. 5秒reader/1MiB/262业务行的候选限额、固定错误及私有golden桥方式；先验收相关专项再接Attest，任何阶段未实现都不开放init/main。
 
-本文只增加该候选文件，没有执行测试/数据库/文件秘密读取，没有发行新证明、增加import或变更旧代码。根集成人复核后更新统一架构和SDD状态；本稿不自行刷新架构清单。
+本节保留冻结前审阅事项：当时只增加候选文档、未执行测试或发行证明。当前矩阵和累计资源边界已由§11所述根冻结落地；不能把当时的“未实施”说明当成当前状态，也不能用后续结果追溯扩大当时验收。本稿不自行刷新架构清单。
+
+## 11. 根冻结与实施状态
+
+本矩阵全部逐列语义、ordinary 21表/6旁路/mandatory FK、SQL安全投影与累计资源界由[c0-authority-contract](c0-authority-contract.md)冻结并已实现于[reader](../../internal/maintenancetrust/predecessor.go)、[私有codec](../../internal/maintenancetrust/predecessor_codec.go)、[行矩阵](../../internal/maintenancetrust/predecessor_rows.go)及[SQL投影](../../internal/maintenancetrust/predecessor_sql.go)。所有时间采用typed pgtype.Timestamptz及有限/年份/微秒校验；created/applied有限性是本片新增失败关闭边界。累计5秒subcall沿原raw-close watcher，成功先stop/ack再cancel，1MiB按安全投影字段字节与primitive固定宽度计，哨兵已返回字段也计入。[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，记录分别列明公开Attest链、私有PG判定层及原codec/QA golden桥的证据范围，不能以纯测试或私有判定层替代公开Attest链验收；ReadLease/全来源/basis/epoch与生产接线仍后续。

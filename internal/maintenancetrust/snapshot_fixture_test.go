@@ -59,6 +59,12 @@ func snapshotFixedSource(t *testing.T, root, name, want string) []byte {
 }
 
 func newSnapshotFixture(t *testing.T) *snapshotFixture {
+	return newSnapshotFixturePrepared(t, nil)
+}
+
+// prepare may create original business history before the fixed C0 candidate
+// is installed. It cannot change production APIs, expected pins or candidate SQL.
+func newSnapshotFixturePrepared(t *testing.T, prepare func(*snapshotFixture, *pgxpool.Pool)) *snapshotFixture {
 	t.Helper()
 	f := &snapshotFixture{gateFixture: newGateFixture(t)}
 	root := snapshotRepositoryRoot(t)
@@ -82,6 +88,9 @@ func newSnapshotFixture(t *testing.T) *snapshotFixture {
 	defer pool.Close()
 	if migrations.Apply(ctx, pool) != nil || operations.ProvisionFor(ctx, pool, f.schema, f.app, f.projector) != nil {
 		t.Fatal("snapshot fixture original migrations/provision")
+	}
+	if prepare != nil {
+		prepare(f, pool)
 	}
 	if _, err = pool.Exec(ctx, string(ddl)); err != nil {
 		t.Fatal("snapshot fixture fixed C0 DDL")

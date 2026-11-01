@@ -1,6 +1,6 @@
 # 022-C0-T1：Snapshot 生命周期（根冻结）与后续读取租约候选
 
-2026-11-02，**T1 生命周期与固定 catalog stage 已由根冻结并授权本片实现，本片实现及真实PG/race专项已完成（115.412秒、124终态全PASS），最终整仓与远端CI独立记录**。T2/T3 衔接仍为候选，不发行 Permit、不开放首发 init 或 serve；T0 锁顺序和安全清理要求保留，Snapshot 集成后的 Close 以本文 §8 为准。依据 [Permit 候选 §§3/5/9](c0-permit-contract.md)、[T0 冻结 §10](c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)、[维护合同](c0-maintenance-contract.md)、[迁移快照](c0-snapshot-contract.md)、[静态 checker](c0-schema-check-contract.md)、[独立来源核验](c0-verifier-contract.md)。已阅读 [HLD](../../docs/design/HLD.md) 与 [LLD](../../docs/design/LLD.md)；它们及统一架构的变更由根在汇合时复核，本稿不自行 refresh。
+2026-11-02，**T1生命周期与固定catalog stage已实现并完成其真实PG/race专项（115.412秒、124终态全PASS），历史范围不扩张。T2现已另按[真实授权根冻结](c0-authority-contract.md)实现二参Attest与Permit.Verify，[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过。** ReadLease、全来源/basis、epoch和生产init/serve仍属后续；T0锁顺序和安全清理要求保留，Snapshot集成后的Close以本文§8为准。依据[Permit合同](c0-permit-contract.md)、[T0冻结§10](c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)、[维护合同](c0-maintenance-contract.md)、[迁移快照](c0-snapshot-contract.md)、[静态checker](c0-schema-check-contract.md)、[独立来源核验](c0-verifier-contract.md)。HLD/LLD及统一架构由根汇合复核，本稿不自行refresh。
 
 ## 1. 裁决与实施切片
 
@@ -30,7 +30,7 @@ func (s *Snapshot) Outcome() Outcome
 
 既有 Acquire/Close 签名保留。Outcome 是只读事务结论，不是业务回执或可接受为授权的输入；nil/zero Snapshot 返回 OutcomeInvalid。String、GoString、JSON 对 Snapshot、未来 lease/row/rows 固定 redacted，不编码 outcome 之外的身份、连接、SQL、行值或原 proof。T1 不添加 Permit、ReadLease 的空实现、可用 stub、测试免验构造器或 main/CLI 调用者；上述之外的源码不能按本文提前接线。
 
-与原 Permit 候选的关系必须显式修订后再冻结：原 Snapshot.Tx() 删除；原 AttestTx(ctx, tx, snapshot, proof) 改为下文不带裸 tx 的 Attest；原 scanner 接收 ctx/pgx.Tx 的维护入口改为 ReadLease 入口。原文件尚为候选的这些签名没有被实现，本稿不将二者并列为两条可用路径。普通线上及 APP runtime 的既有 pgx.Tx 接口不因此改变。
+与旧候选的替代关系已由T2根冻结：没有Snapshot.Tx导出口或外部proof/裸tx授权入口，当前唯一发行函数是 `Attest(ctx, snapshot)`，唯一Permit校验是 `Permit.Verify(ctx)`。维护scanner接收ctx/pgx.Tx的旧示意签名不再保留；T3 ReadLease仍待另冻，没有可用stub。普通线上及APP runtime既有pgx.Tx接口不因此改变。
 
 ## 2. 生命周期、一次性消费与 busy 所有权
 
@@ -102,20 +102,24 @@ proof, err := fundinglotcatalog.VerifyInstallationTx(stageCtx, snapshot.rawTx, s
 
 传入的是私有 capped stageCtx 和同一个真实 rawTx；issuer 不能另 Begin/Commit、拿另一个 pool 或反向调用公开 VerifyInstallation 重入 stage。issuer 包内原来的 5 秒预算保持，未审 expected、别的 catalog profile 或缺对象仍零 proof+固定错误。只有 catalog、空集和最后复核全部成功，才存一份本包拥有的 opaque proof wrapper 副本，并返回另一 proof wrapper；caller 对返回 wrapper 赋零不能改变本包持有的 wrapper，不能升级出维护授权。之后不重新发行第二份 installation evidence。任何阶段失败，即使 leaf proof 已在局部变量产生，对外也只返回 nil+固定错误，不能保留半成功给 Attest。
 
-以下 history/manifest 仅属于未来 T2，本轮 T1 不实现、不缓存其成功声明。完整 manifest 不来自 CatalogProof，也不接收 caller digest。T2 从现有 migrations.Files 的完整 *.sql embed 集合读取全部文件，按 filename ASCII/C 序生成 22 项 JSON 数组；每项仅固定键序 name、sha256，小写 SHA-256、UTF-8、无空白/换行/BOM。沿用 [schema-check §9.1](c0-schema-check-contract.md) 的 2459 字节规范与固定 SHA ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de；零/缺/多/改名/改 bytes 或任何不符均拒绝。本过程只读编译期 embed，不读工作目录、不复制旧 exporter 的运行职责、不改其文件/source pins。未来新增正式 migration 时必须另审 manifest 与 expected profile，不能自动把新 embed 清单当本版已受审。
+本段保留T1阶段的history/manifest边界：T1本身不实现、不缓存其成功声明；当前T2已按真实授权根冻结实现下述固定流程。完整 manifest 不来自 CatalogProof，也不接收 caller digest。T2 从现有 migrations.Files 的完整 *.sql embed 集合读取全部文件，按 filename ASCII/C 序生成 22 项 JSON 数组；每项仅固定键序 name、sha256，小写 SHA-256、UTF-8、无空白/换行/BOM。沿用 [schema-check §9.1](c0-schema-check-contract.md) 的 2459 字节规范与固定 SHA ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de；零/缺/多/改名/改 bytes 或任何不符均拒绝。本过程只读编译期 embed，不读工作目录、不复制旧 exporter 的运行职责、不改其文件/source pins。未来新增正式 migration 时必须另审 manifest 与 expected profile，不能自动把新 embed 清单当本版已受审。
 
 T2 在同一个固定 authority stage 调 migrations.VerifySnapshotTx 确认数据库完整 history 恰等于该固定 embed 集合，并把 manifest canonical/digest 仅存私有 Snapshot 状态，绑定该 Snapshot nonce、rawTx 和原 opaque proof；helper 返回的 error 不是可由 caller 递交的证据。该私有 binding 的取得全由本包固定调用完成，没有 FromDigest/Trusted/VerifyHistoryPassed 参数或公开 history bool。最后还核原 wrapper/conn/PID/top xid/mode、context 和双 gate；任何失败不发行 Permit。
 
-T2 Attest 消费本 Snapshot 已存的原证据，在同一个 rawTx 重核 VerifyTx、完整 pins、固定 manifest/history、16 表空集、真实 LOGIN/owner、双 gate、原 v1 与停服边界；缺项失败。T2 不再次发行 installation proof；v1 字段矩阵仍由其独立候选冻结。此后续接缝把 manifest 来源限定在真实 T2 authority stage，不借旧 helper 的 error 结果伪造一个外部可传的 opaque history proof；T1 的 installation_checked 状态不表示 history 已通过。
+T2 Attest消费本Snapshot已存的owned证据，在同一个rawTx重核原proof.VerifyTx、完整pins、固定manifest/history、16表空集、真实LOGIN/owner、双gate、原v1与新鲜停服边界；缺项失败。T2不再次发行installation proof，v1逐字段矩阵已由[真实授权合同](c0-authority-contract.md)根冻结并实现。manifest只来自固定embed与实际同RR完整history，不借旧helper的error结果伪造外部可传证明；T1的installation_checked状态本身不表示history已通过。
 
-## 6. T2/T3 的签名承诺与全 accounts 阶段
+## 6. T2当前API与T3读取租约候选
 
-以下仅为后续承诺，**T1 不提供这些类型的可用 stub 或授权路径**：
+T2当前已实现如下唯一API；全部账户锁在Attest返回Permit之前完成，最终专项已通过，证据与边界见[独立记录](../../docs/verification/maintenance-authority.md)：
 
 ~~~go
-// T2 namespace仍为internal/maintenancetrust，Permit真实发行后才实现。
-func Attest(ctx context.Context, snapshot *Snapshot,
-    installation *fundinglotcatalog.InstallationProof) (*Permit, error)
+func Attest(ctx context.Context, snapshot *Snapshot) (*Permit, error)
+func (p *Permit) Verify(ctx context.Context) error
+~~~
+
+以下仅为尚未实现、仍待T3根冻结的候选，不提供可用stub或授权路径：
+
+~~~go
 
 type ScanKind uint8
 const (
@@ -154,7 +158,7 @@ FOR UPDATE;
 
 实际 SQL 须全限定目标与受审排序规则；没有 WHERE/LIMIT/SKIP LOCKED/NOWAIT。全量流式消费并关闭 Rows，保存规范有序 ID 的只读摘要/数量；不得预扫描 account ID 再按截断集合锁行，也不以 pg_locks 推测无冲突行锁是否取得。此时 checker 已证明 heap、id=text、无 RLS/view/custom 类型或排序行为，才可执行业务 SELECT。全部 125 表已持 SRE，所以锁行后不能有另一个事务补插 account。零 account 是合法空集，是否存在完整商业来源由 T3 判断，不默补账户或余额。
 
-只有 accounts 成功锁完且最后 authority 复核成功，才能返回 Init Permit 并开放 pre-epoch source leases。Plan 不执行行锁，按完整真实 T2 校验后发行 Plan Permit。完整顺序固定为：Begin/SET → Init ONLY 125 表锁 → InstallationProof → Attest 内 history/身份/v1/gate/空集 → Init 全 account 行锁 → Permit → 各 source scans。不得把已经返回的 Permit 再交 caller 声明 accounts 已锁。
+只有accounts成功锁完且最后authority复核成功，才能返回Init Permit。Plan不执行行锁，按完整T2校验后发行Plan Permit。已实现顺序固定为Begin/SET → Init ONLY125表锁 → InstallationProof → Attest内history/身份/v1/gate/空集 → Init全account行锁 → 出口复核 → Permit。pre-epoch source leases及各source scans仍待T3，不因Permit已实现而自动开放；不得把已返回Permit再交caller声明accounts已锁。
 
 ReadLease 只由真实 Permit.BeginScan 发行，绑定同 Snapshot/rawTx、固定 kind、私有 context 和 stage nonce；ScanPostInit 还必须由未来封闭 init 写入器完成状态开放，不能在初始空安装提前申请。BeginScan 内先进行 Permit 入口验证，Finish 在所有 Rows 关闭、无在途操作后对同一个 rawTx 完整出口验证；中途所有 Query/QueryRow/Next/Scan/Values 也核共享状态与预算。各方法**没有 caller context 参数**，不能用 Background 绕过期限。Rows 没有 Conn、RawValues、SendBatch、CopyFrom、Exec、Begin、Commit、Rollback 或 raw pgx.Rows 获取口；Values 复制 []byte 等借用内存后才返回。
 
@@ -186,14 +190,14 @@ unknown 立即封闭 socket registry，不返回池，不重发 init、不换 ep
 
 ## 9. 必须的真实 PostgreSQL 验收
 
-T1 本轮只验 Snapshot/固定 catalog evidence stage/终结；没有真实 Permit 前不把 source lease 集成写成已完成。全部 PG 测试显式使用独立专库与随机精确资源；不启动普通 main、58123、PSP 或模型，不改共享 public/DB ACL，不用 SET ROLE 代实际 LOGIN。保留 T0 新连接、双 gate、socket registry 的原验收。
+本节保留T1的Snapshot/固定catalog evidence stage/终结验收范围；T2新增身份、前驱与accounts锁的证据另见[专项记录](../../docs/verification/maintenance-authority.md)。尚未实现的T3 source lease不计为集成完成。全部 PG 测试显式使用独立专库与随机精确资源；不启动普通 main、58123、PSP 或模型，不改共享 public/DB ACL，不用 SET ROLE 代实际 LOGIN。保留 T0 新连接、双 gate、socket registry 的原验收。
 
 | 验收 | 必须观察的物理事实与失败边界 |
 | --- | --- |
 | Plan/Init options 与首 SELECT | 真实 TCP wire 记录唯一 BEGIN 与 SET；Plan RR RO 无 SRE/FOR UPDATE，Init RR RW 首 SELECT 前一条 ONLY 125 全序 LOCK。无预先 catalog/current_setting/set_config/xid/history SELECT；不把测试 hook 注入生产。 |
 | writer 屏障 | 独立 writer 先对排序靠后的原表持冲突写锁并完成待提交业务变更；观察 Init 已发送一条完整 LOCK 且真实 pg_locks 等待，writer 提交后才准 Init 首次 source/evidence SELECT。Init 必须看到 writer 的变化、旧 plan basis 不符；不能只有最终余额相同或在 Begin 前已提交。等待在 <=3 秒内用实际锁/响应屏障调度，不延长 lock_timeout。 |
 | 125 停写与 ONLY | 对所有目标核静态数组完整/C 序；锁后另一实际角色的 INSERT/UPDATE/DELETE/TRUNCATE/冲突 DDL 不能越过，普通 SELECT 可进行；未知 inheritance/partition/view/incoming FK/trigger 被完整 checker 拒绝，不能据 ONLY 省略静态认证。缺表与部分已锁后失败不得返回半 Snapshot。 |
-| accounts 次序 | catalog/history/Attest 前没有 ledger_accounts SELECT；真实 T2 后各账户锁按完整 C 序、无 LIMIT；空账户集合法但不宣称来源完整。坏 RLS/id type/view 等在业务行锁前拒绝。无真实 T2 时本项为待验，不制造 fake Permit。 |
+| accounts 次序 | catalog/history/Attest 前没有 ledger_accounts SELECT；T2在Attest内完成各账户按完整C序、无LIMIT的锁定后才发行Permit。空账户集合法但不宣称来源完整；坏RLS/id type/view等在业务行锁前拒绝。此项T1当时留待T2，当前证据见[T2专项](../../docs/verification/maintenance-authority.md)，不追溯计为T1已验。 |
 | 顶层与 proof | 同一次原 wrapper 发行真实 InstallationProof；跨 Snapshot/conn/副本伪状态、第二 Begin/第二 issuer、nested/raw SAVEPOINT 调用图反例、关闭/失败/Commit/Rollback后复用全部拒绝；不降低 fundinglotcatalog 的 pins、五秒预算或 profile。 |
 | deadline/context | 无 deadline 30 秒、有父 deadline 取较早且至多10分钟、剩余<1秒拒绝；原 Begin 父取消、后续 Background、长 deadline、多次stage不能延长。SQL阻塞、Rows读取、CPU间隙和**无人使用的idle Snapshot**到期都实际 raw-close，再独立 PID+backend_start/pg_locks 观察消失，不能由 fixture先关闭使测试通过。 |
 | busy/泄漏 | 活跃 evidence/scanner全程（含两条SQL之间固定屏障）Commit/Rollback/Close/第二stage立即busy且无额外 SQL；Rows未关闭、Row未Scan、并发Query、复制lease、Finish/Abort重入及晚到CancelRequest dial不得越界或race。T1可测真实内置stage；source专项随真实T2/T3完成。 |
@@ -337,8 +341,12 @@ vouchers
 
 ## 10. 根冻结范围与尚未开放的能力
 
-2026-11-02。根已逐段复核本合同及实际 Gate/catalog/迁移接缝，冻结 §§1–5、§8、§9 中仅 T1 的实现与验收、附录 A。§6–7 的 Permit、ReadLease、全账户锁、来源结果和 reader 抽取继续候选，不实现可用 stub。125 个静态名称须同时与五个 ordinary expected、sandbox application expected 及原 109+16 全集相等；不修改冻结 SQL、ACL、expected root 或五秒 catalog 预算。
+2026-11-02。本节保留T1冻结时点：根冻结§§1–5、§8、§9中仅T1的实现与验收、附录A；当时不实施Permit或账户锁。后续T2已由§11及真实授权合同单独冻结实现，不能据本节旧边界认为当前没有Permit，也不能将T2计入T1历史验收。ReadLease、来源结果和reader抽取仍为T3候选，不实现可用stub。125静态名称须与五ordinary expected、sandbox application expected及原109+16全集相等；冻结SQL、ACL、expected root和五秒catalog预算保持。
 
 终态幂等补充：同一 Snapshot 及其副本重复同一个已完成的 Commit/Rollback 返回首次结果，不再发 SQL；对已由另一终结方式消费的 Snapshot 返回 maintenance_transaction，不改变原 Outcome。invalid/unknown 只能清理及观察，不能通过 Rollback 改成确定未提交。Begin 对有效 Gate 一旦消费机会（在任何 BEGIN SQL 之前）即不可重试；输入 nil/已取消/剩余不足一秒时也不保留可用的半状态。零值对象只返回安全错误。
 
 新增安全 sentinel 为 maintenance_schema、maintenance_transaction、maintenance_commit_unknown；T0 六种错误保持。固定 catalog 失败映射 maintenance_schema（已取消/到期优先 maintenance_timeout）；Commit 明确服务器回滚返回 maintenance_transaction，无法确认返回 maintenance_commit_unknown。后续 T2 依赖来源、前驱矩阵及维护授权另冻。
+
+## 11. T2 后续冻结状态
+
+2026-11-02。T1历史边界和证据保持原范围。[T2真实授权](c0-authority-contract.md)已根冻结并实现于[Permit](../../internal/maintenancetrust/permit.go)：Attest只接收原Snapshot，复用owned installation、同rawTx、busy与原总期限。所有invalidate/终结开始/Close均同步撤销active authority和共享Permit；watcher只改短锁状态与原socket，不清仍在读取的不可变证据。[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，真实身份/history/前驱与全accounts锁不追溯计为T1已验；ReadLease、全来源/basis、epoch和资金写入继续后续。

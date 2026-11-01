@@ -1345,3 +1345,83 @@
 - modified `specs/022-self-service-payments/plan.md`
 
 </details>
+
+## 2026-11-01T20:21:33Z · a866a4e98917
+
+022-C0-T2汇合真实维护授权、manifest与身份叶子、完整前驱和Init账户锁；根与独立审阅已复核原Snapshot共态撤销、公开与私有PG证据层级、源码依赖图及README部署边界，T3全来源/basis/epoch继续后续
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1180 个源文件；本次 54 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/funding-lot-catalog.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-maintenance-authority.json`
+- added `docs/verification/assets/architecture-maintenance-authority-application.png`
+- added `docs/verification/assets/architecture-maintenance-authority-detail.png`
+- added `docs/verification/github-ci-third-run.json`
+- added `docs/verification/github-ci-third-run.md`
+- modified `docs/verification/implementation.md`
+- added `docs/verification/maintenance-authority-integration.md`
+- added `docs/verification/maintenance-authority.json`
+- added `docs/verification/maintenance-authority.md`
+- added `internal/maintenancetrust/authority_accounts.go`
+- added `internal/maintenancetrust/authority_accounts_test.go`
+- added `internal/maintenancetrust/authority_budget_integration_test.go`
+- added `internal/maintenancetrust/authority_identity.go`
+- added `internal/maintenancetrust/authority_identity_test.go`
+- added `internal/maintenancetrust/authority_manifest.go`
+- added `internal/maintenancetrust/authority_manifest_test.go`
+- added `internal/maintenancetrust/authority_profiles_integration_test.go`
+- added `internal/maintenancetrust/authority_sandbox_fixture_test.go`
+- added `internal/maintenancetrust/authority_sandbox_integration_test.go`
+- modified `internal/maintenancetrust/gate.go`
+- added `internal/maintenancetrust/permit.go`
+- added `internal/maintenancetrust/permit_integration_test.go`
+- added `internal/maintenancetrust/permit_test.go`
+- added `internal/maintenancetrust/predecessor.go`
+- added `internal/maintenancetrust/predecessor_codec.go`
+- added `internal/maintenancetrust/predecessor_codec_test.go`
+- added `internal/maintenancetrust/predecessor_postgres_test.go`
+- added `internal/maintenancetrust/predecessor_rows.go`
+- added `internal/maintenancetrust/predecessor_rows_test.go`
+- added `internal/maintenancetrust/predecessor_sql.go`
+- added `internal/maintenancetrust/predecessor_sql_test.go`
+- modified `internal/maintenancetrust/snapshot.go`
+- modified `internal/maintenancetrust/snapshot_fixture_test.go`
+- added `internal/maintenancetrust/testdata/predecessor_v1.json`
+- added `internal/maintenancetrust/testdata/predecessor_v1.sha256`
+- added `internal/payments/runtime_predecessor_golden_test.go`
+- added `internal/paymentsandboxqa/application_predecessor_golden_test.go`
+- added `specs/022-self-service-payments/c0-authority-contract.md`
+- modified `specs/022-self-service-payments/c0-maintenance-contract.md`
+- modified `specs/022-self-service-payments/c0-permit-contract.md`
+- modified `specs/022-self-service-payments/c0-predecessor-contract.md`
+- modified `specs/022-self-service-payments/c0-schema-check-contract.md`
+- modified `specs/022-self-service-payments/c0-sequence-contract.md`
+- modified `specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T20:28:04Z · 6dbccf9ebe60
+
+T2最终专库race与整仓check/verify-mvp均通过；独立复核修正HLD账户锁在Attest内且Permit发行前的措辞，收口分层验证、19图、README部署和SDD完成状态，测试后无源码变动，生产和T3边界保留
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1181 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- added `docs/verification/maintenance-authority-integration.json`
+- modified `docs/verification/maintenance-authority-integration.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>

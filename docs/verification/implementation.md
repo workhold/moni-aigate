@@ -83,3 +83,5 @@
 017专项覆盖完整JSON存在性/null/数组元素类型、UUID/版本/金额、UTC微秒与年份边界，历史名称/scopes/地域原样保留，独立触发器和最小角色，CAS/并发/审计失败回滚，以及锁等待后的当前身份、撤销、最新冻结金额和期限。资金与HTTP专项按六协议检验最新限制和在途收尾，编辑器分别保留三域较高revision，不用配置快照覆盖spent/held；未知结果只读核查且不能据相同值归因。最终全量、构建、隔离浏览器和预览迁移/角色/资源核对也已通过限定本地验收，见[017记录](key-configuration.md)。
 
 017最终执行107/107前端测试、strict构建、专用真实PG全Go race、vet及嵌入build全部通过。隔离真实main浏览器完成基本配置/来源/运行编辑与2次SSE、1次JSON调用，3次各20微元、合计60；配置预算409、调用预算402、地域503拒绝前后只读快照逐字段一致，configuration/source/runtime版本为5/2/2。390px无横向溢出，schema/角色/listener/秘密均已清理。58123已完成012迁移与owner provision，以非owner/superuser的受限app启动，projector不可读Key新增字段，ready非恢复模式，首页及28assets与最终dist逐字节一致；正式供应商、容器/灾备、许可及性能门禁保持原范围。
+
+2026-11-02：022-C0-T2按[根冻结](../../specs/022-self-service-payments/c0-authority-contract.md)实现唯一二参Attest和Permit.Verify，复用T1私有Snapshot与原busy/总期限。新增固定manifest+完整history guard/helper、实际维护身份、新鲜clear→runtime采样、16表重空、完整ordinary/v1前驱、Init全账户C序锁、出口与共享撤销；原v1、迁移/ACL/source pins保持。并行纯codec golden与真实PG公开链/私有判定层分别验收，最终[专库race专项](maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归与源码/文档快照另记。T3全来源/ReadLease/basis/epoch及普通main/资金调用者仍未实现。

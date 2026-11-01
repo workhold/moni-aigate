@@ -62,9 +62,17 @@ make check
 make verify-mvp
 ```
 
-直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境和四分区合同见[CI 验证](../verification/github-ci-profile.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
+直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境及四类包归属、十组执行合同见[CI 验证](../verification/github-ci-profile.md)，第三轮精确源码结果见[独立记录](../verification/github-ci-third-run.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
 
 项目没有内置管理员账号、默认密码或自动演示余额。各开发环境应使用自己的私有配置和独立测试数据库；不要将账号、恢复码、Key 或数据库文件提交到仓库。
+
+### 资金来源维护库（022-C0）
+
+`internal/maintenancetrust` 已实现 Gate、私有单次 RR Snapshot，以及库级二参 `Attest(ctx, snapshot)` 和 `Permit.Verify(ctx)`。T2 从 Snapshot 内部持有的安装证明出发，在同一原始事务内核对固定迁移 manifest/history、实际维护 LOGIN、全体 runtime 的新鲜停服采样、空安装与完整前驱；Init 最后按账户 ID 的 C 序完整锁行。Permit 复制共享撤销，取消、失败或开始终结后失效，不暴露原连接、事务或任意 SQL 回调。具体合同见[真实维护授权](../../specs/022-self-service-payments/c0-authority-contract.md)。
+
+T0/T1 的历史专项结果见[Gate](../verification/maintenance-gate.md)和[Snapshot](../verification/maintenance-snapshot.md)；本轮 T2 的[真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，333.879秒、89顶层/832父子终态全部PASS；第三轮CI仍只证明其精确旧源码。专项使用独立 `C0_MAINTENANCE_DATABASE_URL` 显式选择上述专库；ordinary public profile 会创建并精确清理随机数据库，不使用父库的 public 作为安装目标。
+
+当前普通 `main`、Compose 与 1Panel 没有接入该库，也没有生产维护 CLI、全来源重放、basis 或 epoch 开账入口；规格目录中的 C0 SQL 尚非已追加的应用迁移，常规安装继续执行完整 001–022 与 `provision`。后续能力须分别设计、接线和验收。
 
 ## 客户Key来源策略（015）
 

@@ -70,14 +70,15 @@ flowchart LR
 - [x] 根冻结[T1生命周期](c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)：单次私有顶层RR、Init首次SELECT前ONLY125表锁、固定catalog stage、全程busy/总deadline、终结与未知状态；不提供裸Tx/ctx或Permit stub。
 - [x] T1实现及真实PG专项/独立读审汇合：115.412秒、46顶层/124终态全PASS，见[证据](../../docs/verification/maintenance-snapshot.md)；T0历史证据保留原范围。
 - [x] T1最终整仓与CI环境/测试断言修订已汇合；make check及指定专库make verify-mvp通过，286项前端/全默认Go race/vet/build，见[集成记录](../../docs/verification/maintenance-snapshot-integration.md)。
-- [ ] 动态顶层分区及显式PG时区的新远端CI实际验收；[第二轮四组](../../docs/verification/github-ci-second-run.md)失败已保留，不把本地结果或配置解析当远端通过。
-- [ ] 冻结T2–T4：真实维护身份、catalog/history/v1认证后账户锁、scanner ReadLease/独立结果、可信manifest及完整[前驱矩阵候选](c0-predecessor-contract.md)。T1已解决顺序与生命周期合同；其余缺口仍见[维护合同§9](c0-permit-contract.md#9-2026-11-02独立审阅后的冻结前修订项)。
+- [x] 动态顶层分区及显式PG时区的新远端CI实际验收：[第三轮十组](../../docs/verification/github-ci-third-run.md)在精确f64b56f源码全部success；第二轮失败保留，不覆盖后续T2代码。
+- [x] T2按[真实授权根冻结](c0-authority-contract.md)实现真实维护身份、catalog/history/完整v1认证后账户锁、固定manifest与一次Permit，最终专库race已通过。
+- [ ] 冻结并实现T3–T4：scanner ReadLease、独立全来源结果、basis、epoch与封闭写入器，不能由T2维护Permit替代。
 - [ ] 完成正式部署profile验收：当前两套root只实证PG16.15/Homebrew initdb catalog-profile、UTF8与C/C环境，PL/pgSQL language OID 14038为该初始化结果。其他PG16集群、locale/发行版或1Panel环境须独立审profile，未知profile失败关闭，见[正式root合同](c0-schema-check-contract.md#104-首次正式root冻结与已验环境)。
 - [x] C0-V0-L纯账本行检查及V0-R同RR私有ledger reader：三表完整EOF、窄shape/history/函数解析前置、资源界/失败零结果；专项与整仓回归通过，见[读取证据](../../docs/verification/funding-ledger-reader.md)。无完整source/lot证明或运行入口。
 - [x] C1-P独立退款v2纯协议：只读桥接v1已验capture，封闭DTO/四摘要域/三用途HMAC/不可变opaque，独立Python向量及race/vet/fuzz通过；无DB、P、HTTP或资金接线，见[证据](../../docs/verification/payment-refund-protocol-v2.md)。
 - [ ] 审计真实代码锁图与全资金路径，逐操作列出账户/lot桶变动、migration/recovery/历史退款例外。
 - [ ] 维护态legacy迁移；新来源lot和Reserve/FIFO分配、settle/release、消费refund回原来源；VerifyLedger和rebuild对齐。
-- [ ] 后续按冻结合同实现维护Permit/epoch、独立全源RuntimeProof及普通main/全资金路径接线；当前静态leaf没有授予这些能力，022-C与整个后续交付计划仍未完成。
+- [ ] 后续按冻结合同实现epoch、独立全源RuntimeProof及普通main/全资金路径接线；当前静态leaf没有授予这些能力，022-C与整个后续交付计划仍未完成。
 - [ ] 证明现金100消费后用券100补余额，原支付仍不能退款；证明并发Reserve/refund不能复用同一lot额度。
 - [ ] 增加独立PAYMENT_REFUND_HELD、双审原路退款、原外部命令/query/unknown留置；业务关口检查C0已完成。
 - [ ] 增加dispute/chargeback唯一effect、PAYMENT_DEBT、tenant准入屏障、case逆转和显式偿债来源合同；未冻结自动偿债前保留人工核查，不做静默抵扣。
@@ -97,3 +98,10 @@ go run ./scripts/check-architecture
 2026-11-01根冻结022-B0-M/Q：实施依据为[b-runtime-contract](b-runtime-contract.md)、[SQL合同](b-mock-sql-contract.md)及四份自有版本1 SQL。并行分工为公共运行/attestation/schema、mock仓储与回调、receiver/HTTP/独立CLI及harness；各自独占文件，真实进程验收串行。应用迁移/普通main/资金B1不在授权范围，专项真实PG及真实进程短程已通过；20代长程、精确崩溃/COMMIT丢包及旧备份恢复仍各自待验，见运行记录。
 
 2026-11-02最终集成：`make check`7.546秒、`make verify-mvp`340.981秒退出0，286项web/strict、明确专库全Go race/vet/build通过；C0 opt-in完整真实PG leaf独立217.140秒通过，不在整仓命令重复运行。测试入口架构快照1114文件/529d53dc048b，之后只更新验证/状态文档和Runtime前置角色检查的图示顺序，再由根语义复核refresh及只读检查。完整范围见[证据](../../docs/verification/funding-lot-catalog.md)，维护/epoch/全源和全资金C片未由此完成。
+
+## 2026-11-02 T2 实施切片
+
+- [x] 根冻结[真实授权](c0-authority-contract.md)，替换旧三参Attest/maintenanceStage/裸VerifyTx候选，保留T1历史边界。
+- [x] 实现同Snapshot一次Permit、完整history/manifest、真实身份、新鲜统计、完整前驱、Init全账户锁与撤销接线。
+- [x] 汇合T2真实PG/race、ordinary各profile的成功或拒绝边界、genuine sandbox、私有判定层与golden、独立审阅；make check与指定专库make verify-mvp已通过，见[集成记录](../../docs/verification/maintenance-authority-integration.md)。远端交付以Git精确commit/ref核对为准。
+- [ ] T3 ReadLease与独立全来源、basis、epoch封闭写入、全资金路径、C1/C2/C3及后续阶段继续按依赖推进。

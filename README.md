@@ -36,6 +36,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
 | 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
+| 停服维护授权 | 库级已实现，专库专项通过 | Gate、单次 Snapshot、二参 Attest 与 Permit.Verify；尚无生产维护 CLI、全来源重放、basis 或 epoch 开账 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
@@ -197,7 +198,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付；[维护 Gate / Snapshot](docs/architecture/maintenance-gate.md) 库级实现及专项已完成，维护授权与资金接线继续按阶段推进。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付；[维护 Gate / Snapshot](docs/architecture/maintenance-gate.md) 的 T0/T1 专项已完成，[T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)已实现库级二参 `Attest(ctx, snapshot)` 与 `Permit.Verify(ctx)`，新增真实 PostgreSQL race 专项已通过，见[验证记录](docs/verification/maintenance-authority.md)；生产维护 CLI、全来源重放、basis 与 epoch 开账仍后续。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

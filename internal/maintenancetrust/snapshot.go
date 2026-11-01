@@ -61,28 +61,32 @@ type snapshotNonce struct{ marker byte }
 // rawTx are used only by the holder of gate.busy, never by the watcher. rawTx,
 // mode, ctx, deadline and identity pointers do not change after Begin returns.
 type snapshotState struct {
-	gate           *gateState
-	gateNonce      *gateNonce
-	nonce          *snapshotNonce
-	rawTx          pgx.Tx
-	conn           *pgx.Conn
-	pgconn         *pgconn.PgConn
-	mode           snapshotMode
-	ctx            context.Context
-	cancel         context.CancelFunc
-	deadline       time.Time
-	stopWatch      chan struct{}
-	watchDone      chan struct{}
-	stopOnce       sync.Once
-	outcome        Outcome
-	invalidErr     error
-	catalogUsed    bool
-	xid            string
-	installation   *fundinglotcatalog.InstallationProof
-	terminal       terminalMethod
-	terminalDone   bool
-	terminalErr    error
-	commitInFlight bool
+	gate               *gateState
+	gateNonce          *gateNonce
+	nonce              *snapshotNonce
+	rawTx              pgx.Tx
+	conn               *pgx.Conn
+	pgconn             *pgconn.PgConn
+	mode               snapshotMode
+	ctx                context.Context
+	cancel             context.CancelFunc
+	deadline           time.Time
+	stopWatch          chan struct{}
+	watchDone          chan struct{}
+	stopOnce           sync.Once
+	outcome            Outcome
+	invalidErr         error
+	catalogUsed        bool
+	xid                string
+	installation       *fundinglotcatalog.InstallationProof
+	authorityAttempted bool
+	activeAuthority    *authorityStage
+	permit             *permitState
+	permitCall         *snapshotCall
+	terminal           terminalMethod
+	terminalDone       bool
+	terminalErr        error
+	commitInFlight     bool
 }
 
 func (Snapshot) String() string               { return "maintenance_snapshot_redacted" }
@@ -249,6 +253,7 @@ func (st *snapshotState) invalidateLocked(err error) {
 		st.invalidErr = err
 	}
 	st.installation = nil
+	st.revokeAuthorityLocked()
 	if !st.commitInFlight && st.outcome == OutcomeOpen {
 		st.outcome = OutcomeAbandoned
 	}
@@ -502,6 +507,7 @@ func (s *Snapshot) terminate(ctx context.Context, method terminalMethod) error {
 	}
 	gs.busy = true
 	st.terminal, st.installation = method, nil
+	st.revokeAuthorityLocked()
 	invalid := st.invalidErr
 	gs.mu.Unlock()
 	defer func() { gs.mu.Lock(); gs.busy = false; gs.mu.Unlock() }()

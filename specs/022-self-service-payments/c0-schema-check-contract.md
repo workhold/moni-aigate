@@ -1,6 +1,6 @@
 # 022-C0：静态 schema 与角色检查器合同候选
 
-2026-11-01。**§10根冻结正式checker的实现合同；正式静态descriptor必须另经实装、双轮与独立审阅才可启用发行，未审或空root必须失败关闭。** §9离线metadata生成器已实现并通过[限定专项](../../docs/verification/funding-lot-descriptor.md)。未授权生产迁移、维护 Permit、proof v2 发行、普通 main 或资金接线。对应[维护与 proof v2](c0-maintenance-contract.md)、[独立核验器](c0-verifier-contract.md)、[运行 helper](c0-runtime-helper-contract.md)及[固定候选回归](c0-candidate-regression-contract.md)。静态检查通过不证明 epoch、basis 或任何资金来源图正确。
+2026-11-01，T2状态同步于2026-11-02。**§10根冻结正式checker的实现合同；正式静态descriptor必须另经实装、双轮与独立审阅才可启用发行，未审或空root必须失败关闭。** §9离线metadata生成器已实现并通过[限定专项](../../docs/verification/funding-lot-descriptor.md)。本checker本身不授维护Permit；库级T2授权已另按[真实授权合同](c0-authority-contract.md)实现，[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，不扩大本checker历史证据。生产迁移、proof v2发行、普通main或资金接线仍未开放。对应[维护与proof v2](c0-maintenance-contract.md)、[独立核验器](c0-verifier-contract.md)、[运行helper](c0-runtime-helper-contract.md)及[固定候选回归](c0-candidate-regression-contract.md)。静态检查通过不证明epoch、basis或任何资金来源图正确。
 
 ## 1. 固定输入与当前实现事实
 
@@ -17,9 +17,9 @@ ACL 的旧 `d12cb73…` 版本已被根决定收紧，不是本稿期望。现�
 
 当前 [migrations.VerifySnapshotTx](../../migrations/verify_snapshot.go) 只核 caller-owned RR 和完整迁移 history，不核列、函数、trigger 或 ACL。当前 [payments v1 canonical](../../internal/payments/runtime_types.go) 绑定 DB、三 schema、八角色/OID、nonce、origin/callback 和 keyset；**v1 canonical 本身没有 migration manifest 或完整 schema/ACL digest**。这些现有启动检查分别由 migration helper、[operations.VerifyPaymentRole](../../internal/operations/payment_roles.go) 和 [runtime catalog/attestation](../../internal/payments/runtime_catalog.go) 执行，不能把它们的结果虚写进原 v1 proof。
 
-## 2. 叶子包与精确 API 候选
+## 2. 叶子包与精确 API（以§10根冻结为准）
 
-建议新叶子包 `internal/fundinglotcatalog`，仅依赖标准库、pgx 及包内受审静态 descriptor；不依赖 billing、payments、operations、main 或 maintenancetrust，便于后者复用且不形成循环。它不接受外部 expected descriptor 文件、任意 SQL、跳过列表、trusted bool、权限修复参数或可配置角色继承规则。下面名称与形状供根冻结，不能先据此实现：
+已实现叶子包 `internal/fundinglotcatalog`，仅依赖标准库、pgx 及包内受审静态 descriptor；不依赖 billing、payments、operations、main 或 maintenancetrust，便于后者复用且不形成循环。它不接受外部 expected descriptor 文件、任意 SQL、跳过列表、trusted bool、权限修复参数或可配置角色继承规则。下面名称与形状已由§10根冻结；静态checker历史验收见其独立记录，T2维护授权另以[c0-authority-contract](c0-authority-contract.md)为准：
 
 ```go
 package fundinglotcatalog
@@ -84,7 +84,7 @@ func VerifyRuntimeTx(ctx context.Context, tx pgx.Tx,
 
 `VerifyInstallationTx` 先做完全相同的静态检查，随后仅以固定 EXISTS 查询证明**全部16张C0表全空**，包括 epoch 和 funding_lot_runtime_attestations，才封装 InstallationProof。它读业务空集的范围只有这些固定新表；不读取旧v1 canonical，不验证原源/basis/PB。故它不能替代 Permit 的实际维护身份或v1校验；APP即使有全部SELECT拿到该证据，也不能据此取得维护授权。epoch存在、任一新表非空、权限不足或查询失败都不给 InstallationProof。
 
-InstallationProof.VerifyTx 检查证据真实性与同一事务绑定，**不在 init 已按 Permit 写facts后重新要求16表全空**；`emptyAtIssue`是发行阶段事实，不是调用方可改的当前状态。Permit.AttestTx必须在Gate的唯一attest阶段再核pre-epoch/16表空集，并只允许一次发行Permit；重复调用、拿旧证据在写后另发Permit均拒绝。后续init写入与FinalizeCheck由Permit阶段机管理，不能把CatalogProof或一份复制的InstallationProof自动升格。epoch后没有新InstallationProof/init许可，必要的post-epoch只读/恢复另片定义。
+InstallationProof.VerifyTx 检查证据真实性与同一事务绑定，**不在 init 已按 Permit 写facts后重新要求16表全空**；`emptyAtIssue`是发行阶段事实，不是调用方可改的当前状态。已实现的T2二参 `Attest(ctx, snapshot)`仅消费Snapshot内部owned installation，在唯一authority阶段重新核pre-epoch/16表空集；Init全accounts锁及出口复核完成后才一次发行Permit。重复调用、拿旧证据在写后另发Permit均拒绝，后续校验只有 `Permit.Verify(ctx)`，没有裸tx参数。init写入与post-init全图核验仍待T3/T4冻结，不能把CatalogProof或复制的InstallationProof自动升格。epoch后没有新InstallationProof/init许可，必要的post-epoch只读/恢复另片定义。
 
 `VerifyRuntimeTx` 复用完全相同的 schema/矩阵检查，并只接受 RR READ ONLY；额外要求 `tx.Conn().Config().User = current_user = session_user`、actual LOGIN/OID 正好是 pins 中所选角色、连接配置与数据库实际 DB/endpoint/schema 都匹配。它不允许 SET ROLE 冒充连接身份。ordinary 的 Worker/Sandbox 必须同时 nil；sandbox 两者必须完整，三 runtime LOGIN 与三 owner、mock/receiver LOGIN 必须是八个不同 OID。unknown mode/role、空名称、零 OID、typed-nil/closed/aborted tx、非 RR 或失效 context 一律拒绝；ordinary 不存在 worker 不是跳过已有对象核验的开关。
 
@@ -240,7 +240,7 @@ RuntimeProof私有字段还绑定同具体tx wrapper/conn/PID/top xid/DB/schema�
 
 worker无全源allocation/人工/券读取权，projector无C0业务读取权，因此两者**不能发行这份APP全源RuntimeProof**，也不能为了取得它扩大权限。运行装配先取得APP完整核验成功，再让每个实际worker独立核自己的CatalogProof+v1/v2/epoch绑定，projector仅catalog，全部成功才发布同一Lifecycle/ready；APP token不跨连接移交给worker。该上层整体启动门禁与worker窄绑定API仍待单独冻结。
 
-依赖方向固定为：`fundinglotcatalog → stdlib/pgx/static descriptor`；`fundinglotproof → stdlib`；`maintenancetrust → pgx/fundinglotcatalog/严格原proof读取`；`billing(只读组合+独立scanner) → fundinglotcatalog/fundinglotproof/migrations`，其中维护scanner可以另依maintenancetrust，但runtime issuer不调用维护入口。`payments/main → billing/两个leaf`。leaf不反向import维护或billing，billing不import payments/main，不从runtime composer反向构造Permit。严格原proof读取的纯codec复用和维护Permit的最终形状由[Permit合同](c0-permit-contract.md)与本稿一同根审；任一尚未冻结的跨包接缝都不能用stub先授权生产。
+已实现依赖为 `fundinglotcatalog → stdlib/pgx/static descriptor` 与 `maintenancetrust → stdlib/pgx/fundinglotcatalog/migrations/paymentsandboxschema`；T2按[真实授权合同](c0-authority-contract.md)独立实现私有前驱codec，没有反向import payments、billing或运行构造器。未来 `fundinglotproof → stdlib`、billing只读组合/独立scanner及payments/main装配仍是后续接线设计；T3维护scanner须经受控ReadLease，runtime issuer不调用维护入口。leaf不反向import维护或billing，billing不import payments/main，不从runtime composer反向构造Permit。T2[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，其他尚未冻结的跨包接缝不能用stub先授权生产。
 
 ## 8. 拒绝与验收出口
 

@@ -4,6 +4,8 @@
 
 当前源码要求完整 **001–022** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染已验证，容器、1Panel 和正式供应商仍按目标环境分别验收。
 
+022-C0 的停服维护已增加库级二参 `Attest(ctx, snapshot)` 与 `Permit.Verify(ctx)`，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；本轮 T2 [真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，范围限既定专库profile。该库尚未接入普通 `main`、Compose 或 1Panel，没有生产维护 CLI、全来源重放、basis 或 epoch 开账入口，也没有新增正式应用迁移。部署继续使用当前 001–022；C0 规格 SQL 不属于本手册的安装或升级步骤。范围见[维护授权合同](../../specs/022-self-service-payments/c0-authority-contract.md)和[开发边界](development.md#资金来源维护库022-c0)。
+
 ## 首次安装
 
 使用专用服务器/目录保存仓库，安装Docker Compose v2。生成环境后配置HTTPS域名，文件权限保持0600；运行密钥与日常数据库访问权限分开保管。备份脚本会生成包含明文keyring的受保护完整包，必须存放于加密介质，详见恢复手册。

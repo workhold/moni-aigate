@@ -17,19 +17,19 @@ flowchart TD
     Compare --> Catalog[CatalogProof\n同一事务的静态证据]
     Catalog --> Empty[全部16张C0表在发行时全空]
     Empty --> Installation[InstallationProof\n私有原identity，Catalog返回新wrapper]
-    Installation -. 后续受审组合 .-> Permit[维护Permit\n真实维护身份、双gate、顶层事务所有权]
+    Installation -->|T2原Snapshot内部owned proof| Permit[库级维护Permit已实现\n真实身份、前驱、双gate与顶层事务\n专项PG/race已通过]
     Catalog -. 后续受审组合 .-> FullProof[完整RuntimeProof\nv1/v2/epoch与全源独立重放]
 ```
 
 `VerifySnapshotTx`允许调用方RR RO/RW；`VerifyRuntimeTx`只接受选定实际runtime LOGIN的RR RO。`VerifyInstallationTx`在同一次五秒总预算内增加十六表空集事实。API不控制事务、不改GUC或权限、不安装DDL。任何失败只返回固定错误与nil证明；调用方负责回滚或结束事务。
 
-ordinary正式期望包含五个封闭安装profile：named隔离NOLOGIN owner，以及named/public各自的最小LOGIN owner与默认PG管理员LOGIN owner。named的实际LOGIN是后续维护Permit必要的认证形态；NOLOGIN样本用于旧候选交叉核验。不存在worker占位。public的namespace raw owner是builtin `pg_database_owner`，对象owner须为实际datdba，两个身份分别绑定。其他安装组合需要新增实装证据和受审expected。
+ordinary正式期望包含五个封闭安装profile：named隔离NOLOGIN owner，以及named/public各自的最小LOGIN owner与默认PG管理员LOGIN owner。实际owner LOGIN是T2维护Permit必要的认证形态；NOLOGIN样本仅用于静态profile与旧候选交叉核验，不能通过SET ROLE取得维护Permit。不存在worker占位。public的namespace raw owner是builtin `pg_database_owner`，对象owner须为实际datdba，两个身份分别绑定。其他安装组合需要新增实装证据和受审expected。
 
 sandbox完整检查app/mock/receiver的对象正文、类型与自动TOAST/RI关系、依赖、显式ACL、默认ACL和八角色有效权限；同时核十组跨域负权。自动表row/array type的默认USAGE不是表读取权，named `fl_source_proof`及array的权限单独收紧。完整沙盒基线遵循原v1实际离线授权顺序，旧app-only导出候选不会自动升级为正式期望。
 
 opaque证明保存具体事务wrapper、连接、backend PID/start、top xid与深拷贝全pins；`VerifyTx`只重核同一事务身份，不反复执行全catalog比较。它不能抵御受信DDL owner在受控维护之外自行修改对象，因此DDL/GRANT仍由停服维护路径管理。提交、回滚、出错、断连或换事务后旧证明失效。Installation的“发行时全空”在受审init写入后仍是原时点证据；维护Permit必须自行防止二次发行，不能从这份证明推导资金权限。
 
-包依赖只允许标准库、pgx和受控静态expected。离线安装及来源交叉核验只在test中引用operations/migrations；普通main没有调用本包。旧v1 checker、SQL/ACL pins与证明字节保持原规则。维护Permit、epoch开账、全源/lot重放、在线资金helper及完整RuntimeProof仍按后续依赖实施。
+本catalog包依赖只允许标准库、pgx和受控静态expected。离线安装及来源交叉核验只在test中引用operations/migrations；普通main没有调用本包。T2 [维护基础设施](maintenance-gate.md)已在原Snapshot同rawTx消费完整InstallationProof并实现二参[Attest/Permit.Verify](../../internal/maintenancetrust/permit.go)，[T2真实PG/race专项](../verification/maintenance-authority.md)已通过；T0/T1和catalog历史验证不因此扩张。旧v1 checker、SQL/ACL pins与证明字节保持原规则。ReadLease、epoch开账、全源/lot重放、在线资金helper及完整RuntimeProof仍后续。
 
 两runtime（ordinary）或五runtime（sandbox）的database级CREATE与CREATE/CONNECT/TEMPORARY grant option均须为false；默认PUBLIC CONNECT/TEMPORARY可保留。namespace权限不能替代这一database闭包。当前expected仅实证PG16.15/Homebrew initdb profile、UTF8/C/C；PL/pgSQL language OID14038属于本profile的安装分配。其他集群、locale、1Panel及生产部署需要独立profile认证或后续语言/扩展符号合同，不能由major16或同名对象推断兼容。
 
