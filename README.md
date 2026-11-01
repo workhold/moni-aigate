@@ -163,7 +163,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 ## 验证与性能
 
-通过私有环境设置 `TEST_DATABASE_URL`，指向可创建隔离 schema / 测试角色的**专用 PostgreSQL 测试库**后执行：
+按[开发验证](docs/runbooks/development.md#开发验证)准备**专用 PostgreSQL 16 测试集群**：实际端点为 `127.0.0.1:55439/moni_test`，测试 LOGIN 为 `moni_test`。通过私有环境设置 `TEST_DATABASE_URL` 后执行：
 
 ```sh
 make check
@@ -197,7 +197,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付；[T0 Gate](docs/architecture/maintenance-gate.md) 库级实现已完成，维护授权与资金接线继续按阶段推进。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付；[维护 Gate / Snapshot](docs/architecture/maintenance-gate.md) 库级实现及专项已完成，维护授权与资金接线继续按阶段推进。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

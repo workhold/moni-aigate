@@ -24,11 +24,51 @@ func TestInstanceFencesAfterBackendTermination(t *testing.T) {
 		t.Fatal("second process acquired live lock")
 	}
 	pid := first.conn.Conn().PgConn().PID()
-	if _, err = f.owner.Exec(f.ctx, "SELECT pg_terminate_backend($1)", pid); err != nil {
+	// Observe from a separate physical session, capturing the backend identity
+	// before termination so PID reuse cannot satisfy the disappearance check.
+	observer, err := f.owner.Acquire(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer observer.Release()
+	var backendStart time.Time
+	var databaseOID uint32
+	if err = observer.QueryRow(f.ctx, `SELECT backend_start,datid FROM pg_catalog.pg_stat_activity WHERE pid=$1`, pid).Scan(&backendStart, &databaseOID); err != nil || backendStart.IsZero() || databaseOID == 0 {
+		t.Fatal("capture instance backend before termination", err)
+	}
+	var terminated bool
+	if err = observer.QueryRow(f.ctx, "SELECT pg_terminate_backend($1)", pid).Scan(&terminated); err != nil || !terminated {
 		t.Fatal(err)
 	}
 	if !errors.Is(first.Check(f.ctx), ErrInstanceLost) {
 		t.Fatal("dead lock session still admitted")
+	}
+	// A true pg_terminate_backend result confirms signal delivery, not remote
+	// exit. Wait within the fixture lifetime (at most two seconds) for both the
+	// exact backend and this random 64-bit advisory key to disappear. This is
+	// observation only: the actual next AcquireInstance is still called once.
+	observeCtx, cancel := context.WithTimeout(f.ctx, 2*time.Second)
+	defer cancel()
+	for {
+		var backendPresent, keyPresent bool
+		err = observer.QueryRow(observeCtx, `SELECT
+ EXISTS(SELECT 1 FROM pg_catalog.pg_stat_activity WHERE pid=$1 AND backend_start=$2),
+ EXISTS(SELECT 1 FROM pg_catalog.pg_locks WHERE locktype='advisory' AND database=$3::pg_catalog.oid
+ AND classid=$4::pg_catalog.oid AND objid=$5::pg_catalog.oid AND objsubid=1)`,
+			pid, backendStart, databaseOID, uint32(uint64(key)>>32), uint32(key)).Scan(&backendPresent, &keyPresent)
+		if err != nil {
+			t.Fatal("observe terminated instance and advisory key", err)
+		}
+		if !backendPresent && !keyPresent {
+			break
+		}
+		timer := time.NewTimer(5 * time.Millisecond)
+		select {
+		case <-observeCtx.Done():
+			timer.Stop()
+			t.Fatal("terminated instance or advisory key remained within the observation budget")
+		case <-timer.C:
+		}
 	}
 	next, err := AcquireInstance(f.ctx, f.app, key)
 	if err != nil {

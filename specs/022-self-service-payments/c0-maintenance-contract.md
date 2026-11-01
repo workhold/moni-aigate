@@ -58,7 +58,7 @@ proof发行顺序：维护准备阶段验证原v1完整受审内容→部署新C
 
 ## 4. 私有 maintenance permit 与同一RR核验
 
-`internal/maintenancetrust`只依赖pgx/catalog，导出Permit类型但全部字段私有，nil/zero永不有效；不提供trusted bool/任意用户名/跳过校验参数。`AttestTx`自己由tx.Conn().Config和数据库实际会话核以下身份；PB的候选 `VerifyMaintenanceTx(ctx,tx,*Permit)`只接受绑定当前事务的有效permit。原periodicbudget.Verifier actual LOGIN真owner规则完全不变。
+`internal/maintenancetrust`当前仅依赖标准库/pgx/catalog；T1按[根冻结生命周期](c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)保存私有原始顶层tx，不导出Tx/Conn/context。T2候选 `Attest(ctx,snapshot,installation)` 将自行读取真实连接和会话，不接受trusted bool/任意用户名/跳过参数；Permit全私有且零值无效。PB维护入口与ReadLease仍待T2/T3冻结，原periodicbudget.Verifier actual LOGIN真owner规则完全不变。完整history及原peer静态摘要拟依赖migrations/paymentsandboxschema两个叶子，须T2另冻。
 
 普通维护：Config.User=current_user=session_user，真实LOGIN且实际拥有六张PB事实表和目标schema；普通APP不是owner。B3唯一窄例外：固定TCP127.0.0.1:55439、DB moni_test，actual authenticated moni_test是superuser且该database实际owner；current=session=Config，无SET ROLE；全部既有v1/v2 proof、八角色无membership/继承/SET/ADMIN/grant-option提升、三个NOLOGIN owner/OID及对象摘要完整通过。其他endpoint/socket/别名/DB/LOGIN、非DB owner superuser都拒绝；不引入通用installer授权。
 
@@ -66,9 +66,9 @@ Permit绑定pgx顶层Tx wrapper identity、conn指针、backend PID、top xid、
 
 先取得同backend session exclusive instance lock 782193402，再取得migration lock 782193401，持至事务独立cleanup/结果判定结束；与部署停服顺序一致。Permit查pg_locks确认本PID、database OID、advisory、granted、ExclusiveLock、classid=0、objid对应key、objsubid=1；只设置MAINTENANCE_MODE不算持锁。维护CLI对外只提供plan/init固定命令，私有owner/admin连接不进入serve/pool。
 
-plan用一个RR READ ONLY；init用一个RR写事务，在第一次业务SELECT前按§8表名C序取得SHARE ROW EXCLUSIVE，再所有现有account ID C序FOR UPDATE。plan依赖真实gate和停写，不试图在READ ONLY里取写型表锁；init重新算同一规范basis与plan对比。全部ledger/funding/source/request/Key/采购/PB/B验证都用caller-owned同一个tx seam，不各自Begin新snapshot。PB维护入口重用独立scanner，不把在线Reader当证明，不修改配置或提交。
+plan用一个RR READ ONLY；init用一个RR写事务，固定SET后、第一次任何SELECT前对109+16全局C序125表逐项ONLY取得一条完整SHARE ROW EXCLUSIVE锁。随后完整catalog及Attest内history/真实身份/v1/双锁/空集认证成功，才按全部account ID C序FOR UPDATE；T1不执行账户锁。plan依赖真实gate和停写，不在READ ONLY里取写型表锁；init重新算同一规范basis与plan对比。后续ledger/funding/source/request/Key/采购/PB/B验证将经受控ReadLease读取同一私有顶层tx，不各自Begin新snapshot，精确入口待T2/T3冻结。PB维护入口保留独立scanner，不把在线Reader当证明，不修改配置或提交。
 
-**范围纠正：当前migrations.VerifyReadOnlyTx只验证已有RR READ ONLY及schema_migrations完整checksum history；它不验证函数、trigger或列。** 候选VerifySnapshotTx只新增允许caller-owned RR写事务的history helper，不弱化原ReadOnly入口；完整函数/trigger/列/角色静态检查明确归C0 schema/role checker与Permit attestation，不虚称原helper已经具备。PB原Verifier在B3 installer上仍应失败，新维护入口才承认上述窄例外。
+**范围纠正：当前migrations.VerifyReadOnlyTx只验证已有RR READ ONLY及schema_migrations完整checksum history；它不验证函数、trigger或列。** 已实现的VerifySnapshotTx只新增允许caller-owned RR写事务的history helper，不弱化原ReadOnly入口；完整函数/trigger/列/角色静态检查明确归C0 schema/role checker与Permit attestation，不虚称原helper已经具备。PB原Verifier在B3 installer上仍应失败，新维护入口才承认上述窄例外。
 
 必要负例包括APP/worker/projector有全SELECT仍不能取得permit、SET ROLE owner、错误endpoint/DB/OID/superuser owner、NOLOGIN变LOGIN/角色同名换OID、任一membership/函数/trigger/search_path/ACL篡改、permit换Tx/PID/commit后重用、pb verifier另开snapshot；均拒绝且不写epoch/余额。
 

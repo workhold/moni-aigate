@@ -15,12 +15,15 @@ import (
 )
 
 var (
-	ErrInput     = errors.New("maintenance_input")
-	ErrGateBusy  = errors.New("maintenance_gate_busy")
-	ErrIdentity  = errors.New("maintenance_identity")
-	ErrTimeout   = errors.New("maintenance_timeout")
-	ErrExecution = errors.New("maintenance_execution")
-	ErrCleanup   = errors.New("maintenance_cleanup")
+	ErrInput         = errors.New("maintenance_input")
+	ErrGateBusy      = errors.New("maintenance_gate_busy")
+	ErrIdentity      = errors.New("maintenance_identity")
+	ErrTimeout       = errors.New("maintenance_timeout")
+	ErrExecution     = errors.New("maintenance_execution")
+	ErrCleanup       = errors.New("maintenance_cleanup")
+	ErrSchema        = errors.New("maintenance_schema")
+	ErrTransaction   = errors.New("maintenance_transaction")
+	ErrCommitUnknown = errors.New("maintenance_commit_unknown")
 )
 
 const (
@@ -41,6 +44,10 @@ type Gate struct{ state *gateState }
 
 type gateState struct {
 	mu                          sync.Mutex
+	busy                        bool
+	beginAttempted              bool
+	nonce                       *gateNonce
+	snapshot                    *snapshotState
 	conn                        *pgx.Conn
 	socketMu                    sync.Mutex
 	sockets                     []net.Conn
@@ -70,7 +77,7 @@ func Acquire(ctx context.Context, cfg *pgx.ConnConfig, pins fundinglotcatalog.Pi
 	work, cancel := context.WithTimeout(ctx, acquireBudget)
 	defer cancel()
 	copied := cfg.Copy()
-	state := &gateState{pins: copyPins(pins)}
+	state := &gateState{pins: copyPins(pins), nonce: &gateNonce{}}
 	// Capture the dialed socket before pgx can mark an errored connection closed
 	// and hand physical closure to its asynchronous (up to 15s) cleanup path.
 	dial := copied.DialFunc
@@ -152,15 +159,50 @@ func (g *Gate) Close(_ context.Context) error {
 	if !s.mu.TryLock() {
 		return ErrGateBusy
 	}
-	defer s.mu.Unlock()
-	if s.closed {
-		return s.closeErr
+	if s.busy {
+		s.mu.Unlock()
+		return ErrGateBusy
 	}
+	if s.closed {
+		err := s.closeErr
+		s.mu.Unlock()
+		return err
+	}
+	s.busy = true
 	s.closed = true
+	// An unfinished/invalid snapshot is destroyed, never implicitly committed
+	// or rolled back. A confirmed outcome survives a later cleanup failure.
+	unfinished := false
+	ss := s.snapshot
+	if ss != nil {
+		unfinished = !ss.terminalDone || ss.outcome != OutcomeCommitted && ss.outcome != OutcomeRolledBack
+		if !ss.terminalDone {
+			ss.terminal = terminalClose
+			ss.terminalDone = true
+			ss.invalidErr = ErrTransaction
+			ss.installation = nil
+			if ss.outcome != OutcomeUnknown {
+				ss.outcome = OutcomeAbandoned
+			}
+		}
+		ss.stopWatcherLocked()
+	}
+	s.mu.Unlock()
+	defer func() { s.mu.Lock(); s.busy = false; s.mu.Unlock() }()
+	if ss != nil {
+		ss.waitWatcher()
+		ss.cancel()
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), cleanupBudget)
 	defer cancel()
-	bad := func() error { s.closeErr = ErrCleanup; s.destroyWithContext(ctx); return s.closeErr }
-	if !s.idle() {
+	bad := func() error {
+		s.destroyWithContext(ctx)
+		s.mu.Lock()
+		s.closeErr = ErrCleanup
+		s.mu.Unlock()
+		return ErrCleanup
+	}
+	if unfinished || !s.idle() {
 		return bad()
 	}
 	// Validate the complete set before unlocks. Otherwise an extra/shared key or
@@ -233,6 +275,8 @@ func (s *gateState) destroyWithContext(ctx context.Context) {
 	if s.conn != nil {
 		_ = s.conn.Close(ctx)
 	}
+	s.mu.Lock()
 	s.heldInstance, s.heldMigration = false, false
 	s.closed = true
+	s.mu.Unlock()
 }

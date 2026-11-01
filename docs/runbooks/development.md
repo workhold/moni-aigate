@@ -50,17 +50,19 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 示例变量通过私有环境注入；真实渠道会产生供应商费用。本次验证只调用本地Mock，没有用这些示例访问真实供应商。
 
-开发验证（数据库账户需要能创建独立schema/测试角色）：
+## 开发验证
+
+全仓数据库测试要求独立 PostgreSQL 16 测试集群：实际服务端与 URL 均为 `127.0.0.1:55439/moni_test`，实际 LOGIN 为 `moni_test`，且为测试专用超级用户。部分 fixture 会创建无密码的受限 LOGIN；临时测试集群需允许这些角色的 loopback 连接，当前 CI 显式使用 trust。此配置只用于隔离测试，不用于应用部署。
+
+已验测试 profile 的 `max_connections=200`，`fsync`、`synchronous_commit`、`full_page_writes` 均为 `on`。以下 URL 适用于已经按上述规则准备的无密码本地专库；有测试管理员密码时从私有环境加载相应 URL，不将秘密写入脚本。测试会创建并清理随机 schema 和角色，不要指向日常开发、预览或生产库。
 
 ```sh
-export TEST_DATABASE_URL='postgres://test_user:test_password@localhost:5432/moni_test?sslmode=disable'
-go test -race -count=1 ./...
-go vet ./...
-npm --prefix web test
-npm --prefix web run build
+export TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable'
+make check
+make verify-mvp
 ```
 
-未设置TEST_DATABASE_URL会跳过数据库测试；这样的结果不能替代完整验收。容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
+直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境和四分区合同见[CI 验证](../verification/github-ci-profile.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
 
 项目没有内置管理员账号、默认密码或自动演示余额。各开发环境应使用自己的私有配置和独立测试数据库；不要将账号、恢复码、Key 或数据库文件提交到仓库。
 

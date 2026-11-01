@@ -1,0 +1,155 @@
+package maintenancetrust
+
+import (
+	"strings"
+
+	"github.com/jackc/pgx/v5"
+)
+
+// This reviewed C-order union is fixed at build time. Snapshot must not derive
+// its lock targets from a live catalog, an expected descriptor or caller input.
+// See c0-snapshot-lifecycle-contract.md, appendix A; the canonical JSON array is
+// 2878 bytes with SHA-256 6fd978751fe24d37fa29da679be0976e12659e8a8f64d3983050280fffc00b19.
+var initLockTables = [...]string{
+	"active_report_projection",
+	"alert_commands",
+	"alert_control",
+	"alert_episode_events",
+	"alert_episodes",
+	"alert_rule_runtime",
+	"alert_rules",
+	"api_keys",
+	"audit_events",
+	"billing_profile_blocks",
+	"channel_batch_operations",
+	"channel_credentials",
+	"channel_model_discoveries",
+	"channel_model_discovery_results",
+	"channel_version_credentials",
+	"channel_versions",
+	"channels",
+	"commerce_commands",
+	"commerce_operation_receipts",
+	"cost_versions",
+	"credential_procurement_bindings",
+	"credit_orders",
+	"delivery_observations",
+	"finalization_records",
+	"financial_idempotency",
+	"funding_consumption_refund_lots",
+	"funding_lot_balances",
+	"funding_lot_epoch",
+	"funding_lot_events",
+	"funding_lot_legacy_approved_refunds",
+	"funding_lot_legacy_openings",
+	"funding_lot_legacy_receipts",
+	"funding_lot_legacy_sandbox_receipts",
+	"funding_lot_legacy_settlements",
+	"funding_lot_runtime_attestations",
+	"funding_lots",
+	"funding_receipts",
+	"funding_reservation_lots",
+	"funding_settlement_lots",
+	"funding_wallet_heads",
+	"funding_wallet_legacy_sources",
+	"funding_wallet_operations",
+	"identity_challenges",
+	"identity_initialization",
+	"identity_mail_outbox",
+	"identity_mail_subjects",
+	"journal_lines",
+	"journals",
+	"ledger_accounts",
+	"member_model_grants",
+	"memberships",
+	"metering_event_conflicts",
+	"metering_events",
+	"mfa_recovery_codes",
+	"model_bindings",
+	"model_capability_versions",
+	"models",
+	"payment_cancel_intents",
+	"payment_captures",
+	"payment_command_observations",
+	"payment_command_outbox",
+	"payment_effects",
+	"payment_event_conflicts",
+	"payment_evidence_processing",
+	"payment_inbox",
+	"payment_order_capture_selections",
+	"payment_orders",
+	"payment_policy",
+	"payment_provider_revisions",
+	"payment_query_attempts",
+	"payment_query_conflicts",
+	"payment_review_facts",
+	"payment_runtime_attestations",
+	"payment_sandbox_environment",
+	"payment_sku_changes",
+	"payment_sku_versions",
+	"payment_skus",
+	"payment_transaction_identities",
+	"payment_verified_evidence",
+	"payment_verified_queries",
+	"periodic_budget_allocations",
+	"periodic_budget_configuration_versions",
+	"periodic_budget_controls",
+	"periodic_budget_events",
+	"periodic_budget_operations",
+	"periodic_budget_windows",
+	"platform_probe_attempts",
+	"price_groups",
+	"price_versions",
+	"pricing_operations",
+	"procurement_accounts",
+	"procurement_balance_observations",
+	"procurement_budget_events",
+	"procurement_commands",
+	"procurement_cost_proposals",
+	"procurement_evidence_identities",
+	"procurement_reservations",
+	"projection_outbox",
+	"projection_receipts",
+	"provider_cost_corrections",
+	"reconciliation_cases",
+	"recovery_gate",
+	"recovery_jobs",
+	"refund_orders",
+	"report_totals",
+	"request_idempotency",
+	"request_records",
+	"reservations",
+	"route_binding_isolations",
+	"route_policy_versions",
+	"schema_migrations",
+	"session_families",
+	"sessions",
+	"settlements",
+	"tenant_model_grants",
+	"tenant_pricing_assignments",
+	"tenants",
+	"upstream_attempts",
+	"users",
+	"voucher_batches",
+	"voucher_policy",
+	"voucher_redemptions",
+	"voucher_revocation_decisions",
+	"voucher_revocations",
+	"vouchers",
+}
+
+// schema is the copied, preflight-verified target. ONLY prevents PostgreSQL
+// from recursively expanding these targets before their catalog is verified.
+func initLockSQL(schema string) string {
+	var sql strings.Builder
+	sql.WriteString("LOCK TABLE ")
+	for i, table := range initLockTables {
+		if i != 0 {
+			sql.WriteString(", ")
+		}
+		sql.WriteString("ONLY ")
+		sql.WriteString(pgx.Identifier{schema, table}.Sanitize())
+	}
+	sql.WriteString(" IN SHARE ROW EXCLUSIVE MODE")
+	return sql.String()
+}

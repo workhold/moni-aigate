@@ -244,7 +244,12 @@ func TestProcurementManualObservationNeverChangesBudgetAndPermissions(t *testing
 		t.Fatal(err)
 	}
 	after, err := s.Account(f.ctx, a.ID)
-	if err != nil || !reflect.DeepEqual(a, after) {
+	// JSON and pgx may represent the same instant with different locations.
+	// Keep the original instant assertion and compare every field on UTC copies.
+	beforeUTC, afterUTC := a, after
+	beforeUTC.CreatedAt = a.CreatedAt.UTC()
+	afterUTC.CreatedAt = after.CreatedAt.UTC()
+	if err != nil || !a.CreatedAt.Equal(after.CreatedAt) || !reflect.DeepEqual(beforeUTC, afterUTC) {
 		t.Fatalf("balance observation mutated budget %+v %+v %v", a, after, err)
 	}
 	for _, table := range []string{"credential_procurement_bindings", "procurement_budget_events", "procurement_evidence_identities", "procurement_commands", "procurement_balance_observations"} {

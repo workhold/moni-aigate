@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-01T17:57:17Z",
-  "review_reason": "最终集成收口：T0专用Gate真实PG/race53场景通过，B0仅测试oracle修正与多连接竞争专项通过；根make check及verify-mvp全通过，补齐可追溯原失败/最终证据和交付状态。已语义复核19图、模块/数据/权限/资金边界及README部署入口；本轮不接main、不改生产SQL/资金/预算，后续阶段保持未完成",
-  "snapshot_sha256": "93d6c0a4821e547b122601f124636de97409551a6221cde02ffaa533abd7dea9",
-  "architecture_sha256": "6d1a382d44c982beff4c4f28ea8d22b7ec669752131acb9a0c3ae1a8c783c496",
-  "history_sha256": "55b16ba07c79d6db14bacd7bffe26a6d87e6a15620ce0a557fdd73d138c9b449",
+  "reviewed_at": "2026-11-01T18:54:09Z",
+  "review_reason": "最终交付复核T1私有RR/ONLY125首次快照、真实PG与整仓证据、四分区CI修订及19图；README和开发验证已对齐固定专库与测试身份。模块/数据/权限/时序边界一致，T2资金接线和新远端CI验收仍后续",
+  "snapshot_sha256": "622958485758d6dd5225dc254e0842bfd8bb77584f374ac946e7cdd420720d60",
+  "architecture_sha256": "d68965f170d82f039a10d8d842c6d1939c9e0349fbcb1bc738b296a17c1f7e08",
+  "history_sha256": "e26990a9d32dadb099463b9beb2f9861b41f28acde33ea1a6c8932e5f1fbd27a",
   "files": [
     {
       "path": ".dockerignore",
@@ -17,7 +17,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "b5194387bb5e1a07bc5fd31ba6cc0682df4f8e3b47a3259ef3bf393fb8a550c8"
+      "sha256": "d7c0d6767f9b68f29c50448452e73ef7503cabadceac707cf1e061b64b562665"
     },
     {
       "path": ".gitignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "d7afc792c039b49f13eab2a5ca0f32e825e8eac09fc082ee8a99ae9397c3b1c2"
+      "sha256": "e724c485674f9fefbb085fe8dec1a96f06159e205a12428e5952425510dff01c"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "docs/architecture/maintenance-gate.md",
-      "sha256": "48830053e76b90132c2327674a3ff12c65f1c4cdce7ace9034d50d8f49896f48"
+      "sha256": "0fde110e2497dd89f8814d72bd4582cf8d2a1e34e2d40497b0f803d134126f48"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -109,15 +109,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "86ffa7c5e4cb442c4f1000a2d4980bcbdff6dec8d7c60ec3a3ec11a2b5f24fe0"
+      "sha256": "f92847a81c5fc97c8d24bb4ed89c6bf8d90dee4a6d3d722b281de8fed5fc2db7"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "c72c9789d281ea9ac1169f2fa7d336983d295d545f8036a5e7cd68d7fb2f035c"
+      "sha256": "245664b608230294c7258c070e029e0a9b1971a8360a5771d044a7c8a2152643"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "8754536d21cca52d4eb1fe2f1f440e476681a6bb33cc07a3e810c7496c8d851d"
+      "sha256": "980b1f09af7c349a576ffbf298c5e7a74706c7880cd2c996ba14a4ce2e6a978b"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -165,7 +165,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "589186941f13355c91fb21a4202b8572d7554d6e95b058d3ab9057b292266ba3"
+      "sha256": "bcc11079bf51f8b64abb835c8dd55331e97ee24caae8f7b63119bd8096fb03d3"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -182,6 +182,10 @@
     {
       "path": "docs/verification/architecture-maintenance-gate.json",
       "sha256": "ff517f3f334b17843ae71e2ae3d06fee2fd907b1d7de9eb0454e69692bf61341"
+    },
+    {
+      "path": "docs/verification/architecture-maintenance-snapshot.json",
+      "sha256": "969050ea6d4f61ab16bb8292d0438c080b0e888686cfb9838e369f7f8b33598a"
     },
     {
       "path": "docs/verification/architecture-sync.md",
@@ -230,6 +234,14 @@
     {
       "path": "docs/verification/assets/architecture-maintenance-gate-detail.png",
       "sha256": "9cbfa137da2f157ae188f84b9f850eb41ef4b47d1f2161ed7b0c67b817dbd09b"
+    },
+    {
+      "path": "docs/verification/assets/architecture-maintenance-snapshot-application.png",
+      "sha256": "42b1c5b0d622e6c49d6feb73dd16146ca7f7ac021fa71bd67fc0594a4ae8ab11"
+    },
+    {
+      "path": "docs/verification/assets/architecture-maintenance-snapshot-detail.png",
+      "sha256": "57421ec66ee0fc066dbf0a429dde9d6e2d12d9bc3cdf8573993152b44b46c2c7"
     },
     {
       "path": "docs/verification/assets/architecture-payment-proof.png",
@@ -680,6 +692,10 @@
       "sha256": "36dedab75e2671b17f555e1568cb24d090d61b4137c74f4315c01188a90f5080"
     },
     {
+      "path": "docs/verification/ci-profile-contract.md",
+      "sha256": "466364248c7dbc81dc753073506c20db462856cca5dbc8f6730063881889b9f2"
+    },
+    {
       "path": "docs/verification/compose-config-025.json",
       "sha256": "db3d070ae35e45d48195484a18679357b816be5616879b7b208b0b9dc46a8cb2"
     },
@@ -816,6 +832,14 @@
       "sha256": "4ff36c623706d2db1b1ed7792941bb429d12b9c003d080d1a1077162d5195b36"
     },
     {
+      "path": "docs/verification/github-ci-profile.json",
+      "sha256": "0d73eaea7a0fdd1149f5137737dc2d6d99a431b834487c5a4f97e25ef37173a7"
+    },
+    {
+      "path": "docs/verification/github-ci-profile.md",
+      "sha256": "11083b86513ab02d7d94f69d72d5ae58a4e40992b312338a0a4adbe708e7455d"
+    },
+    {
       "path": "docs/verification/github-initial-delivery.json",
       "sha256": "1cb9ecd3fb72f7266cea1728ed18be8e208c19bb8abd3b752a39623b50eede36"
     },
@@ -894,6 +918,22 @@
     {
       "path": "docs/verification/maintenance-gate.md",
       "sha256": "69500c640fd7c7fdba200fbee2489f8acc20fb43805df2d50f86057f4b431f7c"
+    },
+    {
+      "path": "docs/verification/maintenance-snapshot-integration.json",
+      "sha256": "bde70290321ae589a31644da6a700ee24986d6353124710c5bf94c36150884e1"
+    },
+    {
+      "path": "docs/verification/maintenance-snapshot-integration.md",
+      "sha256": "d89a7b9d92187e2bb8b6e40d4bf230ff7b21ed77cac3bfcb014e0f6238279688"
+    },
+    {
+      "path": "docs/verification/maintenance-snapshot.json",
+      "sha256": "aad9169ef933a42f690d9b745a33f43ff4db0e3e6f6f01a8754f97d48c8d0ca6"
+    },
+    {
+      "path": "docs/verification/maintenance-snapshot.md",
+      "sha256": "bf07ae65749409d7b86fc344375720ba35905e781bb0e74155965fdd2849d9b2"
     },
     {
       "path": "docs/verification/metering-vectors.md",
@@ -1229,7 +1269,7 @@
     },
     {
       "path": "internal/billing/funding_ledger_read_integration_test.go",
-      "sha256": "00731fb1ffb2336945e445b10fd7b8487484c5c0feb1239609d961d05b5a4eee"
+      "sha256": "c10013c5b5c5c992e5d5f176114a6e682b6f618bd897bd88f305928dbfab8f01"
     },
     {
       "path": "internal/billing/funding_ledger_read_test.go",
@@ -1725,7 +1765,7 @@
     },
     {
       "path": "internal/maintenancetrust/gate.go",
-      "sha256": "89230302f01bced160a8000e2885f7abc7bbd78f56fb475579cc60f63abee6bd"
+      "sha256": "1b58c61e99dea3e8824f4d3bed866ec92d1d67cc479c3485b669d63adc716d87"
     },
     {
       "path": "internal/maintenancetrust/gate_integration_test.go",
@@ -1738,6 +1778,30 @@
     {
       "path": "internal/maintenancetrust/identity.go",
       "sha256": "20567bab4adb61eb99456d4de44a40f6b3d1b2d1e2068cfad30a63c71eeb8df4"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot.go",
+      "sha256": "0edbe87b25f3e4cf8f7f582c9461cfa906fb91decf4b5898b5191154aa36c433"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_fixture_test.go",
+      "sha256": "f07b1a1f4c676dd7b2b31a0d1fa3a0b7e72bdc2e3173113b74e00a98f45a4fdc"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_integration_test.go",
+      "sha256": "0e7092fc48366746620e717060460df4fc23364f0405cabd1e56b146b778c1e0"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_tables.go",
+      "sha256": "bc6eacd2b7d5e9dd307bff4aafef0e6d70c1b052175b85c8ec199fb2b47d22de"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_tables_test.go",
+      "sha256": "afad10b012ece7accdc538be4c9550ee9fb447d5736b8f90b49d6722e6edb765"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_test.go",
+      "sha256": "66e9a6ebe58cd96630a4ecfcf397d5e527852f4680a7a95c532e942720e93df0"
     },
     {
       "path": "internal/metering/amount.go",
@@ -1909,7 +1973,7 @@
     },
     {
       "path": "internal/operations/instance_test.go",
-      "sha256": "d537d8f62cc39b2d78f016f9d3e49ca5fdfcb49ba5567832c5e14ef83a51a2c9"
+      "sha256": "dda2e0457151aa10911ab9016f15d97803e5aa1ef2e652a33c8d29a83d78e8c1"
     },
     {
       "path": "internal/operations/key_configuration_integration_test.go",
@@ -1965,7 +2029,7 @@
     },
     {
       "path": "internal/operations/procurement_integration_test.go",
-      "sha256": "cf11eb24ac57f1bba9ab142cd247a4dc79af4b32393b9c6f6bfaa29cffd7c1db"
+      "sha256": "e2b0aec6fc30a9aaf8d4b2affda83d8bac079bdc96ceb232b26636f70bbcb4cb"
     },
     {
       "path": "internal/operations/recovery.go",
@@ -3745,7 +3809,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-maintenance-contract.md",
-      "sha256": "9d213377cce865a6dfc875fb93abe9a0fc77ff0cd36e42ed21726984e4eeaeed"
+      "sha256": "dd97908809d7e975220846eb56fd50534c567662008d9a43e90bbec6c919fcce"
     },
     {
       "path": "specs/022-self-service-payments/c0-ordinary-permissions.sql",
@@ -3761,7 +3825,11 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-permit-contract.md",
-      "sha256": "c837f8a45a16849dc95cf5f7bc1ddb716e4d026d5ddf01b78d05ad0507d66945"
+      "sha256": "9d90be8e997136beb0e82bde4df1b0f69ce10b2839ec9e4f553604b91eba2529"
+    },
+    {
+      "path": "specs/022-self-service-payments/c0-predecessor-contract.md",
+      "sha256": "8f0bd8dd5e259bac72dcec4e8ea602aac0951baa4e5c6c7643a63f3602301a12"
     },
     {
       "path": "specs/022-self-service-payments/c0-production-permissions.sql",
@@ -3792,6 +3860,10 @@
       "sha256": "7e3fdfeea85be50125bf4f030a6a984f42f0155b7af2a50df424f01a143757a7"
     },
     {
+      "path": "specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md",
+      "sha256": "2090aee12554779a08a77e90aa9a6105869e512d43f09b3bac5eda1d3f201d81"
+    },
+    {
       "path": "specs/022-self-service-payments/c0-verifier-contract.md",
       "sha256": "947d55fa423fa3925a23cc4f18168e64b1c57eabdcaddd9305b682cc33ecda25"
     },
@@ -3817,7 +3889,7 @@
     },
     {
       "path": "specs/022-self-service-payments/plan.md",
-      "sha256": "926f6a26fac27e2a77bf018c765d0e759d951072affa4954b0bdb953373d503b"
+      "sha256": "2a6432f67ab15745b98e3247ff0d60270e309463d2cc72aa163d47bd61987589"
     },
     {
       "path": "specs/022-self-service-payments/spec.md",

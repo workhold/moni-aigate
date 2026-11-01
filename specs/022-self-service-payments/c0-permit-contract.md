@@ -17,18 +17,17 @@ func Acquire(ctx context.Context, cfg *pgx.ConnConfig,
     pins fundinglotcatalog.Pins) (*Gate, error)
 func (g *Gate) BeginPlan(ctx context.Context) (*Snapshot, error)
 func (g *Gate) BeginInit(ctx context.Context) (*Snapshot, error)
-func (s *Snapshot) Tx() pgx.Tx
 
-func AttestTx(ctx context.Context, tx pgx.Tx, snapshot *Snapshot,
+// T2 候选；T1 不提供 Permit 或裸 tx 访问。
+func Attest(ctx context.Context, snapshot *Snapshot,
     proof *fundinglotcatalog.InstallationProof) (*Permit, error)
-func (p *Permit) VerifyTx(ctx context.Context, tx pgx.Tx) error
 
 func (s *Snapshot) Commit(ctx context.Context) error
 func (s *Snapshot) Rollback(ctx context.Context) error
 func (g *Gate) Close(ctx context.Context) error
 ```
 
-`Acquire`深复制配置与pins（包括Worker/Sandbox等指针及所有嵌套值）后新建且独占一条物理连接，不从 serve/runtime pool 借连接，不接受 caller 提交的“已持锁”连接。pins仅是未受信的比对目标；Acquire/preflight通过不把它升级成身份或catalog证明。连接失败不返回半 Gate。该连接只用于本次固定维护命令；Tx()只供受审同进程 scanner/写入协调器使用，不进入 HTTP、插件、回调 SQL 或任意 statement API。受审 Go 代码仍能调用 pgx；这些 token 不声称抵御恶意 owner 或任意 Go 代码。
+`Acquire`深复制配置与pins（包括Worker/Sandbox等指针及所有嵌套值）后新建且独占一条物理连接，不从 serve/runtime pool 借连接，不接受 caller 提交的“已持锁”连接。pins仅是未受信的比对目标；Acquire/preflight通过不把它升级成身份或catalog证明。连接失败不返回半 Gate。该连接只用于本次固定维护命令；Snapshot 不公开 Tx/Conn/context；固定内置 stage 使用私有原始顶层 wrapper，后续 scanner 采用尚待 T2/T3 冻结的窄 ReadLease，不进入 HTTP、插件或任意回调。受审 Go 代码仍能调用 pgx；这些 token 不声称抵御恶意 owner 或任意 Go 代码。
 
 Gate 只发行一个 Snapshot、一个 Permit；不能在同 Gate 先 plan 再 init，不能 Commit 后 Begin 第二事务。`plan`与`init`是分别取得新 gate、新 RR 的独立命令。Permit不公开 Reset、Extend、Clone、FromJSON、FromDigest、AcceptRole/AlreadyLocked、Trusted 或测试跳过口。
 
@@ -54,9 +53,9 @@ BeginPlan/BeginInit只能从 both_held、idle 的Gate发行由 `conn.BeginTx` **
 
 BeginPlan/BeginInit各自使用当次caller的有效context：无deadline时收紧为30秒；有deadline时取其剩余时间与10分钟的较小值，剩余不足1秒直接拒绝。Snapshot不得延长该父deadline，后续stage不得重置此总预算；Acquire已完成的至多30秒子context不拿来复用或延长，调用方仍须保持原父context有效。固定 `SET LOCAL search_path`（目标schema、pg_catalog、pg_temp）、`lock_timeout`（最多3秒）及 `statement_timeout`（不超过剩余总预算）由Begin执行；采用静态SET utility，不以 `SELECT set_config(...)` 提前取得RR数据快照。后续scanner不改GUC、不另Begin、不换连接。
 
-Init在任何SELECT（包括current_user、current_setting、pg_locks、migration history、catalog或来源读取）之前，立即执行一条静态 `LOCK TABLE <全部125表C序> IN SHARE ROW EXCLUSIVE MODE`。125恰为维护descriptor冻结的109原表与16个C0表的**集合合并后C序**，不是109后再附16；无通配符、运行catalog发现列表或CLI表选择。每个标识符全限定为事务外preflight的目标schema。LOCK缺表/权限/等待超时使整tx失败；不跳表、不降模式、不读取部分成功清单后继续。
+Init在任何SELECT（包括current_user、current_setting、pg_locks、migration history、catalog或来源读取）之前，立即执行一条静态 `LOCK TABLE ONLY <表1>, ONLY <表2>, … IN SHARE ROW EXCLUSIVE MODE`（全部125表C序）。125恰为维护descriptor冻结的109原表与16个C0表的**集合合并后C序**，不是109后再附16；无通配符、运行catalog发现列表或CLI表选择。每个标识符全限定为事务外preflight的目标schema。LOCK缺表/权限/等待超时使整tx失败；不跳表、不降模式、不读取部分成功清单后继续。
 
-SHARE ROW EXCLUSIVE 阻止同表 INSERT/UPDATE/DELETE/TRUNCATE与冲突DDL，同时允许普通读。随后按完整account ID C序锁全部既有ledger_accounts行，严格在第一次业务basis/source扫描之前。行锁语句自身只能在全部125表锁成功后执行。静态checker须证明所有业务FK/trigger写目标均在125集合内、没有未审incoming关系；C0 source/epoch触发器只读原表并写本集合。FK校验所需ROW SHARE/KEY SHARE不授权其他连接越过已被125表锁挡住的原业务写；同tx自己的init INSERT/FK/deferred checks按受审图执行。不能把“125看起来够多”当完整关系证明。
+SHARE ROW EXCLUSIVE 阻止同表 INSERT/UPDATE/DELETE/TRUNCATE与冲突DDL，同时允许普通读。全部125表锁成功后，先完成完整 catalog、history 及真实 Attest，再由固定 authority stage 按完整 account ID C序锁全部既有 ledger_accounts 行；严格在第一次业务 basis/source 扫描之前。T1 不执行这些业务行锁。静态checker须证明所有业务FK/trigger写目标均在125集合内、没有未审incoming关系；C0 source/epoch触发器只读原表并写本集合。FK校验所需ROW SHARE/KEY SHARE不授权其他连接越过已被125表锁挡住的原业务写；同tx自己的init INSERT/FK/deferred checks按受审图执行。不能把“125看起来够多”当完整关系证明。
 
 Plan RO不取得此写型表锁或account FOR UPDATE；其一致性来自成功双gate、受审runtime全停与同RR。Plan和Init各有一个独立snapshot：Init在实际表锁之后重新读取catalog、完整history、全部原源、basis，与原plan安全pins逐项精确比较；不声称跨命令共享同一MVCC snapshot。若等待表锁时别人先提交旧业务变化，Init必须看到该变化并使旧basis不符；该时间窗口须在真实PG以固定屏障验收，不能只检查看起来相同的最终余额。
 
@@ -74,7 +73,7 @@ B3例外只补足三个NOLOGIN owner无法直接认证的维护会话：原App/M
 
 ## 5. 事务、proof及失效的精确绑定
 
-Attest仅接受本Gate唯一Snapshot.Tx()的同一个顶层wrapper和 `fundinglotcatalog.VerifyInstallationTx(ctx,tx,pins)`所发opaque InstallationProof；先调用其VerifyTx，再调用 `proof.Catalog().MatchesPins(gate.copiedPins)`精确比较全部私有绑定pins，随后由Permit核维护身份和真实gate。MatchesPins为opaque CatalogProof的只读方法，nil/zero=false、不访问DB，比较构造时deep-copy的规范pins精确结构值，不trim/别名化；其返回值不是caller自报权限bool。该接缝与schema-check合同同时根冻，不以几个裸digest相等替代完整DB/schema/role/mode目标相等。普通CatalogProof不够，caller构造的结构体/摘要/相同JSON不够。Gate只消费一次installation evidence发行一个Permit；安装证明不授维护权，Permit也不授新源资金权。
+Attest仅接受本 Gate 唯一 Snapshot 私有保存的同一个顶层 wrapper和 `fundinglotcatalog.VerifyInstallationTx(ctx,tx,pins)`所发opaque InstallationProof；先调用其VerifyTx，再调用 `proof.Catalog().MatchesPins(gate.copiedPins)`精确比较全部私有绑定pins，随后由Permit核维护身份和真实gate。MatchesPins为opaque CatalogProof的只读方法，nil/zero=false、不访问DB，比较构造时deep-copy的规范pins精确结构值，不trim/别名化；其返回值不是caller自报权限bool。该接缝与schema-check合同同时根冻，不以几个裸digest相等替代完整DB/schema/role/mode目标相等。普通CatalogProof不够，caller构造的结构体/摘要/相同JSON不够。Gate只消费一次installation evidence发行一个Permit；安装证明不授维护权，Permit也不授新源资金权。
 
 私有绑定至少包括：Gate/Snapshot共享nonce及状态、具体wrapper引用、*pgx.Conn/PgConn指针、backend PID与backend_start、规范top xid8十进制、database名/OID、schema名/OID/owner OID、实际认证role名/OID、ordinary|sandbox、RR access mode、固定purpose(plan|init)、本Snapshot总deadline、完整manifest/descriptor/expected/schema/roles摘要及原v1 predecessor摘要（ordinary为空）。摘要只来自opaque proof或本包实际验证，不提供从caller digest升级信任的构造器。
 
@@ -108,7 +107,7 @@ Commit确认后，startup才由actual APP在新的RR READ ONLY按schema-check §
 
 Plan：Acquire双gate → BeginPlan RR RO → InstallationProof → AttestTx → 同tx完整history/catalog/v1/PB/ledger/funding/采购/B/pre-epoch sources → 规范basis → Permit最后VerifyTx → Snapshot.Commit确认 → 独立cleanup/release/Close → 输出安全plan。任一来源mismatch或coverage缺口不能输出可供init接受的ready plan。过程无业务写；COMMIT/清理未确认不返回成功plan。
 
-Init：Acquire双gate → BeginInit RR RW及125表/全accounts锁 → 同tx InstallationProof/AttestTx → 全部原源独立核验及basis重算 → 与输入plan精确pins核对 → 封闭写入器创建memberships/seq0/lot/events/cache → immutable v2 attestation → 最后epoch → 同tx maintenance post-init独立全图/canonical持久关系核验及Permit最后VerifyTx → Snapshot.Commit确认 → cleanup/release/Close → 输出原epoch安全回执。该链不要求/不发行APP RuntimeProof。写入器不调用在线wallet helper，不改原109表的业务数据/余额/PB/Key，不重新发行旧approved退款。
+Init：Acquire双gate → BeginInit RR RW及125表锁 → 同tx InstallationProof及Attest内完整history/身份/v1校验后全accounts锁 → 全部原源独立核验及basis重算 → 与输入plan精确pins核对 → 封闭写入器创建memberships/seq0/lot/events/cache → immutable v2 attestation → 最后epoch → 同tx maintenance post-init独立全图/canonical持久关系核验及Permit最后VerifyTx → Snapshot.Commit确认 → cleanup/release/Close → 输出原epoch安全回执。该链不要求/不发行APP RuntimeProof。写入器不调用在线wallet helper，不改原109表的业务数据/余额/PB/Key，不重新发行旧approved退款。
 
 跨命令输入plan只是严格解析的**待比较数据**，无权限作用；至少精确匹配原epochUUID、DB/schema OID、mode/v1 predecessor、manifest/descriptor/expected/schema/roles、完整basis、来源phase与安全计数。Init自己重算全部值；CLI不能接受“skip-basis/force/changed-only”，不能用SUM、最近时间或一个balanced bool代替完整basis和CoverageComplete。旧plan因任何业务/catalog/OID变化不符即整tx回滚，需重新plan。
 
@@ -125,7 +124,7 @@ Snapshot.Commit先进入closing并撤销Permit，再发送一次COMMIT；收到�
 | 片 | 文件/接口 | 必须完成的验证 |
 | --- | --- | --- |
 | T0 gate | internal/maintenancetrust/gate.go、gate_test.go、gate_integration_test.go | 新专用conn、实际402→401、反序拒绝、false等待/取消/失回复、逆序有界释放/物理关闭；无遗留session/advisory锁 |
-| T1 snapshot | snapshot.go、snapshot_integration_test.go | 仅顶层RR两mode；Init第一SELECT前125表C序SRE及全accounts锁；物理writer屏障证明先提交变化被Init看到；Plan RO无写型锁；不另Begin |
+| T1 snapshot | snapshot.go、snapshot_integration_test.go | 仅顶层RR两mode；Init第一SELECT前125表C序SRE；全accounts锁留待T2认证后；物理writer屏障证明先提交变化被Init看到；Plan RO无写型锁；不另Begin |
 | T2 authority | permit.go、predecessor.go、permit_integration_test.go | ordinary实际owner与B3字面专库DB-owner唯一例外；完整v1/opaque安装证据；错误LOGIN/SET ROLE/endpoint/OID/成员/ACL/正文/nonce绑定拒绝 |
 | T3同RR scanners | PB独立VerifyMaintenanceTx；billing独立pre-epoch/lot、ledger/funding/采购/B caller-owned接缝 | 全部入口VerifyTx，原PB公共Verifier仍拒B3 installer；原tx私有sentinel不可见、快照旧/新分歧符合MVCC；任何缺口/失败零结果，不跨库/另pool |
 | T4 plan/init协调 | 另根冻固定CLI、写入器、maintenance post-init与startup RuntimeProof分型接口 | 逐行basis跨命令重算、非空原历史、空/零tenant、完整旧membership、维护post-init全图；确定rollback/真实成功COMMIT丢回复及只读原epoch确认，无重复开账；startup另用实际APP新RRRO |
@@ -171,3 +170,9 @@ Close无论传入context已取消、nil或无期限，都使用独立background�
 T0边界补充：sandbox的配置/实际LOGIN用户名也必须为字面moni_test，但其super/datdba维护授权仍留T2重新认证；public的datdba=ObjectOwner pin只是有效namespace目标绑定，不推断当前LOGIN就是维护owner。Close的后续副本调用返回首次cleanup结果（成功nil、失败maintenance_cleanup），busy调用直接maintenance_gate_busy。Copy之前先检查nil cfg/fallback等结构，不能让pgx.Copy的nil fallback panic泄漏。pgx在取消/收包错误时可能先标closed、异步稍后才关socket；unknown/失败路径必须对事先保存的底层net.Conn立即Close，再做有界pgx清理，不能只凭pgx.Close立即返回推断物理连接已销毁或锁已释放。
 
 必须验证：真实新连接和402→401顺序/每把一次、第二把被占时第一把可见但不返回半Gate、false后正常等待取得、取消与父/30秒预算、额外/丢失/shared/two-int锁异常、错误实际endpoint/当前schema/登录映射、部分取得及401已在PG取得但回复丢失的物理关闭、逆序解锁及明确true、取消Close仍清理、复制/零值/并发/幂等与redacted编码。数据库测试使用独立`C0_MAINTENANCE_DATABASE_URL`且只接受本机专库；只清理自己精确创建的随机角色/schema/backend，不能终止其他持锁者、修改共享public或升级58123。真实角色/新conn/pg_locks与PID/start屏障必须独立观察，测试hook只能在test文件的网络wrapper或固定屏障中存在，不向生产提供skip/已持锁声明。T0的完整实现与验证另立记录、更新统一架构后由根汇合检查，不沿用静态checker的通过记录。
+
+## 11. 根冻结 T1 接缝与修订优先级
+
+2026-11-02。以 [Snapshot 生命周期合同](c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力) 的冻结范围实施 T1：一次顶层 RR、私有总期限、ONLY 125 表静态锁、固定内置 catalog stage、busy、提交结果与清理。删除候选 Snapshot.Tx；Attest 及 scanner 的旧裸 tx 签名被该合同 §6–7 的后续设计替代，T2/T3 未冻前不提供 stub 或兼容旁路。本文其他尚存 AttestTx/VerifyTx 表述仅指候选内部核验职责，不是可用的导出 API。
+
+Init 固定次序是 Begin/SET → 首 SELECT 前 ONLY 125 表 SRE → 完整 catalog → Attest 内 history/真实身份/v1/双锁/空集 → 全 account 行锁 → Permit → sources。T1 截止在 catalog stage，不读账户、不发 Permit。§9 四项中生命周期、全程 busy/期限和账户锁顺序已在 T1 合同明确；可信 manifest 和前驱矩阵、维护身份仍须 T2 根冻结和实现。库级 RR RW 不是业务 init 写入口。

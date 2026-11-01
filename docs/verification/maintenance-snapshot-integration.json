@@ -1,0 +1,187 @@
+{
+  "recorded_at": "2026-11-02",
+  "scope": "T1 maintenance Snapshot and first GitHub CI profile correction",
+  "make_check": {
+    "exit_code": 0,
+    "log_sha256": "ff6757be6aeaa259c0ad34520c827e10aab12b06c584c1f6f44255aa0f6e8cd9"
+  },
+  "make_verify_mvp": {
+    "exit_code": 0,
+    "database": "explicit dedicated TEST_DATABASE_URL; value omitted",
+    "frontend_tests": 286,
+    "frontend_failures": 0,
+    "strict_and_vite_build": true,
+    "all_default_go_race": true,
+    "go_vet_all": true,
+    "embedded_binary_build": true,
+    "log_sha256": "b15efb7064c40c042e0f7ab9574a28714e3798755225878f3c0bf39be4cea7eb",
+    "tested_packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+        "elapsed_seconds": 4.583
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alerts",
+        "elapsed_seconds": 44.119
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+        "elapsed_seconds": 3.298
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/billing",
+        "elapsed_seconds": 209.338
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/catalog",
+        "elapsed_seconds": 58.339
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/config",
+        "elapsed_seconds": 7.348
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "elapsed_seconds": 21.292
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+        "elapsed_seconds": 7.12
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/identity",
+        "elapsed_seconds": 258.34
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+        "elapsed_seconds": 5.451
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+        "elapsed_seconds": 3.751
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "elapsed_seconds": 30.39
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/metering",
+        "elapsed_seconds": 8.013
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+        "elapsed_seconds": 21.855
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/operations",
+        "elapsed_seconds": 83.814
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+        "elapsed_seconds": 8.362
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+        "elapsed_seconds": 11.151
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+        "elapsed_seconds": 5.442
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+        "elapsed_seconds": 10.806
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/payments",
+        "elapsed_seconds": 72.307
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+        "elapsed_seconds": 37.685
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+        "elapsed_seconds": 5.653
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+        "elapsed_seconds": 88.912
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/pricing",
+        "elapsed_seconds": 26.715
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+        "elapsed_seconds": 5.138
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/provider",
+        "elapsed_seconds": 6.859
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+        "elapsed_seconds": 5.341
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/routing",
+        "elapsed_seconds": 3.137
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/security",
+        "elapsed_seconds": 3.506
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/server",
+        "elapsed_seconds": 310.402
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+        "elapsed_seconds": 2.368
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+        "elapsed_seconds": 10.198
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/migrations",
+        "elapsed_seconds": 37.467
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+        "elapsed_seconds": 3.303
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+        "elapsed_seconds": 3.577
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+        "elapsed_seconds": 2.933
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+        "elapsed_seconds": 1.768
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+        "elapsed_seconds": 8.195
+      }
+    ]
+  },
+  "separate_opt_in": {
+    "T1": "docs/verification/maintenance-snapshot.json",
+    "final_race_seconds": 115.412,
+    "all_terminal_pass": 124,
+    "C0_other_profiles": "not rerun by default full suite; previous frozen evidence retained"
+  },
+  "binary_sha256": "72487aa4d559842ac0f9ff3059d6cf5d2adb8ac17b08166d95ed6ae46e08060b",
+  "workflow_remote": "new run pending actual push; initial run41334156647 failed as recorded in github-ci-profile.json",
+  "not_delivered": [
+    "T2 Permit/history/predecessor authority",
+    "source replay/basis/epoch and full C0 funding wiring",
+    "C1/C2/C3 business implementations",
+    "official providers, PSP, target1Panel production acceptance"
+  ]
+}

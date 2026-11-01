@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-01（022-B3生命周期、C0纯算法/RR核验、024计量纯层及025配置渲染/邮件进程）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（维护单次RR与首次快照、T2前驱矩阵及阶段边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -733,4 +733,12 @@ C0离线metadata导出已按[§9](../../specs/022-self-service-payments/c0-schem
 
 双bigint session锁固定782193402→782193401，明确false每50ms等待，明确true每把只取一次，核本PID全部advisory的DB/mode/classid/objsubid/granted及无额外锁。工作context贯穿连接、预检及两锁，采用父deadline与30秒的较早值。`Close(ctx)`忽略caller取消，独立background共用5秒，先完整核锁、401→402逐把明确true、末尾零锁再关闭。副本共态，TryLock并发返回maintenance_gate_busy，重复返回首次cleanup结果。
 
-unknown/非idle异常先原子封闭私有socket registry并关闭已捕获连接，再有界pgx.Close；pgx异步CancelRequest使用同copied DialFunc，晚到socket立即关闭。不能只凭pgx已标closed或本地Close返回断言远端锁已释放，PG测试独立观察PID/backend_start。生产无hooks、BEGIN、事务控制或业务SQL；String/GoString/JSON固定redacted，不unwrap driver。合同与专项范围见[T0§10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)和[验证](../verification/maintenance-gate.md)。
+unknown/非idle异常先原子封闭私有socket registry并关闭已捕获连接，再有界pgx.Close；pgx异步CancelRequest使用同copied DialFunc，晚到socket立即关闭。不能只凭pgx已标closed或本地Close返回断言远端锁已释放，PG测试独立观察PID/backend_start。生产无测试hooks；T0 Acquire/Close不发BEGIN，T1的事务控制见§37；String/GoString/JSON固定redacted，不unwrap driver。合同与专项范围见[T0§10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)和[验证](../verification/maintenance-gate.md)。
+
+## 37. 私有维护 Snapshot（022-C0-T1）
+
+[根冻结生命周期](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)限定 Gate 只消费一次 Begin，保留真实顶层rawTx，不导出Tx/Conn/PgConn/context或任意回调。Plan RR RO；Init RR RW固定三条SET LOCAL后、首次任何SELECT前，一条完整ONLY/全限定/C序125表SRE；125静态全集同时绑定六个expected profile与原109+16，canonical JSON名单SHA6fd978751fe24d37fa29da679be0976e12659e8a8f64d3983050280fffc00b19。此片不执行账户行锁。
+
+唯一内置VerifyInstallation在同rawTx调用真实catalog issuer并重核proof/pins，保存与返回分离的opaque wrapper。整个stage占busy，终结/Close/第二stage并发直接拒绝；绝对期限约束所有stage并在idle/CPU间隙强制raw-close，watcher不并发pgx。Commit明确COMMIT、服务器明确回滚和未确认分别记录Committed/RolledBack/Unknown；pgx.ErrTxClosed或任意driver error不当作已回滚。Rollback独立最多5秒，Close不替未终结Snapshot提交或回滚。重复同终结返回首次结果，不同终结拒绝且不变Outcome。
+
+新增[真实PG/race](../verification/maintenance-snapshot.md)115.412秒、124终态全PASS；T0旧记录保留原范围。[完整前驱候选](../../specs/022-self-service-payments/c0-predecessor-contract.md)列App19字段、M/Q真实列与各自本地值、ordinary-off21表/mandatory FK/policy/6旁路，候选SQL须在返回客户端前作scalar长度闸门；T2尚未发行Permit。后续ReadLease须先有真实authority，原pgx.Tx reader通过独立query seam等价迁移，禁止假Conn适配或移除原actual LOGIN/owner检查。

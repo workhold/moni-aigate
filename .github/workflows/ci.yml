@@ -4,42 +4,117 @@ permissions:
   contents: read
 jobs:
   contracts:
+    name: contracts (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [billing, identity, server, other]
     env:
       TEST_DATABASE_URL: postgres://moni_test:test-only-password@127.0.0.1:55439/moni_test?sslmode=disable
+      GO_TEST_SHARD: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
-      # The sandbox proves the actual PostgreSQL port, not a mapped client port.
-      # Keep its server and host ports identical to the frozen local QA target.
-      - name: Start dedicated PostgreSQL for financial and sandbox tests
-        run: |
-          docker run --detach --name moni-aigate-test-pg \
-            --env POSTGRES_USER=moni_test --env POSTGRES_DB=moni_test \
-            --env POSTGRES_PASSWORD=test-only-password \
-            --publish 127.0.0.1:55439:55439 \
-            postgres:16-alpine postgres -p 55439
-          for attempt in $(seq 1 60); do
-            if docker exec moni-aigate-test-pg pg_isready -h 127.0.0.1 -p 55439 -U moni_test -d moni_test; then
-              exit 0
-            fi
-            sleep 1
-          done
-          exit 1
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
       - run: go run ./scripts/check-architecture
+        if: matrix.shard == 'other'
       - uses: actions/setup-node@v4
+        if: matrix.shard == 'other'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci && npm test && npm run build
+        if: matrix.shard == 'other'
         working-directory: web
-      - run: go test -race ./...
+      # Each matrix job owns a disposable database. Host networking preserves
+      # the server-side loopback endpoint required by the sandbox proof.
+      # Trust matches the historical LOGIN fixtures; it is not a deployment
+      # authentication setting or evidence of password authentication.
+      - name: Start dedicated PostgreSQL for financial and sandbox tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name moni-aigate-test-pg \
+            --network host \
+            --env POSTGRES_USER=moni_test --env POSTGRES_DB=moni_test \
+            --env POSTGRES_PASSWORD=test-only-password \
+            --env POSTGRES_HOST_AUTH_METHOD=trust \
+            postgres:16-alpine postgres -p 55439 \
+            -c listen_addresses=127.0.0.1 \
+            -c max_connections=200 \
+            -c fsync=on -c synchronous_commit=on -c full_page_writes=on
+          for attempt in $(seq 1 60); do
+            if [[ "$(docker exec moni-aigate-test-pg \
+              psql -X -qAt -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 55439 \
+              -U moni_test -d moni_test \
+              -c "SELECT CASE WHEN inet_server_addr() = '127.0.0.1'::inet
+                AND inet_server_port() = 55439
+                AND current_database() = 'moni_test' AND current_user = 'moni_test'
+                AND current_setting('max_connections') = '200'
+                AND current_setting('fsync') = 'on'
+                AND current_setting('synchronous_commit') = 'on'
+                AND current_setting('full_page_writes') = 'on'
+                THEN 'ready' ELSE 'not_ready' END")" == "ready" ]]; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - name: Verify complete package partition and run Go tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          module=$(go list -m)
+          go list ./... > "$RUNNER_TEMP/ci-packages-all.txt"
+          for shard in billing identity server other; do
+            : > "$RUNNER_TEMP/ci-packages-$shard.txt"
+          done
+          while IFS= read -r package; do
+            case "$package" in
+              "$module/internal/billing") shard=billing ;;
+              "$module/internal/identity") shard=identity ;;
+              "$module/internal/server") shard=server ;;
+              *) shard=other ;;
+            esac
+            printf '%s\n' "$package" >> "$RUNNER_TEMP/ci-packages-$shard.txt"
+          done < "$RUNNER_TEMP/ci-packages-all.txt"
+          for shard in billing identity server other; do
+            if [[ ! -s "$RUNNER_TEMP/ci-packages-$shard.txt" ]]; then
+              echo "Empty Go test partition: $shard" >&2
+              exit 1
+            fi
+          done
+          sort "$RUNNER_TEMP/ci-packages-all.txt" > "$RUNNER_TEMP/ci-packages-expected.txt"
+          cat "$RUNNER_TEMP/ci-packages-billing.txt" \
+            "$RUNNER_TEMP/ci-packages-identity.txt" \
+            "$RUNNER_TEMP/ci-packages-server.txt" \
+            "$RUNNER_TEMP/ci-packages-other.txt" \
+            | sort > "$RUNNER_TEMP/ci-packages-actual.txt"
+          cmp "$RUNNER_TEMP/ci-packages-expected.txt" "$RUNNER_TEMP/ci-packages-actual.txt"
+          if [[ $(uniq -d "$RUNNER_TEMP/ci-packages-actual.txt" | wc -l) -ne 0 ]]; then
+            echo "Duplicate package in Go test partitions" >&2
+            exit 1
+          fi
+          mapfile -t packages < "$RUNNER_TEMP/ci-packages-$GO_TEST_SHARD.txt"
+          go test -json -race -count=1 -timeout=10m "${packages[@]}" \
+            | tee "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"
       - run: go vet ./...
+        if: matrix.shard == 'other'
       - run: go build -trimpath ./cmd/moni-aigate
+        if: matrix.shard == 'other'
       - name: Stop isolated database
         if: always()
         run: docker rm --force moni-aigate-test-pg
+      - name: Preserve Go test timing and complete package partition
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-tests-${{ matrix.shard }}
+          path: |
+            ${{ runner.temp }}/go-tests-${{ matrix.shard }}.jsonl
+            ${{ runner.temp }}/ci-packages-*.txt
+          if-no-files-found: warn

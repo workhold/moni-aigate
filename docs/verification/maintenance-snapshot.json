@@ -1,0 +1,132 @@
+{
+  "recorded_at": "2026-11-02",
+  "slice": "022-C0-T1 private maintenance Snapshot; T0 regression retained",
+  "status": "PASS within isolated local PostgreSQL test scope",
+  "contract": "specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10",
+  "production_api_added": [
+    "Gate.BeginPlan",
+    "Gate.BeginInit",
+    "Snapshot.VerifyInstallation",
+    "Snapshot.Commit",
+    "Snapshot.Rollback",
+    "Snapshot.Outcome"
+  ],
+  "dependencies_unchanged": [
+    "standard library",
+    "github.com/jackc/pgx/v5 v5.7.6",
+    "internal/fundinglotcatalog"
+  ],
+  "source_files": [
+    {
+      "path": "internal/maintenancetrust/gate.go",
+      "sha256": "1b58c61e99dea3e8824f4d3bed866ec92d1d67cc479c3485b669d63adc716d87"
+    },
+    {
+      "path": "internal/maintenancetrust/gate_integration_test.go",
+      "sha256": "243a11a09851781268ba5578a1a0412993ff1b828b68c966a7dd1109fb9f3e6a"
+    },
+    {
+      "path": "internal/maintenancetrust/gate_test.go",
+      "sha256": "014d7323ff0d9f5f0243ca600367e3e952cc92fee3dcaa5d7012bfabbbd0eb0a"
+    },
+    {
+      "path": "internal/maintenancetrust/identity.go",
+      "sha256": "20567bab4adb61eb99456d4de44a40f6b3d1b2d1e2068cfad30a63c71eeb8df4"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot.go",
+      "sha256": "0edbe87b25f3e4cf8f7f582c9461cfa906fb91decf4b5898b5191154aa36c433"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_fixture_test.go",
+      "sha256": "f07b1a1f4c676dd7b2b31a0d1fa3a0b7e72bdc2e3173113b74e00a98f45a4fdc"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_integration_test.go",
+      "sha256": "0e7092fc48366746620e717060460df4fc23364f0405cabd1e56b146b778c1e0"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_tables.go",
+      "sha256": "bc6eacd2b7d5e9dd307bff4aafef0e6d70c1b052175b85c8ec199fb2b47d22de"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_tables_test.go",
+      "sha256": "afad10b012ece7accdc538be4c9550ee9fb447d5736b8f90b49d6722e6edb765"
+    },
+    {
+      "path": "internal/maintenancetrust/snapshot_test.go",
+      "sha256": "66e9a6ebe58cd96630a4ecfcf397d5e527852f4680a7a95c532e942720e93df0"
+    }
+  ],
+  "final_command": {
+    "command": "go test -json -race ./internal/maintenancetrust -count=1 -timeout=240s",
+    "opt_in_environment": "C0_MAINTENANCE_DATABASE_URL (value omitted)",
+    "exit_code": 0,
+    "elapsed_seconds": 115.412,
+    "top_level_tests": 46,
+    "terminal_outcomes": {
+      "pass": 124
+    },
+    "log_path": ".local/c0-snapshot-verification/final-race.jsonl",
+    "log_sha256": "ce713b48f37667ee8af78a29344506cb629e03ea6723e49c676688262e7fde14"
+  },
+  "writer_barrier": {
+    "command": "go test -json -race ./internal/maintenancetrust -run '^TestSnapshotPostgresWriterBarrierCreatesSnapshotAfterLockWait$' -count=1 -timeout=30s",
+    "exit_code": 0,
+    "package_elapsed_seconds": 20.034,
+    "test_elapsed_seconds": 3.08,
+    "log_sha256": "a3ce9eab049097b3fea9e7e1bdb2b3742d003486661388ff80018a53a1cdd47b",
+    "oracle": "independent old voucher policy row; uncommitted actual writer; Init physical pg_locks wait; writer COMMIT then Init first SELECT observes changed enabled and revision; no basis proof claimed"
+  },
+  "first_attempt": {
+    "exit_code": 1,
+    "package_elapsed_seconds": 112.273,
+    "terminal_outcomes": {
+      "pass": 123,
+      "fail": 1
+    },
+    "test": "TestSnapshotPostgresWriterBarrierCreatesSnapshotAfterLockWait",
+    "cause": "test substring select matched static table payment_order_capture_selections before snapshot visibility assertion; fixed statement keyword classification only",
+    "log_sha256": "a78ae6525ce263f209a21f09f80153ad19703fa0f767c7814e01e5638695274d",
+    "source_pins_sha256": "397d209adc1cb4a0100c4b7d8d377969f1540b9463dcc0e42f0933e42ec113ba"
+  },
+  "vet": {
+    "command": "go vet ./internal/maintenancetrust",
+    "exit_code": 0
+  },
+  "independent_post_run_audit": {
+    "schemas": 0,
+    "roles": 0,
+    "backends": 0,
+    "advisory_locks": 0,
+    "public_builtin_owner": true,
+    "public_relations": 0,
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "full_page_writes": "on",
+    "max_connections": "200",
+    "server_version": "16.15 (Homebrew)"
+  },
+  "invariants": [
+    "single original top-level RR; fixed three SET utilities; Init complete ONLY125 C-order SRE before first SELECT",
+    "six fixed expected inventories equal original109 plus new16; canonical JSON name-list SHA 6fd978751fe24d37fa29da679be0976e12659e8a8f64d3983050280fffc00b19",
+    "actual original InstallationProof; copied return wrapper cannot replace owned evidence; one issuer attempt",
+    "parent and per-call cancellation raw-close while idle/CPU gap/SQL; default30s absolute deadline; remaining below1s rejected",
+    "busy covers evidence; copied Commit/Rollback/Close/second issuer rejected without SQL",
+    "confirmed Commit and explicit/deferred/aborted Rollback distinguished from unknown; no retries or compensation",
+    "real COMMIT durable sentinel independently observed before reply-only drop; cancellation after server commit remains Unknown",
+    "Rollback cancelled caller still uses original independent5s total cleanup; reply loss Abandoned",
+    "T0 dual session order and reverse confirmed cleanup preserved; known outcome never overwritten by cleanup"
+  ],
+  "independent_review": "root semantic review plus cost_ui_review independent production/fixture read review; two cancellation/failed-Begin cleanup issues corrected before final run",
+  "not_delivered": [
+    "Permit and true maintenance authority",
+    "history and compiled manifest stage",
+    "T2 v1 predecessor and ordinary-off reader implementation",
+    "account row locks and ReadLease",
+    "independent full source replay, basis, epoch, RuntimeProof",
+    "production migration, ordinary main/CLI, PSP/provider requests or 1Panel acceptance"
+  ],
+  "preview_58123_touched": false,
+  "model_or_psp_calls": 0
+}

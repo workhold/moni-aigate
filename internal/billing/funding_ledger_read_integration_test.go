@@ -43,9 +43,21 @@ func fundingLedgerReadReal(t *testing.T) *fundingLedgerReadFixture {
 			p.Close()
 		}
 		var remaining int
-		fundingLedgerReadMust(t, f.pool.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE usename=ANY($1::pg_catalog.text[])`, x.roles).Scan(&remaining))
-		if remaining != 0 {
-			t.Error("reader role backends not closed")
+		poll := time.NewTicker(10 * time.Millisecond)
+		defer poll.Stop()
+		for {
+			// The owner pool is independent of the closed runtime pools. Each
+			// autocommit query starts a fresh observation; a long RR/statistics
+			// snapshot could keep reporting an already exited backend.
+			fundingLedgerReadMust(t, f.pool.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE usename=ANY($1::pg_catalog.text[])`, x.roles).Scan(&remaining))
+			if remaining == 0 {
+				break
+			}
+			select {
+			case <-ctx.Done():
+				t.Fatal("reader role backends not closed within cleanup deadline")
+			case <-poll.C:
+			}
 		}
 		for _, r := range x.roles {
 			_, e := f.pool.Exec(ctx, "DROP OWNED BY "+pgx.Identifier{r}.Sanitize())

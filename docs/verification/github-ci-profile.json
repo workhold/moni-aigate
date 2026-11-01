@@ -1,0 +1,91 @@
+{
+  "date": "2026-11-02",
+  "initial_remote_run": {
+    "id": 41334156647,
+    "url": "https://github.com/workhold/moni-aigate/actions/runs/41334156647",
+    "conclusion": "failure",
+    "source_commit": "197eb352ddc179aa7b1b5f631b320e213824f0d6",
+    "failed_log_sha256": "336d0fe988fe87e0da06c41080d40a5cc186e548d84a846433f401b83b9efe3f"
+  },
+  "contract": "docs/verification/ci-profile-contract.md",
+  "fixes": [
+    "disposable CI trust profile for historical no-password actual LOGIN fixtures",
+    "actual SQL loopback endpoint with Linux host networking; production pin unchanged",
+    "four isolated runner/database partitions with complete go-list coverage; per-package10m/race/business budgets retained",
+    "procurement CreatedAt instant Equal plus full UTC-copy field comparison",
+    "exact terminated backend PID/start and random lock disappearance observed before one takeover",
+    "reader original10s cleanup waits exact own runtime role backend disappearance"
+  ],
+  "static_workflow_verification": {
+    "yaml_parse": true,
+    "all_bash_run_syntax": true,
+    "go_list_partition_counts": {
+      "billing": 1,
+      "identity": 1,
+      "server": 1,
+      "other": 39
+    },
+    "all_packages": 42,
+    "duplicates": 0,
+    "missing": 0,
+    "embed_placeholder_tracked": true,
+    "docker_executed_locally": false
+  },
+  "local_real_pg_race": [
+    {
+      "scope": "operations instance and procurement assertions",
+      "log": ".local/github-release-verification/ci-operation-oracles.jsonl",
+      "sha256": "896af40e0091e804b5c8f785ffcbec615f093cc2f30cb68e67094978fdc55cb5",
+      "package_result": "pass",
+      "elapsed_seconds": 2.228,
+      "terminal_counts": {
+        "pass": 2
+      }
+    },
+    {
+      "scope": "billing complete funding ledger reader",
+      "log": ".local/github-release-verification/ci-reader-cleanup.jsonl",
+      "sha256": "55a32c26e70584560e852991210ae178548c2fb106d24e1271327fae931e0f50",
+      "package_result": "pass",
+      "elapsed_seconds": 7.9030000000000005,
+      "terminal_counts": {
+        "pass": 36
+      }
+    },
+    {
+      "scope": "procurement with TZ=UTC",
+      "log": ".local/github-release-verification/ci-procurement-utc.jsonl",
+      "sha256": "9bf4309e1ca4ad4d071957d42aa0234c606ee9d17487daa4d2affa11a0011a36",
+      "package_result": "pass",
+      "elapsed_seconds": 1.74,
+      "terminal_counts": {
+        "pass": 1
+      }
+    }
+  ],
+  "source_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "d7c0d6767f9b68f29c50448452e73ef7503cabadceac707cf1e061b64b562665"
+    },
+    {
+      "path": "internal/operations/instance_test.go",
+      "sha256": "dda2e0457151aa10911ab9016f15d97803e5aa1ef2e652a33c8d29a83d78e8c1"
+    },
+    {
+      "path": "internal/operations/procurement_integration_test.go",
+      "sha256": "e2b0aec6fc30a9aaf8d4b2affda83d8bac079bdc96ceb232b26636f70bbcb4cb"
+    },
+    {
+      "path": "internal/billing/funding_ledger_read_integration_test.go",
+      "sha256": "c10013c5b5c5c992e5d5f176114a6e682b6f618bd897bd88f305928dbfab8f01"
+    }
+  ],
+  "remote_new_run": "pending push; not claimed passed",
+  "not_claimed": [
+    "password-authentication acceptance",
+    "Linux C0 expected profile certification",
+    "production/1Panel acceptance",
+    "changes to runtime authorization or financial budgets"
+  ]
+}

@@ -1249,3 +1249,76 @@
 - modified `specs/022-self-service-payments/plan.md`
 
 </details>
+
+## 2026-11-01T18:43:06Z · 164d96c5a823
+
+根汇合T1私有单次RR、ONLY125首次快照、真实catalog stage、busy/取消/提交未知及115.412秒真实PG race；同步T2前驱候选和HLD/LLD/细化图；修订GitHub临时loopback测试profile、完整独立分区和跨平台测试观察，生产预算/权限保持，未开放Permit或资金接线
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1142 个源文件；本次 29 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/architecture-maintenance-snapshot.json`
+- added `docs/verification/assets/architecture-maintenance-snapshot-application.png`
+- added `docs/verification/assets/architecture-maintenance-snapshot-detail.png`
+- added `docs/verification/ci-profile-contract.md`
+- added `docs/verification/github-ci-profile.json`
+- added `docs/verification/github-ci-profile.md`
+- added `docs/verification/maintenance-snapshot.json`
+- added `docs/verification/maintenance-snapshot.md`
+- modified `internal/billing/funding_ledger_read_integration_test.go`
+- modified `internal/maintenancetrust/gate.go`
+- added `internal/maintenancetrust/snapshot.go`
+- added `internal/maintenancetrust/snapshot_fixture_test.go`
+- added `internal/maintenancetrust/snapshot_integration_test.go`
+- added `internal/maintenancetrust/snapshot_tables.go`
+- added `internal/maintenancetrust/snapshot_tables_test.go`
+- added `internal/maintenancetrust/snapshot_test.go`
+- modified `internal/operations/instance_test.go`
+- modified `internal/operations/procurement_integration_test.go`
+- modified `specs/022-self-service-payments/c0-maintenance-contract.md`
+- modified `specs/022-self-service-payments/c0-permit-contract.md`
+- added `specs/022-self-service-payments/c0-predecessor-contract.md`
+- added `specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T18:52:38Z · b8d729e70236
+
+汇合T1私有单次RR/ONLY125首次快照与真实PG专项、最终整仓证据、CI隔离及断言修订、README和19图；已复核模块/时序/数据/权限/能力边界，T2及资金接线仍后续，新远端CI待实际运行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1144 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/architecture-maintenance-snapshot.json`
+- added `docs/verification/maintenance-snapshot-integration.json`
+- added `docs/verification/maintenance-snapshot-integration.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-01T18:54:09Z · 622958485758
+
+最终交付复核T1私有RR/ONLY125首次快照、真实PG与整仓证据、四分区CI修订及19图；README和开发验证已对齐固定专库与测试身份。模块/数据/权限/时序边界一致，T2资金接线和新远端CI验收仍后续
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1144 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/architecture-maintenance-snapshot.json`
+- modified `docs/verification/maintenance-snapshot-integration.md`
+
+</details>
