@@ -1322,3 +1322,26 @@
 - modified `docs/verification/maintenance-snapshot-integration.md`
 
 </details>
+
+## 2026-11-01T19:28:43Z · b222a0e489b3
+
+第二轮真实GitHub失败证据及CI修订：完整race顶层名单互斥分片、独立runner/PG、显式Shanghai时区与ready核验；已复核原始M/Q Open隔离复现、19图、HLD/LLD和测试部署边界。产品SQL/权限/资金/期限均不变，新远端实际结果另验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1146 个源文件；本次 12 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/architecture-maintenance-snapshot.json`
+- modified `docs/verification/ci-profile-contract.md`
+- modified `docs/verification/github-ci-profile.json`
+- modified `docs/verification/github-ci-profile.md`
+- added `docs/verification/github-ci-second-run.json`
+- added `docs/verification/github-ci-second-run.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>

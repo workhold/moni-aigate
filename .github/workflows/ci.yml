@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [billing, identity, server, other]
+        shard: [billing-0, billing-1, billing-2, billing-3, server-0, server-1, server-2, server-3, identity, other]
     env:
       TEST_DATABASE_URL: postgres://moni_test:test-only-password@127.0.0.1:55439/moni_test?sslmode=disable
       GO_TEST_SHARD: ${{ matrix.shard }}
@@ -45,6 +45,7 @@ jobs:
             --env POSTGRES_HOST_AUTH_METHOD=trust \
             postgres:16-alpine postgres -p 55439 \
             -c listen_addresses=127.0.0.1 \
+            -c timezone=Asia/Shanghai \
             -c max_connections=200 \
             -c fsync=on -c synchronous_commit=on -c full_page_writes=on
           for attempt in $(seq 1 60); do
@@ -54,6 +55,7 @@ jobs:
               -c "SELECT CASE WHEN inet_server_addr() = '127.0.0.1'::inet
                 AND inet_server_port() = 55439
                 AND current_database() = 'moni_test' AND current_user = 'moni_test'
+                AND current_setting('TimeZone') = 'Asia/Shanghai'
                 AND current_setting('max_connections') = '200'
                 AND current_setting('fsync') = 'on'
                 AND current_setting('synchronous_commit') = 'on'
@@ -64,10 +66,17 @@ jobs:
             sleep 1
           done
           exit 1
-      - name: Verify complete package partition and run Go tests
+      - name: Verify complete package and top-level test partitions and run Go tests
         shell: bash
         run: |
           set -euo pipefail
+          export LC_ALL=C
+          case "$GO_TEST_SHARD" in
+            billing-[0-3]) package_class=billing ;;
+            server-[0-3]) package_class=server ;;
+            identity|other) package_class=$GO_TEST_SHARD ;;
+            *) echo "Unknown Go test partition" >&2; exit 1 ;;
+          esac
           module=$(go list -m)
           go list ./... > "$RUNNER_TEMP/ci-packages-all.txt"
           for shard in billing identity server other; do
@@ -99,8 +108,74 @@ jobs:
             echo "Duplicate package in Go test partitions" >&2
             exit 1
           fi
-          mapfile -t packages < "$RUNNER_TEMP/ci-packages-$GO_TEST_SHARD.txt"
-          go test -json -race -count=1 -timeout=10m "${packages[@]}" \
+          mapfile -t packages < "$RUNNER_TEMP/ci-packages-$package_class.txt"
+          run_filter=()
+          if [[ "$package_class" == billing || "$package_class" == server ]]; then
+            if [[ ${#packages[@]} -ne 1 ]]; then
+              echo "Large-package partition must contain exactly one package" >&2
+              exit 1
+            fi
+            # Discover with the same race build configuration as execution.
+            # Listing does not run tests; ordinary go test does not run benchmarks.
+            go test -race -count=1 -list . "${packages[0]}" \
+              > "$RUNNER_TEMP/ci-tests-$package_class-discovery.txt"
+            : > "$RUNNER_TEMP/ci-tests-$package_class-unsorted.txt"
+            while IFS= read -r name; do
+              case "$name" in
+                Test*|Fuzz*|Example*)
+                  if [[ ! "$name" =~ ^(Test|Fuzz|Example)[A-Za-z0-9_]*$ ]]; then
+                    echo "Invalid top-level Go test identifier" >&2
+                    exit 1
+                  fi
+                  printf '%s\n' "$name" >> "$RUNNER_TEMP/ci-tests-$package_class-unsorted.txt"
+                  ;;
+                Benchmark*)
+                  if [[ ! "$name" =~ ^Benchmark[A-Za-z0-9_]*$ ]]; then
+                    echo "Invalid Go benchmark identifier in discovery" >&2
+                    exit 1
+                  fi
+                  ;;
+                *)
+                  if [[ -n "$name" && ! "$name" =~ ^ok[[:space:]] ]]; then
+                    echo "Unexpected go test discovery output" >&2
+                    exit 1
+                  fi
+                  ;;
+              esac
+            done < "$RUNNER_TEMP/ci-tests-$package_class-discovery.txt"
+            sort "$RUNNER_TEMP/ci-tests-$package_class-unsorted.txt" \
+              > "$RUNNER_TEMP/ci-tests-$package_class-all.txt"
+            for part in 0 1 2 3; do
+              : > "$RUNNER_TEMP/ci-tests-$package_class-$part.txt"
+            done
+            index=0
+            while IFS= read -r name; do
+              printf '%s\n' "$name" >> "$RUNNER_TEMP/ci-tests-$package_class-$index.txt"
+              index=$(((index + 1) % 4))
+            done < "$RUNNER_TEMP/ci-tests-$package_class-all.txt"
+            for part in 0 1 2 3; do
+              if [[ ! -s "$RUNNER_TEMP/ci-tests-$package_class-$part.txt" ]]; then
+                echo "Empty top-level Go test partition: $package_class-$part" >&2
+                exit 1
+              fi
+            done
+            cat "$RUNNER_TEMP/ci-tests-$package_class-0.txt" \
+              "$RUNNER_TEMP/ci-tests-$package_class-1.txt" \
+              "$RUNNER_TEMP/ci-tests-$package_class-2.txt" \
+              "$RUNNER_TEMP/ci-tests-$package_class-3.txt" \
+              | sort > "$RUNNER_TEMP/ci-tests-$package_class-actual.txt"
+            cmp "$RUNNER_TEMP/ci-tests-$package_class-all.txt" \
+              "$RUNNER_TEMP/ci-tests-$package_class-actual.txt"
+            if [[ $(uniq -d "$RUNNER_TEMP/ci-tests-$package_class-actual.txt" | wc -l) -ne 0 ]]; then
+              echo "Duplicate top-level Go test in partitions" >&2
+              exit 1
+            fi
+            # Legal identifiers contain no regex metacharacters. Anchoring the
+            # whole parent name retains all of that parent's subtests together.
+            expression="^($(paste -sd '|' "$RUNNER_TEMP/ci-tests-$GO_TEST_SHARD.txt"))$"
+            run_filter=(-run "$expression")
+          fi
+          go test -json -race -count=1 -timeout=10m "${run_filter[@]}" "${packages[@]}" \
             | tee "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"
       - run: go vet ./...
         if: matrix.shard == 'other'
@@ -109,7 +184,7 @@ jobs:
       - name: Stop isolated database
         if: always()
         run: docker rm --force moni-aigate-test-pg
-      - name: Preserve Go test timing and complete package partition
+      - name: Preserve Go test timing and complete package and test partitions
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -117,4 +192,5 @@ jobs:
           path: |
             ${{ runner.temp }}/go-tests-${{ matrix.shard }}.jsonl
             ${{ runner.temp }}/ci-packages-*.txt
+            ${{ runner.temp }}/ci-tests-*.txt
           if-no-files-found: warn

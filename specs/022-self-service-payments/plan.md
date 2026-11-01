@@ -70,7 +70,7 @@ flowchart LR
 - [x] 根冻结[T1生命周期](c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)：单次私有顶层RR、Init首次SELECT前ONLY125表锁、固定catalog stage、全程busy/总deadline、终结与未知状态；不提供裸Tx/ctx或Permit stub。
 - [x] T1实现及真实PG专项/独立读审汇合：115.412秒、46顶层/124终态全PASS，见[证据](../../docs/verification/maintenance-snapshot.md)；T0历史证据保留原范围。
 - [x] T1最终整仓与CI环境/测试断言修订已汇合；make check及指定专库make verify-mvp通过，286项前端/全默认Go race/vet/build，见[集成记录](../../docs/verification/maintenance-snapshot-integration.md)。
-- [ ] 新四分区远端CI实际验收；不把本地结果或配置解析当远端通过。
+- [ ] 动态顶层分区及显式PG时区的新远端CI实际验收；[第二轮四组](../../docs/verification/github-ci-second-run.md)失败已保留，不把本地结果或配置解析当远端通过。
 - [ ] 冻结T2–T4：真实维护身份、catalog/history/v1认证后账户锁、scanner ReadLease/独立结果、可信manifest及完整[前驱矩阵候选](c0-predecessor-contract.md)。T1已解决顺序与生命周期合同；其余缺口仍见[维护合同§9](c0-permit-contract.md#9-2026-11-02独立审阅后的冻结前修订项)。
 - [ ] 完成正式部署profile验收：当前两套root只实证PG16.15/Homebrew initdb catalog-profile、UTF8与C/C环境，PL/pgSQL language OID 14038为该初始化结果。其他PG16集群、locale/发行版或1Panel环境须独立审profile，未知profile失败关闭，见[正式root合同](c0-schema-check-contract.md#104-首次正式root冻结与已验环境)。
 - [x] C0-V0-L纯账本行检查及V0-R同RR私有ledger reader：三表完整EOF、窄shape/history/函数解析前置、资源界/失败零结果；专项与整仓回归通过，见[读取证据](../../docs/verification/funding-ledger-reader.md)。无完整source/lot证明或运行入口。

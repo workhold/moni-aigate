@@ -737,6 +737,8 @@ unknown/非idle异常先原子封闭私有socket registry并关闭已捕获连�
 
 ## 37. 私有维护 Snapshot（022-C0-T1）
 
+CI新增的动态顶层测试分区与临时PG时区只影响测试执行环境；不修改本节Snapshot、SQL、proof或权限合同。Go race实际发现的Test/Fuzz/Example按C序互斥穷尽分组，父测试及其全部子测同行；细节及第二轮失败证据见[CI合同](../verification/ci-profile-contract.md)、[验证](../verification/github-ci-second-run.md)。
+
 [根冻结生命周期](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)限定 Gate 只消费一次 Begin，保留真实顶层rawTx，不导出Tx/Conn/PgConn/context或任意回调。Plan RR RO；Init RR RW固定三条SET LOCAL后、首次任何SELECT前，一条完整ONLY/全限定/C序125表SRE；125静态全集同时绑定六个expected profile与原109+16，canonical JSON名单SHA6fd978751fe24d37fa29da679be0976e12659e8a8f64d3983050280fffc00b19。此片不执行账户行锁。
 
 唯一内置VerifyInstallation在同rawTx调用真实catalog issuer并重核proof/pins，保存与返回分离的opaque wrapper。整个stage占busy，终结/Close/第二stage并发直接拒绝；绝对期限约束所有stage并在idle/CPU间隙强制raw-close，watcher不并发pgx。Commit明确COMMIT、服务器明确回滚和未确认分别记录Committed/RolledBack/Unknown；pgx.ErrTxClosed或任意driver error不当作已回滚。Rollback独立最多5秒，Close不替未终结Snapshot提交或回滚。重复同终结返回首次结果，不同终结拒绝且不变Outcome。

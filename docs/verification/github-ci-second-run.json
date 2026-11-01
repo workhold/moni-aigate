@@ -1,0 +1,331 @@
+{
+  "date": "2026-11-02",
+  "run_id": 41339443048,
+  "url": "https://github.com/workhold/moni-aigate/actions/runs/41339443048",
+  "source_commit": "1bcc10660fa3fdbe653651021d8815780088b98e",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "name": "contracts (other)",
+      "conclusion": "failure"
+    },
+    {
+      "name": "contracts (server)",
+      "conclusion": "failure"
+    },
+    {
+      "name": "contracts (identity)",
+      "conclusion": "success"
+    },
+    {
+      "name": "contracts (billing)",
+      "conclusion": "failure"
+    }
+  ],
+  "logs": [
+    {
+      "file": ".local/github-release-verification/ci-snapshot-artifacts/billing/go-tests-billing.jsonl",
+      "sha256": "3b45ef14609bdce4f48abb7eeb4d3a3a1ca2745448cdedb15a0813818adea7e6",
+      "package_terminals": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "fail",
+          "Elapsed": 600.047
+        }
+      ]
+    },
+    {
+      "file": ".local/github-release-verification/ci-snapshot-artifacts/identity/go-tests-identity.jsonl",
+      "sha256": "295be75c50d7b4ad9a14a61fb8527d1fb617a1f78f80c44b0c955638266c3142",
+      "package_terminals": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/identity",
+          "Action": "pass",
+          "Elapsed": 414.754
+        }
+      ]
+    },
+    {
+      "file": ".local/github-release-verification/ci-snapshot-artifacts/other/go-tests-other.jsonl",
+      "sha256": "67eb5f9548fecbd2885dd353af45be06491188f5ca0b40d8c57c9b06e9b9f789",
+      "package_terminals": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+          "Action": "pass",
+          "Elapsed": 7.171
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+          "Action": "pass",
+          "Elapsed": 1.036
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alerts",
+          "Action": "pass",
+          "Elapsed": 110.848
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/config",
+          "Action": "pass",
+          "Elapsed": 1.032
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/catalog",
+          "Action": "pass",
+          "Elapsed": 142.876
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+          "Action": "pass",
+          "Elapsed": 2
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+          "Action": "pass",
+          "Elapsed": 1.099
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+          "Action": "pass",
+          "Elapsed": 1.094
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+          "Action": "pass",
+          "Elapsed": 87.282
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/metering",
+          "Action": "pass",
+          "Elapsed": 1.627
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+          "Action": "fail",
+          "Elapsed": 20.157
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Action": "pass",
+          "Elapsed": 100.17
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+          "Action": "pass",
+          "Elapsed": 1.821
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+          "Action": "fail",
+          "Elapsed": 3.3689999999999998
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+          "Action": "pass",
+          "Elapsed": 4.4030000000000005
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+          "Action": "fail",
+          "Elapsed": 3.02
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/payments",
+          "Action": "fail",
+          "Elapsed": 191.298
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/operations",
+          "Action": "pass",
+          "Elapsed": 282.898
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+          "Action": "fail",
+          "Elapsed": 38.208
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+          "Action": "pass",
+          "Elapsed": 1.078
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/pricing",
+          "Action": "pass",
+          "Elapsed": 38.161
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "Action": "pass",
+          "Elapsed": 1.027
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/provider",
+          "Action": "pass",
+          "Elapsed": 7.64
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+          "Action": "pass",
+          "Elapsed": 1.035
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/routing",
+          "Action": "pass",
+          "Elapsed": 1.1219999999999999
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/security",
+          "Action": "pass",
+          "Elapsed": 1.035
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+          "Action": "pass",
+          "Elapsed": 1.043
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+          "Action": "pass",
+          "Elapsed": 11.248
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/migrations",
+          "Action": "pass",
+          "Elapsed": 19.384
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+          "Action": "pass",
+          "Elapsed": 1.084
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+          "Action": "pass",
+          "Elapsed": 1.218
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+          "Action": "pass",
+          "Elapsed": 1.115
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+          "Action": "pass",
+          "Elapsed": 1.034
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+          "Action": "fail",
+          "Elapsed": 43.038
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+          "Action": "pass",
+          "Elapsed": 254.867
+        }
+      ]
+    },
+    {
+      "file": ".local/github-release-verification/ci-snapshot-artifacts/server/go-tests-server.jsonl",
+      "sha256": "5fd19f25eb7766bac70e0acb7ede562130748cf4b5236dc579f12fbb7c1f8675",
+      "package_terminals": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "fail",
+          "Elapsed": 600.035
+        }
+      ]
+    }
+  ],
+  "local_original_runtime_reproduction": {
+    "results": [
+      "UTC mock original Open rejected ErrState",
+      "UTC receiver original Open rejected ErrState",
+      "Asia/Shanghai mock original Open and Close passed",
+      "Asia/Shanghai receiver original Open and Close passed",
+      "unchanged funding baseline and exact fixture cleanup passed"
+    ],
+    "proof_files": [
+      {
+        "file": ".local/github-release-verification/ci-timestamptz-deparser.log",
+        "sha256": "ff397f480d172dcb0c6deaba14145e510062687352f4e4af33b72ff5636a317b"
+      },
+      {
+        "file": ".local/github-release-verification/ci-timezone-runtime.log",
+        "sha256": "84afa3910377c5f11ffbc13f8c99b389e6ae6bbe03b208d60dc47896bbd31aa4"
+      },
+      {
+        "file": ".local/github-release-verification/ci-timezone-probe/main.go",
+        "sha256": "ee060d6078b4fc1ce44af557222f42b32c9283ca6335f5891e432f3b212fa84a"
+      }
+    ]
+  },
+  "repair_contract": "docs/verification/ci-profile-contract.md",
+  "next_remote_run": "pending actual publication; not claimed passed",
+  "production_source_changed": false,
+  "test_source_changed": false,
+  "not_claimed": [
+    "all second-run tests passed",
+    "Linux C0 expected profile certification",
+    "production or 1Panel acceptance"
+  ],
+  "static_validation": {
+    "yaml_and_seven_bash_bodies": true,
+    "matrix_jobs": 10,
+    "actual_race_discovery_and_argv": {
+      "billing-0": {
+        "selected": 40,
+        "full_top_level": 157,
+        "anchored_match_exact": true
+      },
+      "billing-1": {
+        "selected": 39,
+        "full_top_level": 157,
+        "anchored_match_exact": true
+      },
+      "billing-2": {
+        "selected": 39,
+        "full_top_level": 157,
+        "anchored_match_exact": true
+      },
+      "billing-3": {
+        "selected": 39,
+        "full_top_level": 157,
+        "anchored_match_exact": true
+      },
+      "server-0": {
+        "selected": 52,
+        "full_top_level": 205,
+        "anchored_match_exact": true
+      },
+      "server-1": {
+        "selected": 51,
+        "full_top_level": 205,
+        "anchored_match_exact": true
+      },
+      "server-2": {
+        "selected": 51,
+        "full_top_level": 205,
+        "anchored_match_exact": true
+      },
+      "server-3": {
+        "selected": 51,
+        "full_top_level": 205,
+        "anchored_match_exact": true
+      },
+      "identity": {
+        "packages": 1,
+        "no_test_filter": true
+      },
+      "other": {
+        "packages": 39,
+        "no_test_filter": true
+      },
+      "local_harness": "macOS Bash3 mapfile shim and empty-array nounset compatibility; original go-list/race-list actual; final DB calls intercepted"
+    },
+    "report_sha256": "d48cf6c1c45a82c1350f810977345e918e6016e687026d44383c1d19fcede8f8",
+    "workflow_sha256": "cda1cd3aa3f65cf96ad11893f0ee0d8e9c2f2fa55fcb42fb674d91df2d3b98f9",
+    "linux_docker_executed_locally": false
+  }
+}

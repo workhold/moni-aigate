@@ -14,3 +14,5 @@
 相关operations两测试真实PG/race2.228秒通过；完整ledger reader专项7.903秒通过；额外TZ=UTC采购测试通过。工作流YAML解析、全部bash脚本语法、真实go-list全分区及embed占位检查通过。所有SQL及产品认证/预算未改；T1另有独立全包证据。
 
 本机未执行Linux Docker环境；推送后的新远端CI仍需看实际运行结果，不能用本地测试或YAML解析替代。默认C0专项不因使用PG16镜像自动取得新catalog profile认证。
+
+后续41339443048已实际运行并失败；本页保留首轮修订来源和专项范围，第二轮真实结果、动态顶层分区及数据库时区修订见[后续记录](github-ci-second-run.md)。

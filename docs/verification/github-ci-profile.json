@@ -81,7 +81,13 @@
       "sha256": "c10013c5b5c5c992e5d5f176114a6e682b6f618bd897bd88f305928dbfab8f01"
     }
   ],
-  "remote_new_run": "pending push; not claimed passed",
+  "remote_new_run": {
+    "id": 41339443048,
+    "source_commit": "1bcc10660fa3fdbe653651021d8815780088b98e",
+    "conclusion": "failure",
+    "evidence": "docs/verification/github-ci-second-run.json",
+    "original_source_pins": "retained for the first environment correction; not replaced with later workflow"
+  },
   "not_claimed": [
     "password-authentication acceptance",
     "Linux C0 expected profile certification",

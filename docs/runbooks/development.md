@@ -54,7 +54,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 全仓数据库测试要求独立 PostgreSQL 16 测试集群：实际服务端与 URL 均为 `127.0.0.1:55439/moni_test`，实际 LOGIN 为 `moni_test`，且为测试专用超级用户。部分 fixture 会创建无密码的受限 LOGIN；临时测试集群需允许这些角色的 loopback 连接，当前 CI 显式使用 trust。此配置只用于隔离测试，不用于应用部署。
 
-已验测试 profile 的 `max_connections=200`，`fsync`、`synchronous_commit`、`full_page_writes` 均为 `on`。以下 URL 适用于已经按上述规则准备的无密码本地专库；有测试管理员密码时从私有环境加载相应 URL，不将秘密写入脚本。测试会创建并清理随机 schema 和角色，不要指向日常开发、预览或生产库。
+已验测试 profile 的 `max_connections=200`，`fsync`、`synchronous_commit`、`full_page_writes` 均为 `on`。当前M/Q固定v1结构库存要求数据库会话默认 `TimeZone=Asia/Shanghai`，用于严格反解析文本核对；单设Go进程TZ不能代替服务端设置，复现及CI修订见[时区验证](../verification/github-ci-second-run.md)。以下 URL 适用于已经按上述规则准备的无密码本地专库；有测试管理员密码时从私有环境加载相应 URL，不将秘密写入脚本。测试会创建并清理随机 schema 和角色，不要指向日常开发、预览或生产库。
 
 ```sh
 export TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable'

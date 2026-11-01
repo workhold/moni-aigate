@@ -378,6 +378,8 @@ A1独立HMAC keyring、六命令/当前授权、父锁后savepoint、未知COMMI
 
 ## 34. 独立计量、维护接缝和后续候选
 
+交付CI为隔离测试拓扑：两个大包各按动态完整顶层名单分四组，连同identity/other共十个独立runner/PG；这不改变生产单活、金融期限或实际角色权限。第二轮失败、原始支付Open时区复现与环境修订见[验证](../verification/github-ci-second-run.md)及[合同](../verification/ci-profile-contract.md)。
+
 024-B0-P的`internal/metering`已按[精确合同](../../specs/024-extension-platform/b0-pure-contract.md)实现八个闭合收费维度、两侧完整schema绑定、末尾一次ceil、硬界与actual区分、域分离摘要和旧token等价adapter。它只依赖标准库，尚无生产import、DB/网络/资金权限；subset/diagnostic及媒体端点不在本片，见[证据](../verification/metering-vectors.md)。
 
 C0新增[VerifySnapshotTx](../../specs/022-self-service-payments/c0-snapshot-contract.md)只在调用方RR事务核完整latest迁移history；写事务可核自身可见修改，失败统一固定错误，原VerifyReadOnlyTx不变。它不授maintenance permit或验证对象/来源。C0生产lot/全序/维护仍候选，需旧tenant含零opening、保护出生事务、逐源同事务与退款累计、全路径接线及独立重放全部通过。

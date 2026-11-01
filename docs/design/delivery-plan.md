@@ -68,3 +68,5 @@ C0的[离线元数据导出窄片](../../specs/022-self-service-payments/c0-sche
 C0-V0-L的[纯账本行检查](../verification/funding-ledger-rows.md)已实现并通过race/vet及短fuzz；只核输入行，不读数据库，不发完整coverage或proof。后续[caller-owned RR ledger reader](../../specs/022-self-service-payments/c0-ledger-reader-contract.md)已实现并通过[真实PG/race专项](../verification/funding-ledger-reader.md)，按三表全部行/128keyset/EOF及原journal业务列读取；独立来源/Key/采购/PB/B和lot序列仍须同snapshot完成，不能用旧VerifyLedger中的写侧SQL谓词作为新oracle。
 
 2026-11-02后续维护片：根已冻结[T1 Snapshot 生命周期](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)，已实现私有单次RR、ONLY125/首次快照、固定catalog stage、全程busy/绝对期限及提交结果分类；最终[真实PG/race](../verification/maintenance-snapshot.md)115.412秒、124终态全PASS，最终整仓make check与指定专库make verify-mvp已通过，见[集成记录](../verification/maintenance-snapshot-integration.md)；新四分区远端CI另验。T2完整history/维护身份/[前驱矩阵](../../specs/022-self-service-payments/c0-predecessor-contract.md)、T3独立来源、T4 basis/epoch继续后续，无资金或生产能力开放。
+
+GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个大包仍因累计600秒超时，支付模拟器被时区相关静态文本校验拒绝。只调整CI为十个完整动态分区与显式数据库时区，原始M/Q Open隔离复现已通过；新远端结果单独核验，见[第二轮证据](../verification/github-ci-second-run.md)。未新增产品/测试源码、迁移、金融或生产权限。

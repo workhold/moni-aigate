@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-01T18:54:09Z",
-  "review_reason": "最终交付复核T1私有RR/ONLY125首次快照、真实PG与整仓证据、四分区CI修订及19图；README和开发验证已对齐固定专库与测试身份。模块/数据/权限/时序边界一致，T2资金接线和新远端CI验收仍后续",
-  "snapshot_sha256": "622958485758d6dd5225dc254e0842bfd8bb77584f374ac946e7cdd420720d60",
-  "architecture_sha256": "d68965f170d82f039a10d8d842c6d1939c9e0349fbcb1bc738b296a17c1f7e08",
-  "history_sha256": "e26990a9d32dadb099463b9beb2f9861b41f28acde33ea1a6c8932e5f1fbd27a",
+  "reviewed_at": "2026-11-01T19:28:43Z",
+  "review_reason": "第二轮真实GitHub失败证据及CI修订：完整race顶层名单互斥分片、独立runner/PG、显式Shanghai时区与ready核验；已复核原始M/Q Open隔离复现、19图、HLD/LLD和测试部署边界。产品SQL/权限/资金/期限均不变，新远端实际结果另验",
+  "snapshot_sha256": "b222a0e489b3dc390deb23255c0a9a4b02201ca0aefbbd86491a0d7d227c8226",
+  "architecture_sha256": "a4255b87de38ac2af6105e9196b49d8889de1faf710623b5bec3fddd6c280fe8",
+  "history_sha256": "6c883c20b6dc7693e4a7a8fc756b7493f438b934f0370a66d8b0106c1026197f",
   "files": [
     {
       "path": ".dockerignore",
@@ -17,7 +17,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "d7c0d6767f9b68f29c50448452e73ef7503cabadceac707cf1e061b64b562665"
+      "sha256": "cda1cd3aa3f65cf96ad11893f0ee0d8e9c2f2fa55fcb42fb674d91df2d3b98f9"
     },
     {
       "path": ".gitignore",
@@ -109,15 +109,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "f92847a81c5fc97c8d24bb4ed89c6bf8d90dee4a6d3d722b281de8fed5fc2db7"
+      "sha256": "26dc4360b436103e8266faad798b46c586bb6725af3e598f6ac5f2f9b563493a"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "245664b608230294c7258c070e029e0a9b1971a8360a5771d044a7c8a2152643"
+      "sha256": "8bea92b23605d5eefa627b897d0c6672933459019b4129c3cedc0ef34421ac7c"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "980b1f09af7c349a576ffbf298c5e7a74706c7880cd2c996ba14a4ce2e6a978b"
+      "sha256": "6c8246da51f4ce4117a938d752beb82659e7228657f8bda2d42d0cc6c3380fd9"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -165,7 +165,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "bcc11079bf51f8b64abb835c8dd55331e97ee24caae8f7b63119bd8096fb03d3"
+      "sha256": "c7d722ed91195a952219de0087e44c7927265c0d3d34b22f03796e208af9f659"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -185,7 +185,7 @@
     },
     {
       "path": "docs/verification/architecture-maintenance-snapshot.json",
-      "sha256": "969050ea6d4f61ab16bb8292d0438c080b0e888686cfb9838e369f7f8b33598a"
+      "sha256": "ffdf3669dff56dbd420c37f7cb74590cbbebd92e3b0b601bd867130d75d95254"
     },
     {
       "path": "docs/verification/architecture-sync.md",
@@ -693,7 +693,7 @@
     },
     {
       "path": "docs/verification/ci-profile-contract.md",
-      "sha256": "466364248c7dbc81dc753073506c20db462856cca5dbc8f6730063881889b9f2"
+      "sha256": "8888a2df0963f5ef5889756cccb2ebf245bf19d276f1df37c146838edaa6e26f"
     },
     {
       "path": "docs/verification/compose-config-025.json",
@@ -833,11 +833,19 @@
     },
     {
       "path": "docs/verification/github-ci-profile.json",
-      "sha256": "0d73eaea7a0fdd1149f5137737dc2d6d99a431b834487c5a4f97e25ef37173a7"
+      "sha256": "d07dba503d567b6a951189058ef05562f69e0cdad2e8ac1626339ef6cdbfba67"
     },
     {
       "path": "docs/verification/github-ci-profile.md",
-      "sha256": "11083b86513ab02d7d94f69d72d5ae58a4e40992b312338a0a4adbe708e7455d"
+      "sha256": "9abd4760d27f78ae417af64b409a3d199bc5778e2bbf967cb9fa4d8c7b29b760"
+    },
+    {
+      "path": "docs/verification/github-ci-second-run.json",
+      "sha256": "49a82451533bee3cb251f62078960b5c6e4400d9aa7822065c9440ea36d1a7db"
+    },
+    {
+      "path": "docs/verification/github-ci-second-run.md",
+      "sha256": "4413724062b833b73120a09d20556bf6d737e7a5ac3a14c9f3138f5203764282"
     },
     {
       "path": "docs/verification/github-initial-delivery.json",
@@ -3889,7 +3897,7 @@
     },
     {
       "path": "specs/022-self-service-payments/plan.md",
-      "sha256": "2a6432f67ab15745b98e3247ff0d60270e309463d2cc72aa163d47bd61987589"
+      "sha256": "2b2accf6fcad1590c0cd42879b9b41995298d9231537d3812e9ead20082b0d3c"
     },
     {
       "path": "specs/022-self-service-payments/spec.md",

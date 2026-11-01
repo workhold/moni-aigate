@@ -1,11 +1,11 @@
 {
   "date": "2026-11-02",
   "mermaid_version": "12.2.0",
-  "architecture_sha256": "d68965f170d82f039a10d8d842c6d1939c9e0349fbcb1bc738b296a17c1f7e08",
+  "architecture_sha256": "a4255b87de38ac2af6105e9196b49d8889de1faf710623b5bec3fddd6c280fe8",
   "sources": [
     {
       "file": "docs/architecture/README.md",
-      "sha256": "d68965f170d82f039a10d8d842c6d1939c9e0349fbcb1bc738b296a17c1f7e08"
+      "sha256": "a4255b87de38ac2af6105e9196b49d8889de1faf710623b5bec3fddd6c280fe8"
     },
     {
       "file": "docs/architecture/funding-lot-catalog.md",
