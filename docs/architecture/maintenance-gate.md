@@ -1,6 +1,6 @@
 # C0 维护 Gate 与快照细化架构
 
-本页描述 022-C0-T0/T1/T2 与 T3 首片库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)为准。真实ReadLease及ledger/PB两个维护reader已实现，尚无普通main、HTTP、生产维护CLI或资金写入装配。T1历史真实PG/race115.412秒、46顶层/124终态通过保留[原范围](../verification/maintenance-snapshot.md)；T2与T3证据分别记录。
+本页描述 022-C0-T0/T1/T2 与 T3 库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)和[来源关联窄合同](../../specs/022-self-service-payments/c0-source-link-contract.md)为准。真实ReadLease及ledger、PB、人工核款/兑换券收据关联三个局部reader已实现，尚无普通main、HTTP、生产维护CLI或资金写入装配。T1历史真实PG/race115.412秒、46顶层/124终态通过保留[原范围](../verification/maintenance-snapshot.md)；T2、T3历史片及新增来源reader证据分别记录。
 
 ```mermaid
 flowchart TD
@@ -35,12 +35,18 @@ Require→固定算法→Finish]
     Ledger[billing固定raw-facts算法
 同三表C序分页core / 完整EOF
 独立大整数CheckLedgerRows / 无authority]
+    FundingReader[billing固定来源关联reader
+credit_orders / voucher_redemptions / funding_receipts
+128行C序分页 / 全量EOF / 无authority]
+    FundingCore[fundinglotverify固定来源关联core
+双向核对manual_credit / voucher_grant
+sandbox收据计入未覆盖]
     Budget[periodicbudget固定raw-facts算法
 19表scalar资源guard / 原业务SQL与三态
 不接受或发行维护proof]
     ScanFinish[Finish / 零pending Row或Rows
 EOF与Err及显式Close全部观察 / 出口重核]
-    Result[私有ScanProof与两个局部结果
+    Result[私有ScanProof与三个局部结果
 绑定原Permit及lease nonce / 不授全源coverage]
     Finish[单次Commit或Rollback
 明确成功、明确回滚或Unknown分别保存]
@@ -63,6 +69,7 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Codec --> Integration
     Integration -->|ScanLedger| Ledger --> ScanFinish
     Integration -->|ScanPeriodicBudget| Budget --> ScanFinish
+    Integration -->|ScanFunding| FundingReader --> FundingCore --> ScanFinish
     ScanFinish --> Result
     Result -->|原Snapshot显式终结即全部撤销| Finish
     Begin -->|失败| Destroy
@@ -100,7 +107,7 @@ Commit 一次调用开始后按可能已发送处理：明确 COMMIT、明确 RO
 
 [T0专项](../verification/maintenance-gate.md)保留原代码版本和运行范围，不自动升级为 T1 证据。[T1真实 PG 验证](../verification/maintenance-snapshot.md)覆盖唯一 RR、首次快照物理 writer 屏障、125表锁、idle期限、busy、真实提交丢回复与明确回滚；最终race 124终态全PASS，独立清理为零。首轮测试语句子串误判已保留原日志并修正，未改产品锁/预算。
 
-[完整前驱矩阵](../../specs/022-self-service-payments/c0-predecessor-contract.md)已按T2根冻结实施，App v1、M/Q实际字段、ordinary-off21表及6旁路不虚构active key、peer文件原件或v1不存在的字段。T3 ReadLease与两个局部reader已经实现；独立全来源结果、完整组合、basis、epoch、startup RuntimeProof与生产接线继续后续。
+[完整前驱矩阵](../../specs/022-self-service-payments/c0-predecessor-contract.md)已按T2根冻结实施，App v1、M/Q实际字段、ordinary-off21表及6旁路不虚构active key、peer文件原件或v1不存在的字段。T3 ReadLease与ledger/PB局部reader先前已实现；当前另有人工核款/兑换券收据关联reader，但全来源结果、完整组合、basis、epoch、startup RuntimeProof与生产接线仍继续后续。
 
 ## 真实授权与不可变前驱（T2）
 
@@ -122,13 +129,15 @@ Permit所有字段私有，复制共享撤销；Verify使用新受控call持原b
 
 [Rows](../../internal/maintenancetrust/lease_rows.go)要求每次Next true恰好Scan一次，真正EOF后必须观察Err与显式Close，两者可以任意先后；单operation所有权不把busy误报为EOF。跳行、重复Scan、提前Close、未消费Row或悬挂Rows均使Finish永久失败并关连接。QueryRow.Scan核恰好一行，再验证EOF/Err/Close。没有悬挂读取且出口完整重核成功时，Finish才发行私有共态ScanProof。proof纯Verify核原Permit/Snapshot/lease nonce和固定kind，可在另一lease占busy时核绑定，不发SQL；原Snapshot终结、失败或到期时所有副本失效。零值、JSON、同摘要或同PID不能重绑。
 
-## 两个实际reader与证明范围
+## 三个实际reader与证明范围
 
 维护装配集中到独立[`maintenancescan`](../../internal/maintenancescan)：它单向依赖billing、periodicbudget与maintenancetrust→fundinglotcatalog。普通billing/PB/main及领域测试不导入集成包、维护库或catalog；只有真正维护消费者承担catalog完整eager认证。[LedgerFactQuery/Rows与ReadLedgerFacts](../../internal/billing/funding_ledger_facts.go)复用[唯一固定query core](../../internal/billing/funding_ledger_query.go)，不接受authority，只返回私有保存snapshot的LedgerFacts；LocalSummary仅描述无权威局部结果。[maintenancescan.VerifyLedgerMaintenance](../../internal/maintenancescan/ledger.go)要求真实`*ReadLease`和ScanLedger，自行构造私有adapter，使用原T2前置与lease内current_schema，读取三表完整C序128条分页、保留journal额外事实，完整EOF/Err/Close后对整份原始行运行独立大整数CheckLedgerRows。原caller-owned RR入口仍保留实际LOGIN/窄shape/history前置，100000行、16MiB和共用期限保持。Require→固定core→Finish全部成功后，集成包才构造私有MaintenanceLedgerResult并保存本次完整snapshot与真实ScanProof，Summary仍为`supplied_ledger_rows`。
 
 [`maintenancescan.VerifyMaintenance`](../../internal/maintenancescan/periodic_budget.go)要求真实`*ReadLease`和ScanPeriodicBudget，复用[PB固定业务SQL、声明列及receipt核验core](../../internal/periodicbudget/verifier_maintenance.go)；原public Verifier仍自行取得RR READ ONLY，执行actual LOGIN、六表owner、完整history/SET和Commit规则。固定ReadBoundedVerificationRows先执行维护专用scalar guard：19关系/146声明字段，全量audits与schema_migrations均计入，最多100000行、每非NULL字段cast text后的UTF8 bytes最多65536、累计16MiB，超界固定ErrVerifyExecution及零结果。该界限制返回客户端与保留的逻辑输入，不宣称界定PG排序/CTE/array_agg内存或Go堆/RSS。集成包从租约内固定SELECT取得schema，在Require→固定算法→Finish成功后才保存私有MaintenanceResult及真实ScanProof；Summary明确`periodic_budget_rows`，三类历史缺证仍为indeterminate。领域接缝无Permit/ScanProof、通过位或任意SQL入口；假的query至多得到无权威局部数据。两个维护入口不接收外部schema、provider或预计算报告，也不提供FromFacts/结果转proof构造器；Verify/Summary/Report继续绑定原Permit和固定kind，所有错误整个零结果。
 
-ScanProof只证明固定kind的lease正常完成；两个局部结果不能授予完整来源`CoverageComplete`、资金写入或init/basis/epoch就绪条件。Funding、Key、采购、B来源与lot全图仍需独立逐列scanner、双向sweep、coverage清单与完整组合器，不复用写侧funding_valid或PB局部SQL充当全源证明。验证分别见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)，不能沿用T2计数或把本地fixture通过扩大为正式供应商/生产验收。
+[`maintenancescan.VerifyFundingSourceLinksMaintenance`](../../internal/maintenancescan/funding_sources.go)要求真实`*ReadLease`和ScanFunding。billing的[固定reader](../../internal/billing/funding_source_read.go)完整读取`credit_orders`、`voucher_redemptions`、`funding_receipts`，以每表128行C序keyset到EOF，执行Rows.Err/Close并共用100000行、16MiB及ReadLease总期限；[纯关联core](../../internal/fundinglotverify/funding_sources.go)双向核对manual/voucher source↔receipt的ID、租户、金额和journal关系，收据公共shape单独核验。`sandbox_capture`不参与支付source语义，只计入uncovered；unknown kind保留mismatch计数。summary仅声明`manual_voucher_receipt_links`的局部一致性，原始事实与proof均私有并绑定同一个ScanFunding/Permit。此reader及summary不核voucher批次/revocation/command图、sandbox支付证据、Key、采购、periodic budget或lot关系，不证同事务顶层xid；未来完整Funding组合必须在同一lease内接入其他reader并统一Finish，ScanFunding不能重复消费。
+
+ScanProof只证明固定kind的lease正常完成；三个局部结果不能授予完整来源`CoverageComplete`、资金写入或init/basis/epoch就绪条件。Funding、Key、采购、支付B来源与lot全图仍需独立逐列scanner、双向sweep、coverage清单与完整组合器，不复用写侧funding_valid或PB局部SQL充当全源证明。ReadLease历史验证见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)；新增reader合同与范围见[来源关联验证](../verification/funding-source-links.md)，不能沿用历史计数或把本地fixture通过扩大为正式供应商/生产验收。
 
 完成证明的纯绑定还同锁检查当前未stopped permitCall的caller/context取消，防止后继lease取消后、异步回调调度前旧结果短暂通过；旧成功call的正常cancel不影响proof。客户端captured socket及时关闭与服务器会话退出分开验收：raw-close不保证即时中断任意长服务器SQL，服务器通常在下一次I/O发现断线；不由此推定服务器端锁已即时消失。
 

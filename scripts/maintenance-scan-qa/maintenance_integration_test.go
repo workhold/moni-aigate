@@ -3,6 +3,7 @@ package maintenancescanqa_test
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"net/url"
@@ -13,13 +14,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
 	"github.com/moni-ai/moni-aigate/internal/maintenancescan"
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 	"github.com/moni-ai/moni-aigate/internal/paymentsandboxqa"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
+	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
 // This external consumer imports only public production entry points. It starts
@@ -30,6 +34,13 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			f := newConsumerFixture(t)
 			ctx := context.Background()
+			if mode == "init" {
+				breakConsumerManualReceiptLink(t, f, ctx, f.fundingSourceCreditID)
+			}
+			fundingBeforeScan, err := f.env.FundingSnapshot(ctx)
+			if err != nil {
+				t.Fatal("consumer funding baseline after voucher fixture failed")
+			}
 			g, err := maintenancetrust.Acquire(ctx, f.cfg, f.pins)
 			if err != nil || g == nil {
 				t.Fatal("real public maintenance Acquire failed")
@@ -57,6 +68,7 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			}
 			var ledger *maintenancescan.MaintenanceLedgerResult
 			var budget *maintenancescan.MaintenanceResult
+			var fundingLinks *maintenancescan.FundingSourceLinksResult
 			readLedger := func() {
 				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanLedger)
 				if e != nil {
@@ -77,11 +89,23 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 					t.Fatal("real maintenance periodic budget scan failed")
 				}
 			}
+			readFundingLinks := func() {
+				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanFunding)
+				if e != nil {
+					t.Fatal("real funding source lease failed")
+				}
+				fundingLinks, e = maintenancescan.VerifyFundingSourceLinksMaintenance(lease)
+				if e != nil || fundingLinks == nil {
+					t.Fatal("real maintenance funding source link scan failed")
+				}
+			}
 			if mode == "plan" {
 				readLedger()
+				readFundingLinks()
 				readBudget()
 			} else {
 				readBudget()
+				readFundingLinks()
 				readLedger()
 			}
 			check, err := ledger.Summary(permit)
@@ -92,28 +116,114 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			if err != nil || report.SchemaVersion != 1 {
 				t.Fatal("periodic budget local report was not retained")
 			}
-			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil {
-				t.Fatal("both real consumers must share the original permit")
+			fundingCheck, err := fundingLinks.Summary(permit)
+			wantConsistent := mode == "plan"
+			linksMatch := fundingCheck.ScopedLinksConsistent == wantConsistent
+			if mode == "init" {
+				linksMatch = linksMatch && fundingCheck.Mismatches.ApprovedCreditMissingReceipt == 1 && fundingCheck.Mismatches.OrphanManualReceipts == 1
+			}
+			if err != nil || fundingCheck.Scope != "manual_voucher_receipt_links" || !linksMatch || fundingCheck.Scanned.Receipts < 3 || fundingCheck.Scanned.Credits < 2 || fundingCheck.Scanned.Redemptions != 1 || fundingCheck.UncoveredSandboxReceipts != 0 {
+				t.Fatal("manual funding local relation facts were not retained")
+			}
+			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil {
+				t.Fatal("all real consumers must share the original permit")
+			}
+			if _, err := permit.BeginScan(ctx, maintenancetrust.ScanFunding); err == nil {
+				t.Fatal("the same Permit accepted ScanFunding twice")
 			}
 			wrong := &maintenancetrust.Permit{}
-			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil {
+			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil {
 				t.Fatal("consumer accepted an unrelated permit")
 			}
-			ledgerCopy, budgetCopy := *ledger, *budget
+			ledgerCopy, budgetCopy, fundingLinksCopy := *ledger, *budget, *fundingLinks
 			if snapshot.Rollback(ctx) != nil {
 				t.Fatal("real shared snapshot rollback failed")
 			}
-			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil {
+			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil {
 				t.Fatal("rollback did not revoke every original consumer result")
 			}
 			if g.Close(ctx) != nil {
 				t.Fatal("original maintenance connection close failed")
 			}
 			f.awaitOwnedGone(t)
-			if f.env.VerifyFundsUnchanged(ctx) != nil || f.env.VerifyLegacyFundingUnchanged(ctx) != nil {
+			fundingAfterScan, err := f.env.FundingSnapshot(ctx)
+			if err != nil || fundingAfterScan != fundingBeforeScan || f.env.VerifyLegacyFundingUnchanged(ctx) != nil {
 				t.Fatal("maintenance scans changed genuine funded data")
 			}
 		})
+	}
+}
+
+func seedConsumerFundingSources(t *testing.T, f *consumerFixture, ctx context.Context) string {
+	t.Helper()
+	app, err := f.env.OpenPool(ctx, "app")
+	if err != nil {
+		t.Fatal("consumer voucher app pool failed")
+	}
+	f.pools = append(f.pools, app)
+	store := billing.New(app)
+	credit, err := store.CreateCredit(ctx, billing.CreditInput{
+		TenantID: f.env.ApplicationTenantID, ActorID: f.env.ActorIDs["finance_operator"], Amount: 19,
+		BusinessRef: "bank:maintenance-qa:" + uuid.NewString(), ProofRef: "proof:maintenance-qa:verified",
+		IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString(),
+	})
+	if err != nil {
+		t.Fatal("consumer manual credit creation failed", err)
+	}
+	creditApproved, err := store.ApproveCredit(ctx, billing.ApprovalInput{TenantID: f.env.ApplicationTenantID, ActorID: f.env.ActorIDs["finance_approver"], OrderID: credit.ID})
+	if err != nil || creditApproved.State != "approved" || creditApproved.JournalID == "" {
+		t.Fatal("consumer manual credit approval failed", err)
+	}
+	keys, err := security.ParseVoucherKeyring(`{"v1":"`+base64.RawURLEncoding.EncodeToString(make([]byte, 32))+`"}`, "v1")
+	if err != nil {
+		t.Fatal("consumer fixed voucher keyring failed")
+	}
+	service, err := billing.NewVoucherService(ctx, billing.New(app), billing.VoucherOptions{RuntimeAllowed: true, Keys: keys})
+	if err != nil {
+		t.Fatal("consumer voucher service failed")
+	}
+	command := func(actor string) billing.VoucherCommandContext {
+		return billing.VoucherCommandContext{OperationID: uuid.NewString(), ActorID: actor, RequestID: uuid.NewString()}
+	}
+	if _, err = service.UpdateVoucherPolicy(ctx, billing.UpdateVoucherPolicyInput{ActorID: f.env.ActorIDs["admin"], ExpectedRevision: 1, Enabled: true}); err != nil {
+		t.Fatal("consumer voucher policy enable failed", err)
+	}
+	issued, err := service.CreateVoucherBatch(ctx, billing.CreateVoucherBatchInput{
+		Command: command(f.env.ActorIDs["finance_operator"]), FaceAmount: 17, Count: 1,
+		ExpiresAt: time.Now().UTC().Add(2 * time.Hour).Truncate(time.Microsecond), PurposeRef: "grant:maintenance-qa", Reason: "maintenance source-link fixture",
+	})
+	if err != nil || !issued.Created || len(issued.Codes) != 1 || issued.Batch == nil {
+		t.Fatal("consumer voucher issue failed", err)
+	}
+	voucherApproved, err := service.ApproveVoucherBatch(ctx, billing.ApproveVoucherBatchInput{Command: command(f.env.ActorIDs["finance_approver"]), BatchID: issued.Batch.ID, ExpectedRevision: 1})
+	if err != nil || voucherApproved.Status != "accepted" {
+		t.Fatal("consumer voucher approval failed", err)
+	}
+	redeem := command(f.env.ActorIDs["owner"])
+	redeem.TenantID = f.env.ApplicationTenantID
+	redemption, err := service.RedeemVoucher(ctx, billing.RedeemVoucherInput{Command: redeem, Code: issued.Codes[0].Code})
+	if err != nil || redemption.Status != "accepted" || redemption.FundingReceiptID == nil || redemption.JournalID == nil {
+		t.Fatalf("consumer voucher redemption failed: status=%s reason=%s error=%v", redemption.Status, redemption.Reason, err)
+	}
+	return credit.ID
+}
+
+func breakConsumerManualReceiptLink(t *testing.T, f *consumerFixture, ctx context.Context, creditID string) {
+	t.Helper()
+	tx, err := f.admin.Begin(ctx)
+	if err != nil {
+		t.Fatal("consumer mismatch fixture transaction failed")
+	}
+	defer func() { _ = tx.Rollback(context.Background()) }()
+	if _, err = tx.Exec(ctx, "SET LOCAL session_replication_role='replica'"); err != nil {
+		t.Fatal("consumer mismatch fixture isolation failed", err)
+	}
+	schema := pgx.Identifier{f.env.Schemas["app"]}.Sanitize()
+	if _, err = tx.Exec(ctx, "UPDATE "+schema+".funding_receipts SET source_id=$1 WHERE source_kind='manual_credit' AND source_id=$2", "unlinked-"+uuid.NewString(), creditID); err != nil {
+		t.Fatal("consumer mismatch fixture source adjustment failed", err)
+	}
+	if err = tx.Commit(ctx); err != nil {
+		t.Fatal("consumer mismatch fixture commit failed", err)
 	}
 }
 
@@ -122,15 +232,16 @@ type consumerBackend struct {
 	start time.Time
 }
 type consumerFixture struct {
-	env          *paymentsandboxqa.ApplicationEnvironment
-	admin        *pgx.Conn
-	cfg          *pgx.ConnConfig
-	pins         fundinglotcatalog.Pins
-	sharedBefore string
-	tag          string
-	gates        []*maintenancetrust.Gate
-	pools        []*pgxpool.Pool
-	backends     []consumerBackend
+	env                   *paymentsandboxqa.ApplicationEnvironment
+	admin                 *pgx.Conn
+	cfg                   *pgx.ConnConfig
+	pins                  fundinglotcatalog.Pins
+	sharedBefore          string
+	tag                   string
+	fundingSourceCreditID string
+	gates                 []*maintenancetrust.Gate
+	pools                 []*pgxpool.Pool
+	backends              []consumerBackend
 }
 
 func consumerConfig(t *testing.T) *pgx.ConnConfig {
@@ -212,6 +323,10 @@ func newConsumerFixture(t *testing.T) *consumerFixture {
 	if err != nil || f.env == nil {
 		t.Fatal("consumer genuine funded v1 install failed")
 	}
+	if f.env.VerifyFundsUnchanged(ctx) != nil {
+		t.Fatal("consumer genuine payment funding changed before voucher source setup")
+	}
+	f.fundingSourceCreditID = seedConsumerFundingSources(t, f, ctx)
 	f.loadPins(t, ctx)
 	owner, err := f.env.OpenPool(ctx, "app_owner")
 	if err != nil {

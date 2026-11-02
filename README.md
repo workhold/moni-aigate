@@ -35,7 +35,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 自助身份与兑换券 | 已实现，限定本地验收 | 邮件证明、密码恢复、双审赠额券；注册、邮件和新券发行默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
-| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；独立维护集成复用 ledger/PB 算法并消费真实 ReadLease，完整来源追踪、维护切换、原路退款/拒付仍在推进 |
+| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；维护态现有 ledger、PB、人工核款/兑换券收据关联三个局部 reader；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
 | 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；两个读取结果仅证明局部核验完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
@@ -81,7 +81,7 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，独立 `internal/maintenancescan` 通过私有适配复用账本和周期预算的固定读取算法；整个扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。普通 billing/PB/main 及领域测试不依赖维护或静态 catalog；真正维护消费者仍在初始化时完整认证固定 catalog。领域读取接缝只返回不可信局部事实，只有集成包消费真实租约并正常 Finish 后才能保存私有 ScanProof 结果，不接收外部报告或 provider。ScanProof 与两个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，历史专项与本次隔离修复验收分别见[T3 专项](docs/verification/maintenance-read-lease.md)和[集成记录](docs/verification/maintenance-read-lease-integration.md)，不扩大历史 T2 的通过范围。
+停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，独立 `internal/maintenancescan` 通过私有适配复用账本、周期预算及人工核款/兑换券收据关联的固定读取算法；整个扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。来源关联 reader 从 `credit_orders`、`voucher_redemptions`、`funding_receipts` 全量读取并双向核对人工核款和兑换券；sandbox capture 收据只计为未覆盖。普通 billing/PB/main 及领域测试不依赖维护或静态 catalog；真正维护消费者仍在初始化时完整认证固定 catalog。领域读取接缝只返回不可信局部事实，只有集成包消费真实租约并正常 Finish 后才能保存私有 ScanProof 结果，不接收外部报告或 provider。三个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，本切片合同与限定证据见[来源关联合同](specs/022-self-service-payments/c0-source-link-contract.md)和[验证记录](docs/verification/funding-source-links.md)；历史 T3 专项与集成证据保留其原有源码范围。
 
 ## 本地启动
 
@@ -201,7 +201,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。[维护架构](docs/architecture/maintenance-gate.md)的 T0/T1 与 [T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)保留各自验证范围；[T3 首片](specs/022-self-service-payments/c0-read-lease-contract.md)已实现真实 ReadLease、ledger/PB 两个库级维护读取器及绑定原 Permit 的局部结果，实际执行见[T3 专项](docs/verification/maintenance-read-lease.md)和[集成记录](docs/verification/maintenance-read-lease-integration.md)。下一步是独立全来源 scanner 与完整组合；生产维护 CLI、basis 与 epoch 开账仍后续。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。[维护架构](docs/architecture/maintenance-gate.md)的 T0/T1 与 [T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)保留各自验证范围；[T3 首片](specs/022-self-service-payments/c0-read-lease-contract.md)已实现真实 ReadLease、ledger/PB reader；本轮新增人工核款/兑换券与收据关联 reader，仅核对固定局部关系，详情见[合同](specs/022-self-service-payments/c0-source-link-contract.md)和[限定验证](docs/verification/funding-source-links.md)。全来源 scanner 与完整组合、生产维护 CLI、basis 和 epoch 开账仍后续。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

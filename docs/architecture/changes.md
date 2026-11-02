@@ -1632,3 +1632,30 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `docs/verification/maintenance-integration-isolation.md`
 
 </details>
+
+## 2026-11-02T01:20:43Z · ed2fdec2eea5
+
+新增C0人工核款/兑换券收据关联维护reader；冻结局部来源合同、固定C序三表分页及双向核验；补齐中断边界回归与真实PG未执行状态，保持完整来源覆盖和T3/T4未完成
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1236 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/funding-source-links.md`
+- added `internal/billing/funding_source_facts.go`
+- added `internal/billing/funding_source_query.go`
+- added `internal/billing/funding_source_read.go`
+- added `internal/billing/funding_source_read_test.go`
+- added `internal/fundinglotverify/funding_sources.go`
+- added `internal/fundinglotverify/funding_sources_test.go`
+- added `internal/maintenancescan/funding_sources.go`
+- added `internal/maintenancescan/funding_sources_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-source-link-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
