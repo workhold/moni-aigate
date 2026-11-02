@@ -282,3 +282,11 @@ Coverage只表示本84表与八算法域的执行完整；没有epoch如实misma
 [固定109表basis叶子](../../specs/022-self-service-payments/c0-basis-reader-contract.md)和[严格v2纯codec](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)现分别提供只读原二进制摘要与owned canonical格式对象。basis自行读取环境、UTF8、原结构和15type/16send受审profile，之后才能读取业务；使用PK record字节序分页、完整COUNT/EOF、记录信封与共享资源限制。proof只检查21字段、manifest自摘要及sandbox嵌入旧v1的完整严格格式/原SHA/DB和角色schema绑定。完整链路图与资源边界见[统一架构](README.md#固定-109-表-basis-与严格-v2-格式叶子)。
 
 两者当前没有维护lease或issuer调用方，也不消费第八kind。Facts/Summary和CanonicalV2均不能发行RuntimeProof或准许初始化。后续必须在真实phase owner内保持原busy和同RR，将完整pre+basis、plan比较、私有写入、strict v2与84表post接到唯一commit-ready；通用Snapshot.Commit当前仍无phase检查。PID/xid/nonce仅属于私有authority，不放跨plan/init比较的basis；已提交epoch另需新observer/runtime合同，不能通过旧空安装入口复用。验证证据见[本片记录](../verification/basis-proof-v2.md)。
+
+## 旧68表的最小数据出口与纯规划
+
+[ProjectLegacySeed](../../internal/fundinglotscan/seed_projection.go)只从符合原68表完整一致资格的私有Facts提取九组普通业务行；tenant仅ID，未读取birth不构成NULL断言。它不执行Query，使用本次ctx、独立rejected并深复制返回值。原Read和ReadWallet的scope、SQL和七kind保持，84表Facts不能冒充原68数据出口。
+
+[fundinglotinit](../../internal/fundinglotinit/types.go)纯Build独立核输入并算出历史membership/开账写集，专门INSERT DTO省略DB stamp，不发行epoch/attestation或写权。源金额、账本净额与账户缓存三方相等；历史receipt/approved退款不重复发lot，零额与terminal集合按[合同](../../specs/022-self-service-payments/c0-init-planner-contract.md)精确保留。
+
+未来phase必须自己从真实Query取得seed并保存在私有state，唯一writer只接同state，不能提供Apply(permit,外部Plan)。原busy须贯穿pre+basis、write、strict v2/84post与commit-ready；当前通用Commit没有该约束，第八kind未消费，不能先Finish再拿描述性数据授写。新片验证见[记录](../verification/init-planner.md)。

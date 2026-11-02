@@ -486,3 +486,9 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 按[basis读取合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)与[v2格式合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)交付两个叶子。`fundinglotbasis`只读固定109表/976列的原二进制行，将实际UTF8/PG版本/locale与受审type/send、manifest和descriptor原件一同摘要，供未来plan/init比较；不把PID/xid/nonce或16张C0新表写入跨事务基线。`fundinglotproof`只提供21字段严格canonical、owned bytes与sandbox原v1完整绑定，普通模式没有前驱；格式有效不表示数据库、epoch、支付或启动授权有效。
 
 它们没有维护phase或在线调用方；现七kind/once、空安装门禁、普通main与资金路径保持原范围。下一依赖是同RR phase owner贯穿完整pre+basis→plan比较→protected writer→strict v2与84表post→commit-ready，并约束未知提交只能查询原epoch/proof。不能释放busy后拿外部摘要或自报bool授写权；已提交epoch须单独认证observer/runtime。当前模块关系与证据见[统一架构](../architecture/README.md#固定-109-表-basis-与严格-v2-格式叶子)、[验证记录](../verification/basis-proof-v2.md)，前面各片“basis后续”的描述保留其当期范围。
+
+## 旧钱包投影与纯开账规划
+
+按[冻结合同](../../specs/022-self-service-payments/c0-init-planner-contract.md)，`fundinglotscan.ProjectLegacySeed` 从完成且一致的原68表私有Facts输出九组最小原件，tenant仅ID；不把没有读取的birth当作NULL证明。`fundinglotinit` 是独立纯叶子，从历史收据、全部reserve/settlement和approved refund重算每tenant的A/H，与旧journal净额及账户余额比较，再生成membership、opening、seq0/head、正额lot/event/cache和未结allocation的描述性写集。
+
+历史本金按开账汇总，不逐receipt重复发lot；旧approved退款已包含A，terminal reserve不建held，未结零额保留opening但无lot。大整数允许A+H及跨tenant总额超BIGINT，各资金桶仍须在BIGINT内。Plan没有epoch/attestation授权、DB stamp、SQL或生产接线。真正phase将自己读68原件、tenant birth、basis并保持原busy，通过私有writer和实际84表post后才提交；外部Plan永远不能授写。当前实现与验证见[统一架构](../architecture/README.md#最小旧数据投影与纯初始化规划)。

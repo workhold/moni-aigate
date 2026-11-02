@@ -127,3 +127,9 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 先冻结[basis读取合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)与[v2 codec合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)，再并行实施：固定元数据与109表原二进制reader、stdlib-only v2 codec/独立golden，以及旧v1单向兼容差分和真实PG审查。离线send profile已由独立专库706字段逐项复核零差异；不从live目录生成运行时expected。根汇合复核、同步README/统一架构、执行专项和整仓验证后提交推送，精确结果见[本片记录](../verification/basis-proof-v2.md)。
 
 两叶子不消费未来第八kind，也不接入资金/启动。下一步先冻结完整protected pre+basis：私有phase owner保持原busy，来自同session的来源原件与basis共同验收，不能拼旧Report/ScanProof；明确组合共享预算、一次init消费和取消清理。随后同Init原RR protected writer→严格v2与84表post→epoch→commit-ready，ready拒绝新lease，Commit受phase约束；未知COMMIT只查原身份，不补发或重新初始化。已提交epoch的observer/runtime另冻，旧空安装门禁不可删除。全部资金路径接线后，继续C1退款/C2拒付债务/C3恢复、商品/订阅、媒体扩展、生产/HA与最后性能；整体目标未完成。
+
+## 最小seed与纯初始化计划
+
+按[冻结合同](../../specs/022-self-service-payments/c0-init-planner-contract.md)先并行完成原68表Facts的最小九组非授权投影、独立纯init planner与外部手算golden。planner用原业务金额计算开账，与ledger净额及cache同时核对；生成准确旧成员集合、零opening、seq0/head及正额lot/event/cache/held allocation，不生成数据库stamp、epoch/proof或资金权限。预算和确定ID均先冻结。实现与执行证据见[本片记录](../verification/init-planner.md)。
+
+下一依赖仍是完整protected phase：自己真实读原68+完整tenant birth=NULL+16空表及109 basis，持有自己的seed/plan；第八once位贯穿原busy，私有writer不接收外部Facts/Plan/Report。strict v2与实际84post、deferred flush、commit-ready和unknown原epoch观察必须一起闭合，然后另冻已提交epoch的observer/runtime及正式迁移，才推进全资金路径。旧安装空表门禁不可删除，普通startup不比较经营后当前basis与历史cutover basis。C1/C2/C3、商品、扩展、生产/HA与性能仍在其后，整体目标保持进行中。

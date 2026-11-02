@@ -125,3 +125,9 @@ go run ./scripts/check-architecture
 - [x] 汇合fake边界、真实PG SQL与真实Plan/Init，完成根复核及make check/指定专库make verify-mvp；专项与整批原始失败、QA修正和最终证据见[本轮记录](../../docs/verification/complete-source-reader.md)，随README/HLD/LLD/统一架构交付，推送身份以远端SHA为准。
 
 下一依赖为lot全序及protected pre/post组合，随后basis/epoch与全部APP资金路径；C1/C2/C3、商品、扩展、生产/HA及性能继续保留，本片不是全目标完成。
+
+## C0 最小旧数据投影与纯开账规划切片
+
+按[冻结合同](c0-init-planner-contract.md)新增九组普通LegacySeedRows、原68完整一致Facts的深复制出口，以及纯fundinglotinit计划。并行实现出口、planner/core和独立external静态golden后由根汇合复核。已完成源专项真实专库race；最终整仓和交付状态以[验证记录](../../docs/verification/init-planner.md)为准。
+
+本片不写数据库、不生成DB stamp/epoch/attestation，不消费第八kind。下一步冻结完整私有phase状态机/预算/提交未知：自己读完整pre与tenant birth、basis，自持seed/plan，唯一writer仅收同phase state，strict v2与真实84post通过后才能提交。之后另冻非空epoch observer/runtime和全资金接线；C1/C2/C3仍依赖该闭环。

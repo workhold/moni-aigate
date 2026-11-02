@@ -247,7 +247,7 @@ worker 初始 lot 完整性证明与 APP 全生命周期证明可由不同 invok
 3. 当前完整最新 migration、全部三来源 funding 图、ledger NUMERIC、reservation/Key held 与唯一 settlement、批准退款累计/原 journal/outbox、023 周期图、B 身份/selection/处理中资金的完整性先核验。任一损坏整体拒绝，不能按当前 AVAILABLE 直接开 lot 掩盖坏账。
 4. 一个维护 RR 写事务中，先对受审静态对象清单中的全部业务写表按 schema/table 名序取得 SHARE ROW EXCLUSIVE 表锁，阻止漏停写入者改变源；再取得所有既有账户 ID 序锁并再次确认业务 basis 未改变。清单须覆盖钱包、source/request/settlement/refund、A/B资金、periodic及其命令/租约写表，不能运行时按前缀猜表。表锁在账户之前，后续 legacy FK 不与在线父锁形成循环；这是明确的全停维护顺序，不供runtime使用。为每 tenant 记录 available opening、每个未终态 reservation 记录 held opening；`SUM(unfinished R)=HELD`、`SUM(Key held)`等原守恒必须成立。
 5. 正 available opening 建一个 nonrefundable lot；每个正额未结 reservation 各建自己的 nonrefundable lot，初始 H=R，并建对应 reservation_lot。这样单租户 A+H 超 BIGINT 也不合并溢出。零额 opening 只保留快照。所有旧 terminal settlement、旧 approved refund、全部旧 receipt 加入明确例外集合。
-6. 新 lot/event/cache/legacy memberships 及 epoch 同事务核验，初始化 audit 一份；确认 COMMIT 后才允许新 binary 启动。**不修改任何原 ledger balance、不追加 financial journal/outbox、不重复 credited，也不改原报告 consumer**。
+6. 新 lot/event/cache/legacy memberships、strict v2 attestation 及 epoch 同事务核验，epoch.actor 与提交证据记录本次维护；依[初始化合同](c0-init-planner-contract.md)仅写16张C0表，不额外写原 audit_events 改变业务 basis。确认 COMMIT 后才允许新 binary 启动。**不修改任何原 ledger balance、不追加 financial journal/outbox、不重复 credited，也不改原报告 consumer**。
 
 计划后发现新 receipt/refund/终态等任一变化，basis_digest 不同则拒绝；不能重新“补差”后悄悄接受。首片不做分批在线 cutover 或双写过渡；大库单事务的容量、WAL/锁时间必须维护演练后确定。超出维护容量需另立分阶段迁移合同，不能删除预检或半提交 epoch。
 

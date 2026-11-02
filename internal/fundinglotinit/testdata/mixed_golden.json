@@ -1,0 +1,630 @@
+{
+  "Metadata": {
+    "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+    "EpochAt": {
+      "Value": "2026-11-03T04:05:06.123456Z",
+      "Valid": true,
+      "Infinity": 0
+    },
+    "TenantCount": 3,
+    "ReceiptCount": 5,
+    "SettlementCount": 1,
+    "ApprovedRefundCount": 2,
+    "OpeningCount": 6,
+    "LegacySourceCount": 12,
+    "DataRows": 47,
+    "GeneratedRows": 49,
+    "AvailableTotal": "9223372036854775822",
+    "HeldTotal": "9223372036854775827"
+  },
+  "LegacyReceipts": [
+    {
+      "ReceiptID": "receipt/a/manual",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "SourceKind": "manual_credit",
+      "SourceID": "credit/a",
+      "Amount": "100",
+      "JournalID": "journal/a/manual"
+    },
+    {
+      "ReceiptID": "receipt/a/sandbox",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "SourceKind": "sandbox_capture",
+      "SourceID": "capture/a",
+      "Amount": "50",
+      "JournalID": "journal/a/sandbox"
+    },
+    {
+      "ReceiptID": "receipt/a/voucher",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "SourceKind": "voucher_grant",
+      "SourceID": "voucher/a",
+      "Amount": "70",
+      "JournalID": "journal/a/voucher"
+    },
+    {
+      "ReceiptID": "receipt/b/manual",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "租户/乙",
+      "SourceKind": "manual_credit",
+      "SourceID": "credit/b",
+      "Amount": "9223372036854775707",
+      "JournalID": "journal/b/manual"
+    },
+    {
+      "ReceiptID": "receipt/b/voucher",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "租户/乙",
+      "SourceKind": "voucher_grant",
+      "SourceID": "voucher/b",
+      "Amount": "9223372036854775737",
+      "JournalID": "journal/b/voucher"
+    }
+  ],
+  "LegacySandboxReceipts": [
+    {
+      "ReceiptID": "receipt/a/sandbox",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "CaptureID": "capture/a",
+      "Amount": "50",
+      "JournalID": "journal/a/sandbox"
+    }
+  ],
+  "LegacySettlements": [
+    {
+      "SettlementID": "settlement/a/terminal",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "ReservationID": "reserve/a/terminal",
+      "RequestID": "request/a/terminal",
+      "ChargedAmount": "30",
+      "RefundedAmountAtCutover": "15",
+      "JournalID": "journal/a/finish"
+    }
+  ],
+  "LegacyApprovedRefunds": [
+    {
+      "RefundOrderID": "refund/a/10",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "SettlementID": "settlement/a/terminal",
+      "Amount": "10",
+      "JournalID": "journal/a/refund/10"
+    },
+    {
+      "RefundOrderID": "refund/a/5",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "SettlementID": "settlement/a/terminal",
+      "Amount": "5",
+      "JournalID": "journal/a/refund/5"
+    }
+  ],
+  "LegacyOpenings": [
+    {
+      "ID": "07a1f67a-c17f-570b-a3de-5b5112e86b19",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "租户/乙",
+      "Kind": "reservation",
+      "AccountID": "account/b/held",
+      "ReservationID": "reserve/b/hold",
+      "Amount": "9223372036854775787",
+      "ObservedAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "1f99edec-4650-50b5-a9ff-e3e55e3aeba6",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "reservation",
+      "AccountID": "account/a/held",
+      "ReservationID": "reserve/a/hold",
+      "Amount": "40",
+      "ObservedAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "5997bcd3-f549-546c-81fa-3341a082787f",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "available",
+      "AccountID": "account/a/available",
+      "ReservationID": null,
+      "Amount": "165",
+      "ObservedAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "8eba0f9b-0ede-5d89-b0a5-6ded6e29b4c1",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "",
+      "Kind": "available",
+      "AccountID": null,
+      "ReservationID": null,
+      "Amount": "0",
+      "ObservedAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "b0706b9c-f89c-5fb0-96b6-ad4df9269fbe",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "租户/乙",
+      "Kind": "available",
+      "AccountID": "account/b/available",
+      "ReservationID": null,
+      "Amount": "9223372036854775657",
+      "ObservedAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "d9f365cb-c46b-548c-9067-f29c195c0431",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "reservation",
+      "AccountID": "account/a/held",
+      "ReservationID": "reserve/a/zero",
+      "Amount": "0",
+      "ObservedAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    }
+  ],
+  "LegacySources": [
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "consumption_refund",
+      "SourceID": "refund/a/10",
+      "JournalID": "journal/a/refund/10",
+      "JournalOperationID": "refund/a/10",
+      "Amount": "10",
+      "RequestID": "request/a/terminal",
+      "ReservationID": "reserve/a/terminal",
+      "SettlementID": "settlement/a/terminal"
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "consumption_refund",
+      "SourceID": "refund/a/5",
+      "JournalID": "journal/a/refund/5",
+      "JournalOperationID": "refund/a/5",
+      "Amount": "5",
+      "RequestID": "request/a/terminal",
+      "ReservationID": "reserve/a/terminal",
+      "SettlementID": "settlement/a/terminal"
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "finish",
+      "SourceID": "settlement/a/terminal",
+      "JournalID": "journal/a/finish",
+      "JournalOperationID": "settlement/a/terminal",
+      "Amount": "30",
+      "RequestID": "request/a/terminal",
+      "ReservationID": "reserve/a/terminal",
+      "SettlementID": "settlement/a/terminal"
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "manual_credit",
+      "SourceID": "receipt/a/manual",
+      "JournalID": "journal/a/manual",
+      "JournalOperationID": "credit/a",
+      "Amount": "100",
+      "RequestID": null,
+      "ReservationID": null,
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "租户/乙",
+      "Kind": "manual_credit",
+      "SourceID": "receipt/b/manual",
+      "JournalID": "journal/b/manual",
+      "JournalOperationID": "credit/b",
+      "Amount": "9223372036854775707",
+      "RequestID": null,
+      "ReservationID": null,
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "reserve",
+      "SourceID": "reserve/a/hold",
+      "JournalID": "journal/reserve/a/hold",
+      "JournalOperationID": "reserve/a/hold",
+      "Amount": "40",
+      "RequestID": "request/a/hold",
+      "ReservationID": "reserve/a/hold",
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "reserve",
+      "SourceID": "reserve/a/terminal",
+      "JournalID": "journal/reserve/a/terminal",
+      "JournalOperationID": "reserve/a/terminal",
+      "Amount": "60",
+      "RequestID": "request/a/terminal",
+      "ReservationID": "reserve/a/terminal",
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "reserve",
+      "SourceID": "reserve/a/zero",
+      "JournalID": "journal/reserve/a/zero",
+      "JournalOperationID": "reserve/a/zero",
+      "Amount": "0",
+      "RequestID": "request/a/zero",
+      "ReservationID": "reserve/a/zero",
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "租户/乙",
+      "Kind": "reserve",
+      "SourceID": "reserve/b/hold",
+      "JournalID": "journal/reserve/b/hold",
+      "JournalOperationID": "reserve/b/hold",
+      "Amount": "9223372036854775787",
+      "RequestID": "request/b/hold",
+      "ReservationID": "reserve/b/hold",
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "sandbox_capture",
+      "SourceID": "receipt/a/sandbox",
+      "JournalID": "journal/a/sandbox",
+      "JournalOperationID": "capture/a",
+      "Amount": "50",
+      "RequestID": null,
+      "ReservationID": null,
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "tenant/A",
+      "Kind": "voucher_grant",
+      "SourceID": "receipt/a/voucher",
+      "JournalID": "journal/a/voucher",
+      "JournalOperationID": "redemption/a",
+      "Amount": "70",
+      "RequestID": null,
+      "ReservationID": null,
+      "SettlementID": null
+    },
+    {
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TenantID": "租户/乙",
+      "Kind": "voucher_grant",
+      "SourceID": "receipt/b/voucher",
+      "JournalID": "journal/b/voucher",
+      "JournalOperationID": "redemption/b",
+      "Amount": "9223372036854775737",
+      "RequestID": null,
+      "ReservationID": null,
+      "SettlementID": null
+    }
+  ],
+  "Operations": [
+    {
+      "ID": "65a2ffe0-eed3-5cfa-97c7-047a02a4444c",
+      "TenantID": "",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "Seq": "0",
+      "PreviousSeq": null,
+      "PreviousID": null,
+      "Kind": "epoch_opening",
+      "SourceID": "",
+      "JournalID": null,
+      "JournalOperationID": null,
+      "EventCount": "0",
+      "AvailableDelta": "0",
+      "HeldDelta": "0",
+      "ConsumedDelta": "0",
+      "IssuedDelta": "0"
+    },
+    {
+      "ID": "7f516c95-387c-50e0-8c67-e98d6cb2aba9",
+      "TenantID": "租户/乙",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "Seq": "0",
+      "PreviousSeq": null,
+      "PreviousID": null,
+      "Kind": "epoch_opening",
+      "SourceID": "租户/乙",
+      "JournalID": null,
+      "JournalOperationID": null,
+      "EventCount": "2",
+      "AvailableDelta": "9223372036854775657",
+      "HeldDelta": "9223372036854775787",
+      "ConsumedDelta": "0",
+      "IssuedDelta": "18446744073709551444"
+    },
+    {
+      "ID": "eb41333a-0f46-556e-af32-01c732c0ed20",
+      "TenantID": "tenant/A",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "Seq": "0",
+      "PreviousSeq": null,
+      "PreviousID": null,
+      "Kind": "epoch_opening",
+      "SourceID": "tenant/A",
+      "JournalID": null,
+      "JournalOperationID": null,
+      "EventCount": "2",
+      "AvailableDelta": "165",
+      "HeldDelta": "40",
+      "ConsumedDelta": "0",
+      "IssuedDelta": "205"
+    }
+  ],
+  "Heads": [
+    {
+      "TenantID": "",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TailSeq": "0",
+      "TailOperationID": "65a2ffe0-eed3-5cfa-97c7-047a02a4444c"
+    },
+    {
+      "TenantID": "tenant/A",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TailSeq": "0",
+      "TailOperationID": "eb41333a-0f46-556e-af32-01c732c0ed20"
+    },
+    {
+      "TenantID": "租户/乙",
+      "EpochID": "01234567-89ab-4cde-8fab-0123456789ab",
+      "TailSeq": "0",
+      "TailOperationID": "7f516c95-387c-50e0-8c67-e98d6cb2aba9"
+    }
+  ],
+  "Lots": [
+    {
+      "ID": "6fcde4f8-2578-501c-ada1-bd0fdbd7e2b0",
+      "TenantID": "租户/乙",
+      "OriginKind": "legacy_reservation",
+      "FundingReceiptID": null,
+      "LegacyOpeningID": "07a1f67a-c17f-570b-a3de-5b5112e86b19",
+      "LegacyRefundOrderID": null,
+      "IssuedAmount": "9223372036854775787",
+      "Currency": "CNY",
+      "RefundClass": "nonrefundable",
+      "FIFOAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "83c90e20-0ed8-540f-9d65-97e2340606cf",
+      "TenantID": "tenant/A",
+      "OriginKind": "legacy_available",
+      "FundingReceiptID": null,
+      "LegacyOpeningID": "5997bcd3-f549-546c-81fa-3341a082787f",
+      "LegacyRefundOrderID": null,
+      "IssuedAmount": "165",
+      "Currency": "CNY",
+      "RefundClass": "nonrefundable",
+      "FIFOAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "cd8f7a93-270b-55fe-82a9-28f6ffefa175",
+      "TenantID": "租户/乙",
+      "OriginKind": "legacy_available",
+      "FundingReceiptID": null,
+      "LegacyOpeningID": "b0706b9c-f89c-5fb0-96b6-ad4df9269fbe",
+      "LegacyRefundOrderID": null,
+      "IssuedAmount": "9223372036854775657",
+      "Currency": "CNY",
+      "RefundClass": "nonrefundable",
+      "FIFOAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    },
+    {
+      "ID": "d605d53c-e83f-5c3a-b763-12a484d6b0b2",
+      "TenantID": "tenant/A",
+      "OriginKind": "legacy_reservation",
+      "FundingReceiptID": null,
+      "LegacyOpeningID": "1f99edec-4650-50b5-a9ff-e3e55e3aeba6",
+      "LegacyRefundOrderID": null,
+      "IssuedAmount": "40",
+      "Currency": "CNY",
+      "RefundClass": "nonrefundable",
+      "FIFOAt": {
+        "Value": "2026-11-03T04:05:06.123456Z",
+        "Valid": true,
+        "Infinity": 0
+      }
+    }
+  ],
+  "Events": [
+    {
+      "ID": "566ce1a0-0339-5ddd-885d-27aca2ec4df2",
+      "TenantID": "租户/乙",
+      "LotID": "cd8f7a93-270b-55fe-82a9-28f6ffefa175",
+      "WalletOperationID": "7f516c95-387c-50e0-8c67-e98d6cb2aba9",
+      "WalletSeq": "0",
+      "Kind": "legacy_opening",
+      "OperationID": null,
+      "JournalID": null,
+      "AvailableDelta": "9223372036854775657",
+      "HeldDelta": "0",
+      "ConsumedDelta": "0",
+      "IssuedDelta": "9223372036854775657",
+      "PreviousEventID": null,
+      "BeforeRevision": "0",
+      "AfterRevision": "1",
+      "BeforeAvailable": "0",
+      "BeforeHeld": "0",
+      "BeforeConsumed": "0",
+      "AfterAvailable": "9223372036854775657",
+      "AfterHeld": "0",
+      "AfterConsumed": "0"
+    },
+    {
+      "ID": "5ac94218-06c8-527e-9f1a-bf935b42043e",
+      "TenantID": "tenant/A",
+      "LotID": "83c90e20-0ed8-540f-9d65-97e2340606cf",
+      "WalletOperationID": "eb41333a-0f46-556e-af32-01c732c0ed20",
+      "WalletSeq": "0",
+      "Kind": "legacy_opening",
+      "OperationID": null,
+      "JournalID": null,
+      "AvailableDelta": "165",
+      "HeldDelta": "0",
+      "ConsumedDelta": "0",
+      "IssuedDelta": "165",
+      "PreviousEventID": null,
+      "BeforeRevision": "0",
+      "AfterRevision": "1",
+      "BeforeAvailable": "0",
+      "BeforeHeld": "0",
+      "BeforeConsumed": "0",
+      "AfterAvailable": "165",
+      "AfterHeld": "0",
+      "AfterConsumed": "0"
+    },
+    {
+      "ID": "cb9587b6-fd2b-5634-aef3-443ea44166e3",
+      "TenantID": "tenant/A",
+      "LotID": "d605d53c-e83f-5c3a-b763-12a484d6b0b2",
+      "WalletOperationID": "eb41333a-0f46-556e-af32-01c732c0ed20",
+      "WalletSeq": "0",
+      "Kind": "legacy_opening",
+      "OperationID": null,
+      "JournalID": null,
+      "AvailableDelta": "0",
+      "HeldDelta": "40",
+      "ConsumedDelta": "0",
+      "IssuedDelta": "40",
+      "PreviousEventID": null,
+      "BeforeRevision": "0",
+      "AfterRevision": "1",
+      "BeforeAvailable": "0",
+      "BeforeHeld": "0",
+      "BeforeConsumed": "0",
+      "AfterAvailable": "0",
+      "AfterHeld": "40",
+      "AfterConsumed": "0"
+    },
+    {
+      "ID": "de399293-a176-5c57-8963-86c28ffcf1cb",
+      "TenantID": "租户/乙",
+      "LotID": "6fcde4f8-2578-501c-ada1-bd0fdbd7e2b0",
+      "WalletOperationID": "7f516c95-387c-50e0-8c67-e98d6cb2aba9",
+      "WalletSeq": "0",
+      "Kind": "legacy_opening",
+      "OperationID": null,
+      "JournalID": null,
+      "AvailableDelta": "0",
+      "HeldDelta": "9223372036854775787",
+      "ConsumedDelta": "0",
+      "IssuedDelta": "9223372036854775787",
+      "PreviousEventID": null,
+      "BeforeRevision": "0",
+      "AfterRevision": "1",
+      "BeforeAvailable": "0",
+      "BeforeHeld": "0",
+      "BeforeConsumed": "0",
+      "AfterAvailable": "0",
+      "AfterHeld": "9223372036854775787",
+      "AfterConsumed": "0"
+    }
+  ],
+  "Balances": [
+    {
+      "LotID": "6fcde4f8-2578-501c-ada1-bd0fdbd7e2b0",
+      "TenantID": "租户/乙",
+      "AvailableAmount": "0",
+      "InferenceHeldAmount": "9223372036854775787",
+      "ConsumedAmount": "0",
+      "Revision": "1",
+      "LastEventID": "de399293-a176-5c57-8963-86c28ffcf1cb"
+    },
+    {
+      "LotID": "83c90e20-0ed8-540f-9d65-97e2340606cf",
+      "TenantID": "tenant/A",
+      "AvailableAmount": "165",
+      "InferenceHeldAmount": "0",
+      "ConsumedAmount": "0",
+      "Revision": "1",
+      "LastEventID": "5ac94218-06c8-527e-9f1a-bf935b42043e"
+    },
+    {
+      "LotID": "cd8f7a93-270b-55fe-82a9-28f6ffefa175",
+      "TenantID": "租户/乙",
+      "AvailableAmount": "9223372036854775657",
+      "InferenceHeldAmount": "0",
+      "ConsumedAmount": "0",
+      "Revision": "1",
+      "LastEventID": "566ce1a0-0339-5ddd-885d-27aca2ec4df2"
+    },
+    {
+      "LotID": "d605d53c-e83f-5c3a-b763-12a484d6b0b2",
+      "TenantID": "tenant/A",
+      "AvailableAmount": "0",
+      "InferenceHeldAmount": "40",
+      "ConsumedAmount": "0",
+      "Revision": "1",
+      "LastEventID": "cb9587b6-fd2b-5634-aef3-443ea44166e3"
+    }
+  ],
+  "ReservationLots": [
+    {
+      "ID": "58e31a05-a65b-5223-a84e-2855943d5e7b",
+      "TenantID": "tenant/A",
+      "ReservationID": "reserve/a/hold",
+      "LotID": "d605d53c-e83f-5c3a-b763-12a484d6b0b2",
+      "AllocationIndex": "1",
+      "Amount": "40"
+    },
+    {
+      "ID": "efd0e210-d15a-5e3c-bd71-b1ac9b9e6a0a",
+      "TenantID": "租户/乙",
+      "ReservationID": "reserve/b/hold",
+      "LotID": "6fcde4f8-2578-501c-ada1-bd0fdbd7e2b0",
+      "AllocationIndex": "1",
+      "Amount": "9223372036854775787"
+    }
+  ],
+  "SettlementLots": [],
+  "RefundLots": []
+}

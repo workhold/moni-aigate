@@ -2358,3 +2358,55 @@ V0-WL最终纯包race、32508次fuzz、make check和专库make verify-mvp全部�
 - modified `specs/022-self-service-payments/c0-schema-check-contract.md`
 
 </details>
+
+## 2026-11-02T17:12:11Z · d27da56634c1
+
+新增原68表最小旧数据投影和独立纯开账规划；复核模块依赖、资金集合、资源界及未来phase权限边界，同步README/HLD/LLD/验证与23图，未新增数据库或在线写入
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1452 个源文件；本次 27 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/architecture-init-planner.json`
+- added `docs/verification/assets/architecture-init-planner-application.png`
+- added `docs/verification/assets/architecture-init-planner-detail.png`
+- added `docs/verification/init-planner.json`
+- added `docs/verification/init-planner.md`
+- added `internal/fundinglotinit/build.go`
+- added `internal/fundinglotinit/generate.go`
+- added `internal/fundinglotinit/ledger.go`
+- added `internal/fundinglotinit/planner_core_test.go`
+- added `internal/fundinglotinit/planner_external_test.go`
+- added `internal/fundinglotinit/sort.go`
+- added `internal/fundinglotinit/sources.go`
+- added `internal/fundinglotinit/testdata/README.md`
+- added `internal/fundinglotinit/testdata/mixed_golden.json`
+- added `internal/fundinglotinit/types.go`
+- added `internal/fundinglotscan/seed_projection.go`
+- added `internal/fundinglotscan/seed_projection_postgres_test.go`
+- added `internal/fundinglotscan/seed_projection_test.go`
+- added `internal/fundinglotverify/legacy_seed.go`
+- added `specs/022-self-service-payments/c0-init-planner-contract.md`
+- modified `specs/022-self-service-payments/c0-lot-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T17:30:00Z · 481e522cf0bb
+
+纯开账规划与最小旧数据出口最终验证收口；相关专库race和46包整仓通过且源码身份一致，复核README/HLD/LLD、23图与未来phase边界，仅更新验证记录和架构快照
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1452 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/init-planner.json`
+- modified `docs/verification/init-planner.md`
+- modified `docs/verification/mvp-status.md`
+
+</details>

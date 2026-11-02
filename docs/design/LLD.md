@@ -881,3 +881,11 @@ U为uint64be，F为U(len)+bytes，N为U(0)或U(1)+F(bytes)。header按冻结顺�
 [v2合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)冻结21字段strict shape、无符号规范整数、UTF8/UTF16、顺序/转义/空白严格重编码、depth12/8192值节点/262144B。EncodeV2/DecodeV2唯一构造CanonicalV2；私有owned bytes、SHA、deep-owned bindings，Bytes/Bindings clone，值与指针fmt/JSON脱敏，nil/zero无效。manifest 1..256、严格ASCII basename升序、数组原canonical自SHA；其他合法摘要仅格式校验，由未来停服init issuer对实际basis/catalog/history比较。ordinary的sandbox/两个predecessor字段显式null；sandbox完整保留旧v1 strict/canonical资格、RawURL原件与SHA，再逐DB/三schema/八role绑定。旧v1原件不含peer state-directory字段，不能虚称认证；外层role的pg_禁止仍沿catalog Pins，差分测试明确这个外层交集边界。
 
 本片不消费第八kind，不新增ReadLease私有facts出口或phase capability，不修改迁移/ACL/main/HTTP/worker。protected pre+basis与init/post/epoch仍须另冻；当前通用Commit没有phase检查、ReadLease没有SELECT解析器。实现和独立golden/兼容差分/PG证据见[验证记录](../verification/basis-proof-v2.md)。
+
+## C0 最小seed与纯init INSERT计划
+
+[初始化合同](../../specs/022-self-service-payments/c0-init-planner-contract.md)冻结九组`LegacySeedRows`于`fundinglotverify`，供scanner与新`fundinglotinit`单向依赖。`ProjectLegacySeed(ctx,Facts)`重核原68表EOF、registry、报告及原共享预算，不执行SQL；独立投影view使用新ctx和独立rejected，深复制返回值，不改变原事实或继承旧ctx的取消。84表结果、缺完整coverage和任何不符均不符合出口资格。
+
+纯`Build`独立核原始账本与业务来源关系，A=ΣF+ΣQ−ΣV.R+ΣS(R−C)，H=ΣU.R，输出12组数据写集与恒空settlement/refund边，以及描述性Metadata。Operations/Lots/Events/ReservationLots专门INSERT DTO不含数据库生成stamp；epoch/attestation仅保留两行预算，不生成伪运行证明。UUIDv5以epoch原16字节为namespace，固定域NUL及U64BE字段帧；tag/字段序与表内PK字节排序逐项冻结，输入置换不改输出。
+
+九组输入和生成计划共享10万行/16MiB，metadata额外固定预留1MiB；省略stamp按XID20B/时间32B估算。这个界限不能替代未来完整68+输出资源重核及真实84post。纯层无数据库、Permit或writer，普通启动与七kind门禁不变；不写audit_events改变basis。错误封闭且零结果，真实专库与独立手算范围见[验证记录](../verification/init-planner.md)。
