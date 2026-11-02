@@ -2,6 +2,7 @@ package billing
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -90,6 +91,7 @@ var procurementAttemptReadTables = []string{
 	"tenants", "request_records", "cost_versions", "procurement_accounts",
 	"credential_procurement_bindings", "upstream_attempts", "procurement_reservations", "procurement_budget_events",
 	"users", "provider_cost_corrections", "procurement_cost_proposals",
+	"procurement_commands", "procurement_balance_observations", "audit_events", "projection_outbox",
 }
 
 func (q *procurementAttemptQueryFixture) Query(sql string, args ...any) (fundingSourceRows, error) {
@@ -195,7 +197,7 @@ func newProcurementAttemptQueryFixture() *procurementAttemptQueryFixture {
 	}
 }
 
-func TestReadProcurementAttemptBindingFactsScansFifteenFixedRelations(t *testing.T) {
+func TestReadProcurementAttemptBindingFactsScansNineteenFixedRelations(t *testing.T) {
 	query := newProcurementAttemptQueryFixture()
 	facts, err := ReadProcurementAttemptBindingFacts(context.Background(), query, "private_schema")
 	if err != nil {
@@ -215,22 +217,32 @@ func TestReadProcurementAttemptBindingFactsScansFifteenFixedRelations(t *testing
 	if approval := facts.ApprovalSummary(); !approval.Balanced || approval.Scope != "procurement_cost_approval_graph_v1" || approval.Scanned.Users != 2 {
 		t.Fatalf("unexpected approval summary: %+v", approval)
 	}
+	if command := facts.CommandSummary(); command.Scope != "procurement_command_observation_graph_v1" || command.Scanned.Bindings != 1 || command.Mismatches.BindingCommandRows != 1 {
+		t.Fatalf("missing original binding command was not retained: %+v", command)
+	}
+	if journal := facts.JournalSummary(); journal.Scope != "procurement_cost_journal_graph_v1" || !journal.Balanced || journal.Scanned.Reservations != 1 {
+		t.Fatalf("unexpected cost journal summary: %+v", journal)
+	}
 	wantSelects := map[string]string{
-		"users":                           `SELECT id FROM "private_schema"."users"`,
-		"provider_cost_corrections":       `SELECT id,tenant_id,attempt_id,operation_id,amount::pg_catalog.text,basis,evidence_ref,created_at FROM "private_schema"."provider_cost_corrections"`,
-		"procurement_cost_proposals":      `SELECT id,tenant_id,attempt_id,amount::pg_catalog.text,basis,evidence_ref,reason,requester,expected_reservation_revision::pg_catalog.text,expected_evidence_count::pg_catalog.text,state,approver,approval_operation_id,created_at,approved_at FROM "private_schema"."procurement_cost_proposals"`,
-		"channels":                        `SELECT id FROM "private_schema"."channels"`,
-		"channel_credentials":             `SELECT id,channel_id FROM "private_schema"."channel_credentials"`,
-		"channel_versions":                `SELECT id,channel_id,credential_id FROM "private_schema"."channel_versions"`,
-		"channel_version_credentials":     `SELECT channel_version_id,channel_id,credential_id,position,weight,max_inflight FROM "private_schema"."channel_version_credentials"`,
-		"tenants":                         `SELECT id FROM "private_schema"."tenants"`,
-		"request_records":                 `SELECT id,tenant_id,input_upper_bound::pg_catalog.text,output_limit::pg_catalog.text FROM "private_schema"."request_records"`,
-		"cost_versions":                   `SELECT id,channel_id,upstream_model,input_rate::pg_catalog.text,output_rate::pg_catalog.text,basis,effective_at,created_at FROM "private_schema"."cost_versions"`,
-		"procurement_accounts":            `SELECT id,held_amount::pg_catalog.text,spent_amount::pg_catalog.text FROM "private_schema"."procurement_accounts"`,
-		"credential_procurement_bindings": `SELECT id,credential_id,channel_id,account_id,operation_id,bound_at FROM "private_schema"."credential_procurement_bindings"`,
-		"upstream_attempts":               `SELECT id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,delivery_state,cost_version_id,cost_input_rate::pg_catalog.text,cost_output_rate::pg_catalog.text,cost_basis,cost_status,cost_amount::pg_catalog.text,created_at FROM "private_schema"."upstream_attempts"`,
-		"procurement_reservations":        `SELECT attempt_id,account_id,binding_id,input_bound::pg_catalog.text,output_bound::pg_catalog.text,upper_amount::pg_catalog.text,held_amount::pg_catalog.text,spent_amount::pg_catalog.text,state,anomaly FROM "private_schema"."procurement_reservations"`,
-		"procurement_budget_events":       `SELECT id,event_key,account_id,attempt_id,held_delta::pg_catalog.text,spent_delta::pg_catalog.text,type,evidence_ref FROM "private_schema"."procurement_budget_events"`,
+		"procurement_commands":             `SELECT operation_id,actor,kind,target_id,input_digest,status,reason,before_state::pg_catalog.text,after_state::pg_catalog.text,created_at FROM "private_schema"."procurement_commands"`,
+		"procurement_balance_observations": `SELECT id,account_id,operation_id,actor,status,amount::pg_catalog.text,currency,source,semantic,observed_at,provider_as_of,evidence_ref,created_at FROM "private_schema"."procurement_balance_observations"`,
+		"audit_events":                     `SELECT id,actor,tenant_scope,action,target,sanitized_diff::pg_catalog.text,request_id,created_at FROM "private_schema"."audit_events"`,
+		"projection_outbox":                `SELECT event_id,tenant_id,operation_id,kind,schema_version,sanitized_payload::pg_catalog.text,created_at FROM "private_schema"."projection_outbox"`,
+		"users":                            `SELECT id FROM "private_schema"."users"`,
+		"provider_cost_corrections":        `SELECT id,tenant_id,attempt_id,operation_id,amount::pg_catalog.text,basis,evidence_ref,created_at FROM "private_schema"."provider_cost_corrections"`,
+		"procurement_cost_proposals":       `SELECT id,tenant_id,attempt_id,amount::pg_catalog.text,basis,evidence_ref,reason,requester,expected_reservation_revision::pg_catalog.text,expected_evidence_count::pg_catalog.text,state,approver,approval_operation_id,created_at,approved_at FROM "private_schema"."procurement_cost_proposals"`,
+		"channels":                         `SELECT id FROM "private_schema"."channels"`,
+		"channel_credentials":              `SELECT id,channel_id FROM "private_schema"."channel_credentials"`,
+		"channel_versions":                 `SELECT id,channel_id,credential_id FROM "private_schema"."channel_versions"`,
+		"channel_version_credentials":      `SELECT channel_version_id,channel_id,credential_id,position,weight,max_inflight FROM "private_schema"."channel_version_credentials"`,
+		"tenants":                          `SELECT id FROM "private_schema"."tenants"`,
+		"request_records":                  `SELECT id,tenant_id,input_upper_bound::pg_catalog.text,output_limit::pg_catalog.text FROM "private_schema"."request_records"`,
+		"cost_versions":                    `SELECT id,channel_id,upstream_model,input_rate::pg_catalog.text,output_rate::pg_catalog.text,basis,effective_at,created_at FROM "private_schema"."cost_versions"`,
+		"procurement_accounts":             `SELECT id,held_amount::pg_catalog.text,spent_amount::pg_catalog.text FROM "private_schema"."procurement_accounts"`,
+		"credential_procurement_bindings":  `SELECT id,credential_id,channel_id,account_id,operation_id,bound_at FROM "private_schema"."credential_procurement_bindings"`,
+		"upstream_attempts":                `SELECT id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,delivery_state,cost_version_id,cost_input_rate::pg_catalog.text,cost_output_rate::pg_catalog.text,cost_basis,cost_status,cost_amount::pg_catalog.text,created_at FROM "private_schema"."upstream_attempts"`,
+		"procurement_reservations":         `SELECT attempt_id,account_id,binding_id,input_bound::pg_catalog.text,output_bound::pg_catalog.text,upper_amount::pg_catalog.text,held_amount::pg_catalog.text,spent_amount::pg_catalog.text,state,anomaly FROM "private_schema"."procurement_reservations"`,
+		"procurement_budget_events":        `SELECT id,event_key,account_id,attempt_id,held_delta::pg_catalog.text,spent_delta::pg_catalog.text,type,evidence_ref FROM "private_schema"."procurement_budget_events"`,
 	}
 	for table, prefix := range wantSelects {
 		if !strings.HasPrefix(query.queries[table][0], prefix) {
@@ -258,6 +270,61 @@ func TestReadProcurementAttemptBindingFactsDataMismatchIsSuccessfulScan(t *testi
 	}
 	if facts.BindingSummary().Balanced {
 		t.Fatal("mismatched attempt/version was reported balanced")
+	}
+}
+
+func TestReadProcurementHistoryFactsPreservesNullableObservationAndAudit(t *testing.T) {
+	for _, known := range []bool{false, true} {
+		t.Run(fmt.Sprintf("known=%t", known), func(t *testing.T) {
+			query := newProcurementAttemptQueryFixture()
+			created := query.tables["upstream_attempts"][0][15].(time.Time)
+			binding := query.tables["credential_procurement_bindings"][0]
+			bindingAfter, err := json.Marshal(map[string]string{
+				"id": binding[0].(string), "credential_id": binding[1].(string), "channel_id": binding[2].(string),
+				"account_id": binding[3].(string), "operation_id": binding[4].(string), "bound_at": binding[5].(time.Time).Format(time.RFC3339Nano), "channel_revision": "1",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			operation := "00000000-0000-4000-8000-000000000002"
+			status := "unknown"
+			var amount *string
+			var providerTime *time.Time
+			if known {
+				status, amount, providerTime = "known", procurementAttemptString("900"), &created
+			}
+			observationAfter, err := json.Marshal(map[string]any{
+				"id": "observation-1", "account_id": "account-1", "operation_id": operation, "actor": "maker", "status": status,
+				"amount": amount, "currency": "CNY", "source": "manual", "semantic": "balance", "observed_at": created.Format(time.RFC3339Nano),
+				"provider_as_of": providerTime, "evidence_ref": "balance:receipt", "created_at": created.Format(time.RFC3339Nano),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			query.tables["procurement_commands"] = [][]any{
+				{binding[4], "maker", "credential_bind", binding[1], strings.Repeat("a", 64), "applied", "", "null", string(bindingAfter), created},
+				{operation, "maker", "balance_observe", "account-1", strings.Repeat("b", 64), "applied", "", "null", string(observationAfter), created},
+			}
+			query.tables["procurement_balance_observations"] = [][]any{
+				{"observation-1", "account-1", operation, "maker", status, amount, "CNY", "manual", "balance", created, providerTime, "balance:receipt", created},
+			}
+			query.tables["audit_events"] = [][]any{
+				{"audit-1", "maker", nil, "procurement.command.applied", binding[4], `{"kind":"credential_bind","status":"applied"}`, "", created},
+				{"audit-2", "maker", nil, "procurement.command.applied", operation, `{"kind":"balance_observe","status":"applied"}`, "", created},
+			}
+			facts, err := ReadProcurementAttemptBindingFacts(context.Background(), query, "private_schema")
+			if err != nil || !facts.CommandSummary().Balanced || !facts.JournalSummary().Balanced {
+				t.Fatalf("history mapping mismatch: err=%v command=%+v journal=%+v", err, facts.CommandSummary(), facts.JournalSummary())
+			}
+			if facts.CommandSummary().Scanned.Observations != 1 || facts.JournalSummary().Scanned.Audits != 2 || query.calls["audit_events"] != 1 {
+				t.Fatal("audit was not read once and shared with both cores")
+			}
+			query.tables["procurement_balance_observations"][0][11] = "changed:receipt"
+			facts, err = ReadProcurementAttemptBindingFacts(context.Background(), query, "private_schema")
+			if err != nil || facts.CommandSummary().Mismatches.AppliedObservationRows != 1 || facts.CommandSummary().Mismatches.ObservationCommandRows != 1 {
+				t.Fatal("observation snapshot mismatch was not detected in both directions", err, facts.CommandSummary())
+			}
+		})
 	}
 }
 
@@ -310,6 +377,14 @@ func procurementAttemptReadRow(table, key string, index int) []any {
 		return []any{key, "account", "binding", "1", "0", "0", "0", "0", "released", false}
 	case "procurement_budget_events":
 		return []any{key, key, "account", "attempt", "0", "0", "reserved", ""}
+	case "procurement_commands":
+		return []any{key, "maker", "account_configure", "account", strings.Repeat("a", 64), "rejected", "not_found", "null", "null", created}
+	case "procurement_balance_observations":
+		return []any{key, "account", operationID, "maker", "unknown", nil, "CNY", "manual", "provider balance", created, nil, "reference", created}
+	case "audit_events":
+		return []any{key, "maker", nil, "other.action", "target", "{}", "", created}
+	case "projection_outbox":
+		return []any{key, "tenant", operationID, "other_kind", int32(1), "{}", created}
 	case "users":
 		return []any{key}
 	case "provider_cost_corrections":
@@ -325,6 +400,14 @@ func procurementAttemptScannedCount(facts ProcurementAttemptBindingFacts, table 
 	scanned := facts.BindingSummary().Scanned
 	approval := facts.ApprovalSummary().Scanned
 	switch table {
+	case "procurement_commands":
+		return facts.CommandSummary().Scanned.Commands
+	case "procurement_balance_observations":
+		return facts.CommandSummary().Scanned.Observations
+	case "audit_events":
+		return facts.CommandSummary().Scanned.Audits
+	case "projection_outbox":
+		return facts.JournalSummary().Scanned.Outbox
 	case "users":
 		return approval.Users
 	case "provider_cost_corrections":
@@ -434,7 +517,7 @@ func TestReadProcurementAttemptBindingFactsUsesOneSharedBudgetAndRejectsCursorFa
 	for i := range query.tables["channels"] {
 		query.tables["channels"][i] = []any{fmt.Sprintf("channel-%06d", i)}
 	}
-	query.tables["tenants"] = [][]any{{"tenant-a"}, {"tenant-b"}}
+	query.tables["projection_outbox"] = [][]any{procurementAttemptReadRow("projection_outbox", "outbox-a", 0), procurementAttemptReadRow("projection_outbox", "outbox-b", 1)}
 	facts, err := ReadProcurementAttemptBindingFacts(context.Background(), query, "private_schema")
 	if err != ErrProcurementAttemptBindingFactsResource || facts != (ProcurementAttemptBindingFacts{}) {
 		t.Fatalf("cross-table row budget was not shared: err=%v", err)
@@ -498,7 +581,7 @@ func TestReadProcurementAttemptBindingFactsEnforcesSharedTextBudget(t *testing.T
 		query.tables[table] = nil
 	}
 	query.tables["channels"] = [][]any{{strings.Repeat("c", fundingSourceReadByteLimit-1)}}
-	query.tables["channel_credentials"] = [][]any{{"x", "y"}}
+	query.tables["projection_outbox"] = [][]any{procurementAttemptReadRow("projection_outbox", "outbox-a", 0)}
 	facts, err = ReadProcurementAttemptBindingFacts(context.Background(), query, "private_schema")
 	if err != ErrProcurementAttemptBindingFactsResource || facts != (ProcurementAttemptBindingFacts{}) {
 		t.Fatalf("cross-table projection text budget was not shared: err=%v", err)

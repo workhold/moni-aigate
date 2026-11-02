@@ -11,12 +11,14 @@ import (
 type ProcurementAttemptBindingFactQuery = fundingSourceQuery
 type ProcurementAttemptBindingFactRows = fundingSourceRows
 
-// ProcurementAttemptBindingFacts contains the three scoped summaries produced
+// ProcurementAttemptBindingFacts contains the five scoped summaries produced
 // from one complete ScanProcurement projection. It is not a domain-wide proof.
 type ProcurementAttemptBindingFacts struct {
 	budget   fundinglotverify.ProcurementBudgetProjectionCheck
 	binding  fundinglotverify.ProcurementAttemptBindingCheck
 	approval fundinglotverify.ProcurementCostApprovalCheck
+	command  fundinglotverify.ProcurementCommandCheck
+	journal  fundinglotverify.ProcurementCostJournalCheck
 }
 
 func (ProcurementAttemptBindingFacts) String() string {
@@ -42,6 +44,14 @@ func (f ProcurementAttemptBindingFacts) ApprovalSummary() fundinglotverify.Procu
 	return f.approval
 }
 
+func (f ProcurementAttemptBindingFacts) CommandSummary() fundinglotverify.ProcurementCommandCheck {
+	return f.command
+}
+
+func (f ProcurementAttemptBindingFacts) JournalSummary() fundinglotverify.ProcurementCostJournalCheck {
+	return f.journal
+}
+
 var (
 	ErrProcurementAttemptBindingFactsInput     = fundingSourceReadInput
 	ErrProcurementAttemptBindingFactsResource  = fundingSourceReadResource
@@ -50,8 +60,8 @@ var (
 	ErrProcurementAttemptBindingFactsExecution = fundingSourceReadExecution
 )
 
-// ReadProcurementAttemptBindingFacts reads the complete fixed fifteen-table
-// projection once and returns independent budget, attempt-binding and cost-approval checks.
+// ReadProcurementAttemptBindingFacts reads the complete fixed nineteen-table
+// projection once and returns independent budget, binding, approval, command and cost-journal checks.
 // Data mismatches are represented in the summaries and do not fail the read.
 func ReadProcurementAttemptBindingFacts(ctx context.Context, query ProcurementAttemptBindingFactQuery, schema string) (ProcurementAttemptBindingFacts, error) {
 	if ctx == nil || query == nil || !validProcurementBudgetSchema(schema) {

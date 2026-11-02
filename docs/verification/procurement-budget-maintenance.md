@@ -1,10 +1,28 @@
-# 采购预算、attempt 与成本双审维护 reader 验证记录
+# 采购五项局部核验维护 reader 验证记录
 
-日期：2026-11-02。原预算投影窄片合同见[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)，此前十二表实现合同见[采购 attempt 关系合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)。一次`ScanProcurement`完整扫描产生两个独立摘要：账户/reservation/event预算投影，以及永久credential binding、attempt/request租户、channel credential pool、上游报价快照与reservation上界关系。它不证明供应商真实扣费或全来源覆盖。
+日期：2026-11-02。当前为十九表/五摘要库级维护核验；无全采购/全来源coverage，不证明供应商真实账单。原预算投影窄片合同见[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)，此前十二表实现合同见[采购 attempt 关系合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)。此前十二表`ScanProcurement`扫描产生两个独立摘要：账户/reservation/event预算投影，以及永久credential binding、attempt/request租户、channel credential pool、上游报价快照与reservation上界关系。它不证明供应商真实扣费或全来源覆盖。
+
+## 当前十九表管理历史与成本消息扩展（2026-11-02）
+
+合同为[历史读取](../../specs/022-self-service-payments/c0-procurement-history-read-contract.md)、[命令/余额观察](../../specs/022-self-service-payments/c0-procurement-command-contract.md)和[成本审计/消息](../../specs/022-self-service-payments/c0-procurement-cost-journal-contract.md)。原十五表后追加procurement_commands、procurement_balance_observations、audit_events和projection_outbox；全部表使用同一100000行/16MiB预算、128行C序keyset和原lease期限，audit只读一次供两core复用。新增两scope后共五摘要，Require/Finish仍各一次。无新迁移、业务写入、在线权限或生产维护装配。
+
+新command core独立核闭合JSON、历史配置内部变化、命令与binding/observation及审计双向关系；不拿当前account/用户角色/channel revision反推历史。snapshot沿014保留每string≤1000/no-control和整快照≤16384字节，物理实体TEXT不另加该上限。新cost journal core核proposed/approved/legacy审计和cost_corrected outbox，Money为字符串；managed由reservation存在性判定，legacy actor未存于source，不能反推其原身份或强制当前users。无关action/kind不按采购JSON解释。
+
+已执行根集成定向`go test -race -count=1 ./internal/billing ./internal/maintenancescan ./scripts/maintenance-scan-qa`及对应vet，通过；三包race分别9.215s、9.868s、10.774s。新四表继承127/128/129分页与Query/Next/Scan/Err/Close故障矩阵；新增nullable amount/provider_as_of、NULL audit tenant、共享audit及观察快照双向错配用例，共享行/字节预算故障移至最后outbox表验证没有重置。初跑新增测试的fixture created_at索引越界，已将16改为实际列15；专项与上述三包重跑通过，未改reader规则。
+
+`go test -v -count=1 ./scripts/maintenance-scan-qa -run '^TestMaintenanceConsumersPostgresFundedSnapshot$'`已执行：Plan/Init均因C0_MAINTENANCE_DATABASE_URL缺失明确SKIP。QA已编码通过真实API创建account、binding、人工known观察和合法not_found拒绝（四条commands、一条observation）；Plan要求五摘要一致，Init在隔离管理员fixture篡改proposal evidence、reservation bounds和observation evidence，核正反关系mismatch且全部采购/commands/observations/audit/outbox扫描前后不变。本轮未取得这组实际数据库证据。TEST_DATABASE_URL同样缺失，未运行make verify-mvp。
+
+最终汇合后的四包定向race再次通过：fundinglotverify 1.562s、billing 9.987s、maintenancescan 10.514s、maintenance-scan-qa 11.856s；对应vet通过。`go test -race -p 1 ./... -count=1 -timeout 600s`整仓通过（数据库opt-in未配置，不能视作专库验收）。独立代码复核确认十九表/五摘要装配无阻塞，另发现无关outbox空operation的去重漏检，已修复并新增空operation/相同kind/不同ID回归，纯包race 1.806s与vet通过；根最终装配结果另记，不把早于该补丁的整仓通过扩大为该补丁的精确版本证据。
+
+空operation去重补丁汇合后，根最终 `go test -race -count=1 ./internal/fundinglotverify ./internal/billing ./internal/maintenancescan ./scripts/maintenance-scan-qa` 再次通过，分别1.781s、9.443s、10.533s、11.478s；对应四包vet与diff-check通过。这次是补丁后的集成证据，整仓race保留前一精确范围。README的native/Compose启动链及新卷/已有卷密码边界已独立静态核对；未执行容器或1Panel部署。
+
+根汇合全部并行结果并复核模块图、请求/数据关系、权限边界、能力状态与源码链接后，架构refresh及只读核验通过；随后`make check`通过（只读架构、全仓go vet、Vue/TypeScript strict生产构建）。最终只补入本执行记录，再复核刷新清单并运行只读架构与diff检查；没有因此重标任何未执行的数据库或部署验收。
+
+本片仍未实现evidence/metering图、完整事件重放、PB/客户资金交叉、全来源组合/basis/epoch或供应商余额认证。源代码审计发现旧冲突incoming身份、原始delivery和预算事件顺序的缺证，见[研究记录](../research/procurement-evidence-lifecycle.md)；不能用猜测补成完整证明。下列十二/十五表记录保留各自历史范围，不追溯扩大为十九表验收。
 
 ## 十五表成本双审扩展（2026-11-02）
 
-当前合同为[采购成本双审关系](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)。同一个ScanProcurement共享十五表100000行/16MiB预算并Finish一次，增加独立`procurement_cost_approval_graph_v1`摘要。新核验包含users ID、所有cost corrections与采购proposals；预算event同次读取type/evidence_ref。approved proposal、managed correction、cost_corrected event必须双向精确匹配；无采购reservation的legacy更正不凭operation前缀强制关联提案。不用当前角色、成本或revision反推历史审批。
+该轮合同为[采购成本双审关系](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)。同一个ScanProcurement共享十五表100000行/16MiB预算并Finish一次，增加独立`procurement_cost_approval_graph_v1`摘要。新核验包含users ID、所有cost corrections与采购proposals；预算event同次读取type/evidence_ref。approved proposal、managed correction、cost_corrected event必须双向精确匹配；无采购reservation的legacy更正不凭operation前缀强制关联提案。不用当前角色、成本或revision反推历史审批。
 
 纯core、固定reader、维护结果和外部PG Plan/Init QA已编码，独立只读复核未发现阻塞问题。本片已执行：
 
@@ -20,7 +38,7 @@
 
 未覆盖evidence identities/metering、commands/audit/outbox、人工余额观察、PB交叉图、全来源组合/basis/epoch或供应商账单，仍无普通main/HTTP/worker/writer/生产维护CLI接线。
 
-## 本轮本地代码验证
+## 历史十二表本地代码验证
 
 - `go test -race -count=1 ./internal/fundinglotverify ./internal/billing ./internal/maintenancescan ./scripts/maintenance-scan-qa`：通过。覆盖纯大整数核验、十二表固定分页reader、一个共享行数/文本预算、同lease双摘要、错误零结果、正常数据mismatch、proof/Permit绑定和脱敏。
 - `go test -race -p 1 ./... -count=1 -timeout 600s`：通过。全仓Go race包含本片reader、维护集成和既有模块；前端测试不由此命令覆盖。

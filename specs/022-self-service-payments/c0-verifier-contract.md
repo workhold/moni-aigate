@@ -1,6 +1,6 @@
 # 022-C0-V：独立来源 lot 核验与全钱包重放合同（审查候选）
 
-2026-11-01。**完整核验器仍为精确设计候选，未分配迁移号、未接入资金或普通 main。根已冻结§12的V0-L纯账本行检查及另册[V0-R同RR账本reader](c0-ledger-reader-contract.md)；两者已实现并通过各自[纯层](../../docs/verification/funding-ledger-rows.md)/[实际PG读取](../../docs/verification/funding-ledger-reader.md)专项。其余reader、来源/lot重放与证明组合仍未冻结、未实现。** 本文细化 [lot 合同](c0-lot-contract.md)、[全序合同](c0-sequence-contract.md)、[生产 DDL 候选](c0-production-schema.sql)、[列 ACL 候选](c0-production-permissions.sql)及[维护与 proof v2](c0-maintenance-contract.md)。[纯分配算法](../../internal/billing/lot_plan.go)已有实现，但不是本核验器的正确性来源。迁移清单接缝以已冻结的 [C0-S](c0-snapshot-contract.md) 为准；旧全序稿中的 `SnapshotRequirement` 示意参数不属于当前 `migrations.VerifySnapshotTx(ctx,tx)` 签名。
+2026-11-01。**完整核验器仍为精确设计候选，未分配迁移号、未接入资金或普通 main。根已冻结§12的V0-L纯账本行检查及另册[V0-R同RR账本reader](c0-ledger-reader-contract.md)；两者已实现并通过各自[纯层](../../docs/verification/funding-ledger-rows.md)/[实际PG读取](../../docs/verification/funding-ledger-reader.md)专项。T2真实Permit、T3 ReadLease与ledger/PB/manual-voucher/sandbox直接关联/采购五个局部reader已分别冻结实现；采购目前十九表五摘要，见[历史读取合同](c0-procurement-history-read-contract.md)。这些局部范围不升级本候选的完整来源/lot重放与证明组合，后者仍未冻结、未实现。** 本文细化 [lot 合同](c0-lot-contract.md)、[全序合同](c0-sequence-contract.md)、[生产 DDL 候选](c0-production-schema.sql)、[列 ACL 候选](c0-production-permissions.sql)及[维护与 proof v2](c0-maintenance-contract.md)。[纯分配算法](../../internal/billing/lot_plan.go)已有实现，但不是本核验器的正确性来源。迁移清单接缝以已冻结的 [C0-S](c0-snapshot-contract.md) 为准；旧全序稿中的 `SnapshotRequirement` 示意参数不属于当前 `migrations.VerifySnapshotTx(ctx,tx)` 签名。
 
 依据 [HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)与 [023-B verifier](../023-periodic-products/b-verifier-contract.md)。本片没有原路退款、拒付、媒体收费或多活的实施授权；核验成功不发出模型/支付调用许可，不修账或重建来源。
 
@@ -8,7 +8,7 @@
 
 核验器从真实来源与不可变序列独立推导应有状态，再比较 lot、事件、分配和缓存。禁止调用 `planReserveFundingLots`、`planFinishFundingLots`、`planRefundFundingLots`，禁止把 `fl_check_*`、`fl_validate_*`、`fl_source_*`、`funding_journal_valid`、`payment_*_valid` 等数据库写侧谓词的返回值作为业务正确性 oracle。可以读其受审定义进行对象完整性验证，但业务结论必须来自独立静态读取和 Go 判断。不得 import provider、HTTP、SMTP 或支付 mutation adapter。
 
-受审共享设施只限：pgx 类型/静态标识符引用、完整迁移清单核验、固定安全错误/UTC6格式和[T2已实现的维护Permit](c0-authority-contract.md)；后续维护scanner仍须经待冻结的T3 ReadLease，不取得裸tx。T2[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，不扩大本核验器的实现范围。金额运算使用独立 `math/big.Int` 表达式；不共用写侧分配函数或写侧 SQL 聚合结果。读到的 `before/after/delta/event_count/revision/last_event` 都是待核声明，不是重放输入的真值。
+受审共享设施只限：pgx 类型/静态标识符引用、完整迁移清单核验、固定安全错误/UTC6格式和[T2已实现的维护Permit](c0-authority-contract.md)；后续完整维护scanner仍须经[已冻结的T3 ReadLease](c0-read-lease-contract.md)，不取得裸tx。T2[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，不扩大本核验器的实现范围。金额运算使用独立 `math/big.Int` 表达式；不共用写侧分配函数或写侧 SQL 聚合结果。读到的 `before/after/delta/event_count/revision/last_event` 都是待核声明，不是重放输入的真值。
 
 本合同证明 C0 epoch 起的来源资格与全部钱包分配。cutover 前缺少 allocation 的真实消费历史只核原财务来源、journal、终态、已退累计及精确维护集合；不声称恢复其历史 FIFO 或支付可退资格。保守 `nonrefundable` opening 是已经声明的范围边界；完整维护证据成立时，它本身不构成 coverage 缺口。缺失旧集合、未知 cutover 身份或无法证明旧新互斥，必须显式计为缺口或确定不符，不能以保守资格掩盖。
 
@@ -36,7 +36,7 @@ func VerifyFundingSourcesMaintenance(lease *maintenancetrust.ReadLease) (LotSour
 
 所有 `*Tx` 入口只使用传入的有效 RR，允许 READ ONLY 或 READ WRITE，不 Begin/Commit/Rollback、换连接、写表/临时表、执行 SET ROLE、SAVEPOINT 或取得业务/维护锁。它们不修改调用方 GUC；调用方负责在第一条扫描前设定 `statement_timeout/lock_timeout` 与整个 context deadline，内部静态查询全限定 schema。成功或确定数据不符后 caller 仍拥有原事务；数据库异常后的事务失败沿 PostgreSQL 规则处理，不偷建新快照或自动修复。tx 已关闭、RC/Serializable、取消/执行/权限失败均为安全错误和零结果。
 
-普通私有接缝只接受同 RR 内完成的静态 runtime C0 schema/role/epoch 核验，不能因 APP 有 SELECT 就承认 maintenance 权限。T2当前唯一公开校验是 `Permit.Verify(ctx)`，绑定原私有Snapshot的顶层wrapper、conn/PID、top xid、DB/schema、模式、proof与实际gate；不接收tx。上述维护入口及ReadLease均是T3候选，实施时必须全程保有原busy与总期限、入口/出口重核原Permit，不得用两次Verify代替执行期间所有权。nil/零值、另tx/保存点wrapper、提交后复用均拒绝；不提供trusted bool、任意角色名单或owner fallback。维护入口只允许全局，不能用单租户结果批准整库init。
+普通私有接缝只接受同 RR 内完成的静态 runtime C0 schema/role/epoch 核验，不能因 APP 有 SELECT 就承认 maintenance 权限。T2当前唯一公开校验是 `Permit.Verify(ctx)`，绑定原私有Snapshot的顶层wrapper、conn/PID、top xid、DB/schema、模式、proof与实际gate；不接收tx。上述完整维护入口仍是候选；ReadLease已由T3实现，完整组合实施时必须全程保有原busy与总期限、入口/出口重核原Permit，不得用两次Verify代替执行期间所有权。nil/零值、另tx/保存点wrapper、提交后复用均拒绝；不提供trusted bool、任意角色名单或owner fallback。维护入口只允许全局，不能用单租户结果批准整库init。
 
 `migrations.VerifyReadOnlyTx` 仍保持 RR READ ONLY；RR 写维护仅用 `VerifySnapshotTx` 检查完整当前嵌入 history。两者都不替代对象正文、权限、角色闭包、Permit 或源图证明。C0 schema 缺失、epoch 未发行、proof 无效时 `VerifyLots` 返回固定错误；pre-epoch 原源入口不会为缺 epoch 返回伪造空 lot balanced。
 
@@ -145,8 +145,8 @@ post-epoch operation必须与实际新钱包source/journal同事务，不能只I
 以下未完成前不授权实现完整Verifier或把C0标为已接线：
 
 1. 最终生产DDL/列ACL/tenant birth、旧集合、refund累计和每种新source的top-xid/生命周期证明冻结；schema/role checker及所有实际LOGIN精确矩阵完成。现有001–022 SQL保持不改。
-2. 独立source scanner逐字段清单与B完整证据状态语义受审；不得复用写侧payment predicate作oracle。ledger/funding/采购/PB/B在caller-owned同一RR的全源接缝明确，未来Permit实现单独冻结。它们任一缺口阻断维护init，不以本lots局部balanced代替。
-3. 已冻结C0-S只证明migration history；完整C0对象/权限与Permit尚无实现。pre-epoch/post-init两phase的状态组合、错误映射及已有VerifyLedger/Rebuild结果兼容由根裁决，避免旧boolean接口忽略CoverageComplete。
+2. 独立source scanner逐字段清单与B完整证据状态语义受审；不得复用写侧payment predicate作oracle。ledger/funding/采购/PB/B在caller-owned同一RR的全源接缝明确，现有T2 Permit和T3局部读取不授完整组合权。它们任一缺口阻断维护init，不以本lots局部balanced代替。
+3. C0-S只证明migration history；完整静态对象/权限checker与T2 Permit已有独立实现和验证，但全来源、basis/epoch和运行issuer尚无实现。pre-epoch/post-init两phase的状态组合、错误映射及已有VerifyLedger/Rebuild结果兼容由根裁决，避免旧boolean接口忽略CoverageComplete。
 4. 页游标/显式列SQL、所需索引、资源硬界与长历史复杂度有真实PG计划和量测；正常流程、多tenant、零额、旧未结/旧pending、分次退款及独立期望的测试矩阵受审。
 5. public wrapper、caller-owned seam与维护fixture的作用域明确；APP独立全读验证不扩大worker读取A，projector零C0权限。owner用于安装和受控历史fixture，不能替代实际APP验收。
 
@@ -178,7 +178,7 @@ func scanWalletLotsTx(context.Context, *lotReadSession) (LotCheck, *lotScanCompl
 
 这些记录只是组合函数的内部工作状态，**没有签名、序列化、公共FromReport/FromDigest/Trusted构造器或跨调用复用能力**。现有`CatalogProof/InstallationProof/Permit/RuntimeProof`的职责保持；不能为扫描再建一套可由调用方装配的permission/proof。issuer自己按固定调用图执行core并核完成记录，外部API不接受这些记录或任意`Balanced/CoverageComplete`参数。纯层§12返回的结果也不能转成完成记录。
 
-`lotReadSession`只能在§2候选入口根冻结后内部建立：runtime入口先核actual APP、同RR RO的CatalogProof和严格v2/epoch；maintenance入口须经未来T3 ReadLease绑定原私有Snapshot的Permit及phase，没有Snapshot.Tx导出口。维护scanner不得取得可自行换context或终结的裸tx；精确查询接缝与core抽取须T3另冻。内部事实须绑定精确wrapper、Conn/PgConn、PID/backend_start、top xid、DB/schema OID、实际role、RR access、原proof、phase、scope和原总deadline。每个core进入与返回前重核原绑定，失败返回整个零结果。保存的xid只是绑定本次核验事务，不要求历史journal.xid等于当前xid。
+`lotReadSession`只能在§2候选入口根冻结后内部建立：runtime入口先核actual APP、同RR RO的CatalogProof和严格v2/epoch；maintenance入口须经已实现的T3 ReadLease绑定原私有Snapshot的Permit及phase，没有Snapshot.Tx导出口。维护scanner不得取得可自行换context或终结的裸tx；现有局部查询接缝不能当作完整组合；完整raw graph、共享预算和固定phase调用图须另行冻结。内部事实须绑定精确wrapper、Conn/PgConn、PID/backend_start、top xid、DB/schema OID、实际role、RR access、原proof、phase、scope和原总deadline。每个core进入与返回前重核原绑定，失败返回整个零结果。保存的xid只是绑定本次核验事务，不要求历史journal.xid等于当前xid。
 
 未来runtime issuer仍按[schema合同§7.1](c0-schema-check-contract.md#71-完整-runtimeproof-的独立组合层)只在actual APP RR RO中调用私有core；maintenance post-init只经原Permit的T3 ReadLease在同RR RW读取。后者可见本事务刚写入的epoch/lot，但结果永远不是APP RuntimeProof；init COMMIT后APP须新开RR RO再核全部内容。T2 `Permit.Verify(ctx)`与原InstallationProof的同tx绑定不因写后C0表不再空而失效；十六表重空只属于一次Attest发行阶段，依据[真实授权合同](c0-authority-contract.md)。post-init scanner/writer及epoch尚未实现，scanner不发行Permit，不扩worker/projector读权。
 

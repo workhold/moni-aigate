@@ -37,7 +37,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 自助身份与兑换券 | 已实现，限定本地验收 | 邮件证明、密码恢复、双审赠额券；注册、邮件和新券发行默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
-| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；维护态有 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联、采购预算、attempt 绑定和成本双审关系五个局部 reader；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
+| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；停服维护有五个局部 reader：账本、周期预算、人工/券来源、沙箱收据、采购；其中采购包含预算、attempt/报价、成本双审、管理命令/人工观察、成本审计/消息五项局部摘要；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
 | 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；五个局部结果只证明各自固定扫描完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
@@ -83,7 +83,7 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-停服维护已有授权与只读核验基础，可检查账本、周期预算、来源引用和采购记录；采购核验覆盖报价快照、预占上界，以及双审提案与成本更正事件的双向关系。当前仅提供库级接口，完整资金来源组合、原路退款、拒付和生产维护命令仍在开发，详见[维护架构](docs/architecture/maintenance-gate.md)与[采购验证记录](docs/verification/procurement-budget-maintenance.md)。
+停服维护已有授权与只读核验基础，可检查账本、周期预算、来源引用和采购记录；采购核验覆盖报价快照、预占上界、双审成本更正、管理命令与余额观察，以及对应审计和成本消息的双向关系。当前仅提供库级接口，完整资金来源组合、原路退款、拒付和生产维护命令仍在开发，详见[维护架构](docs/architecture/maintenance-gate.md)与[采购验证记录](docs/verification/procurement-budget-maintenance.md)。
 
 套餐的价值分摊与月期限算法已独立实现，尚未接入购买、扣款或权益发放，详见[纯算法合同](specs/023-periodic-products/c-value-contract.md)。
 
@@ -125,7 +125,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 ## Docker Compose / 1Panel
 
 仓库提供 [Dockerfile](Dockerfile)、[compose.yaml](compose.yaml) 和 [Nginx 示例](deploy/nginx.conf)。以下为待目标环境验收的部署路径，容器实际构建/运行与 1Panel 实装尚未验证。
-先将完整仓库检出到部署目录，以下命令均在仓库根目录执行，再生成私有配置；已有 `.env` 时跳过生成步骤：
+部署主机需要 Docker Engine 与 Compose v2；下方 `go run` 需要 Go ≥1.26，也可在可信开发机生成配置后安全传入部署主机。先将完整仓库检出到部署目录，以下命令均在仓库根目录执行，再生成私有配置；已有 `.env` 时跳过生成步骤：
 
 ```sh
 go run ./cmd/moni-aigate init-env --out .env
@@ -138,7 +138,7 @@ docker compose up -d app
 
 `bootstrap` 命令会等待 Compose 的迁移与权限初始化依赖完成；它在应用对外监听前创建首次管理员。
 
-Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。
+Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。已有 PostgreSQL 卷不会因修改 `.env` 自动更换角色密码，密码轮换须同时更新数据库角色与私有配置。
 1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录和构建上下文须指向完整仓库根目录：`migrate` 使用 `build: .`，需要 `Dockerfile`、Go/Web 源码和 `deploy/init-roles.sh`，仅复制 YAML 与初始化脚本不足以构建。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理到 `127.0.0.1:8080`；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
 SSE 须关闭代理缓冲和生成 POST 自动重试，显式设置可信代理 CIDR；不要直接信任客户端转发头。
 
@@ -207,7 +207,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。当前采购扫描在同一快照内核对十五张固定关系表，返回预算投影、attempt 绑定/报价、成本双审三个局部摘要；evidence、命令审计、余额观察、周期预算交叉关系和全来源组合仍待完成。详见[成本双审合同](specs/022-self-service-payments/c0-procurement-approval-contract.md)和[交付计划](docs/design/delivery-plan.md)。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。当前采购扫描在同一快照内核对十九张固定关系表，返回预算投影、attempt 绑定/报价、成本双审、命令/余额观察、成本审计/消息五个局部摘要；完整 evidence 图、周期预算交叉关系和全来源组合仍待完成。详见[采购历史读取合同](specs/022-self-service-payments/c0-procurement-history-read-contract.md)和[交付计划](docs/design/delivery-plan.md)。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。
@@ -229,6 +229,10 @@ go run ./scripts/check-architecture
 | [Open WebUI](https://github.com/open-webui/open-webui) | 外部客户端接入；它是前端，不是网关 |
 
 进一步阅读：[New API 源码分析](docs/research/new-api-analysis.md)、[身份/商业源码笔记](docs/research/implementation-auth-commerce-notes.md)、[协议源码笔记](docs/research/implementation-protocol-notes.md)、[依赖来源](docs/research/dependency-provenance.md)。
+
+## 反馈与贡献
+
+功能建议与可复现问题请提交到 [GitHub Issues](https://github.com/workhold/moni-aigate/issues)。参与开发前请阅读 [AGENTS.md](AGENTS.md) 与对应 SDD 规格，先明确行为和验收边界，提交时同步测试、设计和架构记录。问题描述和日志中请移除密钥、个人信息及真实请求正文。
 
 ## License 与来源
 

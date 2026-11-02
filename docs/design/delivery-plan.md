@@ -75,3 +75,8 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 
 2026-11-02并行片：采购ScanProcurement按[成本双审合同](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)扩为十五表/三个局部摘要；023-C-V仅独立精确价值/期限算法；025-A1-G仅私有fixture与实际主进程故障运行器。前两项无新增资金写入，后者无生产fault hook。当前TEST_DATABASE_URL、C0_MAINTENANCE_DATABASE_URL及模型主进程opt-in均未配置，真实PG/模型SIGKILL不记通过；本地验证与最终集成结果见各自验证记录。完整全来源、basis/epoch、退款/拒付、商品购买、正式部署与性能仍按原依赖继续。
+
+
+2026-11-02采购历史增量：按[十九表读取合同](../../specs/022-self-service-payments/c0-procurement-history-read-contract.md)在原ScanProcurement内增加commands、balance observations、audit与projection outbox，新增[命令/观察](../../specs/022-self-service-payments/c0-procurement-command-contract.md)与[成本审计/消息](../../specs/022-self-service-payments/c0-procurement-cost-journal-contract.md)两个局部core。audit只读一次，十九表共用原预算/期限且Finish一次，无迁移/在线资金权限变化。evidence历史保存的缺口和不可重建范围先存入[研究记录](../research/procurement-evidence-lifecycle.md)，不从摘要或最终行猜回历史。
+
+下一串行关口是冻结同session owned raw graph、全局共享资源和reader完成记录，再完善manual/voucher、CustomerKey、完整sandbox与采购/PB交叉图，最后提供固定pre/post phase组合及唯一Finish；现五个分别Finish的局部reader不能拼成全来源proof。随后同pre snapshot核basis，再冻protected init writer/post replay/epoch及实际APP接线。原退款/拒付、商品、扩展、生产/HA和性能阶段继续保留，当前没有标记全目标完成。本轮测试状态见[采购验证](../verification/procurement-budget-maintenance.md)，历史验证不追溯升级。

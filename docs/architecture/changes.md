@@ -1847,3 +1847,47 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `docs/verification/procurement-budget-maintenance.md`
 
 </details>
+
+## 2026-11-02T06:36:43Z · fca4df94cf1f
+
+采购维护核验扩为十九表五个局部摘要，新增命令/余额观察与成本审计/outbox独立core，复核模块图、单lease预算/唯一Finish、历史快照与权限边界；同步README部署贡献说明、HLD/LLD和验证范围，无迁移或在线资金权限变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1284 个源文件；本次 21 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/procurement-budget-maintenance.md`
+- modified `internal/billing/procurement_attempt_facts.go`
+- modified `internal/billing/procurement_attempt_read.go`
+- modified `internal/billing/procurement_attempt_read_test.go`
+- added `internal/billing/procurement_command_read.go`
+- added `internal/fundinglotverify/procurement_command.go`
+- added `internal/fundinglotverify/procurement_command_test.go`
+- added `internal/fundinglotverify/procurement_cost_journal.go`
+- added `internal/fundinglotverify/procurement_cost_journal_test.go`
+- modified `internal/maintenancescan/procurement.go`
+- modified `internal/maintenancescan/procurement_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-procurement-command-contract.md`
+- added `specs/022-self-service-payments/c0-procurement-cost-journal-contract.md`
+- added `specs/022-self-service-payments/c0-procurement-history-read-contract.md`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+
+</details>
+
+## 2026-11-02T06:37:14Z · 39e8eee04ea6
+
+采购十九表五摘要最终验收记录收口；根已复核架构正文、README启动部署与局部证明边界，make check和补丁后四包race/vet通过，无新增结构或权限变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1284 个源文件；本次 1 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-budget-maintenance.md`
+
+</details>

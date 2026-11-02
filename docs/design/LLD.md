@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3采购预算投影reader与局部证明边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3采购十九表五摘要与历史核验边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -790,15 +790,15 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 
 固定投影列为funding_receipts的id、tenant_id、source_kind、source_id、amount::pg_catalog.text、currency、journal_id，以及payment_captures的id、tenant_id、amount::pg_catalog.text、wallet_credit_amount::pg_catalog.text、currency。两张表都按id COLLATE C升序取keyset，不JOIN、不聚合、不使用业务validator；跨表查询使用同一个lease与ReadBudget。客户端UTF-8/NUL和规范整数检查失败时固定返回安全错误与零结果；summary中金额和所有计数均使用十进制字符串。ReadSandboxCaptureReceiptFacts只形成非权威局部facts，ScanProof由维护集成在core成功且lease Finish正常后保存。
 
-### 采购预算、attempt 与成本双审 reader
+### 采购预算、attempt、双审与管理历史 reader
 
-原[预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)经[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)与[审批合同](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)扩展同一个`ScanProcurement`。当前固定读取十五个关系：channels、channel_credentials、channel_versions、channel_version_credentials、tenants、request_records、cost_versions、procurement_accounts、credential_procurement_bindings、upstream_attempts、procurement_reservations、procurement_budget_events、users、provider_cost_corrections与procurement_cost_proposals。只读用户ID，不读取密码、MFA或当前角色；budget event增加type/evidence_ref，其余新增固定列以审批合同为准。reader不使用JOIN、业务过滤或SQL聚合；不读取凭据密文和request secret。
+原[预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)经[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)与[审批合同](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)扩展同一个`ScanProcurement`。当前固定读取十九个关系：channels、channel_credentials、channel_versions、channel_version_credentials、tenants、request_records、cost_versions、procurement_accounts、credential_procurement_bindings、upstream_attempts、procurement_reservations、procurement_budget_events、users、provider_cost_corrections、procurement_cost_proposals、procurement_commands、procurement_balance_observations、audit_events与projection_outbox。只读用户ID，不读取密码、MFA或当前角色；budget event增加type/evidence_ref，其余新增固定列以审批合同为准。reader不使用JOIN、业务过滤或SQL聚合；不读取凭据密文和request secret。
 
-单列键用C序keyset，credential pool按`(channel_version_id,credential_id)`使用分列tuple游标；十五表共用100000行、16MiB所有投影文本和原lease最多30秒期限。每页严格检查Next/Scan/Err/Close及完整EOF；任何SQL、扫描、游标、资源或context故障返回零facts。
+单列键用C序keyset，credential pool按`(channel_version_id,credential_id)`使用分列tuple游标；十九表共用100000行、16MiB所有投影文本和原lease最多30秒期限。每页严格检查Next/Scan/Err/Close及完整EOF；任何SQL、扫描、游标、资源或context故障返回零facts。
 
-同批原始行调用三个独立core：`CheckProcurementBudgetProjection`用big.Int比较账户缓存、reservation与event delta；`CheckProcurementAttemptBindingGraph`核永久绑定、tenant/request、channel/version/pool、精确quote与reservation ceil上界；`CheckProcurementCostApprovalGraph`核历史双人身份、proposal nullable形状，以及approved proposal、managed correction和cost_corrected event的双向精确关系。legacy correction以无采购reservation判定，不凭operation前缀分类；不把当前成本/角色/revision当作历史快照，不以delta直接替代绝对更正金额。
+同批原始行调用五个独立core：`CheckProcurementBudgetProjection`用big.Int比较账户缓存、reservation与event delta；`CheckProcurementAttemptBindingGraph`核永久绑定、tenant/request、channel/version/pool、精确quote与reservation ceil上界；`CheckProcurementCostApprovalGraph`核历史双人身份、proposal nullable形状，以及approved proposal、managed correction和cost_corrected event的双向精确关系。legacy correction以无采购reservation判定，不凭operation前缀分类；不把当前成本/角色/revision当作历史快照，不以delta直接替代绝对更正金额。新增`CheckProcurementCommandGraph`核闭合before/after快照、binding/observation双向关系和精确命令审计；`CheckProcurementCostJournalGraph`核proposed/approved/legacy审计和cost_corrected outbox。audit整表只读一次并共享，其他域action/kind不按采购JSON解释；历史账户快照不与当前可变投影比较。
 
-三个scope固定为`procurement_budget_projection_v1`、`procurement_attempt_binding_graph_v1`、`procurement_cost_approval_graph_v1`，仅输出计数与Balanced。完整数据mismatch正常Finish；执行错误撤销lease并返回零结果。`maintenancescan.VerifyProcurementMaintenance`只Require一次、运行固定reader和三个core、Finish一次，三个summary均绑定同一原Permit/ScanProof。无普通main/HTTP/worker/writer接线，不发行全来源coverage、basis、epoch或init许可。evidence/metering、command/audit/outbox、余额观察与PB交叉图仍后续，真实PG及本地验证范围见[记录](../verification/procurement-budget-maintenance.md)。
+五个scope固定为`procurement_budget_projection_v1`、`procurement_attempt_binding_graph_v1`、`procurement_cost_approval_graph_v1`、`procurement_command_observation_graph_v1`、`procurement_cost_journal_graph_v1`，仅输出计数与Balanced。完整数据mismatch正常Finish；执行错误撤销lease并返回零结果。`maintenancescan.VerifyProcurementMaintenance`只Require一次、运行固定reader和五个core、Finish一次，五个summary均绑定同一原Permit/ScanProof。无普通main/HTTP/worker/writer接线，不发行全来源coverage、basis、epoch或init许可。evidence/metering、完整事件重放与PB/客户资金交叉图仍后续，新增读取与快照语义按[历史读取](../../specs/022-self-service-payments/c0-procurement-history-read-contract.md)、[命令](../../specs/022-self-service-payments/c0-procurement-command-contract.md)和[成本消息](../../specs/022-self-service-payments/c0-procurement-cost-journal-contract.md)合同，真实PG及本地验证范围见[记录](../verification/procurement-budget-maintenance.md)。
 
 
 ### 023-C-V 纯价值与期限

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T06:06:06Z",
-  "review_reason": "收口本批1276文件实现的专项和整仓race、make check通过记录；独立审查后的模型QA断言由最终包race/vet覆盖，真实数据库与模型main窗口仍未执行；仅验证/架构文本更新，无新增结构变化",
-  "snapshot_sha256": "b739416e9833451f6ec89e42fafc70e6e40743dfaa63815b064a9917ce58e93f",
-  "architecture_sha256": "96fcba1f7ab70ee0a5dac1882d49770a39348de3b12296529236dd536829f970",
-  "history_sha256": "51f73e7eac9c6a5bcfff8fce5c04b83aa22e9593018086571e5bcc18dc7344b4",
+  "reviewed_at": "2026-11-02T06:37:14Z",
+  "review_reason": "采购十九表五摘要最终验收记录收口；根已复核架构正文、README启动部署与局部证明边界，make check和补丁后四包race/vet通过，无新增结构或权限变更",
+  "snapshot_sha256": "39e8eee04ea6c7bb77376185729f0d5b39095f2fedccca0034439ede857bd45a",
+  "architecture_sha256": "ceb95608c824294d5070e81d272c5a8f20eee064971c34e8398b6a4ea95161e9",
+  "history_sha256": "28109e5b7c3c0fdf9767f6cf381566e544359ffd0d0ff0f8a20d66a58247d3bb",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "ee3e1b17ccae3726dbc812be9fba6168c95773abb79d3cb187df9660a4db11b5"
+      "sha256": "a8e75b692823fa0d5d8d81f43b9ad0b701828734013a5b25a965f0ad285dd605"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "docs/architecture/maintenance-gate.md",
-      "sha256": "bb0c4c4720f7e19255bfdbffa38e47319075a89f9976e81b89fab315579b6a90"
+      "sha256": "2a41ae0560b45db451f01ac18e5b061292b335011e529802b344d60ac01b9f00"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -109,15 +109,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "c1f929e7738f88cb2cfbc0b0b066ac9908723bc815b5c674190b202b9002cde6"
+      "sha256": "5842e3ef48ce5dfa3e09223df6d1003c0162b9304eaf7854a743a916187a0349"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "f99480ff96f0696d74953deb5f46e573ab37fbe7c1830f87bc7ee07047b04451"
+      "sha256": "3fa5c2225541cbd19dafeb53ce9bf4c990fd7982ccb171eb4a148ae79b1027d4"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "66e6aebd3219f1f3ef89b8591114786f10d67af2f5b28577d66d2cbf5f233e6d"
+      "sha256": "29ba03be408b6907643c27b4464b9935503d1c2f1e37ef25fe38fd6673c09551"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -1225,7 +1225,7 @@
     },
     {
       "path": "docs/verification/procurement-budget-maintenance.md",
-      "sha256": "1b9c69eb72b4248f72fbca3e8deb5af8b22ebaa4408506526c4959ee5f646227"
+      "sha256": "dd8d17588d3fea664f82aa750113295c920394ec0279f2141b732e4ff6cad403"
     },
     {
       "path": "docs/verification/public-catalog-020-browser.json",
@@ -1509,15 +1509,15 @@
     },
     {
       "path": "internal/billing/procurement_attempt_facts.go",
-      "sha256": "d6a28abedb74a1cfaa5640f3b22138b785a17df72e9e324c5d321aaf87220d6b"
+      "sha256": "9e0c1becdf35648c404f97ddeefbd93dccedfd9925f9fc0c5d4b80f6cae5c51d"
     },
     {
       "path": "internal/billing/procurement_attempt_read.go",
-      "sha256": "6762c6443ffbb0c456e105b6cc90da85a877a3a194e9afe7c4859e11bf30792b"
+      "sha256": "1173d613d12fbd0a392e74dc965578757ac0df01ebadfed1e703c4f89bb8e824"
     },
     {
       "path": "internal/billing/procurement_attempt_read_test.go",
-      "sha256": "fa391bec3e418028a5c5cb14d99ca84637aba19bf6afac3d00bd083848e3fb31"
+      "sha256": "82d290b8c878306463b89a6658678b75441f4ed1038f1d0a98b108e2e7d48b47"
     },
     {
       "path": "internal/billing/procurement_budget_facts.go",
@@ -1530,6 +1530,10 @@
     {
       "path": "internal/billing/procurement_budget_read_test.go",
       "sha256": "6a64d2c3904cba3a3cf81608e0e38949612c984255e10683809e8868b569991d"
+    },
+    {
+      "path": "internal/billing/procurement_command_read.go",
+      "sha256": "b482a256ec0a2560850bd2d280fe0a267a8166705624174792104e1a55618e4c"
     },
     {
       "path": "internal/billing/procurement_integration_test.go",
@@ -1928,6 +1932,22 @@
       "sha256": "84a7820c54444e20837d0722f273ed3bce88a83e263fad67bb52618a3f3e4f4a"
     },
     {
+      "path": "internal/fundinglotverify/procurement_command.go",
+      "sha256": "b43a488cce5c742bf249ac86ffb2bd01fd44e5ed2834824dd3dce9a303ffcca4"
+    },
+    {
+      "path": "internal/fundinglotverify/procurement_command_test.go",
+      "sha256": "59cb4eeaee07becc1f03f9891345621bd613517f28c79010ca0dc6a6bf501a7c"
+    },
+    {
+      "path": "internal/fundinglotverify/procurement_cost_journal.go",
+      "sha256": "e29f9c8d01681b2fce9c5be87f15e18d6fb8179d7e1a639698744fd5de9a904e"
+    },
+    {
+      "path": "internal/fundinglotverify/procurement_cost_journal_test.go",
+      "sha256": "c4f8ec6b85111cddf49b089e646a5ce95d63698dcd1f7cc1946aa718b28a7c62"
+    },
+    {
       "path": "internal/fundinglotverify/sandbox_capture_links.go",
       "sha256": "826b94c04b653603eb7e136610c642c0d1fab995d91e883c740783c8f1e90aaf"
     },
@@ -2053,11 +2073,11 @@
     },
     {
       "path": "internal/maintenancescan/procurement.go",
-      "sha256": "d13c5e47315a5311aa985cc13869e556726f51f540ac1504ac3af949ebb519e3"
+      "sha256": "6fb0a24bdd484ac6efeb3cf7c4145534feedc55ef5bc619e0a865ec2ddc2b924"
     },
     {
       "path": "internal/maintenancescan/procurement_test.go",
-      "sha256": "8702087832066b344aa688dd65de771f3b308ee4390076ee2eeae933c47dc98e"
+      "sha256": "48e8aa3a032667305cd4d3064b890ebc220fca5c30005b50daae4f034527e174"
     },
     {
       "path": "internal/maintenancescan/sandbox_capture_links.go",
@@ -3825,7 +3845,7 @@
     },
     {
       "path": "scripts/maintenance-scan-qa/maintenance_integration_test.go",
-      "sha256": "e8feeb9c7d04ec06f96aae3506412841fb44b067738bd9fc88649f6cac4ca569"
+      "sha256": "4ca771a65a61ae3e7ee0253afc736da8f014f1ca7bb3f561b00b13e01f4cd40d"
     },
     {
       "path": "scripts/maintenance-scan-qa/periodic_resources_test.go",
@@ -4340,6 +4360,18 @@
       "sha256": "cf0c4e0af5cc08e41735c871829791f7675e104e18b7fade880f01a9223baa2c"
     },
     {
+      "path": "specs/022-self-service-payments/c0-procurement-command-contract.md",
+      "sha256": "c0169799a900d15d9d1d7b708023603a159f8124f06fd29c8b68f358e6e5132b"
+    },
+    {
+      "path": "specs/022-self-service-payments/c0-procurement-cost-journal-contract.md",
+      "sha256": "61c32199453c621c314c9ecaa07af7d58f265189a30f0c94181166b2d880ff4b"
+    },
+    {
+      "path": "specs/022-self-service-payments/c0-procurement-history-read-contract.md",
+      "sha256": "bd8c0d014c8538a2b53f21597d05767bc3956f83580c8d72d4c15e7fbda31ee2"
+    },
+    {
       "path": "specs/022-self-service-payments/c0-production-permissions.sql",
       "sha256": "9ddeecca3c2e9ec9d26f77bea80c92e4505e07f0f2a4c4bdc75d9e09b02876ae"
     },
@@ -4385,7 +4417,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-verifier-contract.md",
-      "sha256": "c2e0743bf94288bd265932a81962de38be1a63235a4fd959a387053f9d8baf67"
+      "sha256": "f9e778ef1336bf89b0f844547f5a7dd736fa428f8cd37e12c3b0e8533d0164c2"
     },
     {
       "path": "specs/022-self-service-payments/c1-protocol-v2-contract.md",

@@ -265,6 +265,13 @@ func readProcurementAttemptBindingFacts(
 	approvalRows.Attempts = rows.Attempts
 	approvalRows.Reservations = rows.Reservations
 
+	commandRows := fundinglotverify.ProcurementCommandRows{Users: approvalRows.Users, Accounts: rows.Accounts, Bindings: rows.Bindings}
+	journalRows := fundinglotverify.ProcurementCostJournalRows{Users: approvalRows.Users, Attempts: rows.Attempts, Reservations: rows.Reservations, Corrections: approvalRows.Corrections, Proposals: approvalRows.Proposals}
+	if err := readProcurementCommandPages(ctx, query, schema, &commandRows, &journalRows, &budget); err != nil {
+		return ProcurementAttemptBindingFacts{}, err
+	}
+	journalRows.Audits = commandRows.Audits
+
 	budgetCheck, err := fundinglotverify.CheckProcurementBudgetProjection(ctx, fundinglotverify.ProcurementBudgetRows{
 		Accounts: rows.Accounts, Reservations: budgetReservations, Events: rows.BudgetEvents,
 	})
@@ -279,11 +286,25 @@ func readProcurementAttemptBindingFacts(
 	if err != nil {
 		return ProcurementAttemptBindingFacts{}, procurementAttemptCoreFailure(err)
 	}
-	return ProcurementAttemptBindingFacts{budget: budgetCheck, binding: attemptCheck, approval: approvalCheck}, nil
+	commandCheck, err := fundinglotverify.CheckProcurementCommandGraph(ctx, commandRows)
+	if err != nil {
+		return ProcurementAttemptBindingFacts{}, procurementAttemptCoreFailure(err)
+	}
+	journalCheck, err := fundinglotverify.CheckProcurementCostJournalGraph(ctx, journalRows)
+	if err != nil {
+		return ProcurementAttemptBindingFacts{}, procurementAttemptCoreFailure(err)
+	}
+	return ProcurementAttemptBindingFacts{budget: budgetCheck, binding: attemptCheck, approval: approvalCheck, command: commandCheck, journal: journalCheck}, nil
 }
 
 func procurementAttemptCoreFailure(err error) error {
 	switch err {
+	case fundinglotverify.ErrProcurementCommandRowsResource, fundinglotverify.ErrProcurementCostJournalRowsResource:
+		return fundingSourceReadResource
+	case fundinglotverify.ErrProcurementCommandRowsCanceled, fundinglotverify.ErrProcurementCostJournalRowsCanceled:
+		return fundingSourceReadCanceled
+	case fundinglotverify.ErrProcurementCommandRowsTimeout, fundinglotverify.ErrProcurementCostJournalRowsTimeout:
+		return fundingSourceReadTimeout
 	case fundinglotverify.ErrProcurementCostApprovalRowsResource:
 		return fundingSourceReadResource
 	case fundinglotverify.ErrProcurementCostApprovalRowsCanceled:
