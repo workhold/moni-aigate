@@ -1659,3 +1659,54 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `specs/022-self-service-payments/plan.md`
 
 </details>
+
+## 2026-11-02T02:13:42Z · 9219daeda4e1
+
+022-C0-T3新增独立sandbox capture直接关联reader，复核并同步scope、依赖图、资金关系、验证边界与全源未覆盖状态；仅库级ScanSandboxSources，无生产接线或完整资金证明
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1244 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/sandbox-capture-links.md`
+- added `internal/billing/funding_source_capture_facts.go`
+- added `internal/billing/funding_source_capture_read.go`
+- modified `internal/billing/funding_source_facts.go`
+- modified `internal/billing/funding_source_read_test.go`
+- added `internal/fundinglotverify/sandbox_capture_links.go`
+- added `internal/fundinglotverify/sandbox_capture_links_test.go`
+- added `internal/maintenancescan/sandbox_capture_links.go`
+- added `internal/maintenancescan/sandbox_capture_links_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-sandbox-capture-link-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T02:15:33Z · 9d26248ad144
+
+022-C0-T3 sandbox capture窄片文档补记make check与最终架构核验结果；真实PostgreSQL Plan/Init和TEST_DATABASE_URL整仓验收仍未执行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1244 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/sandbox-capture-links.md`
+
+</details>
+
+## 2026-11-02T02:16:52Z · edd55ec3694a
+
+移除新验证记录末尾空白并保持sandbox capture窄片架构快照一致；无行为变化，真实PG验收仍待专库
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1244 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/sandbox-capture-links.md`
+
+</details>

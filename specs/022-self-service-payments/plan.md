@@ -77,6 +77,8 @@ flowchart LR
 - [x] C0-V0-L纯账本行检查及V0-R同RR私有ledger reader：三表完整EOF、窄shape/history/函数解析前置、资源界/失败零结果；专项与整仓回归通过，见[读取证据](../../docs/verification/funding-ledger-reader.md)。无完整source/lot证明或运行入口。
 - [x] C1-P独立退款v2纯协议：只读桥接v1已验capture，封闭DTO/四摘要域/三用途HMAC/不可变opaque，独立Python向量及race/vet/fuzz通过；无DB、P、HTTP或资金接线，见[证据](../../docs/verification/payment-refund-protocol-v2.md)。
 - [x] T3局部reader切片：冻结[人工核款/兑换券来源关联合同](c0-source-link-contract.md)，完整读取`credit_orders`、`voucher_redemptions`、`funding_receipts`并只双向核对manual/voucher receipt链接；固定纯core、billing reader与真实ReadLease维护入口已接入。sandbox capture及全源coverage明确未覆盖；合同和限定真实PG证据见[验证记录](../../docs/verification/funding-source-links.md)。这不完成T3全来源组合。
+- [x] T3第四个局部reader：冻结[sandbox capture直接关联合同](c0-sandbox-capture-link-contract.md)，以独立`ScanSandboxSources`完整分页读取`funding_receipts`和`payment_captures`，只核直接ID/tenant/amount/currency关系，并逐capture报告未验证的evidence图与账务效果；没有普通main/HTTP/worker/writer接线，不降低full-source coverage债务。定向Go测试、race和vet已通过。
+- [ ] sandbox capture reader真实PG Plan/Init验收：需专用`C0_MAINTENANCE_DATABASE_URL`，覆盖真实capture正例、受控孤儿/不匹配和扫描前后资金快照不变；当前未配置，不能以本地fixture替代。`TEST_DATABASE_URL`亦未配置，故本切片之后尚未运行`make verify-mvp`；状态见[验证记录](../../docs/verification/sandbox-capture-links.md)。
 - [ ] 审计真实代码锁图与全资金路径，逐操作列出账户/lot桶变动、migration/recovery/历史退款例外。
 - [ ] 维护态legacy迁移；新来源lot和Reserve/FIFO分配、settle/release、消费refund回原来源；VerifyLedger和rebuild对齐。
 - [ ] 后续按冻结合同实现epoch、独立全源RuntimeProof及普通main/全资金路径接线；当前静态leaf没有授予这些能力，022-C与整个后续交付计划仍未完成。
@@ -108,6 +110,6 @@ go run ./scripts/check-architecture
 - [x] T3首片：真实ReadLease、ledger/PB维护reader与局部结果已实现，真实PG及旧reader回归通过；精确范围见[历史专项](../../docs/verification/maintenance-read-lease.md)。后续新增manual/voucher receipt link reader单独以[C0来源关联合同](c0-source-link-contract.md)和[验证记录](../../docs/verification/funding-source-links.md)记证，不改写首片历史统计。
 - [ ] T3独立全来源与完整组合、basis、epoch封闭写入、全资金路径、C1/C2/C3及后续阶段继续按依赖推进。
 
-2026-11-02 T3首片先冻结[读取租约与两个维护reader](c0-read-lease-contract.md)：根集成Snapshot/Permit撤销和真实PG验证，独立实现ReadLease封闭出口及纯测试、ledger单core与维护结果、PB单core/维护资源profile与诚实三态。历史专项记录不包含后续source-link reader。本轮第三个reader依[c0-source-link-contract.md](c0-source-link-contract.md)完整读三表并局部核对manual/voucher receipt双向关系；sandbox receipts计为未覆盖。独立core、三张表分页/行与字节边界、生命周期错误及真实PG Plan/Init均独立记入[新验证记录](../../docs/verification/funding-source-links.md)。全部source coverage、basis、epoch与生产CLI不因局部读取接线而视为完成。
+2026-11-02 T3首片先冻结[读取租约与两个维护reader](c0-read-lease-contract.md)：根集成Snapshot/Permit撤销和真实PG验证，独立实现ReadLease封闭出口及纯测试、ledger单core与维护结果、PB单core/维护资源profile与诚实三态。历史专项记录不包含后续source-link reader。本轮第三个reader依[c0-source-link-contract.md](c0-source-link-contract.md)完整读三表并局部核对manual/voucher receipt双向关系；其scope内sandbox receipts计为未覆盖。独立core、分页/行与字节边界、生命周期错误及真实PG Plan/Init均独立记入[来源验证记录](../../docs/verification/funding-source-links.md)。第四个ScanSandboxSources reader及当前测试/PG缺口按上方任务与[验证记录](../../docs/verification/sandbox-capture-links.md)单独维护。全部source coverage、basis、epoch与生产CLI不因局部读取接线而视为完成。
 
 2026-11-02 T3集成依赖隔离按读取合同§7实施：独立maintenancescan单向复用领域固定raw-facts算法与真实ReadLease，在线生产/race测试依赖不再引入维护/catalog；原算法、身份、资源、资金和超时规则保持。原失败进程49.177秒、core/防伪造/race依赖门禁15.541秒、真实双reader及九个资源边界194.261秒均通过；完整整仓与新精确提交CI以[隔离修复记录](../../docs/verification/maintenance-integration-isolation.md)为准，f572bbd旧CI失败保留。

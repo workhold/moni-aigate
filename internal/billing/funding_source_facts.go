@@ -36,10 +36,15 @@ var (
 	ErrFundingSourceFactsExecution = fundingSourceReadExecution
 )
 
+func validFundingSourceSchema(schema string) bool {
+	return schema != "" && schema != "pg_catalog" && schema != "information_schema" &&
+		!strings.HasPrefix(schema, "pg_") && !strings.ContainsRune(schema, 0)
+}
+
 // ReadFundingSourceFacts runs the one fixed manual-credit/voucher source
 // reader. Its check remains descriptive, even when its scoped relations agree.
 func ReadFundingSourceFacts(ctx context.Context, query FundingSourceFactQuery, schema string) (FundingSourceFacts, error) {
-	if query == nil || schema == "" || schema == "pg_catalog" || schema == "information_schema" || strings.HasPrefix(schema, "pg_") || strings.ContainsRune(schema, 0) {
+	if query == nil || !validFundingSourceSchema(schema) {
 		return FundingSourceFacts{}, ErrFundingSourceFactsInput
 	}
 	_, check, err := readFundingSourceFacts(ctx, query, schema)

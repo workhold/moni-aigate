@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3真实读取、局部证明边界与CI启动回归后的维护依赖隔离）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3第四个sandbox capture直接关联reader与未覆盖边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -753,11 +753,11 @@ CI新增的动态顶层测试分区与临时PG时区只影响测试执行环境�
 
 按[根冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)实现库级二参Attest与Permit.Verify。Snapshot owned installation是唯一输入；完整history先scalar guard再原helper，manifest来自22项固定embed；实际LOGIN/owner与PB六表owner、sandbox字面专库例外、全runtime新鲜clear→sample、16表重新全空、完整ordinary/v1前驱、仅Init全部账户锁与出口重核后一次发证。原busy/总期限/私有rawTx贯穿CPU/SQL，错误或终结撤销全部副本，watcher只短锁状态与raw-close，不并发pgx。
 
-前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与两个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
+前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与四个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
 
 此前[第三轮CI](../verification/github-ci-third-run.md)保留f64b56f范围；随后[T2发布CI](../verification/github-ci-authority-run.md)在精确46f25e0源码十组success。未开专用C0的跳过项不计专项通过，也不覆盖本轮T3。
 
-## 39. 受控读取租约（022-C0-T3 首片）
+## 39. 受控读取租约与四个局部reader（022-C0-T3）
 
 精确API、状态、数据出口与验收按[根冻结合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)。BeginScan至Finish/Abort持续持原gate.busy，每kind仅一次；snapshotState保存activeLease，原revokeAuthorityLocked同步撤销。ScanProof绑定原Permit/lease nonce与Snapshot生命周期，不因正常Finish关闭本lease取消视图而立即失效。所有权分为scan、query和每次method；Abort/watchers只撤销与raw-close，正在使用pgx的方法返回后才可ack并释放busy。
 
@@ -778,3 +778,14 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 真实接线只存在`maintenancescan.VerifyFundingSourceLinksMaintenance`：接受真实`*ReadLease`，在同一个`ScanFunding`中执行Require→固定schema/reader/core→Finish，再私有保存facts和ScanProof；`Verify`/`Summary`绑定原Permit。每个Permit的`ScanFunding`只能消费一次，未来完整Funding scanner须在同一lease里组合固定reader与其他来源reader并统一Finish，不可调用本wrapper后再启动第二个Funding lease。此切片没有普通main/HTTP/线上资金writer接线；sandbox收据、voucher batch/revocation/命令图、支付capture/evidence/订单效果、Key、采购、PB/B来源、lot、历史coverage与同事务顶层xid均未由本summary证明。纯层和reader单测、真实PG/Plan/Init evidence见[验证记录](../verification/funding-source-links.md)。
 
 此前本地串行整仓1172.881秒成功仅属于原版本；精确f572bbd/CI run 41359784155在billing-0原12秒helper及server-2/3原10秒main观察失败。依赖隔离不放宽60/12/10/600秒期限或catalog五秒预算。新修复的原失败进程、真实双reader/资源界、无权威core、完整整仓与新精确提交CI须另行验收；[历史初始化](../verification/catalog-startup.md)和[集成记录](../verification/maintenance-read-lease-integration.md)保留各自代码身份，不据旧结果声明本次通过。
+
+### Sandbox capture收据直接关联 reader
+
+新增窄片按[冻结合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)使用独立ScanKind ScanSandboxSources；它与已有ScanFunding人工/券关联reader可以在同一个Permit/Snapshot中分别完成，但结果不互相升级。真实维护入口为maintenancescan.VerifySandboxCaptureReceiptLinksMaintenance，billing.ReadSandboxCaptureReceiptFacts通过同一个ReadLease完整读取funding_receipts与payment_captures，不应用where过滤、join、聚合或payment_*_valid函数。schema从lease内固定current_schema()读取，列顺序与每表128行C序keyset固定；同一reader共享100000行、16MiB逻辑字符串预算和原lease期限，逐行先过预算再保留，成功要求完整EOF、Rows.Err与显式Close。
+
+纯core CheckSandboxCaptureReceiptLinks只按原TEXT ID检查sandbox_capture收据与capture的直接双向关系，比较tenant、amount对wallet_credit_amount及currency；单行shape、孤儿、字段不符、缺收据与重复source分别计数。摘要scope固定sandbox_capture_receipt_reference_v1，并逐capture报告UnvalidatedCaptureGraphs与UnvalidatedLedgerEffects。它不核验order、identity、evidence原件与处理代次、review/effect关系、journal/ledger/outbox/audit，也不验证外部PSP真实性。direct_links_consistent只描述本合同中的直接引用，不代表完整SandboxFacts、全源coverage或资金效果有效。
+
+该入口仅供库级ReadLease维护集成使用；没有普通main、HTTP、支付worker、线上资金writer、basis、epoch或生产维护CLI接线。targeted go test、go test -race与go vet由集成人运行通过。专库Plan/Init尚未执行：C0_MAINTENANCE_DATABASE_URL未配置，且TEST_DATABASE_URL未配置，因此make verify-mvp未运行。没有以本地fixture代替真实capture正例或受控坏关系PG验收，具体待验边界见[验证记录](../verification/sandbox-capture-links.md)。
+
+
+固定投影列为funding_receipts的id、tenant_id、source_kind、source_id、amount::pg_catalog.text、currency、journal_id，以及payment_captures的id、tenant_id、amount::pg_catalog.text、wallet_credit_amount::pg_catalog.text、currency。两张表都按id COLLATE C升序取keyset，不JOIN、不聚合、不使用业务validator；跨表查询使用同一个lease与ReadBudget。客户端UTF-8/NUL和规范整数检查失败时固定返回安全错误与零结果；summary中金额和所有计数均使用十进制字符串。ReadSandboxCaptureReceiptFacts只形成非权威局部facts，ScanProof由维护集成在core成功且lease Finish正常后保存。

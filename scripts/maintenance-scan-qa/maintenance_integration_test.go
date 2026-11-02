@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -21,21 +22,25 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
 	"github.com/moni-ai/moni-aigate/internal/maintenancescan"
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
+	"github.com/moni-ai/moni-aigate/internal/paymentproto"
+	"github.com/moni-ai/moni-aigate/internal/payments"
 	"github.com/moni-ai/moni-aigate/internal/paymentsandboxqa"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
 // This external consumer imports only public production entry points. It starts
-// with genuine v1 funded QA data, appends exactly the frozen C0 DDL and ACL, and
-// runs both real readers on the same attested maintenance transaction.
+// with genuine v1 funded QA data and a signed sandbox capture, appends exactly
+// the frozen C0 DDL and ACL, then runs all four connected readers on the same
+// attested maintenance transaction.
 func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 	for _, mode := range []string{"plan", "init"} {
 		t.Run(mode, func(t *testing.T) {
 			f := newConsumerFixture(t)
 			ctx := context.Background()
+			captureID := seedConsumerSandboxCapture(t, f, ctx)
 			if mode == "init" {
-				breakConsumerManualReceiptLink(t, f, ctx, f.fundingSourceCreditID)
+				breakConsumerFundingReceiptLinks(t, f, ctx, f.fundingSourceCreditID, captureID)
 			}
 			fundingBeforeScan, err := f.env.FundingSnapshot(ctx)
 			if err != nil {
@@ -69,6 +74,7 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			var ledger *maintenancescan.MaintenanceLedgerResult
 			var budget *maintenancescan.MaintenanceResult
 			var fundingLinks *maintenancescan.FundingSourceLinksResult
+			var sandboxLinks *maintenancescan.SandboxCaptureReceiptLinksResult
 			readLedger := func() {
 				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanLedger)
 				if e != nil {
@@ -99,13 +105,25 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 					t.Fatal("real maintenance funding source link scan failed")
 				}
 			}
+			readSandboxLinks := func() {
+				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanSandboxSources)
+				if e != nil {
+					t.Fatal("real sandbox source lease failed")
+				}
+				sandboxLinks, e = maintenancescan.VerifySandboxCaptureReceiptLinksMaintenance(lease)
+				if e != nil || sandboxLinks == nil {
+					t.Fatal("real maintenance sandbox capture/receipt scan failed")
+				}
+			}
 			if mode == "plan" {
 				readLedger()
 				readFundingLinks()
+				readSandboxLinks()
 				readBudget()
 			} else {
 				readBudget()
 				readFundingLinks()
+				readSandboxLinks()
 				readLedger()
 			}
 			check, err := ledger.Summary(permit)
@@ -122,24 +140,32 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			if mode == "init" {
 				linksMatch = linksMatch && fundingCheck.Mismatches.ApprovedCreditMissingReceipt == 1 && fundingCheck.Mismatches.OrphanManualReceipts == 1
 			}
-			if err != nil || fundingCheck.Scope != "manual_voucher_receipt_links" || !linksMatch || fundingCheck.Scanned.Receipts < 3 || fundingCheck.Scanned.Credits < 2 || fundingCheck.Scanned.Redemptions != 1 || fundingCheck.UncoveredSandboxReceipts != 0 {
+			if err != nil || fundingCheck.Scope != "manual_voucher_receipt_links" || !linksMatch || fundingCheck.Scanned.Receipts < 4 || fundingCheck.Scanned.Credits < 2 || fundingCheck.Scanned.Redemptions != 1 || fundingCheck.UncoveredSandboxReceipts != 1 {
 				t.Fatal("manual funding local relation facts were not retained")
 			}
-			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil {
+			sandboxCheck, err := sandboxLinks.Summary(permit)
+			wantSandboxConsistent := mode == "plan"
+			if err != nil || sandboxCheck.Scope != "sandbox_capture_receipt_reference_v1" || sandboxCheck.DirectLinksConsistent != wantSandboxConsistent ||
+				sandboxCheck.Scanned.Captures != 1 || sandboxCheck.UnvalidatedCaptureGraphs != 1 || sandboxCheck.UnvalidatedLedgerEffects != 1 ||
+				(mode == "init" && (sandboxCheck.OrphanSandboxReceipts != 1 || sandboxCheck.CapturesMissingReceipts != 1)) {
+				t.Fatal("sandbox direct-link local facts were not retained")
+			}
+			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil {
 				t.Fatal("all real consumers must share the original permit")
 			}
 			if _, err := permit.BeginScan(ctx, maintenancetrust.ScanFunding); err == nil {
 				t.Fatal("the same Permit accepted ScanFunding twice")
 			}
 			wrong := &maintenancetrust.Permit{}
-			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil {
+			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil || sandboxLinks.Verify(wrong) == nil {
 				t.Fatal("consumer accepted an unrelated permit")
 			}
-			ledgerCopy, budgetCopy, fundingLinksCopy := *ledger, *budget, *fundingLinks
+			ledgerCopy, budgetCopy, fundingLinksCopy, sandboxLinksCopy := *ledger, *budget, *fundingLinks, *sandboxLinks
 			if snapshot.Rollback(ctx) != nil {
 				t.Fatal("real shared snapshot rollback failed")
 			}
-			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil {
+			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || sandboxLinks.Verify(permit) == nil ||
+				ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil || sandboxLinksCopy.Verify(permit) == nil {
 				t.Fatal("rollback did not revoke every original consumer result")
 			}
 			if g.Close(ctx) != nil {
@@ -208,7 +234,7 @@ func seedConsumerFundingSources(t *testing.T, f *consumerFixture, ctx context.Co
 	return credit.ID
 }
 
-func breakConsumerManualReceiptLink(t *testing.T, f *consumerFixture, ctx context.Context, creditID string) {
+func breakConsumerFundingReceiptLinks(t *testing.T, f *consumerFixture, ctx context.Context, creditID, captureID string) {
 	t.Helper()
 	tx, err := f.admin.Begin(ctx)
 	if err != nil {
@@ -222,9 +248,129 @@ func breakConsumerManualReceiptLink(t *testing.T, f *consumerFixture, ctx contex
 	if _, err = tx.Exec(ctx, "UPDATE "+schema+".funding_receipts SET source_id=$1 WHERE source_kind='manual_credit' AND source_id=$2", "unlinked-"+uuid.NewString(), creditID); err != nil {
 		t.Fatal("consumer mismatch fixture source adjustment failed", err)
 	}
+	if _, err = tx.Exec(ctx, "UPDATE "+schema+".funding_receipts SET source_id=$1 WHERE source_kind='sandbox_capture' AND source_id=$2", "unlinked-"+uuid.NewString(), captureID); err != nil {
+		t.Fatal("consumer sandbox mismatch fixture source adjustment failed", err)
+	}
 	if err = tx.Commit(ctx); err != nil {
 		t.Fatal("consumer mismatch fixture commit failed", err)
 	}
+}
+
+// seedConsumerSandboxCapture creates one real local-sandbox order, accepts a
+// signed capture notification, and lets the restricted worker credit it. This
+// exercises the exact receipt/capture relation scanned below without using
+// direct SQL to fabricate either side of that relation.
+func seedConsumerSandboxCapture(t *testing.T, f *consumerFixture, ctx context.Context) string {
+	t.Helper()
+	a, err := payments.LoadSandboxOptions(ctx, f.env.ApplicationManifestPath)
+	if err != nil {
+		t.Fatal("consumer app payment options failed")
+	}
+	w, err := payments.LoadWorkerOptions(ctx, f.env.WorkerManifestPath)
+	if err != nil || payments.ValidateOptionsPair(a, w) != nil {
+		t.Fatal("consumer worker payment options failed")
+	}
+	life := payments.Lifecycle{Mode: payments.ModeSandbox, Guard: func(context.Context) error { return nil }}
+	a, err = a.BindLifecycle(life)
+	if err != nil {
+		t.Fatal("consumer app payment lifecycle failed")
+	}
+	w, err = w.BindLifecycle(life)
+	if err != nil || payments.ValidateOptionsPair(a, w) != nil {
+		t.Fatal("consumer worker payment lifecycle failed")
+	}
+	appDSN, err := f.env.RuntimeDSN("app")
+	if err != nil {
+		t.Fatal("consumer app payment DSN failed")
+	}
+	cfg, err := payments.ApplicationPoolConfig(ctx, appDSN, a)
+	if err != nil {
+		t.Fatal("consumer app payment pool config failed")
+	}
+	app, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		t.Fatal("consumer app payment pool failed")
+	}
+	defer app.Close()
+	service, err := payments.NewService(ctx, app, a)
+	if err != nil {
+		t.Fatal("consumer app payment service failed")
+	}
+	worker, err := payments.OpenProcessor(ctx, w)
+	if err != nil {
+		t.Fatal("consumer payment worker failed")
+	}
+	defer func() {
+		closeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if worker.Close(closeCtx) != nil {
+			t.Error("consumer payment worker close failed")
+		}
+	}()
+	adminID, ownerID := f.env.ActorIDs["admin"], f.env.ActorIDs["owner"]
+	skuID := uuid.NewString()
+	published, err := service.PublishSKU(ctx, payments.PublishSKUInput{
+		CommandMeta: payments.CommandMeta{OperationID: uuid.NewString(), ActorID: adminID},
+		SKUID:       skuID, ExpectedRevision: 0, DisplayName: "Maintenance capture fixture", Amount: 23,
+	})
+	if err != nil || published.Receipt.ResourceID == nil {
+		t.Fatal("consumer sandbox SKU publish failed")
+	}
+	versionID := *published.Receipt.ResourceID
+	if _, err = service.ActivateSKU(ctx, payments.ActivateSKUInput{
+		CommandMeta: payments.CommandMeta{OperationID: uuid.NewString(), ActorID: adminID},
+		SKUID:       skuID, ExpectedRevision: 1, VersionID: &versionID, Enabled: true,
+	}); err != nil {
+		t.Fatal("consumer sandbox SKU activation failed")
+	}
+	if _, err = service.UpdatePolicy(ctx, payments.UpdatePolicyInput{ActorID: adminID, ExpectedRevision: 1, Enabled: true}); err != nil {
+		t.Fatal("consumer sandbox policy enable failed")
+	}
+	order, err := service.CreateOrder(ctx, payments.CreateOrderInput{
+		CommandMeta:  payments.CommandMeta{OperationID: uuid.NewString(), ActorID: ownerID, TenantID: f.env.ApplicationTenantID},
+		SKUVersionID: versionID,
+	})
+	if err != nil || order.Order == nil {
+		t.Fatal("consumer sandbox order creation failed")
+	}
+	var now time.Time
+	if app.QueryRow(ctx, `SELECT clock_timestamp()`).Scan(&now) != nil {
+		t.Fatal("consumer sandbox clock read failed")
+	}
+	now = now.UTC()
+	transactionID := "transaction:" + uuid.NewString()
+	notification := paymentproto.Notification{
+		SchemaVersion: 1, EventID: "event:" + uuid.NewString(), EventType: "capture.confirmed",
+		EnvironmentID: f.env.Protocol.ID, MerchantID: f.env.Protocol.MerchantID, OrderID: order.Order.ID,
+		ProviderTransactionID: &transactionID, Amount: "23", Currency: "CNY",
+		OccurredAt: now.Format("2006-01-02T15:04:05.000000Z"), ProviderOrderRevision: "2",
+	}
+	raw, err := paymentproto.CanonicalNotification(notification)
+	if err != nil {
+		t.Fatal("consumer sandbox notification encoding failed")
+	}
+	keyring, err := f.env.Keyring()
+	if err != nil {
+		t.Fatal("consumer sandbox keyring failed")
+	}
+	headers, err := keyring.SignNotification(f.env.Protocol, paymentproto.SignedHeaders{
+		KeyID: "qa-key", DeliveryID: uuid.NewString(), DeliveryTime: strconv.FormatInt(now.Unix(), 10),
+	}, raw)
+	if err != nil {
+		t.Fatal("consumer sandbox notification signing failed")
+	}
+	if _, _, err = service.ReceiveNotification(ctx, payments.NotificationInput{Headers: headers, Body: raw}); err != nil {
+		t.Fatal("consumer sandbox notification receive failed")
+	}
+	lease, ok, err := worker.ClaimEvidence(ctx)
+	if err != nil || !ok {
+		t.Fatal("consumer sandbox evidence claim failed")
+	}
+	result, err := worker.ProcessEvidence(ctx, lease)
+	if err != nil || result.Outcome != "credited" || result.CaptureID == nil || result.FundingReceiptID == nil {
+		t.Fatal("consumer sandbox capture funding failed")
+	}
+	return *result.CaptureID
 }
 
 type consumerBackend struct {

@@ -1,6 +1,6 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3真实读取、局部证明边界与CI启动回归后的维护依赖隔离）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3第四个sandbox capture直接关联reader与未覆盖边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 目标、前提与边界
 
@@ -411,14 +411,14 @@ T1已按[根冻结生命周期](../../specs/022-self-service-payments/c0-snapsho
 
 按[根冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)实现库级二参Attest与Permit.Verify。Snapshot owned installation是唯一输入；完整history先scalar guard再原helper，manifest来自22项固定embed；实际LOGIN/owner与PB六表owner、sandbox字面专库例外、全runtime新鲜clear→sample、16表重新全空、完整ordinary/v1前驱、仅Init全部账户锁与出口重核后一次发证。原busy/总期限/私有rawTx贯穿CPU/SQL，错误或终结撤销全部副本，watcher只短锁状态与raw-close，不并发pgx。
 
-前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与两个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
+前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与四个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
 
 此前[第三轮CI](../verification/github-ci-third-run.md)保留f64b56f范围；随后[T2发布CI](../verification/github-ci-authority-run.md)在精确46f25e0源码十组success。未开专用C0的跳过项不计专项通过，也不覆盖本轮T3。
 
-## 37. 受控读取与独立来源核验（022-C0-T3 首片）
+## 37. 受控读取与独立来源核验（022-C0-T3）
 
 按[读取租约根冻结](../../specs/022-self-service-payments/c0-read-lease-contract.md)继续T3。ReadLease从真实Permit发行，整个扫描期间占原busy和总期限，另用query/method所有权封闭Rows与并发；参数和Scan目标使用exact类型白名单，拒绝pgx QueryRewriter/RowScanner泄漏真实连接。正常EOF、Err观察、显式Close与出口完整授权核验后才发行ScanProof；该proof只证明这一lease正常结束，不代表来源覆盖或资金许可。
 
-ledger与PB保留单一固定读取核心，各自原入口身份与事务规则不变；独立`internal/maintenancescan`单向依赖领域包与maintenancetrust→fundinglotcatalog，只有集成入口接受真实`*ReadLease`，通过私有adapter执行Require→固定算法→Finish。领域窄raw-facts接缝不接受或发行authority，假的query只能得到不可信局部事实，不能通过外部provider、报告或FromFacts构造可信结果。ledger保留全部三表与journal额外事实、大整数核算及原资源界；PB维护保留19关系146字段的服务器scalar资源前置，原public入口不新增该guard，三类旧历史缺证仍为indeterminate。新增来源关联reader固定完整读取`credit_orders`、`voucher_redemptions`、`funding_receipts`，独立双向检查人工核款/兑换券的source↔receipt引用；sandbox capture收据仅计为未覆盖，不能据此声称支付来源图通过。schema仍从lease内固定SELECT读取。维护态现有三个局部reader，集成包在正常Finish后私有保存本次事实与真实ScanProof，Verify/Summary仍绑定原Permit及固定kind。局部结果不证明全来源coverage或来源事实同事务性，不批准basis/epoch/init；Key、采购、B来源、支付evidence及lot全图仍需独立逐列读取与完整组合。本切片合同与[验证](../verification/funding-source-links.md)单独记录，既有T3 [专项](../verification/maintenance-read-lease.md)/[集成](../verification/maintenance-read-lease-integration.md)仍保留历史源码范围，不沿用T2或旧CI结果。
+ledger与PB保留单一固定读取核心，各自原入口身份与事务规则不变。manual/voucher来源reader固定完整读取`credit_orders`、`voucher_redemptions`、`funding_receipts`并核对局部source↔receipt引用；sandbox收据仍不参与这个旧ScanFunding结果。第四个独立`ScanSandboxSources`完整读取`funding_receipts`与`payment_captures`，只双向核对sandbox收据到capture的直接ID、tenant、amount、currency引用，summary scope为`sandbox_capture_receipt_reference_v1`，并逐capture保留`UnvalidatedCaptureGraphs`和`UnvalidatedLedgerEffects`计数。它不验证capture订单/身份/evidence/processing/review/effect图，不读journal、ledger、credited outbox或audit，也不证明PSP真实性；未覆盖计数不能抵扣完整来源coverage债务。schema仍从lease内固定SELECT读取。维护态现有四个局部reader，集成包在正常Finish后私有保存本次事实与真实ScanProof，Verify/Summary仍绑定原Permit及固定kind。局部结果不证明全来源coverage或来源事实同事务性，不批准basis/epoch/init；Key、采购、B来源及lot全图仍需独立逐列读取与完整组合。本片合同与验证状态见[窄合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)和[验证记录](../verification/sandbox-capture-links.md)，原manual/voucher reader范围与T3历史专项仍各自保留。
 
-普通billing/PB/main及其领域测试不再依赖维护集成、maintenancetrust或catalog，避免无关业务进程执行完整静态root初始化；真正维护消费者仍eager认证，尚无普通main维护API或生产维护CLI。expected专用严格解析保持原Token解析器的接受/拒绝和资源语义，并以逐树差分验证，actual/candidate原解析不变；固定SHA、完整DTO/模板、全root规范字节及之后的owned span/digest后完整bytes.Equal、固定字段预编译全部保留。此前本地串行1172.881秒成功是历史范围，精确f572bbd/CI run 41359784155仍在billing-0原12秒helper、server-2/3原10秒main及other周期核验CLI原60秒观察超时。按[合同§6–§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)隔离依赖并加入生产及领域测试依赖门禁，不改原期限或五秒issuer预算；原失败进程、真实双reader、全仓与新精确提交CI须重新验收，不能扩大为首字节或供应商性能结论。
+普通billing/PB/main及其领域测试不再依赖维护集成、maintenancetrust或catalog，避免无关业务进程执行完整静态root初始化；真正维护消费者仍eager认证，尚无普通main维护API或生产维护CLI。expected专用严格解析保持原Token解析器的接受/拒绝和资源语义，并以逐树差分验证，actual/candidate原解析不变；固定SHA、完整DTO/模板、全root规范字节及之后的owned span/digest后完整bytes.Equal、固定字段预编译全部保留。本片针对四reader包的Go测试、race和vet由集成人运行通过；真实PG Plan/Init因未配置`C0_MAINTENANCE_DATABASE_URL`未执行，且`TEST_DATABASE_URL`未配置，因此没有运行整仓`make verify-mvp`。这些结果不代表capture正例、故意损坏关系、供应商或生产数据库验收通过；逐项状态见[记录](../verification/sandbox-capture-links.md)。
