@@ -2483,3 +2483,33 @@ SDD冻结并实现原Permit受保护开账phase、固定writer与strict-v2/实�
 - modified `docs/verification/protected-init-phase.md`
 
 </details>
+
+## 2026-11-02T18:56:04Z · 8d8efb5da28b
+
+CI a9a5b59财务分片暴露既有pg_stat_activity文本与真实锁边采样错配；先冻023-A验收合同，再以精确tenant tuple/XID锁与blocking PID验证屏障，隔离可选幂等FK前锁；真实PG场景20次及全8场景race零SKIP通过。仅测试和文档变更，生产模块/锁序/图/迁移/权限不变，同步架构HLD/LLD及失败记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1474 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/pricing-lock-ci.json`
+- added `docs/verification/pricing-lock-ci.md`
+- modified `internal/billing/tenant_pricing_concurrency_integration_test.go`
+- modified `specs/023-periodic-products/a-contract.md`
+
+</details>
+
+## 2026-11-02T18:57:24Z · 2b130ac94b05
+
+CI并发观察测试补丁收口：真实PG目标20次及定价8场景race零SKIP通过，make check通过；仅补最终失败/修正证据，生产源码及架构图结构未变。保留a9a5b59整仓验证范围与旧CI失败，不将后续源码冒称旧run成功
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1474 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/pricing-lock-ci.json`
+- modified `docs/verification/pricing-lock-ci.md`
+
+</details>

@@ -161,6 +161,41 @@ func tenantPricingWaiter(t *testing.T, ctx context.Context, f *fixture, blocker 
 	}
 }
 
+// pg_stat_activity.query can describe another statement in an extended batch
+// while pg_blocking_pids already sees the tenant wait. Authenticate this exact
+// barrier with the tuple and transaction lock tags instead of activity text.
+func tenantPricingWaitTenantShare(t *testing.T, ctx context.Context, f *fixture, blocker uint32) {
+	t.Helper()
+	ticker := time.NewTicker(5 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		var pid uint32
+		err := f.pool.QueryRow(ctx, `WITH locks AS MATERIALIZED (SELECT * FROM pg_locks)
+ SELECT tuple_lock.pid
+ FROM tenants t JOIN locks tuple_lock ON tuple_lock.relation=t.tableoid
+ AND tuple_lock.database=(SELECT oid FROM pg_database WHERE datname=current_database())
+ AND tuple_lock.locktype='tuple' AND tuple_lock.mode='RowShareLock' AND tuple_lock.granted
+ AND tuple_lock.page::text||','||tuple_lock.tuple::text=btrim(t.ctid::text,'()')
+ JOIN locks waiting ON waiting.pid=tuple_lock.pid AND waiting.locktype='transactionid'
+ AND waiting.mode='ShareLock' AND NOT waiting.granted
+ JOIN locks holding ON holding.pid=$1::int AND holding.locktype='transactionid'
+ AND holding.mode='ExclusiveLock' AND holding.granted AND holding.transactionid=waiting.transactionid
+ WHERE t.id=$2 AND $1::int=ANY(pg_blocking_pids(tuple_lock.pid))
+ ORDER BY tuple_lock.pid LIMIT 1`, int32(blocker), f.tenant).Scan(&pid)
+		if err == nil && pid != 0 {
+			return
+		}
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			t.Fatal("tenant SHARE lock-tag observation", err)
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatal("expected tenant tuple SHARE and transaction wait edge absent", ctx.Err())
+		case <-ticker.C:
+		}
+	}
+}
+
 type tenantPricingReservationResult struct {
 	value Reservation
 	err   error
@@ -343,11 +378,13 @@ func TestPostgresTenantPricingAssignmentFirstReserveSeesCommittedDomain(t *testi
 		assigned <- tenantPricingAssignmentResult{v, e}
 	}()
 	assignmentPID, _ := tenantPricingWaiter(t, ctx, f, actorBlock.Conn().PgConn().PID())
-	reserved := tenantPricingReserveAsync(ctx, f, f.input())
-	_, query := tenantPricingWaiter(t, ctx, f, assignmentPID)
-	if !strings.Contains(query, "FROM tenants") || !strings.Contains(query, "FOR SHARE") {
-		t.Fatal("Reserve did not wait at its tenant SHARE barrier", query)
-	}
+	input := f.input()
+	// Avoid an earlier idempotency INSERT's FK KEY SHARE: PostgreSQL may
+	// skip the heavyweight tuple tag when upgrading its own weaker lock.
+	// This case isolates the actual principal SHARE barrier.
+	input.IdempotencyKey = ""
+	reserved := tenantPricingReserveAsync(ctx, f, input)
+	tenantPricingWaitTenantShare(t, ctx, f, assignmentPID)
 	if err := actorBlock.Commit(ctx); err != nil {
 		t.Fatal(err)
 	}

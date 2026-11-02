@@ -760,3 +760,11 @@ A1/A2/A3实施后必须跑专用PG真实app/projection/owner角色、并发屏�
 ## 9. 根冻结与原型边界
 
 根已逐段复核全部实际选价读取、隐式FK锁、NULL安全、不可变原结果、权限与有界准入，接受第8节所有裁决。专用PostgreSQL16.15随机schema原型（001–017后抽取本稿DDL）普通2.529s/race3.657s通过6组反例，临时schema全部清理；原型发现CASE表达式缺括号的42601已在本稿修正。NO KEY UPDATE登录屏障通过，故意替换FOR UPDATE实际复现40P01；原型不是生产迁移或Reserve端到端验收，后续必须在真实源码重跑。A1/A2/A3授权和文件归属由根分派，B/C尚未冻结。
+
+## 10. 2026-11-03：并发验收的数据库屏障
+
+分组分配先持有 tenant 的 NO KEY UPDATE 再等待管理员锁时，Reserve 的 pgx principal batch 必须真实阻塞于同一 tenant 的 SHARE，释放管理员屏障后才观察已提交的新分组和 revision。验收不能把 `pg_stat_activity.query` 与 `pg_blocking_pids` 当作同一时刻的执行证据：extended batch 的 Parse/Bind 及活动采样可让该文本仍为另一条语句。
+
+本场景改用 PostgreSQL 实际锁标记（同一 materialized pg_locks 采样，绑定当前 database OID）：Reserve backend 持有精确 tenant tableoid/ctid 的 tuple RowShareLock，同时未获授的 transactionid ShareLock 对应分配 backend 已获授的 ExclusiveLock，且 `pg_blocking_pids` 包含分配 backend。屏障未释放时轮询这一完整条件，仍使用原8秒总期限；时间流逝不代表屏障成立。tuple 排队锁已获授不表示 tenant 行 SHARE 已获授；等待原分配 XID 的证据不可省略。保留最终分组/价格/revision快照、钱包守恒和禁止自动重试掩盖死锁的全部断言。此修订仅校准测试观察器，不修改生产锁序、SQL、超时或重试。
+
+该单一屏障场景使用可选的空 IdempotencyKey，避免此前幂等 INSERT 的 tenant FK 先取得 KEY SHARE；PG16 在升级自身已有行锁时可以省略 heavyweight tuple lock，不能把该合法路径误判为没有等待。真实生产幂等路径及其专门回归保持，本场景只隔离并证明 tenant SHARE 与已提交售价域。

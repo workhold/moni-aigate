@@ -531,6 +531,8 @@ sequenceDiagram
 
 数据关系为tenant→price_group、price_version→可选group、group/归属事件→immutable operation、request→原price与组快照。018只追加列/表/guard与唯一性，NULLS NOT DISTINCT保护默认域同生效时刻唯一；历史不更新，不产生资金。app仅组状态列、tenant业务及pricing列、request生命周期三列有UPDATE权；projector无新表读取权。023-A真实PG分包回归/并发故障、227项前端/strict、真实main浏览器和018预览升级通过[限定本地验收](../verification/tenant-pricing.md)；周期预算与商品不因A接通而完成。
 
+023-A的assignment-first并发验收现用同一pg_locks采样中的精确tenant tuple与事务XID等待边，替代pg_stat_activity SQL文本推定；pgx批处理下两种观察可不同步。该场景关闭可选幂等键以避免先行FK KEY SHARE使tuple排队标记省略，仍实际核分组/价格/revision及钱包与禁止重试掩盖死锁。生产锁序、价格选择、身份/权限、迁移、超时和请求路径均无变化；模块/链路图不变。CI失败及修正范围见[CI屏障记录](../verification/pricing-lock-ci.md)。
+
 ## 周期预算核心（023-B）
 
 020引入tenant、Key与procurement三种独立control，UTC自然日/月，首次cap从下一完整周期生效。客户按最终Reserve时刻记录完整R，两种客户scope共享同一次钱包预占；采购每个实际attempt按冻结报价完整预占U。control.total_held包含旧期与legacy未决占用，当期spent与全部held共同参与新准入；关cap仍持续记账。配置日历固定，退款不减少spent，自然换期不复制/重置allocation。

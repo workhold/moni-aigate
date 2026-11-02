@@ -1,0 +1,96 @@
+{
+  "date": "2026-11-03",
+  "base_commit": "a9a5b5971931277b4d81a44a68d8de5cf20f267b",
+  "failed_ci": {
+    "run_id": 41503251163,
+    "job_id": 125475884721,
+    "shard": "billing-2",
+    "test": "TestPostgresTenantPricingAssignmentFirstReserveSeesCommittedDomain",
+    "log_sha256": "d8a9277365f32d360fc78fe7327aa862f256ce9b320b4f36cf60fd8699cbc094",
+    "url": "https://github.com/workhold/moni-aigate/actions/runs/41503251163",
+    "observed_jobs": {
+      "success": 8,
+      "failure": 1,
+      "still_running": [
+        "contracts (other)"
+      ]
+    }
+  },
+  "initial_tuple_only_exploration": {
+    "package_action": "fail",
+    "elapsed_seconds": 9.297,
+    "reason": "Own prior FK KEY SHARE allows PostgreSQL to skip heavyweight tuple tag; fixture corrected to optional empty idempotency key",
+    "log_sha256": "6148c47cd11e5173ea2f262d542c9f7b540cf27e2f590ea2efc6a422b554a74d"
+  },
+  "final_related_race": [
+    {
+      "command": [
+        "go",
+        "test",
+        "-race",
+        "-json",
+        "./internal/billing",
+        "-run",
+        "^TestPostgresTenantPricingAssignmentFirstReserveSeesCommittedDomain$",
+        "-count=20",
+        "-timeout",
+        "180s"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.852,
+      "source_sha256": {
+        "internal/billing/tenant_pricing_concurrency_integration_test.go": "61d507f723b6798c351f300782e453a44fd2cf7988043dd6668f3d691ba499ae",
+        "internal/billing/store.go": "7177e456ddf193933b37faf91649c982bb3d8e5de7b7d12904238a8ebae13dbc",
+        "internal/billing/reserve.go": "c9d16bf060d76c5a665e4e0c8b06f0930bb85f0f32a0a70d90fc7624f6611eac",
+        "internal/catalog/pricing_commands.go": "17c494386e944e2aa2cd743a483b3d8b6a24e534235c293ba7455dbe6909af3f"
+      },
+      "source_identity_unchanged": true,
+      "log_sha256": "4ff14e5f0928d02cab8bce8c10cc4c7c94f142ba013b19d035164805bca97e18",
+      "top_level_passes": 20,
+      "skips": [],
+      "failures": [],
+      "pass": true
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-race",
+        "-json",
+        "./internal/billing",
+        "-run",
+        "^TestPostgresTenantPricing",
+        "-count=1",
+        "-timeout",
+        "180s"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.306,
+      "source_sha256": {
+        "internal/billing/tenant_pricing_concurrency_integration_test.go": "61d507f723b6798c351f300782e453a44fd2cf7988043dd6668f3d691ba499ae",
+        "internal/billing/store.go": "7177e456ddf193933b37faf91649c982bb3d8e5de7b7d12904238a8ebae13dbc",
+        "internal/billing/reserve.go": "c9d16bf060d76c5a665e4e0c8b06f0930bb85f0f32a0a70d90fc7624f6611eac",
+        "internal/catalog/pricing_commands.go": "17c494386e944e2aa2cd743a483b3d8b6a24e534235c293ba7455dbe6909af3f"
+      },
+      "source_identity_unchanged": true,
+      "log_sha256": "38fd6d0000670df7fd3271d9302c988bf4083082a04680831cf4277e7ec6db73",
+      "top_level_passes": 8,
+      "skips": [],
+      "failures": [],
+      "pass": true
+    }
+  ],
+  "production_changed": false,
+  "prior_full_local_scope": "a9a5b59 protected-init implementation; not rerun wholesale for this test-only correction",
+  "status": "real PostgreSQL race and static checks passed; fix will be checked by the new pushed CI run",
+  "make_check": {
+    "command": [
+      "make",
+      "check"
+    ],
+    "exit_code": 0,
+    "pass": true,
+    "log_sha256": "4a0e1df4e883d820ad667b3171cf342cc5f8e2555575d9357d4cad2580902015",
+    "scope": "read-only architecture snapshot, all Go vet and frontend strict build"
+  }
+}

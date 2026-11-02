@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T18:43:05Z",
-  "review_reason": "受保护开账与旧tenant TEXT的实现保持专项和整仓所验身份；补齐最终验证记录：8包680.197秒/431顶层/3317父子终态零SKIP，make check及专库verify-mvp通过；24图与README使用部署边界已复核，无新增运行结构或生产接线",
-  "snapshot_sha256": "a4d989eda7905cae22832608a324197ad81f613eb7266a84036d1e31fdb73be6",
-  "architecture_sha256": "94a0d8d2140f2ff3dee3cac85e24023c038455f5af12803a7683312c5e3cd292",
-  "history_sha256": "bef02d39203ff7c922ef14bf86b0d5cd281fd6933faf58de879140a709bd1640",
+  "reviewed_at": "2026-11-02T18:57:24Z",
+  "review_reason": "CI并发观察测试补丁收口：真实PG目标20次及定价8场景race零SKIP通过，make check通过；仅补最终失败/修正证据，生产源码及架构图结构未变。保留a9a5b59整仓验证范围与旧CI失败，不将后续源码冒称旧run成功",
+  "snapshot_sha256": "2b130ac94b0593f57616374a261b0f01860371bf8d9cbbfadf630dd138059605",
+  "architecture_sha256": "4f5eca8e26165db74767e9ec0685e60e362796981745f7e2834b01e16b03d9a7",
+  "history_sha256": "46a748297ed901418cca610239427e3b3490d03e7d4aaa8d46fffefb675c3614",
   "files": [
     {
       "path": ".dockerignore",
@@ -109,11 +109,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "5d599671f1cf1d4277a309b52e9e3daa2912ebcf3bae43d50a84ad9faa9203dc"
+      "sha256": "15162e1b6d102d3eb3a350e79cbf0f67a60b0182f1640c760f0afd11f210c713"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "e9fb48e56d6d0abf02234c0aa141c8365143514653fd5b4cc8972d7f657234a5"
+      "sha256": "2f94a0b28f1a6d9edc1ad333a3ec3a32bb95c8ae4fdd83799db8bffb5e647627"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1328,6 +1328,14 @@
       "sha256": "e284592067bcda3e59d53ef78816b84d0af660fbf7ae67236ec76bb56ce14ad0"
     },
     {
+      "path": "docs/verification/pricing-lock-ci.json",
+      "sha256": "525ccac2f8f8c4eeeb1f2fbb941184f344a234b508590c1f0a450701ae47ea1c"
+    },
+    {
+      "path": "docs/verification/pricing-lock-ci.md",
+      "sha256": "9422fa302f367d6b0319a1611b4eb6cda2b45048da5f5c09b1e4d3b616ddd559"
+    },
+    {
       "path": "docs/verification/procurement-019-browser.json",
       "sha256": "92dfd3f91d9c8472758f7660c59c721073ddc72000328b026b33366fff365b6c"
     },
@@ -1765,7 +1773,7 @@
     },
     {
       "path": "internal/billing/tenant_pricing_concurrency_integration_test.go",
-      "sha256": "d5d743b0332c995544331786755d6d1f80c06fedd03da2fb1e3a402159e8afd9"
+      "sha256": "61d507f723b6798c351f300782e453a44fd2cf7988043dd6668f3d691ba499ae"
     },
     {
       "path": "internal/billing/tenant_pricing_integration_test.go",
@@ -5201,7 +5209,7 @@
     },
     {
       "path": "specs/023-periodic-products/a-contract.md",
-      "sha256": "c2d62423639271406365fea9935b18ecdb3b17307ca2606b10827b6a1260b094"
+      "sha256": "5bb90b8ee131d7221a807e163be46d4bf4fe28ce30431032e5786ba9bab957f6"
     },
     {
       "path": "specs/023-periodic-products/acceptance.md",
