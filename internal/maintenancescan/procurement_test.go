@@ -33,6 +33,10 @@ func TestProcurementMaintenanceRejectsMissingAuthorityAndRedactsResult(t *testin
 		if err == nil || binding != (fundinglotverify.ProcurementAttemptBindingCheck{}) {
 			t.Fatal("invalid result leaked attempt summary")
 		}
+		approval, err := result.ApprovalSummary(&maintenancetrust.Permit{})
+		if err == nil || approval != (fundinglotverify.ProcurementCostApprovalCheck{}) {
+			t.Fatal("invalid result leaked approval summary")
+		}
 		if result == nil {
 			continue
 		}

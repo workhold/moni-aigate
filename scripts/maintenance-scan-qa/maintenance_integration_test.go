@@ -192,11 +192,19 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 				procurementBindingCheck.Scanned.Tenants != 1 || procurementBindingCheck.Scanned.Requests != 1 || procurementBindingCheck.Scanned.CostVersions != 1 ||
 				procurementBindingCheck.Scanned.Accounts != 1 || procurementBindingCheck.Scanned.Bindings != 1 ||
 				procurementBindingCheck.Scanned.Attempts != 1 || procurementBindingCheck.Scanned.Reservations != 1 ||
-				procurementBindingCheck.Scanned.BudgetEvents != 1 ||
+				procurementBindingCheck.Scanned.BudgetEvents != 3 ||
 				procurementBindingCheck.Mismatches.ReservationRequestBoundRows != wantBoundMismatch ||
 				procurementBindingCheck.Mismatches.ReservationUpperBoundRows != wantUpperMismatch {
 				t.Fatal("procurement attempt binding local facts were not retained", err, procurementBindingCheck)
 			}
+			approvalCheck, err := procurementResult.ApprovalSummary(permit)
+			wantApprovalBalanced := mode == "plan"
+			if err != nil || approvalCheck.Scope != "procurement_cost_approval_graph_v1" || approvalCheck.Balanced != wantApprovalBalanced ||
+				approvalCheck.Scanned.Proposals != 1 || approvalCheck.Scanned.Corrections != 1 ||
+				(mode == "init" && (approvalCheck.Mismatches.ApprovedCorrectionRows != 1 || approvalCheck.Mismatches.ApprovedEventRows != 1 || approvalCheck.Mismatches.ManagedCorrectionApprovalRows != 1 || approvalCheck.Mismatches.CorrectionEventApprovalRows != 1)) {
+				t.Fatal("procurement approval local facts were not retained", err, approvalCheck)
+			}
+
 			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil || procurementResult.Verify(permit) != nil {
 				t.Fatal("all real consumers must share the original permit")
 			}
@@ -450,6 +458,7 @@ type consumerFixture struct {
 	procurementRequestID      string
 	procurementAttemptID      string
 	procurementBindingID      string
+	procurementProposalID     string
 	gates                     []*maintenancetrust.Gate
 	pools                     []*pgxpool.Pool
 	backends                  []consumerBackend
@@ -685,6 +694,29 @@ func seedConsumerProcurementAttempt(t *testing.T, f *consumerFixture, ctx contex
 		t.Fatal("consumer procurement upstream attempt setup failed", err)
 	}
 	f.procurementAttemptID = attempt.ID
+	if err = store.PrepareDispatch(ctx, billing.DispatchInput{TenantID: f.env.ApplicationTenantID, AttemptID: attempt.ID}); err != nil {
+		t.Fatal("consumer procurement sending setup failed", err)
+	}
+	if _, err = store.RecordFinalization(ctx, billing.FinalizationInput{
+		ID: uuid.NewString(), TenantID: f.env.ApplicationTenantID, RequestID: f.procurementRequestID, AttemptID: attempt.ID,
+		Source: "maintenance-procurement", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "missing"},
+		ProtocolOutcome: "completed", TransportEndReason: "connection_error", DeliveryStage: "content", ContentWritten: true,
+	}); err != nil {
+		t.Fatal("consumer procurement unknown evidence setup failed", err)
+	}
+	proposal, err := store.ProposeProcurementCost(ctx, billing.ProcurementCostProposalInput{
+		OperationID: uuid.NewString(), TenantID: f.env.ApplicationTenantID, AttemptID: attempt.ID,
+		ActorID: f.env.ActorIDs["finance_operator"], Amount: 12, Basis: "invoice", EvidenceRef: "maintenance:invoice", Reason: "local procurement QA",
+	})
+	if err != nil {
+		t.Fatal("consumer procurement proposal setup failed", err)
+	}
+	f.procurementProposalID = proposal.ID
+	if _, err = store.ApproveProcurementCost(ctx, billing.ProcurementCostApprovalInput{
+		ProposalID: proposal.ID, OperationID: uuid.NewString(), ActorID: f.env.ActorIDs["finance_approver"],
+	}); err != nil {
+		t.Fatal("consumer procurement approval setup failed", err)
+	}
 }
 
 func damageConsumerProcurementAttempt(t *testing.T, f *consumerFixture, ctx context.Context) {
@@ -701,6 +733,10 @@ func damageConsumerProcurementAttempt(t *testing.T, f *consumerFixture, ctx cont
 	tag, err := tx.Exec(ctx, "UPDATE "+schema+".procurement_reservations SET input_bound=input_bound+1 WHERE attempt_id=$1", f.procurementAttemptID)
 	if err != nil || tag.RowsAffected() != 1 {
 		t.Fatal("consumer procurement attempt bound mismatch fixture failed", err)
+	}
+	tag, err = tx.Exec(ctx, "UPDATE "+schema+".procurement_cost_proposals SET evidence_ref='maintenance:damaged' WHERE id=$1", f.procurementProposalID)
+	if err != nil || tag.RowsAffected() != 1 {
+		t.Fatal("consumer procurement proposal mismatch fixture failed", err)
 	}
 	if err = tx.Commit(ctx); err != nil {
 		t.Fatal("consumer attempt mismatch fixture commit failed", err)
@@ -722,7 +758,9 @@ func (f *consumerFixture) procurementAttemptSnapshot(ctx context.Context) ([]byt
  'customer_reservation',(SELECT to_jsonb(x) FROM `+schema+`.reservations x WHERE x.request_id=$4),
  'attempt',(SELECT to_jsonb(x) FROM `+schema+`.upstream_attempts x WHERE x.id=$5),
  'supplier_reservation',(SELECT to_jsonb(x) FROM `+schema+`.procurement_reservations x WHERE x.attempt_id=$5),
- 'budget_events',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb) FROM `+schema+`.procurement_budget_events x WHERE x.attempt_id=$5)
+ 'budget_events',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb) FROM `+schema+`.procurement_budget_events x WHERE x.attempt_id=$5),
+ 'proposals',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb) FROM `+schema+`.procurement_cost_proposals x WHERE x.attempt_id=$5),
+ 'corrections',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb) FROM `+schema+`.provider_cost_corrections x WHERE x.attempt_id=$5)
 )::text`, f.procurementChannelID, f.procurementCredentialID, f.procurementVersionID, f.procurementRequestID, f.procurementAttemptID, f.procurementAccountID, f.procurementBindingID).Scan(&snapshot)
 	if err != nil {
 		return nil, err

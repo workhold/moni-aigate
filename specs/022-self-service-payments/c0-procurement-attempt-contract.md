@@ -2,6 +2,8 @@
 
 2026-11-02，根冻结实现片。它扩展既有 `ScanProcurement` 预算投影扫描，在一次维护快照中独立核验永久凭据绑定、attempt/request/凭据池关系、不可变采购报价快照及预占上界。此片只提供采购域的两个局部摘要，不代表完整 Procurement coverage、客户资金来源证明或真实供应商账单。
 
+本文保留十二表/双摘要实施片的冻结范围。当前同一reader继续按[成本双审扩展合同](c0-procurement-approval-contract.md)读取十五表并返回第三个局部摘要；下文未覆盖cost correction/proposal的表述属于该十二表历史片，不覆盖新扩展，其他未覆盖项保持。
+
 ## 1. 固定读取范围
 
 所有关系均从各自基表完整 C 序 keyset 扫描；不得以 JOIN、WHERE 业务条件、SQL 聚合或写侧函数作为核验 oracle。每页最多 128 行，短页才表示 EOF。单列首游标用私有 `hasCursor=false`；复合游标用私有 `hasCursor=false` 和两个空参数。后续复合页按完整 tuple 比较：

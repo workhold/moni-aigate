@@ -117,18 +117,19 @@ func readProcurementAttemptBindingFacts(
 	ctx context.Context,
 	query fundingSourceQuery,
 	schema string,
-) (fundinglotverify.ProcurementBudgetProjectionCheck, fundinglotverify.ProcurementAttemptBindingCheck, error) {
+) (ProcurementAttemptBindingFacts, error) {
 	if ctx == nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, fundingSourceReadInput
+		return ProcurementAttemptBindingFacts{}, fundingSourceReadInput
 	}
 	if ctx.Err() != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, fundingSourceReadFailure(ctx)
+		return ProcurementAttemptBindingFacts{}, fundingSourceReadFailure(ctx)
 	}
 	if query == nil || !validProcurementBudgetSchema(schema) {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, fundingSourceReadInput
+		return ProcurementAttemptBindingFacts{}, fundingSourceReadInput
 	}
 
 	rows := fundinglotverify.ProcurementAttemptBindingRows{}
+	approvalRows := fundinglotverify.ProcurementCostApprovalRows{}
 	var budget fundingSourceReadBudget
 
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "channels", "id", "id"), func(source fundingSourceRows) (string, []string, func(), error) {
@@ -138,7 +139,7 @@ func readProcurementAttemptBindingFacts(
 		}
 		return row.ID, []string{row.ID}, func() { rows.Channels = append(rows.Channels, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "channel_credentials", "id", "id", "channel_id"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptCredentialRow
@@ -147,7 +148,7 @@ func readProcurementAttemptBindingFacts(
 		}
 		return row.ID, []string{row.ID, row.ChannelID}, func() { rows.Credentials = append(rows.Credentials, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "channel_versions", "id", "id", "channel_id", "credential_id"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptVersionRow
@@ -156,7 +157,7 @@ func readProcurementAttemptBindingFacts(
 		}
 		return row.ID, []string{row.ID, row.ChannelID, row.CredentialID}, func() { rows.Versions = append(rows.Versions, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readProcurementAttemptPoolPages(ctx, query, procurementAttemptPoolPageSQL(schema), func(source fundingSourceRows) (string, string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptPoolMemberRow
@@ -167,7 +168,7 @@ func readProcurementAttemptBindingFacts(
 			[]string{row.ChannelVersionID, row.ChannelID, row.CredentialID},
 			func() { rows.PoolMemberships = append(rows.PoolMemberships, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "tenants", "id", "id"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptTenantRow
@@ -176,7 +177,7 @@ func readProcurementAttemptBindingFacts(
 		}
 		return row.ID, []string{row.ID}, func() { rows.Tenants = append(rows.Tenants, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "request_records", "id", "id", "tenant_id", "input_upper_bound::pg_catalog.text", "output_limit::pg_catalog.text"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptRequestRow
@@ -185,7 +186,7 @@ func readProcurementAttemptBindingFacts(
 		}
 		return row.ID, []string{row.ID, row.TenantID, row.InputUpperBound, row.OutputLimit}, func() { rows.Requests = append(rows.Requests, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "cost_versions", "id", "id", "channel_id", "upstream_model", "input_rate::pg_catalog.text", "output_rate::pg_catalog.text", "basis", "effective_at", "created_at"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptCostVersionRow
@@ -195,7 +196,7 @@ func readProcurementAttemptBindingFacts(
 		fields := procurementAttemptTextFields([]string{row.ID, row.ChannelID, row.UpstreamModel, row.Basis}, row.InputRate, row.OutputRate)
 		return row.ID, fields, func() { rows.CostVersions = append(rows.CostVersions, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "procurement_accounts", "id", "id", "held_amount::pg_catalog.text", "spent_amount::pg_catalog.text"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementBudgetAccountRow
@@ -204,7 +205,7 @@ func readProcurementAttemptBindingFacts(
 		}
 		return row.ID, []string{row.ID, row.HeldAmount, row.SpentAmount}, func() { rows.Accounts = append(rows.Accounts, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "credential_procurement_bindings", "id", "id", "credential_id", "channel_id", "account_id", "operation_id", "bound_at"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptBindingRow
@@ -213,7 +214,7 @@ func readProcurementAttemptBindingFacts(
 		}
 		return row.ID, []string{row.ID, row.CredentialID, row.ChannelID, row.AccountID, row.OperationID}, func() { rows.Bindings = append(rows.Bindings, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "upstream_attempts", "id", "id", "tenant_id", "request_id", "sequence", "channel_id", "channel_version_id", "credential_id", "upstream_model", "delivery_state", "cost_version_id", "cost_input_rate::pg_catalog.text", "cost_output_rate::pg_catalog.text", "cost_basis", "cost_status", "cost_amount::pg_catalog.text", "created_at"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementAttemptRow
@@ -223,7 +224,7 @@ func readProcurementAttemptBindingFacts(
 		fields := procurementAttemptTextFields([]string{row.ID, row.TenantID, row.RequestID, row.ChannelID, row.ChannelVersionID, row.CredentialID, row.UpstreamModel, row.DeliveryState, row.CostBasis, row.CostStatus}, row.CostVersionID, row.CostInputRate, row.CostOutputRate, row.CostAmount)
 		return row.ID, fields, func() { rows.Attempts = append(rows.Attempts, row) }, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
 	var budgetReservations []fundinglotverify.ProcurementBudgetReservationRow
 	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "procurement_reservations", "attempt_id", "attempt_id", "account_id", "binding_id", "input_bound::pg_catalog.text", "output_bound::pg_catalog.text", "upper_amount::pg_catalog.text", "held_amount::pg_catalog.text", "spent_amount::pg_catalog.text", "state", "anomaly"), func(source fundingSourceRows) (string, []string, func(), error) {
@@ -240,33 +241,55 @@ func readProcurementAttemptBindingFacts(
 			})
 		}, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
-	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "procurement_budget_events", "id", "id", "event_key", "account_id", "attempt_id", "held_delta::pg_catalog.text", "spent_delta::pg_catalog.text"), func(source fundingSourceRows) (string, []string, func(), error) {
+	if err := readFundingSourcePages(ctx, query, procurementAttemptPageSQL(schema, "procurement_budget_events", "id", "id", "event_key", "account_id", "attempt_id", "held_delta::pg_catalog.text", "spent_delta::pg_catalog.text", "type", "evidence_ref"), func(source fundingSourceRows) (string, []string, func(), error) {
 		var row fundinglotverify.ProcurementBudgetEventRow
-		if err := source.Scan(&row.ID, &row.EventKey, &row.AccountID, &row.AttemptID, &row.HeldDelta, &row.SpentDelta); err != nil {
+		var kind, evidence string
+		if err := source.Scan(&row.ID, &row.EventKey, &row.AccountID, &row.AttemptID, &row.HeldDelta, &row.SpentDelta, &kind, &evidence); err != nil {
 			return "", nil, nil, fundingSourceReadExecution
 		}
-		return row.ID, []string{row.ID, row.EventKey, row.AccountID, row.AttemptID, row.HeldDelta, row.SpentDelta}, func() { rows.BudgetEvents = append(rows.BudgetEvents, row) }, nil
+		return row.ID, []string{row.ID, row.EventKey, row.AccountID, row.AttemptID, row.HeldDelta, row.SpentDelta, kind, evidence}, func() {
+			rows.BudgetEvents = append(rows.BudgetEvents, row)
+			approvalRows.Events = append(approvalRows.Events, fundinglotverify.ProcurementApprovalEventRow{
+				ID: row.ID, EventKey: row.EventKey, AccountID: row.AccountID, AttemptID: row.AttemptID, Type: kind, EvidenceRef: evidence,
+			})
+		}, nil
 	}, &budget); err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, err
+		return ProcurementAttemptBindingFacts{}, err
 	}
+
+	if err := readProcurementApprovalPages(ctx, query, schema, &approvalRows, &budget); err != nil {
+		return ProcurementAttemptBindingFacts{}, err
+	}
+	approvalRows.Attempts = rows.Attempts
+	approvalRows.Reservations = rows.Reservations
 
 	budgetCheck, err := fundinglotverify.CheckProcurementBudgetProjection(ctx, fundinglotverify.ProcurementBudgetRows{
 		Accounts: rows.Accounts, Reservations: budgetReservations, Events: rows.BudgetEvents,
 	})
 	if err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, procurementAttemptCoreFailure(err)
+		return ProcurementAttemptBindingFacts{}, procurementAttemptCoreFailure(err)
 	}
 	attemptCheck, err := fundinglotverify.CheckProcurementAttemptBindingGraph(ctx, rows)
 	if err != nil {
-		return fundinglotverify.ProcurementBudgetProjectionCheck{}, fundinglotverify.ProcurementAttemptBindingCheck{}, procurementAttemptCoreFailure(err)
+		return ProcurementAttemptBindingFacts{}, procurementAttemptCoreFailure(err)
 	}
-	return budgetCheck, attemptCheck, nil
+	approvalCheck, err := fundinglotverify.CheckProcurementCostApprovalGraph(ctx, approvalRows)
+	if err != nil {
+		return ProcurementAttemptBindingFacts{}, procurementAttemptCoreFailure(err)
+	}
+	return ProcurementAttemptBindingFacts{budget: budgetCheck, binding: attemptCheck, approval: approvalCheck}, nil
 }
 
 func procurementAttemptCoreFailure(err error) error {
 	switch err {
+	case fundinglotverify.ErrProcurementCostApprovalRowsResource:
+		return fundingSourceReadResource
+	case fundinglotverify.ErrProcurementCostApprovalRowsCanceled:
+		return fundingSourceReadCanceled
+	case fundinglotverify.ErrProcurementCostApprovalRowsTimeout:
+		return fundingSourceReadTimeout
 	case fundinglotverify.ErrProcurementBudgetRowsResource:
 		return fundingSourceReadResource
 	case fundinglotverify.ErrProcurementBudgetRowsCanceled:

@@ -11,11 +11,12 @@ import (
 type ProcurementAttemptBindingFactQuery = fundingSourceQuery
 type ProcurementAttemptBindingFactRows = fundingSourceRows
 
-// ProcurementAttemptBindingFacts contains the two scoped summaries produced
+// ProcurementAttemptBindingFacts contains the three scoped summaries produced
 // from one complete ScanProcurement projection. It is not a domain-wide proof.
 type ProcurementAttemptBindingFacts struct {
-	budget  fundinglotverify.ProcurementBudgetProjectionCheck
-	binding fundinglotverify.ProcurementAttemptBindingCheck
+	budget   fundinglotverify.ProcurementBudgetProjectionCheck
+	binding  fundinglotverify.ProcurementAttemptBindingCheck
+	approval fundinglotverify.ProcurementCostApprovalCheck
 }
 
 func (ProcurementAttemptBindingFacts) String() string {
@@ -36,6 +37,11 @@ func (f ProcurementAttemptBindingFacts) BindingSummary() fundinglotverify.Procur
 	return f.binding
 }
 
+// ApprovalSummary returns only the local proposal/correction/event relation check.
+func (f ProcurementAttemptBindingFacts) ApprovalSummary() fundinglotverify.ProcurementCostApprovalCheck {
+	return f.approval
+}
+
 var (
 	ErrProcurementAttemptBindingFactsInput     = fundingSourceReadInput
 	ErrProcurementAttemptBindingFactsResource  = fundingSourceReadResource
@@ -44,16 +50,12 @@ var (
 	ErrProcurementAttemptBindingFactsExecution = fundingSourceReadExecution
 )
 
-// ReadProcurementAttemptBindingFacts reads the complete fixed twelve-table
-// projection once and returns independent budget and attempt-binding checks.
+// ReadProcurementAttemptBindingFacts reads the complete fixed fifteen-table
+// projection once and returns independent budget, attempt-binding and cost-approval checks.
 // Data mismatches are represented in the summaries and do not fail the read.
 func ReadProcurementAttemptBindingFacts(ctx context.Context, query ProcurementAttemptBindingFactQuery, schema string) (ProcurementAttemptBindingFacts, error) {
 	if ctx == nil || query == nil || !validProcurementBudgetSchema(schema) {
 		return ProcurementAttemptBindingFacts{}, ErrProcurementAttemptBindingFactsInput
 	}
-	budget, binding, err := readProcurementAttemptBindingFacts(ctx, query, schema)
-	if err != nil {
-		return ProcurementAttemptBindingFacts{}, err
-	}
-	return ProcurementAttemptBindingFacts{budget: budget, binding: binding}, nil
+	return readProcurementAttemptBindingFacts(ctx, query, schema)
 }

@@ -47,12 +47,12 @@ funding_receipts + payment_captures完整投影
     SandboxCore[fundinglotverify直接关联core
 sandbox receipt↔capture双向ID租户金额币种
 每capture标记未验图与账务效果]
-    ProcurementReader[billing采购预算固定reader
-procurement_accounts / reservations / events
+    ProcurementReader[billing采购固定reader
+十五表 / binding / attempt / quote / approval
 128行C序分页 / 共享预算 / 完整EOF]
     ProcurementCore[fundinglotverify采购预算纯core
-big.Int逐账户核缓存 / reservations / event delta
-局部投影摘要 / 无authority]
+big.Int预算投影 / 绑定报价 / 双审关系
+三个独立摘要 / 无authority]
     Budget[periodicbudget固定raw-facts算法
 19表scalar资源guard / 原业务SQL与三态
 不接受或发行维护proof]
@@ -86,7 +86,7 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Integration -->|ScanProcurement / 独立kind| ProcurementReader --> ProcurementCore --> ScanFinish
     ScanFinish --> Result
     SandboxReader -->|原快照内两表完整读取| PG
-    ProcurementReader -->|原快照内三表完整读取| PG
+    ProcurementReader -->|原快照内十五表完整读取| PG
     Result -->|原Snapshot显式终结即全部撤销| Finish
     Begin -->|失败| Destroy
     Catalog -->|失败| Destroy
@@ -155,7 +155,7 @@ Permit所有字段私有，复制共享撤销；Verify使用新受控call持原b
 
 第四个[`maintenancescan.VerifySandboxCaptureReceiptLinksMaintenance`](../../internal/maintenancescan/sandbox_capture_links.go)要求真实`*ReadLease`和独立kind `ScanSandboxSources`，不会覆盖或升级上面的ScanFunding结果。billing的[固定reader](../../internal/billing/funding_source_capture_read.go)无过滤、无join地完整读取`funding_receipts`和`payment_captures`，按每表128行C序keyset分页至真实EOF；两表共用100000行、16MiB逻辑字符串预算和原lease最多30秒期限，失败返回零facts。纯[`CheckSandboxCaptureReceiptLinks`](../../internal/fundinglotverify/sandbox_capture_links.go)只按原始TEXT ID检查sandbox收据与capture的直接引用、tenant、receipt amount与capture wallet_credit_amount、currency，并独立计数孤儿、不匹配、缺收据、重复引用与shape问题。scope固定为`sandbox_capture_receipt_reference_v1`；`UnvalidatedCaptureGraphs`和`UnvalidatedLedgerEffects`各等于扫描capture数。直接链接一致不说明capture的order/identity/evidence/processing/review/effect图、journal/ledger/outbox/audit效果或外部PSP真实性成立。本reader及result没有普通main、HTTP、支付worker、资金writer、basis或epoch接线，也没有full-source coverage字段。[窄合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)冻结所有边界。
 
-第五个[`maintenancescan.VerifyProcurementMaintenance`](../../internal/maintenancescan/procurement.go)要求真实`*ReadLease`和`ScanProcurement`。billing的固定[reader](../../internal/billing/procurement_attempt_read.go)一次完整扫描十二张关系表：channels、channel_credentials、channel_versions、channel_version_credentials、tenants、request_records、cost_versions、procurement_accounts、credential_procurement_bindings、upstream_attempts、procurement_reservations与procurement_budget_events。单列键按C序keyset，pool使用独立复合tuple游标；所有表共用100000行、16MiB所有投影文本预算（含NUMERIC转文本）和原lease最多30秒。`CheckProcurementBudgetProjection`以`big.Int`逐账户比较held/spent缓存、reservation合计与immutable event delta总额；`CheckProcurementAttemptBindingGraph`独立核验永久binding时间、channel/version/pool/attempt/request tenant、quote snapshot及reservation bounds与ceil上界。结果保留`procurement_budget_projection_v1`与`procurement_attempt_binding_graph_v1`两个摘要scope，不合成Procurement全域coverage；成本更正/双审proposal/evidence、commands/audit、人工余额观察与周期预算关系未在本片读取，也不证明真实供应商消费。完整读取中的数据矛盾正常Finish并返回mismatch摘要；SQL、分页EOF/Err/Close、资源、取消、deadline或Finish错误返回零结果并撤销lease。该reader仅属于库级维护集成，没有普通main、HTTP、资金writer、basis或epoch装配。[原预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[扩展合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)及[验证记录](../verification/procurement-budget-maintenance.md)保留验收范围。
+第五个[`maintenancescan.VerifyProcurementMaintenance`](../../internal/maintenancescan/procurement.go)要求真实`*ReadLease`和`ScanProcurement`。billing的固定[reader](../../internal/billing/procurement_attempt_read.go)一次完整扫描十五张关系表：channels、channel_credentials、channel_versions、channel_version_credentials、tenants、request_records、cost_versions、procurement_accounts、credential_procurement_bindings、upstream_attempts、procurement_reservations、procurement_budget_events、users、provider_cost_corrections与procurement_cost_proposals。单列键按C序keyset，pool使用独立复合tuple游标；所有表共用100000行、16MiB所有投影文本预算（含NUMERIC转文本）和原lease最多30秒。`CheckProcurementBudgetProjection`以`big.Int`逐账户比较held/spent缓存、reservation合计与immutable event delta总额；`CheckProcurementAttemptBindingGraph`独立核验永久binding时间、channel/version/pool/attempt/request tenant、quote snapshot及reservation bounds与ceil上界。结果保留`procurement_budget_projection_v1`、`procurement_attempt_binding_graph_v1`与`procurement_cost_approval_graph_v1`三个摘要scope，不合成Procurement全域coverage；双审proposal/correction/event关系也已读取并双向核验；evidence、commands/audit/outbox、人工余额观察与周期预算关系未在本片读取，也不证明真实供应商消费。完整读取中的数据矛盾正常Finish并返回mismatch摘要；SQL、分页EOF/Err/Close、资源、取消、deadline或Finish错误返回零结果并撤销lease。该reader仅属于库级维护集成，没有普通main、HTTP、资金writer、basis或epoch装配。[原预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[扩展合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)、[成本双审合同](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)及[验证记录](../verification/procurement-budget-maintenance.md)保留验收范围。
 
 ScanProof只证明固定kind的lease正常完成；五个局部结果不能授予完整来源`CoverageComplete`、资金写入或init/basis/epoch就绪条件。Funding、Key、采购、支付B来源与lot全图仍需独立逐列scanner、双向sweep、coverage清单与完整组合器，不复用写侧funding_valid或PB局部SQL充当全源证明。ReadLease历史验证见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)；manual/voucher reader合同与范围见[来源关联验证](../verification/funding-source-links.md)，sandbox与采购窄片见[各自合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[采购合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)及[验证记录](../verification/sandbox-capture-links.md)、[采购状态](../verification/procurement-budget-maintenance.md)。它们互不递减完整资金来源未覆盖数，也不沿用历史T3通过计数。
 

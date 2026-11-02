@@ -2,7 +2,7 @@
 
 2026-11-02，根冻结首个 `ScanProcurement` 实施片。此合同只授权对同一 T2 Snapshot 中采购账户预算投影做完整局部只读扫描；不授权写入、basis、epoch、全来源证明或生产维护入口。
 
-本文保留首个三表reader的原冻结范围与历史验收口径。随后由[采购 attempt 关系合同](c0-procurement-attempt-contract.md)扩展同一个 `ScanProcurement` 实现：当前入口在一次lease内读取十二张固定关系表，返回预算投影与attempt绑定两个独立摘要，并只 `Finish()` 一次。本文后续对三表范围、Go adapter名称及独立Finish的描述属于首片历史，不是当前维护入口规格；新变更以扩展合同为准。
+本文保留首个三表reader的原冻结范围与历史验收口径。随后由[采购 attempt 关系合同](c0-procurement-attempt-contract.md)扩展同一个 `ScanProcurement` 实现：当前入口在一次lease内读取十二张固定关系表，返回预算投影与attempt绑定两个独立摘要，并只 `Finish()` 一次。本文后续对三表范围、Go adapter名称及独立Finish的描述属于首片历史，不是当前维护入口规格；当前reader再按[成本双审合同](c0-procurement-approval-contract.md)扩展为十五表/三个局部摘要；新变更以对应扩展合同为准。
 
 ## 1. 目标与封闭范围
 

@@ -8,13 +8,14 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 )
 
-// ProcurementMaintenanceResult binds the two scoped procurement checks from
+// ProcurementMaintenanceResult binds the three scoped procurement checks from
 // one complete ScanProcurement projection to the exact originating Permit.
-// Neither summary represents complete procurement coverage.
+// The summaries do not represent complete procurement coverage.
 type ProcurementMaintenanceResult struct {
-	budget  fundinglotverify.ProcurementBudgetProjectionCheck
-	binding fundinglotverify.ProcurementAttemptBindingCheck
-	proof   *maintenancetrust.ScanProof
+	budget   fundinglotverify.ProcurementBudgetProjectionCheck
+	binding  fundinglotverify.ProcurementAttemptBindingCheck
+	approval fundinglotverify.ProcurementCostApprovalCheck
+	proof    *maintenancetrust.ScanProof
 }
 
 func (ProcurementMaintenanceResult) String() string {
@@ -29,7 +30,8 @@ func (ProcurementMaintenanceResult) MarshalJSON() ([]byte, error) {
 
 func (r *ProcurementMaintenanceResult) Verify(permit *maintenancetrust.Permit) error {
 	if r == nil || r.proof == nil || r.budget.Scope != "procurement_budget_projection_v1" ||
-		r.binding.Scope != "procurement_attempt_binding_graph_v1" {
+		r.binding.Scope != "procurement_attempt_binding_graph_v1" ||
+		r.approval.Scope != "procurement_cost_approval_graph_v1" {
 		return billing.ErrProcurementAttemptBindingFactsInput
 	}
 	return r.proof.Verify(permit, maintenancetrust.ScanProcurement)
@@ -53,6 +55,15 @@ func (r *ProcurementMaintenanceResult) BindingSummary(permit *maintenancetrust.P
 	return r.binding, nil
 }
 
+// ApprovalSummary returns only the proposal/correction/event relation check
+// after the exact originating ScanProcurement proof has been verified.
+func (r *ProcurementMaintenanceResult) ApprovalSummary(permit *maintenancetrust.Permit) (fundinglotverify.ProcurementCostApprovalCheck, error) {
+	if err := r.Verify(permit); err != nil {
+		return fundinglotverify.ProcurementCostApprovalCheck{}, err
+	}
+	return r.approval, nil
+}
+
 type procurementAttemptLeaseQuery struct{ lease *maintenancetrust.ReadLease }
 
 func (q procurementAttemptLeaseQuery) Query(sql string, args ...any) (billing.ProcurementAttemptBindingFactRows, error) {
@@ -60,8 +71,8 @@ func (q procurementAttemptLeaseQuery) Query(sql string, args ...any) (billing.Pr
 }
 
 // VerifyProcurementMaintenance reads the complete fixed procurement budget
-// and attempt-binding projections through one ScanProcurement lease. A
-// complete but unbalanced scan still finishes normally and returns both local
+// and attempt/approval projections through one ScanProcurement lease. A
+// complete but unbalanced scan still finishes normally and returns all three local
 // mismatch summaries; execution errors abort the lease and return no result.
 func VerifyProcurementMaintenance(lease *maintenancetrust.ReadLease) (*ProcurementMaintenanceResult, error) {
 	if lease == nil {
@@ -84,7 +95,7 @@ func VerifyProcurementMaintenance(lease *maintenancetrust.ReadLease) (*Procureme
 		return nil, procurementMaintenanceFailure(lease, err)
 	}
 	return &ProcurementMaintenanceResult{
-		budget: facts.BudgetSummary(), binding: facts.BindingSummary(), proof: proof,
+		budget: facts.BudgetSummary(), binding: facts.BindingSummary(), approval: facts.ApprovalSummary(), proof: proof,
 	}, nil
 }
 

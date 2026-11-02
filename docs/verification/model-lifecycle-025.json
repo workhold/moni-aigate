@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-02",
+  "scope": "025-A1-G independent model fixture and private real-main SIGKILL runner",
+  "status": "runner_implemented_real_main_not_run",
+  "explicit_test_database_configured": false,
+  "historical_credentials_read": false,
+  "database_connections_attempted": false,
+  "real_main_started": false,
+  "sigkill_executed": false,
+  "model_generation_posts": 0,
+  "database_schemas_or_roles_created": false,
+  "preview_or_review_accounts_modified": false,
+  "verification": {
+    "browser_qa_race": {
+      "command": "go test -race ./scripts/browser-qa -count=1 -v",
+      "exit_code": 0,
+      "package_elapsed_seconds": 1.659,
+      "top_level_pass": 15,
+      "top_level_skip": 4,
+      "new_pure_tests_pass": 4,
+      "new_real_main_test": "SKIP: explicit isolated model real-main opt-in required"
+    },
+    "explicit_opt_in_without_database": {
+      "command": "MODEL_LIFECYCLE_REAL_MAIN_TEST=1 go test -race ./scripts/browser-qa -run '^TestModelLifecycleRealMainRecovery$' -count=1 -v",
+      "exit_code": 0,
+      "package_elapsed_seconds": 1.583,
+      "test_status": "SKIP: dedicated local PostgreSQL test database is required"
+    },
+    "vet": "PASS: go vet ./scripts/browser-qa",
+    "build": "PASS: go build -o /tmp/moni-model-lifecycle-qa-check ./scripts/browser-qa; owned temporary binary removed",
+    "diff_check": "PASS: git diff --check",
+    "root_review": {
+      "scope": "exact replay conflict/identity, original deadline window and observation privilege preflight",
+      "race_command": "go test -race ./scripts/browser-qa -count=1",
+      "race_exit_code": 0,
+      "race_package_elapsed_seconds": 1.773,
+      "vet_command": "go vet ./scripts/browser-qa",
+      "vet_exit_code": 0,
+      "new_pure_replay_negative_cases": "PASS",
+      "real_main": "NOT RUN"
+    }
+  },
+  "real_main_windows": {
+    "sending_before_upstream_response": "NOT RUN",
+    "committed_final_usage_before_customer_settlement": "NOT RUN",
+    "real_pg_money_and_unique_settlement": "NOT RUN",
+    "predecessor_300_seconds_plus_5_seconds": "NOT RUN",
+    "real_main_resource_cleanup": "NOT RUN"
+  },
+  "source_sha256": {
+    "scripts/browser-qa/main.go": "deaee3e813598385c5392f11a9e3ecd30de1a292e4fbe1851619d2a8ebcdb88e",
+    "scripts/browser-qa/model_fixture.go": "bc69f15287b6ec83fa7e8646bd3c17b45dcc3323e2cb1e2cfa4f0c68bd77e4f3",
+    "scripts/browser-qa/model_fixture_test.go": "8fe95423b757a9bee1b9ce150403b36c6d20f65854aa6ee111e2936cc996cd75",
+    "scripts/browser-qa/model_lifecycle_test.go": "3695fc7df22dd050b8f2323a01e6a692388dc323552c3ff56628a056d7401ed3",
+    "specs/025-production-ha/a1-model-process-contract.md": "a6d136fb1ef8bc58e8b3abc8049d8155aa52601a72d1e86c32bb18dc02cfa9fd"
+  }
+}

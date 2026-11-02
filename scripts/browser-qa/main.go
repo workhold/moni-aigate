@@ -1,5 +1,6 @@
 // browser-qa runs the real binary against disposable, synthetic local resources.
-// It never creates channels, tenants, funds, keys or inference/billing records.
+// Normal CLI runs never create channels, tenants, funds, keys or inference facts.
+// Private opt-in lifecycle tests may create isolated synthetic business facts.
 package main
 
 import (
@@ -46,6 +47,7 @@ type options struct {
 	// Private test seams are never populated by CLI flags or environment.
 	mailFixtureReady func(context.Context, *mailFixture) error
 	mailLifecycle    func(context.Context, *privateLifecycle) error
+	modelLifecycle   func(context.Context, *privateModelLifecycle) error
 }
 type account struct {
 	Email    string `json:"email"`
@@ -410,6 +412,9 @@ func run(ctx context.Context, in options, stdout io.Writer) (result error) {
 	if (in.mailFixtureReady != nil || in.mailLifecycle != nil) && !in.identityFixture {
 		return stage("mail_lifecycle_requires_identity_fixture")
 	}
+	if in.modelLifecycle != nil && fixtureModes != 0 {
+		return stage("model_lifecycle_requires_separate_fixture")
+	}
 	baseConfig, err := testDatabase(in.database)
 	if err != nil {
 		return err
@@ -447,6 +452,7 @@ func run(ctx context.Context, in options, stdout io.Writer) (result error) {
 	var mockListener net.Listener
 	var mockState *mockProvider
 	var smtpFixture *mailFixture
+	var modelFixture *lifecycleModelFixture
 	var child *exec.Cmd
 	var childDone chan error
 	var childExited bool
@@ -455,6 +461,9 @@ func run(ctx context.Context, in options, stdout io.Writer) (result error) {
 	createdRoles := []string{}
 	defer func() {
 		remaining := []string{}
+		if modelFixture != nil {
+			modelFixture.close()
+		}
 		m.ServeShutdown = "not_started"
 		if child != nil && child.Process != nil && !childExited {
 			child.Process.Signal(syscall.SIGTERM)
@@ -650,6 +659,11 @@ func run(ctx context.Context, in options, stdout io.Writer) (result error) {
 	m.MockOrigin = "http://" + mockListener.Addr().String()
 	m.Provider = providerManifest{BaseURL: m.MockOrigin + "/v1", Secret: key, SecondarySecret: secondary, AllowedCIDRs: []string{"127.0.0.1/32"}, Models: []string{"qa-chat", "qa-chat-alt"}, ResponseText: "QA OK", ExpectedUsage: map[string]int{"input_tokens": 4, "output_tokens": 2, "total_tokens": 6}, ExpectedProbeUsage: map[string]int{"input_tokens": 4, "output_tokens": 1, "total_tokens": 5}, SuggestedProfile: map[string]any{"protocol": "openai_chat", "context_limit": 256, "input_token_upper_bound": 128, "output_limit": 64, "default_output_limit": 16, "output_limit_field": "max_tokens", "usage_semantics": "final"}}
 	mock = &http.Server{Handler: mockState, ReadHeaderTimeout: 3 * time.Second, ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 10 * time.Second, ErrorLog: log.New(io.Discard, "", 0)}
+	if in.modelLifecycle != nil {
+		modelFixture = newLifecycleModelFixture(ctx, mockState)
+		mock.Handler = modelFixture
+		mock.WriteTimeout = 320 * time.Second
+	}
 	go mock.Serve(mockListener)
 	childEnv := []string{"PATH=" + os.Getenv("PATH"), "TZ=UTC", "DATABASE_URL=" + appURL, "PROJECTION_DATABASE_URL=" + projectionURL, "LISTEN_ADDR=" + addr, "PUBLIC_ORIGIN=" + m.AppOrigin, "COOKIE_SECURE=false", "RECOVERY_MODE=false", "MFA_ENFORCE_PLATFORM=false", "MASTER_KEY_ID=browserqa", "MASTER_KEY=" + base64.StdEncoding.EncodeToString(master), "AUTH_SECRET=" + base64.StdEncoding.EncodeToString(pepper)}
 	if in.alertsFixture {
@@ -731,7 +745,7 @@ func run(ctx context.Context, in options, stdout io.Writer) (result error) {
 		return stage("manifest_write_failed")
 	}
 	fmt.Fprintf(stdout, "app_origin=%s\nmock_origin=%s\nmanifest=%s\n", m.AppOrigin, m.MockOrigin, path)
-	if in.mailLifecycle != nil {
+	if in.mailLifecycle != nil || in.modelLifecycle != nil {
 		live := &privateLifecycle{owner: owner, fixture: smtpFixture, origin: m.AppOrigin, schema: m.Schema, appRole: m.AppRole, projectionRole: m.ProjectionRole, binaryHash: m.BinarySHA256}
 		live.killAndWait = func(killCtx context.Context) error {
 			if child == nil || child.Process == nil || childExited {
@@ -767,6 +781,9 @@ func run(ctx context.Context, in options, stdout io.Writer) (result error) {
 		live.proofMatches = func(link, expected string) bool {
 			prefix := m.AppOrigin + "/register/complete#token="
 			return strings.HasPrefix(link, prefix) && secrets.Digest("identity-challenge:v1:registration:"+strings.TrimPrefix(link, prefix)) == expected
+		}
+		if in.modelLifecycle != nil {
+			return in.modelLifecycle(ctx, &privateModelLifecycle{privateLifecycle: live, fixture: modelFixture, secrets: secrets, provider: m.Provider})
 		}
 		return in.mailLifecycle(ctx, live)
 	}

@@ -40,9 +40,9 @@ F依据[020验收](../verification/public-catalog.md)完成匿名/管理员HTTP�
 | 020 公开目录 | 已实现，限定本地验收通过 | 默认私有、独立公开授权/匿名DTO、确定售价、CAS与015预览；不授予调用、不锁定未来请求价格 |
 | 021 自助身份 | 已实现，限定本地验收通过 | [证据](../verification/self-service-identity.md)；注册/邮件默认关、最小权限开户/当前MFA、全会话撤销、独立worker/outbox，正式收件仍待外部 |
 | 022 自助支付 | A共同入账/双审券已完成限定本地验收；B0-P及M/Q独立沙箱已编码，专项真实PG/race通过，真实进程短程通过、旧版本20代长程已完成，最新补丁/精确故障继续收口；B1核心设计/SQL已冻结，B2/Go第三来源已实现并通过专项，B3订单/worker/HTTP/UI/main已接线，真实PG专项及两轮真实主进程/最终浏览器整链通过限定本地验收，真实在途SIGTERM与Guard失权补验已通过；C0纯分配/history/同RR账本reader及SQL候选专项已通过，完整静态checker三API与ordinary/sandbox两套正式root已实现，五ordinary变体和完整sandbox的最终leaf真实PG race已通过并保留原五秒预算，整仓make check及verify-mvp已通过；T2库级维护Permit已实现，[专库race专项](../verification/maintenance-authority.md)已通过；epoch、全源proof与全资金路径仍后续，C1退款、C2拒付/债务及C3交叉/恢复已有候选，C尚未接入资金事务 | [B0运行证据](../verification/payment-sandbox.md)→应用支付资金→来源lot/分配后才开放原路退款；正式支付商另门禁 |
-| 023 周期与商品 | A完成限定本地验收；B核心/HTTP/UI、浏览器、020最终相关PG race及预览升级通过；独立三态Verifier/CLI专项通过；C商品价值条带合同已补候选，未实现 | [B核验合同](../../specs/023-periodic-products/b-verifier-contract.md)、[验证](../verification/periodic-budgets.md)；先完成周期硬预算与资金来源，再订阅/套餐 |
+| 023 周期与商品 | A完成限定本地验收；B核心/HTTP/UI、浏览器、020最终相关PG race及预览升级通过；独立三态Verifier/CLI专项通过；[C-V纯价值/锚点月合同](../../specs/023-periodic-products/c-value-contract.md)已冻结实现，无资金或生产接线；C商品购买仍未实现 | [B核验合同](../../specs/023-periodic-products/b-verifier-contract.md)、[验证](../verification/periodic-budgets.md)；先完成周期硬预算与资金来源，再订阅/套餐 |
 | 024 扩展平台 | [独立草案](../../specs/024-extension-platform/spec.md)与[A0精确告警合同](../../specs/024-extension-platform/a-contract.md)已冻结019，生产代码及专项/最终全量race、浏览器和019预览通过，架构检查通过 | 真实PG/HTTP、双槽worker与UI逐项验证；真实main故障/浏览器已通过，见[记录](../verification/operations-alerts.md)。B0-P纯计量层已冻结实现并通过race/vet/fuzz，尚未接入provider/billing；媒体/异步任务/长连接、外部身份按认证与计量能力逐片交付 |
-| 025 HA与生产 | [独立草案](../../specs/025-production-ha/spec.md)已完成；仅A0配置透传及实际CLI渲染、A1-M邮件真实进程窄片已完成限定本地验证，完整HA未冻结未实现 | [共享执行候选](../../specs/025-production-ha/b0-shared-execution-contract.md)已补成员epoch、完整资源边、保守unknown及精确整数桶；生产SQL/角色/接线未冻结。容器/1Panel和灾备；021指定claim/SMTP接受至ACK窗口真实SIGKILL及原60秒lease重启已通过限定本地验收；不得直接移除单活保护 |
+| 025 HA与生产 | [独立草案](../../specs/025-production-ha/spec.md)已完成；仅A0配置透传及实际CLI渲染、A1-M邮件真实进程窄片已完成限定本地验证，A1-G模型真实main运行器按[精确合同](../../specs/025-production-ha/a1-model-process-contract.md)实施，真实两窗口仍未验；完整HA未冻结未实现 | [共享执行候选](../../specs/025-production-ha/b0-shared-execution-contract.md)已补成员epoch、完整资源边、保守unknown及精确整数桶；生产SQL/角色/接线未冻结。容器/1Panel和灾备；021指定claim/SMTP接受至ACK窗口真实SIGKILL及原60秒lease重启已通过限定本地验收；不得直接移除单活保护 |
 | 最后阶段 性能 | 002/008后置 | 完整商业检查保留，重新建立基线并优化；同机同协议同用量条件才能与Bifrost/LiteLLM比较 |
 
 本次持续目标覆盖后续阶段；阶段验收不是整个目标完成。缺正式凭据或运行环境时如实保留该门禁，继续其余可执行工作。
@@ -72,3 +72,6 @@ C0-V0-L的[纯账本行检查](../verification/funding-ledger-rows.md)已实现�
 GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个大包仍因累计600秒超时，支付模拟器被时区相关静态文本校验拒绝。只调整CI为十个完整动态分区与显式数据库时区，原始M/Q Open隔离复现已通过；新远端结果单独核验，见[第二轮证据](../verification/github-ci-second-run.md)。未新增产品/测试源码、迁移、金融或生产权限。
 
 2026-11-02第三轮[GitHub CI](../verification/github-ci-third-run.md)已对精确f64b56f源码十组全部通过，1036顶层PASS/54明确SKIP、web286全PASS；T2新增代码不沿用该结果。T2并行实现已汇合真实manifest/history、LOGIN与新鲜停服采样、完整前驱、Init全账户锁及私有Permit，保持无生产CLI/资金写入/全来源/epoch的边界；专项与最终回归单独记录。
+
+
+2026-11-02并行片：采购ScanProcurement按[成本双审合同](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)扩为十五表/三个局部摘要；023-C-V仅独立精确价值/期限算法；025-A1-G仅私有fixture与实际主进程故障运行器。前两项无新增资金写入，后者无生产fault hook。当前TEST_DATABASE_URL、C0_MAINTENANCE_DATABASE_URL及模型主进程opt-in均未配置，真实PG/模型SIGKILL不记通过；本地验证与最终集成结果见各自验证记录。完整全来源、basis/epoch、退款/拒付、商品购买、正式部署与性能仍按原依赖继续。

@@ -1788,3 +1788,62 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `docs/verification/procurement-budget-maintenance.md`
 
 </details>
+
+## 2026-11-02T06:05:08Z · 793769f6bb49
+
+022-C0采购同lease十五表与成本双审第三局部摘要；023-C-V独立精确价值条带和UTC锚点月；025-A1-G私有模型故障运行器及严格重放/期限oracle，真实PG和主进程未执行；已复核模块图、请求链、数据关系、权限、README和HLD/LLD，无新增迁移或在线资金接线
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1276 个源文件；本次 36 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/periodic-products.md`
+- added `docs/verification/model-lifecycle-025.json`
+- added `docs/verification/model-lifecycle-025.md`
+- modified `docs/verification/procurement-budget-maintenance.md`
+- added `internal/billing/procurement_approval_read.go`
+- added `internal/billing/procurement_approval_read_test.go`
+- modified `internal/billing/procurement_attempt_facts.go`
+- modified `internal/billing/procurement_attempt_read.go`
+- modified `internal/billing/procurement_attempt_read_test.go`
+- added `internal/fundinglotverify/procurement_approval.go`
+- added `internal/fundinglotverify/procurement_approval_test.go`
+- modified `internal/maintenancescan/procurement.go`
+- modified `internal/maintenancescan/procurement_test.go`
+- added `internal/productvalue/fuzz_test.go`
+- added `internal/productvalue/month.go`
+- added `internal/productvalue/month_test.go`
+- added `internal/productvalue/value.go`
+- added `internal/productvalue/value_test.go`
+- modified `scripts/browser-qa/main.go`
+- added `scripts/browser-qa/model_fixture.go`
+- added `scripts/browser-qa/model_fixture_test.go`
+- added `scripts/browser-qa/model_lifecycle_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-procurement-approval-contract.md`
+- modified `specs/022-self-service-payments/c0-procurement-attempt-contract.md`
+- modified `specs/022-self-service-payments/c0-procurement-budget-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+- added `specs/023-periodic-products/c-value-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+- added `specs/025-production-ha/a1-model-process-contract.md`
+- modified `specs/025-production-ha/plan.md`
+
+</details>
+
+## 2026-11-02T06:06:06Z · b739416e9833
+
+收口本批1276文件实现的专项和整仓race、make check通过记录；独立审查后的模型QA断言由最终包race/vet覆盖，真实数据库与模型main窗口仍未执行；仅验证/架构文本更新，无新增结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1276 个源文件；本次 1 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-budget-maintenance.md`
+
+</details>

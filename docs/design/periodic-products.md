@@ -1,12 +1,12 @@
 # 023 分组价格、周期预算与期限商品设计草案
 
-2026-11-01，**A0精确合同已冻结，A已实现并通过[限定本地验收](../verification/tenant-pricing.md)；B/C未冻结未实现**。A按[精确合同](../../specs/023-periodic-products/a-contract.md)与[根复核](../../specs/023-periodic-products/review.md)实施；下文B/C保持设计方向，原型不等于上线能力。
+2026-11-02，**A已实现并通过[限定本地验收](../verification/tenant-pricing.md)；B核心、HTTP/UI与独立三态核验器已实现，限定验证见[记录](../verification/periodic-budgets.md)；C商品商业链路仍未开放**。A以[精确合同](../../specs/023-periodic-products/a-contract.md)与[根复核](../../specs/023-periodic-products/review.md)为准，B以[接线合同](../../specs/023-periodic-products/b-integration-contract.md)为准；C-V纯价值/期限算法按[独立合同](../../specs/023-periodic-products/c-value-contract.md)实施。下文保留设计依据，拟议措辞不覆盖上述已实现状态；B完整交叉故障和C购买仍各自保留门禁。
 
 ## 1. 当前代码基础和本次范围
 
-当前[Reserve](../../internal/billing/reserve.go)在tenant→membership→user→Key→model锁后，用单DB时刻从全局price_versions确定两维客户费率，再冻结钱包和Key lifetime；它没有价格组、周期窗口或商品权益。定价在钱包锁前完成，钱包等待后重验Key/request截止。
+当前[Reserve](../../internal/billing/reserve.go)在tenant→membership→user→Key→model锁后，已通过pricing按tenant当前价格域与单DB时刻冻结客户费率，再在钱包与Key lifetime之外接入周期硬预算。定价在钱包锁前完成，最终准入在全部相关锁后重验时间；商品权益仍未接入。细节以A/B冻结合同为准。
 
-[catalog发布](../../internal/catalog/store.go)和[匿名目录](../../internal/catalog/public_catalog.go)使用同一默认价格表；020限定public_visible、精确安全DTO和确定排序。A应统一这些读取点，不能只给运营UI加group而让调用仍查全局价。
+[catalog发布](../../internal/catalog/store.go)与[匿名目录](../../internal/catalog/public_catalog.go)已经按A统一价格域：匿名始终公共默认域，私有tenant模型与Reserve使用有效组域；020的public_visible、安全DTO和确定排序继续生效。
 
 [lockRequest/PrepareDispatch](../../internal/billing/evidence.go)沿tenant/membership/Key/model/可选channel→reservation→attempt取得原事实与同步锁；[客户finish](../../internal/billing/settle.go)在必要model升级后锁客户账户，再决定24小时截止并唯一结算/释放。完成路径不因为新权限配置拒绝客户收尾。
 
@@ -31,7 +31,7 @@ flowchart TB
     Product -.-> Wallet
 ```
 
-图中的A/B/C均为拟议能力。价格组回答“本次每Token多少钱”，周期预算回答“这个主体还能承诺多少新费用”，权益来源回答“哪些钱/权益可以被预占和退款”。每一层只能收窄已有授权，不能提高另一层额度或改变原资金归属。
+图中的A/B已按冻结合同接入；C购买仍为规划，纯算法不构成权益发放。价格组回答“本次每Token多少钱”，周期预算回答“这个主体还能承诺多少新费用”，权益来源回答“哪些钱/权益可以被预占和退款”。每一层只能收窄已有授权，不能提高另一层额度或改变原资金归属。
 
 ## 3. A的定价域与匿名目录
 
@@ -60,7 +60,7 @@ sequenceDiagram
 
 ## 4. B的窗口和跨期held
 
-首片拟为UTC自然日/月。数据库时刻决定边界，不依赖进程时区、浏览器倒计时或午夜worker。预算control稳定唯一，window追加；旧期closed仅表示不再新接单，未决held仍有意义，不能把closed理解为可以归零。
+B已选用并实现UTC自然日/月。数据库时刻决定边界，不依赖进程时区、浏览器倒计时或午夜worker。预算control稳定唯一，window追加；旧期closed仅表示不再新接单，未决held仍有意义，不能把closed理解为可以归零。
 
 每个request在客户Reserve归属一个原期；每个supplier attempt在RecordAttempt归属自己的原期。窗口限额计量接单时承诺的最大费用，既有客户Key lifetime和采购累计上限继续生效。
 
@@ -70,7 +70,7 @@ sequenceDiagram
 
 例如月底100未决，在新月limit100下不能再接100。旧请求后来结算70，70留旧月、旧held归零，新月才重新可接100。因此预算承诺按接单期成立；完成时间或供应商真实账单时间的费用可能跨期，产品不能宣传为相同含义。
 
-已配置后的正常关开只改变cap是否参与检查，事实继续跟踪；重新开启不会得到“干净的新月”。未配置时没有calendar，不能宣称已跟踪日/月账。首配无法从累计spent可靠重建当前期，因此须在完整同步屏障下把当时全部未决held保留为legacy，从tracking_started_at开始记录，再从下一完整UTC周期启用首cap。首配扫描与新/旧预占的串行方案仍是B0冻结项，不能靠无锁历史查询猜测。改变calendar或手工reset首片不提供。
+已配置后的正常关开只改变cap是否参与检查，事实继续跟踪；重新开启不会得到“干净的新月”。未配置时没有calendar，不能宣称已跟踪日/月账。首配无法从累计spent可靠重建当前期，因此须在完整同步屏障下把当时全部未决held保留为legacy，从tracking_started_at开始记录，再从下一完整UTC周期启用首cap。首配扫描与新/旧预占的串行方案已按[B接线合同](../../specs/023-periodic-products/b-integration-contract.md)冻结并实现，不能靠无锁历史查询猜测。改变calendar或手工reset首片不提供。
 
 客户消费退款不回补该期spent或Key lifetime，避免一次消费反复退钱包绕过预算。采购更正仍按019绝对成本原attempt记账；未知/争议held跨期持续，客户24h释放不构成供应商无消费证明。
 
@@ -82,7 +82,7 @@ sequenceDiagram
 
 取消、statement/lock/commit失败须保持原资金与预算事件全体原子。已知数据库回滚可以只重试原DB closure；未知提交只查原operation，任何后台恢复均不重发模型请求。时钟回退、错window归属或事件不守恒fail-closed，不能以进程时间或SUM调平。
 
-本页锁顺序是目标合同，需要B0与实际外键/触发器/旧model升级一起审查及PG屏障验证，不表示已经证明无死锁。
+本页锁顺序已由B0与实际外键、触发器、旧model升级共同冻结并实施，限定PG验证见[B记录](../verification/periodic-budgets.md)；剩余月末锁等待、跨账户/跨期及进程故障门禁不能由已有结果推导完成。
 
 ## 6. C为何必须等来源完成
 
@@ -92,7 +92,7 @@ sequenceDiagram
 
 到期前已预占但未许可发送的请求在派发前重验期限；已sending保留原held和原24h有利收尾。新term不承担旧term held，旧退款不激活新term；取消未来续期不自动撤回本期已消费。原路退款/拒付仍只针对原支付与冻结的价值分配，不能借其他lot凑钱。
 
-C目前没有完整购买分录、purchase/allowance不等时退款比例与取整、钱包购买来源映射或重叠term消耗规则，因此是明确待审方向，不能冻结购买API。详见[合同C0决策](../../specs/023-periodic-products/contract.md#53-c0仍需单独冻结的决策)。022-C的真实验收是必要条件，仍不替代C0本身的商品商业合同。
+C-V已实现purchase/allowance不等时的精确价值条带与原锚点月纯算法；C仍缺完整购买分录、钱包购买来源证明、退款状态机与重叠term消耗规则，不能据纯算法开放购买API。详见[合同C0决策](../../specs/023-periodic-products/contract.md#53-c0仍需单独冻结的决策)。022-C的真实验收是必要条件，仍不替代C0本身的商品商业合同。
 
 ## 7. 并行、验证与统一架构
 
@@ -100,4 +100,4 @@ A catalog/管理、A billing、web可以在A0 schemas/helper冻结后分工；B�
 
 真实PostgreSQL证明唯一占用、原期归属、跨期unknown、事件/ledger/lot守恒和受限角色；前端fixture只证明DTO及交互，不证明硬预算。实际main浏览器验证匿名/私有报价、租户切换、scheduled/disabled/carry和未知提交。外部供应商账单与正式支付仍单独认证。
 
-集成人实施后更新统一架构的价格域、准入链路、预算关系、权限及能力状态，连同HLD/LLD与验收记录；全部并行结果汇总后再显式reviewed refresh。此次只设计，不改变架构为已实现，不运行refresh。
+集成人实施后更新统一架构的价格域、准入链路、预算关系、权限及能力状态，连同HLD/LLD与验收记录；全部并行结果汇总后再显式reviewed refresh。本次校准只把已有A/B及C-V纯算法反映到当前架构；C购买、扣款、发放和退款仍未完成，不能因纯算法实现就开放。

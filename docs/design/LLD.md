@@ -790,10 +790,25 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 
 固定投影列为funding_receipts的id、tenant_id、source_kind、source_id、amount::pg_catalog.text、currency、journal_id，以及payment_captures的id、tenant_id、amount::pg_catalog.text、wallet_credit_amount::pg_catalog.text、currency。两张表都按id COLLATE C升序取keyset，不JOIN、不聚合、不使用业务validator；跨表查询使用同一个lease与ReadBudget。客户端UTF-8/NUL和规范整数检查失败时固定返回安全错误与零结果；summary中金额和所有计数均使用十进制字符串。ReadSandboxCaptureReceiptFacts只形成非权威局部facts，ScanProof由维护集成在core成功且lease Finish正常后保存。
 
-### 采购预算与 attempt 绑定 reader
+### 采购预算、attempt 与成本双审 reader
 
-原预算窄片按[预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)实现，之后由[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)扩展同一个`ScanProcurement`。固定读取十二个关系：`channels`、`channel_credentials`、`channel_versions`、`channel_version_credentials`、`tenants`、`request_records`、`cost_versions`、`procurement_accounts`、`credential_procurement_bindings`、`upstream_attempts`、`procurement_reservations`与`procurement_budget_events`。reader不使用JOIN/业务过滤/SQL聚合，密文、request secret、evidence字段不在投影中。单列键用C序keyset，credential pool按`(channel_version_id,credential_id)`使用分列tuple游标；十二表共用100000总行、16MiB固定投影文本预算和原lease最多30秒期限。每页严格检查Next/Scan/Err/Close及完整EOF；任何SQL、行扫描、游标、预算或context故障返回零facts。
+原[预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)经[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)与[审批合同](../../specs/022-self-service-payments/c0-procurement-approval-contract.md)扩展同一个`ScanProcurement`。当前固定读取十五个关系：channels、channel_credentials、channel_versions、channel_version_credentials、tenants、request_records、cost_versions、procurement_accounts、credential_procurement_bindings、upstream_attempts、procurement_reservations、procurement_budget_events、users、provider_cost_corrections与procurement_cost_proposals。只读用户ID，不读取密码、MFA或当前角色；budget event增加type/evidence_ref，其余新增固定列以审批合同为准。reader不使用JOIN、业务过滤或SQL聚合；不读取凭据密文和request secret。
 
-同一批原始行分别调用`fundinglotverify.CheckProcurementBudgetProjection`和`CheckProcurementAttemptBindingGraph`。前者以`big.Int`比较账户held/spent缓存、reservation合计和immutable event delta，并检查本scope状态/引用形状；后者检查credential与channel/永久binding身份、channel version primary与pool membership、attempt/request租户和sequence关系、精确cost version报价快照、binding生效时间、reservation identity/request bounds及`ceil((input*input_rate+output*output_rate)/1_000_000)`上界。报价与reservation金额使用规范十进制文本与`big.Int`，不经float或数据库总额。两个summary scope分别固定`procurement_budget_projection_v1`与`procurement_attempt_binding_graph_v1`；每项只报告固定行数、Balanced和mismatch计数。完整扫描中的数据矛盾是`Balanced=false`而不是执行错误，仍正常Finish；所有执行错误撤销lease并返回零结果。
+单列键用C序keyset，credential pool按`(channel_version_id,credential_id)`使用分列tuple游标；十五表共用100000行、16MiB所有投影文本和原lease最多30秒期限。每页严格检查Next/Scan/Err/Close及完整EOF；任何SQL、扫描、游标、资源或context故障返回零facts。
 
-`maintenancescan.VerifyProcurementMaintenance`是唯一权威adapter：真实`ReadLease`、kind `ScanProcurement`、固定schema SELECT、Require→一次reader/两个core→唯一一次Finish，私有结果将两个局部summary都绑定到原Permit和本次ScanProof。没有普通main/HTTP/worker/writer接线，不发行coverage/basis/epoch/init许可；cost correction/evidence、proposal双审、command/audit、余额观察与periodic-budget交叉关系仍未扫描。定向Go/race/vet通过。外部真实PG Plan/Init未执行，且`TEST_DATABASE_URL`未配置，因此本片后未运行整仓`make verify-mvp`；见[验证记录](../verification/procurement-budget-maintenance.md)。
+同批原始行调用三个独立core：`CheckProcurementBudgetProjection`用big.Int比较账户缓存、reservation与event delta；`CheckProcurementAttemptBindingGraph`核永久绑定、tenant/request、channel/version/pool、精确quote与reservation ceil上界；`CheckProcurementCostApprovalGraph`核历史双人身份、proposal nullable形状，以及approved proposal、managed correction和cost_corrected event的双向精确关系。legacy correction以无采购reservation判定，不凭operation前缀分类；不把当前成本/角色/revision当作历史快照，不以delta直接替代绝对更正金额。
+
+三个scope固定为`procurement_budget_projection_v1`、`procurement_attempt_binding_graph_v1`、`procurement_cost_approval_graph_v1`，仅输出计数与Balanced。完整数据mismatch正常Finish；执行错误撤销lease并返回零结果。`maintenancescan.VerifyProcurementMaintenance`只Require一次、运行固定reader和三个core、Finish一次，三个summary均绑定同一原Permit/ScanProof。无普通main/HTTP/worker/writer接线，不发行全来源coverage、basis、epoch或init许可。evidence/metering、command/audit/outbox、余额观察与PB交叉图仍后续，真实PG及本地验证范围见[记录](../verification/procurement-budget-maintenance.md)。
+
+
+### 023-C-V 纯价值与期限
+
+`productvalue.New(P,G)`仅接受正规范BIGINT文本，`Terms.Value`接收最多4096个有序无重叠半开权益区间，用big.Int计算`floor(P*b/G)-floor(P*a/G)`并保留每段本金端点。`Terms.Attribute`要求完整[0,P)本金分区，以有序双指针O(r+e)输出每条原edge索引的金额；不排序、合并、推断来源或修改资金桶。规范输入、资源、错误优先序及失败零结果以[C-V合同](../../specs/023-periodic-products/c-value-contract.md)为准。
+
+`MonthAt`仅接受UTC6年0001..9999，从原年月直接加非负偏移并按目标月夹日；不递推上期已夹结果。`TermAt`同时验证本期首尾，`TermStateAt`用显式asOf判定scheduled/active/expired，不读取系统时钟。全部API无DB、JSON/HTTP解析、goroutine或生产调用；分摊结果不证明本金来源、未消费或退款资格。
+
+### 025-A1-G 私有模型生命周期QA
+
+`browser-qa`私有modelLifecycle接缝仅供显式opt-in使用；独立模型fixture在收到唯一POST与首内容之后提供一次性屏障，取消与Close必须join。最终证据窗口由owner事务先锁本run客户AVAILABLE，独立只读查询确认finalization已COMMIT、settlement=0，并通过pg_blocking_pids确认实际APP在该backend上等待后才SIGKILL。窗口有小于APP lock_timeout的硬时间界；未命中完整oracle即失败。
+
+重启复用同SHA制品和原配置，不修改原300秒期限，不重新setup；ready须晚于原request_deadline+5秒。sending未知保留客户与采购held；已最终计量则原证据唯一结算。两轮恢复和幂等重放不得新增上游生成或资金事件；测试成功/失败均独立清理本run进程、连接、schema/角色/私密文件。真实运行与fixture测试分层记录，见[A1-G合同](../../specs/025-production-ha/a1-model-process-contract.md)。

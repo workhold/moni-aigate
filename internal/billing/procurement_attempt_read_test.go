@@ -89,6 +89,7 @@ var procurementAttemptReadTables = []string{
 	"channels", "channel_credentials", "channel_versions", "channel_version_credentials",
 	"tenants", "request_records", "cost_versions", "procurement_accounts",
 	"credential_procurement_bindings", "upstream_attempts", "procurement_reservations", "procurement_budget_events",
+	"users", "provider_cost_corrections", "procurement_cost_proposals",
 }
 
 func (q *procurementAttemptQueryFixture) Query(sql string, args ...any) (fundingSourceRows, error) {
@@ -187,13 +188,14 @@ func newProcurementAttemptQueryFixture() *procurementAttemptQueryFixture {
 			"credential_procurement_bindings": {{"binding-1", "credential-1", "channel-1", "account-1", "00000000-0000-4000-8000-000000000001", created.Add(-time.Minute)}},
 			"upstream_attempts":               {{"attempt-1", "tenant-1", "request-1", int32(1), "channel-1", "version-1", "credential-1", "upstream-model", "prepared", procurementAttemptString("cost-1"), procurementAttemptString("1000000"), procurementAttemptString("2000000"), "contract", "unknown", nil, created}},
 			"procurement_reservations":        {{"attempt-1", "account-1", "binding-1", "100", "50", "200", "200", "0", "prepared", false}},
-			"procurement_budget_events":       {{"event-1", "reserve:attempt-1", "account-1", "attempt-1", "200", "0"}},
+			"procurement_budget_events":       {{"event-1", "reserve:attempt-1", "account-1", "attempt-1", "200", "0", "reserved", ""}},
+			"users":                           {{"checker"}, {"maker"}},
 		},
 		calls: map[string]int{}, firstArgs: map[string][]any{}, lastArgs: map[string][]any{},
 	}
 }
 
-func TestReadProcurementAttemptBindingFactsScansTwelveFixedRelations(t *testing.T) {
+func TestReadProcurementAttemptBindingFactsScansFifteenFixedRelations(t *testing.T) {
 	query := newProcurementAttemptQueryFixture()
 	facts, err := ReadProcurementAttemptBindingFacts(context.Background(), query, "private_schema")
 	if err != nil {
@@ -210,7 +212,13 @@ func TestReadProcurementAttemptBindingFactsScansTwelveFixedRelations(t *testing.
 			t.Fatalf("table %s not completely read once: calls=%d", table, query.calls[table])
 		}
 	}
+	if approval := facts.ApprovalSummary(); !approval.Balanced || approval.Scope != "procurement_cost_approval_graph_v1" || approval.Scanned.Users != 2 {
+		t.Fatalf("unexpected approval summary: %+v", approval)
+	}
 	wantSelects := map[string]string{
+		"users":                           `SELECT id FROM "private_schema"."users"`,
+		"provider_cost_corrections":       `SELECT id,tenant_id,attempt_id,operation_id,amount::pg_catalog.text,basis,evidence_ref,created_at FROM "private_schema"."provider_cost_corrections"`,
+		"procurement_cost_proposals":      `SELECT id,tenant_id,attempt_id,amount::pg_catalog.text,basis,evidence_ref,reason,requester,expected_reservation_revision::pg_catalog.text,expected_evidence_count::pg_catalog.text,state,approver,approval_operation_id,created_at,approved_at FROM "private_schema"."procurement_cost_proposals"`,
 		"channels":                        `SELECT id FROM "private_schema"."channels"`,
 		"channel_credentials":             `SELECT id,channel_id FROM "private_schema"."channel_credentials"`,
 		"channel_versions":                `SELECT id,channel_id,credential_id FROM "private_schema"."channel_versions"`,
@@ -222,7 +230,7 @@ func TestReadProcurementAttemptBindingFactsScansTwelveFixedRelations(t *testing.
 		"credential_procurement_bindings": `SELECT id,credential_id,channel_id,account_id,operation_id,bound_at FROM "private_schema"."credential_procurement_bindings"`,
 		"upstream_attempts":               `SELECT id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,delivery_state,cost_version_id,cost_input_rate::pg_catalog.text,cost_output_rate::pg_catalog.text,cost_basis,cost_status,cost_amount::pg_catalog.text,created_at FROM "private_schema"."upstream_attempts"`,
 		"procurement_reservations":        `SELECT attempt_id,account_id,binding_id,input_bound::pg_catalog.text,output_bound::pg_catalog.text,upper_amount::pg_catalog.text,held_amount::pg_catalog.text,spent_amount::pg_catalog.text,state,anomaly FROM "private_schema"."procurement_reservations"`,
-		"procurement_budget_events":       `SELECT id,event_key,account_id,attempt_id,held_delta::pg_catalog.text,spent_delta::pg_catalog.text FROM "private_schema"."procurement_budget_events"`,
+		"procurement_budget_events":       `SELECT id,event_key,account_id,attempt_id,held_delta::pg_catalog.text,spent_delta::pg_catalog.text,type,evidence_ref FROM "private_schema"."procurement_budget_events"`,
 	}
 	for table, prefix := range wantSelects {
 		if !strings.HasPrefix(query.queries[table][0], prefix) {
@@ -301,14 +309,28 @@ func procurementAttemptReadRow(table, key string, index int) []any {
 	case "procurement_reservations":
 		return []any{key, "account", "binding", "1", "0", "0", "0", "0", "released", false}
 	case "procurement_budget_events":
-		return []any{key, key, "account", "attempt", "0", "0"}
+		return []any{key, key, "account", "attempt", "0", "0", "reserved", ""}
+	case "users":
+		return []any{key}
+	case "provider_cost_corrections":
+		return []any{key, "tenant", "attempt", operationID, "0", "contract", "reference", created}
+	case "procurement_cost_proposals":
+		return []any{key, "tenant", "attempt", "0", "contract", "reference", "reason", "maker", "1", "0", "proposed", nil, nil, created, nil}
 	default:
 		panic("unknown fixture relation: " + table)
 	}
 }
 
-func procurementAttemptScannedCount(scanned fundinglotverify.ProcurementAttemptBindingCounts, table string) uint64 {
+func procurementAttemptScannedCount(facts ProcurementAttemptBindingFacts, table string) uint64 {
+	scanned := facts.BindingSummary().Scanned
+	approval := facts.ApprovalSummary().Scanned
 	switch table {
+	case "users":
+		return approval.Users
+	case "provider_cost_corrections":
+		return approval.Corrections
+	case "procurement_cost_proposals":
+		return approval.Proposals
 	case "channels":
 		return scanned.Channels
 	case "channel_credentials":
@@ -356,7 +378,7 @@ func TestReadProcurementAttemptBindingFactsSingleKeyPaginationBoundaries(t *test
 				if err != nil {
 					t.Fatal(err)
 				}
-				if got := procurementAttemptScannedCount(facts.BindingSummary().Scanned, table); got != uint64(count) {
+				if got := procurementAttemptScannedCount(facts, table); got != uint64(count) {
 					t.Fatalf("incomplete scan: got %d want %d", got, count)
 				}
 				wantCalls := 1
@@ -390,6 +412,9 @@ func TestReadProcurementAttemptBindingFactsReturnsNoPartialFactsOnReaderFailures
 		for _, table := range procurementAttemptReadTables {
 			t.Run(failure.name+"/"+table, func(t *testing.T) {
 				query := newProcurementAttemptQueryFixture()
+				if len(query.tables[table]) == 0 {
+					query.tables[table] = [][]any{procurementAttemptReadRow(table, "failure-key", 0)}
+				}
 				failure.set(query, table)
 				facts, err := ReadProcurementAttemptBindingFacts(context.Background(), query, "private_schema")
 				if err != ErrProcurementAttemptBindingFactsExecution || facts != (ProcurementAttemptBindingFacts{}) {
