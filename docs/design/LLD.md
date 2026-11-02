@@ -845,3 +845,15 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 NULL/空TEXT严格区分，新UUID规范化只适用新增身份；NUMERIC积分值允许scale-zero，BIGINT/xid各保留原范围。固定全局100000行/16MiB/单字段65536B先预算后索引；检查context，四种封闭错误一律零结果。没有SQL、网络、迁移、ScanKind/once扩展或资金接线。所给声明即使全部相符，仍不能证明实际来源、kind对应金额形状、FIFO、allocation、lot cache、完整epoch/legacy集合或数据库EOF。完整接口/计数与验收见[冻结合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)和[验证](../verification/wallet-sequence-rows.md)。
 
 完整重放的旧held opening必须从legacy reserve减legacy terminal集合推导；旧未结在epoch后finish时opening仍存在，后续消费退款仍按allocated原收费边处理。不能用当前unfinished状态重算cutover。
+
+## V0-WL：原始行的独立钱包 lot 重放
+
+[`CheckWalletLotsRows`](../../internal/fundinglotverify/wallet_lots.go)接收九组业务原行与全部16张C0事实表原列；operation、event、legacy source扩展原WS投影，时间保留NULL/finite/infinity envelope，bytea保留原件。共享输入预算先于索引和大整数分配：全25组100000行/16MiB、普通字段65536B、proof_canonical单独262144B但仍计总界，时间每字段32B、bool1B。微秒精度的PG finite年份范围保持-4712..294276；预算仅界定逻辑输入，不能外推RSS或网关p95。
+
+内部实际运行WS检查，并分别核每tenant的真实序列和可重放前缀。epoch/attestation核内部版本、引用、旧集合计数、opening总额和canonical SHA；真实数据库/OID/角色与严格运行codec另属未来组合。每个钱包源精确归属legacy或唯一新operation，核原journal、可用身份字段与完整准确分录；所有钱包kind journal及碰到客户AVAILABLE/HELD的未知journal反向检查，零分录不能隐藏孤儿。
+
+金额初态从真实业务行及精确legacy集合推导；lot和原边的唯一opaque ID只作后续引用的locator。FIFO在本操作前的独立正A状态按 `(fifo_at,lot_id C序)` 选择整笔最短前缀，先形成expected再apply；finish沿原边正序charge，charge0边仍须terminal/event；分次退款按原charged边逆序扣此前合法seq已退，不能从最终退款SUM决定历史余量。旧approved计入opening，旧terminal后批退款用F0+新批累计核界。操作delta/count、event前驱/revision/三桶/四delta、三类边与最终cache均与独立expected比较。
+
+确定坏声明不重置expected状态；源金额、序列或必要origin身份歧义才停止该tenant的数值后缀，按tenant记 `ReplayPrefixUnproven`。仍计全部25组物理输入行，可证孤儿与受坏前缀影响的deferred事实分开。固定Input/Resource/Canceled/Timeout错误整个零结果；成功报告只含 `supplied_wallet_lots_rows`、三态、RowsConsistent及计数，没有CoverageComplete/ScanProof/RuntimeProof。
+
+本片没有SQL reader、ScanKind/once扩展、ReadLease私有facts出口、维护pre/post/basis、epoch writer、迁移/ACL或HTTP/main/资金接线。九组业务投影不足以重算人工双审、券和capture完整来源资格，这些由已有独立来源域在未来同session组合。合同与独立手算fixture/边界记录见[规格](../../specs/022-self-service-payments/c0-wallet-lots-rows-contract.md)和[验证](../verification/wallet-lots-rows.md)。

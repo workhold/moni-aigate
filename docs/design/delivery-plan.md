@@ -106,4 +106,10 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 根先按[七投影合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)冻结纯序列声明检查，实施与手算测试并行，根汇合后复核、更新架构与[验证记录](../verification/wallet-sequence-rows.md)。该片只解决完整重放的结构前置，不包含FIFO/分配/退款/16表reader，也不升级68表来源结果。
 
-下一步继续原业务源+16表的独立lot全钱包重放（复用本结构检查但不从声明自我初始化金额），再封闭pre+basis与init/post/epoch。既有六kind的uint8 once容量、统一源+lot预算、109表record_send basis计数/分页/超长/取消界、未知init提交及严格v2 codec仍须在组合实施前明确冻结；本片不消耗新kind或声称较大候选预算已支持。全资金接线后继续C1/C2/C3、商品、扩展、生产/HA，最后性能；整体目标仍未完成。
+原业务源+16表的独立lot全钱包纯重放已按下节V0-WL冻结实施，复用结构检查但不从声明自我初始化金额。之后封闭pre+basis与init/post/epoch。既有六kind的uint8 once容量、统一源+lot预算、109表record_send basis计数/分页/超长/取消界、未知init提交及严格v2 codec仍须在组合实施前明确冻结；本片不消耗新kind或声称较大候选预算已支持。全资金接线后继续C1/C2/C3、商品、扩展、生产/HA，最后性能；整体目标仍未完成。
+
+## V0-WL实际 lot 域重放与下一依赖
+
+已按[原行重放合同](../../specs/022-self-service-payments/c0-wallet-lots-rows-contract.md)实现独立 `CheckWalletLotsRows`：25组输入覆盖九组业务原行与16张C0事实表，从真实金额按seq推导旧开账、新来源、FIFO reserve、正序finish和逆原charged边分次refund，比较全部事件/边/cache。实现、独立硬编码手算测试和来源/legacy审查并行，由根集成；本轮与历史失败、修复及最终命令身份见[验证记录](../verification/wallet-lots-rows.md)。本纯片尚无数据库reader或维护/资金调用方，不作为C0生产完成标志。
+
+接下来先冻结并实现同owned session的来源+lot原行读取、共享预算与EOF记录，保留旧六种reader的准确范围；再冻结pre+basis（109表原始record_send、计数/分页/超长/取消界）、一次init消费、同RR写后source+lot重扫和未知COMMIT只查询原epoch/proof的规则。明确封闭ScanKind/once容量及严格v2 codec和APP真实身份/运行组合，不能拼旧报告批准开账。完整资金接线后，按依赖继续C1/C2/C3、商品/订阅、扩展、生产/HA与最后性能，不省略真实供应商、目标容器/1Panel等外部验收。

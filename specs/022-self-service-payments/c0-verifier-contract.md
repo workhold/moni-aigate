@@ -1,6 +1,6 @@
 # 022-C0-V：独立来源 lot 核验与全钱包重放合同（审查候选）
 
-2026-11-01。**完整核验器仍为精确设计候选，未分配迁移号、未接入资金或普通 main。根已冻结§12的V0-L纯账本行检查及另册[V0-R同RR账本reader](c0-ledger-reader-contract.md)；两者已实现并通过各自[纯层](../../docs/verification/funding-ledger-rows.md)/[实际PG读取](../../docs/verification/funding-ledger-reader.md)专项。T2真实Permit、T3 ReadLease与ledger/PB/manual-voucher/sandbox直接关联/采购五个局部reader已分别冻结实现；旧采购入口保持十九表五摘要；第六kind已按[68表合同](c0-complete-source-reader-contract.md)组合采购/PB/支付来源等七项业务算法。这些结果不升级本候选的lot全序/pre-post/basis/epoch证明组合，后者仍未冻结、未实现。** 本文细化 [lot 合同](c0-lot-contract.md)、[全序合同](c0-sequence-contract.md)、[生产 DDL 候选](c0-production-schema.sql)、[列 ACL 候选](c0-production-permissions.sql)及[维护与 proof v2](c0-maintenance-contract.md)。[纯分配算法](../../internal/billing/lot_plan.go)已有实现，但不是本核验器的正确性来源。迁移清单接缝以已冻结的 [C0-S](c0-snapshot-contract.md) 为准；旧全序稿中的 `SnapshotRequirement` 示意参数不属于当前 `migrations.VerifySnapshotTx(ctx,tx)` 签名。
+2026-11-01。**完整核验器仍为精确设计候选，未分配迁移号、未接入资金或普通 main。根已冻结§12的V0-L纯账本行检查及另册[V0-R同RR账本reader](c0-ledger-reader-contract.md)；两者已实现并通过各自[纯层](../../docs/verification/funding-ledger-rows.md)/[实际PG读取](../../docs/verification/funding-ledger-reader.md)专项。T2真实Permit、T3 ReadLease与ledger/PB/manual-voucher/sandbox直接关联/采购五个局部reader已分别冻结实现；旧采购入口保持十九表五摘要；第六kind已按[68表合同](c0-complete-source-reader-contract.md)组合采购/PB/支付来源等七项业务算法。另有[V0-WL原行lot全序纯重放](c0-wallet-lots-rows-contract.md)已冻结实施；这些结果不升级本候选的同session源+lot/pre-post/basis/epoch证明组合，后者仍未冻结、未实现。** 本文细化 [lot 合同](c0-lot-contract.md)、[全序合同](c0-sequence-contract.md)、[生产 DDL 候选](c0-production-schema.sql)、[列 ACL 候选](c0-production-permissions.sql)及[维护与 proof v2](c0-maintenance-contract.md)。[纯分配算法](../../internal/billing/lot_plan.go)已有实现，但不是本核验器的正确性来源。迁移清单接缝以已冻结的 [C0-S](c0-snapshot-contract.md) 为准；旧全序稿中的 `SnapshotRequirement` 示意参数不属于当前 `migrations.VerifySnapshotTx(ctx,tx)` 签名。
 
 依据 [HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)与 [023-B verifier](../023-periodic-products/b-verifier-contract.md)。本片没有原路退款、拒付、媒体收费或多活的实施授权；核验成功不发出模型/支付调用许可，不修账或重建来源。
 
@@ -111,7 +111,7 @@ schema/role checker 先接受静态闭合对象描述符，scanner 只使用其�
 
 每个正 available opening建立一个内存 lot：A=P/H=S=0；每个正 unfinished reservation opening 建其专属 lot：H=P/A=S=0，并建立唯一原 reservation allocation index1。零额 opening保存成员但没有 lot/event/allocation。所有 opening lot均 nonrefundable，FIFO时刻为同 epoch时刻，lot ID按C序打破同刻。每旧 tenant A/H opening与原全部legacy wallet journal的NUMERIC前缀、当时未终态reservation集合及旧已退基线精确相符；不先将A+H合成int64。
 
-这里的“当时未终态”由 legacy reserve 减 legacy terminal settlement 的精确集合推导，不能使用当前 unfinished 集合。旧未结请求在 cutover 后 finish，opening 仍保留，后续退款依原 charged 边走 allocated 分支；只有明确属于 legacy_settlements 的旧 terminal，后批退款才发行新的 nonrefundable lot。funding wallet source 的 source_id=receipt.id；legacy_receipts.source_id 才指原 credit/redemption/capture 身份，两者不可混用。
+这里的“当时未终态”由 legacy reserve 减 legacy terminal settlement 的精确集合推导，不能使用当前 unfinished 集合。旧未结请求在 cutover 后 finish，opening 仍保留，后续退款依原 charged 边走 allocated 分支；只有明确属于 legacy_settlements 的旧 terminal，后批退款才发行新的 nonrefundable lot。funding wallet source 的 source_id=receipt.id；legacy_receipts.source_id 才指原 credit/voucher/capture 身份，两者不可混用。voucher 的原 journal.operation_id 指 redemption.id，不将它误写为 voucher.id 或 receipt.id。
 
 ## 6. 按全钱包 seq 的独立重放
 

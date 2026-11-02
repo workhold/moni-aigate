@@ -1,0 +1,124 @@
+{
+  "date": "2026-11-02",
+  "base_commit": "59fd25bfef05807ecb3ef858f0b3c96355fde0eb",
+  "scope": "Pure supplied wallet lot-domain replay; no authenticated database coverage or financial authority",
+  "source_sha256": {
+    "internal/fundinglotverify/wallet_lots.go": "47ef6d3c303fa69f28518d5e4a83c7b6cf7eeed655c033b11b6f0c4dc7a8b4f4",
+    "internal/fundinglotverify/wallet_lots_check.go": "b09235387e872d5715ca4ddfa22259c823f7780714ada38c4738c1291f030d9d",
+    "internal/fundinglotverify/wallet_lots_events.go": "017412787f6bbf65b641a4a0df111a692578c0271d5b1f84edb24424875b2dd6",
+    "internal/fundinglotverify/wallet_lots_fuzz_test.go": "270ab9c65f3dcbf142a5ed848637cbebbc2a1de3015b6dead10fc4614fea9c4e",
+    "internal/fundinglotverify/wallet_lots_index.go": "33acb020e5ac60cddd7931879e446fffb3e0db6392cba9de3affee36e0f83444",
+    "internal/fundinglotverify/wallet_lots_internal.go": "b65816681799d2281f52a7ea989fcbbdb75964beedd65734c9b3536228be2fb0",
+    "internal/fundinglotverify/wallet_lots_legacy.go": "79263e49379ff3f971769f153a88c524904afb5fcef7ffdd64bf5b8d2e5c5094",
+    "internal/fundinglotverify/wallet_lots_refund.go": "22756987adc080cad05438535a33c4ed2f8d92ed9452b0152d1b89d913fc9db0",
+    "internal/fundinglotverify/wallet_lots_replay.go": "6191d5f748665628452ecf8be13364a015632fa8f1361c4cedd94a416ac95838",
+    "internal/fundinglotverify/wallet_lots_root_test.go": "a28d7e4af3f94f8aa284d0d9cb928c92d2055a5049e45f16d052e207bf28d21a",
+    "internal/fundinglotverify/wallet_lots_shape.go": "8ccfc94d425fffc485d9ae22d61171cbaee2b101c7a15732802c6bb131889fa9",
+    "internal/fundinglotverify/wallet_lots_sources.go": "91db09bda162255f4659a73bdcd6f87399db99271c44a41a1ce83153894e1965",
+    "internal/fundinglotverify/wallet_lots_sweep.go": "e918d2e6ab5d38718f2dd0acb87215599212a8a3d6a1393f1d9832c774053d5b",
+    "internal/fundinglotverify/wallet_lots_test.go": "640f7a4958f48b52221e1d8492e71a372efa3875d4b507d7403e4e78cfc7cbc0",
+    "internal/fundinglotverify/wallet_lots_values.go": "e855486b03e806931ce8a32c96a87e6e5c7fa329d6126736cceffef8679d9f5d",
+    "specs/022-self-service-payments/c0-wallet-lots-rows-contract.md": "e0620ff7317b61ddc9a4ce915c6ec2ec8126eb99356c9c84374cbd5416bc682c"
+  },
+  "targeted_package_race": {
+    "command": [
+      "go",
+      "test",
+      "-race",
+      "-json",
+      "./internal/fundinglotverify",
+      "-count=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.027,
+    "log_sha256": "2f3e3c409ede4bb34e6781abe40af58d2657cc0f2bb2119471164455c4e1e04b",
+    "source_identity_unchanged": true,
+    "pass": true,
+    "package_pass_test_terminals": 1051,
+    "wallet_pass_terminals_including_fuzz_seeds": 152,
+    "wallet_top_level_tests": 25,
+    "failures": []
+  },
+  "fuzz": {
+    "command": [
+      "go",
+      "test",
+      "./internal/fundinglotverify",
+      "-run=^$",
+      "-fuzz=^FuzzWalletLotsRowsBoundedAndPermutationInvariant$",
+      "-fuzztime=12s",
+      "-parallel=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 16.776,
+    "log_sha256": "37d0f5c29cbd843d4ae1e294f02a33f0f506b636b6a60720cbb17f2021d5df02",
+    "source_identity_unchanged": true,
+    "pass": true,
+    "executions": 32508,
+    "parallel": 2
+  },
+  "make_check": {
+    "command": [
+      "make",
+      "check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.702,
+    "log_sha256": "2d9dc8e50c987acca3888d66da41839a0792264ce29e590d53c8952d10d420ce",
+    "source_identity_unchanged": true,
+    "pass": true
+  },
+  "architecture_render": "architecture-wallet-lots.json",
+  "prior_commit_ci": {
+    "head_sha": "59fd25bfef05807ecb3ef858f0b3c96355fde0eb",
+    "run_id": 41449907903,
+    "conclusion": "success"
+  },
+  "review_fixes": [
+    "Unknown wallet journal with zero lines must have a real source",
+    "Future source or sequence damage retains independently known earlier prefix checks",
+    "Dangling zero wallet lines and wallet accounts require actual parents",
+    "Conflicting genesis and duplicate origin groups must be permutation invariant",
+    "Known earlier extra effects stay orphans after later replay barriers",
+    "Deferred suffixes still check raw enum, local arithmetic, tenant/lot and business-root relations",
+    "Duplicate parent/group scanning does not select first row or multiply full source scans"
+  ],
+  "boundaries": [
+    "No SQL reader, ScanKind/once expansion or maintenance authority changes",
+    "No protected pre/post, basis, epoch init, RuntimeProof or financial writer",
+    "No ordinary main/HTTP, migrations, roles, dependencies or preview update",
+    "Receipt-level lot derivation does not authenticate deeper manual/voucher/capture source authorization",
+    "Supplied attestation internal SHA/identity does not certify real OID/catalog/strict runtime codec",
+    "No official provider, production payment, container/1Panel, HA or performance acceptance"
+  ],
+  "make_verify_mvp": {
+    "command": [
+      "make",
+      "verify-mvp"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1018.811,
+    "log_sha256": "48fc6dee77a98a52ae9fd0b14ea095b667f31707d1c8a111bcaf384e7a167a86",
+    "source_identity_unchanged": true,
+    "pass": true,
+    "test_database": "Dedicated moni_test, PostgreSQL 16 local fixture cluster",
+    "c0_opt_in_enabled": false,
+    "passing_go_packages": 43,
+    "frontend_summary": [
+      "# tests 286",
+      "# suites 0",
+      "# pass 286",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# todo 0"
+    ],
+    "race": true,
+    "vet": true,
+    "build": true,
+    "frontend_tests": 286,
+    "frontend_pass": 286,
+    "frontend_fail": 0
+  },
+  "after_full_validation": "Only verification prose, machine records and architecture snapshots updated; Go source/test identities unchanged."
+}

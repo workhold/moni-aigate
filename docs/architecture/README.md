@@ -119,8 +119,10 @@ flowchart TD
       ProcurementEvidenceCore[fundinglotverify\n23组采购证据与事件三态\n完整reader已接线]
       PeriodicGraphCore[fundinglotverify\n18组PB独立重放与历史缺证\n完整reader已接线]
       SandboxGraphCore[fundinglotverify\n33组支付stored-verified来源图\n完整reader已接线]
-      WalletSequenceCore[fundinglotverify.CheckWalletSequenceRows\n七投影全序 / journal与事件声明\n纯前置检查 / 无运行调用方]
+      WalletSequenceCore[fundinglotverify.CheckWalletSequenceRows\n七投影全序 / journal与事件声明\n纯前置检查]
+      WalletLotsCore[fundinglotverify.CheckWalletLotsRows\n25组原行 / FIFO与三桶 / 逆序退款\n纯重放 / 无运行调用方]
     end
+    WalletLotsCore -->|内部原行投影 / 结构计数| WalletSequenceCore
     RefundProto -->|仅已验证capture值的只读桥| PaymentProto
     LedgerReader -->|读取后整份独立核算| LedgerRows
     FundingSourceReader -->|原始来源facts后双向关联核对| LedgerRows
@@ -654,11 +656,11 @@ ledger与PB维护入口是[`maintenancescan.VerifyLedgerMaintenance`](../../inte
 
 领域raw-facts接口不接受或发行authority；维护入口不接受外部provider或预计算通过位，假的query只能生成无权威局部描述，不能铸造维护结果。原三类历史缺证继续indeterminate，原public Verifier的独立LOGIN/owner/history/RRRO/SET/Commit规则未放宽。资源profile限制客户端返回与保留的逻辑输入，不证明PG排序/CTE/array_agg内存或Go RSS界。
 
-旧五类扫描的局部结果与ScanProof不授全来源CoverageComplete、资金写入或生产运行权，不能拼成init/basis/epoch就绪条件。第六类[68表组合](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)现已从同raw读取采购evidence/事件、PB与支付来源并运行七算法；旧sandbox两表和采购十九表入口的局部scope保持。lot全序、protected pre/post、basis、epoch、封闭writer和生产维护CLI尚未完成。历史ReadLease及局部验证保留[T3记录](../verification/maintenance-read-lease.md)的版本范围，新组合另见[本轮记录](../verification/complete-source-reader.md)。
+旧五类扫描的局部结果与ScanProof不授全来源CoverageComplete、资金写入或生产运行权，不能拼成init/basis/epoch就绪条件。第六类[68表组合](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)现已从同raw读取采购evidence/事件、PB与支付来源并运行七算法；旧sandbox两表和采购十九表入口的局部scope保持。lot全序纯重放已实现，受控同session读取、protected pre/post、basis、epoch、封闭writer和生产维护CLI尚未完成。历史ReadLease及局部验证保留[T3记录](../verification/maintenance-read-lease.md)的版本范围，新组合另见[本轮记录](../verification/complete-source-reader.md)。
 
 ### 资金来源、退款与后续经营设计
 
-[C0生产候选](../../specs/022-self-service-payments/c0-production-schema.sql)以lot三桶和tenant全钱包连续序列连接全部来源、Reserve、finish及消费退款；[列权限](../../specs/022-self-service-payments/c0-production-permissions.sql)和[维护/proof v2](../../specs/022-self-service-payments/c0-maintenance-contract.md)尚在审查，不是生产迁移。旧tenant含零可用opening、新tenant的受保护出生事务、非genesis operation与完整新journal同top-xid及逐settlement退款累计已补入候选SQL。APP tenant INSERT收敛为原八列，UPDATE保留原六列，不授UPDATE(id,created_at)；worker原锁权限保留。五项版本化真实PG/race回归全部实际运行通过，见[候选验证](../verification/funding-lot-candidate.md)、[冻结测试范围](../../specs/022-self-service-payments/c0-candidate-regression-contract.md)及[仅测试源码](../../internal/qa/c0candidate)。测试通过不发行维护许可、不启动main、不分配生产迁移号。[独立重放候选](../../specs/022-self-service-payments/c0-verifier-contract.md)仍未实现；不能只靠正常业务代码或总额守恒证明来源。纯分配算法通过不代表这些接线已经完成。
+[C0生产候选](../../specs/022-self-service-payments/c0-production-schema.sql)以lot三桶和tenant全钱包连续序列连接全部来源、Reserve、finish及消费退款；[列权限](../../specs/022-self-service-payments/c0-production-permissions.sql)和[维护/proof v2](../../specs/022-self-service-payments/c0-maintenance-contract.md)尚在审查，不是生产迁移。旧tenant含零可用opening、新tenant的受保护出生事务、非genesis operation与完整新journal同top-xid及逐settlement退款累计已补入候选SQL。APP tenant INSERT收敛为原八列，UPDATE保留原六列，不授UPDATE(id,created_at)；worker原锁权限保留。五项版本化真实PG/race回归全部实际运行通过，见[候选验证](../verification/funding-lot-candidate.md)、[冻结测试范围](../../specs/022-self-service-payments/c0-candidate-regression-contract.md)及[仅测试源码](../../internal/qa/c0candidate)。测试通过不发行维护许可、不启动main、不分配生产迁移号。[独立重放候选](../../specs/022-self-service-payments/c0-verifier-contract.md)中的纯lot域已按[V0-WL](../../specs/022-self-service-payments/c0-wallet-lots-rows-contract.md)实现，完整受控组合仍未实现；不能只靠正常业务代码或总额守恒证明来源。纯分配算法通过不代表这些接线已经完成。
 
 已实现的窄依赖是[caller-owned RR清单核验](../../migrations/verify_snapshot.go)：在原只读或读写RR事务核对完整latest history，固定安全错误，不Begin/Commit或写库；原VerifyReadOnlyTx仍只接受RR READ ONLY。它不授予维护权限、不核函数/trigger/ACL、不发行epoch，见[冻结合同](../../specs/022-self-service-payments/c0-snapshot-contract.md)与[验证](../verification/migration-snapshot.md)。
 
@@ -948,7 +950,7 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 商业闭环 | 已实现，限定本地验收 | 人工双人入账 → 客户授权/Key → 六协议调用 → 预占/结算 → 报表/成本/退款；[014](../verification/mvp-release-qualification.md) |
 | 模型/渠道经营 | 已实现 | 不可变版本、三格式发现、1..32 成员池、跨渠道整批启停；[011](../verification/model-discovery.md)、[012](../verification/credential-pools.md)、[013](../verification/channel-operations.md) |
 | Key 经营 | 已实现 | 来源策略、动态运行限额、模型/地域/预算/期限三版本独立编辑；[017 验证](../verification/key-configuration.md) |
-| 来源追踪核验基础 | C0业务来源完整读取已接线，资金开账仍后续 | [68表合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)与[实现](../../internal/fundinglotscan/reader.go)：同lease扫描固定列并集，七算法、ordinary精确排除、原生时间资格、共享100000行/16MiB；[维护入口](../../internal/maintenancescan/complete_sources.go)绑定原Permit与第六kind。旧五局部scope不变；物理EOF与业务coverage独立，Unproven不授资格。lot全序、pre/post、basis/epoch、线上资金接线和生产CLI仍后续；[本轮验收](../verification/complete-source-reader.md) |
+| 来源追踪核验基础 | C0业务来源完整读取已接线，资金开账仍后续 | [68表合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)与[实现](../../internal/fundinglotscan/reader.go)：同lease扫描固定列并集，七算法、ordinary精确排除、原生时间资格、共享100000行/16MiB；[维护入口](../../internal/maintenancescan/complete_sources.go)绑定原Permit与第六kind。旧五局部scope不变；物理EOF与业务coverage独立，Unproven不授资格。纯lot全序重放已实现，同session读取、pre/post、basis/epoch、线上资金接线和生产CLI仍后续；[本轮验收](../verification/complete-source-reader.md) |
 | 商品价值/期限纯算法 | C-V已实现，无生产接线 | [productvalue](../../internal/productvalue/value.go)精确端点价值差、原本金分区索引归因、UTC6原锚点月/半开term；[合同与专项](../../specs/023-periodic-products/c-value-contract.md)，无购买/权益发放/退款授权 |
 | 上游模型成本 | 已实现 | 每渠道精确上游模型的输入/输出单价、生效版本、每attempt快照及unknown；受控采购更正双人审批，尚无自动供应商账单同步 |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
@@ -1043,7 +1045,7 @@ make architecture-check
 
 精确DTO、资源、三态、合法多事件与故障边界见[采购合同](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md)、[PB合同](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md)、[支付合同](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md)。这三个输入组数不能直接相加当物理读取表数；下节68表reader已对重叠表取固定列并集，只读一次并共用源预算。
 
-原十九表采购reader、PB公共owner Verifier与两表sandbox关联reader保持scope；新核心由下节第六kind组合，不隐式扩展旧入口。业务来源七算法、ordinary排除与唯一Finish已接线；lot全序、pre/post、basis/epoch、资金writer和生产维护CLI仍后续。旧范围真实数据库补验见[原记录](../verification/maintenance-financial-postgres.md)，新组合另见[本轮记录](../verification/complete-source-reader.md)。README保留特性、协议、使用、部署、许可证与验收边界，贡献流程见[指南](../../CONTRIBUTING.md)。
+原十九表采购reader、PB公共owner Verifier与两表sandbox关联reader保持scope；新核心由下节第六kind组合，不隐式扩展旧入口。业务来源七算法、ordinary排除与唯一Finish已接线；另有独立纯lot重放，同session接线、pre/post、basis/epoch、资金writer和生产维护CLI仍后续。旧范围真实数据库补验见[原记录](../verification/maintenance-financial-postgres.md)，新组合另见[本轮记录](../verification/complete-source-reader.md)。README保留特性、协议、使用、部署、许可证与验收边界，贡献流程见[指南](../../CONTRIBUTING.md)。
 
 本轮还修复已有商业命令的并发幂等占位：支付和兑换券共用的`commerce_commands`有两个含operation的唯一索引，两个INSERT均使用无target的`ON CONFLICT DO NOTHING`，随后仍逐项核对原命令身份、输入指纹与terminal。没有新表、迁移、权限、通用重试或资金链路变化；原5秒总预算、3秒锁期限与未知提交不重放保持。既有八并发用例增加共同起跑屏障，专项与整仓结果见[并发验证](../verification/commerce-concurrency.md)。
 
@@ -1064,4 +1066,15 @@ make architecture-check
 
 [CheckWalletSequenceRows](../../internal/fundinglotverify/wallet_sequence.go)位于现有纯核验模块，模块图单列纯序列检查节点，无运行调用方；没有新增持久关系或运行依赖箭头。七组传入原行投影核序列连续/唯一head、旧新tenant genesis、原journal与event top-xid绑定、全局source唯一及legacy互斥、event_count和四项大整数声明。两种新退款kind共用归一源命名空间；同top-xid多次操作仍分别推进seq。
 
-它只返回 `supplied_wallet_sequence_rows` 范围的 RowsConsistent 和计数，不读数据库、不产生EOF/coverage/proof，也不证明来源资格、金额桶、FIFO或退款分配；相互自洽改写的金额仍可能通过这层。当前68表来源reader与六种ReadLease不变，没有新增资金writer、HTTP/main、角色或迁移。完整lot重放、protected pre/post、109表basis、init/epoch和APP接线仍须逐片冻结实现。规格、独立手算与资源/取消边界见[合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)和[验证](../verification/wallet-sequence-rows.md)。
+它只返回 `supplied_wallet_sequence_rows` 范围的 RowsConsistent 和计数，不读数据库、不产生EOF/coverage/proof，也不证明来源资格、金额桶、FIFO或退款分配；相互自洽改写的金额仍可能通过这层。当前68表来源reader与六种ReadLease不变，没有新增资金writer、HTTP/main、角色或迁移。实际lot重放已按下节V0-WL实现；同session读取、protected pre/post、109表basis、init/epoch和APP接线仍须逐片冻结实现。规格、独立手算与资源/取消边界见[合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)和[验证](../verification/wallet-sequence-rows.md)。
+
+
+## 所提供原行的完整 lot 域重放
+
+[CheckWalletLotsRows](../../internal/fundinglotverify/wallet_lots.go)在现有纯核验模块新增实际数值重放：九组业务原行与16张C0事实表原列，在共享100000行/16MiB预算后建立私有索引。内部运行WS结构检查，并从receipt、reserve、settlement和approved refund原金额独立推导big.Int状态；事件、分配边和余额cache只作比较对象。模块图只增加纯层节点及其内部WS调用，没有在线服务或维护reader到该节点的运行箭头。
+
+它按tenant seq核新旧genesis与legacy集合，推导cutover开账A/H；FIFO按原来源时间和lot ID的C序预占，正序结算保留charge=0尾边，逆原收费边支持分次消费退款。旧terminal的后批退款验证原F0累计后发行新nonrefundable lot；旧未结预占后批结算仍沿opening原边。最后比较三桶、事件链/revision、cache、当前账户与退款累计，反向枚举全部实际事实。时间保留原生NULL/finite/infinity，不用墙钟决定seq。
+
+源金额或必要身份不可确定时，保留可算前缀，只停止该tenant依赖的后缀；缺event locator不会拿下条before或cache恢复金额。确定缺父/跨租户或健康完整重放后的多余效果报告orphan，受损前缀后缀记deferred。输出仅supplied scope、三态和脱敏计数，没有数据库EOF、CoverageComplete、ScanProof或资金权限。人工双审/券资格/capture深层来源仍依赖独立来源域；给定epoch/attestation内部一致不认证真实安装、OID或运行proof。
+
+[冻结合同](../../specs/022-self-service-payments/c0-wallet-lots-rows-contract.md)与[验证记录](../verification/wallet-lots-rows.md)描述完整边界。当前68表reader、六kind/once、DDL候选和普通main保持；下一步冻结同session原源+lot读取与protected pre+basis/init/post/epoch，再推进全部资金写路径、原路退款和拒付。

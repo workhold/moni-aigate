@@ -117,3 +117,8 @@ Python SDK可复现工具见[零费用SDK验证](native-sdk.md)，只读取本�
 2026-11-02新增 [V0-WS钱包序列纯检查](wallet-sequence-rows.md)：七组supplied原行的全序、genesis/head、journal/event声明、全局唯一与legacy互斥。它不是完整lot/FIFO重放，没有数据库/维护/资金装配；原路退款、epoch和生产验收继续后续。README同步保持当前使用、部署和能力边界。
 
 V0-WS最终集成：`make check` 7.623秒、明确专库 `make verify-mvp` 977.773秒通过（286项前端、43个Go测试包race、vet/build）。本片纯包race与73385次短fuzz独立通过；默认整仓未启用C0 opt-in。原实现与验证边界见[记录](wallet-sequence-rows.md)，不等于完整来源lot或生产验收完成。
+
+
+2026-11-02新增[V0-WL原行lot纯重放](wallet-lots-rows.md)：25组原始行独立核旧开账、FIFO预占、正序结算、逆原收费分次退款、事件/分配/cache与原始父关系。它不接数据库reader、维护授权或在线资金；同session源+lot、pre/basis/init/post/epoch仍按后续计划推进。最终本片验证以该记录为准，不沿用旧WS通过结果，也不升级58123或生产状态。
+
+V0-WL最终集成：纯包race 9.027秒、32508次短fuzz、`make check` 9.702秒，以及明确专库`make verify-mvp` 1018.811秒全部通过（286项前端、43个Go包race、vet/build）。最终Go源码与测试摘要全程一致，默认整仓未启用C0 opt-in；详见[本片记录](wallet-lots-rows.md)。

@@ -459,4 +459,12 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 
 [冻结合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)将完整重放的前置结构检查独立为 `fundinglotverify.CheckWalletSequenceRows`：七组原始投影，核 seq/genesis/head、原 journal 的 top-xid 与事件声明、全局唯一和 legacy/new 互斥。两种新退款 kind 归一到同一原退款源命名空间，既有 TEXT 身份保持原值。它没有数据库、维护或资金权限，也不把声明守恒当作真实来源和 FIFO 已证。
 
-结果只含 supplied scope、RowsConsistent 和安全计数；无 CoverageComplete 或 proof。现有纯核验节点与运行依赖保持，ReadLease 仍六kind、once位不变；七投影不等于七张完整物理扫描。下步继续原业务源+16表的 lot/桶/分配/逆序退款全钱包重放，再冻结同session的 pre+basis 与 init/post/epoch，不能用本结果批准开账。范围和测试见[验证记录](../verification/wallet-sequence-rows.md)。
+结果只含 supplied scope、RowsConsistent 和安全计数；无 CoverageComplete 或 proof。现有纯核验节点与运行依赖保持，ReadLease 仍六kind、once位不变；七投影不等于七张完整物理扫描。原业务金额+16表的 lot/桶/分配/逆序退款纯重放现由下节 V0-WL 实现；同session的 pre+basis 与 init/post/epoch仍须另行冻结，不能用本结果批准开账。范围和测试见[验证记录](../verification/wallet-sequence-rows.md)。
+
+## 原始行的完整 lot 域重放（V0-WL）
+
+[冻结合同](../../specs/022-self-service-payments/c0-wallet-lots-rows-contract.md)与[纯接口](../../internal/fundinglotverify/wallet_lots.go)将实际重放加入现有 `fundinglotverify` 模块。九组业务原行与16张C0表事实共25组输入；核验器从 receipt、reservation、settlement 和 approved refund 的原金额建立独立 `big.Int` 状态，按每tenant的钱包seq推导opening、来源资格类别、FIFO预占、正序收费/释放和逆原charged边分次退款，再比较事件、三类分配和最终缓存。旧held集合从legacy reserve减legacy terminal推导，旧未结后来finish仍沿原边退款，旧terminal后批退款按历史F0界定余量并发行nonrefundable lot。
+
+实现无数据库与网络调用，不复用写侧分配器、SQL业务判定或外部检查报告。源金额或序列使某tenant的后缀无法独立推导时，只停止其数值后缀并计历史前缀未证；已经可算的前缀及其他tenant继续，确定坏event/cache也不代替可信初态。全部提供事实仍被枚举，无法推导的后缀不冒充孤儿。状态明确区分确定不符与未证，输出只有固定范围和脱敏计数。
+
+本片已实现的是所提供原行的lot域核验。人工双审、券资格、支付capture完整证据、Key/PB/采购与audit/outbox仍由各自来源域负责；这25组输入不证明数据库EOF、实际角色/OID、basis、维护epoch真实性或运行权限。现有68表来源reader没有因此包含16表，普通main与资金writer也没有新增调用。下一依赖为同owned session的来源+lot读取、protected pre+basis/init/post/epoch及严格v2运行组合，之后才是全资金路径接线。测试、缺陷回归和整体验证以[本片记录](../verification/wallet-lots-rows.md)为准，不沿用V0-WS或旧版本的通过结果。

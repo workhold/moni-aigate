@@ -2166,3 +2166,58 @@ V0-WS最终验收与文档收口：专库全仓race/vet/build和前端286项通�
 - modified `docs/verification/wallet-sequence-rows.json`
 
 </details>
+
+## 2026-11-02T14:05:55Z · 3240afab8984
+
+V0-WL从25组原行独立重放lot/FIFO/结算/退款并核事件缓存和复合父关系；增加纯层节点与内部WS调用，同步README/HLD/LLD/计划和维护边界；无DB reader、迁移、六kind或在线资金变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1383 个源文件；本次 30 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-wallet-lots.json`
+- added `docs/verification/assets/architecture-wallet-lots-application.png`
+- added `docs/verification/assets/architecture-wallet-lots-detail.png`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/wallet-lots-rows.json`
+- added `docs/verification/wallet-lots-rows.md`
+- added `internal/fundinglotverify/wallet_lots.go`
+- added `internal/fundinglotverify/wallet_lots_check.go`
+- added `internal/fundinglotverify/wallet_lots_events.go`
+- added `internal/fundinglotverify/wallet_lots_fuzz_test.go`
+- added `internal/fundinglotverify/wallet_lots_index.go`
+- added `internal/fundinglotverify/wallet_lots_internal.go`
+- added `internal/fundinglotverify/wallet_lots_legacy.go`
+- added `internal/fundinglotverify/wallet_lots_refund.go`
+- added `internal/fundinglotverify/wallet_lots_replay.go`
+- added `internal/fundinglotverify/wallet_lots_root_test.go`
+- added `internal/fundinglotverify/wallet_lots_shape.go`
+- added `internal/fundinglotverify/wallet_lots_sources.go`
+- added `internal/fundinglotverify/wallet_lots_sweep.go`
+- added `internal/fundinglotverify/wallet_lots_test.go`
+- added `internal/fundinglotverify/wallet_lots_values.go`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+- added `specs/022-self-service-payments/c0-wallet-lots-rows-contract.md`
+
+</details>
+
+## 2026-11-02T14:25:41Z · 0d282cf66dd6
+
+V0-WL最终纯包race、32508次fuzz、make check和专库make verify-mvp全部通过；仅补真实验证记录与三态/权限边界，Go源码测试摘要保持一致，20图已渲染复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1383 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/mvp-status.md`
+- modified `docs/verification/wallet-lots-rows.json`
+- modified `docs/verification/wallet-lots-rows.md`
+
+</details>

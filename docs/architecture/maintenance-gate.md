@@ -75,7 +75,7 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Destroy[失败或到期 / 原子invalid
 封闭registry并关原始socket / 操作返回后有界pgx清理]
     Future[T3后续与T4
-lot全序与protected pre/post / basis及epoch
+同session lot读取与protected pre/post / basis及epoch
 封闭写入器与生产协调器]
     Caller --> Connect --> Preflight --> Locks --> Gate --> Begin
     Gate -->|不建立Snapshot| Cleanup
@@ -141,7 +141,7 @@ Commit 一次调用开始后按可能已发送处理：明确 COMMIT、明确 RO
 
 [T0专项](../verification/maintenance-gate.md)保留原代码版本和运行范围，不自动升级为 T1 证据。[T1真实 PG 验证](../verification/maintenance-snapshot.md)覆盖唯一 RR、首次快照物理 writer 屏障、125表锁、idle期限、busy、真实提交丢回复与明确回滚；最终race 124终态全PASS，独立清理为零。首轮测试语句子串误判已保留原日志并修正，未改产品锁/预算。
 
-[完整前驱矩阵](../../specs/022-self-service-payments/c0-predecessor-contract.md)已按T2根冻结实施，App v1、M/Q实际字段、ordinary-off21表及6旁路不虚构active key、peer文件原件或v1不存在的字段。T3 ReadLease先交付ledger/PB与人工核款/兑换券等五类局部reader；第六类68表业务来源组合现已实现，见上节。lot重放、protected pre/post、basis、epoch、startup RuntimeProof与生产接线仍继续后续。
+[完整前驱矩阵](../../specs/022-self-service-payments/c0-predecessor-contract.md)已按T2根冻结实施，App v1、M/Q实际字段、ordinary-off21表及6旁路不虚构active key、peer文件原件或v1不存在的字段。T3 ReadLease先交付ledger/PB与人工核款/兑换券等五类局部reader；第六类68表业务来源组合现已实现，见上节。纯lot重放已实现，同session读取、protected pre/post、basis、epoch、startup RuntimeProof与生产接线仍继续后续。
 
 ## 真实授权与不可变前驱（T2）
 
@@ -192,7 +192,7 @@ ScanProof只证明固定kind的lease正常完成；五个局部结果不能授�
 
 [人工/券core](../../internal/fundinglotverify/funding_source_graph.go)核双审批次与撤销、兑换资格、commerce终态、精确两行journal和唯一audit/outbox；[Key core](../../internal/fundinglotverify/customer_key_graph.go)核R与预占/终态/退款/held/spent，退款不减少原始spent。支付四kind仅通用检查，sandbox明确计未覆盖；独立时钟不被误当历史单调序列。旧ledger元数据与source-link数字资格继续作为组合前置，错误封闭五类且全部零结果；真实数据mismatch正常保留四摘要。结果四scope与原Permit绑定，零值/JSON/局部事实不能发行proof或资金权。
 
-21表是业务来源组合的基础；采购证据、PB与sandbox的新纯核验核心见下节，现已纳入第六kind的68表同session reader。旧ScanFunding保持四局部scope；lot重放、protected pre/post、basis/epoch与线上writer仍未实现。历史跳过项及QA顺序修正见[原记录](../verification/funding-financial-graph.md)，本轮真实PG补验另列[独立记录](../verification/maintenance-financial-postgres.md)，不追溯升级旧T2/T3结果。
+21表是业务来源组合的基础；采购证据、PB与sandbox的新纯核验核心见下节，现已纳入第六kind的68表同session reader。旧ScanFunding保持四局部scope；纯lot重放已实现，同session接线、protected pre/post、basis/epoch与线上writer仍未实现。历史跳过项及QA顺序修正见[原记录](../verification/funding-financial-graph.md)，本轮真实PG补验另列[独立记录](../verification/maintenance-financial-postgres.md)，不追溯升级旧T2/T3结果。
 
 ## 采购、周期预算与支付来源的独立原始图
 
@@ -206,11 +206,31 @@ ScanProof只证明固定kind的lease正常完成；五个局部结果不能授�
 
 完整关系中的确定矛盾始终报告mismatch；真正保存不足的历史才进入合同规定的Unproven。SQL/权限/EOF/资源/取消失败是执行错误，不能降为历史缺证。原图共享预算、反向枚举及context检查由各纯核心执行，摘要不暴露ID、金额或原件。
 
-这三项是库级纯算法，现由[第六kind完整业务来源读取](#第六类完整业务来源读取)在同一owned session实际执行。固定列并集、可信ordinary/sandbox模式、共享资源、物理EOF与唯一Finish已实现；旧五类reader保持scope，其ScanProof不能拼成新结果。下一步继续lot全钱包重放，再冻结protected pre/post与同pre快照basis、init/post replay、epoch和APP资金接线。没有迁移、权限或生产装配变化。
+这三项是库级纯算法，现由[第六kind完整业务来源读取](#第六类完整业务来源读取)在同一owned session实际执行。固定列并集、可信ordinary/sandbox模式、共享资源、物理EOF与唯一Finish已实现；旧五类reader保持scope，其ScanProof不能拼成新结果。原行lot全钱包纯重放现已实现；下一步冻结同session读取与protected pre/post与同pre快照basis、init/post replay、epoch和APP资金接线。没有迁移、权限或生产装配变化。
 
 
 ## 钱包序列前置检查的范围
 
 [纯序列检查](../../internal/fundinglotverify/wallet_sequence.go)只接受七组原行投影，无lease、tx、外部报告或权限参数。按[冻结合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)比较seq/genesis/head、原journal/event绑定、全局唯一、legacy/new互斥和四delta声明。即使 RowsConsistent=true，也不能证明扫描完整、真实来源或FIFO；没有ScanProof或CoverageComplete。
 
-本片保留六kind/原once状态，不导出 CompleteSourcesResult 私有facts，不改变Require/Finish、普通main或运行依赖。以后全lot重放须实际读取原业务源和16表，而pre+basis/post须在owned同session内组合；本纯函数不能接收先前report或用外部bool补齐这些条件。验证见[记录](../verification/wallet-sequence-rows.md)。
+本片保留六kind/原once状态，不导出 CompleteSourcesResult 私有facts，不改变Require/Finish、普通main或运行依赖。下节纯lot重放接受原业务源和16表原行，实际数据库读取与pre+basis/post仍须在owned同session内组合；本纯函数不能接收先前report或用外部bool补齐这些条件。验证见[记录](../verification/wallet-sequence-rows.md)。
+
+
+## 实际 lot 域纯重放与维护接线边界
+
+```mermaid
+flowchart LR
+  Business[九组业务原行
+receipt / reservation / settlement / refund等] --> Replay
+  C0[16张C0原列
+legacy / seq / lot / event / cache / edges] --> Replay
+  Replay[CheckWalletLotsRows
+独立big.Int / FIFO / 三桶 / 正序结算 / 逆序退款] --> WS[内部WS原投影
+结构计数]
+  Replay --> Report[supplied_wallet_lots_rows
+三态 / 脱敏计数 / 无authority]
+```
+
+[V0-WL合同](../../specs/022-self-service-payments/c0-wallet-lots-rows-contract.md)已冻结实现；本图只描述纯函数的实际依赖，不表示ReadLease或普通main已调用。共25组原行共享100000行/16MiB，proof bytea单字段262144B仍计总预算；原生时间按32B包络计量。所有执行错误返回零结果。旧tenant held集合按legacy reserve减legacy terminal确定，不从当前unfinished倒推；批次本金和每次分配从真实业务金额计算，不接收外部分配计划或通过bool。
+
+单租约68表仍只证明原业务来源范围，未新增ScanKind/once、SQLreader、权限、生产迁移或维护CLI。之后须冻结同session源+lot读取、protected pre+basis与init/post/epoch，才能组合真正的维护结果；本纯报告不能批准资金开账、原路退款或发行RuntimeProof。专项与回归记录见[验证](../verification/wallet-lots-rows.md)。
