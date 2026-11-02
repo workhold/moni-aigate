@@ -122,3 +122,5 @@ V0-WS最终集成：`make check` 7.623秒、明确专库 `make verify-mvp` 977.7
 2026-11-02新增[V0-WL原行lot纯重放](wallet-lots-rows.md)：25组原始行独立核旧开账、FIFO预占、正序结算、逆原收费分次退款、事件/分配/cache与原始父关系。它不接数据库reader、维护授权或在线资金；同session源+lot、pre/basis/init/post/epoch仍按后续计划推进。最终本片验证以该记录为准，不沿用旧WS通过结果，也不升级58123或生产状态。
 
 V0-WL最终集成：纯包race 9.027秒、32508次短fuzz、`make check` 9.702秒，以及明确专库`make verify-mvp` 1018.811秒全部通过（286项前端、43个Go包race、vet/build）。最终Go源码与测试摘要全程一致，默认整仓未启用C0 opt-in；详见[本片记录](wallet-lots-rows.md)。
+
+84表来源与钱包读取最终集成：相关四包明确MONI专库race 39.531秒、115顶层/960终态通过（69独立opt-in跳过）；另行真实维护Plan/Init race 93.656秒、零跳过。make check 11.714秒与明确TEST专库make verify-mvp 1034.525秒通过（286前端、43 Go包race/vet/build）。原68范围不升级，postphase、basis/epoch和资金writer仍后续；详见[本片记录](source-wallet-reader.md)。

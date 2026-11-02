@@ -1,4 +1,4 @@
-// Package fundinglotscan reads one fixed, untrusted business-source union.
+// Package fundinglotscan reads fixed, untrusted source and source-wallet unions.
 // It never authenticates a database, issues maintenance proof, or writes funds.
 package fundinglotscan
 
@@ -94,7 +94,17 @@ const (
 type column struct {
 	name string
 	kind scalarKind
+	// A nonzero limit is used only by a fixed declaration, never caller input.
+	limit int
 }
+
+func columnLimit(c column) int {
+	if c.limit != 0 {
+		return c.limit
+	}
+	return fieldLimit
+}
+
 type key struct {
 	name    string
 	numeric bool
@@ -136,10 +146,11 @@ type session struct {
 }
 
 func contextFailure(ctx context.Context) error {
-	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+	err := ctx.Err()
+	if errors.Is(err, context.DeadlineExceeded) {
 		return ErrTimeout
 	}
-	if ctx.Err() != nil {
+	if err != nil {
 		return ErrCanceled
 	}
 	return ErrExecution

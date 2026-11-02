@@ -48,13 +48,13 @@ func pureCompleteSourceLease(t *testing.T, mode fundinglotcatalog.Mode) (*ReadLe
 }
 
 func TestCompleteSourceScanKindAppendsWithoutChangingLegacyValues(t *testing.T) {
-	kinds := []ScanKind{ScanPeriodicBudget, ScanLedger, ScanFunding, ScanProcurement, ScanSandboxSources, ScanCompleteSources}
+	kinds := []ScanKind{ScanPeriodicBudget, ScanLedger, ScanFunding, ScanProcurement, ScanSandboxSources, ScanCompleteSources, ScanSourceWallet}
 	for i, kind := range kinds {
 		if kind != ScanKind(i+1) || !validScanKind(kind) {
 			t.Fatal("legacy scan kind changed or complete-source kind is unavailable")
 		}
 	}
-	for _, kind := range []ScanKind{0, 7, 255} {
+	for _, kind := range []ScanKind{0, 8, 255} {
 		if validScanKind(kind) {
 			t.Fatal("unknown scan kind accepted")
 		}

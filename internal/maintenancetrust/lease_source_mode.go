@@ -11,7 +11,7 @@ const (
 	SourceModeSandbox
 )
 
-// SourceMode is available only during a valid complete-source lease. It reads
+// SourceMode is available only during a valid complete-source or source-wallet lease. It reads
 // immutable predecessor evidence, never the current payment policy or SQL.
 // Both lifecycle checks and the mode remain bound to the original Permit.
 func (l *ReadLease) SourceMode() (SourceMode, error) {
@@ -23,7 +23,7 @@ func (l *ReadLease) SourceMode() (SourceMode, error) {
 		return 0, err
 	}
 	defer ls.endMethod()
-	if ls.kind != ScanCompleteSources {
+	if ls.kind != ScanCompleteSources && ls.kind != ScanSourceWallet {
 		return 0, ls.fail(ErrTransaction)
 	}
 	a := ls.permit.authority

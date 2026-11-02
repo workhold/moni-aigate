@@ -113,3 +113,10 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 已按[原行重放合同](../../specs/022-self-service-payments/c0-wallet-lots-rows-contract.md)实现独立 `CheckWalletLotsRows`：25组输入覆盖九组业务原行与16张C0事实表，从真实金额按seq推导旧开账、新来源、FIFO reserve、正序finish和逆原charged边分次refund，比较全部事件/边/cache。实现、独立硬编码手算测试和来源/legacy审查并行，由根集成；本轮与历史失败、修复及最终命令身份见[验证记录](../verification/wallet-lots-rows.md)。本纯片尚无数据库reader或维护/资金调用方，不作为C0生产完成标志。
 
 接下来先冻结并实现同owned session的来源+lot原行读取、共享预算与EOF记录，保留旧六种reader的准确范围；再冻结pre+basis（109表原始record_send、计数/分页/超长/取消界）、一次init消费、同RR写后source+lot重扫和未知COMMIT只查询原epoch/proof的规则。明确封闭ScanKind/once容量及严格v2 codec和APP真实身份/运行组合，不能拼旧报告批准开账。完整资金接线后，按依赖继续C1/C2/C3、商品/订阅、扩展、生产/HA与最后性能，不省略真实供应商、目标容器/1Panel等外部验收。
+
+
+## 84表来源与钱包读取及下一串行关口
+
+已先冻结[ReadWallet合同](../../specs/022-self-service-payments/c0-source-wallet-reader-contract.md)，再并行实现固定25组投影/独立列审查、84表reader与边界测试、第七kind维护封装与真实Plan/Init验证。新入口在同raw执行七来源算法与实际lot重放，平铺八结果；原68表/七算法入口与旧六kind保持，uint8 once未扩位。根汇合后复核状态/coverage、更新README/HLD/LLD/统一架构并按[本片证据](../verification/source-wallet-reader.md)完成验证、提交与推送。
+
+维护发行仍要求16表空，当前维护正例如实缺epoch mismatch；独立owner RR的非空C0验证只属reader。下一关口先冻结完整protected pre+basis（未来第八once位）、109表record_send分页/预算/取消，再实现同Init原RR的protected writer→post重扫→epoch及未知提交只查原身份。已经提交epoch的新维护授权、严格v2 codec与全部资金路径须分别完成；不删除空门禁或借lease SQL写入伪造phase。C1退款、C2拒付/债务、C3恢复、商品/订阅、媒体扩展、生产/HA及性能仍保留，整体持续目标未完成。

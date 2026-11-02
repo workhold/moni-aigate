@@ -18,6 +18,7 @@ type binding struct {
 	keys    []key
 	columns []column
 	target  reflect.Type
+	paths   [][]int
 	valid   bool
 }
 
@@ -34,7 +35,22 @@ func bind[T any](table, keys, fields string) binding {
 		b.keys = append(b.keys, key{name: strings.TrimSuffix(name, "#"), numeric: strings.HasSuffix(name, "#")})
 	}
 	names := strings.Fields(fields)
-	if len(names) != b.target.NumField() || len(b.keys) == 0 {
+	var leaves []reflect.StructField
+	var expand func(reflect.Type, []int)
+	expand = func(t reflect.Type, parent []int) {
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			path := append(append([]int(nil), parent...), i)
+			if f.Anonymous && f.Type.Kind() == reflect.Struct && f.Type != goTimeType && f.Type != budgetTimeType {
+				expand(f.Type, path)
+			} else {
+				leaves = append(leaves, f)
+				b.paths = append(b.paths, path)
+			}
+		}
+	}
+	expand(b.target, nil)
+	if len(names) != len(leaves) || len(b.keys) == 0 {
 		b.valid = false
 		return b
 	}
@@ -47,7 +63,7 @@ func bind[T any](table, keys, fields string) binding {
 			return b
 		}
 		seen[name] = true
-		t := b.target.Field(i).Type
+		t := leaves[i].Type
 		if t.Kind() == reflect.Pointer {
 			t = t.Elem()
 		}
@@ -99,8 +115,11 @@ func registry(groups ...[]binding) ([]tableData, map[string]int, error) {
 				return nil, nil, ErrExecution
 			}
 			for _, c := range b.columns {
+				if c.limit != 0 && !(b.table == "funding_lot_runtime_attestations" && c.name == "proof_canonical" && c.kind == bytesKind && c.limit == 262144) {
+					return nil, nil, ErrExecution
+				}
 				if j, ok := spec.index[c.name]; ok {
-					if spec.columns[j].kind != c.kind {
+					if spec.columns[j].kind != c.kind || columnLimit(spec.columns[j]) != columnLimit(c) {
 						return nil, nil, ErrExecution
 					}
 				} else {
@@ -116,7 +135,7 @@ func registry(groups ...[]binding) ([]tableData, map[string]int, error) {
 // A single non-representable native field disqualifies this complete core
 // input. It never produces a zero/sentinel timestamp for an invoked core.
 func projectInto[T any](s *session, b binding, out *[]T, qualified *bool) error {
-	if !b.valid || b.target != reflect.TypeFor[T]() {
+	if !b.valid || b.target != reflect.TypeFor[T]() || len(b.paths) != len(b.columns) {
 		return ErrExecution
 	}
 	i, ok := s.index[b.table]
@@ -136,7 +155,7 @@ func projectInto[T any](s *session, b binding, out *[]T, qualified *bool) error 
 			if !ok || ci >= len(row) {
 				return ErrExecution
 			}
-			if !assignCell(dest.Field(fi), row[ci]) {
+			if !assignCell(dest.FieldByIndex(b.paths[fi]), row[ci]) {
 				*qualified = false
 				if s.rejected == nil {
 					s.rejected = map[cellRef]bool{}

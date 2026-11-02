@@ -38,20 +38,8 @@ func Read(ctx context.Context, q Query, schema string, mode Mode) (Facts, error)
 		return Facts{}, ErrExecution
 	}
 	s := &session{ctx: ctx, query: q, schema: schema, mode: mode, tables: tables, index: index, rejected: map[cellRef]bool{}}
-	for i := range s.tables {
-		if err = s.readTable(i); err != nil {
-			return Facts{}, readFailure(ctx, err)
-		}
-	}
-	var rows int
-	for _, t := range s.tables {
-		if !t.eof {
-			return Facts{}, ErrExecution
-		}
-		rows += len(t.rows)
-	}
-	if rows != s.rows {
-		return Facts{}, ErrExecution
+	if err = s.readAll(); err != nil {
+		return Facts{}, readFailure(ctx, err)
 	}
 	if err = s.check(); err != nil {
 		return Facts{}, readFailure(ctx, err)
@@ -67,6 +55,28 @@ func Read(ctx context.Context, q Query, schema string, mode Mode) (Facts, error)
 	s.report.SourceBytes = uint64(s.bytes)
 	s.report.InputMismatchFields = uint64(len(s.rejected))
 	return Facts{state: s}, nil
+}
+
+func (s *session) readAll() error {
+	for i := range s.tables {
+		if err := s.readTable(i); err != nil {
+			return err
+		}
+	}
+	var rows int
+	for _, t := range s.tables {
+		if !t.eof {
+			return ErrExecution
+		}
+		rows += len(t.rows)
+	}
+	if rows != s.rows {
+		return ErrExecution
+	}
+	if s.ctx.Err() != nil {
+		return contextFailure(s.ctx)
+	}
+	return nil
 }
 
 func readFailure(ctx context.Context, err error) error {
@@ -116,7 +126,7 @@ func pageSQL(schema string, spec tableSpec) string {
 		inner = append(inner, v+" AS "+identifier(c.name))
 		outer = append(outer, "CASE WHEN p.__qualified THEN p."+identifier(c.name)+" ELSE NULL END")
 		if c.kind == textKind || c.kind == bytesKind {
-			conditions = append(conditions, "("+v+" IS NULL OR pg_catalog.octet_length("+v+") OPERATOR(pg_catalog.<=) 65536::pg_catalog.int4)")
+			conditions = append(conditions, "("+v+" IS NULL OR pg_catalog.octet_length("+v+") OPERATOR(pg_catalog.<=) "+strconv.Itoa(columnLimit(c))+"::pg_catalog.int4)")
 		}
 	}
 	for i, k := range spec.keys {
@@ -189,7 +199,7 @@ func (s *session) readTable(index int) error {
 				_ = rows.Close()
 				return ErrExecution
 			}
-			if e = s.addRow(row); e != nil {
+			if e = s.addTableRow(t.spec, row); e != nil {
 				_ = rows.Close()
 				return e
 			}
@@ -275,22 +285,33 @@ func scanRow(rows Rows, spec tableSpec) (rawRow, error) {
 }
 
 func (s *session) addRow(row rawRow) error {
+	return s.addTableRow(tableSpec{}, row)
+}
+
+func (s *session) addTableRow(spec tableSpec, row rawRow) error {
 	if s.rows >= rowLimit {
 		return ErrResource
 	}
 	n := 0
-	for _, c := range row {
+	for i, c := range row {
+		limit := fieldLimit
+		if len(spec.columns) != 0 {
+			if len(spec.columns) != len(row) {
+				return ErrExecution
+			}
+			limit = columnLimit(spec.columns[i])
+		}
 		switch c.kind {
 		case textKind:
 			if c.valid {
-				if len(c.text) > fieldLimit {
+				if len(c.text) > limit {
 					return ErrResource
 				}
 				n += len(c.text)
 			}
 		case bytesKind:
 			if c.valid {
-				if len(c.data) > fieldLimit {
+				if len(c.data) > limit {
 					return ErrResource
 				}
 				n += len(c.data)

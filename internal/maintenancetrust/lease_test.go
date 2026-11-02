@@ -66,7 +66,7 @@ func TestReadLeaseZeroValuesAndRedaction(t *testing.T) {
 		}
 	}
 	for kind := ScanKind(0); kind < 10; kind++ {
-		if validScanKind(kind) != (kind >= 1 && kind <= 6) {
+		if validScanKind(kind) != (kind >= 1 && kind <= 7) {
 			t.Fatal("unfrozen scan kind")
 		}
 	}

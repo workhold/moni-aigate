@@ -115,7 +115,7 @@ make verify-mvp
 
 T0/T1 的历史专项结果见[Gate](../verification/maintenance-gate.md)和[Snapshot](../verification/maintenance-snapshot.md)；本轮 T2 的[真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，333.879秒、89顶层/832父子终态全部PASS；第三轮CI仍只证明其精确旧源码。专项使用独立 `C0_MAINTENANCE_DATABASE_URL` 显式选择上述专库；ordinary public profile 会创建并精确清理随机数据库，不使用父库的 public 作为安装目标。
 
-维护装配位于独立 `internal/maintenancescan`，单向依赖billing、periodicbudget及maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不依赖维护或catalog，依赖门禁同时检查生产与测试图。真正维护消费者仍在初始化时完整认证固定catalog，普通服务不为未调用的维护能力支付初始化成本。Compose与1Panel没有维护装配，也没有生产维护CLI、受控全来源+lot重放、basis或epoch开账入口；独立CheckWalletLotsRows只接受所给原行，不发行数据库或资金权限；规格目录中的C0 SQL尚非已追加的应用迁移，常规安装继续执行完整001–022与`provision`。
+维护装配位于独立 `internal/maintenancescan`，单向依赖billing、periodicbudget及maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不依赖维护或catalog，依赖门禁同时检查生产与测试图。真正维护消费者仍在初始化时完整认证固定catalog，普通服务不为未调用的维护能力支付初始化成本。Compose与1Panel没有维护装配，也没有生产维护CLI、basis或epoch开账入口；库级新增第七kind的84表来源+lot读取，保留旧68表入口，原Permit绑定的受控读取结果不发行初始化或资金权限；规格目录中的C0 SQL尚非已追加的应用迁移，常规安装继续执行完整001–022与`provision`。
 
 T3首片提供`Permit.BeginScan`、封闭`ReadLease`与账本/PB维护reader。领域包保留原public入口及唯一固定读取算法；窄raw-facts接缝只返回不可信局部事实，不接受或发行authority。maintenancescan仅接受真实`*ReadLease`，私有adapter执行Require→固定schema SELECT与算法→Finish后才构造绑定原Permit的私有结果，不接收外部provider、报告或通过位。两个摘要仍仅为`supplied_ledger_rows`和`periodic_budget_rows`，不发行全来源或开账许可。独立专项使用同一专库的`C0_MAINTENANCE_DATABASE_URL`，重PG测试必须串行；默认`make verify-mvp`不自动打开此专项。实际命令及取消/资源边界见[T3专项](../verification/maintenance-read-lease.md)，整仓结果见[集成记录](../verification/maintenance-read-lease-integration.md)。当前没有可调用的生产维护CLI，请勿据这些库接口自行跳过完整来源/basis/epoch门禁。
 
@@ -489,3 +489,5 @@ curl --get http://localhost:8080/api/public/models \
 019须排空升级、owner迁移及provision后启动受限serve。provision原子配置并核验权限，外部group越权导致拒绝并整体回滚；需离线运维修正角色关系。详见[验收记录](../verification/operations-alerts.md)。
 
 `make verify-mvp`的完整Go race套件每包预算为600秒。真实进程、密码哈希与商业用例增加后，240秒旧预算不足；仅延长测试期限，生产密码哈希成本、请求超时和测试断言保持原值。必须显式传专用TEST_DATABASE_URL，跳过数据库测试不算验收。
+
+本轮[84表来源与钱包读取](../verification/source-wallet-reader.md)按独立opt-in验证：非空C0使用owner RR核真实SQL与算法；真实维护Plan/Init仍保持16表空并如实报告缺epoch。已提交epoch环境尚无新post/runtime授权，不能用旧空安装发行入口或Init lease任意SQL代替protected phase。当前ReadLease没有SQL只读解析器，固定scanner仅发送受审SELECT；phase、严格v2、basis及在线writer均按后续合同推进。

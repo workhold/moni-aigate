@@ -1,0 +1,289 @@
+{
+  "date": "2026-11-02",
+  "base_commit": "ecfd1481915f8fe277fb5591154982828573e749",
+  "scope": "One owned 84-table source-wallet raw session; eight descriptive domain checks; no protected initialization or financial authority",
+  "source_sha256": {
+    "internal/fundinglotscan/binding.go": "f5e93a7dd5d6c3d7443817d2e8ea63139191004a0263445cc03ac3d3bbb03c7e",
+    "internal/fundinglotscan/checks.go": "8f388b6b1a41373bccdb9a6416e7b87a8db1f07f31e9c3612cfd396d114574ab",
+    "internal/fundinglotscan/projection_funding.go": "0eaf7726b68e2034bc8de2912ad283c54a0de59e5fced55ae16b521c98fa5949",
+    "internal/fundinglotscan/projection_periodic.go": "c96f492a6f5e2fa0a0c33608de16d3caec912c4fbed9d29a0c6a7d53a238661d",
+    "internal/fundinglotscan/projection_periodic_test.go": "b34d0faea288285eb33b1b2d5923210d5b124226f68236b032f7a87d7da4ca2e",
+    "internal/fundinglotscan/projection_procurement.go": "b4f27391f07cb0f891f06608efb0159bb8467264b35fd4db9fe0e577f713de10",
+    "internal/fundinglotscan/projection_procurement_test.go": "6993b1fc38d22cf858c6ff150f3e2f5c0f3d825a95d997be9b7ccc0e9b431dd6",
+    "internal/fundinglotscan/projection_sandbox.go": "cb02504dc9c9ba4d12f23fbf840babf9e12ab2da5233ebc1ad3b8758c50df58d",
+    "internal/fundinglotscan/projection_sandbox_test.go": "dad9d784860232c4d8d1f571aa4fb9bc7beff630261767996b9a655732cf3497",
+    "internal/fundinglotscan/projection_wallet.go": "fc2bb315784a7f34ad76f74eee03e638af1f8bc36f9f1812dc1a3d3c7f9ab11a",
+    "internal/fundinglotscan/projection_wallet_test.go": "c0205e0297a1c2510f1da2044b9ced1b31cde194823b4320ee0ee6c2a880723d",
+    "internal/fundinglotscan/reader.go": "976fd3ba6887a6a7be0394959faee9f27744cc895989fbb5a5742d61c64356dd",
+    "internal/fundinglotscan/reader_postgres_test.go": "ee68f3dcec8e88bf56ca5f573976e845a5bee8d92bf311779a00732f7f1bb51a",
+    "internal/fundinglotscan/reader_test.go": "0217fae8e1c820082831f142fd367a5f063ed3767e8b3c1674ed0a20a691b41a",
+    "internal/fundinglotscan/types.go": "dcb95465dc6c7821745d18ca75c9a1a1757434ada424288b12e66640b53d9710",
+    "internal/fundinglotscan/wallet.go": "54a47095b373c5335af24f4c116a315345f1e9078d583c6f03014813f39cc064",
+    "internal/fundinglotscan/wallet_reader_postgres_test.go": "4592869d3d9a3464e8dc0aeb60ff537855234d80e9e4b43e24b2b8f29f47d41e",
+    "internal/fundinglotscan/wallet_reader_test.go": "2bd2685119e4195f493de53f7ceb7d12c8bd8434a80bff95dde377aac9c96c63",
+    "internal/maintenancescan/complete_sources.go": "aeb626c5de26df646208c16b1baf80fa1c7603036cda9a6da31ce2a7a6b8c933",
+    "internal/maintenancescan/complete_sources_test.go": "cd252177bb9925fe8634252cdefe50022c64a53ec18116b4a902a816f8a51397",
+    "internal/maintenancescan/funding_financial.go": "a94c907da0e79af0214935cbf9bf7efcdfc563367d96526cc218d3652e226cb5",
+    "internal/maintenancescan/funding_financial_test.go": "f28f28ee7920b35e0dce68b42c22df813f92731f3b2e8810c6f2fe61bfe97b69",
+    "internal/maintenancescan/funding_sources.go": "e3e816f4cffc3cdd31b0c51436535ed782384daff3cfd06bbfbe9b591ec17771",
+    "internal/maintenancescan/funding_sources_test.go": "ba2f7643f48d20eabad6e650817b1469d1bf03db4f0939f74f76b152dd086d14",
+    "internal/maintenancescan/ledger.go": "949e655ceae4bdaa9d00fabef704ffec6f0ebebb5b1084f9e83a89f12ad46e76",
+    "internal/maintenancescan/ledger_test.go": "7409937843ff095a19602388b0831ab3daecdaf8d86b3b3bbe8ebde11f24d6ae",
+    "internal/maintenancescan/periodic_budget.go": "12666209e7cae0e90d605d27cd2b4b0ba5d55392ad2ec2c884c47408015d320c",
+    "internal/maintenancescan/periodic_budget_test.go": "f48d56c311a9d07046cc26450419e90bce30360f347db35808562a678ed40954",
+    "internal/maintenancescan/procurement.go": "6fb0a24bdd484ac6efeb3cf7c4145534feedc55ef5bc619e0a865ec2ddc2b924",
+    "internal/maintenancescan/procurement_test.go": "48e8aa3a032667305cd4d3064b890ebc220fca5c30005b50daae4f034527e174",
+    "internal/maintenancescan/sandbox_capture_links.go": "be46fcdc420a9d825ede41b1a97bd63f566547de19ef892d66bbcfe3f420616f",
+    "internal/maintenancescan/sandbox_capture_links_test.go": "6fac7009cd0997649c31735361d52dce175d337fbb0ee3b21b9117cd0177a7ce",
+    "internal/maintenancescan/source_wallet.go": "8d09e27b8ab8de8a9899876b0c70bab6e5fd6304be32fe5301844e616091f9ae",
+    "internal/maintenancescan/source_wallet_test.go": "d0c708f549862c867ed5a385c24230f8868ddf1b752a96b81215439d51b14ace",
+    "internal/maintenancetrust/authority_accounts.go": "04b1f06826875c337d689ef3f8bdf2686f98bb007bbb178b350a5af07162adce",
+    "internal/maintenancetrust/authority_accounts_test.go": "08c0e73da80bf89829803dd11a75cb9af223ab2128f0ddfec7ef9752e4ea7c2c",
+    "internal/maintenancetrust/authority_budget_integration_test.go": "2ef3086ca31be53ace5c854dcbe1ddf5324ed06efc1599746bcd502ce5160389",
+    "internal/maintenancetrust/authority_identity.go": "318fb64bff18999fd6c5232275f4b8adae15cedd7500ed20d90fbe31240f3eb5",
+    "internal/maintenancetrust/authority_identity_test.go": "d86d4b153d35fc805a738f97429a81285f1d838743fb4f04997332147bd4fbef",
+    "internal/maintenancetrust/authority_manifest.go": "8102c312df814f95fd3a611470369b08d4a2cb7e35b02244335f72971c3bd91b",
+    "internal/maintenancetrust/authority_manifest_test.go": "2d6ac55991c2baf0cbbaac0aa2399001d698aaff021106acb9427e0135fa6c63",
+    "internal/maintenancetrust/authority_profiles_integration_test.go": "0c922536d82a8430e363bd92d102160e0a5adc4e33103a83684c0d3899f6c2ea",
+    "internal/maintenancetrust/authority_sandbox_fixture_test.go": "0fb401abdcd32c8b69e30a43d96e0d180d0733a1071a96c1745907cbd064a09c",
+    "internal/maintenancetrust/authority_sandbox_integration_test.go": "b29279449fb827ac0dc5f9eec4e22e9e1c43688a689c35206d11fb1c77341faf",
+    "internal/maintenancetrust/gate.go": "d09101c56222794224aec59b5b426661101f030c990b9f511f1461d6a5c4cc11",
+    "internal/maintenancetrust/gate_integration_test.go": "243a11a09851781268ba5578a1a0412993ff1b828b68c966a7dd1109fb9f3e6a",
+    "internal/maintenancetrust/gate_test.go": "014d7323ff0d9f5f0243ca600367e3e952cc92fee3dcaa5d7012bfabbbd0eb0a",
+    "internal/maintenancetrust/identity.go": "20567bab4adb61eb99456d4de44a40f6b3d1b2d1e2068cfad30a63c71eeb8df4",
+    "internal/maintenancetrust/lease.go": "0e2a29ba7ad3302417e7f35944bc69e05c18c0374c1315439d1ef9c7dee20642",
+    "internal/maintenancetrust/lease_codec.go": "2eea1848b649dbcaa14a01ae23789809169a509b754f3dae2e3772ea06ec7e7c",
+    "internal/maintenancetrust/lease_codec_test.go": "30c1982b0dfe1036d09d780eb361b2bfd048f790c1ed0a8fa1dee949f1576195",
+    "internal/maintenancetrust/lease_complete_source_integration_test.go": "daa2a2e459e59f3766339182551d32a49f383de0c6e06aa5ba791749b3a5472d",
+    "internal/maintenancetrust/lease_integration_test.go": "5d9a0809cecf1e33daeb63757fddff3898cd546bde6c24f903c42f12742833de",
+    "internal/maintenancetrust/lease_rows.go": "2e06d096edf36b3b54ea6741595c79e3ee07a4be98ae3d85774240b054ca8063",
+    "internal/maintenancetrust/lease_rows_test.go": "c3951512cdb50e30f16c01026ccdb985f030f70b72f015dcf79294b5240b1f16",
+    "internal/maintenancetrust/lease_source_mode.go": "7a8e20d9888ba0745f91161b55d19f04c4ff82961d1a9ba56a741583e26a2351",
+    "internal/maintenancetrust/lease_source_mode_test.go": "573cbdfbb8325596586c2568986c0f9d6a160b53623b660a22d7dfb40cb6294d",
+    "internal/maintenancetrust/lease_source_wallet_test.go": "3a1b8090bd6a6130c2a1d0386b0c68ab173d3c09d24368617c231af091b886c5",
+    "internal/maintenancetrust/lease_test.go": "3ae4d02766997b22b342a8ad261da201c38d2c71c73c364295f5b3bccff00aa5",
+    "internal/maintenancetrust/permit.go": "664cf17d04b3338df1411f54a1acd49203e06102cb47643a8d71b7e4828f11b0",
+    "internal/maintenancetrust/permit_integration_test.go": "331d766cbed20522937984d333b7a8e38d60b7134ae5415a8083daf4f749b2d2",
+    "internal/maintenancetrust/permit_test.go": "1aa30f453b5b1e47a188b888b1b8c1c2b6204115755da7773065b3a06bda6deb",
+    "internal/maintenancetrust/predecessor.go": "450459cdc85a0d23371a724174f01af99bbccf3b7fea0b76ca863385b565d47b",
+    "internal/maintenancetrust/predecessor_codec.go": "7aa1ff8206abb8477b2001ad0cf1dbd48c68cbbdad22b69906f39e235ab95246",
+    "internal/maintenancetrust/predecessor_codec_test.go": "86d63a9c16d2a60d043fef328b4c52b7161f825eddf9b17d873780d2637a340a",
+    "internal/maintenancetrust/predecessor_postgres_test.go": "eb32f42cb46373e1e5bfb67d012a3d81ccb974eefce0cf858da5ab42ba0c8de9",
+    "internal/maintenancetrust/predecessor_rows.go": "2d47cc058c065197d8fc67f7100742e6d2b250ecfaeab1affc202b126bf2a61c",
+    "internal/maintenancetrust/predecessor_rows_test.go": "ab297c99fbbe62cedfda99ecce698b0ad0c02b5b5af7de58db28d18eaa240a05",
+    "internal/maintenancetrust/predecessor_sql.go": "84c9d806e80c1ac832b13ed377c3bd174e87f6c914ffe1f82ce3a3be8d492b90",
+    "internal/maintenancetrust/predecessor_sql_test.go": "d3e72b95f51ba4e8c0c1574ca566ce9b810a6e44e2725c9d9a646ec3db5ba6e6",
+    "internal/maintenancetrust/sandbox_export_test.go": "73f8b1a2517168daaf7099e903120fdd901c2cdda792710042aff6f635eede2b",
+    "internal/maintenancetrust/sandbox_external_test.go": "b7de4144070c1291a073910760a9d4609b9a7b50bbdec771a7e80d5467c31509",
+    "internal/maintenancetrust/snapshot.go": "4c26b4d02c4d9fe384f0461392d95adcf853b4c776fb5965677532ba8e96aa2b",
+    "internal/maintenancetrust/snapshot_fixture_test.go": "43103c30fc86b1fbd1778dc38c4d7a9aeb341b623173ce65dd4d5d5ec749824e",
+    "internal/maintenancetrust/snapshot_integration_test.go": "0e7092fc48366746620e717060460df4fc23364f0405cabd1e56b146b778c1e0",
+    "internal/maintenancetrust/snapshot_tables.go": "bc6eacd2b7d5e9dd307bff4aafef0e6d70c1b052175b85c8ec199fb2b47d22de",
+    "internal/maintenancetrust/snapshot_tables_test.go": "afad10b012ece7accdc538be4c9550ee9fb447d5736b8f90b49d6722e6edb765",
+    "internal/maintenancetrust/snapshot_test.go": "66e9a6ebe58cd96630a4ecfcf397d5e527852f4680a7a95c532e942720e93df0",
+    "scripts/maintenance-scan-qa/complete_source_edges_test.go": "e4b6958c79df487895919f83fe3d6149b3f057ec361492f2afa005aee7b9500a",
+    "scripts/maintenance-scan-qa/maintenance_integration_test.go": "4a308e7bfbea1bc494e85a39de5dee658d251d9c61dfb25cbfa8251ac471f51d",
+    "scripts/maintenance-scan-qa/periodic_resources_test.go": "722f8c917a3d59944c29e6bf73f8717367b159fa7fce8ca41299039ef00570a7",
+    "scripts/maintenance-scan-qa/source_wallet_integration_test.go": "2fcb7ebeb7b973265dc98e629aed635665548fbc9e3e647cff390ca5e25f0630"
+  },
+  "related_packages_race_with_reader_postgres": {
+    "command": [
+      "go",
+      "test",
+      "-race",
+      "-p",
+      "1",
+      "-json",
+      "./internal/fundinglotscan",
+      "./internal/maintenancetrust",
+      "./internal/maintenancescan",
+      "./scripts/online-dependency-qa",
+      "-count=1",
+      "-timeout",
+      "300s"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 39.531,
+    "log_sha256": "b787041c834aab539aa6a4f6566c52b6507602770ef13c82dda51a0dc7d15e18",
+    "source_identity_unchanged": true,
+    "pass": true,
+    "pass_test_terminals": 960,
+    "top_level_tests": 115,
+    "failures": [],
+    "postgres_tests": [
+      "TestPostgresCompleteSourceReader",
+      "TestPostgresSourceWalletReaderNonemptyC0"
+    ]
+  },
+  "related_packages_skips": {
+    "count": 69,
+    "reason": "Independent C0 installation/maintenance opt-in disabled in this command; new real maintenance test recorded separately."
+  },
+  "maintenance_postgres": {
+    "command": "go test -race -p 1 -count=1 -timeout 300s -json ./scripts/maintenance-scan-qa -run ^TestMaintenanceSourceWalletPostgres",
+    "environment": "C0_MAINTENANCE_DATABASE_URL enabled for fixed dedicated PostgreSQL16; value omitted",
+    "exit_code": 0,
+    "wall_seconds": 93.656,
+    "log": "/tmp/moni-source-wallet-maintenance-pg-20261102.jsonl",
+    "log_sha256": "a02c245012d9f8d59e7b6d0b8bc8271df90dbb2746afada64cd841185cf2cc6c",
+    "source_sha256": {
+      "internal/maintenancetrust/lease.go": "0e2a29ba7ad3302417e7f35944bc69e05c18c0374c1315439d1ef9c7dee20642",
+      "internal/maintenancetrust/lease_source_mode.go": "7a8e20d9888ba0745f91161b55d19f04c4ff82961d1a9ba56a741583e26a2351",
+      "internal/maintenancescan/source_wallet.go": "8d09e27b8ab8de8a9899876b0c70bab6e5fd6304be32fe5301844e616091f9ae",
+      "internal/maintenancescan/source_wallet_test.go": "d0c708f549862c867ed5a385c24230f8868ddf1b752a96b81215439d51b14ace",
+      "internal/maintenancetrust/lease_source_wallet_test.go": "3a1b8090bd6a6130c2a1d0386b0c68ab173d3c09d24368617c231af091b886c5",
+      "scripts/maintenance-scan-qa/source_wallet_integration_test.go": "2fcb7ebeb7b973265dc98e629aed635665548fbc9e3e647cff390ca5e25f0630",
+      "internal/fundinglotscan/wallet.go": "4f8e6029162382bca4a2106ae80a52ba6a819bcced6e5202c37b8394155e05be",
+      "internal/fundinglotscan/projection_wallet.go": "fc2bb315784a7f34ad76f74eee03e638af1f8bc36f9f1812dc1a3d3c7f9ab11a",
+      "specs/022-self-service-payments/c0-source-wallet-reader-contract.md": "675c0220624b1d40c36e2d958e82288b7aa884a372ab5d9c9a8f0e84ec01e07b"
+    },
+    "sources_unchanged": true,
+    "events": [
+      {
+        "Time": "2026-11-02T22:53:06.776951+08:00",
+        "Action": "output",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/plan",
+        "Output": "    source_wallet_integration_test.go:122: source-wallet plan: 84 tables, eight executed algorithms, missing epoch retained as mismatch; no C0 writes\n"
+      },
+      {
+        "Time": "2026-11-02T22:53:06.894619+08:00",
+        "Action": "output",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/plan",
+        "Output": "--- PASS: TestMaintenanceSourceWalletPostgresPreEpochPlanInit/plan (18.09s)\n",
+        "OutputType": "frame"
+      },
+      {
+        "Time": "2026-11-02T22:53:06.894654+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/plan",
+        "Elapsed": 18.09
+      },
+      {
+        "Time": "2026-11-02T22:53:24.786776+08:00",
+        "Action": "output",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/init",
+        "Output": "    source_wallet_integration_test.go:122: source-wallet init: 84 tables, eight executed algorithms, missing epoch retained as mismatch; no C0 writes\n"
+      },
+      {
+        "Time": "2026-11-02T22:53:24.911023+08:00",
+        "Action": "output",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/init",
+        "Output": "--- PASS: TestMaintenanceSourceWalletPostgresPreEpochPlanInit/init (18.02s)\n",
+        "OutputType": "frame"
+      },
+      {
+        "Time": "2026-11-02T22:53:24.911054+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/init",
+        "Elapsed": 18.02
+      },
+      {
+        "Time": "2026-11-02T22:53:24.911062+08:00",
+        "Action": "output",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit",
+        "Output": "--- PASS: TestMaintenanceSourceWalletPostgresPreEpochPlanInit (36.11s)\n",
+        "OutputType": "frame"
+      },
+      {
+        "Time": "2026-11-02T22:53:24.911068+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit",
+        "Elapsed": 36.11
+      },
+      {
+        "Time": "2026-11-02T22:53:42.583044+08:00",
+        "Action": "output",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresResourceAborts",
+        "Output": "--- PASS: TestMaintenanceSourceWalletPostgresResourceAborts (17.67s)\n",
+        "OutputType": "frame"
+      },
+      {
+        "Time": "2026-11-02T22:53:42.583067+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Test": "TestMaintenanceSourceWalletPostgresResourceAborts",
+        "Elapsed": 17.67
+      },
+      {
+        "Time": "2026-11-02T22:53:43.659402+08:00",
+        "Action": "pass",
+        "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "Elapsed": 66.908
+      }
+    ]
+  },
+  "maintenance_identity_note": "Wallet.go gained only the fixed algorithm-order documentation comment after this maintenance command. Final related-package and full validation use current exact identities above; new kind, wrapper, binding and test behavior unchanged.",
+  "architecture_render": "architecture-source-wallet.json",
+  "prior_commit_ci": {
+    "head_sha": "ecfd1481915f8fe277fb5591154982828573e749",
+    "run_id": 41462091823,
+    "conclusion": "success"
+  },
+  "reviews": [
+    "Independent fixed 25 projections/PK and anonymous declaration-path checks",
+    "Independent 84-table fake and real owner-RR tests",
+    "Independent original Permit/mode/once/Finish integration",
+    "Root status, coverage, original 68-table compatibility, field limits and phase review",
+    "README startup/Compose/1Panel static review against actual CLI/config"
+  ],
+  "initial_attempts": [
+    "Go compilation/link failed ENOSPC before affected tests executed; root cleared only rebuildable Go cache",
+    "Fake test initially supplied NULL singleton primary key and wrongly expected input mismatch; changed to required non-key schema_version=NULL, preserving NULL key execution failure"
+  ],
+  "boundaries": [
+    "Original Read remains 68 tables, seven algorithms and original scope; no fl_created_xid/C0 queries",
+    "New seventh kind keeps old six enum values and uint8 once; new flat report is descriptive only",
+    "Installation/Attest issuance still require all sixteen C0 tables empty; downstream original proof verification does not recheck emptiness",
+    "Real maintenance Plan/Init runs only pre-epoch empty C0; missing epoch correctly mismatches",
+    "Nonempty C0 owner-RR fixture enforces original deferred constraints, but explicit fixture canonical is not strict v2, post-phase authority or a production init writer",
+    "ReadLease has codec/lifecycle/nonempty SQL checks, not a SQL SELECT-only parser; fixed scanners execute reviewed SELECTs",
+    "No migration, ACL, ordinary main/HTTP/financial writer or preview update",
+    "No protected pre+basis/init/post/epoch, post-epoch runtime issuer or production maintenance CLI",
+    "No official provider, real payments, container/1Panel, HA or performance acceptance"
+  ],
+  "make_check": {
+    "command": [
+      "make",
+      "check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 11.714,
+    "log_sha256": "d38ef79b66e46ffdcd947b9052f41585b04a947c8f7bba8207ed60a4768bb7a9",
+    "source_identity_unchanged": true,
+    "pass": true
+  },
+  "make_verify_mvp": {
+    "command": [
+      "make",
+      "verify-mvp"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1034.525,
+    "log_sha256": "2e8e3dfa3b60d9a6c0a59ab5d2942d8fb02b935fb0c16fbbfefd96d63d3cdcd6",
+    "source_identity_unchanged": true,
+    "pass": true,
+    "test_database": "Dedicated moni_test, PostgreSQL 16 local fixture cluster",
+    "c0_opt_in_enabled": false,
+    "passing_go_packages": 43,
+    "frontend_summary": [
+      "# tests 286",
+      "# suites 0",
+      "# pass 286",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# todo 0"
+    ]
+  },
+  "final_integration_complete": true,
+  "after_full_validation": "Only verification prose, machine records and architecture snapshots updated; Go source/test identities unchanged."
+}

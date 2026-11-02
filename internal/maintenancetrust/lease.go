@@ -15,6 +15,7 @@ const (
 	ScanProcurement
 	ScanSandboxSources
 	ScanCompleteSources
+	ScanSourceWallet
 )
 
 type leaseNonce struct{ marker byte }
@@ -56,7 +57,7 @@ func (ScanProof) GoString() string             { return "maintenance_scan_proof_
 func (ScanProof) MarshalJSON() ([]byte, error) { return []byte(`{"scan_proof":"redacted"}`), nil }
 
 func validScanKind(kind ScanKind) bool {
-	return kind >= ScanPeriodicBudget && kind <= ScanCompleteSources
+	return kind >= ScanPeriodicBudget && kind <= ScanSourceWallet
 }
 
 // Called only with gate.mu held. The watcher revokes but never touches pgx,

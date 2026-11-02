@@ -2221,3 +2221,57 @@ V0-WL最终纯包race、32508次fuzz、make check和专库make verify-mvp全部�
 - modified `docs/verification/wallet-lots-rows.md`
 
 </details>
+
+## 2026-11-02T15:05:12Z · a323a2767cd9
+
+完成第七ScanSourceWallet与同session84表八算法来源钱包读取；复核旧68表兼容、固定列预算、原Permit唯一Finish及未交付protected phase边界，同步README/启动部署手册/HLD/LLD和21图验证
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1398 个源文件；本次 29 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-source-wallet.json`
+- added `docs/verification/assets/architecture-source-wallet-application.png`
+- added `docs/verification/assets/architecture-source-wallet-detail.png`
+- added `docs/verification/source-wallet-reader.json`
+- added `docs/verification/source-wallet-reader.md`
+- modified `internal/fundinglotscan/binding.go`
+- added `internal/fundinglotscan/projection_wallet.go`
+- added `internal/fundinglotscan/projection_wallet_test.go`
+- modified `internal/fundinglotscan/reader.go`
+- modified `internal/fundinglotscan/types.go`
+- added `internal/fundinglotscan/wallet.go`
+- added `internal/fundinglotscan/wallet_reader_postgres_test.go`
+- added `internal/fundinglotscan/wallet_reader_test.go`
+- added `internal/maintenancescan/source_wallet.go`
+- added `internal/maintenancescan/source_wallet_test.go`
+- modified `internal/maintenancetrust/lease.go`
+- modified `internal/maintenancetrust/lease_source_mode.go`
+- modified `internal/maintenancetrust/lease_source_mode_test.go`
+- added `internal/maintenancetrust/lease_source_wallet_test.go`
+- modified `internal/maintenancetrust/lease_test.go`
+- added `scripts/maintenance-scan-qa/source_wallet_integration_test.go`
+- added `specs/022-self-service-payments/c0-source-wallet-reader-contract.md`
+
+</details>
+
+## 2026-11-02T15:23:36Z · 09651f308e39
+
+84表八算法来源钱包读取最终验收归档：相关真实PG/race、真实维护Plan/Init、make check及明确专库verify-mvp通过；只补验证记录与架构清单，Go源码测试身份保持，未开放protected phase或资金写权限
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1398 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/mvp-status.md`
+- modified `docs/verification/source-wallet-reader.json`
+- modified `docs/verification/source-wallet-reader.md`
+
+</details>

@@ -468,3 +468,14 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 实现无数据库与网络调用，不复用写侧分配器、SQL业务判定或外部检查报告。源金额或序列使某tenant的后缀无法独立推导时，只停止其数值后缀并计历史前缀未证；已经可算的前缀及其他tenant继续，确定坏event/cache也不代替可信初态。全部提供事实仍被枚举，无法推导的后缀不冒充孤儿。状态明确区分确定不符与未证，输出只有固定范围和脱敏计数。
 
 本片已实现的是所提供原行的lot域核验。人工双审、券资格、支付capture完整证据、Key/PB/采购与audit/outbox仍由各自来源域负责；这25组输入不证明数据库EOF、实际角色/OID、basis、维护epoch真实性或运行权限。现有68表来源reader没有因此包含16表，普通main与资金writer也没有新增调用。下一依赖为同owned session的来源+lot读取、protected pre+basis/init/post/epoch及严格v2运行组合，之后才是全资金路径接线。测试、缺陷回归和整体验证以[本片记录](../verification/wallet-lots-rows.md)为准，不沿用V0-WS或旧版本的通过结果。
+
+
+## 同快照来源与钱包核验
+
+按[新冻结合同](../../specs/022-self-service-payments/c0-source-wallet-reader-contract.md)实现 `fundinglotscan.ReadWallet`：同owned session读取68业务与16张C0固定原表，九共享业务表仅新增tenants.fl_created_xid，全部列/行一次读取且共享100000行/16MiB。原七算法从同raw执行后，再从25组钱包投影实际调用 `CheckWalletLotsRows`，新报告平铺八结果与 complete_source_wallet_graphs_v1，旧Read的68表/七算法/原scope保持。四个匿名嵌入DTO按声明路径展开；time.Time与原生时间envelope是叶子。唯一proof_canonical列262144B特例同时用于SQL资格与Go预算，其余字段仍65536B。
+
+新 `ScanSourceWallet` 是第七值，旧六枚举与uint8 once不变；SourceMode仅第六/第七kind可读原authority predecessor。`VerifySourceWalletMaintenance` 在Require成功后接管Abort，私有adapter使用原schema/mode，八算法返回且唯一Finish后绑定原Permit。执行错误零结果；物理EOF、core input_mismatch、确定不符、历史未证与coverage分别记录。NULL/infinity等原生钱包时间交core判定，无法表示的必填非PK值按物理字段去重且其他core继续；NULL主键为执行失败。
+
+原空安装发行入口仍要求16表空，Verify/BeginScan/Finish不重空；同Init原RR的Attest→protected writer→post读取生命周期可行，当前protected writer/phase与已提交epoch的新授权均未交付。ReadLease没有SQL只读解析器；本固定scanner只执行SELECT，不能利用Init RW写seed代替受保护初始化。维护Plan/Init正例保留缺epoch mismatch；非空C0 owner RR仅证明reader，不证明维护postphase或严格v2运行权威。
+
+历史V0-WL章节描述纯层交付时范围；本轮新增受控读取调用，不扩普通main、迁移、权限或在线资金写入。当前架构与精确验证见[统一架构](../architecture/README.md#同租约-84-表来源与钱包读取)和[本片记录](../verification/source-wallet-reader.md)。下一串行依赖是protected pre+basis、init/post/epoch及全资金接线，然后继续C1/C2/C3、商品、扩展、生产/HA与最后性能。
