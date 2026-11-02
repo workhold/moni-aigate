@@ -124,3 +124,6 @@ V0-WS最终集成：`make check` 7.623秒、明确专库 `make verify-mvp` 977.7
 V0-WL最终集成：纯包race 9.027秒、32508次短fuzz、`make check` 9.702秒，以及明确专库`make verify-mvp` 1018.811秒全部通过（286项前端、43个Go包race、vet/build）。最终Go源码与测试摘要全程一致，默认整仓未启用C0 opt-in；详见[本片记录](wallet-lots-rows.md)。
 
 84表来源与钱包读取最终集成：相关四包明确MONI专库race 39.531秒、115顶层/960终态通过（69独立opt-in跳过）；另行真实维护Plan/Init race 93.656秒、零跳过。make check 11.714秒与明确TEST专库make verify-mvp 1034.525秒通过（286前端、43 Go包race/vet/build）。原68范围不升级，postphase、basis/epoch和资金writer仍后续；详见[本片记录](source-wallet-reader.md)。
+
+
+2026-11-03新增[109表basis与strict v2叶子](basis-proof-v2.md)：固定原二进制基线摘要、metadata前置与严格owned canonical；无维护phase/epoch/资金或运行授权装配。最终相关四包race39.657秒、113顶层/1528终态通过，保留69历史opt-in SKIP；其中新basis真实专库18子向量/19终态零跳过。proof fuzz41578次、basis envelope fuzz186770次通过。make check 6.888秒及明确TEST专库make verify-mvp 1003.198秒通过（286前端、45 Go包race/vet/build），unit/全仓源码身份一致。protected pre+basis/init/post/epoch与全资金接线仍后续。

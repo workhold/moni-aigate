@@ -1,6 +1,6 @@
 # C0 维护 Gate 与快照细化架构
 
-当前增量：保留第六类68表/七算法业务来源读取，新增第七类84表/八算法来源与钱包读取，旧六类scope不变。旧五类真实PG补验见[原记录](../verification/maintenance-financial-postgres.md)，68表与84表分别见[业务来源记录](../verification/complete-source-reader.md)和[来源钱包记录](../verification/source-wallet-reader.md)；本页早期片段描述保留其历史范围，不将局部通过升级成lot/basis/epoch证明。
+当前增量：在第六类68表和第七类84表读取之外，增加固定109表 basis v1 只读叶子与严格 proof v2 纯 codec。两者未装配维护phase，不消费第八kind，原七类scope不变。旧五类真实PG补验见[原记录](../verification/maintenance-financial-postgres.md)，68表与84表分别见[业务来源记录](../verification/complete-source-reader.md)和[来源钱包记录](../verification/source-wallet-reader.md)；本页早期片段保留历史范围，不将局部结果升级成开账/epoch证明。
 
 本页描述 022-C0-T0/T1/T2 与 T3 库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[人工/券来源关联窄合同](../../specs/022-self-service-payments/c0-source-link-contract.md)、[sandbox capture直接关联合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[采购预算投影合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)及[采购attempt关系合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)为准。当前ReadLease提供旧五类局部扫描、第六类68表/七算法业务来源读取及第七类84表/八算法来源与钱包读取；ScanFunding保留兼容三表和21表入口。它们是库级维护能力，没有普通main、HTTP、生产维护CLI或资金写入装配。旧范围真实PG/race与新增组合各自记录，不将历史局部验证升级为lot/basis/epoch证明。
 
@@ -76,7 +76,7 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Destroy[失败或到期 / 原子invalid
 封闭registry并关原始socket / 操作返回后有界pgx清理]
     Future[T3后续与T4
-protected pre/post / basis及epoch
+protected pre+basis / post及epoch
 封闭写入器与生产协调器]
     Caller --> Connect --> Preflight --> Locks --> Gate --> Begin
     Gate -->|不建立Snapshot| Cleanup
@@ -115,6 +115,14 @@ protected pre/post / basis及epoch
     Begin -. 总期限覆盖idle和CPU间隙 .-> Destroy
     Cleanup -->|非idle或清理未知| Destroy
     Result -. 局部结果不能替代完整来源 .-> Future
+    Basis[fundinglotbasis独立只读叶子
+固定109表原二进制 / 976列
+metadata前置 / 无phase装配] -->|固定SELECT与完整EOF| PG
+    ProofV2[fundinglotproof独立纯codec
+21字段 / 原v1嵌入绑定
+没有DB或Runtime权限]
+    Basis -. 待同RR受保护组合 .-> Future
+    ProofV2 -. 待真实issuer认证 .-> Future
 ```
 
 ## 专用连接与双锁
@@ -268,3 +276,9 @@ ordinary精确排除仍保持]
 Coverage只表示本84表与八算法域的执行完整；没有epoch如实mismatch，不能当钱包N/A或开账权限。原Installation/Attest发行仍要求16表空，后续Verify/BeginScan/Finish不重空。尚无受保护init writer/phase capability，不能通过RW Init lease写SQL来伪造；ReadLease本身没有SELECT解析器，只约束codec/非空SQL/生命周期，固定scanner只发SELECT。未来同Init原RR的Attest→protected writer→post读取可沿原证据生命周期组合，但已提交epoch须新post/runtime授权合同。
 
 真实维护测试只在空C0执行Plan/Init并核缺epoch、八算法、原Permit、once与撤销；非空C0数据由独立owner RR验证reader，不构成维护postphase或严格v2证明。精确合同与验证见[冻结规格](../../specs/022-self-service-payments/c0-source-wallet-reader-contract.md)、[本片记录](../verification/source-wallet-reader.md)。
+
+## basis 与 proof v2 的独立边界
+
+[固定109表basis叶子](../../specs/022-self-service-payments/c0-basis-reader-contract.md)和[严格v2纯codec](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)现分别提供只读原二进制摘要与owned canonical格式对象。basis自行读取环境、UTF8、原结构和15type/16send受审profile，之后才能读取业务；使用PK record字节序分页、完整COUNT/EOF、记录信封与共享资源限制。proof只检查21字段、manifest自摘要及sandbox嵌入旧v1的完整严格格式/原SHA/DB和角色schema绑定。完整链路图与资源边界见[统一架构](README.md#固定-109-表-basis-与严格-v2-格式叶子)。
+
+两者当前没有维护lease或issuer调用方，也不消费第八kind。Facts/Summary和CanonicalV2均不能发行RuntimeProof或准许初始化。后续必须在真实phase owner内保持原busy和同RR，将完整pre+basis、plan比较、私有写入、strict v2与84表post接到唯一commit-ready；通用Snapshot.Commit当前仍无phase检查。PID/xid/nonce仅属于私有authority，不放跨plan/init比较的basis；已提交epoch另需新observer/runtime合同，不能通过旧空安装入口复用。验证证据见[本片记录](../verification/basis-proof-v2.md)。

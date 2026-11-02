@@ -1,6 +1,6 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（采购证据/PB/支付来源独立图与真实PG补验）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（109表basis与strict v2独立叶子）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 目标、前提与边界
 
@@ -479,3 +479,10 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 原空安装发行入口仍要求16表空，Verify/BeginScan/Finish不重空；同Init原RR的Attest→protected writer→post读取生命周期可行，当前protected writer/phase与已提交epoch的新授权均未交付。ReadLease没有SQL只读解析器；本固定scanner只执行SELECT，不能利用Init RW写seed代替受保护初始化。维护Plan/Init正例保留缺epoch mismatch；非空C0 owner RR仅证明reader，不证明维护postphase或严格v2运行权威。
 
 历史V0-WL章节描述纯层交付时范围；本轮新增受控读取调用，不扩普通main、迁移、权限或在线资金写入。当前架构与精确验证见[统一架构](../architecture/README.md#同租约-84-表来源与钱包读取)和[本片记录](../verification/source-wallet-reader.md)。下一串行依赖是protected pre+basis、init/post/epoch及全资金接线，然后继续C1/C2/C3、商品、扩展、生产/HA与最后性能。
+
+
+## 固定基线摘要与证明格式的独立实现
+
+按[basis读取合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)与[v2格式合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)交付两个叶子。`fundinglotbasis`只读固定109表/976列的原二进制行，将实际UTF8/PG版本/locale与受审type/send、manifest和descriptor原件一同摘要，供未来plan/init比较；不把PID/xid/nonce或16张C0新表写入跨事务基线。`fundinglotproof`只提供21字段严格canonical、owned bytes与sandbox原v1完整绑定，普通模式没有前驱；格式有效不表示数据库、epoch、支付或启动授权有效。
+
+它们没有维护phase或在线调用方；现七kind/once、空安装门禁、普通main与资金路径保持原范围。下一依赖是同RR phase owner贯穿完整pre+basis→plan比较→protected writer→strict v2与84表post→commit-ready，并约束未知提交只能查询原epoch/proof。不能释放busy后拿外部摘要或自报bool授写权；已提交epoch须单独认证observer/runtime。当前模块关系与证据见[统一架构](../architecture/README.md#固定-109-表-basis-与严格-v2-格式叶子)、[验证记录](../verification/basis-proof-v2.md)，前面各片“basis后续”的描述保留其当期范围。

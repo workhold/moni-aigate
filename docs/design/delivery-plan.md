@@ -120,3 +120,10 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 已先冻结[ReadWallet合同](../../specs/022-self-service-payments/c0-source-wallet-reader-contract.md)，再并行实现固定25组投影/独立列审查、84表reader与边界测试、第七kind维护封装与真实Plan/Init验证。新入口在同raw执行七来源算法与实际lot重放，平铺八结果；原68表/七算法入口与旧六kind保持，uint8 once未扩位。根汇合后复核状态/coverage、更新README/HLD/LLD/统一架构并按[本片证据](../verification/source-wallet-reader.md)完成验证、提交与推送。
 
 维护发行仍要求16表空，当前维护正例如实缺epoch mismatch；独立owner RR的非空C0验证只属reader。下一关口先冻结完整protected pre+basis（未来第八once位）、109表record_send分页/预算/取消，再实现同Init原RR的protected writer→post重扫→epoch及未知提交只查原身份。已经提交epoch的新维护授权、严格v2 codec与全部资金路径须分别完成；不删除空门禁或借lease SQL写入伪造phase。C1退款、C2拒付/债务、C3恢复、商品/订阅、媒体扩展、生产/HA及性能仍保留，整体持续目标未完成。
+
+
+## 109表basis与strict v2叶子及下一关口
+
+先冻结[basis读取合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)与[v2 codec合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)，再并行实施：固定元数据与109表原二进制reader、stdlib-only v2 codec/独立golden，以及旧v1单向兼容差分和真实PG审查。离线send profile已由独立专库706字段逐项复核零差异；不从live目录生成运行时expected。根汇合复核、同步README/统一架构、执行专项和整仓验证后提交推送，精确结果见[本片记录](../verification/basis-proof-v2.md)。
+
+两叶子不消费未来第八kind，也不接入资金/启动。下一步先冻结完整protected pre+basis：私有phase owner保持原busy，来自同session的来源原件与basis共同验收，不能拼旧Report/ScanProof；明确组合共享预算、一次init消费和取消清理。随后同Init原RR protected writer→严格v2与84表post→epoch→commit-ready，ready拒绝新lease，Commit受phase约束；未知COMMIT只查原身份，不补发或重新初始化。已提交epoch的observer/runtime另冻，旧空安装门禁不可删除。全部资金路径接线后，继续C1退款/C2拒付债务/C3恢复、商品/订阅、媒体扩展、生产/HA与最后性能；整体目标未完成。

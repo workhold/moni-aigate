@@ -217,7 +217,7 @@ sandbox proof v2 新记录必须绑定：原 v1 canonical **原字节**SHA、原
 
 RuntimeProof **不属于 fundinglotcatalog，也不属于 maintenancetrust**。为避免 `billing→composer→billing` 环，候选将组合 issuer 放在 `internal/billing` 的独立只读文件：它可直接调用本包独立 scanner 的私有 caller-owned Tx core，不能调用 public `VerifyLots/VerifyFunding/VerifyLedger` 另开 snapshot，也不递归要求“先有完整RuntimeProof”才允许扫描。schema leaf与源扫描阶段只需要CatalogProof及同tx已核的v2/epoch绑定；最终完整证明在三类扫描之后才产生。
 
-规范v1/v2的严格解码/原字节摘要/封闭字段校验拟由新的无网络叶子 `internal/fundinglotproof` 承担；这是待根另冻的提取接缝，不表示当前payments已实现新loader。旧v1格式、bytes与拒绝条件必须完全保持。纯解码产物名为 `CanonicalV2`（private字段），只表示格式/规范编码有效，**不是数据库、支付真实性或启动授权**。禁止让billing import payments；也禁止把canonical中自报的OID当已受信对象。
+规范v1/v2的严格解码/原字节摘要/封闭字段校验现已按[严格codec根合同](c0-proof-v2-codec-contract.md)由无网络叶子 `internal/fundinglotproof` 实现；仅该格式接缝已交付，不表示payments已实现新loader或本节RuntimeProof组合。旧v1格式、bytes与拒绝条件保持。纯解码产物 `CanonicalV2`（private字段）只表示格式/规范编码有效，**不是数据库、支付真实性或启动授权**。后续数据库/runtime issuer须在独立组合层，不向该stdlib-only codec加入catalog/DB/maintenance依赖。禁止让billing import payments；也禁止把canonical中自报的OID当已受信对象。
 
 ```go
 // 候选 namespace：internal/billing；未授权实施。
@@ -240,7 +240,7 @@ RuntimeProof私有字段还绑定同具体tx wrapper/conn/PID/top xid/DB/schema�
 
 worker无全源allocation/人工/券读取权，projector无C0业务读取权，因此两者**不能发行这份APP全源RuntimeProof**，也不能为了取得它扩大权限。运行装配先取得APP完整核验成功，再让每个实际worker独立核自己的CatalogProof+v1/v2/epoch绑定，projector仅catalog，全部成功才发布同一Lifecycle/ready；APP token不跨连接移交给worker。该上层整体启动门禁与worker窄绑定API仍待单独冻结。
 
-已实现依赖为 `fundinglotcatalog → stdlib/pgx/static descriptor` 与 `maintenancetrust → stdlib/pgx/fundinglotcatalog/migrations/paymentsandboxschema`；T2按[真实授权合同](c0-authority-contract.md)独立实现私有前驱codec，没有反向import payments、billing或运行构造器。未来 `fundinglotproof → stdlib`、billing只读组合/独立scanner及payments/main装配仍是后续接线设计；T3维护scanner须经受控ReadLease，runtime issuer不调用维护入口。leaf不反向import维护或billing，billing不import payments/main，不从runtime composer反向构造Permit。T2[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，其他尚未冻结的跨包接缝不能用stub先授权生产。
+已实现依赖为 `fundinglotcatalog → stdlib/pgx/static descriptor`、`fundinglotproof → stdlib` 与 `maintenancetrust → stdlib/pgx/fundinglotcatalog/migrations/paymentsandboxschema`；T2按[真实授权合同](c0-authority-contract.md)独立实现私有前驱codec，没有反向import payments、billing或运行构造器。billing只读组合/独立scanner及payments/main装配仍是后续接线设计；T3维护scanner须经受控ReadLease，runtime issuer不调用维护入口。leaf不反向import维护或billing，billing不import payments/main，不从runtime composer反向构造Permit。T2[T2真实PG/race专项](../../docs/verification/maintenance-authority.md)已通过，其他尚未冻结的跨包接缝不能用stub先授权生产。
 
 ## 8. 拒绝与验收出口
 

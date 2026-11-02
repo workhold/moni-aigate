@@ -868,3 +868,16 @@ NULL/空TEXT严格区分，新UUID规范化只适用新增身份；NUMERIC积分
 原空安装发行入口仍要求16表空，Verify/BeginScan/Finish不重空；同Init原RR的Attest→protected writer→post读取生命周期可行，当前protected writer/phase与已提交epoch的新授权均未交付。ReadLease没有SQL只读解析器；本固定scanner只执行SELECT，不能利用Init RW写seed代替受保护初始化。维护Plan/Init正例保留缺epoch mismatch；非空C0 owner RR仅证明reader，不证明维护postphase或严格v2运行权威。
 
 历史V0-WL章节描述纯层交付时范围；本轮新增受控读取调用，不扩普通main、迁移、权限或在线资金写入。当前架构与精确验证见[统一架构](../architecture/README.md#同租约-84-表来源与钱包读取)和[本片记录](../verification/source-wallet-reader.md)。下一串行依赖是protected pre+basis、init/post/epoch及全资金接线，然后继续C1/C2/C3、商品、扩展、生产/HA与最后性能。
+
+
+## basis v1 与 strict proof v2 叶子
+
+[basis合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)冻结`Read(ctx, Query, schema)`，不接受Header/expected/authority。静态109表descriptor、22项manifest和15type/16send profile以原canonical字节及固定SHA嵌入；同q自读环境/原列/PK和内建发送闭包，全部通过后才读业务record_send。tenants仅接受原8列或精确第9 birth delta，basis只编码原8。PG major16且三encoding UTF8；精确minor及locale stored/actual version进hash，不以本机C/C证明其他生产环境。
+
+U为uint64be，F为U(len)+bytes，N为U(0)或U(1)+F(bytes)。header按冻结顺序写域NUL、DB/schema OID、PG major/minor/encoding、locale/version与三份静态原件；逐表写F(name)、U(column count)、F(PK紧凑JSON)、U(COUNT)，逐行F(raw row)。不加入PID/xid/nonce/as_of/phase/owner。PK record仅为binary keyset游标与资源，不重复hash；页128，COUNT与全EOF实际行数一致，整页继续读空页。
+
+窗口资格同时限制剩余业务行/PK+row字节和单记录，两CASE有界传输；false行保留触发Resource。Go验证record envelope的字段数/OID/长度/NULL/固定宽度及PK/row逐payload绑定，variable原字节保留。业务全109共享100000行/64MiB，单PK262144B/row1048576B；metadata另2048行/1MiB/单文本65536B。失败Facts整体零，六固定错误脱敏，Resource先于Close导致的ctx撤销；每行与大块SHA前后观察ctx，不创建连接/事务/goroutine。Summary只输出完成计数与四种SHA，没有Coverage或资金资格。
+
+[v2合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)冻结21字段strict shape、无符号规范整数、UTF8/UTF16、顺序/转义/空白严格重编码、depth12/8192值节点/262144B。EncodeV2/DecodeV2唯一构造CanonicalV2；私有owned bytes、SHA、deep-owned bindings，Bytes/Bindings clone，值与指针fmt/JSON脱敏，nil/zero无效。manifest 1..256、严格ASCII basename升序、数组原canonical自SHA；其他合法摘要仅格式校验，由未来停服init issuer对实际basis/catalog/history比较。ordinary的sandbox/两个predecessor字段显式null；sandbox完整保留旧v1 strict/canonical资格、RawURL原件与SHA，再逐DB/三schema/八role绑定。旧v1原件不含peer state-directory字段，不能虚称认证；外层role的pg_禁止仍沿catalog Pins，差分测试明确这个外层交集边界。
+
+本片不消费第八kind，不新增ReadLease私有facts出口或phase capability，不修改迁移/ACL/main/HTTP/worker。protected pre+basis与init/post/epoch仍须另冻；当前通用Commit没有phase检查、ReadLease没有SELECT解析器。实现和独立golden/兼容差分/PG证据见[验证记录](../verification/basis-proof-v2.md)。

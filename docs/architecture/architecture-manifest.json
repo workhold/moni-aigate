@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T15:23:36Z",
-  "review_reason": "84表八算法来源钱包读取最终验收归档：相关真实PG/race、真实维护Plan/Init、make check及明确专库verify-mvp通过；只补验证记录与架构清单，Go源码测试身份保持，未开放protected phase或资金写权限",
-  "snapshot_sha256": "09651f308e39f3e3d1d9827649a0bf0862db3feb841185a2f3aa7eb9b9de279d",
-  "architecture_sha256": "c2c750a8d7dc092f7bd2627dc26ba5483dbb09f676b9e3698613418845d883df",
-  "history_sha256": "fe53fd59d2643d569e090c3dc5569002adadff14765229ccaeefbc22addab21e",
+  "reviewed_at": "2026-11-02T16:47:46Z",
+  "review_reason": "汇合全部并行实施与独立审查后完成根语义复核；相关race含真实basis PG与v1差分、两leaf fuzz、make check及专库verify-mvp全部通过，补最终证据和README部署说明；澄清cutover basis只约束停服init，普通startup历史绑定与phase/epoch/runtime仍后续",
+  "snapshot_sha256": "f7b328ef695f222caa81ef4ccbff5937788686db78ee60103859770d7b07e068",
+  "architecture_sha256": "3b4752fe61c9a168edbb45885077638fe6676c1f1c639816d6d7ee59faa4b2f0",
+  "history_sha256": "8a899cfd3a8c3dfe560081472870ac6b267080234ab14e37f6d34c733ad5c9fe",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "58737595e5a801ed42acbe1ad50a80ce88d4b149653121958aa5bc64987875e5"
+      "sha256": "b31916ffc1c52c8f034f3b55893be410c3224b8dc888050c81b0d22934f16e6a"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "docs/architecture/maintenance-gate.md",
-      "sha256": "440bb09d179983cc5333343845af494e56c99bd032159250201a5de1f3b6a624"
+      "sha256": "b969a129888b2c07871ee4d1a4fbaf9148ab8e9cb9c6c35e768307e129a5870e"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -109,15 +109,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "a2bd234e4f7868ded2b4d6567b325e944262bea3a2c2a4c1880bdbc9fc7c87ab"
+      "sha256": "20725b6962140f52013e2762623e07c6920e7c6d3244501118cc20bc48930e78"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "6e518dde92c232e85a4cf8c7af054283012a56df493de758fec70e37d3d4ff00"
+      "sha256": "e1f2ef67053d4d7dc3f4e7f60df554ac43b23ac82e7acd19f34ba15eb46e7053"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "c7fd3855085cc426eb7b670b17b629f1d2fb7c95ab077c2163852ccb87630d37"
+      "sha256": "16df122af7ee6e67dbe46fc798eed34d6ebb3a09dce7f33425a080a620e56179"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -161,15 +161,19 @@
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "e2ce2f1be9648671098870e347ef54a70828e8f5e890573a7b00eaf28b7805ec"
+      "sha256": "1461d8b5afee870ef7ba34613d3f3b48c98ce0223726a2fb29ee9d2e6c8924f6"
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "675b120879c57b3a39027d6cf0c650fff2c44ec39fa954093ab9eb48698092e9"
+      "sha256": "bfb4166946f10bf042681bf72cdc0254987ba622a581016217ebfc8fff35977e"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
       "sha256": "dc6e679cf8211888d450b53746492bb7c06baad7337fac445513f871b98be855"
+    },
+    {
+      "path": "docs/verification/architecture-basis-proof-v2.json",
+      "sha256": "1edc9518a731d4aaddb6a3150d0e8b54ec6b092c98418e5e0f8ec2e4efd0e2aa"
     },
     {
       "path": "docs/verification/architecture-c0-catalog.json",
@@ -250,6 +254,14 @@
     {
       "path": "docs/verification/assets/architecture-b3-application.png",
       "sha256": "66c06d16d27d35e1f437950088966fa5f86cd278e6e80817358f82258b8b39a7"
+    },
+    {
+      "path": "docs/verification/assets/architecture-basis-proof-v2-application.png",
+      "sha256": "7e52ba1a418980a862f48edc713cb63f3c992da4f1072e88079d6c725b002a4d"
+    },
+    {
+      "path": "docs/verification/assets/architecture-basis-proof-v2-detail.png",
+      "sha256": "7a33f4c98f49ce20e2d371eb515be6495a75ebe41d09891db1147df44bc66ae3"
     },
     {
       "path": "docs/verification/assets/architecture-c0-catalog-application.png",
@@ -562,6 +574,18 @@
     {
       "path": "docs/verification/backup-restore.md",
       "sha256": "b4141eb896a14ccfba4fb76bc55f9e4fb2a5a264c16638d6d3ed70b369b4e40a"
+    },
+    {
+      "path": "docs/verification/basis-proof-v2.json",
+      "sha256": "cccfc6755c5f7935f8afd7116d04cc31f862209a309f8559e41fbb7de3797631"
+    },
+    {
+      "path": "docs/verification/basis-proof-v2.md",
+      "sha256": "31ab97bd6a6915105b7d64cc033496bf299c9eb2f6a906a9635bedcd37ae8535"
+    },
+    {
+      "path": "docs/verification/basis-send-metadata-audit.json",
+      "sha256": "11e0ed3487a49e6d331df6324ea25070d0f0feb08c92d097f0cf86a58d02d850"
     },
     {
       "path": "docs/verification/c0-integration.json",
@@ -1181,7 +1205,7 @@
     },
     {
       "path": "docs/verification/mvp-status.md",
-      "sha256": "62f82b2e8fbd8599e40aa874d43a7bd8d1d91175df5018f24dc46fd767c7c57e"
+      "sha256": "f4cc8fe5b8df8907090018ab1d2a923a898753350bb78dc7fdc37e9bba72737b"
     },
     {
       "path": "docs/verification/native-protocols.md",
@@ -1852,6 +1876,50 @@
       "sha256": "0ed63bab59ea477cef9b5a25bc2938bfa3020b77dec7ca95ad486bb8442371e6"
     },
     {
+      "path": "internal/fundinglotbasis/basis_test.go",
+      "sha256": "a07d0015904bb1a6b796c7583f19c3febe4a5edd8bcb5dd1f250fac1b43c5d99"
+    },
+    {
+      "path": "internal/fundinglotbasis/independent_postgres_test.go",
+      "sha256": "f3fac38699df0563877ba3cf7e3666c299c231550cbf52cd4c9067b45106fe19"
+    },
+    {
+      "path": "internal/fundinglotbasis/materials.go",
+      "sha256": "4dfe586b27a3b9375f5273825bcb78227c7c85a306507a7ef0b98e12b48fe0da"
+    },
+    {
+      "path": "internal/fundinglotbasis/materials/descriptor-v1.json",
+      "sha256": "54f701af2f993fd9dd6fb6db21f2cc323704ab6d2e962610413d044fdaa0c4e5"
+    },
+    {
+      "path": "internal/fundinglotbasis/materials/manifest-v1.json",
+      "sha256": "ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de"
+    },
+    {
+      "path": "internal/fundinglotbasis/materials/send-v1.json",
+      "sha256": "1bd800f0014a159d1528e716275263c7b6c97e6fb91a037d034e1fbbe028684b"
+    },
+    {
+      "path": "internal/fundinglotbasis/metadata.go",
+      "sha256": "32698b0dd69e60af2b5f98462e4045c3ec07c83ea9a4893cfab8877ada6d760e"
+    },
+    {
+      "path": "internal/fundinglotbasis/queries.go",
+      "sha256": "bcecc8ca55b3717ceea49c5e4a91ae465c2c35c586b5bdd7ea6d5d44ab9c9d2e"
+    },
+    {
+      "path": "internal/fundinglotbasis/read.go",
+      "sha256": "0bb0770ea11ebe36b1ed2a8a80a79bd0706630af29a045e3a6adbe8d5c598567"
+    },
+    {
+      "path": "internal/fundinglotbasis/record.go",
+      "sha256": "850c8a4affc95e14075e79fd0ea4c5109d04f4afa77174728f9106e82b4d6043"
+    },
+    {
+      "path": "internal/fundinglotbasis/types.go",
+      "sha256": "1f9d78c361dfc84b6dfe9d89f7ad3211e674a23f74023cc1635e14e9972c4c7f"
+    },
+    {
       "path": "internal/fundinglotcatalog/canonical.go",
       "sha256": "700faa1a08abd07a3ac002bf1e516ad15c3fac924e547807c0393438aa3b2918"
     },
@@ -2002,6 +2070,58 @@
     {
       "path": "internal/fundinglotcatalog/variants_fixture_test.go",
       "sha256": "3c92e8fcb6808afa5df82f3d0d7f12a0f3b82fd81f30cb6b5afcd32d50d9ee31"
+    },
+    {
+      "path": "internal/fundinglotproof/codec.go",
+      "sha256": "36a32185c3bda50bb0c3947513ef815873ee9fd4e788276d4a5e109b7026bb20"
+    },
+    {
+      "path": "internal/fundinglotproof/codec_test.go",
+      "sha256": "5669b3196764baef9a915182766275ca29d6b09ee844591d70d88510d79f9511"
+    },
+    {
+      "path": "internal/fundinglotproof/strict_test.go",
+      "sha256": "1d766abeaf4d7034cee27f6e8dea0aa2bb80cb3f2777d8c49d149e21d699912a"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/generate_golden.py",
+      "sha256": "67c493729a29507d94337fddb8de8dddbd7e4efb7b926bdeaca0de53cdb887e3"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/ordinary.json",
+      "sha256": "b2aaed4dd053602715b993c78be33d9da04e5e5407b2886349c8cfdcfb85a3a5"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/predecessor_128keys.json",
+      "sha256": "3d93d9cb91071b759eafbfb88f22c58c15fe9dec83d774cfbd89e0a521015060"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/predecessor_1keys.json",
+      "sha256": "d78a12de58fef9e438793abc895dc8f136fa1456bfdf8870222970597ac29596"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/predecessor_v1.json",
+      "sha256": "1a6c1815c400ddf7b051c0c12f0fe203ff43484251aabd34d8f9361ab704b67c"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/sandbox.json",
+      "sha256": "da8c961c2a0f0ef83d087f93eacfc540fa043994c460e1843923b9aaf854a424"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/sandbox_128keys.json",
+      "sha256": "d741c571ac203406b30745a725e415b2adb530a8562764219f71048d44bd8acf"
+    },
+    {
+      "path": "internal/fundinglotproof/testdata/sandbox_1keys.json",
+      "sha256": "4c364d4363e41a42c73ca641d552b02cc6555cdb082d898f4e6e01fc7346f920"
+    },
+    {
+      "path": "internal/fundinglotproof/types.go",
+      "sha256": "2675e92a6f805c6cb9088e7e8885dc6bfb5031a94e51f6d212181e397639bb49"
+    },
+    {
+      "path": "internal/fundinglotproof/v1.go",
+      "sha256": "04e89af52e1c81c9bd97beb3a9c58dfb0c296ce6dc239723d70cbe521e622dd4"
     },
     {
       "path": "internal/fundinglotscan/binding.go",
@@ -2622,6 +2742,10 @@
     {
       "path": "internal/maintenancetrust/predecessor_sql_test.go",
       "sha256": "d3e72b95f51ba4e8c0c1574ca566ce9b810a6e44e2725c9d9a646ec3db5ba6e6"
+    },
+    {
+      "path": "internal/maintenancetrust/proof_v2_compat_test.go",
+      "sha256": "4509df6f42b12dc239681539cbeeb0123ca4389b51cff6861ccc9314db80c3ac"
     },
     {
       "path": "internal/maintenancetrust/sandbox_export_test.go",
@@ -4724,6 +4848,14 @@
       "sha256": "8fbadb96f6cdc372f37c2749783f977beecc3c6a02da45357786e9baa860bc5f"
     },
     {
+      "path": "specs/022-self-service-payments/c0-basis-reader-contract.md",
+      "sha256": "f0adc1f348b5ae12fe1d5d9d28a4f827a089a8b210008236ea2abb38d1ad171b"
+    },
+    {
+      "path": "specs/022-self-service-payments/c0-basis-send-metadata-candidate.json",
+      "sha256": "1bd800f0014a159d1528e716275263c7b6c97e6fb91a037d034e1fbbe028684b"
+    },
+    {
       "path": "specs/022-self-service-payments/c0-candidate-regression-contract.md",
       "sha256": "e84dd91758ca7b2880892c57aaa84ecacf151e3c64f036c517c41405786c3549"
     },
@@ -4820,6 +4952,10 @@
       "sha256": "e61eb57ec2697fce94be6bac4dd306c86f8b05a339541339dd0fd554f3632047"
     },
     {
+      "path": "specs/022-self-service-payments/c0-proof-v2-codec-contract.md",
+      "sha256": "5ac689be974c0c8efdd4dbf9dceff9f5cdcdb3c452a20ecfa0fa60d6da45de9e"
+    },
+    {
       "path": "specs/022-self-service-payments/c0-read-lease-contract.md",
       "sha256": "93120760a306577dca9f8a3cec10891976e208682a59d30e9549ac64c2ff0c40"
     },
@@ -4841,7 +4977,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-schema-check-contract.md",
-      "sha256": "00b6c4df245ee9dc03478500656023d2eb411f8cae02c3ddc4ff63fceae75881"
+      "sha256": "b4685346879ca48b518a8cb6e382571711dc26b100032886260595060b5d2742"
     },
     {
       "path": "specs/022-self-service-payments/c0-sequence-contract.md",

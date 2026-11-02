@@ -105,9 +105,12 @@ flowchart TD
     CompleteReader[fundinglotscan.Read\n原68表一次读取 / 共享预算与私有EOF\n原七项算法 / native资格与ordinary排除]
     SourceWalletReader[fundinglotscan.ReadWallet\n84表同session一次读取 / 共享资源\n原七来源算法 + 实际钱包lot重放]
     SourceChecks[fundinglotscan共享检查设施\n同raw投影 / 原七来源算法]
+    BasisReader[fundinglotbasis\n固定109表 / 976列 / 原二进制basis v1\n环境与send元数据前置 / 无维护phase装配]
+    BasisMaterials[受审静态descriptor / manifest / send profile\n固定原字节与SHA / 不接受live expected]
     SandboxCaptureReader[billing sandbox-capture direct-link reader\nfunding_receipts + payment_captures\n两表完整C序分页与EOF]
     ProcurementReader[billing procurement history reader\n19 relations / shared budget / complete C-order EOF]
     subgraph PureModules[纯算法/核验基础层：不接入在线资金写入或媒体运行链]
+      ProofCodec[fundinglotproof\n严格v2 canonical / owned bytes\n纯格式 / 不授数据库或启动权限]
       LotPlanner[billing lot_plan\nFIFO / 原收费分配 / 逆原来源退回]
       Metering[metering\n八维完整向量 / 精确费率 / 上界与摘要]
       RefundProto[paymentrefundproto\n退款v2封闭协议 / v1只读桥 / 三用途签名]
@@ -149,6 +152,8 @@ flowchart TD
     SourceWalletReader -->|68业务 + 16 C0固定原列 / 同rawTx| PG
     SourceWalletReader -->|同raw实际重跑原七来源算法| SourceChecks
     SourceWalletReader -->|同raw25组投影 / 实际执行| WalletLotsCore
+    BasisReader -->|安全metadata后 / 固定ONLY分页 / 全EOF| PG
+    BasisReader -->|静态比较与hash帧| BasisMaterials
     ProcurementEvidenceCore -->|同raw固定重跑五项局部关系| ProcurementBudgetCore
     ProcurementEvidenceCore --> ProcurementAttemptCore
     ProcurementEvidenceCore --> ProcurementApprovalCore
@@ -265,8 +270,9 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | C0离线结构与权限导出 | 固定001–022/DDL/ACL/provision与工具源码；ordinary/sandbox各自before/after，双轮十文件一致、失败DDL清理通过；只生成未审候选 | [生成器](../../scripts/funding-lot-descriptor/main.go)、[冻结窄片](../../specs/022-self-service-payments/c0-schema-check-contract.md#9-根冻结窄片metadata-only-离线-descriptor-生成器)、[元数据证据](../verification/funding-lot-descriptor.md) |
 | C0正式静态检查与事务证明 | 固定PG16.15 profile、ordinary五变体/无worker、sandbox三schema八角色；Snapshot/Installation/Runtime三入口与同tx opaque证据，最终leaf真实PG race已通过；不授维护或资金权限 | [API](../../internal/fundinglotcatalog/types.go)、[核验与证明](../../internal/fundinglotcatalog/proof.go)、[固定root](../../internal/fundinglotcatalog/expected_embedded.go)、[细化图](funding-lot-catalog.md)、[冻结合同§10](../../specs/022-self-service-payments/c0-schema-check-contract.md#10-根冻结完整静态检查器的实现与正式期望启用) |
 | 维护双锁Gate与快照（022-C0-T0/T1） | T0真实PG/race已验；T1私有单次RR、ONLY125/固定catalog stage、总期限及终结状态，历史真实PG/race124终态全PASS；T0/T1历史片不含Permit、main或资金接线 | [Gate](../../internal/maintenancetrust/gate.go)、[身份](../../internal/maintenancetrust/identity.go)、[冻结合同§10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)、[细化图](maintenance-gate.md)、[T0验证](../verification/maintenance-gate.md)、[T1验证](../verification/maintenance-snapshot.md) |
+| 固定109表basis / strict v2叶子 | 原二进制basis摘要、metadata前置、严格canonical及旧v1绑定；无phase/epoch/资金/启动装配 | [basis包](../../internal/fundinglotbasis)、[proof包](../../internal/fundinglotproof)、[basis合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)、[v2合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)、[验证](../verification/basis-proof-v2.md) |
 | 真实维护授权（022-C0-T2） | 同原Snapshot发行一次Permit；实际身份、完整history/前驱、新鲜停服及仅Init账户锁；T2专库专项通过，不授资金写入 | [Attest/Verify](../../internal/maintenancetrust/permit.go)、[冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)、[T2证据](../verification/maintenance-authority.md) |
-| 受控维护读取与五个局部reader（022-C0-T3） | ReadLease、封闭codec、完整Rows生命周期、原authority入口/出口重核；固定五reader为ledger、PB、manual/voucher、sandbox capture直接关联及采购；其中采购有五项局部摘要；全来源coverage/basis/epoch/生产CLI仍未实现 | [lease](../../internal/maintenancetrust/lease.go)、[Rows](../../internal/maintenancetrust/lease_rows.go)、[codec](../../internal/maintenancetrust/lease_codec.go)、[集成包](../../internal/maintenancescan)、[manual/voucher reader](../../internal/billing/funding_source_read.go)、[sandbox reader](../../internal/billing/funding_source_capture_read.go)、[采购reader](../../internal/billing/procurement_attempt_read.go)、[采购历史reader](../../internal/billing/procurement_command_read.go)、[历史读取合同](../../specs/022-self-service-payments/c0-procurement-history-read-contract.md)、[命令观察合同](../../specs/022-self-service-payments/c0-procurement-command-contract.md)、[成本消息合同](../../specs/022-self-service-payments/c0-procurement-cost-journal-contract.md)、[账本core](../../internal/billing/funding_ledger_query.go)、[纯核验core](../../internal/fundinglotverify)、[PB core/guard](../../internal/periodicbudget/verifier_maintenance.go)、[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)、[sandbox窄合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[T3租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[采购验证状态](../verification/procurement-budget-maintenance.md)、[此前来源reader证据](../verification/funding-source-links.md)、[T3历史专项](../verification/maintenance-read-lease.md)、[T3集成记录](../verification/maintenance-read-lease-integration.md) |
+| 受控维护读取与五个局部reader（022-C0-T3） | ReadLease、封闭codec、完整Rows生命周期、原authority入口/出口重核；固定五reader为ledger、PB、manual/voucher、sandbox capture直接关联及采购；其中采购有五项局部摘要；本行五类scope不提供全来源coverage/basis/epoch，生产CLI仍未实现 | [lease](../../internal/maintenancetrust/lease.go)、[Rows](../../internal/maintenancetrust/lease_rows.go)、[codec](../../internal/maintenancetrust/lease_codec.go)、[集成包](../../internal/maintenancescan)、[manual/voucher reader](../../internal/billing/funding_source_read.go)、[sandbox reader](../../internal/billing/funding_source_capture_read.go)、[采购reader](../../internal/billing/procurement_attempt_read.go)、[采购历史reader](../../internal/billing/procurement_command_read.go)、[历史读取合同](../../specs/022-self-service-payments/c0-procurement-history-read-contract.md)、[命令观察合同](../../specs/022-self-service-payments/c0-procurement-command-contract.md)、[成本消息合同](../../specs/022-self-service-payments/c0-procurement-cost-journal-contract.md)、[账本core](../../internal/billing/funding_ledger_query.go)、[纯核验core](../../internal/fundinglotverify)、[PB core/guard](../../internal/periodicbudget/verifier_maintenance.go)、[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)、[sandbox窄合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[T3租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[采购验证状态](../verification/procurement-budget-maintenance.md)、[此前来源reader证据](../verification/funding-source-links.md)、[T3历史专项](../verification/maintenance-read-lease.md)、[T3集成记录](../verification/maintenance-read-lease-integration.md) |
 | 退款v2纯协议（022-C1-P） | v1已验capture只读桥、严格六种DTO、四摘要域与三用途HMAC、不可变opaque；独立Python向量及race/vet/fuzz通过，无运行接线 | [纯包](../../internal/paymentrefundproto)、[精确合同](../../specs/022-self-service-payments/c1-protocol-v2-contract.md)、[独立向量](../verification/payment-refund-v2-golden.json)、[验证](../verification/payment-refund-protocol-v2.md) |
 | 通用向量计量纯层（024-B0-P） | 闭合八维、两侧完整schema绑定、有理率总和一次ceil、上界/actual区分、规范摘要和旧token等价adapter；专项race/vet/fuzz通过，尚未被网关运行模块调用 | [纯模块](../../internal/metering)、[冻结合同](../../specs/024-extension-platform/b0-pure-contract.md)、[证据](../verification/metering-vectors.md) |
 | 采购资金 | 平台共享账户、永久凭据绑定、累计预算、逐attempt预占、未知占用、双人更正与人工观察 | [procurement](../../internal/procurement)、[采购账务](../../internal/billing/procurement.go)、[019合同](../../specs/019-procurement-accounts/contract.md)、[014迁移](../../migrations/014_procurement_accounts.sql) |
@@ -957,7 +963,7 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 商业闭环 | 已实现，限定本地验收 | 人工双人入账 → 客户授权/Key → 六协议调用 → 预占/结算 → 报表/成本/退款；[014](../verification/mvp-release-qualification.md) |
 | 模型/渠道经营 | 已实现 | 不可变版本、三格式发现、1..32 成员池、跨渠道整批启停；[011](../verification/model-discovery.md)、[012](../verification/credential-pools.md)、[013](../verification/channel-operations.md) |
 | Key 经营 | 已实现 | 来源策略、动态运行限额、模型/地域/预算/期限三版本独立编辑；[017 验证](../verification/key-configuration.md) |
-| 来源追踪核验基础 | C0业务来源完整读取已接线，资金开账仍后续 | [68表合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)与[实现](../../internal/fundinglotscan/reader.go)：同lease扫描固定列并集，七算法、ordinary精确排除、原生时间资格、共享100000行/16MiB；[维护入口](../../internal/maintenancescan/complete_sources.go)绑定原Permit与第六kind。旧五局部scope不变；物理EOF与业务coverage独立，Unproven不授资格。另有[84表八算法](../../internal/fundinglotscan/wallet.go)与[第七kind维护入口](../../internal/maintenancescan/source_wallet.go)，实际调用lot重放并绑定原Permit；pre/post、basis/epoch、线上资金接线和生产CLI仍后续；[新片验收](../verification/source-wallet-reader.md) |
+| 来源追踪核验基础 | C0业务来源完整读取已接线，资金开账仍后续 | [68表合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)与[实现](../../internal/fundinglotscan/reader.go)：同lease扫描固定列并集，七算法、ordinary精确排除、原生时间资格、共享100000行/16MiB；[维护入口](../../internal/maintenancescan/complete_sources.go)绑定原Permit与第六kind。旧五局部scope不变；物理EOF与业务coverage独立，Unproven不授资格。另有[84表八算法](../../internal/fundinglotscan/wallet.go)与[第七kind维护入口](../../internal/maintenancescan/source_wallet.go)，实际调用lot重放并绑定原Permit；另有109表basis与strict v2独立叶子；protected pre/post、epoch、线上资金接线和生产CLI仍后续；[新片验收](../verification/source-wallet-reader.md) |
 | 商品价值/期限纯算法 | C-V已实现，无生产接线 | [productvalue](../../internal/productvalue/value.go)精确端点价值差、原本金分区索引归因、UTC6原锚点月/半开term；[合同与专项](../../specs/023-periodic-products/c-value-contract.md)，无购买/权益发放/退款授权 |
 | 上游模型成本 | 已实现 | 每渠道精确上游模型的输入/输出单价、生效版本、每attempt快照及unknown；受控采购更正双人审批，尚无自动供应商账单同步 |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
@@ -1100,3 +1106,39 @@ WalletFacts私有保存本次session，Summary只给平铺的 complete_source_wa
 现有VerifyInstallation和Attest发行都要求16张C0表为空；证据Verify、BeginScan和Finish不重复空表检查。未来同Init原RR可按Attest→受保护init写入→84表post读取实施，当前受保护writer/phase尚未交付。已提交epoch环境也不能重走原空安装发行入口，须另冻post/runtime authority。ReadLease检查生命周期、codec与非空SQL，不解析SELECT或在SQL层强制只读；受审scanner仅发固定SELECT，不借Init的RW能力写seed或绕过phase。
 
 本批真实维护正例验证开账前的空C0并保留缺epoch不符；非空C0的真实SQL、原值与算法验证使用独立owner RR，只证明reader而非维护postphase。没有迁移、ACL、普通billing/PB/main依赖或在线资金装配变化。验证、环境失败与最终回归独立记录在[本片证据](../verification/source-wallet-reader.md)。下一关口是protected pre+basis、init/post/epoch与全部资金路径；之后继续退款/拒付、商品、扩展、生产/HA，最后性能。
+
+## 固定 109 表 basis 与严格 v2 格式叶子
+
+```mermaid
+flowchart LR
+  Caller[描述性调用方 / Query
+  无 Header / expected / authority] --> Basis[fundinglotbasis.Read]
+  Static[固定受审材料
+  109表976列 / 22迁移
+  15类型与16发送函数] --> Basis
+  Basis --> Meta[同Query自读环境与目录
+  UTF8 / PG16 / locale与version
+  原列与PK / 精确send profile]
+  Meta --> Read[ONLY count + 128行binary keyset
+  100000行与64MiB / PK+row计账
+  完整EOF与record信封校验]
+  Read --> Hash[basis v1精确帧
+  环境 + 静态材料 + 固定原行]
+  Hash --> Facts[私有Facts / 脱敏Summary
+  摘要与完成计数 / 无写入权限]
+  Input[自报v2字段 / 原v1原件] --> Codec[fundinglotproof
+  strict shape / canonical / owned bytes]
+  Codec --> Format[CanonicalV2
+  格式有效 / 无数据库真实性]
+  Facts -. 后续受保护pre+basis与同RR组合 .-> Future[尚未实现的phase owner
+  init writer / post / epoch / runtime issuer]
+  Format -. 未来issuer逐字段认证 .-> Future
+```
+
+[basis合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)冻结原109表/976列，不加入16张C0表、tenant新增birth列、as_of、PID、xid或nonce。该reader先比较原列/PK、permanent heap/无RLS与继承、15内建type/16 send完整静态元数据，再对业务原行执行record_send；tenants仅接受原8列或精确第9列fl_created_xid。实际server/client/database UTF8、PG16 minor、locale/provider及stored/actual版本进入域分离SHA帧，名称与事务身份留给未来authority。同一数据可跨plan/init比较，源明文不公开。
+
+分页游标为PK record的原二进制顺序，COUNT与最终行数相等；MATERIALIZED页的窗口前缀预算同时约束剩余行数、PK+row bytes和单记录，超限行返回false拒绝，不能过滤成EOF。Go核record字段数、OID、长度、NULL、固定宽度与PK/row对应值；变长payload保留原字节，不宣称重验全部PG内部编码。metadata独立2048行/1MiB/单文本65536B；业务100000行/64MiB，单PK262144B/row1048576B。这是逻辑输入限制，非server/RSS/网络实际字节界。
+
+[proof v2合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)冻结21字段、显式ordinary/sandbox可空union、manifest自摘要和sandbox原v1严格原件绑定。生产只用标准库，CanonicalV2私有owned canonical bytes、SHA及deep-copy bindings，fmt/JSON脱敏；原件≤262144B、depth12/8192值节点。合法未知digest仅格式通过，不能由已知root或自报值推导数据库认证。旧v1 wire/loader、相等key时间及重复digest接受条件不改；差分测试在maintenancetrust单向依赖纯叶子，普通领域测试不反向依赖维护。
+
+本片未增加ScanKind、once位、第八pre+basis lease、protected writer、phase owner、epoch、RuntimeProof、迁移/ACL或普通serve/HTTP/worker装配。特别是不能先Finish释放busy再持外部Facts授写权；未来phase须贯穿pre+basis→write→strict v2与84表post→commit-ready，并约束Commit与ready后的新lease。当前Installation/Attest仍要求空C0，ReadLease没有SELECT解析器，叶子报告不能绕过这些边界。cutover basis用于停服plan/init比较，普通startup不能将经营后当前109表数据强等于历史basis；已有epoch的observer/runtime及其最小权限另冻。验收见[basis与v2记录](../verification/basis-proof-v2.md)，下一步仍按[交付计划](../design/delivery-plan.md)推进受保护组合及全资金路径。

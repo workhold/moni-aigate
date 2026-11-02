@@ -1,0 +1,59 @@
+{
+  "actual_metadata_canonical_sorted_json_sha256": "bd7bd8139b1d0983e196b1f8bcbf6b8afd23fb4016ff0874bdd0eb4f349c18b5",
+  "audit": "fixed_builtin_send_metadata_actual_catalog_comparison",
+  "boundary": {
+    "business_tables_read": false,
+    "database_mutations": false,
+    "oid_json_representation": "Explicit int8 casts on scalar OIDs and OID array elements; native JSON booleans/null retained",
+    "queries": "fixed pg_type/pg_proc whitelist and pg_database/current settings only",
+    "source_mutations": false,
+    "tests_or_compilation": false,
+    "transaction": "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY; explicit ROLLBACK"
+  },
+  "candidate_canonical_sorted_json_sha256": "bd7bd8139b1d0983e196b1f8bcbf6b8afd23fb4016ff0874bdd0eb4f349c18b5",
+  "candidate_path": "specs/022-self-service-payments/c0-basis-send-metadata-candidate.json",
+  "candidate_raw_bytes": 12360,
+  "candidate_raw_sha256": "1bd800f0014a159d1528e716275263c7b6c97e6fb91a037d034e1fbbe028684b",
+  "candidate_unchanged": true,
+  "compared": {
+    "format_version_fields": 1,
+    "function_count": 16,
+    "function_fields_per_row": 30,
+    "total_row_fields": 706,
+    "type_count": 15,
+    "type_fields_per_row": 15
+  },
+  "difference_count": 0,
+  "differences": [],
+  "elapsed_seconds": 0.040617,
+  "environment": {
+    "client_encoding": "UTF8",
+    "current_user": "moni_test",
+    "database_locale": {
+      "collate": "C",
+      "ctype": "C",
+      "icu_locale": null,
+      "provider": "c",
+      "version": null
+    },
+    "database_name": "moni_test",
+    "database_oid": 16384,
+    "float8_by_value": true,
+    "name_type_length": 64,
+    "server_address": "127.0.0.1",
+    "server_encoding": "UTF8",
+    "server_port": 55439,
+    "server_version": "PostgreSQL 16.15 (Homebrew) on aarch64-apple-darwin25.6.0, compiled by Apple clang version 21.0.0 (clang-2100.3.34.2), 64-bit",
+    "server_version_num": "160015",
+    "session_user": "moni_test",
+    "transaction_isolation": "repeatable read",
+    "transaction_read_only": "on"
+  },
+  "limits": [
+    "Metadata equality does not authenticate PostgreSQL executable bytes or internal C function bodies.",
+    "Evidence applies to the observed local PostgreSQL server and listed fixed OIDs, not every PG16 installation.",
+    "Sorted compact JSON hashes are audit comparisons, not the project canonical wire digest."
+  ],
+  "date": "2026-11-02",
+  "actual_evidence_raw_sha256": "801c33fa83859b9d9d05af0f369cb6f1ac8d21056b8cf8eebc59041381df7de3"
+}

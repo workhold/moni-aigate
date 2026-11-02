@@ -2275,3 +2275,86 @@ V0-WL最终纯包race、32508次fuzz、make check和专库make verify-mvp全部�
 - modified `docs/verification/source-wallet-reader.md`
 
 </details>
+
+## 2026-11-02T16:23:59Z · 7fc4eaee97a0
+
+新增固定109表976列原二进制basis只读叶子和stdlib严格v2 codec；复核静态send前置、资源/EOF/帧、旧v1单向差分与真实专库，维护第八phase/epoch与在线资金仍后续；同步README/HLD/LLD/统一架构和维护图及验收边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1432 个源文件；本次 41 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-basis-proof-v2.json`
+- added `docs/verification/assets/architecture-basis-proof-v2-application.png`
+- added `docs/verification/assets/architecture-basis-proof-v2-detail.png`
+- added `docs/verification/basis-proof-v2.json`
+- added `docs/verification/basis-proof-v2.md`
+- added `docs/verification/basis-send-metadata-audit.json`
+- added `internal/fundinglotbasis/basis_test.go`
+- added `internal/fundinglotbasis/independent_postgres_test.go`
+- added `internal/fundinglotbasis/materials.go`
+- added `internal/fundinglotbasis/materials/descriptor-v1.json`
+- added `internal/fundinglotbasis/materials/manifest-v1.json`
+- added `internal/fundinglotbasis/materials/send-v1.json`
+- added `internal/fundinglotbasis/metadata.go`
+- added `internal/fundinglotbasis/queries.go`
+- added `internal/fundinglotbasis/read.go`
+- added `internal/fundinglotbasis/record.go`
+- added `internal/fundinglotbasis/types.go`
+- added `internal/fundinglotproof/codec.go`
+- added `internal/fundinglotproof/codec_test.go`
+- added `internal/fundinglotproof/strict_test.go`
+- added `internal/fundinglotproof/testdata/generate_golden.py`
+- added `internal/fundinglotproof/testdata/ordinary.json`
+- added `internal/fundinglotproof/testdata/predecessor_128keys.json`
+- added `internal/fundinglotproof/testdata/predecessor_1keys.json`
+- added `internal/fundinglotproof/testdata/predecessor_v1.json`
+- added `internal/fundinglotproof/testdata/sandbox.json`
+- added `internal/fundinglotproof/testdata/sandbox_128keys.json`
+- added `internal/fundinglotproof/testdata/sandbox_1keys.json`
+- added `internal/fundinglotproof/types.go`
+- added `internal/fundinglotproof/v1.go`
+- added `internal/maintenancetrust/proof_v2_compat_test.go`
+- added `specs/022-self-service-payments/c0-basis-reader-contract.md`
+- added `specs/022-self-service-payments/c0-basis-send-metadata-candidate.json`
+- added `specs/022-self-service-payments/c0-proof-v2-codec-contract.md`
+
+</details>
+
+## 2026-11-02T16:24:54Z · fb0bf5ead439
+
+补录根最终四包race与真实basis专库19终态、两叶子fuzz精确源码身份；正文模块与权限边界已复核，尚待整仓回归
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1432 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/basis-proof-v2.json`
+- modified `docs/verification/basis-proof-v2.md`
+
+</details>
+
+## 2026-11-02T16:47:46Z · f7b328ef695f
+
+汇合全部并行实施与独立审查后完成根语义复核；相关race含真实basis PG与v1差分、两leaf fuzz、make check及专库verify-mvp全部通过，补最终证据和README部署说明；澄清cutover basis只约束停服init，普通startup历史绑定与phase/epoch/runtime仍后续
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1432 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/LLD.md`
+- modified `docs/verification/architecture-basis-proof-v2.json`
+- modified `docs/verification/basis-proof-v2.json`
+- modified `docs/verification/basis-proof-v2.md`
+- modified `docs/verification/mvp-status.md`
+- modified `specs/022-self-service-payments/c0-proof-v2-codec-contract.md`
+- modified `specs/022-self-service-payments/c0-schema-check-contract.md`
+
+</details>
