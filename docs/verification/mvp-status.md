@@ -112,3 +112,8 @@ Python SDK可复现工具见[零费用SDK验证](native-sdk.md)，只读取本�
 022-B3应用支付闭环已接入普通main、独立受限worker、订单/通知HTTP和支付页面，双manifest/双nonce/022运行证明默认不安装；完整payments真实PG race与config/HTTP专项通过，两轮真实主进程/最终浏览器整链已通过限定本地验收，真实Guard失权和在途SIGTERM独立补验已通过，见[当前分层记录](payment-application.md)。长期58123仍为020已验包，此项不等于已升级预览、正式收款或整体后续计划完成；来源lot/退款、订阅、其余扩展、HA与最后性能仍继续。
 
 2026-11-02本轮静态checker收口后的整仓`make check`7.546秒、`make verify-mvp`340.981秒均退出0：286项前端、strict TS/Vite、明确专库全Go race/vet及嵌入build通过。C0专用opt-in的真实PG完整leaf race单独217.140秒通过，整仓命令不重开capture/export/诊断或真实进程运行器；精确范围、两次旧失败、源码hash与清理见[最终证据](funding-lot-catalog.md)及[机器记录](funding-lot-catalog.json)。源码未因此接入main、未升级58123、未作生产或正式供应商验收。
+
+
+2026-11-02新增 [V0-WS钱包序列纯检查](wallet-sequence-rows.md)：七组supplied原行的全序、genesis/head、journal/event声明、全局唯一与legacy互斥。它不是完整lot/FIFO重放，没有数据库/维护/资金装配；原路退款、epoch和生产验收继续后续。README同步保持当前使用、部署和能力边界。
+
+V0-WS最终集成：`make check` 7.623秒、明确专库 `make verify-mvp` 977.773秒通过（286项前端、43个Go测试包race、vet/build）。本片纯包race与73385次短fuzz独立通过；默认整仓未启用C0 opt-in。原实现与验证边界见[记录](wallet-sequence-rows.md)，不等于完整来源lot或生产验收完成。

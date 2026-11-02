@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T12:08:37Z",
-  "review_reason": "最终make check 6.33秒、指定专库make verify-mvp 966.88秒通过，286前端与默认Go race/vet/build完成；C0 opt-in按真实SQL/ordinary授权/维护各场景独立记证，保留原整批失败及Plan复验身份。仅补最终验证文档/机器记录与计划勾选，源码、权限、模块/请求/数据图无进一步变化，19图正文身份保持。",
-  "snapshot_sha256": "4ec301e5a2d12706f37a4bf1a0202f1e829c52e2f577f03935703575e3f3b9f0",
-  "architecture_sha256": "1783050ba7e5b0809082513b18a3d4b496aedf69be913166e9d6913ff41565a6",
-  "history_sha256": "b55263838fd36b1c7bc217215316e0a8e43310c4ccd40edc8a178392fd240376",
+  "reviewed_at": "2026-11-02T13:04:04Z",
+  "review_reason": "补齐最终机器验收记录的Node TAP 286/286与0失败；复核代码身份、README及架构图未变，仅证据元数据更新",
+  "snapshot_sha256": "9c34dbb3dbf647b85028391e2a6ceac3d49b38d3f445f0aed21e0c3e99b2ae1f",
+  "architecture_sha256": "45439f9659c3765d01861d0d764cacb6ebcc5693d04a319e7749fd119746a362",
+  "history_sha256": "7fe0fdcf4f95530124c1af01fa3f38b4388ebd5ef535bc45a85dc499399ae255",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "e8427f2eb4d780a9f5b2cad10639a6a1f1d73c9d965af2e9f58ad8468d9e1185"
+      "sha256": "c1f2b57662a425ed93cd0958e5ac321f447309bea215b34a65f5af4dddd9f314"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "docs/architecture/maintenance-gate.md",
-      "sha256": "c00c0e08684e30224048b9bae9a74dbfd5f65fb79240cca527d95fd775a2dbcf"
+      "sha256": "06a42ed12ea01a2e3f22693b2876fff3e54f11755b25b4e64907ff551c76ca72"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -109,15 +109,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "35b6e7ab5dfaf63be6b20863e1be9743c39379891f97e4f29d5730389d4b7cc3"
+      "sha256": "1cb3199c70b46f1aabd028157caadc8c8c652f28c7e893005c98d6d5bdd75bd7"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "da1007c63bd458c8a0851079d479dc3cc9c3aea372acde24c13021559956e674"
+      "sha256": "5a1e72d3f2a689528aac99cf46abd3cba54d550eab304437b97e96c7045156a2"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "fff3d59d9d984ccd610e4b016a6f238e5ccca8840526687e37937d0ea471f805"
+      "sha256": "f099674f0d28033674d3fbec2860a1d2a8d2f85dd61155f82a2a624dcb6ca679"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -161,7 +161,7 @@
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "d1b7b57c08f2fdb10cce7fdbeb2d0050c13627a2445351eafaa1148bf219fd94"
+      "sha256": "ab12a473722794abc4770712b12b528a67ca84998a45487d34aa1b53637cb9b0"
     },
     {
       "path": "docs/runbooks/development.md",
@@ -214,6 +214,10 @@
     {
       "path": "docs/verification/architecture-sync.md",
       "sha256": "38fc4bebd8d4a2f73c8906529cd7126e7b569ddb8e93790968bd1bcddf88fb44"
+    },
+    {
+      "path": "docs/verification/architecture-wallet-sequence.json",
+      "sha256": "a5cf39ec1e4bf32359564548cadf7e82ab7baa46ed2b4b04a66be294c94f7248"
     },
     {
       "path": "docs/verification/assets/architecture-018.png",
@@ -302,6 +306,14 @@
     {
       "path": "docs/verification/assets/architecture-payment-proof.png",
       "sha256": "c7e27e0e77e94a6afa0382aacac3310d26f9534df12830d2f0a94aa4e4bdf76f"
+    },
+    {
+      "path": "docs/verification/assets/architecture-wallet-sequence-application.png",
+      "sha256": "786cec6c42c66b7228609e9ce1f84a02aa5fc9ed66db6fc807255dacac2acff3"
+    },
+    {
+      "path": "docs/verification/assets/architecture-wallet-sequence-detail.png",
+      "sha256": "dbc1e6b16f47e6d2e5b4c5e63c483a9daa67958c0c159dbbc92ed10095f338d2"
     },
     {
       "path": "docs/verification/assets/console-cost-versions.jpg",
@@ -1145,7 +1157,7 @@
     },
     {
       "path": "docs/verification/mvp-status.md",
-      "sha256": "70922541a8152459bdef58d585abf8ab72d3d21430fb5b8206ad834260ef1863"
+      "sha256": "cd9fecd968e37dacd974355aab568e8b16ee0e6e609ec55892011d0f1201c224"
     },
     {
       "path": "docs/verification/native-protocols.md",
@@ -1330,6 +1342,14 @@
     {
       "path": "docs/verification/tenant-pricing.md",
       "sha256": "29a7d9c3eebc62e0ddabd4f6970a198f0f9495a88d7f931b09490229bb41b9ba"
+    },
+    {
+      "path": "docs/verification/wallet-sequence-rows.json",
+      "sha256": "f6682cc5dedccc6ada90f398a732b2e16cd87967a5c25e6a75f75eaa9b43e351"
+    },
+    {
+      "path": "docs/verification/wallet-sequence-rows.md",
+      "sha256": "1f1fe5245e6346192fda9e40a47a171f451fff955e435deef72598bf3edf164d"
     },
     {
       "path": "go.mod",
@@ -2162,6 +2182,26 @@
     {
       "path": "internal/fundinglotverify/sandbox_source_graph_wire.go",
       "sha256": "607888962a911195ab9b4c568771a40a38dcbb9e84d9294dce17933f9af48e7d"
+    },
+    {
+      "path": "internal/fundinglotverify/wallet_sequence.go",
+      "sha256": "8d4a87546117c2651084403dded42aca6a12b66fc807df648ef25581e9ba4a54"
+    },
+    {
+      "path": "internal/fundinglotverify/wallet_sequence_check.go",
+      "sha256": "651db75da90428e03ece1413e420e630bbea2bdb97c32ee85fd6903618b14a2f"
+    },
+    {
+      "path": "internal/fundinglotverify/wallet_sequence_fuzz_test.go",
+      "sha256": "901d4a1ae121587b86cb0d82e9641b4f7a4f6409621af063ec7006a8e323b48d"
+    },
+    {
+      "path": "internal/fundinglotverify/wallet_sequence_test.go",
+      "sha256": "3a4f35ee763b403ffcdb22c4690be310e1b1b18614874dc2823e4f6b1137e238"
+    },
+    {
+      "path": "internal/fundinglotverify/wallet_sequence_values.go",
+      "sha256": "96deceeb0b0fb4e00b32b9eaa755f1aba4f23c0fbbde81861c2c8dd8794e52d5"
     },
     {
       "path": "internal/identity/identity_integration_test.go",
@@ -4669,7 +4709,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-sequence-contract.md",
-      "sha256": "0ec29515ea430f4b06432e3c2f9a5ef0a9ec860d6635627efbff7a21fda8c267"
+      "sha256": "6466b1038d1e5aaaf9db38796da8fd2b554736ad01e11efe2846e3004c5a4abd"
     },
     {
       "path": "specs/022-self-service-payments/c0-snapshot-contract.md",
@@ -4685,7 +4725,11 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-verifier-contract.md",
-      "sha256": "1e3d3328600a76e30cd68f262afbc12d5c92055751bdbc4b43b2cec5c7b855eb"
+      "sha256": "e330e65e5d29546ad1df6ecf46560349377e9fca678af551d0e26ffec76694d0"
+    },
+    {
+      "path": "specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md",
+      "sha256": "76fef6209ac47224173ea93ebbe04c678f99f76790e11abed789d65973fd0f0b"
     },
     {
       "path": "specs/022-self-service-payments/c1-protocol-v2-contract.md",

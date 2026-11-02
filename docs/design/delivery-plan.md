@@ -100,3 +100,10 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 下一依赖为lot全序及protected pre/post组合，随后basis/epoch与全部APP资金路径；C1/C2/C3、商品、扩展、生产/HA及性能继续保留，不把本业务来源范围标为全目标完成。
 
 下一切片先冻结独立纯Go lot全钱包重放，使用业务源与16张C0表原行、独立big.Int按seq推导FIFO/结算/逆序退款；不接writer或维护authority。随后另冻pre（含109表basis）与post（重扫source+lot）封闭入口。根须先裁决once位图容量、来源全局10万行/16MiB与候选较大重放预算、basis计数/分页/超长值界、未知init提交和v2严格codec，不能用68表摘要代替basis原件。该计划仍是设计工作，不标为已实现。
+
+
+## V0-WS前置全序切片与剩余依赖
+
+根先按[七投影合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)冻结纯序列声明检查，实施与手算测试并行，根汇合后复核、更新架构与[验证记录](../verification/wallet-sequence-rows.md)。该片只解决完整重放的结构前置，不包含FIFO/分配/退款/16表reader，也不升级68表来源结果。
+
+下一步继续原业务源+16表的独立lot全钱包重放（复用本结构检查但不从声明自我初始化金额），再封闭pre+basis与init/post/epoch。既有六kind的uint8 once容量、统一源+lot预算、109表record_send basis计数/分页/超长/取消界、未知init提交及严格v2 codec仍须在组合实施前明确冻结；本片不消耗新kind或声称较大候选预算已支持。全资金接线后继续C1/C2/C3、商品、扩展、生产/HA，最后性能；整体目标仍未完成。

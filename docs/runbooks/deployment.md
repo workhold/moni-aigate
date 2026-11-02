@@ -4,7 +4,9 @@
 
 当前源码要求完整 **001–022** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染已验证，容器、1Panel 和正式供应商仍按目标环境分别验收。
 
-022-C0 的停服维护已增加库级二参 `Attest(ctx, snapshot)` 与 `Permit.Verify(ctx)`，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；T2 [真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，范围限既定专库profile。维护读取集中在独立 `internal/maintenancescan`，单向依赖billing/PB固定事实算法及maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不依赖维护或catalog，不再支付无关eager初始化成本。真正维护消费者仍完整认证固定catalog，普通main、Compose和1Panel没有维护证明发行或扫描装配。当前没有生产维护CLI、全来源重放、basis或epoch开账入口，也没有新增正式应用迁移。部署继续使用当前001–022；C0规格SQL不属于本手册的安装或升级步骤。范围见[隔离合同§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)和[开发边界](development.md#资金来源维护库022-c0)。此前本地串行整仓1172.881秒成功保留原版本，f572bbd/CI run 41359784155仍有原12秒helper与10秒main观察失败；本次隔离修复的进程、真实维护reader、整仓及新精确提交CI须另验，不扩大为部署或生产验收。
+022-C0 的停服维护已有库级 `Attest(ctx, snapshot)`、`Permit.Verify(ctx)` 与受控 ReadLease，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；真实 PostgreSQL 专项与历史 CI 结果分别记录。维护读取集中在独立 `internal/maintenancescan`，普通billing/PB/main及领域测试不依赖维护或catalog；真正维护消费者仍完整认证固定catalog。单租约68表业务来源读取已实现，钱包全序声明另有纯检查，实际 lot 重放、生产维护CLI、basis与epoch开账仍在后续。普通main、Compose和1Panel没有这些维护装配或新增正式迁移；部署继续使用001–022，C0规格SQL不属于安装或升级步骤。
+
+维护依赖隔离的旧 `f572bbd` / CI run 41359784155 观察期限失败保留原结论；后续 `824e4e5` 精确实现提交十组CI全部成功，进程、真实reader与整仓重新验收见[隔离记录](../verification/maintenance-integration-isolation.md)。新68表范围另见[读取记录](../verification/complete-source-reader.md)。这些本地及CI证据不扩大为容器、1Panel、供应商或生产验收；权限与接线边界见[维护架构](../architecture/maintenance-gate.md)。
 
 ## 首次安装
 

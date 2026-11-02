@@ -1,0 +1,88 @@
+{
+  "date": "2026-11-02",
+  "base_commit": "b9da240df1f90d08446e63bda058d9eac1dc6872",
+  "scope": "Pure supplied wallet sequence and declarations; no source/FIFO/authority or database coverage",
+  "source_sha256": {
+    "internal/fundinglotverify/wallet_sequence.go": "8d4a87546117c2651084403dded42aca6a12b66fc807df648ef25581e9ba4a54",
+    "internal/fundinglotverify/wallet_sequence_check.go": "651db75da90428e03ece1413e420e630bbea2bdb97c32ee85fd6903618b14a2f",
+    "internal/fundinglotverify/wallet_sequence_fuzz_test.go": "901d4a1ae121587b86cb0d82e9641b4f7a4f6409621af063ec7006a8e323b48d",
+    "internal/fundinglotverify/wallet_sequence_test.go": "3a4f35ee763b403ffcdb22c4690be310e1b1b18614874dc2823e4f6b1137e238",
+    "internal/fundinglotverify/wallet_sequence_values.go": "96deceeb0b0fb4e00b32b9eaa755f1aba4f23c0fbbde81861c2c8dd8794e52d5",
+    "specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md": "76fef6209ac47224173ea93ebbe04c678f99f76790e11abed789d65973fd0f0b"
+  },
+  "targeted_package_race": {
+    "pass": true,
+    "elapsed_seconds": 3.899,
+    "wallet_top_level_tests": 16,
+    "wallet_pass_terminals_including_fuzz_seeds": 168,
+    "package_pass_test_terminals": 899,
+    "log_sha256": "96db7fecd8d890497d79d11ddf9ebf739e4cc6a9f6d0de3d1dea556e2a790b69"
+  },
+  "fuzz": {
+    "pass": true,
+    "seconds": 12.757,
+    "executions": 73385,
+    "parallel": 2,
+    "log_sha256": "f93408021e23acac407eff08c0e5fc782d221cfd50f5251c03a95c3b070403ee"
+  },
+  "regression_before_fix": {
+    "timeout_classification": {
+      "exit_code": 1,
+      "log_sha256": "35b23b92f64584570f2b55dcb9e90f2a7f2685f3df3786fd82a0a1f0bbc28b4f"
+    },
+    "first_package_after_single_err_sample": {
+      "exit_code": 1,
+      "cause": "Test synthetic context no longer reached 400 Err calls; fixture enlarged within unchanged input budget",
+      "log_sha256": "4a601cab33cacc6f6ba3489110577950725f71336c49be45531615bba8944be7"
+    }
+  },
+  "architecture_render": "architecture-wallet-sequence.json",
+  "make_check": {
+    "command": "make check",
+    "exit_code": 0,
+    "elapsed_seconds": 7.623,
+    "log_sha256": "9d7fc8f09d882161beea8c0579015b5402ec1471d9e1e7141f326d7b4559c37f",
+    "status": "completed",
+    "pass": true
+  },
+  "make_verify_mvp": {
+    "command": "make verify-mvp",
+    "test_database": "Dedicated moni_test, PostgreSQL 16 local fixture cluster",
+    "exit_code": 0,
+    "elapsed_seconds": 977.773,
+    "log_sha256": "1be77ac20674690d3bc7fbfd5de92ec39c334d8a00791ee621219814f29a7ad3",
+    "status": "completed",
+    "pass": true,
+    "frontend_summary": [
+      "# tests 286",
+      "# suites 0",
+      "# pass 286",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# todo 0"
+    ],
+    "passing_go_packages": 43,
+    "c0_opt_in_enabled": false,
+    "race": true,
+    "vet": true,
+    "build": true,
+    "frontend_tests": 286,
+    "frontend_pass": 286,
+    "frontend_fail": 0
+  },
+  "prior_commit_ci": {
+    "head_sha": "b9da240df1f90d08446e63bda058d9eac1dc6872",
+    "run_id": 41442551097,
+    "conclusion": "success"
+  },
+  "boundaries": [
+    "No SQL or production DB/preview mutation",
+    "No new ScanKind or once bit",
+    "No ReadLease private facts export",
+    "No source eligibility, kind-delta shape, FIFO or refund allocation proof",
+    "No maintenance pre/post, basis, epoch or RuntimeProof",
+    "No container, 1Panel, provider or performance acceptance"
+  ],
+  "after_full_validation": "Only verification prose, machine records and architecture snapshots updated; Go source/test identities unchanged."
+}

@@ -836,3 +836,12 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 静态typed binding合并68表固定列并集；128行C序keyset、四种tuple逐项比较，其中两类revision为原生BIGINT，singleton枚举false/true。跨全表100000行/16MiB，TEXT/bytea单字段65536，时间envelope32B、bool1B。时间固定SELECT使用pg_catalog.timestamptz_send传原生8字节/NULL，再以包内pgtype binary plan还原，避开simple protocol文本四位年份限制，保留NULL/finite/infinity；旧time.Time DTO不可表示时记录按物理字段去重的input_mismatch、跳过受损core而完成其余EOF/算法，不伪造scope。SourceMode仅从原authority predecessor取，Result私有Facts+原ScanProof，Require→mode/schema→Read→唯一Finish，错误固定类别且零结果。
 
 详细[冻结合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)、[统一架构](../architecture/README.md)和[验证范围](../verification/complete-source-reader.md)随源码交付；本片无迁移、表关系、权限或在线HTTP装配变更。
+
+
+## V0-WS：所提供全钱包序列与声明
+
+`CheckWalletSequenceRows(ctx, WalletSequenceRows)` 从 epoch ID、tenant birth、operations、heads、legacy sources、journal header 和 event 关系/四delta投影建独立索引。重复主键和全局自然键按组计一次且不选择任意行充当真值；跨tenant/epoch前驱、seq0分支、原journal/事件top-xid、实际event_count和四项big.Int合计逐行比较。退款kind先归一；funding源保持receipt.id，原journal.operation不误等同receipt.id。
+
+NULL/空TEXT严格区分，新UUID规范化只适用新增身份；NUMERIC积分值允许scale-zero，BIGINT/xid各保留原范围。固定全局100000行/16MiB/单字段65536B先预算后索引；检查context，四种封闭错误一律零结果。没有SQL、网络、迁移、ScanKind/once扩展或资金接线。所给声明即使全部相符，仍不能证明实际来源、kind对应金额形状、FIFO、allocation、lot cache、完整epoch/legacy集合或数据库EOF。完整接口/计数与验收见[冻结合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)和[验证](../verification/wallet-sequence-rows.md)。
+
+完整重放的旧held opening必须从legacy reserve减legacy terminal集合推导；旧未结在epoch后finish时opening仍存在，后续消费退款仍按allocated原收费边处理。不能用当前unfinished状态重算cutover。

@@ -4,6 +4,8 @@
 
 依据 [HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)与 [023-B verifier](../023-periodic-products/b-verifier-contract.md)。本片没有原路退款、拒付、媒体收费或多活的实施授权；核验成功不发出模型/支付调用许可，不修账或重建来源。
 
+完整重放的纯结构前置另按 [V0-WS合同](c0-wallet-sequence-rows-contract.md)冻结实现：只核所给七组投影的序列、genesis/head、原journal/event声明与旧新source互斥，不证明真实来源、kind金额形状、FIFO/退款分配或数据库完整性，不发行本候选的完整结果。后续金额初态仍必须从真实业务源独立推导，不能拿该结构结果中的声明当作oracle。
+
 ## 1. 证明范围与独立性
 
 核验器从真实来源与不可变序列独立推导应有状态，再比较 lot、事件、分配和缓存。禁止调用 `planReserveFundingLots`、`planFinishFundingLots`、`planRefundFundingLots`，禁止把 `fl_check_*`、`fl_validate_*`、`fl_source_*`、`funding_journal_valid`、`payment_*_valid` 等数据库写侧谓词的返回值作为业务正确性 oracle。可以读其受审定义进行对象完整性验证，但业务结论必须来自独立静态读取和 Go 判断。不得 import provider、HTTP、SMTP 或支付 mutation adapter。
@@ -108,6 +110,8 @@ schema/role checker 先接受静态闭合对象描述符，scanner 只使用其�
 全部 legacy receipts、terminal settlements、approved refunds、wallet_sources及窄 sandbox receipts互为精确集合。legacy wallet_sources 包含旧 terminal 的 reserve、零额 reserve/finish；旧 reserve 必须指向旧 terminal 或自己的 unfinished opening。旧 approved退款计入开账，不新建lot。旧 pending refund只保留无效果事实，后批按原 settlement 是旧/新决定退款模式。
 
 每个正 available opening建立一个内存 lot：A=P/H=S=0；每个正 unfinished reservation opening 建其专属 lot：H=P/A=S=0，并建立唯一原 reservation allocation index1。零额 opening保存成员但没有 lot/event/allocation。所有 opening lot均 nonrefundable，FIFO时刻为同 epoch时刻，lot ID按C序打破同刻。每旧 tenant A/H opening与原全部legacy wallet journal的NUMERIC前缀、当时未终态reservation集合及旧已退基线精确相符；不先将A+H合成int64。
+
+这里的“当时未终态”由 legacy reserve 减 legacy terminal settlement 的精确集合推导，不能使用当前 unfinished 集合。旧未结请求在 cutover 后 finish，opening 仍保留，后续退款依原 charged 边走 allocated 分支；只有明确属于 legacy_settlements 的旧 terminal，后批退款才发行新的 nonrefundable lot。funding wallet source 的 source_id=receipt.id；legacy_receipts.source_id 才指原 credit/redemption/capture 身份，两者不可混用。
 
 ## 6. 按全钱包 seq 的独立重放
 

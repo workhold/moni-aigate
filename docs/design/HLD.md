@@ -453,3 +453,10 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 同一个68表owned来源快照通过七项纯算法覆盖ledger、manual/voucher links与funding、CustomerKey、采购证据、PB及支付stored-verified图。共享表/列只读一次，物理读完、算法执行与coverage独立；ordinary通过精确排除后sandbox为N/A，历史Unproven保留。新增fundinglotscan叶子与第六ScanCompleteSources，仅maintenancescan将真实lease接入；普通服务无新增维护依赖。lot全序、pre/post、basis/epoch与在线writer仍在此关口之后。
 
 详细[冻结合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)、[统一架构](../architecture/README.md)和[验证范围](../verification/complete-source-reader.md)随源码交付；本片无迁移、表关系、权限或在线HTTP装配变更。
+
+
+## 钱包全序声明纯检查（V0-WS）
+
+[冻结合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)将完整重放的前置结构检查独立为 `fundinglotverify.CheckWalletSequenceRows`：七组原始投影，核 seq/genesis/head、原 journal 的 top-xid 与事件声明、全局唯一和 legacy/new 互斥。两种新退款 kind 归一到同一原退款源命名空间，既有 TEXT 身份保持原值。它没有数据库、维护或资金权限，也不把声明守恒当作真实来源和 FIFO 已证。
+
+结果只含 supplied scope、RowsConsistent 和安全计数；无 CoverageComplete 或 proof。现有纯核验节点与运行依赖保持，ReadLease 仍六kind、once位不变；七投影不等于七张完整物理扫描。下步继续原业务源+16表的 lot/桶/分配/逆序退款全钱包重放，再冻结同session的 pre+basis 与 init/post/epoch，不能用本结果批准开账。范围和测试见[验证记录](../verification/wallet-sequence-rows.md)。

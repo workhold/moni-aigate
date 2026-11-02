@@ -119,6 +119,7 @@ flowchart TD
       ProcurementEvidenceCore[fundinglotverify\n23组采购证据与事件三态\n完整reader已接线]
       PeriodicGraphCore[fundinglotverify\n18组PB独立重放与历史缺证\n完整reader已接线]
       SandboxGraphCore[fundinglotverify\n33组支付stored-verified来源图\n完整reader已接线]
+      WalletSequenceCore[fundinglotverify.CheckWalletSequenceRows\n七投影全序 / journal与事件声明\n纯前置检查 / 无运行调用方]
     end
     RefundProto -->|仅已验证capture值的只读桥| PaymentProto
     LedgerReader -->|读取后整份独立核算| LedgerRows
@@ -1057,3 +1058,10 @@ make architecture-check
 全部68表共享100000行/16MiB预算；TEXT/JSONB原bytes、bytea原件、bool每字段1B、native时间envelope每字段32B，单字段65536B，128行显式C序keyset。原时间经timestamptz_send原生8字节/NULL传输并由固定binary plan还原，保留simple protocol且支持year10000；必填NULL/infinity先保留原生值、完成物理EOF，再将不可表示的旧DTO域标input_mismatch而不运行该core；PB保留原生时间交其算法判定。普通模式仍读取23张payment表并精确检查absence/policy/六旁路，合法时仅sandbox为not_applicable。
 
 报告区分PhysicalEOFComplete、七算法执行状态和CoverageComplete；数据mismatch可以与完整执行并存，Unproven或输入资格缺口不能获得完整coverage。范围仅为固定业务来源图，尚无lot全序、protected pre/post、basis、epoch或RuntimeProof。验证和已知边界见[本轮记录](../verification/complete-source-reader.md)，后续按[交付计划](../design/delivery-plan.md)推进。
+
+
+## 钱包全序声明的独立前置检查
+
+[CheckWalletSequenceRows](../../internal/fundinglotverify/wallet_sequence.go)位于现有纯核验模块，模块图单列纯序列检查节点，无运行调用方；没有新增持久关系或运行依赖箭头。七组传入原行投影核序列连续/唯一head、旧新tenant genesis、原journal与event top-xid绑定、全局source唯一及legacy互斥、event_count和四项大整数声明。两种新退款kind共用归一源命名空间；同top-xid多次操作仍分别推进seq。
+
+它只返回 `supplied_wallet_sequence_rows` 范围的 RowsConsistent 和计数，不读数据库、不产生EOF/coverage/proof，也不证明来源资格、金额桶、FIFO或退款分配；相互自洽改写的金额仍可能通过这层。当前68表来源reader与六种ReadLease不变，没有新增资金writer、HTTP/main、角色或迁移。完整lot重放、protected pre/post、109表basis、init/epoch和APP接线仍须逐片冻结实现。规格、独立手算与资源/取消边界见[合同](../../specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md)和[验证](../verification/wallet-sequence-rows.md)。

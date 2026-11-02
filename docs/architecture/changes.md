@@ -2106,3 +2106,63 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `specs/022-self-service-payments/plan.md`
 
 </details>
+
+## 2026-11-02T12:43:39Z · 906cc2485157
+
+冻结并实现V0-WS七投影全钱包序列声明纯检查；核全序与journal/event绑定，无FIFO或维护权威；同步README、HLD/LLD、模块图、legacy开账边界与验证记录，运行依赖及001–022迁移不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1362 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- added `docs/verification/architecture-wallet-sequence.json`
+- added `docs/verification/assets/architecture-wallet-sequence-application.png`
+- added `docs/verification/assets/architecture-wallet-sequence-detail.png`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/wallet-sequence-rows.json`
+- added `docs/verification/wallet-sequence-rows.md`
+- added `internal/fundinglotverify/wallet_sequence.go`
+- added `internal/fundinglotverify/wallet_sequence_check.go`
+- added `internal/fundinglotverify/wallet_sequence_fuzz_test.go`
+- added `internal/fundinglotverify/wallet_sequence_test.go`
+- added `internal/fundinglotverify/wallet_sequence_values.go`
+- modified `specs/022-self-service-payments/c0-sequence-contract.md`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+- added `specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md`
+
+</details>
+
+## 2026-11-02T13:02:55Z · deaafaae628c
+
+V0-WS最终验收与文档收口：专库全仓race/vet/build和前端286项通过；校准维护文档中已实现68表读取与历史隔离CI状态，更新验证证据，代码身份不变且无运行权限或迁移变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1362 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/verification/architecture-wallet-sequence.json`
+- modified `docs/verification/mvp-status.md`
+- modified `docs/verification/wallet-sequence-rows.json`
+- modified `docs/verification/wallet-sequence-rows.md`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+
+</details>
+
+## 2026-11-02T13:04:04Z · 9c34dbb3dbf6
+
+补齐最终机器验收记录的Node TAP 286/286与0失败；复核代码身份、README及架构图未变，仅证据元数据更新
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1362 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/wallet-sequence-rows.json`
+
+</details>

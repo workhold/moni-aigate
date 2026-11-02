@@ -4,6 +4,8 @@
 
 依据：[HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)、[C0 lot 合同](c0-lot-contract.md)、[B2](b2-funding-contract.md)、[023-B](../023-periodic-products/b-integration-contract.md)。此前接受的严格 FIFO、逆原 charged 边退款、历史全部 nonrefundable、显式空库初始化、不做到期或自动偿债保持成立。
 
+纯前置片 [V0-WS](c0-wallet-sequence-rows-contract.md) 已另行冻结：只核所提供七组原行的 seq/genesis/head、原 journal/事件声明和旧新源互斥，不验证 FIFO、分配、真实来源或 epoch 权威，不授权本文生产写入或完整重放。实现与范围见 [验证记录](../../docs/verification/wallet-sequence-rows.md)。
+
 ## 1. 为什么需要全钱包序列
 
 各 lot 的事件链只能证明自己的连续性。时钟可相等、事务可回滚、同一事务可有多次操作；`created_at`、`txid` 和最终 SUM 均不能证明当时是否跳过更老的可用 lot。为每个 tenant 建一条钱包序列，全部合法钱包写都在已经持有该 tenant AVAILABLE 账户行锁后追加。该账户是原有串行化点，不新增 tenant UPDATE/advisory gate。

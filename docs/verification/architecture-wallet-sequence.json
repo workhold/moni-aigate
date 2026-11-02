@@ -1,0 +1,211 @@
+{
+  "date": "2026-11-02",
+  "mermaid_version": "12.2.0",
+  "architecture_sha256": "45439f9659c3765d01861d0d764cacb6ebcc5693d04a319e7749fd119746a362",
+  "sources": [
+    {
+      "file": "docs/architecture/README.md",
+      "sha256": "45439f9659c3765d01861d0d764cacb6ebcc5693d04a319e7749fd119746a362"
+    },
+    {
+      "file": "docs/architecture/funding-lot-catalog.md",
+      "sha256": "15db0a27dc7c1a89d64d527a98b75d54c2bd9668a1f8c0042244bc032d2d0805"
+    },
+    {
+      "file": "README.md",
+      "sha256": "c1f2b57662a425ed93cd0958e5ac321f447309bea215b34a65f5af4dddd9f314"
+    },
+    {
+      "file": "docs/architecture/maintenance-gate.md",
+      "sha256": "06a42ed12ea01a2e3f22693b2876fff3e54f11755b25b4e64907ff551c76ca72"
+    }
+  ],
+  "diagrams": [
+    {
+      "diagram": 1,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 1,
+      "source_sha256": "f6583f121babc8dcf12c431ece0ae09327c2f8a5976dbf8780ada5b74dd1430e"
+    },
+    {
+      "diagram": 2,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 2,
+      "source_sha256": "e58b07371c8e81b98bf058d3a5d2333034b3f60cb5aad896ecfc62d2e8451c01"
+    },
+    {
+      "diagram": 3,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 3,
+      "source_sha256": "157856b796ea982ce037d4b5bbb115c334a00fc79cf4ef1dae9e2504c9191bc2"
+    },
+    {
+      "diagram": 4,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 4,
+      "source_sha256": "53e5facc0f5db286f9b5491e84b736933c5d5f3b8ec048f340b950cbe2874faf"
+    },
+    {
+      "diagram": 5,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 5,
+      "source_sha256": "910cb1343378c46a1035be91607df854227b08ae11d9faf22074fea71e8876bd"
+    },
+    {
+      "diagram": 6,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 6,
+      "source_sha256": "910cb56adbb354839d228c4cfeb92fe29fe21b50e6b6267dc6f80452f214325f"
+    },
+    {
+      "diagram": 7,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 7,
+      "source_sha256": "b75e89096575f5eabe7b8580281fd56c5863710c8e532b7bd342ceb8595538d5"
+    },
+    {
+      "diagram": 8,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 8,
+      "source_sha256": "0e7174b4bea3948eb7dfb7f79d7652e7334e3a5862b39357b4ab49b4726d5928"
+    },
+    {
+      "diagram": 9,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 9,
+      "source_sha256": "1907077fe60b43b34136edfd8d6ae8f2a580b70e4ad834722471d5b81f36eb5a"
+    },
+    {
+      "diagram": 10,
+      "type": "er",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 10,
+      "source_sha256": "bab522da174233677fbf8c6212a447da761f927b58d3adf74b1198f5e1f9c9b6"
+    },
+    {
+      "diagram": 11,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 11,
+      "source_sha256": "0842d5504631294498996fc3556a6a3f05855eece0a352b04b8eb82e9808b2ed"
+    },
+    {
+      "diagram": 12,
+      "type": "sequence",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 12,
+      "source_sha256": "8bb922c6e97629d08d3a9d1afd2a17078d4a23f8c324ff37a1954a9de10e93b7"
+    },
+    {
+      "diagram": 13,
+      "type": "er",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 13,
+      "source_sha256": "c3d9f02e25d09d41c648f70d5fb119c61cfc6e87d1a94733d0444b85d871e64c"
+    },
+    {
+      "diagram": 14,
+      "type": "er",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 14,
+      "source_sha256": "6058378a0ca92cc4a558d2177e8c1716f0efd986623bbc8d8d4b66fa1df45b8d"
+    },
+    {
+      "diagram": 15,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 15,
+      "source_sha256": "09baa1ccd694912d7b2de88bb2c15783d4a6f3022120dfeb57e2ca16898e8d7b"
+    },
+    {
+      "diagram": 16,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/README.md",
+      "source_index": 16,
+      "source_sha256": "7367e279da995f4e8f5d99050e1180b66d1700f8fb79f97e7d5bb309eed09489"
+    },
+    {
+      "diagram": 17,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/funding-lot-catalog.md",
+      "source_index": 1,
+      "source_sha256": "72173ed5dcdfcadfc2a4dc9b5d2a51d5672105ad09aa37697e7abd6ba40e4a8d"
+    },
+    {
+      "diagram": 18,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "README.md",
+      "source_index": 1,
+      "source_sha256": "7b35151d898cebb0b907db5df785b783293a22e5de24244f3c9d599e76c9e16d"
+    },
+    {
+      "diagram": 19,
+      "type": "flowchart-v2",
+      "parsed": true,
+      "rendered": true,
+      "file": "docs/architecture/maintenance-gate.md",
+      "source_index": 1,
+      "source_sha256": "140ed00e35aa166c4294419fe308a9945bdaeef7823d44ab5e7fca74cad8e9e0"
+    }
+  ],
+  "module_image_sha256": "786cec6c42c66b7228609e9ce1f84a02aa5fc9ed66db6fc807255dacac2acff3",
+  "module_size": {
+    "width": 7681,
+    "height": 3780
+  },
+  "detail_image_sha256": "dbc1e6b16f47e6d2e5b4c5e63c483a9daa67958c0c159dbbc92ed10095f338d2",
+  "detail_size": {
+    "width": 2911,
+    "height": 5012
+  },
+  "pass": true,
+  "scope": "Current architecture Mermaid render after adding a pure wallet-sequence node; no runtime dependency added",
+  "module_image": "docs/verification/assets/architecture-wallet-sequence-application.png",
+  "detail_image": "docs/verification/assets/architecture-wallet-sequence-detail.png",
+  "prose_followup": "Maintenance-gate historical reader/CI states calibrated after rendering; all 19 Mermaid source hashes unchanged and independently rechecked."
+}
