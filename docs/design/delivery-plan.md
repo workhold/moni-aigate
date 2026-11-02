@@ -92,3 +92,11 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 本轮整仓发现并修复支付/兑换券共用commerce命令的冗余唯一索引并发冲突；保留完整输入核对与原期限，不新增23505重试。两既有八并发用例以共同屏障复验，结果及main测试数据库清理诊断见[并发集成记录](../verification/commerce-concurrency.md)。全仓结果按最终实际执行更新，不将专项成功当作整轮通过。
 
 最终原仓库`make check`、指定真实专库下`make verify-mvp`均PASS（后者959.665秒，286项前端/全默认Go race/vet/build）；两商业命令并发专项各30轮、billing/payments全包与两main原例另行通过。默认全仓不打开C0独立opt-in，210.188秒维护专项保留独立归属。下一完整reader合同须先解决native时间与共用旧DTO的保真转换、物理列并集和统一资源计数，再实施同session完成矩阵与唯一Finish；不以旧局部proof或空支付DTO代替完整范围。
+
+## 68表完整业务来源读取切片
+
+先冻结[完整读取合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)，再实现fundinglotscan固定68表/七算法、ScanCompleteSources可信模式和唯一Finish。旧五种局部proof不相加，物理EOF与coverage分开；原生坏值不伪造DTO/算法执行。根汇合三路列/游标审查、fake边界、真实PG SQL与真实Plan/Init后同步README/HLD/LLD/统一架构并提交推送。
+
+下一依赖为lot全序及protected pre/post组合，随后basis/epoch与全部APP资金路径；C1/C2/C3、商品、扩展、生产/HA及性能继续保留，不把本业务来源范围标为全目标完成。
+
+下一切片先冻结独立纯Go lot全钱包重放，使用业务源与16张C0表原行、独立big.Int按seq推导FIFO/结算/逆序退款；不接writer或维护authority。随后另冻pre（含109表basis）与post（重扫source+lot）封闭入口。根须先裁决once位图容量、来源全局10万行/16MiB与候选较大重放预算、basis计数/分页/超长值界、未知init提交和v2严格codec，不能用68表摘要代替basis原件。该计划仍是设计工作，不标为已实现。

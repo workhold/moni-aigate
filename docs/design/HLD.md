@@ -437,13 +437,19 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 
 人工/券覆盖共同入账、批次/兑换/撤销、commerce终态、精确两行journal、audit/outbox；Key覆盖R/预占/结算/消费退款及held/spent，退款不减spent，多pending退款允许暂时超过最终可退额。payment四kind仅共同词法/主键/FK检查，完整支付图未授coverage。保留旧ledger xid/time前置和SourceLinks规范金额资格，不从当前角色或独立clock_timestamp倒推历史授权/顺序。库级API无迁移、HTTP/main或资金写权限变更。统一链路与当前边界见[维护架构](../architecture/maintenance-gate.md)，专项与未执行真实PG的状态见[验证](../verification/funding-financial-graph.md)。
 
-完整pre/post phase仍须同session纳入采购evidence/事件、PB独立原始图、完整sandbox及跨域关系，再冻结完整coverage与唯一Finish；旧分kind局部ScanProof不能拼成全源proof。basis同pre快照读取、protected init/post replay/epoch及APP接线保持后续串行依赖。
+同session的采购evidence/事件、PB独立原始图、sandbox业务来源及唯一Finish现由下节68表reader完成；旧分kind局部ScanProof不能拼成该结果。lot全序与protected pre/post phase、basis同pre快照读取、epoch及APP资金接线仍是后续串行依赖。
 
 
 ## 采购证据、周期预算与支付来源的独立核验
 
 根冻结的[采购证据合同](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md)、[PB合同](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md)与[支付来源合同](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md)分别实现23组、18组、33组原始行的纯Go核验。采购内部从同raw实际重跑原五core并补evidence/事件/成本/账户来源；PB独立从业务起点重放control序列和三层投影；支付独立解析P1/v1 canonical并核stored-verified原件到唯一capture资金效果。所有确定矛盾保留mismatch，真实历史缺证按封闭行级条件进入Unproven，执行失败返回零结果。
 
-本片不增加数据库关系、角色权限、业务写入、生产CLI或RuntimeProof。公共PB owner Verifier和现五类维护reader保持原范围，新增纯算法未替代同session读取。后续根需冻结物理表固定列并集、模式/phase、共享预算、完整EOF与唯一Finish，再实现完整七域组合；basis、protected init/post replay及epoch仍串行在后。旧21表资金专项的真实PG补验与失败修正另存[本轮记录](../verification/maintenance-financial-postgres.md)，不将历史SKIP升级成通过。模块依赖和状态以[统一架构](../architecture/README.md)为准。
+本片不增加数据库关系、角色权限、业务写入、生产CLI或RuntimeProof。公共PB owner Verifier和现五类维护reader保持原范围，新增纯算法通过第六kind完成同session读取，不改变旧五入口scope。物理列并集、可信模式、共享预算、完整EOF及七业务来源算法的唯一Finish现由下节第六kind接线；lot全序、protected pre/post、basis及epoch仍串行在后。旧21表资金专项的真实PG补验与失败修正另存[本轮记录](../verification/maintenance-financial-postgres.md)，不将历史SKIP升级成通过。模块依赖和状态以[统一架构](../architecture/README.md)为准。
 
 商业命令的并发重放仍以原operation及完整输入为边界。支付/兑换券命令占位需要覆盖同表所有含operation的唯一索引，冲突后核对原命令并只返回原终态，不能重做资金效果或把不同输入当同一次调用；真实失败、最小修复和验证另见[并发记录](../verification/commerce-concurrency.md)。没有新增服务或权限边界。
+
+## 68表完整业务来源读取
+
+同一个68表owned来源快照通过七项纯算法覆盖ledger、manual/voucher links与funding、CustomerKey、采购证据、PB及支付stored-verified图。共享表/列只读一次，物理读完、算法执行与coverage独立；ordinary通过精确排除后sandbox为N/A，历史Unproven保留。新增fundinglotscan叶子与第六ScanCompleteSources，仅maintenancescan将真实lease接入；普通服务无新增维护依赖。lot全序、pre/post、basis/epoch与在线writer仍在此关口之后。
+
+详细[冻结合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)、[统一架构](../architecture/README.md)和[验证范围](../verification/complete-source-reader.md)随源码交付；本片无迁移、表关系、权限或在线HTTP装配变更。

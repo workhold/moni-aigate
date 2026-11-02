@@ -1,6 +1,6 @@
 # 022-C0-V：独立来源 lot 核验与全钱包重放合同（审查候选）
 
-2026-11-01。**完整核验器仍为精确设计候选，未分配迁移号、未接入资金或普通 main。根已冻结§12的V0-L纯账本行检查及另册[V0-R同RR账本reader](c0-ledger-reader-contract.md)；两者已实现并通过各自[纯层](../../docs/verification/funding-ledger-rows.md)/[实际PG读取](../../docs/verification/funding-ledger-reader.md)专项。T2真实Permit、T3 ReadLease与ledger/PB/manual-voucher/sandbox直接关联/采购五个局部reader已分别冻结实现；采购目前十九表五摘要，见[历史读取合同](c0-procurement-history-read-contract.md)。这些局部范围不升级本候选的完整来源/lot重放与证明组合，后者仍未冻结、未实现。** 本文细化 [lot 合同](c0-lot-contract.md)、[全序合同](c0-sequence-contract.md)、[生产 DDL 候选](c0-production-schema.sql)、[列 ACL 候选](c0-production-permissions.sql)及[维护与 proof v2](c0-maintenance-contract.md)。[纯分配算法](../../internal/billing/lot_plan.go)已有实现，但不是本核验器的正确性来源。迁移清单接缝以已冻结的 [C0-S](c0-snapshot-contract.md) 为准；旧全序稿中的 `SnapshotRequirement` 示意参数不属于当前 `migrations.VerifySnapshotTx(ctx,tx)` 签名。
+2026-11-01。**完整核验器仍为精确设计候选，未分配迁移号、未接入资金或普通 main。根已冻结§12的V0-L纯账本行检查及另册[V0-R同RR账本reader](c0-ledger-reader-contract.md)；两者已实现并通过各自[纯层](../../docs/verification/funding-ledger-rows.md)/[实际PG读取](../../docs/verification/funding-ledger-reader.md)专项。T2真实Permit、T3 ReadLease与ledger/PB/manual-voucher/sandbox直接关联/采购五个局部reader已分别冻结实现；旧采购入口保持十九表五摘要；第六kind已按[68表合同](c0-complete-source-reader-contract.md)组合采购/PB/支付来源等七项业务算法。这些结果不升级本候选的lot全序/pre-post/basis/epoch证明组合，后者仍未冻结、未实现。** 本文细化 [lot 合同](c0-lot-contract.md)、[全序合同](c0-sequence-contract.md)、[生产 DDL 候选](c0-production-schema.sql)、[列 ACL 候选](c0-production-permissions.sql)及[维护与 proof v2](c0-maintenance-contract.md)。[纯分配算法](../../internal/billing/lot_plan.go)已有实现，但不是本核验器的正确性来源。迁移清单接缝以已冻结的 [C0-S](c0-snapshot-contract.md) 为准；旧全序稿中的 `SnapshotRequirement` 示意参数不属于当前 `migrations.VerifySnapshotTx(ctx,tx)` 签名。
 
 依据 [HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)与 [023-B verifier](../023-periodic-products/b-verifier-contract.md)。本片没有原路退款、拒付、媒体收费或多活的实施授权；核验成功不发出模型/支付调用许可，不修账或重建来源。
 
@@ -203,7 +203,7 @@ func scanWalletLotsTx(context.Context, *lotReadSession) (LotCheck, *lotScanCompl
 
 三态裁决仍为§3：有确定mismatch优先mismatch，coverage另算；无mismatch但有真正数据证据缺口为indeterminate；全部为零且reader完成才balanced。运行错误没有第四种部分report。public便利wrapper只在同RR COMMIT确认后返回成功report；caller-owned core不拥有事务，不将成功读取误称COMMIT确认。报告允许暴露的只有固定phase/scope/as-of和安全计数，无行ID或原文。
 
-当前PB[公共Verifier](../../internal/periodicbudget/verifier.go)自己Begin/Commit，且对六PB表要求actual LOGIN实际owner；它不是actual APP的同RR入口。后续必须另冻caller-owned独立core及维护/APP受审身份适配，不能削弱原public owner规则、临时SET ROLE或复制旧公开report来填本域。在该接缝和完整采购/B/Key读图未实现前，全源组合器仍不得实施通过路径。
+当前PB[公共Verifier](../../internal/periodicbudget/verifier.go)自己Begin/Commit，且对六PB表要求actual LOGIN实际owner；它不是actual APP的同RR入口。PB独立raw core与维护身份适配、采购/B/Key业务读图现已由[68表第六kind](c0-complete-source-reader-contract.md)接线；原public owner规则不变。该业务来源结果不授lot全序/pre-post/basis/epoch资格，完整phase组合及APP身份适配仍须另冻，不能复制旧公开report或削弱原规则。
 
 ## 11. 原始数据读取与本地证据边界（根审候选）
 

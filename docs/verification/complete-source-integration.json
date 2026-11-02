@@ -1,0 +1,296 @@
+{
+  "date": "2026-11-02",
+  "base_commit": "443b79da41e18c2b0e02c0e9e56a1d534817c4db",
+  "scope": "68 physical business source tables, seven fixed algorithms, sixth maintenance lease kind",
+  "source_sha256": {
+    "internal/fundinglotscan/binding.go": "ec38b3131bf130c58e81ec788889d5323fc630b37beb80ce2b6432cec0e5b82a",
+    "internal/fundinglotscan/checks.go": "8f388b6b1a41373bccdb9a6416e7b87a8db1f07f31e9c3612cfd396d114574ab",
+    "internal/fundinglotscan/projection_funding.go": "0eaf7726b68e2034bc8de2912ad283c54a0de59e5fced55ae16b521c98fa5949",
+    "internal/fundinglotscan/projection_periodic.go": "c96f492a6f5e2fa0a0c33608de16d3caec912c4fbed9d29a0c6a7d53a238661d",
+    "internal/fundinglotscan/projection_periodic_test.go": "b34d0faea288285eb33b1b2d5923210d5b124226f68236b032f7a87d7da4ca2e",
+    "internal/fundinglotscan/projection_procurement.go": "b4f27391f07cb0f891f06608efb0159bb8467264b35fd4db9fe0e577f713de10",
+    "internal/fundinglotscan/projection_procurement_test.go": "6993b1fc38d22cf858c6ff150f3e2f5c0f3d825a95d997be9b7ccc0e9b431dd6",
+    "internal/fundinglotscan/projection_sandbox.go": "cb02504dc9c9ba4d12f23fbf840babf9e12ab2da5233ebc1ad3b8758c50df58d",
+    "internal/fundinglotscan/projection_sandbox_test.go": "dad9d784860232c4d8d1f571aa4fb9bc7beff630261767996b9a655732cf3497",
+    "internal/fundinglotscan/reader.go": "1db1a148e3cfebe43e52ce23cf24887b215676f8da5b9d56286be519380aed31",
+    "internal/fundinglotscan/reader_postgres_test.go": "ee68f3dcec8e88bf56ca5f573976e845a5bee8d92bf311779a00732f7f1bb51a",
+    "internal/fundinglotscan/reader_test.go": "0217fae8e1c820082831f142fd367a5f063ed3767e8b3c1674ed0a20a691b41a",
+    "internal/fundinglotscan/types.go": "3ad563644d8fc79fa40b367d27d151003621c15c66ac59e075177c994198cf9e",
+    "internal/fundinglotverify/customer_key_graph.go": "99b7cb007ee6320c747909c9222bc28fc9a69a1680f99ef1a2c36d706212bc45",
+    "internal/fundinglotverify/customer_key_graph_test.go": "27c028f45744489ae530bf9b0c83c3cb84063725d0e6183b01be66b9b7ce9b2d",
+    "internal/fundinglotverify/funding_graph_rows.go": "15d63f16a54b95f1091c91a60e2aca05286a81efb8118983ded8a060f3f0ddd3",
+    "internal/fundinglotverify/funding_source_graph.go": "5823a1fb0a9667b936bf1d5f2f96b255a1672d6aab6fae482d2316e083c4b894",
+    "internal/fundinglotverify/funding_source_graph_checks.go": "8aa18cfe1d63f6982d9c516e8e4579be223063ba3f61d49a2fa83b5cada10dea",
+    "internal/fundinglotverify/funding_source_graph_test.go": "f7289d5a54a729a49252db42ad1268a0ad1c94b5f3babf6ac58b64cae249d83c",
+    "internal/fundinglotverify/funding_sources.go": "d606018c3c2991fa4ad9ca3b112dc2a39c7c800a367f734fe9052d0cce3d7a04",
+    "internal/fundinglotverify/funding_sources_test.go": "aa04b266f2de1f70c80c4f1f70bebca59c731788d1511c270f874f4cb6bc3d2f",
+    "internal/fundinglotverify/ledger.go": "dcccbb5f02e07f685429140461e5d6ff32df5eed08a9c44556e89892cb74f74a",
+    "internal/fundinglotverify/ledger_fuzz_test.go": "2d540d2c2979111307a423817e241ee0dfe29b6971064a6c3f7b3577ffcbdacb",
+    "internal/fundinglotverify/ledger_test.go": "67adf812a9b3f5dc600855e02e9576fff0b013354a392499b44f981d11846197",
+    "internal/fundinglotverify/periodic_budget_graph.go": "495c91a24d506951d8a2cea1c6de050ea5a7c4fd6c2e06e10a0df3465e5bc695",
+    "internal/fundinglotverify/periodic_budget_graph_commands.go": "a6a36a7cc7406894b03abe6544e513f632f0157ba9a4e15f00f032954a20d8db",
+    "internal/fundinglotverify/periodic_budget_graph_history_test.go": "99c8627b4242169c7aea3b37e9a2233f6c3f7b9bbd201d706ef9bdcdcb0680f9",
+    "internal/fundinglotverify/periodic_budget_graph_index.go": "57926f5aad6334fa752fe70d77f76c5c70bde2d6d7099b61aca39439a693843c",
+    "internal/fundinglotverify/periodic_budget_graph_replay.go": "38af94dc57f7ff9f0d2171611a872f2a5cf8b81be4e98099cccbc870411ac26b",
+    "internal/fundinglotverify/periodic_budget_graph_sources.go": "a9121942fd78340dea8c4fdca874a967b1930d1537f027e7917aaf8f4049dc0f",
+    "internal/fundinglotverify/periodic_budget_graph_test.go": "af077d07b6659f1bc65460696cd6ab5a8ae86bf46cf0bf1412addae44848e2c6",
+    "internal/fundinglotverify/periodic_budget_graph_values.go": "00affdd4a6f2ebde4e7df19bde425b2c1ef2bd6eb89bee98ad6d65a50efc1b4d",
+    "internal/fundinglotverify/procurement_approval.go": "af7a5936c1be34c8569895634e82c0df70cb05dc179dc74a109abe34cd569ed9",
+    "internal/fundinglotverify/procurement_approval_test.go": "58965c8fa8d4cad81bd089554f8b430b8fe76352fc7a8c033b2aa5ed6cfd1de6",
+    "internal/fundinglotverify/procurement_attempt.go": "5eea5992ecd37ff1fc228f829797f2f9af7aaf15d48f994096404f3d32476a5d",
+    "internal/fundinglotverify/procurement_attempt_test.go": "ba251af0fe256fa5e4eabec02b60b2c3ab251a4b8a7b155d7bc1016b5734f562",
+    "internal/fundinglotverify/procurement_budget.go": "475da6e8e62554f8608a178691d2351fe76bbe3bf772d4e80fbea88e9beaa136",
+    "internal/fundinglotverify/procurement_budget_test.go": "84a7820c54444e20837d0722f273ed3bce88a83e263fad67bb52618a3f3e4f4a",
+    "internal/fundinglotverify/procurement_command.go": "b43a488cce5c742bf249ac86ffb2bd01fd44e5ed2834824dd3dce9a303ffcca4",
+    "internal/fundinglotverify/procurement_command_test.go": "59cb4eeaee07becc1f03f9891345621bd613517f28c79010ca0dc6a6bf501a7c",
+    "internal/fundinglotverify/procurement_cost_journal.go": "e29f9c8d01681b2fce9c5be87f15e18d6fb8179d7e1a639698744fd5de9a904e",
+    "internal/fundinglotverify/procurement_cost_journal_test.go": "c4f8ec6b85111cddf49b089e646a5ce95d63698dcd1f7cc1946aa718b28a7c62",
+    "internal/fundinglotverify/procurement_evidence_graph.go": "0d89b0741054e04c801b0db5b528c7080f6b69cf07a5e97aaecb67b84c553da9",
+    "internal/fundinglotverify/procurement_evidence_graph_accounts.go": "01c28f99a19f79c61fe8a923e17c8d8aa56242fc8f03d5bdd0c19cac918423f8",
+    "internal/fundinglotverify/procurement_evidence_graph_events.go": "56a684d5ad7d2686b11e05d034074cfe22c26546c60602b6f977bacea2cd7f5d",
+    "internal/fundinglotverify/procurement_evidence_graph_evidence.go": "cb1513b5dcecc6031c6919b7c818c5b98555857c9e18eab0b0914b1d904beaf9",
+    "internal/fundinglotverify/procurement_evidence_graph_test.go": "e4996c8a55c079506254ef15b8579d1b1206060d3f0fae5ff6d615ad8f876f1d",
+    "internal/fundinglotverify/sandbox_capture_links.go": "826b94c04b653603eb7e136610c642c0d1fab995d91e883c740783c8f1e90aaf",
+    "internal/fundinglotverify/sandbox_capture_links_test.go": "73d2a011bd34f053969d4aedea480745239698323c052653e8f9f330218c4433",
+    "internal/fundinglotverify/sandbox_source_graph.go": "67ed4b5a4abd0958e018791b5b4b4f9f12762cef8d4a58cdd14ceb495b52153d",
+    "internal/fundinglotverify/sandbox_source_graph_commerce.go": "93e6baef1daa2c0c44e03f2cb5a6cf801134f34d1d67a0e9d8633401db0cefa7",
+    "internal/fundinglotverify/sandbox_source_graph_evidence.go": "9887d29c375002d6d2dbfbd4fd73294c4f5b710d99f974cc151fa7864c6c0930",
+    "internal/fundinglotverify/sandbox_source_graph_funding.go": "55922ccf442dd6af29482ff4426fa7b82182673a3a86f8cc879cddb38fe0fce8",
+    "internal/fundinglotverify/sandbox_source_graph_test.go": "ae70df350c0870ade6ef0eaf402ba73f58956b452b091c465d817bac9ac89951",
+    "internal/fundinglotverify/sandbox_source_graph_wire.go": "607888962a911195ab9b4c568771a40a38dcbb9e84d9294dce17933f9af48e7d",
+    "internal/maintenancescan/complete_sources.go": "aeb626c5de26df646208c16b1baf80fa1c7603036cda9a6da31ce2a7a6b8c933",
+    "internal/maintenancescan/complete_sources_test.go": "cd252177bb9925fe8634252cdefe50022c64a53ec18116b4a902a816f8a51397",
+    "internal/maintenancetrust/lease.go": "895909cfa76cc46452e77baf7d6471c48b34917a82a6b3c417827469e8baef2d",
+    "internal/maintenancetrust/lease_complete_source_integration_test.go": "daa2a2e459e59f3766339182551d32a49f383de0c6e06aa5ba791749b3a5472d",
+    "internal/maintenancetrust/lease_source_mode.go": "95a08f0c678af034e9fae5cac0eb358682a6a0b293825b9d5b0ec7e529c4ce3c",
+    "internal/maintenancetrust/lease_source_mode_test.go": "6d9e6bec74a0d4487d2e2debc6faa372d77cacdfadc8b3b65f13b3c790f0b993",
+    "internal/maintenancetrust/lease_test.go": "510ccf312dcd0bfeb8f3d63194554cf0003ce3e97ed5775436b27c56a4c8ce95",
+    "scripts/maintenance-scan-qa/complete_source_edges_test.go": "e4b6958c79df487895919f83fe3d6149b3f057ec361492f2afa005aee7b9500a",
+    "scripts/maintenance-scan-qa/maintenance_integration_test.go": "4a308e7bfbea1bc494e85a39de5dee658d251d9c61dfb25cbfa8251ac471f51d",
+    "specs/022-self-service-payments/c0-complete-source-reader-contract.md": "e4dfa312b2adee82ef55e15f42abd85c9f4297595013e7fc37fe9ed606933e79"
+  },
+  "verification": {
+    "make_check_real_seconds": 6.33,
+    "make_verify_mvp_real_seconds": 966.88,
+    "frontend_tests": 286,
+    "frontend_failed": 0,
+    "go_race_packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+        "seconds": 6.02
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alerts",
+        "seconds": 15.802
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+        "seconds": 2.023
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/billing",
+        "seconds": 136.819
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/catalog",
+        "seconds": 18.497
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/config",
+        "seconds": 1.469
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "seconds": 46.756
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+        "seconds": 2.465
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+        "seconds": 2.542
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/identity",
+        "seconds": 220.708
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+        "seconds": 3.49
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+        "seconds": 1.701
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancescan",
+        "seconds": 10.589
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "seconds": 15.255
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/metering",
+        "seconds": 1.819
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+        "seconds": 6.249
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/operations",
+        "seconds": 32.009
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+        "seconds": 1.76
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+        "seconds": 2.32
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+        "seconds": 2.035
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+        "seconds": 4.578
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/payments",
+        "seconds": 29.19
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+        "seconds": 25.727
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+        "seconds": 1.654
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+        "seconds": 34.602
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/pricing",
+        "seconds": 5.637
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+        "seconds": 1.623
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/productvalue",
+        "seconds": 1.709
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/provider",
+        "seconds": 3.188
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+        "seconds": 1.72
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/routing",
+        "seconds": 1.707
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/security",
+        "seconds": 1.609
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/server",
+        "seconds": 271.02
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+        "seconds": 1.584
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+        "seconds": 2.641
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/migrations",
+        "seconds": 3.105
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+        "seconds": 2.214
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+        "seconds": 2.508
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+        "seconds": 2.58
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "seconds": 10.467
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/online-dependency-qa",
+        "seconds": 1.791
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+        "seconds": 2.103
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+        "seconds": 5.158
+      }
+    ],
+    "native_sql_subtests": 12,
+    "ordinary_authority_plan_init_race_seconds": 14.721,
+    "maintenance_full_batch_seconds": 261.557,
+    "maintenance_final_plan_race_seconds": 28.03,
+    "full_batch_final_success": false,
+    "all_changed_scenarios_have_final_production_pass_evidence": true,
+    "c0_opt_in_not_enabled_by_default_verify": true
+  },
+  "local_log_evidence": {
+    "core_race": {
+      "sha256": "15aa91c49d025808f1a462b773b5ec5d466030fe753f50a6180d59fdad1f45aa",
+      "result": "pass"
+    },
+    "native_sql_12": {
+      "sha256": "f074855c3c721821e6675aab42a0a36852360fdff519ab41542281933982f339",
+      "result": "pass"
+    },
+    "maintenance_full_batch": {
+      "sha256": "59fe099795f3d42fdef15d03f37460726d31744945dfc5408f2e5c69d31f6532",
+      "result": "failed QA Plan expected consistent instead of original balanced; all other scenarios passed"
+    },
+    "plan_recheck_unknown_installation_failure": {
+      "sha256": "bd07f588f6a3a2bfde78d185daaa78ab4d24f1b456cf4730f309abb664da11dc",
+      "result": "failed installation precondition; original diagnostic had no category; cause unconfirmed"
+    },
+    "plan_final": {
+      "sha256": "a18fd4e24b28637959bdf695b3c7a4794b3a4325105ddd07020720ce539d62aa",
+      "result": "pass after QA expectation correction and safe diagnostic only"
+    },
+    "check": {
+      "sha256": "86146545f3072c25ba19e77706b8126d98008f961ea3a1c1837912c5cacc8ca9",
+      "result": "pass"
+    },
+    "verify_mvp": {
+      "sha256": "7221a7eb4f3596db7cfe67bcf0d06206f796a8c0e90ff613cbf1abf8161c165b",
+      "result": "pass"
+    }
+  },
+  "boundaries": [
+    "Business source coverage only; no lot replay, protected pre/post, basis, epoch or RuntimeProof.",
+    "No migration, grants, production financial write, main or HTTP change.",
+    "No real provider, production payment, container, 1Panel or HA qualification.",
+    "Native time uses fixed timestamptz_send and pgtype binary decoding; original simple protocol and lease codecs unchanged.",
+    "Fixture cleanup is exact and per-test; preview database and shared instance configuration remain outside this test scope."
+  ]
+}

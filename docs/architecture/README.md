@@ -102,6 +102,7 @@ flowchart TD
     LedgerReader[billing ledger reader\n原RR入口 / 无权威raw facts core\n三表完整EOF]
     FundingSourceReader[billing source-link reader\n人工核款 / voucher / receipt raw facts\n三表完整C序分页与EOF]
     FinancialReader[billing funding financial reader\n21表同session owned图 / 四项局部摘要]
+    CompleteReader[fundinglotscan\n68表一次读取 / 共享预算与私有EOF\n七项算法 / native资格与ordinary排除]
     SandboxCaptureReader[billing sandbox-capture direct-link reader\nfunding_receipts + payment_captures\n两表完整C序分页与EOF]
     ProcurementReader[billing procurement history reader\n19 relations / shared budget / complete C-order EOF]
     subgraph PureModules[纯算法/核验基础层：不接入在线资金写入或媒体运行链]
@@ -115,9 +116,9 @@ flowchart TD
       ProcurementCommandCore[fundinglotverify\ncommand / binding / observation / audit双向核验\n历史快照 / 无authority]
       ProcurementJournalCore[fundinglotverify\ncost proposal / correction / audit / outbox双向核验\n成本消息 / 无authority]
       FundingGraphCore[fundinglotverify\n人工券来源图 / CustomerKey资金图\n21表reader已接线]
-      ProcurementEvidenceCore[fundinglotverify\n23组采购证据与事件三态\n完整reader尚未接线]
-      PeriodicGraphCore[fundinglotverify\n18组PB独立重放与历史缺证\n完整reader尚未接线]
-      SandboxGraphCore[fundinglotverify\n33组支付stored-verified来源图\n完整reader尚未接线]
+      ProcurementEvidenceCore[fundinglotverify\n23组采购证据与事件三态\n完整reader已接线]
+      PeriodicGraphCore[fundinglotverify\n18组PB独立重放与历史缺证\n完整reader已接线]
+      SandboxGraphCore[fundinglotverify\n33组支付stored-verified来源图\n完整reader已接线]
     end
     RefundProto -->|仅已验证capture值的只读桥| PaymentProto
     LedgerReader -->|读取后整份独立核算| LedgerRows
@@ -131,6 +132,13 @@ flowchart TD
     FinancialReader -->|共用账本原始行| LedgerRows
     FinancialReader -->|来源与Key独立关系| FundingGraphCore
     FinancialReader -->|21表完整EOF / 原lease共用预算| PG
+    MaintenanceScan -->|第六kind / authenticated SourceMode / 唯一Finish| CompleteReader
+    CompleteReader -->|固定68表列并集 / 同rawTx| PG
+    CompleteReader --> LedgerRows
+    CompleteReader --> FundingGraphCore
+    CompleteReader --> ProcurementEvidenceCore
+    CompleteReader --> PeriodicGraphCore
+    CompleteReader --> SandboxGraphCore
     ProcurementEvidenceCore -->|同raw固定重跑五项局部关系| ProcurementBudgetCore
     ProcurementEvidenceCore --> ProcurementAttemptCore
     ProcurementEvidenceCore --> ProcurementApprovalCore
@@ -645,7 +653,7 @@ ledger与PB维护入口是[`maintenancescan.VerifyLedgerMaintenance`](../../inte
 
 领域raw-facts接口不接受或发行authority；维护入口不接受外部provider或预计算通过位，假的query只能生成无权威局部描述，不能铸造维护结果。原三类历史缺证继续indeterminate，原public Verifier的独立LOGIN/owner/history/RRRO/SET/Commit规则未放宽。资源profile限制客户端返回与保留的逻辑输入，不证明PG排序/CTE/array_agg内存或Go RSS界。
 
-这五类扫描的局部结果与ScanProof均不授全来源`CoverageComplete`、资金写入或生产运行权，不能成为init/basis/epoch就绪条件。人工/券与Key局部原始图已接入同session；采购evidence/完整事件、PB独立图、完整支付B来源与lot仍需独立逐列读取、双向sweep、coverage清单与固定完整组合器；sandbox reader只核两个表的直接关联，采购reader只核十九表内五类局部关系，仍未覆盖evidence/metering、完整事件重放及PB/客户资金交叉图，也未减少完整来源未覆盖数。basis、epoch、封闭writer和生产维护CLI尚未完成。ReadLease历史范围见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)，人工/券来源关联见[验证](../verification/funding-source-links.md)，sandbox窄片与采购预算/attempt/双审关系分别见[独立记录](../verification/sandbox-capture-links.md)和[采购状态记录](../verification/procurement-budget-maintenance.md)，彼此不沿用T2/T3历史通过计数。
+旧五类扫描的局部结果与ScanProof不授全来源CoverageComplete、资金写入或生产运行权，不能拼成init/basis/epoch就绪条件。第六类[68表组合](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)现已从同raw读取采购evidence/事件、PB与支付来源并运行七算法；旧sandbox两表和采购十九表入口的局部scope保持。lot全序、protected pre/post、basis、epoch、封闭writer和生产维护CLI尚未完成。历史ReadLease及局部验证保留[T3记录](../verification/maintenance-read-lease.md)的版本范围，新组合另见[本轮记录](../verification/complete-source-reader.md)。
 
 ### 资金来源、退款与后续经营设计
 
@@ -895,7 +903,7 @@ flowchart TB
     Catalog[C0 静态对象和最小权限\n固定profile expected / 同RR checker已实现]
     Gate[C0-T0/T1 双锁与私有单次RR\nONLY125与固定catalog stage]
     Permit[C0-T2 维护Permit已实现\n实际身份与完整前驱]
-    Lease[C0-T3 ReadLease与五类扫描已实现\n资金21表四摘要 / ledger / PB / sandbox直接关联 / 采购五摘要\n不授全源coverage]
+    Lease[C0-T3 ReadLease与六类扫描已实现\n旧五类局部扫描 / 新68表七算法组合\n仅业务来源coverage]
     Replay[C0 独立全源与来源重放\n不调用写侧planner或SQL谓词自证]
     Init[C0 basis与开账切换\n精确旧集合、提交未知只查原ID]
     Online[C0 全资金路径接线\n来源、预占、收尾、消费退款]
@@ -939,7 +947,7 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 商业闭环 | 已实现，限定本地验收 | 人工双人入账 → 客户授权/Key → 六协议调用 → 预占/结算 → 报表/成本/退款；[014](../verification/mvp-release-qualification.md) |
 | 模型/渠道经营 | 已实现 | 不可变版本、三格式发现、1..32 成员池、跨渠道整批启停；[011](../verification/model-discovery.md)、[012](../verification/credential-pools.md)、[013](../verification/channel-operations.md) |
 | Key 经营 | 已实现 | 来源策略、动态运行限额、模型/地域/预算/期限三版本独立编辑；[017 验证](../verification/key-configuration.md) |
-| 来源追踪核验基础 | C0部分依赖已实现，尚未进入完整资金链 | 纯分配/账本行检查、[离线metadata候选](../verification/funding-lot-descriptor.md)、[同RR完整账本读取](../verification/funding-ledger-reader.md)、[正式静态checker](funding-lot-catalog.md)、[维护Gate与读取租约](maintenance-gate.md)；T3真实ReadLease及五类扫描已实现；资金kind可选择21表同session raw图，报告ledger/人工券source links/完整人工券图/Key资金图四摘要，旧三表入口保持兼容。采购reader现在在同一ScanProcurement内比对十九张固定关系表，产生预算、attempt绑定/报价、成本双审、命令/观察、成本审计/消息五个局部摘要，不验证evidence/metering、完整事件重放、PB/客户资金交叉关系、供应商账单或完整采购事实图；sandbox reader也不检查capture完整证据/账务图。两者都不减少full-source coverage debt；合同与验证边界见[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)与[状态记录](../verification/procurement-budget-maintenance.md)，以及[sandbox合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)与[状态记录](../verification/sandbox-capture-links.md)。全来源scanner/组合、lot核验、basis/epoch及全资金接线仍后续，PG安装profile/生产推广另验 |
+| 来源追踪核验基础 | C0业务来源完整读取已接线，资金开账仍后续 | [68表合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)与[实现](../../internal/fundinglotscan/reader.go)：同lease扫描固定列并集，七算法、ordinary精确排除、原生时间资格、共享100000行/16MiB；[维护入口](../../internal/maintenancescan/complete_sources.go)绑定原Permit与第六kind。旧五局部scope不变；物理EOF与业务coverage独立，Unproven不授资格。lot全序、pre/post、basis/epoch、线上资金接线和生产CLI仍后续；[本轮验收](../verification/complete-source-reader.md) |
 | 商品价值/期限纯算法 | C-V已实现，无生产接线 | [productvalue](../../internal/productvalue/value.go)精确端点价值差、原本金分区索引归因、UTC6原锚点月/半开term；[合同与专项](../../specs/023-periodic-products/c-value-contract.md)，无购买/权益发放/退款授权 |
 | 上游模型成本 | 已实现 | 每渠道精确上游模型的输入/输出单价、生效版本、每attempt快照及unknown；受控采购更正双人审批，尚无自动供应商账单同步 |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
@@ -1024,7 +1032,7 @@ make architecture-check
 
 ## 采购、PB与支付来源纯图：实现与读取分层
 
-2026-11-02继续补齐独立来源算法，三个新增核心只读取传入原行，尚无完整同session reader或线上调用方。模块图同时补足已实现的21表资金reader与人工券/Key核心，避免将库级算法误画成完整维护装配。
+2026-11-02先补齐三个仅读取传入原行的独立来源算法，随后接通下节的68表同session reader；均无线上调用方。模块图同时展示21表局部reader、68表组合reader与纯算法的依赖，避免将库级算法误画成在线资金装配。
 
 | 核心入口 | 原始依赖 | 主要检查与历史边界 |
 | --- | --- | --- |
@@ -1032,10 +1040,20 @@ make architecture-check
 | [CheckPeriodicBudgetGraph](../../internal/fundinglotverify/periodic_budget_graph.go) | 18组PB与业务来源原行 | control事件有序重放、allocation/window版本、三层投影、配置/指纹/audit/snapshot；保留三类legacy/prefix缺证，不调用现公共SQL verifier作oracle |
 | [CheckSandboxSourceGraph](../../internal/fundinglotverify/sandbox_source_graph.go) | 23张payment表与10张共用表 | stored-verified原件、canonical、SKU链、query/evidence/review到完整资金效果的双向图；不从字面v1 proof构造真实安装认证 |
 
-精确DTO、资源、三态、合法多事件与故障边界见[采购合同](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md)、[PB合同](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md)、[支付合同](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md)。这三个输入组数不能直接相加当物理读取表数；后续root reader必须对重叠表取固定列并集，只读一次并共用源预算。
+精确DTO、资源、三态、合法多事件与故障边界见[采购合同](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md)、[PB合同](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md)、[支付合同](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md)。这三个输入组数不能直接相加当物理读取表数；下节68表reader已对重叠表取固定列并集，只读一次并共用源预算。
 
-原十九表采购reader、PB公共owner Verifier与两表sandbox关联reader保持scope；新纯核心不隐式扩展它们。完整七域、ordinary受审排除、pre/post phase与唯一Finish仍是下一关；basis/epoch/资金writer/生产维护CLI没有开放。实现详情与真实数据库补验见[维护架构](maintenance-gate.md)和[补验记录](../verification/maintenance-financial-postgres.md)。README精简维护内部细节并新增[贡献指南](../../CONTRIBUTING.md)，保留特性、协议、使用、部署、许可证与验收边界。
+原十九表采购reader、PB公共owner Verifier与两表sandbox关联reader保持scope；新核心由下节第六kind组合，不隐式扩展旧入口。业务来源七算法、ordinary排除与唯一Finish已接线；lot全序、pre/post、basis/epoch、资金writer和生产维护CLI仍后续。旧范围真实数据库补验见[原记录](../verification/maintenance-financial-postgres.md)，新组合另见[本轮记录](../verification/complete-source-reader.md)。README保留特性、协议、使用、部署、许可证与验收边界，贡献流程见[指南](../../CONTRIBUTING.md)。
 
 本轮还修复已有商业命令的并发幂等占位：支付和兑换券共用的`commerce_commands`有两个含operation的唯一索引，两个INSERT均使用无target的`ON CONFLICT DO NOTHING`，随后仍逐项核对原命令身份、输入指纹与terminal。没有新表、迁移、权限、通用重试或资金链路变化；原5秒总预算、3秒锁期限与未知提交不重放保持。既有八并发用例增加共同起跑屏障，专项与整仓结果见[并发验证](../verification/commerce-concurrency.md)。
 
 本轮最终`make check`及真实专库下`make verify-mvp`通过，后者959.665秒，含286项前端/strict、全默认Go race/vet/build；维护C0独立opt-in另以210.188秒专项证明原局部范围。19张当前Mermaid语法记录见[本轮图清单](../verification/architecture-source-graphs.json)，完整回归与边界见[机器记录](../verification/source-graph-integration.json)。验证后仅补文档及架构清单，不把历史图记录或专项通过转移到未实现的新reader、完整phase、供应商或生产部署。
+
+## 同租约 68 表业务来源读取
+
+按[根冻结合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)新增无权威叶子包 [fundinglotscan](../../internal/fundinglotscan/types.go)。它固定合并 Financial21、采购新增18、PB新增6、Payment新增23，物理表和共享列各读一次；七项纯算法从同 owned 原行投影。普通服务与 billing/PB 的生产及测试依赖不反向引入 maintenance/catalog。没有迁移、新表、角色权限、在线资金或HTTP变更。
+
+[第六种 ReadLease](../../internal/maintenancetrust/lease.go)保留旧五枚举和scope；[SourceMode](../../internal/maintenancetrust/lease_source_mode.go)来自原authority持有的authenticated predecessor。维护集成自行 Require→mode/schema→固定读取→唯一Finish，私有结果只接受原Permit；假的Query只能生成描述性Facts。原30秒lease、Snapshot更早期限、busy与入口/出口认证继续生效。
+
+全部68表共享100000行/16MiB预算；TEXT/JSONB原bytes、bytea原件、bool每字段1B、native时间envelope每字段32B，单字段65536B，128行显式C序keyset。原时间经timestamptz_send原生8字节/NULL传输并由固定binary plan还原，保留simple protocol且支持year10000；必填NULL/infinity先保留原生值、完成物理EOF，再将不可表示的旧DTO域标input_mismatch而不运行该core；PB保留原生时间交其算法判定。普通模式仍读取23张payment表并精确检查absence/policy/六旁路，合法时仅sandbox为not_applicable。
+
+报告区分PhysicalEOFComplete、七算法执行状态和CoverageComplete；数据mismatch可以与完整执行并存，Unproven或输入资格缺口不能获得完整coverage。范围仅为固定业务来源图，尚无lot全序、protected pre/post、basis、epoch或RuntimeProof。验证和已知边界见[本轮记录](../verification/complete-source-reader.md)，后续按[交付计划](../design/delivery-plan.md)推进。

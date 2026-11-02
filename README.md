@@ -38,7 +38,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
 | 资金来源与原路退款 | 部分基础模块已实现 | 已有来源分配、账本读取，以及人工入账、兑换券、客户 Key 和采购记录的局部核验；完整来源追踪、维护切换、原路退款和拒付仍在推进 |
-| 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；各局部结果只证明各自固定扫描完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
+| 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、Snapshot、Permit 与 ReadLease；已有单租约 68 表、七项业务来源算法的组合读取，lot 全序重放、生产维护 CLI、basis 与 epoch 开账仍在推进 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
@@ -83,7 +83,7 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-停服维护已有授权与只读核验基础，可检查账本、周期预算、人工/券来源、客户 Key 资金关系和采购记录。当前仅提供库级接口，局部核验结果不能代替完整资金来源证明；完整来源组合、原路退款、拒付和生产维护命令仍在开发。读取范围、实现入口和验证结果见[维护架构](docs/architecture/maintenance-gate.md)。
+停服维护已有授权与只读核验基础，新增同一快照 68 表读取与七项业务来源核验；报告区分物理读完、算法实际执行及历史缺证。当前提供库级接口，来源 lot 重放、开账切换、原路退款、拒付和生产维护命令仍在开发。读取范围、实现入口和验证结果见[维护架构](docs/architecture/maintenance-gate.md)。
 
 套餐的价值分摊与月期限算法已独立实现，尚未接入购买、扣款或权益发放，详见[纯算法合同](specs/023-periodic-products/c-value-contract.md)。
 
@@ -175,6 +175,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 按[开发验证](docs/runbooks/development.md#开发验证)准备**专用 PostgreSQL 16 测试集群**：实际端点为 `127.0.0.1:55439/moni_test`，测试 LOGIN 为 `moni_test`。通过私有环境设置 `TEST_DATABASE_URL` 后执行：
 
 ```sh
+npm --prefix web ci
 make check
 make verify-mvp
 ```
@@ -207,7 +208,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。当前继续补齐采购证据、周期预算、支付来源与同一快照内的完整组合，进度见[交付计划](docs/design/delivery-plan.md)。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。当前已接通采购证据、周期预算、支付来源的同一快照读取；接着完成 lot 重放、basis 与 epoch 开账，进度见[交付计划](docs/design/delivery-plan.md)。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T09:17:44Z",
-  "review_reason": "根汇合复核三来源纯核验core与商业命令并发占位修复，默认完整真实PG回归959.665秒及C0独立专项210.188秒分别记录；验证后仅补README/架构/HLD/LLD/计划/验证文档，明确完整reader/native保真与共享预算仍待下一合同，无新迁移、权限、CI或生产装配",
-  "snapshot_sha256": "8d34ce9abd3ca9c92f5a3291a5c7e07f9f48314af2a4bb419276028514b87e14",
-  "architecture_sha256": "3332fc86aadc9870fb1f38c9aff05e1db062156f63cd1e0b626fa8d6c828a50b",
-  "history_sha256": "23c7de67cb1dae0febfe6051803cf1e7cab42f94f67c511e30f2978397de94ff",
+  "reviewed_at": "2026-11-02T12:08:37Z",
+  "review_reason": "最终make check 6.33秒、指定专库make verify-mvp 966.88秒通过，286前端与默认Go race/vet/build完成；C0 opt-in按真实SQL/ordinary授权/维护各场景独立记证，保留原整批失败及Plan复验身份。仅补最终验证文档/机器记录与计划勾选，源码、权限、模块/请求/数据图无进一步变化，19图正文身份保持。",
+  "snapshot_sha256": "4ec301e5a2d12706f37a4bf1a0202f1e829c52e2f577f03935703575e3f3b9f0",
+  "architecture_sha256": "1783050ba7e5b0809082513b18a3d4b496aedf69be913166e9d6913ff41565a6",
+  "history_sha256": "b55263838fd36b1c7bc217215316e0a8e43310c4ccd40edc8a178392fd240376",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "9038aba1230cff4cb187a44b1f681049531542d63e2f10f148a577bd30b3c9a2"
+      "sha256": "e8427f2eb4d780a9f5b2cad10639a6a1f1d73c9d965af2e9f58ad8468d9e1185"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "docs/architecture/maintenance-gate.md",
-      "sha256": "75e8d26178bde0b674b0df88ed9fdacd56da3d80f8b7a651aea9305c8ead5b1d"
+      "sha256": "c00c0e08684e30224048b9bae9a74dbfd5f65fb79240cca527d95fd775a2dbcf"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -109,15 +109,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "33db57d3fdca3a71662f1fd920a0e3c4da581329f909fe993d09e0cec622548f"
+      "sha256": "35b6e7ab5dfaf63be6b20863e1be9743c39379891f97e4f29d5730389d4b7cc3"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "ecfb4421f22d9f8dae374196f4f3224ed262a5e99e30162c3b369410b5396f5d"
+      "sha256": "da1007c63bd458c8a0851079d479dc3cc9c3aea372acde24c13021559956e674"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "709df41cfa40c9995e4e509c8d9879833bc76d94a6cd0269c540033897db3569"
+      "sha256": "fff3d59d9d984ccd610e4b016a6f238e5ccca8840526687e37937d0ea471f805"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -178,6 +178,10 @@
     {
       "path": "docs/verification/architecture-c0-reader.json",
       "sha256": "7cddaefe3bc4c5758919712977cd8b17907bfddc8d6f37177471b5a34803dfe7"
+    },
+    {
+      "path": "docs/verification/architecture-complete-sources.json",
+      "sha256": "cb7303aaf886a4fced279119f8190df0b17abcdb045c243df836d9e4e0c1e854"
     },
     {
       "path": "docs/verification/architecture-funding-financial-graph.json",
@@ -246,6 +250,14 @@
     {
       "path": "docs/verification/assets/architecture-c0-reader-application.png",
       "sha256": "c9853ef39d6491a689762c96651abd6219b836971cfff8f9652bcbc34fd6d078"
+    },
+    {
+      "path": "docs/verification/assets/architecture-complete-sources-application.png",
+      "sha256": "10d6ba59d6f343feaac96aee5e203d043c888dc3be335572893573ea0e058037"
+    },
+    {
+      "path": "docs/verification/assets/architecture-complete-sources-detail.png",
+      "sha256": "dbc1e6b16f47e6d2e5b4c5e63c483a9daa67958c0c159dbbc92ed10095f338d2"
     },
     {
       "path": "docs/verification/assets/architecture-maintenance-authority-application.png",
@@ -752,6 +764,14 @@
       "sha256": "eaf7f537dd3d9cc638cdf96bb62a4d139fa462ce278186ec0d4064df6efbd441"
     },
     {
+      "path": "docs/verification/complete-source-integration.json",
+      "sha256": "79f2e6640db5e7ca94e48d06d256602769371c6d3a5337cd7dbd6957ea4305ca"
+    },
+    {
+      "path": "docs/verification/complete-source-reader.md",
+      "sha256": "9cf15aa25fc2f40e6f9e8ea23ef3b20c6377b1f4023d54bdae82103a0dd1db65"
+    },
+    {
       "path": "docs/verification/compose-config-025.json",
       "sha256": "db3d070ae35e45d48195484a18679357b816be5616879b7b208b0b9dc46a8cb2"
     },
@@ -1125,7 +1145,7 @@
     },
     {
       "path": "docs/verification/mvp-status.md",
-      "sha256": "fb0d034bb57fc67d8fd87569d35e15cf4dd96bb766f0726ee6dd444fdf4a44ed"
+      "sha256": "70922541a8152459bdef58d585abf8ab72d3d21430fb5b8206ad834260ef1863"
     },
     {
       "path": "docs/verification/native-protocols.md",
@@ -1924,6 +1944,58 @@
       "sha256": "3c92e8fcb6808afa5df82f3d0d7f12a0f3b82fd81f30cb6b5afcd32d50d9ee31"
     },
     {
+      "path": "internal/fundinglotscan/binding.go",
+      "sha256": "ec38b3131bf130c58e81ec788889d5323fc630b37beb80ce2b6432cec0e5b82a"
+    },
+    {
+      "path": "internal/fundinglotscan/checks.go",
+      "sha256": "8f388b6b1a41373bccdb9a6416e7b87a8db1f07f31e9c3612cfd396d114574ab"
+    },
+    {
+      "path": "internal/fundinglotscan/projection_funding.go",
+      "sha256": "0eaf7726b68e2034bc8de2912ad283c54a0de59e5fced55ae16b521c98fa5949"
+    },
+    {
+      "path": "internal/fundinglotscan/projection_periodic.go",
+      "sha256": "c96f492a6f5e2fa0a0c33608de16d3caec912c4fbed9d29a0c6a7d53a238661d"
+    },
+    {
+      "path": "internal/fundinglotscan/projection_periodic_test.go",
+      "sha256": "b34d0faea288285eb33b1b2d5923210d5b124226f68236b032f7a87d7da4ca2e"
+    },
+    {
+      "path": "internal/fundinglotscan/projection_procurement.go",
+      "sha256": "b4f27391f07cb0f891f06608efb0159bb8467264b35fd4db9fe0e577f713de10"
+    },
+    {
+      "path": "internal/fundinglotscan/projection_procurement_test.go",
+      "sha256": "6993b1fc38d22cf858c6ff150f3e2f5c0f3d825a95d997be9b7ccc0e9b431dd6"
+    },
+    {
+      "path": "internal/fundinglotscan/projection_sandbox.go",
+      "sha256": "cb02504dc9c9ba4d12f23fbf840babf9e12ab2da5233ebc1ad3b8758c50df58d"
+    },
+    {
+      "path": "internal/fundinglotscan/projection_sandbox_test.go",
+      "sha256": "dad9d784860232c4d8d1f571aa4fb9bc7beff630261767996b9a655732cf3497"
+    },
+    {
+      "path": "internal/fundinglotscan/reader.go",
+      "sha256": "1db1a148e3cfebe43e52ce23cf24887b215676f8da5b9d56286be519380aed31"
+    },
+    {
+      "path": "internal/fundinglotscan/reader_postgres_test.go",
+      "sha256": "ee68f3dcec8e88bf56ca5f573976e845a5bee8d92bf311779a00732f7f1bb51a"
+    },
+    {
+      "path": "internal/fundinglotscan/reader_test.go",
+      "sha256": "0217fae8e1c820082831f142fd367a5f063ed3767e8b3c1674ed0a20a691b41a"
+    },
+    {
+      "path": "internal/fundinglotscan/types.go",
+      "sha256": "3ad563644d8fc79fa40b367d27d151003621c15c66ac59e075177c994198cf9e"
+    },
+    {
       "path": "internal/fundinglotverify/customer_key_graph.go",
       "sha256": "99b7cb007ee6320c747909c9222bc28fc9a69a1680f99ef1a2c36d706212bc45"
     },
@@ -2184,6 +2256,14 @@
       "sha256": "83cde671c5128de3eb66d7aca2d1bea4d99c748dc5102514e83408a3382619e6"
     },
     {
+      "path": "internal/maintenancescan/complete_sources.go",
+      "sha256": "aeb626c5de26df646208c16b1baf80fa1c7603036cda9a6da31ce2a7a6b8c933"
+    },
+    {
+      "path": "internal/maintenancescan/complete_sources_test.go",
+      "sha256": "cd252177bb9925fe8634252cdefe50022c64a53ec18116b4a902a816f8a51397"
+    },
+    {
       "path": "internal/maintenancescan/funding_financial.go",
       "sha256": "a94c907da0e79af0214935cbf9bf7efcdfc563367d96526cc218d3652e226cb5"
     },
@@ -2289,7 +2369,7 @@
     },
     {
       "path": "internal/maintenancetrust/lease.go",
-      "sha256": "49abd89ef3a84d568aea7a54b7e36410cbda9dde0f772272509e47fbb31d3bbe"
+      "sha256": "895909cfa76cc46452e77baf7d6471c48b34917a82a6b3c417827469e8baef2d"
     },
     {
       "path": "internal/maintenancetrust/lease_codec.go",
@@ -2298,6 +2378,10 @@
     {
       "path": "internal/maintenancetrust/lease_codec_test.go",
       "sha256": "30c1982b0dfe1036d09d780eb361b2bfd048f790c1ed0a8fa1dee949f1576195"
+    },
+    {
+      "path": "internal/maintenancetrust/lease_complete_source_integration_test.go",
+      "sha256": "daa2a2e459e59f3766339182551d32a49f383de0c6e06aa5ba791749b3a5472d"
     },
     {
       "path": "internal/maintenancetrust/lease_integration_test.go",
@@ -2312,8 +2396,16 @@
       "sha256": "c3951512cdb50e30f16c01026ccdb985f030f70b72f015dcf79294b5240b1f16"
     },
     {
+      "path": "internal/maintenancetrust/lease_source_mode.go",
+      "sha256": "95a08f0c678af034e9fae5cac0eb358682a6a0b293825b9d5b0ec7e529c4ce3c"
+    },
+    {
+      "path": "internal/maintenancetrust/lease_source_mode_test.go",
+      "sha256": "6d9e6bec74a0d4487d2e2debc6faa372d77cacdfadc8b3b65f13b3c790f0b993"
+    },
+    {
       "path": "internal/maintenancetrust/lease_test.go",
-      "sha256": "7b7cecb264e22877b3e670c86411d2a1e5e2d3b2e250a11a3033b4c6f8081453"
+      "sha256": "510ccf312dcd0bfeb8f3d63194554cf0003ce3e97ed5775436b27c56a4c8ce95"
     },
     {
       "path": "internal/maintenancetrust/permit.go",
@@ -3988,8 +4080,12 @@
       "sha256": "60516a1dd8dcb988c127e0dfcb1e5ec4c7c41e6af9d93e5a31bce50869c4acba"
     },
     {
+      "path": "scripts/maintenance-scan-qa/complete_source_edges_test.go",
+      "sha256": "e4b6958c79df487895919f83fe3d6149b3f057ec361492f2afa005aee7b9500a"
+    },
+    {
       "path": "scripts/maintenance-scan-qa/maintenance_integration_test.go",
-      "sha256": "a1eceb7a774c08142d3e0cbd590e4ed6b16a486d3f64e80cb6588987ef2d9925"
+      "sha256": "4a308e7bfbea1bc494e85a39de5dee658d251d9c61dfb25cbfa8251ac471f51d"
     },
     {
       "path": "scripts/maintenance-scan-qa/periodic_resources_test.go",
@@ -4456,6 +4552,10 @@
       "sha256": "e84dd91758ca7b2880892c57aaa84ecacf151e3c64f036c517c41405786c3549"
     },
     {
+      "path": "specs/022-self-service-payments/c0-complete-source-reader-contract.md",
+      "sha256": "e4dfa312b2adee82ef55e15f42abd85c9f4297595013e7fc37fe9ed606933e79"
+    },
+    {
       "path": "specs/022-self-service-payments/c0-core-prototype.sql",
       "sha256": "37190889e2c805dda53760705c5412d337ae15ae20337ec23cfd85e0c46cbc55"
     },
@@ -4481,7 +4581,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-maintenance-contract.md",
-      "sha256": "71cc3de5382dc9a0a512483f59e8336f5f720e7121c6446e01d9b4e359415850"
+      "sha256": "eae757344d183ac49bf9399de91c0f0bf913f7f184ae0b1bc8687ece165526c3"
     },
     {
       "path": "specs/022-self-service-payments/c0-ordinary-permissions.sql",
@@ -4569,7 +4669,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-sequence-contract.md",
-      "sha256": "5c076998db63098ed2aa3301b71efa4bd380ba36d4287f404ddfa74e93b4218c"
+      "sha256": "0ec29515ea430f4b06432e3c2f9a5ef0a9ec860d6635627efbff7a21fda8c267"
     },
     {
       "path": "specs/022-self-service-payments/c0-snapshot-contract.md",
@@ -4585,7 +4685,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-verifier-contract.md",
-      "sha256": "b48f16e3b90dc943eb7776edb000947530fc31b74caa3aa050ac7376f64316c7"
+      "sha256": "1e3d3328600a76e30cd68f262afbc12d5c92055751bdbc4b43b2cec5c7b855eb"
     },
     {
       "path": "specs/022-self-service-payments/c1-protocol-v2-contract.md",
@@ -4609,7 +4709,7 @@
     },
     {
       "path": "specs/022-self-service-payments/plan.md",
-      "sha256": "e2687c7961849eedb4be7f3d06778e72b4831a87a1387130020a261fe920c8ef"
+      "sha256": "5a2388b3b18ba56a3bf7eb0d391a04e02667a6cf5f5fd11443f739bbdcf465d2"
     },
     {
       "path": "specs/022-self-service-payments/spec.md",

@@ -2019,3 +2019,90 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - added `docs/verification/source-graph-integration.json`
 
 </details>
+
+## 2026-11-02T11:41:38Z · 9272bc72aa57
+
+新增fundinglotscan固定68表列并集、同租约七业务来源算法与第六ScanCompleteSources；原生时间经timestamptz_send保真、Resource原因保留与Require忙拒绝清理；旧五scope/在线依赖/权限不变。已汇总三路实现与独立审查，同步模块图、维护链、能力表、README、HLD/LLD、计划及验证边界；lot/pre-post/basis/epoch与生产仍后续。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1350 个源文件；本次 34 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/architecture-complete-sources.json`
+- added `docs/verification/assets/architecture-complete-sources-application.png`
+- added `docs/verification/assets/architecture-complete-sources-detail.png`
+- added `docs/verification/complete-source-reader.md`
+- modified `docs/verification/mvp-status.md`
+- added `internal/fundinglotscan/binding.go`
+- added `internal/fundinglotscan/checks.go`
+- added `internal/fundinglotscan/projection_funding.go`
+- added `internal/fundinglotscan/projection_periodic.go`
+- added `internal/fundinglotscan/projection_periodic_test.go`
+- added `internal/fundinglotscan/projection_procurement.go`
+- added `internal/fundinglotscan/projection_procurement_test.go`
+- added `internal/fundinglotscan/projection_sandbox.go`
+- added `internal/fundinglotscan/projection_sandbox_test.go`
+- added `internal/fundinglotscan/reader.go`
+- added `internal/fundinglotscan/reader_postgres_test.go`
+- added `internal/fundinglotscan/reader_test.go`
+- added `internal/fundinglotscan/types.go`
+- added `internal/maintenancescan/complete_sources.go`
+- added `internal/maintenancescan/complete_sources_test.go`
+- modified `internal/maintenancetrust/lease.go`
+- added `internal/maintenancetrust/lease_complete_source_integration_test.go`
+- added `internal/maintenancetrust/lease_source_mode.go`
+- added `internal/maintenancetrust/lease_source_mode_test.go`
+- modified `internal/maintenancetrust/lease_test.go`
+- added `scripts/maintenance-scan-qa/complete_source_edges_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-complete-source-reader-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T11:48:47Z · 6f6a97a508e9
+
+汇合最终68表实现及原生时间修复，三路复核与真实PG分层验证已收口；校准PB balanced测试预期、安装失败安全诊断及旧候选合同状态。源码与19图/能力/SDD/README同步，lot/pre-post/basis/epoch与生产边界保留；最终整仓回归结果单独记录。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1350 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+
+</details>
+
+## 2026-11-02T11:49:49Z · b150512855aa
+
+完成最终候选合同状态与下一切片设计缺口校准；记录完整维护批次中的QA预期修正、安装前置未知失败及Plan成功复验。已逐项复核68表/七算法、原生wire、权限与在线依赖边界，README/HLD/LLD/19图及验证入口一致；整仓回归结果另记。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1350 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/complete-source-reader.md`
+- modified `specs/022-self-service-payments/c0-maintenance-contract.md`
+- modified `specs/022-self-service-payments/c0-sequence-contract.md`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+
+</details>
+
+## 2026-11-02T12:08:37Z · 4ec301e5a2d1
+
+最终make check 6.33秒、指定专库make verify-mvp 966.88秒通过，286前端与默认Go race/vet/build完成；C0 opt-in按真实SQL/ordinary授权/维护各场景独立记证，保留原整批失败及Plan复验身份。仅补最终验证文档/机器记录与计划勾选，源码、权限、模块/请求/数据图无进一步变化，19图正文身份保持。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1351 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/complete-source-integration.json`
+- modified `docs/verification/complete-source-reader.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>

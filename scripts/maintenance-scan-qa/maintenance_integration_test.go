@@ -35,7 +35,7 @@ import (
 
 // This external consumer imports only public production entry points. It starts
 // with genuine v1 funded QA data and a signed sandbox capture, appends exactly
-// the frozen C0 DDL and ACL, then runs all five connected readers on the same
+// the frozen C0 DDL and ACL, then runs all five local readers and the complete 68-table reader on the same
 // attested maintenance transaction.
 func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 	for _, mode := range []string{"plan", "init"} {
@@ -76,7 +76,7 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			}
 			installation, err := snapshot.VerifyInstallation(ctx)
 			if err != nil || installation == nil {
-				t.Fatal("genuine installation proof failed")
+				t.Fatal("genuine installation proof failed", err)
 			}
 			// The caller's descriptive copy does not own the installed authority.
 			*installation = fundinglotcatalog.InstallationProof{}
@@ -152,6 +152,32 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 				readProcurement()
 				readLedger()
 			}
+			completeLease, err := permit.BeginScan(ctx, maintenancetrust.ScanCompleteSources)
+			if err != nil {
+				t.Fatal("real complete-source lease failed", err)
+			}
+			complete, err := maintenancescan.VerifyCompleteSourcesMaintenance(completeLease)
+			if err != nil || complete == nil {
+				t.Fatal("real complete-source maintenance scan failed", err)
+			}
+			completeReport, err := complete.Summary(permit)
+			if err != nil || completeReport.Scope != "complete_business_source_graphs_v1" || !completeReport.PhysicalEOFComplete || completeReport.ScannedTables != 68 || completeReport.InputMismatchFields != 0 {
+				t.Fatal("complete-source fixed union was not physically completed", err, completeReport)
+			}
+			for _, algorithm := range completeReport.Algorithms {
+				if algorithm != "executed" {
+					t.Fatal("all seven sandbox algorithms must actually execute", completeReport.Algorithms)
+				}
+			}
+			if mode == "init" && (completeReport.Status != "mismatch" || completeReport.Customer.Balanced || completeReport.Funding.ScopedGraphConsistent) {
+				t.Fatal("complete-source scan hid the genuine corrupted business rows", completeReport)
+			}
+			if mode == "plan" && (completeReport.Status != "indeterminate" || completeReport.CoverageComplete ||
+				completeReport.Procurement.Unproven != (fundinglotverify.ProcurementEvidenceGraphUnproven{ProposalBarrierUnproven: 1}) ||
+				completeReport.Periodic.Status != "balanced" || completeReport.Sandbox.Status != "consistent") {
+				t.Fatal("complete-source scan invented a predecessor for the historical approval barrier", completeReport)
+			}
+			t.Logf("complete-source %s: status=%s coverage=%t rows=%d bytes=%d procurement_unproven=%+v PB_unproven=%+v sandbox_unproven=%+v", mode, completeReport.Status, completeReport.CoverageComplete, completeReport.SourceRows, completeReport.SourceBytes, completeReport.Procurement.Unproven, completeReport.Periodic.Unproven, completeReport.Sandbox.Unproven)
 			check, err := ledger.Summary(permit)
 			if err != nil || check.Scope != "supplied_ledger_rows" || !check.RowsConsistent || check.Scanned.Accounts == 0 || check.Scanned.Journals == 0 || check.Scanned.Lines == 0 {
 				t.Fatal("funded ledger local facts were not retained")
@@ -169,6 +195,9 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			if err != nil || fundingCheck.Scope != "manual_voucher_receipt_links" || !linksMatch || fundingCheck.Scanned.Receipts < 4 || fundingCheck.Scanned.Credits < 2 || fundingCheck.Scanned.Redemptions != 1 || fundingCheck.UncoveredSandboxReceipts != 1 {
 				t.Fatal("manual funding local relation facts were not retained")
 			}
+			if completeReport.Ledger != check || completeReport.Links != fundingCheck {
+				t.Fatal("complete union disagreed with the unchanged local raw algorithms")
+			}
 			financialLedger, err := fundingLinks.LedgerSummary(permit)
 			if err != nil || financialLedger != check {
 				t.Fatal("same-session financial ledger differed from the fixed ledger algorithm", err)
@@ -177,9 +206,15 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			if err != nil || sourceGraph.Scope != "manual_voucher_funding_graph_v1" || sourceGraph.ScopedGraphConsistent != (mode == "plan") || sourceGraph.UncoveredSandboxReceipts != 1 || sourceGraph.Scanned.Redemptions != 1 {
 				t.Fatal("full manual/voucher source graph was not retained", err, sourceGraph)
 			}
+			if completeReport.Funding != sourceGraph {
+				t.Fatal("complete union disagreed with the unchanged manual/voucher core")
+			}
 			customerGraph, err := fundingLinks.CustomerKeySummary(permit)
 			if err != nil || customerGraph.Scope != "customer_key_financial_graph_v1" || customerGraph.Balanced != (mode == "plan") || customerGraph.Scanned.Requests != 1 || customerGraph.Scanned.Keys != 1 || (mode == "init" && customerGraph.Mismatches.KeyHeldRows != 1) {
 				t.Fatal("customer Key graph was not retained", err, customerGraph)
+			}
+			if completeReport.Customer != customerGraph {
+				t.Fatal("complete union disagreed with the unchanged customer core")
 			}
 			sandboxCheck, err := sandboxLinks.Summary(permit)
 			wantSandboxConsistent := mode == "plan"
@@ -230,22 +265,26 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 				t.Fatal("procurement cost journal local facts were not retained", err, journalCheck)
 			}
 
-			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil || procurementResult.Verify(permit) != nil {
+			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil || procurementResult.Verify(permit) != nil || complete.Verify(permit) != nil {
 				t.Fatal("all real consumers must share the original permit")
 			}
 			if _, err := permit.BeginScan(ctx, maintenancetrust.ScanFunding); err == nil {
 				t.Fatal("the same Permit accepted ScanFunding twice")
 			}
+			if _, err := permit.BeginScan(ctx, maintenancetrust.ScanCompleteSources); err == nil {
+				t.Fatal("the same Permit accepted ScanCompleteSources twice")
+			}
 			wrong := &maintenancetrust.Permit{}
-			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil || sandboxLinks.Verify(wrong) == nil || procurementResult.Verify(wrong) == nil {
+			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil || sandboxLinks.Verify(wrong) == nil || procurementResult.Verify(wrong) == nil || complete.Verify(wrong) == nil {
 				t.Fatal("consumer accepted an unrelated permit")
 			}
 			ledgerCopy, budgetCopy, fundingLinksCopy, sandboxLinksCopy, procurementCopy := *ledger, *budget, *fundingLinks, *sandboxLinks, *procurementResult
+			completeCopy := *complete
 			if snapshot.Rollback(ctx) != nil {
 				t.Fatal("real shared snapshot rollback failed")
 			}
 			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || sandboxLinks.Verify(permit) == nil || procurementResult.Verify(permit) == nil ||
-				ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil || sandboxLinksCopy.Verify(permit) == nil || procurementCopy.Verify(permit) == nil {
+				ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil || sandboxLinksCopy.Verify(permit) == nil || procurementCopy.Verify(permit) == nil || complete.Verify(permit) == nil || completeCopy.Verify(permit) == nil {
 				t.Fatal("rollback did not revoke every original consumer result")
 			}
 			if g.Close(ctx) != nil {

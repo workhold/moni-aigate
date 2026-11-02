@@ -1,6 +1,8 @@
 # C0 维护 Gate 与快照细化架构
 
-本页描述 022-C0-T0/T1/T2 与 T3 库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[人工/券来源关联窄合同](../../specs/022-self-service-payments/c0-source-link-contract.md)、[sandbox capture直接关联合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[采购预算投影合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)及[采购attempt关系合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)为准。真实ReadLease及ledger、PB、人工核款/兑换券收据关联、sandbox capture直接关联、采购五项局部核验共五类扫描已实现（ScanFunding有兼容三表和21表新入口）；它们仍是库级维护能力，没有普通main、HTTP、生产维护CLI或资金写入装配。定向Go/race/vet通过；采购reader真实PG Plan/Init和整仓`make verify-mvp`尚未执行，分别见[采购验证记录](../verification/procurement-budget-maintenance.md)与[sandbox验证记录](../verification/sandbox-capture-links.md)。T1历史真实PG/race115.412秒、46顶层/124终态通过保留[原范围](../verification/maintenance-snapshot.md)；T2、T3历史片及各新增reader证据分别记录。
+当前增量：第六类同租约68表/七算法业务来源读取已接线，旧五类scope不变。旧五类真实PG补验见[原记录](../verification/maintenance-financial-postgres.md)，新组合单独见[本轮记录](../verification/complete-source-reader.md)；本页早期片段描述保留其历史范围，不将局部通过升级成lot/basis/epoch证明。
+
+本页描述 022-C0-T0/T1/T2 与 T3 库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[人工/券来源关联窄合同](../../specs/022-self-service-payments/c0-source-link-contract.md)、[sandbox capture直接关联合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[采购预算投影合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)及[采购attempt关系合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)为准。当前ReadLease提供旧五类局部扫描及第六类68表/七算法业务来源读取；ScanFunding保留兼容三表和21表入口。它们是库级维护能力，没有普通main、HTTP、生产维护CLI或资金写入装配。旧范围真实PG/race与新增组合各自记录，不将历史局部验证升级为lot/basis/epoch证明。
 
 ```mermaid
 flowchart TD
@@ -57,13 +59,15 @@ sandbox receipt↔capture双向ID租户金额币种
     ProcurementCore[fundinglotverify采购预算纯core
 big.Int预算投影 / 绑定报价 / 双审关系
 命令观察 / 成本审计消息 / 五个摘要 / 无authority]
+    Complete[fundinglotscan固定68表\n同session一次扫描 / 100000行与16MiB\n七算法与native资格 / 无authority]
+    Mode[原Permit owned predecessor\nSourceMode仅第六kind可读]
     Budget[periodicbudget固定raw-facts算法
 19表scalar资源guard / 原业务SQL与三态
 不接受或发行维护proof]
     ScanFinish[Finish / 零pending Row或Rows
 EOF与Err及显式Close全部观察 / 出口重核]
-    Result[私有ScanProof与五类扫描局部结果
-绑定原Permit及lease nonce / 不授全源coverage]
+    Result[私有ScanProof与原Permit绑定结果
+旧局部或新业务来源coverage / 不授lot与开账资格]
     Finish[单次Commit或Rollback
 明确成功、明确回滚或Unknown分别保存]
     Cleanup[Close独立最多5秒
@@ -71,7 +75,7 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Destroy[失败或到期 / 原子invalid
 封闭registry并关原始socket / 操作返回后有界pgx清理]
     Future[T3后续与T4
-独立全来源与完整组合 / basis及epoch
+lot全序与protected pre/post / basis及epoch
 封闭写入器与生产协调器]
     Caller --> Connect --> Preflight --> Locks --> Gate --> Begin
     Gate -->|不建立Snapshot| Cleanup
@@ -91,6 +95,8 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Integration -->|ScanSandboxSources / 独立kind| SandboxReader --> SandboxCore --> ScanFinish
     Integration -->|ScanProcurement / 独立kind| ProcurementReader --> ProcurementCore --> ScanFinish
     ScanFinish --> Result
+    Integration -->|ScanCompleteSources| Mode --> Complete --> ScanFinish
+    Complete -->|68表固定列并集 / 原rawTx| PG
     SandboxReader -->|原快照内两表完整读取| PG
     ProcurementReader -->|原快照内十九表完整读取| PG
     Result -->|原Snapshot显式终结即全部撤销| Finish
@@ -110,6 +116,12 @@ EOF与Err及显式Close全部观察 / 出口重核]
 ## 专用连接与双锁
 
 [Gate](../../internal/maintenancetrust/gate.go)及[预检](../../internal/maintenancetrust/identity.go)使用新物理连接，不借还 runtime pool。Acquire 共用父期限与30秒的较早值，只有明确 false 才每50ms轮询；每把明确 true 后不重入。核本 PID/DB 的完整 advisory 集合，拒绝额外/shared/two-int 或丢锁，不调用 unlock_all。sandbox 保持字面 127.0.0.1:55439/moni_test 及实际 moni_test LOGIN；T2另重读super/datdba维护授权。
+
+## 第六类完整业务来源读取
+
+[完整合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)冻结68张物理业务表，不含外层安装catalog、schema_migrations与peer前驱。新增[SourceMode](../../internal/maintenancetrust/lease_source_mode.go)只允许有效ScanCompleteSources lease读取原authority owned predecessor，沿用原begin/endMethod与身份绑定，不根据当前payment policy猜模式。
+
+[集成](../../internal/maintenancescan/complete_sources.go)自行取得schema/mode，使用私有Query与仅Deadline/Done/Err的context视图，不接caller Facts/Report。读取[固定原行](../../internal/fundinglotscan/reader.go)、[七算法](../../internal/fundinglotscan/checks.go)并完成唯一Finish后返回私有结果；结果验证绑定原Permit/kind/lease，终结撤销。时间由timestamptz_send原生二进制经既有[]byte codec还原，支持year10000而不修改lease的simple protocol；输入不合格的域明确不执行，物理EOF和coverage分开，ordinary的22空表+policy+六旁路均实际核对。原codec、期限和资金权限不变；新业务来源coverage仍不能代替lot重放、pre/post与basis/epoch。
 
 ## 单次快照与固定 catalog stage
 

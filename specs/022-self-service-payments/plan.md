@@ -117,3 +117,11 @@ go run ./scripts/check-architecture
 2026-11-02 T3首片先冻结[读取租约与两个维护reader](c0-read-lease-contract.md)：根集成Snapshot/Permit撤销和真实PG验证，独立实现ReadLease封闭出口及纯测试、ledger单core与维护结果、PB单core/维护资源profile与诚实三态。历史专项记录不包含后续source-link reader。本轮第三个reader依[c0-source-link-contract.md](c0-source-link-contract.md)完整读三表并局部核对manual/voucher receipt双向关系；其scope内sandbox receipts计为未覆盖。第四个ScanSandboxSources reader和第五个ScanProcurement预算投影reader分别按独立合同接线；采购reader先按[c0-procurement-attempt-contract.md](c0-procurement-attempt-contract.md)扩展十二表/双摘要，再按[c0-procurement-approval-contract.md](c0-procurement-approval-contract.md)扩展为同lease十五表/三个局部摘要，sandbox和当前采购实现的真实PG验收均因专用环境未配置而待执行，范围见各自验证记录。全部source coverage、basis、epoch与生产CLI不因局部读取接线而视为完成。
 
 2026-11-02 T3集成依赖隔离按读取合同§7实施：独立maintenancescan单向复用领域固定raw-facts算法与真实ReadLease，在线生产/race测试依赖不再引入维护/catalog；原算法、身份、资源、资金和超时规则保持。原失败进程49.177秒、core/防伪造/race依赖门禁15.541秒、真实双reader及九个资源边界194.261秒均通过；完整整仓与新精确提交CI以[隔离修复记录](../../docs/verification/maintenance-integration-isolation.md)为准，f572bbd旧CI失败保留。
+
+## 68表完整业务来源读取切片
+
+- [x] 冻结[完整读取合同](c0-complete-source-reader-contract.md)，包含68表物理列并集、native资格、共享预算与ordinary精确排除。
+- [x] 实现fundinglotscan与七算法，以及ScanCompleteSources可信模式/私有结果/唯一Finish；旧五种局部proof不相加。
+- [x] 汇合fake边界、真实PG SQL与真实Plan/Init，完成根复核及make check/指定专库make verify-mvp；专项与整批原始失败、QA修正和最终证据见[本轮记录](../../docs/verification/complete-source-reader.md)，随README/HLD/LLD/统一架构交付，推送身份以远端SHA为准。
+
+下一依赖为lot全序及protected pre/post组合，随后basis/epoch与全部APP资金路径；C1/C2/C3、商品、扩展、生产/HA及性能继续保留，本片不是全目标完成。

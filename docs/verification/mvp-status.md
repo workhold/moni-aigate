@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 自助经营 | 021邮箱证明/恢复、022-A双审券、023-A分组售价与023-B周期预算，均限定本地验收 | 正式SMTP、023-C商品/订阅 |
 | 应用支付 | 022-B3普通main/受限worker/HTTP/UI及本地模拟整链；在途SIGTERM/Guard失权恢复已验 | 正式PSP、main数据库COMMIT回包丢失及外部事实灾备 |
-| 来源与退款 | C0分配/history/SQL候选/静态catalog、维护Gate/Snapshot/Permit/ReadLease与局部reader已实现；21表资金专项真实PG通过；采购证据/PB/支付来源三纯图已实现，完整reader未接线；C1-P纯退款协议专项通过 | 完整同session来源组合、basis/epoch、main接线及全资金路径；C1退款、C2拒付/债务、C3交叉恢复 |
+| 来源与退款 | C0基础及三纯图已实现；新增同租约68表/七算法业务来源读取，真实SQL、ordinary模式及沙箱Plan/Init专项已验，详见[本轮记录](complete-source-reader.md)；C1-P纯退款协议专项通过 | lot全序、protected pre/post、basis/epoch、main接线及全资金路径；C1退款、C2拒付/债务、C3交叉恢复 |
 | 扩展和生产 | 024-A站内告警、024-B0-P纯计量；025-A0隔离Compose实际渲染、025-A1-M两邮件真实SIGKILL窗口已验 | 媒体/异步/长连接接线、容器/1Panel、HA、正式渠道及最后性能 |
 
 [来源候选回归](funding-lot-candidate.md)、[纯退款协议](payment-refund-protocol-v2.md)、[计量](metering-vectors.md)、[Compose渲染](compose-render-025.json)和[邮件进程](mail-lifecycle-025.md)分别说明各自边界；纯层和QA工具不产生生产资金能力。

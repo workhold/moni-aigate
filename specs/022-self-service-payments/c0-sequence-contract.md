@@ -164,7 +164,8 @@ Init已实现的T1/T2前置为：固定SET后、第一次任何SELECT（包括ca
 当前 [Verifier.Verify](../../internal/periodicbudget/verifier.go) 自行Begin RR READ ONLY，且 `verifierAuthority` 要求actual LOGIN拥有六张PB事实表；不能由APP调用，也不能用另连接结果拼进init。B3的app/mock/receiver由三个NOLOGIN owner拥有，安装连接通过SET ROLE安装，故不能要求安装LOGIN本身拥有六表；改变其owner又会破坏既有proof。新维护入口分两条受审信任路径，**不弱化原Verifier**：
 
 ```go
-// T3候选：ReadLease及本入口均未实现，不接收裸tx或另一个caller context。
+// 历史T3接口示意；正式实现见maintenancescan.VerifyMaintenance。
+// ReadLease与PB/68表读取已实现，不接收裸tx或另一个caller context。
 func VerifyMaintenance(lease *maintenancetrust.ReadLease) (Verification, error)
 ```
 
