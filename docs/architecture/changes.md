@@ -1749,3 +1749,42 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `docs/verification/procurement-budget-maintenance.md`
 
 </details>
+
+## 2026-11-02T04:40:32Z · 51f6cd49345f
+
+022-C0-T3扩展ScanProcurement为同一ReadLease内十二表采购budget与attempt binding双摘要；新增固定复合游标、纯big.Int关系核验、维护adapter与真实PG QA边界，更新README/HLD/LLD/架构图/计划/验证记录；成本更正证据命令审计余额观察及PB交叉关系仍未覆盖
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1259 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/procurement-budget-maintenance.md`
+- added `internal/billing/procurement_attempt_facts.go`
+- added `internal/billing/procurement_attempt_read.go`
+- added `internal/billing/procurement_attempt_read_test.go`
+- added `internal/fundinglotverify/procurement_attempt.go`
+- added `internal/fundinglotverify/procurement_attempt_test.go`
+- modified `internal/maintenancescan/procurement.go`
+- modified `internal/maintenancescan/procurement_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-procurement-attempt-contract.md`
+- modified `specs/022-self-service-payments/c0-procurement-budget-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T05:10:43Z · e048ba6da730
+
+补记采购十二表reader扩展的全仓Go race、make check与专用PG缺失跳过状态；无实现范围变化，继续明确真实Plan/Init和TEST_DATABASE_URL未执行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1259 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-budget-maintenance.md`
+
+</details>

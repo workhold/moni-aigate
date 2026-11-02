@@ -1,10 +1,8 @@
 package maintenancescan
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -13,43 +11,27 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 )
 
-type procurementFixtureRows struct{ index int }
-
-func (r *procurementFixtureRows) Next() (bool, error) { r.index++; return false, nil }
-func (*procurementFixtureRows) Scan(...any) error     { return fmt.Errorf("unexpected row") }
-func (*procurementFixtureRows) Err() error            { return nil }
-func (*procurementFixtureRows) Close() error          { return nil }
-
-type procurementFixtureQuery struct{ calls int }
-
-func (q *procurementFixtureQuery) Query(string, ...any) (billing.ProcurementBudgetFactRows, error) {
-	if q.calls >= 3 {
-		return nil, fmt.Errorf("unexpected query")
-	}
-	q.calls++
-	return &procurementFixtureRows{}, nil
-}
-
-func TestProcurementBudgetMaintenanceRejectsMissingAuthorityAndRedactsFacts(t *testing.T) {
-	if got, err := VerifyProcurementBudgetMaintenance(nil); got != nil || err != billing.ErrProcurementBudgetFactsInput {
+func TestProcurementMaintenanceRejectsMissingAuthorityAndRedactsResult(t *testing.T) {
+	if got, err := VerifyProcurementMaintenance(nil); got != nil || err != billing.ErrProcurementAttemptBindingFactsInput {
 		t.Fatal("nil lease accepted")
 	}
-	if got, err := VerifyProcurementBudgetMaintenance(&maintenancetrust.ReadLease{}); got != nil || err == nil {
+	if got, err := VerifyProcurementMaintenance(&maintenancetrust.ReadLease{}); got != nil || err == nil {
 		t.Fatal("zero lease accepted")
 	}
-	facts, err := billing.ReadProcurementBudgetFacts(context.Background(), &procurementFixtureQuery{}, "private_schema")
-	if err != nil || facts.LocalSummary() != (fundinglotverify.ProcurementBudgetProjectionCheck{
-		Scope: "procurement_budget_projection_v1", Balanced: true,
-	}) {
-		t.Fatal("empty local fixture failed", err, facts.LocalSummary())
-	}
-	for _, result := range []*ProcurementBudgetMaintenanceResult{nil, {}, {check: facts.LocalSummary()}} {
+	for _, result := range []*ProcurementMaintenanceResult{nil, {}, {
+		budget:  fundinglotverify.ProcurementBudgetProjectionCheck{Scope: "procurement_budget_projection_v1", Balanced: true},
+		binding: fundinglotverify.ProcurementAttemptBindingCheck{Scope: "procurement_attempt_binding_graph_v1", Balanced: true},
+	}} {
 		if result.Verify(&maintenancetrust.Permit{}) == nil {
 			t.Fatal("result without exact ScanProcurement proof accepted")
 		}
-		got, err := result.Summary(&maintenancetrust.Permit{})
-		if err == nil || got != (fundinglotverify.ProcurementBudgetProjectionCheck{}) {
-			t.Fatal("invalid result leaked local summary")
+		budget, err := result.BudgetSummary(&maintenancetrust.Permit{})
+		if err == nil || budget != (fundinglotverify.ProcurementBudgetProjectionCheck{}) {
+			t.Fatal("invalid result leaked budget summary")
+		}
+		binding, err := result.BindingSummary(&maintenancetrust.Permit{})
+		if err == nil || binding != (fundinglotverify.ProcurementAttemptBindingCheck{}) {
+			t.Fatal("invalid result leaked attempt summary")
 		}
 		if result == nil {
 			continue
@@ -60,20 +42,41 @@ func TestProcurementBudgetMaintenanceRejectsMissingAuthorityAndRedactsFacts(t *t
 			t.Fatal("maintenance result exposed procurement details")
 		}
 	}
-	var decoded ProcurementBudgetMaintenanceResult
-	if json.Unmarshal([]byte(`{"check":{"scope":"procurement_budget_projection_v1","balanced":true},"proof":{}}`), &decoded) != nil || decoded.Verify(&maintenancetrust.Permit{}) == nil {
+	var decoded ProcurementMaintenanceResult
+	if json.Unmarshal([]byte(`{"budget":{"scope":"procurement_budget_projection_v1","balanced":true},"binding":{"scope":"procurement_attempt_binding_graph_v1","balanced":true},"proof":{}}`), &decoded) != nil || decoded.Verify(&maintenancetrust.Permit{}) == nil {
 		t.Fatal("JSON minted a ScanProcurement proof")
 	}
 }
 
-func TestProcurementBudgetMaintenanceSummaryScopeIsClosed(t *testing.T) {
-	facts := fundinglotverify.ProcurementBudgetProjectionCheck{Scope: "wallet_full_source_v1", Balanced: true}
-	result := &ProcurementBudgetMaintenanceResult{check: facts}
-	if result.Verify(&maintenancetrust.Permit{}) == nil {
-		t.Fatal("wrong local scope accepted")
+func TestProcurementMaintenanceSummaryScopesAreClosed(t *testing.T) {
+	result := &ProcurementMaintenanceResult{
+		budget:  fundinglotverify.ProcurementBudgetProjectionCheck{Scope: "wallet_full_source_v1", Balanced: true},
+		binding: fundinglotverify.ProcurementAttemptBindingCheck{Scope: "procurement_full_source_v1", Balanced: true},
 	}
-	got, err := result.Summary(&maintenancetrust.Permit{})
-	if err == nil || !reflect.DeepEqual(got, fundinglotverify.ProcurementBudgetProjectionCheck{}) {
-		t.Fatal("wrong scope summary leaked")
+	if result.Verify(&maintenancetrust.Permit{}) == nil {
+		t.Fatal("wrong local scopes accepted")
+	}
+	if got, err := result.BudgetSummary(&maintenancetrust.Permit{}); err == nil || got != (fundinglotverify.ProcurementBudgetProjectionCheck{}) {
+		t.Fatal("wrong budget scope leaked")
+	}
+	if got, err := result.BindingSummary(&maintenancetrust.Permit{}); err == nil || got != (fundinglotverify.ProcurementAttemptBindingCheck{}) {
+		t.Fatal("wrong binding scope leaked")
+	}
+}
+
+func TestProcurementMaintenanceMapsFailureCategories(t *testing.T) {
+	cases := []struct {
+		input, want error
+	}{
+		{billing.ErrProcurementAttemptBindingFactsInput, billing.ErrProcurementAttemptBindingFactsInput},
+		{billing.ErrProcurementAttemptBindingFactsResource, billing.ErrProcurementAttemptBindingFactsResource},
+		{billing.ErrProcurementAttemptBindingFactsCanceled, billing.ErrProcurementAttemptBindingFactsCanceled},
+		{billing.ErrProcurementAttemptBindingFactsTimeout, billing.ErrProcurementAttemptBindingFactsTimeout},
+		{billing.ErrProcurementAttemptBindingFactsExecution, billing.ErrProcurementAttemptBindingFactsExecution},
+	}
+	for _, tc := range cases {
+		if got := procurementMaintenanceFailure(nil, tc.input); got != tc.want {
+			t.Fatalf("failure category changed: input=%v got=%v want=%v", tc.input, got, tc.want)
+		}
 	}
 }

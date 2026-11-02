@@ -37,7 +37,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 自助身份与兑换券 | 已实现，限定本地验收 | 邮件证明、密码恢复、双审赠额券；注册、邮件和新券发行默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
-| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；维护态有 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联、采购预算投影五个局部 reader；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
+| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；维护态有 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联、采购预算与 attempt 绑定两个独立摘要五个局部 reader；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
 | 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；五个局部结果只证明各自固定扫描完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
@@ -83,7 +83,7 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，独立 `internal/maintenancescan` 通过私有适配复用账本、周期预算、人工核款/兑换券来源关联、sandbox capture 直接关联和采购预算投影五个固定读取算法；每次扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。采购 reader 完整读取 `procurement_accounts`、`procurement_reservations` 与 `procurement_budget_events`，独立比较账户缓存、预占汇总和事件delta汇总；它只证明该三表投影局部一致，不验证报价/供应商账单、凭据绑定、成本更正或周期预算。sandbox reader 完整读取 `funding_receipts` 与 `payment_captures`，只核验两者直接 ID、租户、金额和币种关系，不验证 capture 的订单/身份/evidence 图、journal/ledger/outbox/audit 或 PSP 真实性。其它来源和 full-source coverage 仍需后续独立 scanner 与组合。普通 billing/PB/main、HTTP、支付 worker 与资金 writer 不接入这些维护reader；领域读取接缝只返回不可信局部事实，只有集成包消费真实租约并正常 Finish 后才能保存绑定原 Permit 的私有 ScanProof 结果，不接收外部报告或 provider。五个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，采购投影合同与验证状态见[窄合同](specs/022-self-service-payments/c0-procurement-budget-contract.md)和[验证记录](docs/verification/procurement-budget-maintenance.md)；sandbox合同与记录见[capture窄合同](specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)和[验证记录](docs/verification/sandbox-capture-links.md)，历史 T3 专项与集成证据保留其原有源码范围。
+停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，独立 `internal/maintenancescan` 通过私有适配执行账本、周期预算、人工核款/兑换券来源关联、sandbox capture 直接关联和采购五个固定读取算法；每次扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。采购扫描完整读取十二个固定关系表，一次生成彼此独立的预算投影摘要与 attempt 绑定/报价快照摘要；数据不匹配以局部 `Balanced=false` 返回并正常结束扫描，读取或资源错误撤销整个 lease。它不证明成本更正/证据、人工余额观察、周期预算交叉关系或供应商真实账单。sandbox reader完整读取 `funding_receipts` 与 `payment_captures`，只核验两者直接 ID、租户、金额和币种关系，不验证 capture 的订单/身份/evidence 图、journal/ledger/outbox/audit 或 PSP 真实性。其它来源和 full-source coverage 仍需后续独立 scanner 与组合。普通 billing/PB/main、HTTP、支付 worker 与资金 writer 不接入这些维护reader；领域读取接缝只返回不可信局部事实，只有集成包消费真实租约并正常 Finish 后才能保存绑定原 Permit 的私有 ScanProof 结果，不接收外部报告或 provider。五个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，采购投影与 attempt 关系合同及验证状态见[预算窄合同](specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](specs/022-self-service-payments/c0-procurement-attempt-contract.md)和[验证记录](docs/verification/procurement-budget-maintenance.md)；sandbox合同与记录见[capture窄合同](specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)和[验证记录](docs/verification/sandbox-capture-links.md)，历史 T3 专项与集成证据保留其原有源码范围。
 
 ## 本地启动
 
@@ -205,7 +205,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。[维护架构](docs/architecture/maintenance-gate.md)的 T0/T1 与 [T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)保留各自验证范围；[T3 ReadLease](specs/022-self-service-payments/c0-read-lease-contract.md)现承载 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联与采购预算投影五个局部 reader。采购reader只比较`procurement_accounts`、`procurement_reservations`、`procurement_budget_events`的本地金额投影；不证明上游真实成本/账单或全来源组合，合同与验证边界见[窄合同](specs/022-self-service-payments/c0-procurement-budget-contract.md)和[验证记录](docs/verification/procurement-budget-maintenance.md)。全来源scanner与组合、生产维护CLI、basis和epoch开账仍后续。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。[维护架构](docs/architecture/maintenance-gate.md)的 T0/T1 与 [T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)保留各自验证范围；[T3 ReadLease](specs/022-self-service-payments/c0-read-lease-contract.md)现承载 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联与采购预算+attempt绑定五个局部 reader。采购reader在同一lease内校验账户金额投影、永久credential binding、request/attempt租户归属、channel credential pool、上游成本版本快照与reservation上界；它仍未覆盖成本更正/evidence、command/audit、人工余额观察、周期预算交叉关系、真实供应商账单或全来源组合，合同与验证边界见[预算合同](specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](specs/022-self-service-payments/c0-procurement-attempt-contract.md)和[验证记录](docs/verification/procurement-budget-maintenance.md)。全来源scanner与组合、生产维护CLI、basis和epoch开账仍后续。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

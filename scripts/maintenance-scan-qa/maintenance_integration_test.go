@@ -21,6 +21,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
+	"github.com/moni-ai/moni-aigate/internal/fundinglotverify"
 	"github.com/moni-ai/moni-aigate/internal/maintenancescan"
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 	"github.com/moni-ai/moni-aigate/internal/paymentproto"
@@ -28,6 +29,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/paymentsandboxqa"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/procurement"
+	"github.com/moni-ai/moni-aigate/internal/routing"
 	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
@@ -41,13 +43,18 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			f := newConsumerFixture(t)
 			ctx := context.Background()
 			captureID := seedConsumerSandboxCapture(t, f, ctx)
+			seedConsumerProcurementAttempt(t, f, ctx)
 			if mode == "init" {
-				damageConsumerProcurementProjection(t, f, ctx)
+				damageConsumerProcurementAttempt(t, f, ctx)
 				breakConsumerFundingReceiptLinks(t, f, ctx, f.fundingSourceCreditID, captureID)
 			}
 			fundingBeforeScan, err := f.env.FundingSnapshot(ctx)
 			if err != nil {
 				t.Fatal("consumer funding baseline after voucher fixture failed")
+			}
+			procurementBeforeScan, err := f.procurementAttemptSnapshot(ctx)
+			if err != nil {
+				t.Fatal("consumer procurement baseline before scan failed", err)
 			}
 			g, err := maintenancetrust.Acquire(ctx, f.cfg, f.pins)
 			if err != nil || g == nil {
@@ -78,7 +85,7 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			var budget *maintenancescan.MaintenanceResult
 			var fundingLinks *maintenancescan.FundingSourceLinksResult
 			var sandboxLinks *maintenancescan.SandboxCaptureReceiptLinksResult
-			var procurementBudget *maintenancescan.ProcurementBudgetMaintenanceResult
+			var procurementResult *maintenancescan.ProcurementMaintenanceResult
 			readLedger := func() {
 				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanLedger)
 				if e != nil {
@@ -119,27 +126,27 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 					t.Fatal("real maintenance sandbox capture/receipt scan failed")
 				}
 			}
-			readProcurementBudget := func() {
+			readProcurement := func() {
 				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanProcurement)
 				if e != nil {
 					t.Fatal("real procurement budget lease failed")
 				}
-				procurementBudget, e = maintenancescan.VerifyProcurementBudgetMaintenance(lease)
-				if e != nil || procurementBudget == nil {
-					t.Fatal("real maintenance procurement budget scan failed", e)
+				procurementResult, e = maintenancescan.VerifyProcurementMaintenance(lease)
+				if e != nil || procurementResult == nil {
+					t.Fatal("real maintenance procurement scan failed", e)
 				}
 			}
 			if mode == "plan" {
 				readLedger()
 				readFundingLinks()
 				readSandboxLinks()
-				readProcurementBudget()
+				readProcurement()
 				readBudget()
 			} else {
 				readBudget()
 				readFundingLinks()
 				readSandboxLinks()
-				readProcurementBudget()
+				readProcurement()
 				readLedger()
 			}
 			check, err := ledger.Summary(permit)
@@ -166,33 +173,46 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 				(mode == "init" && (sandboxCheck.OrphanSandboxReceipts != 1 || sandboxCheck.CapturesMissingReceipts != 1)) {
 				t.Fatal("sandbox direct-link local facts were not retained")
 			}
-			procurementCheck, err := procurementBudget.Summary(permit)
-			wantProcurementBalanced := mode == "plan"
-			wantProcurementMismatch := uint64(0)
+			procurementBudgetCheck, err := procurementResult.BudgetSummary(permit)
+			if err != nil || procurementBudgetCheck.Scope != "procurement_budget_projection_v1" || !procurementBudgetCheck.Balanced ||
+				procurementBudgetCheck.Scanned.Accounts != 1 || procurementBudgetCheck.Mismatches != (fundinglotverify.ProcurementBudgetProjectionMismatches{}) {
+				t.Fatal("procurement budget projection was not retained as balanced", err, procurementBudgetCheck)
+			}
+			procurementBindingCheck, err := procurementResult.BindingSummary(permit)
+			wantBindingBalanced := mode == "plan"
+			wantBoundMismatch := uint64(0)
+			wantUpperMismatch := uint64(0)
 			if mode == "init" {
-				wantProcurementMismatch = 1
+				wantBoundMismatch = 1
+				wantUpperMismatch = 1
 			}
-			if err != nil || procurementCheck.Scope != "procurement_budget_projection_v1" || procurementCheck.Balanced != wantProcurementBalanced ||
-				procurementCheck.Scanned.Accounts != 1 || procurementCheck.Mismatches.AccountHeldReservationMismatches != wantProcurementMismatch ||
-				procurementCheck.Mismatches.AccountHeldEventMismatches != wantProcurementMismatch {
-				t.Fatal("procurement budget local projection facts were not retained", err, procurementCheck)
+			if err != nil || procurementBindingCheck.Scope != "procurement_attempt_binding_graph_v1" || procurementBindingCheck.Balanced != wantBindingBalanced ||
+				procurementBindingCheck.Scanned.Channels != 1 || procurementBindingCheck.Scanned.Credentials != 1 ||
+				procurementBindingCheck.Scanned.Versions != 1 || procurementBindingCheck.Scanned.PoolMemberships != 1 ||
+				procurementBindingCheck.Scanned.Tenants != 1 || procurementBindingCheck.Scanned.Requests != 1 || procurementBindingCheck.Scanned.CostVersions != 1 ||
+				procurementBindingCheck.Scanned.Accounts != 1 || procurementBindingCheck.Scanned.Bindings != 1 ||
+				procurementBindingCheck.Scanned.Attempts != 1 || procurementBindingCheck.Scanned.Reservations != 1 ||
+				procurementBindingCheck.Scanned.BudgetEvents != 1 ||
+				procurementBindingCheck.Mismatches.ReservationRequestBoundRows != wantBoundMismatch ||
+				procurementBindingCheck.Mismatches.ReservationUpperBoundRows != wantUpperMismatch {
+				t.Fatal("procurement attempt binding local facts were not retained", err, procurementBindingCheck)
 			}
-			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil || procurementBudget.Verify(permit) != nil {
+			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil || procurementResult.Verify(permit) != nil {
 				t.Fatal("all real consumers must share the original permit")
 			}
 			if _, err := permit.BeginScan(ctx, maintenancetrust.ScanFunding); err == nil {
 				t.Fatal("the same Permit accepted ScanFunding twice")
 			}
 			wrong := &maintenancetrust.Permit{}
-			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil || sandboxLinks.Verify(wrong) == nil || procurementBudget.Verify(wrong) == nil {
+			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil || sandboxLinks.Verify(wrong) == nil || procurementResult.Verify(wrong) == nil {
 				t.Fatal("consumer accepted an unrelated permit")
 			}
-			ledgerCopy, budgetCopy, fundingLinksCopy, sandboxLinksCopy, procurementBudgetCopy := *ledger, *budget, *fundingLinks, *sandboxLinks, *procurementBudget
+			ledgerCopy, budgetCopy, fundingLinksCopy, sandboxLinksCopy, procurementCopy := *ledger, *budget, *fundingLinks, *sandboxLinks, *procurementResult
 			if snapshot.Rollback(ctx) != nil {
 				t.Fatal("real shared snapshot rollback failed")
 			}
-			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || sandboxLinks.Verify(permit) == nil || procurementBudget.Verify(permit) == nil ||
-				ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil || sandboxLinksCopy.Verify(permit) == nil || procurementBudgetCopy.Verify(permit) == nil {
+			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || sandboxLinks.Verify(permit) == nil || procurementResult.Verify(permit) == nil ||
+				ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil || sandboxLinksCopy.Verify(permit) == nil || procurementCopy.Verify(permit) == nil {
 				t.Fatal("rollback did not revoke every original consumer result")
 			}
 			if g.Close(ctx) != nil {
@@ -203,8 +223,12 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			if err != nil || fundingAfterScan != fundingBeforeScan || f.env.VerifyLegacyFundingUnchanged(ctx) != nil {
 				t.Fatal("maintenance scans changed genuine funded data")
 			}
+			procurementAfterScan, err := f.procurementAttemptSnapshot(ctx)
+			if err != nil || string(procurementAfterScan) != string(procurementBeforeScan) {
+				t.Fatal("maintenance scan changed procurement business facts", err)
+			}
 			var procurementHeld, procurementSpent string
-			if err = f.admin.QueryRow(ctx, "SELECT held_amount::text,spent_amount::text FROM "+pgx.Identifier{f.env.Schemas["app"]}.Sanitize()+".procurement_accounts WHERE id=$1", f.procurementAccountID).Scan(&procurementHeld, &procurementSpent); err != nil || procurementHeld != "1" && mode == "init" || procurementHeld != "0" && mode == "plan" || procurementSpent != "0" {
+			if err = f.admin.QueryRow(ctx, "SELECT held_amount::text,spent_amount::text FROM "+pgx.Identifier{f.env.Schemas["app"]}.Sanitize()+".procurement_accounts WHERE id=$1", f.procurementAccountID).Scan(&procurementHeld, &procurementSpent); err != nil || procurementHeld != "240" || procurementSpent != "0" {
 				t.Fatal("maintenance scan changed procurement budget projection", err, procurementHeld, procurementSpent)
 			}
 		})
@@ -409,17 +433,26 @@ type consumerBackend struct {
 	start time.Time
 }
 type consumerFixture struct {
-	env                   *paymentsandboxqa.ApplicationEnvironment
-	admin                 *pgx.Conn
-	cfg                   *pgx.ConnConfig
-	pins                  fundinglotcatalog.Pins
-	sharedBefore          string
-	tag                   string
-	fundingSourceCreditID string
-	procurementAccountID  string
-	gates                 []*maintenancetrust.Gate
-	pools                 []*pgxpool.Pool
-	backends              []consumerBackend
+	env                       *paymentsandboxqa.ApplicationEnvironment
+	admin                     *pgx.Conn
+	cfg                       *pgx.ConnConfig
+	pins                      fundinglotcatalog.Pins
+	sharedBefore              string
+	tag                       string
+	fundingSourceCreditID     string
+	procurementAccountID      string
+	procurementChannelID      string
+	procurementCredentialID   string
+	procurementVersionID      string
+	procurementModelID        string
+	procurementPriceVersionID string
+	procurementKeyID          string
+	procurementRequestID      string
+	procurementAttemptID      string
+	procurementBindingID      string
+	gates                     []*maintenancetrust.Gate
+	pools                     []*pgxpool.Pool
+	backends                  []consumerBackend
 }
 
 func consumerConfig(t *testing.T) *pgx.ConnConfig {
@@ -572,17 +605,129 @@ func seedConsumerProcurementAccount(t *testing.T, f *consumerFixture, ctx contex
 	return after.ID
 }
 
-func damageConsumerProcurementProjection(t *testing.T, f *consumerFixture, ctx context.Context) {
+func seedConsumerProcurementAttempt(t *testing.T, f *consumerFixture, ctx context.Context) {
 	t.Helper()
-	if _, err := f.admin.Exec(ctx, "SET session_replication_role='replica'"); err != nil {
-		t.Fatal("consumer projection damage setup failed", err)
+	f.procurementChannelID = uuid.NewString()
+	f.procurementCredentialID = uuid.NewString()
+	f.procurementVersionID = uuid.NewString()
+	f.procurementModelID = uuid.NewString()
+	f.procurementPriceVersionID = uuid.NewString()
+	f.procurementKeyID = uuid.NewString()
+	f.procurementRequestID = uuid.NewString()
+	profileVersion := "maintenance-procurement-v1"
+	profile := `{"version":"v1","model":"maintenance-procurement","protocol":"openai_chat","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`
+	requestDeadline := time.Now().UTC().Add(4 * time.Minute)
+	owner, err := f.env.OpenPool(ctx, "app_owner")
+	if err != nil {
+		t.Fatal("consumer procurement owner pool failed", err)
 	}
-	if _, err := f.admin.Exec(ctx, "UPDATE "+pgx.Identifier{f.env.Schemas["app"]}.Sanitize()+".procurement_accounts SET held_amount=1 WHERE id=$1", f.procurementAccountID); err != nil {
-		t.Fatal("consumer procurement projection damage failed", err)
+	f.pools = append(f.pools, owner)
+	tx, err := owner.Begin(ctx)
+	if err != nil {
+		t.Fatal("consumer procurement source fixture transaction failed", err)
 	}
-	if _, err := f.admin.Exec(ctx, "RESET session_replication_role"); err != nil {
-		t.Fatal("consumer projection damage cleanup failed", err)
+	defer func() { _ = tx.Rollback(context.Background()) }()
+	for _, q := range []struct {
+		sql  string
+		args []any
+	}{
+		{`INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$2,$3,$4)`, []any{f.procurementModelID, "maintenance-procurement-" + f.procurementModelID, profile, profileVersion}},
+		{`INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, []any{f.env.ApplicationTenantID, f.procurementModelID}},
+		{`INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'maintenance procurement key','qa',$4,$5,1000000)`, []any{f.procurementKeyID, f.env.ApplicationTenantID, f.env.ActorIDs["owner"], "maintenance-" + f.procurementKeyID, []string{f.procurementModelID}}},
+		{`INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1000000,1000000,clock_timestamp()-interval '1 minute',$3)`, []any{f.procurementPriceVersionID, f.procurementModelID, f.env.ActorIDs["admin"]}},
+		{`INSERT INTO channels(id,name,current_version) VALUES($1,'maintenance procurement channel',$2)`, []any{f.procurementChannelID, f.procurementVersionID}},
+		{`INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'qa-ciphertext')`, []any{f.procurementCredentialID, f.procurementChannelID}},
+		{`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, []any{f.procurementVersionID, f.procurementChannelID, f.procurementCredentialID}},
+		{`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'maintenance-qa',1,1)`, []any{f.procurementVersionID, f.procurementChannelID, f.procurementCredentialID}},
+		{`INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'maintenance-upstream',2000000,2000000,'contract')`, []any{f.procurementChannelID}},
+		{`INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision) VALUES($1,$2,$3,$4,$5,$6,1000000,1000000,100,20,$7,'maintenance-qa',$8,$9,'maintenance-qa',false,0)`, []any{f.procurementRequestID, f.env.ApplicationTenantID, f.procurementKeyID, f.env.ActorIDs["owner"], f.procurementModelID, f.procurementPriceVersionID, profileVersion, "maintenance-procurement-" + uuid.NewString(), requestDeadline}},
+		{`INSERT INTO reservations(id,tenant_id,request_id,amount,deadline) VALUES($1,$2,$3,120,$4)`, []any{uuid.NewString(), f.env.ApplicationTenantID, f.procurementRequestID, requestDeadline.Add(24 * time.Hour)}},
+	} {
+		if _, err = tx.Exec(ctx, q.sql, q.args...); err != nil {
+			t.Fatal("consumer procurement source fact setup failed", err)
+		}
 	}
+	if err = tx.Commit(ctx); err != nil {
+		t.Fatal("consumer procurement source fixture commit failed", err)
+	}
+	app, err := f.env.OpenPool(ctx, "app")
+	if err != nil {
+		t.Fatal("consumer procurement runtime pool failed", err)
+	}
+	f.pools = append(f.pools, app)
+	var revision string
+	if err = app.QueryRow(ctx, `SELECT management_revision::text FROM channels WHERE id=$1`, f.procurementChannelID).Scan(&revision); err != nil {
+		t.Fatal("consumer procurement channel revision read failed", err)
+	}
+	bound, err := procurement.New(app).BindCredential(ctx, f.env.ActorIDs["admin"], procurement.BindingInput{
+		OperationID: uuid.NewString(), ChannelID: f.procurementChannelID, CredentialID: f.procurementCredentialID,
+		AccountID: f.procurementAccountID, ExpectedChannelRevision: revision,
+	})
+	if err != nil || bound.Status != "applied" {
+		t.Fatal("consumer procurement credential binding failed", err)
+	}
+	if err = app.QueryRow(ctx, `SELECT id FROM credential_procurement_bindings WHERE credential_id=$1`, f.procurementCredentialID).Scan(&f.procurementBindingID); err != nil {
+		t.Fatal("consumer procurement binding identity read failed", err)
+	}
+	store := billing.New(app)
+	var quote routing.CostQuote
+	var inputRate, outputRate int64
+	if err = app.QueryRow(ctx, `SELECT id,input_rate,output_rate,basis FROM cost_versions WHERE channel_id=$1 AND upstream_model=$2 ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1`, f.procurementChannelID, "maintenance-upstream").Scan(&quote.VersionID, &inputRate, &outputRate, &quote.Basis); err != nil {
+		t.Fatal("consumer procurement cost quote read failed", err)
+	}
+	quote.InputRate, quote.OutputRate = &inputRate, &outputRate
+	attempt, err := store.RecordAttempt(ctx, billing.AttemptInput{
+		TenantID: f.env.ApplicationTenantID, RequestID: f.procurementRequestID, Sequence: 1,
+		ChannelID: f.procurementChannelID, ChannelVersionID: f.procurementVersionID,
+		CredentialID: f.procurementCredentialID, UpstreamModel: "maintenance-upstream", CostQuote: &quote,
+	})
+	if err != nil || attempt.ID == "" {
+		t.Fatal("consumer procurement upstream attempt setup failed", err)
+	}
+	f.procurementAttemptID = attempt.ID
+}
+
+func damageConsumerProcurementAttempt(t *testing.T, f *consumerFixture, ctx context.Context) {
+	t.Helper()
+	tx, err := f.admin.Begin(ctx)
+	if err != nil {
+		t.Fatal("consumer attempt mismatch fixture transaction failed", err)
+	}
+	defer func() { _ = tx.Rollback(context.Background()) }()
+	if _, err = tx.Exec(ctx, "SET LOCAL session_replication_role='replica'"); err != nil {
+		t.Fatal("consumer attempt mismatch fixture trigger bypass failed", err)
+	}
+	schema := pgx.Identifier{f.env.Schemas["app"]}.Sanitize()
+	tag, err := tx.Exec(ctx, "UPDATE "+schema+".procurement_reservations SET input_bound=input_bound+1 WHERE attempt_id=$1", f.procurementAttemptID)
+	if err != nil || tag.RowsAffected() != 1 {
+		t.Fatal("consumer procurement attempt bound mismatch fixture failed", err)
+	}
+	if err = tx.Commit(ctx); err != nil {
+		t.Fatal("consumer attempt mismatch fixture commit failed", err)
+	}
+}
+
+func (f *consumerFixture) procurementAttemptSnapshot(ctx context.Context) ([]byte, error) {
+	schema := pgx.Identifier{f.env.Schemas["app"]}.Sanitize()
+	var snapshot string
+	err := f.admin.QueryRow(ctx, `SELECT jsonb_build_object(
+ 'channel',(SELECT to_jsonb(x) FROM `+schema+`.channels x WHERE x.id=$1),
+ 'credential',(SELECT jsonb_build_object('id',x.id,'channel_id',x.channel_id,'revoked_at',x.revoked_at) FROM `+schema+`.channel_credentials x WHERE x.id=$2),
+ 'version',(SELECT to_jsonb(x) FROM `+schema+`.channel_versions x WHERE x.id=$3),
+ 'pool',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.channel_version_id,x.credential_id),'[]'::jsonb) FROM `+schema+`.channel_version_credentials x WHERE x.channel_version_id=$3),
+ 'cost',(SELECT to_jsonb(x) FROM `+schema+`.cost_versions x WHERE x.channel_id=$1 AND x.upstream_model='maintenance-upstream' ORDER BY x.effective_at DESC,x.created_at DESC,x.id DESC LIMIT 1),
+ 'account',(SELECT to_jsonb(x) FROM `+schema+`.procurement_accounts x WHERE x.id=$6),
+ 'binding',(SELECT to_jsonb(x) FROM `+schema+`.credential_procurement_bindings x WHERE x.id=$7),
+	 'request',(SELECT jsonb_build_object('id',x.id,'tenant_id',x.tenant_id,'key_id',x.key_id,'owner_id',x.owner_id,'model_id',x.model_id,'price_version_id',x.price_version_id,'input_upper_bound',x.input_upper_bound,'output_limit',x.output_limit,'profile_version',x.profile_version,'policy_version',x.policy_version,'status',x.status,'billing_status',x.billing_status,'request_deadline',x.request_deadline,'created_at',x.created_at) FROM `+schema+`.request_records x WHERE x.id=$4),
+ 'customer_reservation',(SELECT to_jsonb(x) FROM `+schema+`.reservations x WHERE x.request_id=$4),
+ 'attempt',(SELECT to_jsonb(x) FROM `+schema+`.upstream_attempts x WHERE x.id=$5),
+ 'supplier_reservation',(SELECT to_jsonb(x) FROM `+schema+`.procurement_reservations x WHERE x.attempt_id=$5),
+ 'budget_events',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb) FROM `+schema+`.procurement_budget_events x WHERE x.attempt_id=$5)
+)::text`, f.procurementChannelID, f.procurementCredentialID, f.procurementVersionID, f.procurementRequestID, f.procurementAttemptID, f.procurementAccountID, f.procurementBindingID).Scan(&snapshot)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(snapshot), nil
 }
 
 func (f *consumerFixture) loadPins(t *testing.T, ctx context.Context) {
