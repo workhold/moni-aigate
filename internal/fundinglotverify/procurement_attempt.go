@@ -193,6 +193,18 @@ func (w *procurementAttemptWork) rowText(required []string, optional ...*string)
 	return valid, nil
 }
 
+func (w *procurementAttemptWork) rowTenantText(required []string, tenant string, optional ...*string) (bool, error) {
+	valid, err := w.rowText(required, optional...)
+	if err != nil {
+		return false, err
+	}
+	if len(tenant) > fundingSourceByteLimit-w.bytes {
+		return false, ErrProcurementAttemptBindingRowsResource
+	}
+	w.bytes += len(tenant)
+	return valid && legacyTenantText(tenant), nil
+}
+
 func procurementAttemptRowCount(rows ProcurementAttemptBindingRows) (uint64, bool) {
 	remaining := uint64(fundingSourceRowLimit)
 	counts := [...]int{
@@ -264,6 +276,19 @@ func procurementAttemptTextPass(w *procurementAttemptWork, rows ProcurementAttem
 		}
 		return nil
 	}
+	checkTenant := func(required []string, tenant string, optional ...*string) error {
+		if err := w.tick(); err != nil {
+			return err
+		}
+		valid, err := w.rowTenantText(required, tenant, optional...)
+		if err != nil {
+			return err
+		}
+		if !valid {
+			invalid++
+		}
+		return nil
+	}
 	for _, row := range rows.Channels {
 		if err := check([]string{row.ID}); err != nil {
 			return 0, err
@@ -285,12 +310,12 @@ func procurementAttemptTextPass(w *procurementAttemptWork, rows ProcurementAttem
 		}
 	}
 	for _, row := range rows.Tenants {
-		if err := check([]string{row.ID}); err != nil {
+		if err := checkTenant(nil, row.ID); err != nil {
 			return 0, err
 		}
 	}
 	for _, row := range rows.Requests {
-		if err := check([]string{row.ID, row.TenantID, row.InputUpperBound, row.OutputLimit}); err != nil {
+		if err := checkTenant([]string{row.ID, row.InputUpperBound, row.OutputLimit}, row.TenantID); err != nil {
 			return 0, err
 		}
 	}
@@ -310,7 +335,7 @@ func procurementAttemptTextPass(w *procurementAttemptWork, rows ProcurementAttem
 		}
 	}
 	for _, row := range rows.Attempts {
-		if err := check([]string{row.ID, row.TenantID, row.RequestID, row.ChannelID, row.ChannelVersionID, row.CredentialID, row.UpstreamModel, row.DeliveryState, row.CostBasis, row.CostStatus}, row.CostVersionID, row.CostInputRate, row.CostOutputRate, row.CostAmount); err != nil {
+		if err := checkTenant([]string{row.ID, row.RequestID, row.ChannelID, row.ChannelVersionID, row.CredentialID, row.UpstreamModel, row.DeliveryState, row.CostBasis, row.CostStatus}, row.TenantID, row.CostVersionID, row.CostInputRate, row.CostOutputRate, row.CostAmount); err != nil {
 			return 0, err
 		}
 	}
@@ -852,7 +877,7 @@ func CheckProcurementAttemptBindingGraph(ctx context.Context, rows ProcurementAt
 		}
 		request, requestOK := requests[row.RequestID]
 		_, tenantOK := tenants[row.TenantID]
-		if !procurementAttemptValidText(row.RequestID) || !requestOK || !procurementAttemptValidText(row.TenantID) || !tenantOK || request.TenantID != row.TenantID {
+		if !procurementAttemptValidText(row.RequestID) || !requestOK || !legacyTenantText(row.TenantID) || !tenantOK || request.TenantID != row.TenantID {
 			out.Mismatches.AttemptRequestTenantRows++
 		}
 		version, versionOK := versions[row.ChannelVersionID]

@@ -155,8 +155,12 @@ func (g *sandboxGraphData) accepted(operation, kind, resource, actor, tenant str
 	c, cok := sandboxGraphGet[FundingGraphCommerceCommandRow](g, "Commands", operation)
 	r, rok := sandboxGraphGet[FundingGraphCommerceReceiptRow](g, "CommerceReceipts", operation)
 	scope := "platform"
-	if tenant != "" {
+	switch kind {
+	case "payment.order.create", "payment.order.cancel":
 		scope = "tenant:" + tenant
+	case "payment.sku.publish", "payment.sku.activate":
+	default:
+		return false
 	}
 	return cok && rok && c.Kind == kind && c.Actor == actor && c.Scope == scope && r.Status == "accepted" && r.Reason == "accepted" && r.ResourceID != nil && *r.ResourceID == resource && r.Kind == kind && r.Actor == actor && r.Scope == scope
 }

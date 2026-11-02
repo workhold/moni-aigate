@@ -265,7 +265,7 @@ func (w *procurementEvidenceWork) index(in ProcurementEvidenceGraphRows) (*procu
 		if r.SchemaVersion != 1 {
 			return nil, ErrProcurementEvidenceGraphRowsExecution
 		}
-		if !procurementAttemptValidText(r.ID) || !procurementAttemptValidText(r.TenantID) || !procurementAttemptValidText(r.RequestID) || len(r.Source) == 0 || len(r.Source) > 80 || len(r.SourceEventID) == 0 || len(r.SourceEventID) > 200 || r.AttemptID != nil && !procurementAttemptValidText(*r.AttemptID) {
+		if !procurementAttemptValidText(r.ID) || !legacyTenantText(r.TenantID) || !procurementAttemptValidText(r.RequestID) || len(r.Source) == 0 || len(r.Source) > 80 || len(r.SourceEventID) == 0 || len(r.SourceEventID) > 200 || r.AttemptID != nil && !procurementAttemptValidText(*r.AttemptID) {
 			w.out.Mismatches.InvalidTextRows++
 		}
 		u, valid := procurementEvidenceUsageParse(r.UsageJSON)
@@ -335,7 +335,7 @@ func (w *procurementEvidenceWork) index(in ProcurementEvidenceGraphRows) (*procu
 			return nil, err
 		}
 		_, uuidErr := uuid.Parse(r.ID)
-		if uuidErr != nil || !procurementAttemptValidText(r.TenantID) || !procurementAttemptValidText(r.RequestID) || !procurementAttemptValidText(r.EventID) || !procurementCommandHex(r.InputDigest) || len(r.FinishReason) > 80 || !procurementAttemptValidText(r.PolicyVersion) {
+		if uuidErr != nil || !legacyTenantText(r.TenantID) || !procurementAttemptValidText(r.RequestID) || !procurementAttemptValidText(r.EventID) || !procurementCommandHex(r.InputDigest) || len(r.FinishReason) > 80 || !procurementAttemptValidText(r.PolicyVersion) {
 			w.out.Mismatches.InvalidTextRows++
 		}
 		valid := procurementAttemptStatus(r.ProtocolOutcome, "completed", "failed", "incomplete", "cancelled", "unknown") && procurementAttemptStatus(r.TransportEndReason, procurementEvidenceReasons...) && procurementAttemptStatus(r.DeliveryStage, "none", "committed", "content", "unknown") && r.ContentWritten == (r.DeliveryStage == "content")

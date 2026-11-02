@@ -264,7 +264,7 @@ func procurementCostJournalHex4(raw string, at int) (uint16, bool) {
 }
 
 func procurementCostJournalTenant(scope *string, tenant string) bool {
-	return scope != nil && *scope == tenant && procurementAttemptValidText(tenant)
+	return scope != nil && *scope == tenant && legacyTenantText(tenant)
 }
 
 func procurementCostJournalProposalAudit(p ProcurementCostProposalRow, a ProcurementAttemptRow, event ProcurementAuditRow, values map[string]string, approved bool) bool {
@@ -347,7 +347,8 @@ func CheckProcurementCostJournalGraph(ctx context.Context, rows ProcurementCostJ
 		}
 		required, optional := []string{event.ID, event.Kind}, []string{event.Payload}
 		if event.Kind == "cost_corrected" {
-			required = append(required, event.TenantID, event.OperationID)
+			required = append(required, event.OperationID)
+			optional = append(optional, event.TenantID)
 		} else {
 			optional = append(optional, event.TenantID, event.OperationID)
 		}

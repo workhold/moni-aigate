@@ -1,5 +1,7 @@
 # 022-C0：SandboxFacts 完整本地来源图合同候选
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02，**根冻结纯 core；reader、完整 phase 及其权威装配未冻结**。本稿承接 [完整来源候选 §10–11](c0-verifier-contract.md)、[B 领域](b-domain-contract.md)、[Processor](b-processor-contract.md)、[第三资金来源](b2-funding-contract.md)、[原前驱认证](c0-predecessor-contract.md)及 [HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)。目标是独立检查全部应用支付持久图；[两表 capture links](c0-sandbox-capture-link-contract.md)继续保留原窄 scope，不转换为完整 SandboxFacts。
 
 本稿以 [021](../../migrations/021_payment_sandbox.sql)、[022](../../migrations/022_payment_runtime_attestation.sql)、正式 [Service](../../internal/payments/service_commands.go)、[通知持久化](../../internal/payments/service_notification.go)、[query](../../internal/payments/processor_query.go)、[evidence](../../internal/payments/processor_evidence.go)、[lease](../../internal/payments/processor_claim.go)、[资金 helper](../../internal/billing/funding_sandbox.go)核定事实合同。可以阅读 SQL 的受审定义，但 Go 判断不得调用、复制调用结果或引入写侧 `payment_*_valid`、`funding_journal_valid`、`payment_check_human` 等谓词作 oracle；不得调用 billing helper、Processor、Service 或付款/模型网络。后续纯 core 独占 `internal/fundinglotverify/sandbox_source_graph*.go`，不修改旧 reader/writer、根 session、共享 DTO 或架构快照。

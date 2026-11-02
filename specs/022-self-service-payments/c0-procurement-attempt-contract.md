@@ -1,5 +1,7 @@
 # 022-C0-T3：采购 attempt 绑定与报价快照核验合同
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02，根冻结实现片。它扩展既有 `ScanProcurement` 预算投影扫描，在一次维护快照中独立核验永久凭据绑定、attempt/request/凭据池关系、不可变采购报价快照及预占上界。此片只提供采购域的两个局部摘要，不代表完整 Procurement coverage、客户资金来源证明或真实供应商账单。
 
 本文保留十二表/双摘要实施片的冻结范围。当前同一reader继续按[成本双审扩展合同](c0-procurement-approval-contract.md)读取十五表并返回第三个局部摘要；下文未覆盖cost correction/proposal的表述属于该十二表历史片，不覆盖新扩展，其他未覆盖项保持。

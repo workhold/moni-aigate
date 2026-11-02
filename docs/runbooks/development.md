@@ -490,7 +490,9 @@ curl --get http://localhost:8080/api/public/models \
 
 `make verify-mvp`的完整Go race套件每包预算为600秒。真实进程、密码哈希与商业用例增加后，240秒旧预算不足；仅延长测试期限，生产密码哈希成本、请求超时和测试断言保持原值。必须显式传专用TEST_DATABASE_URL，跳过数据库测试不算验收。
 
-本轮[84表来源与钱包读取](../verification/source-wallet-reader.md)按独立opt-in验证：非空C0使用owner RR核真实SQL与算法；真实维护Plan/Init仍保持16表空并如实报告缺epoch。已提交epoch环境尚无新post/runtime授权，不能用旧空安装发行入口或Init lease任意SQL代替protected phase。当前ReadLease没有SQL只读解析器，固定scanner仅发送受审SELECT；phase、严格v2、basis及在线writer均按后续合同推进。
+本轮[84表来源与钱包读取](../verification/source-wallet-reader.md)按独立opt-in验证：非空C0使用owner RR核真实SQL与算法；真实维护Plan/Init仍保持16表空并如实报告缺epoch。已提交epoch环境尚无新post/runtime授权，不能用旧空安装发行入口或Init lease任意SQL代替protected phase。当前ReadLease没有SQL只读解析器，固定scanner仅发送受审SELECT；phase、严格v2与basis现已按[新合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)完成库级候选组合；独立观察/runtime、正式迁移/CLI及在线writer继续后续。
 
 
-固定109表[basis与v2叶子](../verification/basis-proof-v2.md)为独立库专项：basis使用原迁移隔离schema与只读RR，先验证真实目录/UTF8，再读取原二进制；v2无需数据库，兼容差分放维护包单向引用。二者没有生产CLI，不新增启动参数或要求开发者手工发行证明；不能将CanonicalV2或Summary当运行授权。专库测试须串行并清理，不改同集群预览或全局设置；受保护phase/开账/epoch装配仍在后续合同中推进。
+固定109表[basis与v2叶子](../verification/basis-proof-v2.md)为独立库专项：basis使用原迁移隔离schema与只读RR，先验证真实目录/UTF8，再读取原二进制；v2无需数据库，兼容差分放维护包单向引用。二者没有生产CLI，不新增启动参数或要求开发者手工发行证明；不能将CanonicalV2或Summary当运行授权。专库测试须串行并清理，不改同集群预览或全局设置；受保护phase/开账/epoch已完成库级候选装配，独立非空epoch观察/runtime、正式迁移及CLI/在线接线仍在后续；执行证据见[本片记录](../verification/protected-init-phase.md)。
+
+受保护开账的完整维护专项须同时设置 `C0_MAINTENANCE_DATABASE_URL` 与 `MONI_TEST_DATABASE_URL` 指向上述同一专库，再串行运行 `go test -race -p 1 ./internal/maintenancetrust ./internal/maintenancescan ./internal/fundinglotbasis ./internal/fundinglotproof ./internal/fundinglotinit ./internal/fundinglotscan ./internal/fundinglotverify ./scripts/online-dependency-qa -count=1 -timeout 900s`。前者启用真实Gate/Permit/phase，后者启用basis/seed来源SQL；仅一个开关通过不能替代另一组。900秒是测试包累计预算，产品phase累计30秒、原leaf预算及断言不变。检查具体SKIP和失败，精确执行记录见[事务验证](../verification/protected-init-phase.md)。

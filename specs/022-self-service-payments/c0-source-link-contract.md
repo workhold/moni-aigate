@@ -1,5 +1,7 @@
 # 022-C0：人工核款与兑换券来源关联检查（根冻结窄片）
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02。根从 [C0 来源与维护核验候选](c0-verifier-contract.md) §9–11 拆出第一个可独立交付的纵向窄片并冻结本合同。范围是完整读取当前数据库内的 `credit_orders`、`voucher_redemptions`、`funding_receipts` 三表，并独立核对人工核款和兑换券的 source↔receipt 双向关系。它只形成带固定局部 scope 的描述性结果；**不是完整 FundingSources 核验、CoverageComplete、全源 proof、basis、epoch、维护初始化或资金写入许可**。sandbox capture 收据会完整计数为未覆盖来源；不读取 payment 模拟器表，不据此声称 B0/B3 支付来源已核。
 
 冻结输入来自 [022 总规格](spec.md)、[C0 候选](c0-verifier-contract.md) §11.2、[T3 ReadLease 合同](c0-read-lease-contract.md) §1–4，以及当前已应用的 [002](../../migrations/002_billing.sql)、[017](../../migrations/017_funding_vouchers.sql)、[021](../../migrations/021_payment_sandbox.sql)。既有迁移不得修改。

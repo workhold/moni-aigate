@@ -1,5 +1,7 @@
 # 022-C0-T3 采购成本审计与 outbox 局部核验
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02，根已授权冻结实施的纯core增量。沿 [成本双审图](c0-procurement-approval-contract.md) 的原始事实，独立核对三种成本审计与 `cost_corrected` outbox；新增固定scope `procurement_cost_journal_graph_v1`。本片的 journal 是审计/投影消息关系，不是资金journal或供应商账单。没有新迁移、writer、SQL聚合、HTTP或完整采购coverage；root在同一次十九表扩展扫描中完整读audit/outbox并共享给其它局部core，读取/维护装配由root独占。
 
 ## 1. 固定纯API与输入

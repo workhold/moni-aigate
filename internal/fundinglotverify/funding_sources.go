@@ -308,7 +308,7 @@ func CheckFundingSourceLinks(ctx context.Context, rows FundingSourceRows) (Fundi
 			return FundingSourceLinksCheck{}, err
 		}
 		amount, _ := fundingSourceCanonicalInt64(row.Amount)
-		if row.ID == "" || row.TenantID == "" || row.SourceID == "" || row.JournalID == "" || row.Currency != "CNY" || amount <= 0 {
+		if row.ID == "" || row.SourceID == "" || row.JournalID == "" || row.Currency != "CNY" || amount <= 0 {
 			m.ReceiptShapeMismatches++
 		}
 		switch row.SourceKind {
@@ -351,7 +351,7 @@ func CheckFundingSourceLinks(ctx context.Context, rows FundingSourceRows) (Fundi
 			return FundingSourceLinksCheck{}, err
 		}
 		amount, _ := fundingSourceCanonicalInt64(row.Amount)
-		shape := row.ID == "" || row.TenantID == "" || row.Requester == "" || amount <= 0 || row.State != "pending" && row.State != "approved"
+		shape := row.ID == "" || row.Requester == "" || amount <= 0 || row.State != "pending" && row.State != "approved"
 		if row.Approver != nil && (*row.Approver == "" || *row.Approver == row.Requester) {
 			shape = true
 		}
@@ -389,7 +389,7 @@ func CheckFundingSourceLinks(ctx context.Context, rows FundingSourceRows) (Fundi
 			return FundingSourceLinksCheck{}, err
 		}
 		amount, _ := fundingSourceCanonicalInt64(row.Amount)
-		if row.ID == "" || row.TenantID == "" || row.VoucherID == "" || row.FundingReceiptID == "" || row.JournalID == "" || amount <= 0 {
+		if row.ID == "" || row.VoucherID == "" || row.FundingReceiptID == "" || row.JournalID == "" || amount <= 0 {
 			m.RedemptionShapeMismatches++
 		}
 		if redemptionsByReceipt[row.FundingReceiptID] > 1 || redemptionsByVoucher[row.VoucherID] > 1 {

@@ -45,6 +45,9 @@ func (Permit) MarshalJSON() ([]byte, error) { return []byte(`{"permit":"redacted
 
 func (st *snapshotState) revokeAuthorityLocked() {
 	st.revokeReadLeaseLocked()
+	if st.fundingLots != nil {
+		st.fundingLots.revoked = true
+	}
 	if st.activeAuthority != nil {
 		st.activeAuthority.active = false
 	}

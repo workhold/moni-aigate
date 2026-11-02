@@ -1,5 +1,7 @@
 # 022-C0 采购原始证据、状态事件与成本来源图（根冻结）
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02，根审冻结纯 core；reader/writer 仍由根独占接线。本合同把现有十九表五个局部 core 未覆盖的 metering、conflict、finalization、语义 identity、全部预算事件 type/evidence、cost_recorded 与当前成本来源、账户配置来源放在同一原始图下。目标是为 C0 Procurement 域提供有明确缺证的独立三态结果，不能将五份 Balanced 摘要 AND 后改名全源通过。本片仍不发行数据库完整性/维护权/RuntimeProof、C0 lot、PB 或真实供应商账单证明。
 
 依据 [019合同](../019-procurement-accounts/contract.md)、[C0独立核验](c0-verifier-contract.md)、[十九表读取](c0-procurement-history-read-contract.md)、[evidence生命周期研究](../../docs/research/procurement-evidence-lifecycle.md)、[HLD](../../docs/design/HLD.md) 和 [LLD](../../docs/design/LLD.md)。源代码为 [evidence](../../internal/billing/evidence.go)、[采购状态写入](../../internal/billing/procurement.go)、[legacy更正](../../internal/billing/recovery.go)、[配置命令](../../internal/procurement/store.go)，DDL为 [002](../../migrations/002_billing.sql)、[014](../../migrations/014_procurement_accounts.sql)、[020](../../migrations/020_periodic_budgets.sql)。研究文档不构成数据库验收或规范的新版本；本合同明确化其剩余决策。

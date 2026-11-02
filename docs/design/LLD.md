@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（采购证据/PB/支付来源独立图与真实PG补验）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-03（受保护开账事务与旧 tenant TEXT 边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -889,3 +889,12 @@ U为uint64be，F为U(len)+bytes，N为U(0)或U(1)+F(bytes)。header按冻结顺�
 纯`Build`独立核原始账本与业务来源关系，A=ΣF+ΣQ−ΣV.R+ΣS(R−C)，H=ΣU.R，输出12组数据写集与恒空settlement/refund边，以及描述性Metadata。Operations/Lots/Events/ReservationLots专门INSERT DTO不含数据库生成stamp；epoch/attestation仅保留两行预算，不生成伪运行证明。UUIDv5以epoch原16字节为namespace，固定域NUL及U64BE字段帧；tag/字段序与表内PK字节排序逐项冻结，输入置换不改输出。
 
 九组输入和生成计划共享10万行/16MiB，metadata额外固定预留1MiB；省略stamp按XID20B/时间32B估算。这个界限不能替代未来完整68+输出资源重核及真实84post。纯层无数据库、Permit或writer，普通启动与七kind门禁不变；不写audit_events改变basis。错误封闭且零结果，真实专库与独立手算范围见[验证记录](../verification/init-planner.md)。
+
+
+## C0 protected phase、固定writer与post
+
+Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx,expected)只在原RW快照。Expected恰含EpochID、BasisDigest、ManifestDigest、DescriptorDigest、RuntimeProofDigest五字符串。私有state永久latch/nonce/once128保持原busy；pre→basis→draft→writing→post→ready→committing→done累计30秒，公开Commit在latch后封锁。writer固定14组INSERT、builtin参数、完整RETURNING/EOF和DB stamp，epoch最后再flush；全68加生成投影+1MiB预留共享10万行/16MiB。post真实84资格/逐组计数、strict v2全部21字段与metadata、fresh catalog/history/identity，以及第二次109basis全相等后才能ready。
+
+先冻结[精确合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)，实现和测试分工后由根汇合；当前图与源码见[统一架构](../architecture/README.md#受保护钱包初始化事务)，实际执行边界见[验证](../verification/protected-init-phase.md)。候选DDL/ACL和固定001–022材料不变；原16表空发行门禁保留。actor是offline-maintenance类别，实际LOGIN另由owned identity复核。未知提交保留状态且禁止重试，独立非空epoch观察/runtime、正式迁移、维护CLI和全资金路径尚未交付；普通经营后的basis不能强等历史cutover基线。前面各纯层和reader章节保留其当期范围。
+
+旧 tenant 的 TEXT 身份校准见[phase 合同第6节](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md#6-验收与交付)：空串与 SQL NULL 分离，完整来源图的 tenant 主键/外键及其索引统一接纳合法旧 TEXT，继续精确核关联和预算；新业务对象 ID、voucher 的 UUID scope 与在线 admission 不放宽。采购深层、周期预算 tenant scope 和支付命令的 scope 选择一并复核。历史 SQL fixture 与原在线 API fixture 分开记录。

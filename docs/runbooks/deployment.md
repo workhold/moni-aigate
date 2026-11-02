@@ -4,7 +4,7 @@
 
 当前源码要求完整 **001–022** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染已验证，容器、1Panel 和正式供应商仍按目标环境分别验收。
 
-022-C0 的停服维护已有库级 `Attest(ctx, snapshot)`、`Permit.Verify(ctx)` 与受控 ReadLease，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；真实 PostgreSQL 专项与历史 CI 结果分别记录。维护读取集中在独立 `internal/maintenancescan`，普通billing/PB/main及领域测试不依赖维护或catalog；真正维护消费者仍完整认证固定catalog。保留单租约68表业务来源入口，新增84表/八算法的同session来源与lot/FIFO/消费退款读取核验；生产维护CLI、protected phase、basis与epoch开账仍在后续。普通main、Compose和1Panel没有这些维护装配或新增正式迁移；部署继续使用001–022，C0规格SQL不属于安装或升级步骤。
+022-C0 的停服维护已有库级 `Attest(ctx, snapshot)`、`Permit.Verify(ctx)` 与受控 ReadLease，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；真实 PostgreSQL 专项与历史 CI 结果分别记录。维护读取集中在独立 `internal/maintenancescan`，普通billing/PB/main及领域测试不依赖维护或catalog；真正维护消费者仍完整认证固定catalog。保留单租约68表业务来源入口，新增84表/八算法的同session来源与lot/FIFO/消费退款读取核验；库级候选protected phase、basis和epoch开账已见[当前架构](../architecture/README.md#受保护钱包初始化事务)；正式迁移、维护CLI与非空epoch观察/runtime仍后续。普通main、Compose和1Panel没有这些维护装配或新增正式迁移；部署继续使用001–022，C0规格SQL不属于安装或升级步骤。
 
 维护依赖隔离的旧 `f572bbd` / CI run 41359784155 观察期限失败保留原结论；后续 `824e4e5` 精确实现提交十组CI全部成功，进程、真实reader与整仓重新验收见[隔离记录](../verification/maintenance-integration-isolation.md)。68表与84表范围分别见[业务读取记录](../verification/complete-source-reader.md)和[来源与钱包读取记录](../verification/source-wallet-reader.md)。这些本地及CI证据不扩大为容器、1Panel、供应商或生产验收；权限与接线边界见[维护架构](../architecture/maintenance-gate.md)。
 
@@ -90,4 +90,4 @@ Compose 已透传 `AUTH_REGISTRATION_ENABLED`（默认 false）、`AUTH_PASSWORD
 `PAYMENTS_MODE=off` 为常规部署默认。022-B3目前仅为 literal `127.0.0.1:55439/moni_test` 隔离本地模拟，要求成对私密 APP/worker manifest、精确 listener 与环境证明；常规 Compose 不透传这些文件或 worker DSN。不能用容器内 postgres 服务名替换目标后绕过证明。live 在连接前拒绝；带沙箱历史而缺原证明也拒绝启动。支付入口的已验范围见[应用支付证据](../verification/payment-application.md)，不是生产收款能力。来源 lot 维护、原路退款和后续生产方案仍按各自 SDD 门禁推进。
 
 
-109表basis摘要与strict v2格式模块当前是独立库，没有生产维护命令或新的部署参数；它们不改变当前迁移/权限/单活与默认支付off流程。不要手工构造JSON或通过Init lease SQL替代开账；受保护pre/init/post/epoch及RuntimeProof issuer仍须后续实现与验收。[统一架构](../architecture/README.md#固定-109-表-basis-与严格-v2-格式叶子)与[本片证据](../verification/basis-proof-v2.md)明确其范围。
+109表basis摘要与strict v2格式模块当前是独立库，没有生产维护命令或新的部署参数；它们不改变当前迁移/权限/单活与默认支付off流程。不要手工构造JSON或通过Init lease SQL替代开账；受保护pre/init/post/epoch已作为库级候选实现，独立非空epoch观察与RuntimeProof运行认证仍后续；详见[事务验证](../verification/protected-init-phase.md)。[统一架构](../architecture/README.md#固定-109-表-basis-与严格-v2-格式叶子)与[本片证据](../verification/basis-proof-v2.md)明确其范围。

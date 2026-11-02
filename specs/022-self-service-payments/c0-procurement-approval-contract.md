@@ -1,5 +1,7 @@
 # 022-C0-T3：采购成本双审关系核验合同
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02，根冻结增量实施片。在[attempt合同](c0-procurement-attempt-contract.md)的同一个 `ScanProcurement` 内增加成本提案、成本更正和预算更正事件的双向关系核验。保留原预算与绑定图摘要，新增独立 `procurement_cost_approval_graph_v1`；不授予采购全域或全来源 coverage。
 
 ## 1. 固定读取与纯入口

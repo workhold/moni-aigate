@@ -1,6 +1,6 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（109表basis与strict v2独立叶子）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-03（受保护开账事务与旧 tenant TEXT 边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 目标、前提与边界
 
@@ -492,3 +492,12 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 按[冻结合同](../../specs/022-self-service-payments/c0-init-planner-contract.md)，`fundinglotscan.ProjectLegacySeed` 从完成且一致的原68表私有Facts输出九组最小原件，tenant仅ID；不把没有读取的birth当作NULL证明。`fundinglotinit` 是独立纯叶子，从历史收据、全部reserve/settlement和approved refund重算每tenant的A/H，与旧journal净额及账户余额比较，再生成membership、opening、seq0/head、正额lot/event/cache和未结allocation的描述性写集。
 
 历史本金按开账汇总，不逐receipt重复发lot；旧approved退款已包含A，terminal reserve不建held，未结零额保留opening但无lot。大整数允许A+H及跨tenant总额超BIGINT，各资金桶仍须在BIGINT内。Plan没有epoch/attestation授权、DB stamp、SQL或生产接线。真正phase将自己读68原件、tenant birth、basis并保持原busy，通过私有writer和实际84表post后才提交；外部Plan永远不能授写。当前实现与验证见[统一架构](../architecture/README.md#最小旧数据投影与纯初始化规划)。
+
+
+## 受保护旧钱包初始化事务
+
+将纯模块装配到隔离维护库的私有phase：真实Permit一次认领第八once，原同RR自行读取完整来源/birth/空安装与109basis，持有自己的计划及strict v2；按固定写集落库后实际重放84表、核所有证明绑定并再次比较109基线，通过后唯一提交。公开比较值不能授权写入。Plan与Init均由原owner成功COMMIT后发布普通结果，取消或提交未知不重放。
+
+先冻结[精确合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)，实现和测试分工后由根汇合；当前图与源码见[统一架构](../architecture/README.md#受保护钱包初始化事务)，实际执行边界见[验证](../verification/protected-init-phase.md)。候选DDL/ACL和固定001–022材料不变；原16表空发行门禁保留。actor是offline-maintenance类别，实际LOGIN另由owned identity复核。未知提交保留状态且禁止重试，独立非空epoch观察/runtime、正式迁移、维护CLI和全资金路径尚未交付；普通经营后的basis不能强等历史cutover基线。前面各纯层和reader章节保留其当期范围。
+
+旧 tenant 的 TEXT 身份校准见[phase 合同第6节](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md#6-验收与交付)：空串与 SQL NULL 分离，完整来源图的 tenant 主键/外键及其索引统一接纳合法旧 TEXT，继续精确核关联和预算；新业务对象 ID、voucher 的 UUID scope 与在线 admission 不放宽。采购深层、周期预算 tenant scope 和支付命令的 scope 选择一并复核。历史 SQL fixture 与原在线 API fixture 分开记录。

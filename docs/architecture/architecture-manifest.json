@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T17:30:00Z",
-  "review_reason": "纯开账规划与最小旧数据出口最终验证收口；相关专库race和46包整仓通过且源码身份一致，复核README/HLD/LLD、23图与未来phase边界，仅更新验证记录和架构快照",
-  "snapshot_sha256": "481e522cf0bb700879376252f84d37c74bdfda8365ff1131a17c5bc0182abd3a",
-  "architecture_sha256": "8b39a1bfd6d287354b02d8d157c39046bb721464c79ff7fc612c0917ba839e68",
-  "history_sha256": "426417bd0206fd9092c087c7ea8ecc779a8bf7f4361a30b15b2e62349ae7700e",
+  "reviewed_at": "2026-11-02T18:43:05Z",
+  "review_reason": "受保护开账与旧tenant TEXT的实现保持专项和整仓所验身份；补齐最终验证记录：8包680.197秒/431顶层/3317父子终态零SKIP，make check及专库verify-mvp通过；24图与README使用部署边界已复核，无新增运行结构或生产接线",
+  "snapshot_sha256": "a4d989eda7905cae22832608a324197ad81f613eb7266a84036d1e31fdb73be6",
+  "architecture_sha256": "94a0d8d2140f2ff3dee3cac85e24023c038455f5af12803a7683312c5e3cd292",
+  "history_sha256": "bef02d39203ff7c922ef14bf86b0d5cd281fd6933faf58de879140a709bd1640",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "0e547d8ea44b6b4d73a60361a8c959c0c9e6a56e168698c34ab4f08496508457"
+      "sha256": "f380796b9ecfcfd79236ef1328a6a21d617f8ae94756a7f848ba245fc1e5843f"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "docs/architecture/maintenance-gate.md",
-      "sha256": "5cf7c3e72261bc05d95a72b95a39a0f08c5004a94a45949cf3b0b2e026812dd2"
+      "sha256": "fbad1fb816160fd8d96e4c0fa4cf8ce11121b399fa7ddccb79292ac1bc0cc297"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -109,15 +109,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "9d4ff6633439654227e7a2c7daab73c0047e3fb4fbfe9eb58f36c9a6180902c0"
+      "sha256": "5d599671f1cf1d4277a309b52e9e3daa2912ebcf3bae43d50a84ad9faa9203dc"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "2582a0390c55469e90bce4f2077f2c92abf4bd4fa06684e5cf5fc163be6e0547"
+      "sha256": "e9fb48e56d6d0abf02234c0aa141c8365143514653fd5b4cc8972d7f657234a5"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "c7ad4cd23ebe4c8cb4cc96965f54fd9076e46fec2dc98a478484eaca46e6359a"
+      "sha256": "cf569b82199d34dac91e96ecca02071bc975fe6eae9719337d8fbf58253a44dd"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -161,11 +161,11 @@
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "1461d8b5afee870ef7ba34613d3f3b48c98ce0223726a2fb29ee9d2e6c8924f6"
+      "sha256": "f71b815d3f1f18b33d4cc62d77f14fc7224e138733f921d2a33a64e15c7d731b"
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "bfb4166946f10bf042681bf72cdc0254987ba622a581016217ebfc8fff35977e"
+      "sha256": "20635ab879682b0aa9c0a23a7729ea63b6f921a3bf725d1eea9aae1203ce7aaa"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -338,6 +338,14 @@
     {
       "path": "docs/verification/assets/architecture-payment-proof.png",
       "sha256": "c7e27e0e77e94a6afa0382aacac3310d26f9534df12830d2f0a94aa4e4bdf76f"
+    },
+    {
+      "path": "docs/verification/assets/architecture-protected-init-application.png",
+      "sha256": "a0b2250486447d4036aae4eb9ff12f89dc64d1a7472fed56d1c60f6b5114cf89"
+    },
+    {
+      "path": "docs/verification/assets/architecture-protected-init-detail.png",
+      "sha256": "e584b9bef1ec433a513b31c38c0af2ed933c43c0c9a0d6b05bea8ec57ff7b56d"
     },
     {
       "path": "docs/verification/assets/architecture-source-wallet-application.png",
@@ -1348,6 +1356,14 @@
       "sha256": "dd8d17588d3fea664f82aa750113295c920394ec0279f2141b732e4ff6cad403"
     },
     {
+      "path": "docs/verification/protected-init-phase.json",
+      "sha256": "ceb0a82d164e9982e17706c1f28e4552e498e40f04ef864bd504c2dc131c4dea"
+    },
+    {
+      "path": "docs/verification/protected-init-phase.md",
+      "sha256": "6544e9b3ede4b8778ca7edcfc9dc6e53b33ce92c8b02c2ef8213a346243dc889"
+    },
+    {
       "path": "docs/verification/public-catalog-020-browser.json",
       "sha256": "4dfa2160a3902b9a9f7713010f66e38b4977a2084c9060837c713cc97a7e8f6c"
     },
@@ -2281,11 +2297,11 @@
     },
     {
       "path": "internal/fundinglotverify/funding_source_graph.go",
-      "sha256": "5823a1fb0a9667b936bf1d5f2f96b255a1672d6aab6fae482d2316e083c4b894"
+      "sha256": "126b0a08a10d20f56373bb1bf8c16f3296726aa4184d157bb406fc9658532f18"
     },
     {
       "path": "internal/fundinglotverify/funding_source_graph_checks.go",
-      "sha256": "8aa18cfe1d63f6982d9c516e8e4579be223063ba3f61d49a2fa83b5cada10dea"
+      "sha256": "faaa0c4dbac49a83634828f4c86d0a4b060da921513885bfd431ad349018c86d"
     },
     {
       "path": "internal/fundinglotverify/funding_source_graph_test.go",
@@ -2293,7 +2309,7 @@
     },
     {
       "path": "internal/fundinglotverify/funding_sources.go",
-      "sha256": "d606018c3c2991fa4ad9ca3b112dc2a39c7c800a367f734fe9052d0cce3d7a04"
+      "sha256": "68d84f99bddb2617f468c8692965f2b503fd160a28c3b56d3ef15aa17a8f0724"
     },
     {
       "path": "internal/fundinglotverify/funding_sources_test.go",
@@ -2316,6 +2332,18 @@
       "sha256": "09b42a7d888231edc16648cebf07f6b8b2339860340e7cb71eca9f9e695ad968"
     },
     {
+      "path": "internal/fundinglotverify/legacy_tenant.go",
+      "sha256": "63447f422ff49b583c03c0d624336171f532e060d7f22188984fbc1f8cce353d"
+    },
+    {
+      "path": "internal/fundinglotverify/legacy_tenant_domain_test.go",
+      "sha256": "8d574385fcfd49631f4f474b5d17934aa2ddacd0c5cbef031a1943e03fcd9d2b"
+    },
+    {
+      "path": "internal/fundinglotverify/legacy_tenant_scope_test.go",
+      "sha256": "ce107294a5be668eac2b9b6afd97c9ee52ab5e406986f6a7ff16e8829984041f"
+    },
+    {
       "path": "internal/fundinglotverify/periodic_budget_graph.go",
       "sha256": "495c91a24d506951d8a2cea1c6de050ea5a7c4fd6c2e06e10a0df3465e5bc695"
     },
@@ -2329,7 +2357,7 @@
     },
     {
       "path": "internal/fundinglotverify/periodic_budget_graph_index.go",
-      "sha256": "57926f5aad6334fa752fe70d77f76c5c70bde2d6d7099b61aca39439a693843c"
+      "sha256": "87ee6fa913ffeb0876c72e5dd15492d6df9c4ad6207c34fca058f0334cae3918"
     },
     {
       "path": "internal/fundinglotverify/periodic_budget_graph_replay.go",
@@ -2349,7 +2377,7 @@
     },
     {
       "path": "internal/fundinglotverify/procurement_approval.go",
-      "sha256": "af7a5936c1be34c8569895634e82c0df70cb05dc179dc74a109abe34cd569ed9"
+      "sha256": "24d59fb4394bdcaefaa12a4355dd46619210fcc37bbc1b7cb448d6ca5725bd36"
     },
     {
       "path": "internal/fundinglotverify/procurement_approval_test.go",
@@ -2357,7 +2385,7 @@
     },
     {
       "path": "internal/fundinglotverify/procurement_attempt.go",
-      "sha256": "5eea5992ecd37ff1fc228f829797f2f9af7aaf15d48f994096404f3d32476a5d"
+      "sha256": "240699bae8dc36dccd7ad1c01e7f580233e0f6927b9dbfc3f0cf25b2ef758460"
     },
     {
       "path": "internal/fundinglotverify/procurement_attempt_test.go",
@@ -2381,7 +2409,7 @@
     },
     {
       "path": "internal/fundinglotverify/procurement_cost_journal.go",
-      "sha256": "e29f9c8d01681b2fce9c5be87f15e18d6fb8179d7e1a639698744fd5de9a904e"
+      "sha256": "57725c1f5d44da59740eab1ddebe7f29e1b900089dada9df131bdc29cb693801"
     },
     {
       "path": "internal/fundinglotverify/procurement_cost_journal_test.go",
@@ -2401,7 +2429,7 @@
     },
     {
       "path": "internal/fundinglotverify/procurement_evidence_graph_evidence.go",
-      "sha256": "cb1513b5dcecc6031c6919b7c818c5b98555857c9e18eab0b0914b1d904beaf9"
+      "sha256": "913f0662afcba036628f55ad7c603c1d690d65eab12b826c28a7419e56379125"
     },
     {
       "path": "internal/fundinglotverify/procurement_evidence_graph_test.go",
@@ -2421,7 +2449,7 @@
     },
     {
       "path": "internal/fundinglotverify/sandbox_source_graph_commerce.go",
-      "sha256": "93e6baef1daa2c0c44e03f2cb5a6cf801134f34d1d67a0e9d8633401db0cefa7"
+      "sha256": "f42d31181bc6751761270eed4f55cafff06f7802772d15ddd4bd1aee21c90ea9"
     },
     {
       "path": "internal/fundinglotverify/sandbox_source_graph_evidence.go",
@@ -2716,8 +2744,56 @@
       "sha256": "b29279449fb827ac0dc5f9eec4e22e9e1c43688a689c35206d11fb1c77341faf"
     },
     {
+      "path": "internal/maintenancetrust/funding_lots_commit.go",
+      "sha256": "1e92c86931621cade1a8ca4e4b3ee63645240799aa400a302797d50ca94aebaf"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_legacy_integration_test.go",
+      "sha256": "aa555f699045822b03dc0cc8d429c15476d676b56e37319cf86d53270d666257"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_phase.go",
+      "sha256": "16dbe0e20e3c8f36312be207df054dbc8c2ccb6fe8e9028a1ff7512a0123983d"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_phase_integration_test.go",
+      "sha256": "7332767a3401803b47a49f1ca2e9d5a2b9da1501d535d10f399b27c02f99a0c8"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_phase_test.go",
+      "sha256": "edbc90a723699122da4cba94d6c4a2a3661e63d2ef60351a0dd83d3937241901"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_post.go",
+      "sha256": "d49975477c56d580309724549f80af338ee1451130c8111e47a50158fe2d7de1"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_proof.go",
+      "sha256": "3eebc126c0fb98be85843c5014ac352fd9794cbfd337df9a1006e947a7596ce3"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_proof_test.go",
+      "sha256": "236080c4b6c26ad5dfd7c0c41e03ba421a01d181225dfcec1fd75371bbdb9e04"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_rows.go",
+      "sha256": "104ab76a0271b05eaba72b16866e32192f25104ed10fb138455e90d0c7a74e53"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_run.go",
+      "sha256": "148def75ec00a5ee73e27054678bfc6de04a5a4381a3a6b4418c748c6b329c32"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_writer.go",
+      "sha256": "aa4e9f609980bdf3e3b6f806816bc97fc9fa3e1ef0e05771f21167a02ed89619"
+    },
+    {
+      "path": "internal/maintenancetrust/funding_lots_writer_test.go",
+      "sha256": "952ee1ad87b367b994d19a3a3f09f3ac30c655a5281db66eeb059dfac8a161e0"
+    },
+    {
       "path": "internal/maintenancetrust/gate.go",
-      "sha256": "d09101c56222794224aec59b5b426661101f030c990b9f511f1461d6a5c4cc11"
+      "sha256": "b124a3e1e0b9bd50804c7e4daedd10309738adb2fc996c45d38ce7967f724dbf"
     },
     {
       "path": "internal/maintenancetrust/gate_integration_test.go",
@@ -2777,7 +2853,7 @@
     },
     {
       "path": "internal/maintenancetrust/permit.go",
-      "sha256": "664cf17d04b3338df1411f54a1acd49203e06102cb47643a8d71b7e4828f11b0"
+      "sha256": "f1a5fde256e0acf5f8933a9f9b73f4b5f5d4620256de083a0e6fb3ad05d3cbab"
     },
     {
       "path": "internal/maintenancetrust/permit_integration_test.go",
@@ -2833,11 +2909,11 @@
     },
     {
       "path": "internal/maintenancetrust/snapshot.go",
-      "sha256": "4c26b4d02c4d9fe384f0461392d95adcf853b4c776fb5965677532ba8e96aa2b"
+      "sha256": "a6381368587a4aa1b33aaafdaa0b2294f1d3abe697792fc2b741633ad9f2311c"
     },
     {
       "path": "internal/maintenancetrust/snapshot_fixture_test.go",
-      "sha256": "43103c30fc86b1fbd1778dc38c4d7a9aeb341b623173ce65dd4d5d5ec749824e"
+      "sha256": "f5af8b1ca4a3547fdfe228c550633da23b4f693c592ee67dfac7b0add42e57bf"
     },
     {
       "path": "internal/maintenancetrust/snapshot_integration_test.go",
@@ -4953,7 +5029,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-funding-source-graph-contract.md",
-      "sha256": "5894f39f8756d97f0d8a5293ab2a7cc9c99db90dc6187a184fec4401661953ec"
+      "sha256": "6c1f7e46668b71fc06ab2cea624a062c28466af0f218e3909b6182c8ea162b45"
     },
     {
       "path": "specs/022-self-service-payments/c0-init-planner-contract.md",
@@ -4981,7 +5057,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-periodic-budget-graph-contract.md",
-      "sha256": "3c9b004548293922db6c6e9ca54a73627ea91eb13d087779c7e3906abc3bbce2"
+      "sha256": "bc543e73ca55d6c16c34e243f1d20e1e9af6e59d634b1830b26631ed3e812303"
     },
     {
       "path": "specs/022-self-service-payments/c0-permissions-prototype.sql",
@@ -4997,11 +5073,11 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-procurement-approval-contract.md",
-      "sha256": "b1e6c46b251fade8868c950d1c513ccb6cffd3c42fa8c49b83af0e3121281c86"
+      "sha256": "198d12acc4a02496a3e3772f0149beb959e28ce56a58fd4a08a6d687aa7d4df3"
     },
     {
       "path": "specs/022-self-service-payments/c0-procurement-attempt-contract.md",
-      "sha256": "5492a5b4e405ebc8c0d3c2a946c78c76fb8d0db24f530b7661e9a76c53e36d5d"
+      "sha256": "f318de6ee262db89cdd7ccc624a322d454652eef403a9f226f2cf9a88b8b61a3"
     },
     {
       "path": "specs/022-self-service-payments/c0-procurement-budget-contract.md",
@@ -5013,11 +5089,11 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-procurement-cost-journal-contract.md",
-      "sha256": "61c32199453c621c314c9ecaa07af7d58f265189a30f0c94181166b2d880ff4b"
+      "sha256": "169b2d273dfcdd56e0d5344567cc1f60708740b81d090be0185d8ade68c65ae2"
     },
     {
       "path": "specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md",
-      "sha256": "35ff4f9a46f7037d8fbabd61b2eb15e37a84e59f4a13b0d6780d16cf8ddae793"
+      "sha256": "30d7f46451852c7068738ce9cafafa85f31a5164478b16d96458b26b70e4c121"
     },
     {
       "path": "specs/022-self-service-payments/c0-procurement-history-read-contract.md",
@@ -5034,6 +5110,10 @@
     {
       "path": "specs/022-self-service-payments/c0-proof-v2-codec-contract.md",
       "sha256": "5ac689be974c0c8efdd4dbf9dceff9f5cdcdb3c452a20ecfa0fa60d6da45de9e"
+    },
+    {
+      "path": "specs/022-self-service-payments/c0-protected-init-phase-contract.md",
+      "sha256": "84309749e34fd513b927b4f5a004ecba21fdfc29fbb48f918e3970e106659c27"
     },
     {
       "path": "specs/022-self-service-payments/c0-read-lease-contract.md",
@@ -5053,7 +5133,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-sandbox-source-graph-contract.md",
-      "sha256": "959963449f3baaadc9b7aec0cb387f481ea75a69b73e8a4178b92d72a60ae351"
+      "sha256": "450af1cab5da001fc1e3e75fd8e31c773de818cd84efcb019b3c07c04f3347d1"
     },
     {
       "path": "specs/022-self-service-payments/c0-schema-check-contract.md",
@@ -5073,7 +5153,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-source-link-contract.md",
-      "sha256": "bab51f9a9585e6092b7aacecf190f63c108a8d6037b47885ac886074fb6cdc10"
+      "sha256": "4675d4b0edd3e7bc44db121abeb66e95224e764835e7e8d6c11fa16a612bc3df"
     },
     {
       "path": "specs/022-self-service-payments/c0-source-wallet-reader-contract.md",
@@ -5113,7 +5193,7 @@
     },
     {
       "path": "specs/022-self-service-payments/plan.md",
-      "sha256": "1c48482ca222e332c1f3fbcd38af53b7f7ec8edf6a34bff3c4554ce65b3bee16"
+      "sha256": "e3c7928de4f1d0a6eb7b2cbe2649392a5338df11fe900528c1406b4c4fad7a7b"
     },
     {
       "path": "specs/022-self-service-payments/spec.md",

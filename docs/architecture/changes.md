@@ -2410,3 +2410,76 @@ V0-WL最终纯包race、32508次fuzz、make check和专库make verify-mvp全部�
 - modified `docs/verification/mvp-status.md`
 
 </details>
+
+## 2026-11-02T18:25:52Z · ce342ef86bfc
+
+SDD冻结并实现原Permit受保护开账phase、固定writer与strict-v2/实际84表及109表post、永久busy和唯一提交；校准七core旧tenant TEXT且保留在线admission；真实专项431顶层零SKIP通过，同步README使用部署、HLD/LLD及24张架构图和失败修正记录，正式迁移/观察器/CLI/在线接线仍后续
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1472 个源文件；本次 49 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/architecture-protected-init-application.png`
+- added `docs/verification/assets/architecture-protected-init-detail.png`
+- added `docs/verification/protected-init-phase.json`
+- added `docs/verification/protected-init-phase.md`
+- modified `internal/fundinglotverify/funding_source_graph.go`
+- modified `internal/fundinglotverify/funding_source_graph_checks.go`
+- modified `internal/fundinglotverify/funding_sources.go`
+- added `internal/fundinglotverify/legacy_tenant.go`
+- added `internal/fundinglotverify/legacy_tenant_domain_test.go`
+- added `internal/fundinglotverify/legacy_tenant_scope_test.go`
+- modified `internal/fundinglotverify/periodic_budget_graph_index.go`
+- modified `internal/fundinglotverify/procurement_approval.go`
+- modified `internal/fundinglotverify/procurement_attempt.go`
+- modified `internal/fundinglotverify/procurement_cost_journal.go`
+- modified `internal/fundinglotverify/procurement_evidence_graph_evidence.go`
+- modified `internal/fundinglotverify/sandbox_source_graph_commerce.go`
+- added `internal/maintenancetrust/funding_lots_commit.go`
+- added `internal/maintenancetrust/funding_lots_legacy_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_phase.go`
+- added `internal/maintenancetrust/funding_lots_phase_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_phase_test.go`
+- added `internal/maintenancetrust/funding_lots_post.go`
+- added `internal/maintenancetrust/funding_lots_proof.go`
+- added `internal/maintenancetrust/funding_lots_proof_test.go`
+- added `internal/maintenancetrust/funding_lots_rows.go`
+- added `internal/maintenancetrust/funding_lots_run.go`
+- added `internal/maintenancetrust/funding_lots_writer.go`
+- added `internal/maintenancetrust/funding_lots_writer_test.go`
+- modified `internal/maintenancetrust/gate.go`
+- modified `internal/maintenancetrust/permit.go`
+- modified `internal/maintenancetrust/snapshot.go`
+- modified `internal/maintenancetrust/snapshot_fixture_test.go`
+- modified `specs/022-self-service-payments/c0-funding-source-graph-contract.md`
+- modified `specs/022-self-service-payments/c0-periodic-budget-graph-contract.md`
+- modified `specs/022-self-service-payments/c0-procurement-approval-contract.md`
+- modified `specs/022-self-service-payments/c0-procurement-attempt-contract.md`
+- modified `specs/022-self-service-payments/c0-procurement-cost-journal-contract.md`
+- modified `specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md`
+- added `specs/022-self-service-payments/c0-protected-init-phase-contract.md`
+- modified `specs/022-self-service-payments/c0-sandbox-source-graph-contract.md`
+- modified `specs/022-self-service-payments/c0-source-link-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T18:43:05Z · a4d989eda790
+
+受保护开账与旧tenant TEXT的实现保持专项和整仓所验身份；补齐最终验证记录：8包680.197秒/431顶层/3317父子终态零SKIP，make check及专库verify-mvp通过；24图与README使用部署边界已复核，无新增运行结构或生产接线
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1472 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/protected-init-phase.json`
+- modified `docs/verification/protected-init-phase.md`
+
+</details>

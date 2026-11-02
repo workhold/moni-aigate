@@ -55,7 +55,9 @@ func (w *pbGraphWork) index(r PeriodicBudgetGraphRows) {
 			w.uuid(*v.LastEventID, o)
 		}
 		if target, ok := pbTarget(v); ok {
-			w.uuid(target, o)
+			if v.Scope != "tenant" {
+				w.uuid(target, o)
+			}
 			pbNatural(w, w.scopes, pbGraphPair{v.Scope, target}, v.ID, &m.DuplicateControlScopeRows, o)
 		}
 	}
@@ -141,7 +143,7 @@ func (w *pbGraphWork) index(r PeriodicBudgetGraphRows) {
 		w.uuid(v.OperationID, o)
 		w.uuid(v.ResourceID, o)
 		w.enum(v.Kind, o, "tenant_periodic_budget.configure", "key_periodic_budget.configure", "procurement_periodic_budget.configure")
-		if v.Scope != "platform" {
+		if v.Scope != "platform" && v.Kind != "key_periodic_budget.configure" {
 			w.uuid(v.Scope, o)
 		}
 		w.revision(v.Revision, true, o)

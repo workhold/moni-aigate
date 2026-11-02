@@ -54,11 +54,11 @@ func (g *fundingGraphState) shapes() error {
 			return fundingGraphShapes(w, r.Users, m, func(r ProcurementApprovalUserRow) bool { return fundingGraphID(r.ID) }, nil, nil, nil)
 		},
 		func() error {
-			return fundingGraphShapes(w, r.Tenants, m, func(r ProcurementAttemptTenantRow) bool { return fundingGraphID(r.ID) }, nil, nil, nil)
+			return fundingGraphShapes(w, r.Tenants, m, func(r ProcurementAttemptTenantRow) bool { return legacyTenantText(r.ID) }, nil, nil, nil)
 		},
 		func() error {
 			return fundingGraphShapes(w, r.Accounts, m, func(r LedgerAccountRow) bool {
-				return fundingGraphRequired(r.ID, r.Kind) && fundingGraphOptional(r.TenantID)
+				return fundingGraphRequired(r.ID, r.Kind) && (r.TenantID == nil || legacyTenantText(*r.TenantID))
 			}, nil, func(r LedgerAccountRow) bool { return fundingGraphNumber(r.Balance, false) }, nil)
 		},
 		func() error {
@@ -81,17 +81,17 @@ func (g *fundingGraphState) shapes() error {
 		},
 		func() error {
 			return fundingGraphShapes(w, r.Receipts, m, func(r FundingGraphReceiptRow) bool {
-				return fundingGraphUUID(r.ID) && fundingGraphRequired(r.TenantID, r.SourceKind, r.SourceID, r.Currency, r.JournalID)
+				return fundingGraphUUID(r.ID) && legacyTenantText(r.TenantID) && fundingGraphRequired(r.SourceKind, r.SourceID, r.Currency, r.JournalID)
 			}, func(r FundingGraphReceiptRow) bool { return fundingGraphTime(r.CreatedAt) }, func(r FundingGraphReceiptRow) bool { return fundingGraphNumber(r.Amount, true) }, func(r FundingGraphReceiptRow) bool { return r.Currency == "CNY" })
 		},
 		func() error {
 			return fundingGraphShapes(w, r.Credits, m, func(r FundingGraphCreditRow) bool {
-				return fundingGraphRequired(r.ID, r.TenantID, r.BusinessRef, r.Amount, r.State, r.Requester, r.ProofRef) && fundingGraphOptional(r.Approver, r.JournalID)
+				return legacyTenantText(r.TenantID) && fundingGraphRequired(r.ID, r.BusinessRef, r.Amount, r.State, r.Requester, r.ProofRef) && fundingGraphOptional(r.Approver, r.JournalID)
 			}, func(r FundingGraphCreditRow) bool { return fundingGraphTime(r.CreatedAt) }, func(r FundingGraphCreditRow) bool { return fundingGraphNumber(r.Amount, true) }, func(r FundingGraphCreditRow) bool { return r.State == "pending" || r.State == "approved" })
 		},
 		func() error {
 			return fundingGraphShapes(w, r.Redemptions, m, func(r FundingGraphRedemptionRow) bool {
-				return fundingGraphUUID(r.ID) && fundingGraphUUID(r.VoucherID) && fundingGraphUUID(r.BatchID) && fundingGraphUUID(r.OperationID) && fundingGraphUUID(r.FundingReceiptID) && fundingGraphRequired(r.TenantID, r.Actor, r.JournalID)
+				return fundingGraphUUID(r.ID) && fundingGraphUUID(r.VoucherID) && fundingGraphUUID(r.BatchID) && fundingGraphUUID(r.OperationID) && fundingGraphUUID(r.FundingReceiptID) && legacyTenantText(r.TenantID) && fundingGraphRequired(r.Actor, r.JournalID)
 			}, func(r FundingGraphRedemptionRow) bool { return fundingGraphTime(r.CreatedAt) }, func(r FundingGraphRedemptionRow) bool { return fundingGraphNumber(r.Amount, true) }, nil)
 		},
 		func() error {
@@ -161,7 +161,7 @@ func (g *fundingGraphState) indexes() error {
 	if g.users, e = fundingGraphIndex(w, r.Users, func(r ProcurementApprovalUserRow) string { return r.ID }, false, &m.DuplicatePrimaryRows); e != nil {
 		return e
 	}
-	if g.tenants, e = fundingGraphIndex(w, r.Tenants, func(r ProcurementAttemptTenantRow) string { return r.ID }, false, &m.DuplicatePrimaryRows); e != nil {
+	if g.tenants, e = fundingGraphTenantIndex(w, r.Tenants, &m.DuplicatePrimaryRows); e != nil {
 		return e
 	}
 	if g.accounts, e = fundingGraphIndex(w, r.Accounts, func(r LedgerAccountRow) string { return r.ID }, false, &m.DuplicatePrimaryRows); e != nil {

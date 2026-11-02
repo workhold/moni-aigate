@@ -336,6 +336,24 @@ func fundingGraphIndex[T any](w *fundingGraphWork, rows []T, id func(T) string, 
 	}
 	return index, nil
 }
+
+func fundingGraphTenantIndex(w *fundingGraphWork, rows []ProcurementAttemptTenantRow, duplicate *uint64) (map[string]ProcurementAttemptTenantRow, error) {
+	index := make(map[string]ProcurementAttemptTenantRow, len(rows))
+	for _, row := range rows {
+		if err := w.tick(); err != nil {
+			return nil, err
+		}
+		if !legacyTenantText(row.ID) {
+			continue
+		}
+		if _, exists := index[row.ID]; exists {
+			(*duplicate)++
+			continue
+		}
+		index[row.ID] = row
+	}
+	return index, nil
+}
 func fundingGraphGroup[K comparable, T any](w *fundingGraphWork, rows map[string]T, key func(T) (K, bool), duplicate *uint64) (map[K][]T, error) {
 	groups := make(map[K][]T, len(rows))
 	for _, r := range rows {
@@ -440,7 +458,9 @@ func fundingGraphJSONKeys(action string) ([]string, string) {
 func fundingGraphProductFits(a, b string) bool {
 	// Reject oversized/noncanonical literals before big.Int parses or allocates
 	// for caller-controlled text. Only the bounded product needs wide arithmetic.
-	if !fundingGraphNumber(a, true) || !fundingGraphNumber(b, true) { return false }
+	if !fundingGraphNumber(a, true) || !fundingGraphNumber(b, true) {
+		return false
+	}
 	x, ok := new(big.Int).SetString(a, 10)
 	if !ok {
 		return false

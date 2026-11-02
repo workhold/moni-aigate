@@ -84,6 +84,7 @@ type snapshotState struct {
 	permit             *permitState
 	permitCall         *snapshotCall
 	activeLease        *leaseState
+	fundingLots        *fundingLotsPhase
 	terminal           terminalMethod
 	terminalDone       bool
 	terminalErr        error
@@ -501,6 +502,10 @@ func (s *Snapshot) terminate(ctx context.Context, method terminalMethod) error {
 		}
 		gs.mu.Unlock()
 		return err
+	}
+	if method == terminalCommit && st.fundingLots != nil {
+		gs.mu.Unlock()
+		return ErrTransaction
 	}
 	if gs.closed || st.terminal != terminalNone || st.rawTx == nil {
 		gs.mu.Unlock()

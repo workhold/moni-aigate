@@ -131,3 +131,10 @@ go run ./scripts/check-architecture
 按[冻结合同](c0-init-planner-contract.md)新增九组普通LegacySeedRows、原68完整一致Facts的深复制出口，以及纯fundinglotinit计划。并行实现出口、planner/core和独立external静态golden后由根汇合复核。已完成源专项真实专库race；最终整仓和交付状态以[验证记录](../../docs/verification/init-planner.md)为准。
 
 本片不写数据库、不生成DB stamp/epoch/attestation，不消费第八kind。下一步冻结完整私有phase状态机/预算/提交未知：自己读完整pre与tenant birth、basis，自持seed/plan，唯一writer仅收同phase state，strict v2与真实84post通过后才能提交。之后另冻非空epoch observer/runtime和全资金接线；C1/C2/C3仍依赖该闭环。
+
+
+## C0 受保护初始化事务切片
+
+按[冻结合同](c0-protected-init-phase-contract.md)，并行实现phase生命周期/rows/唯一提交、固定writer和精确投影预算、strict v2真实issuer及写后证明复核。根负责真实ordinary与genuine sandbox、原业务API混合资金/大NUMERIC、取消/busy与真实持久化后丢回复等验收，以及README/HLD/LLD/统一架构、最终检查和GitHub推送。具体执行身份见[验证记录](../../docs/verification/protected-init-phase.md)。
+
+没有新增正式迁移/ACL/CLI/HTTP/在线writer。原空安装发行门禁不删除；Unknown不重试，原epoch独立观察与非空runtime另片设计，再审正式材料/全资金接线，继续C1/C2/C3及后续路线。候选phase闭环不表示整个商业目标完成。

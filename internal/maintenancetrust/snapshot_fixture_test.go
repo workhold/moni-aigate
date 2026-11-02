@@ -90,7 +90,19 @@ func newSnapshotFixturePrepared(t *testing.T, prepare func(*snapshotFixture, *pg
 		t.Fatal("snapshot fixture original migrations/provision")
 	}
 	if prepare != nil {
-		prepare(f, pool)
+		// Original application APIs write JSON []byte through pgx's normal
+		// typed protocol. Keep that fixture traffic on its own short-lived pool;
+		// the maintenance/DDL connection retains its fixed simple profile.
+		businessConfig := pc.Copy()
+		businessConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheStatement
+		businessPool, businessErr := pgxpool.NewWithConfig(ctx, businessConfig)
+		if businessErr != nil {
+			t.Fatal("snapshot fixture original business pool")
+		}
+		func() {
+			defer businessPool.Close()
+			prepare(f, businessPool)
+		}()
 	}
 	if _, err = pool.Exec(ctx, string(ddl)); err != nil {
 		t.Fatal("snapshot fixture fixed C0 DDL")

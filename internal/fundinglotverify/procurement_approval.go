@@ -106,7 +106,8 @@ func (w *procurementApprovalWork) tick() error {
 
 // text accounts for every returned text value, including the reused attempt
 // and reservation rows. Required fields cannot be empty; optional allows empty
-// strings only for event evidence, never for nullable proposal/quote fields.
+// strings for event evidence and legacy tenant identities, never for nullable
+// proposal/quote fields.
 func (w *procurementApprovalWork) text(required, optional []string) (bool, error) {
 	valid := true
 	for _, fields := range [][]string{required, optional} {
@@ -186,13 +187,13 @@ func procurementApprovalTextPass(w *procurementApprovalWork, rows ProcurementCos
 		}
 	}
 	for _, row := range rows.Attempts {
-		fields := []string{row.ID, row.TenantID, row.RequestID, row.ChannelID, row.ChannelVersionID, row.CredentialID, row.UpstreamModel, row.DeliveryState, row.CostBasis, row.CostStatus}
+		fields := []string{row.ID, row.RequestID, row.ChannelID, row.ChannelVersionID, row.CredentialID, row.UpstreamModel, row.DeliveryState, row.CostBasis, row.CostStatus}
 		for _, value := range []*string{row.CostVersionID, row.CostInputRate, row.CostOutputRate, row.CostAmount} {
 			if value != nil {
 				fields = append(fields, *value)
 			}
 		}
-		if err := check(fields, nil, true); err != nil {
+		if err := check(fields, []string{row.TenantID}, true); err != nil {
 			return 0, err
 		}
 	}
@@ -207,12 +208,12 @@ func procurementApprovalTextPass(w *procurementApprovalWork, rows ProcurementCos
 		}
 	}
 	for _, row := range rows.Corrections {
-		if err := check([]string{row.ID, row.TenantID, row.AttemptID, row.OperationID, row.Amount, row.Basis, row.EvidenceRef}, nil, true); err != nil {
+		if err := check([]string{row.ID, row.AttemptID, row.OperationID, row.Amount, row.Basis, row.EvidenceRef}, []string{row.TenantID}, true); err != nil {
 			return 0, err
 		}
 	}
 	for _, row := range rows.Proposals {
-		fields := []string{row.ID, row.TenantID, row.AttemptID, row.Amount, row.Basis, row.EvidenceRef, row.Reason, row.Requester, row.ExpectedRevision, row.ExpectedEvidenceCount, row.State}
+		fields := []string{row.ID, row.AttemptID, row.Amount, row.Basis, row.EvidenceRef, row.Reason, row.Requester, row.ExpectedRevision, row.ExpectedEvidenceCount, row.State}
 		for _, value := range []*string{row.Approver, row.ApprovalOperationID} {
 			if value != nil {
 				fields = append(fields, *value)
@@ -220,7 +221,7 @@ func procurementApprovalTextPass(w *procurementApprovalWork, rows ProcurementCos
 		}
 		extraValid := procurementApprovalUUID(row.ID) && (row.ApprovalOperationID == nil || procurementApprovalUUID(*row.ApprovalOperationID)) &&
 			procurementApprovalBoundText(row.EvidenceRef, 256) && procurementApprovalBoundText(row.Reason, 400)
-		if err := check(fields, nil, extraValid); err != nil {
+		if err := check(fields, []string{row.TenantID}, extraValid); err != nil {
 			return 0, err
 		}
 	}
@@ -445,7 +446,7 @@ func CheckProcurementCostApprovalGraph(ctx context.Context, rows ProcurementCost
 		attempt, attemptOK := attempts[row.AttemptID]
 		_, reservationOK := reservations[row.AttemptID]
 		_, requesterOK := users[row.Requester]
-		identityValid := attemptOK && reservationOK && requesterOK && procurementAttemptValidText(row.TenantID) && row.TenantID == attempt.TenantID
+		identityValid := attemptOK && reservationOK && requesterOK && legacyTenantText(row.TenantID) && row.TenantID == attempt.TenantID
 		if row.State == "approved" {
 			if row.Approver == nil {
 				identityValid = false
@@ -473,7 +474,7 @@ func CheckProcurementCostApprovalGraph(ctx context.Context, rows ProcurementCost
 			return ProcurementCostApprovalCheck{}, err
 		}
 		attempt, exists := attempts[row.AttemptID]
-		if !exists || !procurementAttemptValidText(row.TenantID) || row.TenantID != attempt.TenantID {
+		if !exists || !legacyTenantText(row.TenantID) || row.TenantID != attempt.TenantID {
 			out.Mismatches.CorrectionIdentityRows++
 		}
 		if _, managed := reservations[row.AttemptID]; !managed {

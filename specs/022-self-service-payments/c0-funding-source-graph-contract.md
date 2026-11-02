@@ -1,5 +1,7 @@
 # 022-C0 人工核款与兑换券资金来源全关系图（根冻结纯 core）
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02。根复核§3/7的021 payment精确分派、§6时钟边界和§9正式writer/fixture差异后，冻结并授权独立纯 core。它在既有 [三表来源关联](c0-source-link-contract.md) 之外，覆盖 manual/voucher 的原始来源、批次与撤销、commerce terminal、receipt、资金 journal 的精确两行、audit 与 credited outbox；固定局部 scope 为 `manual_voucher_funding_graph_v1`。这里的“全关系图”只指本合同封闭的两类来源关系，不等于完整 FundingSources、SandboxFacts、钱包来源/退款/lot 重放、CoverageComplete、basis、epoch、RuntimeProof 或维护资金写许可。
 
 依据 [总规格](spec.md)、[A 领域](a-domain-contract.md)、[A 合同](a-contract.md)、[独立核验候选](c0-verifier-contract.md) §9–11、[HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)。代码事实来自 [人工核款](../../internal/billing/orders.go)、[共同入账](../../internal/billing/funding.go)、[六类券命令](../../internal/billing/voucher_commands.go)、[journal/audit/outbox 写入](../../internal/billing/store.go)、[002](../../migrations/002_billing.sql) 与 [017](../../migrations/017_funding_vouchers.sql)。SQL guard 是研究材料，不是新核验的业务 oracle；不调用 `funding_journal_valid`、旧 `verifyFundingTx` 或写侧函数，不修改已应用迁移。

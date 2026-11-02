@@ -1,5 +1,7 @@
 # 022-C0：周期预算完整原始图独立核验合同（根冻结）
 
+2026-11-03 tenant 身份校准：本合同中的 tenant 主键及真正指向它的外键按[受保护事务第6节](c0-protected-init-phase-contract.md#6-验收与交付)接受合法旧 TEXT（含空串），并保留原字节/行预算、精确关联及 NULL/空串区别；旧泛称“必需身份非空”不再涵盖这些 tenant 字段。其他对象 ID、非 tenant 引用、UUID、金额/状态与在线调用合同保持。PB 的 tenant target/key configure scope、Sandbox 按固定 kind 选择 scope 亦以该校准为准。
+
 2026-11-02。本文承接 [全来源核验目标](c0-verifier-contract.md)、[HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md) 与 [023-B 三态边界](../023-periodic-products/b-verifier-contract.md)。**2026-11-02根已审定冻结并授权本文精确纯core与独立测试；owned reader及维护组合仍由根后续冻结接线。** 目标是七域中的完整 PB 域，不是只有金额 SUM 的局部投影，也不以旧 SQL 报告替代新的 Go 独立重建。外层同租约 reader、共享 DTO、维护组合、README、架构与清单由根集成；公共 owner Verifier 和原写入路径保持原合同。
 
 ## 1. 已核对的真实事实与独立边界

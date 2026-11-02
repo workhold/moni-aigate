@@ -24,6 +24,7 @@ var (
 	ErrSchema        = errors.New("maintenance_schema")
 	ErrTransaction   = errors.New("maintenance_transaction")
 	ErrCommitUnknown = errors.New("maintenance_commit_unknown")
+	ErrResource      = errors.New("maintenance_resource")
 )
 
 const (
