@@ -1939,3 +1939,83 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `docs/verification/funding-financial-graph.md`
 
 </details>
+
+## 2026-11-02T08:21:37Z · 9c45ba4040a4
+
+新增采购证据、周期预算及支付stored-verified纯图核验并完成交叉审查；保留完整reader/phase/basis/epoch未接线边界；真实PG维护QA修正与补验、README及贡献指南同步，无迁移/角色/在线资金装配变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1324 个源文件；本次 32 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/architecture-source-graphs.json`
+- added `docs/verification/maintenance-financial-postgres.md`
+- added `docs/verification/source-graph-cores.md`
+- added `internal/fundinglotverify/periodic_budget_graph.go`
+- added `internal/fundinglotverify/periodic_budget_graph_commands.go`
+- added `internal/fundinglotverify/periodic_budget_graph_history_test.go`
+- added `internal/fundinglotverify/periodic_budget_graph_index.go`
+- added `internal/fundinglotverify/periodic_budget_graph_replay.go`
+- added `internal/fundinglotverify/periodic_budget_graph_sources.go`
+- added `internal/fundinglotverify/periodic_budget_graph_test.go`
+- added `internal/fundinglotverify/periodic_budget_graph_values.go`
+- added `internal/fundinglotverify/procurement_evidence_graph.go`
+- added `internal/fundinglotverify/procurement_evidence_graph_accounts.go`
+- added `internal/fundinglotverify/procurement_evidence_graph_events.go`
+- added `internal/fundinglotverify/procurement_evidence_graph_evidence.go`
+- added `internal/fundinglotverify/procurement_evidence_graph_test.go`
+- added `internal/fundinglotverify/sandbox_source_graph.go`
+- added `internal/fundinglotverify/sandbox_source_graph_commerce.go`
+- added `internal/fundinglotverify/sandbox_source_graph_evidence.go`
+- added `internal/fundinglotverify/sandbox_source_graph_funding.go`
+- added `internal/fundinglotverify/sandbox_source_graph_test.go`
+- added `internal/fundinglotverify/sandbox_source_graph_wire.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- modified `scripts/maintenance-scan-qa/periodic_resources_test.go`
+- added `specs/022-self-service-payments/c0-periodic-budget-graph-contract.md`
+- added `specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md`
+- added `specs/022-self-service-payments/c0-sandbox-source-graph-contract.md`
+
+</details>
+
+## 2026-11-02T08:57:34Z · c350b1cb2dd9
+
+实现采购23组、PB18组、支付33组独立来源纯图，保持完整reader/phase/basis/epoch未接线；复核模块依赖与能力状态，补真实PG维护QA证据，修复支付/券命令冗余唯一索引并发占位并保留原资金与期限，完善GitHub README/贡献和验证说明
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1325 个源文件；本次 11 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/commerce-concurrency.md`
+- modified `docs/verification/mvp-status.md`
+- modified `internal/billing/voucher_commands.go`
+- modified `internal/billing/voucher_integration_test.go`
+- modified `internal/payments/service_commands.go`
+- modified `internal/payments/service_test.go`
+- modified `specs/022-self-service-payments/a-domain-contract.md`
+- modified `specs/022-self-service-payments/b-domain-contract.md`
+
+</details>
+
+## 2026-11-02T09:17:44Z · 8d34ce9abd3c
+
+根汇合复核三来源纯核验core与商业命令并发占位修复，默认完整真实PG回归959.665秒及C0独立专项210.188秒分别记录；验证后仅补README/架构/HLD/LLD/计划/验证文档，明确完整reader/native保真与共享预算仍待下一合同，无新迁移、权限、CI或生产装配
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1326 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/commerce-concurrency.md`
+- modified `docs/verification/source-graph-cores.md`
+- added `docs/verification/source-graph-integration.json`
+
+</details>

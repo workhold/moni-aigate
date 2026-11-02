@@ -8,10 +8,12 @@
 | --- | --- | --- |
 | 自助经营 | 021邮箱证明/恢复、022-A双审券、023-A分组售价与023-B周期预算，均限定本地验收 | 正式SMTP、023-C商品/订阅 |
 | 应用支付 | 022-B3普通main/受限worker/HTTP/UI及本地模拟整链；在途SIGTERM/Guard失权恢复已验 | 正式PSP、main数据库COMMIT回包丢失及外部事实灾备 |
-| 来源与退款 | C0纯分配/history/SQL候选/离线导出/同RR账本读取专项通过；静态checker三API及两套正式root已实现，五ordinary变体、完整三schema/八角色sandbox已实装，最终leaf真实PG race通过，保留原五秒预算；C1-P纯退款协议/独立签名向量专项通过 | main接线、维护Permit/epoch、独立全源proof及全资金路径；C1退款、C2拒付/债务、C3交叉恢复 |
+| 来源与退款 | C0分配/history/SQL候选/静态catalog、维护Gate/Snapshot/Permit/ReadLease与局部reader已实现；21表资金专项真实PG通过；采购证据/PB/支付来源三纯图已实现，完整reader未接线；C1-P纯退款协议专项通过 | 完整同session来源组合、basis/epoch、main接线及全资金路径；C1退款、C2拒付/债务、C3交叉恢复 |
 | 扩展和生产 | 024-A站内告警、024-B0-P纯计量；025-A0隔离Compose实际渲染、025-A1-M两邮件真实SIGKILL窗口已验 | 媒体/异步/长连接接线、容器/1Panel、HA、正式渠道及最后性能 |
 
 [来源候选回归](funding-lot-candidate.md)、[纯退款协议](payment-refund-protocol-v2.md)、[计量](metering-vectors.md)、[Compose渲染](compose-render-025.json)和[邮件进程](mail-lifecycle-025.md)分别说明各自边界；纯层和QA工具不产生生产资金能力。
+
+最新来源纯图、维护真实PG补验和商业命令并发修复分别见[三核心](source-graph-cores.md)、[C0补验](maintenance-financial-postgres.md)与[并发集成记录](commerce-concurrency.md)。本轮整仓结果以并发集成记录的实际最终执行为准；以下历次PASS不转移到未完成的新接线或生产环境。
 
 2026-11-01本轮[离线descriptor](funding-lot-descriptor.md)与[同RR账本reader](funding-ledger-reader.md)汇合后，根实际`make verify-mvp`全部通过：286项前端/strict、明确专库下全Go race、vet与嵌入build，见[整仓证据](c0-integration.json)。无生产入口、完整C0 proof或原路退款开放；本轮未升级长期预览、未执行正式供应商/支付商或性能验收。
 

@@ -91,7 +91,7 @@ func (s *Service) run(ctx context.Context, spec paymentCommandSpec, apply func(*
 		if spec.meta.TenantID != "" {
 			scope = "tenant:" + spec.meta.TenantID
 		}
-		tag, e := tx.Exec(ctx, `INSERT INTO commerce_commands(operation_id,actor,scope,kind,request_digest,fingerprint_key_version) VALUES($1,$2,$3,$4,$5,NULL) ON CONFLICT(operation_id) DO NOTHING`, spec.meta.OperationID, spec.meta.ActorID, scope, spec.kind, digest)
+		tag, e := tx.Exec(ctx, `INSERT INTO commerce_commands(operation_id,actor,scope,kind,request_digest,fingerprint_key_version) VALUES($1,$2,$3,$4,$5,NULL) ON CONFLICT DO NOTHING`, spec.meta.OperationID, spec.meta.ActorID, scope, spec.kind, digest)
 		if e != nil {
 			return e
 		}

@@ -180,4 +180,18 @@ ScanProof只证明固定kind的lease正常完成；五个局部结果不能授�
 
 [人工/券core](../../internal/fundinglotverify/funding_source_graph.go)核双审批次与撤销、兑换资格、commerce终态、精确两行journal和唯一audit/outbox；[Key core](../../internal/fundinglotverify/customer_key_graph.go)核R与预占/终态/退款/held/spent，退款不减少原始spent。支付四kind仅通用检查，sandbox明确计未覆盖；独立时钟不被误当历史单调序列。旧ledger元数据与source-link数字资格继续作为组合前置，错误封闭五类且全部零结果；真实数据mismatch正常保留四摘要。结果四scope与原Permit绑定，零值/JSON/局部事实不能发行proof或资金权。
 
-本片是完整全来源组合的基础，仍无采购evidence/PB独立图、完整sandbox、phase/basis/epoch或线上writer。专项、真实PG跳过项及QA顺序修正见[验证记录](../verification/funding-financial-graph.md)，不沿用旧T2/T3数据库通过计数。
+本片是完整全来源组合的基础。采购证据、PB与sandbox的新纯核验核心见下节，尚未纳入完整同session reader；phase/basis/epoch与线上writer仍未实现。历史跳过项及QA顺序修正见[原记录](../verification/funding-financial-graph.md)，本轮真实PG补验另列[独立记录](../verification/maintenance-financial-postgres.md)，不追溯升级旧T2/T3结果。
+
+## 采购、周期预算与支付来源的独立原始图
+
+三个纯核心继续位于`fundinglotverify`，只解释传入的原始行，不接收外部摘要或完成位，不连接数据库，也不发行维护权威。
+
+| 核心 / 合同 | 输入与独立核验 | 明确边界 |
+| --- | --- | --- |
+| [采购证据](../../internal/fundinglotverify/procurement_evidence_graph.go) / [合同](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md) | 23组原始行；内部从同一图重跑原五core，再核用量、finalization双摘要、语义identity、八类预算事件、成本记录与账户配置来源 | 缺失的incoming归属、历史前驱或事件顺序按明确行级规则报告indeterminate；不猜供应商真实账单 |
+| [周期预算](../../internal/fundinglotverify/periodic_budget_graph.go) / [合同](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md) | 18组业务行；独立逐笔重放control序列、allocation/window revision与三层投影，核配置版本、命令指纹、审计及来源反向关系 | 保留legacy成员、legacy效果边界、历史snapshot prefix三类真实缺证；原owner Verifier保持兼容 |
+| [支付来源](../../internal/fundinglotverify/sandbox_source_graph.go) / [合同](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md) | 33组原始行；独立canonical/digest、SKU前驱链、命令/query、验签原件、evidence/processing/review、identity/selection/capture及完整入账效果 | 依赖外层原安装/前驱认证；stored-verified本地关系不替代历史HMAC、外部收款或正式PSP认证 |
+
+完整关系中的确定矛盾始终报告mismatch；真正保存不足的历史才进入合同规定的Unproven。SQL/权限/EOF/资源/取消失败是执行错误，不能降为历史缺证。原图共享预算、反向枚举及context检查由各纯核心执行，摘要不暴露ID、金额或原件。
+
+这三项当前是库级纯算法实现，**尚未接入同一个完整维护读取session**。现五类reader不自动扩大scope，新纯结果也不能拼接旧ScanProof。下一步须冻结完整固定列并集、受审ordinary/sandbox模式、pre/post phase、共享资源及唯一Finish；随后才是同pre快照basis、protected init/post replay、epoch和APP资金接线。没有迁移、权限或生产装配变化。

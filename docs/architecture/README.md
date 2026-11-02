@@ -101,6 +101,7 @@ flowchart TD
     PG[(PostgreSQL)]
     LedgerReader[billing ledger reader\n原RR入口 / 无权威raw facts core\n三表完整EOF]
     FundingSourceReader[billing source-link reader\n人工核款 / voucher / receipt raw facts\n三表完整C序分页与EOF]
+    FinancialReader[billing funding financial reader\n21表同session owned图 / 四项局部摘要]
     SandboxCaptureReader[billing sandbox-capture direct-link reader\nfunding_receipts + payment_captures\n两表完整C序分页与EOF]
     ProcurementReader[billing procurement history reader\n19 relations / shared budget / complete C-order EOF]
     subgraph PureModules[纯算法/核验基础层：不接入在线资金写入或媒体运行链]
@@ -113,6 +114,10 @@ flowchart TD
       ProcurementApprovalCore[fundinglotverify\n双审proposal / correction / event双向核验\n历史身份 / 无authority]
       ProcurementCommandCore[fundinglotverify\ncommand / binding / observation / audit双向核验\n历史快照 / 无authority]
       ProcurementJournalCore[fundinglotverify\ncost proposal / correction / audit / outbox双向核验\n成本消息 / 无authority]
+      FundingGraphCore[fundinglotverify\n人工券来源图 / CustomerKey资金图\n21表reader已接线]
+      ProcurementEvidenceCore[fundinglotverify\n23组采购证据与事件三态\n完整reader尚未接线]
+      PeriodicGraphCore[fundinglotverify\n18组PB独立重放与历史缺证\n完整reader尚未接线]
+      SandboxGraphCore[fundinglotverify\n33组支付stored-verified来源图\n完整reader尚未接线]
     end
     RefundProto -->|仅已验证capture值的只读桥| PaymentProto
     LedgerReader -->|读取后整份独立核算| LedgerRows
@@ -123,6 +128,14 @@ flowchart TD
     ProcurementReader -->|approved proposal ↔ managed correction / event| ProcurementApprovalCore
     ProcurementReader -->|command snapshots ↔ binding / observation / audit| ProcurementCommandCore
     ProcurementReader -->|cost sources ↔ audit / cost_corrected outbox| ProcurementJournalCore
+    FinancialReader -->|共用账本原始行| LedgerRows
+    FinancialReader -->|来源与Key独立关系| FundingGraphCore
+    FinancialReader -->|21表完整EOF / 原lease共用预算| PG
+    ProcurementEvidenceCore -->|同raw固定重跑五项局部关系| ProcurementBudgetCore
+    ProcurementEvidenceCore --> ProcurementAttemptCore
+    ProcurementEvidenceCore --> ProcurementApprovalCore
+    ProcurementEvidenceCore --> ProcurementCommandCore
+    ProcurementEvidenceCore --> ProcurementJournalCore
     LedgerReader -->|三表显式读取 / 原RR入口前置保持| PG
     SandboxCaptureReader -->|两表无过滤完整读取 / 同一原快照| PG
     ProcurementReader -->|十九表无过滤完整读取 / 同一原快照| PG
@@ -168,6 +181,7 @@ flowchart TD
     MaintenanceLease -->|原快照内固定SELECT / EOF Err Close| PG
     MaintenanceLease -->|正常Finish / 无悬挂查询| MaintenanceProof
     MaintenanceScan -->|ScanFunding / 固定reader| FundingSourceReader
+    MaintenanceScan -->|ScanFunding / 与三表入口二选一| FinancialReader
     MaintenanceScan -->|ScanSandboxSources / 固定reader| SandboxCaptureReader
     MaintenanceScan -->|ScanProcurement / 固定reader| ProcurementReader
     AlertWorker --> Alerts
@@ -1006,4 +1020,22 @@ make architecture-check
 本轮19图的Mermaid12.2.0语法解析通过，逐图内容SHA见[当前图记录](../verification/architecture-funding-financial-graph.json)；本轮未执行浏览器布局渲染，既有PNG仅证明其历史版本。
 
 
-21表资金片最终验证：全部并行实现与独立复核汇合后，相关四包race/vet、全仓`go test -race -count=1 ./...`及`make check`通过。真实Plan/Init子用例因缺C0专库配置明确SKIP，未运行`make verify-mvp`；最终验证文字同步后再次由根更新清单并做只读检查，未改变上述能力与生产边界。
+21表资金片原轮验证：全部并行实现与独立复核汇合后，相关四包race/vet、全仓`go test -race -count=1 ./...`及`make check`通过。该轮真实Plan/Init子用例因缺C0专库配置明确SKIP，未运行`make verify-mvp`；后续真实PG执行单独记录，历史跳过结果不追溯改写。
+
+## 采购、PB与支付来源纯图：实现与读取分层
+
+2026-11-02继续补齐独立来源算法，三个新增核心只读取传入原行，尚无完整同session reader或线上调用方。模块图同时补足已实现的21表资金reader与人工券/Key核心，避免将库级算法误画成完整维护装配。
+
+| 核心入口 | 原始依赖 | 主要检查与历史边界 |
+| --- | --- | --- |
+| [CheckProcurementEvidenceGraph](../../internal/fundinglotverify/procurement_evidence_graph.go) | 23组采购及证据原行 | 同raw内部运行原五局部core；独立Usage/digest、meter出生、identity、全部预算事件、成本与账户配置来源；复杂历史按固定Unproven规则报告 |
+| [CheckPeriodicBudgetGraph](../../internal/fundinglotverify/periodic_budget_graph.go) | 18组PB与业务来源原行 | control事件有序重放、allocation/window版本、三层投影、配置/指纹/audit/snapshot；保留三类legacy/prefix缺证，不调用现公共SQL verifier作oracle |
+| [CheckSandboxSourceGraph](../../internal/fundinglotverify/sandbox_source_graph.go) | 23张payment表与10张共用表 | stored-verified原件、canonical、SKU链、query/evidence/review到完整资金效果的双向图；不从字面v1 proof构造真实安装认证 |
+
+精确DTO、资源、三态、合法多事件与故障边界见[采购合同](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md)、[PB合同](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md)、[支付合同](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md)。这三个输入组数不能直接相加当物理读取表数；后续root reader必须对重叠表取固定列并集，只读一次并共用源预算。
+
+原十九表采购reader、PB公共owner Verifier与两表sandbox关联reader保持scope；新纯核心不隐式扩展它们。完整七域、ordinary受审排除、pre/post phase与唯一Finish仍是下一关；basis/epoch/资金writer/生产维护CLI没有开放。实现详情与真实数据库补验见[维护架构](maintenance-gate.md)和[补验记录](../verification/maintenance-financial-postgres.md)。README精简维护内部细节并新增[贡献指南](../../CONTRIBUTING.md)，保留特性、协议、使用、部署、许可证与验收边界。
+
+本轮还修复已有商业命令的并发幂等占位：支付和兑换券共用的`commerce_commands`有两个含operation的唯一索引，两个INSERT均使用无target的`ON CONFLICT DO NOTHING`，随后仍逐项核对原命令身份、输入指纹与terminal。没有新表、迁移、权限、通用重试或资金链路变化；原5秒总预算、3秒锁期限与未知提交不重放保持。既有八并发用例增加共同起跑屏障，专项与整仓结果见[并发验证](../verification/commerce-concurrency.md)。
+
+本轮最终`make check`及真实专库下`make verify-mvp`通过，后者959.665秒，含286项前端/strict、全默认Go race/vet/build；维护C0独立opt-in另以210.188秒专项证明原局部范围。19张当前Mermaid语法记录见[本轮图清单](../verification/architecture-source-graphs.json)，完整回归与边界见[机器记录](../verification/source-graph-integration.json)。验证后仅补文档及架构清单，不把历史图记录或专项通过转移到未实现的新reader、完整phase、供应商或生产部署。

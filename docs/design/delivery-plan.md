@@ -83,3 +83,12 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 
 本轮[资金核验记录](../verification/funding-financial-graph.md)区分纯core、固定21表reader/维护封装及真实PG验收。真实Plan/Init fixture已改用正式Store.Reserve并补成员模型授权，全部业务历史先于候选C0触发器安装；专库未配置时明确跳过，不能据Go测试包成功宣称资金维护切换通过。README继续按当前dev状态说明使用、部署和能力边界，交付代码与统一架构同步推送。
+
+
+2026-11-02完整来源依赖增量：已冻结并实现[采购证据图](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md)、[PB原始图](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md)与[支付stored-verified来源图](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md)三个纯Go核心，分别包含23/18/33组原行与明确历史缺证。它们尚未接入完整同session reader，不将五个旧局部ScanProof拼成全来源证明。下一串行关口仍是固定列并集、模式/phase、完整EOF与唯一Finish，再继续basis/epoch和APP资金接线。
+
+原21表资金/五类维护reader的[真实PG补验](../verification/maintenance-financial-postgres.md)在专用PG16.15环境执行：修正fixture连接池关闭、双审后的采购余额预期，以及合法核款后的legacy基线；原仓库最终完整race专项210.188秒全PASS。历史缺环境而SKIP的记录保持，补验不扩大供应商、正式支付、部署或全目标验收范围。README保留GitHub首页特性/使用/部署/许可说明并精简维护内部细节，新增贡献指南；代码、设计和统一架构在根汇合检查后共同推送。
+
+本轮整仓发现并修复支付/兑换券共用commerce命令的冗余唯一索引并发冲突；保留完整输入核对与原期限，不新增23505重试。两既有八并发用例以共同屏障复验，结果及main测试数据库清理诊断见[并发集成记录](../verification/commerce-concurrency.md)。全仓结果按最终实际执行更新，不将专项成功当作整轮通过。
+
+最终原仓库`make check`、指定真实专库下`make verify-mvp`均PASS（后者959.665秒，286项前端/全默认Go race/vet/build）；两商业命令并发专项各30轮、billing/payments全包与两main原例另行通过。默认全仓不打开C0独立opt-in，210.188秒维护专项保留独立归属。下一完整reader合同须先解决native时间与共用旧DTO的保真转换、物理列并集和统一资源计数，再实施同session完成矩阵与唯一Finish；不以旧局部proof或空支付DTO代替完整范围。

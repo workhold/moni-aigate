@@ -276,10 +276,20 @@ func TestPostgresPaymentServiceConcurrentSKUAndOrderIdempotency(t *testing.T) {
 	input := CreateOrderInput{CommandMeta: CommandMeta{OperationID: uuid.NewString(), ActorID: f.user, TenantID: f.tenant}, SKUVersionID: f.version}
 	orderResults := make([]OrderResult, 8)
 	orderErrs := make([]error, 8)
+	startOrders := make(chan struct{})
+	var readyOrders sync.WaitGroup
+	readyOrders.Add(len(orderResults))
 	for i := range orderResults {
 		wg.Add(1)
-		go func(i int) { defer wg.Done(); orderResults[i], orderErrs[i] = f.service.CreateOrder(f.ctx, input) }(i)
+		go func(i int) {
+			defer wg.Done()
+			readyOrders.Done()
+			<-startOrders
+			orderResults[i], orderErrs[i] = f.service.CreateOrder(f.ctx, input)
+		}(i)
 	}
+	readyOrders.Wait()
+	close(startOrders)
 	wg.Wait()
 	created := 0
 	for i, r := range orderResults {

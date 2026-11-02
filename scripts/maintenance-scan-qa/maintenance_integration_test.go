@@ -265,7 +265,9 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 				t.Fatal("maintenance scan changed procurement business facts", err)
 			}
 			var procurementHeld, procurementSpent string
-			if err = f.admin.QueryRow(ctx, "SELECT held_amount::text,spent_amount::text FROM "+pgx.Identifier{f.env.Schemas["app"]}.Sanitize()+".procurement_accounts WHERE id=$1", f.procurementAccountID).Scan(&procurementHeld, &procurementSpent); err != nil || procurementHeld != "240" || procurementSpent != "0" {
+			// The fixture confirms an invoice cost of 12 before maintenance;
+			// approval releases the original upper-bound hold of 240.
+			if err = f.admin.QueryRow(ctx, "SELECT held_amount::text,spent_amount::text FROM "+pgx.Identifier{f.env.Schemas["app"]}.Sanitize()+".procurement_accounts WHERE id=$1", f.procurementAccountID).Scan(&procurementHeld, &procurementSpent); err != nil || procurementHeld != "0" || procurementSpent != "12" {
 				t.Fatal("maintenance scan changed procurement budget projection", err, procurementHeld, procurementSpent)
 			}
 		})
@@ -615,7 +617,14 @@ func newConsumerFixture(t *testing.T) *consumerFixture {
 	if _, err = public.Verify(ctx); !errors.Is(err, periodicbudget.ErrVerifyAuthority) {
 		t.Fatal("ordinary verifier accepted SET ROLE instead of actual LOGIN")
 	}
-	owner.Close()
+	// The genuine business fixture uses several independently owned runtime
+	// pools. Stop every producer before asserting the maintenance entrance has
+	// no live runtime sessions; closing only this final owner pool leaves the
+	// earlier funding/procurement pools legitimately idle in pg_stat_activity.
+	for _, pool := range f.pools {
+		pool.Close()
+	}
+	f.pools = nil
 	f.awaitOwnedGone(t)
 	f.cfg = cfg.Copy()
 	f.tag = "c0_consumer_" + f.env.Schemas["app"]

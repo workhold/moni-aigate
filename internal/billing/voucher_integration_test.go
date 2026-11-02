@@ -179,10 +179,20 @@ func TestPostgresVoucherCreateReplayRotationAndCurrentRights(t *testing.T) {
 	var wg sync.WaitGroup
 	results := make([]CreateVoucherBatchResult, 8)
 	errs := make([]error, 8)
+	start := make(chan struct{})
+	var ready sync.WaitGroup
+	ready.Add(len(results))
 	for i := range results {
 		wg.Add(1)
-		go func(i int) { defer wg.Done(); results[i], errs[i] = v.CreateVoucherBatch(f.ctx, in) }(i)
+		go func(i int) {
+			defer wg.Done()
+			ready.Done()
+			<-start
+			results[i], errs[i] = v.CreateVoucherBatch(f.ctx, in)
+		}(i)
 	}
+	ready.Wait()
+	close(start)
 	wg.Wait()
 	winners := 0
 	var issued CreateVoucherBatchResult

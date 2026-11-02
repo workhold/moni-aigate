@@ -232,7 +232,7 @@ func (v *VoucherService) run(ctx context.Context, spec voucherCommandSpec, apply
 		if spec.command.TenantID != "" {
 			scope = "tenant:" + spec.command.TenantID
 		}
-		tag, e := tx.Exec(ctx, `INSERT INTO commerce_commands(operation_id,actor,scope,kind,request_digest,fingerprint_key_version) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(operation_id) DO NOTHING`, spec.command.OperationID, spec.command.ActorID, scope, spec.kind, digest, versionArg)
+		tag, e := tx.Exec(ctx, `INSERT INTO commerce_commands(operation_id,actor,scope,kind,request_digest,fingerprint_key_version) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`, spec.command.OperationID, spec.command.ActorID, scope, spec.kind, digest, versionArg)
 		if e != nil {
 			return e
 		}

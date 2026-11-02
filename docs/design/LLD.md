@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3资金21表同session与人工券/Key独立图）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（采购证据/PB/支付来源独立图与真实PG补验）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -821,3 +821,12 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 人工/券覆盖共同入账、批次/兑换/撤销、commerce终态、精确两行journal、audit/outbox；Key覆盖R/预占/结算/消费退款及held/spent，退款不减spent，多pending退款允许暂时超过最终可退额。payment四kind仅共同词法/主键/FK检查，完整支付图未授coverage。保留旧ledger xid/time前置和SourceLinks规范金额资格，不从当前角色或独立clock_timestamp倒推历史授权/顺序。库级API无迁移、HTTP/main或资金写权限变更。统一链路与当前边界见[维护架构](../architecture/maintenance-gate.md)，专项与未执行真实PG的状态见[验证](../verification/funding-financial-graph.md)。
 
 完整pre/post phase仍须同session纳入采购evidence/事件、PB独立原始图、完整sandbox及跨域关系，再冻结完整coverage与唯一Finish；旧分kind局部ScanProof不能拼成全源proof。basis同pre快照读取、protected init/post replay/epoch及APP接线保持后续串行依赖。
+
+
+## 采购证据、周期预算与支付来源的独立核验
+
+根冻结的[采购证据合同](../../specs/022-self-service-payments/c0-procurement-evidence-graph-contract.md)、[PB合同](../../specs/022-self-service-payments/c0-periodic-budget-graph-contract.md)与[支付来源合同](../../specs/022-self-service-payments/c0-sandbox-source-graph-contract.md)分别实现23组、18组、33组原始行的纯Go核验。采购内部从同raw实际重跑原五core并补evidence/事件/成本/账户来源；PB独立从业务起点重放control序列和三层投影；支付独立解析P1/v1 canonical并核stored-verified原件到唯一capture资金效果。所有确定矛盾保留mismatch，真实历史缺证按封闭行级条件进入Unproven，执行失败返回零结果。
+
+本片不增加数据库关系、角色权限、业务写入、生产CLI或RuntimeProof。公共PB owner Verifier和现五类维护reader保持原范围，新增纯算法未替代同session读取。后续根需冻结物理表固定列并集、模式/phase、共享预算、完整EOF与唯一Finish，再实现完整七域组合；basis、protected init/post replay及epoch仍串行在后。旧21表资金专项的真实PG补验与失败修正另存[本轮记录](../verification/maintenance-financial-postgres.md)，不将历史SKIP升级成通过。模块依赖和状态以[统一架构](../architecture/README.md)为准。
+
+`payments.Service.run`与`billing.VoucherService.run`的commerce命令INSERT采用无target的`ON CONFLICT DO NOTHING`，覆盖operation主键与供terminal复合FK引用的`UNIQUE(operation_id,kind,scope,actor)`。受影响行数为0后以新语句读原operation，再核actor/scope/kind、原指纹版本及digest、当前读权与terminal；不在INSERT同一旧snapshot读取，不扩展任意23505重试。原5秒总deadline、3秒lock_timeout及明确回滚重试集合保持。[A合同](../../specs/022-self-service-payments/a-domain-contract.md)与[B补充合同](../../specs/022-self-service-payments/b-domain-contract.md)先于修复冻结，实测结果见[验证](../verification/commerce-concurrency.md)。

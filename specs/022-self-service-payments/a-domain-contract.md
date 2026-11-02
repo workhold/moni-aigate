@@ -115,7 +115,7 @@ body按以下顺序声明，字段都不省略：create=`face_amount,count,expir
 拟私有`runVoucherCommand(ctx, commandSpec, businessFn)`，不导出通用造额接口。一次调用的5秒总deadline包含pool wait、全部重试和COMMIT；根HTTP限制4个在途。保持现有事务隔离/timeout/已知回滚重试范围，但A私有runner显式区分begin/business/commit阶段，不改变旧transaction的资金路径语义。
 
 1. 每个attempt开始清空全部返回值、Created、Batch、Codes及待提交decision；未确认提交的秘密不能流入外层结果。仅PG明确40P01/40001且能证明本attempt已回滚时，在**同一5秒总预算**内最多重试两次，包含COMMIT返回上述明确PG回滚错误；没有剩余预算不再试。不因一般网络、超时、constraint或结果未知重试。
-2. 外层tx先INSERT command ON CONFLICT DO NOTHING；冲突等待后使用**新语句**读原command/terminal，不把INSERT与读合为同语句旧snapshot。绑定actor/scope/kind/target/body，异体409；同体复验当前读权并返回原receipt，不执行业务或生成code。不复用financial_idempotency。
+2. 外层tx先INSERT command `ON CONFLICT DO NOTHING`，不指定仅含`operation_id`的冲突目标。`commerce_commands`除operation主键外，为terminal复合外键保留`UNIQUE(operation_id,kind,scope,actor)`；两项唯一均包含同一个operation，完全相同命令并发时可能由任一索引先报告冲突，不能仅以主键作为arbiter而让另一唯一键泄漏23505。冲突等待后使用**新语句**读原command/terminal，不把INSERT与读合为同语句旧snapshot；先逐字段核原actor/scope/kind，再用原`fingerprint_key_version`重算target/body指纹并常量时间比较原摘要。异体409；同体复验当前读权并返回原receipt，不执行业务或生成code。不复用financial_idempotency，不将任意23505扩为重试。既有8个相同operation的创建调用以共同起跑屏障触发竞争，仍要求恰一Created/秘密获胜者，其余只返回原安全batch和terminal。
 3. 对新command按A§10取得业务根、policy及全部当前授权父锁并新语句复查；batch/proposal不存在404、失权403均回滚外层。先锁batch再读不可变proposal；无效兑换券也必须检查当前owner，不能向失权actor持久化拒绝。没有voucher时跳过不存在的batch锁，仍保持policy→tenant→membership→user的顺序。
 4. **业务savepoint放在已有根/policy/授权父锁之后、首次业务写/账户初始化之前**。其后业务拒绝ROLLBACK TO仅消除业务/资金变化，不能丢掉写rejected terminal/decision所需的父锁。已经无业务效果的早期语义拒绝可直接写terminal。savepoint不是独立提交。
 5. create在当前attempt生成秘密并只存摘要；状态命令写受控状态/审计；redeem只调用A0 ApplyFundingTx，source={voucher_grant,voucherID}，scope={锁内tenant,actor,已claim command}。A0拥有一次全账户ID序锁、账户锁后DB时间/expiry复验、journal/核销/receipt/唯一credited；A1不先发钱、不再次emit、不COMMIT helper。

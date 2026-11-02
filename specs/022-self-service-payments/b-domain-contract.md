@@ -394,3 +394,13 @@ main对payment worker另建context/done并在pool关闭前stop+wait。网络最�
 ## 13. B0-P 实施与限定验证
 
 2026-11-01，internal/paymentproto已实现§2–4，只有标准库依赖；普通main/config/router与应用资金无改动。严格JSON/UTF-16代理对/七通知联合值/null、规范时间/请求/摘要、不可变keyring、raw-body HMAC与query全部身份/参数绑定、zero-value Verified拒绝与Canonical副本保护已覆盖。race通过1.555s，vet通过，coverage89.4%；5秒fuzz实际6.471s，393430次输入、4workers无失败。根核读签名/keyring/值验证实现。这里只是P验证，M/Q持久状态/跨进程时钟与重启、B资金和正式支付商均未完成。
+
+## 14. B2 已实现人类命令的并发幂等补充合同（2026-11-02 根冻结）
+
+本节仅校准现有 [Service.run](../../internal/payments/service_commands.go) 的命令占位冲突，不改变上文历史 B0 分片或扩大支付能力。最终整仓回归的八并发同订单用例实际失败，专用 PostgreSQL 日志确认 SQLSTATE `23505`、约束 `commerce_commands_operation_id_kind_scope_actor_key`；原 INSERT 只将 `operation_id` 主键指定为 conflict arbiter，相同命令的并发 speculative insertion 可在另一条复合唯一索引上先报错，后被安全错误映射为 `payment_unavailable`。这不是已证明的预算超时，也不能把失败直接归为偶发并略过。记录不得复制操作、租户、用户或密钥的实际值。
+
+已逐条核对 [017 DDL](../../migrations/017_funding_vouchers.sql) 及后续迁移：`commerce_commands` 只有主键 `(operation_id)` 和唯一 `(operation_id,kind,scope,actor)`，两者都包含同一不可变 operation；没有其它资源唯一语义。复合唯一约束仍被 terminal 的复合外键引用，保留原迁移和约束。
+
+该 INSERT 使用无 target 的 `ON CONFLICT DO NOTHING`，让两个现有唯一索引都作为 arbiters。RowsAffected=0 后仍仅按原 `operation_id` 读出已提交命令，逐项核 `actor/scope/kind/fingerprint_key_version/request_digest`；任一不同均返回原 `commerce_operation_conflict`，全部相同才执行当前权限复核并读原 terminal。不得吞掉不同输入，不换 operation，不 UPDATE 原命令，也不因冲突再次执行业务效果。并发同输入只允许一个首次 accepted、一个 immutable order 和一个 checkout outbox，其余调用返回同一 receipt。
+
+事务总预算 5 秒、lock_timeout 3 秒及原最多三次仅 `40P01/40001` 明确回滚重试保持原合同；不添加通用 `23505` 重试，未知 COMMIT 不重放。验收复用 [现有并发用例](../../internal/payments/service_test.go)，八 goroutine 先在共同开始屏障集合再同时提交；须由根在独占数据库窗口执行该例 `-race -count=30` 及 payments 全包，并汇总整仓最终结果。此处先冻结合同和静态实现，未执行的数据库验证不得写成通过。

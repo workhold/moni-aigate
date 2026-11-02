@@ -246,6 +246,14 @@ func runPeriodicResourcePublicScan(t *testing.T, f *consumerFixture, totals peri
 	if err != nil || fundingBefore == "" {
 		t.Fatal("resource post-setup funding baseline failed")
 	}
+	legacyBefore, err := f.env.LegacyFundingSnapshot(ctx)
+	if err != nil || legacyBefore == "" {
+		t.Fatal("resource post-setup legacy baseline failed")
+	}
+	procurementBefore, err := f.procurementAttemptSnapshot(ctx)
+	if err != nil {
+		t.Fatal("resource post-setup procurement baseline failed")
+	}
 	f.awaitOwnedGone(t)
 	g, err := maintenancetrust.Acquire(ctx, f.cfg, f.pins)
 	if err != nil || g == nil {
@@ -262,7 +270,7 @@ func runPeriodicResourcePublicScan(t *testing.T, f *consumerFixture, totals peri
 	// counts the real history in each aggregate rather than bypassing T2.
 	installation, err := snapshot.VerifyInstallation(ctx)
 	if err != nil || installation == nil {
-		t.Fatal("resource genuine installation proof failed")
+		t.Fatal("resource genuine installation proof failed", err)
 	}
 	permit, err := maintenancetrust.Attest(ctx, snapshot)
 	if err != nil || permit == nil {
@@ -305,8 +313,16 @@ func runPeriodicResourcePublicScan(t *testing.T, f *consumerFixture, totals peri
 	}
 	f.awaitOwnedGone(t)
 	fundingAfter, err := f.env.FundingSnapshot(ctx)
-	if err != nil || fundingAfter != fundingBefore || f.env.VerifyLegacyFundingUnchanged(ctx) != nil {
+	if err != nil || fundingAfter != fundingBefore {
 		t.Fatal("resource maintenance scan changed genuine funded facts or setup audits")
+	}
+	legacyAfter, err := f.env.LegacyFundingSnapshot(ctx)
+	if err != nil || legacyAfter != legacyBefore {
+		t.Fatal("resource maintenance scan changed post-setup legacy facts")
+	}
+	procurementAfter, err := f.procurementAttemptSnapshot(ctx)
+	if err != nil || string(procurementAfter) != string(procurementBefore) {
+		t.Fatal("resource maintenance scan changed post-setup procurement facts")
 	}
 	f.awaitOwnedGone(t)
 }

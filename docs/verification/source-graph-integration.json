@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-02",
+  "base_head": "a874aab810bae1264e9af84c5273d8a28dca1e48",
+  "architecture_snapshot_at_final_run": "c350b1cb2dd9",
+  "source_frozen_during_final_run": true,
+  "environment": {
+    "postgres": "16.15",
+    "endpoint": "127.0.0.1:55439/moni_test",
+    "test_login": "moni_test",
+    "max_connections": 200,
+    "timezone": "Asia/Shanghai",
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "full_page_writes": "on",
+    "shared_cluster_parameters_changed": false
+  },
+  "checks": [
+    {
+      "command": "make check",
+      "exit_code": 0
+    },
+    {
+      "command": "TEST_DATABASE_URL=<dedicated local fixture> make verify-mvp",
+      "exit_code": 0,
+      "wall_seconds": 959.665
+    },
+    {
+      "command": "go test -race -count=30 -run ^TestPostgresPaymentServiceConcurrentSKUAndOrderIdempotency$ ./internal/payments",
+      "exit_code": 0,
+      "go_seconds": 15.154
+    },
+    {
+      "command": "go test -race -count=1 ./internal/payments",
+      "exit_code": 0,
+      "go_seconds": 29.823
+    },
+    {
+      "command": "go test -race -count=30 -run ^TestPostgresVoucherCreateReplayRotationAndCurrentRights$ ./internal/billing",
+      "exit_code": 0,
+      "go_seconds": 11.431
+    },
+    {
+      "command": "go test -race -count=1 -timeout 600s ./internal/billing",
+      "exit_code": 0,
+      "go_seconds": 147.581
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-race",
+        "-count=1",
+        "-p",
+        "1",
+        "-timeout",
+        "600s",
+        "-run",
+        "^(TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery|TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay)$",
+        "./internal/server"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 31.22,
+      "go_seconds": 26.796
+    },
+    {
+      "command": "C0_MAINTENANCE_DATABASE_URL=<dedicated local fixture> go test -race -count=1 -p 1 -timeout 30m -v ./scripts/maintenance-scan-qa",
+      "exit_code": 0,
+      "go_seconds": 210.188,
+      "scope": "independent earlier opt-in run; not enabled by make verify-mvp"
+    }
+  ],
+  "preflight_checkpoint": {
+    "action": "explicit preflight CHECKPOINT; original profile and deadlines unchanged",
+    "exit_code": 0,
+    "wall_seconds": 2.372
+  },
+  "final_log_sha256": "646cb535fa0b97842c8be559e8ffe37b9b82c7ac0142a83b3b521e23a29519b8",
+  "boundaries": [
+    "No new complete 23/18/33-group database reader, phase, basis, epoch or runtime funding writer.",
+    "Default full regression does not enable C0 opt-in suites.",
+    "No supplier, official payment, container/1Panel, HA or performance-parity certification.",
+    "Checkpoint preflight and successful reruns do not prove all checkpoint cleanup schedules are resolved.",
+    "Final documentation-only changes are followed by reviewed architecture refresh and read-only checks."
+  ]
+}
