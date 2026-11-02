@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r4 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3第四个sandbox capture直接关联reader与未覆盖边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3采购预算投影reader与局部证明边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -753,11 +753,11 @@ CI新增的动态顶层测试分区与临时PG时区只影响测试执行环境�
 
 按[根冻结合同](../../specs/022-self-service-payments/c0-authority-contract.md)实现库级二参Attest与Permit.Verify。Snapshot owned installation是唯一输入；完整history先scalar guard再原helper，manifest来自22项固定embed；实际LOGIN/owner与PB六表owner、sandbox字面专库例外、全runtime新鲜clear→sample、16表重新全空、完整ordinary/v1前驱、仅Init全部账户锁与出口重核后一次发证。原busy/总期限/私有rawTx贯穿CPU/SQL，错误或终结撤销全部副本，watcher只短锁状态与raw-close，不并发pgx。
 
-前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与四个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
+前驱逐列SQL资格位和CASE有界投影、typed有限时间、262行/1MiB与累计5秒；原v1 bytes/重编码/原SHA三向绑定，不把peer本地字段硬加v1。Init一条全账户C序FOR UPDATE，无WHERE/LIMIT，count及uint64be长度+原UTF8字节SHA，无额外域前缀或历史ID长度限制。Permit.Verify以新受控call复核同authority事实及新鲜停服；发行call结束后仍可使用，终结即永久撤销。详见[架构](../architecture/maintenance-gate.md)。T2[专库race专项](../verification/maintenance-authority.md)333.879秒、89顶层/832父子终态全部PASS，整仓回归另记；T2历史范围不包括T3；当前ReadLease与五个局部reader见下节，独立全来源、basis、epoch/writer、生产CLI与资金接线仍后续。
 
 此前[第三轮CI](../verification/github-ci-third-run.md)保留f64b56f范围；随后[T2发布CI](../verification/github-ci-authority-run.md)在精确46f25e0源码十组success。未开专用C0的跳过项不计专项通过，也不覆盖本轮T3。
 
-## 39. 受控读取租约与四个局部reader（022-C0-T3）
+## 39. 受控读取租约与五个局部reader（022-C0-T3）
 
 精确API、状态、数据出口与验收按[根冻结合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)。BeginScan至Finish/Abort持续持原gate.busy，每kind仅一次；snapshotState保存activeLease，原revokeAuthorityLocked同步撤销。ScanProof绑定原Permit/lease nonce与Snapshot生命周期，不因正常Finish关闭本lease取消视图而立即失效。所有权分为scan、query和每次method；Abort/watchers只撤销与raw-close，正在使用pgx的方法返回后才可ack并释放busy。
 
@@ -789,3 +789,11 @@ Rows.Next/Close显式返回error，避免并发busy假扮EOF；必须完整EOF�
 
 
 固定投影列为funding_receipts的id、tenant_id、source_kind、source_id、amount::pg_catalog.text、currency、journal_id，以及payment_captures的id、tenant_id、amount::pg_catalog.text、wallet_credit_amount::pg_catalog.text、currency。两张表都按id COLLATE C升序取keyset，不JOIN、不聚合、不使用业务validator；跨表查询使用同一个lease与ReadBudget。客户端UTF-8/NUL和规范整数检查失败时固定返回安全错误与零结果；summary中金额和所有计数均使用十进制字符串。ReadSandboxCaptureReceiptFacts只形成非权威局部facts，ScanProof由维护集成在core成功且lease Finish正常后保存。
+
+### 采购预算投影 reader
+
+本切片按[冻结合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)实现`ScanProcurement`，固定读取`procurement_accounts(id,held_amount,spent_amount)`、`procurement_reservations(attempt_id,account_id,upper_amount,held_amount,spent_amount,state,anomaly)`与`procurement_budget_events(id,event_key,account_id,attempt_id,held_delta,spent_delta)`。所有NUMERIC以`::pg_catalog.text`返回并由Go用规范整数解析；全reader按表分别使用`id`、`attempt_id`和`id`做C序keyset，128行一页，三表共享100000行、16MiB投影文本预算和原lease最多30秒期限。每页必须到EOF并观察Err/Close，任何query/scan/预算/取消失败返回零facts。
+
+`fundinglotverify.CheckProcurementBudgetProjection`独立用`big.Int`聚合每账户reservation held/spent和budget event held/spent delta，比较账户投影；并检查账户/attempt外键缺失、重复身份/事件键、金额/文本形状、状态枚举和prepared/sending/settled/released桶关系。摘要仅scope `procurement_budget_projection_v1`、扫描行数、Balanced与固定mismatch计数，不泄漏账户或attempt标识。Balanced只表示三张固定表的局部预算投影一致；不验证采购binding、attempt实际成本快照、成本更正proposal/evidence、余额观察、周期PB或供应商账单真实性。
+
+`maintenancescan.VerifyProcurementBudgetMaintenance`要求真实`ReadLease` kind `ScanProcurement`，使用固定schema SELECT、Require→reader/core→Finish并私有绑定原Permit的ScanProof。没有普通main/HTTP/worker/writer接线，不发行coverage/basis/epoch/init许可；未来全来源组合必须另冻同lease内多个reader复用和统一Finish合同。定向Go/race/vet通过；外部真实PG Plan/Init未执行，且`TEST_DATABASE_URL`未配置，因此本片后未运行整仓`make verify-mvp`；见[验证记录](../verification/procurement-budget-maintenance.md)。

@@ -1,6 +1,6 @@
 # C0 维护 Gate 与快照细化架构
 
-本页描述 022-C0-T0/T1/T2 与 T3 库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[人工/券来源关联窄合同](../../specs/022-self-service-payments/c0-source-link-contract.md)及[sandbox capture直接关联合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)为准。真实ReadLease及ledger、PB、人工核款/兑换券收据关联、sandbox capture直接关联四个reader kind已实现（ScanProcurement保留为ScanKind但尚无对应reader）；它们仍是库级维护能力，没有普通main、HTTP、生产维护CLI或资金写入装配。新reader的targeted Go测试、race与vet已通过；真实PG Plan/Init、整仓`make verify-mvp`尚未执行，见[本片验证记录](../verification/sandbox-capture-links.md)。T1历史真实PG/race115.412秒、46顶层/124终态通过保留[原范围](../verification/maintenance-snapshot.md)；T2、T3历史片及各新增reader证据分别记录。
+本页描述 022-C0-T0/T1/T2 与 T3 库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[人工/券来源关联窄合同](../../specs/022-self-service-payments/c0-source-link-contract.md)、[sandbox capture直接关联合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)及[采购预算投影合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)为准。真实ReadLease及ledger、PB、人工核款/兑换券收据关联、sandbox capture直接关联、采购预算投影五个reader已实现；它们仍是库级维护能力，没有普通main、HTTP、生产维护CLI或资金写入装配。定向Go/race/vet通过；采购预算reader真实PG Plan/Init和整仓`make verify-mvp`尚未执行，分别见[采购验证记录](../verification/procurement-budget-maintenance.md)与[sandbox验证记录](../verification/sandbox-capture-links.md)。T1历史真实PG/race115.412秒、46顶层/124终态通过保留[原范围](../verification/maintenance-snapshot.md)；T2、T3历史片及各新增reader证据分别记录。
 
 ```mermaid
 flowchart TD
@@ -47,12 +47,18 @@ funding_receipts + payment_captures完整投影
     SandboxCore[fundinglotverify直接关联core
 sandbox receipt↔capture双向ID租户金额币种
 每capture标记未验图与账务效果]
+    ProcurementReader[billing采购预算固定reader
+procurement_accounts / reservations / events
+128行C序分页 / 共享预算 / 完整EOF]
+    ProcurementCore[fundinglotverify采购预算纯core
+big.Int逐账户核缓存 / reservations / event delta
+局部投影摘要 / 无authority]
     Budget[periodicbudget固定raw-facts算法
 19表scalar资源guard / 原业务SQL与三态
 不接受或发行维护proof]
     ScanFinish[Finish / 零pending Row或Rows
 EOF与Err及显式Close全部观察 / 出口重核]
-    Result[私有ScanProof与四个局部结果
+    Result[私有ScanProof与五个局部结果
 绑定原Permit及lease nonce / 不授全源coverage]
     Finish[单次Commit或Rollback
 明确成功、明确回滚或Unknown分别保存]
@@ -77,8 +83,10 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Integration -->|ScanPeriodicBudget| Budget --> ScanFinish
     Integration -->|ScanFunding| FundingReader --> FundingCore --> ScanFinish
     Integration -->|ScanSandboxSources / 独立kind| SandboxReader --> SandboxCore --> ScanFinish
+    Integration -->|ScanProcurement / 独立kind| ProcurementReader --> ProcurementCore --> ScanFinish
     ScanFinish --> Result
     SandboxReader -->|原快照内两表完整读取| PG
+    ProcurementReader -->|原快照内三表完整读取| PG
     Result -->|原Snapshot显式终结即全部撤销| Finish
     Begin -->|失败| Destroy
     Catalog -->|失败| Destroy
@@ -137,7 +145,7 @@ Permit所有字段私有，复制共享撤销；Verify使用新受控call持原b
 
 [Rows](../../internal/maintenancetrust/lease_rows.go)要求每次Next true恰好Scan一次，真正EOF后必须观察Err与显式Close，两者可以任意先后；单operation所有权不把busy误报为EOF。跳行、重复Scan、提前Close、未消费Row或悬挂Rows均使Finish永久失败并关连接。QueryRow.Scan核恰好一行，再验证EOF/Err/Close。没有悬挂读取且出口完整重核成功时，Finish才发行私有共态ScanProof。proof纯Verify核原Permit/Snapshot/lease nonce和固定kind，可在另一lease占busy时核绑定，不发SQL；原Snapshot终结、失败或到期时所有副本失效。零值、JSON、同摘要或同PID不能重绑。
 
-## 四个实际reader与证明范围
+## 五个实际reader与证明范围
 
 维护装配集中到独立[`maintenancescan`](../../internal/maintenancescan)：它单向依赖billing、periodicbudget与maintenancetrust→fundinglotcatalog。普通billing/PB/main及领域测试不导入集成包、维护库或catalog；只有真正维护消费者承担catalog完整eager认证。[LedgerFactQuery/Rows与ReadLedgerFacts](../../internal/billing/funding_ledger_facts.go)复用[唯一固定query core](../../internal/billing/funding_ledger_query.go)，不接受authority，只返回私有保存snapshot的LedgerFacts；LocalSummary仅描述无权威局部结果。[maintenancescan.VerifyLedgerMaintenance](../../internal/maintenancescan/ledger.go)要求真实`*ReadLease`和ScanLedger，自行构造私有adapter，使用原T2前置与lease内current_schema，读取三表完整C序128条分页、保留journal额外事实，完整EOF/Err/Close后对整份原始行运行独立大整数CheckLedgerRows。原caller-owned RR入口仍保留实际LOGIN/窄shape/history前置，100000行、16MiB和共用期限保持。Require→固定core→Finish全部成功后，集成包才构造私有MaintenanceLedgerResult并保存本次完整snapshot与真实ScanProof，Summary仍为`supplied_ledger_rows`。
 
@@ -147,7 +155,9 @@ Permit所有字段私有，复制共享撤销；Verify使用新受控call持原b
 
 第四个[`maintenancescan.VerifySandboxCaptureReceiptLinksMaintenance`](../../internal/maintenancescan/sandbox_capture_links.go)要求真实`*ReadLease`和独立kind `ScanSandboxSources`，不会覆盖或升级上面的ScanFunding结果。billing的[固定reader](../../internal/billing/funding_source_capture_read.go)无过滤、无join地完整读取`funding_receipts`和`payment_captures`，按每表128行C序keyset分页至真实EOF；两表共用100000行、16MiB逻辑字符串预算和原lease最多30秒期限，失败返回零facts。纯[`CheckSandboxCaptureReceiptLinks`](../../internal/fundinglotverify/sandbox_capture_links.go)只按原始TEXT ID检查sandbox收据与capture的直接引用、tenant、receipt amount与capture wallet_credit_amount、currency，并独立计数孤儿、不匹配、缺收据、重复引用与shape问题。scope固定为`sandbox_capture_receipt_reference_v1`；`UnvalidatedCaptureGraphs`和`UnvalidatedLedgerEffects`各等于扫描capture数。直接链接一致不说明capture的order/identity/evidence/processing/review/effect图、journal/ledger/outbox/audit效果或外部PSP真实性成立。本reader及result没有普通main、HTTP、支付worker、资金writer、basis或epoch接线，也没有full-source coverage字段。[窄合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)冻结所有边界。
 
-ScanProof只证明固定kind的lease正常完成；四个局部结果不能授予完整来源`CoverageComplete`、资金写入或init/basis/epoch就绪条件。Funding、Key、采购、支付B来源与lot全图仍需独立逐列scanner、双向sweep、coverage清单与完整组合器，不复用写侧funding_valid或PB局部SQL充当全源证明。ReadLease历史验证见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)；manual/voucher reader合同与范围见[来源关联验证](../verification/funding-source-links.md)，sandbox窄片见[合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)和[待执行PG验收状态](../verification/sandbox-capture-links.md)。两者独立扫描、互不递减完整资金来源未覆盖数，也不沿用历史T3通过计数。
+第五个[`maintenancescan.VerifyProcurementBudgetMaintenance`](../../internal/maintenancescan/procurement.go)要求真实`*ReadLease`和`ScanProcurement`。billing的固定[reader](../../internal/billing/procurement_budget_read.go)完整扫描`procurement_accounts`、`procurement_reservations`、`procurement_budget_events`，按各自`id`/`attempt_id`键做128行C序keyset至EOF；三表共用100000行、16MiB所有投影文本预算（含NUMERIC转文本）和原lease最多30秒。纯[`CheckProcurementBudgetProjection`](../../internal/fundinglotverify/procurement_budget.go)以`big.Int`逐账户比较缓存held/spent、reservation合计与immutable event delta总额，并计数重复/孤儿/文本数字状态形状。scope固定`procurement_budget_projection_v1`，Balanced只描述这三表预算投影；不核binding/attempt报价、成本更正、双审proposal/evidence、commands/audit/观察或周期预算，也不证明真实供应商消费。该reader仅属于库级维护集成，没有普通main、HTTP、资金writer、basis或epoch装配。[根冻结合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)及[验证记录](../verification/procurement-budget-maintenance.md)保留验收范围。
+
+ScanProof只证明固定kind的lease正常完成；五个局部结果不能授予完整来源`CoverageComplete`、资金写入或init/basis/epoch就绪条件。Funding、Key、采购、支付B来源与lot全图仍需独立逐列scanner、双向sweep、coverage清单与完整组合器，不复用写侧funding_valid或PB局部SQL充当全源证明。ReadLease历史验证见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)；manual/voucher reader合同与范围见[来源关联验证](../verification/funding-source-links.md)，sandbox与采购窄片见[各自合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[采购合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)及[验证记录](../verification/sandbox-capture-links.md)、[采购状态](../verification/procurement-budget-maintenance.md)。它们互不递减完整资金来源未覆盖数，也不沿用历史T3通过计数。
 
 完成证明的纯绑定还同锁检查当前未stopped permitCall的caller/context取消，防止后继lease取消后、异步回调调度前旧结果短暂通过；旧成功call的正常cancel不影响proof。客户端captured socket及时关闭与服务器会话退出分开验收：raw-close不保证即时中断任意长服务器SQL，服务器通常在下一次I/O发现断线；不由此推定服务器端锁已即时消失。
 

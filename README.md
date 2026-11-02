@@ -1,5 +1,7 @@
 # moni-aigate
 
+[![CI](https://github.com/workhold/moni-aigate/actions/workflows/ci.yml/badge.svg)](https://github.com/workhold/moni-aigate/actions/workflows/ci.yml)
+
 面向对外 API 经营的自托管 AI 网关，将模型接入、客户授权、渠道采购、计费结算和运营控制台放在同一个平台中。
 参考 New API / One API 的业务设计与 1Panel 的部署体验，采用 Go + PostgreSQL + Vue 3 独立实现，按 SDD 持续交付。
 
@@ -35,8 +37,8 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 自助身份与兑换券 | 已实现，限定本地验收 | 邮件证明、密码恢复、双审赠额券；注册、邮件和新券发行默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
-| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；维护态现有 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联四个局部 reader；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
-| 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；四个局部结果仅证明各自固定扫描完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
+| 资金来源与原路退款 | 部分基础模块已实现 | 来源分配、账本读取和静态检查已有实现；维护态有 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联、采购预算投影五个局部 reader；完整来源追踪、维护切换、原路退款/拒付仍在推进 |
+| 停服维护授权与受控读取 | 库级已实现，验证按阶段记录 | Gate、单次 Snapshot、二参 Attest、Permit.Verify 与 ReadLease；五个局部结果只证明各自固定扫描完成，尚无全来源组合、生产维护 CLI、basis 或 epoch 开账 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
@@ -81,7 +83,7 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，独立 `internal/maintenancescan` 通过私有适配复用账本、周期预算、人工核款/兑换券来源关联，以及 sandbox capture 直接关联的固定读取算法；每次扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。第四个 `ScanSandboxSources` reader 在同一快照完整读取 `funding_receipts` 与 `payment_captures`，只核验 sandbox 收据与 capture 的直接 ID、租户、金额和币种关系，并逐 capture 报告未验证的 evidence 图和账务效果。它不验证 capture 的订单/身份/evidence 图、journal/ledger/outbox/audit，也不证明 PSP 真实性；其它来源和 full-source coverage 仍需后续独立 scanner 与组合。普通 billing/PB/main、HTTP、支付 worker 与资金 writer 不接入该维护 reader；领域读取接缝只返回不可信局部事实，只有集成包消费真实租约并正常 Finish 后才能保存绑定原 Permit 的私有 ScanProof 结果，不接收外部报告或 provider。四个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，本切片合同与验证状态见[窄合同](specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)和[验证记录](docs/verification/sandbox-capture-links.md)；历史 T3 专项与集成证据保留其原有源码范围。
+停服维护目前提供库级接口：原 Permit 在同一私有快照中发行 ReadLease，独立 `internal/maintenancescan` 通过私有适配复用账本、周期预算、人工核款/兑换券来源关联、sandbox capture 直接关联和采购预算投影五个固定读取算法；每次扫描持有同一 busy 与总期限，并要求完整 EOF、Err 和 Close。采购 reader 完整读取 `procurement_accounts`、`procurement_reservations` 与 `procurement_budget_events`，独立比较账户缓存、预占汇总和事件delta汇总；它只证明该三表投影局部一致，不验证报价/供应商账单、凭据绑定、成本更正或周期预算。sandbox reader 完整读取 `funding_receipts` 与 `payment_captures`，只核验两者直接 ID、租户、金额和币种关系，不验证 capture 的订单/身份/evidence 图、journal/ledger/outbox/audit 或 PSP 真实性。其它来源和 full-source coverage 仍需后续独立 scanner 与组合。普通 billing/PB/main、HTTP、支付 worker 与资金 writer 不接入这些维护reader；领域读取接缝只返回不可信局部事实，只有集成包消费真实租约并正常 Finish 后才能保存绑定原 Permit 的私有 ScanProof 结果，不接收外部报告或 provider。五个局部结果不授完整资金来源覆盖、资金写入或开账能力。结构与边界见[维护架构](docs/architecture/maintenance-gate.md)，采购投影合同与验证状态见[窄合同](specs/022-self-service-payments/c0-procurement-budget-contract.md)和[验证记录](docs/verification/procurement-budget-maintenance.md)；sandbox合同与记录见[capture窄合同](specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)和[验证记录](docs/verification/sandbox-capture-links.md)，历史 T3 专项与集成证据保留其原有源码范围。
 
 ## 本地启动
 
@@ -128,9 +130,11 @@ go run ./cmd/moni-aigate init-env --out .env
 # 编辑 PUBLIC_ORIGIN=https://your-domain、COOKIE_SECURE=true、PORT=8080
 docker compose config --quiet
 docker compose build
-docker compose up -d app
 docker compose run --rm -T app bootstrap --email admin@example.com --password-stdin < /absolute/private/admin-password
+docker compose up -d app
 ```
+
+`bootstrap` 命令会等待 Compose 的迁移与权限初始化依赖完成；它在应用对外监听前创建首次管理员。
 
 Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。
 1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录和构建上下文须指向完整仓库根目录：`migrate` 使用 `build: .`，需要 `Dockerfile`、Go/Web 源码和 `deploy/init-roles.sh`，仅复制 YAML 与初始化脚本不足以构建。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理到 `127.0.0.1:8080`；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
@@ -201,7 +205,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。[维护架构](docs/architecture/maintenance-gate.md)的 T0/T1 与 [T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)保留各自验证范围；[T3 ReadLease](specs/022-self-service-payments/c0-read-lease-contract.md)现承载 ledger、PB、人工核款/兑换券来源关联与 sandbox capture 直接关联四个局部 reader。新增 sandbox reader 只比对 `funding_receipts` 与 `payment_captures` 的直接引用，capture evidence/ledger 效果和全源组合仍未覆盖；合同及待执行验收见[窄合同](specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)和[验证记录](docs/verification/sandbox-capture-links.md)。全来源 scanner 与完整组合、生产维护 CLI、basis 和 epoch 开账仍后续。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。[维护架构](docs/architecture/maintenance-gate.md)的 T0/T1 与 [T2 维护授权](specs/022-self-service-payments/c0-authority-contract.md)保留各自验证范围；[T3 ReadLease](specs/022-self-service-payments/c0-read-lease-contract.md)现承载 ledger、PB、人工核款/兑换券关联、sandbox capture 直接关联与采购预算投影五个局部 reader。采购reader只比较`procurement_accounts`、`procurement_reservations`、`procurement_budget_events`的本地金额投影；不证明上游真实成本/账单或全来源组合，合同与验证边界见[窄合同](specs/022-self-service-payments/c0-procurement-budget-contract.md)和[验证记录](docs/verification/procurement-budget-maintenance.md)。全来源scanner与组合、生产维护CLI、basis和epoch开账仍后续。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

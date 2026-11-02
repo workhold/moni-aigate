@@ -17,10 +17,10 @@ go run ./cmd/moni-aigate init-env --out .env
 # .env由Compose读取，不要提交到Git。
 docker compose config --quiet
 docker compose build
-# 按依赖执行空库迁移、受限角色授权，再启动单活动app。
-docker compose up -d app
-# 使用受限app角色引导一次管理员，从安全stdin读取初始密码。
+# bootstrap 会等待迁移与受限角色授权依赖完成；此时尚未启动对外app。
 docker compose run --rm -T app bootstrap --email admin@example.com --password-stdin
+# 首个管理员创建成功后，再启动单活动app。
+docker compose up -d app
 ```
 
 `MFA_ENFORCE_PLATFORM=false`（未设置也为false）允许未绑定账号密码登录；`compose.yaml`将该变量传给app。设为true并重建app容器后，未绑定的平台管理员/财务账号必须先设置验证器；已经启用MFA的账号始终须第二因子，关闭强制策略不会取消个人绑定。敏感操作近期密码验证、权限、双人审批仍生效；本地二维码和手动绑定入口均保留。

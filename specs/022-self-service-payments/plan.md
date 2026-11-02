@@ -1,6 +1,6 @@
 # 022 实施计划（提案）
 
-2026-11-01，**A0/A1已实现并通过限定本地验收；B0-P纯协议与M/Q独立沙箱已编码并通过专项验证，真实进程短程通过，旧版本20代长程已完成，最新补丁/精确故障继续收口，B1核心SQL与B2资金接线合同已冻结，B2已追加021并实现Go第三来源与三角色核验，专项通过；B3运行证明/Processor/HTTP/UI合同已冻结、022证明表/23表权限已实施，领域/runtime/Processor及HTTP/UI/main已正式接线，真实PG专项通过，真实主进程和最终浏览器整链通过限定本地验收，真实Guard失权/在途SIGTERM补验已通过，C继续后续**。A依[A执行合同](a-contract.md)、[领域合同](a-domain-contract.md)完成共同入账、双审券、HTTP和控制台，证据见[验证记录](../../docs/verification/funding-vouchers.md)。M/Q范围见[沙箱验证](../../docs/verification/payment-sandbox.md)；应用支付资金、来源lot与原路退款继续独立审查，不能将A或B0局部验收视作022整体完成。
+2026-11-02，**A0/A1已实现并通过限定本地验收；B0-P纯协议与M/Q独立沙箱已编码并通过专项验证，真实进程短程通过，旧版本20代长程已完成，最新补丁/精确故障继续收口，B1核心SQL与B2资金接线合同已冻结，B2已追加021并实现Go第三来源与三角色核验，专项通过；B3运行证明/Processor/HTTP/UI合同已冻结、022证明表/23表权限已实施，领域/runtime/Processor及HTTP/UI/main已正式接线，真实PG专项通过，真实主进程和最终浏览器整链通过限定本地验收，真实Guard失权/在途SIGTERM补验已通过，C继续后续**。A依[A执行合同](a-contract.md)、[领域合同](a-domain-contract.md)完成共同入账、双审券、HTTP和控制台，证据见[验证记录](../../docs/verification/funding-vouchers.md)。M/Q范围见[沙箱验证](../../docs/verification/payment-sandbox.md)；应用支付资金、来源lot与原路退款继续独立审查，不能将A或B0局部验收视作022整体完成。
 
 ## 依赖与并行边界
 
@@ -79,6 +79,8 @@ flowchart LR
 - [x] T3局部reader切片：冻结[人工核款/兑换券来源关联合同](c0-source-link-contract.md)，完整读取`credit_orders`、`voucher_redemptions`、`funding_receipts`并只双向核对manual/voucher receipt链接；固定纯core、billing reader与真实ReadLease维护入口已接入。sandbox capture及全源coverage明确未覆盖；合同和限定真实PG证据见[验证记录](../../docs/verification/funding-source-links.md)。这不完成T3全来源组合。
 - [x] T3第四个局部reader：冻结[sandbox capture直接关联合同](c0-sandbox-capture-link-contract.md)，以独立`ScanSandboxSources`完整分页读取`funding_receipts`和`payment_captures`，只核直接ID/tenant/amount/currency关系，并逐capture报告未验证的evidence图与账务效果；没有普通main/HTTP/worker/writer接线，不降低full-source coverage债务。定向Go测试、race和vet已通过。
 - [ ] sandbox capture reader真实PG Plan/Init验收：需专用`C0_MAINTENANCE_DATABASE_URL`，覆盖真实capture正例、受控孤儿/不匹配和扫描前后资金快照不变；当前未配置，不能以本地fixture替代。`TEST_DATABASE_URL`亦未配置，故本切片之后尚未运行`make verify-mvp`；状态见[验证记录](../../docs/verification/sandbox-capture-links.md)。
+- [x] T3第五个局部reader：冻结[采购预算投影合同](c0-procurement-budget-contract.md)，新增ScanProcurement完整分页读取采购账户、reservation与event三表，以Go大整数独立比较held/spent投影并检查局部状态/引用形状；没有main/HTTP/writer/basis/epoch接线，结果不证明真实供应商账单或全来源覆盖。定向Go测试、race、vet已通过。
+- [ ] 采购预算reader真实PG Plan/Init验收：复用专用`C0_MAINTENANCE_DATABASE_URL`，验证真实账户正例、绕过约束后的缓存投影损坏能被读出、扫描前后资金/采购值不变；当前环境未配置。`TEST_DATABASE_URL`也未配置，本轮尚未运行`make verify-mvp`，见[验证记录](../../docs/verification/procurement-budget-maintenance.md)。
 - [ ] 审计真实代码锁图与全资金路径，逐操作列出账户/lot桶变动、migration/recovery/历史退款例外。
 - [ ] 维护态legacy迁移；新来源lot和Reserve/FIFO分配、settle/release、消费refund回原来源；VerifyLedger和rebuild对齐。
 - [ ] 后续按冻结合同实现epoch、独立全源RuntimeProof及普通main/全资金路径接线；当前静态leaf没有授予这些能力，022-C与整个后续交付计划仍未完成。
@@ -110,6 +112,6 @@ go run ./scripts/check-architecture
 - [x] T3首片：真实ReadLease、ledger/PB维护reader与局部结果已实现，真实PG及旧reader回归通过；精确范围见[历史专项](../../docs/verification/maintenance-read-lease.md)。后续新增manual/voucher receipt link reader单独以[C0来源关联合同](c0-source-link-contract.md)和[验证记录](../../docs/verification/funding-source-links.md)记证，不改写首片历史统计。
 - [ ] T3独立全来源与完整组合、basis、epoch封闭写入、全资金路径、C1/C2/C3及后续阶段继续按依赖推进。
 
-2026-11-02 T3首片先冻结[读取租约与两个维护reader](c0-read-lease-contract.md)：根集成Snapshot/Permit撤销和真实PG验证，独立实现ReadLease封闭出口及纯测试、ledger单core与维护结果、PB单core/维护资源profile与诚实三态。历史专项记录不包含后续source-link reader。本轮第三个reader依[c0-source-link-contract.md](c0-source-link-contract.md)完整读三表并局部核对manual/voucher receipt双向关系；其scope内sandbox receipts计为未覆盖。独立core、分页/行与字节边界、生命周期错误及真实PG Plan/Init均独立记入[来源验证记录](../../docs/verification/funding-source-links.md)。第四个ScanSandboxSources reader及当前测试/PG缺口按上方任务与[验证记录](../../docs/verification/sandbox-capture-links.md)单独维护。全部source coverage、basis、epoch与生产CLI不因局部读取接线而视为完成。
+2026-11-02 T3首片先冻结[读取租约与两个维护reader](c0-read-lease-contract.md)：根集成Snapshot/Permit撤销和真实PG验证，独立实现ReadLease封闭出口及纯测试、ledger单core与维护结果、PB单core/维护资源profile与诚实三态。历史专项记录不包含后续source-link reader。本轮第三个reader依[c0-source-link-contract.md](c0-source-link-contract.md)完整读三表并局部核对manual/voucher receipt双向关系；其scope内sandbox receipts计为未覆盖。第四个ScanSandboxSources reader和第五个ScanProcurement预算投影reader分别按独立合同接线，当前两者PG验收均因专用环境未配置而待执行，范围见各自验证记录。全部source coverage、basis、epoch与生产CLI不因局部读取接线而视为完成。
 
 2026-11-02 T3集成依赖隔离按读取合同§7实施：独立maintenancescan单向复用领域固定raw-facts算法与真实ReadLease，在线生产/race测试依赖不再引入维护/catalog；原算法、身份、资源、资金和超时规则保持。原失败进程49.177秒、core/防伪造/race依赖门禁15.541秒、真实双reader及九个资源边界194.261秒均通过；完整整仓与新精确提交CI以[隔离修复记录](../../docs/verification/maintenance-integration-isolation.md)为准，f572bbd旧CI失败保留。

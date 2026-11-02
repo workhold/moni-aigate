@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"net/url"
 	"os"
@@ -26,12 +27,13 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/payments"
 	"github.com/moni-ai/moni-aigate/internal/paymentsandboxqa"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
+	"github.com/moni-ai/moni-aigate/internal/procurement"
 	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
 // This external consumer imports only public production entry points. It starts
 // with genuine v1 funded QA data and a signed sandbox capture, appends exactly
-// the frozen C0 DDL and ACL, then runs all four connected readers on the same
+// the frozen C0 DDL and ACL, then runs all five connected readers on the same
 // attested maintenance transaction.
 func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 	for _, mode := range []string{"plan", "init"} {
@@ -40,6 +42,7 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			ctx := context.Background()
 			captureID := seedConsumerSandboxCapture(t, f, ctx)
 			if mode == "init" {
+				damageConsumerProcurementProjection(t, f, ctx)
 				breakConsumerFundingReceiptLinks(t, f, ctx, f.fundingSourceCreditID, captureID)
 			}
 			fundingBeforeScan, err := f.env.FundingSnapshot(ctx)
@@ -75,6 +78,7 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			var budget *maintenancescan.MaintenanceResult
 			var fundingLinks *maintenancescan.FundingSourceLinksResult
 			var sandboxLinks *maintenancescan.SandboxCaptureReceiptLinksResult
+			var procurementBudget *maintenancescan.ProcurementBudgetMaintenanceResult
 			readLedger := func() {
 				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanLedger)
 				if e != nil {
@@ -115,15 +119,27 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 					t.Fatal("real maintenance sandbox capture/receipt scan failed")
 				}
 			}
+			readProcurementBudget := func() {
+				lease, e := permit.BeginScan(ctx, maintenancetrust.ScanProcurement)
+				if e != nil {
+					t.Fatal("real procurement budget lease failed")
+				}
+				procurementBudget, e = maintenancescan.VerifyProcurementBudgetMaintenance(lease)
+				if e != nil || procurementBudget == nil {
+					t.Fatal("real maintenance procurement budget scan failed", e)
+				}
+			}
 			if mode == "plan" {
 				readLedger()
 				readFundingLinks()
 				readSandboxLinks()
+				readProcurementBudget()
 				readBudget()
 			} else {
 				readBudget()
 				readFundingLinks()
 				readSandboxLinks()
+				readProcurementBudget()
 				readLedger()
 			}
 			check, err := ledger.Summary(permit)
@@ -150,22 +166,33 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 				(mode == "init" && (sandboxCheck.OrphanSandboxReceipts != 1 || sandboxCheck.CapturesMissingReceipts != 1)) {
 				t.Fatal("sandbox direct-link local facts were not retained")
 			}
-			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil {
+			procurementCheck, err := procurementBudget.Summary(permit)
+			wantProcurementBalanced := mode == "plan"
+			wantProcurementMismatch := uint64(0)
+			if mode == "init" {
+				wantProcurementMismatch = 1
+			}
+			if err != nil || procurementCheck.Scope != "procurement_budget_projection_v1" || procurementCheck.Balanced != wantProcurementBalanced ||
+				procurementCheck.Scanned.Accounts != 1 || procurementCheck.Mismatches.AccountHeldReservationMismatches != wantProcurementMismatch ||
+				procurementCheck.Mismatches.AccountHeldEventMismatches != wantProcurementMismatch {
+				t.Fatal("procurement budget local projection facts were not retained", err, procurementCheck)
+			}
+			if err := ledger.Verify(permit); err != nil || budget.Verify(permit) != nil || fundingLinks.Verify(permit) != nil || sandboxLinks.Verify(permit) != nil || procurementBudget.Verify(permit) != nil {
 				t.Fatal("all real consumers must share the original permit")
 			}
 			if _, err := permit.BeginScan(ctx, maintenancetrust.ScanFunding); err == nil {
 				t.Fatal("the same Permit accepted ScanFunding twice")
 			}
 			wrong := &maintenancetrust.Permit{}
-			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil || sandboxLinks.Verify(wrong) == nil {
+			if ledger.Verify(wrong) == nil || budget.Verify(wrong) == nil || fundingLinks.Verify(wrong) == nil || sandboxLinks.Verify(wrong) == nil || procurementBudget.Verify(wrong) == nil {
 				t.Fatal("consumer accepted an unrelated permit")
 			}
-			ledgerCopy, budgetCopy, fundingLinksCopy, sandboxLinksCopy := *ledger, *budget, *fundingLinks, *sandboxLinks
+			ledgerCopy, budgetCopy, fundingLinksCopy, sandboxLinksCopy, procurementBudgetCopy := *ledger, *budget, *fundingLinks, *sandboxLinks, *procurementBudget
 			if snapshot.Rollback(ctx) != nil {
 				t.Fatal("real shared snapshot rollback failed")
 			}
-			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || sandboxLinks.Verify(permit) == nil ||
-				ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil || sandboxLinksCopy.Verify(permit) == nil {
+			if ledger.Verify(permit) == nil || budget.Verify(permit) == nil || fundingLinks.Verify(permit) == nil || sandboxLinks.Verify(permit) == nil || procurementBudget.Verify(permit) == nil ||
+				ledgerCopy.Verify(permit) == nil || budgetCopy.Verify(permit) == nil || fundingLinksCopy.Verify(permit) == nil || sandboxLinksCopy.Verify(permit) == nil || procurementBudgetCopy.Verify(permit) == nil {
 				t.Fatal("rollback did not revoke every original consumer result")
 			}
 			if g.Close(ctx) != nil {
@@ -175,6 +202,10 @@ func TestMaintenanceConsumersPostgresFundedSnapshot(t *testing.T) {
 			fundingAfterScan, err := f.env.FundingSnapshot(ctx)
 			if err != nil || fundingAfterScan != fundingBeforeScan || f.env.VerifyLegacyFundingUnchanged(ctx) != nil {
 				t.Fatal("maintenance scans changed genuine funded data")
+			}
+			var procurementHeld, procurementSpent string
+			if err = f.admin.QueryRow(ctx, "SELECT held_amount::text,spent_amount::text FROM "+pgx.Identifier{f.env.Schemas["app"]}.Sanitize()+".procurement_accounts WHERE id=$1", f.procurementAccountID).Scan(&procurementHeld, &procurementSpent); err != nil || procurementHeld != "1" && mode == "init" || procurementHeld != "0" && mode == "plan" || procurementSpent != "0" {
+				t.Fatal("maintenance scan changed procurement budget projection", err, procurementHeld, procurementSpent)
 			}
 		})
 	}
@@ -385,6 +416,7 @@ type consumerFixture struct {
 	sharedBefore          string
 	tag                   string
 	fundingSourceCreditID string
+	procurementAccountID  string
 	gates                 []*maintenancetrust.Gate
 	pools                 []*pgxpool.Pool
 	backends              []consumerBackend
@@ -473,6 +505,7 @@ func newConsumerFixture(t *testing.T) *consumerFixture {
 		t.Fatal("consumer genuine payment funding changed before voucher source setup")
 	}
 	f.fundingSourceCreditID = seedConsumerFundingSources(t, f, ctx)
+	f.procurementAccountID = seedConsumerProcurementAccount(t, f, ctx)
 	f.loadPins(t, ctx)
 	owner, err := f.env.OpenPool(ctx, "app_owner")
 	if err != nil {
@@ -515,6 +548,41 @@ func newConsumerFixture(t *testing.T) *consumerFixture {
 	f.cfg.RuntimeParams = map[string]string{"application_name": f.tag, "search_path": pgx.Identifier{f.env.Schemas["app"]}.Sanitize() + ",pg_catalog,pg_temp"}
 	f.cfg.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 	return f
+}
+
+func seedConsumerProcurementAccount(t *testing.T, f *consumerFixture, ctx context.Context) string {
+	t.Helper()
+	app, err := f.env.OpenPool(ctx, "app")
+	if err != nil {
+		t.Fatal("consumer procurement app pool failed", err)
+	}
+	f.pools = append(f.pools, app)
+	command, err := procurement.New(app).CreateAccount(ctx, f.env.ActorIDs["admin"], procurement.CreateInput{
+		OperationID: uuid.NewString(), Label: "Maintenance QA account", Provider: "local-test", State: "active", LimitAmount: "1000",
+	})
+	if err != nil || command.Status != "applied" {
+		t.Fatal("consumer procurement account setup failed", err)
+	}
+	var after struct {
+		ID string `json:"id"`
+	}
+	if json.Unmarshal(command.After, &after) != nil || after.ID == "" {
+		t.Fatal("consumer procurement account identity missing")
+	}
+	return after.ID
+}
+
+func damageConsumerProcurementProjection(t *testing.T, f *consumerFixture, ctx context.Context) {
+	t.Helper()
+	if _, err := f.admin.Exec(ctx, "SET session_replication_role='replica'"); err != nil {
+		t.Fatal("consumer projection damage setup failed", err)
+	}
+	if _, err := f.admin.Exec(ctx, "UPDATE "+pgx.Identifier{f.env.Schemas["app"]}.Sanitize()+".procurement_accounts SET held_amount=1 WHERE id=$1", f.procurementAccountID); err != nil {
+		t.Fatal("consumer procurement projection damage failed", err)
+	}
+	if _, err := f.admin.Exec(ctx, "RESET session_replication_role"); err != nil {
+		t.Fatal("consumer projection damage cleanup failed", err)
+	}
 }
 
 func (f *consumerFixture) loadPins(t *testing.T, ctx context.Context) {

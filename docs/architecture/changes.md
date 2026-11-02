@@ -1710,3 +1710,42 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `docs/verification/sandbox-capture-links.md`
 
 </details>
+
+## 2026-11-02T02:49:14Z · 7f578ec37a22
+
+022-C0-T3增加采购预算投影维护reader；复核固定扫描SQL、独立核验、ReadLease权限、QA损坏场景、架构图和未验PG边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1253 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/runbooks/deployment.md`
+- added `docs/verification/procurement-budget-maintenance.md`
+- added `internal/billing/procurement_budget_facts.go`
+- added `internal/billing/procurement_budget_read.go`
+- added `internal/billing/procurement_budget_read_test.go`
+- added `internal/fundinglotverify/procurement_budget.go`
+- added `internal/fundinglotverify/procurement_budget_test.go`
+- added `internal/maintenancescan/procurement.go`
+- added `internal/maintenancescan/procurement_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-procurement-budget-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T02:50:52Z · 7e87fbcc8d2b
+
+补记采购预算reader专项race、vet、make check与Plan/Init真实PG跳过状态；同步核验记录至架构快照
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1253 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-budget-maintenance.md`
+
+</details>
