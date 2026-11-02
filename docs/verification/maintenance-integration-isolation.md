@@ -7,3 +7,5 @@
 原失败进程专项已重新通过，49.177秒退出0；原四父测试与五个计费崩溃阶段均保留。无权威core、资源guard、结果防伪造与脱敏、race生产/测试依赖门禁专项15.541秒退出0。精确日志身份与终态计数见[机器记录](maintenance-integration-isolation.json)。真实Plan/Init双reader与九个资源边界4顶层/15父子PASS，194.261秒，零skip。最终`make verify-mvp`退出0、933.969秒：前端286项，41个有测试包Go race、4个无测试包、vet及可执行文件构建通过；串行不证明跨包并发余量。固定专库后置只读观察见[审计记录](maintenance-integration-isolation-post-audit.json)，所观测fixture schema/role/DB/backend/advisory及父库其他backend均为0，不清理资源或推断不存在的前基线。精确命令、日志SHA和计数见[机器记录](maintenance-integration-isolation.json)；代码、最终集成文档和README发布后再以同一精确新commit检查CI，不沿用f572bbd失败身份。
 
 最终集成文档、README与架构清单同步后再次执行`make check`退出0，6.187秒，SHA `71e05f23d6b497182e2a6867e34ff7a3d8641973e7ffcc22e3b9e0909b7f349c`。
+
+提交 `824e4e54bac1fdd9597938a02125d40d8f253296` 已推送到 `codex/initial-mvp`，远端commit/tree与本地一致；GitHub API回读README字节与本地一致，SHA `041ad504ac1a32a35cb3babdb78de97392c8ff154f0d29c13c28f21670deef77`。该精确实现提交的[GitHub Actions](https://github.com/workhold/moni-aigate/actions/runs/41363556441)十个分组全部成功。机器记录保留commit、tree、README摘要和每组结论；本证据更新是后续文档提交，不覆盖实现提交的CI身份。

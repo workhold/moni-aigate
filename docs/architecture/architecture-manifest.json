@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-01T23:43:17Z",
-  "review_reason": "追加最终make check验证日志身份及集成文档，所有代码语义审阅已完成；清单保持覆盖1226个源/设计文件",
-  "snapshot_sha256": "ac1bfa065df55039842e4524d6e42bbc60afcb935c8313ea6810082894195a7d",
+  "reviewed_at": "2026-11-02T00:01:35Z",
+  "review_reason": "记录精确实现提交824e4e5远端tree、README字节一致及十组GitHub Actions全部成功；仅追加发布验证，不改变源码或能力架构",
+  "snapshot_sha256": "d6723e6e357de1186226666bc5f861b959ee0c2ef96534620fb5245979348bc4",
   "architecture_sha256": "cbdae2734c580f6a19de56f32b9aa7540160559448f10cf151626014bd3d8eb0",
-  "history_sha256": "6e02e9ac3cf059c4d4b4ebe40666c1d0392b336b02fe14e820df8357f6bd5ac3",
+  "history_sha256": "7accc0b203a0fd929ba203752d3f1886b2f34cb2aeeafaa399911d937d0d447c",
   "files": [
     {
       "path": ".dockerignore",
@@ -1009,11 +1009,11 @@
     },
     {
       "path": "docs/verification/maintenance-integration-isolation.json",
-      "sha256": "66dc26e9fa937e821e47be511b87aebffa93277db152401e421c7990cc1afd31"
+      "sha256": "d98e266412ea1330705df90e7915b13bcc8e3a7c3e7f2b60f9073679db9a074c"
     },
     {
       "path": "docs/verification/maintenance-integration-isolation.md",
-      "sha256": "1b4d43e8267f52b0738719c379549c38bb37116114c0b12ef29425411568bac1"
+      "sha256": "f953df6fb5732c4f17d2b66bafc95ee0ba5cf67aad0f4c7a1e7c3a8cb4539ff8"
     },
     {
       "path": "docs/verification/maintenance-read-lease-cleanup.json",

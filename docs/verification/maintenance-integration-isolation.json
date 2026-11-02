@@ -1507,5 +1507,33 @@
     "result": "Observed fixture schema/role/database/backend/advisory aggregate counts and other parent backends are zero; read-only observation on fixed moni_test only, no cleanup and no inferred before/after baseline."
   },
   "publication_boundary": "Publication identity is verified after committing; current file does not assert a new remote or CI outcome.",
-  "publication": "Post-publication commit/ref/tree and README byte identity will be verified after this evidence commit."
+  "publication": {
+    "repository": "https://github.com/workhold/moni-aigate",
+    "branch": "codex/initial-mvp",
+    "commit": "824e4e54bac1fdd9597938a02125d40d8f253296",
+    "tree": "5a4aec974eec8f119a874f92f8d700a0519131fd",
+    "readme_sha256": "041ad504ac1a32a35cb3babdb78de97392c8ff154f0d29c13c28f21670deef77",
+    "remote_readme_matches_local": true,
+    "ci_run": {
+      "id": 41363556441,
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41363556441",
+      "head_sha": "824e4e54bac1fdd9597938a02125d40d8f253296",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": {
+        "contracts (billing-2)": "success",
+        "contracts (server-0)": "success",
+        "contracts (billing-1)": "success",
+        "contracts (server-2)": "success",
+        "contracts (billing-3)": "success",
+        "contracts (server-3)": "success",
+        "contracts (server-1)": "success",
+        "contracts (identity)": "success",
+        "contracts (other)": "success",
+        "contracts (billing-0)": "success"
+      },
+      "all_ten_jobs_passed": true
+    },
+    "boundary": "CI validates exact implementation commit 824e4e54bac1fdd9597938a02125d40d8f253296. This evidence-only follow-up preserves that run identity."
+  }
 }
