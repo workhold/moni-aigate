@@ -56,7 +56,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | `POST /v1/embeddings` | 单条/批次输入，float / base64 输出 |
 | `POST /v1/rerank` | Jina 风格字符串文档重排 |
 | `POST /v1beta/models/{model}:generateContent` | Gemini 原生无状态纯文本 |
-| `POST /v1beta/models/{model}:streamGenerateContent` | Gemini 原生纯文本 SSE |
+| `POST /v1beta/models/{model}:streamGenerateContent?alt=sse` | Gemini 原生纯文本 SSE，必须带 `alt=sse` |
 
 协议与模型必须具有明确的能力、硬计量上界和可信最终用量。基础工具调用由客户端执行，网关不执行函数；Gemini 暂无工具或多模态支持。
 当前不承诺 Codex / Claude Code 全产品兼容，也不以接口路径相同推定所有供应商模型均可使用。
@@ -206,7 +206,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。受保护开账事务与独立只读结果观察已进入库级候选实现；接着完成非空 epoch 启动认证、正式迁移和全部资金路径接线，进度见[交付计划](docs/design/delivery-plan.md)。
+1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。受保护开账事务与独立只读结果观察已进入库级候选实现；显式资金图读取权限版本已通过限定专库验收；接着完成历史证明兼容、非空 epoch 启动认证、正式迁移和全部资金路径接线，进度见[交付计划](docs/design/delivery-plan.md)。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

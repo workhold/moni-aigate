@@ -147,3 +147,6 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 2026-11-03先冻结[O1合同](../../specs/022-self-service-payments/c0-epoch-observer-contract.md)，再并行实现私有观察生命周期、不授权限的快照 facts reader、实际84表原件投影和strict-v2绑定。新的 Gate 重新取得双锁；当前图完整且cleanup完成后才返回普通观察，不修改原Unknown、不重试开账。经营后不重算当前basis强等历史cutover摘要。实现与真实执行范围以[本片验证](../verification/epoch-observer.md)为准。
 
 下一依赖是R1：审全84表/列实际APP权限，明确 payment_query_conflicts 四列最小读取与cutover/current roots兼容，再实现 actual APP 非空epoch完整RuntimeProof、worker窄证明和projector catalog。R2另审正式迁移、维护CLI、普通/沙箱/off/Recovery启动及全部资金helper；之后继续C1/C2/C3、商品/订阅、媒体、生产部署/HA及性能，不缩减整体目标。
+
+
+2026-11-03 C0-R1-A：[显式读取profile合同](../../specs/022-self-service-payments/c0-runtime-read-profile-contract.md)先于实现冻结，新增WalletReadV2及84表776列（history另2列）受审读取清单。原API/旧root/operations/provision源SHA保持，新增四列仅SELECT，完整新root由静态base+delta固定，专库验收状态见[记录](../verification/runtime-read-profile.md)。当前已实现非空RuntimeProof的权限前置，并通过限定专库验收；最终make check与明确专库make verify-mvp也已通过（286前端、46 Go包race/vet/build），准确记录见同页。不替代R1-B历史/current根兼容、APP自有v1/文件认证及完整同RR组合；R2正式迁移/CLI/全资金接线和全部后续阶段继续。

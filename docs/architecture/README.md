@@ -83,6 +83,7 @@ flowchart TD
     CatalogRR[调用方持有的RR\n静态库接口，尚无main装配]
     LotCatalog[fundinglotcatalog\n全对象/权限与事务opaque证明]
     CatalogExpected[固定expected / PG16.15 profile\nordinary五变体 / 完整sandbox]
+    WalletReadProfile[显式WalletReadV2\n固定base加四列ACL delta / 新完整root\n无完整RuntimeProof或在线装配]
     MaintenanceGate[maintenancetrust\nGate / 私有Snapshot / Attest / Permit]
     FundingLotsPhase[maintenancetrust私有开账phase\n第八once / pre与basis / 自持draft\n固定writer / strict v2与实际post / 唯一提交]
     FundingLotsObserver[maintenancetrust.ObserveFundingLots\n新双锁 / RR只读 / strict原件与当前图\nRO终结及cleanup后返回普通结果]
@@ -213,6 +214,7 @@ flowchart TD
     DescriptorCLI --> DescriptorFiles
     CatalogRR --> LotCatalog
     CatalogExpected --> LotCatalog
+    WalletReadProfile -->|显式profile / 所选类别界与完整比较| LotCatalog
     LotCatalog -->|只读catalog / Installation发行时空集| PG
     MaintenanceCaller --> MaintenanceGate
     MaintenanceGate -->|双锁 / ONLY125 / 真实身份与前驱 / accounts锁及清理| PG
@@ -263,7 +265,7 @@ flowchart TD
 
 LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与ReadLedgerFacts](../../internal/billing/funding_ledger_facts.go)、人工/券来源固定reader、sandbox capture直接关联reader、采购预算与attempt reader及PB的[VerificationQuery/Rows/Row](../../internal/periodicbudget/verifier.go)提供无维护依赖的窄raw-facts接缝，复用各自唯一固定算法。LedgerFacts与source-link facts只描述局部结果；普通ledger入口的actual LOGIN、owner、history、RRRO与事务规则保持。独立maintenancescan单向依赖领域包与maintenancetrust→fundinglotcatalog，通过私有adapter消费真实ReadLease，执行Require→固定算法→Finish，才构造保存本次事实与ScanProof的私有结果。manual/voucher source-link reader完整读取credit_orders、voucher_redemptions、funding_receipts，只双向核对manual_credit与voucher_grant；sandbox_capture仍在该局部summary中计为未覆盖。新的ScanSandboxSources独立reader完整读取funding_receipts和payment_captures，仅检查直接receipt↔capture引用，不验证订单、identity/evidence/processing/review/effect、journal、ledger、outbox、audit或PSP真实性。ScanProcurement完整读取十九张固定关系表，同批原始行分别核预算投影、永久binding/attempt/request/凭据池/报价/上界、成本双审、command/binding/observation及命令审计、成本审计/outbox五类局部关系。audit只读一次并共享给后两个core；两者仅解释精确action/kind，保留全表反向查漏。evidence/metering、完整事件重放和周期预算交叉关系仍未覆盖，不证明采购全域或供应商真实账单。各reader相互独立，均不减少full-source coverage债务。纯关联算法不发行authority，伪造query至多得到不可信局部数据；没有外部provider、FromFacts或结果转proof的构造器。五个已连接维护reader仍无普通main、HTTP或生产维护CLI装配，局部结果不证明完整资金来源。
 
-`fundinglotcatalog`是另一个只读叶子模块：固定expected先作SHA/封闭解析，三个公开API在同一RR核完整schema、角色和ACL并发行同事务证明。ordinary真实无worker，sandbox完整三schema八角色；Installation只额外证明发行时十六表全空。T2维护授权通过原Snapshot内部owned installation消费其证明，当前仍没有普通main或资金调用边。详见[细化架构](funding-lot-catalog.md)。
+`fundinglotcatalog`是另一个只读叶子模块：固定expected先作SHA/封闭解析，原三个公开API固定LegacyV1，在同一RR核完整schema、角色和ACL并发行同事务证明。ordinary真实无worker，sandbox完整三schema八角色；Installation只额外证明发行时十六表全空。R1-A新增两项显式profile API与WalletReadV2，APP只增加完整资金图所缺四列SELECT，保持原5秒、所有对象与ACL核验及同事务寿命；新旧API不会隐式互换矩阵。T2维护授权仍使用原owned installation。当前没有普通main或资金调用边，CatalogProof不是完整RuntimeProof。详见[原细化架构](funding-lot-catalog.md)与[读取版本细图](runtime-read-profile.md)。
 
 `maintenancetrust`在T0双锁基础上提供T1私有单次Snapshot及T2真实维护授权。T3新增真实ReadLease：单次扫描全程持原busy，入口/出口重核原authority，固定至多30秒并受原Snapshot和caller更早期限约束；封闭参数/Scan目标、完整EOF/Err/Close和CPU取消共同控制读取生命周期。当前依赖方向是maintenancescan→billing/periodicbudget/procurement与maintenancescan→maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不得反向依赖维护集成或catalog，避免无关eager初始化。五个已连接reader分别消费ScanLedger、ScanPeriodicBudget、ScanFunding、ScanSandboxSources与ScanProcurement，每个Permit对每kind仅允许尝试一次；它们均为局部扫描，不可拼装成全来源proof。T1历史真实PG/race115.412秒、124终态PASS保持原范围；T2/T3历史与各独立reader验收分别记录，尚无普通main维护API、完整全来源或资金接线，详见[细化架构](maintenance-gate.md)。
 

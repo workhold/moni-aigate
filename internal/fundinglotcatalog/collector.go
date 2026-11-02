@@ -377,11 +377,18 @@ func observeCatalogTx(ctx context.Context, tx pgx.Tx, pins Pins) (*catalogSnapsh
 // Public issuance compares normalized documents to the closed expected without serializing
 // observed metadata. Canonical bytes come only from the matched immutable root.
 func observeCatalogDocumentsTx(ctx context.Context, tx pgx.Tx, pins Pins) (*catalogSnapshot, error) {
+	reviewed, _, e := loadExpected(pins)
+	if e != nil {
+		return nil, ErrCatalog
+	}
+	return observeCatalogProfileDocumentsTx(ctx, tx, pins, reviewed)
+}
+
+func observeCatalogProfileDocumentsTx(ctx context.Context, tx pgx.Tx, pins Pins, reviewed *descriptorSet) (*catalogSnapshot, error) {
 	if ctx == nil || ctx.Err() != nil || !validPins(pins) || tx == nil {
 		return nil, ErrCatalog
 	}
-	reviewed, _, e := loadExpected(pins)
-	if e != nil {
+	if reviewed == nil {
 		return nil, ErrCatalog
 	}
 	profiles, roles := catalogProfiles(pins)
@@ -477,7 +484,7 @@ func collectTx(ctx context.Context, tx pgx.Tx, pins Pins, expected *descriptorSe
 	if expected == nil {
 		return nil, ErrCatalog
 	}
-	s, e := observeCatalogDocumentsTx(ctx, tx, pins)
+	s, e := observeCatalogProfileDocumentsTx(ctx, tx, pins, expected)
 	if e != nil {
 		return nil, ErrCatalog
 	}

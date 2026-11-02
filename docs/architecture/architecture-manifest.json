@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T20:02:05Z",
-  "review_reason": "仅补录最后一次make check的成功结果与原始日志摘要；25图、全部已验源码及架构结构未变，复核GitHub交付文件与生产边界",
-  "snapshot_sha256": "e12ac2f31713d775d7658e49e8080cad5776ab0ff58286a8b585479e1e54cf0f",
-  "architecture_sha256": "13ace8eef134604fd4663f7b8e1fa49aaa9b27b39b132c058c801824dafe1937",
-  "history_sha256": "caac5a6d2be882bb2f3e85cccbfab927adc58dd0d9af92dcae2d974b603c784c",
+  "reviewed_at": "2026-11-02T21:26:54Z",
+  "review_reason": "仅补录最终make check再次成功6.062秒及其日志SHA；已验源码/静态材料、26图与模块/权限结构不变，复核最终README、SDD和交付文件，所有未验生产及R1-B/R2边界保持",
+  "snapshot_sha256": "3e801abb4df38c1cfffc02204ab58baaf18036426e05c63c6f6a70b2110b9b2d",
+  "architecture_sha256": "f4576670e65df276dc4ee54cdbdbf448a1c4bd777c6691f740835dd0122d8f0d",
+  "history_sha256": "bf5058fac63c1150d4ee53627008b7f31c427c17f0c500fe20e57a9b03c08f54",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "6c3f0cb361909d811a0e7c03bb6e6a554e8b0f9b38b3f70fb427067ccf5331c9"
+      "sha256": "4fc4cc906e22a8252c9a5c0755b3ce754282b3ecee4398892ed8c0c7d51e831f"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -85,11 +85,15 @@
     },
     {
       "path": "docs/architecture/funding-lot-catalog.md",
-      "sha256": "15db0a27dc7c1a89d64d527a98b75d54c2bd9668a1f8c0042244bc032d2d0805"
+      "sha256": "fd56975808e51a67d97d453489287189e98b7332818637cc5b0d28e1fa8f8749"
     },
     {
       "path": "docs/architecture/maintenance-gate.md",
       "sha256": "fca4752bef685ffb1c8665a4a20208dbdc00701baf28904915561a24d0243bbd"
+    },
+    {
+      "path": "docs/architecture/runtime-read-profile.md",
+      "sha256": "6b065781b99f14f01a0da681854fb98fcf87e236f3bc7f91700752ae00f83262"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -109,15 +113,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "34b532cf0ba9c013d97791cb7be581b49f58655ef22bf924471465ce19067b9a"
+      "sha256": "082ef370386e493bb89b71ac013e26215546f1fe716127522799f35aeb908ac4"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "9d86dabdad3f1e800eb843be32dfe48533dc50e3ca58b54357a1afa164867074"
+      "sha256": "138ea04cfa6de6bbc0417a9b32efe22806ab937c9b75c8993ebddc47468e2ac6"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "b57374e421eb729ef667145367942ce3dc2dba8092c74ef125901fef70179af9"
+      "sha256": "9aa99c87597da5a89057d96d48e2474c0134d18f88e9517e824c9d67d73a7db5"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -218,6 +222,10 @@
     {
       "path": "docs/verification/architecture-maintenance-snapshot.json",
       "sha256": "ffdf3669dff56dbd420c37f7cb74590cbbebd92e3b0b601bd867130d75d95254"
+    },
+    {
+      "path": "docs/verification/architecture-runtime-read-profile.json",
+      "sha256": "2075bf8dc8f84b68ad491a585958bcca020224914b25396afa018e5b67a5ad7b"
     },
     {
       "path": "docs/verification/architecture-source-graphs.json",
@@ -358,6 +366,14 @@
     {
       "path": "docs/verification/assets/architecture-protected-init-detail.png",
       "sha256": "e584b9bef1ec433a513b31c38c0af2ed933c43c0c9a0d6b05bea8ec57ff7b56d"
+    },
+    {
+      "path": "docs/verification/assets/architecture-runtime-read-profile-application.png",
+      "sha256": "8fa012ef1319b194f05a7cd7cb6db0f39cf5b2b4a29941f6dbaeb34f2e983d47"
+    },
+    {
+      "path": "docs/verification/assets/architecture-runtime-read-profile-detail.png",
+      "sha256": "b31c8823b734fe4e5a18d47e971b74a2a9c4c5b328836a73ba3b43c8a749ad01"
     },
     {
       "path": "docs/verification/assets/architecture-source-wallet-application.png",
@@ -1253,7 +1269,7 @@
     },
     {
       "path": "docs/verification/mvp-status.md",
-      "sha256": "7efe15749eb513f9c401e03c23e4e725fcd566c2e01ce36efb523b5565506828"
+      "sha256": "82a403654c030fea0f203d7f9dcd0129b3a4122f33c77e6dbb31ec182a7e303c"
     },
     {
       "path": "docs/verification/native-protocols.md",
@@ -1410,6 +1426,18 @@
     {
       "path": "docs/verification/retrieval-protocols.md",
       "sha256": "d1d9823f28a017d4419e26616fafa43c75485bc27abb8745be2ae309164979f0"
+    },
+    {
+      "path": "docs/verification/runtime-read-profile-roots.json",
+      "sha256": "54f409b88f1c19d1320a15151b4d349502325558af58f69e6ab51723141e9e4b"
+    },
+    {
+      "path": "docs/verification/runtime-read-profile.json",
+      "sha256": "58546fe32e5e659d9091b3ff7e1a949da3deb29a1ad781d749d91bffcae49abc"
+    },
+    {
+      "path": "docs/verification/runtime-read-profile.md",
+      "sha256": "4a159b7970b6c35676f1e9f29292691ca77d5e53fba9a5f6222ea07f65ec67c1"
     },
     {
       "path": "docs/verification/sandbox-capture-links.md",
@@ -1989,7 +2017,7 @@
     },
     {
       "path": "internal/fundinglotcatalog/collector.go",
-      "sha256": "34f8a4b3a9662eecc05318fe91ec126c698fd6c425751ef81bb8b8871ca30514"
+      "sha256": "e268c2c1c55ffe48a143061480ec973496ba20cb6a3713a8330193380ba9059a"
     },
     {
       "path": "internal/fundinglotcatalog/collector_bounds.go",
@@ -2116,8 +2144,12 @@
       "sha256": "8e06412c574950a8fe1bfaa25fe5516d14bc6866e9a07501bfb3b984cc4f70f0"
     },
     {
+      "path": "internal/fundinglotcatalog/profile.go",
+      "sha256": "8f349ba2406e599ee0f52967a6a558d25de7879712c955ef0e8ba508bb3b1624"
+    },
+    {
       "path": "internal/fundinglotcatalog/proof.go",
-      "sha256": "c88bd7e1d06e85d9df55ae4db95f9d2531f3911fb2256b26c81652ad76defa4b"
+      "sha256": "2948c82431158bebbb17bb65592c343af7f0cc771f2f1a6fb5584613a8878e77"
     },
     {
       "path": "internal/fundinglotcatalog/proof_integration_test.go",
@@ -2129,11 +2161,23 @@
     },
     {
       "path": "internal/fundinglotcatalog/types.go",
-      "sha256": "f39db7853fca1e9962da2d2c00c813f3ee4753609ecc959cb7f389627faf81ea"
+      "sha256": "e0b172debaf6d7af2cd217c08f32959c0d5521b3e34f5d8795b74313d67851b2"
     },
     {
       "path": "internal/fundinglotcatalog/variants_fixture_test.go",
       "sha256": "3c92e8fcb6808afa5df82f3d0d7f12a0f3b82fd81f30cb6b5afcd32d50d9ee31"
+    },
+    {
+      "path": "internal/fundinglotcatalog/wallet_expected.go",
+      "sha256": "bcfd96d2728a4544089f8dc82b80549108ff2a8a1b607607fd3cb12e941f823c"
+    },
+    {
+      "path": "internal/fundinglotcatalog/wallet_profile_integration_test.go",
+      "sha256": "30ffe72538dfb26ac51baf7b12435ae03da2157e3b26124eee402f73759027ca"
+    },
+    {
+      "path": "internal/fundinglotcatalog/wallet_profile_test.go",
+      "sha256": "103cb76d0ffd550943bb7279b8bf12ffabb75b8c116a82e89b387e3c8d4a1284"
     },
     {
       "path": "internal/fundinglotinit/build.go",
@@ -2318,6 +2362,10 @@
     {
       "path": "internal/fundinglotscan/wallet_reader_test.go",
       "sha256": "2bd2685119e4195f493de53f7ceb7d12c8bd8434a80bff95dde377aac9c96c63"
+    },
+    {
+      "path": "internal/fundinglotscan/wallet_readset_test.go",
+      "sha256": "77462da32cf886b555f583978ddef506008e28fb1cca29c937855db535e7954a"
     },
     {
       "path": "internal/fundinglotverify/customer_key_graph.go",
@@ -4564,6 +4612,10 @@
       "sha256": "ca84c5211f0f425939a778066ef62aede0300846ee73a4258cd928c364c2b6eb"
     },
     {
+      "path": "scripts/check-wallet-profile-roots.py",
+      "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
+    },
+    {
       "path": "scripts/export-native-sdk-fixtures/main.go",
       "sha256": "8b63c72c6ee0aa99f679e5801badaee49bb1c83648f102702fbd220fd762f54e"
     },
@@ -5200,6 +5252,14 @@
       "sha256": "acce6837eed6f4487c5fbebec5a3507fb491dd86c7753c534cb6ba77a1c73888"
     },
     {
+      "path": "specs/022-self-service-payments/c0-runtime-read-permissions.sql",
+      "sha256": "97abd87df7e5d0e7a03adae4158470e76ab94d58c9e9d8b92ae792aeb84867c2"
+    },
+    {
+      "path": "specs/022-self-service-payments/c0-runtime-read-profile-contract.md",
+      "sha256": "f728d395d00dfd73e07ccc41109c9a9cb7ee295dc940c94177d31e0521f7b499"
+    },
+    {
       "path": "specs/022-self-service-payments/c0-sandbox-capture-link-contract.md",
       "sha256": "789360542544a26255fb824e9fdad5746056a5d57a3baf83d02c490099cf540c"
     },
@@ -5244,6 +5304,10 @@
       "sha256": "e0620ff7317b61ddc9a4ce915c6ec2ec8126eb99356c9c84374cbd5416bc682c"
     },
     {
+      "path": "specs/022-self-service-payments/c0-wallet-readset.json",
+      "sha256": "b4f66f3d15b9d5ecf4f670392a2029282dc2ab965b5d2e4412d7171f446f9a46"
+    },
+    {
       "path": "specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md",
       "sha256": "76fef6209ac47224173ea93ebbe04c678f99f76790e11abed789d65973fd0f0b"
     },
@@ -5269,7 +5333,7 @@
     },
     {
       "path": "specs/022-self-service-payments/plan.md",
-      "sha256": "4e2bb70ff6df89bd898080d6796b0062cdc968e5881e835ab621c1df79bfdb3d"
+      "sha256": "c2454a804b5e6819d46a94418735cbf1ac181f00d559e8685e578ff24a68c64a"
     },
     {
       "path": "specs/022-self-service-payments/spec.md",

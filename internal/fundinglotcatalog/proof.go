@@ -18,6 +18,7 @@ type proofIdentity struct {
 	expected    string
 	schema      string
 	roles       string
+	profile     Profile
 }
 
 func hashBytes(b []byte) string {
@@ -60,6 +61,14 @@ func VerifyRuntimeTx(ctx context.Context, tx pgx.Tx, pins Pins, role RuntimeRole
 }
 
 func verifyCatalogTx(ctx context.Context, tx pgx.Tx, pins Pins, runtime RuntimeRole) (*CatalogProof, error) {
+	return verifyCatalogProfileTx(ctx, tx, pins, runtime, LegacyV1)
+}
+
+func verifyCatalogProfileTx(ctx context.Context, tx pgx.Tx, pins Pins, runtime RuntimeRole, profile Profile) (*CatalogProof, error) {
+	expected, root, err := loadExpectedProfile(pins, profile)
+	if err != nil || expected == nil || expected.FormatVersion == 0 || len(root) != 64 {
+		return nil, ErrCatalog
+	}
 	id, err := identifyTx(ctx, tx, pins)
 	if err != nil {
 		return nil, ErrCatalog
@@ -78,11 +87,7 @@ func verifyCatalogTx(ctx context.Context, tx pgx.Tx, pins Pins, runtime RuntimeR
 			return nil, ErrCatalog
 		}
 	}
-	version, root, err := expectedMetadata(pins)
-	if err != nil || version == 0 || len(root) != 64 {
-		return nil, ErrCatalog
-	}
-	snapshot, err := readCatalogTx(ctx, tx, pins)
+	snapshot, err := collectTx(ctx, tx, pins, expected)
 	if err != nil || snapshot == nil || len(snapshot.schemaCanonical) == 0 || len(snapshot.rolesCanonical) == 0 {
 		return nil, ErrCatalog
 	}
@@ -91,7 +96,7 @@ func verifyCatalogTx(ctx context.Context, tx pgx.Tx, pins Pins, runtime RuntimeR
 		return nil, ErrCatalog
 	}
 	return &CatalogProof{identity: &proofIdentity{
-		transaction: id, pins: copyPins(pins), version: version, expected: root,
+		transaction: id, pins: copyPins(pins), version: expected.FormatVersion, expected: root, profile: profile,
 		schema: hashBytes(snapshot.schemaCanonical), roles: hashBytes(snapshot.rolesCanonical),
 	}}, nil
 }

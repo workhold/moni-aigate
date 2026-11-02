@@ -510,3 +510,7 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 初始化提交回复未知后，按[O1冻结合同](../../specs/022-self-service-payments/c0-epoch-observer-contract.md)使用新的专用连接和双 session 锁，再开启 RR READ ONLY。它验证完整 current catalog/history、真实停服身份、实际 predecessor/v2 原件以及当前 84 表资金图；只读终结和独立 cleanup 完成才返回目标存在、未初始化或另一有效 epoch。坏记录或不完整图一律错误零结果，不自动初始化，不修改旧 Snapshot 的 Unknown。当前历史 basis 只与保存原件绑定，经营后合法数据变化不要求重现切换摘要。
 
 新增入口在维护库内，不进入 ordinary main/HTTP/worker，不发行 Permit 或 RuntimeProof；旧空安装门禁不放宽。实现与当前验证范围见[统一架构](../architecture/README.md#独立停服-epoch-观察)及[本片验证](../verification/epoch-observer.md)。后续须先设计 APP 的全 84 表最小列权限和 historical/current roots 兼容，才能完成 runtime、正式迁移与所有资金路径。
+
+## C0-R1-A：显式资金图读取权限版本
+
+按[冻结合同](../../specs/022-self-service-payments/c0-runtime-read-profile-contract.md)新增库级WalletReadV2 catalog profile。原三API、provision、历史proof与legacy root保持；只有显式profile API认证APP新增四列SELECT后的完整静态矩阵，collector类别界与逐值比较使用同一选定descriptor。当前84表776列及history另外两列以[已审清单](../../specs/022-self-service-payments/c0-wallet-readset.json)固定，并已在actual APP上通过完整读取面验收；不向worker或peer内容扩权。详细结构见[统一架构细图](../architecture/runtime-read-profile.md)。本片CatalogProof仍不是完整RuntimeProof；历史/当前根兼容、APP v1文件认证与同RR组合继续R1-B，正式迁移/CLI和全在线资金接线继续R2。

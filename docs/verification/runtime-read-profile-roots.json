@@ -1,0 +1,40 @@
+{
+  "ordinary": {
+    "base_sha256": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+    "expected_sha256": "c9466842df4a55490f53b7c0ba9694ee61b5fd5e011912cd2083f2ec191cdf20",
+    "canonical_bytes": 44863025,
+    "variants": {
+      "named-isolated": {
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "57ed93278687cbac78081e4e29189d65f5218b0c02ce32e635826db7a1a34413"
+      },
+      "named-minimal-login": {
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "ee33f5673c7a7f93d2e950d58d0713112d67453778149f5fa9a7b3ef3266815f"
+      },
+      "named-image-login": {
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "bb99b7c11d267d7e3f0e5be62b36a5eda65638afefc3eab3936b8c60442da168"
+      },
+      "public-minimal-login": {
+        "schema": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+        "roles": "c3d7f7f4f3631153911c8867ae2d4d35eb5e4e45543836541ddbb2bf885aa3f1"
+      },
+      "public-image-login": {
+        "schema": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+        "roles": "d140513eecfbf603d78ae65a5d527d39b4054f50666c9e4229315dc3f12890d0"
+      }
+    }
+  },
+  "sandbox": {
+    "base_sha256": "a3a7f855a5ac58ee583dce071c02707499c2a9e3d4bd2ec8b7b1b60228d55c4f",
+    "expected_sha256": "42a63f7178748ea5dd4ce6964cbe9cd77d0131ca8dad795fbd61a4735b206706",
+    "canonical_bytes": 13536723,
+    "variants": {
+      "full-sandbox": {
+        "schema": "ed7698eb58d76621f18b7e6aae0000f262549a4b565d9a04e946c1436bff0b02",
+        "roles": "28e771bd6f6b96817910252d21d17f09f9d4753f99841562a788f27d90622f4e"
+      }
+    }
+  }
+}

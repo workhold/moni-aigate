@@ -19,6 +19,14 @@ const (
 	Projector
 )
 
+// Profile selects an immutable reviewed catalog, never an ACL repair policy.
+type Profile uint8
+
+const (
+	LegacyV1 Profile = iota + 1
+	WalletReadV2
+)
+
 type RolePin struct {
 	Name string
 	OID  uint32

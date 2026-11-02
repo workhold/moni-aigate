@@ -2602,3 +2602,69 @@ C0-O1新增独立停服epoch只读观察、同次84表原件投影和私有事�
 - modified `docs/verification/epoch-observer.json`
 
 </details>
+
+## 2026-11-02T21:07:05Z · 1a76b04e2e8f
+
+C0-R1-A冻结显式WalletReadV2与84表776列清单，旧root/API及生产接线保持；复核四列只读ACL与sandbox依赖镜像、同RR完整比较和新旧拒绝边界，同步模块图/权限细图/HLD/LLD/README与限定专库证据，26图已渲染视检，最终整仓检查待执行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1507 个源文件；本次 26 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/funding-lot-catalog.md`
+- added `docs/architecture/runtime-read-profile.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/architecture-runtime-read-profile.json`
+- added `docs/verification/assets/architecture-runtime-read-profile-application.png`
+- added `docs/verification/assets/architecture-runtime-read-profile-detail.png`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/runtime-read-profile-roots.json`
+- added `docs/verification/runtime-read-profile.json`
+- added `docs/verification/runtime-read-profile.md`
+- modified `internal/fundinglotcatalog/collector.go`
+- added `internal/fundinglotcatalog/profile.go`
+- modified `internal/fundinglotcatalog/proof.go`
+- modified `internal/fundinglotcatalog/types.go`
+- added `internal/fundinglotcatalog/wallet_expected.go`
+- added `internal/fundinglotcatalog/wallet_profile_integration_test.go`
+- added `internal/fundinglotcatalog/wallet_profile_test.go`
+- added `internal/fundinglotscan/wallet_readset_test.go`
+- added `scripts/check-wallet-profile-roots.py`
+- added `specs/022-self-service-payments/c0-runtime-read-permissions.sql`
+- added `specs/022-self-service-payments/c0-runtime-read-profile-contract.md`
+- added `specs/022-self-service-payments/c0-wallet-readset.json`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T21:26:08Z · dfb66e6692df
+
+汇合R1-A全部审查与真实PG记录，复核137份源码身份、26图与550链接及README使用/部署边界；整仓286前端与46Go包race/vet/build通过，修正文档Gemini SSE必需查询参数；当前结构仍为显式catalog读取权限候选，R1-B/R2和生产状态不扩展
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1507 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/architecture-runtime-read-profile.json`
+- modified `docs/verification/runtime-read-profile.json`
+- modified `docs/verification/runtime-read-profile.md`
+
+</details>
+
+## 2026-11-02T21:26:54Z · 3e801abb4df3
+
+仅补录最终make check再次成功6.062秒及其日志SHA；已验源码/静态材料、26图与模块/权限结构不变，复核最终README、SDD和交付文件，所有未验生产及R1-B/R2边界保持
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1507 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/runtime-read-profile.json`
+- modified `docs/verification/runtime-read-profile.md`
+
+</details>

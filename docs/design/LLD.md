@@ -909,3 +909,9 @@ Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx
 私有 snapshot facts reader 只返回描述数据，原 authority wrapper 保留原 Installation/nonce/5秒子预算和退出验证；observer 不能构造旧证明。实际 84 表经原共享预算/EOF/八算法后，[ProjectEpochProof](../../internal/fundinglotscan/epoch_proof_projection.go)只从该次私有原行深复制双单例，不增加查询；[严格绑定](../../internal/maintenancetrust/funding_lots_observed_proof.go)核全部 v2/pins/manifest/current roots/实际原v1。它不使用初始化专属 postCounts 或经营后 109 basis 强等，历史计数与合计由独立 lot 重放核 immutable legacy/opening 集合。
 
 精确[合同](../../specs/022-self-service-payments/c0-epoch-observer-contract.md)、[架构](../architecture/README.md#独立停服-epoch-观察)和[验证记录](../verification/epoch-observer.md)共同说明本库级范围；没有正式迁移/ACL、生产CLI、APP RuntimeProof或在线资金writer变化。
+
+## C0-R1-A：版本化descriptor与最小列权限
+
+新增`Profile{LegacyV1,WalletReadV2}`与`VerifySnapshotProfileTx/VerifyRuntimeProfileTx`，新proof保存显式profile并沿原tx/conn/PgConn/PID/top-xid/LOGIN绑定。入口仍累计5秒、Snapshot可RR RO/RW、Runtime只选定actual LOGIN的RR RO；不发行新Installation、不开关caller事务。原API固定LegacyV1，旧operations源SHA与拒绝条件保留。
+
+[静态派生器](../../internal/fundinglotcatalog/wallet_expected.go)只从已SHA认证的原根复制四column ACL、四APP effective SELECT与四条列级pg_shdepend ACL dependency（sandbox在两peer文档另保存同一依赖的镜像），完整新envelope再次固定SHA认证；其他静态节点只读共享、变更数组和节点owned，schema canonical不变。完整collector的raw/normalized bounds、compare和proof发行共用同一descriptor，旧metadata候选路径仍用旧profile。[独立Python复算](../../scripts/check-wallet-profile-roots.py)与Go逐variant摘要相同；[访问清单](../../specs/022-self-service-payments/c0-wallet-readset.json)按物理列去重并固定源SHA，scanner侧双向检查、PG侧逐列与实际SELECT/ReadWallet核可读。candidate SQL只给owner测试安装，不是已应用migration。验证与未验边界见[记录](../verification/runtime-read-profile.md)，历史cutover→current根映射与非空RuntimeProof尚未实现。

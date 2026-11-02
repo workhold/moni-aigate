@@ -146,3 +146,11 @@ go run ./scripts/check-architecture
 - [x] 实现私有snapshotObserve与RO终结/cleanup、快照facts读取复用、84表无Query原件深复制及严格持久绑定；不扩旧空安装权威。
 - [x] 集成真实提交丢回复、回滚、经营后资金图、genuine sandbox、故障与资源边界，完成根独立审阅及架构同步/验收/交付；精确状态见[验证](../../docs/verification/epoch-observer.md)。
 - [ ] R1最小APP全源列权限及historical/current roots兼容、非空epoch runtime；R2正式迁移/CLI/所有资金路径；C1/C2/C3与后续目标继续保留。
+
+
+### C0-R1-A：APP完整读取权限前置
+
+- [x] 冻结[版本化读取profile](c0-runtime-read-profile-contract.md)、四列最小增量及84表776列清单（history另2列）。
+- [x] 实现显式WalletReadV2 catalog API、固定派生根、完整矩阵及所选profile类别界；原入口和旧权限检查不放宽。
+- [x] 完成两轮六变体actual APP/worker/projector及全部读取面的专库验收、旧profile回归与架构同步；实际范围以[验证记录](../../docs/verification/runtime-read-profile.md)为准。
+- [ ] R1-B历史cutover/current roots兼容、APP v1/文件认证与非空RuntimeProof；R2正式迁移、维护CLI、进程门禁及全部在线资金路径仍后续。
