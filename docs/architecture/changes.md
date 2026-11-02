@@ -2668,3 +2668,76 @@ C0-R1-A冻结显式WalletReadV2与84表776列清单，旧root/API及生产接线
 - modified `docs/verification/runtime-read-profile.md`
 
 </details>
+
+## 2026-11-02T22:49:28Z · cd3d3785b266
+
+C0-R1-B独立APP核验库：严格V1与私有APP材料、同84表投影、六条历史兼容、完整catalog/history和原事务证明；同步模块/流程/权限/寿命图及限定专库证据，保留活动PB来源门禁与未在线装配边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1542 个源文件；本次 49 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- added `docs/architecture/runtime-composer.md`
+- modified `docs/architecture/runtime-read-profile.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- added `docs/verification/assets/architecture-runtime-composer-application.png`
+- added `docs/verification/assets/architecture-runtime-composer-detail.png`
+- added `docs/verification/runtime-composer.json`
+- added `docs/verification/runtime-composer.md`
+- modified `internal/fundinglotcatalog/wallet_profile_integration_test.go`
+- added `internal/fundinglotproof/v1_public.go`
+- added `internal/fundinglotproof/v1_public_test.go`
+- added `internal/fundinglotruntime/application_codec.go`
+- added `internal/fundinglotruntime/application_codec_test.go`
+- added `internal/fundinglotruntime/application_files.go`
+- added `internal/fundinglotruntime/application_state.go`
+- added `internal/fundinglotruntime/application_state_test.go`
+- added `internal/fundinglotruntime/expected/compatibility-v1.json`
+- added `internal/fundinglotruntime/runtime_bindings.go`
+- added `internal/fundinglotruntime/runtime_bindings_test.go`
+- added `internal/fundinglotruntime/runtime_compose.go`
+- added `internal/fundinglotruntime/runtime_history.go`
+- added `internal/fundinglotruntime/runtime_history_test.go`
+- added `internal/fundinglotruntime/runtime_materials.go`
+- added `internal/fundinglotruntime/runtime_materials_test.go`
+- added `internal/fundinglotruntime/runtime_rows.go`
+- added `internal/fundinglotruntime/runtime_rows_test.go`
+- added `internal/fundinglotruntime/runtime_types.go`
+- added `internal/fundinglotruntime/runtime_window.go`
+- added `internal/fundinglotscan/application_payment_proof_projection.go`
+- added `internal/fundinglotscan/application_payment_proof_projection_test.go`
+- modified `internal/fundinglotscan/wallet_readset_test.go`
+- modified `internal/maintenancetrust/authority_profiles_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_runtime_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_runtime_procurement_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_runtime_profiles_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_runtime_resource_integration_test.go`
+- modified `internal/maintenancetrust/sandbox_export_test.go`
+- modified `internal/maintenancetrust/sandbox_external_test.go`
+- added `internal/maintenancetrust/v1_codec_compat_test.go`
+- added `internal/payments/v1_codec_compat_test.go`
+- added `scripts/check-runtime-compatibility.py`
+- modified `specs/022-self-service-payments/c0-proof-v2-codec-contract.md`
+- added `specs/022-self-service-payments/c0-runtime-composer-contract.md`
+- added `specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md`
+- modified `specs/022-self-service-payments/c0-wallet-readset.json`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T23:08:17Z · cefc8e9d5034
+
+R1-B最终整仓验收记录：286前端测试、47 Go包race、vet与嵌入构建通过，关键73份源码未变；补充验证与README链接复核，架构/运行图和PB未解门禁语义保持
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1542 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/runtime-composer.json`
+- modified `docs/verification/runtime-composer.md`
+
+</details>

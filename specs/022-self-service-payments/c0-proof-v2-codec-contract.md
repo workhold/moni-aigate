@@ -1,5 +1,7 @@
 # 022-C0：严格 proof v2 纯 codec（根冻结）
 
+2026-11-03补充：后续[R1-B运行组合合同](c0-runtime-composer-contract.md#3-已授权的最小-v1-纯格式-api)明确授权最小V1纯格式API，替代本页“V1只保持私有helper”的出口限制。V2 wire、旧payments/maintenance逻辑和来源pins保持；V1仍不认证文件、秘密、数据库或启动，具体接口及旧成功/拒绝边界以新合同为准。
+
 2026-11-02。承接[维护候选](c0-maintenance-contract.md#3-proof-v2-与旧b3的精确结合)与[运行组合候选](c0-schema-check-contract.md#71-完整-runtimeproof-的独立组合层)。本合同冻结完整格式叶子，不发行数据库、支付真实性、维护、初始化、epoch、RuntimeProof 或启动权限；原 v1 wire/loader/拒绝条件不改，旧 migration 不改。
 
 ## 接口与所有权

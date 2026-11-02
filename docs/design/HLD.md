@@ -513,4 +513,8 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 
 ## C0-R1-A：显式资金图读取权限版本
 
-按[冻结合同](../../specs/022-self-service-payments/c0-runtime-read-profile-contract.md)新增库级WalletReadV2 catalog profile。原三API、provision、历史proof与legacy root保持；只有显式profile API认证APP新增四列SELECT后的完整静态矩阵，collector类别界与逐值比较使用同一选定descriptor。当前84表776列及history另外两列以[已审清单](../../specs/022-self-service-payments/c0-wallet-readset.json)固定，并已在actual APP上通过完整读取面验收；不向worker或peer内容扩权。详细结构见[统一架构细图](../architecture/runtime-read-profile.md)。本片CatalogProof仍不是完整RuntimeProof；历史/当前根兼容、APP v1文件认证与同RR组合继续R1-B，正式迁移/CLI和全在线资金接线继续R2。
+后续[R1-B完整APP运行核验](../../specs/022-self-service-payments/c0-runtime-composer-contract.md)已先冻结设计，新增独立组合库：实际APP在同caller-owned RR RO中核当前catalog/history、历史v2与APP旧v1持有、完整84表八算法后才发行原事务proof。R1-B库已实现，完整经营认证仍受PB证据门禁约束，不开放在线资金或ready；历史证明兼容由六条精确静态映射承担，不改旧原件，不强等经营后basis。
+
+按[冻结合同](../../specs/022-self-service-payments/c0-runtime-read-profile-contract.md)新增库级WalletReadV2 catalog profile。原三API、provision、历史proof与legacy root保持；只有显式profile API认证APP新增四列SELECT后的完整静态矩阵，collector类别界与逐值比较使用同一选定descriptor。当前84表776列及history另外两列以[已审清单](../../specs/022-self-service-payments/c0-wallet-readset.json)固定，并已在actual APP上通过完整读取面验收；不向worker或peer内容扩权。详细结构见[统一架构细图](../architecture/runtime-read-profile.md)。本片CatalogProof仍不是完整RuntimeProof；历史/当前根兼容、APP v1文件认证与同RR组合现由R1-B库实现并限定验收，完整PB认证仍有门禁；正式迁移/CLI和全在线资金接线继续R2。
+
+2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)仍使真实held/window历史为Indeterminate；完整R1-B验收与R2线上装配不能越过此门禁。后续先设计可证明的command前缀及window创建cut，不放宽现有Unproven或重签旧原件。

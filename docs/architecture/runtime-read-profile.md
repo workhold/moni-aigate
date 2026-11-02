@@ -29,3 +29,5 @@ flowchart TD
 [离线ACL候选](../../specs/022-self-service-payments/c0-runtime-read-permissions.sql)只在本轮随机测试安装由owner执行；旧operations checker及其源SHA不变，旧checker继续拒绝该增量。APP/worker仍不能读取mock/receiver内容；worker的八张C0表窄权与projector边界保持。普通main、HTTP、账务与worker没有新增依赖或配置出口。
 
 R1-B继续冻结历史cutover roots到当前profile的明确兼容关系，认证APP自有v1/严格文件并完成同RR全源组合。不能重签历史proof或要求经营后109表basis等于切换时摘要。R2再引入正式迁移、维护CLI、在线资金路径和进程ready/guard，原路退款、拒付、商品、媒体、部署/HA与性能按[交付计划](../design/delivery-plan.md)继续。
+
+2026-11-03后续：[R1-B完整APP运行组合合同](../../specs/022-self-service-payments/c0-runtime-composer-contract.md)已先冻结，独立组合库已实现，限定实际验证与完整PB证据缺口见[记录](../verification/runtime-composer.md)。该实现将同caller-owned RR RO的当前catalog/history、固定历史兼容、APP旧v1私有文件与84表八算法组合为原事务proof；失败查询保留pending并取消，由caller fresh cleanup确认结束/必要关闭。当前不把限定验证视为完整经营验收通过，普通main/在线资金/生产范围仍沿上述边界。

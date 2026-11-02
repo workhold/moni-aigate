@@ -123,6 +123,7 @@ func TestWalletReadsetSourcePinsAndHistory(t *testing.T) {
 	// Freeze the pin set as well as each digest: dropping a source pin must not
 	// turn a changed SQL builder, registry, DTO or history reader into an omission.
 	sources := []string{
+		"internal/fundinglotscan/application_payment_proof_projection.go",
 		"internal/fundinglotscan/binding.go",
 		"internal/fundinglotscan/checks.go",
 		"internal/fundinglotscan/epoch_proof_projection.go",

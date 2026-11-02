@@ -154,3 +154,10 @@ go run ./scripts/check-architecture
 - [x] 实现显式WalletReadV2 catalog API、固定派生根、完整矩阵及所选profile类别界；原入口和旧权限检查不放宽。
 - [x] 完成两轮六变体actual APP/worker/projector及全部读取面的专库验收、旧profile回归与架构同步；实际范围以[验证记录](../../docs/verification/runtime-read-profile.md)为准。
 - [ ] R1-B历史cutover/current roots兼容、APP v1/文件认证与非空RuntimeProof；R2正式迁移、维护CLI、进程门禁及全部在线资金路径仍后续。
+
+### C0-R1-B：完整APP资金运行核验
+
+- [x] 先冻结[独立组合合同](c0-runtime-composer-contract.md)：双模式API、纯V1接缝、同raw投影、六条历史兼容、文件/SQL/预算/失败清理及完整非空验收。
+- [x] 并行实施V1 codec与旧路径差分、APP本地文件loader、同84表原件投影；根集成静态兼容、受界history、caller-owned adapter/composer。
+- [ ] 完成完整经营验收：actual APP普通/genuine sandbox、真实采购成本及其他非空图已通过本轮限定专项；非空PB因[历史前缀证据缺口](c0-runtime-pb-evidence-gap.md)仍不可完整认证，先设计再实现；故障/资源/寿命、依赖/旧路径与最终交付分别记录。
+- [ ] R2完整V2发行/持有/加载、正式迁移/维护CLI、进程门禁和全部在线资金路径，及其后全部阶段继续。

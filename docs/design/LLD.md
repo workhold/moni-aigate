@@ -912,6 +912,10 @@ Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx
 
 ## C0-R1-A：版本化descriptor与最小列权限
 
+后续[R1-B组合合同](../../specs/022-self-service-payments/c0-runtime-composer-contract.md)先冻结V1纯格式API、APP strict文件loader、同raw两原件投影及独立fundinglotruntime。固定30秒发行/5秒窄核验，history用LIMIT23布尔guard先核22行/35B名称/64B校验和，再同RR核完整清单；adapter提前失败latch/cancel/pending，由caller fresh cleanup确认结束/必要关闭，不把pgx.Close或defer Rollback等同清理成功。当前按限定实际验证与PB证据缺口分别记录，不增加生产接线。
+
 新增`Profile{LegacyV1,WalletReadV2}`与`VerifySnapshotProfileTx/VerifyRuntimeProfileTx`，新proof保存显式profile并沿原tx/conn/PgConn/PID/top-xid/LOGIN绑定。入口仍累计5秒、Snapshot可RR RO/RW、Runtime只选定actual LOGIN的RR RO；不发行新Installation、不开关caller事务。原API固定LegacyV1，旧operations源SHA与拒绝条件保留。
 
-[静态派生器](../../internal/fundinglotcatalog/wallet_expected.go)只从已SHA认证的原根复制四column ACL、四APP effective SELECT与四条列级pg_shdepend ACL dependency（sandbox在两peer文档另保存同一依赖的镜像），完整新envelope再次固定SHA认证；其他静态节点只读共享、变更数组和节点owned，schema canonical不变。完整collector的raw/normalized bounds、compare和proof发行共用同一descriptor，旧metadata候选路径仍用旧profile。[独立Python复算](../../scripts/check-wallet-profile-roots.py)与Go逐variant摘要相同；[访问清单](../../specs/022-self-service-payments/c0-wallet-readset.json)按物理列去重并固定源SHA，scanner侧双向检查、PG侧逐列与实际SELECT/ReadWallet核可读。candidate SQL只给owner测试安装，不是已应用migration。验证与未验边界见[记录](../verification/runtime-read-profile.md)，历史cutover→current根映射与非空RuntimeProof尚未实现。
+[静态派生器](../../internal/fundinglotcatalog/wallet_expected.go)只从已SHA认证的原根复制四column ACL、四APP effective SELECT与四条列级pg_shdepend ACL dependency（sandbox在两peer文档另保存同一依赖的镜像），完整新envelope再次固定SHA认证；其他静态节点只读共享、变更数组和节点owned，schema canonical不变。完整collector的raw/normalized bounds、compare和proof发行共用同一descriptor，旧metadata候选路径仍用旧profile。[独立Python复算](../../scripts/check-wallet-profile-roots.py)与Go逐variant摘要相同；[访问清单](../../specs/022-self-service-payments/c0-wallet-readset.json)按物理列去重并固定源SHA，scanner侧双向检查、PG侧逐列与实际SELECT/ReadWallet核可读。candidate SQL只给owner测试安装，不是已应用migration。验证与未验边界见[记录](../verification/runtime-read-profile.md)，历史cutover→current根映射与独立RuntimeProof已由R1-B实现，限定验收与PB门禁见下段；生产接线仍在后续。
+
+2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)仍使真实held/window历史为Indeterminate；完整R1-B验收与R2线上装配不能越过此门禁。后续先设计可证明的command前缀及window创建cut，不放宽现有Unproven或重签旧原件。

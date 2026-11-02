@@ -44,6 +44,14 @@ type authorityProfileBackend struct {
 
 func newAuthorityPublicProfile(t *testing.T, image bool) *authorityPublicProfile {
 	t.Helper()
+	return newAuthorityPublicProfilePrepared(t, image, nil)
+}
+
+// prepare creates original application history before the C0 candidate adds
+// its epoch-dependent tenant trigger. A nil callback preserves the original
+// empty-installation public profile fixture.
+func newAuthorityPublicProfilePrepared(t *testing.T, image bool, prepare func(*pgxpool.Pool)) *authorityPublicProfile {
+	t.Helper()
 	cfg := gateTestConfig(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -120,6 +128,21 @@ func newAuthorityPublicProfile(t *testing.T, image bool) *authorityPublicProfile
 	acl := snapshotFixedSource(t, root, "specs/022-self-service-payments/c0-ordinary-permissions.sql", "864a3e5b19a9e7d21d98b6557abf1d4903ca6ced438f1ec0259e786582b0d74e")
 	if migrations.Apply(ctx, pool) != nil || operations.ProvisionFor(ctx, pool, "public", f.app, f.proj) != nil {
 		t.Fatal("authority public original migrations and provision")
+	}
+	if prepare != nil {
+		// Original billing APIs bind JSON []byte through pgx's typed protocol.
+		// Its pool is owned by this fixture and closes before fixed C0 DDL;
+		// maintenance/DDL and subsequent APP verification stay simple protocol.
+		businessConfig := pc.Copy()
+		businessConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheStatement
+		businessPool, err := pgxpool.NewWithConfig(ctx, businessConfig)
+		if err != nil {
+			t.Fatal("authority public original business pool")
+		}
+		func() {
+			defer businessPool.Close()
+			prepare(businessPool)
+		}()
 	}
 	if _, err = pool.Exec(ctx, string(ddl)); err != nil {
 		t.Fatal("authority public fixed C0 schema")

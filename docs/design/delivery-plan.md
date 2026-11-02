@@ -150,3 +150,7 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 
 2026-11-03 C0-R1-A：[显式读取profile合同](../../specs/022-self-service-payments/c0-runtime-read-profile-contract.md)先于实现冻结，新增WalletReadV2及84表776列（history另2列）受审读取清单。原API/旧root/operations/provision源SHA保持，新增四列仅SELECT，完整新root由静态base+delta固定，专库验收状态见[记录](../verification/runtime-read-profile.md)。当前已实现非空RuntimeProof的权限前置，并通过限定专库验收；最终make check与明确专库make verify-mvp也已通过（286前端、46 Go包race/vet/build），准确记录见同页。不替代R1-B历史/current根兼容、APP自有v1/文件认证及完整同RR组合；R2正式迁移/CLI/全资金接线和全部后续阶段继续。
+
+2026-11-03后续先冻结[R1-B完整APP运行合同](../../specs/022-self-service-payments/c0-runtime-composer-contract.md)：根串行组合当前完整catalog/history、六条静态历史映射与同RR原件/八域图；V1纯格式、原件投影和APP文件loader可独立并行。caller-owned失败清理、30秒发行与5秒窄检查先于实现明确，组合库已实现，限定真实APP/genuine sandbox结果与整仓/架构/推送分别见[记录](../verification/runtime-composer.md)；完整PB历史认证继续下述证据门禁。R2完整V2交付/正式迁移/维护CLI/全部在线资金及后续阶段保持原范围。
+
+2026-11-03运行验收发现：[非空PB历史来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)是原算法有意保留的 `OperationSnapshotPrefixUnproven`，不因APP组合库落地而消失。空control配置不视为活动预算认证；需先冻结command前缀/window创建cut及必要append-only证据，保留旧历史缺证，再验完整经营图。此项仍是R1-B完整验收前置，不能据本轮限定PASS推进在线资金ready。

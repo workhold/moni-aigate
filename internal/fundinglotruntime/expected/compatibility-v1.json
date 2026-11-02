@@ -1,0 +1,188 @@
+{
+  "format_version": 1,
+  "postgres_major": 16,
+  "descriptor_version": 1,
+  "basis_version": 1,
+  "basis_descriptor": "54f701af2f993fd9dd6fb6db21f2cc323704ab6d2e962610413d044fdaa0c4e5",
+  "historical_profile": "LegacyV1",
+  "current_profile": "WalletReadV2",
+  "manifest_digest": "ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de",
+  "manifest_bytes": 2459,
+  "max_name_bytes": 35,
+  "manifest": [
+    {
+      "name": "001_core.sql",
+      "sha256": "98aacd5c4cebc6beb2860bd22a711b7ac50a2801e53c95ea2017f6c77b1dbd1e"
+    },
+    {
+      "name": "002_billing.sql",
+      "sha256": "4faa722a467a995fb3387cd4fda1a374c37783bbb14f1cc1e2dcfa39e837aa19"
+    },
+    {
+      "name": "003_operations.sql",
+      "sha256": "47412edde4284c9951eeb6733080ae32d391a73325d76282a5d085146cddd7fe"
+    },
+    {
+      "name": "004_recovery.sql",
+      "sha256": "5ae9fdd39777399abbc33b92bb8e2327be6b163e7e28e8958dbdd6584be4ea37"
+    },
+    {
+      "name": "005_binding_isolation.sql",
+      "sha256": "6ca3d629e4907a721d938fb5b0e29c8ede0a32ba7be867b9905ebf5d5415f91f"
+    },
+    {
+      "name": "006_route_decisions.sql",
+      "sha256": "de17ab57589af39f2bbb69afdbf714752bff90db52bde4d816f1aa610fd73ec4"
+    },
+    {
+      "name": "007_model_discovery.sql",
+      "sha256": "b450c2d063afe915f3a3202dc3b476d52083add0c4451c160e342b5c4bcd1a13"
+    },
+    {
+      "name": "008_credential_pools.sql",
+      "sha256": "6e68fd53aa9dc56d050c5876505a84a87925cfe4609a2db7b6a8ba4bed4a9069"
+    },
+    {
+      "name": "009_channel_batch_operations.sql",
+      "sha256": "688e107e9d6d7fee09d2b0ab0eee38c473e04d76739bc106ab41fc4137e95638"
+    },
+    {
+      "name": "010_key_access_policy.sql",
+      "sha256": "b56dbf0419be3727eb0c7c743efee6959124fe01dea2e762902c08386a48eb91"
+    },
+    {
+      "name": "011_key_runtime_limits.sql",
+      "sha256": "27874fc09dda03b2eafb3196dcb1a2cef7c1d6ad8f88f48332e128d1ef62749d"
+    },
+    {
+      "name": "012_key_configuration.sql",
+      "sha256": "21a131347b5f44f03f9146314d6c67415f700711a60e482a84e02ab53c824f60"
+    },
+    {
+      "name": "013_cost_aware_routing.sql",
+      "sha256": "b0a6034169dbc787cf57ab5a8c2310a608a242023b3d9fc84f4aa8323f824edf"
+    },
+    {
+      "name": "014_procurement_accounts.sql",
+      "sha256": "0bb5b3b68be34943d58a90bc0b6e84911e1e82ab638a4ce19dc65e6a8b4e9901"
+    },
+    {
+      "name": "015_public_catalog.sql",
+      "sha256": "fb0d104a10a33e27d5f3df6991cedbf5aed30ddb31759129c03bfc0cef7c225b"
+    },
+    {
+      "name": "016_self_service_identity.sql",
+      "sha256": "d0d5aae8707625971bd4526cb0d214e3132f3e3edafd68f889faa855692df379"
+    },
+    {
+      "name": "017_funding_vouchers.sql",
+      "sha256": "5dc682fb01313da617baa3f9444b7e98acc4a02bc3d5e76b2a45390bf7fdff75"
+    },
+    {
+      "name": "018_tenant_pricing.sql",
+      "sha256": "17bbaf03fa66da424d3671af6ea958e203df5ca2858a190cd1dad841b216f6ae"
+    },
+    {
+      "name": "019_operations_alerts.sql",
+      "sha256": "3b402de0d06309eab1fae4e5799f6dcd95819974fffb16e0e1dc088238034ed8"
+    },
+    {
+      "name": "020_periodic_budgets.sql",
+      "sha256": "bf5ca4007356fe6b560a7ee263d11b7e7cf4b49bffac11f7a8efb7cb28d52c99"
+    },
+    {
+      "name": "021_payment_sandbox.sql",
+      "sha256": "757721a8559ce6710972759aaa1eb4bbd1a4af6d0b1a058d45f69c121643323d"
+    },
+    {
+      "name": "022_payment_runtime_attestation.sql",
+      "sha256": "d4e3413404d7ff8d55af0b41505738288b60ba5bc2bbe8a4e353d71c946114c5"
+    }
+  ],
+  "mappings": [
+    {
+      "mode": "ordinary",
+      "variant": "named-isolated",
+      "historical": {
+        "expected": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "b032e7b1626df0cb1fc3160619d808fd382c966ccb66258a61cc3fb1e29b3609"
+      },
+      "current": {
+        "expected": "c9466842df4a55490f53b7c0ba9694ee61b5fd5e011912cd2083f2ec191cdf20",
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "57ed93278687cbac78081e4e29189d65f5218b0c02ce32e635826db7a1a34413"
+      }
+    },
+    {
+      "mode": "ordinary",
+      "variant": "named-minimal-login",
+      "historical": {
+        "expected": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "d7d632a6e77082c79a5dce0e558fe46e9d37c02c4c63702371f4dd84fbd41b62"
+      },
+      "current": {
+        "expected": "c9466842df4a55490f53b7c0ba9694ee61b5fd5e011912cd2083f2ec191cdf20",
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "ee33f5673c7a7f93d2e950d58d0713112d67453778149f5fa9a7b3ef3266815f"
+      }
+    },
+    {
+      "mode": "ordinary",
+      "variant": "named-image-login",
+      "historical": {
+        "expected": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "b1a1c15e35149789b1cba3ecb58197704b0e6c1a4c296d26efc0fbd33ee58f5f"
+      },
+      "current": {
+        "expected": "c9466842df4a55490f53b7c0ba9694ee61b5fd5e011912cd2083f2ec191cdf20",
+        "schema": "089382152edefa4195ecb0f247a46c56bb4b41aa325d30b74fc1ce92a8b01e24",
+        "roles": "bb99b7c11d267d7e3f0e5be62b36a5eda65638afefc3eab3936b8c60442da168"
+      }
+    },
+    {
+      "mode": "ordinary",
+      "variant": "public-minimal-login",
+      "historical": {
+        "expected": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+        "schema": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+        "roles": "4c8037ece6c9a07569c922b31088188e30f593021413bad656ef36e356a2b644"
+      },
+      "current": {
+        "expected": "c9466842df4a55490f53b7c0ba9694ee61b5fd5e011912cd2083f2ec191cdf20",
+        "schema": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+        "roles": "c3d7f7f4f3631153911c8867ae2d4d35eb5e4e45543836541ddbb2bf885aa3f1"
+      }
+    },
+    {
+      "mode": "ordinary",
+      "variant": "public-image-login",
+      "historical": {
+        "expected": "a25e8a070e0808854ea2c12fa6b006a72879555ccc9e45a151d4287d78feeff2",
+        "schema": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+        "roles": "864d06014ceb1a5bc28bafcbf81b216dc0476abc2b2bf61fb380f7d2952173b3"
+      },
+      "current": {
+        "expected": "c9466842df4a55490f53b7c0ba9694ee61b5fd5e011912cd2083f2ec191cdf20",
+        "schema": "3b694f847d07a7ddcdcfcac0f64459a65ce55f65bc938bc8700cad690e7ba926",
+        "roles": "d140513eecfbf603d78ae65a5d527d39b4054f50666c9e4229315dc3f12890d0"
+      }
+    },
+    {
+      "mode": "sandbox",
+      "variant": "full-sandbox",
+      "historical": {
+        "expected": "a3a7f855a5ac58ee583dce071c02707499c2a9e3d4bd2ec8b7b1b60228d55c4f",
+        "schema": "ed7698eb58d76621f18b7e6aae0000f262549a4b565d9a04e946c1436bff0b02",
+        "roles": "186b82132de40cf01a46b04dd7aace17248a73b53d52f5228f07d376fb11dfbf"
+      },
+      "current": {
+        "expected": "42a63f7178748ea5dd4ce6964cbe9cd77d0131ca8dad795fbd61a4735b206706",
+        "schema": "ed7698eb58d76621f18b7e6aae0000f262549a4b565d9a04e946c1436bff0b02",
+        "roles": "28e771bd6f6b96817910252d21d17f09f9d4753f99841562a788f27d90622f4e"
+      }
+    }
+  ]
+}

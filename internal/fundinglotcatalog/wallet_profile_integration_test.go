@@ -18,7 +18,7 @@ import (
 )
 
 const walletProfilePermissionsSHA = "97abd87df7e5d0e7a03adae4158470e76ab94d58c9e9d8b92ae792aeb84867c2"
-const walletProfileReadsetSHA = "b4f66f3d15b9d5ecf4f670392a2029282dc2ab965b5d2e4412d7171f446f9a46"
+const walletProfileReadsetSHA = "b40f22ecebab659e6ebef74778c0464c733018f0228c3e5c797ccc601375106c"
 
 // These tests use the original, source-pinned offline catalog fixtures. They do
 // not provision a genuine payment installation or issue a full RuntimeProof.

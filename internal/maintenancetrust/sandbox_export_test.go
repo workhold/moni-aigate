@@ -15,6 +15,7 @@ import (
 type SandboxQAEnvironmentForTest struct {
 	Roles                        map[string]string
 	Schemas                      map[string]string
+	ApplicationManifestPath      string
 	OpenPool                     func(context.Context, string) (*pgxpool.Pool, error)
 	Close                        func(context.Context) error
 	VerifyLegacyFundingUnchanged func(context.Context) error

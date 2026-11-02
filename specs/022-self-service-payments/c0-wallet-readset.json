@@ -1211,6 +1211,7 @@
     "columns_with_history": 778
   },
   "source_sha256": {
+    "internal/fundinglotscan/application_payment_proof_projection.go": "7885abfaf99825802b5358db2a6944d0c7a852f9ba13cb1370b8428cc136976c",
     "internal/fundinglotscan/binding.go": "f5e93a7dd5d6c3d7443817d2e8ea63139191004a0263445cc03ac3d3bbb03c7e",
     "internal/fundinglotscan/checks.go": "8f388b6b1a41373bccdb9a6416e7b87a8db1f07f31e9c3612cfd396d114574ab",
     "internal/fundinglotscan/epoch_proof_projection.go": "d9b7b18e99fd4860b9131a83d4011416b58bae9a55a69c4ee56b5a48717e9d7e",

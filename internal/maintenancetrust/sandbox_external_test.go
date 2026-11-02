@@ -16,7 +16,8 @@ func init() {
 		}
 		return &maintenancetrust.SandboxQAEnvironmentForTest{
 			Roles: maps.Clone(env.Roles), Schemas: maps.Clone(env.Schemas),
-			OpenPool: env.OpenPool, Close: env.Close,
+			ApplicationManifestPath: env.ApplicationManifestPath,
+			OpenPool:                env.OpenPool, Close: env.Close,
 			VerifyLegacyFundingUnchanged: env.VerifyLegacyFundingUnchanged,
 		}, nil
 	})

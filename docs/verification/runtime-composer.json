@@ -1,0 +1,1405 @@
+{
+  "date": "2026-11-03",
+  "base_commit": "1844c447d5b7d5ff0f0ac7ef2e6d685c3f435dc6",
+  "scope": "C0-R1-B independent actual-APP runtime composition library; no production migrations, online financial writers or main/worker/projector/ready wiring",
+  "qualification": "limited_local_component_and_whole_repository_checks_passed; complete R1-B operating qualification remains open because active PB evidence gate",
+  "production_wiring": false,
+  "complete_r1b_operating_qualification": false,
+  "full_operating_periodic_budget_qualification": false,
+  "remaining_design_gate": "specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md",
+  "environment": {
+    "database": "127.0.0.1:55439/moni_test",
+    "preparation_login": "moni_test",
+    "server_version": "16.15 (Homebrew)",
+    "encoding": "UTF8",
+    "locale": "C/C",
+    "timezone": "Asia/Shanghai",
+    "other_postgresql_profiles_certified": false,
+    "runtime_login": "actual APP LOGIN; no owner/SET ROLE/maintenance Permit substitute",
+    "runtime_transaction": "caller-owned REPEATABLE READ READ ONLY"
+  },
+  "pure": {
+    "command": "env -u C0_MAINTENANCE_DATABASE_URL -u TEST_DATABASE_URL go test -race -count=1 -json ./internal/fundinglotruntime ./internal/fundinglotscan ./internal/fundinglotproof",
+    "exit_code": 0,
+    "local_log": ".local/r1b-pure-final.json",
+    "log_sha256": "557ef5231874889043d19375c6deba48c85844f438c94be5f337788d0a1ff287",
+    "log_bytes": 1479913,
+    "packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotproof",
+        "action": "pass",
+        "elapsed_seconds": 2.532
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+        "action": "pass",
+        "elapsed_seconds": 7.19
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotruntime",
+        "action": "pass",
+        "elapsed_seconds": 22.355
+      }
+    ],
+    "top_level": {
+      "pass": 111,
+      "skip": 3
+    },
+    "all_parent_child_terminals": {
+      "pass": 1381,
+      "skip": 4
+    },
+    "top_level_results": [
+      {
+        "test": "TestProjectApplicationPaymentProofOriginalAndOwned",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestProjectApplicationPaymentProofOrdinaryAndSingletons",
+        "action": "pass",
+        "elapsed_seconds": 0.16
+      },
+      {
+        "test": "TestIndependentCanonicalGoldens",
+        "action": "pass",
+        "elapsed_seconds": 0.04
+      },
+      {
+        "test": "TestOrdinaryCatalogCompatibleNamesAndClaims",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestRejectInvalidTypedValues",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestNullableUnionEveryCombination",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestManifestClosedArrayAndBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestOwnedImmutableAndRedacted",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestZeroAndJSONCannotConstruct",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestConcurrentImmutableReaders",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestStrictRawRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestSandboxEveryPinMismatch",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestV1OriginalCanonicalAndSemanticRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestPredecessorDigestAndBase64Rejections",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestJSONNodeAndDepthBudget",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestProductionOnlyStandardLibraryAndPrivateCanonical",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestV1KeyCountBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestNoFixtureSecrets",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestV1PublicIndependentGolden",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestV1PublicPreservesHistoricalSuccessBoundary",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestV1PublicRejectsInvalidTypedTextBeforeRepair",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestV1PublicRejectsRawAndNoncanonicalBytes",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestV1PublicOwnedImmutableAndRedacted",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestV1PublicConcurrentOwnedReads",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestV1PublicRetainsRootZeroDepth",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "FuzzDecodeV2",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "FuzzDecodeV1",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestProjectApplicationPaymentProofQualificationsAndPhysicalUnion",
+        "action": "pass",
+        "elapsed_seconds": 0.61
+      },
+      {
+        "test": "TestProjectApplicationPaymentProofCumulativeBudgetAndOldFacts",
+        "action": "pass",
+        "elapsed_seconds": 0.05
+      },
+      {
+        "test": "TestProjectApplicationPaymentProofTimeAndRequiredOriginals",
+        "action": "pass",
+        "elapsed_seconds": 0.33
+      },
+      {
+        "test": "TestProjectApplicationPaymentProofContextAndConcurrentReaders",
+        "action": "pass",
+        "elapsed_seconds": 0.06
+      },
+      {
+        "test": "TestProjectEpochProofOriginalAndOwned",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestProjectEpochProofNullableAndNativeCopyCodec",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestProjectEpochProofQualificationsAndCompletion",
+        "action": "pass",
+        "elapsed_seconds": 0.32
+      },
+      {
+        "test": "TestProjectEpochProofRawBudgetAndStructure",
+        "action": "pass",
+        "elapsed_seconds": 0.3
+      },
+      {
+        "test": "TestProjectEpochProofFreshViewAndContext",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestProjectEpochProofCancellationAlwaysZero",
+        "action": "pass",
+        "elapsed_seconds": 0.04
+      },
+      {
+        "test": "TestProjectPeriodicPreservesNativeTimesAndSourceValues",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestPeriodicBindingsTypedKeysAndNativeColumns",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestProjectPeriodicRequiresEOFAndReturnsZeroOnError",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestProcurementBindingsMatchFixedDTOContracts",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestProjectProcurementPreservesRawFieldsAndNullableValues",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestProjectProcurementNativeTimeQualificationAcrossAllFields",
+        "action": "pass",
+        "elapsed_seconds": 0.04
+      },
+      {
+        "test": "TestProjectProcurementErrorsReturnNoPartialRows",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestSandboxProjectionStaticContract",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestSandboxProjectionPreservesEveryField",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestSandboxProjectionNullableOriginals",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestSandboxProjectionNativeQualification",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestSandboxProjectionFailureReturnsZero",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestWalletBindingsFrozenPhysicalSets",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestProjectWalletEmbeddedPathsAndOriginalValues",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestProjectWalletNativeNullAndTimeBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestProjectWalletRequiredNullQualificationAndEOF",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestPostgresCompleteSourceReader",
+        "action": "skip",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestReadCompleteOrdinaryAndSandboxModes",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestReadCompletePhysicalPagination",
+        "action": "pass",
+        "elapsed_seconds": 0.07
+      },
+      {
+        "test": "TestReadCompleteTupleAndFalseSingletonKeys",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestReadCompleteNativeMismatchPreservesEOFAndOtherAlgorithms",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestReadCompleteResourceBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0.5
+      },
+      {
+        "test": "TestReadCompleteByteaNativeNullEmptyAndOwnedCopy",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestReadCompleteFailuresReturnZeroFacts",
+        "action": "pass",
+        "elapsed_seconds": 0.1
+      },
+      {
+        "test": "TestProjectLegacySeedOriginalReadAndNoQuery",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestProjectLegacySeedNineGroupsAndOwnedValues",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestProjectLegacySeedOriginalContextIsNotReused",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestProjectLegacySeedConcurrentCopies",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestProjectLegacySeedEveryChildCountFromNonemptyRead",
+        "action": "pass",
+        "elapsed_seconds": 0.59
+      },
+      {
+        "test": "TestProjectLegacySeedPreservesNativeEnvelopesAndNullPointers",
+        "action": "pass",
+        "elapsed_seconds": 0.05
+      },
+      {
+        "test": "TestProjectLegacySeedRejectsQualifications",
+        "action": "pass",
+        "elapsed_seconds": 0.31
+      },
+      {
+        "test": "TestProjectLegacySeedPrivateStructureFailsClosed",
+        "action": "pass",
+        "elapsed_seconds": 0.1
+      },
+      {
+        "test": "TestProjectLegacySeedInvalidRawTextAndIndependentRejectedMap",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestProjectLegacySeedCancellationAlwaysZero",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestProjectLegacySeedRawResourceBudgets",
+        "action": "pass",
+        "elapsed_seconds": 0.21
+      },
+      {
+        "test": "TestPostgresSourceWalletReaderNonemptyC0",
+        "action": "skip",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestReadWalletIndependentReplayAndSharedPhysicalRows",
+        "action": "pass",
+        "elapsed_seconds": 0.06
+      },
+      {
+        "test": "TestReadWalletEmptyEpochAndOldReadScope",
+        "action": "pass",
+        "elapsed_seconds": 0.04
+      },
+      {
+        "test": "TestReadWalletC0PaginationAndSingletons",
+        "action": "pass",
+        "elapsed_seconds": 0.17
+      },
+      {
+        "test": "TestReadWalletNativeQualificationDoesNotSkipOtherCores",
+        "action": "pass",
+        "elapsed_seconds": 0.08
+      },
+      {
+        "test": "TestReadWalletProofLimitsAndSharedBudget",
+        "action": "pass",
+        "elapsed_seconds": 0.57
+      },
+      {
+        "test": "TestReadWalletOwnedByteaAndRedaction",
+        "action": "pass",
+        "elapsed_seconds": 0.05
+      },
+      {
+        "test": "TestReadWalletFailuresAreEntirelyZero",
+        "action": "pass",
+        "elapsed_seconds": 0.14
+      },
+      {
+        "test": "TestWalletReadsetMatchesReviewedACLContract",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestWalletReadsetSourcePinsAndHistory",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestPostgresLegacySeedProjection",
+        "action": "skip",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestApplicationStrictManifestEveryField",
+        "action": "pass",
+        "elapsed_seconds": 0.32
+      },
+      {
+        "test": "TestApplicationStrictManifestNumberTextAndDepth",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestApplicationLoaderValidSnapshots",
+        "action": "pass",
+        "elapsed_seconds": 0.09
+      },
+      {
+        "test": "TestApplicationLoaderPreservesHistoricalFormat",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestApplicationLoaderMaterialAndBindingRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.09
+      },
+      {
+        "test": "TestApplicationLoaderFileBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0.04
+      },
+      {
+        "test": "TestApplicationLoaderManifestSizeBoundary",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestApplicationLoaderBudgetAndContexts",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestApplicationStateRedactionOwnershipAndReadOnlyCopies",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestApplicationLoaderClosesFileDescriptors",
+        "action": "pass",
+        "elapsed_seconds": 0.16
+      },
+      {
+        "test": "TestRuntimeBindingsSixHistoricalMappings",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestRuntimeBindingsEveryAuthenticatedEpochColumn",
+        "action": "pass",
+        "elapsed_seconds": 0.15
+      },
+      {
+        "test": "TestRuntimeBindingsEveryApplicationOriginalColumn",
+        "action": "pass",
+        "elapsed_seconds": 0.16
+      },
+      {
+        "test": "TestRuntimeBindingsTimestampAndModeBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0.05
+      },
+      {
+        "test": "TestRuntimeHistoryGuardAndOriginalHelper",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestRuntimeHistoryRejectsIncompleteOrCorruptHistory",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestRuntimeHistoryAbsoluteDeadlineAtDriverBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestRuntimeHistoryPrivateQueryRejectsPendingAndArbitrarySQL",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestRuntimeMaterialExactBytesManifestAndSixMappings",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestRuntimeMaterialSHAFirstRejectsEveryAlteredArtifact",
+        "action": "pass",
+        "elapsed_seconds": 0.04
+      },
+      {
+        "test": "TestRuntimeCompatibilitySixUniqueFullTuples",
+        "action": "pass",
+        "elapsed_seconds": 0.02
+      },
+      {
+        "test": "TestRuntimeCompatibilityRejectsKnownRootSplices",
+        "action": "pass",
+        "elapsed_seconds": 0.18
+      },
+      {
+        "test": "TestRuntimeCompatibilityRejectsUnknownAndPartialBindings",
+        "action": "pass",
+        "elapsed_seconds": 0.27
+      },
+      {
+        "test": "TestRuntimeCompatibilityRejectsCurrentProfileAndTupleChanges",
+        "action": "pass",
+        "elapsed_seconds": 0.14
+      },
+      {
+        "test": "TestRuntimeCompatibilityDoesNotReplaceBusinessOrIdentityBinding",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestWalletAdapterCompleteOwnershipAndEOF",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestWalletAdapterFailureNeverAddsDrain",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestWalletAdapterScanPublishesAtomically",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "TestWalletAdapterArgumentAndZeroBoundaries",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestRuntimeWindowDeadlineAndFreshChecks",
+        "action": "pass",
+        "elapsed_seconds": 0
+      },
+      {
+        "test": "FuzzApplicationManifestStrict",
+        "action": "pass",
+        "elapsed_seconds": 0
+      }
+    ],
+    "skipped": [
+      "TestPostgresCompleteSourceReader",
+      "TestPostgresSourceWalletReaderNonemptyC0",
+      "TestPostgresLegacySeedProjection",
+      "TestApplicationLoaderFileBoundaries/wrong_owner"
+    ]
+  },
+  "legacy_oracles": {
+    "command": "env -u C0_MAINTENANCE_DATABASE_URL -u TEST_DATABASE_URL go test -race -count=1 -json ./internal/payments ./internal/maintenancetrust -run 'V1.*Compat|Codec.*Compat|Legacy.*Compat'",
+    "exit_code": 0,
+    "local_log": ".local/r1b-codec-final.json",
+    "log_sha256": "eb3f7849fb2d4676f3afbd09c733e89ddda926fa2f1ab49e2eb1444a3e3e25e1",
+    "log_bytes": 1875673,
+    "packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/payments",
+        "action": "pass",
+        "elapsed_seconds": 2.841
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "action": "pass",
+        "elapsed_seconds": 25.071
+      }
+    ],
+    "top_level": {
+      "pass": 20
+    },
+    "all_parent_child_terminals": {
+      "pass": 1864
+    },
+    "top_level_results": [
+      {
+        "test": "TestV1CodecCompatibilityAccepted",
+        "action": "pass",
+        "elapsed_seconds": 0.15
+      },
+      {
+        "test": "TestV1CodecCompatibilitySemanticRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.33
+      },
+      {
+        "test": "TestV1CodecCompatibilityRawAndCanonicalRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.05
+      },
+      {
+        "test": "TestV1CodecCompatibilityExactShape",
+        "action": "pass",
+        "elapsed_seconds": 0.65
+      },
+      {
+        "test": "TestV1CodecCompatibilityReservedRoleBoundary",
+        "action": "pass",
+        "elapsed_seconds": 0.04
+      },
+      {
+        "test": "TestV1CodecCompatibilityTypedTextAndShape",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "FuzzV1CodecCompatibility",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestProofV2V1CompatibilityAccepted",
+        "action": "pass",
+        "elapsed_seconds": 0.1
+      },
+      {
+        "test": "TestProofV2V1CompatibilitySemanticRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.35
+      },
+      {
+        "test": "TestProofV2V1CompatibilityRawAndCanonicalRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.06
+      },
+      {
+        "test": "TestProofV2V1CompatibilityExactShape",
+        "action": "pass",
+        "elapsed_seconds": 0.56
+      },
+      {
+        "test": "TestProofV2V1CompatibilityReservedRoleEnvelopeBoundary",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "TestV1CodecCompatibilityAccepted",
+        "action": "pass",
+        "elapsed_seconds": 0.12
+      },
+      {
+        "test": "TestV1CodecCompatibilitySemanticRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.26
+      },
+      {
+        "test": "TestV1CodecCompatibilityRawAndCanonicalRejections",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestV1CodecCompatibilityExactShape",
+        "action": "pass",
+        "elapsed_seconds": 0.4
+      },
+      {
+        "test": "TestV1CodecCompatibilityReservedRoleBoundary",
+        "action": "pass",
+        "elapsed_seconds": 0.03
+      },
+      {
+        "test": "TestV1CodecCompatibilityTypedTextAndShape",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "FuzzProofV2V1Compatibility",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      },
+      {
+        "test": "FuzzV1CodecCompatibility",
+        "action": "pass",
+        "elapsed_seconds": 0.01
+      }
+    ],
+    "skipped": []
+  },
+  "sandbox": {
+    "command": "C0_MAINTENANCE_DATABASE_URL=<dedicated test database> go test -race -p=1 -count=1 -timeout=600s -json ./internal/maintenancetrust -run '^TestFundingLotsRuntimePostgres(GenuineSandboxProfiles)$'",
+    "exit_code": 0,
+    "local_log": ".local/r1b-sandbox.json",
+    "log_sha256": "1d980f7abe5dffb5cd2d6928bb5d62f12b1b8a82f1d94ee97a687518c3bcb4bc",
+    "log_bytes": 80059,
+    "packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "action": "pass",
+        "elapsed_seconds": 355.421
+      }
+    ],
+    "top_level": {
+      "pass": 1
+    },
+    "all_parent_child_terminals": {
+      "pass": 63
+    },
+    "top_level_results": [
+      {
+        "test": "TestFundingLotsRuntimePostgresGenuineSandboxProfiles",
+        "action": "pass",
+        "elapsed_seconds": 335.98
+      }
+    ],
+    "skipped": [],
+    "command_note": "Normalized shell form of retained invocation summary; timeout flag shown with explicit equals. Go JSON log records outcomes, not process argv."
+  },
+  "ordinary_and_public_group": {
+    "command": null,
+    "exit_code": 1,
+    "local_log": ".local/r1b-runtime-qualified.json",
+    "log_sha256": "464fc29555596e6395fa2f3f7d431a074a87cba1e2c1576eba4c5b7d34d1f40a",
+    "log_bytes": 68354,
+    "packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "action": "fail",
+        "elapsed_seconds": 370.183
+      }
+    ],
+    "top_level": {
+      "pass": 9,
+      "fail": 1
+    },
+    "all_parent_child_terminals": {
+      "pass": 53,
+      "fail": 1
+    },
+    "top_level_results": [
+      {
+        "test": "TestAuthorityPostgresPublicOwnerProfiles",
+        "action": "pass",
+        "elapsed_seconds": 11.28
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresNamedMixedAndLifetime",
+        "action": "pass",
+        "elapsed_seconds": 44.09
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresIdentityAndHistoryRefusals",
+        "action": "pass",
+        "elapsed_seconds": 32.04
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresOperatingBasisAndPagination",
+        "action": "pass",
+        "elapsed_seconds": 22.23
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresAllOrdinaryDomainsRejectCorruption",
+        "action": "pass",
+        "elapsed_seconds": 48.6
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresRealRowsCancelAndFreshCleanup",
+        "action": "pass",
+        "elapsed_seconds": 27.42
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresPermissionDriftAndLockedSQL",
+        "action": "pass",
+        "elapsed_seconds": 33.89
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresActiveProcurementCost",
+        "action": "fail",
+        "elapsed_seconds": 16.74
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresPublicProfiles",
+        "action": "pass",
+        "elapsed_seconds": 86.51
+      },
+      {
+        "test": "TestFundingLotsRuntimePostgresActualTransportBounds",
+        "action": "pass",
+        "elapsed_seconds": 28.57
+      }
+    ],
+    "skipped": [],
+    "command_note": "Original -run filter not retained; exact ten selected top-level tests are recorded from the log. Failed command is not relabeled PASS.",
+    "failure_cause": "Test-only assertion expected consistent; original verifier returned contract status balanced with complete graph and no mismatch/unproven. Only test assertion changed before targeted rerun."
+  },
+  "procurement_corrected_rerun": {
+    "command": "C0_MAINTENANCE_DATABASE_URL=<dedicated test database> go test -race -p=1 -count=1 -timeout=600s -json ./internal/maintenancetrust -run '^TestFundingLotsRuntimePostgresActiveProcurementCost$'",
+    "exit_code": 0,
+    "local_log": ".local/r1b-active-procurement-final.json",
+    "log_sha256": "2a6c1bdd5286c2c88d1934f70c4677f85a55066b207cb25cc783f4c20a7d22ad",
+    "log_bytes": 1978,
+    "packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "action": "pass",
+        "elapsed_seconds": 44.49
+      }
+    ],
+    "top_level": {
+      "pass": 1
+    },
+    "all_parent_child_terminals": {
+      "pass": 1
+    },
+    "top_level_results": [
+      {
+        "test": "TestFundingLotsRuntimePostgresActiveProcurementCost",
+        "action": "pass",
+        "elapsed_seconds": 25.01
+      }
+    ],
+    "skipped": [],
+    "business_evidence": {
+      "credit": 1000,
+      "procurement_reserved": 120,
+      "procurement_unknown_cap": 240,
+      "actual_dispatch_permit": true,
+      "confirmed_upstream_cost": 24,
+      "customer_settlement": 12,
+      "composer_elapsed_seconds": 5.13842175,
+      "recorded_selects": 325,
+      "actual_app_physical_tables": 84,
+      "periodic_budget_activity": false,
+      "altered_cost_refused": true
+    },
+    "command_note": "Normalized shell form of retained invocation summary; timeout flag shown with explicit equals. Go JSON log records outcomes, not process argv."
+  },
+  "loader_fuzz": {
+    "command": "env -u C0_MAINTENANCE_DATABASE_URL -u TEST_DATABASE_URL go test ./internal/fundinglotruntime -run '^$' -fuzz '^FuzzApplicationManifestStrict$' -fuzztime=10s",
+    "exit_code": 0,
+    "local_log": ".local/r1b-loader-fuzz-final.log",
+    "log_sha256": "54d66123600bddacf2411c74554e6bb2f4841d441302d8a86973419d11f679bd",
+    "package_elapsed_seconds": 15.314,
+    "executions": 281184,
+    "new_interesting": 208,
+    "total_interesting": 213,
+    "race_enabled": false
+  },
+  "static_checks": [
+    {
+      "command": "python3 scripts/check-runtime-compatibility.py",
+      "exit_code": 0,
+      "local_log": ".local/r1b-compatibility-final.log",
+      "log_sha256": "44ea47cabac338847de97327a82594ffacf80ad69bd2372294bb2215a260f5cc",
+      "output": "runtime compatibility verified: six exact LegacyV1 → WalletReadV2 tuples; 22 migrations / 2459 bytes"
+    },
+    {
+      "command": "python3 scripts/check-wallet-profile-roots.py",
+      "exit_code": 0,
+      "local_log": ".local/r1b-wallet-roots-final.log",
+      "log_sha256": "c15316730c5d493de205a475f000a2534664c7b706f149729fe041e7036da496",
+      "output": "static wallet-read profile roots verified: 2 modes, 6 variants, exact four-column delta"
+    }
+  ],
+  "fixed_materials": {
+    "compatibility_v1_bytes": 7374,
+    "compatibility_v1_sha256": "5add8e6ffde8f792547aff8b205b0c34b6ea6ec13ac19f2ab823902e8a987f4b",
+    "historical_current_mappings": 6,
+    "migration_count": 22,
+    "migration_manifest_canonical_bytes": 2459,
+    "migration_manifest_sha256": "ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de",
+    "basis_descriptor_sha256": "54f701af2f993fd9dd6fb6db21f2cc323704ab6d2e962610413d044fdaa0c4e5",
+    "legacy_v1_canonical_bytes": 1786,
+    "legacy_v1_canonical_sha256": "1a6c1815c400ddf7b051c0c12f0fe203ff43484251aabd34d8f9361ab704b67c",
+    "wallet_readset_sha256": "b40f22ecebab659e6ebef74778c0464c733018f0228c3e5c797ccc601375106c",
+    "physical_tables": 84,
+    "physical_columns": 776,
+    "original_source_pins_preserved": 29
+  },
+  "source_sha256": {
+    "internal/fundinglotcatalog/wallet_profile_integration_test.go": "89e5f83082d11e069ddc2dca364bf2ef75699e7d704aac9e8cf7587534d039a7",
+    "internal/fundinglotproof/codec.go": "36a32185c3bda50bb0c3947513ef815873ee9fd4e788276d4a5e109b7026bb20",
+    "internal/fundinglotproof/codec_test.go": "5669b3196764baef9a915182766275ca29d6b09ee844591d70d88510d79f9511",
+    "internal/fundinglotproof/strict_test.go": "1d766abeaf4d7034cee27f6e8dea0aa2bb80cb3f2777d8c49d149e21d699912a",
+    "internal/fundinglotproof/testdata/generate_golden.py": "67c493729a29507d94337fddb8de8dddbd7e4efb7b926bdeaca0de53cdb887e3",
+    "internal/fundinglotproof/testdata/ordinary.json": "b2aaed4dd053602715b993c78be33d9da04e5e5407b2886349c8cfdcfb85a3a5",
+    "internal/fundinglotproof/testdata/predecessor_128keys.json": "3d93d9cb91071b759eafbfb88f22c58c15fe9dec83d774cfbd89e0a521015060",
+    "internal/fundinglotproof/testdata/predecessor_1keys.json": "d78a12de58fef9e438793abc895dc8f136fa1456bfdf8870222970597ac29596",
+    "internal/fundinglotproof/testdata/predecessor_v1.json": "1a6c1815c400ddf7b051c0c12f0fe203ff43484251aabd34d8f9361ab704b67c",
+    "internal/fundinglotproof/testdata/sandbox.json": "da8c961c2a0f0ef83d087f93eacfc540fa043994c460e1843923b9aaf854a424",
+    "internal/fundinglotproof/testdata/sandbox_128keys.json": "d741c571ac203406b30745a725e415b2adb530a8562764219f71048d44bd8acf",
+    "internal/fundinglotproof/testdata/sandbox_1keys.json": "4c364d4363e41a42c73ca641d552b02cc6555cdb082d898f4e6e01fc7346f920",
+    "internal/fundinglotproof/types.go": "2675e92a6f805c6cb9088e7e8885dc6bfb5031a94e51f6d212181e397639bb49",
+    "internal/fundinglotproof/v1.go": "04e89af52e1c81c9bd97beb3a9c58dfb0c296ce6dc239723d70cbe521e622dd4",
+    "internal/fundinglotproof/v1_public.go": "b7fde1830e33404e7120dca3ee24c2be4e7ca0475a5ac41a54bfd05a2534c2c2",
+    "internal/fundinglotproof/v1_public_test.go": "791195c71d40af630b54f62b318da927f48e05d1d13d3de851419b44a6d6c938",
+    "internal/fundinglotruntime/application_codec.go": "76af7df1cdf38fc493c0b81de8b8225e341cacc199ef12204f68cdc4b073ae1f",
+    "internal/fundinglotruntime/application_codec_test.go": "e62a2301910d8cafaf7ea7ff40e8d3f100589df51b8c0fc614f0c388267f605b",
+    "internal/fundinglotruntime/application_files.go": "3c44aa71c8829c675d054141fa70705fa596bd7ff215faf342bafd7c7cf2c1a2",
+    "internal/fundinglotruntime/application_state.go": "232a416a7502d1c93f8ac6a4ed8e36aba845ccd6f8a87a4382ecfe7f6ef66328",
+    "internal/fundinglotruntime/application_state_test.go": "1defc6103aa7a6c7562c4efb8f715e9e000cf2c49e10381b0a58e98656ec606d",
+    "internal/fundinglotruntime/expected/compatibility-v1.json": "5add8e6ffde8f792547aff8b205b0c34b6ea6ec13ac19f2ab823902e8a987f4b",
+    "internal/fundinglotruntime/runtime_bindings.go": "78f8adcbe681ec04c5807f1c9f74c66e0450afaa352333ff6778d8b9cf3f71f3",
+    "internal/fundinglotruntime/runtime_bindings_test.go": "4a2fc11628572de38f681b1aec7c3a9ec2d26ad5f2a2e93c7db8bd579149f19f",
+    "internal/fundinglotruntime/runtime_compose.go": "08d17d3aa46071178080cdb2eb95b6a9d0fe0f2eb4dddba9d169f76d2febe6b6",
+    "internal/fundinglotruntime/runtime_history.go": "d8d613d524a7e155819e1a66475a0e03088aa5e16ff06c3ce8f1551e8bbbcb01",
+    "internal/fundinglotruntime/runtime_history_test.go": "1bbff11d7de50432f7329eb5b5ef9a3a4bd3799374fdd6bdb244183ad4788658",
+    "internal/fundinglotruntime/runtime_materials.go": "18c41a2a82e4c38637eea287a6db269bf43e7a94ca61e66d701004b38b17e5a3",
+    "internal/fundinglotruntime/runtime_materials_test.go": "a641e2d2bc6c8ec0122ad442be75b122020dc9ef7c6e1996630374076d48b5dc",
+    "internal/fundinglotruntime/runtime_rows.go": "cff6aff3a4504fae848d1a8fd41e5291138a694510d1c4b735e4e9981230cb31",
+    "internal/fundinglotruntime/runtime_rows_test.go": "b180aa64819b6473032abe679f536104e86a00bc0e842b244243d5f026be7117",
+    "internal/fundinglotruntime/runtime_types.go": "bb5c877fb2803202f146d2025a0abee28ee97f30eb3cedb648d38305083fee64",
+    "internal/fundinglotruntime/runtime_window.go": "b922d225746b926190fbadb8e45fd9633454c40a4b0a3353514168a7887cf898",
+    "internal/fundinglotscan/application_payment_proof_projection.go": "7885abfaf99825802b5358db2a6944d0c7a852f9ba13cb1370b8428cc136976c",
+    "internal/fundinglotscan/application_payment_proof_projection_test.go": "d44fde5527b9d558a44ff09454d741b71c0b45a9c5478978d802c0f4e04cb1bc",
+    "internal/fundinglotscan/binding.go": "f5e93a7dd5d6c3d7443817d2e8ea63139191004a0263445cc03ac3d3bbb03c7e",
+    "internal/fundinglotscan/checks.go": "8f388b6b1a41373bccdb9a6416e7b87a8db1f07f31e9c3612cfd396d114574ab",
+    "internal/fundinglotscan/epoch_proof_projection.go": "d9b7b18e99fd4860b9131a83d4011416b58bae9a55a69c4ee56b5a48717e9d7e",
+    "internal/fundinglotscan/epoch_proof_projection_test.go": "a167201936d2a31781f702de2b7a01656b369813f979e04d77e73534fb3d9c54",
+    "internal/fundinglotscan/projection_funding.go": "0eaf7726b68e2034bc8de2912ad283c54a0de59e5fced55ae16b521c98fa5949",
+    "internal/fundinglotscan/projection_periodic.go": "c96f492a6f5e2fa0a0c33608de16d3caec912c4fbed9d29a0c6a7d53a238661d",
+    "internal/fundinglotscan/projection_periodic_test.go": "b34d0faea288285eb33b1b2d5923210d5b124226f68236b032f7a87d7da4ca2e",
+    "internal/fundinglotscan/projection_procurement.go": "b4f27391f07cb0f891f06608efb0159bb8467264b35fd4db9fe0e577f713de10",
+    "internal/fundinglotscan/projection_procurement_test.go": "6993b1fc38d22cf858c6ff150f3e2f5c0f3d825a95d997be9b7ccc0e9b431dd6",
+    "internal/fundinglotscan/projection_sandbox.go": "cb02504dc9c9ba4d12f23fbf840babf9e12ab2da5233ebc1ad3b8758c50df58d",
+    "internal/fundinglotscan/projection_sandbox_test.go": "dad9d784860232c4d8d1f571aa4fb9bc7beff630261767996b9a655732cf3497",
+    "internal/fundinglotscan/projection_wallet.go": "fc2bb315784a7f34ad76f74eee03e638af1f8bc36f9f1812dc1a3d3c7f9ab11a",
+    "internal/fundinglotscan/projection_wallet_test.go": "c0205e0297a1c2510f1da2044b9ced1b31cde194823b4320ee0ee6c2a880723d",
+    "internal/fundinglotscan/reader.go": "976fd3ba6887a6a7be0394959faee9f27744cc895989fbb5a5742d61c64356dd",
+    "internal/fundinglotscan/reader_postgres_test.go": "ee68f3dcec8e88bf56ca5f573976e845a5bee8d92bf311779a00732f7f1bb51a",
+    "internal/fundinglotscan/reader_test.go": "0217fae8e1c820082831f142fd367a5f063ed3767e8b3c1674ed0a20a691b41a",
+    "internal/fundinglotscan/seed_projection.go": "76e327cfb0ea9d9b7a8f5be4a83e5f9b07cda57459d7bae8e703c049746959ce",
+    "internal/fundinglotscan/seed_projection_postgres_test.go": "410cc2e4df10ba9da2f6f712b9f01d99c2094a23a35b83babc28fc4139f2f2e2",
+    "internal/fundinglotscan/seed_projection_test.go": "037ab9ff48e110215bdae96e19940f6cabbd096827755e2ff2efa817eaffa8e8",
+    "internal/fundinglotscan/types.go": "dcb95465dc6c7821745d18ca75c9a1a1757434ada424288b12e66640b53d9710",
+    "internal/fundinglotscan/wallet.go": "54a47095b373c5335af24f4c116a315345f1e9078d583c6f03014813f39cc064",
+    "internal/fundinglotscan/wallet_reader_postgres_test.go": "4592869d3d9a3464e8dc0aeb60ff537855234d80e9e4b43e24b2b8f29f47d41e",
+    "internal/fundinglotscan/wallet_reader_test.go": "2bd2685119e4195f493de53f7ceb7d12c8bd8434a80bff95dde377aac9c96c63",
+    "internal/fundinglotscan/wallet_readset_test.go": "ab11f059b236541fefdb484a734448ae34defbfc68507d124017c666cc7dd813",
+    "internal/maintenancetrust/authority_profiles_integration_test.go": "d6bddfff6c308f686fc0d8f37a765083fa56ec4b9aedef47130b3ee88ebdace9",
+    "internal/maintenancetrust/funding_lots_runtime_integration_test.go": "a4d07e757302cb533b9adea294ff452f99e3fe3cc4193232b47d17c283255700",
+    "internal/maintenancetrust/funding_lots_runtime_procurement_integration_test.go": "2e2e8ba076b1dae40d2acec6cebca106200b0cf744351fb8a4c93e65ca55ef01",
+    "internal/maintenancetrust/funding_lots_runtime_profiles_integration_test.go": "3f003aafd4d707c1b36a339238d58484d38c3fcb33cc09f5e29ef1903b4e86f1",
+    "internal/maintenancetrust/funding_lots_runtime_resource_integration_test.go": "73aac9132eddc2031815d811f036b181df6f3b09d620e729ef8968d801477d56",
+    "internal/maintenancetrust/sandbox_export_test.go": "7f4b54db5022bfb8294cdbbbf9ebda9c7a191aefce2dd2a507f6b712d814bd9f",
+    "internal/maintenancetrust/sandbox_external_test.go": "434fb458debbd4cf7874fe62e01fa8759c205fd9c106b17c9b3c33999810c3ea",
+    "internal/maintenancetrust/v1_codec_compat_test.go": "7241228df9f801734c01a1dbd0ec3ac5e96600df9903e23879cd15217a1a3788",
+    "internal/payments/v1_codec_compat_test.go": "62dfc2b0fc4002caf41556d88a533d46c93a826679c29dd798e28a88c81150fe",
+    "scripts/check-runtime-compatibility.py": "24c456dc5df27d0b0756cf1d9358f4195db320f6ab59b1a3ebab5e3ad72d154b",
+    "specs/022-self-service-payments/c0-proof-v2-codec-contract.md": "e615ef1c8c1fc3fc721e9b8ecf766eb6bdfbe15ff34d0124f99807e1af70dc38",
+    "specs/022-self-service-payments/c0-runtime-composer-contract.md": "b40a22694a511e3b81ab611ac6e3d618af66105bcf012df8268d108a209466d7",
+    "specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md": "39ad6f2f7d8174f42e54e3a9760e223cb6d7611cfb9189973555c5c5e5536128",
+    "specs/022-self-service-payments/c0-wallet-readset.json": "b40f22ecebab659e6ebef74778c0464c733018f0228c3e5c797ccc601375106c"
+  },
+  "library_baseline_source_pins": {
+    "count": 61,
+    "changed_paths": [
+      "internal/fundinglotruntime/runtime_materials.go",
+      "internal/fundinglotruntime/runtime_window.go",
+      "specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md"
+    ],
+    "change_reason": "runtime_materials.go/runtime_window.go received final gofmt-only formatting after scoped test logs; PB gap received final read-only design review. Whole-repository checks will run final sources.",
+    "local_manifest": ".local/r1b-library-source-pins.json",
+    "manifest_sha256": "9165cfde7ccd299c65413035bcb48a412e274cc2e0d8dd733664695ce41ac942"
+  },
+  "architecture_render": {
+    "status": "pass",
+    "local_report": ".local/architecture-mermaid-check/runtime-composer-report.json",
+    "report_sha256": "8fb7660164107f8c9dda2d544d5dc1c7e5634ffe280acebe03b07b5eefed9425",
+    "report": {
+      "date": "2026-11-03",
+      "mermaid_version": "12.2.0",
+      "architecture_sha256": "8bb62d9d6dd4a602fd8ca01445f9c4f517b12e6419b0cebad4367da12fe01902",
+      "sources": [
+        {
+          "file": "docs/architecture/README.md",
+          "sha256": "8bb62d9d6dd4a602fd8ca01445f9c4f517b12e6419b0cebad4367da12fe01902"
+        },
+        {
+          "file": "docs/architecture/funding-lot-catalog.md",
+          "sha256": "fd56975808e51a67d97d453489287189e98b7332818637cc5b0d28e1fa8f8749"
+        },
+        {
+          "file": "README.md",
+          "sha256": "120c42797202c014af399a1a73f227f6f548046ee4693a17e2fed15ee3441344"
+        },
+        {
+          "file": "docs/architecture/maintenance-gate.md",
+          "sha256": "fca4752bef685ffb1c8665a4a20208dbdc00701baf28904915561a24d0243bbd"
+        },
+        {
+          "file": "docs/architecture/runtime-read-profile.md",
+          "sha256": "75621dca00eea55d19735a9e0cdbc2a2d575e4f0f69145be41a2cd7903464777"
+        },
+        {
+          "file": "docs/architecture/runtime-composer.md",
+          "sha256": "d4051025f0c99a3fcf3449117ee021387d6875f09f88598610d5f601b0053f40"
+        }
+      ],
+      "diagrams": [
+        {
+          "diagram": 1,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 1
+        },
+        {
+          "diagram": 2,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 2
+        },
+        {
+          "diagram": 3,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 3
+        },
+        {
+          "diagram": 4,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 4
+        },
+        {
+          "diagram": 5,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 5
+        },
+        {
+          "diagram": 6,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 6
+        },
+        {
+          "diagram": 7,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 7
+        },
+        {
+          "diagram": 8,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 8
+        },
+        {
+          "diagram": 9,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 9
+        },
+        {
+          "diagram": 10,
+          "type": "er",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 10
+        },
+        {
+          "diagram": 11,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 11
+        },
+        {
+          "diagram": 12,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 12
+        },
+        {
+          "diagram": 13,
+          "type": "er",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 13
+        },
+        {
+          "diagram": 14,
+          "type": "er",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 14
+        },
+        {
+          "diagram": 15,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 15
+        },
+        {
+          "diagram": 16,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 16
+        },
+        {
+          "diagram": 17,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 17
+        },
+        {
+          "diagram": 18,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 18
+        },
+        {
+          "diagram": 19,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 19
+        },
+        {
+          "diagram": 20,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 20
+        },
+        {
+          "diagram": 21,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/README.md",
+          "source_index": 21
+        },
+        {
+          "diagram": 22,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/funding-lot-catalog.md",
+          "source_index": 1
+        },
+        {
+          "diagram": 23,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "README.md",
+          "source_index": 1
+        },
+        {
+          "diagram": 24,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/maintenance-gate.md",
+          "source_index": 1
+        },
+        {
+          "diagram": 25,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/maintenance-gate.md",
+          "source_index": 2
+        },
+        {
+          "diagram": 26,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/maintenance-gate.md",
+          "source_index": 3
+        },
+        {
+          "diagram": 27,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/runtime-read-profile.md",
+          "source_index": 1
+        },
+        {
+          "diagram": 28,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/runtime-composer.md",
+          "source_index": 1
+        },
+        {
+          "diagram": 29,
+          "type": "sequence",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/runtime-composer.md",
+          "source_index": 2
+        },
+        {
+          "diagram": 30,
+          "type": "flowchart-v2",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/runtime-composer.md",
+          "source_index": 3
+        },
+        {
+          "diagram": 31,
+          "type": "stateDiagram",
+          "parsed": true,
+          "rendered": true,
+          "file": "docs/architecture/runtime-composer.md",
+          "source_index": 4
+        }
+      ],
+      "module_image_sha256": "b94ccef5f70ae4901fc0d1251bc93ee1b58eba1d1055c6052cfcd09ab0561958",
+      "module_size": {
+        "width": 11236,
+        "height": 4452
+      },
+      "detail_image_sha256": "b093fb376ec2c410e9ecdb7d01f51937914fd9c44a1dd6b6f6f36bee46017f4c",
+      "detail_size": {
+        "width": 1594,
+        "height": 1901
+      },
+      "pass": true
+    },
+    "root_visual_review": true,
+    "images": [
+      "docs/verification/assets/architecture-runtime-composer-application.png",
+      "docs/verification/assets/architecture-runtime-composer-detail.png"
+    ]
+  },
+  "whole_repository": {
+    "status": "pass",
+    "runs": [
+      {
+        "command": "make check",
+        "exit_code": 0,
+        "elapsed_seconds": 7.035,
+        "log": ".local/r1b-make-check.log",
+        "log_sha256": "0803d74c519ba301f09636386c8c3431ad991e414f02924ca1574bbd33da046d"
+      },
+      {
+        "command": "TEST_DATABASE_URL=<dedicated test database>; C0_MAINTENANCE_DATABASE_URL unset; make verify-mvp",
+        "exit_code": 0,
+        "elapsed_seconds": 1089.86,
+        "log": ".local/r1b-verify-mvp.log",
+        "log_sha256": "7af4f9f21f3c9f8b76d7f77e12d0de3b8eba6a2540adc5b1bdc4a06fb5ba981c"
+      }
+    ],
+    "frontend_tests": {
+      "pass": 286,
+      "fail": 0
+    },
+    "default_go_race_test_packages_passed": 47,
+    "go_packages_without_tests": 4,
+    "database": "127.0.0.1:55439/moni_test",
+    "C0_MAINTENANCE_DATABASE_URL": "unset",
+    "optional_test_environment_present_before_run": [],
+    "default_pass_does_not_replace_optional_C0_qualification": true,
+    "reviewed_73_source_sha256_unchanged_after_all_checks": true,
+    "code_and_test_sources_unchanged_during_repository_checks": true,
+    "architecture_snapshot_at_checks": "cd3d3785b266792714f4f022c5c1eebfdb44f19d89c9fc903a7e57b370648c4f",
+    "only_verification_records_and_architecture_manifest_updated_after_full_checks": true
+  },
+  "delivery": {
+    "target_repository": "https://github.com/workhold/moni-aigate",
+    "target_branch": "codex/initial-mvp",
+    "exact_commit_and_ci_record": "Post-commit verification is recorded in GitHub Actions and the delivery reply; this versioned record does not prefill a future commit hash or CI result.",
+    "remote_readme_check": "Compare README bytes fetched with the pushed exact commit against the local file after push."
+  },
+  "not_qualified": [
+    "active periodic-budget historical command snapshot prefixes",
+    "production C0/R2 startup/guard/ready and financial wiring",
+    "formal V2 issuance/holding/loading",
+    "worker and projector runtime proof integration",
+    "real upstream suppliers and PSP",
+    "container runtime and 1Panel installation",
+    "HA/multi-active deployment",
+    "competitive performance parity"
+  ],
+  "readme_and_document_review": {
+    "result": "passed",
+    "local_links": {
+      "files": [
+        "README.md",
+        "docs/architecture/README.md",
+        "docs/architecture/runtime-composer.md",
+        "docs/design/HLD.md",
+        "docs/design/LLD.md",
+        "docs/design/delivery-plan.md",
+        "docs/verification/runtime-composer.md"
+      ],
+      "local_file_links_checked": 1052,
+      "missing_files": [],
+      "anchors_checked": false
+    },
+    "license_selection": "undecided; no LICENSE added",
+    "deployment_claim": "configuration and documentation only; actual containers/1Panel remain unqualified"
+  }
+}
