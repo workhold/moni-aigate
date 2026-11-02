@@ -1,6 +1,6 @@
 # MVP 交付状态
 
-2026-11-02，`v0.1.0-dev`，本地可运行的商业网关MVP候选。功能闭环已实现；001/002中的生产发布与性能门禁尚未全部通过，不能标成生产试运营验收完成。
+2026-11-03，`v0.1.0-dev`，本地可运行的商业网关MVP候选。人工入账、授权、多协议调用与结算的基础闭环已实现；正式支付扩展、001/002中的生产发布与性能门禁尚未全部通过，不能标成生产试运营验收完成。
 
 当前扩展状态以此表及[统一架构](../architecture/README.md)为准；下文各轮测试、预览PID与二进制摘要保留当期范围，不表示所有轮次已部署到当前预览。
 
@@ -8,12 +8,12 @@
 | --- | --- | --- |
 | 自助经营 | 021邮箱证明/恢复、022-A双审券、023-A分组售价与023-B周期预算，均限定本地验收 | 正式SMTP、023-C商品/订阅 |
 | 应用支付 | 022-B3普通main/受限worker/HTTP/UI及本地模拟整链；在途SIGTERM/Guard失权恢复已验 | 正式PSP、main数据库COMMIT回包丢失及外部事实灾备 |
-| 来源与退款 | C0基础及三纯图已实现；新增同租约68表/七算法业务来源读取，真实SQL、ordinary模式及沙箱Plan/Init专项已验，详见[本轮记录](complete-source-reader.md)；C1-P纯退款协议专项通过 | lot全序、protected pre/post、basis/epoch、main接线及全资金路径；C1退款、C2拒付/债务、C3交叉恢复 |
+| 来源与退款 | 完整68表来源、84表/八算法来源与lot重放、109表basis/strict v2、受保护开账事务及独立停服epoch观察均已进入库级候选实现；独立观察的真实PG范围见[本轮记录](epoch-observer.md)，旧phase及各纯层保留各自证据；C1-P纯退款协议专项通过 | R1非空RuntimeProof与权限/root兼容、R2正式迁移/CLI/main及全部在线资金路径；C1原路退款、C2拒付/债务、C3交叉恢复 |
 | 扩展和生产 | 024-A站内告警、024-B0-P纯计量；025-A0隔离Compose实际渲染、025-A1-M两邮件真实SIGKILL窗口已验 | 媒体/异步/长连接接线、容器/1Panel、HA、正式渠道及最后性能 |
 
 [来源候选回归](funding-lot-candidate.md)、[纯退款协议](payment-refund-protocol-v2.md)、[计量](metering-vectors.md)、[Compose渲染](compose-render-025.json)和[邮件进程](mail-lifecycle-025.md)分别说明各自边界；纯层和QA工具不产生生产资金能力。
 
-最新来源纯图、维护真实PG补验和商业命令并发修复分别见[三核心](source-graph-cores.md)、[C0补验](maintenance-financial-postgres.md)与[并发集成记录](commerce-concurrency.md)。本轮整仓结果以并发集成记录的实际最终执行为准；以下历次PASS不转移到未完成的新接线或生产环境。
+最新来源纯图、维护真实PG补验和商业命令并发修复分别见[三核心](source-graph-cores.md)、[C0补验](maintenance-financial-postgres.md)与[并发集成记录](commerce-concurrency.md)。本轮观察器及整仓执行以[O1记录](epoch-observer.md)和[机器结果](epoch-observer.json)为准；并发集成及以下历次PASS保留其当期身份，不转移到未完成的新接线或生产环境。
 
 2026-11-01本轮[离线descriptor](funding-lot-descriptor.md)与[同RR账本reader](funding-ledger-reader.md)汇合后，根实际`make verify-mvp`全部通过：286项前端/strict、明确专库下全Go race、vet与嵌入build，见[整仓证据](c0-integration.json)。无生产入口、完整C0 proof或原路退款开放；本轮未升级长期预览、未执行正式供应商/支付商或性能验收。
 

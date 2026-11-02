@@ -42,6 +42,7 @@ type snapshotMode uint8
 const (
 	snapshotPlan snapshotMode = iota + 1
 	snapshotInit
+	snapshotObserve
 )
 
 type terminalMethod uint8
@@ -161,6 +162,13 @@ func (g *Gate) beginSnapshot(ctx context.Context, mode snapshotMode) (*Snapshot,
 		gs.destroyFailedBegin()
 		return nil, err
 	}
+	return gs.beginSnapshotOwned(ctx, mode, deadline)
+}
+
+// The caller owns gate.busy and its sole Begin claim throughout this helper.
+// Observe keeps that ownership until its private transaction and cleanup end;
+// ordinary Plan/Init still return only after the original Begin checks.
+func (gs *gateState) beginSnapshotOwned(ctx context.Context, mode snapshotMode, deadline time.Time) (*Snapshot, error) {
 	if gs.nonce == nil || !gs.heldInstance || !gs.heldMigration || !gs.idle() {
 		gs.destroyFailedBegin()
 		return nil, ErrTransaction
@@ -349,7 +357,7 @@ func (s *Snapshot) VerifyInstallation(ctx context.Context) (*fundinglotcatalog.I
 		gs.mu.Unlock()
 		return nil, ErrGateBusy
 	}
-	if gs.closed || st.terminal != terminalNone || st.invalidErr != nil || st.catalogUsed || st.outcome != OutcomeOpen {
+	if gs.closed || st.mode != snapshotPlan && st.mode != snapshotInit || st.terminal != terminalNone || st.invalidErr != nil || st.catalogUsed || st.outcome != OutcomeOpen {
 		err := st.invalidErr
 		gs.mu.Unlock()
 		if err == nil {
@@ -410,7 +418,7 @@ const snapshotIdentitySQL = `SELECT pg_catalog.pg_backend_pid(),a.backend_start,
 func (st *snapshotState) verifyBinding(ctx context.Context) error {
 	gs := st.gate
 	if st.rawTx == nil || st.rawTx.Conn() != st.conn || st.conn != gs.conn || st.pgconn != st.conn.PgConn() || gs.snapshot != st || st.gateNonce != gs.nonce || st.nonce == nil ||
-		st.mode != snapshotPlan && st.mode != snapshotInit ||
+		st.mode != snapshotPlan && st.mode != snapshotInit && st.mode != snapshotObserve ||
 		st.conn.IsClosed() || st.pgconn.IsBusy() || st.pgconn.TxStatus() != 'T' || !gs.heldInstance || !gs.heldMigration {
 		return ErrTransaction
 	}
@@ -503,7 +511,7 @@ func (s *Snapshot) terminate(ctx context.Context, method terminalMethod) error {
 		gs.mu.Unlock()
 		return err
 	}
-	if method == terminalCommit && st.fundingLots != nil {
+	if st.mode == snapshotObserve || method == terminalCommit && st.fundingLots != nil {
 		gs.mu.Unlock()
 		return ErrTransaction
 	}

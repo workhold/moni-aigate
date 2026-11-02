@@ -900,3 +900,12 @@ Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx
 旧 tenant 的 TEXT 身份校准见[phase 合同第6节](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md#6-验收与交付)：空串与 SQL NULL 分离，完整来源图的 tenant 主键/外键及其索引统一接纳合法旧 TEXT，继续精确核关联和预算；新业务对象 ID、voucher 的 UUID scope 与在线 admission 不放宽。采购深层、周期预算 tenant scope 和支付命令的 scope 选择一并复核。历史 SQL fixture 与原在线 API fixture 分开记录。
 
 023-A CI并发观察校准仅影响测试：采用实际tenant tuple排队锁与XID等待边，保持真实分组/价格/revision快照和禁止重试掩盖死锁断言；不改生产锁序或资金路径。原本地整仓结果与后续补丁验证分开记录，详见[CI屏障记录](../verification/pricing-lock-ci.md)及[合同第10节](../../specs/023-periodic-products/a-contract.md)。
+
+
+## C0-O1 独立观察生命周期
+
+[ObserveFundingLots](../../internal/maintenancetrust/funding_lots_observe.go)独占 Gate 唯一 beginAttempted 与 busy，私有 snapshotObserve 复用原绑定与 raw-close watcher，不返回 Snapshot。累计 30 秒涵盖 RR READ ONLY 到原 ROLLBACK；前驱仍有 5 秒子预算、stageContext 取消关闭及锁内期限确认/ACK。完整入口与出口各自重采 catalog/history/identity/fresh stopped，RO终结确认 idle 后停止并等待 watcher，再在独立 5 秒内逆序释放双锁及关闭原 socket；全部完成才发布普通 DTO。所有异常零结果，Unknown 不由新观察覆写。
+
+私有 snapshot facts reader 只返回描述数据，原 authority wrapper 保留原 Installation/nonce/5秒子预算和退出验证；observer 不能构造旧证明。实际 84 表经原共享预算/EOF/八算法后，[ProjectEpochProof](../../internal/fundinglotscan/epoch_proof_projection.go)只从该次私有原行深复制双单例，不增加查询；[严格绑定](../../internal/maintenancetrust/funding_lots_observed_proof.go)核全部 v2/pins/manifest/current roots/实际原v1。它不使用初始化专属 postCounts 或经营后 109 basis 强等，历史计数与合计由独立 lot 重放核 immutable legacy/opening 集合。
+
+精确[合同](../../specs/022-self-service-payments/c0-epoch-observer-contract.md)、[架构](../architecture/README.md#独立停服-epoch-观察)和[验证记录](../verification/epoch-observer.md)共同说明本库级范围；没有正式迁移/ACL、生产CLI、APP RuntimeProof或在线资金writer变化。

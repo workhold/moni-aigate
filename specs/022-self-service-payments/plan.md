@@ -138,3 +138,11 @@ go run ./scripts/check-architecture
 按[冻结合同](c0-protected-init-phase-contract.md)，并行实现phase生命周期/rows/唯一提交、固定writer和精确投影预算、strict v2真实issuer及写后证明复核。根负责真实ordinary与genuine sandbox、原业务API混合资金/大NUMERIC、取消/busy与真实持久化后丢回复等验收，以及README/HLD/LLD/统一架构、最终检查和GitHub推送。具体执行身份见[验证记录](../../docs/verification/protected-init-phase.md)。
 
 没有新增正式迁移/ACL/CLI/HTTP/在线writer。原空安装发行门禁不删除；Unknown不重试，原epoch独立观察与非空runtime另片设计，再审正式材料/全资金接线，继续C1/C2/C3及后续路线。候选phase闭环不表示整个商业目标完成。
+
+
+## C0-O1 独立停服观察
+
+- [x] 根先冻结[独立epoch观察合同](c0-epoch-observer-contract.md)，含唯一Begin、固定总预算、strict原件与当前图、历史basis、三种成功结论及失败零值。
+- [x] 实现私有snapshotObserve与RO终结/cleanup、快照facts读取复用、84表无Query原件深复制及严格持久绑定；不扩旧空安装权威。
+- [x] 集成真实提交丢回复、回滚、经营后资金图、genuine sandbox、故障与资源边界，完成根独立审阅及架构同步/验收/交付；精确状态见[验证](../../docs/verification/epoch-observer.md)。
+- [ ] R1最小APP全源列权限及historical/current roots兼容、非空epoch runtime；R2正式迁移/CLI/所有资金路径；C1/C2/C3与后续目标继续保留。

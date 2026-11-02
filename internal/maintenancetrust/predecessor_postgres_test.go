@@ -40,7 +40,7 @@ func predecessorPGTx(t *testing.T, f *snapshotFixture) (pgx.Tx, context.Context)
 func predecessorPGReader(f *snapshotFixture, tx pgx.Tx, ctx context.Context) *predecessorReader {
 	// This incomplete private value can exercise readers only. It has no nonce,
 	// installation, history, identity, authority state or route to a Permit.
-	return &predecessorReader{authority: &authorityStage{snapshot: &snapshotState{rawTx: tx, gate: &gateState{pins: copyPins(f.pins)}}}, work: ctx}
+	return &predecessorReader{snapshot: &snapshotState{rawTx: tx, gate: &gateState{pins: copyPins(f.pins)}}, work: ctx}
 }
 func predecessorPGExec(t *testing.T, ctx context.Context, tx pgx.Tx, q string, args ...any) {
 	t.Helper()

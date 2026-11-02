@@ -76,6 +76,19 @@ func (a *authorityStage) attestManifest(ctx context.Context) (*manifestEvidence,
 	if err := a.verify(ctx); err != nil {
 		return nil, err
 	}
+	canonical, err := readMaintenanceManifestSnapshot(ctx, a.snapshot)
+	if err != nil {
+		return nil, err
+	}
+	return &manifestEvidence{authority: a, nonce: a.nonce, canonical: canonical, digest: authorityManifestSHA}, nil
+}
+
+// The ordinary bytes returned here describe the complete current history.
+// Only attestManifest can bind them to an already verified authority issuer.
+func readMaintenanceManifestSnapshot(ctx context.Context, st *snapshotState) ([]byte, error) {
+	if err := maintenanceFactsSnapshot(ctx, st); err != nil {
+		return nil, err
+	}
 	canonical, maxName, err := authorityManifestCanonical(migrations.Files)
 	if err != nil {
 		return nil, authorityLeafFailure(ctx, ErrSchema)
@@ -85,18 +98,18 @@ func (a *authorityStage) attestManifest(ctx context.Context) (*manifestEvidence,
  AND pg_catalog.octet_length(name) OPERATOR(pg_catalog.>) 0
  AND pg_catalog.octet_length(name) OPERATOR(pg_catalog.<=) $1::pg_catalog.int4
  AND pg_catalog.octet_length(checksum) OPERATOR(pg_catalog.=) 64),false) FROM ` +
-		pgx.Identifier{a.snapshot.gate.pins.AppSchema.Name, "schema_migrations"}.Sanitize()
+		pgx.Identifier{st.gate.pins.AppSchema.Name, "schema_migrations"}.Sanitize()
 	var qualified bool
-	if a.snapshot.rawTx.QueryRow(ctx, q, pgx.QueryExecModeSimpleProtocol, maxName).Scan(&qualified) != nil || !qualified {
+	if st.rawTx.QueryRow(ctx, q, pgx.QueryExecModeSimpleProtocol, maxName).Scan(&qualified) != nil || !qualified {
 		return nil, authorityLeafFailure(ctx, ErrSchema)
 	}
-	if migrations.VerifySnapshotTx(ctx, a.snapshot.rawTx) != nil {
+	if migrations.VerifySnapshotTx(ctx, st.rawTx) != nil {
 		return nil, authorityLeafFailure(ctx, ErrSchema)
 	}
 	if ctx.Err() != nil {
 		return nil, ErrTimeout
 	}
-	return &manifestEvidence{authority: a, nonce: a.nonce, canonical: bytes.Clone(canonical), digest: authorityManifestSHA}, nil
+	return bytes.Clone(canonical), nil
 }
 
 func (m *manifestEvidence) verifyAuthority(a *authorityStage) error {

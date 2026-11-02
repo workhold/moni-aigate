@@ -2513,3 +2513,92 @@ CI并发观察测试补丁收口：真实PG目标20次及定价8场景race零SKI
 - modified `docs/verification/pricing-lock-ci.md`
 
 </details>
+
+## 2026-11-02T19:29:14Z · f9fc5dfd539e
+
+C0-O1新增独立停服epoch只读观察、同次84表原件投影和私有事实读取；复核唯一Begin、期限、旧空安装权限及普通服务依赖隔离，更新模块图/流程/HLD/LLD/验证范围；README精简并校准默认端口、JSON环境示例与部署状态，正式迁移/在线资金路径未变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1489 个源文件；本次 31 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/architecture-epoch-observer-application.png`
+- added `docs/verification/assets/architecture-epoch-observer-detail.png`
+- added `docs/verification/epoch-observer.md`
+- added `internal/fundinglotscan/epoch_proof_projection.go`
+- added `internal/fundinglotscan/epoch_proof_projection_test.go`
+- modified `internal/maintenancetrust/authority_identity.go`
+- modified `internal/maintenancetrust/authority_manifest.go`
+- added `internal/maintenancetrust/funding_lots_observe.go`
+- added `internal/maintenancetrust/funding_lots_observe_business_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_observe_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_observe_rows.go`
+- added `internal/maintenancetrust/funding_lots_observe_test.go`
+- added `internal/maintenancetrust/funding_lots_observed_proof.go`
+- added `internal/maintenancetrust/funding_lots_observed_proof_test.go`
+- modified `internal/maintenancetrust/gate.go`
+- added `internal/maintenancetrust/maintenance_facts.go`
+- added `internal/maintenancetrust/maintenance_facts_test.go`
+- modified `internal/maintenancetrust/predecessor.go`
+- modified `internal/maintenancetrust/predecessor_postgres_test.go`
+- modified `internal/maintenancetrust/predecessor_rows.go`
+- modified `internal/maintenancetrust/snapshot.go`
+- added `specs/022-self-service-payments/c0-epoch-observer-contract.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T19:42:50Z · febd5ac58dc9
+
+汇合O1独立审查、完整169项维护测试发现/PASS及七包真实PG补跑证据；保留调度器中断exit1与历史失败，不扩大生产范围；同步手动专项累计预算建议、下一阶段权限与root设计关口，架构模块/流程无额外变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1491 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/runbooks/development.md`
+- added `docs/verification/architecture-epoch-observer.json`
+- added `docs/verification/epoch-observer.json`
+- modified `docs/verification/epoch-observer.md`
+- modified `specs/022-self-service-payments/c0-epoch-observer-contract.md`
+
+</details>
+
+## 2026-11-02T20:00:52Z · d7958fe75ebc
+
+完成O1真实PG与整仓验收：457顶层/3455终态、46默认Go包及286前端项；保留中断与补跑证据，复核当前README/MVP状态/阶段表及25图，资金/权限/生产边界不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1491 个源文件；本次 8 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `README.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/architecture-epoch-observer.json`
+- modified `docs/verification/epoch-observer.json`
+- modified `docs/verification/epoch-observer.md`
+- modified `docs/verification/mvp-status.md`
+- modified `specs/022-self-service-payments/plan.md`
+
+</details>
+
+## 2026-11-02T20:02:05Z · e12ac2f31713
+
+仅补录最后一次make check的成功结果与原始日志摘要；25图、全部已验源码及架构结构未变，复核GitHub交付文件与生产边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1491 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/epoch-observer.json`
+
+</details>

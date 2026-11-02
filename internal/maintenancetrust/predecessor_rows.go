@@ -57,10 +57,10 @@ func predecessorFinite(t pgtype.Timestamptz) (time.Time, error) {
 	return v, nil
 }
 
-// Reads only the already bounded projection. No production caller can supply
-// a tx: the reader is created only by readPredecessorAuthority.
+// Reads only the already bounded projection of the caller-owned private
+// snapshot. No exported constructor accepts a transaction or proof.
 func (r *predecessorReader) readTable(schema string, table predecessorTable) ([]predecessorRow, error) {
-	rows, err := r.authority.snapshot.rawTx.Query(r.work, predecessorProjectionSQL(schema, table), pgx.QueryExecModeSimpleProtocol)
+	rows, err := r.snapshot.rawTx.Query(r.work, predecessorProjectionSQL(schema, table), pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
 		return nil, executionError(r.work)
 	}
@@ -330,10 +330,10 @@ func predecessorValidOwnedRow(table predecessorTable, row predecessorRow) bool {
 	return true
 }
 
-// context is intentionally used only by the authority-owned reader, not an
-// alternative constructor accepting arbitrary transaction/proof material.
+// The enclosing private snapshot owner retains lifecycle and SQL ownership.
+// This fixed reader has no authority issuer or alternative exported constructor.
 type predecessorReader struct {
-	authority *authorityStage
+	snapshot  *snapshotState
 	work      context.Context
 	resources predecessorResources
 }

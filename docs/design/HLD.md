@@ -503,3 +503,10 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 旧 tenant 的 TEXT 身份校准见[phase 合同第6节](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md#6-验收与交付)：空串与 SQL NULL 分离，完整来源图的 tenant 主键/外键及其索引统一接纳合法旧 TEXT，继续精确核关联和预算；新业务对象 ID、voucher 的 UUID scope 与在线 admission 不放宽。采购深层、周期预算 tenant scope 和支付命令的 scope 选择一并复核。历史 SQL fixture 与原在线 API fixture 分开记录。
 
 023-A CI并发观察校准仅影响测试：采用实际tenant tuple排队锁与XID等待边，保持真实分组/价格/revision快照和禁止重试掩盖死锁断言；不改生产锁序或资金路径。原本地整仓结果与后续补丁验证分开记录，详见[CI屏障记录](../verification/pricing-lock-ci.md)及[合同第10节](../../specs/023-periodic-products/a-contract.md)。
+
+
+## 独立停服 epoch 观察
+
+初始化提交回复未知后，按[O1冻结合同](../../specs/022-self-service-payments/c0-epoch-observer-contract.md)使用新的专用连接和双 session 锁，再开启 RR READ ONLY。它验证完整 current catalog/history、真实停服身份、实际 predecessor/v2 原件以及当前 84 表资金图；只读终结和独立 cleanup 完成才返回目标存在、未初始化或另一有效 epoch。坏记录或不完整图一律错误零结果，不自动初始化，不修改旧 Snapshot 的 Unknown。当前历史 basis 只与保存原件绑定，经营后合法数据变化不要求重现切换摘要。
+
+新增入口在维护库内，不进入 ordinary main/HTTP/worker，不发行 Permit 或 RuntimeProof；旧空安装门禁不放宽。实现与当前验证范围见[统一架构](../architecture/README.md#独立停服-epoch-观察)及[本片验证](../verification/epoch-observer.md)。后续须先设计 APP 的全 84 表最小列权限和 historical/current roots 兼容，才能完成 runtime、正式迁移与所有资金路径。

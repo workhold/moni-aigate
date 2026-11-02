@@ -67,7 +67,19 @@ func (a *authorityStage) readMaintenanceIdentity(ctx context.Context) (*maintena
 	if err := a.verify(ctx); err != nil {
 		return nil, err
 	}
-	st, gs := a.snapshot, a.snapshot.gate
+	return readMaintenanceIdentitySnapshot(ctx, a.snapshot)
+}
+
+// This returns observed scalar identity only. Authority callers still verify
+// their original InstallationProof and issuer binding before entering here.
+func readMaintenanceIdentitySnapshot(ctx context.Context, st *snapshotState) (*maintenanceIdentity, error) {
+	if err := maintenanceFactsSnapshot(ctx, st); err != nil {
+		return nil, err
+	}
+	if st.conn == nil || st.pgconn == nil {
+		return nil, ErrTransaction
+	}
+	gs := st.gate
 	cfg := st.conn.Config()
 	if !validConfig(cfg, gs.pins) {
 		return nil, ErrIdentity
@@ -175,17 +187,24 @@ func (a *authorityStage) verifyStopped(ctx context.Context) error {
 	if err := a.verify(ctx); err != nil {
 		return err
 	}
-	ids, err := maintenanceRuntimeOIDs(a.snapshot.gate.pins)
+	return verifyMaintenanceStoppedSnapshot(ctx, a.snapshot)
+}
+
+func verifyMaintenanceStoppedSnapshot(ctx context.Context, st *snapshotState) error {
+	if err := maintenanceFactsSnapshot(ctx, st); err != nil {
+		return err
+	}
+	ids, err := maintenanceRuntimeOIDs(st.gate.pins)
 	if err != nil {
 		return err
 	}
 	// Keep these consecutive and separate: T1 already warmed the transaction's
 	// activity cache. Clearing stats does not replace its commercial RR snapshot.
-	if _, err = a.snapshot.rawTx.Exec(ctx, clearMaintenanceActivitySQL, pgx.QueryExecModeSimpleProtocol); err != nil {
+	if _, err = st.rawTx.Exec(ctx, clearMaintenanceActivitySQL, pgx.QueryExecModeSimpleProtocol); err != nil {
 		return authorityLeafFailure(ctx, ErrIdentity)
 	}
 	var count int64
-	if err = a.snapshot.rawTx.QueryRow(ctx, stoppedMaintenanceActivitySQL, pgx.QueryExecModeSimpleProtocol, a.snapshot.gate.pins.Database.OID, ids).Scan(&count); err != nil || count != 0 {
+	if err = st.rawTx.QueryRow(ctx, stoppedMaintenanceActivitySQL, pgx.QueryExecModeSimpleProtocol, st.gate.pins.Database.OID, ids).Scan(&count); err != nil || count != 0 {
 		return authorityLeafFailure(ctx, ErrIdentity)
 	}
 	return authorityLeafFailure(ctx, nil)

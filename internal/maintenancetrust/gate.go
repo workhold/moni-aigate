@@ -207,6 +207,22 @@ func (g *Gate) Close(_ context.Context) error {
 	if unfinished || !s.idle() {
 		return bad()
 	}
+	return s.closeIdleOwned(ctx)
+}
+
+// closeIdleOwned is shared only by Close and the private observation owner.
+// Both retain gate.busy, mark closed, and acknowledge watchers before calling.
+func (s *gateState) closeIdleOwned(ctx context.Context) error {
+	bad := func() error {
+		s.destroyWithContext(ctx)
+		s.mu.Lock()
+		s.closeErr = ErrCleanup
+		s.mu.Unlock()
+		return ErrCleanup
+	}
+	if !s.idle() {
+		return bad()
+	}
 	// Validate the complete set before unlocks. Otherwise an extra/shared key or
 	// an externally lost key could be hidden by an apparently successful unlock.
 	if s.checkLocks(ctx) != nil {

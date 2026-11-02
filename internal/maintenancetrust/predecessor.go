@@ -2,6 +2,7 @@ package maintenancetrust
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
@@ -12,6 +13,24 @@ type predecessorOrdinaryRows struct {
 	foreignKey bool
 	policy     predecessorRow
 	bypasses   [6]bool
+}
+
+// These owned values are observations only. They have no issuer, nonce,
+// installation proof or method capable of granting maintenance authority.
+type predecessorSnapshotFacts struct {
+	mode      fundinglotcatalog.Mode
+	v1SHA256  string
+	canonical []byte
+	proof     predecessorV1Proof
+	rows      predecessorRows
+	ordinary  predecessorOrdinaryRows
+	resources predecessorResources
+}
+
+func (predecessorSnapshotFacts) String() string   { return "maintenance_predecessor_facts_redacted" }
+func (predecessorSnapshotFacts) GoString() string { return "maintenance_predecessor_facts_redacted" }
+func (predecessorSnapshotFacts) MarshalJSON() ([]byte, error) {
+	return []byte(`{"predecessor_facts":"redacted"}`), nil
 }
 
 // A predecessor is private evidence, never a deserializable credential. Its
@@ -60,34 +79,16 @@ func readPredecessorAuthority(a *authorityStage) (*predecessorEvidence, error) {
 		return nil, ErrTransaction
 	}
 	st := a.snapshot
-	e := &predecessorEvidence{authority: a, nonce: a.nonce, snapshot: st, snapshotNonce: st.nonce, gateNonce: st.gateNonce, installed: a.installed, manifest: a.manifest, identity: a.identity, purpose: st.mode, mode: st.gate.pins.Mode}
-	r := &predecessorReader{authority: a, work: work}
-	switch e.mode {
-	case fundinglotcatalog.Ordinary:
-		if e.ordinary, err = r.readOrdinary(); err != nil {
-			return nil, err
-		}
-	case fundinglotcatalog.Sandbox:
-		tables := predecessorTables()
-		for i, table := range tables {
-			schema := st.gate.pins.AppSchema.Name
-			switch i {
-			case 2, 4, 6:
-				schema = st.gate.pins.Sandbox.Mock.Name
-			case 3, 5, 7:
-				schema = st.gate.pins.Sandbox.Receiver.Name
-			}
-			if e.rows.tables[i], err = r.readTable(schema, table); err != nil {
-				return nil, err
-			}
-		}
-		if e.proof, e.canonical, e.v1SHA256, err = predecessorValidateSandbox(st.gate.pins, e.rows); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, ErrTransaction
+	facts, err := readPredecessorSnapshot(work, st)
+	if err != nil {
+		return nil, err
 	}
-	e.resources = r.resources
+	e := &predecessorEvidence{
+		authority: a, nonce: a.nonce, snapshot: st, snapshotNonce: st.nonce, gateNonce: st.gateNonce,
+		installed: a.installed, manifest: a.manifest, identity: a.identity, purpose: st.mode,
+		mode: facts.mode, v1SHA256: facts.v1SHA256, canonical: facts.canonical, proof: facts.proof,
+		rows: facts.rows, ordinary: facts.ordinary, resources: facts.resources,
+	}
 	if err = e.verifyAuthority(a); err != nil {
 		return nil, err
 	}
@@ -105,6 +106,54 @@ func readPredecessorAuthority(a *authorityStage) (*predecessorEvidence, error) {
 		return nil, authorityError(work, st, ErrTransaction)
 	}
 	return e, nil
+}
+
+// The enclosing owner supplies its already narrowed cumulative context. This
+// reader does not start a stage, consume a capability or control a transaction.
+func readPredecessorSnapshot(ctx context.Context, st *snapshotState) (predecessorSnapshotFacts, error) {
+	var zero predecessorSnapshotFacts
+	if err := maintenanceFactsSnapshot(ctx, st); err != nil {
+		return zero, err
+	}
+	facts := predecessorSnapshotFacts{mode: st.gate.pins.Mode}
+	r := &predecessorReader{snapshot: st, work: ctx}
+	var err error
+	switch facts.mode {
+	case fundinglotcatalog.Ordinary:
+		if facts.ordinary, err = r.readOrdinary(); err != nil {
+			return zero, err
+		}
+		if !predecessorValidateOrdinary(facts.ordinary) {
+			return zero, ErrIdentity
+		}
+	case fundinglotcatalog.Sandbox:
+		tables := predecessorTables()
+		for i, table := range tables {
+			schema := st.gate.pins.AppSchema.Name
+			switch i {
+			case 2, 4, 6:
+				schema = st.gate.pins.Sandbox.Mock.Name
+			case 3, 5, 7:
+				schema = st.gate.pins.Sandbox.Receiver.Name
+			}
+			if facts.rows.tables[i], err = r.readTable(schema, table); err != nil {
+				return zero, err
+			}
+		}
+		if facts.proof, facts.canonical, facts.v1SHA256, err = predecessorValidateSandbox(st.gate.pins, facts.rows); err != nil {
+			return zero, err
+		}
+	default:
+		return zero, ErrTransaction
+	}
+	if ctx.Err() != nil {
+		return zero, ErrTimeout
+	}
+	if r.resources.bytes < 0 || r.resources.bytes > predecessorByteBudget || r.resources.rows < 1 || r.resources.rows > predecessorRowBudget {
+		return zero, ErrExecution
+	}
+	facts.resources = r.resources
+	return facts, nil
 }
 
 // This verifies immutable issuer ownership only. Lifecycle/actual SQL binding
@@ -135,7 +184,7 @@ func (e *predecessorEvidence) verifyAuthority(a *authorityStage) error {
 
 func (r *predecessorReader) readOrdinary() (predecessorOrdinaryRows, error) {
 	var out predecessorOrdinaryRows
-	st := r.authority.snapshot
+	st := r.snapshot
 	schema := st.gate.pins.AppSchema.Name
 	for i, table := range predecessorHistoryTables {
 		q := "SELECT EXISTS(SELECT 1 FROM ONLY " + pgx.Identifier{schema, table}.Sanitize() + ")"

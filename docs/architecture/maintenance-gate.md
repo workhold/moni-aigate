@@ -1,6 +1,6 @@
 # C0 维护 Gate 与快照细化架构
 
-当前增量：第八once位的私有受保护开账phase已装配原68表、tenant birth、109表basis、纯规划、固定writer与strict v2/实际84post/唯一提交。原七类公开ScanKind和scope不变；正式迁移、CLI、非空epoch观察及在线资金接线仍后续。详见[当前事务架构](README.md#受保护钱包初始化事务)。旧五类真实PG补验见[原记录](../verification/maintenance-financial-postgres.md)，68表与84表分别见[业务来源记录](../verification/complete-source-reader.md)和[来源钱包记录](../verification/source-wallet-reader.md)；本页早期片段保留历史范围，不将局部结果升级成开账/epoch证明。
+当前增量：第八once位的私有受保护开账phase已装配原68表、tenant birth、109表basis、纯规划、固定writer与strict v2/实际84post/唯一提交。原七类公开ScanKind和scope不变；现新增独立停服只读epoch观察；正式迁移、CLI、非空runtime及在线资金接线仍后续。详见[当前事务架构](README.md#受保护钱包初始化事务)。旧五类真实PG补验见[原记录](../verification/maintenance-financial-postgres.md)，68表与84表分别见[业务来源记录](../verification/complete-source-reader.md)和[来源钱包记录](../verification/source-wallet-reader.md)；本页早期片段保留历史范围，不将局部结果升级成开账/epoch证明。
 
 本页描述 022-C0-T0/T1/T2 与 T3 库级维护基础设施。统一入口见[系统架构](README.md)，锁合同以[T0 §10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)为准，Snapshot 以[T1 根冻结](../../specs/022-self-service-payments/c0-snapshot-lifecycle-contract.md#10-根冻结范围与尚未开放的能力)为准，T2以[真实授权](../../specs/022-self-service-payments/c0-authority-contract.md)、T3以[受控读取租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[人工/券来源关联窄合同](../../specs/022-self-service-payments/c0-source-link-contract.md)、[sandbox capture直接关联合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[采购预算投影合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)及[采购attempt关系合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)为准。当前ReadLease提供旧五类局部扫描、第六类68表/七算法业务来源读取及第七类84表/八算法来源与钱包读取；ScanFunding保留兼容三表和21表入口。它们是库级维护能力，没有普通main、HTTP、生产维护CLI或普通在线资金写入装配；本页顶部所述私有phase是新增的候选维护写入闭环。旧范围真实PG/race与新增组合各自记录，不将历史局部验证升级为lot/basis/epoch证明。
 
@@ -78,9 +78,16 @@ EOF与Err及显式Close全部观察 / 出口重核]
     Phase[私有受保护phase / 第八once
 自读pre68和birth / 109basis / draft
 固定writer / strict v2 / actual84post与post109]
-    Future[后续独立epoch观察 / runtime
+    Observe[独立ObserveFundingLots / 新RR只读
+current catalog与完整history / fresh stopped
+原strict v2及当前84表 / RO终结与cleanup]
+    Observation[Matched / Uninitialized / DifferentEpoch
+普通描述值 / 不改变原Unknown / 无写许可]
+    Future[后续非空runtime
 正式迁移 / CLI / 全资金接线]
     Caller --> Connect --> Preflight --> Locks --> Gate --> Begin
+    Gate -->|Observe独占唯一Begin| Observe --> Observation
+    Observe -->|失败零结果| Destroy
     Gate -->|不建立Snapshot| Cleanup
     Begin --> Plan --> Catalog
     Begin --> Init --> Catalog
@@ -302,3 +309,12 @@ Coverage只表示本84表与八算法域的执行完整；没有epoch如实misma
 [完整合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)和[当前总图](README.md#受保护钱包初始化事务)为本片现状。phase保持原busy、私有nonce/state及累计30秒预算，自读完整68表/tenant出生事务列NULL/16空表和109basis，自己构造draft与v2。固定writer只在原Init Writing阶段，epoch最后、flush后真实84重扫、strict proof所有绑定及fresh catalog/history/identity再核，再实际读109并比同事务pre。全部成功才由私有owner消费ready发送一次COMMIT；Plan也先成功提交只读事务再发布结果。
 
 phase latch永久保留；公开Commit不得在失败或半完成后绕过。原ReadLease仍按七kind提供读取完成证明，无新增权威出口。提交未知关闭原socket并保留Unknown，不自动重做；当前无独立生产观察器。库级候选验证及源码身份见[验证记录](../verification/protected-init-phase.md)。前面独立叶子及T0–T3的“未装配”文字描述各自历史范围，不将其旧测试当新事务证据。
+
+
+## 独立 epoch 观察路径
+
+新[观察入口](../../internal/maintenancetrust/funding_lots_observe.go)从新 Acquire 消费唯一 Begin，持有原 busy 到 RR READ ONLY 验证、原 ROLLBACK、取消回调 ACK 及独立 cleanup 全部完成。它不经 Installation/Attest，不修改 16 空表发行条件；私有 snapshot facts 复用固定身份、完整history、fresh stopped与真实前驱投影，不向 observer 发行旧 authority evidence。
+
+全16表空才是 Uninitialized；非空必须完成84表/八算法及[原件深复制](../../internal/fundinglotscan/epoch_proof_projection.go)、[strict v2绑定](../../internal/maintenancetrust/funding_lots_observed_proof.go)才返回 Matched/DifferentEpoch。同 ID 异摘要、半套表、坏原件或当前图不符为错误零值。原 Unknown 永久保留；新结论不识别原网络 attempt，不自动重做。历史basis只比保存绑定，不能对已经营的109表强等；init-only postCounts不复用。
+
+[合同](../../specs/022-self-service-payments/c0-epoch-observer-contract.md)与[验证](../verification/epoch-observer.md)说明当前库级候选范围。没有普通main/HTTP/worker/迁移/权限/生产CLI接线；非空 runtime 与正式资金路径继续后续。

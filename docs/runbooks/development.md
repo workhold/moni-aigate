@@ -221,11 +221,11 @@ BROWSER_QA_REAL_MAIN_TEST=1 BROWSER_QA_ERROR_TEST=1 go test -race ./scripts/brow
 CLI示例（自行在安全终端设置`MONI_API_KEY`与已授权公开模型名，示例不包含真实Key）：
 
 ```sh
-curl http://localhost:58123/v1/responses \
+curl http://localhost:8080/v1/responses \
   -H "Authorization: Bearer $MONI_API_KEY" -H 'Content-Type: application/json' \
   -d '{"model":"your-responses-model","input":"hello","max_output_tokens":32,"store":false}'
 
-curl http://localhost:58123/v1/messages \
+curl http://localhost:8080/v1/messages \
   -H "x-api-key: $MONI_API_KEY" -H 'anthropic-version: 2023-06-01' \
   -H 'Content-Type: application/json' \
   -d '{"model":"your-messages-model","messages":[{"role":"user","content":"hello"}],"max_tokens":32}'
@@ -236,11 +236,11 @@ Messages不可同时发送Bearer和x-api-key；协议须与模型profile一致�
 Embeddings/Rerank选择相应模型后，Playground显示文本/文本列表或query/documents、top_n等字段，隐藏生成输出与流式选项。API还支持Embeddings token数组；详细范围见[009](../../specs/009-retrieval-protocols/spec.md)。平台须设置整个请求的聚合输入硬界、输出上限/默认输出0及输出价0，并核实供应商对聚合计费量的保证。不要将单文档context当整批计费上界。
 
 ```sh
-curl http://localhost:58123/v1/embeddings \
+curl http://localhost:8080/v1/embeddings \
   -H "Authorization: Bearer $MONI_API_KEY" -H 'Content-Type: application/json' \
   -d '{"model":"your-embedding-model","input":["hello","world"],"encoding_format":"float"}'
 
-curl http://localhost:58123/v1/rerank \
+curl http://localhost:8080/v1/rerank \
   -H "Authorization: Bearer $MONI_API_KEY" -H 'Content-Type: application/json' \
   -d '{"model":"your-jina-rerank-model","query":"hello","documents":["hello world","another text"],"top_n":1,"return_documents":true}'
 ```
@@ -256,11 +256,11 @@ curl http://localhost:58123/v1/rerank \
 JSON示例中`your-gemini-model`应替换为已授权的公开模型名。请求体保持原生`contents`、可选`systemInstruction`和`generationConfig`，不含`model`或`stream`：
 
 ```sh
-curl 'http://localhost:58123/v1beta/models/your-gemini-model:generateContent' \
+curl 'http://localhost:8080/v1beta/models/your-gemini-model:generateContent' \
   -H "Authorization: Bearer $MONI_API_KEY" -H 'Content-Type: application/json' \
   -d '{"contents":[{"role":"user","parts":[{"text":"hello"}]}],"systemInstruction":{"parts":[{"text":"Be concise."}]},"generationConfig":{"maxOutputTokens":32,"candidateCount":1}}'
 
-curl -N 'http://localhost:58123/v1beta/models/your-gemini-model:streamGenerateContent?alt=sse' \
+curl -N 'http://localhost:8080/v1beta/models/your-gemini-model:streamGenerateContent?alt=sse' \
   -H "Authorization: Bearer $MONI_API_KEY" -H 'Content-Type: application/json' \
   -d '{"contents":[{"role":"user","parts":[{"text":"hello"}]}],"generationConfig":{"maxOutputTokens":32,"candidateCount":1}}'
 ```
@@ -433,7 +433,7 @@ manual按原优先级和权重选路；cost_first在健康、授权、容量与�
 
 ## 公开模型与售价目录020
 
-直接访问`/pricing`或本机[58123价格页](http://localhost:58123/pricing)，无需账号、会话、MFA或API Key。它使用独立公开布局，不进入客户工作台，也不请求个人资料。模型默认`public_visible=false`，升级不会自动公开既有模型；空目录是默认状态。
+直接访问`/pricing`或[本机价格页](http://localhost:8080/pricing)，无需账号、会话、MFA或API Key。它使用独立公开布局，不进入客户工作台，也不请求个人资料。模型默认`public_visible=false`，升级不会自动公开既有模型；空目录是默认状态。
 
 管理员在平台模型列表中打开公开配置，读取当前公开状态后显式保存。`public_revision`为独立正整数字符串，只保护公开标记；启停、路由revision及售价版本各有自己的含义。公开前须有合法逻辑名/profile，隐藏不受损坏profile阻碍。停用模型允许预设公开标记，但目录仅展示公开且启用的模型；重新启用会恢复展示。
 
@@ -490,9 +490,9 @@ curl --get http://localhost:8080/api/public/models \
 
 `make verify-mvp`的完整Go race套件每包预算为600秒。真实进程、密码哈希与商业用例增加后，240秒旧预算不足；仅延长测试期限，生产密码哈希成本、请求超时和测试断言保持原值。必须显式传专用TEST_DATABASE_URL，跳过数据库测试不算验收。
 
-本轮[84表来源与钱包读取](../verification/source-wallet-reader.md)按独立opt-in验证：非空C0使用owner RR核真实SQL与算法；真实维护Plan/Init仍保持16表空并如实报告缺epoch。已提交epoch环境尚无新post/runtime授权，不能用旧空安装发行入口或Init lease任意SQL代替protected phase。当前ReadLease没有SQL只读解析器，固定scanner仅发送受审SELECT；phase、严格v2与basis现已按[新合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)完成库级候选组合；独立观察/runtime、正式迁移/CLI及在线writer继续后续。
+本轮[84表来源与钱包读取](../verification/source-wallet-reader.md)按独立opt-in验证：非空C0使用owner RR核真实SQL与算法；真实维护Plan/Init仍保持16表空并如实报告缺epoch。已提交epoch环境尚无新post/runtime授权，不能用旧空安装发行入口或Init lease任意SQL代替protected phase。当前ReadLease没有SQL只读解析器，固定scanner仅发送受审SELECT；phase、严格v2与basis现已按[新合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)完成库级候选组合；独立停服只读epoch观察现已进入库级候选实现；非空runtime、正式迁移/CLI及在线writer继续后续。
 
 
-固定109表[basis与v2叶子](../verification/basis-proof-v2.md)为独立库专项：basis使用原迁移隔离schema与只读RR，先验证真实目录/UTF8，再读取原二进制；v2无需数据库，兼容差分放维护包单向引用。二者没有生产CLI，不新增启动参数或要求开发者手工发行证明；不能将CanonicalV2或Summary当运行授权。专库测试须串行并清理，不改同集群预览或全局设置；受保护phase/开账/epoch已完成库级候选装配，独立非空epoch观察/runtime、正式迁移及CLI/在线接线仍在后续；执行证据见[本片记录](../verification/protected-init-phase.md)。
+固定109表[basis与v2叶子](../verification/basis-proof-v2.md)为独立库专项：basis使用原迁移隔离schema与只读RR，先验证真实目录/UTF8，再读取原二进制；v2无需数据库，兼容差分放维护包单向引用。二者没有生产CLI，不新增启动参数或要求开发者手工发行证明；不能将CanonicalV2或Summary当运行授权。专库测试须串行并清理，不改同集群预览或全局设置；受保护phase/开账/epoch已完成库级候选装配，独立停服只读epoch观察已作为库级候选实现；非空runtime、正式迁移及CLI/在线接线仍在后续；执行证据见[事务记录](../verification/protected-init-phase.md)与[观察记录](../verification/epoch-observer.md)。
 
-受保护开账的完整维护专项须同时设置 `C0_MAINTENANCE_DATABASE_URL` 与 `MONI_TEST_DATABASE_URL` 指向上述同一专库，再串行运行 `go test -race -p 1 ./internal/maintenancetrust ./internal/maintenancescan ./internal/fundinglotbasis ./internal/fundinglotproof ./internal/fundinglotinit ./internal/fundinglotscan ./internal/fundinglotverify ./scripts/online-dependency-qa -count=1 -timeout 900s`。前者启用真实Gate/Permit/phase，后者启用basis/seed来源SQL；仅一个开关通过不能替代另一组。900秒是测试包累计预算，产品phase累计30秒、原leaf预算及断言不变。检查具体SKIP和失败，精确执行记录见[事务验证](../verification/protected-init-phase.md)。
+受保护开账的完整维护专项须同时设置 `C0_MAINTENANCE_DATABASE_URL` 与 `MONI_TEST_DATABASE_URL` 指向上述同一专库，再串行运行 `go test -race -p 1 ./internal/maintenancetrust ./internal/maintenancescan ./internal/fundinglotbasis ./internal/fundinglotproof ./internal/fundinglotinit ./internal/fundinglotscan ./internal/fundinglotverify ./scripts/online-dependency-qa -count=1 -timeout 1200s`。前者启用真实Gate/Permit/phase与独立观察器，后者启用basis/seed来源SQL；仅一个开关通过不能替代另一组。本轮实际以900秒预算通过维护包（894.881秒）；新增经营、沙箱和故障场景后，建议为手动串行专项保留1200秒累计测试包预算。产品phase/观察事务累计30秒、原leaf与独立cleanup预算及断言不变。检查具体SKIP和失败，精确执行记录见[事务验证](../verification/protected-init-phase.md)与[观察验证](../verification/epoch-observer.md)。
