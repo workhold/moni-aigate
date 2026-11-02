@@ -335,3 +335,8 @@ nil context、坏UTF8/NUL、非法数字、同表重复主键(ID相同，即使�
 实施证据需写明命令/真实退出、标准库依赖、无生产import和上述未授权范围；不修改既有VerifyLedger/VerifyFunding/Rebuild，不运行main或触碰用户预览。只有根汇总审阅后才更新统一架构与manifest。本片通过后可另行冻结：同RR静态ledger reader（直接消费本API）/独立source图规则/完整lot序列重放三条并行线；任何一条未完成都不能发行全源RuntimeProof或开账ready plan。
 
 V0-R后续状态：同RR静态ledger reader已按[独立冻结合同](c0-ledger-reader-contract.md)交付并通过[真实PG专项](../../docs/verification/funding-ledger-reader.md)，成为上述纯API的首个产品代码调用方；§12关于无生产import的实施证据保留原纯片范围。reader没有运行入口或完整来源证明，不改变独立source图和lot序列重放仍待实施的门禁。
+
+
+## 局部读取基础实施跟踪（2026-11-02）
+
+[资金同session合同](c0-financial-read-session-contract.md)已冻结并实现21表owned原始图，在原ScanFunding中一次读取并核四个局部摘要；[人工/券关系合同](c0-funding-source-graph-contract.md)与[CustomerKey资金合同](c0-customer-key-graph-contract.md)的独立core已落地。此处只更新局部依赖状态，本文完整七域pre/post phase、lot序列、cross-domain、basis/epoch与资金接线仍未实现。旧SourceLinks/ledger数字及元数据前置保留，不以单core mismatch接受语言弱化组合资格。完整scanner必须继续同session纳入采购evidence/事件、PB独立图与完整sandbox，不接受旧分kindScanProof合成全来源通过。专库与本地验证范围见[本轮记录](../../docs/verification/funding-financial-graph.md)。

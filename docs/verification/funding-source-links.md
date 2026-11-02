@@ -26,3 +26,6 @@ go test -race -count=1 -run '^TestMaintenanceConsumersPostgresFundedSnapshot$' -
 ```
 
 必须确认Plan与Init两个子项均实际PASS、没有SKIP；报告仍仅为`manual_voucher_receipt_links`。该reader不证明sandbox capture/evidence/order/effect图、完整资金来源coverage、basis、epoch、退款、生产维护CLI或资金写入。其余全仓、固定专库`make verify-mvp`、部署profile及生产环境验收仍按各自计划单独进行。
+
+
+2026-11-02后续已有[21表同session新入口](funding-financial-graph.md)，另核人工/券完整来源关系及CustomerKey资金图。本文仍记录旧三表source↔receipt窄scope及其历史验收，不将新core或旧证据升级为完整FundingSources/全源proof。

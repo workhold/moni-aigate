@@ -1,0 +1,33 @@
+# 022-C0：资金原始图同租约读取与组合基础合同
+
+2026-11-02，根冻结。本片承接独立来源核验候选§10–11，把账本、人工/券来源、客户Key资金关系保留在同一个私有owned原始图中。它是完整pre/post phase scanner的必要基础，不开放完整全来源通过路径；采购evidence/PB独立图、完整sandbox、basis/epoch仍须按原目标继续。
+
+## 1. 兼容入口与唯一事实
+
+旧ReadLedgerFacts、ReadFundingSourceFacts、ReadProcurementAttemptBindingFacts及其维护wrapper保留原查询、scope、错误类别、预算和单次Finish行为。新固定入口`billing.ReadFundingFinancialFacts(ctx, FundingSourceFactQuery, schema)`只返回私有保存的`FundingFinancialFacts`，公开四个安全摘要：LedgerSummary、SourceLinksSummary、SourceGraphSummary、CustomerKeySummary；无raw、完成记录或事实→proof出口。假的query只能形成无权威描述。新`maintenancescan.VerifyFundingFinancialMaintenance`消费原ScanFunding lease；与旧三表wrapper在同Permit下只能选择其一，不重复消费kind，不将旧结果拼进新结果。
+
+Ledger与来源/Key共用同一次ledger_accounts/journals/journal_lines读取。先把现有ledger唯一core拆为readRaw→CheckLedgerRows，旧wrapper继续沿原SQL和参数（第一页bool=!hasCursor）、原字段/预算/错误运行；新session以私有预算adapter调用同一raw core，不复制账本算法。组合入口保留原ledger raw对journal.created_txid规范正int64与created_at有限微秒的前置资格：不符时整组合Execution/零facts；这是四域组合的共同前置，不改变SourceGraph独立core将对应坏行计mismatch、Key独立core不解释其历史的合同。新session在ledger的私有query/rows adapter逐Next/Scan观察原ctx，三表返回后再次核ctx才登记EOF；不修改旧paging循环。新增共用纯DTO `FundingGraphJournalRow{ID,TenantID,OperationID,Kind,Reference,Actor,Currency,CreatedTXID string; CreatedAt time.Time}`，由根唯一声明。Account/Line使用既有Ledger DTO；Users/Tenants使用既有只含ID的采购DTO；audit/outbox复用既有完整安全DTO，不复用采购的业务判断。
+
+## 2. 固定私有session与表完成记录
+
+billing内私有session仅由固定总入口建立，持同ctx/query/schema、一个累计budget、owned图和封闭reader枚举/完成记录。SQL context由真实lease私有adapter持有，CPU context只是取消视图；不对每reader续期，不Begin/Commit/Rollback或取得业务锁。不提供公共session构造、MarkComplete、callback/provider或FromFacts/FromDigest/Trusted API。
+
+固定全表并集共21表：users、tenants、ledger_accounts、journals、journal_lines、credit_orders、funding_receipts、voucher_batches、vouchers、voucher_revocations、voucher_revocation_decisions、voucher_redemptions、commerce_commands、commerce_operation_receipts、audit_events、projection_outbox、api_keys、request_records、reservations、settlements、refund_orders。固定列/DTO分别沿来源图及CustomerKey精确合同；读取这些合同所需字段的静态并集，不读取密码/MFA/邮箱、券码摘要/密钥版本、模型正文、客户或供应商凭据。缺字段或权限失败，不自动补权、换owner或降级。
+
+每表独立128行C序keyset；commerce按operation_id，outbox按event_id，其余按id。显式列、无JOIN/聚合/业务过滤，无写侧validator。nullable保持NULL，BIGINT/NUMERIC按text，不走float。每页真正Next=false后核Err与Close，满128行继续下一页。游标严格前进，首次页与空ID用独立bool区分；ledger保持自己的已冻结SQL bool约定，其余为hasCursor，不混用。
+
+只有本固定reader完成全部EOF/Err/Close及末尾ctx检查后，才在本session私有记录登记其实际行数；共享ledger raw函数成功返回时才登记其三张表，任何失败丢弃全部图。固定总入口逐项检查全部21表完成，不接受外部完成位；四个core和反向扫描执行完后另记本session算法完成。数据mismatch不阻止其它必需表/core继续执行；执行错误返回零facts。
+
+## 3. 资源与完成边界
+
+本库级组合profile为整session100000实际源行、16MiB所有原始投影文本、原ReadLease最多30秒；同表只读一次、交多个core不重复计源预算，不重置预算或deadline。纯core自身输入资源界继续执行，预算不是Go RSS/数据库排序内存承诺。完整phase候选的百万事实/更大字节profile仍须统一测量与冻结，不因本片实现而自动生效。
+
+固定流程：Require(ScanFunding)→schema→同session21表→CheckLedgerRows/原SourceLinks/独立SourceGraph/CustomerKeyGraph→全部完成检查→唯一Finish。summary仅固定scope、安全计数与一致性/合同缺证，无原文/ID/秘密；新维护结果仅正常Finish后保存本次私有facts与同一原Permit的ScanProof。原Snapshot结束/撤销即全部结果失效。nil、零值、JSON、另Permit、缺scope不得造proof。
+
+错误封闭为Input/Resource/Canceled/Timeout/Execution；任何Query/Next/Scan/Err/Close、游标、EOF、预算、context、core执行或Finish错误均零结果并Abort维护lease。不泄漏driver/SQL/raw cause。来源/Key数据矛盾按各合同返回安全计数，不能伪称执行失败以跳过其余数据。组合同时保留旧SourceLinks对非规范金额/重复输入的core Input资格；这类core执行错误统一映射Execution并返回零facts，不把旧core的失败补造成新core通过。
+
+## 4. 验收与仍需推进
+
+新21表固定投影、0/1/127/128/129分页与完整故障矩阵；nullable/time/金额与共享audit/ledger映射；跨首末表累计预算；真实context取消/timeout；缺表/核心错误全零；结果脱敏与原Permit绑定。专用PG Plan/Init使用真实业务API正例、隔离管理员损坏关系反例及前后完整只读对照；缺专库明确SKIP，不记商业验收通过。相关race/vet与架构检查由根汇合后执行。
+
+本片不登记完整七域coverage，不接受旧局部ScanProof合成，不发行RuntimeProof、basis、epoch、资金writer或生产CLI。尚未实施域必须作为依赖错误阻断未来完整phase，不能把它们伪装为indeterminate。真正历史缺证只沿各独立core精确合同计数。后续固定同session继续采购/PB/sandbox全图，再封闭pre/post外层kind与唯一Finish，同pre snapshot读取basis后才允许protected init/post replay与APP接线。

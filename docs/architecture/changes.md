@@ -1891,3 +1891,51 @@ T3隔离修复完成：依赖门禁race、原失败进程、真实双reader九�
 - modified `docs/verification/procurement-budget-maintenance.md`
 
 </details>
+
+## 2026-11-02T07:22:57Z · 9fcd1c1f1a13
+
+冻结并实现21表资金同session原始图，新增人工券及CustomerKey独立核验与原ScanFunding四摘要入口，保持旧reader语义和无资金写权边界；同步README、HLD/LLD、维护链路图、QA及验证范围
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1299 个源文件；本次 25 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/maintenance-gate.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/architecture-funding-financial-graph.json`
+- added `docs/verification/funding-financial-graph.md`
+- modified `docs/verification/funding-ledger-reader.md`
+- modified `docs/verification/funding-source-links.md`
+- added `internal/billing/funding_financial_read.go`
+- added `internal/billing/funding_financial_read_test.go`
+- modified `internal/billing/funding_ledger_query.go`
+- added `internal/fundinglotverify/customer_key_graph.go`
+- added `internal/fundinglotverify/customer_key_graph_test.go`
+- added `internal/fundinglotverify/funding_graph_rows.go`
+- added `internal/fundinglotverify/funding_source_graph.go`
+- added `internal/fundinglotverify/funding_source_graph_checks.go`
+- added `internal/fundinglotverify/funding_source_graph_test.go`
+- added `internal/maintenancescan/funding_financial.go`
+- added `internal/maintenancescan/funding_financial_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- added `specs/022-self-service-payments/c0-customer-key-graph-contract.md`
+- added `specs/022-self-service-payments/c0-financial-read-session-contract.md`
+- added `specs/022-self-service-payments/c0-funding-source-graph-contract.md`
+- modified `specs/022-self-service-payments/c0-verifier-contract.md`
+
+</details>
+
+## 2026-11-02T07:24:39Z · f72d97fb2991
+
+记录资金21表最终四包及全仓race、vet、make check和19图语法检查结果；复核模块、链路、权限与未验边界无进一步结构变化，真实PG保持明确SKIP
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1299 个源文件；本次 1 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/funding-financial-graph.md`
+
+</details>

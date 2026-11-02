@@ -605,7 +605,7 @@ erDiagram
 
 源码入口：[一次发行与Verify](../../internal/maintenancetrust/permit.go)、[真实身份与新鲜停服](../../internal/maintenancetrust/authority_identity.go)、[manifest与完整history](../../internal/maintenancetrust/authority_manifest.go)、[完整accounts锁](../../internal/maintenancetrust/authority_accounts.go)、[前驱编排](../../internal/maintenancetrust/predecessor.go)、[v1规范编码](../../internal/maintenancetrust/predecessor_codec.go)、[typed rows与资源记账](../../internal/maintenancetrust/predecessor_rows.go)、[服务端有界投影](../../internal/maintenancetrust/predecessor_sql.go)。
 
-### 受控读取租约与五个局部核验结果（022-C0-T3）
+### 受控读取租约与局部核验结果（022-C0-T3）
 
 [冻结合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)对应的`Permit.BeginScan(ctx, kind)`现已实现。它保留原Snapshot/rawTx，从BeginScan到Finish/Abort持续持原Gate busy；SQL、遍历和CPU间隙共用一次最多30秒，并取原Snapshot/caller更早期限。每个Permit的同kind只尝试一次，入口与正常出口均完整重核T2 evidence及新鲜runtime停服采样；期间Permit.Verify、另一个scan及Commit/Rollback/Close立即busy，不并发SQL。失败或取消撤销整个Snapshot与全部既有proof，原socket由watcher关闭；正在使用pgx的方法返回后才释放其operation/busy，不另goroutine drain。
 
@@ -617,6 +617,10 @@ ledger与PB维护入口是[`maintenancescan.VerifyLedgerMaintenance`](../../inte
 
 第三个[`maintenancescan.VerifyFundingSourceLinksMaintenance`](../../internal/maintenancescan/funding_sources.go)在同一个ScanFunding lease内组合billing固定[来源reader](../../internal/billing/funding_source_read.go)与[纯关联core](../../internal/fundinglotverify/funding_sources.go)，全量读取`credit_orders`、`voucher_redemptions`、`funding_receipts`并只双向核对人工核款和兑换券source↔receipt关系。sandbox capture收据过去在这里仅计为未覆盖；新增第四个`ScanSandboxSources` reader使用单独的固定合同和扫描kind，不升级`ScanFunding`的既有结果。
 
+新增[`VerifyFundingFinancialMaintenance`](../../internal/maintenancescan/funding_financial.go)仍消费同一个`ScanFunding` kind，与旧三表入口在每个Permit中二选一。它调用[billing私有同session reader](../../internal/billing/funding_financial_read.go)，在原lease里一次完整读取21表：用户/租户、三张账本、人工单据/receipt、批次/券/兑换/撤销、commerce命令与终态、audit/outbox、Key/请求/预占/结算/消费退款。固定128行C序分页，21表累计100000实际行与16MiB原始投影文本，沿原最多30秒期限；完整EOF、Err、Close及ctx复核后登记私有表完成记录。ledger raw沿[唯一三表算法](../../internal/billing/funding_ledger_query.go)读取，不复制其SQL/预算规则；共享用户、租户、账户、journal与line仅读一次，多core不重复计源预算。返回facts只保留owned图及四个安全摘要，无原始值或完成位出口。
+
+四个摘要分别是原ledger、原source links、[`manual_voucher_funding_graph_v1`](../../internal/fundinglotverify/funding_source_graph.go)和[`customer_key_financial_graph_v1`](../../internal/fundinglotverify/customer_key_graph.go)。新来源core核双审券状态/commerce终态、资格时点、精确两行入账及唯一audit/outbox；六种券kind与四种payment kind精确分派，后者只核通用身份/FK而不冒充支付图已验。Key core独立重算R、状态关系、原始消费C、held/spent和approved退款累计；退款不减spent，允许多笔pending退款暂时超过可退款额。零预占/零收费仍需真实零分录。组合保留旧ledger元数据与SourceLinks数字资格，执行错误整体零facts；普通mismatch不跳过其它core。维护wrapper校验四scope、闭合五类错误、唯一Finish后才绑定原Permit，Snapshot终结即撤销。[合同](../../specs/022-self-service-payments/c0-financial-read-session-contract.md)与[验证范围](../verification/funding-financial-graph.md)细化资源、历史缺证和失败边界。
+
 [`maintenancescan.VerifySandboxCaptureReceiptLinksMaintenance`](../../internal/maintenancescan/sandbox_capture_links.go)消费真实`ScanSandboxSources` lease，通过billing的固定 reader完整读取`funding_receipts`与`payment_captures`两表，再由[`CheckSandboxCaptureReceiptLinks`](../../internal/fundinglotverify/sandbox_capture_links.go)按精确TEXT ID双向检查收据和capture的租户、钱包入账金额与币种。没有过滤/join/helper谓词；两表共用每ReadLease 100000行、16MiB逻辑字符串与最多30秒期限，失败返回零facts。结果scope为`sandbox_capture_receipt_reference_v1`，逐capture报告`UnvalidatedCaptureGraphs`和`UnvalidatedLedgerEffects`。它不检查订单、身份、evidence、processing/review/effect链，也不读journal/ledger/outbox/audit或验证PSP真实性；直接链接一致不表示完整SandboxFacts或任何资金效果正确。reader只属于库级维护集成，没有普通main、HTTP、支付worker、线上writer、basis或epoch装配。[窄合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)与[本片验证状态](../verification/sandbox-capture-links.md)独立记录；目前真实PG Plan/Init及整仓专库验收待执行。
 
 第五个[`maintenancescan.VerifyProcurementMaintenance`](../../internal/maintenancescan/procurement.go)消费唯一ScanProcurement lease，通过[billing固定reader](../../internal/billing/procurement_attempt_read.go)及[历史扩展reader](../../internal/billing/procurement_command_read.go)完整读取十九表：channels、credentials、versions、credential pool、tenants、requests、cost versions、采购账户、永久绑定、upstream attempts、采购 reservations、budget events、users ID、cost corrections、cost proposals、procurement commands、balance observations、audit events与projection outbox。每表128行C序keyset至EOF，pool用独立复合tuple游标；十九表共用100000行、16MiB投影文本预算和原lease期限，audit只扫一次。
@@ -627,7 +631,7 @@ ledger与PB维护入口是[`maintenancescan.VerifyLedgerMaintenance`](../../inte
 
 领域raw-facts接口不接受或发行authority；维护入口不接受外部provider或预计算通过位，假的query只能生成无权威局部描述，不能铸造维护结果。原三类历史缺证继续indeterminate，原public Verifier的独立LOGIN/owner/history/RRRO/SET/Commit规则未放宽。资源profile限制客户端返回与保留的逻辑输入，不证明PG排序/CTE/array_agg内存或Go RSS界。
 
-这五个局部结果与ScanProof均不授全来源`CoverageComplete`、资金写入或生产运行权，不能成为init/basis/epoch就绪条件。Funding、Key、采购、支付B来源完整图及lot仍需独立逐列读取、双向sweep、coverage清单与完整组合器；sandbox reader只核两个表的直接关联，采购reader只核十九表内五类局部关系，仍未覆盖evidence/metering、完整事件重放及PB/客户资金交叉图，也未减少完整来源未覆盖数。basis、epoch、封闭writer和生产维护CLI尚未完成。ReadLease历史范围见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)，人工/券来源关联见[验证](../verification/funding-source-links.md)，sandbox窄片与采购预算/attempt/双审关系分别见[独立记录](../verification/sandbox-capture-links.md)和[采购状态记录](../verification/procurement-budget-maintenance.md)，彼此不沿用T2/T3历史通过计数。
+这五类扫描的局部结果与ScanProof均不授全来源`CoverageComplete`、资金写入或生产运行权，不能成为init/basis/epoch就绪条件。人工/券与Key局部原始图已接入同session；采购evidence/完整事件、PB独立图、完整支付B来源与lot仍需独立逐列读取、双向sweep、coverage清单与固定完整组合器；sandbox reader只核两个表的直接关联，采购reader只核十九表内五类局部关系，仍未覆盖evidence/metering、完整事件重放及PB/客户资金交叉图，也未减少完整来源未覆盖数。basis、epoch、封闭writer和生产维护CLI尚未完成。ReadLease历史范围见[T3专项](../verification/maintenance-read-lease.md)与[集成记录](../verification/maintenance-read-lease-integration.md)，人工/券来源关联见[验证](../verification/funding-source-links.md)，sandbox窄片与采购预算/attempt/双审关系分别见[独立记录](../verification/sandbox-capture-links.md)和[采购状态记录](../verification/procurement-budget-maintenance.md)，彼此不沿用T2/T3历史通过计数。
 
 ### 资金来源、退款与后续经营设计
 
@@ -877,7 +881,7 @@ flowchart TB
     Catalog[C0 静态对象和最小权限\n固定profile expected / 同RR checker已实现]
     Gate[C0-T0/T1 双锁与私有单次RR\nONLY125与固定catalog stage]
     Permit[C0-T2 维护Permit已实现\n实际身份与完整前驱]
-    Lease[C0-T3 ReadLease与五个reader已实现\nledger / PB / 人工与券 / sandbox直接关联 / 采购五项局部核验\n不授全源coverage]
+    Lease[C0-T3 ReadLease与五类扫描已实现\n资金21表四摘要 / ledger / PB / sandbox直接关联 / 采购五摘要\n不授全源coverage]
     Replay[C0 独立全源与来源重放\n不调用写侧planner或SQL谓词自证]
     Init[C0 basis与开账切换\n精确旧集合、提交未知只查原ID]
     Online[C0 全资金路径接线\n来源、预占、收尾、消费退款]
@@ -921,7 +925,7 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 商业闭环 | 已实现，限定本地验收 | 人工双人入账 → 客户授权/Key → 六协议调用 → 预占/结算 → 报表/成本/退款；[014](../verification/mvp-release-qualification.md) |
 | 模型/渠道经营 | 已实现 | 不可变版本、三格式发现、1..32 成员池、跨渠道整批启停；[011](../verification/model-discovery.md)、[012](../verification/credential-pools.md)、[013](../verification/channel-operations.md) |
 | Key 经营 | 已实现 | 来源策略、动态运行限额、模型/地域/预算/期限三版本独立编辑；[017 验证](../verification/key-configuration.md) |
-| 来源追踪核验基础 | C0部分依赖已实现，尚未进入完整资金链 | 纯分配/账本行检查、[离线metadata候选](../verification/funding-lot-descriptor.md)、[同RR完整账本读取](../verification/funding-ledger-reader.md)、[正式静态checker](funding-lot-catalog.md)、[维护Gate与读取租约](maintenance-gate.md)；T3真实ReadLease及ledger/PB/manual-voucher/sandbox capture/采购五个局部reader已实现。采购reader现在在同一ScanProcurement内比对十九张固定关系表，产生预算、attempt绑定/报价、成本双审、命令/观察、成本审计/消息五个局部摘要，不验证evidence/metering、完整事件重放、PB/客户资金交叉关系、供应商账单或完整采购事实图；sandbox reader也不检查capture完整证据/账务图。两者都不减少full-source coverage debt；合同与验证边界见[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)与[状态记录](../verification/procurement-budget-maintenance.md)，以及[sandbox合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)与[状态记录](../verification/sandbox-capture-links.md)。全来源scanner/组合、lot核验、basis/epoch及全资金接线仍后续，PG安装profile/生产推广另验 |
+| 来源追踪核验基础 | C0部分依赖已实现，尚未进入完整资金链 | 纯分配/账本行检查、[离线metadata候选](../verification/funding-lot-descriptor.md)、[同RR完整账本读取](../verification/funding-ledger-reader.md)、[正式静态checker](funding-lot-catalog.md)、[维护Gate与读取租约](maintenance-gate.md)；T3真实ReadLease及五类扫描已实现；资金kind可选择21表同session raw图，报告ledger/人工券source links/完整人工券图/Key资金图四摘要，旧三表入口保持兼容。采购reader现在在同一ScanProcurement内比对十九张固定关系表，产生预算、attempt绑定/报价、成本双审、命令/观察、成本审计/消息五个局部摘要，不验证evidence/metering、完整事件重放、PB/客户资金交叉关系、供应商账单或完整采购事实图；sandbox reader也不检查capture完整证据/账务图。两者都不减少full-source coverage debt；合同与验证边界见[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)与[状态记录](../verification/procurement-budget-maintenance.md)，以及[sandbox合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)与[状态记录](../verification/sandbox-capture-links.md)。全来源scanner/组合、lot核验、basis/epoch及全资金接线仍后续，PG安装profile/生产推广另验 |
 | 商品价值/期限纯算法 | C-V已实现，无生产接线 | [productvalue](../../internal/productvalue/value.go)精确端点价值差、原本金分区索引归因、UTC6原锚点月/半开term；[合同与专项](../../specs/023-periodic-products/c-value-contract.md)，无购买/权益发放/退款授权 |
 | 上游模型成本 | 已实现 | 每渠道精确上游模型的输入/输出单价、生效版本、每attempt快照及unknown；受控采购更正双人审批，尚无自动供应商账单同步 |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
@@ -994,3 +998,12 @@ make architecture-check
 2026-11-02采购历史后续集成：按三份新合同扩为十九表/五局部摘要，audit单次读取复用，单lease预算及唯一Finish保持。独立复核后修复无关outbox空operation的全量pair去重漏检；补丁后四包race与vet通过，整仓Go race的早于该最后补丁版本也通过，具体版本范围见[采购验证记录](../verification/procurement-budget-maintenance.md)。README补充部署主机依赖、已有卷密码边界与贡献入口，启动命令经独立静态核对。本轮未配置专库，真实Plan/Init、容器/1Panel与make verify-mvp未执行。无迁移、新数据库关系、在线资金权限或生产装配变化；完整evidence/事件重放/PB与资金交叉图、全来源/basis/epoch仍后续。
 
 十九表交付最终检查：根复核后架构清单与只读检查通过，`make check`通过（全仓vet及Vue/TypeScript strict构建）；最终验证文字收口后再次同步清单。数据库opt-in仍明确SKIP，原限界不变。
+
+
+2026-11-02资金同session增量：新增21表固定owned原始图、人工/券独立来源关系及CustomerKey资金纯core，旧ledger reader仅抽取唯一raw读取算法而保留既有入口语义。ScanFunding不新增kind，旧三表与新21表入口每Permit二选一，四摘要只Finish一次。没有新增迁移、数据库关系、在线资金权限、HTTP/main装配、basis或epoch。真实PG QA补足成员模型授权、将真实业务写入放在候选C0触发器安装前、以fixture完成后的legacy基线比较，并校正全表租户计数；未配置专库的执行仍明确SKIP。完整来源/采购evidence/PB/sandbox与phase组合依赖保持开放，见[本轮记录](../verification/funding-financial-graph.md)。
+
+
+本轮19图的Mermaid12.2.0语法解析通过，逐图内容SHA见[当前图记录](../verification/architecture-funding-financial-graph.json)；本轮未执行浏览器布局渲染，既有PNG仅证明其历史版本。
+
+
+21表资金片最终验证：全部并行实现与独立复核汇合后，相关四包race/vet、全仓`go test -race -count=1 ./...`及`make check`通过。真实Plan/Init子用例因缺C0专库配置明确SKIP，未运行`make verify-mvp`；最终验证文字同步后再次由根更新清单并做只读检查，未改变上述能力与生产边界。

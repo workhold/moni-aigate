@@ -1,6 +1,6 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3采购十九表五摘要与历史核验边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-02（T3资金21表同session与人工券/Key独立图）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 目标、前提与边界
 
@@ -429,3 +429,12 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 [023-C-V合同](../../specs/023-periodic-products/c-value-contract.md)先冻结纯`productvalue`模块：权益区间按绝对端点价值差回溯本金，支持购买价与权益量不同、混合本金分区索引归因和UTC原锚点月。无数据库、网络、生产调用或资金授权；C商品售卖仍依赖完整022-C及独立购买/到期/退款合同，不从纯算法完成推导可售卖。
 
 [025-A1-G合同](../../specs/025-production-ha/a1-model-process-contract.md)补齐真实main模型sending/最终证据两种崩溃运行器；独立loopback模型fixture与PG物理等待负责精确定位窗口，生产代码不加入测试暂停。保留原request deadline+5秒排空、未知不重放和采购独立留置。运行器实现、纯fixture测试、真实专库/制品执行按不同证据范围记录；当前无显式数据库和制品配置，实际模型SIGKILL恢复、目标容器/1Panel、多活与外部供应商仍待独立验收。
+
+
+## 资金21表同session与四项局部核验
+
+[session合同](../../specs/022-self-service-payments/c0-financial-read-session-contract.md)已冻结并实现；[来源合同](../../specs/022-self-service-payments/c0-funding-source-graph-contract.md)与[Key合同](../../specs/022-self-service-payments/c0-customer-key-graph-contract.md)分别定义完整双向关系、唯一键、固定原始投影、算术和历史可证性。旧ledger/source入口保留原语义，原ScanFunding每Permit选择三表旧入口或21表新入口；新入口共享同一原始图、累计源预算和ctx，私有EOF及算法记录不可由调用者装配。完整读取后运行ledger、source links、人工/券图及Key图，四scope成功且唯一Finish后才发行局部维护结果；错误整体零事实，普通mismatch不提前跳过其余core。
+
+人工/券覆盖共同入账、批次/兑换/撤销、commerce终态、精确两行journal、audit/outbox；Key覆盖R/预占/结算/消费退款及held/spent，退款不减spent，多pending退款允许暂时超过最终可退额。payment四kind仅共同词法/主键/FK检查，完整支付图未授coverage。保留旧ledger xid/time前置和SourceLinks规范金额资格，不从当前角色或独立clock_timestamp倒推历史授权/顺序。库级API无迁移、HTTP/main或资金写权限变更。统一链路与当前边界见[维护架构](../architecture/maintenance-gate.md)，专项与未执行真实PG的状态见[验证](../verification/funding-financial-graph.md)。
+
+完整pre/post phase仍须同session纳入采购evidence/事件、PB独立原始图、完整sandbox及跨域关系，再冻结完整coverage与唯一Finish；旧分kind局部ScanProof不能拼成全源proof。basis同pre快照读取、protected init/post replay/epoch及APP接线保持后续串行依赖。

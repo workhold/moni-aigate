@@ -46,3 +46,6 @@ Limit  (cost=26.42..26.74 rows=128 width=160)
 该小fixture采用Seq Scan后Sort，未证明当前生产索引支持大历史C排序，也不代表网关p95或生产长历史核验预算通过。后续索引/DDL与量级预算另审。
 
 本片只认证同RR三表读取及传入行的结构与算术一致，不返回Balanced/CoverageComplete、不授Permit/RuntimeProof或资金写权限，不验证完整source、Key、采购、PB/B、C0 lot/epoch或外部支付真实性。统一架构/HLD/LLD与manifest由根汇合集成。
+
+
+2026-11-02复用改动：为[资金21表同session](funding-financial-graph.md)将原唯一三表reader拆为私有raw读取与原CheckLedgerRows阶段；旧入口保留原SQL、字段、第一页bool与错误身份。新入口以私有预算/context adapter共用同一次账本原始行；新验证范围独立记录，不沿用本文真实PG历史计数宣称本轮已验。

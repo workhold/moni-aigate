@@ -1,0 +1,140 @@
+{
+  "date": "2026-11-02",
+  "mermaid_version": "12.2.0",
+  "validation": "syntax parse only; browser layout rendering not run in this slice",
+  "diagrams": [
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 1,
+      "sha256": "f6583f121babc8dcf12c431ece0ae09327c2f8a5976dbf8780ada5b74dd1430e",
+      "type": "flowchart-v2",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 2,
+      "sha256": "bd1b927640643d04c89e51af8a314883f7818dbb5b22bd3a44d88133e5b5eddf",
+      "type": "flowchart-v2",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 3,
+      "sha256": "157856b796ea982ce037d4b5bbb115c334a00fc79cf4ef1dae9e2504c9191bc2",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 4,
+      "sha256": "53e5facc0f5db286f9b5491e84b736933c5d5f3b8ec048f340b950cbe2874faf",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 5,
+      "sha256": "910cb1343378c46a1035be91607df854227b08ae11d9faf22074fea71e8876bd",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 6,
+      "sha256": "910cb56adbb354839d228c4cfeb92fe29fe21b50e6b6267dc6f80452f214325f",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 7,
+      "sha256": "b75e89096575f5eabe7b8580281fd56c5863710c8e532b7bd342ceb8595538d5",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 8,
+      "sha256": "0e7174b4bea3948eb7dfb7f79d7652e7334e3a5862b39357b4ab49b4726d5928",
+      "type": "flowchart-v2",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 9,
+      "sha256": "1907077fe60b43b34136edfd8d6ae8f2a580b70e4ad834722471d5b81f36eb5a",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 10,
+      "sha256": "bab522da174233677fbf8c6212a447da761f927b58d3adf74b1198f5e1f9c9b6",
+      "type": "er",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 11,
+      "sha256": "0842d5504631294498996fc3556a6a3f05855eece0a352b04b8eb82e9808b2ed",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 12,
+      "sha256": "8bb922c6e97629d08d3a9d1afd2a17078d4a23f8c324ff37a1954a9de10e93b7",
+      "type": "sequence",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 13,
+      "sha256": "c3d9f02e25d09d41c648f70d5fb119c61cfc6e87d1a94733d0444b85d871e64c",
+      "type": "er",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 14,
+      "sha256": "6058378a0ca92cc4a558d2177e8c1716f0efd986623bbc8d8d4b66fa1df45b8d",
+      "type": "er",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 15,
+      "sha256": "09baa1ccd694912d7b2de88bb2c15783d4a6f3022120dfeb57e2ca16898e8d7b",
+      "type": "flowchart-v2",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/README.md",
+      "source_index": 16,
+      "sha256": "2abbd2cac01236b865393a7624cbdbd2c2f19762e28e629b62d54a89497b79ec",
+      "type": "flowchart-v2",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/funding-lot-catalog.md",
+      "source_index": 1,
+      "sha256": "72173ed5dcdfcadfc2a4dc9b5d2a51d5672105ad09aa37697e7abd6ba40e4a8d",
+      "type": "flowchart-v2",
+      "parsed": true
+    },
+    {
+      "file": "docs/architecture/maintenance-gate.md",
+      "source_index": 1,
+      "sha256": "680cdfed4d1b56fa9fe0dc8adc0678b197960cb756b01feb380f35722a1735b6",
+      "type": "flowchart-v2",
+      "parsed": true
+    },
+    {
+      "file": "README.md",
+      "source_index": 1,
+      "sha256": "7b35151d898cebb0b907db5df785b783293a22e5de24244f3c9d599e76c9e16d",
+      "type": "flowchart-v2",
+      "parsed": true
+    }
+  ]
+}

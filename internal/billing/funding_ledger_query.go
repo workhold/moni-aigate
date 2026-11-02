@@ -96,7 +96,34 @@ func fundingLedgerReadPages(query fundingLedgerQuery, sql string, scan func(fund
 	}
 }
 
+// fundingLedgerRowBudget is private and only accounts for actual source rows.
+// It lets the fixed financial session share one budget without changing legacy
+// ledger projections, pagination parameters or error identities.
+type fundingLedgerRowBudget interface{ add(...string) error }
+
 func readFundingLedgerCore(ctx context.Context, query fundingLedgerQuery, schema string) (fundingLedgerSnapshot, error) {
+	var budget fundingLedgerBudget
+	out, err := readFundingLedgerRows(ctx, query, schema, &budget)
+	if err != nil {
+		return fundingLedgerSnapshot{}, err
+	}
+	out.check, err = fundinglotverify.CheckLedgerRows(ctx, out.rows)
+	if err != nil {
+		switch err {
+		case fundinglotverify.ErrLedgerRowsResource:
+			return fundingLedgerSnapshot{}, fundingLedgerReadResource
+		case fundinglotverify.ErrLedgerRowsCanceled:
+			return fundingLedgerSnapshot{}, fundingLedgerReadCanceled
+		default:
+			return fundingLedgerSnapshot{}, fundingLedgerReadExecution
+		}
+	}
+	return out, nil
+}
+
+// readFundingLedgerRows is the unique three-table raw reader. It does not run
+// a checker or authenticate a snapshot, and returns no partial rows on failure.
+func readFundingLedgerRows(ctx context.Context, query fundingLedgerQuery, schema string, budget fundingLedgerRowBudget) (fundingLedgerSnapshot, error) {
 	if ctx == nil {
 		return fundingLedgerSnapshot{}, fundingLedgerReadInput
 	}
@@ -105,7 +132,6 @@ func readFundingLedgerCore(ctx context.Context, query fundingLedgerQuery, schema
 	}
 	var err error
 	var out fundingLedgerSnapshot
-	var budget fundingLedgerBudget
 	err = fundingLedgerReadPages(query, fundingLedgerPageSQL(schema, "ledger_accounts"), func(rows fundingLedgerRows) (string, error) {
 		var row fundinglotverify.LedgerAccountRow
 		if err := rows.Scan(&row.ID, &row.TenantID, &row.Kind, &row.Balance); err != nil {
@@ -158,17 +184,6 @@ func readFundingLedgerCore(ctx context.Context, query fundingLedgerQuery, schema
 	})
 	if err != nil {
 		return fundingLedgerSnapshot{}, err
-	}
-	out.check, err = fundinglotverify.CheckLedgerRows(ctx, out.rows)
-	if err != nil {
-		switch err {
-		case fundinglotverify.ErrLedgerRowsResource:
-			return fundingLedgerSnapshot{}, fundingLedgerReadResource
-		case fundinglotverify.ErrLedgerRowsCanceled:
-			return fundingLedgerSnapshot{}, fundingLedgerReadCanceled
-		default:
-			return fundingLedgerSnapshot{}, fundingLedgerReadExecution
-		}
 	}
 	return out, nil
 }
