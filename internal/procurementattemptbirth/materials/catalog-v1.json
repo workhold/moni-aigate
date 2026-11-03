@@ -1,0 +1,1518 @@
+{
+  "format_version": 1,
+  "candidate": "birth-exact-link-a2-v1",
+  "status": "static_expectations_not_runtime_authority",
+  "counts": {
+    "functions": 38,
+    "definer_functions": 4,
+    "triggers": 68,
+    "new_tables": 12,
+    "new_columns": 262,
+    "original_nullable_columns_added": 38,
+    "constraints": 137
+  },
+  "assembly_order": [
+    "preflight-v1.sql",
+    "a2-tables-v1.sql",
+    "a2-original-columns-v1.sql",
+    "a2-constraints-v1.sql",
+    "account-pure-v1.sql",
+    "authority-v1.sql",
+    "validators-v1.sql",
+    "guards-v1.sql",
+    "account-writer-v1.sql",
+    "attempt-writer-v1.sql",
+    "request-capture-v1.sql",
+    "triggers-v1.sql",
+    "permissions-v1.sql"
+  ],
+  "functions": [
+    {
+      "name": "pp_ac_uuid_v1",
+      "input_types": [
+        "text",
+        "pg_catalog.bool"
+      ],
+      "source_material": "account-pure-v1.sql",
+      "source_index": 0,
+      "body_template_sha256": "af18de9f9ed8858fef778f5ea8a5e571dbaa27425dfbae4e29b86386bfe2f843",
+      "language": "sql",
+      "security_definer": false,
+      "volatility": "i",
+      "parallel": "s",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ac_text_v1",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "account-pure-v1.sql",
+      "source_index": 1,
+      "body_template_sha256": "836bfd7c0658cce99fce1d513302d7fbc124c8070a9a49278110b9114c91af30",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "i",
+      "parallel": "s",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ac_command_digest_v1",
+      "input_types": [
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8",
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8"
+      ],
+      "source_material": "account-pure-v1.sql",
+      "source_index": 2,
+      "body_template_sha256": "41cf55922bb12c6b733f19a779eac3b42f92b4552f30004b53f20af5660de4d7",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "i",
+      "parallel": "s",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ac_time_v1",
+      "input_types": [
+        "timestamptz"
+      ],
+      "source_material": "account-pure-v1.sql",
+      "source_index": 3,
+      "body_template_sha256": "5a9cd0d620b6f12d0d42f7774037172e849538f1ff34b7c2b1db5a7204edfd8e",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "i",
+      "parallel": "s",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ac_snapshot_v1",
+      "input_types": [
+        "text",
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8",
+        "pg_catalog.numeric",
+        "pg_catalog.numeric",
+        "pg_catalog.int8",
+        "timestamptz"
+      ],
+      "source_material": "account-pure-v1.sql",
+      "source_index": 4,
+      "body_template_sha256": "afc11f855d8eccc4624e400e5f001b6b82733898ca943828846de478e92a122b",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "i",
+      "parallel": "s",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_require_writer_v1",
+      "input_types": [],
+      "source_material": "authority-v1.sql",
+      "source_index": 0,
+      "body_template_sha256": "e776787f97482525dbdc47c57a560b09433984bcc9d558a1a16cf7333db964c0",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_require_root_v1",
+      "input_types": [],
+      "source_material": "authority-v1.sql",
+      "source_index": 1,
+      "body_template_sha256": "00be455286b12ca418d2db9390372f3bac0e1c95de85b498acaeebc87038178d",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_validate_request_leaf_v1",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 0,
+      "body_template_sha256": "783aa856d99ff378a732c2221a29d9ffe068e217100fcf7e059b58188ef21915",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_validate_attempt_leaf_v1",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 1,
+      "body_template_sha256": "f22e6a68ad887269190f270ef5b6a3f93f75704daba9622be38f7e2dc6992fb5",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_validate_command_leaf_v1",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 2,
+      "body_template_sha256": "b582191db9d8df9de2bc32711db6de49c9c4fbae7dbb57a70ffe5b52e4445389",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_validate_account_leaf_v1",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 3,
+      "body_template_sha256": "622e91083b5a6efbf8e124ee1bda85dbaef50a2fa05d4e22dd3a1ab9b223a355",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_validate_request",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 4,
+      "body_template_sha256": "cf4aa58ee3c8a5fd6c4c542b86c35c737883739b3f5e117381c6d468759162ae",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_validate_attempt",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 5,
+      "body_template_sha256": "b4c2b7c3f635e9a86a146252b7f0a90274be9dc31e58296fc9ae0a3265643b31",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_validate_account",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 6,
+      "body_template_sha256": "fe743a39da2579979e63070b77645c3e2cc7084cefbaea221cdf8477bd1587af",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_validate_root",
+      "input_types": [
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 7,
+      "body_template_sha256": "6d9cda0aa20788ee2bc07e127c2e6e715c5ccea42943fc8a8c6f4b3d3293d875",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_validate_original",
+      "input_types": [
+        "text",
+        "text",
+        "text"
+      ],
+      "source_material": "validators-v1.sql",
+      "source_index": 8,
+      "body_template_sha256": "12501c989bb06dc5078c01da656c038bfbdf6911a972c90d915038f965b5fc86",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_request_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 0,
+      "body_template_sha256": "2f38b77a46e99a555501f3fbda7d2d8a9ebd483f5a55cbdfa8607929688816d2",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_shared_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 1,
+      "body_template_sha256": "077b1ddcfe8fbf9b89bf968b8994a5c455bd58b71f715027e8575f538992dcef",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_source_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 2,
+      "body_template_sha256": "6b3ec21533900e3054ee0518d426764d77211cd320eaeaae19aeafe09c1184aa",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_attempt_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 3,
+      "body_template_sha256": "cb2e34ad54c1cb3f5fe9b1a878bee31bca882e6d78583b4094eb32d12a50bbcc",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_attempt_result_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 4,
+      "body_template_sha256": "ba76639a0250cfc59732242529775596a7c2d01cb2834020a47a9911993b5ae3",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_account_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 5,
+      "body_template_sha256": "ea8ce9775c9abdfc34bbe94ff74e13c5d35aa8ee1bcc2c989f042bc908876bda",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_account_result_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 6,
+      "body_template_sha256": "ef1cdbd6b0d777aee708a8395ff9fee2d2d61d04ed33a0b2c11c05ef04c4ffb1",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_procurement_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 7,
+      "body_template_sha256": "e4251ce45f8743a643da2abde71a77e1c583ca1c3b77751199f628e38895504e",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_attempt_birth_p_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 8,
+      "body_template_sha256": "e6b1f3b16d33ac5c740276bbe1e9a3f48301caf0c8b388ce084a99e3a7b2e00d",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_event_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 9,
+      "body_template_sha256": "7ebfe827d1883aa6686c0be3bcfaf344f631d2aef3f8e209607397b29a0a8136",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_command_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 10,
+      "body_template_sha256": "68daecd337ef7c9f50558b23f9c02e9c82abb1334bb2614ae77a6b91ecf92629",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_audit_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 11,
+      "body_template_sha256": "811c8ff78bfd0117fde6bc3134eea3f90571a16dde28c22a91f24d4af7532821",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_parent_write_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 12,
+      "body_template_sha256": "3a35ac19b4da8c7af9fe4f5fb2c95d5240010b3eb0f22b3f44098fb23d410515",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_deferred_v1",
+      "input_types": [],
+      "source_material": "guards-v1.sql",
+      "source_index": 13,
+      "body_template_sha256": "7a9c5f311d4879f44fb8cc62c9a4f71ea3d8c939ba97d47ece09f4b49c1d46b3",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_account_mutate_v1",
+      "input_types": [
+        "text",
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8",
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8"
+      ],
+      "source_material": "account-writer-v1.sql",
+      "source_index": 0,
+      "body_template_sha256": "d7dd7b72397690c14f7d567d25d151f9680e1abec6518e5e358c90f90c1e1ca4",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_create_account",
+      "input_types": [
+        "text",
+        "text",
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8"
+      ],
+      "source_material": "account-writer-v1.sql",
+      "source_index": 1,
+      "body_template_sha256": "86e184421a41a6ac1413a01feab8ee08a8c368f0aa13a3b7983d9462791e6bce",
+      "language": "plpgsql",
+      "security_definer": true,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_configure_account",
+      "input_types": [
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8",
+        "text",
+        "text",
+        "text",
+        "pg_catalog.int8"
+      ],
+      "source_material": "account-writer-v1.sql",
+      "source_index": 2,
+      "body_template_sha256": "0a01408984130e60e0c6c01da6899996680f66cc52ccf890069f1cf44737eb61",
+      "language": "plpgsql",
+      "security_definer": true,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_apply_supplier_pb",
+      "input_types": [
+        "text",
+        "text",
+        "text"
+      ],
+      "source_material": "attempt-writer-v1.sql",
+      "source_index": 0,
+      "body_template_sha256": "207e8367f1b90e9e2b8846e3a887ab5e3e8ee00602893c6ce7573434443a0ef6",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_account_effect",
+      "input_types": [
+        "text",
+        "text",
+        "text",
+        "text"
+      ],
+      "source_material": "attempt-writer-v1.sql",
+      "source_index": 1,
+      "body_template_sha256": "5a4f6ba3d07f57155cc1c7fba3d68cf2c8a5977d86ca280bac066a7368cb0aa0",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_complete_attempt_birth",
+      "input_types": [
+        "text",
+        "text",
+        "text"
+      ],
+      "source_material": "attempt-writer-v1.sql",
+      "source_index": 2,
+      "body_template_sha256": "31f6175814c162f2e29f375def7d388f73b94f4fa7107fa5f1d5a9a26f1eb103",
+      "language": "plpgsql",
+      "security_definer": false,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_record_attempt",
+      "input_types": [
+        "text",
+        "text",
+        "pg_catalog.int4",
+        "text",
+        "text",
+        "text",
+        "text",
+        "jsonb",
+        "pg_catalog.bool",
+        "bytea",
+        "pg_catalog.int8",
+        "pg_catalog.int8",
+        "bytea"
+      ],
+      "source_material": "attempt-writer-v1.sql",
+      "source_index": 3,
+      "body_template_sha256": "4a8779eb5e797c67f909b2e917df21e14be52cb538138c53a47a639b1a02e2ea",
+      "language": "plpgsql",
+      "security_definer": true,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    },
+    {
+      "name": "pp_ab_capture_request_v1",
+      "input_types": [],
+      "source_material": "request-capture-v1.sql",
+      "source_index": 0,
+      "body_template_sha256": "93640d61bf9c84990616f489f0797abd785b89fb52e73cde96adad8b5175ac81",
+      "language": "plpgsql",
+      "security_definer": true,
+      "volatility": "v",
+      "parallel": "u",
+      "owner": "writer",
+      "search_path": [
+        "{{MONI_SCHEMA}}",
+        "pg_catalog",
+        "pg_temp"
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "name": "aa_pp_ab_root_write",
+      "table": "pp_operation_roots",
+      "function": "pp_ab_shared_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_root_truncate",
+      "table": "pp_operation_roots",
+      "function": "pp_ab_shared_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_root_complete",
+      "table": "pp_operation_roots",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_step_write",
+      "table": "pp_root_steps",
+      "function": "pp_ab_shared_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_step_truncate",
+      "table": "pp_root_steps",
+      "function": "pp_ab_shared_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_step_complete",
+      "table": "pp_root_steps",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_request_origin_write",
+      "table": "pp_request_origins",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_request_origin_truncate",
+      "table": "pp_request_origins",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_request_origin_complete",
+      "table": "pp_request_origins",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_request_head_write",
+      "table": "pp_request_heads",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_request_head_truncate",
+      "table": "pp_request_heads",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_request_head_complete",
+      "table": "pp_request_heads",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_attempt_origin_write",
+      "table": "pp_attempt_origins",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_attempt_origin_truncate",
+      "table": "pp_attempt_origins",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_attempt_origin_complete",
+      "table": "pp_attempt_origins",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_attempt_head_write",
+      "table": "pp_attempt_heads",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_attempt_head_truncate",
+      "table": "pp_attempt_heads",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_attempt_head_complete",
+      "table": "pp_attempt_heads",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_attempt_node_write",
+      "table": "pp_attempt_nodes",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_attempt_node_truncate",
+      "table": "pp_attempt_nodes",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_attempt_node_complete",
+      "table": "pp_attempt_nodes",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_command_source_write",
+      "table": "pp_account_command_sources",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_command_source_truncate",
+      "table": "pp_account_command_sources",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_command_source_complete",
+      "table": "pp_account_command_sources",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_account_origin_write",
+      "table": "pp_account_origins",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_account_origin_truncate",
+      "table": "pp_account_origins",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_account_origin_complete",
+      "table": "pp_account_origins",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_account_head_write",
+      "table": "pp_account_heads",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_account_head_truncate",
+      "table": "pp_account_heads",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_account_head_complete",
+      "table": "pp_account_heads",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_account_journal_write",
+      "table": "pp_account_journal",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_account_journal_truncate",
+      "table": "pp_account_journal",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_account_journal_complete",
+      "table": "pp_account_journal",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_transition_write",
+      "table": "pp_procurement_transitions",
+      "function": "pp_ab_source_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_transition_truncate",
+      "table": "pp_procurement_transitions",
+      "function": "pp_ab_source_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_transition_complete",
+      "table": "pp_procurement_transitions",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_request_write",
+      "table": "request_records",
+      "function": "pp_ab_request_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_request_truncate",
+      "table": "request_records",
+      "function": "pp_ab_request_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_request_complete",
+      "table": "request_records",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_attempt_write",
+      "table": "upstream_attempts",
+      "function": "pp_ab_attempt_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_attempt_truncate",
+      "table": "upstream_attempts",
+      "function": "pp_ab_attempt_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_attempt_complete",
+      "table": "upstream_attempts",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_account_write",
+      "table": "procurement_accounts",
+      "function": "pp_ab_account_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_account_truncate",
+      "table": "procurement_accounts",
+      "function": "pp_ab_account_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_account_complete",
+      "table": "procurement_accounts",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_procurement_write",
+      "table": "procurement_reservations",
+      "function": "pp_ab_procurement_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_procurement_truncate",
+      "table": "procurement_reservations",
+      "function": "pp_ab_procurement_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_procurement_complete",
+      "table": "procurement_reservations",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_event_write",
+      "table": "procurement_budget_events",
+      "function": "pp_ab_event_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_event_truncate",
+      "table": "procurement_budget_events",
+      "function": "pp_ab_event_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_event_complete",
+      "table": "procurement_budget_events",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_command_write",
+      "table": "procurement_commands",
+      "function": "pp_ab_command_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_command_truncate",
+      "table": "procurement_commands",
+      "function": "pp_ab_command_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_command_complete",
+      "table": "procurement_commands",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "aa_pp_ab_audit_write",
+      "table": "audit_events",
+      "function": "pp_ab_audit_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_audit_truncate",
+      "table": "audit_events",
+      "function": "pp_ab_audit_write_v1",
+      "type": 34,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_audit_complete",
+      "table": "audit_events",
+      "function": "pp_ab_deferred_v1",
+      "type": 29,
+      "deferrable": true,
+      "initially_deferred": true,
+      "enabled": "O",
+      "constraint": true
+    },
+    {
+      "name": "zz_pp_ab_request_birth",
+      "table": "request_records",
+      "function": "pp_ab_capture_request_v1",
+      "type": 5,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_attempt_result",
+      "table": "upstream_attempts",
+      "function": "pp_ab_attempt_result_v1",
+      "type": 23,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_ab_account_result",
+      "table": "procurement_accounts",
+      "function": "pp_ab_account_result_v1",
+      "type": 23,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "zz_pp_attempt_birth_p",
+      "table": "procurement_reservations",
+      "function": "pp_ab_attempt_birth_p_v1",
+      "type": 7,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_parent_lock_only",
+      "table": "users",
+      "function": "pp_ab_parent_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_parent_lock_only",
+      "table": "tenants",
+      "function": "pp_ab_parent_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_parent_lock_only",
+      "table": "memberships",
+      "function": "pp_ab_parent_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_parent_lock_only",
+      "table": "models",
+      "function": "pp_ab_parent_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_parent_lock_only",
+      "table": "channels",
+      "function": "pp_ab_parent_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_parent_lock_only",
+      "table": "api_keys",
+      "function": "pp_ab_parent_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    },
+    {
+      "name": "aa_pp_ab_parent_lock_only",
+      "table": "reservations",
+      "function": "pp_ab_parent_write_v1",
+      "type": 31,
+      "deferrable": false,
+      "initially_deferred": false,
+      "enabled": "O",
+      "constraint": false
+    }
+  ],
+  "boundary": {
+    "automatic_installation": false,
+    "serving_profile": false,
+    "runtime_qualification": false,
+    "old_candidates_modified": false
+  },
+  "materials": [
+    {
+      "name": "preflight-v1.sql",
+      "sha256": "df9cc40c31a41799158a495f011e4a54e1cc6b66d04efc65a74a6cc074822377"
+    },
+    {
+      "name": "a2-tables-v1.sql",
+      "sha256": "a77697b78c745379ac5f03a83792360e29923518c46c1dd98c70ce4fccfc2595"
+    },
+    {
+      "name": "a2-original-columns-v1.sql",
+      "sha256": "4842d267a6c2763bfa61828aa6e431d8f60efb24d6998d9bbd33536df2d37053"
+    },
+    {
+      "name": "a2-constraints-v1.sql",
+      "sha256": "21f5c2bd136663e0e39a055db4d77da5fd0a299be1a71c625d4838e331f05bd7"
+    },
+    {
+      "name": "account-pure-v1.sql",
+      "sha256": "04494ffe1a078990f71323ecb356eccfecf17b7c9648a30d51d2c0feb4ccfa0f"
+    },
+    {
+      "name": "authority-v1.sql",
+      "sha256": "579aaf0c25ceb10f6b49a81667681c1fc6073e1b6c6489f31532124124b82efe"
+    },
+    {
+      "name": "validators-v1.sql",
+      "sha256": "12aa892af011241f48e17315e031b6f04961efddd33a37fa584890a9524e829a"
+    },
+    {
+      "name": "guards-v1.sql",
+      "sha256": "695a33f87ed2632cd909f943d0c5105a61d9271368f134c5c33c64643e8228a1"
+    },
+    {
+      "name": "account-writer-v1.sql",
+      "sha256": "0dda1de67afb5fdf16b479f9e0907aa320690f7698f93eab63a711434e6f0578"
+    },
+    {
+      "name": "attempt-writer-v1.sql",
+      "sha256": "a69f442ae6326afbac6d54d02b47dd785bc8e4f0acdaff0e45cd95d7572496a9"
+    },
+    {
+      "name": "request-capture-v1.sql",
+      "sha256": "84a8713e2cf162e78ea8af09c9871895ac0a7a2353958ee53c1fadb06d81076e"
+    },
+    {
+      "name": "triggers-v1.sql",
+      "sha256": "be8254c968b11daa3e517cb38add2f4ab111a885391d7d6a5dd1171ced4521ba"
+    },
+    {
+      "name": "permissions-v1.sql",
+      "sha256": "96d4ffc1682783b9d23da253559d3fd8def0ab3e8b9270c9a14f5302e244eaf1"
+    }
+  ]
+}

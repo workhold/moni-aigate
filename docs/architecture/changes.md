@@ -3721,3 +3721,66 @@ A1新增父资格/PB真实等待、提前约束、提交回执丢失与全catalo
 - added `specs/023-periodic-products/b-procurement-request-birth-pb-wait-contract.md`
 
 </details>
+
+## 2026-11-03T21:01:25Z · 41ca2d206187
+
+实现独立A2采购出生候选：12表262列与38原扩列、NULL激活保持FK、38函数68触发器、精确ACL及test-only安装catalog；actual APP整链/PB导入/故障/争用限定race通过，同步统一模块图、managed时序、权限和未启用线上边界，更新README使用与候选状态
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1858 个源文件；本次 31 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-attempt-birth.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/procurement-attempt-birth.md`
+- added `internal/procurementattemptbirth/attempt_fault_postgres_test.go`
+- added `internal/procurementattemptbirth/attempt_postgres_test.go`
+- added `internal/procurementattemptbirth/attempt_wait_postgres_test.go`
+- added `internal/procurementattemptbirth/catalog_postgres_test.go`
+- added `internal/procurementattemptbirth/material_pins.go`
+- added `internal/procurementattemptbirth/materials.go`
+- added `internal/procurementattemptbirth/materials/a2-constraints-v1.sql`
+- added `internal/procurementattemptbirth/materials/a2-original-columns-v1.sql`
+- added `internal/procurementattemptbirth/materials/a2-tables-v1.sql`
+- added `internal/procurementattemptbirth/materials/account-pure-v1.sql`
+- added `internal/procurementattemptbirth/materials/account-writer-v1.sql`
+- added `internal/procurementattemptbirth/materials/attempt-writer-v1.sql`
+- added `internal/procurementattemptbirth/materials/authority-v1.sql`
+- added `internal/procurementattemptbirth/materials/catalog-v1.json`
+- added `internal/procurementattemptbirth/materials/guards-v1.sql`
+- added `internal/procurementattemptbirth/materials/permissions-v1.sql`
+- added `internal/procurementattemptbirth/materials/preflight-v1.sql`
+- added `internal/procurementattemptbirth/materials/relation-descriptor-v1.json`
+- added `internal/procurementattemptbirth/materials/request-capture-v1.sql`
+- added `internal/procurementattemptbirth/materials/triggers-v1.sql`
+- added `internal/procurementattemptbirth/materials/validators-v1.sql`
+- added `internal/procurementattemptbirth/materials_test.go`
+- modified `specs/023-periodic-products/b-procurement-attempt-installation-contract.md`
+- modified `specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md`
+
+</details>
+
+## 2026-11-03T21:03:59Z · be4ea4b994b7
+
+汇合A2最终材料与验证：规范化SQL末尾空白并同步固定摘要，复核NULL激活FK/38函数68hook/权限边界；最终actual APP race12顶层25子项PASS，同步18.045s原件与架构/HLD/LLD/README，普通运行profile不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1858 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/procurement-attempt-birth.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/procurement-attempt-birth.md`
+- modified `internal/procurementattemptbirth/material_pins.go`
+- modified `internal/procurementattemptbirth/materials/a2-constraints-v1.sql`
+- modified `internal/procurementattemptbirth/materials/catalog-v1.json`
+- modified `internal/procurementattemptbirth/materials/relation-descriptor-v1.json`
+- modified `internal/procurementattemptbirth/materials/request-capture-v1.sql`
+
+</details>

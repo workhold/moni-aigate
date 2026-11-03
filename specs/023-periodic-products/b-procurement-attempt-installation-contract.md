@@ -1,6 +1,6 @@
 # B-P4：command＋request＋attempt 出生候选装配合同
 
-2026-11-04；集成人已审定本页的 ABI、关系清单、真实暂态、锁用授权与文件所有权，下一步按本页分配 SQL 实施。承接[完整出生根](b-procurement-attempt-birth-writer-contract.md)、[exact-link 集成](b-procurement-birth-exact-link-integration-contract.md)、[账户](b-procurement-account-contract.md)、[完整 ACL](b-procurement-full-acl-contract.md)与[PB ACL](b-procurement-pb-acl-contract.md)。本页把 A2/A3 的完整安装单元、旧材料冲突、精确接受集及源码 owner 顺序合并；不是可执行材料、已安装能力或实际 PG PASS。原 001–022、旧 relation/account-writer/A1/A0 文件与摘要不变。
+2026-11-04；集成人已审定本页的 ABI、关系清单、真实暂态、锁用授权与文件所有权，已按本页形成独立 SQL/ACL/descriptor 材料与 renderer；限定 actual APP PG 结果见[验证记录](../../docs/verification/procurement-attempt-birth.md)。承接[完整出生根](b-procurement-attempt-birth-writer-contract.md)、[exact-link 集成](b-procurement-birth-exact-link-integration-contract.md)、[账户](b-procurement-account-contract.md)、[完整 ACL](b-procurement-full-acl-contract.md)与[PB ACL](b-procurement-pb-acl-contract.md)。本页把 A2/A3 的完整安装单元、旧材料冲突、精确接受集及源码 owner 顺序合并；它是设计合同；新材料仅在隔离 fixture 安装，不是正式迁移、线上启用或完整退出矩阵已通过。原 001–022、旧 relation/account-writer/A1/A0 文件与摘要不变。
 
 ## 1. 唯一 canonical 装配与实际范围
 
@@ -90,11 +90,11 @@ pp_ad_transition_before_p
 
 ### 3.2 外键与精确边逐项替换规则
 
-[集成合同附录 A/B](b-procurement-birth-exact-link-integration-contract.md#附录-ba2消费的旧边与精确替换范围)是完整映射前像，A2 的 59 边逐一纳入安装 descriptor。标为 native 的边保留准确原名、列序、`MATCH SIMPLE/DEFERRABLE INITIALLY DEFERRED`；不装其余旧复合 FK/目标宽 UK。A1 四个 `pp_bx_*` locator FK 保持同定义。A2 新 locator 名精确定义为 `pp_ba_`＋旧 FK 名去掉开头 `pp_`，不得截断/自动命名；完整 expected 中保存每个展开后的名字与真实两端列序。
+[集成合同附录 A/B](b-procurement-birth-exact-link-integration-contract.md#附录-ba2消费的旧边与精确替换范围)是完整映射前像，A2 的 59 边逐一纳入安装 descriptor。标为 native 的边保留准确原名、列序、`MATCH SIMPLE/DEFERRABLE INITIALLY DEFERRED`；不装其余旧复合 FK/目标宽 UK。A1 四个 `pp_bx_*` locator FK 保持同定义。A2 新 locator 名精确定义为 `pp_ba_`＋旧 FK 名去掉开头 `pp_`，不得截断/自动命名；唯一额外分类是下述 `pp_ad_birth_p` 既有双列键替换边，保留准确旧名但不宣称保留旧六列 tuple。完整 expected 中保存每个展开后的名字与真实两端列序。
 
-附录 B 的 12 个保留 native 边精确为 `pp_s_attempt_birth_root_fk/pp_s_attempt_origin_head_fk/pp_s_attempt_head_origin_fk/pp_s_node_origin_fk/pp_s_account_command_root_fk/pp_s_procurement_transition_root_fk/pp_ad_head_origin/pp_ad_journal_origin/pp_ad_journal_binding/pp_ad_transition_binding/pp_ad_birth_binding/pp_ad_birth_account`；其余 47 个为新 locator。加 A1 已定的 6 native＋4 locator，共 69 个 FK，连同 22 个 PK/UK 和 46 个 CHECK，关系候选总计 137 约束；原 001–022/B-P1 约束不计入这 137 项。
+附录 B 的 12 个保留 native 边精确为 `pp_s_attempt_birth_root_fk/pp_s_attempt_origin_head_fk/pp_s_attempt_head_origin_fk/pp_s_node_origin_fk/pp_s_account_command_root_fk/pp_s_procurement_transition_root_fk/pp_ad_head_origin/pp_ad_journal_origin/pp_ad_journal_binding/pp_ad_transition_binding/pp_ad_birth_binding/pp_ad_birth_account`；另有 1 个复用原既有双列 UK 的 NULL 激活保持替换边 `pp_ad_birth_p`，其余 46 个为新 locator（包括引用 step 的固定双列 locator）。加 A1 已定的 6 native＋4 locator，共 69 个 FK，连同 22 个 PK/UK 和 46 个 CHECK，关系候选总计 137 约束；原 001–022/B-P1 约束不计入这 137 项。
 
-每个非 native 旧边以附录所列父 locator 建立真实 native FK；parent 为 step 时引用 `(root_id,step_no)`，其余按单列 PK。例外仅是原件反向出生边，避免 legacy 无条件引用 source：
+每个非 native 旧边以附录所列父 locator 建立真实 native FK；parent 为 step 时引用 `(root_id,step_no)`，下述 birth→p 复用原既有双列 UK，其余引用单列 PK。原件反向出生边另采用以下 locator 覆盖，避免 legacy 无条件引用 source：
 
 | 旧边 | 新 locator 的真实子列 → 父列 | 最终必须另核的完整关系 |
 | --- | --- | --- |
@@ -104,6 +104,26 @@ pp_ad_transition_before_p
 | `pp_ad_original_transition_fk` | procurement_budget_events(pp_transition_id) → pp_procurement_transitions(id) | 原 PE 的完整字段/五 pointer ↔ transition ↔ reserved journal |
 
 其余非 native 子列按附录所列父 locator 的**对应子槽**取值；例如 head→journal 取 journal_id，birth→transition 取 procurement_transition_id，step→origin 取 generated d，不能因同表还有 id 就选错。原件 G→step 使用 pp_root_id/pp_root_step；nullable locator 不等于省略其精确 NULL 联合。重复语义边可以有相同窄列，但每个旧边保留可追踪的命名和逐字段 exact 检查，不以一个“id 存在”查询代替多个关系。
+
+`pp_ad_birth_p` 必须安装为 `pp_attempt_origins(attempt_id,account_id)` → 原 014 已有 `procurement_reservations(attempt_id,account_id)`，准确引用其 `procurement_reservations_attempt_id_account_id_key`，保留 `MATCH SIMPLE/DEFERRABLE INITIALLY DEFERRED`。不新增 key、generated 列或布局；旧六列中 binding/xid/journal/admitted_at 仍由逐槽 exact 检查闭合。这是 **existing-key activation-preserving replacement**，不是旧六列 native FK 原样保留，也不是 `attempt_id` 单列 locator。managed 的六项联合全部非 NULL，两列边真实激活；unmanaged 的 account/binding/journal/admission 均 NULL，双列边随 account_id 为 NULL 保持未激活且必须无 p。不得把它窄化为非 NULL attempt_id 而强迫 unmanaged 创建 p，也不得删除 FK 绕过错误。
+
+### 3.3 全 59 边的 NULL 激活复核
+
+每条 `MATCH SIMPLE` 边仅在**全部实际子列非 NULL** 时执行存在性约束；locator 选取必须同时审查旧 tuple 的激活条件和合法分支中的父缺席。descriptor 的 59 条 `null_activation_review` 逐边保存旧/新触发列、受支持分支的 NULL 列及旧/新激活结果，不能只比较目标 id 类型。以下是该完整 registry 的分类摘要；本次仅修复上面的 birth→p 边，其余准确定义不变：
+
+| 子关系 / 受支持分支 | NULL 与父存在结论 |
+| --- | --- |
+| root / request birth、account command、attempt birth | account root 的 tenant/request/attempt 均 NULL；request birth 的 attempt NULL；attempt root 的三项完整。两个 attempt locator 随 attempt_id NULL 一同关闭，不要求 request/account root 存在 attempt。 |
+| step / 四种实际 kind | generated `d_attempt_birth/d_account_command/d_procurement_transition` 只有匹配 kind 非 NULL；其余 kind 的反向边保持关闭。 |
+| attempt origin / managed、unmanaged（含无报价和不完整报价） | 身份/root/step/original/head 边始终激活；binding/account/p/admission/transition 六项 managed 联合全部有值才激活。unmanaged 无 p/PE/journal/transition，相关边全部关闭；birth→p 复用双列 key 修复这一边界。 |
+| attempt head / head0、managed head1；node / 首节点 | head0 的 last_node_id NULL，不要求 node；head1 指向真实 node1。node1 previous_node_id NULL，不要求前驱。member 域尚未安装。 |
+| command source / create、configure、revision conflict、noop、not_found | 真实 command/audit 始终有父；not_found 的 journal_id NULL，journal 边关闭，其余四种均有准确 journal。 |
+| account origin/head | 本片已认证 origin/head 的相关身份与配置均非 NULL；其必需父真实存在。原 account 旧三 pointer 全 NULL 时反向 source 边关闭；部分 pointer 不降级 legacy。 |
+| journal / create、configure、configure_rejected、reserve | create.previous_id NULL，前驱边关闭；后续 ordinal 有真实前驱。command journal 的 binding/transition/attempt 保留 NULL，reserve 的 command_source_id NULL，两个 source 联合边只激活所属分支。reserve 的 before-p 五项 NULL，使旧 `pp_ad_journal_transition_before` tuple 未激活，而新的 transition_id locator 已激活：这里父 reserved transition 本来就必须存在，由同一 journal 的 transition 因果边及 exact guard/validator 核实；这个额外存在性检查不要求缺席父，也不把 NULL before-p 冒充完整旧 tuple。 |
+| reserved transition | before-p 五项为 NULL，但不消费它们作为子列的 locator；实际 quote/bounds、binding、event/journal/cause 均完整且有父。quote 维度缺失的 managed reserve 不属于支持集，必须拒绝，未来非 reserved cause 仍为 PP906。 |
+| 原 upstream/p/PE/command/audit | 真正 legacy/原 APP 绑定、余额观察、普通 audit 的整组 nullable pointer 全 NULL，反向出生 locator 关闭；A2 完整组才激活。原组部分 NULL 或错 discriminator 由 guard/validator 拒绝，不能借 MATCH SIMPLE 逃逸。 |
+
+上述复核针对本片完整合法状态及其明确暂态：缺父只能在出生顺序内由真实 deferred FK等待后续行；COMMIT 必须全闭合。`journal_transition_before` 的已说明收紧是对必需父的存在性再核，不能扩展为“所有旧 NULL tuple 都可无条件换非 NULL id”。本片以外的未来状态不由这些 locator 暗中接纳，仍按接口的 PP906/受证损坏 PP902 分类。
 
 双端 guard 在真实出生阶段执行：存在父按 §6 的准确显式 SHARE 语句锁定，**等待结束后的下一条独立 RC statement**重读，再逐槽 `IS NOT DISTINCT FROM` 比较；父 UPDATE/DELETE 在真实锁下反向枚举或拒绝。保留 request 冻结 payload、attempt 实际 quote/route/出生快照、managed 六项联合、p/PE/journal before/after/quote/admission 与原金额的全字段对照。不得 hash/截断/拼接 ID、JSONB::text 长度、归一化或空值折零。
 
@@ -154,7 +174,7 @@ pp_ac_snapshot_v1(text,text,text,text,bigint,numeric,numeric,bigint,timestamptz)
 
 四只读 leaf 是新装配的固定普通依赖，不是公开业务根；APP 仅因 deferred 传递调用获 EXECUTE，与五固定只读接口同权限边界。它们只能 SELECT/纯计算/固定异常，不执行锁、DML、mutation、授权或发行凭证。普通 require 函数核 W/actual APP/RC/3s/5s 只是一组必要条件，不构成任意同 xid 对象的出生授权。
 
-本片 `pp_account_effect` 只接受 source_kind=attempt_birth、source_id=该真实 attempt origin自然ID，消费同root预分配的唯一 reserved transition/event/journal；其余三种合法未来cause明确PP906，错证PP902。`pp_apply_supplier_pb` 亦仅消费本次真实 reserved PE，不授一般source/delta/target写面；支持将来接口的固定ABI不等于支持其全部状态机。
+`pp_account_effect` 四参 canonical 语义为 `(root_id,attempt_id,source_kind,source_id)`，不增加外部 effect/delta/target 参数。本片只接受 source_kind=attempt_birth、attempt_id=source_id=该真实 attempt origin自然ID，消费同root预分配的唯一 reserved transition/event/journal；其余三种合法未来cause明确PP906，错证PP902。`pp_apply_supplier_pb` 亦仅消费本次真实 reserved PE，不授一般source/delta/target写面；支持将来接口的固定ABI不等于支持其全部状态机。
 
 调用图固定为：command leaf 只核该 command/source/audit/journal 与其 root/step 的准确元组；attempt leaf 只核该 attempt 的出生图、原件与本条 reserved/PB 效果及 root/step；request leaf 核 request 出生/冻结快照/head0 与对应 birth root/step，**不调用 account/attempt leaf**。account leaf 枚举全链并调用 command/attempt leaf，逐 ordinal 重放配置/桶/blocker/p/PE/PB，核唯一 head 与原账户实值；不调用 request leaf、公开 validator 或自己。
 
@@ -219,9 +239,11 @@ catalog 必须核 p BEFORE INSERT 的真实名字顺序为 `aa_pp_ab_procurement
 
 账户配置与 reserve 必须在真实链中交错：create→reserve→configure→reserve，各 journal ordinal 连续、before=真实旧 head、after=真实效果、configuration_revision 仅配置变化增长。reserve before p 全 NULL、after=(revision1,prepared,U,0,false)，transition delta=(U,0)、event_key=reserve:attempt、evidence_ref=''；U=0 仍发行真实 PE/journal/PB event（若有 control）。configure noop/拒绝保留不变 H/S，不把 reserved journal 当 PP906。若遇未来非 reserve 合法 journal，先核必要身份后 PP906，不把未实现状态机成功返回。
 
+gate 采时落位：closure 在 p INSERT 前仍按原顺序完成实际 account gate；末序 p hook 在原 PB stamp 后，以已锁 A/head 和相同 U 再核相同 gate，并在该独立 statement 采真实 clock 写入 reserved transition.created_at。journal.gate_checked_at 必须逐值等该不可变 transition.created_at，pb_decision_at 等 origin/p 的原 pb_admitted_at；这两个时点不互相冒充，不追加 caller timestamp 参数、GUC 或 pending source。hook 的这次重核仍在 p 物理行出生前，原先 gate/error 优先级不移动；source 时间不是从最终账户余额倒造。effect 仅消费这些真实来源值。
+
 ## 6. 新 ACL 差异与每项显式锁用授权
 
-本节是对[全域 ACL](b-procurement-full-acl-contract.md)的 **A2 切片及已审定 lock-only 差异**；上位正文已记录本片适用范围，尚未实现或安装。W NOLOGIN/NOINHERIT，无 owner/schema CREATE、membership、SET ROLE 路径；actual session_user 必须绑定 APP LOGIN OID，owner＋SET ROLE APP 不替代。三个根 EXECUTE 只给 APP；private mutation 不给 APP/PUBLIC/peer，trigger 自动执行不要求直接 trigger EXECUTE。只读 leaf/五接口的 APP 显式调用面与其普通依赖、准确 SELECT 必须闭合。
+本节是对[全域 ACL](b-procurement-full-acl-contract.md)的 **A2 切片及已审定 lock-only 差异**；上位正文已记录本片适用范围；本片已有独立材料和限定 PG 验证，尚未安装为常规 serving profile。W NOLOGIN/NOINHERIT，无 owner/schema CREATE、membership、SET ROLE 路径；actual session_user 必须绑定 APP LOGIN OID，owner＋SET ROLE APP 不替代。三个根 EXECUTE 只给 APP；private mutation 不给 APP/PUBLIC/peer，trigger 自动执行不要求直接 trigger EXECUTE。只读 leaf/五接口的 APP 显式调用面与其普通依赖、准确 SELECT 必须闭合。
 
 ### 6.1 真实业务 DML 的准确 A2 子集
 
@@ -263,18 +285,21 @@ W SELECT 仅本片实际读取的全域 ACL 子集：十二新表准确普通列
 
 ### 6.3 PB、系统列与普通函数闭包
 
-supplier PB SQL必须逐行为等价实现原[tx_supplier](../../internal/periodicbudget/tx_supplier.go)，不能从DB根返回后再交Go补镜像。W普通PB闭包取 PB合同的13项准确签名；allocation仅INSERT id/control_id/subject_type/subject_id/origin/origin_source_id/window_id 七列，金额/基线由原 guard；control/window/allocation/event/B-P1 journal/head的精确 UPDATE/INSERT列沿PB矩阵，不授配置版本/控制创建/operations SELECT。APP Commander后配/import与原客户PB独立保留。
+managed p RETURNING后、gate前保留原readSupplier对attempt/account/request/tenant/credential/channel/binding七ID的pb_uuid接受集及真实current tuple/初态证明；即使无control也不省略，unmanaged不施加此额外UUID限制。supplier PB SQL必须逐行为等价实现原[tx_supplier](../../internal/periodicbudget/tx_supplier.go)，不能从DB根返回后再交Go补镜像。W普通PB闭包取 PB合同的13项准确签名；allocation仅INSERT id/control_id/subject_type/subject_id/origin/origin_source_id/window_id 七列，金额/基线由原 guard；control/window/allocation/event/B-P1 journal/head的精确 UPDATE/INSERT列沿PB矩阵，不授配置版本/控制创建/operations SELECT。APP Commander后配/import与原客户PB独立保留。
 
 A2 W实际 xmin 读面为 upstream_attempts、procurement_reservations、procurement_budget_events、periodic_budget_observation_journal 四表；request birth capture与本片attempt不调用readCustomer，因此不因未来dispatch/finish给W request_records.xmin。APP原Reserve/Commander/B-P1的五表sidecar仍保留。精确列级普通SELECT不能隐含xmin；PUBLIC/继承/旧表级SELECT旁路要由新profile收口并验effective权限。若正文新增实际xmin查询，先修订矩阵，不临时兜底表级SELECT。
 
 保留原 `valid_procurement_command_snapshot(text,jsonb)`→`valid_channel_batch_revision(text)` CHECK调用闭包，以及实际使用的identity纯函数/内部json helper。仅实际消费的普通 EXECUTE算必要；原PB PUBLIC收口与APP补授按PB合同，自动trigger直接EXECUTE不作为必要grant。两项allocation读权若在真实路径未被使用必须作为非必要正控制，不能把重复撤grant仍成功算失败或新增多余权。
 
+实现前补齐原 IP 检查依赖：`pp_record_attempt` 在原 Key 查询后的独立 PL/pgSQL 阶段逐项重核原 `ClientIPAllowed` 的长度/32项/4096字节与 canonical CIDR，不只检查某一个匹配项；复用原010的 `canonical_key_client_cidr(text)` 取得与 Go net/netip 一致的 IPv6 字符形式，W 必须有该准确普通 EXECUTE。比较request来源时沿原host/IPv4-mapped Unmap语义；不授Key配置写权、不新增纯函数或修改010。此新增闭包须进入新permissions/catalog与实际失权差分，不依靠当前PUBLIC重叠默认为可用。
+
 ## 7. 单 owner 文件顺序与可并行的真实边界
 
-根审定本合同与 §6 差异后，新增独立包建议固定为 `internal/procurementattemptbirth`；不修改旧包文件。renderer仅显式渲染固定字节，不连接DB或自动provision/启动。Bindings沿Schema/App/Writer/AppOID/WriterOID，安全标识与一次占位替换、避开插入名称的dollar delimiter沿已验A1；Digests逐材料固定预像SHA-256。函数未全创建时不提交半候选、不发布成功stub。
+根审定本合同与 §6 差异后，新增独立包建议固定为 `internal/procurementattemptbirth`；不修改旧包文件。renderer仅显式渲染固定字节，不连接DB或自动provision/启动。共13份SQL与两份静态JSON，15项固定摘要；完整SQL与Permissions须在同一安装事务执行，COMMIT前独立核实际catalog。Bindings沿Schema/App/Writer/AppOID/WriterOID，安全标识与一次占位替换、避开插入名称的dollar delimiter沿已验A1；Digests逐材料固定预像SHA-256。函数未全创建时不提交半候选、不发布成功stub。
 
 | 最终顺序 | 新文件/owner | 输入与交付 |
 | --- | --- | --- |
+| 0 | `materials/preflight-v1.sql`；装配owner | DML前拒旧封闭函数/已存在候选表，核identity/A0/B-P1必要前驱，不DROP或自动升级 |
 | 1 | `materials/a2-tables-v1.sql`、`a2-original-columns-v1.sql`；关系owner | A1同源71列＋另八表191列的准确DDL、七原表38扩列；不复制旧完整32表 |
 | 2 | `materials/a2-constraints-v1.sql`；关系owner独占 | §3全部真实key/CHECK/native+locator FK及59边展开registry；无宽UK；与表列descriptor一起静态验 |
 | 3 | `materials/account-pure-v1.sql`、`authority-v1.sql`；函数owner | 五个旧纯函数准确同源提取及两个新require普通函数；identity/A0由原独立材料在先安装 |
@@ -303,3 +328,5 @@ require两个函数在第3步先定义，validator叶子只依赖表与pure函�
 - 最小grant逐项实际撤还且effective true→false→true；必要失权有真实42501/回滚，继承/PUBLIC/owner/自动trigger假失权作独立正控制；APP外层deferred实际权限，准确系统列、函数owner/proconfig/trigger enabled/defaultACL/temp/search_path均验。
 
 保留RC、3秒lock/5秒statement与原上层绝对期限；只对原允许且已确定回滚的40001/40P01最多三次，55P03/57014不扩大重试。未知COMMIT只读核准确operation/root，不重发模型请求、不换operation盲做财务；本片不生成模型调用。每次实现变更先更新受影响合同/架构，所有并行结果汇合后由集成人语义复核、更新统一架构/验证记录，再执行带理由的architecture refresh与只读检查。
+
+本轮材料、真实组合与catalog的限定结果见[新A2验证](../../docs/verification/procurement-attempt-birth.md)。该记录逐项列出未完成的本节矩阵；当前PASS不关闭完整A1差分、逐grant失权/误授权攻击、未知COMMIT、A5 executor或全域profile。

@@ -132,3 +132,5 @@ V0-WL最终集成：纯包race 9.027秒、32508次短fuzz、`make check` 9.702�
 
 
 2026-11-03新增[最小旧数据投影与纯初始化规划](init-planner.md)：原68表完成一致Facts深复制九组业务原件，独立big.Int/ledger/来源核对后生成准确legacy/opening/seq0与正额lot写集，无数据库stamp、epoch/proof或写权。三tenant47行手算golden/G49及确定UUID、资源/取消/深复制已验；明确MONI专库四包race33.983秒、223顶层/1432终态零跳过，实际普通/沙箱Read→Project→Build成功且原资金不变。make check 8.057秒与明确TEST专库make verify-mvp 1007.389秒通过（286前端、46 Go包race/vet/build），源码SHA一致；23张图已渲染视检。protected phase/writer、strict v2/84post提交、非空epoch observer/runtime和全资金路径仍后续。
+
+2026-11-04新增[采购出生候选限定验收](procurement-attempt-birth.md)：独立38函数/68trigger材料、完整command/request/managed/unmanaged/reserved及精确ACL，12顶层/25子项race PASS、零SKIP/FAIL。账户配置与预占交错、PB后配导入、15写入故障、共享预算争用和安装前后catalog已实跑；不关闭完整A4攻击/失权矩阵、A5 executor、全域profile/R2或真实供应商/生产门禁，常规启动仍为001–022。
