@@ -178,6 +178,8 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 [行锁ACL实验](../verification/procurement-account-lock-acl.md)以实际APP LOGIN确认created_at单列UPDATE可取得四种行锁且实际UPDATE受guard拒绝；它与namespace实验均只证权限/锁原语，未验完整writer/014/PB/角色组合。没有生产模块、业务数据库、普通权限或部署结构变化，统一架构已增加明确标为候选的数据关系图。
 
-下一串行关口仍是D1：完整可执行DDL/受控根、精确SQLSTATE映射、全部角色列ACL及入口锁图、独立纯DTO/重放与固定完整reader/basis/catalog/profile/资源合同。其后I1写证与独立oracle、I2读集材料按所有权并行，维护/runtime由根集成，PG严格串行。A0必须实际新历史完整成功、旧历史继续缺证和actual APP攻击/旧接口回归，不能用窄例或缺证拒绝代替。原十一项Unproven、catalog原5秒race门禁和R2正式迁移/CLI/启动/在线资金接线不解除；C1/C2/C3、商品/扩展、真实供应商/支付、容器/1Panel、生产/HA及最终性能范围保持。
+本轮进一步汇合[32表物理字段](../../specs/023-periodic-products/b-procurement-schema-contract.md)、[入口锁/错误/恢复](../../specs/023-periodic-products/b-procurement-execution-contract.md)、[全部角色列ACL](../../specs/023-periodic-products/b-procurement-full-acl-contract.md)及[纯核/读取/保护阶段](../../specs/023-periodic-products/b-procurement-replay-read-contract.md)合同。完整pp_record_attempt接管DB选价与INSERT，私有三参helper最后seal；BYTEA保持被忽略预期报价的原接受集，未消费字段不转TEXT。32新表711列（647可INSERT、64 generated）的候选物料已有只读CLI和Make/CI检查，但不包含原表扩列、完整约束或最终profile。
+
+下一串行关口仍是D1：可执行DDL/受控根/validator/guard全文、精确约束/触发顺序与ACL材料、完整原表新增列和最终固定profile；其后按已冻合同实现独立纯DTO/重放与reader/basis/catalog/保护链。其后I1写证与独立oracle、I2读集材料按所有权并行，维护/runtime由根集成，PG严格串行。A0必须实际新历史完整成功、旧历史继续缺证和actual APP攻击/旧接口回归，不能用窄例或缺证拒绝代替。原十一项Unproven、catalog原5秒race门禁和R2正式迁移/CLI/启动/在线资金接线不解除；C1/C2/C3、商品/扩展、真实供应商/支付、容器/1Panel、生产/HA及最终性能范围保持。
 
 GitHub首页与贡献指南已复核特点、本地/API使用、Docker/1Panel和许可/验证边界。精确2223e40的[远端CI](../verification/procurement-identity-ci.md)10/10成功：Go56包中52PASS/4无测试，前端286PASS，新identity为2顶层/8含子项PASS且无SKIP；原13套PG和1诊断未验收。此前[本机整仓失败](../verification/procurement-identity-leaf.md#本轮整仓集成与未通过项)及三个原用例的定向PASS分账保留，远端成功不确定本机超时根因。本轮合同与诊断的最终检查、架构快照及提交推送独立收口。

@@ -91,11 +91,12 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 - [x] D1-A：冻结[权限/事务方向](b-procurement-writer-authority-contract.md)：闭合DB mutation与最小NOLOGIN writer；真实namespace实验确认与原PB锁域同步所需search_path。它不是全DDL或权限攻击验收。
 - [x] D1-I：先冻结[身份字节合同](b-procurement-identity-contract.md)，实现独立六函数SQL材料与原Go ABI差分；真实PG/race 2顶层/8含子项PASS，无SKIP。无默认业务import、安装器或授予财务权限，见[验证](../../docs/verification/procurement-identity-leaf.md)。
 - [x] D1-S：汇合[共同来源](b-procurement-source-contract.md)、[账户](b-procurement-account-contract.md)、[成本/request](b-procurement-cost-request-contract.md)逻辑字段与联合、单attempt链/双向原件和[PB最小闭包](b-procurement-pb-acl-contract.md)候选合同；锁权primitive actual LOGIN实证通过。它不是完整可执行DDL、全部角色ACL/锁图或writer实施。
-- [ ] D1：冻结逐字段DDL、受控写入口与权限、source双向闭合、同事务多根/锁图、纯DTO与完整读集、固定新profile和负面验收合同。
+- [x] D1-L：汇合[32表布局](b-procurement-schema-contract.md)、[执行锁图/错误](b-procurement-execution-contract.md)、[完整ACL](b-procurement-full-acl-contract.md)及[重放读取](b-procurement-replay-read-contract.md)合同；只读列布局工具展开32新表711列/64 generated并比对静态候选物料。此项只交付列设计与开发检查，不是可执行DDL/完整权限/profile。
+- [ ] D1：冻结完整可执行DDL与根/helper/validator/guard正文、精确约束与全部权限装配、原表新增列及固定全量reader/basis/catalog/profile材料；32新表列布局不替代这些义务。
 - [ ] I1：在D1之后并行实施受控写证与独立纯重放/手算oracle；业务共享文件单一owner，PG串行。
 - [ ] I2：在完整固定材料后接入scanner/basis/catalog、protected pre/post、observer和actual APP runtime；旧Base、V3固定材料与缺证边界保留。
 - [ ] A0：实际APP完整成功/失败矩阵、旧接口回归、最终仓库与精确CI、统一架构和推送收口；不得把SKIP或纯模块通过当完整验收。
 
 正式migration/provision/维护CLI/startup/在线资金接线仍为R2独立合同，不随设计稿或候选完成自动启用。
 
-原两份D1工作提案保留当期记录；当前共同/账户/成本逻辑合同和PB最小闭包已汇合。D1整体仍缺完整可执行DDL/角色列ACL/锁图、独立DTO/重放与固定新profile材料。纯identity及两个锁实验不解决原十一项历史缺证，不改旧checker、V3材料或B-P3门禁。精确2223e40的[远端CI](../../docs/verification/procurement-identity-ci.md)10/10成功；旧本机整仓失败与专项SKIP保持分别计账。
+原两份D1工作提案保留当期记录；当前共同/账户/成本逻辑合同和PB最小闭包已汇合。D1整体仍缺完整可执行DDL/函数正文/约束/ACL装配、独立DTO/重放与固定全量新profile材料；逻辑列ACL/锁图和新表列布局已交付，不能当作实际权限验收。纯identity及两个锁实验不解决原十一项历史缺证，不改旧checker、V3材料或B-P3门禁。精确2223e40的[远端CI](../../docs/verification/procurement-identity-ci.md)10/10成功；旧本机整仓失败与专项SKIP保持分别计账。

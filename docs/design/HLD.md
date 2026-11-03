@@ -546,4 +546,6 @@ B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../spec
 
 先行[身份SQL叶子](../../specs/023-periodic-products/b-procurement-identity-contract.md)已实现，真实PG/race与精确2223e40的[远端CI](../verification/procurement-identity-ci.md)通过；仅提供纯材料API，无默认安装或财务权限。namespace及[账户锁权实验](../verification/procurement-account-lock-acl.md)分别验证schema顺序和单列UPDATE允许行锁的原语，不代替完整writer/旧014组合、PB或角色攻击验收。本轮新增合同和独立诊断，没有改变现有生产请求、数据关系、部署或权限结构。
 
-D1整体仍待可执行DDL、完整锁图/ACL、纯DTO/独立重放、固定读集及新profile，I1 writer未实施。旧算法/V3材料、采购十一项缺证及catalog专项race门禁保留；正式迁移及在线来源钱包按R2独立交付。此前本机整仓失败与远端通过分别保留，边界和候选关系图见[统一架构](../architecture/README.md#采购账户与成本完整历史证据b-p4)。
+后续[物理布局](../../specs/023-periodic-products/b-procurement-schema-contract.md)、[执行锁图](../../specs/023-periodic-products/b-procurement-execution-contract.md)、[完整ACL](../../specs/023-periodic-products/b-procurement-full-acl-contract.md)及[重放读取](../../specs/023-periodic-products/b-procurement-replay-read-contract.md)合同已固定32新表、80个PP错误、逐入口锁/等待后校验与四域独立重放。公开完整`pp_record_attempt`拥有DB选价/INSERT，三参出生helper固定私有；预期报价BYTEA、未消费字段与原幂等顺序保留，单根5秒不续时。候选source105/wallet121、basis144/catalog160及显式V4不升级旧profile；RequestHead仅认证latest/sticky，不认证全部客户状态历史。开发工具只读核对32新表711列（64 generated），未安装业务SQL。原PB实时tuple检查的八表xmin权限由独立sidecar与新V4 catalog认证，不加入历史重放；账户命令时间的DB采样/BEFORE stamp保留明确兼容边界。
+
+D1整体仍待可执行DDL/函数正文、完整约束/权限装配、纯DTO/独立重放、固定全列读集及新profile，I1 writer未实施。旧算法/V3材料、采购十一项缺证及catalog专项race门禁保留；正式迁移及在线来源钱包按R2独立交付。此前本机整仓失败与远端通过分别保留，边界和候选关系图见[统一架构](../architecture/README.md#采购账户与成本完整历史证据b-p4)。

@@ -204,7 +204,7 @@ make check
 make verify-mvp
 ```
 
-`make check` 执行只读架构检查、Go vet 和前端构建；`make verify-mvp` 额外运行前端测试、Go race 测试和二进制构建，并强制要求测试库配置。独立 opt-in 专项仍须单独执行；跳过的数据库测试不能作为商业验收完成。
+`make check` 执行只读架构与候选采购列布局检查、Go vet 和前端构建；`make verify-mvp` 额外运行前端测试、Go race 测试和二进制构建，并强制要求测试库配置。独立 opt-in 专项仍须单独执行；跳过的数据库测试不能作为商业验收完成。
 环境准备与提交要求见[贡献指南](CONTRIBUTING.md)，实际验收范围见 [MVP 状态](docs/verification/mvp-status.md)和[发布验收](docs/verification/mvp-release-qualification.md)。
 
 当前优先完善能力，再推进性能专项。网关额外首字节延迟与模型首 token 时间分开衡量；历史 Mock 结果不能代表当前版本或真实供应商。
@@ -216,6 +216,8 @@ make verify-mvp
 主要入口：[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
 
 每次代码、测试、依赖、迁移、部署、CI 或设计合同变化，都同步复核统一架构并保留[变更记录](docs/architecture/changes.md)与 [SHA-256 清单](docs/architecture/architecture-manifest.json)。Make / CI 默认只读检查，不自动刷新；具体流程见[贡献指南](CONTRIBUTING.md#架构同步与检查)和 [AGENTS.md](AGENTS.md)。
+
+采购历史设计的[字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它核对候选新表的列与设计物料，不执行数据库安装，也不代表完整历史证明已经实现。
 
 ## Roadmap
 

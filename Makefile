@@ -1,6 +1,8 @@
-.PHONY: test console build check verify-mvp architecture-check architecture-refresh
+.PHONY: test console build check verify-mvp architecture-check architecture-refresh procurement-layout-check
 architecture-check:
 	go run ./scripts/check-architecture
+procurement-layout-check:
+	go run ./scripts/check-procurement-layout
 architecture-refresh: export ARCHITECTURE_REVIEW_REASON = $(REASON)
 architecture-refresh:
 	@test -n "$$ARCHITECTURE_REVIEW_REASON" || { echo 'REASON must describe the change and its architectural impact' >&2; exit 1; }
@@ -12,12 +14,13 @@ build: console
 test:
 	go test -race ./...
 	cd web && npm test
-check: architecture-check
+check: architecture-check procurement-layout-check
 	go vet ./...
 	cd web && npm run build
 verify-mvp:
 	@test -n "$$TEST_DATABASE_URL" || { echo 'TEST_DATABASE_URL must point to a dedicated PostgreSQL test database' >&2; exit 1; }
 	go run ./scripts/check-architecture
+	go run ./scripts/check-procurement-layout
 	npm --prefix web test
 	npm --prefix web run build
 	go test -race -p 1 ./... -count=1 -timeout 600s

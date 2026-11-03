@@ -1,0 +1,4542 @@
+{
+  "schema": 1,
+  "status": "design-only-new-table-columns",
+  "source": "specs/023-periodic-products/b-procurement-schema-contract.md",
+  "not_covered": [
+    "executable_ddl",
+    "primary_unique_foreign_keys",
+    "checks_triggers_function_bodies",
+    "acl_roles",
+    "reader_basis_catalog_profiles",
+    "original_table_extensions",
+    "database_or_production_acceptance"
+  ],
+  "table_count": 32,
+  "column_count": 711,
+  "generated_column_count": 64,
+  "nongenerated_column_count": 647,
+  "tables": [
+    {
+      "name": "pp_operation_roots",
+      "column_count": 11,
+      "generated_column_count": 0,
+      "nongenerated_column_count": 11,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "entry_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "scope_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_target_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "session_role_oid",
+          "type": "OID",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_count",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "semantic_result",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_root_steps",
+      "column_count": 23,
+      "generated_column_count": 18,
+      "nongenerated_column_count": 5,
+      "columns": [
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "d_request_birth",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'request_birth' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_attempt_birth",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'attempt_birth' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_account_command",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'account_command' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_attempt_delivery",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'attempt_delivery' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_incoming",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'incoming' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_meter_choice",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'meter_choice' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_request_decision",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'request_decision' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_normal_cost_decision",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'normal_cost_decision' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_cost_mutation",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'cost_mutation' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_cost_reset_decision",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'cost_reset_decision' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_evidence_choice",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'evidence_choice' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_procurement_transition",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'procurement_transition' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_proposal_birth",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'proposal_birth' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_approval_consumed",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'approval_consumed' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_unmanaged_correction",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'unmanaged_correction' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_recovery",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'recovery' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_cost_outbox",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'cost_outbox' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "d_reconciliation",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN kind = 'reconciliation' THEN source_id ELSE NULL END"
+        }
+      ]
+    },
+    {
+      "name": "pp_request_origins",
+      "column_count": 33,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 32,
+      "columns": [
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'request_birth'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "key_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "owner_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "model_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "price_version_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_rate",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "output_rate",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_upper_bound",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "output_limit",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "profile_version",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "policy_version",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_hmac",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "route_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_deadline",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "instance_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "streaming",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "client_ip",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "pricing_group_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_pricing_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "retail_priced_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "pb_created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "pb_tenant_control",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "pb_key_control",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "pb_admitted_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "initial_latest_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "initial_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "initial_billing_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_request_heads",
+      "column_count": 4,
+      "generated_column_count": 0,
+      "nongenerated_column_count": 4,
+      "columns": [
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "last_decision_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "updated_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_attempt_origins",
+      "column_count": 30,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 29,
+      "columns": [
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'attempt_birth'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "sequence",
+          "type": "INTEGER",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "channel_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "channel_version_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "credential_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "upstream_model",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "route_decisions",
+          "type": "JSONB",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_version_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_input_rate",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_output_rate",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_basis",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "quote_selected_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "pb_created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "initial_delivery_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "initial_cost_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "initial_cost_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "management_mode",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "binding_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_transition_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "reserved_event_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_journal_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "admitted_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_attempt_heads",
+      "column_count": 6,
+      "generated_column_count": 0,
+      "nongenerated_column_count": 6,
+      "columns": [
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "last_node_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "member_count",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "member_tail_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "updated_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_attempt_nodes",
+      "column_count": 10,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 9,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_node_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": "ordinal - 1"
+        }
+      ]
+    },
+    {
+      "name": "pp_account_origins",
+      "column_count": 10,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 9,
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "version",
+          "type": "SMALLINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "create_operation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "command_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'account_command'::text"
+        },
+        {
+          "name": "journal_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_account_heads",
+      "column_count": 12,
+      "generated_column_count": 0,
+      "nongenerated_column_count": 12,
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "journal_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "updated_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "label",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "provider",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "limit_amount",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "configuration_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "blocking_count",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_account_journal",
+      "column_count": 58,
+      "generated_column_count": 4,
+      "nongenerated_column_count": 54,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": "ordinal - 1"
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "source_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_label",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_provider",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_state",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_limit_amount",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_configuration_revision",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_blocking_count",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_label",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_provider",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_limit_amount",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_configuration_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_blocking_count",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "binding_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_reservation_revision",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_reservation_state",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_reservation_held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_reservation_spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_reservation_anomaly",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_reservation_revision",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_reservation_state",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_reservation_held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_reservation_spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_reservation_anomaly",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_bound",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "output_bound",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "upper_amount",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_version_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_input_rate",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_output_rate",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_basis",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "gate_extra",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "gate_checked_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "pb_decision_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "pause_event_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "command_source_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "transition_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "delivery_source_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "command_operation_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN source_kind = 'command' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "procurement_event_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN source_kind = 'budget_event' THEN source_id ELSE NULL END"
+        },
+        {
+          "name": "dispatch_attempt_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN source_kind = 'dispatch' THEN source_id ELSE NULL END"
+        }
+      ]
+    },
+    {
+      "name": "pp_account_command_sources",
+      "column_count": 24,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 23,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'account_command'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "actor_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "actor_role",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "actor_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_target_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "target_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_label",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_provider",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_limit_amount",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_digest",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "command_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "command_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "command_created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "audit_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_expected_revision",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "journal_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_attempt_delivery_sources",
+      "column_count": 16,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 15,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'attempt_delivery'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "mode",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_source_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_delivery_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_delivery_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "dispatch_account_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "dispatch_journal_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "dispatch_xid",
+          "type": "XID8",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "pb_dispatch_checked_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_incoming_sources",
+      "column_count": 26,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 25,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'incoming'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_finalization_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_digest",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "source",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "source_event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "usage_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_tokens",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "output_tokens",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "total_tokens",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cached_tokens",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reasoning_tokens",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "protocol_outcome",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "transport_end_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "raw_delivery_stage",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "raw_content_written",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "finish_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "observed_at_input",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "effective_observed_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reconcile_source_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_meter_choices",
+      "column_count": 16,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 15,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'meter_choice'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "incoming_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "meter_event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "meter_origin_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "disposition",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_cut_before_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_cut_after_meter_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "collision_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "competing_meter_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_meter_origins",
+      "column_count": 7,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 6,
+      "columns": [
+        {
+          "name": "meter_event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "incoming_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'meter_choice'::text"
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_conflict_sources",
+      "column_count": 11,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 10,
+      "columns": [
+        {
+          "name": "conflict_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'meter_choice'::text"
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "incoming_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "meter_choice_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_request_decisions",
+      "column_count": 21,
+      "generated_column_count": 2,
+      "nongenerated_column_count": 19,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'request_decision'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_decision_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "incoming_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "meter_choice_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_latest_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_latest_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "normalized_delivery_stage",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "normalized_content_written",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "branch",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "finalization_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "conflict_source_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": "ordinal - 1"
+        }
+      ]
+    },
+    {
+      "name": "pp_normal_cost_decisions",
+      "column_count": 29,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 28,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'normal_cost_decision'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_cost_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_cost_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "management_mode",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_procurement_revision",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_procurement_state",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_procurement_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_procurement_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_procurement_anomaly",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "member_count_before",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "member_tail_before",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_ordinal_cut",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_tail_cut",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "finalization_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "incoming_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "meter_choice_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "decision",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "selected_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "selected_basis",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_mutation_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_recorded_outbox_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_cost_mutations",
+      "column_count": 19,
+      "generated_column_count": 6,
+      "nongenerated_column_count": 13,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'cost_mutation'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "d_normal_cost_decision",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'normal_cost_decision' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_procurement_dispute_reset",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'procurement_dispute_reset' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_incoming_conflict_reset",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'incoming_conflict_reset' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_approval_consumed",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'approval_consumed' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_unmanaged_correction",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'unmanaged_correction' THEN cause_source_id ELSE NULL END"
+        }
+      ]
+    },
+    {
+      "name": "pp_cost_reset_decisions",
+      "column_count": 15,
+      "generated_column_count": 3,
+      "nongenerated_column_count": 12,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'cost_reset_decision'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_state_before",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "policy",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_mutation_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "d_procurement_dispute",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'procurement_dispute' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_incoming_conflict",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'incoming_conflict' THEN cause_source_id ELSE NULL END"
+        }
+      ]
+    },
+    {
+      "name": "pp_evidence_choices",
+      "column_count": 36,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 35,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'evidence_choice'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "incoming_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "meter_choice_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "evidence_digest",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_anomaly",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_ordinal_cut",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_tail_cut",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "disposition",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "identity_attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "identity_digest",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "identity_event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "member_count_before",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "member_tail_before",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "member_count_after",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "member_tail_after",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "forced_conflict",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "effective_conflict",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "conflict_cause",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "decision",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "existing_dispute_event_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_transition_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_event_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_journal_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "skip_reason",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_evidence_members",
+      "column_count": 13,
+      "generated_column_count": 2,
+      "nongenerated_column_count": 11,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "member_ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_member_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "identity_digest",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "identity_event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "evidence_choice_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'evidence_choice'::text"
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "previous_member_ordinal",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": "member_ordinal - 1"
+        }
+      ]
+    },
+    {
+      "name": "pp_procurement_transitions",
+      "column_count": 41,
+      "generated_column_count": 5,
+      "nongenerated_column_count": 36,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'procurement_transition'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "binding_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "journal_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "event_type",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "event_key",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "held_delta",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "spent_delta",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_revision",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_state",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_anomaly",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_anomaly",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_bound",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "output_bound",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "upper_amount",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_version_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_input_rate",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_output_rate",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_basis",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "d_attempt_birth",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'attempt_birth' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_evidence_choice",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'evidence_choice' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_approval_consumed",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'approval_consumed' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_recovery",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'recovery' THEN cause_source_id ELSE NULL END"
+        }
+      ]
+    },
+    {
+      "name": "pp_proposal_births",
+      "column_count": 23,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 22,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'proposal_birth'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "proposal_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "requester",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "requester_role",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "requester_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_anomaly",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "member_count",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "member_tail",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_ordinal_cut",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_tail_cut",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "audit_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_approval_consumptions",
+      "column_count": 40,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 39,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'approval_consumed'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "proposal_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "proposal_birth_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "approval_operation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "requester",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "requester_role",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "requester_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "approver",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "approver_role",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "approver_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "consumed_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "consumed_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "consumed_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "consumed_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "consumed_anomaly",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "consumed_member_count",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "consumed_member_tail",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_cost_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_cost_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_ordinal_cut",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_tail_cut",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_transition_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "provider_correction_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_mutation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "outbox_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "audit_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_anomaly",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_unmanaged_correction_sources",
+      "column_count": 22,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 21,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'unmanaged_correction'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "provider_correction_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_actor_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "effective_audit_actor",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "amount",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "basis",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_cost_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_cost_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_cost_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_cost_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cost_mutation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "audit_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "outbox_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_recovery_sources",
+      "column_count": 22,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 21,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'recovery'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "checked_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_deadline",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_revision",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_before_anomaly",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "delivery_before_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "permit_source_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "decision",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_transition_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "delivery_mutation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "procurement_event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_journal_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_cost_outbox_links",
+      "column_count": 14,
+      "generated_column_count": 4,
+      "nongenerated_column_count": 10,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'cost_outbox'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "cause_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "outbox_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "d_normal_cost_decision",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'normal_cost_decision' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_approval_consumed",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'approval_consumed' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_unmanaged_correction",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN cause_kind = 'unmanaged_correction' THEN cause_source_id ELSE NULL END"
+        }
+      ]
+    },
+    {
+      "name": "pp_reconciliation_sources",
+      "column_count": 46,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 45,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'reconciliation'::text"
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "case_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "actor_role",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "actor_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "input_usage_status",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_input_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_output_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_total_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_cached_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_reasoning_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_evidence_ref",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "input_reason",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_case_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "case_created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_case_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_case_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_reservation_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_requester",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_approver",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "requester_role",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "requester_status",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_requester",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "after_approver",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_usage_status",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_input_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_output_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_total_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_cached_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_reasoning_tokens",
+          "type": "BIGINT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_evidence_ref",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "case_proposal_reason",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "approval_checked_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_deadline",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "prior_latest_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "derived_incoming_source_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "finalization_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "customer_finish_outcome_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "audit_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_customer_finish_outcomes",
+      "column_count": 47,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 46,
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'reconciliation'::text"
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reconciliation_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "case_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "latest_finalization_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "customer_reservation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_amount",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "reservation_deadline",
+          "type": "TIMESTAMPTZ",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "result_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "selected_mode",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "selected_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "settlement_decision_checked_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "financial_checked_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "before_case_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_case_state",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_case_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_case_reason",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_reservation_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_reservation_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_request_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_request_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_billing_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_billing_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_key_held",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_key_spent",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_key_held",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_key_spent",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "raw_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "charged_amount",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "waived_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "result_status",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "settlement_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "customer_journal_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "customer_tenant_control_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "customer_key_control_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "billing_audit_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "billing_outbox_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "profile_block_model_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "profile_block_profile_version",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "profile_block_disposition",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "profile_block_audit_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_customer_finish_ledger_effects",
+      "column_count": 14,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 13,
+      "columns": [
+        {
+          "name": "finish_outcome_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'reconciliation'::text"
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "account_tenant_id",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": null
+        },
+        {
+          "name": "account_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "before_balance",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "after_balance",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "signed_delta",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "journal_line_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    },
+    {
+      "name": "pp_customer_finish_pb_effects",
+      "column_count": 12,
+      "generated_column_count": 1,
+      "nongenerated_column_count": 11,
+      "columns": [
+        {
+          "name": "finish_outcome_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "root_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_no",
+          "type": "BIGINT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "step_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": "'reconciliation'::text"
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "scope",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "allocation_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "event_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "original_source_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        },
+        {
+          "name": "original_source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "generated_expression": null
+        }
+      ]
+    }
+  ]
+}

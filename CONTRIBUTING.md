@@ -39,7 +39,9 @@ make check
 
 `--reviewed` 表示已完成正文和源码的语义复核。清单用 SHA-256 检测增加、修改与删除，并检查本地链接；它不能代替审阅，也不能证明业务验收通过。默认检查及 CI 都不自动刷新，禁止为了通过检查盲目刷新或缩小覆盖范围。
 
-`make check` 包含只读架构检查、Go vet 和前端构建，不运行完整测试套件。`make test` 运行 Go race 和前端测试，但未提供数据库配置时部分测试会跳过。
+`make check` 包含只读架构与候选采购列布局检查、Go vet 和前端构建，不运行完整测试套件。`make test` 运行 Go race 和前端测试，但未提供数据库配置时部分测试会跳过。
+
+修改[采购字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)时，先复核宏、列、类型与 generated 表达式，再显式运行 `go run ./scripts/check-procurement-layout --write` 更新候选 JSON，随后用 `make procurement-layout-check` 只读比对。该物料只覆盖新表列，不是安装 SQL 或完整 catalog/reader 注册表；不得用它替代数据库与权限验收。
 
 ## 商业链路验证
 
@@ -51,7 +53,7 @@ make verify-mvp
 
 当前专库要求 `127.0.0.1:55439/moni_test`，测试 LOGIN 为 `moni_test`；完整权限与隔离要求以开发手册为准。测试会创建临时 schema 和角色，不要指向预览或生产数据库。
 
-`make verify-mvp` 串行运行使用同一专库的 Go 包，并执行只读架构检查、前端测试/构建、Go race、vet 与构建。C0 等独立 opt-in 专项按各自合同另行运行，普通命令不会自动启用这些专项。记录精确提交、命令及 PASS / SKIP / 未运行结果；跳过的数据库测试不能计为商业验收通过，CI 绿色也不代表供应商、支付或部署认证完成。
+`make verify-mvp` 串行运行使用同一专库的 Go 包，并执行只读架构与候选采购列布局检查、前端测试/构建、Go race、vet 与构建。C0 等独立 opt-in 专项按各自合同另行运行，普通命令不会自动启用这些专项。记录精确提交、命令及 PASS / SKIP / 未运行结果；跳过的数据库测试不能计为商业验收通过，CI 绿色也不代表供应商、支付或部署认证完成。
 
 ## 提交 PR
 

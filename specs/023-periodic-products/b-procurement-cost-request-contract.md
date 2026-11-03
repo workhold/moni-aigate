@@ -72,7 +72,7 @@ finalization/evidence digest 由 DB 调用已冻结身份 codec 再 sha256(bytea
 | pp_recover_procurement_attempt | `tenant TEXT,attempt TEXT`；不额外接request/deadline/permit |
 | pp_reconcile | `tenant TEXT,request TEXT,actor TEXT,action TEXT,U的六个nullable参数,evidence_ref TEXT NULL,reason TEXT NULL`；按§9的action联合只传实际消费字段 |
 
-RecordAttempt的closure三参、dispatch两参沿共同/账户合同。Go原公开输入类型不删字段、不改原API；candidate adapter只将原业务本就不消费的Reconcile字段丢弃，其他全部原样传递。Reconcile忽略字段不会成为identity或资格，也不能先转换PG TEXT导致原来被忽略的NUL/非法UTF8输入新增失败。
+RecordAttempt改由[物理布局§6](b-procurement-schema-contract.md#6-校准完整记录attempt的公开db根)的完整pp_record_attempt根执行；原三参closure仅private，dispatch仍两参。Go原公开输入类型不删字段、不改原API；candidate adapter只将原业务本就不消费的Reconcile字段丢弃，其他全部原样传递。Reconcile忽略字段不会成为identity或资格，也不能先转换PG TEXT导致原来被忽略的NUL/非法UTF8输入新增失败。
 
 ## 3. 出生与局部顺序域
 
@@ -101,7 +101,7 @@ initial_latest_id(NULL),initial_status(accepted),initial_billing_status(reserved
 ```text
 tenant_id,request_id,attempt_id,sequence,channel_id,channel_version_id,
 credential_id,upstream_model,route_decisions,
-cost_version_id?,cost_input_rate?,cost_output_rate?,cost_basis,
+cost_version_id?,cost_input_rate?,cost_output_rate?,cost_basis,quote_selected_at,
 attempt_created_at,pb_created_xid,
 initial_delivery_state(prepared),initial_cost_status(unknown),initial_cost_amount(NULL),
 management_mode(managed|unmanaged),account_id?,binding_id?,
@@ -110,7 +110,7 @@ procurement_transition_id?,reserved_event_id?,account_journal_id?,admitted_at?
 
 managed 联合的 account/binding/transition/event/journal/admitted_at 全非 NULL，精确指真实新 p、reserved PE、唯一 journal 与 DB admission时间；unmanaged 这些列全 NULL，以本 origin 在真实 binding 屏障后的显式分类为出生来源，不另建第二套 origin 或无来源的“无p”布尔。它对应原业务的 legacy_unmanaged 分类，不表示可以登记旧历史。全 quote、身份、route_decisions 和初态与原 attempt 精确相等；DB 对锁后当前 quote、credential/channel membership、请求硬界和期限做原规则核验，不能采纳 APP 伪造的输入费率。
 
-原 `RecordAttempt` INSERT 之后同一事务必须调用三参 `pp_complete_attempt_birth(tenant,request,attempt)` 完成出生。其 channel/credential/实际 binding 屏障与账户片一致；不能在 AFTER INSERT 暂无 p 时认作 unmanaged。deferred 反向要求真实新 attempt 恰一个完整 origin；managed 的 p/reserved PE/account journal 同根闭合，unmanaged 明确来源禁止 p。DB birth stamp、不可改初态/身份与 source 反向约束共同防止“先改后改回再补生”，仅 xmin=current 不充分。重试已有 tracked attempt 不重生 root。
+候选公开`pp_record_attempt`完整执行原RecordAttempt的前层检查/DB选价/INSERT和采购出生，APP没有attempt INSERT；三参`pp_complete_attempt_birth`固定为同根private helper，无APP EXECUTE。其channel/credential/实际binding屏障与账户片一致；不能在AFTER INSERT暂无p时认作unmanaged。quote_selected_at由原选价语句实际DB采时，写入原pp_quote_selected_at并与origin精确一致；unmanaged不在closure重新选价，managed仍按原account/PB等待及admission时点复核。该时刻不证明旧目录完整可见集合，不能从今天新插入的版本倒推旧absence。deferred 反向要求真实新 attempt 恰一个完整 origin；managed 的 p/reserved PE/account journal 同根闭合，unmanaged 明确来源禁止 p。DB birth stamp、不可改初态/身份与 source 反向约束共同防止“先改后改回再补生”，仅 xmin=current 不充分。重试已有 tracked attempt 不重生 root。
 
 `AttemptHead(attempt_id,ordinal,last_node_id?,member_count?,member_tail_id?)` 为完整 attempt 局部序列，物理表为 `pp_attempt_heads`。唯一 companion `AttemptNode`（`pp_attempt_nodes`）接入所有有 attempt 根的 canonical step：
 
@@ -169,6 +169,8 @@ branch(normal|conflict),finalization_id?,conflict_source_id?
 在原 tenant SHARE→membership SHARE→key UPDATE→model SHARE→customer reservation UPDATE 屏障之后，新 statement 取得 request latest/head，且在 sticky/meter/本次写之前保存。先将 raw content=true 或 raw stage=content 归一化为 content/true，再消费准确 before_latest：前驱 content/true 则持续 content/true；否则前驱 committed 且 incoming none/unknown 则 committed。前驱可来自不同 attempt 或无 attempt；按 request 链核，不按 attempt 链或时间排序。
 
 normal 联合：finalization 非 NULL、conflict_source NULL、after_latest=本 finalization；原 finalization 的 tenant/request/event/input_digest/outcome/reason/stage/content/finish/policy 逐值匹配。request status 为 reason=client_cancelled 时 cancelled，否则 completed 时 succeeded，其余 failed。conflict 联合相反，after_latest=before_latest，不能制造 normal finalization；markPending 沿原规则，已 settled/released 的客户资金不被重开。
+
+RequestHead仅认证latest/sticky的ordinal顺序，不能替代request.status/billing_status的完整生命周期。before_status是在本次受审根锁后真实capture；跨dispatch或普通客户finish时，不强令它等于上一RequestDecision.after_status或origin.accepted。本decision.after_status按本分支核验；其他合法入口后续改变current status不使旧decision失效，也不能据此省略latest前驱的精确重放。
 
 每个新 finalization/conflict 流程恰一个 incoming、meter choice、request decision，正常快返全无新行。原 finalization 反向只允许唯一 normal decision；原 conflict 反向只允许唯一 conflict source；request latest只能指完整 normal 链当前末项。source-key复用的旧 meter 不构成新 latest 的隐式前驱。
 
@@ -424,7 +426,7 @@ canonical `ReconcileSource`（kind=reconciliation，表 `pp_reconciliation_sourc
 
 ```text
 tenant_id,request_id,case_id,action,actor,actor_role,actor_status,
-input_usage_status?,input_tokens?,output_tokens?,total_tokens?,cached_tokens?,reasoning_tokens?,
+input_usage_status?,input_input_tokens?,input_output_tokens?,input_total_tokens?,input_cached_tokens?,input_reasoning_tokens?,
 input_evidence_ref?,input_reason?,
 before_case_reason,case_created_at,before_case_state,after_case_state,before_reservation_status,
 before_requester?,before_approver?,requester_role?,requester_status?,after_requester?,after_approver?,
@@ -505,7 +507,7 @@ before读取总表：request latest 在原同步 reservation 锁后、任何 sti
 
 ## 11. 返回、错误、重试与未知提交
 
-公开根必须返回封闭typed record，统一顶层`outcome=applied|replay|noop|semantic_conflict`，仅各根实际有的分支可用；不能用任意error text作为“可提交”。本页明确业务枚举及字段；SQLSTATE到原billing code的精确表仍待可安装材料冻结，不能解析本地化文本。`root_id`在新动作指本次sealed root，replay可指精确已受证旧root而不产生新root；无法从原回执唯一定位旧root时为NULL，不伪造历史。`source_id`按入口明确指proposal birth/approval consumption/correction/recovery/reconciliation，不是任意typed source。
+公开根必须返回封闭typed record，统一顶层`outcome=applied|replay|noop|semantic_conflict`，仅各根实际有的分支可用；不能用任意error text作为“可提交”。本页明确业务枚举及字段；SQLSTATE到原billing code的精确表见[执行合同](b-procurement-execution-contract.md)；原PB固定code/Message的窄兼容例外沿共同协议，不能解析未知或本地化文本。`root_id`在新动作指本次sealed root，replay可指精确已受证旧root而不产生新root；无法从原回执唯一定位旧root时为NULL，不伪造历史。`source_id`按入口明确指proposal birth/approval consumption/correction/recovery/reconciliation，不是任意typed source。
 
 | 根 | 成功返回联合 |
 | --- | --- |

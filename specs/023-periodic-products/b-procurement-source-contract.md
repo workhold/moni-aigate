@@ -72,7 +72,7 @@ root由私有根函数局部预分配ID，**最后一次INSERT完整不可变行
 
 每种kind使用一个generated nullable discriminator列指向对应具体表：仅选中kind的列等于source_id，其他列为NULL；每列的**复合deferred FK**包含该source id/root/step/kind/xid。具体child反向以其主键+固定kind+同组字段FK回pp_root_steps。合法联合必须恰好有一个选中child，不能用“任意表中存在同ID”验证。全部generated discriminator也进入新物理读集并逐值核验。
 
-companion与canonical child采用按实际身份的双向复合deferred FK/等价固定约束，不能只附一个无约束source_id。原source本身有反向pointer，完整读取从两侧都能发现遗漏；RootStep计数或hash不能替代原件枚举。mutable投影仅FK当前末项/after，旧历史不能永久FK到未来变化的当前revision。
+companion与canonical child采用按实际身份的双向复合deferred FK/等价固定约束，不能只附一个无约束source_id。原source本身有反向pointer，完整读取从两侧都能发现遗漏；RootStep计数或hash不能替代原件枚举。mutable投影仅按该字段实际覆盖的顺序域绑定当前末项，旧历史不能永久FK到未来变化的当前revision。RequestHead覆盖latest/sticky决策顺序；request.status/billing_status还可由真实dispatch或普通客户finish改变，不能将其当前值永久绑定末RequestDecision.after，亦不声称本前缀认证了客户状态全生命周期。
 
 ### 3.1 共享原 audit/outbox 的反向来源列
 
@@ -124,7 +124,7 @@ EvidenceChoice无PE分支也明确记录真实原因和观察cut，包括重复i
 ## 6. 入口模板与精确嵌套
 
 - request_birth：唯一request_birth step，只认证真实INSERT初态及其不可变身份/报价/硬界/期限；不冒称完整客户reserve或采购账户出生。
-- attempt_birth：首步attempt_birth；unmanaged到此结束，managed还须唯一reserved procurement_transition及账户journal/PB效果。初始分类在原INSERT之后同事务完整闭合，原attempt反向deferred要求唯一origin；不能从AFTER INSERT暂时没p推断unmanaged。
+- attempt_birth：公开pp_record_attempt完整执行原RecordAttempt的检查、DB选价、INSERT/ON CONFLICT及采购出生，首步attempt_birth；unmanaged到此结束，managed还须唯一reserved procurement_transition及账户journal/PB效果。原三参complete_birth固定为同根private helper，不开放APP。初始分类在受控INSERT之后同事务闭合，原attempt反向deferred要求唯一origin；不能从AFTER INSERT暂时没p推断unmanaged。详细ABI及跨定时采购价的校准见[物理布局§6](b-procurement-schema-contract.md#6-校准完整记录attempt的公开db根)。
 - account_create/configure：唯一account_command step。成功create origin/head/journal一并闭合；configure found按真实成功/拒绝规则生成journal，not_found禁止账户journal。重试无新root。
 - dispatch：唯一attempt_delivery，mode=dispatch_permit；真实upstream prepared→sending和p sending、客户/Key/采购PB guard及期限/报价在同根。managed唯一dispatch账户journal；unmanaged禁止journal。它不是可跨事务使用的token。
 - record_finalization：incoming→meter_choice→request_decision必有且各一次。原normal分支按真实顺序含attempt_delivery(finalization)、normal_cost_decision、必要cost_mutation/cost_outbox；managed再有evidence_choice及其真实transition/reset。conflict禁止正常finalization/NormalCostDecision，但保存原incoming、真实meter选择和conflict原件，按原分支生成evidence/reset。精确分支字段与子顺序见成本合同；仅step数不能证明合法。
@@ -142,7 +142,7 @@ Go公开方法保持原返回语义；候选executor选择实现，不授authori
 
 applied的root semantic_result沿§2；replay/noop无新root，返回既有结果身份或明确无动作。account configure的rejected是持久命令业务结果，由applied outcome返回status/reason，不与SQL失败混用。record_finalization的semantic_conflict允许公开外层提交事实后返回原metering冲突错误；相同私有子过程在Reconcile内部一律作为事务错误回滚，不seal一个“已批准但冲突忽略”的root。
 
-业务拒绝沿原错误码优先级及包装，不新造通用可提交SQLSTATE。基础执行错误、唯一约束、权限、deferred不变量及资源/取消错误均不可被转换为业务成功。原23505（例如cost_recorded唯一身份已占）继续全回滚；不改成静默skip。SQLSTATE40P01/40001仅在确认旧事务回滚后按原有界次数重试；57014/55P03不是扩大后的重试依据。未知COMMIT只按原操作身份只读查询，不重做审批、财务或模型生成。
+业务拒绝沿原错误码优先级及包装，不新造通用可提交SQLSTATE。新pp拒绝使用[执行合同](b-procurement-execution-contract.md)的精确五位SQLSTATE映射；原020/PB仍有code加固定Message（及可用constraint）的既有窄分类，作为明确兼容例外保留，不泛解析未知/本地化文本。基础执行错误、唯一约束、权限、deferred不变量及资源/取消错误均不可被转换为业务成功。原23505（例如cost_recorded唯一身份已占）继续全回滚；不改成静默skip。SQLSTATE40P01/40001仅在确认旧事务回滚后按原有界次数重试；57014/55P03不是扩大后的重试依据。未知COMMIT只按原操作身份只读查询，不重做审批、财务或模型生成。
 
 ## 8. 权限、锁权与设计验证
 

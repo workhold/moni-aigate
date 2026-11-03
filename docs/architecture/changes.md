@@ -3107,3 +3107,44 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `specs/023-periodic-products/plan.md`
 
 </details>
+
+## 2026-11-03T09:16:44Z · 77f2625983b3
+
+汇合采购32表物理/执行/ACL/重放合同，校准DB选价与命令采时、status/OID和xmin边界；新增只读列布局工具及Make/CI检查，同步README/HLD/LLD与交付计划，无线上业务SQL或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1665 个源文件；本次 18 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `Makefile`
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/procurement-prefix-layout.md`
+- added `scripts/check-procurement-layout/main.go`
+- added `scripts/check-procurement-layout/main_test.go`
+- modified `specs/023-periodic-products/b-procurement-account-contract.md`
+- added `specs/023-periodic-products/b-procurement-column-layout-v1.json`
+- modified `specs/023-periodic-products/b-procurement-cost-request-contract.md`
+- added `specs/023-periodic-products/b-procurement-execution-contract.md`
+- added `specs/023-periodic-products/b-procurement-full-acl-contract.md`
+- added `specs/023-periodic-products/b-procurement-replay-read-contract.md`
+- added `specs/023-periodic-products/b-procurement-schema-contract.md`
+- modified `specs/023-periodic-products/b-procurement-source-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T09:18:05Z · 0054cedc6548
+
+收口采购列布局专项与最终make check实际结果，补齐统一架构验证链接；仅更新验证说明，无新增运行结构或权限
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1665 个源文件；本次 1 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-prefix-layout.md`
+
+</details>

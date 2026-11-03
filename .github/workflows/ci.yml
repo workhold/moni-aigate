@@ -21,6 +21,8 @@ jobs:
           cache: true
       - run: go run ./scripts/check-architecture
         if: matrix.shard == 'other'
+      - run: go run ./scripts/check-procurement-layout
+        if: matrix.shard == 'other'
       - uses: actions/setup-node@v4
         if: matrix.shard == 'other'
         with:

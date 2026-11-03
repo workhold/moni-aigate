@@ -93,6 +93,8 @@ create/configure/configure_rejected→command；reserve→budget_event且原type
 - configure revision_conflict：目标存在且受证，expected_revision≠锁后真实revision；status=rejected、reason=revision_conflict；原command.before为真实原账户快照、after=NULL；journal kind=configure_rejected，before=after。
 - configure not_found：input_target_id=target_id，目标锁后不存在；status=rejected、reason=not_found；原command.before/after均NULL，journal_id=NULL；不得伪造account origin/head/journal。
 
+为同时满足source先出生与原command时间精确相等，固定根在真实锁/权限/分支确定后，独立调用DB clock取得command_created_at，再完整INSERT source。候选command BEFORE guard从本次精确source强制派生NEW.created_at；W仍不获INSERT(created_at)，source.created_at是独立诊断时刻，不能拿它猜原件DEFAULT。原表DEFAULT保留，account_create/configure两kind的实际命令时间改为受审根采时；credential_bind/balance_observe仍沿原DEFAULT。该时点不同于原saveCommand语句的DEFAULT评估时刻，必须明示并实际回归，不宣称两者同刻。旧命令不回填或重签。
+
 actor_role/status是当场users FOR SHARE读取的admin/active；它证明该DB入口重核当前角色，不认证浏览器真人会话。完整原input用于独立重算摘要和幂等；不接caller digest。source↔原command必须精确匹配operation/actor/kind/target/digest/status/reason/created_at，found时再双向匹配journal(account/operation/root/step/xid/id)。source.audit_id与原audit双向唯一闭合：actor=actor_id、tenant_scope=NULL、request_id=''、action='procurement.command.'+status、target=operation_id、sanitized_diff正好kind/status两字符串字段。反向pointer采用共同原audit来源列合同，不能仅source单向查存在；相同前缀的绑定/余额观察审计不能冒充账户命令。not_found只闭合命令source/root和原audit，不要求不存在账户的FK。
 
 原command.before_state/after_state始终SQL NOT NULL的JSONB；文中原快照的NULL表示JSON字面null，不能误改成SQL NULL。source/journal可选列使用真正SQL NULL，原JSON快照存在时按既有Account九字段及string值合同匹配，不能增加JSON number或遗漏字段。
@@ -132,26 +134,30 @@ p.last必须精确指当前最后journal.after的(account,attempt,revision,state
 
 ## 4. 公共函数、返回和原API接缝
 
-只给精确APP LOGIN授以下受审根EXECUTE；所有业务mutation为VOLATILE/PARALLEL UNSAFE。下列参数全部必填且禁止SQL NULL，不包括digest、root/source输出ID、账户桶或caller proof；NULL必须明确拒绝，不能由STRICT函数静默返回空结果。Go公开Store/API签名保持原样，由显式prospective executor选择候选，不按库内函数存在自动启用，失败不回退旧SQL。
+只给精确APP LOGIN授以下受审根EXECUTE；所有业务mutation为VOLATILE/PARALLEL UNSAFE。账户/dispatch/recovery参数必填且禁止SQL NULL；record_attempt的expected quote按[物理布局§6](b-procurement-schema-contract.md#6-校准完整记录attempt的公开db根)封闭nullable联合，保留原未消费字段接受集。输入不包括digest、root/source输出ID、账户桶或caller proof；必填NULL明确拒绝，不能由STRICT函数静默返回空结果。Go公开Store/API签名保持原样，由显式prospective executor选择候选，不按库内函数存在自动启用，失败不回退旧SQL。
 
 ```text
 pp_create_account(actor text,operation text,label text,provider text,state text,limit_amount bigint)
 pp_configure_account(actor text,operation text,account text,expected_revision bigint,
                      label text,provider text,state text,limit_amount bigint)
-pp_complete_attempt_birth(tenant text,request text,attempt text)
+pp_record_attempt(tenant text,request text,sequence integer,
+                  channel text,channel_version text,credential text,upstream_model text,
+                  route_decisions jsonb,has_expected_quote boolean,
+                  expected_version bytea,expected_input_rate bigint,
+                  expected_output_rate bigint,expected_basis bytea)
 pp_permit_dispatch(tenant text,attempt text)
 pp_recover_procurement_attempt(tenant text,attempt text)
 ```
 
 create/configure返回一行：`outcome(applied/replay),operation_id,actor,kind,target_id,status,reason,before_state JSONB,after_state JSONB,created_at TIMESTAMPTZ,root_id,account_journal_id?`。中间原command字段与既有Command返回逐值一致；outcome=replay时返回旧受证root/journal身份，不新建任何源；status仍是原applied/rejected。持久化rejected命令的outcome=applied，不另造rejected outcome。not_found只有account_journal_id为NULL，target_id仍是原目标文字。所有新applied outcome都指本次sealed root。prospective遇未受证旧账户/命令不能补登记；明确返回共同错误表的untracked-domain拒绝。
 
-birth返回一行`outcome(applied),root_id,attempt_id,management_mode(managed/unmanaged),account_id?,reserved_event_id?,account_journal_id?,admitted_at?`。managed后四项完整，admitted_at=p.pb_admitted_at；unmanaged后四项全NULL。新origin的management_mode统一managed/unmanaged；原API既有legacy_unmanaged展示标签不因此改动。只能关闭本事务真正新的attempt；已有完成origin重复调用不生成第二个root/来源，按共同birth错误表拒绝。原RecordAttempt的ON CONFLICT重读在Go原流程完成，不调用birth、不凭此登记旧origin。
+record_attempt返回一行`outcome(applied|replay),root_id?,source_id?,attempt_id,request_id,sequence,delivery_state,cost_status`；新动作source_id为自然attempt_id，Go重建原Attempt五字段。完整根仍先执行原read/check再INSERT ON CONFLICT，已有attempt按原身份快返，不凭此登记旧origin。新origin的management_mode统一managed/unmanaged；原API既有legacy_unmanaged展示不变。只有真正新INSERT才生成本次root/origin，managed的account/reserved PE/journal/admitted_at完整，unmanaged这些字段全NULL。三参complete_birth仅private；详细字节ABI与quote_selected_at见物理布局合同。
 
 dispatch返回一行`outcome(applied),checked_at TIMESTAMPTZ,root_id TEXT,delivery_source_id TEXT,account_journal_id TEXT NULL`。checked_at精确等原PB有限时间，managed的journal非NULL、unmanaged为NULL；其余列均非NULL。ID仅描述这次持久事实，不授跨事务许可。没有replay成功分支；已非prepared或已有真实许可的第二次调用沿原attempt_already_dispatched拒绝，无新root/journal。Go PrepareDispatch仍原error接口，在COMMIT前不能向模型客户端使用许可；COMMIT未知不能重新发请求。
 
 recovery由共同成本合同拥有，签名统一两参；request必须从原attempt派生并在锁后交叉核归属。返回outcome(applied/noop)及recovery_source/event/journal身份：applied三类身份完整并有sealed root；noop无本次新root/source/event/journal。原批扫描只是选择候选，不构成deadline或permit证明。request自动birth trigger不是公开SQL业务根，不要求返回此outcome行。
 
-错误区分业务拒绝、原管理命令可提交的rejected回执、数据库执行/完整性失败和未知提交。semantic_code沿原invalid_procurement_configuration/procurement_operation_conflict/procurement_forbidden、procurement_paused/procurement_budget_exceeded、cost_unknown/cost_quote_stale、procurement_binding_changed、request_deadline/invalid_key、attempt_already_dispatched及共同合同新增闭合错误；**SQLSTATE数值与精确统一映射由共同来源合同冻结，本页不另造一套编号。** 不解析本地化异常文本，不将任意约束失败包装成可提交rejected。
+错误区分业务拒绝、原管理命令可提交的rejected回执、数据库执行/完整性失败和未知提交。semantic_code沿原invalid_procurement_configuration/procurement_operation_conflict/procurement_forbidden、procurement_paused/procurement_budget_exceeded、cost_unknown/cost_quote_stale、procurement_binding_changed、request_deadline/invalid_key、attempt_already_dispatched及共同合同新增闭合错误；**SQLSTATE数值由[执行合同](b-procurement-execution-contract.md)统一固定，本页不另造编号。** 原PB固定code/Message窄兼容例外沿共同协议；不解析未知或本地化异常文本，不将任意约束失败包装成可提交rejected。
 
 ## 5. 命令摘要与账户管理事务
 
