@@ -1,6 +1,6 @@
 # B-P4-A1：真实 Reserve 的 request 自动出生与保护合同
 
-2026-11-04；设计核对基线 `1d45726`。承接[最小 exact-link 集成](b-procurement-birth-exact-link-integration-contract.md)、[出生根实施切片 A0–A6](b-procurement-attempt-birth-writer-contract.md#8-实施切片和实际尚缺正文)、[共同来源](b-procurement-source-contract.md)、[request 来源](b-procurement-cost-request-contract.md#31-requestorigin--requesthead)、[布局](b-procurement-schema-contract.md)与[原 Reserve 权限接缝](b-procurement-full-acl-contract.md#41-request自动出生保留原reserve)。**本合同已完成隔离候选实现及窄范围 PG 验证，完整矩阵仍待补齐。** [实际记录](../../docs/verification/procurement-request-birth.md)覆盖 actual APP 原 Reserve、legacy、角色/写保护及故障回滚；不能据此关闭本页全部退出条件。不修改原 001–022、既有账户 writer v1/摘要、715/482 列、旧 profile、正式迁移或在线入口。
+2026-11-04；设计核对基线 `1d45726`，验收续片基线 `71de18a`。承接[最小 exact-link 集成](b-procurement-birth-exact-link-integration-contract.md)、[出生根实施切片 A0–A6](b-procurement-attempt-birth-writer-contract.md#8-实施切片和实际尚缺正文)、[共同来源](b-procurement-source-contract.md)、[request 来源](b-procurement-cost-request-contract.md#31-requestorigin--requesthead)、[布局](b-procurement-schema-contract.md)与[原 Reserve 权限接缝](b-procurement-full-acl-contract.md#41-request自动出生保留原reserve)。**隔离候选及扩充矩阵整包23顶层/423子项真实PG race通过，完整矩阵仍待补齐。** [实际记录](../../docs/verification/procurement-request-birth.md)区分预算/资金、钱包等待、raw误授和有效撤权与尚缺分支；不能据此关闭本页全部退出条件。不修改原 001–022、既有账户 writer v1/摘要、715/482 列、旧 profile、正式迁移或在线入口。
 
 ## 1. 目标、实际入口与信任边界
 
@@ -139,6 +139,8 @@ APP 不获 INSERT(status/billing/latest/created_at/pb_*/pp_*)，不获 source/he
 W 在 request 上仅新增 UPDATE 三个 `pp_origin_*` 与只读 33 普通列，**没有 request INSERT、status/billing/latest/其他冻结列 UPDATE**。新增 RequestOrigin INSERT 32 个非 generated 列、Head INSERT 四列；root INSERT 11 列/step INSERT 五列由本独立候选显式精确授予，不继承旧账户 grant，不扩表级权；新表不授业务 UPDATE/DELETE/TRUNCATE；只为精确双端父 SHARE 给 W 三个锁列 UPDATE：step(root_id)、Origin(request_id)、Head(request_id)，四个新表 BEFORE guard 对实际 UPDATE（包括赋原值）无条件拒绝；root(id) 没有实际 SHARE 路径，不授其 UPDATE。APP 不写这些子表、deferred 纯读不锁，故不需要新表锁列 UPDATE。APP/W 对 Origin 33列、Head 4列及 request 33列有准确只读面；root/step 与本四表反向读闭包在本候选逐列显式冻结，不假定原账户闭包存在。APP 仅获两只读普通 validator EXECUTE 及其真实传递普通函数 EXECUTE，自动 trigger 的直接 EXECUTE 不作为授予 APP 私有能力的理由。
 
 W pointer UPDATE 的原 020 分支显式调用 `pb_require_read_committed()`，必须有准确 EXECUTE；原 trigger 条件可能读取 `periodic_budget_allocations(subject_type,subject_id)`，按实际 SQL 授准确只读面，不用 table SELECT。A1 W 不负责 PB admission，不新增 PB window/event/control 写权、预算配置权或 SELECT(xmin)。APP 原 `readCustomer`/reservation guard 真实读取 request.xmin，若收口 request 表级 SELECT 为固定普通列，必须单独授 APP `SELECT(xmin)`；不能靠列 SELECT * 推断系统列权。其他未变 PB 表维持原 profile，A1 不冒称全 V4 sidecar 已装配。
+
+实际撤权续验校准：pointer UPDATE不改 `(id,tenant_id,key_id)`，原020的 `AND EXISTS` 短路，故W两项allocation SELECT在当前出生路径并非必要。冻结v1 SQL/ACL摘要保留，用两项有效失权仍真实成功的正控制记录，而不伪计42501；291项实际必要失权与PUBLIC重叠边界见[授权合同](b-procurement-request-birth-grant-fault-contract.md)。这不扩大为所有原经营父锁权限已验。
 
 锁能力不可漏：原 APP Reserve 的 tenants/memberships/users/models SHARE、Key UPDATE、价格组 SHARE、PB control 与 wallet UPDATE 都仍需原 SELECT + 至少一列 UPDATE；APP 已有真实管理/资金 UPDATE 列时复用，不为 A1 追加表级写。A1 W 的 pointer UPDATE 已有三列 UPDATE，因此若局部 source/原件检查需要 request SHARE 可复用；本页 readonly validator 自身不加锁。capture 不重锁 tenant/Key/钱包，不为 W 新增这些父表 UPDATE 权。本候选不授共享账户 W 的 users 锁权或其他未用域权限；A2/未来组合扩父锁时另按完整 ACL 给单列及 invoker 拒写。
 

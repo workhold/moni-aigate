@@ -3656,3 +3656,41 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-request-birth.md`
 
 </details>
+
+## 2026-11-03T19:41:22Z · 0bad2a97b346
+
+A1新增预算、钱包真实等待、raw误授和有效撤权四合同及四测试；23顶层423子项真实专库race通过，校准W两项未用读权/PUBLIC重叠并保留失败记录；同步架构图、权限与未验边界、HLD/LLD/计划和README，生产模块/SQL/迁移与运行接线不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1826 个源文件；本次 15 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-attempt-birth.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/procurement-request-birth.md`
+- added `internal/procurementrequestbirth/request_birth_budget_postgres_test.go`
+- added `internal/procurementrequestbirth/request_birth_grant_fault_postgres_test.go`
+- added `internal/procurementrequestbirth/request_birth_raw_postgres_test.go`
+- added `internal/procurementrequestbirth/request_birth_wait_postgres_test.go`
+- added `specs/023-periodic-products/b-procurement-request-birth-budget-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-grant-fault-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-raw-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-wait-contract.md`
+- modified `specs/023-periodic-products/b-procurement-request-birth-writer-contract.md`
+
+</details>
+
+## 2026-11-03T19:42:40Z · 1a783035ddc8
+
+归档A1整包23/423真实PG、1826文件架构只读检查、make check及最终Go构建的实际结果；已审README/CLI/Compose/1Panel文档一致性，保持active预算/PB等待/未知提交/完整profile与生产未验边界，代码和SQL不再变更。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1826 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-request-birth.md`
+
+</details>

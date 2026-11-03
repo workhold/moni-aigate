@@ -1,6 +1,6 @@
 # A1 真实 request 自动出生：隔离候选续片
 
-2026-11-04；基线 `1d45726`。先冻结[真实父请求合同](../../specs/023-periodic-products/b-procurement-request-birth-writer-contract.md)与[窄定位集成合同](../../specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md)，再实现[独立 DDL](../../internal/procurementbirthschema/materials.go)、[writer / guard / 只读 validator](../../internal/procurementrequestbirth/materials/request-birth-writer-v1.sql)及[列 ACL](../../internal/procurementrequestbirth/materials/permissions-v1.sql)。当前只验证本页列明范围，完整 A1 矩阵尚未关闭。
+2026-11-04；初片基线 `1d45726`，矩阵续片基线 `71de18a`。先冻结[真实父请求合同](../../specs/023-periodic-products/b-procurement-request-birth-writer-contract.md)与[窄定位集成合同](../../specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md)，再实现[独立 DDL](../../internal/procurementbirthschema/materials.go)、[writer / guard / 只读 validator](../../internal/procurementrequestbirth/materials/request-birth-writer-v1.sql)及[列 ACL](../../internal/procurementrequestbirth/materials/permissions-v1.sql)。下文区分初片和新增矩阵；完整 A1 矩阵尚未关闭。
 
 ## 已实现与真实执行
 
@@ -36,12 +36,37 @@ TEST_DATABASE_URL="$PRIVATE_TEST_DATABASE_URL" \
 | `.local/moni-request-birth-initial.json`，安装 FAIL | 4820 | `9856864006687c1d233b27cf6e4fe55360d489b86882a1d24f74bb114a9943ec` |
 | `.local/moni-request-birth-reviewed.json` | 32302 | `07bed17e412ad0dfeccb5c7597ecd8f8feac132eb4422f902c9dd9937ae12653` |
 
+## 预算、等待、误授与有效撤权续验
+
+续片先冻结[预算/资金兼容](../../specs/023-periodic-products/b-procurement-request-birth-budget-contract.md)、[真实钱包等待](../../specs/023-periodic-products/b-procurement-request-birth-wait-contract.md)、[raw/误授/exact-link](../../specs/023-periodic-products/b-procurement-request-birth-raw-contract.md)和[必要授权失权](../../specs/023-periodic-products/b-procurement-request-birth-grant-fault-contract.md)四合同，再新增对应独立测试。原 fixture、writer/ACL SQL、固定摘要、001–022 和在线入口均未修改。根串行运行同一专库，APP 原 RC / 3s / 5s 保持。
+
+| 专项 | 真实结果 | 已执行的准确范围 |
+| --- | --- | --- |
+| [预算/资金](../../internal/procurementrequestbirth/request_birth_budget_postgres_test.go) | 5 顶层 / 11 子项 PASS，7.764s | tenant×Key none/enabled/disabled 九配置；零售价、input-only、分组价格及缺组价不回退；pending、Release、无 attempt recovery 和幂等；PB reservation、pending case、PB settlement 三处故障全回滚 |
+| [钱包等待](../../internal/procurementrequestbirth/request_birth_wait_postgres_test.go) | 首两顶层 / 两子项 PASS，7.550s；新增超时/取消一顶层 / 两子项 PASS，5.619s | `pg_blocking_pids` 证明真实 AVAILABLE 行锁等待；跨 scheduled price 仍冻结早报价；request/Key 过期全回滚；原55P03和精确backend取消57014，释放锁后新请求成功 |
+| [raw/误授](../../internal/procurementrequestbirth/request_birth_raw_postgres_test.go) | 6 顶层 / 92 子项 PASS，4.208s | 等价21列raw与同xid双请求；缺reservation由原020 COMMIT 23514；三种非RC写隔离PP903；26冻结字段/五pointer误授、11派生INSERT、legacy补证、四表真实DML/TRUNCATE guard及22处capture内错边 |
+| [有效撤权](../../internal/procurementrequestbirth/request_birth_grant_fault_postgres_test.go) | 修订后3 顶层 / 294 子项 PASS，15.926s | 291项必要权限真实true→false→true、原42501、18表全行回滚及完整canonical ACL恢复；两项未使用读取和PUBLIC重叠另作准确正控制，不计必要失权 |
+
+随后根对**整个包**重新执行上方 `go test -race -p=1 -json ... -count=1 -timeout=180s`：最终 **23 顶层 / 423 子项全部 PASS，0 SKIP / FAIL，36.078s**，其中三顶层为静态检查，其余为真实PG。该总数已含初片5/22和各专项，不再相加。独立查询随机 `rb_*` schema / role 均为 **0 / 0**。真实模型、支付或网络供应商未参与本验收。
+
+重要接受边界仍保留：fresh enabled PB 由原020在下一UTC边界生效，此片证明真实配置/追踪而非active cap拦截；双scope不重复扣钱包，zero价仍有唯一零额效果。input-only非零输出上界由原Reserve拒绝，非零输出价格由原catalog拒绝。没有finalization的live Settle只能pending；正向settled依赖尚未接通的dispatch/decision链，不能用owner手造最终证据补过。
+
+等价raw已实测自动出生，原reservation companion可满足无PB场景原020关系，但**不证明完整Reserve的资金/Key/账本执行**。request guard按值不可变，误授后同值no-op允许；四张来源表任何UPDATE（含同值）由PP901拒绝。显式created_at INSERT依靠ACL，误授后无法区分合法值与DEFAULT；不得将其升级为独立DB采时证明。
+
+首轮grant专项两项失败揭示了必要性假设错误：W的 `periodic_budget_allocations(subject_type,subject_id)` 有效失权后Reserve仍成功。原020 pointer UPDATE未改变 `(id,tenant_id,key_id)`，`AND EXISTS` 不执行；两读属于候选保留的保守权限，**当前路径并非必需**。按事先合同修订固定inventory为291必要项，加两个失权成功正控制；没有新增人为读取、删改原SQL或静默SKIP。原 `pb_require_read_committed()` 同时有PUBLIC/W授权，单撤W仍有效；只有明确保留APP并隔离PUBLIC后再撤W，才计真实W失权。owner隐含权与自动trigger直接EXECUTE不伪计失权。
+
+| 本地原件（忽略，不含生产秘密） | 字节 | SHA-256 |
+| --- | ---: | --- |
+| `.local/moni-request-birth-budget-initial.json`，共享raw文件中间态尚缺helper，编译FAIL，未触达PG | 1517 | `1e4bfd9297e8dae10af0ce4b38597d11f51fb38ce73dba6055d48e328a597350` |
+| `.local/moni-request-birth-grant-first-pg.json`，两项必要性假设FAIL | 349594 | `6399429af23da2f3b7c99c2e9bef111dc2b93bd9b4113abc6cc2c6b63b787e08` |
+| `.local/moni-request-birth-matrix-final.json`，最终整包 | 513914 | `add5ca91bd221b3d250eeec1b7a05e4ed0052314d361260b385821db593c17f3` |
+
 ## 尚未验收与下一步
 
-本轮尚未运行 enabled / disabled tenant / Key PB 及预算争用、零金额 / input-only / 价格组、scheduled 报价跨钱包/PB等待与过期、等价 raw INSERT / 缺 reservation 的 23514、初态 / 派生列 / 部分输入、逐冻结字段误授后篡改、缺多错来源 / 跨 root / 同事务多请求、RC 与其他写隔离、真实 SHARE 等待与锁后重读、超时取消 / 未知提交、逐项必要 grant 撤还与完整 catalog / ACL 恢复、pending / Release / settled 兼容。实现已有相应 guard 不等于这些矩阵已经通过；不能把十项无权写的 42501 当作误授后逐字段 guard 验证。
+仍需active预算上限/争用、真实PB control等待及准入窗口跨期、原Reserve全体父锁授权/锁后资格重读、提前SET CONSTRAINTS、COMMIT结果未知和完整catalog/ACL等独立矩阵。本片已执行的钱包等待不能代替PB等待；原权限闭包的新增项逐撤不能代替所有旧经营权限。未获实测的源/root攻击仍按上位合同保留，完整A1未关闭。
 
-APP 同一权限下手写的完全等价 INSERT 会自动出生，这是保留原 21 列接口的信任边界；本轮还没有执行该专门用例。来源只认证真实初态和不可变快照，不认证完整 Reserve 资金来源或 retail_priced_at 的独立采时。完整 A1、A2/A3 attempt 与 reserved 效果、账户组合、全域 exact-link / ACL / profile、R2 与后续经营/生产阶段继续开放。
+来源只认证真实初态和不可变快照，不认证完整 Reserve 资金来源或 retail_priced_at 的独立采时。A2/A3 attempt 与 reserved 效果、账户组合、全域 exact-link / ACL / profile、R2 与后续经营/生产阶段继续开放。
 
 没有正式迁移、普通 `serve` 安装或在线权限变更。模块、实际时序、数据与权限见[架构细图](../architecture/procurement-attempt-birth.md)，原规则差分另见[A0 记录](procurement-attempt-rules.md)，两套结果不重复加总为完整业务验收。
 
-汇合后根独立观察本轮 `rb_*` / `pp_at_*` 随机 schema 与角色均为零残留；新规则/关系材料最终 race 分别3顶层（2.105s）/4顶层（2.452s）全部PASS。统一架构已完成语义复核与1818文件快照刷新、只读核验；`make check` PASS，含715列设计布局、`go vet ./...`、Vue strict/Vite构建。本轮没有重新执行整仓`make verify-mvp`，不据专项通过宣称完整商业/生产验收；最终归档后再刷新并只读核验。
+初片汇合时，根独立观察 `rb_*` / `pp_at_*` 随机 schema 与角色均为零残留；新规则/关系材料 race 分别3顶层（2.105s）/4顶层（2.452s）全部PASS。初片统一架构1818文件快照和`make check`已通过。续片根语义复核模块、时序、关系与权限边界，1826文件架构快照刷新/只读检查、`make check`与最终Go二进制构建均PASS；检查含715列设计布局、全仓Go vet和Vue strict/Vite构建。README/贡献/安全/开发/部署文档已独立对照实际CLI、Compose和Nginx，链接与步骤通过静态核对；不替代容器/1Panel实际部署。本片没有重新执行整仓`make verify-mvp`，不据专项通过宣称完整商业/生产验收。

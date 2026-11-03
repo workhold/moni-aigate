@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-03T19:23:36Z",
-  "review_reason": "归档原规则与A1真实Reserve限定PG、两次fixture及SQL安装失败修正、三锁列最小授权和剩余预算/并发/撤权矩阵；统一模块/时序/关系/权限/README已语义复核，补最终make check与零残留观察，无线上结构或普通迁移变更",
-  "snapshot_sha256": "35a22ee74500275580646e913cbc21c0cc6bc9f491b83e3691de7daf5dadaa44",
-  "architecture_sha256": "7104b3b15810630e2e2cc621d7a9ce59e64dca5515531a93401e0351107bc0f6",
-  "history_sha256": "81829b6921b77c5cf09df1cafa4bbb2c0614419d5829e7e5b06d4aaa01a3009f",
+  "reviewed_at": "2026-11-03T19:42:40Z",
+  "review_reason": "归档A1整包23/423真实PG、1826文件架构只读检查、make check及最终Go构建的实际结果；已审README/CLI/Compose/1Panel文档一致性，保持active预算/PB等待/未知提交/完整profile与生产未验边界，代码和SQL不再变更。",
+  "snapshot_sha256": "1a783035ddc8f8ce3171eead1dcff2102e29a73a097f1ee8af3a3949cc0a05b8",
+  "architecture_sha256": "58e39c0156351c95e523648376a9a94ce9b3a6a4258a6bdce561e4202483b12e",
+  "history_sha256": "98e6095cc410d7b6755e9e3853d135e85bc3ae06d6c40e11d590f84fa1049d00",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "e5788c62b4d2f3ddb3babb0fecd74781c0f8b3d46aae26a64932c5ecebbbd628"
+      "sha256": "511805009a3a0eff57a86046c33829f03bd646de567bad2a2ce98b243c48f2c2"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -117,7 +117,7 @@
     },
     {
       "path": "docs/architecture/procurement-attempt-birth.md",
-      "sha256": "701dcf36a4dce947e5dd85847b86d8c809a619d38a42f07362781cd9166bff9e"
+      "sha256": "188691241b8730815219a918b224cad53096a756055e5adba9c29ae16550c031"
     },
     {
       "path": "docs/architecture/procurement-replay.md",
@@ -149,15 +149,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "8fd3c596e26e577894cc3395897d830b6054ebaa555f13de194624f6a71a6315"
+      "sha256": "ea41f45077b552c7d4f04f8aa3ab0fc5eb7c1baa5cb853dc5e4487799d734b26"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "823a9843150b01c9fd14dfa176f8be617678a19d08da40e862770aa6d26ebb8d"
+      "sha256": "64c934e9d7bb3d73523705dae36b3839a5a0c63c40cfac549bb4eea4427aa666"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "212df047ab8fc3c19d595ad6645a712ac4c9116ea94aae18c382be1f2c6a2702"
+      "sha256": "84d310595983846d8a632214329c1a5056db13e9980bc8d9040d199d82947f73"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -1577,7 +1577,7 @@
     },
     {
       "path": "docs/verification/procurement-request-birth.md",
-      "sha256": "97bc285a444c8de81c0d78251a87e102c66103bad614c3c9ef05b64304af661e"
+      "sha256": "0f7d1a3962d53631c024deb744bd7229068dde0f56d9d805eebcffd90e0ed855"
     },
     {
       "path": "docs/verification/procurement-source-relations.md",
@@ -4880,8 +4880,24 @@
       "sha256": "d8ca7c6a53c022d583005cfd567172063065a2d1ebc2530149d92f8282630153"
     },
     {
+      "path": "internal/procurementrequestbirth/request_birth_budget_postgres_test.go",
+      "sha256": "741bef2c7dc765e98c3eb3ff97d4de1de369657e2042c7e78b6af7edafb45c67"
+    },
+    {
+      "path": "internal/procurementrequestbirth/request_birth_grant_fault_postgres_test.go",
+      "sha256": "4f3aa4953b9964e274908b226a61c468eee839bbba5cf99d3ee11b943bf96de8"
+    },
+    {
       "path": "internal/procurementrequestbirth/request_birth_postgres_test.go",
       "sha256": "0c25bbe623f5428c45d1c3537628f519147b21356dfbc4c03d1ca8c7c70c313d"
+    },
+    {
+      "path": "internal/procurementrequestbirth/request_birth_raw_postgres_test.go",
+      "sha256": "dcc32c76e18bb7579b0767e1995ca1a437f4e6bc9d2b8659447d1dddff38cec6"
+    },
+    {
+      "path": "internal/procurementrequestbirth/request_birth_wait_postgres_test.go",
+      "sha256": "bc9b7b36dff02f4e045e34d8ca8e56ec56f89d0454020cbd7c9ba1fa1c2c1e64"
     },
     {
       "path": "internal/productvalue/fuzz_test.go",
@@ -6600,8 +6616,24 @@
       "sha256": "d6c1bbee38ed76a502c4bb85957968fdc14060556cfa9c4cf7811cbce63e1141"
     },
     {
+      "path": "specs/023-periodic-products/b-procurement-request-birth-budget-contract.md",
+      "sha256": "b8f495b378989a197ffdfb449b2e4b53f5ff2af67faad841c0ca51a4bcea0892"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-request-birth-grant-fault-contract.md",
+      "sha256": "d1390beb08c1b65ffe73ab5d5124eef577372349129d36ed60bc6e7eedfd1ee5"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-request-birth-raw-contract.md",
+      "sha256": "595efaf00067d094261421fd27b9d17699ea80ae5b47446d6d65b5debe09e169"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-request-birth-wait-contract.md",
+      "sha256": "5383cb3238a41da429810fa27c7fb5ec2add6af4db941f39a58ba9154fbb5363"
+    },
+    {
       "path": "specs/023-periodic-products/b-procurement-request-birth-writer-contract.md",
-      "sha256": "68e5b0a8fe393e1eaf640e9c8bf0e497f3043b24a8d567767c759f8b5caebca0"
+      "sha256": "48177a7dbff4256ad4fc5a773442fed763f5f4fc66c0777394062202eacf6ea7"
     },
     {
       "path": "specs/023-periodic-products/b-procurement-schema-contract.md",

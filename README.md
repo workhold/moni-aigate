@@ -255,7 +255,7 @@ make verify-mvp
 
 采购历史核验仍是开发期候选，普通启动不会安装对应 SQL。源码关系、当前已实现的校验与剩余观察缺口见[采购模块细图](docs/architecture/procurement-replay.md)；最新实现与真实数据库故障范围见[采购关系与预算重放](docs/verification/procurement-pb-relations.md)和[账户 writer 验证](docs/verification/procurement-account-prefix.md)。局部校验通过不代表完整历史证明或正式迁移已交付。
 
-当前正推进请求与采购尝试的来源保护；原路由/报价规则已完成独立数据库差分，阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)。这些候选材料不属于常规部署步骤。
+当前正推进请求与采购尝试的来源保护：原路由/报价规则已完成独立数据库差分，请求来源已补验预算组合、价格快照、等待过期、资金回滚和权限防护。完整采购尝试链与正式迁移仍在开发，阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)和[验收记录](docs/verification/procurement-request-birth.md)。这些候选材料不属于常规部署步骤。
 
 [字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它只比对候选表列与设计物料，不安装数据库；部署请遵循上面的常规迁移与启动步骤。
 
