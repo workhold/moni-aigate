@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-03T00:21:23Z",
-  "review_reason": "归档B-P1末轮make check 6.124秒与全仓1072.572秒成功记录；已复核候选代码/测试/SQL/合同固定及CI、README、架构来源链接；本次仅验证记录变更，无模块、数据、权限或运行时结构变化",
-  "snapshot_sha256": "479f6503186b2f9f15409edf5ddc2d2b2aaec255195be3dc7de933ff15702cbf",
-  "architecture_sha256": "0381bab83afdf92083744dce145e126f039427bffc4bad357463365c4e37680f",
-  "history_sha256": "ccdec5f8c7bb81f95b1df9613551f4d92009a2bc49a7ee39a4697dd9f3aa65b5",
+  "reviewed_at": "2026-11-03T01:13:49Z",
+  "review_reason": "B-P2最终make check结果与精确旧catalog补验日志摘要已收口；仅验证元数据更新，已复核安装图/源码链接与普通运行不变的边界",
+  "snapshot_sha256": "d4866433f34ae8818eb89aa41d72637c5fb98b66d83898788f221d3e2f49163f",
+  "architecture_sha256": "fafd6ae3e9f307c839d161bf7bb8efe5892fa3dc6d9c9b4839112aeda45a3363",
+  "history_sha256": "a26dea2ead7338b4772e816f8ae8416f44dcf2303f47998ec0a6462e45670d77",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "28a01d11a5cb873bb5c80a5b37e28c7876ba7c1a9e5c685d637ae7ca7c5f7e09"
+      "sha256": "e447ba371794ec7fa57bb704aa45f93a8540e0aabf82dbdbf0da9ac630ee45c2"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -104,6 +104,10 @@
       "sha256": "fca4752bef685ffb1c8665a4a20208dbdc00701baf28904915561a24d0243bbd"
     },
     {
+      "path": "docs/architecture/periodic-budget-prefix-install.md",
+      "sha256": "22d55c55c20b6a425a29f801351b0d549ea0d2fc5e52326890d9ba8fc60b6e16"
+    },
+    {
       "path": "docs/architecture/periodic-budget-prefix.md",
       "sha256": "c1c888df64ff56cd30f18043bdffc702e222017b523da4074e023d755d17073a"
     },
@@ -133,15 +137,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "e407bbeeec30a67e62c7ec559fd5da1ac5fdfa38b8e86cb7eb616d7fdc86bae2"
+      "sha256": "16a5f6e1db338246a32c1874e0b9ed82acea703cc25e6e59b8d75d5133b3153c"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "9909a4624451bf8f220228f64fceef737b2d8e4663fe5c2fd80ee51354fd777e"
+      "sha256": "c6fbaeb756190d94634f959ba5b41d7c9d9e63e5b402347068159dc59fa76649"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "b8fe2ed01e1bfdf640d66c938a48ce5ee87ceafd35d0535ea420991b34de1031"
+      "sha256": "db6c81a8b402602d300f4ea99809686925c300f3640cfd90bdf215e40703967f"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -189,7 +193,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "5e0a51be32a025a92961591dda1bb83a2c0d186e63365cf878f8c5b0a9f6acd8"
+      "sha256": "72aebd3c62ad4cb13b80d9c03ddc18745eca2065a588511aeab29e9b27e45c2b"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -386,6 +390,10 @@
     {
       "path": "docs/verification/assets/architecture-periodic-budget-prefix-detail.png",
       "sha256": "efa8d6f89435310df11c1c8c263082965ff51136cf9737a16ffd90c2ba616ad3"
+    },
+    {
+      "path": "docs/verification/assets/architecture-periodic-budget-prefix-install-detail.png",
+      "sha256": "cb504257850028bb7ddc3cd83d907d5d036d2109573b922939df047353bf22da"
     },
     {
       "path": "docs/verification/assets/architecture-protected-init-application.png",
@@ -1392,6 +1400,14 @@
       "sha256": "11b7723d310de648b376db08ccffa227ab2d586dbb1d2e75362f6853a578acdb"
     },
     {
+      "path": "docs/verification/periodic-budget-prefix-install.json",
+      "sha256": "8a735def513638c6a434ab2c87c63227c42cbe60a7cfb82a3f20b0a94aa6e078"
+    },
+    {
+      "path": "docs/verification/periodic-budget-prefix-install.md",
+      "sha256": "6c332551a36336a1e093a176d6c6e98b486c89c59cb433af7adda445f182758a"
+    },
+    {
       "path": "docs/verification/periodic-budget-prefix.json",
       "sha256": "a6f15c19d20d213a916487e8eaa779a4790bc6dfe8fd74d8cc3e85c6df3b1358"
     },
@@ -2194,6 +2210,10 @@
     {
       "path": "internal/fundinglotcatalog/peers.go",
       "sha256": "8e06412c574950a8fe1bfaa25fe5516d14bc6866e9a07501bfb3b984cc4f70f0"
+    },
+    {
+      "path": "internal/fundinglotcatalog/prefix_rejection_integration_test.go",
+      "sha256": "f0255e3319d4174c0fbd1c6ce86765ee4ce856f2cf40ff6749b60654b1e5c838"
     },
     {
       "path": "internal/fundinglotcatalog/profile.go",
@@ -3913,7 +3933,11 @@
     },
     {
       "path": "internal/periodicbudget/prefix_fixture_integration_test.go",
-      "sha256": "462a3352a9776ebeedf27efea59695cc47af9e9b363a080b616efeacbe3c13aa"
+      "sha256": "4dddda80c0ce3b4cfaef79e937d65103f4dc2614575afbb3d25b41a1c417a8b7"
+    },
+    {
+      "path": "internal/periodicbudget/prefix_install_integration_test.go",
+      "sha256": "416a494ca420b1973fcd7ba49e841a0899e5fe921c2a9797870541728586be61"
     },
     {
       "path": "internal/periodicbudget/reader.go",
@@ -3961,7 +3985,7 @@
     },
     {
       "path": "internal/periodicbudget/tx_fixture_test.go",
-      "sha256": "c868b0c7c2d21a38ca8902e55b9753fd6391b0b9bb277256f1675d187f53eda7"
+      "sha256": "8b0639ee949d4bdc2382e3dea8f2a46e1c7114bdeef0664bbea262973217ddee"
     },
     {
       "path": "internal/periodicbudget/tx_identity_integration_test.go",
@@ -4066,6 +4090,22 @@
     {
       "path": "internal/periodicbudgetprefix/values.go",
       "sha256": "562321d310e50fb4d67757e5daa8dde983b7e933e21a6d2bd5acf273ad8b4fa4"
+    },
+    {
+      "path": "internal/periodicbudgetprefixschema/materials.go",
+      "sha256": "e1f0e17975acd821f5b079d0d1cfb0b7234a886f7340a6b54cd7b2cd85fbdf7e"
+    },
+    {
+      "path": "internal/periodicbudgetprefixschema/materials/candidate-v1.sql",
+      "sha256": "b225c3ff61b735d6830aed1d25edc27bc4784f8e251cb2c1d656196d8d9c630e"
+    },
+    {
+      "path": "internal/periodicbudgetprefixschema/materials/permissions-v1.sql",
+      "sha256": "aaea2994d5a79726df8b5c1767b5adb054d14ee8cb81fa12b43b87d24a2f28bf"
+    },
+    {
+      "path": "internal/periodicbudgetprefixschema/materials_test.go",
+      "sha256": "bf841fa565a61f067a612e1cf28eda8c052e0e1e3be7d51beb4ce8ffea18b21d"
     },
     {
       "path": "internal/pricing/pricing.go",
@@ -4636,6 +4676,18 @@
       "sha256": "067c1be3490e238681871ef4302a6d5377647b08590bb23980acd373985dfef8"
     },
     {
+      "path": "internal/testsupport/periodicprefix/install.go",
+      "sha256": "3234896427fda5e799c4e086c817ee623895bcc17d94d0ea49353d849b0e7eb1"
+    },
+    {
+      "path": "internal/testsupport/periodicprefix/roles.go",
+      "sha256": "3de6d64a78d9bc633ee1943a956e14733a1a5069a8a5a585a972e45bb6be1b56"
+    },
+    {
+      "path": "internal/testsupport/periodicprefix/roles_test.go",
+      "sha256": "25ccf9820e66ec737ed4c54b7a43f104320a6aca7c7bb4876c47d0d4bb7aca65"
+    },
+    {
       "path": "migrations/001_core.sql",
       "sha256": "98aacd5c4cebc6beb2860bd22a711b7ac50a2801e53c95ea2017f6c77b1dbd1e"
     },
@@ -4730,6 +4782,22 @@
     {
       "path": "migrations/embed_test.go",
       "sha256": "560c69368c69b26cfc59dfc14b11ce98d81c773d6a976de41c3e3288e32547b1"
+    },
+    {
+      "path": "migrations/original22.go",
+      "sha256": "cc5abec101fdb4fa502e082eeecf665450ebe176a5438c941694081f81af22bf"
+    },
+    {
+      "path": "migrations/original22_manifest.json",
+      "sha256": "ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de"
+    },
+    {
+      "path": "migrations/original22_postgres_test.go",
+      "sha256": "2247cb19a0939cb300c224a8c16f65300266d8e4c3a007a3876ae0441264efae"
+    },
+    {
+      "path": "migrations/original22_test.go",
+      "sha256": "9e93315f981652136e88db8b64692b3eb0488e7cd78eaab51e0064ba98d9d1d1"
     },
     {
       "path": "migrations/verify_readonly.go",
@@ -5592,6 +5660,10 @@
       "sha256": "fa2de2dd188da3ad57b97880ef6e5babf558e28d350ec0c6f32fc58a00007e4e"
     },
     {
+      "path": "specs/023-periodic-products/b-prefix-install-contract.md",
+      "sha256": "deae955b67a61fabd82934b77564cedf1c17516b9d02af5329312412948623bd"
+    },
+    {
       "path": "specs/023-periodic-products/b-prefix-permissions.sql",
       "sha256": "aaea2994d5a79726df8b5c1767b5adb054d14ee8cb81fa12b43b87d24a2f28bf"
     },
@@ -5625,7 +5697,7 @@
     },
     {
       "path": "specs/023-periodic-products/plan.md",
-      "sha256": "05c8a2ba6378bec70f3cb849e9559d80eddf50165a7cc67d853005d68f4ecd17"
+      "sha256": "6c30a874f770903ede0b5a9baadad1f1952e37715bef33a9df6957038c892172"
     },
     {
       "path": "specs/023-periodic-products/review.md",

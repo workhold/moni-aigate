@@ -1,23 +1,25 @@
 package periodicbudget_test
 
 import (
-	"io/fs"
+	"context"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotverify"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudgetprefix"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/periodicprefix"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
-// These candidate tests deliberately do not follow a future current migration
-// set. The existing factory is usable only while this exact embedded baseline
-// guard succeeds; the additional candidate is never a formal migration.
+// These candidate tests use the fixed original22 material and explicit historical
+// factory, independently of future current migrations. No guard is skipped when
+// a future file is embedded; the applied history still must be exactly original22.
 func newPBPrefixBaseFixture(t *testing.T) *pbTxFixture {
 	t.Helper()
 	raw := os.Getenv("PB_PREFIX_DATABASE_URL")
@@ -29,13 +31,10 @@ func newPBPrefixBaseFixture(t *testing.T) *pbTxFixture {
 		t.Fatal("prefix candidate tests require the dedicated local moni_test database on port 55439")
 	}
 	expected := strings.Fields(`001_core.sql 002_billing.sql 003_operations.sql 004_recovery.sql 005_binding_isolation.sql 006_route_decisions.sql 007_model_discovery.sql 008_credential_pools.sql 009_channel_batch_operations.sql 010_key_access_policy.sql 011_key_runtime_limits.sql 012_key_configuration.sql 013_cost_aware_routing.sql 014_procurement_accounts.sql 015_public_catalog.sql 016_self_service_identity.sql 017_funding_vouchers.sql 018_tenant_pricing.sql 019_operations_alerts.sql 020_periodic_budgets.sql 021_payment_sandbox.sql 022_payment_runtime_attestation.sql`)
-	names, err := fs.Glob(migrations.Files, "*.sql")
-	pbTxMust(t, "read exact prefix candidate embedded baseline", err)
-	if !reflect.DeepEqual(names, expected) {
-		t.Fatal("prefix candidate requires an isolated exact original 001–022 embedded migration manifest")
-	}
+	_, err = migrations.Original22Manifest()
+	pbTxMust(t, "verify frozen original22 embedded bytes", err)
 	t.Setenv("TEST_DATABASE_URL", raw)
-	f := newPBBillingFixture(t)
+	f := newPBTxFixtureBaseline(t, true, "022_payment_runtime_attestation.sql")
 	pbTxMust(t, "verify exact original 001–022 applied checksums", migrations.VerifyThrough(f.ctx, f.owner, "022_payment_runtime_attestation.sql"))
 	var history []string
 	rows, err := f.app.Query(f.ctx, `SELECT name FROM schema_migrations ORDER BY name`)
@@ -63,11 +62,15 @@ func newPBPrefixFixture(t *testing.T) *pbTxFixture {
 
 func pbPrefixInstall(t *testing.T, f *pbTxFixture) {
 	t.Helper()
-	_, err := f.owner.Exec(f.ctx, pbTxTrackedSQL(t, "b-prefix-candidate.sql"))
-	pbTxMust(t, "install additional prefix SQL candidate", err)
-	permissions := strings.NewReplacer("{{app}}", pgx.Identifier{f.appRole}.Sanitize(), "{{projection}}", pgx.Identifier{f.projectionRole}.Sanitize()).Replace(pbTxTrackedSQL(t, "b-prefix-permissions.sql"))
-	_, err = f.owner.Exec(f.ctx, permissions)
-	pbTxMust(t, "grant minimal additional candidate permissions", err)
+	tx, err := f.owner.BeginTx(f.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadWrite})
+	pbTxMust(t, "begin caller-owned exact baseline candidate installation", err)
+	defer func() {
+		cleanup, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = tx.Rollback(cleanup)
+	}()
+	pbTxMust(t, "install candidate and verify minimal permissions in the same snapshot", periodicprefix.InstallTx(f.ctx, tx, periodicprefix.Pins{Schema: f.schema, AppRole: f.appRole, ProjectionRole: f.projectionRole}))
+	pbTxMust(t, "caller commits complete candidate", tx.Commit(f.ctx))
 }
 
 type pbPrefixNativeTime struct {

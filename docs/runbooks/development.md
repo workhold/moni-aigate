@@ -114,7 +114,7 @@ PB_PREFIX_DATABASE_URL="$TEST_DATABASE_URL" go test -race -p 1 ./internal/period
 go test -race ./internal/periodicbudgetprefix -count=1
 ```
 
-fixture 先校验精确原001–022，再在随机schema中追加候选并用actual APP验证；将来增加正式迁移时必须先完成历史安装隔离，不能删除精确guard或改为skip。CI仅在原`other`分区的Go测试命令显式启用此候选，其他分区和默认本地`make verify-mvp`不自动启用。当前结果、初次失败及未验边界见[候选验证](../verification/periodic-budget-prefix.md)。
+fixture 现按B-P2明确应用原001–022，以固定历史材料和同事务核验替代临时“current恰有22项”的guard；再在随机schema的savepoint中原子追加候选/最小权限并用actual APP验证，不随未来latest漂移。CI仅在原`other`分区的Go测试命令显式启用此候选，其他分区和默认本地`make verify-mvp`不自动启用。B-P1原语义证据见[候选验证](../verification/periodic-budget-prefix.md)，本轮安装、权限与复跑边界见[安装验证](../verification/periodic-budget-prefix-install.md)。
 
 项目没有内置管理员账号、默认密码或自动演示余额。各开发环境应使用自己的私有配置和独立测试数据库；不要将账号、恢复码、Key 或数据库文件提交到仓库。
 
@@ -505,3 +505,5 @@ curl --get http://localhost:8080/api/public/models \
 固定109表[basis与v2叶子](../verification/basis-proof-v2.md)为独立库专项：basis使用原迁移隔离schema与只读RR，先验证真实目录/UTF8，再读取原二进制；v2无需数据库，兼容差分放维护包单向引用。二者没有生产CLI，不新增启动参数或要求开发者手工发行证明；不能将CanonicalV2或Summary当运行授权。专库测试须串行并清理，不改同集群预览或全局设置；受保护phase/开账/epoch已完成库级候选装配，独立停服只读epoch观察已作为库级候选实现；非空runtime、正式迁移及CLI/在线接线仍在后续；执行证据见[事务记录](../verification/protected-init-phase.md)与[观察记录](../verification/epoch-observer.md)。
 
 受保护开账的完整维护专项须同时设置 `C0_MAINTENANCE_DATABASE_URL` 与 `MONI_TEST_DATABASE_URL` 指向上述同一专库，再串行运行 `go test -race -p 1 ./internal/maintenancetrust ./internal/maintenancescan ./internal/fundinglotbasis ./internal/fundinglotproof ./internal/fundinglotinit ./internal/fundinglotscan ./internal/fundinglotverify ./scripts/online-dependency-qa -count=1 -timeout 1200s`。前者启用真实Gate/Permit/phase与独立观察器，后者启用basis/seed来源SQL；仅一个开关通过不能替代另一组。本轮实际以900秒预算通过维护包（894.881秒）；新增经营、沙箱和故障场景后，建议为手动串行专项保留1200秒累计测试包预算。产品phase/观察事务累计30秒、原leaf与独立cleanup预算及断言不变。检查具体SKIP和失败，精确执行记录见[事务验证](../verification/protected-init-phase.md)与[观察验证](../verification/epoch-observer.md)。
+
+预算观察前缀专项继续显式使用 `PB_PREFIX_DATABASE_URL` 指向同一专库，串行运行 `go test -race -p 1 ./internal/periodicbudget -run '^TestPBPrefix' -count=1 -timeout 180s`。B-P2 fixture 明确 `ApplyThrough(...022)`，在原 RR RW 的同一 savepoint 核固定历史、安装候选与最小 ACL；不要把候选 SQL 放进普通 main，也不要在候选后重跑旧 `provision`。原历史 API 专项使用 `TEST_DATABASE_URL`：`go test -race ./migrations -run '^TestOriginal22' -count=1`。新包 `periodicbudgetprefixschema` 是纯材料，`testsupport/periodicprefix` 仅用于专库 fixture，没有生产安装命令。证据见[安装验证](../verification/periodic-budget-prefix-install.md)。

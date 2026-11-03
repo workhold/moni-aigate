@@ -1356,3 +1356,9 @@ RuntimeProof仅覆盖原仍活跃的RR快照；结束/关闭或换事务后不�
 按[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)新增独立 `periodicbudgetprefix` 纯包和隔离 SQL 候选，细节见[模块与数据关系图](periodic-budget-prefix.md)。命令和窗口出生共用观察 ordinal，资金 effect 继续使用原 event_seq；回执 JSON 与 cut 在同一锁内原件上生成。新报告自行运行旧 PB 算法，并在新 scope 按唯一 cut 逐命令认证，原 Base 与两类 legacy gap 保留。
 
 候选只在精确 001–022 后的专用 schema 验证，来源字段与三张证据表不由普通 migrate/provision/main/Compose 安装。旧读取器、basis/catalog roots 与 APP 运行证明没有隐式接入新能力；正式 profile、完整组合、追加迁移和启动接线仍按依赖后续推进。CI仅在原other分区的测试命令显式开启PB专项，沿用该job独立PG/JSONL，随机schema内安装候选，其他九分区与默认本地验收不扩范围。GitHub 首页和 Issue/PR 模板仅改变使用与协作入口，不增加运行时模块或权限。实际测试与跳过范围见[本片验证](../verification/periodic-budget-prefix.md)。
+
+### 固定历史与候选安装隔离（B-P2）
+
+按[安装合同](../../specs/023-periodic-products/b-prefix-install-contract.md)新增固定 original22 历史材料与同事务核验、纯候选材料包和仅测试支持的安装接缝。测试 fixture 明确应用原 022，候选安装在 caller RR RW 的私有 savepoint 中完成历史检查、完整缺席、DDL、最小授权与局部有效权限复核；失败 fresh 有界回滚，成功仍由 caller 决定最终提交。未来 current 追加不会使历史材料跟随 latest，也不能使已记录新版本的数据库冒充原 22。
+
+新三表、三 source 字段与准确 12 个函数的权限单独验证，包含 PUBLIC/默认授权、角色 SET/ADMIN、owner 与 grant option。旧 `ProvisionFor` 在候选后重跑会扩权，必须检出；不修改旧命令隐式适配候选。普通服务模块、请求/资金链路、正式迁移、worker/部署权限、旧 roots 和 RuntimeProof 均不因本片改变。安装状态机与源码见[细化架构](periodic-budget-prefix-install.md)，实际专项与未验范围见[验证记录](../verification/periodic-budget-prefix-install.md)。

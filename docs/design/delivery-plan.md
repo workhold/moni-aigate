@@ -160,3 +160,5 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 下一依赖仍按合同§1：精确001–022安装/材料隔离→新完整scanner/basis/catalog/report profile与同snapshot组合→正式append-only迁移/provision/startup。旧control不补造origin，原Base与legacy缺证保留，完整R1-B和R2线上门禁持续关闭；C1/C2/C3、商品、媒体扩展、供应商与容器/1Panel、生产/HA和最后性能阶段继续，不以本候选替代最后阶段交付。
 
 本片根最终专项15顶层/46父子终态PG race与19顶层/227父子纯race全部通过；`make verify-mvp`指定专库1072.572秒、286前端/48Go包race/vet/build通过，默认独立opt-in仍分别记账。CI仅other分区命令级显式运行PB候选，保留精确22与随机schema/actual APP隔离；最终静态/架构与推送后CI按[验证记录](../verification/periodic-budget-prefix.md)核对，不将本地成功当Linux、正式迁移或生产能力。
+
+2026-11-03 B-P2 按[精确合同](../../specs/023-periodic-products/b-prefix-install-contract.md)新增固定 original22 材料及明确 schema 的同事务 verifier，纯候选材料与局部角色核验并行实施，根接入仅测试支持的 savepoint 安装及显式历史 fixture。候选不跟随 latest；失败不留下可提交半片，旧 provision 后跑扩权要被检出。实现与实际结果见[架构](../architecture/periodic-budget-prefix-install.md)和[验证](../verification/periodic-budget-prefix-install.md)。下一项继续为 B-P3 全来源共享扫描/basis/catalog/report profile 与 protected pre/post/observer/runtime 集成，最后发布正式迁移/启动及完整经营验收；后续商业化、生产/HA 与性能目标保持原范围。

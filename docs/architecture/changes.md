@@ -2807,3 +2807,67 @@ B-P1最终15项actual APP候选race及19项纯race和全仓专库验收通过，
 - modified `docs/verification/periodic-budget-prefix.md`
 
 </details>
+
+## 2026-11-03T00:51:47Z · 551bf375b61e
+
+B-P2新增固定original22同事务历史核验、纯候选材料及仅测试支持的savepoint安装和局部ACL复核；普通运行与正式迁移及旧catalog/runtime边界保持；同步HLD/LLD与安装架构和专项证据
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1578 个源文件；本次 24 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- added `docs/architecture/periodic-budget-prefix-install.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/periodic-budget-prefix-install.json`
+- added `docs/verification/periodic-budget-prefix-install.md`
+- modified `internal/periodicbudget/prefix_fixture_integration_test.go`
+- added `internal/periodicbudget/prefix_install_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- added `internal/periodicbudgetprefixschema/materials.go`
+- added `internal/periodicbudgetprefixschema/materials/candidate-v1.sql`
+- added `internal/periodicbudgetprefixschema/materials/permissions-v1.sql`
+- added `internal/periodicbudgetprefixschema/materials_test.go`
+- added `internal/testsupport/periodicprefix/install.go`
+- added `internal/testsupport/periodicprefix/roles.go`
+- added `internal/testsupport/periodicprefix/roles_test.go`
+- added `migrations/original22.go`
+- added `migrations/original22_manifest.json`
+- added `migrations/original22_postgres_test.go`
+- added `migrations/original22_test.go`
+- added `specs/023-periodic-products/b-prefix-install-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T01:13:16Z · 07e8771c860a
+
+B-P2汇合完成：固定历史/候选savepoint与ACL专项、完整商业回归及旧LegacyV1/WalletReadV2精确拒绝补测通过；源码边界、README、HLD/LLD、安装图与证据已复核，正式迁移/runtime仍未接入
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1580 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/periodic-budget-prefix-install.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/architecture-periodic-budget-prefix-install-detail.png`
+- modified `docs/verification/periodic-budget-prefix-install.json`
+- modified `docs/verification/periodic-budget-prefix-install.md`
+- added `internal/fundinglotcatalog/prefix_rejection_integration_test.go`
+
+</details>
+
+## 2026-11-03T01:13:49Z · d4866433f34a
+
+B-P2最终make check结果与精确旧catalog补验日志摘要已收口；仅验证元数据更新，已复核安装图/源码链接与普通运行不变的边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1580 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/periodic-budget-prefix-install.json`
+
+</details>

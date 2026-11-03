@@ -927,3 +927,9 @@ Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx
 [`periodicbudgetprefix.Check`](../../internal/periodicbudgetprefix/check.go)接原完整PB图与来源投影，自己运行旧算法，分别验证origin、source、观察连续链与精确cut/tail，再扫描资金前缀推导held/spent/carry和窗口revision/tail，严格比对12/5字段回执。窗口存在按birth.ordinal判断，不搜索同金额的其他cut。合并100000行/16MiB逻辑预算，单字段65536字节；资源/取消/超时零报告。新scope只解决已认证命令的prefix gap，原Base与legacy membership/effect缺证不改。
 
 actual APP专库test-only reader不等于生产scanner或authority。精确安装/材料隔离、新readset/basis/catalog与历史→current映射、pre/post/runtime组合、正式追加迁移和普通启动接线仍依次推进；[精确合同](../../specs/023-periodic-products/b-prefix-contract.md)、[架构](../architecture/periodic-budget-prefix.md)与[执行记录](../verification/periodic-budget-prefix.md)共同限定本片。
+
+## B-P2：同事务固定历史与候选权限
+
+`Original22Manifest` 固定 22 项/2459B/原 SHA，逐名认证旧 SQL，不枚举 future current；`VerifyOriginal22SnapshotTx(ctx,tx,schema)` 仅在原 RR RO/RW 查询明确 schema 的 ONLY history，CASE 限制 name/checksum 传输，LIMIT23 检额外项，逐项拒绝重复/缺失/坏值。它不控制 caller 事务、加锁或发行维护权限，旧 APIs 保持。
+
+纯 `periodicbudgetprefixschema` 保存逐字候选及权限模板；仅测试支持的 `InstallTx` 限定实际专库 owner 与随机 schema，在私有 savepoint 中核 exact history/完整缺席后安装，独立核三表25列/rowtypes/12函数及新source不可UPDATE。有效权限含 SET/ADMIN 闭包、owner/高权/grant option，raw ACL 拒 PUBLIC/外部默认授权。成功 RELEASE，任一失败 fresh 5 秒回滚，清理不明必须放弃原事务；最终 COMMIT 丢回复不据此重装。完整 catalog/依赖/正文 proof 留给 B-P3，不开放旧 Gate 的 tx。详见[冻结合同](../../specs/023-periodic-products/b-prefix-install-contract.md)与[架构](../architecture/periodic-budget-prefix-install.md)。

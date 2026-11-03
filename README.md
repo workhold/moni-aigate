@@ -87,6 +87,8 @@ flowchart LR
 
 资金来源维护与在线经营分阶段交付，完整经营认证仍受周期预算历史证据门禁限制。库级实现和后续接线见[运行核验架构](docs/architecture/runtime-composer.md)、[验证记录](docs/verification/runtime-composer.md)及[维护架构](docs/architecture/maintenance-gate.md)。套餐购买、原路退款和拒付等未完成能力见交付计划。
 
+预算证据升级目前在[隔离候选环境](docs/architecture/periodic-budget-prefix-install.md)验证，普通部署继续使用正式迁移；README 的部署步骤不要求手工安装候选 SQL。
+
 ## 本地启动
 
 需要 **Go ≥1.26、Node 22、PostgreSQL 16**。首次运行请使用专用数据库。

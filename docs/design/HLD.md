@@ -524,3 +524,5 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 按[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)增加独立证据域与纯核验：原资金 event_seq 排序 effect，新观察 ordinal 排序窗口出生与命令，包括 no-op。新 control 出生建立 origin，head 与不可变 journal 绑定真实 source，命令 JSON 和精确资金 cut 从同一锁内原件生成。新 scope 自行重跑原 PB 图并逐命令认证，原 Base 与 legacy 缺证保留，旧 control 不回填出生。
 
 SQL 与权限只作为精确001–022之后的隔离候选，不进入正式 migrate/provision/main。旧reader/basis/catalog与APP RuntimeProof尚未接入；先补精确安装和全新profile/组合，再发布追加迁移及启动装配，完整R1-B与R2门禁不提前开放。模块与实际验证见[细化架构](../architecture/periodic-budget-prefix.md)及[验证记录](../verification/periodic-budget-prefix.md)。
+
+B-P2 按[独立合同](../../specs/023-periodic-products/b-prefix-install-contract.md)固定原 22 份历史材料，新增 caller 原 RR 的明确 schema 核验。候选 DDL/授权保存于独立纯材料包；仅测试支持的专库安装器将核验、DDL、最小 ACL 及权限复核放入同一 savepoint，最终提交仍由 caller 拥有。它解决候选随 latest 漂移和旧 provision 扩权的风险，不增加生产安装入口；新完整 profile、protected phase/runtime、正式迁移/启动依赖继续。详见[安装架构](../architecture/periodic-budget-prefix-install.md)。

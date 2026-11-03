@@ -61,3 +61,9 @@ flowchart LR
 每片专项PG测试、严格前端构建和隔离浏览器完成后，由集成人汇总全部并行结果，同步HLD/LLD、路线图、统一架构的价格链路/预算数据/权限/能力状态/源码链接及验证范围，再执行仓库规定的显式reviewed refresh和只读检查。
 
 A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，B核心/HTTP/UI已接线且专项、隔离main浏览器、最终相关PG race与020预览升级通过，独立只读核验器及C仍继续；A完成不能写成周期和订阅完成，B也不能写成供应商真实月账单硬封顶。当前代码、旧验证和fixture不得被当作新行为验收证据。
+
+## 6. B-P2 固定历史与隔离安装
+
+按[安装合同](b-prefix-install-contract.md)拆分固定 original22 同事务核验、纯候选材料与局部权限复核，根串行接入明确历史 fixture 与 savepoint 安装，再验实际失败阶段及旧 provision 扩权负例。新接缝仅在 testsupport 专库运行，不给生产入口增 DDL 权限；旧 current API、roots 与运行证明保持。
+
+本片实现与结果分别见[安装架构](../../docs/architecture/periodic-budget-prefix-install.md)和[执行记录](../../docs/verification/periodic-budget-prefix-install.md)。后续先冻结 B-P3 完整 source/wallet profile、共享物理预算与新 basis/catalog/report，连同 protected pre/post、observer、APP runtime 验证，最后正式迁移/provision/startup 与全经营验收。不能以本片安装成功关闭 R1-B/R2 或其他后续阶段。

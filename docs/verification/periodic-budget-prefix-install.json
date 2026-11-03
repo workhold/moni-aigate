@@ -1,0 +1,414 @@
+{
+  "format_version": 1,
+  "date": "2026-11-03",
+  "baseline": "6bed3a98052b26d42a3e5dd5e447968da39331ce",
+  "scope": "original22_and_periodic_prefix_candidate_test_install_only",
+  "production_install": false,
+  "runtime_proof": false,
+  "online_funding_ready": false,
+  "original22": {
+    "count": 22,
+    "canonical_bytes": 2459,
+    "sha256": "ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de"
+  },
+  "frozen_sources": {
+    "internal/periodicbudget/prefix_fixture_integration_test.go": "4dddda80c0ce3b4cfaef79e937d65103f4dc2614575afbb3d25b41a1c417a8b7",
+    "internal/periodicbudget/prefix_install_integration_test.go": "416a494ca420b1973fcd7ba49e841a0899e5fe921c2a9797870541728586be61",
+    "internal/periodicbudget/tx_fixture_test.go": "8b0639ee949d4bdc2382e3dea8f2a46e1c7114bdeef0664bbea262973217ddee",
+    "internal/periodicbudgetprefixschema/materials.go": "e1f0e17975acd821f5b079d0d1cfb0b7234a886f7340a6b54cd7b2cd85fbdf7e",
+    "internal/periodicbudgetprefixschema/materials/candidate-v1.sql": "b225c3ff61b735d6830aed1d25edc27bc4784f8e251cb2c1d656196d8d9c630e",
+    "internal/periodicbudgetprefixschema/materials/permissions-v1.sql": "aaea2994d5a79726df8b5c1767b5adb054d14ee8cb81fa12b43b87d24a2f28bf",
+    "internal/periodicbudgetprefixschema/materials_test.go": "bf841fa565a61f067a612e1cf28eda8c052e0e1e3be7d51beb4ce8ffea18b21d",
+    "internal/testsupport/periodicprefix/install.go": "3234896427fda5e799c4e086c817ee623895bcc17d94d0ea49353d849b0e7eb1",
+    "internal/testsupport/periodicprefix/roles.go": "3de6d64a78d9bc633ee1943a956e14733a1a5069a8a5a585a972e45bb6be1b56",
+    "internal/testsupport/periodicprefix/roles_test.go": "25ccf9820e66ec737ed4c54b7a43f104320a6aca7c7bb4876c47d0d4bb7aca65",
+    "migrations/original22.go": "cc5abec101fdb4fa502e082eeecf665450ebe176a5438c941694081f81af22bf",
+    "migrations/original22_manifest.json": "ba5e965dabdbee6469f0cfa45c26b244fe7bfecde11ce85ecb33fffd9c14b1de",
+    "migrations/original22_postgres_test.go": "2247cb19a0939cb300c224a8c16f65300266d8e4c3a007a3876ae0441264efae",
+    "migrations/original22_test.go": "9e93315f981652136e88db8b64692b3eb0488e7cd78eaab51e0064ba98d9d1d1",
+    "specs/023-periodic-products/b-prefix-install-contract.md": "deae955b67a61fabd82934b77564cedf1c17516b9d02af5329312412948623bd",
+    "internal/fundinglotcatalog/prefix_rejection_integration_test.go": "f0255e3319d4174c0fbd1c6ce86765ee4ce856f2cf40ff6749b60654b1e5c838"
+  },
+  "specialized": {
+    "command": "TEST_DATABASE_URL=<dedicated> PB_PREFIX_DATABASE_URL=<same dedicated> go test -json -race -p 1 ./migrations ./internal/periodicbudgetprefixschema ./internal/testsupport/periodicprefix ./internal/periodicbudget -run '^Test(Original22|PBPrefix|FrozenMaterials|Permission|PrivilegeSubset|RolePins)' -count=1 -timeout=4m",
+    "log": ".local/pb-prefix-install-reviewed-specialized.jsonl",
+    "sha256": "1f06e31d2938a2290663707fdd8d42245c952a203f63c80e4c5c6e944b7d1718",
+    "packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/migrations",
+        "result": "pass",
+        "elapsed_seconds": 3.046,
+        "top_level": {
+          "pass": 9
+        },
+        "parent_and_child": {
+          "pass": 27
+        },
+        "top_level_names": [
+          "TestOriginal22SnapshotPostgresIsolationContextAndCallerOwnership",
+          "TestOriginal22SnapshotPostgresMVCCAndExplicitSchemaIgnoresTempShadow",
+          "TestOriginal22SnapshotPostgresRejectsPhysicalHistoryCorruption",
+          "TestOriginal22SnapshotPostgresOnlyIgnoresInheritedHistory",
+          "TestOriginal22SnapshotPostgresCancellationReturnsSafeErrorAndCallerRollsBack",
+          "TestOriginal22ManifestFixedOwnedMaterial",
+          "TestOriginal22ManifestFakeFSIgnoresFutureFiles",
+          "TestOriginal22ManifestFakeFSRejectsChangedMissingOrUntrustedMaterial",
+          "TestOriginal22SnapshotRejectsNilContextAndTransactionBeforeDriver"
+        ]
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefixschema",
+        "result": "pass",
+        "elapsed_seconds": 1.2429999999999999,
+        "top_level": {
+          "pass": 3
+        },
+        "parent_and_child": {
+          "pass": 3
+        },
+        "top_level_names": [
+          "TestFrozenMaterialsMatchSpecOriginals",
+          "TestPermissionIdentifiers",
+          "TestPermissionMatrixRemainsFrozen"
+        ]
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/testsupport/periodicprefix",
+        "result": "pass",
+        "elapsed_seconds": 1.267,
+        "top_level": {
+          "pass": 2
+        },
+        "parent_and_child": {
+          "pass": 8
+        },
+        "top_level_names": [
+          "TestPrivilegeSubsetPreservesRequiredAndReachableBoundaries",
+          "TestRolePinsAndUnavailableTransaction"
+        ]
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+        "result": "pass",
+        "elapsed_seconds": 18.173,
+        "top_level": {
+          "pass": 24
+        },
+        "parent_and_child": {
+          "pass": 101
+        },
+        "top_level_names": [
+          "TestPBPrefixPostgresReadCommittedFreshSnapshot",
+          "TestPBPrefixPostgresReturningAndMultirow",
+          "TestPBPrefixPGCommanderAllScopes",
+          "TestPBPrefixPGSameFinancialCutWindowOrder",
+          "TestPBPrefixPGRealCustomerSupplierEffectsAndCommands",
+          "TestPBPrefixPGLegacyControlRemainsUncovered",
+          "TestPBPrefixPGRestrictedImmutabilityAndForgery",
+          "TestPBPrefixPGOriginalProjectionProfileRemainsDenied",
+          "TestPBPrefixPGSavepointAndFullRollback",
+          "TestPBPrefixPGSourceInsertOverridesCallerWitness",
+          "TestPBPrefixPGPrecreatedOriginCannotEnrollControl",
+          "TestPBPrefixPGCTECommandThenWindowAtSameCut",
+          "TestPBPrefixPGCrossDayCarryKeepsOriginalCustomerAndSupplierWindows",
+          "TestPBPrefixPGFaultRealDeadlockRetryBound",
+          "TestPBPrefixPGFaultDisconnectDuringCommitReturnsUnknown",
+          "TestPBPrefixInstallCallerOwnsVisibilityRollbackAndCommit",
+          "TestPBPrefixInstallRejectsModesPinsAndOwnHistoryDrift",
+          "TestPBPrefixInstallRejectsEveryPartialCandidateSurface",
+          "TestPBPrefixInstallExplicitPathIgnoresTemporaryHistoryAndSourceNames",
+          "TestPBPrefixInstallUncertainSavepointRequiresWholeCallerRollback",
+          "TestPBPrefixInstallSavepointRollsBackDDLACLAndCancellation",
+          "TestPBPrefixCandidateACLRejectsPrivilegeAndFunctionDrift",
+          "TestPBPrefixInstallRejectsInheritedDefaultAndSetAdminPrivileges",
+          "TestPBPrefixCandidateACLRejectsReachableElevatedRoleWithoutObjectGrantDrift"
+        ]
+      }
+    ]
+  },
+  "full_regression": {
+    "status": "pass",
+    "command": "TEST_DATABASE_URL=<dedicated local moni_test> make verify-mvp",
+    "exit_code": 0,
+    "log": ".local/pb-prefix-install-verify-mvp.log",
+    "log_sha256": "35f7a0225ea32604f4c1890950996585c62bf81651d96555306ec481c069e03b",
+    "frontend_pass": 286,
+    "go_race_packages_pass": 50,
+    "packages_no_test_files": 4,
+    "go_packages": [
+      {
+        "package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+        "elapsed_seconds": 4.687
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alerts",
+        "elapsed_seconds": 16.511
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+        "elapsed_seconds": 1.482
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/billing",
+        "elapsed_seconds": 141.131
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/catalog",
+        "elapsed_seconds": 16.598
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/config",
+        "elapsed_seconds": 1.473
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotbasis",
+        "elapsed_seconds": 13.192
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+        "elapsed_seconds": 113.826
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotinit",
+        "elapsed_seconds": 1.932
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotproof",
+        "elapsed_seconds": 1.79
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotruntime",
+        "elapsed_seconds": 20.932
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+        "elapsed_seconds": 6.673
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+        "elapsed_seconds": 5.16
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/identity",
+        "elapsed_seconds": 218.844
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+        "elapsed_seconds": 1.699
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+        "elapsed_seconds": 1.548
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancescan",
+        "elapsed_seconds": 19.036
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+        "elapsed_seconds": 26.876
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/metering",
+        "elapsed_seconds": 1.662
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+        "elapsed_seconds": 6.061
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/operations",
+        "elapsed_seconds": 31.325
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+        "elapsed_seconds": 1.605
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+        "elapsed_seconds": 2.042
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+        "elapsed_seconds": 1.99
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+        "elapsed_seconds": 4.224
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/payments",
+        "elapsed_seconds": 29.732
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+        "elapsed_seconds": 25.459
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+        "elapsed_seconds": 1.503
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+        "elapsed_seconds": 33.803
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefix",
+        "elapsed_seconds": 2.064
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefixschema",
+        "elapsed_seconds": 1.501
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/pricing",
+        "elapsed_seconds": 5.57
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+        "elapsed_seconds": 1.51
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/productvalue",
+        "elapsed_seconds": 1.58
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/provider",
+        "elapsed_seconds": 3.017
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+        "elapsed_seconds": 1.563
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/routing",
+        "elapsed_seconds": 1.608
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/security",
+        "elapsed_seconds": 1.473
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/server",
+        "elapsed_seconds": 259.501
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+        "elapsed_seconds": 1.616
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+        "elapsed_seconds": 2.298
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/internal/testsupport/periodicprefix",
+        "elapsed_seconds": 1.443
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/migrations",
+        "elapsed_seconds": 4.197
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+        "elapsed_seconds": 1.652
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+        "elapsed_seconds": 1.536
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+        "elapsed_seconds": 1.564
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+        "elapsed_seconds": 19.517
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/online-dependency-qa",
+        "elapsed_seconds": 1.614
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+        "elapsed_seconds": 1.572
+      },
+      {
+        "package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+        "elapsed_seconds": 4.448
+      }
+    ],
+    "vet": "pass",
+    "build": "pass",
+    "optional_C0_and_PB_opt_ins_enabled_in_this_run": false,
+    "supplemental_catalog_test_added_after_this_full_run": true,
+    "note": "Implementation sources remained frozen; the only later source addition is the retained exact old-catalog rejection test, independently run with explicit C0_CATALOG_DATABASE_URL below."
+  },
+  "initial_failures": {
+    "first_log": ".local/pb-prefix-install-first.jsonl",
+    "first_log_sha256": "46d3d347ee9495aa52f95ae653feed497b57999030634038c2e9d0cc30727c42",
+    "causes": [
+      "owner identity used inet text with /32; fixed with pg_catalog.host without broadening loopback",
+      "canceled pool connection Destroy is asynchronous; assert bounded drain and original backend exit instead of immediate zero"
+    ],
+    "second_log": ".local/pb-prefix-install-second.jsonl",
+    "second_log_sha256": "f7e47161764946e1a840e74e73a9696cb87c2b8912e909a07b6342970ddb0741",
+    "second_cause": "unnamed PostgreSQL primary index avoids a name collision; use explicitly named unique-constraint index collision and require actual stage evidence",
+    "false_positive_results_not_counted": true
+  },
+  "unproven": [
+    "production mutual exclusion or installation",
+    "real network savepoint reply loss; driver wrappers model library uncertainty against actual PostgreSQL savepoints",
+    "new full catalog/static roots/87-table reader/basis profile and runtime integration",
+    "successful top-level COMMIT with lost reply",
+    "real provider, payment, container/1Panel or HA acceptance"
+  ],
+  "static_review": {
+    "legacy_pins": ".local/pb-prefix-install-legacy-pins.json",
+    "unchanged_old_source_and_material_files": 29,
+    "mermaid_render": ".local/pb-prefix-install-render.json",
+    "mermaid_diagrams": 23,
+    "rendered_and_visually_reviewed": "docs/verification/assets/architecture-periodic-budget-prefix-install-detail.png",
+    "local_link_targets": 1130,
+    "readme_command_audit": "local/native and Docker/1Panel instructions read against current CLI/config; actual container target not run",
+    "dependency_isolation": {
+      "log": ".local/pb-prefix-install-dependency-isolation.json",
+      "pass": true
+    }
+  },
+  "predecessor_linux_ci": {
+    "commit": "6bed3a98052b26d42a3e5dd5e447968da39331ce",
+    "run": 41553185722,
+    "url": "https://github.com/workhold/moni-aigate/actions/runs/41553185722",
+    "conclusion": "success",
+    "jobs_success": 10,
+    "prefix_pg_top_level_pass": 15,
+    "prefix_pg_parent_and_child_pass": 46,
+    "prefix_pure_top_level_pass": 19,
+    "prefix_pure_parent_and_child_pass": 227,
+    "prefix_skipped": 0,
+    "all_optional_skips_retained": true,
+    "other_jsonl_sha256": "96d278a4fc58255fddf4c8d6a208fd0c121d15b1a6b9bf4148e4ddd29858eb62",
+    "evidence": ".local/pb-prefix-ci-evidence/all-ten-analysis.json",
+    "does_not_cover_this_B_P2_commit": true
+  },
+  "supplemental_catalog": {
+    "command": "C0_CATALOG_DATABASE_URL=<same dedicated> go test -json -race -p 1 ./internal/fundinglotcatalog -run '^TestCatalogOriginalProfilesRejectCompletePeriodicPrefixCandidate$' -count=1 -timeout=3m",
+    "result": "pass",
+    "log": ".local/pb-prefix-install-catalog-first.jsonl",
+    "log_sha256": "000a26e2900f67fe71b98257fc3712a2ac67b08aad06121802013faada3c5ee3",
+    "top_level_pass": 1,
+    "parent_and_child_pass": 3,
+    "elapsed_seconds": 37.135,
+    "scope": "ordinaryNamed LegacyV1 and WalletReadV2; genuine baseline first, complete candidate DDL/ACL then original snapshot/runtime rejection; Legacy installation rejection only; old bytes/roots remain unchanged"
+  },
+  "initial_make_check": {
+    "result": "pass",
+    "log": ".local/pb-prefix-install-make-check.log",
+    "log_sha256": "17bad920ba6c07ca32b50f9fb5646ba0a6586af4cbf03a329c1121a20e8e9ab8"
+  },
+  "final_make_check": {
+    "result": "pass",
+    "log": ".local/pb-prefix-install-final-check.log",
+    "log_sha256": "b182a999d0e12039e83f31f60caa5fae350873c55507695497c35ff693620422"
+  }
+}

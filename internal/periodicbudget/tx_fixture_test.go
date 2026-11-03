@@ -52,6 +52,13 @@ func pbTxMust(t *testing.T, step string, err error) {
 func newPBTxFixture(t *testing.T) *pbTxFixture      { return newPBTxFixtureVariant(t, false) }
 func newPBBillingFixture(t *testing.T) *pbTxFixture { return newPBTxFixtureVariant(t, true) }
 func newPBTxFixtureVariant(t *testing.T, latest bool) *pbTxFixture {
+	return newPBTxFixtureBaseline(t, latest, "")
+}
+
+// through is an explicit historical fixture boundary. The existing latest and
+// pre-020 factories retain their original behavior; the prefix candidate never
+// follows a future embedded migration through the latest branch.
+func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixture {
 	t.Helper()
 	raw := os.Getenv("TEST_DATABASE_URL")
 	if raw == "" {
@@ -102,7 +109,9 @@ func newPBTxFixtureVariant(t *testing.T, latest bool) *pbTxFixture {
 	cfg.ConnConfig.RuntimeParams["statement_timeout"] = "5s"
 	f.owner, err = pgxpool.NewWithConfig(ctx, cfg.Copy())
 	pbTxMust(t, "open schema owner", err)
-	if latest {
+	if through != "" {
+		pbTxMust(t, "apply explicit historical application migrations", migrations.ApplyThrough(ctx, f.owner, through))
+	} else if latest {
 		pbTxMust(t, "apply actual latest application migrations", migrations.Apply(ctx, f.owner))
 	} else {
 		pbTxMust(t, "apply actual migrations 001–019", migrations.ApplyThrough(ctx, f.owner, "019_operations_alerts.sql"))
@@ -110,7 +119,9 @@ func newPBTxFixtureVariant(t *testing.T, latest bool) *pbTxFixture {
 	var count, max int
 	pbTxMust(t, "verify migration baseline", f.owner.QueryRow(ctx, `SELECT count(*),max(left(name,3)::integer) FROM schema_migrations`).Scan(&count, &max))
 	expected := 19
-	if latest {
+	if through == "022_payment_runtime_attestation.sql" {
+		expected = 22
+	} else if latest {
 		names, e := fs.Glob(migrations.Files, "*.sql")
 		pbTxMust(t, "read complete embedded migration manifest", e)
 		expected = len(names)
