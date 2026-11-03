@@ -72,6 +72,8 @@ PostgreSQL的FOR SHARE/KEY SHARE/UPDATE/NO KEY UPDATE均须除SELECT外至少一
 
 guard不能改为SECURITY DEFINER后再比较current_user；APP原用户、租户、成员、模型、渠道、凭据管理路径保留原规则，不被W锁用拒写分支误伤。实际源/资金表由其合法UPDATE列满足锁权；procurement_accounts的APP锁权只保留UPDATE(created_at)，按账户合同拒绝APP所有实际UPDATE。原credential binding trigger执行`UPDATE channels SET id=id`的APP权限与管理revision副作用仍沿原路径，不给W这项身份UPDATE。
 
+2026-11-04 审定的[A2/A3 独立装配](b-procurement-attempt-installation-contract.md#6-新-acl-差异与每项显式锁用授权)只覆盖 command＋request＋managed/unmanaged attempt 出生，不提前复制上述全域写面。其 §6.2 将每项额外锁权对应到真实显式锁语句：Key/reservations 以 `UPDATE(created_at)` 满足原 LR，新增父 guard 拒 W 的真实写入；未使用的 channel_credentials 锁权和 hook 不安装。immutable 新关系的窄锁列由各自 guard 拒实际 UPDATE，root seal 前缺席、seal 后不追加，故不授 root(id) UPDATE。该切片的 W xmin 仅四表，不提前授未来 dispatch/finish 才需要的 request_records.xmin；APP 原 sidecar 保留。准确 12 表、262 列、38 扩列、137 关系约束、68 trigger 与函数闭包按装配合同独立实现及验收，本页全域矩阵不因局部合同审定而标完成，也不改旧 A1/account 材料或摘要。
+
 ### 2.2 实时xmin的精确系统列sidecar
 
 PG16按被引用的实际attnum逐列检查SELECT；`xmin`为attnum=-2，其ACL不由全部正attnum列的授权继承。候选固定采用**系统列sidecar ACL**，只对下表的角色/关系授`SELECT(xmin)`，不授表级SELECT、其他系统列、系统列写权或grant option。W/APP其余普通列仍按前述准确矩阵；P/K/peer无新增系统列权限。下表是当前成功入口所需的完整集合，`—`表示该候选角色不因本合同取得此项权限。

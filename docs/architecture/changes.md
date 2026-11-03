@@ -3694,3 +3694,30 @@ A1新增预算、钱包真实等待、raw误授和有效撤权四合同及四测
 - modified `docs/verification/procurement-request-birth.md`
 
 </details>
+
+## 2026-11-03T20:17:25Z · 617dbaae6034
+
+A1新增父资格/PB真实等待、提前约束、提交回执丢失与全catalog漂移验收，整包32/528通过；审定A2完整装配及逐锁权限合同，同步README使用部署、架构/HLD/LLD/验证边界，原SQL和线上入口不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1835 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-attempt-birth.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/procurement-request-birth.md`
+- added `internal/procurementrequestbirth/request_birth_catalog_postgres_test.go`
+- added `internal/procurementrequestbirth/request_birth_commit_unknown_postgres_test.go`
+- added `internal/procurementrequestbirth/request_birth_parent_wait_postgres_test.go`
+- added `internal/procurementrequestbirth/request_birth_pb_wait_postgres_test.go`
+- added `specs/023-periodic-products/b-procurement-attempt-installation-contract.md`
+- modified `specs/023-periodic-products/b-procurement-full-acl-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-catalog-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-commit-unknown-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-parent-wait-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-pb-wait-contract.md`
+
+</details>

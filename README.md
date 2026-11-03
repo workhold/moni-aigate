@@ -180,7 +180,7 @@ curl -N http://localhost:8080/v1/chat/completions \
   -d '{"model":"your-public-model","messages":[{"role":"user","content":"Hello"}],"max_tokens":128,"stream":true}'
 ```
 
-推理使用客户 API Key，与控制台会话分开。Messages 也可单独使用 `x-api-key`，不能同时提交两种认证。
+推理使用客户 API Key，与控制台会话分开。Messages 也可单独使用 `x-api-key`，不能同时提交两种认证。Gemini 入口仅接受唯一的 Bearer API Key，不接受 `x-goog-api-key`、`x-api-key` 或 query `key`；客户端须能配置这一认证方式。
 响应提供 `X-Request-ID`，可在控制台关联请求、尝试、客户账单与采购成本。
 匿名 `/pricing` 默认没有模型；管理员显式公开后才展示当前价格，公开展示不授予调用权限。
 
@@ -240,7 +240,7 @@ make check
 make verify-mvp
 ```
 
-`make check` 执行只读架构与候选采购列布局检查、Go vet 和前端构建；`make verify-mvp` 额外运行前端测试、Go race 测试和二进制构建，并强制要求测试库配置。独立 opt-in 专项仍须单独执行；跳过的数据库测试不能作为商业验收完成。
+`make check` 执行只读架构与候选采购列布局检查、Go vet 和前端构建；`make verify-mvp` 额外运行前端测试、Go race 测试和二进制构建，并强制要求测试库配置。Go race 测试还需要启用 CGO 并提供可用的 C 编译器。独立 opt-in 专项仍须单独执行；跳过的数据库测试不能作为商业验收完成。
 环境准备与提交要求见[贡献指南](CONTRIBUTING.md)，实际验收范围见 [MVP 状态](docs/verification/mvp-status.md)和[发布验收](docs/verification/mvp-release-qualification.md)。
 
 当前优先完善能力，再推进性能专项。网关额外首字节延迟与模型首 token 时间分开衡量；历史 Mock 结果不能代表当前版本或真实供应商。
@@ -255,7 +255,7 @@ make verify-mvp
 
 采购历史核验仍是开发期候选，普通启动不会安装对应 SQL。源码关系、当前已实现的校验与剩余观察缺口见[采购模块细图](docs/architecture/procurement-replay.md)；最新实现与真实数据库故障范围见[采购关系与预算重放](docs/verification/procurement-pb-relations.md)和[账户 writer 验证](docs/verification/procurement-account-prefix.md)。局部校验通过不代表完整历史证明或正式迁移已交付。
 
-当前正推进请求与采购尝试的来源保护：原路由/报价规则已完成独立数据库差分，请求来源已补验预算组合、价格快照、等待过期、资金回滚和权限防护。完整采购尝试链与正式迁移仍在开发，阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)和[验收记录](docs/verification/procurement-request-birth.md)。这些候选材料不属于常规部署步骤。
+当前正推进请求与采购尝试的来源保护：原路由/报价规则已完成独立数据库差分，请求来源已补验预算组合、价格快照、父行与预算控制行等待、资金回滚、权限防护及提交回执丢失；数据库对象与权限也有独立漂移检查。完整采购尝试链与正式迁移仍在开发，下一候选的[装配合同](specs/023-periodic-products/b-procurement-attempt-installation-contract.md)已明确完整账户命令与采购预占组合。阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)和[验收记录](docs/verification/procurement-request-birth.md)。这些候选材料不属于常规部署步骤。
 
 [字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它只比对候选表列与设计物料，不安装数据库；部署请遵循上面的常规迁移与启动步骤。
 

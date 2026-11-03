@@ -12,7 +12,7 @@ flowchart TD
     Oracle --> PGTest
     Reserve[测试 actual APP\n原 billing.Store.Reserve] --> Birth[已实现的 A1 隔离候选\nsource → head → pointer → step → seal]
     Schema[A1 四表与窄定位关系\n独立材料及 exact-link] --> Birth
-    Birth --> Matrix[真实 PG 验收\n预算 / 钱包等待 / raw误授 / 有效撤权]
+    Birth --> Matrix[真实 PG 验收\n预算 / 钱包与父行及PB等待 / 权限\n丢COMMIT回执 / catalog漂移]
     Rules -. A2 / A3 待接通 .-> Attempt[完整 pp_record_attempt\n真实 attempt / p / PE / account / PB]
     Birth -. 真实父快照 .-> Attempt
 ```
@@ -41,7 +41,7 @@ flowchart TD
 
 原 Reserve 保留 APP 的 21 列 INSERT，故同一 actual APP 手写的完全等价 INSERT 也会自动出生。该来源只认证真实初态与冻结事实，不能证明完整 Reserve 已经受控执行；客户资金来源、零售选价时刻的完整资格、后续 request decision 和 attempt 根仍有各自责任。原 018/020 触发器、资金硬预占与最终 COMMIT 保持真实运行。
 
-[独立 DDL](../../internal/procurementbirthschema/materials.go)与[request writer](../../internal/procurementrequestbirth/materials.go)均已实现；四表 71 列、5 键、8 CHECK、10 条 native deferred FK 配套七函数、16 trigger、五个 deferred trigger。W 为无登录角色，仅 capture 为 definer；APP 无来源写权或私有 EXECUTE，W 对 origin/head/step 三项行锁列的实际 UPDATE 由 guard 拒绝。原候选 SQL/摘要保持，新增四份合同与四个测试文件扩充独立验收；最终整包 **23 顶层 / 423 子项 race PASS，0 SKIP/FAIL**，含初片而非另加，详见[真实 PG 记录](../verification/procurement-request-birth.md)。
+[独立 DDL](../../internal/procurementbirthschema/materials.go)与[request writer](../../internal/procurementrequestbirth/materials.go)均已实现；四表 71 列、5 键、8 CHECK、10 条 native deferred FK 配套七函数、16 trigger、五个 deferred trigger。W 为无登录角色，仅 capture 为 definer；APP 无来源写权或私有 EXECUTE，W 对 origin/head/step 三项行锁列的实际 UPDATE 由 guard 拒绝。原候选 SQL/摘要保持；在原预算/钱包/raw/授权四份专项之上，再增加父锁、PB等待、提交回执和catalog四份先行合同/独立测试。最终整包 **32 顶层 / 528 子项 race PASS，0 SKIP/FAIL，62.292s**，含五个静态或纯wire顶层，其余27个为真实PG；总数已含上轮23/423及初片，详见[真实 PG 记录](../verification/procurement-request-birth.md)。
 
 | 新增验收面 | 当前证明与保留边界 |
 | --- | --- |
@@ -49,9 +49,13 @@ flowchart TD
 | [真实钱包等待](../../internal/procurementrequestbirth/request_birth_wait_postgres_test.go) | 真实锁证据下保留较早零售价、过期回滚、55P03与精确57014；不代替PB锁等待或COMMIT未知 |
 | [raw与误授](../../internal/procurementrequestbirth/request_birth_raw_postgres_test.go) | 等价raw/同xid双请求、原020缺reservation、写隔离、冻结逐槽、真实guard与capture内错边；request允许同值no-op，来源表任意UPDATE拒绝 |
 | [有效授权](../../internal/procurementrequestbirth/request_birth_grant_fault_postgres_test.go) | 291必要失权、全行与canonical ACL恢复；原PUBLIC重叠单独控制。W两allocation SELECT因原020身份不变的AND短路当前不使用，另以有效撤权成功验证，不能称所有现有grant均必需 |
+| [父行与提前约束](../../internal/procurementrequestbirth/request_birth_parent_wait_postgres_test.go) | 八项真实等待后的资格变更及26表解锁前baseline；ALL IMMEDIATE先由原020报23514，单提前origin_complete由A1报PP902，回滚/恢复正控完整 |
+| [PB控制行](../../internal/procurementrequestbirth/request_birth_pb_wait_postgres_test.go) | 精确原LockCustomerTx和blocking PID，tenant/Key两种控制行跨价保留120与四种期限回滚；不证明active cap或窗口跨期 |
+| [提交回执丢失](../../internal/procurementrequestbirth/request_birth_commit_unknown_postgres_test.go) | 实际APP socket的真实C/COMMIT帧零泄漏与独立已提交可见性；原Store仍传输失败，三种原幂等观察无重复资金/出生。纯wire六控制另列，不泛化所有未知窗口 |
+| [catalog/全部grantee](../../internal/procurementrequestbirth/request_birth_catalog_postgres_test.go) | 独立固定DDL参考与正文pins，五关系104列/38约束/8索引、七函数、20trigger、角色/OID/普通和系统ACL；78项同事务漂移准确拒绝，回滚复核。仅测试显式调用，未自动发行profile/Qualified |
 
-新增合同分别为[预算](../../specs/023-periodic-products/b-procurement-request-birth-budget-contract.md)、[等待](../../specs/023-periodic-products/b-procurement-request-birth-wait-contract.md)、[raw](../../specs/023-periodic-products/b-procurement-request-birth-raw-contract.md)和[授权](../../specs/023-periodic-products/b-procurement-request-birth-grant-fault-contract.md)。仍需active预算争用、PB真实等待/窗口、旧经营父锁授权和锁后重读、提前约束、未知提交及完整catalog等矩阵，完整A1尚未关闭。权限测试纠正必要性假设，不以人为增加读取改变生产路径。
+先行合同分别为[预算](../../specs/023-periodic-products/b-procurement-request-birth-budget-contract.md)、[钱包等待](../../specs/023-periodic-products/b-procurement-request-birth-wait-contract.md)、[raw](../../specs/023-periodic-products/b-procurement-request-birth-raw-contract.md)、[授权](../../specs/023-periodic-products/b-procurement-request-birth-grant-fault-contract.md)、[父行](../../specs/023-periodic-products/b-procurement-request-birth-parent-wait-contract.md)、[PB等待](../../specs/023-periodic-products/b-procurement-request-birth-pb-wait-contract.md)、[回执](../../specs/023-periodic-products/b-procurement-request-birth-commit-unknown-contract.md)和[catalog](../../specs/023-periodic-products/b-procurement-request-birth-catalog-contract.md)。仍需active预算争用、真实UTC窗口跨期、全体旧经营父锁授权撤还及其余未实测攻击，完整A1尚未关闭。fresh控制必须遵守原020下一周期生效，不能改时钟或手改control冒充active。原SQL/权限未变，验证修正不靠人为增加读取。
 
-A2/A3 继续在真实父请求上完成 managed / unmanaged attempt、真实 PB admission 时点、reserved 效果、command+reserve 新账户 guard / validator、唯一 seal 与反向集合。旧账户 writer v1 对 reserve 的拒绝不能绕过；A1 四表切片不等于全 715 列布局、完整读集、profile 或线上启用。
+A2/A3 的[装配合同](../../specs/023-periodic-products/b-procurement-attempt-installation-contract.md)已审定独立 `birth-exact-link-a2-v1`，覆盖完整 command＋request＋managed/unmanaged attempt：12表262列、七原表38扩列、137关系约束、68trigger，固定leaf无递归图和每项显式锁用授权；尚未实现新材料。它将复用同源关系定义、identity/A0与账户纯函数，在干净前驱一次装配新writer/guard/validator，不叠旧account v1或A1封闭writer。原LR的Key/reservation锁只授created_at单列UPDATE并拒W真正写，APP原管理/资金面保留；未用credential/root锁权不授。真实p末序hook采原admitted_at，完整PB/reserved效果之后由private closure唯一最后seal。完整实现、catalog和actual APP矩阵仍是后续，不把本合同计作通过。
 
 实际测试、失败修正和当前保留边界分别见[A0 原规则](../verification/procurement-attempt-rules.md)与[A1 真实父请求](../verification/procurement-request-birth.md)。来源纯核仍 `Complete=false`、Qualified 为空，无公共 Check；D1/I1、B-P3、R2、生产支付、真实供应商、目标容器/1Panel 与最终性能阶段没有因本轮局部通过而关闭。

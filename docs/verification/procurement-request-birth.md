@@ -1,6 +1,6 @@
 # A1 真实 request 自动出生：隔离候选续片
 
-2026-11-04；初片基线 `1d45726`，矩阵续片基线 `71de18a`。先冻结[真实父请求合同](../../specs/023-periodic-products/b-procurement-request-birth-writer-contract.md)与[窄定位集成合同](../../specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md)，再实现[独立 DDL](../../internal/procurementbirthschema/materials.go)、[writer / guard / 只读 validator](../../internal/procurementrequestbirth/materials/request-birth-writer-v1.sql)及[列 ACL](../../internal/procurementrequestbirth/materials/permissions-v1.sql)。下文区分初片和新增矩阵；完整 A1 矩阵尚未关闭。
+2026-11-04；初片基线 `1d45726`，矩阵续片基线 `71de18a`，等待/未知提交/catalog 续验基线 `3b528fb`。先冻结[真实父请求合同](../../specs/023-periodic-products/b-procurement-request-birth-writer-contract.md)与[窄定位集成合同](../../specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md)，再实现[独立 DDL](../../internal/procurementbirthschema/materials.go)、[writer / guard / 只读 validator](../../internal/procurementrequestbirth/materials/request-birth-writer-v1.sql)及[列 ACL](../../internal/procurementrequestbirth/materials/permissions-v1.sql)。下文区分初片和新增矩阵；完整 A1 矩阵尚未关闭。
 
 ## 已实现与真实执行
 
@@ -61,9 +61,45 @@ TEST_DATABASE_URL="$PRIVATE_TEST_DATABASE_URL" \
 | `.local/moni-request-birth-grant-first-pg.json`，两项必要性假设FAIL | 349594 | `6399429af23da2f3b7c99c2e9bef111dc2b93bd9b4113abc6cc2c6b63b787e08` |
 | `.local/moni-request-birth-matrix-final.json`，最终整包 | 513914 | `add5ca91bd221b3d250eeec1b7a05e4ed0052314d361260b385821db593c17f3` |
 
+## 父行、PB 等待、提交回执与 catalog 续验
+
+先冻结[父锁与提前约束](../../specs/023-periodic-products/b-procurement-request-birth-parent-wait-contract.md)、[PB 控制行等待](../../specs/023-periodic-products/b-procurement-request-birth-pb-wait-contract.md)、[提交回执丢失](../../specs/023-periodic-products/b-procurement-request-birth-commit-unknown-contract.md)与[实际 catalog/全 grantee](../../specs/023-periodic-products/b-procurement-request-birth-catalog-contract.md)四合同，再新增四个独立测试；没有修改原 SQL、摘要、fixture、001–022 或生产入口。实际 PG 仍由根串行运行，保留原 RC / 3s / 5s。
+
+| 专项 | 实际结果 | 准确范围 |
+| --- | --- | --- |
+| [父行与约束](../../internal/procurementrequestbirth/request_birth_parent_wait_postgres_test.go) | 2 顶层 / 10 子项 PASS，5.212s | `pg_blocking_pids` 确认原 Reserve 等待选定父行；解锁前改 tenant/member/user 状态、Key 撤销/scopes、member 模型授权或 model enabled/profile，共八项。owner 变更后未解锁时独立采 26 表 baseline，APP 拒绝后逐行不变；恢复后新请求成功。另验 ALL IMMEDIATE 原020的23514，以及只提前 origin_complete 的A1 PP902 |
+| [PB 控制行](../../internal/procurementrequestbirth/request_birth_pb_wait_postgres_test.go) | 2 顶层 / 6 子项 PASS，12.812s | tenant-only / Key-only 的原 LockCustomerTx 精确查询与 backend 阻塞证据；两项等待跨未来售价仍冻结原120，四项 request/Key 到期原错误且全图/资金回滚。不是 active 预算窗口切换 |
+| [提交回执](../../internal/procurementrequestbirth/request_birth_commit_unknown_postgres_test.go) | 真实 PG 1 顶层 / 3 子项 PASS，2.011s；纯 wire 另有1顶层/6子项 | 包装实际 APP loopback socket，识别原 pgx simple Q commit 与真实 C/COMMIT 成功帧，只整帧丢弃该成功回执。原 Store 返回传输失败/零结果，独立 owner 可见完整已提交图、钱包9880/held120、Key/PB 与唯一业务伴随效果。同Store、新Store及换fresh RequestID的原幂等分支均指向原请求，快照不变 |
+| [catalog/ACL](../../internal/procurementrequestbirth/request_birth_catalog_postgres_test.go) | 正控1顶层/2子项 PASS，2.173s；漂移1顶层/78子项 PASS，10.156s；另有静态inventory | 五关系104普通列、19 generated、38关系约束、8索引、七完整函数、20用户trigger及六constraint-trigger元数据；schema/role/OID、全部 grantee 原始 ACL/有效权及系统列。独立固定 SHA 原DDL参考取得PG16表达式规范形，未抄actual定义。78种漂移在其自身事务内准确拒绝，回滚后完整复核，最后actual APP正控制 |
+
+COMMIT 证据同时要求真实成功 C 帧和另一连接的已提交可见性，发送 Q 或遇 EOF 均不能单独证明提交。纯 wire 控制只验证分段、非目标透传、目标零泄漏、畸形帧拒绝及 timeout 后保留半帧续读，不当成 PostgreSQL 验收。该场景没有 attempt 或模型派发，不扩称所有未知提交、跨进程恢复或生产网络均已验证。
+
+catalog inspector 只在测试显式调用；原 fixture 安装、数据库只读 row validator、普通 serve 并没有自动获得这一认证，更没有发行 Qualified/profile。检查现有保守 allocation 两读及 PUBLIC 重叠权限时保留其原样，不把它们变为必要权限。
+
+两项首轮失败保留：ALL IMMEDIATE 在原020的 AFTER 检查早于 A1 capture 时先报23514，初期期待PP902错误；已按真实顺序分开原020和A1的提前约束场景，未放宽成“任意错误”。catalog 初次正控误把 PG16 JSON 的 OID 当数值，原生 OID 实为 JSON 字符串；独立查询确认后对 inspector 查询的数值 OID 显式 `::bigint`（数组同理），固定2279/2278/25、源摘要和业务SQL均不改。
+
+根最终重新运行**整个包**：**32 顶层 / 528 子项 race 全 PASS，0 SKIP / FAIL，62.292s**，其中五顶层为静态或纯 wire 控制，其余27顶层使用真实 PG。该总数包含上轮23/423和全部新专项，不重复相加。最终独立查询 `rb_*` schema/role 残留 **0/0**。
+
+README与实际CLI/Makefile/Compose/env/runbooks已独立对照，GitHub默认分支确认为`codex/initial-mvp`，普通clone会取得交付分支；补明Gemini只接受Bearer及race需要CGO/C编译器。最终13份相关文本的1510个本地链接目标均存在，并修正新合同的一个附录锚点。架构细图使用官方Mermaid12.2.0与隔离Chrome156完成一图解析、真实渲染及截图检查；精确文档SHA `fd99c297134e0d15826c975dbc75d0065c6f7d2cb6c3130a02539d77a8f7944e`，图源码SHA `8060bfbc095be3d4e6d516a2d27c1cbcae4012de2c96278537c7aeb8def59990`。本地报告为`.local/architecture-mermaid-check/procurement-attempt-birth-20261104/report.json`，PNG为864×752、SHA `3088373fe3adae4c2bacb63468819acfbf0547c99cb57bab140eab65edf50a27`；不覆盖旧图证据，也不把静态部署说明称为容器实装通过。
+
+| 本地原件（忽略，不含生产秘密） | 字节 | SHA-256 |
+| --- | ---: | --- |
+| `.local/moni-request-birth-parent-wait-initial.json`，提前约束期待错误 FAIL | 11584 | `7462fb8893370ed59a03e0c7ab95124749341138561e6a8b380158be0c17f3fb` |
+| `.local/moni-request-birth-parent-wait-reviewed.json` | 13619 | `d79ce458698b47ea8ff356cd7993367dd088e5f20c373e84e900e1fd771f589c` |
+| `.local/moni-request-birth-pb-wait-first-pg.json` | 9272 | `a79c82d1043db54c1836dcaf5a0c9232a96150a41c335bc0774f97cc00bf3c23` |
+| `.local/moni-request-birth-commit-unknown-first-pg.json` | 5195 | `be3ca93c8572f99eaa323369f5566208e4351b8bfdcdac8c965780d29ec74f38` |
+| `.local/moni-request-birth-catalog-positive-first-pg.json`，OID JSON表示 FAIL | 2084 | `e34ee9e86625c35662d7517eb209321860be91d288430222e92778990b9a2005` |
+| `.local/moni-request-birth-catalog-positive-reviewed-pg.json` | 3773 | `a72a516fcd57bbb6060efe7f3764eb9b95259e2c980c65f86b6e70ecfdf1c725` |
+| `.local/moni-request-birth-catalog-drift-first-pg.json` | 85273 | `55548fff40e3f568ec848ffb458b10003c42493bdb92dd079000997bbc6bfbb6` |
+| `.local/moni-request-birth-expanded-final.json`，最终整包 | 635609 | `97befb8bfdedea0e529be0747246e2d6a34b075b789454cbe75c83185e893a8e` |
+
 ## 尚未验收与下一步
 
-仍需active预算上限/争用、真实PB control等待及准入窗口跨期、原Reserve全体父锁授权/锁后资格重读、提前SET CONSTRAINTS、COMMIT结果未知和完整catalog/ACL等独立矩阵。本片已执行的钱包等待不能代替PB等待；原权限闭包的新增项逐撤不能代替所有旧经营权限。未获实测的源/root攻击仍按上位合同保留，完整A1未关闭。
+仍需active预算上限/争用、真实PB准入窗口跨UTC周期、原Reserve全体旧经营父锁权限撤还及其他未实测的源/root攻击。八项资格锁后重读、实际PB control等待、两种提前约束、成功后丢COMMIT回执和本页精确catalog已按上节关闭各自窄缺口；不能泛化到全管理权限或所有网络窗口，完整A1未关闭。
+
+fresh control 的 tracking/effective 周期受原020真实当前/下一UTC周期约束，Commander不能提前生效；本次短程无法合法构造active cap或真实窗口跨期。后续需在真实前周期提交并保留的隔离fixture或先设计完整历史导入，不能改控制时间、mock时钟或把 scheduled 追踪成功称为active验收。这一时间条件不阻止未启用的A2源码实施。
+
+[A2/A3 装配合同](../../specs/023-periodic-products/b-procurement-attempt-installation-contract.md)已经根审定完整 command＋request＋managed/unmanaged 接受集、12表262列、38原表扩列、137约束、68trigger及逐锁最小权限。它是下一实施合同，尚无可执行新包/SQL；不叠装旧account v1或A1封闭writer，不将旧PASS重新解释为新候选通过。
 
 来源只认证真实初态和不可变快照，不认证完整 Reserve 资金来源或 retail_priced_at 的独立采时。A2/A3 attempt 与 reserved 效果、账户组合、全域 exact-link / ACL / profile、R2 与后续经营/生产阶段继续开放。
 
