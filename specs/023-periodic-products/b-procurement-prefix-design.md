@@ -5,7 +5,7 @@
 **状态：设计稿 v0.1，尚未实施。** 本文确定业务目标、证据原则、现有缺证的覆盖矩阵与分片门禁；逐字段 DDL、数据库受控写入口、权限及固定读集尚须按第八节冻结。它不是完整实施合同，不授权修改原 checker 的接受集、旧迁移或已有证明材料。
 
 
-后续进展：本文保留D0设计的当期范围；[权限/事务方向](b-procurement-writer-authority-contract.md)及[独立身份ABI](b-procurement-identity-contract.md)已分别冻结，身份材料已实现并有[真实PG差分](../../docs/verification/procurement-identity-leaf.md)。[账户](b-procurement-account-d1-proposal.md)和[成本/request](b-procurement-cost-request-d1-proposal.md)仍是工作提案，完整DDL、受控writer、纯重放与新profile尚未实现；D1整体与B-P3门禁保持。单独冻结的无业务权限codec不扩大本设计的业务写入授权。
+后续进展：本文保留D0设计的当期范围；[权限/事务方向](b-procurement-writer-authority-contract.md)及[独立身份ABI](b-procurement-identity-contract.md)已分别冻结，身份材料已实现并有[真实PG差分](../../docs/verification/procurement-identity-leaf.md)及[精确提交CI](../../docs/verification/procurement-identity-ci.md)。原两份工作提案已汇合为[共同来源](b-procurement-source-contract.md)、[账户](b-procurement-account-contract.md)、[成本/request](b-procurement-cost-request-contract.md)与[PB最小闭包](b-procurement-pb-acl-contract.md)逻辑合同；完整可执行DDL、角色列ACL/锁图、writer、纯重放与新profile尚未实现，D1整体与B-P3门禁保持。单独codec和namespace/行锁原语实验不扩大本设计的业务写入授权。
 
 ## 1. 目标与业务意义
 

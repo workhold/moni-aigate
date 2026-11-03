@@ -3082,3 +3082,28 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-identity-leaf.md`
 
 </details>
+
+## 2026-11-03T08:05:01Z · a55ba1ebbc9c
+
+汇合B-P4共同来源、账户、成本request和PB最小权限逻辑合同；复核候选关系、source先出生/单attempt链及Reconcile资金时点，新增独立锁权诊断与准确2223e40 CI证据；无线上调用、实际业务表、正式权限或部署结构变化，D1整体及旧缺证门禁保留
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1657 个源文件；本次 14 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/procurement-account-lock-acl.json`
+- added `docs/verification/procurement-account-lock-acl.md`
+- added `docs/verification/procurement-identity-ci.json`
+- added `docs/verification/procurement-identity-ci.md`
+- added `docs/verification/testdata/procurement-account-lock-acl/main.go`
+- added `specs/023-periodic-products/b-procurement-account-contract.md`
+- added `specs/023-periodic-products/b-procurement-cost-request-contract.md`
+- added `specs/023-periodic-products/b-procurement-pb-acl-contract.md`
+- modified `specs/023-periodic-products/b-procurement-prefix-design.md`
+- added `specs/023-periodic-products/b-procurement-source-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>

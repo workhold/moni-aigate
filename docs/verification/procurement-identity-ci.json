@@ -1,0 +1,1097 @@
+{
+  "commit": "2223e40a2947846541e34451b6b2465082c18bbe",
+  "run_id": 41594394743,
+  "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743",
+  "status": "completed",
+  "conclusion": "success",
+  "created_at": "2026-11-03T07:09:00Z",
+  "updated_at": "2026-11-03T07:27:48Z",
+  "jobs": [
+    {
+      "databaseId": 125778236581,
+      "name": "contracts (billing-3)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:12:56Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236581"
+    },
+    {
+      "databaseId": 125778236774,
+      "name": "contracts (billing-0)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:12:16Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236774"
+    },
+    {
+      "databaseId": 125778236851,
+      "name": "contracts (billing-2)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:13:09Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236851"
+    },
+    {
+      "databaseId": 125778236854,
+      "name": "contracts (server-1)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:13:02Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236854"
+    },
+    {
+      "databaseId": 125778236869,
+      "name": "contracts (server-3)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:13:26Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236869"
+    },
+    {
+      "databaseId": 125778236894,
+      "name": "contracts (server-2)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:14:06Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236894"
+    },
+    {
+      "databaseId": 125778236916,
+      "name": "contracts (billing-1)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:14:01Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236916"
+    },
+    {
+      "databaseId": 125778236936,
+      "name": "contracts (other)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:27:47Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236936"
+    },
+    {
+      "databaseId": 125778236965,
+      "name": "contracts (identity)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:03Z",
+      "completedAt": "2026-11-03T07:17:50Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778236965"
+    },
+    {
+      "databaseId": 125778237054,
+      "name": "contracts (server-0)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T07:09:04Z",
+      "completedAt": "2026-11-03T07:12:50Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41594394743/job/125778237054"
+    }
+  ],
+  "all_job_count": 10,
+  "successful_job_count": 10,
+  "artifact_count": 10,
+  "unique_package_count": 56,
+  "package_outcomes": {
+    "pass": 52,
+    "no_test_files": 4
+  },
+  "top_level_test_outcomes": {
+    "pass": 1679,
+    "skip": 114
+  },
+  "including_children_outcomes": {
+    "pass": 9471,
+    "skip": 220
+  },
+  "baseline_commit": "d93f6096b471bd365bf1708dfbda98b847f5ca7a",
+  "baseline_differences_after_normalizing_runtime_clock": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestFrozenIdentityMaterial",
+      "baseline": null,
+      "current": "pass"
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestPostgresOriginalProcurementIdentityABI",
+      "baseline": null,
+      "current": "pass"
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestPostgresOriginalProcurementIdentityABI/escaping_and_unicode",
+      "baseline": null,
+      "current": "pass"
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestPostgresOriginalProcurementIdentityABI/exact_original_struct_and_raw_delivery",
+      "baseline": null,
+      "current": "pass"
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestPostgresOriginalProcurementIdentityABI/fixed_seed_unicode_and_integer_differential",
+      "baseline": null,
+      "current": "pass"
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestPostgresOriginalProcurementIdentityABI/full_int64_each_position",
+      "baseline": null,
+      "current": "pass"
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestPostgresOriginalProcurementIdentityABI/session_settings_and_invalid_text_domain",
+      "baseline": null,
+      "current": "pass"
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+      "test": "TestPostgresOriginalProcurementIdentityABI/strict_null_every_argument",
+      "baseline": null,
+      "current": "pass"
+    }
+  ],
+  "baseline_manifest_files": 19,
+  "baseline_manifest_top_level_tests": 67,
+  "baseline_manifest_top_level_raw_outcomes": {
+    "skip": 9,
+    "pass": 58
+  },
+  "baseline_manifest_top_level_genuinely_executed_and_passed": 53,
+  "parent_pass_with_all_postgres_children_skipped": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations",
+      "skipped_children": 12
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogRejectsDrift",
+      "skipped_children": 2
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresLegacyEpochCompatibility",
+      "skipped_children": 2
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresPreEpochPlanInit",
+      "skipped_children": 2
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce",
+      "skipped_children": 4
+    }
+  ],
+  "baseline_manifest_top_level_suites_with_skips": 14,
+  "baseline_manifest_postgres_suites_not_accepted": 13,
+  "pb_prefix_top_level": {
+    "pass": 24
+  },
+  "pb_prefix_including_children": {
+    "pass": 101
+  },
+  "procurement_identity": {
+    "top_level_outcomes": {
+      "pass": 2
+    },
+    "including_children_outcomes": {
+      "pass": 8
+    },
+    "test_outcomes": [
+      {
+        "test": "TestPostgresOriginalProcurementIdentityABI/exact_original_struct_and_raw_delivery",
+        "outcome": "pass"
+      },
+      {
+        "test": "TestPostgresOriginalProcurementIdentityABI/escaping_and_unicode",
+        "outcome": "pass"
+      },
+      {
+        "test": "TestPostgresOriginalProcurementIdentityABI/full_int64_each_position",
+        "outcome": "pass"
+      },
+      {
+        "test": "TestPostgresOriginalProcurementIdentityABI/fixed_seed_unicode_and_integer_differential",
+        "outcome": "pass"
+      },
+      {
+        "test": "TestPostgresOriginalProcurementIdentityABI/strict_null_every_argument",
+        "outcome": "pass"
+      },
+      {
+        "test": "TestPostgresOriginalProcurementIdentityABI/session_settings_and_invalid_text_domain",
+        "outcome": "pass"
+      },
+      {
+        "test": "TestPostgresOriginalProcurementIdentityABI",
+        "outcome": "pass"
+      },
+      {
+        "test": "TestFrozenIdentityMaterial",
+        "outcome": "pass"
+      }
+    ],
+    "package_elapsed_seconds": 3.085,
+    "postgres_actually_executed_and_passed": true,
+    "explicit_ci_env": "PROCUREMENT_IDENTITY_DATABASE_URL=$TEST_DATABASE_URL",
+    "boundary": "Pure SQL identity ABI leaf only, real PostgreSQL16 and restricted APP LOGIN under trust fixture. Does not prove password authentication, procurement business writer authority, D1, B-P3, full B-P4, supplier/payment/production/deployment/performance acceptance."
+  },
+  "architecture_verification": {
+    "files": 1648,
+    "snapshot_prefix": "79f2682b7a32",
+    "result": "pass"
+  },
+  "frontend": {
+    "tests": 286,
+    "suites": 0,
+    "pass": 286,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "frontend_build": "success",
+  "go_vet_all": "success",
+  "production_go_build": "success",
+  "package_partition_counts": {
+    "billing": 1,
+    "identity": 1,
+    "server": 1,
+    "other": 53
+  },
+  "ci_other_explicit_opt_ins": [
+    "PB_PREFIX_DATABASE_URL",
+    "PROCUREMENT_IDENTITY_DATABASE_URL"
+  ],
+  "ci_absent_opt_ins": [
+    "MONI_TEST_DATABASE_URL",
+    "C0_CATALOG_DATABASE_URL",
+    "C0_MAINTENANCE_DATABASE_URL",
+    "C0_CATALOG_TIMING_DIAGNOSTIC"
+  ],
+  "local_full_verify_mvp_failure_preserved": true,
+  "boundary": "Remote exact-SHA CI success does not replace the separately preserved failed local whole-repository make verify-mvp. Existing MONI/C0/diagnostic opt-ins stay absent; PASS parents whose PostgreSQL descendants all SKIP do not establish their PostgreSQL acceptance. No supplier, payments, 1Panel, Docker production, HA or performance-parity acceptance is inferred.",
+  "previous_local_failed_suites_remote_results": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/billing",
+      "test": "TestPostgresBindingIsolationSharesChannelLock",
+      "result": "pass",
+      "elapsed": 4.82
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/server",
+      "test": "TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery",
+      "result": "pass",
+      "elapsed": 13.96
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/server",
+      "test": "TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay",
+      "result": "pass",
+      "elapsed": 18.21
+    }
+  ],
+  "old_opt_in_skip_details_identical": true,
+  "parent_pass_with_all_postgres_children_skipped_count": 5,
+  "baseline_manifest_diagnostic_skipped": 1,
+  "wall_clock_seconds": 1128,
+  "evidence_files": {
+    "run-final.json": "6f6cd337bdf26f3e46303af8343fb331f0dc7646aa60f72cefbe77aebe02e856",
+    "artifacts-final.json": "9739a5779d7c98e3116c5436b13de5787d156a2dc8cc8f209d037ad14664673b",
+    "test-summary.json": "3e2170a672809095a11bed58950f546d2fded95bc6888bb6ea8cdb1da6ed3738",
+    "opt-in-boundary.json": "fc9925aac0358763b1453e276c67f4068b48c97f72673f94cc083b8ca3f8d495",
+    "workflow-exact.yml": "aae3024364280bd619320eceb2014fd3e4aeb53133b8a44e072e0b6a804f8ed0",
+    "other-job.log": "5320482b3a96bab4e690f27055139a867810b74451df9006c739843aa72a84cc",
+    "analyze.py": "d8cf22f24c2a10b79c4d9bbe9f0d0e505c01be87a060cd11d345d86eac38468f",
+    "summary.json": "514b3e36e1b43bec1b68130573d4dab30e8d44131783f6d3d9a68acc5809dabf"
+  },
+  "date": "2026-11-03",
+  "scope": "Exact pushed source commit CI evidence; pure procurement identity SQL ABI leaf, not complete procurement business or production acceptance",
+  "head_branch": "codex/initial-mvp",
+  "record_does_not_certify_later_commit": true,
+  "material_sha256": "05f4476b25158624ed08d1e6497ac41580bb3c50550ff7164f7ea08c8be3eacc",
+  "local_evidence_directory": ".local/b-p4-identity-ci",
+  "local_summary_sha256": "514b3e36e1b43bec1b68130573d4dab30e8d44131783f6d3d9a68acc5809dabf",
+  "artifact_digest_boundary": "GitHub API-reported ZIP digest, not independently recomputed from ZIP bytes; independently computed extracted JSONL SHA-256 is recorded separately",
+  "artifacts": [
+    {
+      "id": 13211269025,
+      "name": "go-tests-billing-0",
+      "size_in_bytes": 49272,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13211269025",
+      "expired": false,
+      "digest": "sha256:59a1080e436a1233800e08e740f10be5d3cfaae2f64d26f31aacd3e9c63b6fd0",
+      "created_at": "2026-11-03T07:12:13Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-billing-0/go-tests-billing-0.jsonl",
+      "jsonl_sha256": "dd14d6e358f9602b7d8da8b752ce893847ac71d8fe08016862d287a7207ae657",
+      "jsonl_event_count": 1756,
+      "top_level_test_outcomes": {
+        "pass": 52
+      },
+      "including_children_outcomes": {
+        "pass": 438
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 150.922
+        }
+      ]
+    },
+    {
+      "id": 13211189501,
+      "name": "go-tests-billing-1",
+      "size_in_bytes": 37564,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13211189501",
+      "expired": false,
+      "digest": "sha256:33549af40a76c2559a4f8b5fd5b9b626839a9e9c4946e927ecd47b71f1587dc9",
+      "created_at": "2026-11-03T07:13:56Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-billing-1/go-tests-billing-1.jsonl",
+      "jsonl_sha256": "2e13db51bd7c328fb4a0ce4c072e670a015756e6251ea8671585dee86139d9fe",
+      "jsonl_event_count": 825,
+      "top_level_test_outcomes": {
+        "pass": 51,
+        "skip": 1
+      },
+      "including_children_outcomes": {
+        "pass": 204,
+        "skip": 1
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 241.394
+        }
+      ]
+    },
+    {
+      "id": 13211493751,
+      "name": "go-tests-billing-2",
+      "size_in_bytes": 34778,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13211493751",
+      "expired": false,
+      "digest": "sha256:c3c5f2b0931900edc98aa84084d9e247322dd9a9765a3f5cfe7aef494fb58592",
+      "created_at": "2026-11-03T07:13:06Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-billing-2/go-tests-billing-2.jsonl",
+      "jsonl_sha256": "7b6fd0b96f79d4719deca1c697069dc8f53823346a03fab2ae74a19fdcfffbe5",
+      "jsonl_event_count": 621,
+      "top_level_test_outcomes": {
+        "pass": 52
+      },
+      "including_children_outcomes": {
+        "pass": 153
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 197.854
+        }
+      ]
+    },
+    {
+      "id": 13212075714,
+      "name": "go-tests-billing-3",
+      "size_in_bytes": 37141,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13212075714",
+      "expired": false,
+      "digest": "sha256:46c2280d91d0b479cf5dbaac2f8e94887bb13f7b7d944abe250b0807c44e3fc1",
+      "created_at": "2026-11-03T07:12:53Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-billing-3/go-tests-billing-3.jsonl",
+      "jsonl_sha256": "c42480880ecf4337bd1e8e28ccbd87d4c92925bc37ac091b3fb08cd275ded338",
+      "jsonl_event_count": 836,
+      "top_level_test_outcomes": {
+        "pass": 52
+      },
+      "including_children_outcomes": {
+        "pass": 208
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Action": "pass",
+          "Elapsed": 185.088
+        }
+      ]
+    },
+    {
+      "id": 13211682114,
+      "name": "go-tests-identity",
+      "size_in_bytes": 10284,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13211682114",
+      "expired": false,
+      "digest": "sha256:f05df521f1bb2a2e45f2eb42c500c36dd2657bcb7484391092f91d24cd7f1cb8",
+      "created_at": "2026-11-03T07:17:45Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-identity/go-tests-identity.jsonl",
+      "jsonl_sha256": "5a252bdc4f2f9f8473fd659bedf650473ac3172ab705e3772674ee8d570a33a0",
+      "jsonl_event_count": 364,
+      "top_level_test_outcomes": {
+        "pass": 57
+      },
+      "including_children_outcomes": {
+        "pass": 90
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/identity",
+          "Action": "pass",
+          "Elapsed": 488.042
+        }
+      ]
+    },
+    {
+      "id": 13212367313,
+      "name": "go-tests-other",
+      "size_in_bytes": 499750,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13212367313",
+      "expired": false,
+      "digest": "sha256:e823b20a8bc55d7a9d06e047a59dd408b02f668f9a5a1b2e2acae80360830261",
+      "created_at": "2026-11-03T07:27:43Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-other/go-tests-other.jsonl",
+      "jsonl_sha256": "441f37f044ef960d6a2c74b32cef173dd672273f2380e4511754d0333dcb93b5",
+      "jsonl_event_count": 32996,
+      "top_level_test_outcomes": {
+        "pass": 1211,
+        "skip": 112
+      },
+      "including_children_outcomes": {
+        "pass": 7914,
+        "skip": 218
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-payment-sandbox",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/cmd/moni-aigate",
+          "Action": "pass",
+          "Elapsed": 5.731
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alertworker",
+          "Action": "pass",
+          "Elapsed": 1.023
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/alerts",
+          "Action": "pass",
+          "Elapsed": 79.755
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/config",
+          "Action": "pass",
+          "Elapsed": 1.023
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotbasis",
+          "Action": "pass",
+          "Elapsed": 26.133
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/catalog",
+          "Action": "pass",
+          "Elapsed": 103.667
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotinit",
+          "Action": "pass",
+          "Elapsed": 1.683
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotprefixcompat",
+          "Action": "pass",
+          "Elapsed": 1.038
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotproof",
+          "Action": "pass",
+          "Elapsed": 1.9180000000000001
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotruntime",
+          "Action": "pass",
+          "Elapsed": 85.909
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+          "Action": "pass",
+          "Elapsed": 19.04
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotverify",
+          "Action": "pass",
+          "Elapsed": 9.272
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maildeliver",
+          "Action": "pass",
+          "Elapsed": 1.074
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mailworker",
+          "Action": "pass",
+          "Elapsed": 1.08
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancescan",
+          "Action": "pass",
+          "Elapsed": 85.289
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+          "Action": "pass",
+          "Elapsed": 107.498
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+          "Action": "pass",
+          "Elapsed": 347.923
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/metering",
+          "Action": "pass",
+          "Elapsed": 1.371
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/mockpsp",
+          "Action": "pass",
+          "Elapsed": 19.744
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentproto",
+          "Action": "pass",
+          "Elapsed": 1.475
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentreceiver",
+          "Action": "pass",
+          "Elapsed": 3.237
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentrefundproto",
+          "Action": "pass",
+          "Elapsed": 2.622
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentruntime",
+          "Action": "pass",
+          "Elapsed": 8.955
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/payments",
+          "Action": "pass",
+          "Elapsed": 130.901
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/operations",
+          "Action": "pass",
+          "Elapsed": 182.41
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema",
+          "Action": "pass",
+          "Elapsed": 1.045
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa",
+          "Action": "pass",
+          "Elapsed": 44.813
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefix",
+          "Action": "pass",
+          "Elapsed": 2.095
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefixschema",
+          "Action": "pass",
+          "Elapsed": 1.016
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/pricing",
+          "Action": "pass",
+          "Elapsed": 24.883
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "Action": "pass",
+          "Elapsed": 1.017
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+          "Action": "pass",
+          "Elapsed": 3.085
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/productvalue",
+          "Action": "pass",
+          "Elapsed": 1.141
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/provider",
+          "Action": "pass",
+          "Elapsed": 4.862
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+          "Action": "pass",
+          "Elapsed": 1.022
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/routing",
+          "Action": "pass",
+          "Elapsed": 1.072
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/security",
+          "Action": "pass",
+          "Elapsed": 1.02
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/telemetry",
+          "Action": "pass",
+          "Elapsed": 1.025
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+          "Action": "pass",
+          "Elapsed": 5.925
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/testsupport/periodicprefix",
+          "Action": "pass",
+          "Elapsed": 1.015
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/migrations",
+          "Action": "pass",
+          "Elapsed": 26.41
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+          "Action": "pass",
+          "Elapsed": 1.108
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/check-architecture",
+          "Action": "pass",
+          "Elapsed": 1.1320000000000001
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/export-native-sdk-fixtures",
+          "Action": "skip",
+          "Elapsed": 0
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+          "Action": "pass",
+          "Elapsed": 1.065
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+          "Action": "pass",
+          "Elapsed": 79.174
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/online-dependency-qa",
+          "Action": "pass",
+          "Elapsed": 1.499
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-application-qa",
+          "Action": "pass",
+          "Elapsed": 1.022
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa",
+          "Action": "pass",
+          "Elapsed": 31.099
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/web",
+          "Action": "skip",
+          "Elapsed": 0.001
+        },
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+          "Action": "pass",
+          "Elapsed": 273.61
+        }
+      ]
+    },
+    {
+      "id": 13212105702,
+      "name": "go-tests-server-0",
+      "size_in_bytes": 32327,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13212105702",
+      "expired": false,
+      "digest": "sha256:ba021a90d684631cbe04463407a7bcb819584b308f5175a67c72917be5c01763",
+      "created_at": "2026-11-03T07:12:46Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-server-0/go-tests-server-0.jsonl",
+      "jsonl_sha256": "2901c414b678ad37abae3b7bece1174c38cbe75a3d00a72323ad174b3d30b794",
+      "jsonl_event_count": 444,
+      "top_level_test_outcomes": {
+        "pass": 52
+      },
+      "including_children_outcomes": {
+        "pass": 110
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 148.283
+        }
+      ]
+    },
+    {
+      "id": 13211199359,
+      "name": "go-tests-server-1",
+      "size_in_bytes": 31232,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13211199359",
+      "expired": false,
+      "digest": "sha256:f4b3d3e3dcc0170033d67f761a0f2d67895e7ab75b1bf2b655783d094117a8d4",
+      "created_at": "2026-11-03T07:12:57Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-server-1/go-tests-server-1.jsonl",
+      "jsonl_sha256": "3538e927dc278565a92681c2d4f6134ad6709f70cb2d5a008f70b002ee88dbfa",
+      "jsonl_event_count": 369,
+      "top_level_test_outcomes": {
+        "pass": 50,
+        "skip": 1
+      },
+      "including_children_outcomes": {
+        "pass": 90,
+        "skip": 1
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 155.719
+        }
+      ]
+    },
+    {
+      "id": 13212250113,
+      "name": "go-tests-server-2",
+      "size_in_bytes": 33696,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13212250113",
+      "expired": false,
+      "digest": "sha256:2d0fce938b2e79d2c94d434a2290885d30da28e50322fd557fbbf3d34fe00874",
+      "created_at": "2026-11-03T07:14:02Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-server-2/go-tests-server-2.jsonl",
+      "jsonl_sha256": "db946bfd1c7bcaa1e4f08f6fe8e376d37b6a1f4a92b3a1f7bf3e4dbdb7b85088",
+      "jsonl_event_count": 509,
+      "top_level_test_outcomes": {
+        "pass": 51
+      },
+      "including_children_outcomes": {
+        "pass": 126
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 214.738
+        }
+      ]
+    },
+    {
+      "id": 13212055903,
+      "name": "go-tests-server-3",
+      "size_in_bytes": 34071,
+      "url": "https://api.github.com/repos/workhold/moni-aigate/actions/artifacts/13212055903",
+      "expired": false,
+      "digest": "sha256:6bae84a5dc4bd0e4ccf3e8c03d357d6971bbd1f583539b950aba01e4f4e336e7",
+      "created_at": "2026-11-03T07:13:22Z",
+      "expires_at": "2027-02-01T07:09:00Z",
+      "workflow_run_id": 41594394743,
+      "head_sha": "2223e40a2947846541e34451b6b2465082c18bbe",
+      "jsonl": "go-tests-server-3/go-tests-server-3.jsonl",
+      "jsonl_sha256": "e4ec9b958018c277de463f9ac090564b0532bf29e89d78ac67da3a3776ce9d10",
+      "jsonl_event_count": 556,
+      "top_level_test_outcomes": {
+        "pass": 51
+      },
+      "including_children_outcomes": {
+        "pass": 138
+      },
+      "package_terminal_events": [
+        {
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Action": "pass",
+          "Elapsed": 179.034
+        }
+      ]
+    }
+  ],
+  "jsonl_total_event_count": 39276,
+  "old_opt_in_skip_details": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotbasis",
+      "test": "TestIndependentPostgresPrefixBasis",
+      "skipped_tests": [
+        "TestIndependentPostgresPrefixBasis"
+      ],
+      "reasons": [
+        "prefix_postgres_test.go:44: MONI_TEST_DATABASE_URL required for dedicated basis PostgreSQL acceptance"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogTimingDiagnostic",
+      "skipped_tests": [
+        "TestPeriodicPrefixCatalogTimingDiagnostic"
+      ],
+      "reasons": [
+        "prefix_profile_integration_test.go:607: requires explicit C0_CATALOG_TIMING_DIAGNOSTIC=1; diagnostic only"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations",
+      "skipped_tests": [
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_1/named-isolated",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_1/named-minimal-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_1/named-image-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_1/public-minimal-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_1/public-image-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_1/full-sandbox",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_2/named-isolated",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_2/named-minimal-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_2/named-image-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_2/public-minimal-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_2/public-image-login",
+        "TestPeriodicPrefixCatalogIndependentInstallations/round_2/full-sandbox"
+      ],
+      "reasons": [
+        "prefix_profile_integration_test.go:638: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance",
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogRejectsDrift",
+      "skipped_tests": [
+        "TestPeriodicPrefixCatalogRejectsDrift/ordinary",
+        "TestPeriodicPrefixCatalogRejectsDrift/sandbox"
+      ],
+      "reasons": [
+        "prefix_profile_integration_test.go:724: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance",
+        "prefix_profile_integration_test.go:725: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresPrefixSourceWalletReader",
+      "skipped_tests": [
+        "TestPostgresPrefixSourceWalletReader"
+      ],
+      "reasons": [
+        "prefix_reader_postgres_test.go:102: MONI_TEST_DATABASE_URL required for isolated complete-source PostgreSQL tests"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresBusinessCrossWindowAndConcurrentObservation",
+      "skipped_tests": [
+        "TestPeriodicPrefixMaintenancePostgresBusinessCrossWindowAndConcurrentObservation"
+      ],
+      "reasons": [
+        "funding_lots_prefix_business_integration_test.go:443: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresAbsoluteCostCorrectionRemainsUnproven",
+      "skipped_tests": [
+        "TestPeriodicPrefixMaintenancePostgresAbsoluteCostCorrectionRemainsUnproven"
+      ],
+      "reasons": [
+        "funding_lots_prefix_business_integration_test.go:595: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresNonemptyActualApplication",
+      "skipped_tests": [
+        "TestPeriodicPrefixMaintenancePostgresNonemptyActualApplication"
+      ],
+      "reasons": [
+        "funding_lots_prefix_integration_test.go:134: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresSourceBudgetAbandonsInit",
+      "skipped_tests": [
+        "TestPeriodicPrefixMaintenancePostgresSourceBudgetAbandonsInit"
+      ],
+      "reasons": [
+        "funding_lots_prefix_integration_test.go:243: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresInstallationSelectionConsumesOnce",
+      "skipped_tests": [
+        "TestPeriodicPrefixMaintenancePostgresInstallationSelectionConsumesOnce"
+      ],
+      "reasons": [
+        "funding_lots_prefix_integration_test.go:282: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresLegacyEpochCompatibility",
+      "skipped_tests": [
+        "TestPeriodicPrefixMaintenancePostgresLegacyEpochCompatibility/original109_epoch_current_v3_with_new_observations",
+        "TestPeriodicPrefixMaintenancePostgresLegacyEpochCompatibility/real_preexisting_control_without_origin_remains_rejected"
+      ],
+      "reasons": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresGenuineSandboxActualApplication",
+      "skipped_tests": [
+        "TestPeriodicPrefixMaintenancePostgresGenuineSandboxActualApplication"
+      ],
+      "reasons": [
+        "funding_lots_prefix_sandbox_integration_test.go:246: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresPreEpochPlanInit",
+      "skipped_tests": [
+        "TestMaintenancePeriodicPrefixPostgresPreEpochPlanInit/plan",
+        "TestMaintenancePeriodicPrefixPostgresPreEpochPlanInit/init"
+      ],
+      "reasons": [
+        "periodic_prefix_integration_test.go:172: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce",
+      "skipped_tests": [
+        "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/prefix_on_legacy/source_kind6",
+        "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/prefix_on_legacy/wallet_kind7",
+        "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/legacy_on_prefix/source_kind6",
+        "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/legacy_on_prefix/wallet_kind7"
+      ],
+      "reasons": [
+        "periodic_prefix_integration_test.go:262: C0_MAINTENANCE_DATABASE_URL not set",
+        "periodic_prefix_integration_test.go:264: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    }
+  ],
+  "baseline_manifest_reference": "Prior 19-file / 67-top-level manifest in .local/b-p4-docs-ci/new-test-manifest.json; count does not include the newly added procurementidentity tests",
+  "baseline_comparison_scope": "All 9683 prior individual outcomes match after explicit normalization of two runtime-clock-generated subtest labels; the only eight added outcomes are procurementidentity PASS",
+  "local_full_verify_mvp": {
+    "local_log": ".local/b-p4-identity-verify-mvp.log",
+    "sha256": "834037fdac31e6d45bb49301940fba53581380ddd62aefe0532ecfb9e0108ace",
+    "exit_code": 2,
+    "result": "failed; focused reruns do not replace this result",
+    "command_environment": [
+      "TEST_DATABASE_URL dedicated cluster",
+      "PROCUREMENT_IDENTITY_DATABASE_URL same cluster"
+    ],
+    "package_terminals": {
+      "ok": 50,
+      "?": 4,
+      "FAIL": 2
+    },
+    "package_total": 56,
+    "front_end": {
+      "pass": 286,
+      "fail": 0,
+      "skip": 0
+    },
+    "top_level_failures": [
+      "TestPostgresBindingIsolationSharesChannelLock",
+      "TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery",
+      "TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay"
+    ],
+    "identity_package_pass_seconds": 3.751,
+    "per_test_skip_counts": "not available from this non-JSON whole run; other C0 and PB_PREFIX independent opt-ins were not enabled",
+    "make_steps_after_go_failure": "vet and build not reached by make; make check vet and separate binary build accounted independently",
+    "record": "docs/verification/procurement-identity-leaf.json#integration.make_verify_mvp",
+    "superseded_by_remote_ci": false
+  },
+  "local_failure_details": [
+    {
+      "test": "TestPostgresBindingIsolationSharesChannelLock/prepare_dispatch",
+      "failure": "SQLSTATE 57014 statement timeout instead of binding_unavailable; exact SQL/backend/block phase absent from original log",
+      "remote_result": "pass",
+      "remote_elapsed_seconds": 2.41
+    },
+    {
+      "test": "TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery",
+      "failure": "temporary database/role cleanup context timeout"
+    },
+    {
+      "test": "TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay",
+      "failure": "temporary database/role cleanup context timeout"
+    }
+  ],
+  "local_timeout_root_cause": "not established by focused reruns or remote success",
+  "verification_actions": "Read-only GitHub run/jobs/artifacts/log inspection and independent local parsing/hashing of downloaded evidence; no workflow restart, local PostgreSQL tests, or whole-repository tests for this record",
+  "namespace_probe_ci_executed": false,
+  "architecture_impact": "Evidence only; no runtime module, request, data, permission or deployment structure change. Integrator must synchronize architecture verification status and reviewed snapshot after all parallel work."
+}

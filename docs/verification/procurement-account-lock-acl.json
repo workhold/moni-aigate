@@ -1,0 +1,51 @@
+{
+  "record_version": 1,
+  "date": "2026-11-03",
+  "baseline_commit": "2223e40a2947846541e34451b6b2465082c18bbe",
+  "scope": "isolated PostgreSQL 16 row-lock and column UPDATE ACL primitive; no complete writer/profile/business acceptance",
+  "source": {
+    "path": "docs/verification/testdata/procurement-account-lock-acl/main.go",
+    "sha256": "141ae824254a72473dabf1aadba9927d8eeff3d02e6841f0354ecbc6c82fc2a1"
+  },
+  "execution": {
+    "command": "go run ./docs/verification/testdata/procurement-account-lock-acl",
+    "explicit_env": "PROCUREMENT_LOCK_ACL_DATABASE_URL",
+    "dedicated_endpoint": "127.0.0.1:55439/moni_test",
+    "exit_code": 0,
+    "output_path": ".local/b-p4-account-lock-acl.json",
+    "output_sha256": "43173cc8a6c4633ba38eea3d3fe6da2ecd165e3ba07b961bf7d6ef6ce87a65f7",
+    "output": {
+      "actual_app_login": true,
+      "cleanup_confirmed": true,
+      "column_grant_lock_modes_allowed": 4,
+      "competing_lock_sqlstate": "55P03",
+      "guard_invoker": true,
+      "held_column_update": false,
+      "invoker_guard_rejected_timestamp_updates": 2,
+      "lock_timeout_ms": 150,
+      "other_dml_denied": 4,
+      "pass": true,
+      "restricted_app": true,
+      "scope": "isolated PG16 row-lock ACL semantics; not complete writer/profile/business acceptance",
+      "select_only_lock_modes_denied": 4,
+      "state_unchanged": true,
+      "table_update": false,
+      "timestamp_column_update": true
+    },
+    "timeout_seconds": 45,
+    "cleanup_timeout_seconds": 5
+  },
+  "static_checks": {
+    "gofmt": "pass",
+    "go_vet": "pass"
+  },
+  "limitations": [
+    "guard unconditionally rejects UPDATE; writer allowed branch not tested",
+    "original 014 and complete PB/binding chain not installed",
+    "complete role, default ACL and PUBLIC closure not accepted",
+    "150ms is lock_timeout setting, no measured latency",
+    "cleanup reuses owner connection; no disconnect injection or reconnect cleanup acceptance",
+    "not a replacement for historical local verify-mvp failure or exact-commit remote CI",
+    "no original migration, production provision/main or default runtime change"
+  ]
+}
