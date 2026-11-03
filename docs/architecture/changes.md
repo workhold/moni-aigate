@@ -3607,3 +3607,52 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-pb-snapshot-dml.md`
 
 </details>
+
+## 2026-11-03T19:22:49Z · 80be5e0776ed
+
+新增attempt五函数原规则及原Go/actual APP差分、独立A1四表窄关系与真实Reserve自动来源/guard/最小ACL和限定故障验证；复核候选模块图、真实时序、NULL与TEXT关系、角色边界和未完成矩阵，README补SDK并校准catalog已过专项，普通迁移及线上接线不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1818 个源文件；本次 26 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `README.md`
+- added `docs/architecture/procurement-attempt-birth.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/procurement-attempt-rules.md`
+- added `docs/verification/procurement-request-birth.md`
+- added `internal/billing/procurement_attempt_rules_postgres_test.go`
+- added `internal/procurementattemptrules/materials.go`
+- added `internal/procurementattemptrules/materials/attempt-rules-v1.sql`
+- added `internal/procurementattemptrules/materials_test.go`
+- added `internal/procurementbirthschema/materials.go`
+- added `internal/procurementbirthschema/materials/a1-constraints-v1.sql`
+- added `internal/procurementbirthschema/materials/a1-original-columns-v1.sql`
+- added `internal/procurementbirthschema/materials/a1-tables-v1.sql`
+- added `internal/procurementbirthschema/materials_test.go`
+- added `internal/procurementrequestbirth/materials.go`
+- added `internal/procurementrequestbirth/materials/permissions-v1.sql`
+- added `internal/procurementrequestbirth/materials/request-birth-writer-v1.sql`
+- added `internal/procurementrequestbirth/materials_test.go`
+- added `internal/procurementrequestbirth/request_birth_postgres_test.go`
+- added `specs/023-periodic-products/b-procurement-attempt-rules-contract.md`
+- added `specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md`
+- added `specs/023-periodic-products/b-procurement-request-birth-writer-contract.md`
+- modified `specs/023-periodic-products/b-procurement-schema-contract.md`
+
+</details>
+
+## 2026-11-03T19:23:36Z · 35a22ee74500
+
+归档原规则与A1真实Reserve限定PG、两次fixture及SQL安装失败修正、三锁列最小授权和剩余预算/并发/撤权矩阵；统一模块/时序/关系/权限/README已语义复核，补最终make check与零残留观察，无线上结构或普通迁移变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1818 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-request-birth.md`
+
+</details>

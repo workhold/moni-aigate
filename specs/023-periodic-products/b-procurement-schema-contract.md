@@ -214,7 +214,7 @@ has_expected_quote=false时四个expected参数全NULL；true时两个BYTEA均�
 
 原source71/wallet87的完整union加32新表及已有reconciliation_cases、billing_profile_blocks两表，关系数候选为105/121；catalog128+32=160、basis112+32=144。准确列数、PK计数、descriptor/hash及所有原表新增列须由完整展开注册表与可执行DDL双向独立核对后固定，不能从live结果回填expected。本页尚无该注册表或SQL，不把这些关系数当已验证的最终profile。
 
-完整DDL仍须逐项落实本页全部复合键/生成列/FK/guard/模板、固定根与helper正文、完整函数/类型/ACL和trigger时序，并以actual LOGIN验证。独立纯DTO/重放、reader/basis/catalog、保护阶段/runtime/兼容及完整成功/失败矩阵不能由布局合同替代。正式迁移/provision/维护CLI/启动/在线资金接线仍R2独立交付；旧11项Unproven、B-P3和catalog原5秒race门禁保持。
+完整DDL仍须逐项落实本页全部复合键/生成列/FK/guard/模板、固定根与helper正文、完整函数/类型/ACL和trigger时序，并以actual LOGIN验证。独立纯DTO/重放、reader/basis/catalog、保护阶段/runtime/兼容及完整成功/失败矩阵不能由布局合同替代。正式迁移/provision/维护CLI/启动/在线资金接线仍R2独立交付；旧11项Unproven与B-P3整体状态保持。catalog原5秒正式race专项已通过，详见[实际复验记录](../../docs/verification/periodic-prefix-catalog-cpu.md)，此前失败记录仍保留；不能再把这项已关闭的专项缺口写成当前门禁未过，也不能据此宣称B-P3整体完成。
 
 ### 7.1 本片列布局检查的实施边界
 

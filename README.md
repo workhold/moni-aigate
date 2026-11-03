@@ -184,6 +184,29 @@ curl -N http://localhost:8080/v1/chat/completions \
 响应提供 `X-Request-ID`，可在控制台关联请求、尝试、客户账单与采购成本。
 匿名 `/pricing` 默认没有模型；管理员显式公开后才展示当前价格，公开展示不授予调用权限。
 
+### 使用 OpenAI Python SDK
+
+在客户端项目安装 `openai`，将 `MONI_API_KEY` 设为客户 API Key，`MONI_BASE_URL` 设为网关地址（包含 `/v1`，例如 `http://localhost:8080/v1`）：
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ["MONI_API_KEY"],
+    base_url=os.environ["MONI_BASE_URL"],
+    max_retries=0,
+)
+response = client.chat.completions.create(
+    model="your-public-model",
+    messages=[{"role": "user", "content": "Hello"}],
+    max_tokens=128,
+)
+print(response.choices[0].message.content)
+```
+
+模型名使用平台发布并授权的逻辑模型。示例关闭 SDK 自动重试，避免在网络中断、消费状态未知时由客户端重复生成；需要重试时先核对请求记录，再按业务约束处理。其他客户端同样配置网关地址和客户 API Key；实际功能范围以[协议范围](#协议范围)为准。
+
 ## 常用配置
 
 常用变量与格式示例见 [.env.example](.env.example)，生成私有配置使用 `init-env`。源码/二进制启动时显式加载 `.env`；Compose 会读取根目录 `.env` 并通过 `compose.yaml` 映射变量。
@@ -231,6 +254,8 @@ make verify-mvp
 每次代码、测试、依赖、迁移、部署、CI 或设计合同变化，都同步复核统一架构并保留[变更记录](docs/architecture/changes.md)与 [SHA-256 清单](docs/architecture/architecture-manifest.json)。Make / CI 默认只读检查，不自动刷新；具体流程见[贡献指南](CONTRIBUTING.md#架构同步与检查)和 [AGENTS.md](AGENTS.md)。
 
 采购历史核验仍是开发期候选，普通启动不会安装对应 SQL。源码关系、当前已实现的校验与剩余观察缺口见[采购模块细图](docs/architecture/procurement-replay.md)；最新实现与真实数据库故障范围见[采购关系与预算重放](docs/verification/procurement-pb-relations.md)和[账户 writer 验证](docs/verification/procurement-account-prefix.md)。局部校验通过不代表完整历史证明或正式迁移已交付。
+
+当前正推进请求与采购尝试的来源保护；原路由/报价规则已完成独立数据库差分，阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)。这些候选材料不属于常规部署步骤。
 
 [字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它只比对候选表列与设计物料，不安装数据库；部署请遵循上面的常规迁移与启动步骤。
 

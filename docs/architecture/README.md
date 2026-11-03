@@ -1478,4 +1478,12 @@ README的特点、使用及Docker/1Panel步骤已复核，并补[安全报告](.
 
 [下一真实attempt出生根](../../specs/023-periodic-products/b-procurement-attempt-birth-writer-contract.md)仅设计冻结：允许upstream先INSERT，p的原020 stamp与014 identity之后拟加末序BEFORE hook，读取真实NEW.pb_admitted_at一次完整生source再写p，closure最后seal；replay不新生root/source。真实request出生、command+reserve新guard/validator、exact-link、ACL及actual LOGIN验收列为A0–A6前置，尚未实现。该候选依赖没有新增为线上调用边。
 
+### B-P4-A0 原规则与 A1 父请求切片
+
+[procurementattemptrules](../../internal/procurementattemptrules/materials.go)已实现五函数独立材料：原UUID Parse接受集、Go路由JSON字节、expected BYTEA联合/Equal、单statement真实DB采时与确定选价。包没有安装器或普通main/billing调用；仅test-only billing直接用原私有规则与真实CostQuote作oracle。真实原001–022/actual APP专库差分2顶层/224子项race PASS，零SKIP/FAIL；报价同生效旧数据经真实012→013边界准备，原guard不禁用，前两轮fixture失败如实保留，见[验证](../verification/procurement-attempt-rules.md)。CI billing分区显式开启这一opt-in，不转称完整attempt根或性能结果。
+
+[A1真实request合同](../../specs/023-periodic-products/b-procurement-request-birth-writer-contract.md)与[最小exact-link合同](../../specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md)冻结独立四表、request四列及窄定位关系，不先安装685项旧关系再删宽UK。[关系材料](../../internal/procurementbirthschema/materials.go)提供4表71列、5键、8CHECK、10条真deferred FK；[真实AFTER writer/guards/ACL](../../internal/procurementrequestbirth/materials.go)已实现7函数/16trigger，actual APP原Reserve、legacy差分、角色/保护写和9处故障回滚整包5顶层/22子项race PASS，见[A1限定验证](../verification/procurement-request-birth.md)。预算/并发/逐项撤权等完整矩阵仍未齐。原Reserve保留21列APP INSERT，完全等价raw SQL也会自动birth，该来源只认证初态与冻结事实；完整Reserve资金来源和A2/A3另验。模块、时序、数据/角色责任及当前实现与后续边界见[新细图](procurement-attempt-birth.md)。
+
+README增加Python SDK使用示例，源码/Compose/1Panel步骤已按实际入口复核。普通在线模块、正式迁移、供应商或支付能力没有新增；来源纯核Complete=false、Qualified空，完整writer/profile、B-P3/R2及后续阶段保持未完成。
+
 独立catalog双轮安装、drift与旧profile拒绝候选race矩阵在原5秒界全PASS（3顶层/37子项），仅关闭该专项复验缺口；历史失败、采购命题、B-P3整体及R2仍分别保留。README复核项目特点、使用/部署并补仓库导览；Docker daemon未运行，目标容器/1Panel实装不据静态说明标通过。

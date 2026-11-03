@@ -196,3 +196,9 @@ covered PB命令的精确动态前缀与账户必要W DML故障矩阵已实施�
 下一真实受控路径按[attempt出生根A0–A6](../../specs/023-periodic-products/b-procurement-attempt-birth-writer-contract.md#8-实施切片和实际尚缺正文)推进：先原规则叶子、真实request自动birth与保护，再完整attempt/managed时序、reserved效果和command+reserve新guard/validator、最小ACL、显式adapter/actual LOGIN及集成。末序p hook取得原020真实admitted_at后一次完整生source，旧account v1与715/482物料不改签。该根仍仅设计，不能绕旧guard或给APP原件DML旁路。
 
 legacy cut/absence/完整首配、B-HO1、全部业务资格/逐对象Q与Base/aggregate、其余根/profile/宽TEXT/R2和所有后续经营/扩展/生产阶段继续原范围；B-P3整体未完成。Docker daemon当前不可用，容器/1Panel实际安装仍保留，其他可执行工作继续。
+
+## B-P4 attempt A0 与独立 A1 续片
+
+本轮[A0原规则](../../specs/023-periodic-products/b-procurement-attempt-rules-contract.md)已实现五函数固定材料，并由真实原Go规则与actual APP专库完成2顶层/224子项race差分，零SKIP/FAIL；CI billing分区显式开启。该切片是完整attempt根的一个前置，不等于上文全域验收A0或完整writer完成。[A1真实父请求](../../specs/023-periodic-products/b-procurement-request-birth-writer-contract.md)与[窄定位集成](../../specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md)已经冻结独立四表切片，不以A2账户闭包阻塞A1；旧685关系、账户v1和正式001–022不改签。
+
+本轮已实现独立A1 writer/guard/只读validator/最小ACL；actual APP原Store.Reserve、legacy差分、角色/保护写与9处故障完整回滚的5顶层/22子项race通过，详见[A1窄验证](../verification/procurement-request-birth.md)。下一步补PB/预算/并发等待/逐项有效撤权/等价raw及终态兼容矩阵，再在真实父快照上接完整attempt、reserved效果和command+reserve新账户guard/validator。独立A1不接后续dispatch/decision，不发行完整profile；完整exact-link、A4/A5与R2继续显式门禁。README新增Python SDK示例并复核源码/Compose/1Panel说明；实际模块与当前状态见[架构细图](../architecture/procurement-attempt-birth.md)，原规则另见[A0验证](../verification/procurement-attempt-rules.md)。

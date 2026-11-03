@@ -184,6 +184,9 @@ jobs:
             test_env+=("PB_PREFIX_DATABASE_URL=$TEST_DATABASE_URL")
             test_env+=("PROCUREMENT_IDENTITY_DATABASE_URL=$TEST_DATABASE_URL")
           fi
+          if [[ "$package_class" == billing ]]; then
+            test_env+=("PROCUREMENT_ATTEMPT_RULES_DATABASE_URL=$TEST_DATABASE_URL")
+          fi
           env "${test_env[@]}" go test -json -race -count=1 -timeout=10m "${run_filter[@]}" "${packages[@]}" \
             | tee "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"
       - run: go vet ./...

@@ -581,3 +581,9 @@ D1整体仍待剩余受控根/全域validator/guard、触发顺序和完整权�
 [完整attempt出生根](../../specs/023-periodic-products/b-procurement-attempt-birth-writer-contract.md)及四份上位合同已校准，仍仅设计。原件与来源的出生先后明确：upstream先INSERT，managed p在原020生成真实准入时间后一次完整生成来源，再由closure闭合采购/PB效果并唯一seal。replay不新生root/source；真实request birth、新command+reserve guard/validator、exact-link、ACL与actual LOGIN列为A0–A6实施前置，下一根尚未实现。
 
 来源Complete=false、Qualified空，无公共Check；legacy精确cut、历史absence/完整首配、B-HO1、实际资格/逐对象依赖及完整Base/aggregate仍待交付。715/482/173列、旧迁移/profile与线上/部署/权限无结构变更；完整writer/profile及R2继续原边界。当前模块和源码入口见[统一架构](../architecture/README.md#b-p4-动态快照与必要-dml-续片)，触发时序与延迟约束见[LLD](LLD.md#b-p4动态前缀dml失权与下一真实根)。
+
+### B-P4-A0 原规则材料与独立 A1 父请求
+
+[A0合同](../../specs/023-periodic-products/b-procurement-attempt-rules-contract.md)先冻结后实现五个只读规则函数，保持原UUID/Go JSON/full uint64与按需报价Equal接受集；单真实DB采时在无quote时也有一行结果。固定材料无默认业务接线，独立原Go/actual APP差分已通过，不据此宣称完整attempt writer已交付。
+
+[A1](../../specs/023-periodic-products/b-procurement-request-birth-writer-contract.md)采用[独立四表窄定位切片](../../specs/023-periodic-products/b-procurement-birth-exact-link-integration-contract.md)，已实现真实AFTER捕获与最小ACL，按source→head→pointer→step→seal；actual APP原Reserve、legacy与故障回滚完成[限定PG验证](../verification/procurement-request-birth.md)，预算/并发/撤权等完整矩阵继续。原21列APP写接缝保留，同一actual APP等价raw INSERT具有相同出生行为；该来源不认证完整Reserve资金执行。原账户v1组合、attempt reserved效果与全域profile另有明确依赖，不先安装旧宽UK后再删除。模块/数据/权限见[细图](../architecture/procurement-attempt-birth.md)；普通001–022/main/生产权限保持。
