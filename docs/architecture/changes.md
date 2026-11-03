@@ -3196,3 +3196,42 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-relation-materials.md`
 
 </details>
+
+## 2026-11-03T10:56:17Z · ce7fd63c099e
+
+按SDD交付采购账户create/configure隔离writer与精确ACL，actual APP三组专库race及并发/CAS/撤权提交回滚通过；增加40原件482列与32前缀715列DTO、72数组预算和旧Base无损投影，无Check；精确关联RC六场景实验与268键/291FK清单静态核对通过但原685约束未改；同步HLD/LLD/计划/验证、README安装与Compose排障和1Panel网络前提。无正式迁移、默认main、在线资金或部署权限变化，保留完整writer/profile/宽TEXT及生产验收边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1700 个源文件；本次 28 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- added `docs/verification/procurement-account-prefix.md`
+- added `internal/procurementaccountwriter/account_postgres_test.go`
+- added `internal/procurementaccountwriter/materials.go`
+- added `internal/procurementaccountwriter/materials/account-writer-v1.sql`
+- added `internal/procurementaccountwriter/materials/permissions-v1.sql`
+- added `internal/procurementaccountwriter/materials_test.go`
+- added `internal/procurementprefix/base_projection.go`
+- added `internal/procurementprefix/base_projection_test.go`
+- added `internal/procurementprefix/original_types.go`
+- added `internal/procurementprefix/scalar.go`
+- added `internal/procurementprefix/scalar_test.go`
+- added `internal/procurementprefix/types.go`
+- added `internal/procurementprefix/types_test.go`
+- added `internal/procurementprefixschema/exact_link_experiment_postgres_test.go`
+- added `internal/procurementprefixschema/exact_link_inventory_test.go`
+- added `specs/023-periodic-products/b-procurement-account-writer-contract.md`
+- added `specs/023-periodic-products/b-procurement-core-dto-contract.md`
+- added `specs/023-periodic-products/b-procurement-exact-link-contract.md`
+- added `specs/023-periodic-products/b-procurement-exact-link-inventory-v1.json`
+- modified `specs/023-periodic-products/b-procurement-execution-contract.md`
+- added `specs/023-periodic-products/b-procurement-original-core-layout-v1.json`
+- modified `specs/023-periodic-products/b-procurement-replay-read-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>

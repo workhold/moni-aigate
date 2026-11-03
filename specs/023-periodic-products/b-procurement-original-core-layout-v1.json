@@ -1,0 +1,2700 @@
+{
+  "schema": 1,
+  "status": "design-only-procurement-core-original-columns",
+  "source": "specs/023-periodic-products/b-procurement-core-dto-contract.md",
+  "table_count": 40,
+  "column_count": 482,
+  "original_extension_column_count": 110,
+  "tables": [
+    {
+      "name": "channels",
+      "array": "Channels",
+      "row_type": "ChannelRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "channel_credentials",
+      "array": "ChannelCredentials",
+      "row_type": "ChannelCredentialRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "channel_id",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "channel_versions",
+      "array": "ChannelVersions",
+      "row_type": "ChannelVersionRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "channel_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "credential_id",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "channel_version_credentials",
+      "array": "ChannelVersionCredentials",
+      "row_type": "ChannelVersionCredentialRow",
+      "columns": [
+        {
+          "name": "channel_version_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "channel_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "credential_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "position",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "weight",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "max_inflight",
+          "type": "INTEGER",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "tenants",
+      "array": "Tenants",
+      "row_type": "TenantRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "request_records",
+      "array": "RequestRecords",
+      "row_type": "RequestRecordRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "key_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "model_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "billing_status",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "price_version_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "input_rate",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "output_rate",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "input_upper_bound",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "output_limit",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "profile_version",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "policy_version",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_hmac",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "route_revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "request_deadline",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "instance_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "streaming",
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        {
+          "name": "latest_finalization_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "client_ip",
+          "type": "INET",
+          "nullable": true
+        },
+        {
+          "name": "pricing_group_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "tenant_pricing_revision",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "retail_priced_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "pb_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pb_tenant_control",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pb_key_control",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pb_admitted_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_decision_id",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "cost_versions",
+      "array": "CostVersions",
+      "row_type": "CostVersionRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "channel_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "upstream_model",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "input_rate",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "output_rate",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "basis",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "effective_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "procurement_accounts",
+      "array": "ProcurementAccounts",
+      "row_type": "ProcurementAccountRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "label",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "provider",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "state",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "limit_amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_version",
+          "type": "SMALLINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_journal_id",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "credential_procurement_bindings",
+      "array": "CredentialProcurementBindings",
+      "row_type": "CredentialProcurementBindingRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "credential_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "channel_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "bound_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "upstream_attempts",
+      "array": "UpstreamAttempts",
+      "row_type": "UpstreamAttemptRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "sequence",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "channel_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "channel_version_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "credential_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "upstream_model",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "delivery_state",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "cost_version_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "cost_input_rate",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "cost_output_rate",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "cost_basis",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "cost_status",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "cost_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "route_decisions",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "pb_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pb_dispatch_checked_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_quote_selected_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_cost_mutation_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_delivery_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_account_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_journal_id",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_reservations",
+      "array": "ProcurementReservations",
+      "row_type": "ProcurementReservationRow",
+      "columns": [
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "binding_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "input_bound",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "output_bound",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "upper_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "state",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "anomaly",
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pb_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pb_control",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pb_admitted_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_journal_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_journal_id",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_budget_events",
+      "array": "ProcurementBudgetEvents",
+      "row_type": "ProcurementBudgetEventRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "event_key",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "held_delta",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "spent_delta",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "type",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pb_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_transition_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_journal_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "array": "Users",
+      "row_type": "UserRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "provider_cost_corrections",
+      "array": "ProviderCostCorrections",
+      "row_type": "ProviderCostCorrectionRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "basis",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_cost_proposals",
+      "array": "ProcurementCostProposals",
+      "row_type": "ProcurementCostProposalRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "basis",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "requester",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "expected_reservation_revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "expected_evidence_count",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "state",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "approver",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "approval_operation_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "approved_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_commands",
+      "array": "ProcurementCommands",
+      "row_type": "ProcurementCommandRow",
+      "columns": [
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "target_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "input_digest",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "before_state",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "after_state",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        },
+        {
+          "name": "pp_account_journal_id",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_balance_observations",
+      "array": "ProcurementBalanceObservations",
+      "row_type": "ProcurementBalanceObservationRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "amount",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "currency",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "source",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "semantic",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "observed_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "provider_as_of",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "audit_events",
+      "array": "AuditEvents",
+      "row_type": "AuditEventRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_scope",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "target",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "sanitized_diff",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "projection_outbox",
+      "array": "ProjectionOutbox",
+      "row_type": "ProjectionOutboxRow",
+      "columns": [
+        {
+          "name": "event_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "schema_version",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "sanitized_payload",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_evidence_identities",
+      "array": "ProcurementEvidenceIdentities",
+      "row_type": "ProcurementEvidenceIdentityRow",
+      "columns": [
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "evidence_digest",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "event_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "metering_events",
+      "array": "MeteringEvents",
+      "row_type": "MeteringEventRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "attempt_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "source",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "source_event_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "schema_version",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "normalized_usage",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "happened_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "received_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "metering_event_conflicts",
+      "array": "MeteringEventConflicts",
+      "row_type": "MeteringEventConflictRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "event_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "normalized_usage",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "finalization_records",
+      "array": "FinalizationRecords",
+      "row_type": "FinalizationRecordRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "event_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "input_digest",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "protocol_outcome",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "transport_end_reason",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "delivery_stage",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "content_written",
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        {
+          "name": "finish_reason",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "policy_version",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "reservations",
+      "array": "Reservations",
+      "row_type": "ReservationRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "deadline",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "settlements",
+      "array": "Settlements",
+      "row_type": "SettlementRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "finalization_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "charged_amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "raw_retail_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "waived_retail_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "refunded_amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "journal_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "reconciliation_cases",
+      "array": "ReconciliationCases",
+      "row_type": "ReconciliationCaseRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "state",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "proposed_usage",
+          "type": "JSONB",
+          "nullable": true
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "proposal_reason",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "requester",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "approver",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_last_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "billing_profile_blocks",
+      "array": "BillingProfileBlocks",
+      "row_type": "BillingProfileBlockRow",
+      "columns": [
+        {
+          "name": "model_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "profile_version",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "reason",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "request_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "ledger_accounts",
+      "array": "LedgerAccounts",
+      "row_type": "LedgerAccountRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "balance",
+          "type": "BIGINT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "journals",
+      "array": "Journals",
+      "row_type": "JournalRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "reference",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "currency",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_txid",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "journal_lines",
+      "array": "JournalLines",
+      "row_type": "JournalLineRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "journal_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "signed_delta",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "pp_root_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "api_keys",
+      "array": "APIKeys",
+      "row_type": "APIKeyRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "owner_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "lifetime_limit",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "spent",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "held",
+          "type": "BIGINT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_controls",
+      "array": "PeriodicBudgetControls",
+      "row_type": "PeriodicBudgetControlRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "scope",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "key_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "period_kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        {
+          "name": "limit_amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "tracking_started_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "effective_from",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "max_observed_window_start",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "event_seq",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "last_event_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false
+        },
+        {
+          "name": "configuration_operation_id",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_windows",
+      "array": "PeriodicBudgetWindows",
+      "row_type": "PeriodicBudgetWindowRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "start_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "end_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "last_event_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "observation_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "observation_created_xid",
+          "type": "XID8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_allocations",
+      "array": "PeriodicBudgetAllocations",
+      "row_type": "PeriodicBudgetAllocationRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "subject_type",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "subject_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "origin",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "origin_source_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "window_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "admitted_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "upper_amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "baseline",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "source_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "source_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "held_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "spent_amount",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "state",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "last_event_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_events",
+      "array": "PeriodicBudgetEvents",
+      "row_type": "PeriodicBudgetEventRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "allocation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "source_kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "seq",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "allocation_before_revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "window_before_revision",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "before_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "before_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "after_held",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "after_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "after_source_spent",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "after_state",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "held_delta",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "spent_delta",
+          "type": "NUMERIC(100,0)",
+          "nullable": false
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_operations",
+      "array": "PeriodicBudgetOperations",
+      "row_type": "PeriodicBudgetOperationRow",
+      "columns": [
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "scope",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "target",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "resource_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "safe_input",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "input_fingerprint",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "result_snapshot",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        },
+        {
+          "name": "observation_id",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_configuration_versions",
+      "array": "PeriodicBudgetConfigurationVersions",
+      "row_type": "PeriodicBudgetConfigurationVersionRow",
+      "columns": [
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "period_kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        {
+          "name": "limit_amount",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "actor",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_observation_origins",
+      "array": "PeriodicBudgetObservationOrigins",
+      "row_type": "PeriodicBudgetObservationOriginRow",
+      "columns": [
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "version",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false
+        },
+        {
+          "name": "tracking_started_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_observation_heads",
+      "array": "PeriodicBudgetObservationHeads",
+      "row_type": "PeriodicBudgetObservationHeadRow",
+      "columns": [
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "last_observation_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "updated_xid",
+          "type": "XID8",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "periodic_budget_observation_journal",
+      "array": "PeriodicBudgetObservationJournal",
+      "row_type": "PeriodicBudgetObservationJournalRow",
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "control_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "ordinal",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "previous_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "event_seq",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "last_event_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "configuration_revision",
+          "type": "BIGINT",
+          "nullable": false
+        },
+        {
+          "name": "configuration_operation_id",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "window_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "window_revision",
+          "type": "BIGINT",
+          "nullable": true
+        },
+        {
+          "name": "window_last_event_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_xid",
+          "type": "XID8",
+          "nullable": false
+        },
+        {
+          "name": "observed_at",
+          "type": "TIMESTAMPTZ",
+          "nullable": true
+        },
+        {
+          "name": "command_source_id",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "window_source_id",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ]
+    }
+  ]
+}

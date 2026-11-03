@@ -95,6 +95,7 @@ make build
 ```
 
 `init-env` 生成随机秘密，文件权限为 `0600`，不覆盖已有文件。它不会替你建立外部 PostgreSQL 数据库或 LOGIN 角色。
+当前常规安装使用完整 **001–022** 迁移；`specs/` 中尚在开发的候选 SQL 不属于安装步骤。
 继续启动前：
 
 1. 按[建立本地数据库与角色](docs/runbooks/development.md#建立本地数据库与角色)建立空 `moni` 数据库、迁移 owner，以及独立的 `moni_app` / `moni_projection` LOGIN 角色。初始化管理身份执行建库/建角色，三个项目角色均不授予 `CREATEDB` / `CREATEROLE`。
@@ -123,6 +124,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 部署主机需要 Docker Engine 与 Compose v2。将完整仓库检出到部署目录，在根目录执行以下命令。`go run` 需要 Go ≥1.26，也可在可信开发机生成私有配置后安全传入部署主机；已有 `.env` 时跳过生成步骤。
 
 先在仓库外准备权限 `0600` 的管理员密码文件，内容为 12–72 字节的一行密码；将示例私有路径替换为实际文件。
+仅在本机试用时可保留生成的 `PUBLIC_ORIGIN=http://localhost:8080`、`COOKIE_SECURE=false`；对外使用时按下例配置 HTTPS 域名与 Secure Cookie。
 
 ```sh
 go run ./cmd/moni-aigate init-env --out .env
@@ -135,9 +137,10 @@ docker compose up -d app
 
 `bootstrap` 命令会等待 Compose 的迁移与权限初始化依赖完成；它在应用对外监听前创建首次管理员。
 启动后可用 `curl --fail http://127.0.0.1:8080/health/ready` 核查就绪状态，若修改了 `PORT`，相应替换端口；正常收费模式还须确认响应中的 `recovery_mode` 为 `false`。
+使用 `docker compose ps` 查看服务状态，启动失败时按 `docker compose logs --tail=100 migrate provision app` 检查迁移、授权与应用日志。`migrate` / `provision` 是一次性任务，正常完成后显示退出状态；`/health/live` 仅说明进程存活。
 
 Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。已有 PostgreSQL 卷不会因修改 `.env` 自动更换角色密码，密码轮换须同时更新数据库角色与私有配置。
-1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录与 `build: .` 构建上下文须指向完整仓库根目录，包含 Dockerfile、Go/Web 源码和初始化脚本。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理到 `127.0.0.1:8080`；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
+1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录与 `build: .` 构建上下文须指向完整仓库根目录，包含 Dockerfile、Go/Web 源码和初始化脚本。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理；示例上游 `127.0.0.1:8080` 要求代理能够访问宿主机环回。如果 OpenResty 使用独立容器网络，该地址指向代理容器自身，须先按目标网络确认到应用的可达路径，并保持数据库和应用上游端口不向公网开放；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
 SSE 须关闭代理缓冲和生成 POST 自动重试，显式设置可信代理 CIDR；不要直接信任客户端转发头。
 
 升级须先排空并停止旧实例，再执行迁移/授权后启动新实例。生产配置、密钥轮换、单活与反代约束见[部署手册](docs/runbooks/deployment.md)，恢复演练见[备份恢复](docs/runbooks/backup-restore.md)。
@@ -219,6 +222,7 @@ make verify-mvp
 
 采购历史设计的[字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它核对候选新表的列与设计物料，不执行数据库安装，也不代表完整历史证明已经实现。
 另有[隔离关系 SQL 材料](specs/023-periodic-products/b-procurement-original-ddl-contract.md)，用于验证采购来源、账户和成本的数据库关系；它是开发期候选，不参与上面的正式迁移、部署启动或在线资金写入。
+后续[账户命令与历史校验基础](docs/verification/procurement-account-prefix.md)也按独立规格和专库测试推进；完整历史重放与生产接线尚未完成，安装时无需手工执行这些候选 SQL。
 
 ## Roadmap
 

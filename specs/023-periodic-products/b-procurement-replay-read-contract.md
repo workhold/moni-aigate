@@ -2,7 +2,7 @@
 
 2026-11-03。本页冻结 B-P4 的纯 DTO、重放、读取、资源和保护阶段接线责任，承接[共同来源](b-procurement-source-contract.md)、[账户](b-procurement-account-contract.md)、[成本/request](b-procurement-cost-request-contract.md)、[身份字节](b-procurement-identity-contract.md)、[写入权限](b-procurement-writer-authority-contract.md)与[PB ACL](b-procurement-pb-acl-contract.md)。新列的唯一物理展开、顺序、类型、NULL 与 generated 表达式由[统一 schema](b-procurement-schema-contract.md)约束；本页不另造另一套字段别名。
 
-这是联合设计合同，不是已实现能力或 D1 完成记录。目前旧 scanner、basis、catalog、maintenance 和 runtime 仍使用自己的固定接受集。没有新物料、纯实现、实际受限 LOGIN 与保护阶段证据时，不启用候选 writer，不关闭 B-P3/R2，不以 fixture、codec 或一份 `consistent` 报告代替验收。
+这是联合设计合同，不是完整能力或 D1 完成记录。当前已按[DTO与旧Base投影实施合同](b-procurement-core-dto-contract.md)交付40原件482列/32前缀715列DTO、72数组共享资源预检及旧23数组173字段无损投影；未导出`Check`，四域/十一对象义务/aggregate仍未实现。[账户writer](b-procurement-account-writer-contract.md)为20函数/29触发器的隔离候选，actual APP LOGIN限定专项已通过，完整故障矩阵仍待完成。旧 scanner、basis、catalog、maintenance 和 runtime 仍使用自己的固定接受集；没有完整新物料、纯重放、实际受限 LOGIN 与保护阶段证据时，不启用业务候选，不关闭 B-P3/R2，不以 fixture、codec 或一份 `consistent` 报告代替验收。
 
 ## 1. 证明范围与不变边界
 
@@ -322,7 +322,7 @@ qualification用调用自己的context和不可变raw session，独立验证regi
 
 新Profile只接受固定160关系及准确函数/类型/默认ACL/成员/constraint/index/trigger/sequence/generated/dependency集合。NOLOGINwriter、封闭public根、private helpers、identity叶子、原020 PUBLIC撤销、APP精确补授、PB/021共享闭包和deferred提交身份都进入新expected。`SECURITY DEFINER` owner、安全search_path/proconfig、动态SQL禁止与schema限定依赖逐项精确核；APP不能通过PUBLIC/INHERIT/SET/ADMIN/defaultACL成为writer。
 
-新V4还必须认证[实时xmin权限sidecar](b-procurement-full-acl-contract.md#22-实时xmin的精确系统列sidecar)：固定负attnum原始列ACL与逐角色有效SELECT权限，完整拒绝额外系统列授权/继承旁路。旧collector的attnum>0过滤不能直接覆盖该义务，需独立新采集/expected材料；旧profile查询与roots不改。xmin只用于原020/B-P1实时guard权限，不读入历史raw rows/纯DTO/basis，不改变新表711列或上述关系计数。
+新V4还必须认证[实时xmin权限sidecar](b-procurement-full-acl-contract.md#22-实时xmin的精确系统列sidecar)：固定负attnum原始列ACL与逐角色有效SELECT权限，完整拒绝额外系统列授权/继承旁路。旧collector的attnum>0过滤不能直接覆盖该义务，需独立新采集/expected材料；旧profile查询与roots不改。xmin只用于原020/B-P1实时guard权限，不读入历史raw rows/纯DTO/basis，不改变新表715列或上述关系计数。
 
 新增writer pin使用新具体pins类型/私有验证状态，不能给旧Pins静默加一个optional角色后授权。静态/runtime校验同实际tx/conn/pgconn的before/after身份与RR snapshot，runtime用actual LOGIN，SET ROLE不代替。新typedproof绑定profile4、schema/db/role OID/root和同事务；旧CatalogProof不能转换为V4authority。保护构造器须从自己owned的exact catalog/pins取得当前候选APP OID，与每个root.session_role_oid逐值绑定；根出生另核实际session_user。当前合同固定同一APP OID，不接受caller映射旧role、按角色同名换OID或重建环境后自行接纳旧root；这种历史兼容若确需支持，须另有完整角色前驱合同及新材料，不能用时间戳/旧报告或pure PASS补授权。
 
@@ -368,12 +368,18 @@ catalog的raw/normalized bounds由固定expected的multiset multiplicity推导�
 
 本页已经决定表集合、纯core/DTO规则、重放对象、算法/新profile、兼容边界和预算，不把它们留作“以后再冻”。以下是具体尚未交付的材料/实现/验收，不因本文完成而勾D1：
 
-目前已交付[32新表候选列布局](b-procurement-column-layout-v1.json)：711列（647可INSERT列、64 generated）及只读layout lint；它只覆盖design-only-new-table-columns，不含原表扩列、PK/FK/CHECK、trigger/函数/ACL或最终reader/basis/catalog descriptor。其通过不代表完整DDL可安装，也不提供新的业务权限。
+目前已交付[32新表候选列布局](b-procurement-column-layout-v1.json)：715列（647可INSERT列、68 generated）及只读layout lint；此前711/64验证保留原历史。随后[固定关系材料](../../internal/procurementprefixschema/materials.go)已经展开上述新表、18原表110新增列及685项候选关系约束，隔离结构和命名声明边的既有验收见[关系记录](../../docs/verification/procurement-relation-materials.md)。完整根/trigger/ACL/profile不属于该关系包，宽TEXT复合索引接受集亦未因此解决。
 
-1. 原表扩列的最终完整物料、全量registry及完整可执行DDL/根/helper/guard和全部FK/UNIQUE/generated/ACL组合；已有711新列不能冒充105/121表总列数，本文不从尚未生成的全量物料编造总数和SHA。
+本轮[40原件union物料](b-procurement-original-core-layout-v1.json)与[procurementprefix静态DTO](../../internal/procurementprefix/types.go)覆盖40表482列和32表715列，完整72数组具名计数；[scalar预检](../../internal/procurementprefix/scalar.go)和[旧Base投影](../../internal/procurementprefix/base_projection.go)已实现，独立旧readset/全部110扩列/旧scanner173字段的定向race通过。原Base checker未修改；本片尚不调用完整四域或发行结果，因此**没有导出的Check**，类型Report的存在不等于新scope已可执行。
+
+[账户命令writer材料](../../internal/procurementaccountwriter/materials.go)按[独立合同](b-procurement-account-writer-contract.md)交付20函数/29触发器与精确账户ACL隔离候选，两个公开根只处理create/configure；actual APP LOGIN限定专项已通过，实际范围和未验矩阵见[本片记录](../../docs/verification/procurement-account-prefix.md)。当前执行错误合同为81个PP状态，含PP906旧未受证/尚未实施域拒绝；不能把局部账户校验器视作全部五个全域validator已经完成。
+
+[宽TEXT精确链接合同](b-procurement-exact-link-contract.md)与[268 PK/UK、291 FK清单](b-procurement-exact-link-inventory-v1.json)先冻结native原定位FK与双端逐列比较方向。独立[RC原语实验](../../internal/procurementprefixschema/exact_link_experiment_postgres_test.go)6组PG race场景通过，只验证长值/NULL/锁后新语句重读/双端最终态及tracked RR写拒绝。685项关系约束仍未修改，全域来源出生/guard/ACL、逐边映射和宽TEXT接受集门禁保持。
+
+1. 全量registry、剩余受控根/helper/全域validator/guard和完整触发/ACL组合、宽TEXT全域精确关系方案；已有715新列、原110扩列或40类原件DTO不能冒充105/121表完整读集总列数，本文不从尚未生成的全量物料编造总数和SHA。
 2. 新canonical readset/descriptor/catalogexpected及其真实字节数/count/SHA，固定selector与错profile拒绝；旧材料保持原样。
-3. `procurementprefix`真实独立四域实现、原Base逐值保留、十一对象义务枚举及所有新/原件双向集合；缺来源不能默认covered。
+3. `procurementprefix`真实独立四域实现、内部调用旧checker并原样保存Base、十一对象义务枚举及所有新/原件双向集合与最终aggregate；已有无损投影不等于完整Check，缺来源不能默认covered。
 4. 新scanner/privatefacts/qualification/basis/catalog与maintenance、protectedinit、observer/history/current、runtime真实接线及准确新格式；只完成pure或SQLcodec不关闭这些门禁。
 5. actual LOGIN/全部商业原件/取消与资源/并发锁/权限删除/旧模式回归和完整保护链专库证据；目录catalograce预算门禁原样保留。生产官方/三方渠道与真实部署验收仍单列。
 
-集成人必须汇总并行结果、语义复核统一架构与本页交叉合同后，按AGENTS执行architecture refresh/check。此子任务仅新增设计页，无SQL、实现、旧profile/材料、数据库运行或生产动作。
+集成人必须汇总并行结果、语义复核统一架构与本页交叉合同后，按AGENTS执行architecture refresh/check。关系材料、纯核基础、账户候选、精确链接原语与完整商业/保护链分别计账；D1、I1完整writer、A0、B-P3及R2保持未完成，无已应用迁移或线上接线变化。

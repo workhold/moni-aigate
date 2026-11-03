@@ -33,7 +33,7 @@ docker compose up -d app
 
 1Panel可使用“容器→编排”导入根 `compose.yaml`，编排项目目录与 `build: .` 的构建上下文均须指向完整仓库根目录；若导入界面把YAML保存到其他目录，须先将完整检出放入实际项目目录或按目标1Panel版本正确指定源目录，不能只复制YAML和初始化脚本。确认相对挂载路径 `deploy/init-roles.sh`、根Dockerfile/源码及私有 `.env` 均可被解析，先在测试目录验证变量注入、构建和依赖条件，再使用正式卷。当前容器运行与1Panel实装仍待目标环境验收，没有声称已上架1Panel应用商店或修改1Panel本体。
 
-在1Panel网站/OpenResty建立HTTPS反向代理到127.0.0.1:8080，合并[nginx.conf](../../deploy/nginx.conf)。SSE需`proxy_buffering off`，`proxy_next_upstream off`，超时覆盖300s总deadline并留排空余量。其他CDN/负载均衡也应关闭生成POST自动重试，避免网关之外重复生成。安全Cookie和Origin必须与最终访问域名一致。
+在1Panel网站/OpenResty建立HTTPS反向代理，合并[nginx.conf](../../deploy/nginx.conf)。示例上游 `127.0.0.1:8080` 要求代理能够访问宿主机环回；若 OpenResty 使用独立容器网络，该地址指向代理容器自身。须先在目标环境确认代理到应用的可达路径，再配置上游和可信代理 CIDR，保持数据库与应用上游端口不向公网开放。SSE需`proxy_buffering off`，`proxy_next_upstream off`，超时覆盖300s总deadline并留排空余量。其他CDN/负载均衡也应关闭生成POST自动重试，避免网关之外重复生成。安全Cookie和Origin必须与最终访问域名一致。
 
 反代部署还须设置`TRUSTED_PROXY_CIDRS`为应用实际看到的边缘代理源CIDR。默认空表示不信任任何转发头；单机直接反代可显式设`127.0.0.1/32,::1/128`。容器端口转发后源地址可能为bridge/NAT地址，须在目标环境核实并尽可能使用单地址CIDR，不能照抄环回或设全网。该配置只影响客户端身份解析，不授予模型、资金或管理权限；Compose会传给app。
 

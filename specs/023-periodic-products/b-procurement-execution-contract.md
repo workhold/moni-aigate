@@ -191,6 +191,7 @@ expired且p/upstream均prepared且无真实permit：delivery failed、released/H
 | PP903 | procurement_execution_protocol：结果行数/NULL联合/typed DTO/调用协议不符 |
 | PP904 | procurement_history_resource：合同资源预算超界 |
 | PP905 | procurement_history_exhausted：新ordinal/step/member计数不能推进，禁止回绕 |
+| PP906 | procurement_prefix_untracked_domain：prospective入口遇真实未受证旧对象，或当前账户命令候选尚未接通的历史域；不得把声称tracked却不一致降级此错 |
 | 40P01 / 40001 | 保留原PgError cause，billing确定回滚且ctx未结束时最多三次；management无自动重试 |
 | 55P03 / 57014 | 锁超时/取消或statement timeout；不重试，不包装成业务rejected |
 | 42501 / 23503 / 23505 / 23514 / P0002 / 22xxx / 其他未列state | 原执行错误，不泛映射forbidden/idempotency/not_found，不吞完整性错误，不纳入通用重试。PB精确例外见下一节 |

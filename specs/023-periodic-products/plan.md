@@ -91,7 +91,13 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 - [x] D1-A：冻结[权限/事务方向](b-procurement-writer-authority-contract.md)：闭合DB mutation与最小NOLOGIN writer；真实namespace实验确认与原PB锁域同步所需search_path。它不是全DDL或权限攻击验收。
 - [x] D1-I：先冻结[身份字节合同](b-procurement-identity-contract.md)，实现独立六函数SQL材料与原Go ABI差分；真实PG/race 2顶层/8含子项PASS，无SKIP。无默认业务import、安装器或授予财务权限，见[验证](../../docs/verification/procurement-identity-leaf.md)。
 - [x] D1-S：汇合[共同来源](b-procurement-source-contract.md)、[账户](b-procurement-account-contract.md)、[成本/request](b-procurement-cost-request-contract.md)逻辑字段与联合、单attempt链/双向原件和[PB最小闭包](b-procurement-pb-acl-contract.md)候选合同；锁权primitive actual LOGIN实证通过。它不是完整可执行DDL、全部角色ACL/锁图或writer实施。
-- [x] D1-L：汇合[32表布局](b-procurement-schema-contract.md)、[执行锁图/错误](b-procurement-execution-contract.md)、[完整ACL](b-procurement-full-acl-contract.md)及[重放读取](b-procurement-replay-read-contract.md)合同；只读列布局工具展开32新表711列/64 generated并比对静态候选物料。此项只交付列设计与开发检查，不是可执行DDL/完整权限/profile。
+- [x] D1-L：汇合[32表布局](b-procurement-schema-contract.md)、[执行锁图/错误](b-procurement-execution-contract.md)、[完整ACL](b-procurement-full-acl-contract.md)及[重放读取](b-procurement-replay-read-contract.md)合同；当前只读列布局工具展开32新表715列/68 generated并比对静态候选物料，PP错误为81个（含PP906未受证域）。此项只交付列设计与开发检查；原711/64历史验证不改签。
+- [x] D1-K：交付[固定关系材料](../../internal/procurementprefixschema/materials.go)、32新表715列/18原表110扩列及685项候选关系约束；隔离结构和声明边验证按[历史记录](../../docs/verification/procurement-relation-materials.md)保留，不证明宽TEXT兼容或完整writer。
+- [x] D1-R0：先冻结[DTO与旧Base投影合同](b-procurement-core-dto-contract.md)，实现[40原件482列/32前缀715列DTO](../../internal/procurementprefix/types.go)、全部72数组共享预算和[旧23数组173字段无损投影](../../internal/procurementprefix/base_projection.go)；独立旧scanner/readset/110扩列测试与定向race通过。未导出Check，四域及命题枚举/aggregate未完成。
+- [x] D1-W0材料：冻结[账户writer合同](b-procurement-account-writer-contract.md)，落盘[20函数/29触发器与精确账户ACL隔离候选](../../internal/procurementaccountwriter/materials.go)；仅create/configure，不接线上或完整profile。
+- [x] D1-W0基础专项：actual APP LOGIN专库create/configure/noop/拒绝/重放、并发operation与CAS、失权/权限攻击、撤validator后COMMIT全回滚、timeout协议、SQL NULL及精确清理通过；准确范围见[记录](../../docs/verification/procurement-account-prefix.md)。
+- [ ] D1-W0完整故障矩阵：继续覆盖全部坏来源/额外来源、必要grant逐项撤销、超时取消、极限计数、未知COMMIT与完整原APP/PB经营路径，不以基础专项替代I1/A0。
+- [x] D1-X原语：冻结[宽TEXT精确链接候选](b-procurement-exact-link-contract.md)与[268 PK/UK、291 FK清单](b-procurement-exact-link-inventory-v1.json)，独立RC实验6组PG race场景通过；685项关系未改，全域替换/guard/权限及接受集门禁仍未完成。
 - [ ] D1：冻结完整可执行DDL与根/helper/validator/guard正文、精确约束与全部权限装配、原表新增列及固定全量reader/basis/catalog/profile材料；32新表列布局不替代这些义务。
 - [ ] I1：在D1之后并行实施受控写证与独立纯重放/手算oracle；业务共享文件单一owner，PG串行。
 - [ ] I2：在完整固定材料后接入scanner/basis/catalog、protected pre/post、observer和actual APP runtime；旧Base、V3固定材料与缺证边界保留。
@@ -99,8 +105,8 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 
 正式migration/provision/维护CLI/startup/在线资金接线仍为R2独立合同，不随设计稿或候选完成自动启用。
 
-原两份D1工作提案保留当期记录；当前共同/账户/成本逻辑合同和PB最小闭包已汇合。D1整体仍缺完整可执行DDL/函数正文/约束/ACL装配、独立DTO/重放与固定全量新profile材料；逻辑列ACL/锁图和新表列布局已交付，不能当作实际权限验收。纯identity及两个锁实验不解决原十一项历史缺证，不改旧checker、V3材料或B-P3门禁。精确2223e40的[远端CI](../../docs/verification/procurement-identity-ci.md)10/10成功；旧本机整仓失败与专项SKIP保持分别计账。
+原两份D1工作提案保留当期记录；当前共同/账户/成本逻辑合同和PB最小闭包已汇合。D1整体仍缺剩余根/全域validator/guard与完整ACL装配、四域独立重放/十一对象义务、宽TEXT全域方案及固定全量新profile材料；已有关系、DTO/预算/Base投影与账户局部候选不替代这些义务。纯identity与锁/精确链接原语实验不解决原十一项历史缺证，不改旧checker、V3材料或B-P3门禁。精确2223e40的[远端CI](../../docs/verification/procurement-identity-ci.md)10/10成功；旧本机整仓失败与专项SKIP保持分别计账，本轮最终范围另见[验证](../../docs/verification/procurement-account-prefix.md)。
 
 ## B-P4 D1关系材料切片（2026-11-03）
 
-先冻结[source](b-procurement-source-ddl-contract.md)、[account](b-procurement-account-ddl-contract.md)、[cost](b-procurement-cost-ddl-contract.md)、[原件](b-procurement-original-ddl-contract.md)逐边合同，再交付固定摘要的纯SQL装配包。候选新表从711改715列，647普通/68 generated，原18表110列无默认扩展。专用PG按原001–022+B-P1串行安装并独立核结构和命名声明边，具体范围与结果见[验证](../../docs/verification/procurement-relation-materials.md)。D1整体不勾选完成：受控根、validator/guard、完整ACL/触发顺序、宽索引兼容策略、全量DTO/重放/readset/profile与actual APP矩阵仍缺。正式迁移/启动/在线资金及其他既有门禁保持。
+先冻结[source](b-procurement-source-ddl-contract.md)、[account](b-procurement-account-ddl-contract.md)、[cost](b-procurement-cost-ddl-contract.md)、[原件](b-procurement-original-ddl-contract.md)逐边合同，再交付固定摘要的纯SQL装配包。候选新表从711改715列，647普通/68 generated，原18表110列无默认扩展。专用PG按原001–022+B-P1串行安装并独立核结构和命名声明边，具体范围与结果见[验证](../../docs/verification/procurement-relation-materials.md)。随后DTO/预算/Base投影及账户局部writer候选按上节独立交付；D1整体不勾选完成，剩余根/全域validator/guard、完整ACL/触发顺序、宽TEXT全域兼容、四域重放/readset/profile与actual APP完整矩阵仍缺。正式迁移/启动/在线资金及其他既有门禁保持。
