@@ -34,7 +34,7 @@ flowchart TD
     Rules --> Functions
     Relations --> Request
     Relations --> Effects
-    Request --> A2PG["A2 限定race PASS：12顶层 / 25子项<br/>整链 / PB / 故障 / 权限 / 等待 / 固定catalog"]
+    Request --> A2PG["A2 限定race PASS：47顶层 / 1648子项<br/>整链 / 规则 / 请求兼容 / 授权 / catalog"]
     Effects --> A2PG
     A2PG -. "后续独立门禁" .-> Future["完整A4漂移与授权矩阵 / A5 executor<br/>全域profile / R2 / 供应商与生产"]
 ```
@@ -174,10 +174,16 @@ unmanaged 不进入账户/PB效果：冻结首次 Q1，仅 origin/head0、step1 
 
 [A2业务PG测试](../verification/procurement-attempt-birth.md)覆盖基础命令/request/managed/unmanaged/replay、supplier PB新配/后配导入、15 DML故障边界/**34表全快照**、raw/private拒绝、账户硬预算争用和锁后重价。最终新增包 **12顶层 / 25子项 race全部PASS，0 SKIP/FAIL，18.045s**：四顶层为静态检查（3 material＋1 catalog inventory），八顶层为真实PG（七组合业务＋一catalog）。专库随机 `ab_*` schema/roles 最终 **0/0**；精确命令、原件字节/SHA与失败历史由[验证记录](../verification/procurement-attempt-birth.md)保存。该结果没有使用真实模型或支付供应商。
 
-[test-only catalog inspector](../../internal/procurementattemptbirth/catalog_postgres_test.go)在每个fixture安装事务COMMIT前执行，独立顶层另于提交后重复核验。期望从认证冻结材料在可回滚子事务中独立重建，不抄actual定义；核19张受影响关系的物理列/约束/索引、38函数完整正文/签名/安全属性/owner、68 hooks及完整触发器顺序、混装inventory、APP/W身份和membership、有效普通/系统列ACL、函数PUBLIC与O/W默认ACL。W覆盖全部固定历史关系，APP覆盖50张明确变更关系；它尚未扩成所有grantee原始ACL、有效失权和漂移攻击矩阵，也不发行runtime profile或Qualified。
+[test-only catalog inspector](../../internal/procurementattemptbirth/catalog_postgres_test.go)在每个fixture安装事务COMMIT前执行，独立顶层另于提交后重复核验。期望从认证冻结材料在可回滚子事务中独立重建，不抄actual定义；结构检查已由原19张扩至权限材料涉及的50张关系，另核38候选函数的renderer原文、固定依赖函数的正文/签名/安全属性/固定owner、68 hooks及完整触发器顺序、混装inventory、APP/W身份与membership、有效普通/系统列ACL及全部grantee原始ACL、schema与O/W默认ACL。W覆盖全部固定历史关系，APP覆盖50张明确变更关系；范围仍是测试显式调用，不发行runtime profile或Qualified。
+
+本轮扩展[规则](../../internal/procurementattemptbirth/attempt_rules_postgres_test.go)、[请求兼容](../../internal/procurementattemptbirth/request_compat_postgres_test.go)、[有效授权](../../internal/procurementattemptbirth/attempt_grant_postgres_test.go)与[漂移反例](../../internal/procurementattemptbirth/catalog_drift_postgres_test.go)。1339项固定授权区分1334项必要拒权预期与5项effective loss后managed COMMIT成功正控制，不删保守授权、不增加人为读取；21项W与1项APP锁用原值UPDATE继续拒绝。110项漂移分四顶层/15个独立fixture，逐项同事务语义拒绝、回滚后完整接受并执行真实APP组末正控。全部结果及首次失败的实际原因由[扩展验收记录](../verification/procurement-attempt-birth.md#扩展规则请求兼容授权与-catalog-反例)单列，不将首轮12/25计数当成新增矩阵结果。
+
+最终当前包47顶层/1648子项race全部PASS、0 FAIL/SKIP，535.086秒，含41顶层真实PG与6静态；临时`ab_*` schema/role均为0。[机器记录](../verification/procurement-attempt-birth-hardening.json)绑定本轮测试源与原件摘要，不与首轮或单项重跑累加。
+
+这些测试的安装会暂时改变同一创建者的global default FUNCTION ACL，随机schema不足以隔离另一个包的安装。Make和CI使用`-p 1`串行同库包；A2与billing/server分别发现完整顶层名单并轮转四份，当前共14组独立runner/数据库。fixture原180秒、业务RC/3s/5s、CI进程10分钟及包内真实并发保持。上一轮CI的42501与修订合同见[隔离记录](../verification/ci-package-isolation.md)；这不是产品权限、网关并发或性能变化。
 
 首次unmanaged可空FK激活错误已按上一节修复。首次完整七业务PG顶层中，account-wait用例自身在持account后发布成本价，反转原channel→account锁序而死锁；现先按原channel顺序真实发布1500ms后生效报价，再持account等待跨生效，保持原3s/5s且不改生产锁序。修订后包含在上述整包通过中；不把失败删成未发生，也不将等待用例扩大成全部时钟/父锁验收。
 
-完整A4的所有grantee/漂移攻击/逐项有效授权矩阵，A5显式prospective Go executor与typed错误适配，完整A1差分、全部原checks/route字节/quote/expiry/双向等待/累计超时/未知COMMIT，以及active cap/真实跨UTC周期继续按[安装合同](../../specs/023-periodic-products/b-procurement-attempt-installation-contract.md)独立收口。未实现dispatch/delivery、finalization/incoming、cost/member/correction、proposal/approval、case/recovery/finish/outbox；保留列或generated discriminator不表示启用这些域。没有正式迁移、线上安装/profile、默认provision或失败回退。
+完整A4的全部grantee提升路径、原Reserve/A1与command-only逐grant及剩余来源攻击，A5显式prospective Go executor与typed错误适配，完整A1差分、全部原checks/route字节/quote/expiry/双向等待/累计超时/未知COMMIT，以及active cap/真实跨UTC周期继续按[安装合同](../../specs/023-periodic-products/b-procurement-attempt-installation-contract.md)独立收口。当前授权矩阵只覆盖冻结managed first-window场景，不泛化其它路径。未实现dispatch/delivery、finalization/incoming、cost/member/correction、proposal/approval、case/recovery/finish/outbox；保留列或generated discriminator不表示启用这些域。没有正式迁移、线上安装/profile、默认provision或失败回退。
 
 实际测试、失败修正和当前保留边界分别见[A0原规则](../verification/procurement-attempt-rules.md)、[A1真实父请求](../verification/procurement-request-birth.md)与[A2出生/效果](../verification/procurement-attempt-birth.md)。来源纯核仍 `Complete=false`、Qualified为空、无公共Check；D1/I1、B-P3历史命题、全域profile、R2、生产支付、真实供应商、目标容器/1Panel、HA与最终性能阶段没有因局部通过而关闭。

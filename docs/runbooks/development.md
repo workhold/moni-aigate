@@ -103,9 +103,9 @@ make check
 make verify-mvp
 ```
 
-`make verify-mvp` 的Go阶段以 `-p 1` 按包串行使用同一专用数据库，完整执行所有包、race与包内显式并发，保留原测试期限和skip条件。它会比跨包并发执行更久；通过不代表并发启动余量或容量验收。`make test` 与CI独立runner继续使用各自执行合同，不能由本地串行结果推断远端状态。
+`make test`、`make verify-mvp` 及CI每个runner的Go执行命令均以 `-p 1` 按包串行使用其专用数据库；完整包集合、race与包内显式并发保持。CI使用14组独立runner/数据库：billing、server、A2 attempt各四份，加identity与other，每个测试进程保留原10分钟上限；`make test` 保留其原默认期限与skip条件。随机schema不能隔离同一创建者的全局默认函数权限，因此不要同时对同一专库启动另一条数据库测试命令。串行执行可能更久，本地通过不代表远端CI或容量验收通过；故障证据、修订及覆盖边界见[包隔离验证](../verification/ci-package-isolation.md)。
 
-直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境及四类包归属、十组执行合同见[CI 验证](../verification/github-ci-profile.md)，第三轮与T2发布精确源码结果分别见[第三轮记录](../verification/github-ci-third-run.md)、[T2发布记录](../verification/github-ci-authority-run.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
+直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。当前五类包归属、14组执行合同见[包隔离验证](../verification/ci-package-isolation.md)；原CI环境与历史范围见[CI 验证](../verification/github-ci-profile.md)、[第三轮记录](../verification/github-ci-third-run.md)及[T2发布记录](../verification/github-ci-authority-run.md)。容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
 
 B-P4 的纯采购身份 SQL 材料使用独立开关，可在同一专库串行运行；它不安装完整业务 writer。CI 仅在 `other` 分区命令级显式启用，精确差分与权限范围见[叶子验证](../verification/procurement-identity-leaf.md)。
 

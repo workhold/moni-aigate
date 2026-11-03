@@ -1,0 +1,50 @@
+{
+  "recorded_at": "2026-11-04T06:01:23.107708+08:00",
+  "scope": "isolated procurement birth candidate; not production qualification",
+  "command": "TEST_DATABASE_URL=$PRIVATE_TEST_DATABASE_URL go test -race -p 1 ./internal/procurementattemptbirth -count=1 -timeout 600s -json",
+  "result": "pass",
+  "elapsed_seconds": 535.086,
+  "tests": {
+    "pass": {
+      "top_level": 47,
+      "subtests": 1648
+    },
+    "fail": {
+      "top_level": 0,
+      "subtests": 0
+    },
+    "skip": {
+      "top_level": 0,
+      "subtests": 0
+    }
+  },
+  "postgres_top_level": 41,
+  "log": {
+    "path": ".local/moni-a2-release-final.json",
+    "bytes": 1981464,
+    "sha256": "4cdd53e79ac6a90a1d2fe663f8501986a45867ed0d9eba7af7c7d7fc9da71fe5"
+  },
+  "fixed_grants": {
+    "necessary_loss_cases": 1334,
+    "effective_loss_commit_success_controls": 5,
+    "additional_lock_only_noop_rejections": 22
+  },
+  "catalog_drift": {
+    "attacks": 110,
+    "semantic_classes": 13,
+    "fixtures": 15,
+    "top_level_partitions": 4
+  },
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "sources": {
+    "internal/procurementattemptbirth/attempt_fault_postgres_test.go": "3b84799328cd85b73cec42e3aecfac744499ee47ba54fccadfec5b1d40443f8c",
+    "internal/procurementattemptbirth/attempt_grant_postgres_test.go": "936c04fbaaa604f49a8e4fefbdddad7cc16af2f2663dc42de2431988477d65ff",
+    "internal/procurementattemptbirth/attempt_postgres_test.go": "5b7d815b5ea96571b62ee31fe7d30f66e74e1c8c7309ade8dd124cf80e058f75",
+    "internal/procurementattemptbirth/attempt_rules_postgres_test.go": "c99182bf8dec453412fd7655a2398c6dd771c021ffd5ea072d3cf6c6016ebfe9",
+    "internal/procurementattemptbirth/attempt_wait_postgres_test.go": "89aeeb19e707484ac40484c589b5a2e03278ea7348913e814d1c1a8747b8418f",
+    "internal/procurementattemptbirth/catalog_drift_postgres_test.go": "7c0a1607ddace14216d09c934aeb151b99228f233009d803c55ba2350ff65963",
+    "internal/procurementattemptbirth/catalog_postgres_test.go": "bdf8b2cac7140280acb12a7d1a988b8304d497f60d9ba818059bcb036c193dff",
+    "internal/procurementattemptbirth/materials_test.go": "5aa9882ad6951c9e3c35175a16756fae4adcf1545b2199000d2fa3589bab94bd",
+    "internal/procurementattemptbirth/request_compat_postgres_test.go": "2196b80db788924f6d66f4c6357b2c511ad6f007063890d5d19d9f99e26744e4"
+  }
+}

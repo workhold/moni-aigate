@@ -650,9 +650,15 @@ func abCatalogCheckRoles(ctx context.Context, db abCatalogDB, b procurementattem
 	if e = db.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_auth_members WHERE roleid IN ($1,$2) OR member IN ($1,$2)`, b.AppOID, b.WriterOID).Scan(&n); e != nil || n != 0 {
 		return fmt.Errorf("A2 role membership bypass: %d %v", n, e)
 	}
+	if e = db.QueryRow(ctx, `SELECT n.nspowner=current_user::regrole::oid AND NOT EXISTS(
+ SELECT 1 FROM pg_catalog.aclexplode(coalesce(n.nspacl,pg_catalog.acldefault('n',n.nspowner))) a
+ WHERE a.privilege_type='CREATE' AND a.grantee<>n.nspowner)
+ FROM pg_catalog.pg_namespace n WHERE n.nspname=$1`, b.Schema).Scan(&ok); e != nil || !ok {
+		return fmt.Errorf("A2 schema effective ACL owner/foreign CREATE: %v", e)
+	}
 	for _, role := range []string{b.App, b.Writer} {
-		var usage, create bool
-		if e = db.QueryRow(ctx, `SELECT pg_catalog.has_schema_privilege($1,$2,'USAGE'),pg_catalog.has_schema_privilege($1,$2,'CREATE')`, role, b.Schema).Scan(&usage, &create); e != nil || !usage || create {
+		var usage, create, grantable bool
+		if e = db.QueryRow(ctx, `SELECT pg_catalog.has_schema_privilege($1,$2,'USAGE'),pg_catalog.has_schema_privilege($1,$2,'CREATE'),pg_catalog.has_schema_privilege($1,$2,'USAGE WITH GRANT OPTION') OR pg_catalog.has_schema_privilege($1,$2,'CREATE WITH GRANT OPTION')`, role, b.Schema).Scan(&usage, &create, &grantable); e != nil || !usage || create || grantable {
 			return fmt.Errorf("A2 schema effective ACL %s: %v", role, e)
 		}
 	}
@@ -663,6 +669,10 @@ func abCatalogCheckACL(ctx context.Context, db abCatalogDB, b procurementattempt
 	if e != nil {
 		return e
 	}
+	var installer uint32
+	if e = db.QueryRow(ctx, `SELECT current_user::regrole::oid`).Scan(&installer); e != nil {
+		return e
+	}
 	// W is checked on every fixed historical relation, including unrelated
 	// payment/funding tables. APP checks cover all explicitly touched relations.
 	var tables []string
@@ -670,6 +680,64 @@ func abCatalogCheckACL(ctx context.Context, db abCatalogDB, b procurementattempt
 		tables = append(tables, table)
 	}
 	sort.Strings(tables)
+	// Effective APP/W privileges alone cannot detect a peer or PUBLIC acquiring
+	// a privilege both business roles already have. Inspect every explicit
+	// grantee on the fixed relations touched by this candidate as a separate
+	// boundary. Original unrelated projection relations keep their own profile.
+	var covered []string
+	for table := range ex.covered {
+		covered = append(covered, table)
+	}
+	sort.Strings(covered)
+	var foreign int
+	// Historical parents outside the 19 structural relations still belong to
+	// O. A live owner is never itself an authority certificate: changing it to
+	// a peer must not turn that peer's implicit privileges into an exemption.
+	e = db.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+ WHERE n.nspname=$1 AND c.relname=ANY($2::text[]) AND c.relowner<>$3::oid`, b.Schema, covered, installer).Scan(&foreign)
+	if e != nil || foreign != 0 {
+		return fmt.Errorf("A2 foreign relation ACL owner count=%d: %v", foreign, e)
+	}
+	e = db.QueryRow(ctx, `SELECT count(*) FROM (
+ SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+ CROSS JOIN LATERAL pg_catalog.aclexplode(coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+ WHERE n.nspname=$1 AND c.relname=ANY($2::text[]) AND a.grantee<>c.relowner AND a.grantee<>$3::oid AND a.grantee<>$4::oid
+ UNION ALL
+ SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+ JOIN pg_catalog.pg_attribute v ON v.attrelid=c.oid AND NOT v.attisdropped
+ CROSS JOIN LATERAL pg_catalog.aclexplode(v.attacl) a
+ WHERE n.nspname=$1 AND c.relname=ANY($2::text[]) AND a.grantee<>c.relowner AND a.grantee<>$3::oid AND a.grantee<>$4::oid
+ ) x`, b.Schema, covered, b.AppOID, b.WriterOID).Scan(&foreign)
+	if e != nil || foreign != 0 {
+		return fmt.Errorf("A2 foreign relation ACL count=%d: %v", foreign, e)
+	}
+	var signatures []string
+	for sig := range ex.functions {
+		signatures = append(signatures, pgx.Identifier{b.Schema}.Sanitize()+"."+sig)
+	}
+	sort.Strings(signatures)
+	owners := make([]int64, 0, len(signatures))
+	prefix := pgx.Identifier{b.Schema}.Sanitize() + "."
+	for _, signature := range signatures {
+		owner := installer
+		if ex.functionOwners[strings.TrimPrefix(signature, prefix)] {
+			owner = b.WriterOID
+		}
+		owners = append(owners, int64(owner))
+	}
+	e = db.QueryRow(ctx, `SELECT count(*) FROM unnest($1::text[],$2::bigint[]) expected(signature,owner)
+ JOIN pg_catalog.pg_proc p ON p.oid=expected.signature::regprocedure
+ WHERE p.proowner::bigint<>expected.owner`, signatures, owners).Scan(&foreign)
+	if e != nil || foreign != 0 {
+		return fmt.Errorf("A2 foreign function ACL owner count=%d: %v", foreign, e)
+	}
+	e = db.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_proc p
+ CROSS JOIN LATERAL pg_catalog.aclexplode(coalesce(p.proacl,pg_catalog.acldefault('f',p.proowner))) a
+ WHERE p.oid=ANY(ARRAY(SELECT x::regprocedure::oid FROM unnest($1::text[]) x))
+ AND a.grantee<>p.proowner AND a.grantee<>$2::oid AND a.grantee<>$3::oid AND a.grantee<>0`, signatures, b.AppOID, b.WriterOID).Scan(&foreign)
+	if e != nil || foreign != 0 {
+		return fmt.Errorf("A2 foreign function ACL count=%d: %v", foreign, e)
+	}
 	rows, e := db.Query(ctx, `WITH roles AS (SELECT unnest($2::text[]) AS name), privs AS (SELECT unnest($4::text[]) AS privilege)
  SELECT r.name,c.relname,p.privilege,pg_catalog.has_table_privilege(r.name,c.oid,p.privilege),pg_catalog.has_table_privilege(r.name,c.oid,p.privilege||' WITH GRANT OPTION')
  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace CROSS JOIN roles r CROSS JOIN privs p WHERE n.nspname=$1 AND c.relname=ANY($3::text[]) ORDER BY r.name,c.relname,p.privilege`, b.Schema, []string{b.App, b.Writer}, tables, abCatalogAllTablePrivileges)
@@ -767,10 +835,6 @@ func abCatalogCheckACL(ctx context.Context, db abCatalogDB, b procurementattempt
 		}
 	}
 	// Functions created by O or W must not acquire global/default PUBLIC execute.
-	var installer uint32
-	if e = db.QueryRow(ctx, `SELECT current_user::regrole::oid`).Scan(&installer); e != nil {
-		return e
-	}
 	for _, owner := range []uint32{installer, b.WriterOID} {
 		var bad bool
 		e = db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(coalesce((SELECT d.defaclacl FROM pg_catalog.pg_default_acl d WHERE d.defaclrole=$1 AND d.defaclnamespace=0 AND d.defaclobjtype='f'),pg_catalog.acldefault('f',$1::oid))) a WHERE a.grantee<>$1::oid AND a.privilege_type='EXECUTE') OR EXISTS(SELECT 1 FROM pg_catalog.pg_default_acl d JOIN pg_catalog.pg_namespace n ON n.oid=d.defaclnamespace CROSS JOIN LATERAL pg_catalog.aclexplode(d.defaclacl) a WHERE d.defaclrole=$1 AND n.nspname=$2 AND d.defaclobjtype='f' AND a.grantee<>$1::oid AND a.privilege_type='EXECUTE')`, owner, b.Schema).Scan(&bad)
@@ -779,6 +843,23 @@ func abCatalogCheckACL(ctx context.Context, db abCatalogDB, b procurementattempt
 		}
 	}
 	return nil
+}
+
+func abCatalogReferenceColumns(ctx context.Context, db abCatalogDB, schema string) (map[string][]string, error) {
+	columns := map[string][]string{}
+	rows, err := db.Query(ctx, `SELECT c.relname,a.attname FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid WHERE n.nspname=$1 AND c.relkind='r' AND a.attnum>0 AND NOT a.attisdropped ORDER BY c.relname,a.attnum`, schema)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var table, col string
+		if err = rows.Scan(&table, &col); err != nil {
+			return nil, err
+		}
+		columns[table] = append(columns[table], col)
+	}
+	return columns, rows.Err()
 }
 
 func abCatalogVerify(ctx context.Context, db abCatalogDB, b procurementattemptbirth.Bindings) error {
@@ -806,12 +887,17 @@ func abCatalogVerify(ctx context.Context, db abCatalogDB, b procurementattemptbi
 	if e != nil {
 		return fmt.Errorf("A2 independent reference: %w", e)
 	}
-	var tables []string
-	for _, v := range r.Tables {
-		tables = append(tables, v.Name)
+	columns, e := abCatalogReferenceColumns(ctx, tx, ref)
+	if e != nil {
+		return e
 	}
-	for _, v := range r.OriginalExtensions {
-		tables = append(tables, v.Table)
+	acl, e := abCatalogExpectedACL(b, c, columns)
+	if e != nil {
+		return e
+	}
+	var tables []string
+	for table := range acl.covered {
+		tables = append(tables, table)
 	}
 	sort.Strings(tables)
 	for group, q := range abCatalogRelationQueries {
@@ -886,6 +972,103 @@ func abCatalogVerify(ctx context.Context, db abCatalogDB, b procurementattemptbi
 	if len(seen) != 38 {
 		return fmt.Errorf("A2 candidate function count %d", len(seen))
 	}
+	// A frozen candidate is only as safe as its original identity, quotation,
+	// PB and trigger dependencies. Compare their complete metadata and source
+	// against the independent original-material namespace, including originals
+	// not covered by the 38-function candidate descriptor. New test helpers with
+	// unrelated names are not used to construct these fixed expectations.
+	var dependencyNames []string
+	e = tx.QueryRow(ctx, `SELECT array_agg(DISTINCT p.proname ORDER BY p.proname) FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname=$1`, ref).Scan(&dependencyNames)
+	if e != nil {
+		return e
+	}
+	// Historical functions can use schema-local composite argument/result
+	// types. Compare their qualified type names, never unrelated per-schema OIDs.
+	dependencyQuery := strings.NewReplacer(
+		"p.proargtypes::oid[]::bigint[] AS argtypes", "ARRAY(SELECT pg_catalog.format_type(v,NULL) FROM unnest(p.proargtypes::oid[]) WITH ORDINALITY x(v,n) ORDER BY n) AS argtypes",
+		"p.proallargtypes::bigint[] AS allargtypes", "CASE WHEN p.proallargtypes IS NULL THEN NULL ELSE ARRAY(SELECT pg_catalog.format_type(v,NULL) FROM unnest(p.proallargtypes) WITH ORDINALITY x(v,n) ORDER BY n) END AS allargtypes",
+		"p.prorettype::bigint AS result", "pg_catalog.format_type(p.prorettype,NULL) AS result",
+	).Replace(abCatalogFunctionsQuery)
+	want, e = abCatalogJSON(ctx, tx, dependencyQuery, ref, dependencyNames)
+	if e != nil {
+		return e
+	}
+	got, e = abCatalogJSON(ctx, tx, dependencyQuery, b.Schema, dependencyNames)
+	if e != nil {
+		return e
+	}
+	if got != want {
+		var actual, expected []map[string]any
+		if json.Unmarshal([]byte(got), &actual) == nil && json.Unmarshal([]byte(want), &expected) == nil && len(actual) == len(expected) {
+			for i := range actual {
+				var keys []string
+				for key := range expected[i] {
+					keys = append(keys, key)
+				}
+				sort.Strings(keys)
+				for _, key := range keys {
+					if !reflect.DeepEqual(actual[i][key], expected[i][key]) {
+						if key == "prosrc" {
+							return fmt.Errorf("A2 dependency function drift %s/source", actual[i]["name"])
+						}
+						return fmt.Errorf("A2 dependency function drift %s/%s actual=%v expected=%v", actual[i]["name"], key, actual[i][key], expected[i][key])
+					}
+				}
+			}
+		}
+		return fmt.Errorf("A2 dependency function drift inventory")
+	}
+	// Rewrite only the independently rendered reference namespace. Never
+	// normalize the target source: even schema literals remain exact bytes.
+	readSources := func(schema string) (map[string]string, error) {
+		var raw []byte
+		err := tx.QueryRow(ctx, `SELECT jsonb_object_agg(p.proname||'('||pg_catalog.pg_get_function_identity_arguments(p.oid)||')',p.prosrc)
+ FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+ WHERE n.nspname=$1 AND p.proname=ANY($2::text[])`, schema, dependencyNames).Scan(&raw)
+		if err != nil {
+			return nil, err
+		}
+		out := map[string]string{}
+		return out, json.Unmarshal(raw, &out)
+	}
+	referenceSources, e := readSources(ref)
+	if e != nil {
+		return e
+	}
+	actualSources, e := readSources(b.Schema)
+	if e != nil {
+		return e
+	}
+	if len(referenceSources) != len(actualSources) {
+		return fmt.Errorf("A2 dependency function drift source inventory")
+	}
+	for signature, body := range referenceSources {
+		// The 38 candidate bodies were already compared byte-for-byte against
+		// the target-binding renderer above, including its hex-encoded schema
+		// literals. Do not translate those literals through a second renderer.
+		if _, candidate := byName[strings.SplitN(signature, "(", 2)[0]]; candidate {
+			continue
+		}
+		actualSignature := strings.ReplaceAll(signature, ref, b.Schema)
+		actual, found := actualSources[actualSignature]
+		if !found || actual != strings.ReplaceAll(body, ref, b.Schema) {
+			return fmt.Errorf("A2 dependency function drift %s/source", actualSignature)
+		}
+	}
+	var candidateNames []string
+	for _, f := range c.Functions {
+		candidateNames = append(candidateNames, f.Name)
+	}
+	var installer uint32
+	if e = tx.QueryRow(ctx, `SELECT current_user::regrole::oid`).Scan(&installer); e != nil {
+		return e
+	}
+	var wrongOwners int
+	e = tx.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+ WHERE n.nspname=$1 AND p.proname=ANY($2::text[]) AND p.proowner<>CASE WHEN p.proname=ANY($3::text[]) THEN $4::oid ELSE $5::oid END`, b.Schema, dependencyNames, candidateNames, b.WriterOID, installer).Scan(&wrongOwners)
+	if e != nil || wrongOwners != 0 {
+		return fmt.Errorf("A2 foreign function ACL owner count=%d: %v", wrongOwners, e)
+	}
 	// Independent identity/A0 are the only additional pp_ functions. Comparing
 	// the complete inventory catches A1/account-only writers and overload mixing.
 	inv := `SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.name,x.args),'[]'::jsonb) FROM (SELECT p.proname AS name,p.proargtypes::text AS args FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname=$1 AND left(p.proname,3)='pp_' AND ($2::text[] IS NULL)) x`
@@ -929,25 +1112,6 @@ func abCatalogVerify(ctx context.Context, db abCatalogDB, b procurementattemptbi
 		if e != nil || count != 1 {
 			return fmt.Errorf("A2 descriptor trigger %s/%s: %v", trigger.Table, trigger.Name, e)
 		}
-	}
-	columns := map[string][]string{}
-	rows, e = tx.Query(ctx, `SELECT c.relname,a.attname FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid WHERE n.nspname=$1 AND c.relkind='r' AND a.attnum>0 AND NOT a.attisdropped ORDER BY c.relname,a.attnum`, ref)
-	if e != nil {
-		return e
-	}
-	for rows.Next() {
-		var table, col string
-		if e = rows.Scan(&table, &col); e != nil {
-			break
-		}
-		columns[table] = append(columns[table], col)
-	}
-	if e == nil {
-		e = rows.Err()
-	}
-	rows.Close()
-	if e != nil {
-		return e
 	}
 	if e = abCatalogCheckACL(ctx, tx, b, c, columns); e != nil {
 		return e

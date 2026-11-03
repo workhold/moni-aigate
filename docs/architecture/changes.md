@@ -3784,3 +3784,32 @@ A1新增父资格/PB真实等待、提前约束、提交回执丢失与全catalo
 - modified `internal/procurementattemptbirth/materials/request-capture-v1.sql`
 
 </details>
+
+## 2026-11-03T22:03:34Z · 24c3d9996b4e
+
+扩展A2规则/请求兼容、1339授权与110漂移验收并保留5项真实成功控制；47顶层1648子项PG/race及失败CI相关回归通过；CI同库包串行与14组完整分片、README使用部署和架构状态同步，生产模块/SQL/权限与001–022启动链路未变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1864 个源文件；本次 18 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `Makefile`
+- modified `README.md`
+- modified `docs/architecture/procurement-attempt-birth.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/ci-package-isolation.md`
+- modified `docs/verification/ci-profile-contract.md`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/procurement-attempt-birth-hardening.json`
+- modified `docs/verification/procurement-attempt-birth.md`
+- added `internal/procurementattemptbirth/attempt_grant_postgres_test.go`
+- modified `internal/procurementattemptbirth/attempt_postgres_test.go`
+- added `internal/procurementattemptbirth/attempt_rules_postgres_test.go`
+- added `internal/procurementattemptbirth/catalog_drift_postgres_test.go`
+- modified `internal/procurementattemptbirth/catalog_postgres_test.go`
+- added `internal/procurementattemptbirth/request_compat_postgres_test.go`
+- modified `specs/023-periodic-products/b-procurement-attempt-installation-contract.md`
+- modified `web/README.md`
+
+</details>

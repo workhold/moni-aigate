@@ -28,3 +28,15 @@ PostgreSQL连接数显式200与本地测试配置对齐；日志没有连接耗�
 先校验YAML/bash语法、真实动态名单的互斥穷尽及锚定匹配，再以实际远端运行验证。未改生产或测试源码，既有本地整仓证据保持当期范围；配置解析和名单检查不冒充新Linux整轮通过。
 
 第二轮其它组最终也失败：M/Q组件均被原catalog检查拒绝。固定v1 inventory保存Asia/Shanghai反解析的timestamptz字面量，UTC服务端会将同一常量显示为不同字符串；原检查按完整文本严格比较。专库单事务临时表、相同CHECK分别SET LOCAL UTC/Asia/Shanghai，已独立复现year1的00:00:00+00与08:05:43+08:05:43，以及year10000的00:00:00+00与08:00:00+08差异，事务已回滚。修订只在临时CI PostgreSQL启动参数中增加 `timezone=Asia/Shanghai`，就绪查询必须核对实际值；Go进程TZ不能代替数据库设置。不改SQL、固定inventory、产品DSN或校验器，未知profile继续失败；不宣称C0 expected或生产认证。
+
+## 同库创建者默认权限与包串行合同
+
+2026-11-04，实际运行 [41718896150](https://github.com/workhold/moni-aigate/actions/runs/41718896150) 的源码为 `20907f33ea214f35c69ffa664d6a92455c98351b`。九组通过，`contracts (other)` 失败；其中四个周期预算顶层测试在A2候选包同时运行期间返回42501。A2材料在安装期撤销同一installer的全局默认FUNCTION/PUBLIC EXECUTE，随机schema不能隔离该创建者级状态。日志事实、源码推断及无法确定的具体拒权对象见[包隔离记录](ci-package-isolation.md)；本节不宣称修订后的新CI已通过。
+
+CI实际执行命令增加 `-p 1`，成为 `go test -json -race -p 1 -count=1 -timeout=10m`，保留完整包参数和精确 `-run`。同一runner/专库内的包依次执行。新增A2反例后的累计执行范围较大，`internal/procurementattemptbirth`独立分配 `attempt-0..3`；当前为billing/server/attempt各四份及identity/other，共14组独立runner/数据库。三大包均按完整顶层名单C序轮转，保留互斥穷尽检查和JSONL上传。其它新增包自动进入other，新增顶层测试自动进入对应分区，没有新增排除名单。
+
+`-p 1` 不关闭race，不取消包内显式并发或测试内部的多连接、双进程、锁等待和提交争用；10分钟仍按每个测试进程计算，原业务、SQL、锁及fixture期限不变。单包发现步骤只列测试，不运行数据库fixture。`make test`、`make verify-mvp` 的全仓Go命令采用相同的包串行约束，前者保留默认期限/skip语义，后者保留数据库变量前置检查与600秒期限。
+
+此约束只管一条Go命令调度的包，不能协调另一个shell、并行任务或独立进程对同一专库/installer的全局默认权限变更；这些调用必须串行，或使用独立专库和创建者身份。不能据本次调度修订改变生产ACL、补授历史fixture宽权限、跳过数据库测试或延长金融预算。修订须在包含全部集成变更的精确提交上重新运行CI，以该run的实际终态记录验收。
+
+A2的110项catalog反例分四个连续名称顶层，metadata与ACL固定拆分后共15个fixture，继续逐项同事务拒绝/回滚复核及各fixture末尾actual APP业务正控。静态库存强制全部攻击互斥、穷尽、无重复；fixture原180秒与进程原10分钟均不变。这是测试调度调整，不改变请求链路、业务权限、候选SQL或真实并发验收条件；详细来源与已知限制见[包隔离记录](ci-package-isolation.md)。

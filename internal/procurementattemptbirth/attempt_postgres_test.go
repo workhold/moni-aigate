@@ -49,7 +49,7 @@ func sqlstate(t *testing.T, err error, want string) {
 	}
 }
 
-func newFixture(t *testing.T) *fixture {
+func newFixture(t *testing.T, beforeInstall ...func(*fixture)) *fixture {
 	t.Helper()
 	raw := os.Getenv("TEST_DATABASE_URL")
 	if raw == "" {
@@ -160,6 +160,12 @@ func newFixture(t *testing.T) *fixture {
 	must(t, "create original credit", err)
 	_, err = store.ApproveCredit(ctx, billing.ApprovalInput{TenantID: f.tenant, OrderID: credit.ID, ActorID: f.approver})
 	must(t, "fund original wallet", err)
+	// Optional acceptance setup executes genuine original business operations
+	// before any A2 relation or guard exists. It must not synthesize tracked
+	// provenance or disable protection to imitate legacy data.
+	for _, prepare := range beforeInstall {
+		prepare(f)
+	}
 	// Broad original provisioning runs before candidate tables exist. The new
 	// profile narrows exact ordinary columns without changing original SQL.
 	must(t, "provision original APP/projector", operations.ProvisionFor(ctx, owned, b.Schema, b.App, projector))

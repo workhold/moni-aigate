@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [billing-0, billing-1, billing-2, billing-3, server-0, server-1, server-2, server-3, identity, other]
+        shard: [billing-0, billing-1, billing-2, billing-3, server-0, server-1, server-2, server-3, attempt-0, attempt-1, attempt-2, attempt-3, identity, other]
     env:
       TEST_DATABASE_URL: postgres://moni_test:test-only-password@127.0.0.1:55439/moni_test?sslmode=disable
       GO_TEST_SHARD: ${{ matrix.shard }}
@@ -76,12 +76,13 @@ jobs:
           case "$GO_TEST_SHARD" in
             billing-[0-3]) package_class=billing ;;
             server-[0-3]) package_class=server ;;
+            attempt-[0-3]) package_class=attempt ;;
             identity|other) package_class=$GO_TEST_SHARD ;;
             *) echo "Unknown Go test partition" >&2; exit 1 ;;
           esac
           module=$(go list -m)
           go list ./... > "$RUNNER_TEMP/ci-packages-all.txt"
-          for shard in billing identity server other; do
+          for shard in billing identity server attempt other; do
             : > "$RUNNER_TEMP/ci-packages-$shard.txt"
           done
           while IFS= read -r package; do
@@ -89,11 +90,12 @@ jobs:
               "$module/internal/billing") shard=billing ;;
               "$module/internal/identity") shard=identity ;;
               "$module/internal/server") shard=server ;;
+              "$module/internal/procurementattemptbirth") shard=attempt ;;
               *) shard=other ;;
             esac
             printf '%s\n' "$package" >> "$RUNNER_TEMP/ci-packages-$shard.txt"
           done < "$RUNNER_TEMP/ci-packages-all.txt"
-          for shard in billing identity server other; do
+          for shard in billing identity server attempt other; do
             if [[ ! -s "$RUNNER_TEMP/ci-packages-$shard.txt" ]]; then
               echo "Empty Go test partition: $shard" >&2
               exit 1
@@ -103,6 +105,7 @@ jobs:
           cat "$RUNNER_TEMP/ci-packages-billing.txt" \
             "$RUNNER_TEMP/ci-packages-identity.txt" \
             "$RUNNER_TEMP/ci-packages-server.txt" \
+            "$RUNNER_TEMP/ci-packages-attempt.txt" \
             "$RUNNER_TEMP/ci-packages-other.txt" \
             | sort > "$RUNNER_TEMP/ci-packages-actual.txt"
           cmp "$RUNNER_TEMP/ci-packages-expected.txt" "$RUNNER_TEMP/ci-packages-actual.txt"
@@ -112,7 +115,7 @@ jobs:
           fi
           mapfile -t packages < "$RUNNER_TEMP/ci-packages-$package_class.txt"
           run_filter=()
-          if [[ "$package_class" == billing || "$package_class" == server ]]; then
+          if [[ "$package_class" == billing || "$package_class" == server || "$package_class" == attempt ]]; then
             if [[ ${#packages[@]} -ne 1 ]]; then
               echo "Large-package partition must contain exactly one package" >&2
               exit 1
@@ -187,7 +190,11 @@ jobs:
           if [[ "$package_class" == billing ]]; then
             test_env+=("PROCUREMENT_ATTEMPT_RULES_DATABASE_URL=$TEST_DATABASE_URL")
           fi
-          env "${test_env[@]}" go test -json -race -count=1 -timeout=10m "${run_filter[@]}" "${packages[@]}" \
+          # Packages share this job's disposable database and installer role.
+          # Serialize package execution just as make verify-mvp does: isolated
+          # schemas do not isolate ALTER DEFAULT PRIVILEGES for that creator.
+          # Explicit within-test concurrency and every discovered test remain.
+          env "${test_env[@]}" go test -json -race -p 1 -count=1 -timeout=10m "${run_filter[@]}" "${packages[@]}" \
             | tee "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"
       - run: go vet ./...
         if: matrix.shard == 'other'

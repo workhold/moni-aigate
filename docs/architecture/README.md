@@ -1490,3 +1490,7 @@ README的特点、使用及Docker/1Panel步骤已复核，并补[安全报告](.
 README增加Python SDK使用示例，源码/Compose/1Panel步骤已按实际入口复核。普通在线模块、正式迁移、供应商或支付能力没有新增；来源纯核Complete=false、Qualified空，完整writer/profile、B-P3/R2及后续阶段保持未完成。
 
 独立catalog双轮安装、drift与旧profile拒绝候选race矩阵在原5秒界全PASS（3顶层/37子项），仅关闭该专项复验缺口；历史失败、采购命题、B-P3整体及R2仍分别保留。README复核项目特点、使用/部署并补仓库导览；Docker daemon未运行，目标容器/1Panel实装不据静态说明标通过。
+
+2026-11-04继续扩展[A2采购出生验收](../verification/procurement-attempt-birth.md)：新增原规则/宽输入/replay/报价、A2下原Reserve与预算/资金/raw兼容、1339项实际授权及110项catalog漂移反例。catalog结构覆盖权限材料涉及的50关系，补固定依赖正文/owner与全部grantee原始ACL，避免peer/PUBLIC旁路；1339项区分1334必要拒权预期与5项真实有效失权后COMMIT成功控制，保守授权保留。最终整包47顶层/1648子项race全部PASS，0 FAIL/SKIP，535.086秒，含41顶层真实PG与6静态；临时schema/role零残留，见[机器记录](../verification/procurement-attempt-birth-hardening.json)。完整结果、失败修正与场景限制由验证记录单列。模块图、请求链路、数据关系和生产权限没有新增：本轮仅扩大测试证明面，正式迁移、默认billing.New/serve/provision与在线资金接线不变，完整A4/A5、全域profile/R2与供应商/生产门禁继续开放。相关源入口与测试职责已同步[采购细图](procurement-attempt-birth.md)。
+
+测试部署边界同步调整：上一轮[CI 42501](../verification/ci-package-isolation.md)与同installer全局默认函数权限的跨包竞争一致，Make/CI将同库包串行`-p 1`；A2另按完整顶层发现及C序轮转四份，连同billing/server四份及identity/other，共14组独立runner/数据库。110反例保留13语义类，metadata/ACL固定拆分后15fixture/四顶层；原180秒fixture、RC/3s/5s、10分钟进程、race、全部名单核对和包内并发均保留。该变更不改变生产部署、实例并发或TTFB目标。README与前端README已复核特点、首次使用、本地/Docker/1Panel、MFA默认可选及代理路径；正式供应商、支付、目标容器/1Panel与HA仍按原验收边界。

@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Vite 在 `http://127.0.0.1:5173` 提供页面，将 `/api`、`/v1` 请求代理至 `http://127.0.0.1:8080`。联调时为服务端设置 `PUBLIC_ORIGIN=http://127.0.0.1:5173` 与 `COOKIE_SECURE=false`，并从该地址访问前端，保留 CSRF/Origin 校验。生产环境使用同源 HTTPS，恢复安全 Cookie。
+Vite 在 `http://127.0.0.1:5173` 提供页面，将 `/api`、`/v1`（含 `/v1beta`）与 `/health` 请求代理至 `http://127.0.0.1:8080`。联调时为服务端设置 `PUBLIC_ORIGIN=http://127.0.0.1:5173` 与 `COOKIE_SECURE=false`，并从该地址访问前端，保留 CSRF/Origin 校验。生产环境使用同源 HTTPS，恢复安全 Cookie。
 
 ```sh
 npm test

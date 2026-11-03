@@ -330,3 +330,17 @@ require两个函数在第3步先定义，validator叶子只依赖表与pure函�
 保留RC、3秒lock/5秒statement与原上层绝对期限；只对原允许且已确定回滚的40001/40P01最多三次，55P03/57014不扩大重试。未知COMMIT只读核准确operation/root，不重发模型请求、不换operation盲做财务；本片不生成模型调用。每次实现变更先更新受影响合同/架构，所有并行结果汇合后由集成人语义复核、更新统一架构/验证记录，再执行带理由的architecture refresh与只读检查。
 
 本轮材料、真实组合与catalog的限定结果见[新A2验证](../../docs/verification/procurement-attempt-birth.md)。该记录逐项列出未完成的本节矩阵；当前PASS不关闭完整A1差分、逐grant失权/误授权攻击、未知COMMIT、A5 executor或全域profile。
+
+## 9. 验收隔离、固定依赖与必要权限判定
+
+隔离 schema 不能隔离同一创建者的 global default ACL。本候选安装事务按 §6 收紧 O 的全局函数 PUBLIC EXECUTE，fixture 在清理时恢复原值；同一测试库、同一 O 的其他包不得在该生命周期中并行创建函数。`make test`、`make verify-mvp` 与 CI 的专库包执行统一使用 `go test -p 1`。完整包/分片清单、race、包内显式业务并发、原 3s lock / 5s statement 及 10m package timeout 保持；不通过给旧函数临时补 PUBLIC/APP 权限掩盖并发污染。
+
+test-only catalog inspector 的期望继续仅来自固定原 001–022、B-P1、identity/A0 与候选材料：结构查询覆盖权限材料触及的全部 50 张关系，不能只核 12 新表和 7 扩列表而漏掉父表 RLS、owner 或约束。原件表 owner 固定为 O，38 个候选函数 owner 固定为 W，其余固定依赖 owner 为 O；不能根据 live owner 自动豁免新获得所有权的 peer。
+
+固定 reference 的全部函数签名、安全属性和正文均需核对；schema-local composite 参数/结果比较限定类型名，不能比较两个 schema 各自分配的 rowtype OID。38 个候选正文仍按实际绑定的认证 renderer 逐字节比较；原函数只改写独立 reference 的 namespace 得到期望，target 正文不归一化。all-grantee 原始 ACL 检查针对上述 50 张关系及 permissions 的固定函数签名集，包含 APP/W 已有权限不能显露的 PUBLIC/peer 旁路；它不扩称全数据库生产权限认证。
+
+必要 grant 由实际路径消费证明，静态调用图和有效撤权本身都不足。每项先证明 effective true→false，再执行真实公开根及外层 APP deferred，最后精确恢复 canonical ACL 并重新执行；原 owner、PUBLIC、继承和 automatic trigger 直接 EXECUTE 必须分别识别。未被当前路径消费的保守 grant 保留为有效撤权成功正控制，不删业务权限，也不添加人为读取或额外函数调用制造必要性。仅为行锁保留的原值 UPDATE 必须拒绝：W 经已授普通 helper 返回 PP901；APP 的 account.created_at 更新可先被私有普通 helper 的 EXECUTE 边界以准确 42501 拒绝，不为得到 PP901 额外扩权。
+
+漂移攻击按独立 fixture 分组，逐项在同一事务执行变更→语义拒绝→回滚→完整正常核验，并以 actual APP 业务作组末正控制。SQL 错误、取消、reference 重建错误和观察超时不得冒充语义拒绝。分组只划分整套实验的生命周期，不放宽单次业务根的执行期限；这些检查仍不发行 Qualified、生产 Check 或 serving profile。
+
+110 项 catalog 攻击保持原 13 类语义判定，验收调度拆为名称连续的四个顶层 `TestPostgresA2CatalogRejectsTransactionalDriftA/B/C/D`，供独立 runner/专库按完整顶层名单排序轮转。metadata 的 30 项与 ACL 的 19 项分别按固定攻击名称分成 15/15 与 10/9 两份，其余 11 类各保留独立 fixture，共 15 个 fixture；两个大类的两份分散在 A/B。每份仍使用原 180s fixture 上限、原事务/SQL/锁期限、逐项变更/拒绝/回滚/完整复核和末尾 actual APP 成功正控。静态库存必须核对固定 110 名称在四顶层/十五份中的互斥、穷尽与非空，CI 同时核对完整包及全部顶层名单，不使用攻击排除列表，也不改变正常应用或生产权限。分组用于避免多个独立实验累积触发 fixture 或单进程 10m 上限，不扩称远端时延保证或实际验收已经通过。

@@ -134,3 +134,5 @@ V0-WL最终集成：纯包race 9.027秒、32508次短fuzz、`make check` 9.702�
 2026-11-03新增[最小旧数据投影与纯初始化规划](init-planner.md)：原68表完成一致Facts深复制九组业务原件，独立big.Int/ledger/来源核对后生成准确legacy/opening/seq0与正额lot写集，无数据库stamp、epoch/proof或写权。三tenant47行手算golden/G49及确定UUID、资源/取消/深复制已验；明确MONI专库四包race33.983秒、223顶层/1432终态零跳过，实际普通/沙箱Read→Project→Build成功且原资金不变。make check 8.057秒与明确TEST专库make verify-mvp 1007.389秒通过（286前端、46 Go包race/vet/build），源码SHA一致；23张图已渲染视检。protected phase/writer、strict v2/84post提交、非空epoch observer/runtime和全资金路径仍后续。
 
 2026-11-04新增[采购出生候选限定验收](procurement-attempt-birth.md)：独立38函数/68trigger材料、完整command/request/managed/unmanaged/reserved及精确ACL，12顶层/25子项race PASS、零SKIP/FAIL。账户配置与预占交错、PB后配导入、15写入故障、共享预算争用和安装前后catalog已实跑；不关闭完整A4攻击/失权矩阵、A5 executor、全域profile/R2或真实供应商/生产门禁，常规启动仍为001–022。
+
+同日扩展规则、请求兼容、有效授权与catalog反例后，当前A2包最终47顶层/1648子项race PASS、0 FAIL/SKIP，535.086秒，详见[机器记录](procurement-attempt-birth-hardening.json)。包括1334必要失权、5项保守授权有效撤销后COMMIT成功控制及110项同事务漂移拒绝/回滚复核；固定SQL、正式迁移和线上接线不变。完整A4其它路径、A5、全域profile/R2及供应商/生产边界仍开放。CI同库包串行与14组独立runner合同见[隔离记录](ci-package-isolation.md)，新远端结果须独立确认。

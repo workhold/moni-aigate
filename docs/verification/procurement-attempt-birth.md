@@ -67,7 +67,7 @@ managed PB proof 边界补回原 `AdmitSupplierTx→readSupplier` 的 UUID 接�
 
 [静态测试](../../internal/procurementattemptbirth/materials_test.go)另检查 15 份材料固定摘要、38 函数/68 hooks 的装配、SQL 与 Permissions 分离、descriptor 的调用方拷贝隔离、恶意标识符单次 quoting 与无效绑定拒绝。静态装配不能代替实际数据库函数、trigger、ACL 或 COMMIT 执行。
 
-## 实际执行结果
+## 首轮实现的历史执行结果
 
 2026-11-04，最终15项材料摘要、关系descriptor设计来源及全部并行结果汇合后，在专用PG16串行执行：
 
@@ -96,9 +96,34 @@ TEST_DATABASE_URL="$PRIVATE_TEST_DATABASE_URL" \
 
 架构细图两块Mermaid均用官方12.2.0与隔离Chrome156解析、渲染和看图；证据位于`.local/architecture-mermaid-check/procurement-attempt-birth-a2-20261104/`。未操作用户浏览器，不把语法解析当作数据库验收。
 
+## 扩展规则、请求兼容、授权与 catalog 反例
+
+本轮只修改测试、安装验收合同、CI调度与文档，不改业务SQL、固定摘要、正式001–022迁移、应用权限或默认启动路径。
+
+| 源码 | 验证责任 |
+| --- | --- |
+| [attempt_rules_postgres_test.go](../../internal/procurementattemptbirth/attempt_rules_postgres_test.go) | actual APP输入及错误优先序、忽略的expected BYTEA、宽TEXT/route JSON、replay及采购报价/未知报价/零额分支；失败逐次核34表全行回滚 |
+| [request_compat_postgres_test.go](../../internal/procurementattemptbirth/request_compat_postgres_test.go) | A2下原Reserve与等价raw出生、冻结/派生字段、tenant/Key九种预算配置、零价/input-only/分组价、pending/Release/recovery、资金与内部DML故障、IP/幂等错误优先序、真实legacy不回填及提前约束 |
+| [attempt_grant_postgres_test.go](../../internal/procurementattemptbirth/attempt_grant_postgres_test.go) | 固定1339项授权：1334项必要失权预期、5项有效失权但managed COMMIT成功正控制；另有21项W锁用原值UPDATE与1项APP账户锁用UPDATE拒绝控制 |
+| [catalog_drift_postgres_test.go](../../internal/procurementattemptbirth/catalog_drift_postgres_test.go) | 110项固定对象/函数/触发器/角色/权限反例；同一事务改变并准确拒绝，回滚后完整接受，每个隔离fixture以actual APP真实业务再次正控 |
+
+catalog inspector扩至权限材料涉及的50张关系，并核对固定依赖函数的正文、安全属性和固定owner；38个候选函数仍逐字节比较认证renderer输出。APP/W有效权限之外增加全部grantee原始ACL检查，避免PUBLIC/peer获得两业务角色本已拥有的权限而漏检。范围仍是test-only inspector，不发行生产Check、Qualified或profile。
+
+逐grant实验先证明权限确实true→false，再由actual APP执行完整公开根及外层deferred COMMIT；恢复时精确比较all-grantee canonical ACL，复核已提交旧前缀和新根正控。失败需准确42501和34表全行不变，不能把owner、PUBLIC、继承或automatic trigger的直接EXECUTE误算作必要权限。
+
+五项成功正控制为APP的 `pp_ac_text_v1`、`pp_ac_command_digest_v1`、`pp_ac_time_v1`、`pp_ac_snapshot_v1` 和 `pp_json_string_v1`，准确签名留在冻结矩阵。当前managed根先在W上下文初始化/执行相关纯表达式，PG16同事务simple-expression状态可被外层APP deferred复用。实测成功不能解释成函数从未运行或其它APP路径不需要授权；固定grant全部保留，不为测试增加人为调用。正控制确实提交第二笔managed预占，独立手算H=480/S=0/revision=1/account ordinal=3，随后恢复权限并以全新request核验。
+
+首轮扩展整包为43顶层/1638子项PASS、1顶层/8子项FAIL，487.047s；失败均在旧APP deferred EXECUTE预期中。首个成功提交后共用request使后续发生replay级联；独立fixture重跑进一步证实上述另外四项COMMIT也成功。最终改为17项EXECUTE各用独立fixture，对五项记录真实成功，余项保留必要拒权。修订后该专项2顶层/17子项race PASS、0 SKIP/FAIL，54.044s；本段不把首次失败计作通过。首轮JSONL为`.local/moni-a2-hardening-final.json`（1974580字节，SHA-256 `6a894fcda8c9a65afce0b227fe42ec88cecf78b9ec3469e1e50c5fd4e3dc0ff7`），专项修订原件为`.local/moni-a2-grant-deferred-final.json`。
+
+catalog拒绝只接受预期语义分类；SQL执行、reference重建、取消和超时错误不能充作漂移检出。四个顶层执行组保留全部110反例，metadata与ACL固定拆分后共15个隔离fixture，各自180秒、业务RC/3s/5s及每进程10分钟均保持。静态清单核对四组互斥、穷尽、无重复；CI对A2沿用完整顶层发现与C序轮转四分片。该调度只提供执行隔离，不是网关性能指标。CI同库包串行的故障依据见[包隔离记录](ci-package-isolation.md)。
+
+最终串行整包使用`go test -race -p 1 ./internal/procurementattemptbirth -count=1 -timeout 600s -json`：**47顶层/1648子项全部PASS、0 FAIL/SKIP，535.086秒**，其中41顶层真实连接PG，6顶层静态；包含本页首轮业务及全部新增矩阵，不与此前专项重复相加。结束后专库`ab_*` schema/role均为0。原件`.local/moni-a2-release-final.json`为1981464字节，SHA-256 `4cdd53e79ac6a90a1d2fe663f8501986a45867ed0d9eba7af7c7d7fc9da71fe5`；[机器记录](procurement-attempt-birth-hardening.json)保存源码摘要、实际Go版本与范围。该结果仍不替代远端CI、全域来源认证或供应商/生产验收。
+
+更新后的细图两张Mermaid均以官方12.2.0和隔离Chrome156实际解析/渲染，已查看变更的模块概览；证据在`.local/architecture-mermaid-check/procurement-attempt-birth-a2-hardening-20261104/`，不覆盖首轮图原件，也未操作用户浏览器。页面仅变化测试覆盖标签，真实请求时序与生产模块边没有改变。
+
 ## 仍未关闭的边界
 
-当前基础/故障/等待测试不覆盖安装合同的完整矩阵：原 checks 与错误优先序的全部差分、宽 TEXT/route JSON 与 BYTEA 接受集、无报价/不完整报价和零额、全部幂等冲突、绑定/首次 PB 配置双向等待、资格/expiry/真实预算窗口跨期、active cap、原始逐grant失权/误授权与完整catalog漂移攻击、提前约束/错来源/额外来源、真实取消/锁超时/整体 5s、死锁重试和未知 COMMIT 仍须依实际证据逐项收口。故障 trigger 覆盖 DML 边界不等于这些全部来源攻击已验。
+上述扩展仍不关闭安装合同的完整矩阵：全部原checks与组合错误优先序、所有路由/重试分支及幂等冲突、绑定/首次PB配置双向等待、资格/expiry/真实UTC预算窗口跨期、active cap、原Reserve/A1与command-only逐grant、全部grantee提升路径、完整来源篡改/额外来源、真实取消/锁超时/整体5s、死锁重试和未知COMMIT继续逐项验收。当前1339授权仅覆盖冻结managed first-window场景，110漂移仅覆盖固定test-only inspector，不能泛化全域生产认证；DML故障也不等于全部来源攻击已验。
 
 D1/I1、B-P3 历史命题、全域认证/完整 profile、A5 prospective executor、R2 正式迁移/权限/运行接线继续开放。没有接通真实模型生成或后台重发；供应商、正式支付、容器/1Panel、HA、生产验收和最后性能指标必须独立完成，不能由本地 fixture PASS 代替。
 
