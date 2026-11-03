@@ -2741,3 +2741,69 @@ R1-B最终整仓验收记录：286前端测试、47 Go包race、vet与嵌入构�
 - modified `docs/verification/runtime-composer.md`
 
 </details>
+
+## 2026-11-03T00:00:00Z · 604e6799ab64
+
+B-P1先冻结命令前缀与窗口出生合同，汇合纯核验与隔离SQL及actual APP候选专项；保留旧Base与legacy缺证及正式迁移/reader/runtime门禁；同步模块细图、HLD/LLD、README和GitHub协作入口
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1562 个源文件；本次 24 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `.github/ISSUE_TEMPLATE/bug_report.yml`
+- added `.github/ISSUE_TEMPLATE/feature_request.yml`
+- added `.github/pull_request_template.md`
+- modified `README.md`
+- added `docs/architecture/periodic-budget-prefix.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/assets/architecture-periodic-budget-prefix-application.png`
+- added `docs/verification/assets/architecture-periodic-budget-prefix-detail.png`
+- added `docs/verification/periodic-budget-prefix.json`
+- added `docs/verification/periodic-budget-prefix.md`
+- added `internal/periodicbudget/prefix_concurrency_integration_test.go`
+- added `internal/periodicbudget/prefix_contract_integration_test.go`
+- added `internal/periodicbudget/prefix_fault_integration_test.go`
+- added `internal/periodicbudget/prefix_fixture_integration_test.go`
+- added `internal/periodicbudgetprefix/check.go`
+- added `internal/periodicbudgetprefix/check_test.go`
+- added `internal/periodicbudgetprefix/snapshot.go`
+- added `internal/periodicbudgetprefix/types.go`
+- added `internal/periodicbudgetprefix/values.go`
+- added `specs/023-periodic-products/b-prefix-candidate.sql`
+- added `specs/023-periodic-products/b-prefix-contract.md`
+- added `specs/023-periodic-products/b-prefix-permissions.sql`
+
+</details>
+
+## 2026-11-03T00:20:33Z · 9db30609fa74
+
+B-P1最终15项actual APP候选race及19项纯race和全仓专库验收通过，12份候选源未漂移；补other分区显式PB测试环境、完整README竞品与运行说明和复现/验证记录；无正式迁移、在线资金、旧profile或启动接线变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1562 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `README.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/github-ci-profile.md`
+- modified `docs/verification/periodic-budget-prefix.json`
+- modified `docs/verification/periodic-budget-prefix.md`
+
+</details>
+
+## 2026-11-03T00:21:23Z · 479f6503186b
+
+归档B-P1末轮make check 6.124秒与全仓1072.572秒成功记录；已复核候选代码/测试/SQL/合同固定及CI、README、架构来源链接；本次仅验证记录变更，无模块、数据、权限或运行时结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1562 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/periodic-budget-prefix.json`
+- modified `docs/verification/periodic-budget-prefix.md`
+
+</details>

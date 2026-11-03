@@ -9,6 +9,8 @@
 
 [系统架构](docs/architecture/README.md) · [本地开发](docs/runbooks/development.md) · [部署手册](docs/runbooks/deployment.md) · [MVP 状态](docs/verification/mvp-status.md) · [交付计划](docs/design/delivery-plan.md)
 
+快速导航：[特点](#定位与特点) · [能力与协议](#能力状态) · [架构](#架构概览) · [本地启动](#本地启动) · [Docker / 1Panel](#docker-compose--1panel) · [首次配置](#从部署到第一次-api-调用) · [API 示例](#api-示例) · [配置](#常用配置) · [贡献](#反馈与贡献) · [许可](#license-与来源)
+
 ## 定位与特点
 
 moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合平台。客户按平台售价消费，平台按渠道与精确上游模型登记采购成本，并在授权、能力、地域、健康和预算约束内选择渠道。
@@ -38,7 +40,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
 | 资金来源与原路退款 | 部分基础模块已实现 | 已有来源分配、业务来源图及 lot/FIFO/结算/消费退款独立重放；已接通同快照读取，维护切换、在线资金接线、原路退款和拒付仍在推进 |
-| 停服维护与钱包开账 | 库级实现，验证按阶段记录 | Gate、Snapshot、Permit、开账事务、严格 v2、84 表重放、109 表基线与独立 epoch 观察；独立 APP 完整运行核验已实现，限定验证见记录；完整经营认证仍有 PB 证据门禁；正式迁移、进程启动装配、在线资金接线及维护 CLI 仍在推进 |
+| 停服维护与钱包开账 | 库级实现，验证按阶段记录 | 受保护开账、资金来源重放、独立停服观察与 APP 运行核验；完整经营认证仍有周期预算历史证据门禁，正式迁移、启动与在线资金接线仍在推进 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
@@ -83,7 +85,7 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-资金来源维护正在按阶段交付：历史钱包开账规划、受保护初始化事务与独立只读结果观察已有库级实现；独立 APP 完整运行核验已实现，限定验证见记录；完整经营认证仍有 PB 证据门禁，范围见[运行核验架构](docs/architecture/runtime-composer.md)与[验证记录](docs/verification/runtime-composer.md)。正式迁移、进程启动装配、在线资金接线、原路退款和拒付尚未完成；维护细节见[维护架构](docs/architecture/maintenance-gate.md)。套餐已有价值分摊与月期限算法，购买、扣款及权益发放仍在后续计划中。
+资金来源维护与在线经营分阶段交付，完整经营认证仍受周期预算历史证据门禁限制。库级实现和后续接线见[运行核验架构](docs/architecture/runtime-composer.md)、[验证记录](docs/verification/runtime-composer.md)及[维护架构](docs/architecture/maintenance-gate.md)。套餐购买、原路退款和拒付等未完成能力见交付计划。
 
 ## 本地启动
 
@@ -117,8 +119,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 打开 `http://localhost:8080`，使用刚创建的管理员登录。`bootstrap` 仅允许空用户库首次创建管理员；没有固定默认账号、密码、演示模型或赠送余额。
 程序交互读取密码不会隐藏输入，建议使用密码管理器或受保护文件提供 stdin，避免将真实密码写进命令参数或历史。
 
-首次经营顺序：模型能力 profile → 上游渠道 → 发布完整 binding/revision → 客户售价与采购报价 → 客户模型授权 → 两个财务账号核款 → 客户创建 Key → 调用。
-详细配置与故障排查见[开发手册](docs/runbooks/development.md)。
+首次登录后按下方[首次配置](#从部署到第一次-api-调用)接入模型。详细配置与故障排查见[开发手册](docs/runbooks/development.md)。
 
 ## Docker Compose / 1Panel
 
@@ -142,6 +143,17 @@ SSE 须关闭代理缓冲和生成 POST 自动重试，显式设置可信代理 
 
 升级须先排空并停止旧实例，再执行迁移/授权后启动新实例。生产配置、密钥轮换、单活与反代约束见[部署手册](docs/runbooks/deployment.md)，恢复演练见[备份恢复](docs/runbooks/backup-restore.md)。
 
+## 从部署到第一次 API 调用
+
+1. **准备运营账号**：创建客户租户、成员与所需财务账号；客户资金操作按双人审批流程执行。
+2. **定义可售模型**：配置逻辑模型及能力 profile，明确支持协议、计量方式和单次用量上界。
+3. **接入上游**：填写渠道地址、私有凭据和精确上游模型，发布完整的渠道绑定与路由版本。上游可以是原厂或收费聚合平台，实际可用范围取决于已支持协议及模型计量合同。
+4. **设置销售与采购**：分别发布客户售价、渠道模型采购价；按需绑定共享采购账户、预算与成本路由策略。
+5. **授权与入账**：授予客户模型权限，通过财务核款流程录入客户可用资金；匿名价格展示不会授予调用权限。
+6. **调用与核对**：客户创建 API Key，在 Playground 或下方 API 示例发起请求；通过 `X-Request-ID` 核对调用记录、客户账单和上游采购成本。
+
+官方 OpenAI、Anthropic、DeepSeek、Gemini、GLM 以及硅基流动等供应商是计划逐一认证的接入目标；当前协议模拟器通过不代表这些供应商全部实测通过。供应商选型与验收范围见[接入认证计划](docs/design/provider-qualification-plan.md)。
+
 ## API 示例
 
 先由平台配置并授权可用模型，通过私有环境提供 `MONI_API_KEY`。下列模型名须替换为已发布的逻辑模型；接入真实上游会产生供应商费用。
@@ -159,6 +171,21 @@ curl -N http://localhost:8080/v1/chat/completions \
 推理使用客户 API Key，与控制台会话分开。Messages 也可单独使用 `x-api-key`，不能同时提交两种认证。
 响应提供 `X-Request-ID`，可在控制台关联请求、尝试、客户账单与采购成本。
 匿名 `/pricing` 默认没有模型；管理员显式公开后才展示当前价格，公开展示不授予调用权限。
+
+## 常用配置
+
+常用变量与格式示例见 [.env.example](.env.example)，生成私有配置使用 `init-env`。源码/二进制启动时显式加载 `.env`；Compose 会读取根目录 `.env` 并通过 `compose.yaml` 映射变量。
+
+| 配置 | 用途与默认行为 |
+| --- | --- |
+| `DATABASE_URL` / `PROJECTION_DATABASE_URL` / `MIGRATION_DATABASE_URL` | 二进制部署分别配置应用、投影、迁移连接；Compose 通过三个独立角色与相应密码建立连接 |
+| `MASTER_KEY` / `AUTH_SECRET` | 渠道秘密加密与身份验证材料，由 `init-env` 生成，须受保护保存与备份 |
+| `PUBLIC_ORIGIN` / `COOKIE_SECURE` | 对外访问源与 Cookie 策略；本机 HTTP 将 `COOKIE_SECURE` 设 `false`，HTTPS 部署设 `true` |
+| `LISTEN_ADDR` / `PORT` | 二进制监听地址 / Compose 宿主机环回映射端口，示例使用 8080 |
+| `TRUSTED_PROXY_CIDRS` | 默认为空；反代部署按应用实际观察的代理源地址配置 |
+| `MFA_ENFORCE_PLATFORM` | 默认 `false`；个人已绑定 MFA 的账号仍须验证动态码 |
+| `AUTH_REGISTRATION_ENABLED` / `MAIL_TRANSPORT` | 默认 `false` / `disabled`；自助注册须配合有效邮件服务 |
+| `PAYMENTS_MODE` | 默认 `off`；当前在线支付仅有独立隔离本地模拟验收 |
 
 ## 安全默认
 
@@ -206,7 +233,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成资金来源全路径、停服维护与独立核验，再推进原路退款、拒付及正式支付。活动周期预算的历史前缀证据仍需补齐，当前核验会对缺证图拒绝发行证明。受保护开账与独立观察已有库级实现，显式资金图读取权限版本已通过限定专库验收；历史证明兼容和原事务 APP 完整运行核验已实现，限定验证见记录；完整经营认证仍有 PB 证据门禁。接着完成 V2 材料与进程启动装配、正式迁移和全部资金路径接线，进度见[交付计划](docs/design/delivery-plan.md)。
+1. 补齐周期预算历史证据与资金来源全路径，完成维护工具、正式迁移和启动接线，再推进原路退款、拒付及正式支付；详细依赖与阶段状态见[交付计划](docs/design/delivery-plan.md)。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。
@@ -220,6 +247,8 @@ go run ./scripts/check-architecture
 | 项目 | 主要参考方向 |
 | --- | --- |
 | [One API](https://github.com/songquanpeng/one-api) / [New API](https://github.com/QuantumNous/new-api) | 统一接口、渠道、客户/令牌、计价与预扣流程 |
+| [ChatAPI](https://github.com/ai365vip/chat-api) | 自托管令牌、渠道治理与简化运营流程 |
+| [Moni-AI（Gitee）](https://gitee.com/moni-ai/moni-ai) | 动态调度研究候选；给定地址未取得可核查源码，能力与许可待验证 |
 | [1Panel-Gateway](https://github.com/1Panel-dev/1Panel-Gateway) | 公开产品治理与自托管部署；给定固定公开树没有网关业务实现 |
 | [LiteLLM](https://github.com/BerriAI/litellm) / [Bifrost](https://github.com/maximhq/bifrost) / [Portkey](https://github.com/Portkey-AI/gateway) | 路由、预算、回退、成本与观测边界 |
 | [Higress](https://github.com/alibaba/higress) / [Apache APISIX](https://github.com/apache/apisix) | 网关策略阶段、流式处理与插件边界 |
@@ -228,6 +257,8 @@ go run ./scripts/check-architecture
 | [Open WebUI](https://github.com/open-webui/open-webui) | 外部客户端接入；它是前端，不是网关 |
 
 进一步阅读：[New API 源码分析](docs/research/new-api-analysis.md)、[身份/商业源码笔记](docs/research/implementation-auth-commerce-notes.md)、[协议源码笔记](docs/research/implementation-protocol-notes.md)、[依赖来源](docs/research/dependency-provenance.md)。
+
+[Calcium-Ion/new-api](https://github.com/Calcium-Ion/new-api) 是 New API 的旧地址，研究记录已归一到 QuantumNous/new-api；Moni-AI 的来源访问与未验证范围见[国内项目研究](docs/research/ecosystem-domestic.md)。
 
 ## 反馈与贡献
 

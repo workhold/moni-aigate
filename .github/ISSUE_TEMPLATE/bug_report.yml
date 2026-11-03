@@ -1,0 +1,36 @@
+name: 缺陷报告
+description: 提供可复现步骤，帮助定位调用、计费、控制台或部署问题。
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先查看 README 与部署手册。不要提交真实 API Key、密码、MFA 密钥、恢复码、数据库连接秘密或模型请求/回复正文。
+        如需提供日志，请先脱敏；使用本地模拟器复现可避免产生上游费用。
+  - type: textarea
+    id: environment
+    attributes:
+      label: 版本与环境
+      description: 提交 SHA、操作系统、部署方式、Go/PostgreSQL 版本，以及是否经过反向代理。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 最小复现步骤
+      description: 提供从初始配置到出现问题的步骤；协议问题请注明接口和模型能力 profile。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为与脱敏证据
+      description: 可提供错误码、请求 ID、脱敏日志或截图；数据库测试请说明是否实际启用专用测试库。
+    validations:
+      required: true

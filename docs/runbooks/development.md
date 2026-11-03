@@ -107,6 +107,15 @@ make verify-mvp
 
 直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境及四类包归属、十组执行合同见[CI 验证](../verification/github-ci-profile.md)，第三轮与T2发布精确源码结果分别见[第三轮记录](../verification/github-ci-third-run.md)、[T2发布记录](../verification/github-ci-authority-run.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
 
+B-P1 周期预算观察来源是独立 SQL 候选，不由普通迁移安装。使用上述专库可单独执行：
+
+```sh
+PB_PREFIX_DATABASE_URL="$TEST_DATABASE_URL" go test -race -p 1 ./internal/periodicbudget -run '^TestPBPrefix' -count=1 -timeout 180s
+go test -race ./internal/periodicbudgetprefix -count=1
+```
+
+fixture 先校验精确原001–022，再在随机schema中追加候选并用actual APP验证；将来增加正式迁移时必须先完成历史安装隔离，不能删除精确guard或改为skip。CI仅在原`other`分区的Go测试命令显式启用此候选，其他分区和默认本地`make verify-mvp`不自动启用。当前结果、初次失败及未验边界见[候选验证](../verification/periodic-budget-prefix.md)。
+
 项目没有内置管理员账号、默认密码或自动演示余额。各开发环境应使用自己的私有配置和独立测试数据库；不要将账号、恢复码、Key 或数据库文件提交到仓库。
 
 ### 资金来源维护库（022-C0）

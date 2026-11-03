@@ -518,3 +518,9 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 按[冻结合同](../../specs/022-self-service-payments/c0-runtime-read-profile-contract.md)新增库级WalletReadV2 catalog profile。原三API、provision、历史proof与legacy root保持；只有显式profile API认证APP新增四列SELECT后的完整静态矩阵，collector类别界与逐值比较使用同一选定descriptor。当前84表776列及history另外两列以[已审清单](../../specs/022-self-service-payments/c0-wallet-readset.json)固定，并已在actual APP上通过完整读取面验收；不向worker或peer内容扩权。详细结构见[统一架构细图](../architecture/runtime-read-profile.md)。本片CatalogProof仍不是完整RuntimeProof；历史/当前根兼容、APP v1文件认证与同RR组合现由R1-B库实现并限定验收，完整PB认证仍有门禁；正式迁移/CLI和全在线资金接线继续R2。
 
 2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)仍使真实held/window历史为Indeterminate；完整R1-B验收与R2线上装配不能越过此门禁。后续先设计可证明的command前缀及window创建cut，不放宽现有Unproven或重签旧原件。
+
+## B-P1：周期预算观察前缀候选
+
+按[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)增加独立证据域与纯核验：原资金 event_seq 排序 effect，新观察 ordinal 排序窗口出生与命令，包括 no-op。新 control 出生建立 origin，head 与不可变 journal 绑定真实 source，命令 JSON 和精确资金 cut 从同一锁内原件生成。新 scope 自行重跑原 PB 图并逐命令认证，原 Base 与 legacy 缺证保留，旧 control 不回填出生。
+
+SQL 与权限只作为精确001–022之后的隔离候选，不进入正式 migrate/provision/main。旧reader/basis/catalog与APP RuntimeProof尚未接入；先补精确安装和全新profile/组合，再发布追加迁移及启动装配，完整R1-B与R2门禁不提前开放。模块与实际验证见[细化架构](../architecture/periodic-budget-prefix.md)及[验证记录](../verification/periodic-budget-prefix.md)。

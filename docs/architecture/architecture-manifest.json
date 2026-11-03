@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-02T23:08:17Z",
-  "review_reason": "R1-B最终整仓验收记录：286前端测试、47 Go包race、vet与嵌入构建通过，关键73份源码未变；补充验证与README链接复核，架构/运行图和PB未解门禁语义保持",
-  "snapshot_sha256": "cefc8e9d50342af1e249323a9748ec995a40ead71c7236a95d43052130315dd9",
-  "architecture_sha256": "8bb62d9d6dd4a602fd8ca01445f9c4f517b12e6419b0cebad4367da12fe01902",
-  "history_sha256": "fc4c684505eb2a602cc1c2f6718f17906bb0ac5ac0b633212402c6fa27508d70",
+  "reviewed_at": "2026-11-03T00:21:23Z",
+  "review_reason": "归档B-P1末轮make check 6.124秒与全仓1072.572秒成功记录；已复核候选代码/测试/SQL/合同固定及CI、README、架构来源链接；本次仅验证记录变更，无模块、数据、权限或运行时结构变化",
+  "snapshot_sha256": "479f6503186b2f9f15409edf5ddc2d2b2aaec255195be3dc7de933ff15702cbf",
+  "architecture_sha256": "0381bab83afdf92083744dce145e126f039427bffc4bad357463365c4e37680f",
+  "history_sha256": "ccdec5f8c7bb81f95b1df9613551f4d92009a2bc49a7ee39a4697dd9f3aa65b5",
   "files": [
     {
       "path": ".dockerignore",
@@ -16,8 +16,20 @@
       "sha256": "ea6ab3a70b38dc237836604bf808cde9243f44609ef1870f8ae038c6feab1153"
     },
     {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "sha256": "36269a7873aabfd5b78a2ee0cf7afea6aa98210cca551b7b416c302aa1151479"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "sha256": "ac6f6b420c4e6aa5b251b7777148897e0bcb5aca39f9e7ad8149e35d9838e313"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "sha256": "c37263b9c74bc9b2c3e2a8f82ed1604dddc5520e0a7a6dc256ecf9f68dc7e898"
+    },
+    {
       "path": ".github/workflows/ci.yml",
-      "sha256": "cda1cd3aa3f65cf96ad11893f0ee0d8e9c2f2fa55fcb42fb674d91df2d3b98f9"
+      "sha256": "9aaf6c17e95ea7e147e7025937d4079e8a063dc730bc6554bc0575746b8703b4"
     },
     {
       "path": ".gitignore",
@@ -37,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "120c42797202c014af399a1a73f227f6f548046ee4693a17e2fed15ee3441344"
+      "sha256": "28a01d11a5cb873bb5c80a5b37e28c7876ba7c1a9e5c685d637ae7ca7c5f7e09"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -92,6 +104,10 @@
       "sha256": "fca4752bef685ffb1c8665a4a20208dbdc00701baf28904915561a24d0243bbd"
     },
     {
+      "path": "docs/architecture/periodic-budget-prefix.md",
+      "sha256": "c1c888df64ff56cd30f18043bdffc702e222017b523da4074e023d755d17073a"
+    },
+    {
       "path": "docs/architecture/runtime-composer.md",
       "sha256": "d4051025f0c99a3fcf3449117ee021387d6875f09f88598610d5f601b0053f40"
     },
@@ -117,15 +133,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "c9ecd3f372553f497f3dd9215cb6dff8104267dda8edbd440120f84be1b44ba3"
+      "sha256": "e407bbeeec30a67e62c7ec559fd5da1ac5fdfa38b8e86cb7eb616d7fdc86bae2"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "951348b662f6b0cae67eee1219807bf83035ec180f1d7c1fc3dacd3ee5f383f4"
+      "sha256": "9909a4624451bf8f220228f64fceef737b2d8e4663fe5c2fd80ee51354fd777e"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "e97697e3987a3c1ee50a0f8692708d3b970444cd3858bac708b9d3b2f0478f49"
+      "sha256": "b8fe2ed01e1bfdf640d66c938a48ce5ee87ceafd35d0535ea420991b34de1031"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -173,7 +189,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "f5ab4fe811173f364d806e064df078d07d6562b7dec1450dd9336c79237bbc79"
+      "sha256": "5e0a51be32a025a92961591dda1bb83a2c0d186e63365cf878f8c5b0a9f6acd8"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -362,6 +378,14 @@
     {
       "path": "docs/verification/assets/architecture-payment-proof.png",
       "sha256": "c7e27e0e77e94a6afa0382aacac3310d26f9534df12830d2f0a94aa4e4bdf76f"
+    },
+    {
+      "path": "docs/verification/assets/architecture-periodic-budget-prefix-application.png",
+      "sha256": "502952fc4619eec78f4cd8bb3a95a78e9a038a702dc71d5a39513b59d7453963"
+    },
+    {
+      "path": "docs/verification/assets/architecture-periodic-budget-prefix-detail.png",
+      "sha256": "efa8d6f89435310df11c1c8c263082965ff51136cf9737a16ffd90c2ba616ad3"
     },
     {
       "path": "docs/verification/assets/architecture-protected-init-application.png",
@@ -1057,7 +1081,7 @@
     },
     {
       "path": "docs/verification/github-ci-profile.md",
-      "sha256": "9abd4760d27f78ae417af64b409a3d199bc5778e2bbf967cb9fa4d8c7b29b760"
+      "sha256": "4833cd5082a17142fce198ea12bfed16f54dddfc6fea0fa159c01ea1d34e8496"
     },
     {
       "path": "docs/verification/github-ci-second-run.json",
@@ -1366,6 +1390,14 @@
     {
       "path": "docs/verification/periodic-budget-023-preview.json",
       "sha256": "11b7723d310de648b376db08ccffa227ab2d586dbb1d2e75362f6853a578acdb"
+    },
+    {
+      "path": "docs/verification/periodic-budget-prefix.json",
+      "sha256": "a6f15c19d20d213a916487e8eaa779a4790bc6dfe8fd74d8cc3e85c6df3b1358"
+    },
+    {
+      "path": "docs/verification/periodic-budget-prefix.md",
+      "sha256": "7af66f39c34e9d54ede750eda7a9dfbd5c9968fce6e82c7c404950465b5688a8"
     },
     {
       "path": "docs/verification/periodic-budgets.md",
@@ -3868,6 +3900,22 @@
       "sha256": "9982d2254d6d89aa6c3e532dc5860d18b60ba6e116239ec2b928f2de7ea82b19"
     },
     {
+      "path": "internal/periodicbudget/prefix_concurrency_integration_test.go",
+      "sha256": "a0fcdf3d10d681ff647fc4a92c0f3a4f477f86934447752cbf50959e5e13cbbd"
+    },
+    {
+      "path": "internal/periodicbudget/prefix_contract_integration_test.go",
+      "sha256": "dcb108c29963cb1aa0e1e703b505c547d2ca106501e2a3aa34cfd33c40ca8ffb"
+    },
+    {
+      "path": "internal/periodicbudget/prefix_fault_integration_test.go",
+      "sha256": "a843ae8b2030b244790c10a377515a2b364430ef0f64976e39ee5376c585b80c"
+    },
+    {
+      "path": "internal/periodicbudget/prefix_fixture_integration_test.go",
+      "sha256": "462a3352a9776ebeedf27efea59695cc47af9e9b363a080b616efeacbe3c13aa"
+    },
+    {
       "path": "internal/periodicbudget/reader.go",
       "sha256": "e01a73c23c09a45159e47c63d58e51de9b4df23cdfabccd3f27fa7a4dbdf8ad3"
     },
@@ -3998,6 +4046,26 @@
     {
       "path": "internal/periodicbudget/verifier_test.go",
       "sha256": "6f590d9631fb2ccd793dd75c3bcef15ebbbc82edc718098bce456624f17e11ba"
+    },
+    {
+      "path": "internal/periodicbudgetprefix/check.go",
+      "sha256": "50dab3183eb3238a42b1d9376643522fdeaeefe82ee461fcd0920ac67545b6b8"
+    },
+    {
+      "path": "internal/periodicbudgetprefix/check_test.go",
+      "sha256": "3a51afba18a854f047bd245f9328291357f27b3c7fc2971fc52b9771a2fac514"
+    },
+    {
+      "path": "internal/periodicbudgetprefix/snapshot.go",
+      "sha256": "d17c42a92f45cfb912337320ecbc55627eb581c9d808ab19a8dd749db688a402"
+    },
+    {
+      "path": "internal/periodicbudgetprefix/types.go",
+      "sha256": "ea508f59ab2d9c322ee56911b1c88d0d07124506f617e6d57e7ad20de7e2cf67"
+    },
+    {
+      "path": "internal/periodicbudgetprefix/values.go",
+      "sha256": "562321d310e50fb4d67757e5daa8dde983b7e933e21a6d2bd5acf273ad8b4fa4"
     },
     {
       "path": "internal/pricing/pricing.go",
@@ -5514,6 +5582,18 @@
     {
       "path": "specs/023-periodic-products/b-permissions.sql",
       "sha256": "be4683bf0c179f53fadb069eb25f0fe7c9ca3bf6b3476edb53ec184d55b79c7f"
+    },
+    {
+      "path": "specs/023-periodic-products/b-prefix-candidate.sql",
+      "sha256": "b225c3ff61b735d6830aed1d25edc27bc4784f8e251cb2c1d656196d8d9c630e"
+    },
+    {
+      "path": "specs/023-periodic-products/b-prefix-contract.md",
+      "sha256": "fa2de2dd188da3ad57b97880ef6e5babf558e28d350ec0c6f32fc58a00007e4e"
+    },
+    {
+      "path": "specs/023-periodic-products/b-prefix-permissions.sql",
+      "sha256": "aaea2994d5a79726df8b5c1767b5adb054d14ee8cb81fa12b43b87d24a2f28bf"
     },
     {
       "path": "specs/023-periodic-products/b-reader-contract.md",

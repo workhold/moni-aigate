@@ -134,6 +134,7 @@ flowchart TD
       FundingGraphCore[fundinglotverify\n人工券来源图 / CustomerKey资金图\n21表reader已接线]
       ProcurementEvidenceCore[fundinglotverify\n23组采购证据与事件三态\n完整reader已接线]
       PeriodicGraphCore[fundinglotverify\n18组PB独立重放与历史缺证\n完整reader已接线]
+      PeriodicPrefixCore[periodicbudgetprefix\n命令精确前缀 / 窗口出生顺序\n独立纯核验 / 候选尚未接入reader]
       SandboxGraphCore[fundinglotverify\n33组支付stored-verified来源图\n完整reader已接线]
       WalletSequenceCore[fundinglotverify.CheckWalletSequenceRows\n七投影全序 / journal与事件声明\n纯前置检查]
       WalletLotsCore[fundinglotverify.CheckWalletLotsRows\n25组原行 / FIFO与三桶 / 逆序退款\n纯核验 / 84表维护reader已接线]
@@ -161,6 +162,7 @@ flowchart TD
     SourceChecks --> FundingGraphCore
     SourceChecks --> ProcurementEvidenceCore
     SourceChecks --> PeriodicGraphCore
+    PeriodicPrefixCore -->|内部重跑原算法 / 保留Base缺证| PeriodicGraphCore
     SourceChecks --> SandboxGraphCore
     MaintenanceScan -->|第七kind / 原模式与Permit / 唯一Finish| SourceWalletReader
     SourceWalletReader -->|68业务 + 16 C0固定原列 / 同rawTx| PG
@@ -304,6 +306,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 独立本地支付沙箱（022-B0） | P协议、M模拟器/receiver/持久回调和私密运行证明已编码；专项真实PG/race和真实进程短程通过，长程故障验收按记录推进；独立M/Q进程限定验证；应用接线另见B3 | [协议](../../internal/paymentproto)、[模拟器](../../internal/mockpsp)、[接收器](../../internal/paymentreceiver)、[运行证明](../../internal/paymentruntime)、[版本1 SQL/inventory](../../internal/paymentsandboxschema)、[离线QA](../../internal/paymentsandboxqa)、[精确合同](../../specs/022-self-service-payments/b-runtime-contract.md)、[验证记录](../verification/payment-sandbox.md) |
 | 周期预算核心（023-B） | 020追加迁移、billing预占/采购/派发/原窗收尾、受限角色与启动核验已接线；Reader/Commander与HTTP/控制台已接线，核心全Go/HTTP专项/前端/真实多tab/隔离main浏览器通过；最终020相关回归与预览升级通过，独立三态只读核验器和CLI专项通过，交叉回归继续 | [纯基础层](../../internal/periodicbudget)、[HTTP冻结片](../../specs/023-periodic-products/b-http-contract.md)、[Tx合同](../../specs/023-periodic-products/b-tx-contract.md)、[Reader合同](../../specs/023-periodic-products/b-reader-contract.md)、[Commander合同](../../specs/023-periodic-products/b-commander-contract.md)、[核心接线](../../specs/023-periodic-products/b-integration-contract.md)、[020迁移](../../migrations/020_periodic_budgets.sql)、[核心验证](../verification/periodic-budgets.md) |
 | 周期预算离线核验 | 实际owner LOGIN、六表owner及完整最新迁移，同一RR只读快照核19类异常与3类历史缺证；0/2/3/1退出码，不修复数据 | [Verifier](../../internal/periodicbudget/verifier.go)、[CLI](../../cmd/moni-aigate/periodic_verify.go)、[迁移快照核验](../../migrations/verify_readonly.go)、[精确合同](../../specs/023-periodic-products/b-verifier-contract.md) |
+| 周期预算命令前缀（023-B-P1） | 独立纯核验与隔离 SQL 候选；新 origin/head/journal 证明回执实际观察前缀及窗口出生顺序，旧 Base 缺证保留；专项结果另记，未接正式迁移/reader/runtime | [纯包](../../internal/periodicbudgetprefix)、[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)、[候选 SQL](../../specs/023-periodic-products/b-prefix-candidate.sql)、[细化架构](periodic-budget-prefix.md)、[验证](../verification/periodic-budget-prefix.md) |
 | 支付资金接缝（022-B2） | 021追加完整支付SQL、第三来源helper、十方向核验与三角色最小权限；真实PG专项通过；订单领域/worker/HTTP现由B3接线 | [021](../../migrations/021_payment_sandbox.sql)、[第三来源](../../internal/billing/funding_sandbox.go)、[角色](../../internal/operations/payment_roles.go)、[冻结合同](../../specs/022-self-service-payments/b2-funding-contract.md)、[B3设计](../../specs/022-self-service-payments/b3-http-ui-contract.md) |
 | 应用支付闭环（022-B3） | 订单/通知/安全视图、双manifest/022证明、独立真实worker、2网络/4证据槽、HTTP/UI和main已接线；专项PG/race及两轮真实主进程、最终浏览器整链通过限定本地验收；在途SIGTERM/真实Guard失权独立真实进程补验通过 | [领域与运行](../../internal/payments)、[HTTP](../../internal/server/payment_handlers.go)、[准入](../../internal/server/payment_admission.go)、[启动](../../cmd/moni-aigate/payment_startup.go)、[022](../../migrations/022_payment_runtime_attestation.sql)、[前端](../../web/src/components/PaymentsPage.vue)、[分层证据](../verification/payment-application.md) |
 | 资金来源分配算法（022-C0窄切片） | 仅package-private纯FIFO/finish/逆原charged边refund算法及race专项通过；无DB/网络/资金入口，C0正式DDL与维护仍候选 | [算法](../../internal/billing/lot_plan.go)、[冻结范围](../../specs/022-self-service-payments/c0-lot-contract.md#12-根冻结纯分配算法切片2026-11-01)、[验证](../verification/funding-lot-planners.md) |
@@ -1347,3 +1350,9 @@ sandbox V1三方bytes与APP nonce]
 RuntimeProof仅覆盖原仍活跃的RR快照；结束/关闭或换事务后不能继续使用，当次wrapper/连接/角色/search_path偏离原身份时拒绝，不能跨RC写事务沿用。失败取消本次work但不接管caller事务：caller使用fresh有界cleanup做Rollback，失败/busy或无法确认idle时关闭连接，不能归还busy pool。本库没有维护O1的自持socket watcher与双锁清理保证。流程、模块、APP/peer权限与寿命详见[完整细图](runtime-composer.md)，实际专项结果见[验证记录](../verification/runtime-composer.md)。R2的V2材料装配、各actual runtime自核、顶层结束确认、startup/ready/guard及在线资金路径仍为后续门禁。
 
 实际验收还确认[非空周期预算历史前缀证据缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)：现有算法对活动held/window历史保留OperationSnapshotPrefixUnproven，composer继续拒绝。空预算配置不等于完整经营认证；先补SDD与不可变来源证据，再补全非空PB正例，不能据本轮限定通过打开R2在线资金ready。
+
+## 周期预算观察前缀候选（023-B-P1）
+
+按[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)新增独立 `periodicbudgetprefix` 纯包和隔离 SQL 候选，细节见[模块与数据关系图](periodic-budget-prefix.md)。命令和窗口出生共用观察 ordinal，资金 effect 继续使用原 event_seq；回执 JSON 与 cut 在同一锁内原件上生成。新报告自行运行旧 PB 算法，并在新 scope 按唯一 cut 逐命令认证，原 Base 与两类 legacy gap 保留。
+
+候选只在精确 001–022 后的专用 schema 验证，来源字段与三张证据表不由普通 migrate/provision/main/Compose 安装。旧读取器、basis/catalog roots 与 APP 运行证明没有隐式接入新能力；正式 profile、完整组合、追加迁移和启动接线仍按依赖后续推进。CI仅在原other分区的测试命令显式开启PB专项，沿用该job独立PG/JSONL，随机schema内安装候选，其他九分区与默认本地验收不扩范围。GitHub 首页和 Issue/PR 模板仅改变使用与协作入口，不增加运行时模块或权限。实际测试与跳过范围见[本片验证](../verification/periodic-budget-prefix.md)。

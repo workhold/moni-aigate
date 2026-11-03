@@ -1,0 +1,26 @@
+name: 功能建议
+description: 描述业务场景、期望行为与验收条件。
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: 请先查看 README 的能力状态与交付计划。设计和实现按 SDD 推进，请勿填写真实凭据或客户数据。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 业务场景与问题
+      description: 谁在什么场景遇到什么限制？
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 期望行为与验收条件
+      description: 描述输入、输出和成功/失败边界；涉及计费时说明客户售价和上游成本分别如何处理。
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 相关设计与参考
+      description: 可附相关 SDD、协议文档、替代方案或经过脱敏的例子。

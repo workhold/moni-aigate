@@ -1,0 +1,456 @@
+{
+  "date": "2026-11-03",
+  "baseline": "83734076223ffe80d460dd255b45c4f9362e972f",
+  "scope": "periodic_budget_snapshot_prefix_v1_candidate_only",
+  "database": {
+    "host": "127.0.0.1",
+    "port": 55439,
+    "database": "moni_test",
+    "preparation_login": "moni_test",
+    "postgres": "16.15 Homebrew",
+    "timezone": "Asia/Shanghai",
+    "max_connections": 200,
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "full_page_writes": "on",
+    "business_login": "random restricted actual APP; read transaction RR RO"
+  },
+  "frozen_sources": {
+    "internal/periodicbudget/prefix_concurrency_integration_test.go": "a0fcdf3d10d681ff647fc4a92c0f3a4f477f86934447752cbf50959e5e13cbbd",
+    "internal/periodicbudget/prefix_contract_integration_test.go": "dcb108c29963cb1aa0e1e703b505c547d2ca106501e2a3aa34cfd33c40ca8ffb",
+    "internal/periodicbudget/prefix_fault_integration_test.go": "a843ae8b2030b244790c10a377515a2b364430ef0f64976e39ee5376c585b80c",
+    "internal/periodicbudget/prefix_fixture_integration_test.go": "462a3352a9776ebeedf27efea59695cc47af9e9b363a080b616efeacbe3c13aa",
+    "internal/periodicbudgetprefix/check.go": "50dab3183eb3238a42b1d9376643522fdeaeefe82ee461fcd0920ac67545b6b8",
+    "internal/periodicbudgetprefix/check_test.go": "3a51afba18a854f047bd245f9328291357f27b3c7fc2971fc52b9771a2fac514",
+    "internal/periodicbudgetprefix/snapshot.go": "d17c42a92f45cfb912337320ecbc55627eb581c9d808ab19a8dd749db688a402",
+    "internal/periodicbudgetprefix/types.go": "ea508f59ab2d9c322ee56911b1c88d0d07124506f617e6d57e7ad20de7e2cf67",
+    "internal/periodicbudgetprefix/values.go": "562321d310e50fb4d67757e5daa8dde983b7e933e21a6d2bd5acf273ad8b4fa4",
+    "specs/023-periodic-products/b-prefix-candidate.sql": "b225c3ff61b735d6830aed1d25edc27bc4784f8e251cb2c1d656196d8d9c630e",
+    "specs/023-periodic-products/b-prefix-contract.md": "fa2de2dd188da3ad57b97880ef6e5babf558e28d350ec0c6f32fc58a00007e4e",
+    "specs/023-periodic-products/b-prefix-permissions.sql": "aaea2994d5a79726df8b5c1767b5adb054d14ee8cb81fa12b43b87d24a2f28bf"
+  },
+  "final_specialized": [
+    {
+      "command": "PB_PREFIX_DATABASE_URL=<dedicated local test database> go test -json -race -p 1 ./internal/periodicbudget -run '^TestPBPrefix' -count=1 -timeout 180s",
+      "log": ".local/pb-prefix-integrated-final.jsonl",
+      "log_sha256": "61a893987b4f1808e8e30cc40d5883f56a527fb93636625c4f243b8f69a1065b",
+      "top_level": {
+        "pass": 15
+      },
+      "parent_and_child": {
+        "pass": 46
+      },
+      "top_level_names": [
+        "TestPBPrefixPostgresReadCommittedFreshSnapshot",
+        "TestPBPrefixPostgresReturningAndMultirow",
+        "TestPBPrefixPGCommanderAllScopes",
+        "TestPBPrefixPGSameFinancialCutWindowOrder",
+        "TestPBPrefixPGRealCustomerSupplierEffectsAndCommands",
+        "TestPBPrefixPGLegacyControlRemainsUncovered",
+        "TestPBPrefixPGRestrictedImmutabilityAndForgery",
+        "TestPBPrefixPGOriginalProjectionProfileRemainsDenied",
+        "TestPBPrefixPGSavepointAndFullRollback",
+        "TestPBPrefixPGSourceInsertOverridesCallerWitness",
+        "TestPBPrefixPGPrecreatedOriginCannotEnrollControl",
+        "TestPBPrefixPGCTECommandThenWindowAtSameCut",
+        "TestPBPrefixPGCrossDayCarryKeepsOriginalCustomerAndSupplierWindows",
+        "TestPBPrefixPGFaultRealDeadlockRetryBound",
+        "TestPBPrefixPGFaultDisconnectDuringCommitReturnsUnknown"
+      ],
+      "packages": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+          "result": "pass",
+          "elapsed_seconds": 9.271
+        }
+      ]
+    },
+    {
+      "command": "go test -race -json ./internal/periodicbudgetprefix -count=1",
+      "log": ".local/pb-prefix-pure-root-final.jsonl",
+      "log_sha256": "949d776b127d08e198d44f1c3869f1512ab619e7ea28fbd9f8b11c8780bf03f8",
+      "top_level": {
+        "pass": 19
+      },
+      "parent_and_child": {
+        "pass": 227
+      },
+      "top_level_names": [
+        "TestHandCalculatedPrefixesAndOriginalBoundary",
+        "TestSameAmountCutsStillRequireRevisionAndTail",
+        "TestEmptyWindowBeforeOrAfterCommandAtSameFinancialCut",
+        "TestLaterWindowDoesNotInvalidateEarlierNull",
+        "TestCrossWindowCarryAndLaterSettlement",
+        "TestChangedConfigurationAndNoOps",
+        "TestLegacyDomainRemainsUncovered",
+        "TestCertifiedCommandPreservesLegacyMembershipGap",
+        "TestCertifiedCommandPreservesLegacyEffectBoundaryGap",
+        "TestDeclaredCoverageNeverFallsBackOnMissingSources",
+        "TestObservationFieldsAndLineageMutations",
+        "TestEveryMetadataTextFieldRejectsInvalidEncoding",
+        "TestObservationTimeMetadataBoundaries",
+        "TestBaseCorruptionCannotBeQualifiedByWitnesses",
+        "TestSnapshotWireStrictnessAndEscapedKeys",
+        "TestSharedBudgetsAndSafeErrors",
+        "TestCancellationNeverReturnsPartialEvidence",
+        "TestOnlySafeCountsAreReturned",
+        "FuzzCheckSnapshot"
+      ],
+      "packages": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefix",
+          "result": "pass",
+          "elapsed_seconds": 1.7650000000000001
+        }
+      ]
+    }
+  ],
+  "earlier_logs": [
+    {
+      "path": ".local/pb-prefix-contract-first.log",
+      "sha256": "970471e50f69b5b3f652e96fe0c0aa3cf7a315f6998297d6c75e22202ae8a41e"
+    },
+    {
+      "path": ".local/pb-prefix-contract-second.log",
+      "sha256": "abb696fa0f23fd5747073355552c308bc8438af3be6de4425d90506408648bc9"
+    },
+    {
+      "path": ".local/pb-prefix-contract-race-final.log",
+      "sha256": "0ebcb87ed6d43f3a90618f9c47b6972cfb6e9c629c92ce18760477c513f49407"
+    },
+    {
+      "path": ".local/pb-prefix-concurrency-first.jsonl",
+      "sha256": "713e2c91330b52b648d4b5664feaf3ae4f2af3cec74d6258d8987ac84edd11c2"
+    },
+    {
+      "path": ".local/pb-prefix-concurrency-second.jsonl",
+      "sha256": "3874bd83a90015396326fffd09de4a8142b59936682050d2e54fa7aa50626ef9"
+    },
+    {
+      "path": ".local/pb-prefix-crossday-race.log",
+      "sha256": "d9b97748a4d7c857a2655b1a3b75b0e021785bfd2ce9c69c84dd5094ed2ee53d"
+    },
+    {
+      "path": ".local/pb-prefix-fault-race.log",
+      "sha256": "da0d5e832011584d121bf136e0ec086dbf5aaef5ee5064dfcba9ab2d833e4ff2"
+    },
+    {
+      "path": ".local/pb-prefix-pure.json",
+      "sha256": "7b68c827ab31cd8a6276ba29c34252e3fe431a658a92f2bba821c0248b46b5b1"
+    }
+  ],
+  "architecture_render": {
+    "date": "2026-11-03",
+    "mermaid_version": "12.2.0",
+    "architecture_sha256": "0381bab83afdf92083744dce145e126f039427bffc4bad357463365c4e37680f",
+    "sources": [
+      {
+        "file": "docs/architecture/README.md",
+        "sha256": "0381bab83afdf92083744dce145e126f039427bffc4bad357463365c4e37680f"
+      },
+      {
+        "file": "README.md",
+        "sha256": "28a01d11a5cb873bb5c80a5b37e28c7876ba7c1a9e5c685d637ae7ca7c5f7e09"
+      },
+      {
+        "file": "docs/architecture/periodic-budget-prefix.md",
+        "sha256": "c1c888df64ff56cd30f18043bdffc702e222017b523da4074e023d755d17073a"
+      }
+    ],
+    "diagrams": [
+      {
+        "diagram": 1,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 1
+      },
+      {
+        "diagram": 2,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 2
+      },
+      {
+        "diagram": 3,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 3
+      },
+      {
+        "diagram": 4,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 4
+      },
+      {
+        "diagram": 5,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 5
+      },
+      {
+        "diagram": 6,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 6
+      },
+      {
+        "diagram": 7,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 7
+      },
+      {
+        "diagram": 8,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 8
+      },
+      {
+        "diagram": 9,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 9
+      },
+      {
+        "diagram": 10,
+        "type": "er",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 10
+      },
+      {
+        "diagram": 11,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 11
+      },
+      {
+        "diagram": 12,
+        "type": "sequence",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 12
+      },
+      {
+        "diagram": 13,
+        "type": "er",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 13
+      },
+      {
+        "diagram": 14,
+        "type": "er",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 14
+      },
+      {
+        "diagram": 15,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 15
+      },
+      {
+        "diagram": 16,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 16
+      },
+      {
+        "diagram": 17,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 17
+      },
+      {
+        "diagram": 18,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 18
+      },
+      {
+        "diagram": 19,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 19
+      },
+      {
+        "diagram": 20,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 20
+      },
+      {
+        "diagram": 21,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/README.md",
+        "source_index": 21
+      },
+      {
+        "diagram": 22,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "README.md",
+        "source_index": 1
+      },
+      {
+        "diagram": 23,
+        "type": "flowchart-v2",
+        "parsed": true,
+        "rendered": true,
+        "file": "docs/architecture/periodic-budget-prefix.md",
+        "source_index": 1
+      }
+    ],
+    "module_image_sha256": "502952fc4619eec78f4cd8bb3a95a78e9a038a702dc71d5a39513b59d7453963",
+    "module_size": {
+      "width": 12452,
+      "height": 4696
+    },
+    "detail_image_sha256": "efa8d6f89435310df11c1c8c263082965ff51136cf9737a16ffd90c2ba616ad3",
+    "detail_size": {
+      "width": 1186,
+      "height": 519
+    },
+    "pass": true
+  },
+  "documentation_validation": {
+    "local_link_targets": 1121,
+    "missing_local_targets": [],
+    "readme_anchor_references": 11,
+    "missing_readme_anchors": [],
+    "ci_packages": {
+      "other": 49,
+      "billing": 1,
+      "identity": 1,
+      "server": 1
+    },
+    "all_packages": 52,
+    "link_sources": [
+      "README.md",
+      "CONTRIBUTING.md",
+      "docs/architecture/README.md",
+      "docs/architecture/periodic-budget-prefix.md",
+      "docs/verification/periodic-budget-prefix.md",
+      "docs/design/HLD.md",
+      "docs/design/LLD.md",
+      "docs/design/delivery-plan.md",
+      "docs/runbooks/development.md",
+      "docs/verification/github-ci-profile.md"
+    ],
+    "github_issue_yaml_parsed": 2,
+    "workflow_yaml_parsed": true,
+    "workflow_bash_scripts_syntax_checked": 7
+  },
+  "remaining_boundaries": [
+    "successful commit with lost reply not injected",
+    "40001 not independently injected",
+    "some wrong-kind/cross-control cases also violate ordinal",
+    "production installer/material isolation/profile/complete reader/runtime/migration/startup are not implemented by this candidate"
+  ],
+  "whole_repository": {
+    "check": {
+      "command": "make check",
+      "exit_code": 0,
+      "elapsed_seconds": 6.204,
+      "log": ".local/pb-prefix-final-check.log",
+      "log_sha256": "f63402ea9824f722fa7f1ad033c4c86feed16139db5e802a877d19c76a87ed04",
+      "explicit_test_database": "127.0.0.1:55439/moni_test / moni_test",
+      "specialized_opt_in": false
+    },
+    "verify_mvp": {
+      "command": "make verify-mvp",
+      "exit_code": 0,
+      "elapsed_seconds": 1072.572,
+      "log": ".local/pb-prefix-final-verify_mvp.log",
+      "log_sha256": "0b3daafd6728fe842cc16d96ce5f6b223a8a618fc56cf4327887e088d1a68f53",
+      "explicit_test_database": "127.0.0.1:55439/moni_test / moni_test",
+      "specialized_opt_in": false,
+      "frontend_tests": 286,
+      "frontend_pass": 286,
+      "go_tested_packages": 48,
+      "packages_without_test_files": 4,
+      "runtime_source_drift": []
+    },
+    "post_ci_check": {
+      "command": "make check",
+      "exit_code": 0,
+      "elapsed_seconds": 6.124,
+      "log": ".local/pb-prefix-post-ci-check.log",
+      "log_sha256": "c2906521955f5c4f2b543386e40e787e75d76b157b0d114485d30ff050a1e72a",
+      "reason": "final CI command environment and documentation updates; code/test/SQL/contract unchanged"
+    }
+  },
+  "fuzz": {
+    "command": "go test ./internal/periodicbudgetprefix -run '^$' -fuzz '^FuzzCheckSnapshot$' -fuzztime=10s",
+    "result": "pass",
+    "executions": 55604,
+    "new_interesting": 71,
+    "total_interesting": 74,
+    "elapsed_seconds": 11.615,
+    "race": false,
+    "independent_log_retained": false,
+    "evidence": "subagent original tool output only; pure race JSON is separate"
+  },
+  "ci_candidate_opt_in": {
+    "workflow": ".github/workflows/ci.yml",
+    "workflow_sha256": "9aaf6c17e95ea7e147e7025937d4079e8a063dc730bc6554bc0575746b8703b4",
+    "enabled_partition": "other",
+    "environment_scope": "final Go test command only",
+    "other_partitions_enabled": false,
+    "production_installation": false,
+    "first_linux_result": "not yet executed; inspect exact pushed commit"
+  },
+  "initial_fault_test_failure": {
+    "reason": "Reader test pepper was not exactly 32 bytes",
+    "production_change": false,
+    "failed_file_log_retained": false,
+    "evidence": "initial log path overwritten by final run; original failure only retained in agent tool output",
+    "reconstructed_log": false
+  },
+  "source_identity": {
+    "frozen_sources_unchanged": true,
+    "later_changes": "CI command environment and documentation only; no frozen code/test/SQL/contract or Makefile changes"
+  }
+}

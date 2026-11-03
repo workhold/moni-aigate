@@ -154,3 +154,9 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 2026-11-03后续先冻结[R1-B完整APP运行合同](../../specs/022-self-service-payments/c0-runtime-composer-contract.md)：根串行组合当前完整catalog/history、六条静态历史映射与同RR原件/八域图；V1纯格式、原件投影和APP文件loader可独立并行。caller-owned失败清理、30秒发行与5秒窄检查先于实现明确，组合库已实现，限定真实APP/genuine sandbox结果与整仓/架构/推送分别见[记录](../verification/runtime-composer.md)；完整PB历史认证继续下述证据门禁。R2完整V2交付/正式迁移/维护CLI/全部在线资金及后续阶段保持原范围。
 
 2026-11-03运行验收发现：[非空PB历史来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)是原算法有意保留的 `OperationSnapshotPrefixUnproven`，不因APP组合库落地而消失。空control配置不视为活动预算认证；需先冻结command前缀/window创建cut及必要append-only证据，保留旧历史缺证，再验完整经营图。此项仍是R1-B完整验收前置，不能据本轮限定PASS推进在线资金ready。
+
+2026-11-03 B-P1先冻结[命令前缀与窗口出生合同](../../specs/023-periodic-products/b-prefix-contract.md)，并行实现独立纯包、候选SQL/最小APP权限与restricted actual APP专库语义矩阵，根负责并发快照/语句副作用与架构/交付汇合。候选不改旧迁移、旧核验器或正式运行入口，实际执行范围见[本片记录](../verification/periodic-budget-prefix.md)。README补导航、首次经营与配置，新增Issue/PR模板，代码与设计一起推送。
+
+下一依赖仍按合同§1：精确001–022安装/材料隔离→新完整scanner/basis/catalog/report profile与同snapshot组合→正式append-only迁移/provision/startup。旧control不补造origin，原Base与legacy缺证保留，完整R1-B和R2线上门禁持续关闭；C1/C2/C3、商品、媒体扩展、供应商与容器/1Panel、生产/HA和最后性能阶段继续，不以本候选替代最后阶段交付。
+
+本片根最终专项15顶层/46父子终态PG race与19顶层/227父子纯race全部通过；`make verify-mvp`指定专库1072.572秒、286前端/48Go包race/vet/build通过，默认独立opt-in仍分别记账。CI仅other分区命令级显式运行PB候选，保留精确22与随机schema/actual APP隔离；最终静态/架构与推送后CI按[验证记录](../verification/periodic-budget-prefix.md)核对，不将本地成功当Linux、正式迁移或生产能力。

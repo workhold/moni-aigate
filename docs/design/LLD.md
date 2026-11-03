@@ -919,3 +919,11 @@ Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx
 [静态派生器](../../internal/fundinglotcatalog/wallet_expected.go)只从已SHA认证的原根复制四column ACL、四APP effective SELECT与四条列级pg_shdepend ACL dependency（sandbox在两peer文档另保存同一依赖的镜像），完整新envelope再次固定SHA认证；其他静态节点只读共享、变更数组和节点owned，schema canonical不变。完整collector的raw/normalized bounds、compare和proof发行共用同一descriptor，旧metadata候选路径仍用旧profile。[独立Python复算](../../scripts/check-wallet-profile-roots.py)与Go逐variant摘要相同；[访问清单](../../specs/022-self-service-payments/c0-wallet-readset.json)按物理列去重并固定源SHA，scanner侧双向检查、PG侧逐列与实际SELECT/ReadWallet核可读。candidate SQL只给owner测试安装，不是已应用migration。验证与未验边界见[记录](../verification/runtime-read-profile.md)，历史cutover→current根映射与独立RuntimeProof已由R1-B实现，限定验收与PB门禁见下段；生产接线仍在后续。
 
 2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)仍使真实held/window历史为Indeterminate；完整R1-B验收与R2线上装配不能越过此门禁。后续先设计可证明的command前缀及window创建cut，不放宽现有Unproven或重签旧原件。
+
+## B-P1：周期预算不可变观察来源
+
+[候选](../../specs/023-periodic-products/b-prefix-candidate.sql)增加origin/head/journal三关系与operation/window不可变pointer；最后受审BEFORE在原scope→control锁序内捕获同份c/w，独立生成fresh journal，双向DEFERRABLE复合FK绑定kind/source/control/id/top xid，command另绑定原created_at。head仅按原ordinal+1前进且不反取control锁；函数固定search_path且为invoker，APP只取得候选最小列写入/函数权限，projection不新增权限。
+
+[`periodicbudgetprefix.Check`](../../internal/periodicbudgetprefix/check.go)接原完整PB图与来源投影，自己运行旧算法，分别验证origin、source、观察连续链与精确cut/tail，再扫描资金前缀推导held/spent/carry和窗口revision/tail，严格比对12/5字段回执。窗口存在按birth.ordinal判断，不搜索同金额的其他cut。合并100000行/16MiB逻辑预算，单字段65536字节；资源/取消/超时零报告。新scope只解决已认证命令的prefix gap，原Base与legacy membership/effect缺证不改。
+
+actual APP专库test-only reader不等于生产scanner或authority。精确安装/材料隔离、新readset/basis/catalog与历史→current映射、pre/post/runtime组合、正式追加迁移和普通启动接线仍依次推进；[精确合同](../../specs/023-periodic-products/b-prefix-contract.md)、[架构](../architecture/periodic-budget-prefix.md)与[执行记录](../verification/periodic-budget-prefix.md)共同限定本片。

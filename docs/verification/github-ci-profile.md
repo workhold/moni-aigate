@@ -16,3 +16,7 @@
 本机未执行Linux Docker环境；推送后的新远端CI仍需看实际运行结果，不能用本地测试或YAML解析替代。默认C0专项不因使用PG16镜像自动取得新catalog profile认证。
 
 后续41339443048已实际运行并失败；本页保留首轮修订来源和专项范围，第二轮真实结果、动态顶层分区及数据库时区修订见[后续记录](github-ci-second-run.md)。
+
+## B-P1 候选的后续测试接线
+
+2026-11-03新增预算观察来源候选后，原十分区划分保持；仅在`other`的最终Go执行处通过`env`传入`PB_PREFIX_DATABASE_URL=$TEST_DATABASE_URL`，复用本job独立PG16/loopback/trust，测试各自创建随机schema与实际受限APP。原JSONL、pipefail、包/顶层完整分区校验及期限保持，其他九个分区与生产运行不安装候选。Homebrew专库已验，首次Linux CI按新提交另验；精确范围与后续结果见[本片记录](periodic-budget-prefix.md)，不改写本页历史失败或旧SHA。
