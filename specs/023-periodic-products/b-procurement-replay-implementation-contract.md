@@ -28,6 +28,14 @@ Required只从本次raw原件的无损旧Base投影独立计算，不接收旧Re
 
 ## 实施责任与完整门禁
 
+### AttemptCost 的两个私有实施子域
+
+成本历史入口为 `checkAttemptCostHistory(work, Rows)`，拥有出生/quote、delivery、normal/reset/mutation、更正、恢复、outbox与当前成本的固定前九项计数和三个attempt命题候选。`checkReconciliationFinish(work, Rows)`拥有ReconciliationRows、CustomerFinishRows、CustomerLedgerRows、CustomerPBRows，独立核三种action、无attempt派生incoming及finish的结果和真实效果；两者都只读取本次raw输入，共享同一work。子结果的Complete只描述其明确的子范围，不是整个AttemptCost或来源闭合。最终AttemptCost必须等两者全部义务实施并执行后才能完整；本片不能因任一子域通过开放公共Check。
+
+finish按原实际时点分别核approval、settlement decision和最终financial clock；existing先于decision clock，pending保留reservation/billing/case reason的实际改变。new settlement独立计算冻结客户两维费率的单次ceil、R上限、waived和最终过期释放；HELD/AVAILABLE即使零delta仍各有真实line，REVENUE仅最终charge>0。profile-block按实际最终raw>R决定，复用旧block不强制旧request=current。账本与PB效果逐对象双向对照，不能以原件存在替代准确金额/来源；所有资金全历史与PB配置/窗口链继续依赖原完整checker。Reconcile mutable last-source的总序、请求/attempt真实历史cut等尚未实现时保留准确Unimplemented，禁止用当前投影反填历史或以UUID/时间排序。
+
+finish固定计数自然键：ReconciliationRows按source ID（缺source的原case单独物理类型）；CustomerFinishRows按outcome ID（缺outcome按source义务ID）；CustomerLedgerRows按(outcome ID,account ID)，孤立原journal/line分类型；CustomerPBRows按(outcome ID,scope)，孤立原event分类型。同一对象多错只计一次，不同表相同ID不互抵。
+
 来源域独立检查32表全部scalar/NULL联合/68 generated、18 canonical/root模板、companion与原件反向槽、request/node/account/member四链；业务域按原合同逐项重放请求输入/meter/sticky、attempt quote/cost/finish、account gate/成员/采购效果/提案/恢复。不复用writer或SQLcodec作为计算expected，不用今天当前状态填补过去before，不按时间/UUID排序。
 
-工作文件单一owner：来源域 `source_closure*.go`，请求域 `request_replay*.go`，账户域 `account_replay*.go`，共享support与Required由根集成；attempt成本域随后按同一完整合同继续。所有结果汇合后根复核精确实际范围、HLD/LLD/统一架构与验证，再按AGENTS刷新/只读检查/Make。PG仍仅根独占串行；纯核没有DB、supplier或资金权限。
+工作文件单一owner：来源域 `source_closure*.go`，请求域 `request_replay*.go`，账户域 `account_replay*.go`，成本历史 `attempt_cost*.go`、客户结算 `finish_replay*.go`，共享support与Required由根集成；所有子域继续沿完整合同推进，局部实现不缩最终门禁。所有结果汇合后根复核精确实际范围、HLD/LLD/统一架构与验证，再按AGENTS刷新/只读检查/Make。PG仍仅根独占串行；纯核没有DB、supplier或资金权限。

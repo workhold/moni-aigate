@@ -2,6 +2,8 @@
 
 2026-11-03；实施基线 `5e5dcdf6867b58a1107abe889895e08320b66cfc`。先冻结[实施合同](../../specs/023-periodic-products/b-procurement-replay-implementation-contract.md)，再并行实现来源、请求与账户，根独立实现 Required。模块关系、真实调用与后续接线见[架构细图](../architecture/procurement-replay.md)。
 
+本页保留首轮验收范围和当期余项。后续成本/finish、来源严格路由与冻结列、账户金额审计 ABI 修正及当前剩余义务见[续片记录](procurement-cost-finish-replay.md)，不能用本页旧余项推定新增部分尚未实现，也不能把首轮测试结果当成续片验收。
+
 本片仍无公共 `Check`，没有新 profile 或线上调用。所有结果均为包内叶子；旧采购 checker、V3、数据库候选材料与迁移均不改动。
 
 ## Required 与资源合同

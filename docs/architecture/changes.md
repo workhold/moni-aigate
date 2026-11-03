@@ -3280,3 +3280,53 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `specs/023-periodic-products/plan.md`
 
 </details>
+
+## 2026-11-03T15:42:53Z · 6bbf5566284f
+
+采购成本历史与Reconcile客户结算私有核验、严格路由及冻结快照续片；修正Money审计ABI和自然计数，复核README/HLD/LLD/调用图与未完成历史cut，无正式迁移或线上接线
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1745 个源文件；本次 27 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/procurement-cost-finish-replay.md`
+- modified `docs/verification/procurement-replay-leaves.md`
+- modified `internal/procurementprefix/account_replay_barriers.go`
+- modified `internal/procurementprefix/account_replay_test.go`
+- added `internal/procurementprefix/attempt_cost.go`
+- added `internal/procurementprefix/attempt_cost_events.go`
+- added `internal/procurementprefix/attempt_cost_objects.go`
+- added `internal/procurementprefix/attempt_cost_test.go`
+- added `internal/procurementprefix/finish_replay.go`
+- added `internal/procurementprefix/finish_replay_edges_test.go`
+- added `internal/procurementprefix/finish_replay_effects.go`
+- added `internal/procurementprefix/finish_replay_json.go`
+- added `internal/procurementprefix/finish_replay_test.go`
+- modified `internal/procurementprefix/source_closure.go`
+- added `internal/procurementprefix/source_closure_birth_snapshots.go`
+- added `internal/procurementprefix/source_closure_birth_snapshots_test.go`
+- added `internal/procurementprefix/source_closure_original_unions.go`
+- added `internal/procurementprefix/source_closure_original_unions_test.go`
+- added `internal/procurementprefix/source_closure_routes.go`
+- added `internal/procurementprefix/source_closure_routes_test.go`
+- modified `specs/023-periodic-products/b-procurement-replay-implementation-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-read-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T15:43:44Z · a8ee19bce24b
+
+归档成本与finish续片最终87顶层434子例race及make check通过；复核1745文件、README部署说明和私有子域未完成边界，代码与依赖无后续改变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1745 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-cost-finish-replay.md`
+
+</details>

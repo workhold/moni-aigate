@@ -895,7 +895,7 @@ func (f *acFixture) approve(amount int, basis string) {
 	birth := ProposalBirthRow{ID: birthID, RootID: root, StepNo: "1", StepKind: "proposal_birth", CreatedXID: "7", TenantID: f.actor, RequestID: f.request, AttemptID: f.attempt, ProposalID: proposalID, Requester: f.actor, RequesterRole: "finance_operator", RequesterStatus: "active", ReservationRevision: strconv.Itoa(f.pr), ReservationState: f.pstate, ReservationHeld: strconv.Itoa(f.ph), ReservationSpent: strconv.Itoa(f.ps), ReservationAnomaly: f.anomaly, MemberCount: strconv.Itoa(f.count), MemberTail: f.memberTail, AccountID: f.account, AccountOrdinalCut: strconv.Itoa(f.ordinal), AccountTailCut: f.last, AuditID: proposalAudit}
 	f.rows.PrefixRows.ProposalBirths = append(f.rows.PrefixRows.ProposalBirths, birth)
 	proposal := ProcurementCostProposalRow{ID: proposalID, TenantID: f.actor, AttemptID: f.attempt, Amount: strconv.Itoa(amount), Basis: basis, EvidenceRef: "invoice:fixture", Reason: "supplier invoice", Requester: f.actor, ExpectedReservationRevision: strconv.Itoa(f.pr), ExpectedEvidenceCount: strconv.Itoa(f.count), State: "approved", CreatedAt: f.at, ApprovedAt: f.at}
-	f.rows.OriginalRows.AuditEvents = append(f.rows.OriginalRows.AuditEvents, AuditEventRow{ID: proposalAudit, Actor: f.actor, TenantScope: acTestPtr(f.actor), Action: "procurement.cost_proposed", Target: proposalID, RequestID: f.request, SanitizedDiff: acTestJSON(map[string]any{"attempt_id": f.attempt, "amount": amount, "basis": basis, "evidence_ref": proposal.EvidenceRef})})
+	f.rows.OriginalRows.AuditEvents = append(f.rows.OriginalRows.AuditEvents, AuditEventRow{ID: proposalAudit, Actor: f.actor, TenantScope: acTestPtr(f.actor), Action: "procurement.cost_proposed", Target: proposalID, RequestID: f.request, SanitizedDiff: acTestJSON(map[string]string{"attempt_id": f.attempt, "amount": strconv.Itoa(amount), "basis": basis, "evidence_ref": proposal.EvidenceRef})})
 	f.addNode(root, "1", "proposal_birth", birthID)
 	approvalID, approvalRoot, operation, approver, transition, event, correction, audit := f.id(), f.id(), f.id(), f.id(), f.id(), f.id(), f.id(), f.id()
 	j := f.journal(approvalRoot, "cost_corrected", "2", "procurement_transition", "budget_event", event)
@@ -932,7 +932,7 @@ func (f *acFixture) approve(amount int, basis string) {
 	f.rows.PrefixRows.ApprovalConsumptions = append(f.rows.PrefixRows.ApprovalConsumptions, approval)
 	f.rows.OriginalRows.ProcurementCostProposals = append(f.rows.OriginalRows.ProcurementCostProposals, proposal)
 	f.rows.OriginalRows.ProviderCostCorrections = append(f.rows.OriginalRows.ProviderCostCorrections, ProviderCostCorrectionRow{ID: correction, TenantID: f.actor, AttemptID: f.attempt, OperationID: "procurement:" + operation, Amount: strconv.Itoa(amount), Basis: basis, EvidenceRef: proposal.EvidenceRef})
-	f.rows.OriginalRows.AuditEvents = append(f.rows.OriginalRows.AuditEvents, AuditEventRow{ID: audit, Actor: approver, TenantScope: acTestPtr(f.actor), Action: "procurement.cost_approved", Target: proposalID, RequestID: f.request, SanitizedDiff: acTestJSON(map[string]any{"attempt_id": f.attempt, "amount": amount, "evidence_ref": proposal.EvidenceRef})})
+	f.rows.OriginalRows.AuditEvents = append(f.rows.OriginalRows.AuditEvents, AuditEventRow{ID: audit, Actor: approver, TenantScope: acTestPtr(f.actor), Action: "procurement.cost_approved", Target: proposalID, RequestID: f.request, SanitizedDiff: acTestJSON(map[string]string{"attempt_id": f.attempt, "amount": strconv.Itoa(amount), "evidence_ref": proposal.EvidenceRef})})
 	f.addNode(approvalRoot, "1", "approval_consumed", approvalID)
 	t := ProcurementTransitionRow{ID: transition, RootID: approvalRoot, StepNo: "2", StepKind: "procurement_transition", CreatedXID: "7", CreatedAt: f.at, TenantID: f.actor, RequestID: f.request, AttemptID: f.attempt, AccountID: f.account, BindingID: f.binding, CauseKind: "approval_consumed", CauseSourceID: approvalID, EventID: event, JournalID: j.ID, EventType: "cost_corrected", EventKey: "correction:" + operation, EvidenceRef: proposal.EvidenceRef, HeldDelta: strconv.Itoa(-beforeHeld), SpentDelta: strconv.Itoa(amount - beforeSpent), BeforeRevision: acTestPtr(strconv.Itoa(beforeRevision)), BeforeState: &beforeState, BeforeHeld: acTestPtr(strconv.Itoa(beforeHeld)), BeforeSpent: acTestPtr(strconv.Itoa(beforeSpent)), BeforeAnomaly: &beforeAnomaly, AfterRevision: strconv.Itoa(f.pr), AfterState: f.pstate, AfterHeld: "0", AfterSpent: strconv.Itoa(amount), AfterAnomaly: afterAnomaly, InputBound: strconv.Itoa(f.input), OutputBound: strconv.Itoa(f.output), UpperAmount: strconv.Itoa(f.upper), CostVersionID: f.cost, CostInputRate: strconv.Itoa(f.inputRate), CostOutputRate: strconv.Itoa(f.outputRate), CostBasis: "contract"}
 	f.rows.PrefixRows.ProcurementTransitions = append(f.rows.PrefixRows.ProcurementTransitions, t)
@@ -954,7 +954,7 @@ func TestAccountReplayProposalApprovalMemberBarrier(t *testing.T) {
 	}, func(r *Rows) {
 		r.PrefixRows.ApprovalConsumptions[0].Approver = r.PrefixRows.ApprovalConsumptions[0].Requester
 	}, func(r *Rows) { r.OriginalRows.ProcurementCostProposals[0].Basis = "contract" }, func(r *Rows) {
-		r.OriginalRows.AuditEvents[len(r.OriginalRows.AuditEvents)-1].SanitizedDiff = `{"attempt_id":"wrong","amount":25,"evidence_ref":"invoice:fixture"}`
+		r.OriginalRows.AuditEvents[len(r.OriginalRows.AuditEvents)-1].SanitizedDiff = `{"attempt_id":"wrong","amount":"25","evidence_ref":"invoice:fixture"}`
 	}} {
 		copy := acClone(f.rows)
 		mutation(&copy)
@@ -970,6 +970,49 @@ func TestAccountReplayProposalApprovalMemberBarrier(t *testing.T) {
 	acClean(t, same.rows)
 	if same.pr != 2 {
 		t.Fatal("same amount correction fixture advanced p revision")
+	}
+}
+
+func TestAccountReplayProcurementAuditAmountABI(t *testing.T) {
+	// Pin the real legacy boundary to literal bytes. The replay and its fixture
+	// below use independent string expectations, never this writer's encoding.
+	encoded, err := json.Marshal(map[string]any{"amount": billing.Money(25)})
+	if err != nil || string(encoded) != `{"amount":"25"}` {
+		t.Fatalf("legacy Money audit ABI changed: %s %v", encoded, err)
+	}
+	f := newACFixture()
+	f.reserve(70, 30)
+	f.evidence("done", "confirmed_final", 40, 20, "confirm_cost", "settled", 0, 60, false, "none")
+	f.approve(25, "invoice")
+	for index := range f.rows.OriginalRows.AuditEvents {
+		audit := &f.rows.OriginalRows.AuditEvents[index]
+		switch audit.Action {
+		case "procurement.cost_proposed":
+			audit.SanitizedDiff = fmt.Sprintf(`{"attempt_id":%q,"amount":"25","basis":"invoice","evidence_ref":"invoice:fixture"}`, f.attempt)
+		case "procurement.cost_approved":
+			audit.SanitizedDiff = fmt.Sprintf(`{"attempt_id":%q,"amount":"25","evidence_ref":"invoice:fixture"}`, f.attempt)
+		}
+	}
+	acClean(t, f.rows)
+	if got := acRun(t, f.rows); len(got.Candidates.ProposalBarrier) != 1 {
+		t.Fatal("literal canonical Money strings were not nominated")
+	}
+	for _, action := range []string{"procurement.cost_proposed", "procurement.cost_approved"} {
+		for _, amount := range []string{`25`, `25.0`, `2.5e1`, `"025"`, `"+25"`, `"25.0"`, `"2.5e1"`, `null`} {
+			t.Run(action+"/"+amount, func(t *testing.T) {
+				rows := acClone(f.rows)
+				for index := range rows.OriginalRows.AuditEvents {
+					audit := &rows.OriginalRows.AuditEvents[index]
+					if audit.Action == action {
+						audit.SanitizedDiff = strings.Replace(audit.SanitizedDiff, `"amount":"25"`, `"amount":`+amount, 1)
+					}
+				}
+				got := acRun(t, rows)
+				if len(got.Candidates.ProposalBarrier) != 0 || action == "procurement.cost_proposed" && got.Stats.ProposalRows != 1 || action == "procurement.cost_approved" && got.Stats.ApprovalRows != 1 {
+					t.Fatalf("noncanonical audit amount accepted: %#v", got)
+				}
+			})
+		}
 	}
 }
 

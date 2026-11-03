@@ -1,7 +1,6 @@
 package procurementprefix
 
 import (
-	"encoding/json"
 	"sort"
 	"strconv"
 	"strings"
@@ -55,7 +54,7 @@ func (e *acReplay) checkProposals() {
 		amount, money := acInt(proposal.Amount)
 		good := found && !duplicate && valid && held && members && e.observes(birth.AttemptID, birth.AccountID, cut.ordinal, node) && money && amount >= 0 && (proposal.Basis == "contract" || proposal.Basis == "invoice") && acReference(proposal.EvidenceRef) && len(proposal.Reason) >= 1 && len(proposal.Reason) <= 200 && birth.RequesterRole == "finance_operator" && birth.RequesterStatus == "active" && proposal.Requester == birth.Requester && proposal.TenantID == birth.TenantID && proposal.AttemptID == birth.AttemptID && p.account == birth.AccountID && p.state != "prepared" && p.state != "sending" && birth.ReservationRevision == p.revision && birth.ReservationState == p.state && birth.ReservationHeld == p.held && birth.ReservationSpent == p.spent && birth.ReservationAnomaly == p.anomaly && birth.MemberCount == strconv.FormatInt(count, 10) && acSamePtr(birth.MemberTail, tail) && proposal.ExpectedReservationRevision == p.revision && proposal.ExpectedEvidenceCount == birth.MemberCount && (acCmp(proposal.Amount, p.spent) >= 0 || proposal.Basis == "invoice")
 		audit, audited := e.audit[tupleKey(birth.AuditID)]
-		good = good && audited && audit.Actor == birth.Requester && audit.Action == "procurement.cost_proposed" && audit.Target == proposal.ID && acPtrEq(audit.TenantScope, birth.TenantID) && audit.RequestID == birth.RequestID && e.jsonMatches(audit.SanitizedDiff, map[string]any{"attempt_id": birth.AttemptID, "amount": json.Number(proposal.Amount), "basis": proposal.Basis, "evidence_ref": proposal.EvidenceRef})
+		good = good && audited && audit.Actor == birth.Requester && audit.Action == "procurement.cost_proposed" && audit.Target == proposal.ID && acPtrEq(audit.TenantScope, birth.TenantID) && audit.RequestID == birth.RequestID && e.jsonMatches(audit.SanitizedDiff, map[string]any{"attempt_id": birth.AttemptID, "amount": proposal.Amount, "basis": proposal.Basis, "evidence_ref": proposal.EvidenceRef})
 		if !good {
 			e.proposalBad(birth.ProposalID, birth.AccountID)
 		}
@@ -86,7 +85,7 @@ func (e *acReplay) checkProposals() {
 		journal, present := e.journals[tupleKey(transition.JournalID)]
 		good = good && present && journal.Ordinal == strconv.FormatInt(cut.ordinal+1, 10)
 		audit, audited := e.audit[tupleKey(approval.AuditID)]
-		good = good && audited && audit.Actor == approval.Approver && audit.Action == "procurement.cost_approved" && audit.Target == approval.ProposalID && acPtrEq(audit.TenantScope, approval.TenantID) && audit.RequestID == approval.RequestID && e.jsonMatches(audit.SanitizedDiff, map[string]any{"attempt_id": approval.AttemptID, "amount": json.Number(proposal.Amount), "evidence_ref": proposal.EvidenceRef})
+		good = good && audited && audit.Actor == approval.Approver && audit.Action == "procurement.cost_approved" && audit.Target == approval.ProposalID && acPtrEq(audit.TenantScope, approval.TenantID) && audit.RequestID == approval.RequestID && e.jsonMatches(audit.SanitizedDiff, map[string]any{"attempt_id": approval.AttemptID, "amount": proposal.Amount, "evidence_ref": proposal.EvidenceRef})
 		if !good {
 			e.approvalBad(approval.ID, approval.ProposalID, approval.AccountID)
 		}

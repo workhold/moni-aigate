@@ -54,6 +54,12 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 			return sourceClosureResult{}, err
 		}
 	}
+	if err := s.originalUnions(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	if err := s.routeRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := s.semanticRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
@@ -67,6 +73,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 		return sourceClosureResult{}, err
 	}
 	if err := s.originalPointers(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	if err := s.birthSnapshots(); err != nil {
 		return sourceClosureResult{}, err
 	}
 	if err := s.chains(rows.PrefixRows); err != nil {
@@ -87,9 +96,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	s.stats.AccountChainRows = uint64(len(s.bad["account_chain"]))
 	s.stats.EvidenceChainRows = uint64(len(s.bad["evidence_chain"]))
 	return sourceClosureResult{Stats: s.stats, Qualified: make(map[string]keySet), Complete: false, Unimplemented: []string{
-		"original business scalar and closed JSON contracts, including strict route_decisions and original payload shapes",
+		"remaining original business scalar and closed JSON contracts, including command snapshots, audit/outbox payload shapes and Usage JSON; strict route_decisions are implemented",
 		"remaining semantic NULL and value unions, including reconciliation proposal/role groups, full management/quote and clock branches",
-		"complete original payload/current projection slots: request/attempt frozen and last pointers, persistent dispatch group, procurement reservation origin/last, exact ledger and PB effect sets",
+		"complete original payload/current projection slots: request/attempt current last pointers and persistent dispatch exact source identity, procurement reservation origin/last, exact ledger and PB effect sets",
 		"mutable reconciliation last-source ordering; current implementation verifies an exact historical target but does not establish that it is the last manual action",
 		"attempt-node ordered delivery, current-cost and procurement before/after continuity, and evidence-choice member-cut continuity; request latest and account Config/Buckets continuity are implemented",
 		"per-object dependency closure and SourceClosure Qualified key construction after all remaining obligations are implemented",
