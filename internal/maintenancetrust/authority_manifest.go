@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -88,6 +89,9 @@ func (a *authorityStage) attestManifest(ctx context.Context) (*manifestEvidence,
 func readMaintenanceManifestSnapshot(ctx context.Context, st *snapshotState) ([]byte, error) {
 	if err := maintenanceFactsSnapshot(ctx, st); err != nil {
 		return nil, err
+	}
+	if st.sourceProfile() == fundinglotcatalog.PeriodicPrefixV3 {
+		return readPeriodicPrefixManifestSnapshot(ctx, st)
 	}
 	canonical, maxName, err := authorityManifestCanonical(migrations.Files)
 	if err != nil {

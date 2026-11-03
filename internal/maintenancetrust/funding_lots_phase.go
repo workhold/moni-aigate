@@ -64,12 +64,14 @@ type fundingLotsPhase struct {
 	epochID                                     string
 	epochAt                                     fundinglotverify.WalletLotsTime
 	facts                                       fundinglotscan.Facts
+	prefixFacts                                 fundinglotscan.PrefixFacts
 	seed                                        fundinglotverify.LegacySeedRows
 	draft                                       fundinglotinit.Plan
 	basis                                       fundinglotbasis.Report
 	canonical                                   *fundinglotproof.CanonicalV2
 	expected                                    FundingLotsExpected
 	post                                        fundinglotscan.WalletFacts
+	prefixPost                                  fundinglotscan.PrefixWalletFacts
 }
 
 func (p *fundingLotsPhase) verify(ctx context.Context) error {

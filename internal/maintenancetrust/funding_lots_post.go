@@ -43,8 +43,12 @@ func fundingLotsPostQualified(r fundinglotscan.WalletReport, mode fundinglotscan
 }
 
 func fundingLotsPostCounts(r fundinglotscan.WalletReport, source fundinglotscan.Report, p fundinglotinit.Plan) bool {
-	w, m := r.Wallet.Scanned, p.Metadata
-	if source.SourceRows > 100000 || m.GeneratedRows > 100000-source.SourceRows || r.SourceRows != source.SourceRows+m.GeneratedRows ||
+	return fundingLotsWalletCounts(r.Wallet.Scanned, r.SourceRows, source.SourceRows, p)
+}
+
+func fundingLotsWalletCounts(w fundinglotverify.WalletLotsRowCounts, postRows, sourceRows uint64, p fundinglotinit.Plan) bool {
+	m := p.Metadata
+	if sourceRows > 100000 || m.GeneratedRows > 100000-sourceRows || postRows != sourceRows+m.GeneratedRows ||
 		m.GeneratedRows < 2 || m.DataRows != m.GeneratedRows-2 || w.Epochs != 1 || w.Attestations != 1 {
 		return false
 	}

@@ -1,0 +1,2269 @@
+{
+  "format_version": 1,
+  "source": {
+    "tables": [
+      {
+        "name": "api_keys",
+        "columns": [
+          "held",
+          "id",
+          "lifetime_limit",
+          "owner_id",
+          "spent",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "audit_events",
+        "columns": [
+          "action",
+          "actor",
+          "created_at",
+          "id",
+          "request_id",
+          "sanitized_diff",
+          "target",
+          "tenant_scope"
+        ]
+      },
+      {
+        "name": "channel_credentials",
+        "columns": [
+          "channel_id",
+          "id"
+        ]
+      },
+      {
+        "name": "channel_version_credentials",
+        "columns": [
+          "channel_id",
+          "channel_version_id",
+          "credential_id",
+          "max_inflight",
+          "position",
+          "weight"
+        ]
+      },
+      {
+        "name": "channel_versions",
+        "columns": [
+          "channel_id",
+          "credential_id",
+          "id"
+        ]
+      },
+      {
+        "name": "channels",
+        "columns": [
+          "id"
+        ]
+      },
+      {
+        "name": "commerce_commands",
+        "columns": [
+          "actor",
+          "created_at",
+          "fingerprint_key_version",
+          "kind",
+          "operation_id",
+          "request_digest",
+          "scope"
+        ]
+      },
+      {
+        "name": "commerce_operation_receipts",
+        "columns": [
+          "actor",
+          "amount",
+          "created_at",
+          "funding_receipt_id",
+          "journal_id",
+          "kind",
+          "operation_id",
+          "reason",
+          "resource_id",
+          "scope",
+          "status"
+        ]
+      },
+      {
+        "name": "cost_versions",
+        "columns": [
+          "basis",
+          "channel_id",
+          "created_at",
+          "effective_at",
+          "id",
+          "input_rate",
+          "output_rate",
+          "upstream_model"
+        ]
+      },
+      {
+        "name": "credential_procurement_bindings",
+        "columns": [
+          "account_id",
+          "bound_at",
+          "channel_id",
+          "credential_id",
+          "id",
+          "operation_id"
+        ]
+      },
+      {
+        "name": "credit_orders",
+        "columns": [
+          "amount",
+          "approver",
+          "business_ref",
+          "created_at",
+          "id",
+          "journal_id",
+          "proof_ref",
+          "requester",
+          "state",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "finalization_records",
+        "columns": [
+          "content_written",
+          "created_at",
+          "delivery_stage",
+          "event_id",
+          "finish_reason",
+          "id",
+          "input_digest",
+          "policy_version",
+          "protocol_outcome",
+          "request_id",
+          "tenant_id",
+          "transport_end_reason"
+        ]
+      },
+      {
+        "name": "funding_receipts",
+        "columns": [
+          "amount",
+          "created_at",
+          "currency",
+          "id",
+          "journal_id",
+          "source_id",
+          "source_kind",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "journal_lines",
+        "columns": [
+          "account_id",
+          "id",
+          "journal_id",
+          "signed_delta"
+        ]
+      },
+      {
+        "name": "journals",
+        "columns": [
+          "actor",
+          "created_at",
+          "created_txid",
+          "currency",
+          "id",
+          "kind",
+          "operation_id",
+          "reference",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "ledger_accounts",
+        "columns": [
+          "balance",
+          "id",
+          "kind",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "metering_event_conflicts",
+        "columns": [
+          "created_at",
+          "event_id",
+          "id",
+          "normalized_usage"
+        ]
+      },
+      {
+        "name": "metering_events",
+        "columns": [
+          "attempt_id",
+          "happened_at",
+          "id",
+          "normalized_usage",
+          "received_at",
+          "request_id",
+          "schema_version",
+          "source",
+          "source_event_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "payment_cancel_intents",
+        "columns": [
+          "actor",
+          "created_at",
+          "operation_id",
+          "order_id"
+        ]
+      },
+      {
+        "name": "payment_captures",
+        "columns": [
+          "amount",
+          "captured_at",
+          "created_at",
+          "currency",
+          "environment_id",
+          "id",
+          "identity_id",
+          "merchant_id",
+          "order_id",
+          "processing_generation",
+          "provider_order_revision",
+          "provider_transaction_id",
+          "tenant_id",
+          "verified_evidence_id",
+          "wallet_credit_amount"
+        ]
+      },
+      {
+        "name": "payment_command_observations",
+        "columns": [
+          "canonical_reply",
+          "generation",
+          "id",
+          "observed_at",
+          "outbox_id",
+          "reply_digest"
+        ]
+      },
+      {
+        "name": "payment_command_outbox",
+        "columns": [
+          "attempt_count",
+          "canonical_parameters",
+          "created_at",
+          "current_query_id",
+          "external_command_id",
+          "generation",
+          "id",
+          "kind",
+          "last_error_code",
+          "last_submission_unknown_at",
+          "lease_until",
+          "next_attempt_at",
+          "order_id",
+          "original_outbox_id",
+          "parameter_digest",
+          "state"
+        ]
+      },
+      {
+        "name": "payment_effects",
+        "columns": [
+          "capture_id",
+          "created_at",
+          "effect_id",
+          "effect_kind",
+          "environment_id",
+          "identity_id",
+          "merchant_id",
+          "provider_transaction_id"
+        ]
+      },
+      {
+        "name": "payment_event_conflicts",
+        "columns": [
+          "conflicting_digest",
+          "id",
+          "inbox_id",
+          "received_at"
+        ]
+      },
+      {
+        "name": "payment_evidence_processing",
+        "columns": [
+          "attempt_count",
+          "evidence_id",
+          "generation",
+          "last_error_code",
+          "lease_until",
+          "next_attempt_at",
+          "state"
+        ]
+      },
+      {
+        "name": "payment_inbox",
+        "columns": [
+          "business_digest",
+          "canonical_body",
+          "environment_id",
+          "event_id",
+          "id",
+          "merchant_id",
+          "received_at",
+          "verified_key_id"
+        ]
+      },
+      {
+        "name": "payment_order_capture_selections",
+        "columns": [
+          "first_evidence_id",
+          "identity_id",
+          "order_id",
+          "selected_at"
+        ]
+      },
+      {
+        "name": "payment_orders",
+        "columns": [
+          "amount",
+          "created_at",
+          "creator",
+          "currency",
+          "display_name",
+          "environment_id",
+          "expires_at",
+          "id",
+          "merchant_id",
+          "merchant_order_id",
+          "payee_label",
+          "sku_version_id",
+          "tenant_id",
+          "wallet_credit_amount"
+        ]
+      },
+      {
+        "name": "payment_policy",
+        "columns": [
+          "enabled",
+          "revision",
+          "singleton"
+        ]
+      },
+      {
+        "name": "payment_provider_revisions",
+        "columns": [
+          "environment_id",
+          "evidence_id",
+          "fact_digest",
+          "kind",
+          "merchant_id",
+          "order_id",
+          "provider_order_revision"
+        ]
+      },
+      {
+        "name": "payment_query_attempts",
+        "columns": [
+          "canonical_request",
+          "created_at",
+          "created_generation",
+          "mutation_generation",
+          "query_id",
+          "request_digest",
+          "supervisor_id"
+        ]
+      },
+      {
+        "name": "payment_query_conflicts",
+        "columns": [
+          "conflicting_digest",
+          "id",
+          "received_at",
+          "verified_query_id"
+        ]
+      },
+      {
+        "name": "payment_review_facts",
+        "columns": [
+          "created_at",
+          "evidence_id",
+          "id",
+          "identity_id",
+          "order_id",
+          "reason",
+          "selection_order_id"
+        ]
+      },
+      {
+        "name": "payment_runtime_attestations",
+        "columns": [
+          "app_nonce_digest",
+          "app_role_oid",
+          "created_at",
+          "database_oid",
+          "environment_id",
+          "projector_role_oid",
+          "proof_canonical",
+          "proof_sha256",
+          "proof_version",
+          "schema_oid",
+          "schema_owner_oid",
+          "singleton",
+          "worker_nonce_digest",
+          "worker_role_oid"
+        ]
+      },
+      {
+        "name": "payment_sandbox_environment",
+        "columns": [
+          "app_role",
+          "created_at",
+          "database_oid",
+          "id",
+          "merchant_id",
+          "nonce_digest",
+          "payee_label",
+          "projector_role",
+          "protocol_version",
+          "schema_oid",
+          "singleton",
+          "worker_role"
+        ]
+      },
+      {
+        "name": "payment_sku_changes",
+        "columns": [
+          "after_enabled",
+          "after_revision",
+          "after_version_id",
+          "before_enabled",
+          "before_operation_id",
+          "before_revision",
+          "before_version_id",
+          "created_at",
+          "created_xid",
+          "kind",
+          "operation_id",
+          "published_version_id",
+          "sku_id"
+        ]
+      },
+      {
+        "name": "payment_sku_versions",
+        "columns": [
+          "amount",
+          "checkout_ttl_seconds",
+          "created_at",
+          "created_by",
+          "currency",
+          "display_name",
+          "environment_id",
+          "id",
+          "merchant_id",
+          "payee_label",
+          "publish_operation_id",
+          "sku_id",
+          "version",
+          "wallet_credit_amount"
+        ]
+      },
+      {
+        "name": "payment_skus",
+        "columns": [
+          "created_at",
+          "created_by",
+          "current_version_id",
+          "enabled",
+          "id",
+          "last_change_operation_id",
+          "last_version",
+          "revision"
+        ]
+      },
+      {
+        "name": "payment_transaction_identities",
+        "columns": [
+          "amount",
+          "captured_at",
+          "created_at",
+          "currency",
+          "environment_id",
+          "evidence_id",
+          "id",
+          "merchant_id",
+          "order_id",
+          "processing_generation",
+          "provider_order_revision",
+          "provider_transaction_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "payment_verified_evidence",
+        "columns": [
+          "amount",
+          "currency",
+          "environment_id",
+          "fact_digest",
+          "happened_at",
+          "id",
+          "inbox_id",
+          "kind",
+          "merchant_id",
+          "order_id",
+          "provider_order_revision",
+          "provider_transaction_id",
+          "verified_at",
+          "verified_query_id"
+        ]
+      },
+      {
+        "name": "payment_verified_queries",
+        "columns": [
+          "canonical_body",
+          "id",
+          "query_id",
+          "received_at",
+          "snapshot_digest",
+          "verified_key_id"
+        ]
+      },
+      {
+        "name": "periodic_budget_allocations",
+        "columns": [
+          "admitted_at",
+          "baseline",
+          "control_id",
+          "created_at",
+          "created_xid",
+          "held_amount",
+          "id",
+          "last_event_id",
+          "origin",
+          "origin_source_id",
+          "revision",
+          "source_held",
+          "source_spent",
+          "spent_amount",
+          "state",
+          "subject_id",
+          "subject_type",
+          "upper_amount",
+          "window_id"
+        ]
+      },
+      {
+        "name": "periodic_budget_configuration_versions",
+        "columns": [
+          "actor",
+          "control_id",
+          "created_at",
+          "created_xid",
+          "enabled",
+          "limit_amount",
+          "operation_id",
+          "period_kind",
+          "revision"
+        ]
+      },
+      {
+        "name": "periodic_budget_controls",
+        "columns": [
+          "account_id",
+          "configuration_operation_id",
+          "created_xid",
+          "effective_from",
+          "enabled",
+          "event_seq",
+          "held_amount",
+          "id",
+          "key_id",
+          "last_event_id",
+          "limit_amount",
+          "max_observed_window_start",
+          "period_kind",
+          "revision",
+          "scope",
+          "spent_amount",
+          "tenant_id",
+          "tracking_started_at"
+        ]
+      },
+      {
+        "name": "periodic_budget_events",
+        "columns": [
+          "after_held",
+          "after_source_spent",
+          "after_spent",
+          "after_state",
+          "allocation_before_revision",
+          "allocation_id",
+          "before_held",
+          "before_spent",
+          "control_id",
+          "created_at",
+          "created_xid",
+          "held_delta",
+          "id",
+          "seq",
+          "source_id",
+          "source_kind",
+          "spent_delta",
+          "window_before_revision"
+        ]
+      },
+      {
+        "name": "periodic_budget_observation_heads",
+        "columns": [
+          "control_id",
+          "last_observation_id",
+          "ordinal",
+          "updated_xid"
+        ]
+      },
+      {
+        "name": "periodic_budget_observation_journal",
+        "columns": [
+          "command_source_id",
+          "configuration_operation_id",
+          "configuration_revision",
+          "control_id",
+          "created_xid",
+          "event_seq",
+          "id",
+          "kind",
+          "last_event_id",
+          "observed_at",
+          "ordinal",
+          "previous_id",
+          "source_id",
+          "window_id",
+          "window_last_event_id",
+          "window_revision",
+          "window_source_id"
+        ]
+      },
+      {
+        "name": "periodic_budget_observation_origins",
+        "columns": [
+          "control_id",
+          "created_xid",
+          "tracking_started_at",
+          "version"
+        ]
+      },
+      {
+        "name": "periodic_budget_operations",
+        "columns": [
+          "actor",
+          "created_at",
+          "created_xid",
+          "input_fingerprint",
+          "kind",
+          "observation_id",
+          "operation_id",
+          "resource_id",
+          "result_snapshot",
+          "revision",
+          "safe_input",
+          "scope",
+          "target"
+        ]
+      },
+      {
+        "name": "periodic_budget_windows",
+        "columns": [
+          "control_id",
+          "end_at",
+          "held_amount",
+          "id",
+          "last_event_id",
+          "observation_created_xid",
+          "observation_id",
+          "revision",
+          "spent_amount",
+          "start_at"
+        ]
+      },
+      {
+        "name": "procurement_accounts",
+        "columns": [
+          "created_at",
+          "held_amount",
+          "id",
+          "label",
+          "limit_amount",
+          "provider",
+          "revision",
+          "spent_amount",
+          "state"
+        ]
+      },
+      {
+        "name": "procurement_balance_observations",
+        "columns": [
+          "account_id",
+          "actor",
+          "amount",
+          "created_at",
+          "currency",
+          "evidence_ref",
+          "id",
+          "observed_at",
+          "operation_id",
+          "provider_as_of",
+          "semantic",
+          "source",
+          "status"
+        ]
+      },
+      {
+        "name": "procurement_budget_events",
+        "columns": [
+          "account_id",
+          "attempt_id",
+          "created_at",
+          "event_key",
+          "evidence_ref",
+          "held_delta",
+          "id",
+          "pb_created_xid",
+          "spent_delta",
+          "type"
+        ]
+      },
+      {
+        "name": "procurement_commands",
+        "columns": [
+          "actor",
+          "after_state",
+          "before_state",
+          "created_at",
+          "input_digest",
+          "kind",
+          "operation_id",
+          "reason",
+          "status",
+          "target_id"
+        ]
+      },
+      {
+        "name": "procurement_cost_proposals",
+        "columns": [
+          "amount",
+          "approval_operation_id",
+          "approved_at",
+          "approver",
+          "attempt_id",
+          "basis",
+          "created_at",
+          "evidence_ref",
+          "expected_evidence_count",
+          "expected_reservation_revision",
+          "id",
+          "reason",
+          "requester",
+          "state",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "procurement_evidence_identities",
+        "columns": [
+          "attempt_id",
+          "created_at",
+          "event_id",
+          "evidence_digest"
+        ]
+      },
+      {
+        "name": "procurement_reservations",
+        "columns": [
+          "account_id",
+          "anomaly",
+          "attempt_id",
+          "binding_id",
+          "created_at",
+          "held_amount",
+          "input_bound",
+          "output_bound",
+          "pb_admitted_at",
+          "pb_control",
+          "pb_created_xid",
+          "revision",
+          "spent_amount",
+          "state",
+          "updated_at",
+          "upper_amount"
+        ]
+      },
+      {
+        "name": "projection_outbox",
+        "columns": [
+          "created_at",
+          "event_id",
+          "kind",
+          "operation_id",
+          "sanitized_payload",
+          "schema_version",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "provider_cost_corrections",
+        "columns": [
+          "amount",
+          "attempt_id",
+          "basis",
+          "created_at",
+          "evidence_ref",
+          "id",
+          "operation_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "refund_orders",
+        "columns": [
+          "amount",
+          "approver",
+          "business_ref",
+          "id",
+          "journal_id",
+          "requester",
+          "settlement_id",
+          "state",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "request_records",
+        "columns": [
+          "billing_status",
+          "id",
+          "input_rate",
+          "input_upper_bound",
+          "key_id",
+          "latest_finalization_id",
+          "output_limit",
+          "output_rate",
+          "owner_id",
+          "pb_admitted_at",
+          "pb_created_xid",
+          "pb_key_control",
+          "pb_tenant_control",
+          "policy_version",
+          "request_deadline",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "reservations",
+        "columns": [
+          "amount",
+          "id",
+          "request_id",
+          "status",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "settlements",
+        "columns": [
+          "charged_amount",
+          "id",
+          "journal_id",
+          "raw_retail_amount",
+          "reason",
+          "refunded_amount",
+          "request_id",
+          "status",
+          "tenant_id",
+          "waived_retail_amount"
+        ]
+      },
+      {
+        "name": "tenants",
+        "columns": [
+          "id"
+        ]
+      },
+      {
+        "name": "upstream_attempts",
+        "columns": [
+          "channel_id",
+          "channel_version_id",
+          "cost_amount",
+          "cost_basis",
+          "cost_input_rate",
+          "cost_output_rate",
+          "cost_status",
+          "cost_version_id",
+          "created_at",
+          "credential_id",
+          "delivery_state",
+          "id",
+          "pb_created_xid",
+          "pb_dispatch_checked_at",
+          "request_id",
+          "sequence",
+          "tenant_id",
+          "upstream_model"
+        ]
+      },
+      {
+        "name": "users",
+        "columns": [
+          "id"
+        ]
+      },
+      {
+        "name": "voucher_batches",
+        "columns": [
+          "activated_at",
+          "approver",
+          "count",
+          "created_at",
+          "expires_at",
+          "face_amount",
+          "id",
+          "maker",
+          "purpose_ref",
+          "reason",
+          "redeemed_count",
+          "revision",
+          "state",
+          "terminal_actor",
+          "terminal_at"
+        ]
+      },
+      {
+        "name": "voucher_redemptions",
+        "columns": [
+          "actor",
+          "amount",
+          "batch_id",
+          "created_at",
+          "funding_receipt_id",
+          "id",
+          "journal_id",
+          "operation_id",
+          "tenant_id",
+          "voucher_id"
+        ]
+      },
+      {
+        "name": "voucher_revocation_decisions",
+        "columns": [
+          "approver",
+          "batch_id",
+          "decided_at",
+          "id",
+          "operation_id",
+          "proposal_id",
+          "reason",
+          "status"
+        ]
+      },
+      {
+        "name": "voucher_revocations",
+        "columns": [
+          "batch_id",
+          "created_at",
+          "expected_redeemed_count",
+          "expected_revision",
+          "id",
+          "maker",
+          "operation_id",
+          "reason"
+        ]
+      },
+      {
+        "name": "vouchers",
+        "columns": [
+          "batch_id",
+          "created_at",
+          "id"
+        ]
+      }
+    ],
+    "counts": {
+      "tables": 71,
+      "columns": 635,
+      "columns_with_history": 637
+    }
+  },
+  "wallet": {
+    "tables": [
+      {
+        "name": "api_keys",
+        "columns": [
+          "held",
+          "id",
+          "lifetime_limit",
+          "owner_id",
+          "spent",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "audit_events",
+        "columns": [
+          "action",
+          "actor",
+          "created_at",
+          "id",
+          "request_id",
+          "sanitized_diff",
+          "target",
+          "tenant_scope"
+        ]
+      },
+      {
+        "name": "channel_credentials",
+        "columns": [
+          "channel_id",
+          "id"
+        ]
+      },
+      {
+        "name": "channel_version_credentials",
+        "columns": [
+          "channel_id",
+          "channel_version_id",
+          "credential_id",
+          "max_inflight",
+          "position",
+          "weight"
+        ]
+      },
+      {
+        "name": "channel_versions",
+        "columns": [
+          "channel_id",
+          "credential_id",
+          "id"
+        ]
+      },
+      {
+        "name": "channels",
+        "columns": [
+          "id"
+        ]
+      },
+      {
+        "name": "commerce_commands",
+        "columns": [
+          "actor",
+          "created_at",
+          "fingerprint_key_version",
+          "kind",
+          "operation_id",
+          "request_digest",
+          "scope"
+        ]
+      },
+      {
+        "name": "commerce_operation_receipts",
+        "columns": [
+          "actor",
+          "amount",
+          "created_at",
+          "funding_receipt_id",
+          "journal_id",
+          "kind",
+          "operation_id",
+          "reason",
+          "resource_id",
+          "scope",
+          "status"
+        ]
+      },
+      {
+        "name": "cost_versions",
+        "columns": [
+          "basis",
+          "channel_id",
+          "created_at",
+          "effective_at",
+          "id",
+          "input_rate",
+          "output_rate",
+          "upstream_model"
+        ]
+      },
+      {
+        "name": "credential_procurement_bindings",
+        "columns": [
+          "account_id",
+          "bound_at",
+          "channel_id",
+          "credential_id",
+          "id",
+          "operation_id"
+        ]
+      },
+      {
+        "name": "credit_orders",
+        "columns": [
+          "amount",
+          "approver",
+          "business_ref",
+          "created_at",
+          "id",
+          "journal_id",
+          "proof_ref",
+          "requester",
+          "state",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "finalization_records",
+        "columns": [
+          "content_written",
+          "created_at",
+          "delivery_stage",
+          "event_id",
+          "finish_reason",
+          "id",
+          "input_digest",
+          "policy_version",
+          "protocol_outcome",
+          "request_id",
+          "tenant_id",
+          "transport_end_reason"
+        ]
+      },
+      {
+        "name": "funding_consumption_refund_lots",
+        "columns": [
+          "allocation_index",
+          "amount",
+          "created_at",
+          "created_xid",
+          "id",
+          "lot_id",
+          "origin",
+          "refund_order_id",
+          "settlement_lot_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_lot_balances",
+        "columns": [
+          "available_amount",
+          "consumed_amount",
+          "inference_held_amount",
+          "last_event_id",
+          "lot_id",
+          "revision",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_lot_epoch",
+        "columns": [
+          "actor",
+          "approved_refund_count",
+          "available_total",
+          "basis_digest",
+          "created_at",
+          "database_oid",
+          "descriptor_digest",
+          "held_total",
+          "id",
+          "legacy_source_count",
+          "manifest_digest",
+          "opening_count",
+          "receipt_count",
+          "runtime_proof_digest",
+          "schema_oid",
+          "schema_version",
+          "settlement_count",
+          "singleton",
+          "tenant_count"
+        ]
+      },
+      {
+        "name": "funding_lot_events",
+        "columns": [
+          "after_available",
+          "after_consumed",
+          "after_held",
+          "after_revision",
+          "available_delta",
+          "before_available",
+          "before_consumed",
+          "before_held",
+          "before_revision",
+          "consumed_delta",
+          "created_at",
+          "created_xid",
+          "id",
+          "inference_held_delta",
+          "issued_delta",
+          "journal_id",
+          "kind",
+          "lot_id",
+          "operation_id",
+          "previous_event_id",
+          "tenant_id",
+          "wallet_operation_id",
+          "wallet_seq"
+        ]
+      },
+      {
+        "name": "funding_lot_legacy_approved_refunds",
+        "columns": [
+          "amount",
+          "epoch_id",
+          "journal_id",
+          "refund_order_id",
+          "settlement_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_lot_legacy_openings",
+        "columns": [
+          "account_id",
+          "amount",
+          "epoch_id",
+          "id",
+          "kind",
+          "observed_at",
+          "reservation_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_lot_legacy_receipts",
+        "columns": [
+          "amount",
+          "epoch_id",
+          "journal_id",
+          "receipt_id",
+          "source_id",
+          "source_kind",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_lot_legacy_sandbox_receipts",
+        "columns": [
+          "amount",
+          "capture_id",
+          "epoch_id",
+          "journal_id",
+          "receipt_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_lot_legacy_settlements",
+        "columns": [
+          "charged_amount",
+          "epoch_id",
+          "journal_id",
+          "refunded_amount_at_cutover",
+          "request_id",
+          "reservation_id",
+          "settlement_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_lot_runtime_attestations",
+        "columns": [
+          "app_role_oid",
+          "created_at",
+          "database_oid",
+          "descriptor_digest",
+          "epoch_id",
+          "manifest_digest",
+          "mode",
+          "predecessor_payment_digest",
+          "projector_role_oid",
+          "proof_canonical",
+          "proof_sha256",
+          "proof_version",
+          "schema_oid",
+          "schema_owner_oid",
+          "singleton",
+          "worker_role_oid"
+        ]
+      },
+      {
+        "name": "funding_lots",
+        "columns": [
+          "created_at",
+          "currency",
+          "fifo_at",
+          "funding_receipt_id",
+          "id",
+          "issued_amount",
+          "legacy_opening_id",
+          "legacy_refund_order_id",
+          "origin_kind",
+          "refund_class",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_receipts",
+        "columns": [
+          "amount",
+          "created_at",
+          "currency",
+          "id",
+          "journal_id",
+          "source_id",
+          "source_kind",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_reservation_lots",
+        "columns": [
+          "allocation_index",
+          "amount",
+          "created_at",
+          "created_xid",
+          "id",
+          "lot_id",
+          "reservation_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_settlement_lots",
+        "columns": [
+          "charged_amount",
+          "created_at",
+          "created_xid",
+          "id",
+          "released_amount",
+          "reservation_lot_id",
+          "settlement_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_wallet_heads",
+        "columns": [
+          "epoch_id",
+          "tail_operation_id",
+          "tail_seq",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_wallet_legacy_sources",
+        "columns": [
+          "amount",
+          "epoch_id",
+          "journal_id",
+          "journal_operation_id",
+          "kind",
+          "request_id",
+          "reservation_id",
+          "settlement_id",
+          "source_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "funding_wallet_operations",
+        "columns": [
+          "available_delta",
+          "consumed_delta",
+          "created_at",
+          "created_xid",
+          "epoch_id",
+          "event_count",
+          "held_delta",
+          "id",
+          "issued_delta",
+          "journal_id",
+          "journal_operation_id",
+          "kind",
+          "previous_id",
+          "previous_seq",
+          "seq",
+          "source_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "journal_lines",
+        "columns": [
+          "account_id",
+          "id",
+          "journal_id",
+          "signed_delta"
+        ]
+      },
+      {
+        "name": "journals",
+        "columns": [
+          "actor",
+          "created_at",
+          "created_txid",
+          "currency",
+          "id",
+          "kind",
+          "operation_id",
+          "reference",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "ledger_accounts",
+        "columns": [
+          "balance",
+          "id",
+          "kind",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "metering_event_conflicts",
+        "columns": [
+          "created_at",
+          "event_id",
+          "id",
+          "normalized_usage"
+        ]
+      },
+      {
+        "name": "metering_events",
+        "columns": [
+          "attempt_id",
+          "happened_at",
+          "id",
+          "normalized_usage",
+          "received_at",
+          "request_id",
+          "schema_version",
+          "source",
+          "source_event_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "payment_cancel_intents",
+        "columns": [
+          "actor",
+          "created_at",
+          "operation_id",
+          "order_id"
+        ]
+      },
+      {
+        "name": "payment_captures",
+        "columns": [
+          "amount",
+          "captured_at",
+          "created_at",
+          "currency",
+          "environment_id",
+          "id",
+          "identity_id",
+          "merchant_id",
+          "order_id",
+          "processing_generation",
+          "provider_order_revision",
+          "provider_transaction_id",
+          "tenant_id",
+          "verified_evidence_id",
+          "wallet_credit_amount"
+        ]
+      },
+      {
+        "name": "payment_command_observations",
+        "columns": [
+          "canonical_reply",
+          "generation",
+          "id",
+          "observed_at",
+          "outbox_id",
+          "reply_digest"
+        ]
+      },
+      {
+        "name": "payment_command_outbox",
+        "columns": [
+          "attempt_count",
+          "canonical_parameters",
+          "created_at",
+          "current_query_id",
+          "external_command_id",
+          "generation",
+          "id",
+          "kind",
+          "last_error_code",
+          "last_submission_unknown_at",
+          "lease_until",
+          "next_attempt_at",
+          "order_id",
+          "original_outbox_id",
+          "parameter_digest",
+          "state"
+        ]
+      },
+      {
+        "name": "payment_effects",
+        "columns": [
+          "capture_id",
+          "created_at",
+          "effect_id",
+          "effect_kind",
+          "environment_id",
+          "identity_id",
+          "merchant_id",
+          "provider_transaction_id"
+        ]
+      },
+      {
+        "name": "payment_event_conflicts",
+        "columns": [
+          "conflicting_digest",
+          "id",
+          "inbox_id",
+          "received_at"
+        ]
+      },
+      {
+        "name": "payment_evidence_processing",
+        "columns": [
+          "attempt_count",
+          "evidence_id",
+          "generation",
+          "last_error_code",
+          "lease_until",
+          "next_attempt_at",
+          "state"
+        ]
+      },
+      {
+        "name": "payment_inbox",
+        "columns": [
+          "business_digest",
+          "canonical_body",
+          "environment_id",
+          "event_id",
+          "id",
+          "merchant_id",
+          "received_at",
+          "verified_key_id"
+        ]
+      },
+      {
+        "name": "payment_order_capture_selections",
+        "columns": [
+          "first_evidence_id",
+          "identity_id",
+          "order_id",
+          "selected_at"
+        ]
+      },
+      {
+        "name": "payment_orders",
+        "columns": [
+          "amount",
+          "created_at",
+          "creator",
+          "currency",
+          "display_name",
+          "environment_id",
+          "expires_at",
+          "id",
+          "merchant_id",
+          "merchant_order_id",
+          "payee_label",
+          "sku_version_id",
+          "tenant_id",
+          "wallet_credit_amount"
+        ]
+      },
+      {
+        "name": "payment_policy",
+        "columns": [
+          "enabled",
+          "revision",
+          "singleton"
+        ]
+      },
+      {
+        "name": "payment_provider_revisions",
+        "columns": [
+          "environment_id",
+          "evidence_id",
+          "fact_digest",
+          "kind",
+          "merchant_id",
+          "order_id",
+          "provider_order_revision"
+        ]
+      },
+      {
+        "name": "payment_query_attempts",
+        "columns": [
+          "canonical_request",
+          "created_at",
+          "created_generation",
+          "mutation_generation",
+          "query_id",
+          "request_digest",
+          "supervisor_id"
+        ]
+      },
+      {
+        "name": "payment_query_conflicts",
+        "columns": [
+          "conflicting_digest",
+          "id",
+          "received_at",
+          "verified_query_id"
+        ]
+      },
+      {
+        "name": "payment_review_facts",
+        "columns": [
+          "created_at",
+          "evidence_id",
+          "id",
+          "identity_id",
+          "order_id",
+          "reason",
+          "selection_order_id"
+        ]
+      },
+      {
+        "name": "payment_runtime_attestations",
+        "columns": [
+          "app_nonce_digest",
+          "app_role_oid",
+          "created_at",
+          "database_oid",
+          "environment_id",
+          "projector_role_oid",
+          "proof_canonical",
+          "proof_sha256",
+          "proof_version",
+          "schema_oid",
+          "schema_owner_oid",
+          "singleton",
+          "worker_nonce_digest",
+          "worker_role_oid"
+        ]
+      },
+      {
+        "name": "payment_sandbox_environment",
+        "columns": [
+          "app_role",
+          "created_at",
+          "database_oid",
+          "id",
+          "merchant_id",
+          "nonce_digest",
+          "payee_label",
+          "projector_role",
+          "protocol_version",
+          "schema_oid",
+          "singleton",
+          "worker_role"
+        ]
+      },
+      {
+        "name": "payment_sku_changes",
+        "columns": [
+          "after_enabled",
+          "after_revision",
+          "after_version_id",
+          "before_enabled",
+          "before_operation_id",
+          "before_revision",
+          "before_version_id",
+          "created_at",
+          "created_xid",
+          "kind",
+          "operation_id",
+          "published_version_id",
+          "sku_id"
+        ]
+      },
+      {
+        "name": "payment_sku_versions",
+        "columns": [
+          "amount",
+          "checkout_ttl_seconds",
+          "created_at",
+          "created_by",
+          "currency",
+          "display_name",
+          "environment_id",
+          "id",
+          "merchant_id",
+          "payee_label",
+          "publish_operation_id",
+          "sku_id",
+          "version",
+          "wallet_credit_amount"
+        ]
+      },
+      {
+        "name": "payment_skus",
+        "columns": [
+          "created_at",
+          "created_by",
+          "current_version_id",
+          "enabled",
+          "id",
+          "last_change_operation_id",
+          "last_version",
+          "revision"
+        ]
+      },
+      {
+        "name": "payment_transaction_identities",
+        "columns": [
+          "amount",
+          "captured_at",
+          "created_at",
+          "currency",
+          "environment_id",
+          "evidence_id",
+          "id",
+          "merchant_id",
+          "order_id",
+          "processing_generation",
+          "provider_order_revision",
+          "provider_transaction_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "payment_verified_evidence",
+        "columns": [
+          "amount",
+          "currency",
+          "environment_id",
+          "fact_digest",
+          "happened_at",
+          "id",
+          "inbox_id",
+          "kind",
+          "merchant_id",
+          "order_id",
+          "provider_order_revision",
+          "provider_transaction_id",
+          "verified_at",
+          "verified_query_id"
+        ]
+      },
+      {
+        "name": "payment_verified_queries",
+        "columns": [
+          "canonical_body",
+          "id",
+          "query_id",
+          "received_at",
+          "snapshot_digest",
+          "verified_key_id"
+        ]
+      },
+      {
+        "name": "periodic_budget_allocations",
+        "columns": [
+          "admitted_at",
+          "baseline",
+          "control_id",
+          "created_at",
+          "created_xid",
+          "held_amount",
+          "id",
+          "last_event_id",
+          "origin",
+          "origin_source_id",
+          "revision",
+          "source_held",
+          "source_spent",
+          "spent_amount",
+          "state",
+          "subject_id",
+          "subject_type",
+          "upper_amount",
+          "window_id"
+        ]
+      },
+      {
+        "name": "periodic_budget_configuration_versions",
+        "columns": [
+          "actor",
+          "control_id",
+          "created_at",
+          "created_xid",
+          "enabled",
+          "limit_amount",
+          "operation_id",
+          "period_kind",
+          "revision"
+        ]
+      },
+      {
+        "name": "periodic_budget_controls",
+        "columns": [
+          "account_id",
+          "configuration_operation_id",
+          "created_xid",
+          "effective_from",
+          "enabled",
+          "event_seq",
+          "held_amount",
+          "id",
+          "key_id",
+          "last_event_id",
+          "limit_amount",
+          "max_observed_window_start",
+          "period_kind",
+          "revision",
+          "scope",
+          "spent_amount",
+          "tenant_id",
+          "tracking_started_at"
+        ]
+      },
+      {
+        "name": "periodic_budget_events",
+        "columns": [
+          "after_held",
+          "after_source_spent",
+          "after_spent",
+          "after_state",
+          "allocation_before_revision",
+          "allocation_id",
+          "before_held",
+          "before_spent",
+          "control_id",
+          "created_at",
+          "created_xid",
+          "held_delta",
+          "id",
+          "seq",
+          "source_id",
+          "source_kind",
+          "spent_delta",
+          "window_before_revision"
+        ]
+      },
+      {
+        "name": "periodic_budget_observation_heads",
+        "columns": [
+          "control_id",
+          "last_observation_id",
+          "ordinal",
+          "updated_xid"
+        ]
+      },
+      {
+        "name": "periodic_budget_observation_journal",
+        "columns": [
+          "command_source_id",
+          "configuration_operation_id",
+          "configuration_revision",
+          "control_id",
+          "created_xid",
+          "event_seq",
+          "id",
+          "kind",
+          "last_event_id",
+          "observed_at",
+          "ordinal",
+          "previous_id",
+          "source_id",
+          "window_id",
+          "window_last_event_id",
+          "window_revision",
+          "window_source_id"
+        ]
+      },
+      {
+        "name": "periodic_budget_observation_origins",
+        "columns": [
+          "control_id",
+          "created_xid",
+          "tracking_started_at",
+          "version"
+        ]
+      },
+      {
+        "name": "periodic_budget_operations",
+        "columns": [
+          "actor",
+          "created_at",
+          "created_xid",
+          "input_fingerprint",
+          "kind",
+          "observation_id",
+          "operation_id",
+          "resource_id",
+          "result_snapshot",
+          "revision",
+          "safe_input",
+          "scope",
+          "target"
+        ]
+      },
+      {
+        "name": "periodic_budget_windows",
+        "columns": [
+          "control_id",
+          "end_at",
+          "held_amount",
+          "id",
+          "last_event_id",
+          "observation_created_xid",
+          "observation_id",
+          "revision",
+          "spent_amount",
+          "start_at"
+        ]
+      },
+      {
+        "name": "procurement_accounts",
+        "columns": [
+          "created_at",
+          "held_amount",
+          "id",
+          "label",
+          "limit_amount",
+          "provider",
+          "revision",
+          "spent_amount",
+          "state"
+        ]
+      },
+      {
+        "name": "procurement_balance_observations",
+        "columns": [
+          "account_id",
+          "actor",
+          "amount",
+          "created_at",
+          "currency",
+          "evidence_ref",
+          "id",
+          "observed_at",
+          "operation_id",
+          "provider_as_of",
+          "semantic",
+          "source",
+          "status"
+        ]
+      },
+      {
+        "name": "procurement_budget_events",
+        "columns": [
+          "account_id",
+          "attempt_id",
+          "created_at",
+          "event_key",
+          "evidence_ref",
+          "held_delta",
+          "id",
+          "pb_created_xid",
+          "spent_delta",
+          "type"
+        ]
+      },
+      {
+        "name": "procurement_commands",
+        "columns": [
+          "actor",
+          "after_state",
+          "before_state",
+          "created_at",
+          "input_digest",
+          "kind",
+          "operation_id",
+          "reason",
+          "status",
+          "target_id"
+        ]
+      },
+      {
+        "name": "procurement_cost_proposals",
+        "columns": [
+          "amount",
+          "approval_operation_id",
+          "approved_at",
+          "approver",
+          "attempt_id",
+          "basis",
+          "created_at",
+          "evidence_ref",
+          "expected_evidence_count",
+          "expected_reservation_revision",
+          "id",
+          "reason",
+          "requester",
+          "state",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "procurement_evidence_identities",
+        "columns": [
+          "attempt_id",
+          "created_at",
+          "event_id",
+          "evidence_digest"
+        ]
+      },
+      {
+        "name": "procurement_reservations",
+        "columns": [
+          "account_id",
+          "anomaly",
+          "attempt_id",
+          "binding_id",
+          "created_at",
+          "held_amount",
+          "input_bound",
+          "output_bound",
+          "pb_admitted_at",
+          "pb_control",
+          "pb_created_xid",
+          "revision",
+          "spent_amount",
+          "state",
+          "updated_at",
+          "upper_amount"
+        ]
+      },
+      {
+        "name": "projection_outbox",
+        "columns": [
+          "created_at",
+          "event_id",
+          "kind",
+          "operation_id",
+          "sanitized_payload",
+          "schema_version",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "provider_cost_corrections",
+        "columns": [
+          "amount",
+          "attempt_id",
+          "basis",
+          "created_at",
+          "evidence_ref",
+          "id",
+          "operation_id",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "refund_orders",
+        "columns": [
+          "amount",
+          "approver",
+          "business_ref",
+          "id",
+          "journal_id",
+          "requester",
+          "settlement_id",
+          "state",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "request_records",
+        "columns": [
+          "billing_status",
+          "id",
+          "input_rate",
+          "input_upper_bound",
+          "key_id",
+          "latest_finalization_id",
+          "output_limit",
+          "output_rate",
+          "owner_id",
+          "pb_admitted_at",
+          "pb_created_xid",
+          "pb_key_control",
+          "pb_tenant_control",
+          "policy_version",
+          "request_deadline",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "reservations",
+        "columns": [
+          "amount",
+          "id",
+          "request_id",
+          "status",
+          "tenant_id"
+        ]
+      },
+      {
+        "name": "settlements",
+        "columns": [
+          "charged_amount",
+          "id",
+          "journal_id",
+          "raw_retail_amount",
+          "reason",
+          "refunded_amount",
+          "request_id",
+          "status",
+          "tenant_id",
+          "waived_retail_amount"
+        ]
+      },
+      {
+        "name": "tenants",
+        "columns": [
+          "fl_created_xid",
+          "id"
+        ]
+      },
+      {
+        "name": "upstream_attempts",
+        "columns": [
+          "channel_id",
+          "channel_version_id",
+          "cost_amount",
+          "cost_basis",
+          "cost_input_rate",
+          "cost_output_rate",
+          "cost_status",
+          "cost_version_id",
+          "created_at",
+          "credential_id",
+          "delivery_state",
+          "id",
+          "pb_created_xid",
+          "pb_dispatch_checked_at",
+          "request_id",
+          "sequence",
+          "tenant_id",
+          "upstream_model"
+        ]
+      },
+      {
+        "name": "users",
+        "columns": [
+          "id"
+        ]
+      },
+      {
+        "name": "voucher_batches",
+        "columns": [
+          "activated_at",
+          "approver",
+          "count",
+          "created_at",
+          "expires_at",
+          "face_amount",
+          "id",
+          "maker",
+          "purpose_ref",
+          "reason",
+          "redeemed_count",
+          "revision",
+          "state",
+          "terminal_actor",
+          "terminal_at"
+        ]
+      },
+      {
+        "name": "voucher_redemptions",
+        "columns": [
+          "actor",
+          "amount",
+          "batch_id",
+          "created_at",
+          "funding_receipt_id",
+          "id",
+          "journal_id",
+          "operation_id",
+          "tenant_id",
+          "voucher_id"
+        ]
+      },
+      {
+        "name": "voucher_revocation_decisions",
+        "columns": [
+          "approver",
+          "batch_id",
+          "decided_at",
+          "id",
+          "operation_id",
+          "proposal_id",
+          "reason",
+          "status"
+        ]
+      },
+      {
+        "name": "voucher_revocations",
+        "columns": [
+          "batch_id",
+          "created_at",
+          "expected_redeemed_count",
+          "expected_revision",
+          "id",
+          "maker",
+          "operation_id",
+          "reason"
+        ]
+      },
+      {
+        "name": "vouchers",
+        "columns": [
+          "batch_id",
+          "created_at",
+          "id"
+        ]
+      }
+    ],
+    "counts": {
+      "tables": 87,
+      "columns": 804,
+      "columns_with_history": 806
+    }
+  },
+  "history": {
+    "name": "schema_migrations",
+    "columns": [
+      "name",
+      "checksum"
+    ]
+  },
+  "source_sha256": {
+    "internal/fundinglotscan/prefix_checks.go": "1b7d299e9f567b957653ce808de799a8d0785fb3f4b3196d4c1520741f62a9f8",
+    "internal/fundinglotscan/prefix_projection.go": "d969c98a62029e474b65fbec534996bc5c4278e118be1a64f4e9a09f7bc31138",
+    "internal/fundinglotscan/prefix_qualification.go": "fc23cdaaef71bb79790e00cc296fb97b47c16137852f6a24ff1d9940dc38fedd",
+    "internal/fundinglotscan/prefix_reader.go": "066c58c510980e64d10837d8ce4079b62e00f3003ec1e750b22f7ab1af5dc10b",
+    "internal/fundinglotscan/prefix_types.go": "aaad2149582af0cd5c3e5e52e594c60e7181ae75ebbfb90371a75e70146f84ec",
+    "internal/fundinglotscan/projection_prefix.go": "01071afba0268b2dfadfa460502f351e0d5496e9373840a9d20da9b2d41c39a5",
+    "internal/periodicbudgetprefix/check.go": "50dab3183eb3238a42b1d9376643522fdeaeefe82ee461fcd0920ac67545b6b8",
+    "internal/periodicbudgetprefix/snapshot.go": "d17c42a92f45cfb912337320ecbc55627eb581c9d808ab19a8dd749db688a402",
+    "internal/periodicbudgetprefix/types.go": "ea508f59ab2d9c322ee56911b1c88d0d07124506f617e6d57e7ad20de7e2cf67",
+    "internal/periodicbudgetprefix/values.go": "562321d310e50fb4d67757e5daa8dde983b7e933e21a6d2bd5acf273ad8b4fa4"
+  }
+}

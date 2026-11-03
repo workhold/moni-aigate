@@ -16,7 +16,7 @@
 moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合平台。客户按平台售价消费，平台按渠道与精确上游模型登记采购成本，并在授权、能力、地域、健康和预算约束内选择渠道。
 
 - **销售与采购分开**：客户输入/输出售价、上游输入/输出采购价分别版本化，每次请求与尝试保留实际快照。
-- **资金先于派发**：金额使用 CNY 精确整数，硬预占、唯一结算、不可变平衡流水；用量未知进入核对，不把估算当作账单。
+- **资金先于派发**：金额以 CNY 微元整数存储，硬预占、唯一结算、不可变平衡流水；用量未知进入核对，不把估算当作账单。
 - **渠道可治理**：不可变发布、凭据池、模型发现与差异预览、整批启停，以及可解释的选路与排除原因。
 - **客户可自助**：租户控制台、API Key、模型目录、账单、Playground，以及可选的邮箱注册与恢复流程。
 - **部署依赖少**：前端嵌入单个 Go 可执行文件，PostgreSQL 是唯一持久事实源；当前采用单活动实例。
@@ -40,7 +40,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
 | 资金来源与原路退款 | 部分基础模块已实现 | 已有来源分配、业务来源图及 lot/FIFO/结算/消费退款独立重放；已接通同快照读取，维护切换、在线资金接线、原路退款和拒付仍在推进 |
-| 停服维护与钱包开账 | 库级实现，验证按阶段记录 | 受保护开账、资金来源重放、独立停服观察与 APP 运行核验；完整经营认证仍有周期预算历史证据门禁，正式迁移、启动与在线资金接线仍在推进 |
+| 停服维护与钱包开账 | 库级候选实现，验证按阶段记录 | 受保护开账、资金来源重放、独立停服观察与 APP 运行核验；新增预算历史证据版本，正式迁移、启动与在线资金接线仍在推进 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
@@ -85,13 +85,13 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
-资金来源维护与在线经营分阶段交付，完整经营认证仍受周期预算历史证据门禁限制。库级实现和后续接线见[运行核验架构](docs/architecture/runtime-composer.md)、[验证记录](docs/verification/runtime-composer.md)及[维护架构](docs/architecture/maintenance-gate.md)。套餐购买、原路退款和拒付等未完成能力见交付计划。
+资金来源维护和预算历史核验按版本逐步交付。新的库级入口已将预算命令与窗口观察证据接入开账、停服观察和 APP 运行核验，实际验证范围见[预算证据架构](docs/architecture/periodic-budget-prefix-profile.md)与[验证记录](docs/verification/periodic-budget-prefix-profile.md)。缺少来源原件的旧历史继续拒绝认证；套餐购买、原路退款和拒付等后续能力见交付计划。
 
-预算证据升级目前在[隔离候选环境](docs/architecture/periodic-budget-prefix-install.md)验证，普通部署继续使用正式迁移；README 的部署步骤不要求手工安装候选 SQL。
+这些能力仍在隔离候选环境验证，尚未发布正式迁移和生产维护工具。普通部署继续使用正式迁移，下述部署步骤不要求手工安装候选 SQL。
 
 ## 本地启动
 
-需要 **Go ≥1.26、Node 22、PostgreSQL 16**。首次运行请使用专用数据库。
+需要 **Go ≥1.26、Node 22.12+（22 系列）、PostgreSQL 16**，以及 Git、Make。首次运行请使用专用数据库。
 
 ```sh
 git clone https://github.com/workhold/moni-aigate.git
@@ -128,6 +128,8 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 仓库提供 [Dockerfile](Dockerfile)、[compose.yaml](compose.yaml) 和 [Nginx 示例](deploy/nginx.conf)。以下为待目标环境验收的部署路径，容器实际构建/运行与 1Panel 实装尚未验证。
 部署主机需要 Docker Engine 与 Compose v2；下方 `go run` 需要 Go ≥1.26，也可在可信开发机生成配置后安全传入部署主机。先将完整仓库检出到部署目录，以下命令均在仓库根目录执行，再生成私有配置；已有 `.env` 时跳过生成步骤：
 
+先在仓库外准备权限 `0600` 的管理员密码文件，内容为12–72字节的一行密码；将示例私有路径替换为实际文件。
+
 ```sh
 go run ./cmd/moni-aigate init-env --out .env
 # 编辑 PUBLIC_ORIGIN=https://your-domain、COOKIE_SECURE=true、PORT=8080
@@ -138,6 +140,7 @@ docker compose up -d app
 ```
 
 `bootstrap` 命令会等待 Compose 的迁移与权限初始化依赖完成；它在应用对外监听前创建首次管理员。
+启动后可用 `curl --fail http://127.0.0.1:8080/health/ready` 核查就绪状态，若修改了 `PORT`，相应替换端口；正常收费模式还须确认响应中的 `recovery_mode` 为 `false`。
 
 Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。已有 PostgreSQL 卷不会因修改 `.env` 自动更换角色密码，密码轮换须同时更新数据库角色与私有配置。
 1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录和构建上下文须指向完整仓库根目录：`migrate` 使用 `build: .`，需要 `Dockerfile`、Go/Web 源码和 `deploy/init-roles.sh`，仅复制 YAML 与初始化脚本不足以构建。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理到 `127.0.0.1:8080`；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
@@ -235,7 +238,7 @@ go run ./scripts/check-architecture
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 补齐周期预算历史证据与资金来源全路径，完成维护工具、正式迁移和启动接线，再推进原路退款、拒付及正式支付；详细依赖与阶段状态见[交付计划](docs/design/delivery-plan.md)。
+1. 完成预算证据的完整经营验收与资金来源全路径、维护工具、正式迁移和启动接线，再推进原路退款、拒付及正式支付；详细依赖与阶段状态见[交付计划](docs/design/delivery-plan.md)。
 2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。

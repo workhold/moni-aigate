@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
+	"github.com/moni-ai/moni-aigate/internal/fundinglotprefixcompat"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotproof"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotscan"
 )
@@ -28,7 +29,7 @@ func fundingLotsObservedProof(rows fundinglotscan.EpochProofRows, pins fundinglo
 	}
 	current := fundingLotsObservedCatalog{version: catalog.DescriptorVersion(), expected: catalog.ExpectedSHA256(),
 		schema: catalog.SchemaSHA256(), roles: catalog.RolesSHA256()}
-	return fundingLotsObservedProofAgainst(rows, pins, current, manifest, predecessorMode, predecessorCanonical, predecessorDigest)
+	return fundingLotsObservedProofAgainstProfile(rows, pins, current, manifest, predecessorMode, predecessorCanonical, predecessorDigest, catalog.Profile())
 }
 
 // This pure comparison is also exercised without manufacturing an opaque
@@ -36,6 +37,12 @@ func fundingLotsObservedProof(rows fundinglotscan.EpochProofRows, pins fundinglo
 func fundingLotsObservedProofAgainst(rows fundinglotscan.EpochProofRows, pins fundinglotcatalog.Pins,
 	current fundingLotsObservedCatalog, manifest []byte, predecessorMode fundinglotcatalog.Mode,
 	predecessorCanonical []byte, predecessorDigest string) (FundingLotsExpected, error) {
+	return fundingLotsObservedProofAgainstProfile(rows, pins, current, manifest, predecessorMode, predecessorCanonical, predecessorDigest, fundinglotcatalog.LegacyV1)
+}
+
+func fundingLotsObservedProofAgainstProfile(rows fundinglotscan.EpochProofRows, pins fundinglotcatalog.Pins,
+	current fundingLotsObservedCatalog, manifest []byte, predecessorMode fundinglotcatalog.Mode,
+	predecessorCanonical []byte, predecessorDigest string, profile fundinglotcatalog.Profile) (FundingLotsExpected, error) {
 	e, a := rows.Epoch, rows.Attestation
 	if !validPins(pins) || predecessorMode != pins.Mode || current.version == 0 ||
 		!fundingLotsDigest(current.expected) || !fundingLotsDigest(current.schema) || !fundingLotsDigest(current.roles) ||
@@ -47,16 +54,38 @@ func fundingLotsObservedProofAgainst(rows fundinglotscan.EpochProofRows, pins fu
 	if json.Unmarshal(manifest, &migrations) != nil || len(migrations) != authorityManifestCount {
 		return FundingLotsExpected{}, ErrSchema
 	}
+	decoded, err := fundinglotproof.DecodeV2(a.ProofCanonical)
+	if err != nil || decoded.SHA256() != a.ProofSHA256 {
+		return FundingLotsExpected{}, ErrSchema
+	}
+	bindings, err := decoded.Bindings()
+	if err != nil {
+		return FundingLotsExpected{}, ErrSchema
+	}
+	basisDescriptor := fundingLotsBasisDescriptor
+	historical := current
+	if profile == fundinglotcatalog.PeriodicPrefixV3 {
+		mapping, matchErr := fundinglotprefixcompat.Match(bindings, current.version, fundinglotprefixcompat.Tuple{
+			Expected: current.expected, Schema: current.schema, Roles: current.roles,
+		})
+		if matchErr != nil {
+			return FundingLotsExpected{}, ErrSchema
+		}
+		basisDescriptor = mapping.BasisDescriptor
+		historical = fundingLotsObservedCatalog{version: current.version, expected: mapping.Historical.Expected, schema: mapping.Historical.Schema, roles: mapping.Historical.Roles}
+	} else if profile != fundinglotcatalog.LegacyV1 {
+		return FundingLotsExpected{}, ErrSchema
+	}
 	// The initial data basis remains historical. Its saved digest is compared
 	// with the original, never recomputed from business rows after cutover.
 	want := fundinglotproof.V2Input{
 		Domain: fundinglotproof.DomainV2, ProofVersion: 2, EpochID: e.ID,
 		Database:  fundinglotproof.Database{Host: pins.Database.Host, Port: pins.Database.Port, Name: pins.Database.Name, OID: pins.Database.OID},
 		AppSchema: fundingLotsProofSchema(pins.AppSchema), AppRole: fundingLotsProofRole(pins.App), ProjectorRole: fundingLotsProofRole(pins.Projector),
-		BasisVersion: 1, BasisDigest: e.BasisDigest, BasisDescriptorDigest: fundingLotsBasisDescriptor,
+		BasisVersion: 1, BasisDigest: e.BasisDigest, BasisDescriptorDigest: basisDescriptor,
 		MigrationManifest: migrations, ManifestDigest: authorityManifestSHA,
 		CatalogDescriptorVersion: current.version, CatalogPostgresMajor: 16,
-		CatalogExpectedDigest: current.expected, CatalogSchemaDigest: current.schema, CatalogRolesDigest: current.roles,
+		CatalogExpectedDigest: historical.expected, CatalogSchemaDigest: historical.schema, CatalogRolesDigest: historical.roles,
 	}
 	switch predecessorMode {
 	case fundinglotcatalog.Ordinary:
@@ -78,19 +107,14 @@ func fundingLotsObservedProofAgainst(rows fundinglotscan.EpochProofRows, pins fu
 	default:
 		return FundingLotsExpected{}, ErrSchema
 	}
-	decoded, err := fundinglotproof.DecodeV2(a.ProofCanonical)
-	if err != nil || decoded.SHA256() != a.ProofSHA256 {
-		return FundingLotsExpected{}, ErrSchema
-	}
-	bindings, err := decoded.Bindings()
-	if err != nil || !fundingLotsProofBindingsEqual(bindings, want) {
+	if !fundingLotsProofBindingsEqual(bindings, want) {
 		return FundingLotsExpected{}, ErrSchema
 	}
 	u := func(value uint32) string { return strconv.FormatUint(uint64(value), 10) }
 	if !e.Singleton || !a.Singleton || e.SchemaVersion != "1" || a.ProofVersion != "2" || a.EpochID != e.ID || a.Mode != want.Mode ||
 		e.DatabaseOID != u(pins.Database.OID) || a.DatabaseOID != e.DatabaseOID || e.SchemaOID != u(pins.AppSchema.OID) || a.SchemaOID != e.SchemaOID ||
 		a.SchemaOwnerOID != u(pins.AppSchema.ObjectOwner.OID) || a.AppRoleOID != u(pins.App.OID) || a.ProjectorRoleOID != u(pins.Projector.OID) ||
-		e.ManifestDigest != authorityManifestSHA || a.ManifestDigest != e.ManifestDigest || e.DescriptorDigest != fundingLotsBasisDescriptor || a.DescriptorDigest != e.DescriptorDigest ||
+		e.ManifestDigest != authorityManifestSHA || a.ManifestDigest != e.ManifestDigest || e.DescriptorDigest != basisDescriptor || a.DescriptorDigest != e.DescriptorDigest ||
 		e.RuntimeProofDigest != a.ProofSHA256 || e.Actor != "offline-maintenance" || !fundingLotsProofTimeEqual(e.CreatedAt, a.CreatedAt) ||
 		!fundingLotsProofStringEqual(a.PredecessorPaymentDigest, want.PredecessorPaymentDigest) {
 		return FundingLotsExpected{}, ErrSchema

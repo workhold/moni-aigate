@@ -38,3 +38,9 @@
 整仓命令完成后仅追加了一份旧 catalog 精确拒绝测试，没有改变实现。显式 `C0_CATALOG_DATABASE_URL` 的 supplemental race 测试通过（1 顶层/3 父子，包总计 37.135s）：named ordinary 的 LegacyV1 与 WalletReadV2 均先从真实基线发行 snapshot/runtime 证明，再在同原事务安装完整候选并拒绝旧 snapshot，提交后实际 APP 新 RR 拒绝旧 runtime；LegacyV1 还核原 installation 拒绝。两份原静态材料、缓存及 roots 未变。WalletReadV2 没有 installation profile API，不将其原本不匹配旧安装接口的失败计作候选证据。该新测试由独立日志记录，未伪称包含在此前整仓命令内。
 
 本片不发行 catalog/runtime authority，不安装正式迁移，不打开 R1-B 完整经营认证或 R2 在线资金 ready。新完整 profile 的物理读取、共享预算、basis/catalog/report、protected pre/post/observer/runtime 及历史兼容仍是下一依赖；生产互斥、真实网络未知提交、正式供应商/支付、容器/1Panel 与 HA 均未由本片验收。
+
+## 推送后 Linux CI 复核
+
+提交 `ff812a3f983c2285a7d7fff973004f6f66c449fb` 的 [CI 41558391404](https://github.com/workhold/moni-aigate/actions/runs/41558391404) 已完成，10/10 jobs success。下载十份 JSONL 与包/测试分区原件独立核对：54 个包，顶层1619 PASS/105 SKIP，无重复顶层、无FAIL，分区全集和执行包集合相等。other 中本片四组专项分别为9/27、3/3、2/8、24/101，原纯checker19/227，均与精确提交的测试名称一致且零SKIP/FAIL。
+
+补充旧catalog拒绝测试在此CI中是父测试PASS、两个实际数据库子测试明确SKIP（未启用 `C0_CATALOG_DATABASE_URL`）；它不计作CI实际PG验收。此前本地独立专库的1/3 PASS仍按自己的日志记账。完整日志SHA和分区核对摘要追加到机器记录，不重写原源码SHA或本地结果。

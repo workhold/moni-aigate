@@ -25,6 +25,7 @@ type runtimeProofState struct {
 	historicalRoot, currentRoot            string
 	compatibility                          compatibilityRecord
 	report                                 fundinglotscan.WalletReport
+	prefixReport                           fundinglotscan.PrefixWalletReport
 }
 
 func (RuntimeProof) String() string               { return "fundinglotruntime.RuntimeProof(redacted)" }

@@ -158,7 +158,7 @@ func gatherRefs(v any, want map[refKey]bool) error {
 	return nil
 }
 
-func primeBuiltins(ctx context.Context, tx pgx.Tx, r *resolver, b *collectorBudget, values ...any) error {
+func primeBuiltins(ctx context.Context, tx pgx.Tx, r *resolver, b *collectorBudget, expected *descriptorSet, values ...any) error {
 	want := map[refKey]bool{}
 	for _, v := range values {
 		if gatherRefs(v, want) != nil {
@@ -196,7 +196,7 @@ func primeBuiltins(ctx context.Context, tx pgx.Tx, r *resolver, b *collectorBudg
 			if !reviewedBuiltinTypes[k.oid] {
 				return ErrCatalog
 			}
-		} else if _, ok := reviewedBuiltinObjects[k]; !ok {
+		} else if _, ok := expectedBuiltinObject(expected, k); !ok {
 			return ErrCatalog
 		}
 		keys = append(keys, k)
@@ -253,7 +253,8 @@ func primeBuiltins(ctx context.Context, tx pgx.Tx, r *resolver, b *collectorBudg
 				}
 			} else {
 				raw, e := canonical(v)
-				if e != nil || string(raw) != reviewedBuiltinObjects[k] {
+				want, ok := expectedBuiltinObject(expected, k)
+				if e != nil || !ok || string(raw) != want {
 					rows.Close()
 					return ErrCatalog
 				}
@@ -452,7 +453,7 @@ func observeCatalogProfileDocumentsTx(ctx context.Context, tx pgx.Tx, pins Pins,
 		}
 		allSchema[p.scope], allRoles[p.scope] = s, role
 	}
-	if primeBuiltins(ctx, tx, r, b, allSchema, allRoles) != nil {
+	if primeBuiltins(ctx, tx, r, b, reviewed, allSchema, allRoles) != nil {
 		return nil, ErrCatalog
 	}
 	for _, p := range profiles {

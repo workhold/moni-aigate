@@ -40,4 +40,4 @@ flowchart LR
 
 全部原图与新增投影共同受 100000 行、16 MiB 逻辑预算与 65536 字节单字段上界限制。取消、超时和资源错误返回安全错误与零报告，结果不包含原件 ID 或正文。
 
-后续先完成候选的精确安装/材料隔离，再设计完整新 scanner/basis/catalog/report profile、pre/post 与 APP runtime 组合，最后发布追加迁移与启动装配。旧历史字节与 roots 不重签，缺证历史不因新安装自动补全；R1-B 完整经营验收与 R2 在线资金门禁继续保留。
+候选的精确安装/材料隔离现由[B-P2](periodic-budget-prefix-install.md)提供，完整新scanner/basis/catalog/report及pre/post、observer、APP runtime显式组合由[B-P3](periodic-budget-prefix-profile.md)承接；本页保留B-P1独立纯层与候选SQL范围。正式追加迁移与启动装配仍在后续。旧历史字节与roots不重签，缺证历史不因新安装自动补全；实际全经营和R2在线资金门禁按各阶段记录保留。

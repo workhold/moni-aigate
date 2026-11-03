@@ -73,7 +73,7 @@ func bindRuntimeOriginals(w *verificationWindow, pins fundinglotcatalog.Pins, cu
 	if err != nil || w.check() != nil {
 		return runtimeBinding{}, ErrRuntime
 	}
-	mapping, err := matchCompatibility(b, current)
+	mapping, err := matchRuntimeCompatibility(b, current)
 	if err != nil || w.check() != nil {
 		return runtimeBinding{}, ErrRuntime
 	}

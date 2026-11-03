@@ -1,6 +1,6 @@
 # 本地开发与首次运行
 
-本版要求 Go ≥1.26、Node 22、PostgreSQL 16。使用独立数据库，应用仅一个活动实例；不使用SQLite或Redis代替资金事实。
+本版要求 Go ≥1.26、Node 22.12+（22 系列）、PostgreSQL 16。使用独立数据库，应用仅一个活动实例；不使用SQLite或Redis代替资金事实。
 
 当前源码迁移范围为 **001–022**。下文带规格编号的升级与测试记录保留各阶段的历史范围；新部署始终使用当前完整迁移及 `provision`，不按历史清单裁剪。
 
@@ -52,7 +52,7 @@ MIGRATION_DATABASE_URL=postgres://moni_owner:OWNER_PASSWORD_URL_ENCODED@127.0.0.
 
 ## 迁移、初始化管理员与启动
 
-完成数据库初始化与私有配置后，在仓库根目录执行：
+完成数据库初始化与私有配置后，在仓库外准备权限0600、只含一行初始管理员密码的文件，将下方私有路径替换为实际路径，再在仓库根目录执行：
 
 ```sh
 set -a
@@ -60,7 +60,7 @@ set -a
 set +a
 ./bin/moni-aigate migrate
 DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
-./bin/moni-aigate bootstrap --email admin@example.com --password-stdin
+./bin/moni-aigate bootstrap --email admin@example.com --password-stdin < /absolute/private/admin-password
 ./bin/moni-aigate serve
 ```
 
@@ -499,11 +499,29 @@ curl --get http://localhost:8080/api/public/models \
 
 `make verify-mvp`的完整Go race套件每包预算为600秒。真实进程、密码哈希与商业用例增加后，240秒旧预算不足；仅延长测试期限，生产密码哈希成本、请求超时和测试断言保持原值。必须显式传专用TEST_DATABASE_URL，跳过数据库测试不算验收。
 
-本轮[84表来源与钱包读取](../verification/source-wallet-reader.md)按独立opt-in验证：非空C0使用owner RR核真实SQL与算法；真实维护Plan/Init仍保持16表空并如实报告缺epoch。已提交epoch环境尚无新post/runtime授权，不能用旧空安装发行入口或Init lease任意SQL代替protected phase。当前ReadLease没有SQL只读解析器，固定scanner仅发送受审SELECT；phase、严格v2与basis现已按[新合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)完成库级候选组合；独立停服只读epoch观察现已进入库级候选实现；非空runtime、正式迁移/CLI及在线writer继续后续。
+原[84表来源与钱包读取](../verification/source-wallet-reader.md)的独立opt-in记录仅验证reader：非空C0使用owner RR核真实SQL与算法，当期维护Plan/Init保持16表空并如实报告缺epoch。后续[受保护phase](../verification/protected-init-phase.md)、[独立停服观察](../verification/epoch-observer.md)和[APP runtime](../verification/runtime-composer.md)已按各自合同实现库级候选，预算新证据组合见下文B-P3。不能用旧空安装发行入口或Init lease任意SQL代替protected phase；ReadLease没有SQL只读解析器，固定scanner只发送受审SELECT。正式迁移/CLI及在线writer仍待后续交付。
 
 
-固定109表[basis与v2叶子](../verification/basis-proof-v2.md)为独立库专项：basis使用原迁移隔离schema与只读RR，先验证真实目录/UTF8，再读取原二进制；v2无需数据库，兼容差分放维护包单向引用。二者没有生产CLI，不新增启动参数或要求开发者手工发行证明；不能将CanonicalV2或Summary当运行授权。专库测试须串行并清理，不改同集群预览或全局设置；受保护phase/开账/epoch已完成库级候选装配，独立停服只读epoch观察已作为库级候选实现；非空runtime、正式迁移及CLI/在线接线仍在后续；执行证据见[事务记录](../verification/protected-init-phase.md)与[观察记录](../verification/epoch-observer.md)。
+固定109表[basis与v2叶子](../verification/basis-proof-v2.md)为独立库专项：basis使用原迁移隔离schema与只读RR，先验证真实目录/UTF8，再读取原二进制；v2无需数据库，兼容差分放维护包单向引用。二者没有生产CLI，不新增启动参数或要求开发者手工发行证明；不能将CanonicalV2或Summary当运行授权。专库测试须串行并清理，不改同集群预览或全局设置。受保护phase、observer和APP runtime分别在原事务内组合这些原件，新V3使用下述独立112表descriptor；正式迁移、CLI与在线接线仍在后续。
 
 受保护开账的完整维护专项须同时设置 `C0_MAINTENANCE_DATABASE_URL` 与 `MONI_TEST_DATABASE_URL` 指向上述同一专库，再串行运行 `go test -race -p 1 ./internal/maintenancetrust ./internal/maintenancescan ./internal/fundinglotbasis ./internal/fundinglotproof ./internal/fundinglotinit ./internal/fundinglotscan ./internal/fundinglotverify ./scripts/online-dependency-qa -count=1 -timeout 1200s`。前者启用真实Gate/Permit/phase与独立观察器，后者启用basis/seed来源SQL；仅一个开关通过不能替代另一组。本轮实际以900秒预算通过维护包（894.881秒）；新增经营、沙箱和故障场景后，建议为手动串行专项保留1200秒累计测试包预算。产品phase/观察事务累计30秒、原leaf与独立cleanup预算及断言不变。检查具体SKIP和失败，精确执行记录见[事务验证](../verification/protected-init-phase.md)与[观察验证](../verification/epoch-observer.md)。
 
 预算观察前缀专项继续显式使用 `PB_PREFIX_DATABASE_URL` 指向同一专库，串行运行 `go test -race -p 1 ./internal/periodicbudget -run '^TestPBPrefix' -count=1 -timeout 180s`。B-P2 fixture 明确 `ApplyThrough(...022)`，在原 RR RW 的同一 savepoint 核固定历史、安装候选与最小 ACL；不要把候选 SQL 放进普通 main，也不要在候选后重跑旧 `provision`。原历史 API 专项使用 `TEST_DATABASE_URL`：`go test -race ./migrations -run '^TestOriginal22' -count=1`。新包 `periodicbudgetprefixschema` 是纯材料，`testsupport/periodicprefix` 仅用于专库 fixture，没有生产安装命令。证据见[安装验证](../verification/periodic-budget-prefix-install.md)。
+
+### B-P3 预算证据完整组合专项
+
+按[冻结合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)，新显式 `PeriodicPrefixV3` 入口已接入同快照 scanner、basis、完整 catalog、受保护 Plan/Init、独立停服 observer 和 actual APP runtime composer。固定读取为 source 71表/635列、source+wallet 87表/804列、basis 112表/1004列，全 catalog 为128张普通表；source/wallet 的 history 两列另核，basis 已包含 history。旧68/84表和109表入口、旧根与缺证结果保留，不会随新枚举自动升级。详细模块及实际结果见[组合架构](../architecture/periodic-budget-prefix-profile.md)和[组合验证](../verification/periodic-budget-prefix-profile.md)。
+
+针对新 profile 的 PostgreSQL 专项可按以下方式串行运行；三个变量均须指向上文同一个隔离专库。此命令只选择新 profile 专项，旧接口回归、B-P1/B-P2及最终仓库检查仍按各自合同执行：
+
+```sh
+MONI_TEST_DATABASE_URL="$TEST_DATABASE_URL" \
+C0_CATALOG_DATABASE_URL="$TEST_DATABASE_URL" \
+C0_MAINTENANCE_DATABASE_URL="$TEST_DATABASE_URL" \
+go test -race -p 1 ./internal/fundinglotscan ./internal/fundinglotbasis \
+  ./internal/fundinglotcatalog ./internal/maintenancetrust \
+  -run '^(TestPostgresPrefix|TestIndependentPostgresPrefix|TestPeriodicPrefix)' \
+  -count=1 -timeout 1200s
+```
+
+各受保护操作仍只有累计30秒，catalog发行保留5秒子预算；测试包的1200秒覆盖多次独立安装与故障用例，不改变产品期限。普通安装、`migrate`、`provision`、`serve`和Compose不接入此候选。genuine sandbox 专项保留原本地 manifest/nonce 和真实充值来源；本地模拟验证也不代表正式支付或供应商认证。必须检查具体 PASS/SKIP 与清理结果，不能因包返回成功就宣布 B-P3 完整验收。

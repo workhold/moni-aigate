@@ -97,7 +97,7 @@ func (p *fundingLotsPhase) fundingLotsProofInput(ctx context.Context, catalog *f
 		return fundinglotproof.V2Input{}, err
 	}
 	if p == nil || p.snapshot == nil || p.snapshot.gate == nil || p.authority == nil || p.authority.manifest == nil ||
-		p.authority.predecessor == nil || p.authority.installed == nil || catalog == nil || !fundingLotsProofBasisValid(p.basis) ||
+		p.authority.predecessor == nil || p.authority.installed == nil || catalog == nil || !fundingLotsProofBasisProfileValid(p.basis, p.snapshot.sourceProfile()) ||
 		!fundingLotsUUID(p.epochID) || p.draft.Metadata.EpochID != p.epochID || !fundingLotsProofTimeEqual(p.draft.Metadata.EpochAt, p.epochAt) {
 		return fundinglotproof.V2Input{}, ErrTransaction
 	}
@@ -206,7 +206,7 @@ func (p *fundingLotsPhase) checkFundingLotsPostProof(ctx context.Context) error 
 	// VerifyTx alone only checks identity. Recollect and compare the full static
 	// catalog in this same original RR transaction after the fixed write set.
 	pins := p.snapshot.gate.pins
-	fresh, err := fundinglotcatalog.VerifySnapshotTx(ctx, p.snapshot.rawTx, pins)
+	fresh, err := verifyOwnedSnapshotCatalog(ctx, p.snapshot.rawTx, pins, p.snapshot.sourceProfile())
 	if err != nil || fresh == nil || fresh.VerifyTx(ctx, p.snapshot.rawTx) != nil || !fresh.MatchesPins(pins) {
 		return authorityLeafFailure(ctx, ErrSchema)
 	}

@@ -2871,3 +2871,119 @@ B-P2最终make check结果与精确旧catalog补验日志摘要已收口；仅�
 - modified `docs/verification/periodic-budget-prefix-install.json`
 
 </details>
+
+## 2026-11-03T04:01:06Z · 224b44572775
+
+B-P3显式prefix读集、basis/catalog、受保护开账与observer/APP组合；保留旧接口、原件与证据缺口，补共享采购准入及更正缺证和race预算未达边界；同步README部署、HLD/LLD、统一架构和真实专项结果
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1633 个源文件；本次 90 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/periodic-budget-prefix-install.md`
+- added `docs/architecture/periodic-budget-prefix-profile.md`
+- modified `docs/architecture/periodic-budget-prefix.md`
+- modified `docs/architecture/runtime-composer.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/verification/assets/architecture-periodic-budget-prefix-profile-application.png`
+- added `docs/verification/assets/architecture-periodic-budget-prefix-profile-detail.png`
+- modified `docs/verification/mvp-status.md`
+- modified `docs/verification/periodic-budget-prefix-install.json`
+- modified `docs/verification/periodic-budget-prefix-install.md`
+- added `docs/verification/periodic-budget-prefix-profile.json`
+- added `docs/verification/periodic-budget-prefix-profile.md`
+- added `docs/verification/periodic-prefix-catalog-cpu.md`
+- added `docs/verification/periodic-prefix-catalog-static.md`
+- added `docs/verification/periodic-prefix-profile-roots.json`
+- modified `internal/fundinglotbasis/materials.go`
+- added `internal/fundinglotbasis/materials/descriptor-prefix-v1.json`
+- modified `internal/fundinglotbasis/metadata.go`
+- added `internal/fundinglotbasis/prefix.go`
+- added `internal/fundinglotbasis/prefix_postgres_test.go`
+- added `internal/fundinglotbasis/prefix_test.go`
+- modified `internal/fundinglotbasis/queries.go`
+- modified `internal/fundinglotbasis/read.go`
+- modified `internal/fundinglotcatalog/collector.go`
+- modified `internal/fundinglotcatalog/collector_decode.go`
+- added `internal/fundinglotcatalog/collector_privilege_decode.go`
+- added `internal/fundinglotcatalog/collector_privilege_decode_test.go`
+- modified `internal/fundinglotcatalog/descriptor.go`
+- added `internal/fundinglotcatalog/expected/periodic-prefix-v3-delta.json`
+- added `internal/fundinglotcatalog/prefix_expected.go`
+- added `internal/fundinglotcatalog/prefix_profile.go`
+- added `internal/fundinglotcatalog/prefix_profile_integration_test.go`
+- added `internal/fundinglotcatalog/prefix_profile_test.go`
+- modified `internal/fundinglotcatalog/proof.go`
+- added `internal/fundinglotprefixcompat/expected/compatibility-v1.json`
+- added `internal/fundinglotprefixcompat/materials.go`
+- added `internal/fundinglotprefixcompat/materials_test.go`
+- added `internal/fundinglotruntime/prefix_bindings_test.go`
+- added `internal/fundinglotruntime/prefix_compose.go`
+- added `internal/fundinglotruntime/prefix_materials.go`
+- modified `internal/fundinglotruntime/runtime_bindings.go`
+- modified `internal/fundinglotruntime/runtime_compose.go`
+- modified `internal/fundinglotruntime/runtime_types.go`
+- added `internal/fundinglotscan/prefix_checks.go`
+- added `internal/fundinglotscan/prefix_projection.go`
+- added `internal/fundinglotscan/prefix_projection_test.go`
+- added `internal/fundinglotscan/prefix_qualification.go`
+- added `internal/fundinglotscan/prefix_reader.go`
+- added `internal/fundinglotscan/prefix_reader_postgres_test.go`
+- added `internal/fundinglotscan/prefix_reader_test.go`
+- added `internal/fundinglotscan/prefix_readset_test.go`
+- added `internal/fundinglotscan/prefix_types.go`
+- added `internal/fundinglotscan/projection_prefix.go`
+- modified `internal/fundinglotscan/wallet_readset_test.go`
+- modified `internal/maintenancescan/complete_sources.go`
+- added `internal/maintenancescan/periodic_prefix.go`
+- added `internal/maintenancescan/periodic_prefix_test.go`
+- modified `internal/maintenancescan/source_wallet.go`
+- modified `internal/maintenancetrust/authority_manifest.go`
+- modified `internal/maintenancetrust/funding_lots_observe.go`
+- modified `internal/maintenancetrust/funding_lots_observed_proof.go`
+- modified `internal/maintenancetrust/funding_lots_phase.go`
+- modified `internal/maintenancetrust/funding_lots_post.go`
+- added `internal/maintenancetrust/funding_lots_prefix.go`
+- added `internal/maintenancetrust/funding_lots_prefix_business_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_prefix_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_prefix_legacy_integration_test.go`
+- added `internal/maintenancetrust/funding_lots_prefix_observe.go`
+- added `internal/maintenancetrust/funding_lots_prefix_observed_proof_test.go`
+- added `internal/maintenancetrust/funding_lots_prefix_sandbox_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_proof.go`
+- modified `internal/maintenancetrust/funding_lots_run.go`
+- modified `internal/maintenancetrust/funding_lots_runtime_procurement_integration_test.go`
+- added `internal/maintenancetrust/periodic_prefix_profile.go`
+- added `internal/maintenancetrust/periodic_prefix_profile_test.go`
+- modified `internal/maintenancetrust/snapshot.go`
+- modified `internal/maintenancetrust/snapshot_fixture_test.go`
+- added `scripts/check-periodic-prefix-compatibility.py`
+- added `scripts/check-prefix-profile-delta.py`
+- added `scripts/check-prefix-profile-roots.py`
+- added `scripts/maintenance-scan-qa/periodic_prefix_integration_test.go`
+- added `specs/023-periodic-products/b-prefix-procurement-barrier-gap.md`
+- added `specs/023-periodic-products/b-prefix-profile-contract.md`
+- added `specs/023-periodic-products/b-prefix-readset.json`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T04:58:41Z · 65e85bfe971f
+
+最终复核B-P3候选及README部署范围；追加标准专库7/13维护与2/37 catalog通过、整仓50包通过和资金短时限失败、保醒未阻止维护休眠的环境证据及独立构建，明确采购历史缺证和专项race未关闭；仅补交付文档与验证事实
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1633 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/verification/periodic-budget-prefix-profile.json`
+- modified `docs/verification/periodic-budget-prefix-profile.md`
+- modified `docs/verification/periodic-prefix-catalog-cpu.md`
+
+</details>

@@ -288,7 +288,7 @@ func (s *reader) metadata() (environment, error) {
 		return environment{}, ErrMetadata
 	}
 	count = 0
-	e = s.consumeMetadata(relationsSQL(s.materials), 110, func(raw []byte) error {
+	e = s.consumeMetadata(relationsSQL(s.materials), s.materials.profile.tables+1, func(raw []byte) error {
 		var r relationMetadata
 		if e := decodeMetadata(raw, &r); e != nil {
 			return e
@@ -302,17 +302,17 @@ func (s *reader) metadata() (environment, error) {
 	if e != nil {
 		return environment{}, e
 	}
-	if count != 109 {
+	if count != s.materials.profile.tables {
 		return environment{}, ErrMetadata
 	}
-	byName := make(map[string]table, 109)
-	seen := make(map[string]int, 109)
+	byName := make(map[string]table, s.materials.profile.tables)
+	seen := make(map[string]int, s.materials.profile.tables)
 	lastTable := ""
 	var lastOrdinal int32
 	for _, t := range s.materials.tables {
 		byName[t.name] = t
 	}
-	e = s.consumeMetadata(attributesSQL(s.materials), 978, func(raw []byte) error {
+	e = s.consumeMetadata(attributesSQL(s.materials), s.materials.profile.columns+2, func(raw []byte) error {
 		var a attributeMetadata
 		if e := decodeMetadata(raw, &a); e != nil {
 			return e
@@ -346,12 +346,12 @@ func (s *reader) metadata() (environment, error) {
 		}
 	}
 	count = 0
-	e = s.consumeMetadata(primaryKeysSQL(s.materials), 110, func(raw []byte) error {
+	e = s.consumeMetadata(primaryKeysSQL(s.materials), s.materials.profile.tables+1, func(raw []byte) error {
 		var p primaryKeyMetadata
 		if e := decodeMetadata(raw, &p); e != nil {
 			return e
 		}
-		if count >= 109 {
+		if count >= s.materials.profile.tables {
 			return ErrMetadata
 		}
 		t := s.materials.tables[count]
@@ -364,7 +364,7 @@ func (s *reader) metadata() (environment, error) {
 	if e != nil {
 		return environment{}, e
 	}
-	if count != 109 {
+	if count != s.materials.profile.tables {
 		return environment{}, ErrMetadata
 	}
 	count = 0

@@ -410,5 +410,90 @@
     "result": "pass",
     "log": ".local/pb-prefix-install-final-check.log",
     "log_sha256": "b182a999d0e12039e83f31f60caa5fae350873c55507695497c35ff693620422"
+  },
+  "post_push_ci": {
+    "run_id": 41558391404,
+    "url": "https://github.com/workhold/moni-aigate/actions/runs/41558391404",
+    "head_sha": "ff812a3f983c2285a7d7fff973004f6f66c449fb",
+    "conclusion": "success",
+    "jobs_success": 10,
+    "all_package_count": 54,
+    "top_level": {
+      "pass": 1619,
+      "skip": 105
+    },
+    "parent_and_child": {
+      "pass": 9212,
+      "skip": 189
+    },
+    "duplicate_top_level": 0,
+    "other_suites": {
+      "migrations": {
+        "top_level": {
+          "pass": 9
+        },
+        "parent_and_child": {
+          "pass": 27
+        },
+        "expected_names_match": true,
+        "pass": true
+      },
+      "internal/periodicbudgetprefixschema": {
+        "top_level": {
+          "pass": 3
+        },
+        "parent_and_child": {
+          "pass": 3
+        },
+        "expected_names_match": true,
+        "pass": true
+      },
+      "internal/testsupport/periodicprefix": {
+        "top_level": {
+          "pass": 2
+        },
+        "parent_and_child": {
+          "pass": 8
+        },
+        "expected_names_match": true,
+        "pass": true
+      },
+      "internal/periodicbudget": {
+        "top_level": {
+          "pass": 24
+        },
+        "parent_and_child": {
+          "pass": 101
+        },
+        "expected_names_match": true,
+        "pass": true
+      },
+      "internal/periodicbudgetprefix": {
+        "top_level": {
+          "pass": 19
+        },
+        "parent_and_child": {
+          "pass": 227
+        },
+        "expected_names_match": true,
+        "pass": true
+      }
+    },
+    "supplemental_catalog": {
+      "parent_pass": 1,
+      "children_skip": 2,
+      "actual_pg_accepted": false,
+      "reason": "Both real catalog variants require independently enabled C0_CATALOG_DATABASE_URL; their explicit child SKIP does not count as PG acceptance."
+    },
+    "evidence": [
+      {
+        "path": ".local/pb-prefix-install-ci-evidence/other-analysis.json",
+        "sha256": "6378236963ea38e53bb10acd5246b39cf3f7b22015d3ecdd8284c887e05f08d4"
+      },
+      {
+        "path": ".local/pb-prefix-install-ci-evidence/all-ten-analysis.json",
+        "sha256": "8c3ae13773df4657ef8abed74ee82ca7379561a3350da67d9419602c06fbc1c2"
+      }
+    ]
   }
 }

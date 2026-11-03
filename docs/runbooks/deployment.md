@@ -10,7 +10,9 @@
 
 ## 首次安装
 
-使用专用服务器/目录检出完整仓库，安装Docker Compose v2，以下命令均在仓库根目录执行。`migrate`使用 `build: .` 构建本地镜像，`provision`和app复用该镜像，因此需要根 `Dockerfile`、Go/Web源码及 `deploy/init-roles.sh`，仅保存Compose文件和脚本不足以首次构建；当前流程不假定存在已发布的预构建镜像。生成环境后配置HTTPS域名，文件权限保持0600；运行密钥与日常数据库访问权限分开保管。备份脚本会生成包含明文keyring的受保护完整包，必须存放于加密介质，详见恢复手册。
+使用专用服务器/目录检出完整仓库，安装Docker Compose v2，以下命令均在仓库根目录执行。下方生成配置的 `go run` 需要Go ≥1.26；也可在可信开发机生成私有配置并安全传入部署主机。`migrate`使用 `build: .` 构建本地镜像，`provision`和app复用该镜像，因此需要根 `Dockerfile`、Go/Web源码及 `deploy/init-roles.sh`，仅保存Compose文件和脚本不足以首次构建；当前流程不假定存在已发布的预构建镜像。生成环境后配置HTTPS域名，文件权限保持0600；运行密钥与日常数据库访问权限分开保管。备份脚本会生成包含明文keyring的受保护完整包，必须存放于加密介质，详见恢复手册。
+
+在仓库外准备权限0600的初始管理员密码文件，内容为12–72字节的一行密码，将下面私有路径替换为实际路径。已有 `.env` 时跳过生成步骤；`init-env`不覆盖已有文件。
 
 ```sh
 go run ./cmd/moni-aigate init-env --out .env
@@ -20,7 +22,7 @@ go run ./cmd/moni-aigate init-env --out .env
 docker compose config --quiet
 docker compose build
 # bootstrap 会等待迁移与受限角色授权依赖完成；此时尚未启动对外app。
-docker compose run --rm -T app bootstrap --email admin@example.com --password-stdin
+docker compose run --rm -T app bootstrap --email admin@example.com --password-stdin < /absolute/private/admin-password
 # 首个管理员创建成功后，再启动单活动app。
 docker compose up -d app
 ```

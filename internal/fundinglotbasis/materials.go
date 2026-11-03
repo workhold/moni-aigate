@@ -97,10 +97,16 @@ type sendProfile struct {
 	Types         []typeMetadata     `json:"types"`
 	Functions     []functionMetadata `json:"functions"`
 }
+type descriptorMaterial struct {
+	canonical                        []byte
+	digest, scope                    string
+	bytes, tables, columns, pkFields int
+}
 type materials struct {
 	tables   []table
 	manifest []manifestEntry
 	send     sendProfile
+	profile  descriptorMaterial
 }
 
 var fixedOnce sync.Once
@@ -127,8 +133,11 @@ func loadMaterials() (*materials, error) {
 	return &fixedMaterials, nil
 }
 func parseMaterials() (materials, error) {
-	var out materials
-	if len(descriptorCanonical) != 39415 || sha(descriptorCanonical) != descriptorSHA || len(manifestCanonical) != 2459 || sha(manifestCanonical) != manifestSHA || len(sendCanonical) != 12360 || sha(sendCanonical) != sendSHA {
+	return parseFixedMaterials(descriptorMaterial{descriptorCanonical, descriptorSHA, "fixed_109_table_basis_v1", 39415, 109, 976, 128})
+}
+func parseFixedMaterials(profile descriptorMaterial) (materials, error) {
+	out := materials{profile: profile}
+	if len(profile.canonical) != profile.bytes || sha(profile.canonical) != profile.digest || len(manifestCanonical) != 2459 || sha(manifestCanonical) != manifestSHA || len(sendCanonical) != 12360 || sha(sendCanonical) != sendSHA {
 		return out, ErrMetadata
 	}
 	var raw []struct {
@@ -136,7 +145,7 @@ func parseMaterials() (materials, error) {
 		PrimaryKey []string            `json:"primary_key"`
 		Columns    [][]json.RawMessage `json:"columns"`
 	}
-	if decode(descriptorCanonical, &raw) != nil || len(raw) != 109 || decode(manifestCanonical, &out.manifest) != nil || len(out.manifest) != 22 || decode(sendCanonical, &out.send) != nil || out.send.FormatVersion != 1 || len(out.send.Types) != 15 || len(out.send.Functions) != 16 {
+	if decode(profile.canonical, &raw) != nil || len(raw) != profile.tables || decode(manifestCanonical, &out.manifest) != nil || len(out.manifest) != 22 || decode(sendCanonical, &out.send) != nil || out.send.FormatVersion != 1 || len(out.send.Types) != 15 || len(out.send.Functions) != 16 {
 		return out, ErrMetadata
 	}
 	count, pks := 0, 0
@@ -182,7 +191,7 @@ func parseMaterials() (materials, error) {
 		pks += len(t.pkColumns)
 		out.tables = append(out.tables, t)
 	}
-	if count != 976 || pks != 128 {
+	if count != profile.columns || pks != profile.pkFields {
 		return materials{}, ErrMetadata
 	}
 	return out, nil

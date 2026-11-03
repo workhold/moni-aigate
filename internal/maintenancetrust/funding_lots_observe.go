@@ -38,12 +38,17 @@ type fundingLotsObservationRun struct {
 	predecessor predecessorSnapshotFacts
 	pending     *fundingLotsObservationRows
 	failure     error
+	profile     fundinglotcatalog.Profile
 }
 
 // ObserveFundingLots consumes a fresh Gate's only Begin opportunity. It holds
 // busy through independent read-only verification, rollback and cleanup; no
 // Snapshot, SQL handle, Permit or proof capability is returned to the caller.
 func (g *Gate) ObserveFundingLots(ctx context.Context, expected FundingLotsExpected) (FundingLotsObservation, error) {
+	return g.observeFundingLots(ctx, expected, fundinglotcatalog.LegacyV1)
+}
+
+func (g *Gate) observeFundingLots(ctx context.Context, expected FundingLotsExpected, profile fundinglotcatalog.Profile) (FundingLotsObservation, error) {
 	now := time.Now()
 	if g == nil || g.state == nil {
 		return FundingLotsObservation{}, ErrInput
@@ -80,11 +85,11 @@ func (g *Gate) ObserveFundingLots(ctx context.Context, expected FundingLotsExpec
 	// Length/format checks precede every retained copy.
 	expected = FundingLotsExpected{EpochID: strings.Clone(expected.EpochID), BasisDigest: strings.Clone(expected.BasisDigest),
 		ManifestDigest: strings.Clone(expected.ManifestDigest), DescriptorDigest: strings.Clone(expected.DescriptorDigest), RuntimeProofDigest: strings.Clone(expected.RuntimeProofDigest)}
-	snapshot, err := gs.beginSnapshotOwned(ctx, snapshotObserve, deadline)
+	snapshot, err := gs.beginSnapshotProfileOwned(ctx, snapshotObserve, deadline, profile)
 	if err != nil {
 		return FundingLotsObservation{}, err
 	}
-	run := &fundingLotsObservationRun{snapshot: snapshot.state}
+	run := &fundingLotsObservationRun{snapshot: snapshot.state, profile: profile}
 	fail := func(err error) (FundingLotsObservation, error) {
 		return FundingLotsObservation{}, run.abort(fundingLotsFailure(err))
 	}
@@ -102,24 +107,16 @@ func (g *Gate) ObserveFundingLots(ctx context.Context, expected FundingLotsExpec
 		if gs.pins.Mode == fundinglotcatalog.Sandbox {
 			mode = fundinglotscan.ModeSandbox
 		}
-		facts, readErr := fundinglotscan.ReadWallet(work, run, gs.pins.AppSchema.Name, mode)
+		rows, counts, readErr := run.readWallet(work, mode)
 		if readErr != nil {
-			return fail(fundingLotsReadFailure(readErr, run.failure))
-		}
-		report := facts.Summary()
-		if !fundingLotsPostQualified(report, mode) || run.pending != nil {
-			return fail(ErrSchema)
-		}
-		rows, projectionErr := fundinglotscan.ProjectEpochProof(work, facts)
-		if projectionErr != nil {
-			return fail(projectionErr)
+			return fail(readErr)
 		}
 		actual, proofErr := fundingLotsObservedProof(rows, gs.pins, run.catalog, run.manifest,
 			run.predecessor.mode, run.predecessor.canonical, run.predecessor.v1SHA256)
 		if proofErr != nil {
 			return fail(proofErr)
 		}
-		result = FundingLotsObservation{Status: FundingLotsObservationMatched, Observed: actual, SourceRows: report.SourceRows, SourceBytes: report.SourceBytes}
+		result = FundingLotsObservation{Status: FundingLotsObservationMatched, Observed: actual, SourceRows: counts.SourceRows, SourceBytes: counts.SourceBytes}
 		if actual.EpochID != expected.EpochID {
 			result.Status = FundingLotsObservationDifferentEpoch
 		} else if actual != expected {
@@ -181,11 +178,11 @@ func (r *fundingLotsObservationRun) authenticate(ctx context.Context) error {
 		return authorityLeafFailure(ctx, ErrTransaction)
 	}
 	var err error
-	r.catalog, err = fundinglotcatalog.VerifySnapshotTx(ctx, st.rawTx, st.gate.pins)
+	r.catalog, err = verifyOwnedSnapshotCatalog(ctx, st.rawTx, st.gate.pins, r.profile)
 	if err != nil || r.catalog == nil || !r.catalog.MatchesPins(st.gate.pins) || r.catalog.VerifyTx(ctx, st.rawTx) != nil {
 		return authorityLeafFailure(ctx, ErrSchema)
 	}
-	if r.manifest, err = readMaintenanceManifestSnapshot(ctx, st); err != nil {
+	if r.manifest, err = r.readManifest(ctx); err != nil {
 		return err
 	}
 	if r.identity, err = readMaintenanceIdentitySnapshot(ctx, st); err != nil {
@@ -240,13 +237,13 @@ func (r *fundingLotsObservationRun) verifyExit(ctx context.Context) error {
 	if r.pending != nil || st.verifyBinding(ctx) != nil {
 		return authorityLeafFailure(ctx, ErrTransaction)
 	}
-	fresh, err := fundinglotcatalog.VerifySnapshotTx(ctx, st.rawTx, st.gate.pins)
+	fresh, err := verifyOwnedSnapshotCatalog(ctx, st.rawTx, st.gate.pins, r.profile)
 	if err != nil || fresh == nil || fresh.VerifyTx(ctx, st.rawTx) != nil || !fresh.MatchesPins(st.gate.pins) ||
 		fresh.DescriptorVersion() != r.catalog.DescriptorVersion() || fresh.ExpectedSHA256() != r.catalog.ExpectedSHA256() ||
 		fresh.SchemaSHA256() != r.catalog.SchemaSHA256() || fresh.RolesSHA256() != r.catalog.RolesSHA256() {
 		return authorityLeafFailure(ctx, ErrSchema)
 	}
-	manifest, err := readMaintenanceManifestSnapshot(ctx, st)
+	manifest, err := r.readManifest(ctx)
 	if err != nil || !bytes.Equal(manifest, r.manifest) {
 		return authorityLeafFailure(ctx, ErrSchema)
 	}

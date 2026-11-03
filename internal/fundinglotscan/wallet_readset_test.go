@@ -172,8 +172,15 @@ func TestWalletReadsetSourcePinsAndHistory(t *testing.T) {
 			t.Errorf("readset source changed: %s; review scanner SQL/ACL/history before updating its pin", source)
 		}
 	}
-	// A newly added scanner production file must also enter the reviewed input
-	// set. Tests are deliberately excluded; this test never hashes itself.
+	// The original thirty pins stay byte-for-byte frozen. The reviewed prefix
+	// extension contributes a disjoint explicit source set; together they must
+	// cover every scanner production file. Neither manifest hashes this test.
+	prefix := loadPrefixReadsetContract(t)
+	for source := range prefix.SourceSHA256 {
+		if _, exists := contract.SourceSHA256[source]; exists {
+			t.Fatalf("old and prefix source manifests overlap: %s", source)
+		}
+	}
 	files, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatal(err)
@@ -182,7 +189,10 @@ func TestWalletReadsetSourcePinsAndHistory(t *testing.T) {
 		if strings.HasSuffix(file, "_test.go") {
 			continue
 		}
-		if _, ok := contract.SourceSHA256["internal/fundinglotscan/"+file]; !ok {
+		name := "internal/fundinglotscan/" + file
+		_, old := contract.SourceSHA256[name]
+		_, added := prefix.SourceSHA256[name]
+		if !old && !added {
 			t.Errorf("unreviewed scanner production source %s", file)
 		}
 	}

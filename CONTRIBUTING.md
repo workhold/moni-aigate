@@ -17,7 +17,7 @@
 
 ## 本地环境与检查
 
-需要 Go ≥1.26、Node 22 与 PostgreSQL 16。建库、角色分离和首次启动见[开发手册](docs/runbooks/development.md)，容器与 1Panel 见[部署手册](docs/runbooks/deployment.md)。没有固定默认管理员或测试密码。
+需要 Go ≥1.26、Node 22.12+（22 系列）与 PostgreSQL 16。建库、角色分离和首次启动见[开发手册](docs/runbooks/development.md)，容器与 1Panel 见[部署手册](docs/runbooks/deployment.md)。没有固定默认管理员或测试密码。
 
 在仓库根目录执行相关 Go 包和前端测试后，完成架构语义复核，再运行：
 

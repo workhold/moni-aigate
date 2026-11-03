@@ -16,6 +16,18 @@ func decodeCatalogJSON(raw []byte) (any, error) {
 	if len(raw) > collectorRecordLimit || !utf8.Valid(raw) {
 		return nil, ErrCatalog
 	}
+	if value, ok := decodeEffectivePrivilegeJSON(raw); ok {
+		return value, nil
+	}
+	return decodeCatalogJSONGeneral(raw)
+}
+
+// Keep the original generic path for every input outside the independently
+// closed fast shape, including escaped or otherwise unusual fixed JSON values.
+func decodeCatalogJSONGeneral(raw []byte) (any, error) {
+	if len(raw) > collectorRecordLimit || !utf8.Valid(raw) {
+		return nil, ErrCatalog
+	}
 	d := json.NewDecoder(bytes.NewReader(raw))
 	d.UseNumber()
 	var value any

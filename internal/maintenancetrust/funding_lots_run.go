@@ -35,7 +35,7 @@ func (p *Permit) PlanFundingLots(ctx context.Context, epochID string) (FundingLo
 	if err = ph.commitOwned(work); err != nil {
 		return FundingLotsPlanResult{}, err
 	}
-	source := ph.facts.Summary()
+	source := ph.sourceCounts()
 	return FundingLotsPlanResult{Expected: ph.expected, Metadata: ph.draft.Metadata,
 		SourceRows: source.SourceRows, SourceBytes: source.SourceBytes,
 		BasisRows: ph.basis.SourceRows, BasisBytes: ph.basis.SourceBytes}, nil
@@ -100,17 +100,23 @@ func (p *fundingLotsPhase) verifyFundingLotsPost(ctx context.Context) error {
 		return err
 	}
 	query := &fundingLotsSourceQuery{phase: p}
-	p.post, err = fundinglotscan.ReadWallet(ctx, query, p.snapshot.gate.pins.AppSchema.Name, mode)
-	if err != nil {
-		return fundingLotsReadFailure(err, query.failure)
-	}
-	if !fundingLotsPostQualified(p.post.Summary(), mode) || !fundingLotsPostCounts(p.post.Summary(), p.facts.Summary(), p.draft) {
-		return ErrTransaction
+	if p.snapshot.sourceProfile() == fundinglotcatalog.PeriodicPrefixV3 {
+		if err = p.readPeriodicPrefixPost(ctx, query, mode); err != nil {
+			return err
+		}
+	} else {
+		p.post, err = fundinglotscan.ReadWallet(ctx, query, p.snapshot.gate.pins.AppSchema.Name, mode)
+		if err != nil {
+			return fundingLotsReadFailure(err, query.failure)
+		}
+		if !fundingLotsPostQualified(p.post.Summary(), mode) || !fundingLotsPostCounts(p.post.Summary(), p.facts.Summary(), p.draft) {
+			return ErrTransaction
+		}
 	}
 	if err = p.checkFundingLotsPostProof(ctx); err != nil {
 		return err
 	}
-	// Re-read all 109 tables: the wallet union does not contain the other 41.
+	// Re-read the selected full basis, including tables outside the wallet union.
 	after, err := p.readFundingLotsBasis(ctx)
 	if err != nil {
 		return err
@@ -181,12 +187,18 @@ func (p *fundingLotsPhase) prepareFundingLots(ctx context.Context) error {
 		return err
 	}
 	query := &fundingLotsSourceQuery{phase: p}
-	p.facts, err = fundinglotscan.Read(ctx, query, p.snapshot.gate.pins.AppSchema.Name, mode)
-	if err != nil {
-		return fundingLotsReadFailure(err, query.failure)
-	}
-	if p.seed, err = fundinglotscan.ProjectLegacySeed(ctx, p.facts); err != nil {
-		return err
+	if p.snapshot.sourceProfile() == fundinglotcatalog.PeriodicPrefixV3 {
+		if err = p.readPeriodicPrefixSources(ctx, query, mode); err != nil {
+			return err
+		}
+	} else {
+		p.facts, err = fundinglotscan.Read(ctx, query, p.snapshot.gate.pins.AppSchema.Name, mode)
+		if err != nil {
+			return fundingLotsReadFailure(err, query.failure)
+		}
+		if p.seed, err = fundinglotscan.ProjectLegacySeed(ctx, p.facts); err != nil {
+			return err
+		}
 	}
 	if err = p.readFundingLotsBirth(ctx); err != nil {
 		return err
@@ -226,7 +238,7 @@ func (p *fundingLotsPhase) verifyFundingLotsEvidence(ctx context.Context) error 
 	if manifest == nil || manifest.digest != p.authority.manifest.digest || !bytes.Equal(manifest.canonical, p.authority.manifest.canonical) {
 		return ErrSchema
 	}
-	fresh, err := fundinglotcatalog.VerifySnapshotTx(ctx, p.snapshot.rawTx, p.snapshot.gate.pins)
+	fresh, err := verifyOwnedSnapshotCatalog(ctx, p.snapshot.rawTx, p.snapshot.gate.pins, p.snapshot.sourceProfile())
 	original := p.authority.installed.Catalog()
 	if err != nil || fresh == nil || original == nil || fresh.VerifyTx(ctx, p.snapshot.rawTx) != nil || !fresh.MatchesPins(p.snapshot.gate.pins) ||
 		fresh.DescriptorVersion() != original.DescriptorVersion() || fresh.ExpectedSHA256() != original.ExpectedSHA256() ||
@@ -238,12 +250,12 @@ func (p *fundingLotsPhase) verifyFundingLotsEvidence(ctx context.Context) error 
 
 func (p *fundingLotsPhase) readFundingLotsBasis(ctx context.Context) (fundinglotbasis.Report, error) {
 	query := &fundingLotsSourceQuery{phase: p}
-	facts, err := fundinglotbasis.Read(ctx, fundingLotsBasisQuery{source: query}, p.snapshot.gate.pins.AppSchema.Name)
+	facts, err := readOwnedBasis(ctx, fundingLotsBasisQuery{source: query}, p.snapshot.gate.pins.AppSchema.Name, p.snapshot.sourceProfile())
 	if err != nil {
 		return fundinglotbasis.Report{}, fundingLotsReadFailure(err, query.failure)
 	}
 	report := facts.Summary()
-	if !fundingLotsProofBasisValid(report) {
+	if !fundingLotsProofBasisProfileValid(report, p.snapshot.sourceProfile()) {
 		return fundinglotbasis.Report{}, ErrSchema
 	}
 	if err = p.noPending(ctx); err != nil {
@@ -343,7 +355,7 @@ func (p *fundingLotsPhase) checkFundingLotsBudget(ctx context.Context) error {
 	if err := p.noPending(ctx); err != nil {
 		return err
 	}
-	r, m := p.facts.Summary(), p.draft.Metadata
+	r, m := p.sourceCounts(), p.draft.Metadata
 	if len(p.draft.SettlementLots) != 0 || len(p.draft.RefundLots) != 0 {
 		return ErrTransaction
 	}

@@ -65,6 +65,10 @@ func newSnapshotFixture(t *testing.T) *snapshotFixture {
 // prepare may create original business history before the fixed C0 candidate
 // is installed. It cannot change production APIs, expected pins or candidate SQL.
 func newSnapshotFixturePrepared(t *testing.T, prepare func(*snapshotFixture, *pgxpool.Pool)) *snapshotFixture {
+	return newSnapshotFixtureHistoryPrepared(t, prepare, false)
+}
+
+func newSnapshotFixtureHistoryPrepared(t *testing.T, prepare func(*snapshotFixture, *pgxpool.Pool), prefixProfile bool) *snapshotFixture {
 	t.Helper()
 	f := &snapshotFixture{gateFixture: newGateFixture(t)}
 	root := snapshotRepositoryRoot(t)
@@ -86,7 +90,13 @@ func newSnapshotFixturePrepared(t *testing.T, prepare func(*snapshotFixture, *pg
 		t.Fatal("snapshot fixture owner pool")
 	}
 	defer pool.Close()
-	if migrations.Apply(ctx, pool) != nil || operations.ProvisionFor(ctx, pool, f.schema, f.app, f.projector) != nil {
+	var migrationErr error
+	if prefixProfile {
+		migrationErr = migrations.ApplyThrough(ctx, pool, "022_payment_runtime_attestation.sql")
+	} else {
+		migrationErr = migrations.Apply(ctx, pool)
+	}
+	if migrationErr != nil || operations.ProvisionFor(ctx, pool, f.schema, f.app, f.projector) != nil {
 		t.Fatal("snapshot fixture original migrations/provision")
 	}
 	if prepare != nil {
@@ -130,8 +140,12 @@ func newSnapshotFixturePrepared(t *testing.T, prepare func(*snapshotFixture, *pg
 		}
 	}
 	var tables int
-	if pool.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_class WHERE relnamespace=$1 AND relkind='r'`, f.pins.AppSchema.OID).Scan(&tables) != nil || tables != 125 {
-		t.Fatal("snapshot fixture complete 125 table installation")
+	wantTables := 125
+	if prefixProfile {
+		wantTables = 128
+	}
+	if pool.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_class WHERE relnamespace=$1 AND relkind='r'`, f.pins.AppSchema.OID).Scan(&tables) != nil || tables != wantTables {
+		t.Fatal("snapshot fixture complete selected table installation")
 	}
 	return f
 }

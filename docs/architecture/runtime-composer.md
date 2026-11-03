@@ -184,4 +184,6 @@ proof 保存原入口与出口 catalog identity、deep-owned pins、固定兼容
 | [v1_public.go](../../internal/fundinglotproof/v1_public.go) | 原 V1 语义的最小纯格式 API；旧 V1/V2 核心及 wire 保持 |
 | [application_payment_proof_projection.go](../../internal/fundinglotscan/application_payment_proof_projection.go) | 同次合格 84 raw 的 APP 双原件纯投影 |
 
-实际验收还确认[非空周期预算历史前缀证据缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)：现有算法对活动held/window历史保留OperationSnapshotPrefixUnproven，composer继续拒绝。空预算配置不等于完整经营认证；先补SDD与不可变来源证据，再补全非空PB正例，不能据本轮限定通过打开R2在线资金ready。
+原 WalletReadV2 验收确认[非空周期预算历史前缀证据缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)：原算法对活动held/window历史保留OperationSnapshotPrefixUnproven，旧composer继续拒绝。空预算配置不等于完整经营认证。
+
+B-P3现按[独立合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)新增显式ordinary/sandbox V3入口：完整128表catalog、exact original22、同session87表804列九算法及prefix深拷贝投影，observer/runtime共用12条固定历史映射。旧入口、六条旧映射、原84表读集和旧缺证保持；新路径仍绑定原APP事务、sandbox本地V1原件及30秒总预算，未接普通main/ready或在线写事务。新模块、数据面和实际验收分别见[完整组合架构](periodic-budget-prefix-profile.md)及[本片记录](../verification/periodic-budget-prefix-profile.md)，不能据候选组合打开R2在线资金ready。

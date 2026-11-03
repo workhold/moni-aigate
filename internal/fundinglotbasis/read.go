@@ -55,6 +55,9 @@ func (f *framer) nullable(v *string) error {
 	return f.frame([]byte(*v))
 }
 func (f *framer) header(e environment) error {
+	return f.headerDescriptor(e, descriptorCanonical)
+}
+func (f *framer) headerDescriptor(e environment, descriptor []byte) error {
 	if err := f.write([]byte("moni-aigate/funding-lots-basis/v1\x00")); err != nil {
 		return err
 	}
@@ -73,7 +76,7 @@ func (f *framer) header(e environment) error {
 			return err
 		}
 	}
-	for _, b := range [][]byte{sendCanonical, manifestCanonical, descriptorCanonical} {
+	for _, b := range [][]byte{sendCanonical, manifestCanonical, descriptor} {
 		if err := f.frame(b); err != nil {
 			return err
 		}
@@ -84,13 +87,16 @@ func (f *framer) header(e environment) error {
 // Read uses only the supplied Query. Its successful facts describe complete
 // enumeration; they are not evidence of an authenticated transaction or role.
 func Read(ctx context.Context, q Query, schema string) (Facts, error) {
+	return readFixed(ctx, q, schema, loadMaterials)
+}
+func readFixed(ctx context.Context, q Query, schema string, load func() (*materials, error)) (Facts, error) {
 	if ctx == nil || nilValue(q) || schema == "" || len(schema) > 63 || !utf8.ValidString(schema) || strings.ContainsRune(schema, 0) {
 		return Facts{}, ErrInput
 	}
 	if ctx.Err() != nil {
 		return Facts{}, contextFailure(ctx)
 	}
-	m, e := loadMaterials()
+	m, e := load()
 	if e != nil {
 		return Facts{}, e
 	}
@@ -100,7 +106,7 @@ func Read(ctx context.Context, q Query, schema string) (Facts, error) {
 		return Facts{}, failure(ctx, e)
 	}
 	f := &framer{ctx: ctx, hash: sha256.New()}
-	if e = f.header(env); e != nil {
+	if e = f.headerDescriptor(env, m.profile.canonical); e != nil {
 		return Facts{}, failure(ctx, e)
 	}
 	for _, t := range m.tables {
@@ -111,7 +117,7 @@ func Read(ctx context.Context, q Query, schema string) (Facts, error) {
 	if ctx.Err() != nil {
 		return Facts{}, contextFailure(ctx)
 	}
-	r := Report{Scope: "fixed_109_table_basis_v1", PhysicalEOFComplete: true, ScannedTables: 109, ScannedColumns: 976, SourceRows: uint64(s.rows), SourceBytes: uint64(s.bytes), BasisSHA256: hex.EncodeToString(f.hash.Sum(nil)), ManifestSHA256: manifestSHA, DescriptorSHA256: descriptorSHA, SendMetadataSHA256: sendSHA}
+	r := Report{Scope: m.profile.scope, PhysicalEOFComplete: true, ScannedTables: uint64(m.profile.tables), ScannedColumns: uint64(m.profile.columns), SourceRows: uint64(s.rows), SourceBytes: uint64(s.bytes), BasisSHA256: hex.EncodeToString(f.hash.Sum(nil)), ManifestSHA256: manifestSHA, DescriptorSHA256: m.profile.digest, SendMetadataSHA256: sendSHA}
 	return Facts{state: &factsState{report: r}}, nil
 }
 func (s *reader) count(t table) (int64, error) {

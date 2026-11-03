@@ -25,7 +25,16 @@ type runtimeProcurementHistory struct {
 // and the published catalog; it is never the APP runtime-verification identity.
 // This is local financial evidence, without a model or supplier network call.
 func runtimePrepareActiveProcurement(t *testing.T, pool *pgxpool.Pool) runtimeProcurementHistory {
+	return runtimePrepareActiveProcurementConfigured(t, pool, nil, nil)
+}
+
+// The optional actual APP pool configures budgets before the first reservation.
+// Existing fixtures retain their original unconfigured history path.
+func runtimePrepareActiveProcurementConfigured(t *testing.T, pool, business *pgxpool.Pool, beforeReserve func(tenant, user, key, admin, account string)) runtimeProcurementHistory {
 	t.Helper()
+	if business == nil {
+		business = pool
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
 	h := runtimeProcurementHistory{tenant: uuid.NewString()}
@@ -61,7 +70,7 @@ func runtimePrepareActiveProcurement(t *testing.T, pool *pgxpool.Pool) runtimePr
 		t.Fatal("commit active procurement original catalog")
 	}
 
-	store := billing.New(pool)
+	store := billing.New(business)
 	creditID := uuid.NewString()
 	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: h.tenant, ActorID: operator, BusinessRef: creditID,
 		ProofRef: "receipt:runtime-active-procurement", Amount: 1000, IdempotencyKey: creditID, RequestHMAC: creditID})
@@ -71,7 +80,7 @@ func runtimePrepareActiveProcurement(t *testing.T, pool *pgxpool.Pool) runtimePr
 	if _, err = store.ApproveCredit(ctx, billing.ApprovalInput{TenantID: h.tenant, OrderID: credit.ID, ActorID: approver}); err != nil {
 		t.Fatal("active procurement original credit approval", err)
 	}
-	p := procurement.New(pool)
+	p := procurement.New(business)
 	created, err := p.CreateAccount(ctx, admin, procurement.CreateInput{OperationID: uuid.NewString(), Label: "runtime active supplier",
 		Provider: "isolated-local", State: "active", LimitAmount: "1000"})
 	if err != nil || created.Status != "applied" || created.TargetID == "" {
@@ -86,6 +95,9 @@ func runtimePrepareActiveProcurement(t *testing.T, pool *pgxpool.Pool) runtimePr
 		CredentialID: credential, AccountID: h.account, ExpectedChannelRevision: revision})
 	if err != nil || bound.Status != "applied" {
 		t.Fatalf("original active procurement binding: status=%s error=%v", bound.Status, err)
+	}
+	if beforeReserve != nil {
+		beforeReserve(h.tenant, user, key, admin, h.account)
 	}
 	var now time.Time
 	if pool.QueryRow(ctx, `SELECT clock_timestamp()`).Scan(&now) != nil {

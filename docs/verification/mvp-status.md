@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 自助经营 | 021邮箱证明/恢复、022-A双审券、023-A分组售价与023-B周期预算，均限定本地验收 | 正式SMTP、023-C商品/订阅 |
 | 应用支付 | 022-B3普通main/受限worker/HTTP/UI及本地模拟整链；在途SIGTERM/Guard失权恢复已验 | 正式PSP、main数据库COMMIT回包丢失及外部事实灾备 |
-| 来源与退款 | 完整68表来源、84表/八算法来源与lot重放、109表basis/strict v2、受保护开账事务及独立停服epoch观察均已进入库级候选实现；独立观察的真实PG范围见[本轮记录](epoch-observer.md)，旧phase及各纯层保留各自证据；C1-P纯退款协议专项通过 | R1-A显式读取profile已通过限定专库验收，见[记录](runtime-read-profile.md)；R1-B非空RuntimeProof与历史/current root兼容、R2正式迁移/CLI/main及全部在线资金路径；C1原路退款、C2拒付/债务、C3交叉恢复 |
+| 来源与退款 | 原68/84表来源、109表basis、受保护开账/observer与APP运行组合已有库级实现；新增显式V3的71/87表来源、112表basis、128表catalog和共用12条历史映射；按[当前分项记录](periodic-budget-prefix-profile.md)验证，C1-P纯退款协议专项通过 | 完整经营矩阵及证据缺口、正式migration/provision/CLI/main与全部在线来源资金路径；C1原路退款、C2拒付/债务、C3交叉恢复 |
 | 扩展和生产 | 024-A站内告警、024-B0-P纯计量；025-A0隔离Compose实际渲染、025-A1-M两邮件真实SIGKILL窗口已验 | 媒体/异步/长连接接线、容器/1Panel、HA、正式渠道及最后性能 |
 
 [来源候选回归](funding-lot-candidate.md)、[纯退款协议](payment-refund-protocol-v2.md)、[计量](metering-vectors.md)、[Compose渲染](compose-render-025.json)和[邮件进程](mail-lifecycle-025.md)分别说明各自边界；纯层和QA工具不产生生产资金能力。

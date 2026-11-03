@@ -23,13 +23,14 @@ type catalogSnapshot struct {
 	observedSchema, observedRoles   document
 }
 type descriptorSet struct {
-	bounds        map[categoryBoundKey]categoryBound
-	FormatVersion uint32              `json:"format_version"`
-	PostgresMajor uint32              `json:"postgres_major"`
-	Mode          string              `json:"mode"`
-	Schema        document            `json:"schema,omitempty"`
-	Roles         document            `json:"roles,omitempty"`
-	Variants      []descriptorVariant `json:"variants,omitempty"`
+	bounds         map[categoryBoundKey]categoryBound
+	builtinObjects map[refKey]string
+	FormatVersion  uint32              `json:"format_version"`
+	PostgresMajor  uint32              `json:"postgres_major"`
+	Mode           string              `json:"mode"`
+	Schema         document            `json:"schema,omitempty"`
+	Roles          document            `json:"roles,omitempty"`
+	Variants       []descriptorVariant `json:"variants,omitempty"`
 }
 type descriptorVariant struct {
 	schemaCanonical, rolesCanonical []byte

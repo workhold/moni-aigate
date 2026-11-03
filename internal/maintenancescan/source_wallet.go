@@ -3,6 +3,7 @@ package maintenancescan
 import (
 	"errors"
 
+	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotscan"
 	"github.com/moni-ai/moni-aigate/internal/maintenancetrust"
 )
@@ -55,6 +56,13 @@ func VerifySourceWalletMaintenance(lease *maintenancetrust.ReadLease) (*SourceWa
 		return nil, completeSourcesMaintenanceFailure(lease, err)
 	}
 	defer lease.Abort()
+	profile, profileErr := lease.SourceProfile()
+	if profileErr != nil {
+		return nil, completeSourcesMaintenanceFailure(lease, profileErr)
+	}
+	if profile != fundinglotcatalog.LegacyV1 {
+		return nil, fundinglotscan.ErrExecution
+	}
 	original, err := lease.SourceMode()
 	if err != nil {
 		return nil, completeSourcesMaintenanceFailure(lease, err)

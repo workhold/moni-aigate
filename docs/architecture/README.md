@@ -85,12 +85,16 @@ flowchart TD
     CatalogExpected[固定expected / PG16.15 profile\nordinary五变体 / 完整sandbox]
     WalletReadProfile[显式WalletReadV2\n固定base加四列ACL delta / 新完整root\n仅catalog权限版本 / 不授资金写权]
     RuntimeCaller[库级actual APP调用方\n独占caller-owned RR READ ONLY / 无main装配]
-    FundingLotRuntime[fundinglotruntime\n完整catalog-history-84表组合 / strict原件\n最多30秒发行原事务RuntimeProof]
+    FundingLotRuntime[fundinglotruntime\n显式旧84表 / V3新87表组合与strict原件\n最多30秒发行原事务RuntimeProof]
+    PrefixProfile[显式PeriodicPrefixV3\nsource71 / wallet87 / basis112 / catalog128\n固定original22候选 / 无main接线]
+    PrefixCompatibility[fundinglotprefixcompat\n12条静态历史与fresh映射\nobserver与runtime共用 / 无authority]
+    PrefixReaders[fundinglotscan显式prefix读取\n71/635来源与87/804钱包\n同session共享预算 / generated逐值核验]
+    PrefixProjections[三个prefix无查询投影\n同raw重算资格 / 深拷贝普通原件]
     ApplicationState[fundinglotruntime.ApplicationState\nAPP私有文件严格加载 / 独立5秒\n仅owned V1与APP nonce摘要]
     RuntimeProof[RuntimeProof.VerifyTx\n原wrapper-Conn-PgConn-top xid\n新ctx最多5秒 / 无跨事务资金许可]
     MaintenanceGate[maintenancetrust\nGate / 私有Snapshot / Attest / Permit]
     FundingLotsPhase[maintenancetrust私有开账phase\n第八once / pre与basis / 自持draft\n固定writer / strict v2与实际post / 唯一提交]
-    FundingLotsObserver[maintenancetrust.ObserveFundingLots\n新双锁 / RR只读 / strict原件与当前图\nRO终结及cleanup后返回普通结果]
+    FundingLotsObserver[maintenancetrust显式旧/V3 observer\n新双锁 / RR只读 / strict原件与当前图\nRO终结及cleanup后返回普通结果]
     MaintenanceLease[maintenancetrust.ReadLease\n同rawTx / 单生命周期busy / 封闭codec]
     MaintenanceProof[ScanProof\n仅原Permit绑定的固定kind完成凭据]
     MaintenanceScan[maintenancescan\n独立维护集成 / Require core Finish\n私有结果绑定真实ScanProof]
@@ -115,7 +119,7 @@ flowchart TD
     EpochProjection[fundinglotscan.ProjectEpochProof\n同次完整原行 / 新ctx与深复制\n普通epoch及attestation / 无Query]
     ApplicationProjection[fundinglotscan.ProjectApplicationPaymentProof\n同次84raw / APP marker与v1原件\nordinary双空 / sandbox双单例 / 无Query]
     SourceChecks[fundinglotscan共享检查设施\n同raw投影 / 原七来源算法]
-    BasisReader[fundinglotbasis\n固定109表 / 976列 / 原二进制basis v1\n环境与send元数据前置 / phase同RR调用]
+    BasisReader[fundinglotbasis\n固定旧109/976或新112/1004\n唯一metadata分页hash / 同RR basis v1]
     BasisMaterials[受审静态descriptor / manifest / send profile\n固定原字节与SHA / 不接受live expected]
     SandboxCaptureReader[billing sandbox-capture direct-link reader\nfunding_receipts + payment_captures\n两表完整C序分页与EOF]
     ProcurementReader[billing procurement history reader\n19 relations / shared budget / complete C-order EOF]
@@ -134,7 +138,7 @@ flowchart TD
       FundingGraphCore[fundinglotverify\n人工券来源图 / CustomerKey资金图\n21表reader已接线]
       ProcurementEvidenceCore[fundinglotverify\n23组采购证据与事件三态\n完整reader已接线]
       PeriodicGraphCore[fundinglotverify\n18组PB独立重放与历史缺证\n完整reader已接线]
-      PeriodicPrefixCore[periodicbudgetprefix\n命令精确前缀 / 窗口出生顺序\n独立纯核验 / 候选尚未接入reader]
+      PeriodicPrefixCore[periodicbudgetprefix\n命令精确前缀 / 窗口出生顺序\n显式V3完整reader已接线 / 候选]
       SandboxGraphCore[fundinglotverify\n33组支付stored-verified来源图\n完整reader已接线]
       WalletSequenceCore[fundinglotverify.CheckWalletSequenceRows\n七投影全序 / journal与事件声明\n纯前置检查]
       WalletLotsCore[fundinglotverify.CheckWalletLotsRows\n25组原行 / FIFO与三桶 / 逆序退款\n纯核验 / 84表维护reader已接线]
@@ -163,6 +167,25 @@ flowchart TD
     SourceChecks --> ProcurementEvidenceCore
     SourceChecks --> PeriodicGraphCore
     PeriodicPrefixCore -->|内部重跑原算法 / 保留Base缺证| PeriodicGraphCore
+    PrefixProfile -->|唯一Begin固定 / Init首读前锁128表| MaintenanceGate
+    PrefixProfile -->|封闭选择固定读集| PrefixReaders
+    MaintenanceScan -->|原kind6/7 / 显式wrapper| PrefixReaders
+    FundingLotsPhase -->|新profile的pre71/post87| PrefixReaders
+    FundingLotsObserver -->|新profile完整来源及原件| PrefixReaders
+    FundingLotRuntime -->|新profile实际APP读取| PrefixReaders
+    PrefixReaders -->|同次raw / 重跑原全部算法| SourceChecks
+    PrefixReaders -->|新scope / 原Base保留| PeriodicPrefixCore
+    PrefixReaders -->|新wallet同raw重放| WalletLotsCore
+    PrefixReaders -->|完整EOF / 单次物理预算| PG
+    PrefixReaders --> PrefixProjections
+    PrefixProjections -->|合格seed| InitPlanner
+    PrefixProjections -->|普通epoch及APP原件| FundingLotRuntime
+    PrefixProjections -->|普通epoch原件| FundingLotsObserver
+    PrefixProfile -->|封闭选择新固定descriptor| BasisReader
+    PrefixProfile -->|三个专用API / 共用发行核心| LotCatalog
+    PrefixProfile -->|显式V3普通与sandbox入口| FundingLotRuntime
+    PrefixCompatibility -->|严格历史原件映射| FundingLotRuntime
+    PrefixCompatibility -->|严格历史原件映射| FundingLotsObserver
     SourceChecks --> SandboxGraphCore
     MaintenanceScan -->|第七kind / 原模式与Permit / 唯一Finish| SourceWalletReader
     SourceWalletReader -->|68业务 + 16 C0固定原列 / 同rawTx| PG
@@ -171,11 +194,11 @@ flowchart TD
     BasisReader -->|安全metadata后 / 固定ONLY分页 / 全EOF| PG
     BasisReader -->|静态比较与hash帧| BasisMaterials
     MaintenanceGate -->|PlanFundingLots / InitializeFundingLots| FundingLotsPhase
-    FundingLotsPhase -->|自己读取pre68| CompleteReader
+    FundingLotsPhase -->|旧profile自己读取pre68| CompleteReader
     FundingLotsPhase -->|自己的seed与纯规划| InitPlanner
-    FundingLotsPhase -->|同RR pre及post109| BasisReader
+    FundingLotsPhase -->|同RR pre及post / owned固定选择| BasisReader
     FundingLotsPhase -->|真实owned证据发行并严格复核| ProofCodec
-    FundingLotsPhase -->|实际写后84表| SourceWalletReader
+    FundingLotsPhase -->|旧profile实际写后84表| SourceWalletReader
     FundingLotsPhase -->|固定14组INSERT / 16C0 allowlist| PG
     MaintenanceGate -->|独占唯一Begin / 不发行Permit| FundingLotsObserver
     FundingLotsObserver -->|自己读取当前84表| SourceWalletReader
@@ -287,7 +310,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 
 `fundinglotcatalog`是另一个只读叶子模块：固定expected先作SHA/封闭解析，原三个公开API固定LegacyV1，在同一RR核完整schema、角色和ACL并发行同事务证明。ordinary真实无worker，sandbox完整三schema八角色；Installation只额外证明发行时十六表全空。R1-A新增两项显式profile API与WalletReadV2，APP只增加完整资金图所缺四列SELECT，保持原5秒、所有对象与ACL核验及同事务寿命；新旧API不会隐式互换矩阵。T2维护授权仍使用原owned installation。当前没有普通main或资金调用边，CatalogProof不是完整RuntimeProof。详见[原细化架构](funding-lot-catalog.md)与[读取版本细图](runtime-read-profile.md)。
 
-`fundinglotruntime`新增独立 APP 完整组合库：actual APP 在原 caller-owned RR READ ONLY 中，自行核当前 WalletReadV2 catalog、完整 history、84 表八算法与严格 epoch/v2；sandbox 再核本地 APP 文件及自有 DB V1/内嵌 V1 三方原件。全部成功才发行只对原事务有效的 RuntimeProof，未接普通 main/HTTP/资金写入。实现已汇合；限定验证与完整验收缺口见记录；[流程与权限细图](runtime-composer.md)、[冻结合同](../../specs/022-self-service-payments/c0-runtime-composer-contract.md)与[验证记录](../verification/runtime-composer.md)分别界定实现、规则和实际验收。
+`fundinglotruntime`提供独立 APP 完整组合库：原入口在 actual APP 原 RR READ ONLY 中核 WalletReadV2 catalog、完整 history、84 表八算法与严格 epoch/v2；新增显式 V3 入口核128表catalog、exact original22及87表九算法，observer/runtime共用12条固定历史映射。sandbox再核本地APP文件及DB V1/内嵌V1三方原件。全部成功才发行原事务RuntimeProof，累计30秒与原事务寿命保留，未接普通main/HTTP/资金写入。旧路径的PB缺口和历史验收见[原流程](runtime-composer.md)与[原记录](../verification/runtime-composer.md)，新路径见[完整组合架构](periodic-budget-prefix-profile.md)与[本片记录](../verification/periodic-budget-prefix-profile.md)。
 
 `maintenancetrust`在T0双锁基础上提供T1私有单次Snapshot及T2真实维护授权。T3新增真实ReadLease：单次扫描全程持原busy，入口/出口重核原authority，固定至多30秒并受原Snapshot和caller更早期限约束；封闭参数/Scan目标、完整EOF/Err/Close和CPU取消共同控制读取生命周期。当前依赖方向是maintenancescan→billing/periodicbudget/procurement与maintenancescan→maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不得反向依赖维护集成或catalog，避免无关eager初始化。五个已连接reader分别消费ScanLedger、ScanPeriodicBudget、ScanFunding、ScanSandboxSources与ScanProcurement，每个Permit对每kind仅允许尝试一次；它们均为局部扫描，不可拼装成全来源proof。T1历史真实PG/race115.412秒、124终态PASS保持原范围；T2/T3历史与各独立reader验收分别记录，尚无普通main维护API、完整全来源或资金接线，详见[细化架构](maintenance-gate.md)。
 
@@ -306,7 +329,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 独立本地支付沙箱（022-B0） | P协议、M模拟器/receiver/持久回调和私密运行证明已编码；专项真实PG/race和真实进程短程通过，长程故障验收按记录推进；独立M/Q进程限定验证；应用接线另见B3 | [协议](../../internal/paymentproto)、[模拟器](../../internal/mockpsp)、[接收器](../../internal/paymentreceiver)、[运行证明](../../internal/paymentruntime)、[版本1 SQL/inventory](../../internal/paymentsandboxschema)、[离线QA](../../internal/paymentsandboxqa)、[精确合同](../../specs/022-self-service-payments/b-runtime-contract.md)、[验证记录](../verification/payment-sandbox.md) |
 | 周期预算核心（023-B） | 020追加迁移、billing预占/采购/派发/原窗收尾、受限角色与启动核验已接线；Reader/Commander与HTTP/控制台已接线，核心全Go/HTTP专项/前端/真实多tab/隔离main浏览器通过；最终020相关回归与预览升级通过，独立三态只读核验器和CLI专项通过，交叉回归继续 | [纯基础层](../../internal/periodicbudget)、[HTTP冻结片](../../specs/023-periodic-products/b-http-contract.md)、[Tx合同](../../specs/023-periodic-products/b-tx-contract.md)、[Reader合同](../../specs/023-periodic-products/b-reader-contract.md)、[Commander合同](../../specs/023-periodic-products/b-commander-contract.md)、[核心接线](../../specs/023-periodic-products/b-integration-contract.md)、[020迁移](../../migrations/020_periodic_budgets.sql)、[核心验证](../verification/periodic-budgets.md) |
 | 周期预算离线核验 | 实际owner LOGIN、六表owner及完整最新迁移，同一RR只读快照核19类异常与3类历史缺证；0/2/3/1退出码，不修复数据 | [Verifier](../../internal/periodicbudget/verifier.go)、[CLI](../../cmd/moni-aigate/periodic_verify.go)、[迁移快照核验](../../migrations/verify_readonly.go)、[精确合同](../../specs/023-periodic-products/b-verifier-contract.md) |
-| 周期预算命令前缀（023-B-P1） | 独立纯核验与隔离 SQL 候选；新 origin/head/journal 证明回执实际观察前缀及窗口出生顺序，旧 Base 缺证保留；专项结果另记，未接正式迁移/reader/runtime | [纯包](../../internal/periodicbudgetprefix)、[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)、[候选 SQL](../../specs/023-periodic-products/b-prefix-candidate.sql)、[细化架构](periodic-budget-prefix.md)、[验证](../verification/periodic-budget-prefix.md) |
+| 周期预算命令前缀（023-B-P1..P3） | 纯核验与隔离 SQL 候选已接显式 V3：71表来源、87表钱包、112表basis、128表catalog、受保护开账/observer/APP runtime；保留旧Base与legacy缺证；采购历史屏障缺证与catalog race时限门禁未关闭，B-P3整体未完成，尚未接正式迁移/启动/在线来源钱包 | [纯包](../../internal/periodicbudgetprefix)、[完整组合合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)、[候选 SQL](../../specs/023-periodic-products/b-prefix-candidate.sql)、[完整组合架构](periodic-budget-prefix-profile.md)、[验证](../verification/periodic-budget-prefix-profile.md) |
 | 支付资金接缝（022-B2） | 021追加完整支付SQL、第三来源helper、十方向核验与三角色最小权限；真实PG专项通过；订单领域/worker/HTTP现由B3接线 | [021](../../migrations/021_payment_sandbox.sql)、[第三来源](../../internal/billing/funding_sandbox.go)、[角色](../../internal/operations/payment_roles.go)、[冻结合同](../../specs/022-self-service-payments/b2-funding-contract.md)、[B3设计](../../specs/022-self-service-payments/b3-http-ui-contract.md) |
 | 应用支付闭环（022-B3） | 订单/通知/安全视图、双manifest/022证明、独立真实worker、2网络/4证据槽、HTTP/UI和main已接线；专项PG/race及两轮真实主进程、最终浏览器整链通过限定本地验收；在途SIGTERM/真实Guard失权独立真实进程补验通过 | [领域与运行](../../internal/payments)、[HTTP](../../internal/server/payment_handlers.go)、[准入](../../internal/server/payment_admission.go)、[启动](../../cmd/moni-aigate/payment_startup.go)、[022](../../migrations/022_payment_runtime_attestation.sql)、[前端](../../web/src/components/PaymentsPage.vue)、[分层证据](../verification/payment-application.md) |
 | 资金来源分配算法（022-C0窄切片） | 仅package-private纯FIFO/finish/逆原charged边refund算法及race专项通过；无DB/网络/资金入口，C0正式DDL与维护仍候选 | [算法](../../internal/billing/lot_plan.go)、[冻结范围](../../specs/022-self-service-payments/c0-lot-contract.md#12-根冻结纯分配算法切片2026-11-01)、[验证](../verification/funding-lot-planners.md) |
@@ -314,7 +337,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 同RR账本读取（022-C0-V0-R） | 私有caller-owned RR、实际LOGIN、四表窄shape/history与函数解析前置；三表128条keyset至完整EOF后独立核算，保留journal额外事实；原15项真实PG/race与vet专项保留，读取core现与T3共用；该原入口自身不发proof | [reader](../../internal/billing/funding_ledger_read.go)、[共享core](../../internal/billing/funding_ledger_query.go)、[冻结合同](../../specs/022-self-service-payments/c0-ledger-reader-contract.md)、[原验证](../verification/funding-ledger-reader.md) |
 | C0离线结构与权限导出 | 固定001–022/DDL/ACL/provision与工具源码；ordinary/sandbox各自before/after，双轮十文件一致、失败DDL清理通过；只生成未审候选 | [生成器](../../scripts/funding-lot-descriptor/main.go)、[冻结窄片](../../specs/022-self-service-payments/c0-schema-check-contract.md#9-根冻结窄片metadata-only-离线-descriptor-生成器)、[元数据证据](../verification/funding-lot-descriptor.md) |
 | C0正式静态检查与事务证明 | 固定PG16.15 profile、ordinary五变体/无worker、sandbox三schema八角色；Snapshot/Installation/Runtime三入口与同tx opaque证据，最终leaf真实PG race已通过；不授维护或资金权限 | [API](../../internal/fundinglotcatalog/types.go)、[核验与证明](../../internal/fundinglotcatalog/proof.go)、[固定root](../../internal/fundinglotcatalog/expected_embedded.go)、[细化图](funding-lot-catalog.md)、[冻结合同§10](../../specs/022-self-service-payments/c0-schema-check-contract.md#10-根冻结完整静态检查器的实现与正式期望启用) |
-| 独立 APP 完整运行核验（022-C0-R1-B） | 实现已汇合，限定实际验证见记录，完整经营验收仍有PB门禁；actual APP原RR RO内完整catalog/history/84表八算法、六条历史映射、APP V1三方材料及原事务proof；无普通main/ready或在线资金接线 | [编排](../../internal/fundinglotruntime/runtime_compose.go)、[原件绑定](../../internal/fundinglotruntime/runtime_bindings.go)、[history](../../internal/fundinglotruntime/runtime_history.go)、[APP文件](../../internal/fundinglotruntime/application_state.go)、[V1纯API](../../internal/fundinglotproof/v1_public.go)、[APP同raw投影](../../internal/fundinglotscan/application_payment_proof_projection.go)、[细化图](runtime-composer.md)、[合同](../../specs/022-self-service-payments/c0-runtime-composer-contract.md)、[验证](../verification/runtime-composer.md) |
+| 独立 APP 完整运行核验（022-C0-R1-B / B-P3） | 原WalletReadV2固定84表/六条映射；新显式V3接128表catalog、87表九算法、12条共用历史映射，保留原事务proof/APP V1三方绑定及30秒界；候选实际验收见记录，无普通main/ready或在线来源钱包接线 | [原编排](../../internal/fundinglotruntime/runtime_compose.go)、[V3入口](../../internal/fundinglotruntime/prefix_compose.go)、[原件绑定](../../internal/fundinglotruntime/runtime_bindings.go)、[共同材料](../../internal/fundinglotprefixcompat/materials.go)、[原细图](runtime-composer.md)、[新细图](periodic-budget-prefix-profile.md)、[原验收](../verification/runtime-composer.md)、[新验收](../verification/periodic-budget-prefix-profile.md) |
 | 维护双锁Gate与快照（022-C0-T0/T1） | T0真实PG/race已验；T1私有单次RR、ONLY125/固定catalog stage、总期限及终结状态，历史真实PG/race124终态全PASS；T0/T1历史片不含Permit、main或资金接线 | [Gate](../../internal/maintenancetrust/gate.go)、[身份](../../internal/maintenancetrust/identity.go)、[冻结合同§10](../../specs/022-self-service-payments/c0-permit-contract.md#10-根冻结t0专用连接双session-gate与清理)、[细化图](maintenance-gate.md)、[T0验证](../verification/maintenance-gate.md)、[T1验证](../verification/maintenance-snapshot.md) |
 | 固定109表basis / strict v2叶子 | 原二进制basis摘要、metadata前置、严格canonical及旧v1绑定；纯模块不授权限，受保护phase已装配；无在线启动接线 | [basis包](../../internal/fundinglotbasis)、[proof包](../../internal/fundinglotproof)、[basis合同](../../specs/022-self-service-payments/c0-basis-reader-contract.md)、[v2合同](../../specs/022-self-service-payments/c0-proof-v2-codec-contract.md)、[验证](../verification/basis-proof-v2.md) |
 | 受保护钱包开账事务 | 同原Permit第八once、pre68/birth/109basis、自持计划、固定writer、strict v2/实际84post及post109比较后唯一提交；库级候选，无正式迁移/CLI/在线运行 | [生命周期](../../internal/maintenancetrust/funding_lots_phase.go)、[编排](../../internal/maintenancetrust/funding_lots_run.go)、[写入](../../internal/maintenancetrust/funding_lots_writer.go)、[proof](../../internal/maintenancetrust/funding_lots_proof.go)、[合同](../../specs/022-self-service-payments/c0-protected-init-phase-contract.md)、[验证](../verification/protected-init-phase.md) |
@@ -1349,16 +1372,26 @@ sandbox V1三方bytes与APP nonce]
 
 RuntimeProof仅覆盖原仍活跃的RR快照；结束/关闭或换事务后不能继续使用，当次wrapper/连接/角色/search_path偏离原身份时拒绝，不能跨RC写事务沿用。失败取消本次work但不接管caller事务：caller使用fresh有界cleanup做Rollback，失败/busy或无法确认idle时关闭连接，不能归还busy pool。本库没有维护O1的自持socket watcher与双锁清理保证。流程、模块、APP/peer权限与寿命详见[完整细图](runtime-composer.md)，实际专项结果见[验证记录](../verification/runtime-composer.md)。R2的V2材料装配、各actual runtime自核、顶层结束确认、startup/ready/guard及在线资金路径仍为后续门禁。
 
-实际验收还确认[非空周期预算历史前缀证据缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)：现有算法对活动held/window历史保留OperationSnapshotPrefixUnproven，composer继续拒绝。空预算配置不等于完整经营认证；先补SDD与不可变来源证据，再补全非空PB正例，不能据本轮限定通过打开R2在线资金ready。
+原 WalletReadV2 实际验收确认[非空周期预算历史前缀证据缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)：原算法对活动held/window历史保留OperationSnapshotPrefixUnproven，旧composer继续拒绝。B-P3现已按新合同将不可变证据接入显式V3组合，保留原Base并独立判断新scope；新路径的实际非空经营验证见[本片记录](../verification/periodic-budget-prefix-profile.md)。候选组合不会自动开放R2在线资金ready，正式迁移与启动装配仍需后续合同和验收。
 
 ## 周期预算观察前缀候选（023-B-P1）
 
 按[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)新增独立 `periodicbudgetprefix` 纯包和隔离 SQL 候选，细节见[模块与数据关系图](periodic-budget-prefix.md)。命令和窗口出生共用观察 ordinal，资金 effect 继续使用原 event_seq；回执 JSON 与 cut 在同一锁内原件上生成。新报告自行运行旧 PB 算法，并在新 scope 按唯一 cut 逐命令认证，原 Base 与两类 legacy gap 保留。
 
-候选只在精确 001–022 后的专用 schema 验证，来源字段与三张证据表不由普通 migrate/provision/main/Compose 安装。旧读取器、basis/catalog roots 与 APP 运行证明没有隐式接入新能力；正式 profile、完整组合、追加迁移和启动接线仍按依赖后续推进。CI仅在原other分区的测试命令显式开启PB专项，沿用该job独立PG/JSONL，随机schema内安装候选，其他九分区与默认本地验收不扩范围。GitHub 首页和 Issue/PR 模板仅改变使用与协作入口，不增加运行时模块或权限。实际测试与跳过范围见[本片验证](../verification/periodic-budget-prefix.md)。
+候选只在精确 001–022 后的专用 schema 验证，来源字段与三张证据表不由普通 migrate/provision/main/Compose 安装。旧读取器、basis/catalog roots与APP运行入口不隐式升级；B-P3的显式新profile与完整组合见下节，追加迁移和启动接线继续后续。CI仅在原other分区的测试命令显式开启PB候选专项，沿用该job独立PG/JSONL；新catalog/维护专项仍须各自opt-in，默认SKIP不能当验收。B-P1实际范围见[历史验证](../verification/periodic-budget-prefix.md)。
 
 ### 固定历史与候选安装隔离（B-P2）
 
 按[安装合同](../../specs/023-periodic-products/b-prefix-install-contract.md)新增固定 original22 历史材料与同事务核验、纯候选材料包和仅测试支持的安装接缝。测试 fixture 明确应用原 022，候选安装在 caller RR RW 的私有 savepoint 中完成历史检查、完整缺席、DDL、最小授权与局部有效权限复核；失败 fresh 有界回滚，成功仍由 caller 决定最终提交。未来 current 追加不会使历史材料跟随 latest，也不能使已记录新版本的数据库冒充原 22。
 
 新三表、三 source 字段与准确 12 个函数的权限单独验证，包含 PUBLIC/默认授权、角色 SET/ADMIN、owner 与 grant option。旧 `ProvisionFor` 在候选后重跑会扩权，必须检出；不修改旧命令隐式适配候选。普通服务模块、请求/资金链路、正式迁移、worker/部署权限、旧 roots 和 RuntimeProof 均不因本片改变。安装状态机与源码见[细化架构](periodic-budget-prefix-install.md)，实际专项与未验范围见[验证记录](../verification/periodic-budget-prefix-install.md)。
+
+### 完整来源、静态 profile 与受保护组合（B-P3）
+
+按[先行合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)实现 source71/635、wallet87/804 的单session固定读取及三个深拷贝投影；basis112/1004使用新静态descriptor并共用原metadata/分页/hash。新增PeriodicPrefixV3的三个专用catalog API、固定128表/1173列全对象root和profile专属builtin；旧generic API、roots、旧30项scanner源pin与旧basis/golden保留。observer与runtime共用新的无权威12条兼容材料，不重签历史原件。
+
+Gate在唯一Begin时固定profile，V3 Init在首个SELECT前一条C序LOCK锁128表；安装API不可改选，原catalogUsed、kind6/7与第八phase once共用。原受保护phase按owned选择pre71→seed→basis112→draft/writer→post87→basis复读及freshcatalog/authority→唯一commit，source+generated资源和来源守恒包含新增证据；新独立observer和actual APP普通/sandbox composer自行核完整图与原件，保留原事务身份、30秒总界和5秒catalog界。
+
+模块依赖、数据面、状态机、权限、材料与源码链接见[完整细图](periodic-budget-prefix-profile.md)，静态delta与独立重算见[审定记录](../verification/periodic-prefix-catalog-static.md)，实际专项、回归与SKIP边界见[验证记录](../verification/periodic-budget-prefix-profile.md)。候选仍exact original22，正式migration/provision/CLI/main/ready、在线来源资金写入与生产环境认证未在本片启用。
+
+B-P3整体未完成：[采购绝对成本更正的历史提案屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)继续产生`ProposalBarrierUnproven`，owned V3 Plan必须拒绝，不能以拒绝通过替代采购更正后完整成功的合同门禁；下一片须先设计不可变审批消费证据。[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)保留原5秒预算，标准无race诊断与局部解码差分已通过，但原LegacyV1 baseline的catalog race时限仍未通过；该诊断不属于网关TTFB/TTFT性能验收。

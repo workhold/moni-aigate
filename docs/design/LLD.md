@@ -918,7 +918,7 @@ Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx
 
 [静态派生器](../../internal/fundinglotcatalog/wallet_expected.go)只从已SHA认证的原根复制四column ACL、四APP effective SELECT与四条列级pg_shdepend ACL dependency（sandbox在两peer文档另保存同一依赖的镜像），完整新envelope再次固定SHA认证；其他静态节点只读共享、变更数组和节点owned，schema canonical不变。完整collector的raw/normalized bounds、compare和proof发行共用同一descriptor，旧metadata候选路径仍用旧profile。[独立Python复算](../../scripts/check-wallet-profile-roots.py)与Go逐variant摘要相同；[访问清单](../../specs/022-self-service-payments/c0-wallet-readset.json)按物理列去重并固定源SHA，scanner侧双向检查、PG侧逐列与实际SELECT/ReadWallet核可读。candidate SQL只给owner测试安装，不是已应用migration。验证与未验边界见[记录](../verification/runtime-read-profile.md)，历史cutover→current根映射与独立RuntimeProof已由R1-B实现，限定验收与PB门禁见下段；生产接线仍在后续。
 
-2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)仍使真实held/window历史为Indeterminate；完整R1-B验收与R2线上装配不能越过此门禁。后续先设计可证明的command前缀及window创建cut，不放宽现有Unproven或重签旧原件。
+2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)在旧接口继续使真实held/window历史为Indeterminate；后续B-P1–B-P3以新来源证据和独立scope认证新历史，不放宽旧Unproven或重签旧原件。新组合范围见下节，完整经营与R2线上装配仍按各自门禁验收。
 
 ## B-P1：周期预算不可变观察来源
 
@@ -926,10 +926,26 @@ Permit.PlanFundingLots(ctx,epochID)只在原RO快照；InitializeFundingLots(ctx
 
 [`periodicbudgetprefix.Check`](../../internal/periodicbudgetprefix/check.go)接原完整PB图与来源投影，自己运行旧算法，分别验证origin、source、观察连续链与精确cut/tail，再扫描资金前缀推导held/spent/carry和窗口revision/tail，严格比对12/5字段回执。窗口存在按birth.ordinal判断，不搜索同金额的其他cut。合并100000行/16MiB逻辑预算，单字段65536字节；资源/取消/超时零报告。新scope只解决已认证命令的prefix gap，原Base与legacy membership/effect缺证不改。
 
-actual APP专库test-only reader不等于生产scanner或authority。精确安装/材料隔离、新readset/basis/catalog与历史→current映射、pre/post/runtime组合、正式追加迁移和普通启动接线仍依次推进；[精确合同](../../specs/023-periodic-products/b-prefix-contract.md)、[架构](../architecture/periodic-budget-prefix.md)与[执行记录](../verification/periodic-budget-prefix.md)共同限定本片。
+actual APP专库test-only reader不等于生产scanner或authority。精确安装/材料隔离由B-P2承接，新readset/basis/catalog与历史→current映射、pre/post/runtime组合由B-P3承接，正式追加迁移和普通启动另行交付；[精确合同](../../specs/023-periodic-products/b-prefix-contract.md)、[架构](../architecture/periodic-budget-prefix.md)与[执行记录](../verification/periodic-budget-prefix.md)共同保留本片当期范围。
 
 ## B-P2：同事务固定历史与候选权限
 
 `Original22Manifest` 固定 22 项/2459B/原 SHA，逐名认证旧 SQL，不枚举 future current；`VerifyOriginal22SnapshotTx(ctx,tx,schema)` 仅在原 RR RO/RW 查询明确 schema 的 ONLY history，CASE 限制 name/checksum 传输，LIMIT23 检额外项，逐项拒绝重复/缺失/坏值。它不控制 caller 事务、加锁或发行维护权限，旧 APIs 保持。
 
-纯 `periodicbudgetprefixschema` 保存逐字候选及权限模板；仅测试支持的 `InstallTx` 限定实际专库 owner 与随机 schema，在私有 savepoint 中核 exact history/完整缺席后安装，独立核三表25列/rowtypes/12函数及新source不可UPDATE。有效权限含 SET/ADMIN 闭包、owner/高权/grant option，raw ACL 拒 PUBLIC/外部默认授权。成功 RELEASE，任一失败 fresh 5 秒回滚，清理不明必须放弃原事务；最终 COMMIT 丢回复不据此重装。完整 catalog/依赖/正文 proof 留给 B-P3，不开放旧 Gate 的 tx。详见[冻结合同](../../specs/023-periodic-products/b-prefix-install-contract.md)与[架构](../architecture/periodic-budget-prefix-install.md)。
+纯 `periodicbudgetprefixschema` 保存逐字候选及权限模板；仅测试支持的 `InstallTx` 限定实际专库 owner 与随机 schema，在私有 savepoint 中核 exact history/完整缺席后安装，独立核三表25列/rowtypes/12函数及新source不可UPDATE。有效权限含 SET/ADMIN 闭包、owner/高权/grant option，raw ACL 拒 PUBLIC/外部默认授权。成功 RELEASE，任一失败 fresh 5 秒回滚，清理不明必须放弃原事务；最终 COMMIT 丢回复不据此重装。完整 catalog/依赖/正文 proof 由 B-P3 承接，不开放旧 Gate 的 tx。详见[冻结合同](../../specs/023-periodic-products/b-prefix-install-contract.md)与[架构](../architecture/periodic-budget-prefix-install.md)。
+
+## B-P3：固定prefix读取、完整catalog与原事务组合
+
+按[冻结合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)，`fundinglotscan.ReadPrefix`和`ReadWalletPrefix`分别读取71表/635列、87表/804列；Facts使用不同私有命名state，各自保留原七/八算法并追加prefix为八/九算法。journal两列generated discriminator同样传输、计量和逐值比较，错误进入`ObservationSourceMismatches`。同一次私有session共用100000行/16MiB物理预算并记录EOF/Err/Close；不拼接旧报告。新aggregate独立重算，要求`PeriodicPrefix.Base == Periodic`且prefix完整，旧`OperationSnapshotPrefixUnproven`原样保留，legacy两类缺证与缺origin继续阻断。三个无查询投影独立核registry、计数/预算、原core和prefix，再深拷贝seed/epoch/APP付款原件。新受审清单与源码SHA见[readset](../../specs/023-periodic-products/b-prefix-readset.json)，旧30项源材料不改签。
+
+`fundinglotbasis.ReadPrefix`复用唯一metadata/SQL/分页/hash核心，仅选择固定112表/1004列/131个PK字段的新descriptor，scope为`fixed_112_table_prefix_basis_v1`。header帧入实际选中descriptor原bytes；原manifest、send材料、v1 framing和旧109/976/128读集保持。basis单次100000行/64MiB，metadata2048行/1MiB；元数据sentinel新profile为relation/PK113、attribute1006，旧profile仍110/978。basis包含history三列，排除16张C0输出的指纹内容，`tenants.fl_created_xid`仍按准确nullable扩展核验。
+
+`PeriodicPrefixV3=3`只由`VerifyPeriodicPrefixSnapshotTx/RuntimeTx/InstallationTx`三个专用入口加载固定根。完整catalog含128张普通表，覆盖结构、函数原文、generated、raw/effective ACL、依赖与角色；静态根从原已认证材料和准确delta推导，不采用live回填。旧generic profile入口仍只接LegacyV1/WalletReadV2。新旧共同使用identify→actual LOGIN→collect→identify→opaque proof的唯一主体；Installation在同一5秒内保留原16张C0输出空集检查，新PB观察历史允许非空。APP内容读面87/804加history两列，不向worker/projector/peer扩授内容读取。三项新增PG16 builtin依赖仅由V3私有descriptor选择，旧接受表保持。
+
+`Gate.BeginPeriodicPrefixPlan/Init`在原Snapshot创建前固定profile，Init三条SET LOCAL后、首次数据SELECT前用一条固定C序ONLY128表SRE锁语句；旧Begin仍125表。`Snapshot.VerifyPeriodicPrefixInstallation`与旧安装入口共用原catalogUsed一次机会，交叉选择失败仍消耗机会。Permit仍由同事务original22 history、actual owner、fresh stopped、完整前驱和Init账户行锁共同发行；`VerifyPrefixSourcesMaintenance/VerifyPrefixWalletMaintenance`共享原kind6/7的once，phase保留第八位128，profile不能替换或重试。Plan自读pre71/basis112并生成draft，复核证据后只读COMMIT发布比较值；fresh Init重新完整读取，再按draft→固定writer→post87→原epoch→basis复读→fresh完整catalog/authority→ready→唯一COMMIT执行。原raw tx/nonce/busy、累计30秒和失败终结规则共同保持，固定C0 writer不生成或改写PB观察原件。
+
+`ObservePeriodicPrefixFundingLots`沿原Gate sole-begin/owner独占raw tx，在同RR RO重核V3 catalog、exact history、87表图、strict v2及fresh stopped，只有原ROLLBACK与独立cleanup完成才返回普通观察。`VerifyOrdinaryPeriodicPrefixApplicationTx/VerifySandboxPeriodicPrefixApplicationTx`在实际APP caller-owned RR RO中组合相同完整图和前后catalog，总30秒内核准后发行原wrapper/Conn/PID/xid绑定的RuntimeProof；sandbox继续要求原`LoadSandboxApplicationState`加载的本地manifest/nonce，并与不可变v1前驱比较，不能从数据库原件替代本地材料。两类消费者共用`fundinglotprefixcompat`固定12项历史→current映射，精确绑定六个旧LegacyV1/109descriptor与六个新V3/112descriptor发行tuple；旧六项材料和V2 codec/golden保持，不将经营后basis与cutover强等。
+
+实现已落地，scanner、basis与ordinary受保护全阶段已有专项PG证据；catalog/sandbox及最终回归状态以[组合验证](../verification/periodic-budget-prefix-profile.md)为准，模块和源码见[细化架构](../architecture/periodic-budget-prefix-profile.md)。候选仍建立在exact original22之上，不是正式追加迁移；普通migrate/provision/serve、生产维护CLI与在线资金尚未接入，不据库级组合宣布R1-B/R2或供应商/支付/1Panel验收完成。
+
+[采购屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)保留approved提案的更正前reservation revision与evidence数；更正后当前revision递增不等于历史提案错误，原`ProposalBarrierUnproven`不删除。该历史上的pre71完整读取不能授予aggregate coverage，owned V3 Plan必须在发行epoch前失败；审批消费的不可变revision/evidence/唯一成本事件绑定须另先冻结合同。[catalog解码优化](../verification/periodic-prefix-catalog-cpu.md)只对固定五字段权限对象走完整EOF快路径，其他输入回退原decoder，SQL/root/权限与5秒总界不变；标准无race诊断不能抵消原LegacyV1 baseline的catalog race时限失败。两项门禁仍未关闭，B-P3整体未完成。

@@ -66,4 +66,18 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 
 按[安装合同](b-prefix-install-contract.md)拆分固定 original22 同事务核验、纯候选材料与局部权限复核，根串行接入明确历史 fixture 与 savepoint 安装，再验实际失败阶段及旧 provision 扩权负例。新接缝仅在 testsupport 专库运行，不给生产入口增 DDL 权限；旧 current API、roots 与运行证明保持。
 
-本片实现与结果分别见[安装架构](../../docs/architecture/periodic-budget-prefix-install.md)和[执行记录](../../docs/verification/periodic-budget-prefix-install.md)。后续先冻结 B-P3 完整 source/wallet profile、共享物理预算与新 basis/catalog/report，连同 protected pre/post、observer、APP runtime 验证，最后正式迁移/provision/startup 与全经营验收。不能以本片安装成功关闭 R1-B/R2 或其他后续阶段。
+本片实现与结果分别见[安装架构](../../docs/architecture/periodic-budget-prefix-install.md)和[执行记录](../../docs/verification/periodic-budget-prefix-install.md)。B-P3按下节承接完整source/wallet profile、共享物理预算与新basis/catalog/report，连同protected pre/post、observer、APP runtime验证；最后正式迁移/provision/startup与全经营验收。不能以本片安装成功关闭R1-B/R2或其他后续阶段。
+
+## 7. B-P3 固定profile与完整组合
+
+以[冻结合同](b-prefix-profile-contract.md)为唯一行为边界，scanner、basis、catalog静态材料分工并行，根负责状态机、跨mode/variant兼容、runtime与最终集成；共享生产文件由单一owner修改，真实PG串行执行。
+
+- [x] 新source71表/635列、wallet87表/804列与独立Facts/八或九算法；同session共享物理预算、generated逐值核验和三个无查询深拷贝投影，旧68/84表、原Base和legacy缺证保留。
+- [x] 新basis112表/1004列/131个PK字段及固定descriptor；与旧109表共用唯一读取核心，旧材料/framing/golden保持。
+- [x] 新完整catalog128张普通表及显式V3发行API、静态base+delta固定根；旧generic API、roots和有效权限边界保持。
+- [x] 原Gate/Snapshot中显式V3 Begin/Installation与kind6/7共用once；受保护pre71→basis112→writer→post87→fresh证据→唯一提交，Init首读前固定锁128表。
+- [x] 新停服observer、ordinary/sandbox actual APP组合与共用12项历史/current映射；保留原事务/实际身份/总预算和sandbox本地原件。
+- [ ] 完成catalog双轮多variant/权限/正文负例、genuine sandbox与全场景交叉验收，汇总旧接口回归、专项race及最终仓库检查；实际PASS/SKIP与清理按[组合验证](../../docs/verification/periodic-budget-prefix-profile.md)记录，叶子通过不关闭整个B-P3。
+- [ ] 由集成人复核HLD/LLD、统一架构正文/源码链接和能力状态，刷新与只读检查后提交、推送并核精确远端源码/CI。
+
+实现已落地，scanner、basis和ordinary全阶段已有专项PG证据，其他门禁按记录继续。正式迁移/provision/维护CLI/startup与在线资金接线不在本候选交付中；本片不能关闭R2或把本地fixture当正式供应商、生产支付、1Panel/HA和性能验收。完整细图见[组合架构](../../docs/architecture/periodic-budget-prefix-profile.md)。

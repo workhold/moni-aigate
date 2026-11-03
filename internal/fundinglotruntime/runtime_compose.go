@@ -27,6 +27,11 @@ func VerifySandboxApplicationTx(ctx context.Context, tx pgx.Tx, pins fundinglotc
 
 func verifyApplicationTx(ctx context.Context, tx pgx.Tx, pins fundinglotcatalog.Pins,
 	expected *fundinglotproof.CanonicalV2, local *ApplicationState, mode fundinglotcatalog.Mode) (*RuntimeProof, error) {
+	return verifyApplicationProfileTx(ctx, tx, pins, expected, local, mode, fundinglotcatalog.WalletReadV2)
+}
+
+func verifyApplicationProfileTx(ctx context.Context, tx pgx.Tx, pins fundinglotcatalog.Pins,
+	expected *fundinglotproof.CanonicalV2, local *ApplicationState, mode fundinglotcatalog.Mode, profile fundinglotcatalog.Profile) (*RuntimeProof, error) {
 	w, err := newVerificationWindow(ctx, runtimeBudget)
 	if err != nil {
 		return nil, ErrRuntime
@@ -62,42 +67,28 @@ func verifyApplicationTx(ctx context.Context, tx pgx.Tx, pins fundinglotcatalog.
 		}
 		scanMode = fundinglotscan.ModeSandbox
 	}
-	entry, err := verifyApplicationCatalog(w, tx, pins)
+	entry, err := verifyApplicationProfileCatalog(w, tx, pins, profile)
 	if err != nil || w.check() != nil {
 		return nil, ErrRuntime
 	}
-	if verifyRuntimeHistory(w, tx, pins.AppSchema.Name) != nil || w.check() != nil {
+	if verifyProfileRuntimeHistory(w, tx, pins.AppSchema.Name, profile) != nil || w.check() != nil {
 		return nil, ErrRuntime
 	}
 	q := &walletQuery{tx: tx, window: w}
-	facts, err := fundinglotscan.ReadWallet(w.ctx, q, pins.AppSchema.Name, scanMode)
+	graph, err := readApplicationGraph(w, q, pins.AppSchema.Name, scanMode, profile)
 	if err != nil || q.check() != nil || q.pending != nil || w.check() != nil {
 		q.fail()
 		return nil, ErrRuntime
 	}
-	report := facts.Summary()
-	if !runtimeReportComplete(report, scanMode) || w.check() != nil {
-		return nil, ErrRuntime
-	}
-	// Both projections recheck the complete raw/report relationship, all eight
-	// algorithms, zero mismatch/unproven, EOF, and the original shared budgets.
-	epoch, err := fundinglotscan.ProjectEpochProof(w.ctx, facts)
-	if err != nil || w.check() != nil {
-		return nil, ErrRuntime
-	}
-	payment, err := fundinglotscan.ProjectApplicationPaymentProof(w.ctx, facts)
-	if err != nil || w.check() != nil {
-		return nil, ErrRuntime
-	}
-	bound, err := bindRuntimeOriginals(w, pins, catalogDescription(entry), original, epoch, payment, app)
+	bound, err := bindRuntimeOriginals(w, pins, catalogDescription(entry), original, graph.epoch, graph.payment, app)
 	if err != nil || w.check() != nil || q.check() != nil || q.pending != nil {
 		return nil, ErrRuntime
 	}
-	exit, err := verifyApplicationCatalog(w, tx, pins)
+	exit, err := verifyApplicationProfileCatalog(w, tx, pins, profile)
 	if err != nil || catalogDescription(exit) != catalogDescription(entry) || w.check() != nil {
 		return nil, ErrRuntime
 	}
-	if verifyRuntimeHistory(w, tx, pins.AppSchema.Name) != nil || w.check() != nil {
+	if verifyProfileRuntimeHistory(w, tx, pins.AppSchema.Name, profile) != nil || w.check() != nil {
 		return nil, ErrRuntime
 	}
 	if verifyCatalogIdentity(w, entry, tx) != nil || verifyCatalogIdentity(w, exit, tx) != nil ||
@@ -109,7 +100,7 @@ func verifyApplicationTx(ctx context.Context, tx pgx.Tx, pins fundinglotcatalog.
 		epoch: bound.epoch, proofSHA: bound.proofSHA, basisSHA: bound.basisSHA, manifestSHA: bound.manifestSHA,
 		basisDescriptorSHA: bound.basisDescriptorSHA, predecessorSHA: bound.predecessorSHA,
 		historicalRoot: bound.compatibility.Historical.Expected, currentRoot: bound.compatibility.Current.Expected,
-		compatibility: bound.compatibility, report: report,
+		compatibility: bound.compatibility, report: graph.legacy, prefixReport: graph.prefix,
 	}}
 	if w.check() != nil {
 		return nil, ErrRuntime
@@ -118,6 +109,10 @@ func verifyApplicationTx(ctx context.Context, tx pgx.Tx, pins fundinglotcatalog.
 }
 
 func verifyApplicationCatalog(w *verificationWindow, tx pgx.Tx, pins fundinglotcatalog.Pins) (*fundinglotcatalog.CatalogProof, error) {
+	return verifyApplicationProfileCatalog(w, tx, pins, fundinglotcatalog.WalletReadV2)
+}
+
+func verifyApplicationProfileCatalog(w *verificationWindow, tx pgx.Tx, pins fundinglotcatalog.Pins, profile fundinglotcatalog.Profile) (*fundinglotcatalog.CatalogProof, error) {
 	if w.check() != nil {
 		return nil, ErrRuntime
 	}
@@ -126,9 +121,17 @@ func verifyApplicationCatalog(w *verificationWindow, tx pgx.Tx, pins fundinglotc
 		return nil, ErrRuntime
 	}
 	defer identity.cancel()
-	p, err := fundinglotcatalog.VerifyRuntimeProfileTx(identity.ctx, tx, pins, fundinglotcatalog.Application, fundinglotcatalog.WalletReadV2)
+	var p *fundinglotcatalog.CatalogProof
+	switch profile {
+	case fundinglotcatalog.WalletReadV2:
+		p, err = fundinglotcatalog.VerifyRuntimeProfileTx(identity.ctx, tx, pins, fundinglotcatalog.Application, fundinglotcatalog.WalletReadV2)
+	case fundinglotcatalog.PeriodicPrefixV3:
+		p, err = fundinglotcatalog.VerifyPeriodicPrefixRuntimeTx(identity.ctx, tx, pins, fundinglotcatalog.Application)
+	default:
+		return nil, ErrRuntime
+	}
 	if err != nil || identity.check() != nil || w.check() != nil || p == nil ||
-		p.Profile() != fundinglotcatalog.WalletReadV2 || !p.MatchesPins(pins) {
+		p.Profile() != profile || !p.MatchesPins(pins) {
 		return nil, ErrRuntime
 	}
 	return p, nil
@@ -164,10 +167,9 @@ func (p *RuntimeProof) VerifyTx(ctx context.Context, tx pgx.Tx) error {
 	s := p.state
 	if s.catalog == nil || s.finalCatalog == nil || !s.catalog.MatchesPins(s.pins) || !s.finalCatalog.MatchesPins(s.pins) ||
 		catalogDescription(s.catalog) != catalogDescription(s.finalCatalog) ||
-		s.catalog.Profile() != fundinglotcatalog.WalletReadV2 ||
 		s.compatibility.Current != catalogDescription(s.catalog).tuple ||
 		s.historicalRoot != s.compatibility.Historical.Expected || s.currentRoot != s.compatibility.Current.Expected ||
-		s.manifestSHA != currentManifestSHA || s.basisDescriptorSHA != basisDescriptorSHA {
+		s.manifestSHA != currentManifestSHA || !runtimeProfileStateValid(s) {
 		return ErrRuntime
 	}
 	if verifyCatalogIdentity(w, s.catalog, tx) != nil || verifyCatalogIdentity(w, s.finalCatalog, tx) != nil || w.check() != nil {

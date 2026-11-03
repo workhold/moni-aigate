@@ -1,6 +1,6 @@
 # 固定历史与预算证据候选安装
 
-本片按 [B-P2 合同](../../specs/023-periodic-products/b-prefix-install-contract.md)隔离历史材料与安装权限，承接 [B-P1 观察来源](periodic-budget-prefix.md)。它提供候选测试的安装接缝，没有生产安装或运行证明入口。执行结果与未验范围见[验证记录](../verification/periodic-budget-prefix-install.md)。
+本片按 [B-P2 合同](../../specs/023-periodic-products/b-prefix-install-contract.md)隔离历史材料与安装权限，承接 [B-P1 观察来源](periodic-budget-prefix.md)。它提供候选测试的安装接缝，没有生产安装入口。后续显式V3的完整读取、catalog及运行组合见[B-P3架构](periodic-budget-prefix-profile.md)，本片自身不发行运行权限。执行结果与未验范围见[验证记录](../verification/periodic-budget-prefix-install.md)。
 
 ```mermaid
 flowchart LR

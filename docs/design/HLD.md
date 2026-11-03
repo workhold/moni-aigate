@@ -517,12 +517,22 @@ ledger与PB保留单一固定读取核心，各自原入口身份与事务规则
 
 按[冻结合同](../../specs/022-self-service-payments/c0-runtime-read-profile-contract.md)新增库级WalletReadV2 catalog profile。原三API、provision、历史proof与legacy root保持；只有显式profile API认证APP新增四列SELECT后的完整静态矩阵，collector类别界与逐值比较使用同一选定descriptor。当前84表776列及history另外两列以[已审清单](../../specs/022-self-service-payments/c0-wallet-readset.json)固定，并已在actual APP上通过完整读取面验收；不向worker或peer内容扩权。详细结构见[统一架构细图](../architecture/runtime-read-profile.md)。本片CatalogProof仍不是完整RuntimeProof；历史/当前根兼容、APP v1文件认证与同RR组合现由R1-B库实现并限定验收，完整PB认证仍有门禁；正式迁移/CLI和全在线资金接线继续R2。
 
-2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)仍使真实held/window历史为Indeterminate；完整R1-B验收与R2线上装配不能越过此门禁。后续先设计可证明的command前缀及window创建cut，不放宽现有Unproven或重签旧原件。
+2026-11-03验收复核：组合库已汇合，实际执行的限定结果见[记录](../verification/runtime-composer.md)。[非空PB来源缺口](../../specs/022-self-service-payments/c0-runtime-pb-evidence-gap.md)在旧接口继续使真实held/window历史为Indeterminate；后续 B-P1–B-P3 独立增加可证明的 command 前缀与 window 创建 cut，不放宽原 Unproven 或重签旧原件。新组合的当前范围见下节，完整经营与R2线上装配仍按各自门禁验收。
 
 ## B-P1：周期预算观察前缀候选
 
 按[冻结合同](../../specs/023-periodic-products/b-prefix-contract.md)增加独立证据域与纯核验：原资金 event_seq 排序 effect，新观察 ordinal 排序窗口出生与命令，包括 no-op。新 control 出生建立 origin，head 与不可变 journal 绑定真实 source，命令 JSON 和精确资金 cut 从同一锁内原件生成。新 scope 自行重跑原 PB 图并逐命令认证，原 Base 与 legacy 缺证保留，旧 control 不回填出生。
 
-SQL 与权限只作为精确001–022之后的隔离候选，不进入正式 migrate/provision/main。旧reader/basis/catalog与APP RuntimeProof尚未接入；先补精确安装和全新profile/组合，再发布追加迁移及启动装配，完整R1-B与R2门禁不提前开放。模块与实际验证见[细化架构](../architecture/periodic-budget-prefix.md)及[验证记录](../verification/periodic-budget-prefix.md)。
+SQL 与权限只作为精确001–022之后的隔离候选，不进入正式 migrate/provision/main。B-P1当期尚未接入完整reader/basis/catalog与APP RuntimeProof；精确安装和全新profile/组合分别由后续B-P2/B-P3承接，不据纯层或候选验证开放完整R1-B与R2。模块与当期验证见[细化架构](../architecture/periodic-budget-prefix.md)及[验证记录](../verification/periodic-budget-prefix.md)。
 
-B-P2 按[独立合同](../../specs/023-periodic-products/b-prefix-install-contract.md)固定原 22 份历史材料，新增 caller 原 RR 的明确 schema 核验。候选 DDL/授权保存于独立纯材料包；仅测试支持的专库安装器将核验、DDL、最小 ACL 及权限复核放入同一 savepoint，最终提交仍由 caller 拥有。它解决候选随 latest 漂移和旧 provision 扩权的风险，不增加生产安装入口；新完整 profile、protected phase/runtime、正式迁移/启动依赖继续。详见[安装架构](../architecture/periodic-budget-prefix-install.md)。
+B-P2 按[独立合同](../../specs/023-periodic-products/b-prefix-install-contract.md)固定原 22 份历史材料，新增 caller 原 RR 的明确 schema 核验。候选 DDL/授权保存于独立纯材料包；仅测试支持的专库安装器将核验、DDL、最小 ACL 及权限复核放入同一 savepoint，最终提交仍由 caller 拥有。它解决候选随 latest 漂移和旧 provision 扩权的风险，不增加生产安装入口。详见[安装架构](../architecture/periodic-budget-prefix-install.md)。
+
+## B-P3：预算观察证据的完整版本组合
+
+按[冻结合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)实现显式 `PeriodicPrefixV3`：source71表/635列、source+wallet87表/804列、basis112表/1004列，完整 catalog128张普通表。新来源扫描在一个私有session内读取旧业务和新增观察证据，重跑全部原算法与prefix；有原件的新命令在新scope逐条认证，原 `PeriodicPrefix.Base == Periodic` 与旧缺证计数保留，缺origin和legacy来源缺口仍关闭。
+
+V3由新的Begin、安装核验、停服观察和ordinary/sandbox APP组合入口明确选择，旧68/84表、109表basis、LegacyV1/WalletReadV2及历史原件保持。Plan在原RR RO生成比较值，Init在新的原RR内完成pre71→basis112→固定开账writer→post87→basis复读→fresh catalog/authority→唯一提交，首次数据快照前固定锁128表。observer仍只读终结，APP proof仍绑定实际受限LOGIN、caller原RR RO与本地sandbox原件，不增加启动或在线资金写权。
+
+历史/current兼容采用共用固定12项映射，逐mode/variant绑定旧、新发行根及准确basis descriptor，不按经营后数据重算历史cutover摘要。实现已落地，scanner、basis与ordinary全阶段已有专项PG证据，其余门禁和最终集成状态以[组合验证](../verification/periodic-budget-prefix-profile.md)为准；[细化架构](../architecture/periodic-budget-prefix-profile.md)给出模块与源码。当前仍为exact original22之后的隔离候选，正式追加迁移、provision、维护CLI、startup与在线资金接线另行交付。
+
+B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)仍阻断完整来源证明，V3 Plan必须拒绝，后续先设计不可变审批消费证据再实现；不能将拒绝通过计为采购更正后完整成功。[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)保留原5秒界，标准无race诊断及局部差分通过，但catalog race时限门禁尚未关闭；它不构成网关首字节/首token基准。

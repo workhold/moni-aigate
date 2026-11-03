@@ -66,7 +66,16 @@ func verifyCatalogTx(ctx context.Context, tx pgx.Tx, pins Pins, runtime RuntimeR
 
 func verifyCatalogProfileTx(ctx context.Context, tx pgx.Tx, pins Pins, runtime RuntimeRole, profile Profile) (*CatalogProof, error) {
 	expected, root, err := loadExpectedProfile(pins, profile)
-	if err != nil || expected == nil || expected.FormatVersion == 0 || len(root) != 64 {
+	if err != nil {
+		return nil, ErrCatalog
+	}
+	return verifyCatalogExpectedTx(ctx, tx, pins, runtime, profile, expected, root)
+}
+
+// All fixed profiles share this one identity and collection lifecycle. Only
+// package-owned fixed loaders may select the expected descriptor and root.
+func verifyCatalogExpectedTx(ctx context.Context, tx pgx.Tx, pins Pins, runtime RuntimeRole, profile Profile, expected *descriptorSet, root string) (*CatalogProof, error) {
+	if expected == nil || expected.FormatVersion == 0 || len(root) != 64 {
 		return nil, ErrCatalog
 	}
 	id, err := identifyTx(ctx, tx, pins)
@@ -121,14 +130,20 @@ func VerifyInstallationTx(ctx context.Context, tx pgx.Tx, pins Pins) (*Installat
 	if err != nil {
 		return nil, ErrCatalog
 	}
+	return verifyInstallationEmptyTx(c, tx, pins, proof)
+}
+
+// The one-time installation fact covers only the original sixteen C0 output
+// tables. Business evidence, including periodic-prefix history, is allowed.
+func verifyInstallationEmptyTx(ctx context.Context, tx pgx.Tx, pins Pins, proof *CatalogProof) (*InstallationProof, error) {
 	for _, table := range installationTables {
 		var nonempty bool
 		q := "SELECT EXISTS(SELECT 1 FROM " + pgx.Identifier{pins.AppSchema.Name, table}.Sanitize() + ")"
-		if tx.QueryRow(c, q).Scan(&nonempty) != nil || nonempty {
+		if tx.QueryRow(ctx, q).Scan(&nonempty) != nil || nonempty {
 			return nil, ErrCatalog
 		}
 	}
-	if proof.verifyTx(c, tx) != nil {
+	if proof.verifyTx(ctx, tx) != nil {
 		return nil, ErrCatalog
 	}
 	return &InstallationProof{identity: proof.identity}, nil

@@ -69,6 +69,7 @@ type snapshotState struct {
 	conn               *pgx.Conn
 	pgconn             *pgconn.PgConn
 	mode               snapshotMode
+	profile            fundinglotcatalog.Profile
 	ctx                context.Context
 	cancel             context.CancelFunc
 	deadline           time.Time
@@ -136,6 +137,10 @@ func (g *Gate) BeginInit(ctx context.Context) (*Snapshot, error) {
 }
 
 func (g *Gate) beginSnapshot(ctx context.Context, mode snapshotMode) (*Snapshot, error) {
+	return g.beginSnapshotProfile(ctx, mode, fundinglotcatalog.LegacyV1)
+}
+
+func (g *Gate) beginSnapshotProfile(ctx context.Context, mode snapshotMode, profile fundinglotcatalog.Profile) (*Snapshot, error) {
 	now := time.Now()
 	if g == nil || g.state == nil {
 		return nil, ErrInput
@@ -162,20 +167,24 @@ func (g *Gate) beginSnapshot(ctx context.Context, mode snapshotMode) (*Snapshot,
 		gs.destroyFailedBegin()
 		return nil, err
 	}
-	return gs.beginSnapshotOwned(ctx, mode, deadline)
+	return gs.beginSnapshotProfileOwned(ctx, mode, deadline, profile)
 }
 
 // The caller owns gate.busy and its sole Begin claim throughout this helper.
 // Observe keeps that ownership until its private transaction and cleanup end;
 // ordinary Plan/Init still return only after the original Begin checks.
 func (gs *gateState) beginSnapshotOwned(ctx context.Context, mode snapshotMode, deadline time.Time) (*Snapshot, error) {
+	return gs.beginSnapshotProfileOwned(ctx, mode, deadline, fundinglotcatalog.LegacyV1)
+}
+
+func (gs *gateState) beginSnapshotProfileOwned(ctx context.Context, mode snapshotMode, deadline time.Time, profile fundinglotcatalog.Profile) (*Snapshot, error) {
 	if gs.nonce == nil || !gs.heldInstance || !gs.heldMigration || !gs.idle() {
 		gs.destroyFailedBegin()
 		return nil, ErrTransaction
 	}
 	lifetime, cancel := context.WithDeadline(ctx, deadline)
 	st := &snapshotState{
-		gate: gs, gateNonce: gs.nonce, nonce: &snapshotNonce{}, mode: mode,
+		gate: gs, gateNonce: gs.nonce, nonce: &snapshotNonce{}, mode: mode, profile: profile,
 		conn: gs.conn, pgconn: gs.conn.PgConn(), ctx: lifetime, cancel: cancel,
 		deadline: deadline, stopWatch: make(chan struct{}), watchDone: make(chan struct{}), outcome: OutcomeOpen,
 	}
@@ -226,7 +235,11 @@ func (gs *gateState) beginSnapshotOwned(ctx context.Context, mode snapshotMode, 
 		}
 	}
 	if mode == snapshotInit {
-		if _, err = tx.Exec(lifetime, initLockSQL(gs.pins.AppSchema.Name)); err != nil {
+		lockSQL := initLockSQL(gs.pins.AppSchema.Name)
+		if profile == fundinglotcatalog.PeriodicPrefixV3 {
+			lockSQL = periodicPrefixInitLockSQL(gs.pins.AppSchema.Name)
+		}
+		if _, err = tx.Exec(lifetime, lockSQL); err != nil {
 			return fail(executionError(lifetime))
 		}
 	}
@@ -346,6 +359,10 @@ func (call *snapshotCall) close() {
 // VerifyInstallation is the only T1 evidence stage. It does not issue a Permit
 // and never claims that history, sources, or maintenance authority were checked.
 func (s *Snapshot) VerifyInstallation(ctx context.Context) (*fundinglotcatalog.InstallationProof, error) {
+	return s.verifyInstallation(ctx, fundinglotcatalog.LegacyV1)
+}
+
+func (s *Snapshot) verifyInstallation(ctx context.Context, profile fundinglotcatalog.Profile) (*fundinglotcatalog.InstallationProof, error) {
 	if s == nil || s.state == nil || s.state.gate == nil {
 		return nil, ErrInput
 	}
@@ -393,7 +410,10 @@ func (s *Snapshot) VerifyInstallation(ctx context.Context) (*fundinglotcatalog.I
 	if st.verifyBinding(work) != nil {
 		return catalogFailure()
 	}
-	proof, err := fundinglotcatalog.VerifyInstallationTx(work, st.rawTx, gs.pins)
+	if profile != st.profile {
+		return catalogFailure()
+	}
+	proof, err := verifyOwnedInstallationCatalog(work, st.rawTx, gs.pins, profile)
 	if err != nil || proof == nil || proof.VerifyTx(work, st.rawTx) != nil || !proof.Catalog().MatchesPins(gs.pins) || st.verifyBinding(work) != nil {
 		return catalogFailure()
 	}
