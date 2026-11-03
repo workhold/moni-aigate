@@ -78,6 +78,19 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 - [x] 原Gate/Snapshot中显式V3 Begin/Installation与kind6/7共用once；受保护pre71→basis112→writer→post87→fresh证据→唯一提交，Init首读前固定锁128表。
 - [x] 新停服observer、ordinary/sandbox actual APP组合与共用12项历史/current映射；保留原事务/实际身份/总预算和sandbox本地原件。
 - [ ] 完成catalog双轮多variant/权限/正文负例、genuine sandbox与全场景交叉验收，汇总旧接口回归、专项race及最终仓库检查；实际PASS/SKIP与清理按[组合验证](../../docs/verification/periodic-budget-prefix-profile.md)记录，叶子通过不关闭整个B-P3。
-- [ ] 由集成人复核HLD/LLD、统一架构正文/源码链接和能力状态，刷新与只读检查后提交、推送并核精确远端源码/CI。
+- [x] 由集成人复核HLD/LLD、统一架构正文/源码链接和能力状态，刷新与只读检查后提交、推送并核精确远端源码/CI。交付提交 `0b150c5` 的10/10任务已成功，默认C0 opt-in跳过仍不计PG验收，见[精确CI记录](../../docs/verification/periodic-budget-prefix-profile-ci.json)。
 
 实现已落地，scanner、basis和ordinary全阶段已有专项PG证据，其他门禁按记录继续。正式迁移/provision/维护CLI/startup与在线资金接线不在本候选交付中；本片不能关闭R2或把本地fixture当正式供应商、生产支付、1Panel/HA和性能验收。完整细图见[组合架构](../../docs/architecture/periodic-budget-prefix-profile.md)。
+
+
+## 8. B-P4 采购完整历史设计与实施关口
+
+承接[采购缺口](b-prefix-procurement-barrier-gap.md)与[设计稿v0.1](b-procurement-prefix-design.md)。不能以窄总upper定理或当前proposal/reservation相等替代历史消费证据；B-P3整体验收保持未完成。
+
+- [x] D0：汇合账户/成本两路源码审查，明确十一项Unproven对应原始来源、正常/冲突/审批时序、无变化decision及历史不可回填原则；交付设计稿，未实施。
+- [ ] D1：冻结逐字段DDL、受控写入口与权限、source双向闭合、同事务多根/锁图、纯DTO与完整读集、固定新profile和负面验收合同。
+- [ ] I1：在D1之后并行实施受控写证与独立纯重放/手算oracle；业务共享文件单一owner，PG串行。
+- [ ] I2：在完整固定材料后接入scanner/basis/catalog、protected pre/post、observer和actual APP runtime；旧Base、V3固定材料与缺证边界保留。
+- [ ] A0：实际APP完整成功/失败矩阵、旧接口回归、最终仓库与精确CI、统一架构和推送收口；不得把SKIP或纯模块通过当完整验收。
+
+正式migration/provision/维护CLI/startup/在线资金接线仍为R2独立合同，不随设计稿或候选完成自动启用。

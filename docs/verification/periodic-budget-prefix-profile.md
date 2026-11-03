@@ -43,7 +43,7 @@
 
 独立串行race诊断 `.local/b-p3-catalog-timing-awake.jsonl` 在原LegacyV1第98个固定查询（application/type_acl，sentinel253）耗尽5秒，尚未达到权限快解码路径：总5014ms、driver587ms。CPU采样5.12秒中有4.39秒样本，通用`decodeCatalogJSON`累计1.73秒，race的`tsan_read`自身flat0.76秒。此证据定位到受instrumentation影响的旧公共解码/检查路径；未到root比较，不能报告为已经证实的ACL或root差异。局部优化范围、差分测试与准确性能含义见[CPU诊断](periodic-prefix-catalog-cpu.md)。后续系统日志确认该保醒命令仍未阻止Maintenance Sleep，诊断窗口11:39:35–11:39:40也休眠5秒；本记录撤回“完全醒时”的环境假设。CPU采样可以定位热点，不能排除环境暂停或将全部差异归因instrumentation。不延长产品5秒或30秒预算，不削减核验；标准PG与race分别记录。
 
-当前记录将在校正复跑、旧接口回归、整仓检查和远端CI核对完成后更新。分项PASS不能关闭B-P3完整门禁。
+以下标准复跑、整仓检查和精确远端CI分别记录后续结果；以上失败保留其当时状态。分项PASS不能关闭B-P3完整门禁。
 
 ## 标准 PostgreSQL 复跑
 
@@ -71,4 +71,15 @@
 
 `make check`退出0，报告执行时间10.188秒、墙钟15.983秒，完成只读架构检查、全Go vet和前端strict构建。随后`make verify-mvp`启用专用`TEST_DATABASE_URL`，286项前端通过；默认Go race全仓已执行：50个测试包PASS、资金包1个FAIL、4个包无测试，命令退出2；报告执行时间2173.090秒、墙钟3220.200秒。已有资金包的`TestPostgresKeyConfigurationExpiryAfterUnchangedLockWait`与`TestPostgresRetailWalletWaitKeepsAlreadyFrozenPrice`出现statement/lock timeout，该包268.439秒FAIL，不能标为整仓通过。
 
-12:01开始的电源日志确认测试期间反复Maintenance Sleep/DarkWake，临时caffeinate未能阻止电池供电下的休眠；本轮采集区间内最长56秒。不能仅据此证明每项失败的唯一原因，也不能延长产品资金期限来获得PASS。标准PG专项、默认race、完整命令结果及其未执行后续步骤分别记录；远端CI只按精确提交确认，不转移旧提交结果。`make verify-mvp`在测试失败后没有执行其末尾vet/build；全Go vet已由`make check`通过，另独立`go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate`退出0，1.642秒。本轮提交时远端CI尚待推送触发，结果按精确commit与Actions运行核对。
+12:01开始的电源日志确认测试期间反复Maintenance Sleep/DarkWake，临时caffeinate未能阻止电池供电下的休眠；本轮采集区间内最长56秒。不能仅据此证明每项失败的唯一原因，也不能延长产品资金期限来获得PASS。标准PG专项、默认race、完整命令结果及其未执行后续步骤分别记录；远端CI只按精确提交确认，不转移旧提交结果。`make verify-mvp`在测试失败后没有执行其末尾vet/build；全Go vet已由`make check`通过，另独立`go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate`退出0，1.642秒。提交时远端CI尚待推送触发；推送后的终态核对见下节，不将该结果转记为本机整仓通过。
+
+
+## 精确提交的远端 CI
+
+已推送提交 `0b150c58ebf630f984770bd0fe37c07591b13c51` 的 [Actions 41581210176](https://github.com/workhold/moni-aigate/actions/runs/41581210176) 于2026-11-03完成，10/10任务成功。独立核对远端分支SHA、run headSha、全部job终态与10份artifact，并确认九分区的包/顶层测试分配完整无重叠。可复核的机器摘要、artifact文件摘要与逐项跳过原因见[CI记录](periodic-budget-prefix-profile-ci.json)。
+
+51个有测试包PASS、4包无测试；全矩阵顶层1677 PASS/114 SKIP，含子项9463 PASS/220 SKIP，零FAIL。只读架构检查为1633文件、snapshot前缀 `65e85bfe971f`，前端测试/构建、Go vet和生产build全部成功。
+
+本提交新增67个顶层测试的原始终态是58 PASS/9 SKIP；其中5个父PASS的PG子项全部SKIP，因此仅53个新增顶层测试完整执行。13套新增PG验收及1项诊断未由本轮CI执行。CI设置 `PB_PREFIX_DATABASE_URL`，没有设置 `MONI_TEST_DATABASE_URL`、`C0_CATALOG_DATABASE_URL`、`C0_MAINTENANCE_DATABASE_URL` 或诊断开关；不能据CI全绿认证这些专项。原PB prefix隔离PG专项实际执行24个顶层/101项含子项，全PASS。
+
+这份远端结果确认该精确提交的默认CI通过；本机旧资金测试的两项timeout、catalog专项race时限与采购三类历史缺证继续保留。B-P3整体和正式迁移/在线来源资金接线仍未完成。

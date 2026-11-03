@@ -949,3 +949,12 @@ actual APP专库test-only reader不等于生产scanner或authority。精确安�
 实现已落地，scanner、basis与ordinary受保护全阶段已有专项PG证据；catalog/sandbox及最终回归状态以[组合验证](../verification/periodic-budget-prefix-profile.md)为准，模块和源码见[细化架构](../architecture/periodic-budget-prefix-profile.md)。候选仍建立在exact original22之上，不是正式追加迁移；普通migrate/provision/serve、生产维护CLI与在线资金尚未接入，不据库级组合宣布R1-B/R2或供应商/支付/1Panel验收完成。
 
 [采购屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)保留approved提案的更正前reservation revision与evidence数；更正后当前revision递增不等于历史提案错误，原`ProposalBarrierUnproven`不删除。该历史上的pre71完整读取不能授予aggregate coverage，owned V3 Plan必须在发行epoch前失败；审批消费的不可变revision/evidence/唯一成本事件绑定须另先冻结合同。[catalog解码优化](../verification/periodic-prefix-catalog-cpu.md)只对固定五字段权限对象走完整EOF快路径，其他输入回退原decoder，SQL/root/权限与5秒总界不变；标准无race诊断不能抵消原LegacyV1 baseline的catalog race时限失败。两项门禁仍未关闭，B-P3整体未完成。
+
+
+## B-P4：采购决策与历史屏障的设计前置
+
+[设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)明确账户journal ordinal、configuration revision、reservation revision、evidence成员前缀及cost decision ordinal互不替代。真实准入须绑定持锁后的before配置/held/spent/异常阻断；派发另绑定prepared→sending、期限与PB检查。现有reservation→自动pause→event→账户金额→PB效果的暂态不能由任意AFTER触发器读取后冒称before。
+
+正常路径在`recordAttemptCost`之后才`finalizeProcurement`，冲突路径没有正常finalization；应在真实分支捕获成本资格和原incoming。批准消费提案出生时完整成员屏障，同额更正允许before/after revision相等但仍有唯一decision/event/correction/outbox；request级sticky delivery使用真实latest前驱。新纯层拟保留Base和原全部Unproven，逐项独立重放，不清零旧计数。
+
+本片仍是D0设计稿：逐字段SQL、source双向闭合、函数权限/角色闭包、锁与同事务多根关联、读集/basis/catalog/历史兼容及资源界均须D1先冻。未改现有生产Go/SQL、旧迁移、权限或任何main/ready/在线资金入口；真实PG验收须等待候选实现，不能引用旧CI作为新行为通过。

@@ -170,3 +170,12 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 实现已落地，scanner、basis和ordinary全阶段已有专项PG证据；catalog/sandbox矩阵、最终回归和精确远端CI以[组合验证](../verification/periodic-budget-prefix-profile.md)为准。B-P3整体未完成：[采购历史证据缺口](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)仍要求Plan拒绝，下一独立片先设计不可变审批消费的revision、完整evidence与唯一绝对成本事件绑定，再实现完整成功路径；[catalog CPU专项](../verification/periodic-prefix-catalog-cpu.md)的标准无race诊断与解码差分已通过，但原5秒界下catalog race时限门禁仍未关闭，局部性能结果不抵消该缺口。
 
 当前候选仍是exact original22之后的隔离安装，无正式追加迁移/provision/生产维护CLI/startup或在线资金接线。完成上述合同门禁及本片验收后，再另冻R2正式交付和全资金路径；之后继续C1/C2/C3、商品/订阅、媒体扩展、实际供应商与支付、容器/1Panel、生产/HA，最后在完整商业检查下性能对照。历史片中的“下一依赖”保留其当期记录，本节作为当前路线入口。
+
+
+## B-P4 设计前置与当前下一步
+
+[采购历史设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)已完成D0汇合：账户真实准入前缀、成本资格、审批消费、完整evidence成员、incoming冲突与request级finalization前驱共同映射原十一项缺证。它是设计进展，尚无新SQL/Go运行能力；B-P3整体仍未完成。
+
+下一串行关口D1先冻结逐字段DDL/受控写函数/最小权限、全部来源出生点与双向绑定、同事务多根和完整锁序、纯DTO及固定新profile材料。其后I1写证与独立纯重放、I2读集/basis/catalog可按明确所有权并行，维护/runtime由根集成，实际PG严格串行；A0要求新原件真实生成后的完整成功及旧历史继续拒绝，不能用三个窄例或缺证拒绝代替完整验收。正式R2、C1/C2/C3、商品/扩展、供应商/支付、容器/1Panel、生产/HA及最终性能的依赖保持。
+
+GitHub首页与贡献指南已整理特点、使用、源码构建、Docker/1Panel及验证方式，并保留未完成与许可边界。上片精确提交 `0b150c5` 的CI10/10成功已[记录](../verification/periodic-budget-prefix-profile.md#精确提交的远端-ci)，独立C0 opt-in未执行部分不计PG验收。本轮为文档交付，无模块/数据库/权限结构变化，统一架构入口和快照同步维护。

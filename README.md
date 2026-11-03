@@ -5,7 +5,7 @@
 面向对外 API 经营的自托管 AI 网关，将模型接入、客户授权、渠道采购、计费结算和运营控制台放在同一个平台中。
 参考 New API / One API 的业务设计与 1Panel 的部署体验，采用 Go + PostgreSQL + Vue 3 独立实现，按 SDD 持续交付。
 
-**当前版本：`v0.1.0-dev`。核心商业链路已完成限定本地验收；正式收款、生产部署与真实供应商认证仍需独立验收。**
+**当前版本：`v0.1.0-dev`，持续开发中。核心商业链路已完成限定本地验收；正式收款、生产部署与真实供应商认证尚未完成。**
 
 [系统架构](docs/architecture/README.md) · [本地开发](docs/runbooks/development.md) · [部署手册](docs/runbooks/deployment.md) · [MVP 状态](docs/verification/mvp-status.md) · [交付计划](docs/design/delivery-plan.md)
 
@@ -29,23 +29,22 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 
 | 能力 | 当前状态 | 主要范围与边界 |
 | --- | --- | --- |
-| 租户与 API Key | 已实现 | 成员/模型授权，来源 IP/CIDR，RPM、burst、并发、模型/地域、累计额度、有效期及撤销 |
+| 租户与 API Key | 已实现 | 成员/模型授权，来源 IP/CIDR，RPM、burst、并发、地域、累计额度、有效期及撤销 |
 | 六种推理协议 | 已实现，限定本地验收 | Chat、Responses、Messages、Embeddings、Rerank、Gemini 文本；范围见下表 |
 | 模型与渠道运营 | 已实现，限定本地验收 | 不可变渠道/路由版本，1..32 成员凭据池，目录发现/差异预览，跨渠道批量启停 |
 | 成本感知路由 | 已实现，限定本地验收 | 同模型优先级/权重/健康/容量；可配置成本优先、未知报价拒绝策略及采购单价上限 |
-| 采购账户与预算 | 已实现，限定本地验收 | 跨渠道共享账户、累计与周期预算、逐 attempt 预占、未知占用、双人更正；余额观察为人工证据 |
+| 采购账户与预算 | 已实现，限定本地验收 | 跨渠道共享账户、累计与周期预算、逐次尝试预占、未知占用、双人更正；余额观察为人工证据 |
 | 客户资金与账单 | 已实现，限定本地验收 | 硬预占、最终用量、唯一结算、双人入账/消费退款/核对、请求关联账单与采购成本 |
-| 公开目录与分组报价 | 已实现，限定本地验收 | 模型默认私有，管理员显式发布；客户分组售价与周期硬预算，不等于订阅商品 |
-| 自助身份与兑换券 | 已实现，限定本地验收 | 邮件证明、密码恢复、双审赠额券；注册、邮件和新券发行默认关闭 |
+| 客户自助与公开目录 | 已实现，限定本地验收 | API Key、账单、Playground、邮件证明、密码恢复、分组报价；模型默认私有，注册与邮件默认关闭 |
+| 兑换券与经营告警 | 已实现，限定本地验收 | 双审赠额券、渠道隔离/采购余量/待核对积压告警；新券发行和告警评估默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
-| 站内经营告警 | 已实现，限定本地验收 | 渠道隔离、采购登记余量和待核对积压，规则/历史/确认；默认关闭评估 |
-| 资金来源与原路退款 | 部分基础模块已实现 | 已有来源分配、业务来源图及 lot/FIFO/结算/消费退款独立重放；已接通同快照读取，维护切换、在线资金接线、原路退款和拒付仍在推进 |
-| 停服维护与钱包开账 | 库级候选实现，验证按阶段记录 | 受保护开账、资金来源重放、独立停服观察与 APP 运行核验；新增预算历史证据版本，正式迁移、启动与在线资金接线仍在推进 |
+| 资金来源维护与钱包开账 | 库级候选，阶段验证中 | 已有来源分配/重放、受保护开账与运行核验；正式迁移、启动及在线资金接线尚未完成，原路退款与拒付尚未交付 |
 | 媒体与实时协议 | 仅纯计量基础层已实现 | 图片、音频、异步任务和 Realtime 尚未接通生产协议 |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
 采购报价支持按“渠道 + 精确上游模型”设置独立输入/输出单价与生效版本，不会把客户售价直接当作成本。
 多渠道可绑定同一采购账户共同消耗预算；当前没有供应商真实余额或外部账单自动同步。
+商品/订阅、原路退款、拒付及生产支付按[交付计划](docs/design/delivery-plan.md)继续推进；周期预算不等于订阅商品，退回平台钱包不等于原路现金退款。
 
 ### 协议范围
 
@@ -76,18 +75,13 @@ flowchart LR
 ```
 
 控制平面与数据平面属于同一个 Go 模块化单体，网络调用在数据库事务之外。
-客户一次请求唯一结算，上游成本按每次 attempt 留存；只允许明确安全的有限回退，消费未知时不自动重放生成请求。
-恢复任务处理证据、结算和释放，不重新发送模型生成。
+客户一次请求唯一结算，上游成本按每次尝试留存；只允许明确安全的有限回退。消费未知时进入核对，恢复任务处理证据、结算和释放，不重新发送模型生成。
 
 技术栈：Go / Gin / pgx，PostgreSQL 16，Vue 3 / TypeScript / Element Plus。
 应用、报表投影与迁移角色分离；当前不引入 Redis / Kafka，不支持通过增加副本直接切换多活。
 
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
-
-资金来源维护和预算历史核验按版本逐步交付。新的库级入口已将预算命令与窗口观察证据接入开账、停服观察和 APP 运行核验，实际验证范围见[预算证据架构](docs/architecture/periodic-budget-prefix-profile.md)与[验证记录](docs/verification/periodic-budget-prefix-profile.md)。缺少来源原件的旧历史继续拒绝认证；套餐购买、原路退款和拒付等后续能力见交付计划。
-
-这些能力仍在隔离候选环境验证，尚未发布正式迁移和生产维护工具。普通部署继续使用正式迁移，下述部署步骤不要求手工安装候选 SQL。
 
 ## 本地启动
 
@@ -118,17 +112,17 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 ./bin/moni-aigate serve
 ```
 
-打开 `http://localhost:8080`，使用刚创建的管理员登录。`bootstrap` 仅允许空用户库首次创建管理员；没有固定默认账号、密码、演示模型或赠送余额。
-程序交互读取密码不会隐藏输入，建议使用密码管理器或受保护文件提供 stdin，避免将真实密码写进命令参数或历史。
+打开 `http://localhost:8080`，使用刚创建的管理员登录。**没有固定默认账号或密码；MFA 默认可选。** `bootstrap` 仅允许空用户库首次创建管理员，系统不预置演示模型或赠送余额。
+管理员密码通过受保护文件提供 stdin；程序交互读取不会隐藏输入，避免将真实密码写入命令参数或历史。
 
 首次登录后按下方[首次配置](#从部署到第一次-api-调用)接入模型。详细配置与故障排查见[开发手册](docs/runbooks/development.md)。
 
 ## Docker Compose / 1Panel
 
-仓库提供 [Dockerfile](Dockerfile)、[compose.yaml](compose.yaml) 和 [Nginx 示例](deploy/nginx.conf)。以下为待目标环境验收的部署路径，容器实际构建/运行与 1Panel 实装尚未验证。
-部署主机需要 Docker Engine 与 Compose v2；下方 `go run` 需要 Go ≥1.26，也可在可信开发机生成配置后安全传入部署主机。先将完整仓库检出到部署目录，以下命令均在仓库根目录执行，再生成私有配置；已有 `.env` 时跳过生成步骤：
+仓库提供 [Dockerfile](Dockerfile)、[compose.yaml](compose.yaml) 和 [Nginx 示例](deploy/nginx.conf)。当前从源码构建镜像；以下路径已核对配置，容器实际构建/运行与 1Panel 实装尚待目标环境验收。
+部署主机需要 Docker Engine 与 Compose v2。将完整仓库检出到部署目录，在根目录执行以下命令。`go run` 需要 Go ≥1.26，也可在可信开发机生成私有配置后安全传入部署主机；已有 `.env` 时跳过生成步骤。
 
-先在仓库外准备权限 `0600` 的管理员密码文件，内容为12–72字节的一行密码；将示例私有路径替换为实际文件。
+先在仓库外准备权限 `0600` 的管理员密码文件，内容为 12–72 字节的一行密码；将示例私有路径替换为实际文件。
 
 ```sh
 go run ./cmd/moni-aigate init-env --out .env
@@ -143,7 +137,7 @@ docker compose up -d app
 启动后可用 `curl --fail http://127.0.0.1:8080/health/ready` 核查就绪状态，若修改了 `PORT`，相应替换端口；正常收费模式还须确认响应中的 `recovery_mode` 为 `false`。
 
 Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。已有 PostgreSQL 卷不会因修改 `.env` 自动更换角色密码，密码轮换须同时更新数据库角色与私有配置。
-1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录和构建上下文须指向完整仓库根目录：`migrate` 使用 `build: .`，需要 `Dockerfile`、Go/Web 源码和 `deploy/init-roles.sh`，仅复制 YAML 与初始化脚本不足以构建。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理到 `127.0.0.1:8080`；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
+1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录与 `build: .` 构建上下文须指向完整仓库根目录，包含 Dockerfile、Go/Web 源码和初始化脚本。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理到 `127.0.0.1:8080`；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
 SSE 须关闭代理缓冲和生成 POST 自动重试，显式设置可信代理 CIDR；不要直接信任客户端转发头。
 
 升级须先排空并停止旧实例，再执行迁移/授权后启动新实例。生产配置、密钥轮换、单活与反代约束见[部署手册](docs/runbooks/deployment.md)，恢复演练见[备份恢复](docs/runbooks/backup-restore.md)。
@@ -202,7 +196,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 ## 验证与性能
 
-按[开发验证](docs/runbooks/development.md#开发验证)准备**专用 PostgreSQL 16 测试集群**：实际端点为 `127.0.0.1:55439/moni_test`，测试 LOGIN 为 `moni_test`。通过私有环境设置 `TEST_DATABASE_URL` 后执行：
+按[开发验证](docs/runbooks/development.md#开发验证)准备**专用 PostgreSQL 16 测试集群**，通过私有环境设置 `TEST_DATABASE_URL` 后执行：
 
 ```sh
 npm --prefix web ci
@@ -210,10 +204,8 @@ make check
 make verify-mvp
 ```
 
-`make check` 执行只读架构检查、Go vet 和前端构建。
-`make verify-mvp` 强制要求测试库配置，并运行前端测试/构建、Go race 测试、vet 和构建；未配置数据库而跳过的测试不能作为商业验收完成。
-本地验证与生产门禁分别记录在 [MVP 状态](docs/verification/mvp-status.md)和[发布验收](docs/verification/mvp-release-qualification.md)。
-维护集成与普通服务的依赖隔离由可执行门禁检查。启动回归、维护读取专项、整仓检查和每轮 CI 均保留精确版本身份，详见[集成隔离验证](docs/verification/maintenance-integration-isolation.md)。
+`make check` 执行只读架构检查、Go vet 和前端构建；`make verify-mvp` 额外运行前端测试、Go race 测试和二进制构建，并强制要求测试库配置。独立 opt-in 专项仍须单独执行；跳过的数据库测试不能作为商业验收完成。
+环境准备与提交要求见[贡献指南](CONTRIBUTING.md)，实际验收范围见 [MVP 状态](docs/verification/mvp-status.md)和[发布验收](docs/verification/mvp-release-qualification.md)。
 
 当前优先完善能力，再推进性能专项。网关额外首字节延迟与模型首 token 时间分开衡量；历史 Mock 结果不能代表当前版本或真实供应商。
 尚未完成 Rust LiteLLM / Bifrost 同条件实跑对比，不宣称性能相近。方法与固定参考见[性能规格](specs/002-performance-parity/spec.md)、[容量方法](docs/verification/capacity.md)和[研究记录](docs/research/performance-references.md)。
@@ -223,16 +215,7 @@ make verify-mvp
 每项行为先补齐规格、状态机、接口/数据合同、故障与验收边界，再修改实现。
 主要入口：[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
 
-代码、测试、依赖、迁移、部署、CI 或设计合同发生变化时，都要复核[统一架构](docs/architecture/README.md)的模块图、请求链路、数据关系、权限边界、能力状态和源码链接。
-汇总并行任务结果后，由集成人完成语义复核、更新受影响正文，并执行：
-
-```sh
-go run ./scripts/check-architecture --refresh --reviewed --reason '本次变更及其架构影响；无结构变化时说明复核结论'
-go run ./scripts/check-architecture
-```
-
-统一交付架构正文、[架构变更记录](docs/architecture/changes.md)和 [SHA-256 清单](docs/architecture/architecture-manifest.json)。默认检查只读，CI 不自动刷新；内容快照不能替代语义审查。
-详细规则见 [AGENTS.md](AGENTS.md)。
+每次代码、测试、依赖、迁移、部署、CI 或设计合同变化，都同步复核统一架构并保留[变更记录](docs/architecture/changes.md)与 [SHA-256 清单](docs/architecture/architecture-manifest.json)。Make / CI 默认只读检查，不自动刷新；具体流程见[贡献指南](CONTRIBUTING.md#架构同步与检查)和 [AGENTS.md](AGENTS.md)。
 
 ## Roadmap
 

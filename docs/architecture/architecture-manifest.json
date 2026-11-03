@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-03T04:58:41Z",
-  "review_reason": "最终复核B-P3候选及README部署范围；追加标准专库7/13维护与2/37 catalog通过、整仓50包通过和资金短时限失败、保醒未阻止维护休眠的环境证据及独立构建，明确采购历史缺证和专项race未关闭；仅补交付文档与验证事实",
-  "snapshot_sha256": "65e85bfe971fa2fc1e40e446f342d23f5e6e04a6379372541c03d97970ae30e1",
-  "architecture_sha256": "ee5fbd5afe0069047aca9281636e15e0a8da08696f9ae372be6885ba4286792b",
-  "history_sha256": "b857b7a6d1718154de30abdb9d127a4ed302c7e9043e75e776f7a6d7fde67d9e",
+  "reviewed_at": "2026-11-03T05:39:39Z",
+  "review_reason": "补齐GitHub首页与B-P4 D0文档交付验证记录：make check、链接和Shell语法已通过。并行审查已汇合，源码与图源未变；只追加准确验证范围，保留旧资金timeout、catalog race及采购缺证，无运行结构变化。",
+  "snapshot_sha256": "8eb92f0764cbb8cb83f5d27cc7d3a91cf9c4490241938efcd24f001fced70987",
+  "architecture_sha256": "9fd3f6ed53114cfad47b9ab8bac202b3c69078438f0c669c2ba3ce9e7e5fd985",
+  "history_sha256": "31394a4b36ab3e4e4730f52e5329e8dec93b4611afb8a07b854594767e22649d",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "6065a3057d670afa18c9e08ea2d79fe43758e72fe6d997e931ebad26a7547f0c"
+      "sha256": "03d6a63fbcd1b9b4d8089b328234efa94d2204138f4c9a00b66b87044e97608b"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -141,15 +141,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "35fd8b4a146bc928f4d5c2814602d02361e25e7757ca34a019814bc22fccbccd"
+      "sha256": "74239b207d3c628054a77c9aafba25c6d0e8dce93483feea4fed35b32cfc4f13"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "f1a6abe66712f8f2bcb3edf961d23d6ec9dc4b4f1c50555a92d9fe4d01b2ba24"
+      "sha256": "6acace328ba4edb69f7ebf26a2f3f5fa00398818ea29ec5cc50c8b143731df98"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "c4c25d7bf06b0f3340d2cebd7c00d14cfea4b4196f358f73bbf16976e02e4e7a"
+      "sha256": "20743c8ee3084a63dab775c7708d54ec26ed7d59f4a20df7487e32d3778b0c19"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -1128,6 +1128,10 @@
       "sha256": "5026b5886026d17d1e60ccae7a2309b2aafe4f7a33c2e7689b79c81a3758bf29"
     },
     {
+      "path": "docs/verification/github-readme-design-delivery.md",
+      "sha256": "694f1d261df9b452c5ca2a54ded93cff85c59b4109a7db12bd89a20f02c394f3"
+    },
+    {
       "path": "docs/verification/implementation.md",
       "sha256": "6a5d36ace7b5d44a0c7eef411f4095ffb6276d5e89042200d568b133bab8de7d"
     },
@@ -1420,12 +1424,16 @@
       "sha256": "a50886f1b142820eb57cd7c6a6b73b0defd7bff87445ec0f78788f9866cbed6e"
     },
     {
+      "path": "docs/verification/periodic-budget-prefix-profile-ci.json",
+      "sha256": "577df274218fce2b9658eb6f9f658a0d865691eed7784658c92bdedc47d3b77d"
+    },
+    {
       "path": "docs/verification/periodic-budget-prefix-profile.json",
       "sha256": "39386aac710a453898322b88ff45f3089c5e7a5de2a71111c86ae5e4e6a4796e"
     },
     {
       "path": "docs/verification/periodic-budget-prefix-profile.md",
-      "sha256": "f2dd584de97a0234a9bda64c459cc29711fb7862f9cb53c48b3c65fa19261ab2"
+      "sha256": "125b87eac70c5c1a7c30b06277054f54931f47662d53b1a6205c3e3b050bc5c4"
     },
     {
       "path": "docs/verification/periodic-budget-prefix.json",
@@ -5869,7 +5877,7 @@
     },
     {
       "path": "specs/023-periodic-products/b-prefix-procurement-barrier-gap.md",
-      "sha256": "be1ff9e16c589775bd0c6a32c0a3093326a2784a5f23e1a24577f64c21824974"
+      "sha256": "f98b226a563e6b253fbc25d68c215f4cb039576087b44f37311f61d47a3128fa"
     },
     {
       "path": "specs/023-periodic-products/b-prefix-profile-contract.md",
@@ -5878,6 +5886,10 @@
     {
       "path": "specs/023-periodic-products/b-prefix-readset.json",
       "sha256": "2dad293610e6b63adf3306b37a1b2629d26f1de4bcc93eb1c40ddc13688bd4a3"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-prefix-design.md",
+      "sha256": "3cfd15f631e9a361af58f9513113c5a9e5017cc3ba0e618ae873f1eaac3492ed"
     },
     {
       "path": "specs/023-periodic-products/b-reader-contract.md",
@@ -5909,7 +5921,7 @@
     },
     {
       "path": "specs/023-periodic-products/plan.md",
-      "sha256": "72feb96b7fe6a3c6c3d2bca8ad0c9c28c8e85f7e6dd6caf6459a685648869ae6"
+      "sha256": "b178bfffeacabb665b3bc10bd6ddac9ddc71a96c2239ef6110a494fe4f76c845"
     },
     {
       "path": "specs/023-periodic-products/review.md",

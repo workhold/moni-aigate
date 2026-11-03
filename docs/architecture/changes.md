@@ -2987,3 +2987,35 @@ B-P3显式prefix读集、basis/catalog、受保护开账与observer/APP组合；
 - modified `docs/verification/periodic-prefix-catalog-cpu.md`
 
 </details>
+
+## 2026-11-03T05:38:08Z · e41892451ee8
+
+整理GitHub首页及贡献入口，记录0b150c5精确CI和SKIP边界；汇合B-P4采购历史设计稿及十一项证据命题，DDL权限与新profile未冻结。复核现有模块图、请求、数据、权限、部署和源码链接，无运行结构变化，保留B-P3与R2未完成门禁。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1635 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/periodic-budget-prefix-profile-ci.json`
+- modified `docs/verification/periodic-budget-prefix-profile.md`
+- modified `specs/023-periodic-products/b-prefix-procurement-barrier-gap.md`
+- added `specs/023-periodic-products/b-procurement-prefix-design.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T05:39:39Z · 8eb92f0764cb
+
+补齐GitHub首页与B-P4 D0文档交付验证记录：make check、链接和Shell语法已通过。并行审查已汇合，源码与图源未变；只追加准确验证范围，保留旧资金timeout、catalog race及采购缺证，无运行结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1636 个源文件；本次 1 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/github-readme-design-delivery.md`
+
+</details>

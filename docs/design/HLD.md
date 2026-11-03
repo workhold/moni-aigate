@@ -536,3 +536,10 @@ V3由新的Begin、安装核验、停服观察和ordinary/sandbox APP组合入�
 历史/current兼容采用共用固定12项映射，逐mode/variant绑定旧、新发行根及准确basis descriptor，不按经营后数据重算历史cutover摘要。实现已落地，scanner、basis与ordinary全阶段已有专项PG证据，其余门禁和最终集成状态以[组合验证](../verification/periodic-budget-prefix-profile.md)为准；[细化架构](../architecture/periodic-budget-prefix-profile.md)给出模块与源码。当前仍为exact original22之后的隔离候选，正式追加迁移、provision、维护CLI、startup与在线资金接线另行交付。
 
 B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)仍阻断完整来源证明，V3 Plan必须拒绝，后续先设计不可变审批消费证据再实现；不能将拒绝通过计为采购更正后完整成功。[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)保留原5秒界，标准无race诊断及局部差分通过，但catalog race时限门禁尚未关闭；它不构成网关首字节/首token基准。
+
+
+## B-P4：采购历史完整前缀设计
+
+[设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)面向多渠道共享收费账户与可审计成本：在真实业务事务内记录账户配置/金额/阻断前缀、正常成本决定和双人更正实际消费的证据。incoming冲突来源与request级finalization前驱单独保存，以覆盖原采购图全部十一项历史命题；它们不能由账户余额、PB journal或approval witness互相替代。
+
+当前只完成D0设计稿与源代码依据审查，尚未冻结精确DDL、权限和数据库闭合写路径。下一步D1先确定全锁图、typed来源、同事务多操作语义、完整读集和新profile，再分工实施。旧算法、B-P3/V3材料和历史缺证保留，正式迁移及在线来源钱包仍按R2独立交付；设计稿不能计为已运行能力。统一架构的现有模块/部署图无需结构调整，本轮只更新设计入口及CI证据边界。

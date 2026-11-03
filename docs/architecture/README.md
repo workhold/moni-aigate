@@ -1395,3 +1395,14 @@ Gate在唯一Begin时固定profile，V3 Init在首个SELECT前一条C序LOCK锁1
 模块依赖、数据面、状态机、权限、材料与源码链接见[完整细图](periodic-budget-prefix-profile.md)，静态delta与独立重算见[审定记录](../verification/periodic-prefix-catalog-static.md)，实际专项、回归与SKIP边界见[验证记录](../verification/periodic-budget-prefix-profile.md)。候选仍exact original22，正式migration/provision/CLI/main/ready、在线来源资金写入与生产环境认证未在本片启用。
 
 B-P3整体未完成：[采购绝对成本更正的历史提案屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)继续产生`ProposalBarrierUnproven`，owned V3 Plan必须拒绝，不能以拒绝通过替代采购更正后完整成功的合同门禁；下一片须先设计不可变审批消费证据。[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)保留原5秒预算，标准无race诊断与局部解码差分已通过，但原LegacyV1 baseline的catalog race时限仍未通过；该诊断不属于网关TTFB/TTFT性能验收。
+
+
+### 采购账户与成本完整历史证据（B-P4，设计稿）
+
+下一片的[设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)已汇合账户及成本两路源码审查，尚未实施。拟增加真实账户操作前缀、reservation/evidence/cost decision、审批实际消费屏障，以及冲突incoming和request级finalization前驱；原采购图十一项Unproven逐项映射，不以当前余额或revision代替历史。受控写入路径与权限、精确DDL/读集/新profile须先完成D1冻结，再并行实施。
+
+本次仅设计、GitHub首页/贡献文档及精确CI证据更新，现有模块图、请求链路、数据库关系、运行权限、正式迁移和启动行为均未变化。当前B-P3的采购缺证、专项catalog race时限和R2在线资金门禁继续保留；新设计不回填旧历史、不修改V3固定材料或旧算法。实现计划与验收矩阵见设计稿，实际状态仍以能力表及各片验证为准。
+
+交付提交 `0b150c5` 的远端10/10任务已终态成功；新增测试53项完整执行，另13套PG及1诊断未由CI验收（含5个父PASS/子SKIP），见[准确CI范围](../verification/periodic-budget-prefix-profile-ci.json)。这不覆盖本机既有资金timeout或专项race缺口。
+
+GitHub首页、贡献指南和本设计稿的交付范围及本轮实际静态/构建检查见[文档交付记录](../verification/github-readme-design-delivery.md)，不作为新采购行为或生产部署验收。
