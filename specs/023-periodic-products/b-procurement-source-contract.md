@@ -115,7 +115,7 @@ request_decisions自己的request ordinal覆盖跨attempt及无attempt sticky前
 | approval_consumed | pp_approval_consumptions | cost_corrected |
 | recovery | pp_recovery_sources | expired_without_permit / recovered_unknown |
 
-真实源在锁后捕获before及完整资格，独立算出唯一合法target；DB预分配本次future transition/PE/journal/mutation/audit/outbox等输出ID，一次INSERT完整不可变source，再消费它执行结果。输出引用为同root精确deferred关系，实际RETURNING逐值核预期，最后seal root。即便同额批准也保留source、零delta PE/journal和实际成本UPDATE；p revision只按原状态/桶/anomaly规则变化。
+真实源在锁后捕获before及完整资格，独立算出唯一合法target；DB预分配本次future transition/PE/journal/mutation/audit/outbox等输出ID，一次INSERT完整不可变source，再消费它执行结果。输出引用为同root精确deferred关系，实际RETURNING逐值核预期，最后seal root。原request/attempt出生具有明定的原件先INSERT许可，不将“source先于效果”泛化为先于所有原件；managed attempt的origin/transition在原020采时后的p末序BEFORE生成，详见下节。即便同额批准也保留source、零delta PE/journal和实际成本UPDATE；p revision只按原状态/桶/anomaly规则变化。
 
 禁止source先写一个pending行稍后UPDATE填before，也禁止最后才读终态补before；如果任何实际结果与预选目标不同、缺失或多出，全事务失败。source存在/XID相同/金额相同都单独不授写权。完整helper不接caller金额、before、member数、序号或passed。
 
@@ -124,7 +124,7 @@ EvidenceChoice无PE分支也明确记录真实原因和观察cut，包括重复i
 ## 6. 入口模板与精确嵌套
 
 - request_birth：唯一request_birth step，只认证真实INSERT初态及其不可变身份/报价/硬界/期限；不冒称完整客户reserve或采购账户出生。
-- attempt_birth：公开pp_record_attempt完整执行原RecordAttempt的检查、DB选价、INSERT/ON CONFLICT及采购出生，首步attempt_birth；unmanaged到此结束，managed还须唯一reserved procurement_transition及账户journal/PB效果。原三参complete_birth固定为同根private helper，不开放APP。初始分类在受控INSERT之后同事务闭合，原attempt反向deferred要求唯一origin；不能从AFTER INSERT暂时没p推断unmanaged。详细ABI及跨定时采购价的校准见[物理布局§6](b-procurement-schema-contract.md#6-校准完整记录attempt的公开db根)。
+- attempt_birth：公开pp_record_attempt完整执行原RecordAttempt的检查、DB选价、INSERT/ON CONFLICT及采购出生，首步attempt_birth；unmanaged到此结束，managed还须唯一reserved procurement_transition及账户journal/PB效果。原三参complete_birth固定为同根private helper，不开放APP。允许真实upstream INSERT先于source；managed p的BEFORE字典序为`pb_procurement_stamp`→`procurement_reservation_identity`→新`zz_pp_attempt_birth_p`，末序hook以真实NEW.pb_admitted_at一次完整生origin/transition并派生p pointers，之后才写p本体和PE/账户/PB效果，最后由closure唯一seal。相关双向边真实deferred；不建pending source，不从AFTER INSERT暂时没p推断unmanaged。replay返回原Attempt五字段，root/source均SQL NULL，不补旧证据。详细ABI、原guard/phase与缺失A0–A6见[出生根合同](b-procurement-attempt-birth-writer-contract.md)；真实request birth、新command+reserve guard及exact-link是前置，现有account writer v1仍拒该域，须新候选显式接通。
 - account_create/configure：唯一account_command step。成功create origin/head/journal一并闭合；configure found按真实成功/拒绝规则生成journal，not_found禁止账户journal。重试无新root。
 - dispatch：唯一attempt_delivery，mode=dispatch_permit；真实upstream prepared→sending和p sending、客户/Key/采购PB guard及期限/报价在同根。managed唯一dispatch账户journal；unmanaged禁止journal。它不是可跨事务使用的token。
 - record_finalization：incoming→meter_choice→request_decision必有且各一次。原normal分支按真实顺序含attempt_delivery(finalization)、normal_cost_decision、必要cost_mutation/cost_outbox；managed再有evidence_choice及其真实transition/reset。conflict禁止正常finalization/NormalCostDecision，但保存原incoming、真实meter选择和conflict原件，按原分支生成evidence/reset。精确分支字段与子顺序见成本合同；仅step数不能证明合法。

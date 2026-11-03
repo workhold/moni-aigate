@@ -75,3 +75,9 @@ RequestHead认证latest/sticky序；last decision可以是conflict，此时lates
 按[更正原件合同](b-procurement-correction-original-relations-contract.md)、[PB操作合同](b-procurement-pb-operation-relations-contract.md)和[PB事件合同](b-procurement-pb-event-relations-contract.md)补三组独立关系：原correction全局operation/内容与真实scope/proposal桥，完整配置/version/changed-noop/审计及origin-head-journal，真实客户/供应商source镜像与三层金额重放/当前投影。验收见[最新记录](../../docs/verification/procurement-pb-relations.md)。
 
 这使§4所列configuration/calendar/window/event的可证关系落地，但命令动态carry/window held/spent和revision/latest-tail仍缺完整前缀，历史scope absence、首配完整成员及B-HO1仍未实施；legacy residual仅守恒不证明effect cut。更正原件内容不替代AttemptCost/AccountPrefix/RequestIncoming资格。逐对象Q、完整Base和aggregate继续后续，无公共Check。账户203项APP提交撤权与4锁故障是独立专库子矩阵，不关闭完整writer/guard/profile/R2。
+
+## 7. 精确动态前缀与下一真实根
+
+[动态快照合同](b-procurement-pb-snapshot-prefix-contract.md)已冻结实施，covered command按自己的event_seq与window出生ordinal核历史carry、窗口H/S/revision/latest-tail；本次不再把这部分列作未实施。legacy精确cut、历史scope absence、完整首配成员、B-HO1和§4的业务资格/逐对象Q仍缺。最终纯核220顶层/1123子项race全PASS，完整私有入口保持Complete=false/Qualified空。
+
+[必要W DML矩阵](b-procurement-account-writer-dml-fault-contract.md)138个grant/232次故障及50次正控制已真实PG通过，完整账户包10顶层/478子项race全PASS，不替代全部writer故障。[attempt出生根合同](b-procurement-attempt-birth-writer-contract.md)冻结原件/source出生例外、真实admitted_at末序hook、nullable replay和A0–A6前置；下一根尚未实现，先交真实request birth、新guard/validator与exact-link，不能靠继续扩大纯核叶子取代受控写入。准确结果、首轮失败及保留范围见[续片验证](../../docs/verification/procurement-pb-snapshot-dml.md)。

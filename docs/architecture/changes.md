@@ -3562,3 +3562,48 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-pb-relations.md`
 
 </details>
+
+## 2026-11-03T18:52:16Z · 062965662dcc
+
+接入私有PB命令精确动态前缀并复核多值/资金cut/出生ordinal与线性错误范围；新增138必要W授权232次失权及50正控制，实际PG账户与纯核最终race通过；冻结下一attempt出生根真实admitted_at hook与A0–A6设计；归档原5秒catalog正式双轮及drift复验，保留原失败与采购缺证；同步HLD/LLD、统一架构/细图、计划、验证及README仓库导览；无正式迁移、线上调用、权限或部署变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1798 个源文件；本次 22 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/periodic-budget-prefix-profile.md`
+- modified `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/periodic-prefix-catalog-cpu.md`
+- added `docs/verification/procurement-pb-snapshot-dml.md`
+- added `internal/procurementaccountwriter/account_dml_fault_postgres_test.go`
+- modified `internal/procurementprefix/source_closure.go`
+- modified `internal/procurementprefix/source_closure_pb_relations_integration_test.go`
+- added `internal/procurementprefix/source_closure_pb_snapshot_prefix.go`
+- added `internal/procurementprefix/source_closure_pb_snapshot_prefix_test.go`
+- added `specs/023-periodic-products/b-procurement-account-writer-dml-fault-contract.md`
+- added `specs/023-periodic-products/b-procurement-attempt-birth-writer-contract.md`
+- modified `specs/023-periodic-products/b-procurement-execution-contract.md`
+- modified `specs/023-periodic-products/b-procurement-full-acl-contract.md`
+- added `specs/023-periodic-products/b-procurement-pb-snapshot-prefix-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-closure-plan.md`
+- modified `specs/023-periodic-products/b-procurement-schema-contract.md`
+- modified `specs/023-periodic-products/b-procurement-source-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T18:53:22Z · 6194f2ce2f37
+
+归档本片最终纯核220/1123、实际PG账户10/478、catalog3/37全部race通过与原失败；make check及最终二进制构建已通过；复核1798文件模块/数据/权限/能力边界与README使用部署说明，无后续行为代码变动
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1798 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-pb-snapshot-dml.md`
+
+</details>

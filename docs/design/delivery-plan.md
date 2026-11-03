@@ -167,7 +167,7 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 2026-11-03按[冻结合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)并行完成source/wallet scanner、basis和静态catalog材料，再由根汇合V3维护/observer/runtime及固定兼容映射。新固定读集为71表/635列、87表/804列、112表/1004列，全catalog为128张普通表；显式V3入口不替换旧68/84表、109表与LegacyV1/WalletReadV2，也不删除旧Base或legacy历史缺证。受保护phase保持同原RR的pre→basis→writer→post→basis复读与fresh授权→唯一提交；observer只读终结，actual APP组合仍绑定原受限LOGIN/事务，sandbox保留原本地manifest/nonce和v1。
 
-实现已落地，scanner、basis和ordinary全阶段已有专项PG证据；catalog/sandbox矩阵、最终回归和精确远端CI以[组合验证](../verification/periodic-budget-prefix-profile.md)为准。B-P3整体未完成：[采购历史证据缺口](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)仍要求Plan拒绝，下一独立片先设计不可变审批消费的revision、完整evidence与唯一绝对成本事件绑定，再实现完整成功路径；[catalog CPU专项](../verification/periodic-prefix-catalog-cpu.md)的标准无race诊断与解码差分已通过，但原5秒界下catalog race时限门禁仍未关闭，局部性能结果不抵消该缺口。
+实现已落地，scanner、basis和ordinary全阶段已有专项PG证据；catalog/sandbox矩阵、最终回归和精确远端CI以[组合验证](../verification/periodic-budget-prefix-profile.md)为准。B-P3整体未完成：[采购历史证据缺口](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)仍要求Plan拒绝，下一独立片先设计不可变审批消费的revision、完整evidence与唯一绝对成本事件绑定，再实现完整成功路径；[catalog CPU专项](../verification/periodic-prefix-catalog-cpu.md)的2026-11-04正式catalog双轮/负例race矩阵已在原5秒界通过，旧失败仍保留，局部性能结果不抵消该缺口。
 
 当前候选仍是exact original22之后的隔离安装，无正式追加迁移/provision/生产维护CLI/startup或在线资金接线。完成上述合同门禁及本片验收后，再另冻R2正式交付和全资金路径；之后继续C1/C2/C3、商品/订阅、媒体扩展、实际供应商与支付、容器/1Panel、生产/HA，最后在完整商业检查下性能对照。历史片中的“下一依赖”保留其当期记录，本节作为当前路线入口。
 
@@ -182,8 +182,17 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 本轮在上述关系材料之上拆出三条互不覆盖的工作线：[纯核DTO合同](../../specs/023-periodic-products/b-procurement-core-dto-contract.md)对应[procurementprefix基础](../../internal/procurementprefix/types.go)，40类原件482列与32类前缀715列、72数组共享100000行/16MiB预检及旧23数组173字段Base无损投影已实现，定向race通过，但未导出Check；[账户writer合同](../../specs/023-periodic-products/b-procurement-account-writer-contract.md)对应[20函数/29触发器隔离候选](../../internal/procurementaccountwriter/materials.go)，actual APP LOGIN限定专项已通过，完整故障矩阵仍待完成；[宽TEXT精确链接合同](../../specs/023-periodic-products/b-procurement-exact-link-contract.md)与[268 PK/UK、291 FK清单](../../specs/023-periodic-products/b-procurement-exact-link-inventory-v1.json)先交RC双端锁/比较原语实验，6组PG race场景通过，现有685项关系未改。执行合同当前为81个PP错误，PP906明确表示旧未受证或尚未实现的数据域。三线的实际范围与最终验收见[本片记录](../verification/procurement-account-prefix.md)。
 
-下一串行关口仍是D1：剩余受控根/全域validator/guard全文、触发顺序与完整ACL、宽TEXT全域接受集方案、四域独立重放/十一命题逐对象枚举与最终固定profile；已有DTO和账户候选不替代完整实现。I1完整写证与独立oracle、I2全量reader/basis/catalog和保护链按所有权推进，维护/runtime由根集成，PG严格串行。A0必须实际新历史完整成功、旧历史继续缺证和actual APP攻击/旧接口回归，不能用窄例或缺证拒绝代替；D1、A0和B-P3整体仍未完成。原十一项Unproven、catalog原5秒race门禁和R2正式迁移/CLI/启动/在线资金接线不解除；C1/C2/C3、商品/扩展、真实供应商/支付、容器/1Panel、生产/HA及最终性能范围保持。
+下一串行关口仍是D1：剩余受控根/全域validator/guard全文、触发顺序与完整ACL、宽TEXT全域接受集方案、四域独立重放/十一命题逐对象枚举与最终固定profile；已有DTO和账户候选不替代完整实现。I1完整写证与独立oracle、I2全量reader/basis/catalog和保护链按所有权推进，维护/runtime由根集成，PG严格串行。A0必须实际新历史完整成功、旧历史继续缺证和actual APP攻击/旧接口回归，不能用窄例或缺证拒绝代替；D1、A0和B-P3整体仍未完成。原十一项Unproven和R2正式迁移/CLI/启动/在线资金接线不解除；C1/C2/C3、商品/扩展、真实供应商/支付、容器/1Panel、生产/HA及最终性能范围保持。
 
 GitHub首页与贡献指南已复核特点、本地/API使用、Docker/1Panel和许可/验证边界。精确2223e40的[远端CI](../verification/procurement-identity-ci.md)10/10成功：Go56包中52PASS/4无测试，前端286PASS，新identity为2顶层/8含子项PASS且无SKIP；原13套PG和1诊断未验收。此前[本机整仓失败](../verification/procurement-identity-leaf.md#本轮整仓集成与未通过项)及三个原用例的定向PASS分账保留，远端成功不确定本机超时根因。本轮合同与诊断的最终检查、架构快照及提交推送独立收口。
 
 本次关系材料的独立catalog与命名声明边验收、GitHub上一提交精确CI、最终静态检查分别记录于[关系材料验证](../verification/procurement-relation-materials.md)。README及SECURITY入口同步；不把候选SQL关系安装当成完整写证或商业验收。
+
+
+## 2026-11-04 续片交付与下一根
+
+covered PB命令的精确动态前缀与账户必要W DML故障矩阵已实施；最终纯核220顶层/1123子项、账户真实PG10顶层/478子项race全PASS，零SKIP/FAIL。独立catalog双轮安装/负例/旧profile拒绝候选3顶层/37子项race在原5秒界通过，关闭该专项复验缺口，历史失败保留。证据与实际边界见[本片记录](../verification/procurement-pb-snapshot-dml.md)和[catalog记录](../verification/periodic-prefix-catalog-cpu.md)。README特点、API/源码/Compose/1Panel与账号说明已独立复核并补仓库导览。
+
+下一真实受控路径按[attempt出生根A0–A6](../../specs/023-periodic-products/b-procurement-attempt-birth-writer-contract.md#8-实施切片和实际尚缺正文)推进：先原规则叶子、真实request自动birth与保护，再完整attempt/managed时序、reserved效果和command+reserve新guard/validator、最小ACL、显式adapter/actual LOGIN及集成。末序p hook取得原020真实admitted_at后一次完整生source，旧account v1与715/482物料不改签。该根仍仅设计，不能绕旧guard或给APP原件DML旁路。
+
+legacy cut/absence/完整首配、B-HO1、全部业务资格/逐对象Q与Base/aggregate、其余根/profile/宽TEXT/R2和所有后续经营/扩展/生产阶段继续原范围；B-P3整体未完成。Docker daemon当前不可用，容器/1Panel实际安装仍保留，其他可执行工作继续。

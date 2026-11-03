@@ -244,6 +244,21 @@ make verify-mvp
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。
 5. 在完整商业检查下优化首字节与完成延迟，并执行固定环境的竞品对照。
 
+## 仓库导览
+
+| 目录 / 文档 | 内容 |
+| --- | --- |
+| [`cmd/`](cmd/) | 网关命令入口与隔离支付验收工具 |
+| [`internal/`](internal/) | 鉴权、协议、路由、计量、账务、运营与后台任务 |
+| [`web/`](web/) | Vue 控制台、客户自助与 Playground |
+| [`migrations/`](migrations/) | 正式数据库迁移；开发中的候选材料不在此目录安装 |
+| [`deploy/`](deploy/) | PostgreSQL 初始化及反向代理配置，配合根目录 Compose 使用 |
+| [`specs/`](specs/) | SDD 规格、数据与接口合同、分片计划和验收条件 |
+| [`docs/architecture/`](docs/architecture/) | 当前系统架构、模块细图和变更追踪 |
+| [`docs/runbooks/`](docs/runbooks/) / [`docs/verification/`](docs/verification/) | 开发部署手册、实际验证结果与保留边界 |
+
+开发前先阅读[贡献指南](CONTRIBUTING.md)和[仓库约定](AGENTS.md)。当前可使用的能力以本文及统一架构为准，规划中的设计合同须结合对应验证记录阅读。
+
 ## 竞品与相关项目
 
 以下项目用于研究设计取舍，不是本项目运行时依赖，也不表示继承其全部能力或宣传性能。

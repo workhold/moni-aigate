@@ -535,7 +535,7 @@ V3由新的Begin、安装核验、停服观察和ordinary/sandbox APP组合入�
 
 历史/current兼容采用共用固定12项映射，逐mode/variant绑定旧、新发行根及准确basis descriptor，不按经营后数据重算历史cutover摘要。实现已落地，scanner、basis与ordinary全阶段已有专项PG证据，其余门禁和最终集成状态以[组合验证](../verification/periodic-budget-prefix-profile.md)为准；[细化架构](../architecture/periodic-budget-prefix-profile.md)给出模块与源码。当前仍为exact original22之后的隔离候选，正式追加迁移、provision、维护CLI、startup与在线资金接线另行交付。
 
-B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)仍阻断完整来源证明，V3 Plan必须拒绝，后续先设计不可变审批消费证据再实现；不能将拒绝通过计为采购更正后完整成功。[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)保留原5秒界，标准无race诊断及局部差分通过，但catalog race时限门禁尚未关闭；它不构成网关首字节/首token基准。
+B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)仍阻断完整来源证明，V3 Plan必须拒绝，后续先设计不可变审批消费证据再实现；不能将拒绝通过计为采购更正后完整成功。[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)保留原5秒界，2026-11-04正式catalog双轮/负例race矩阵已在原5秒界通过，旧失败单独保留；它不构成网关首字节/首token基准。
 
 
 ## B-P4：采购历史完整前缀设计
@@ -561,7 +561,7 @@ B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../spec
 另已形成[历史观察B-HO1设计草案](../../specs/023-periodic-products/b-procurement-historical-observation-design.md)：request序与PB scope序共六表候选，复用已有normal decision前驱及正向PB event桥，补未派生decision的latest/sent与未配置scope/首配导入观察。草案未实现、未安装、未验收；需要全writer/guard/锁图、独立reader/replay、ACL/basis/catalog新版本共同交付，不就地改签715列或回填旧历史。本轮不改变正式迁移、部署、权限或在线资金链路。
 
 
-D1整体仍待剩余受控根/全域validator/guard、触发顺序和完整权限装配、独立四域重放、固定全列读集及新profile；I1完整writer、A0和B-P3均未完成。旧算法/V3材料、采购十一项缺证及catalog专项race门禁保留；正式迁移及在线来源钱包按R2独立交付。此前本机整仓失败与远端通过分别保留，本片结果见[记录](../verification/procurement-account-prefix.md)，边界和候选关系图见[统一架构](../architecture/README.md#采购账户与成本完整历史证据b-p4)。
+D1整体仍待剩余受控根/全域validator/guard、触发顺序和完整权限装配、独立四域重放、固定全列读集及新profile；I1完整writer、A0和B-P3均未完成。旧算法/V3材料、采购十一项缺证保留；catalog正式矩阵已在原5秒界通过；正式迁移及在线来源钱包按R2独立交付。此前本机整仓失败与远端通过分别保留，本片结果见[记录](../verification/procurement-account-prefix.md)，边界和候选关系图见[统一架构](../architecture/README.md#采购账户与成本完整历史证据b-p4)。
 
 关系DDL与[原件](../../specs/023-periodic-products/b-procurement-original-ddl-contract.md)、[source](../../specs/023-periodic-products/b-procurement-source-ddl-contract.md)、[account](../../specs/023-periodic-products/b-procurement-account-ddl-contract.md)、[cost](../../specs/023-periodic-products/b-procurement-cost-ddl-contract.md)合同同步，具体验证见[关系材料记录](../verification/procurement-relation-materials.md)。[宽TEXT精确链接候选](../../specs/023-periodic-products/b-procurement-exact-link-contract.md)交付268 PK/UK与291 FK清单，并以真实RC原语实验的6组race场景验证原定位FK、双端逐列比较、锁后重读与tracked RR写拒绝。现有685项关系未修改；全域精确替换/来源guard/ACL尚缺，旧数据及后续索引宽度接受集门禁不能据局部实验关闭。
 
@@ -570,3 +570,14 @@ D1整体仍待剩余受控根/全域validator/guard、触发顺序和完整权�
 本轮按[更正原件](../../specs/023-periodic-products/b-procurement-correction-original-relations-contract.md)、[PB配置与观察](../../specs/023-periodic-products/b-procurement-pb-operation-relations-contract.md)和[PB事件重放](../../specs/023-periodic-products/b-procurement-pb-event-relations-contract.md)合同扩充私有来源域。两类成本cause独立绑定全局operation、原correction内容及attempt/proposal出生桥；周期预算分别核完整配置版本、changed/no-op和观察来源，以及真实source镜像、allocation/window/control三层桶。legacy残余只证明金额边界相容，不能推定历史cut；命令快照动态金额、scope absence/首次完整导入、B-HO1和逐对象资格仍保留。准确源码、验证及架构见[最新记录](../verification/procurement-pb-relations.md)与[细图](../architecture/procurement-replay.md)。
 
 [账户故障矩阵](../../specs/023-periodic-products/b-procurement-account-writer-fault-matrix.md)补203项实际有效权限逐项撤销，以及operation/account两种锁的真实超时与精确取消；APP拒绝提交后九表逐值恢复baseline，独立清理随机schema/角色。此为真实专库账户候选证据，不扩充业务根或固定SQL，不视为完整writer/profile、生产支付或部署验收。715/482/173列字段边界、旧迁移和在线链路不变；来源Complete=false、Qualified为空且无公共Check。
+
+
+### B-P4：动态前缀、DML失权与下一真实根
+
+[动态快照合同](../../specs/023-periodic-products/b-procurement-pb-snapshot-prefix-contract.md)已实现独立raw重放：每条covered command的event_seq决定资金前缀，窗口出生ordinal决定当时是否存在窗口，精确核历史carry、窗口金额、revision和最新tail。今天投影与其他叶子报告不作oracle，legacy历史不补造精确cut。重复控制对象只处理一次，错指外部对象及可定位坏后缀保持正确错误范围；执行仍共享原work/context/绝对期限。
+
+[必要DML合同](../../specs/023-periodic-products/b-procurement-account-writer-dml-fault-contract.md)以真实APP调用原根，逐项撤W的138个必要grant，执行232次原42501故障与50次未使用授权正控制，核九表原子回滚和精确ACL恢复。最终账户包10顶层/478子项、纯核220顶层/1123子项race全PASS；catalog正式3顶层/37子项race另在原5秒界通过。准确证据与保留失败见[本片记录](../verification/procurement-pb-snapshot-dml.md)和[catalog记录](../verification/periodic-prefix-catalog-cpu.md)。
+
+[完整attempt出生根](../../specs/023-periodic-products/b-procurement-attempt-birth-writer-contract.md)及四份上位合同已校准，仍仅设计。原件与来源的出生先后明确：upstream先INSERT，managed p在原020生成真实准入时间后一次完整生成来源，再由closure闭合采购/PB效果并唯一seal。replay不新生root/source；真实request birth、新command+reserve guard/validator、exact-link、ACL与actual LOGIN列为A0–A6实施前置，下一根尚未实现。
+
+来源Complete=false、Qualified空，无公共Check；legacy精确cut、历史absence/完整首配、B-HO1、实际资格/逐对象依赖及完整Base/aggregate仍待交付。715/482/173列、旧迁移/profile与线上/部署/权限无结构变更；完整writer/profile及R2继续原边界。当前模块和源码入口见[统一架构](../architecture/README.md#b-p4-动态快照与必要-dml-续片)，触发时序与延迟约束见[LLD](LLD.md#b-p4动态前缀dml失权与下一真实根)。

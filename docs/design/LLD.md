@@ -948,7 +948,7 @@ actual APP专库test-only reader不等于生产scanner或authority。精确安�
 
 实现已落地，scanner、basis与ordinary受保护全阶段已有专项PG证据；catalog/sandbox及最终回归状态以[组合验证](../verification/periodic-budget-prefix-profile.md)为准，模块和源码见[细化架构](../architecture/periodic-budget-prefix-profile.md)。候选仍建立在exact original22之上，不是正式追加迁移；普通migrate/provision/serve、生产维护CLI与在线资金尚未接入，不据库级组合宣布R1-B/R2或供应商/支付/1Panel验收完成。
 
-[采购屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)保留approved提案的更正前reservation revision与evidence数；更正后当前revision递增不等于历史提案错误，原`ProposalBarrierUnproven`不删除。该历史上的pre71完整读取不能授予aggregate coverage，owned V3 Plan必须在发行epoch前失败；审批消费的不可变revision/evidence/唯一成本事件绑定须另先冻结合同。[catalog解码优化](../verification/periodic-prefix-catalog-cpu.md)只对固定五字段权限对象走完整EOF快路径，其他输入回退原decoder，SQL/root/权限与5秒总界不变；标准无race诊断不能抵消原LegacyV1 baseline的catalog race时限失败。两项门禁仍未关闭，B-P3整体未完成。
+[采购屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)保留approved提案的更正前reservation revision与evidence数；更正后当前revision递增不等于历史提案错误，原`ProposalBarrierUnproven`不删除。该历史上的pre71完整读取不能授予aggregate coverage，owned V3 Plan必须在发行epoch前失败；审批消费的不可变revision/evidence/唯一成本事件绑定须另先冻结合同。[catalog解码优化](../verification/periodic-prefix-catalog-cpu.md)只对固定五字段权限对象走完整EOF快路径，其他输入回退原decoder，SQL/root/权限与5秒总界不变；2026-11-04正式双轮安装、drift和旧profile拒绝候选race矩阵已在原5秒界通过；原失败保留。采购历史门禁与B-P3整体仍未完成。
 
 
 ## B-P4：采购决策与历史屏障的设计前置
@@ -996,7 +996,7 @@ actual APP专库test-only reader不等于生产scanner或authority。精确安�
 
 [exact-link合同](../../specs/023-periodic-products/b-procurement-exact-link-contract.md)及[固定关系清单](../../specs/023-periodic-products/b-procurement-exact-link-inventory-v1.json)提出保留native原定位FK、对其余字段双端逐列IS NOT DISTINCT FROM。tracked父/子写在BEFORE拒绝非RC，子FOR SHARE后以新statement重读父，父等待后反向枚举当前子；legacy和RR只读不新增限制。[独立实验](../../internal/procurementprefixschema/exact_link_experiment_postgres_test.go)6组PG race场景已通过，仅验证长TEXT、NULL、等待/重读、双端最终态及RR拒绝原语，现有685约束未改，完整逐边guard/来源/权限及宽TEXT接受集仍未验收。
 
-D1整体仍缺剩余受控根/全域validator/guard正文、完整触发顺序和ACL装配、四域纯重放、宽TEXT全域替换、最终reader/basis/catalog/profile与actual APP完整矩阵；I1完整writer、A0及B-P3未完成，不解除十一项Unproven、catalog时限或R2门禁。无正式迁移、默认业务import或线上权限装配变化。
+D1整体仍缺剩余受控根/全域validator/guard正文、完整触发顺序和ACL装配、四域纯重放、宽TEXT全域替换、最终reader/basis/catalog/profile与actual APP完整矩阵；I1完整writer、A0及B-P3未完成，不解除十一项Unproven或R2门禁。无正式迁移、默认业务import或线上权限装配变化。
 
 ### B-P4：更正原件、PB关系与账户故障续片
 
@@ -1005,3 +1005,14 @@ D1整体仍缺剩余受控根/全域validator/guard正文、完整触发顺序�
 [账户故障矩阵](../../specs/023-periodic-products/b-procurement-account-writer-fault-matrix.md)补203项实际有效权限逐项撤销，以及operation/account两种锁的真实超时与精确取消；APP拒绝提交后九表逐值恢复baseline，独立清理随机schema/角色。此为真实专库账户候选证据，不扩充业务根或固定SQL，不视为完整writer/profile、生产支付或部署验收。715/482/173列字段边界、旧迁移和在线链路不变；来源Complete=false、Qualified为空且无公共Check。
 
 新叶子共享唯一replayWork、context与原绝对deadline，所有物理PK和业务键只消费多值索引的唯一项。操作配置按revision、观察按ordinal、资金按event seq，各自排序且不以XID或墙钟互替；UTC日/月日历与NUMERIC100整数独立复算。原件关系错误按真实表/自然PK计数，缺失对象不造假键；取消、超时或资源失败由完整入口返回零结果。
+
+
+### B-P4：动态前缀、DML失权与下一真实根
+
+按[动态快照合同](../../specs/023-periodic-products/b-procurement-pb-snapshot-prefix-contract.md)实现私有独立raw重放：command自己的event_seq决定资金前缀，window birth ordinal决定存在性，精确核历史carry、窗口H/S/revision/latest-tail。今天金额与其他叶子报告不作oracle，legacy完整NULL不虚构cut；可靠可定位的坏后缀只从其seq起失效。重复control/索引bucket只处理一次，错指外部allocation不污染合法兄弟；共享work/context/原deadline与错误零结果保持。
+
+[必要DML合同](../../specs/023-periodic-products/b-procurement-account-writer-dml-fault-contract.md)固定138个grant、232次create/changed-configure失权及50次未使用授权正控制。actual APP调原根、W准确单项true→false→true、原42501、九表全行与完整ACL恢复均通过真实PG；最终账户包10顶层/478子项、纯核220顶层/1123子项race全PASS且零SKIP/FAIL。catalog正式3顶层/37子项race另在原5秒界通过；旧失败与修复过程不删除。准确命令及范围见[本片记录](../verification/procurement-pb-snapshot-dml.md)和[catalog记录](../verification/periodic-prefix-catalog-cpu.md)。
+
+[完整attempt出生根合同](../../specs/023-periodic-products/b-procurement-attempt-birth-writer-contract.md)及四份上位合同已校准，仍仅设计：upstream INSERT先于source的原件出生许可保留；p BEFORE按pb_procurement_stamp→procurement_reservation_identity→拟zz_pp_attempt_birth_p，末序hook取真实NEW.pb_admitted_at，一次完整生origin/reserved transition后派生p pointers；p RETURNING后闭合PE/A/PB/journal/node/head，private closure唯一seal。replay root/source均NULL，不为旧attempt补证；不用pending source、预采时间或caller phase。原p identity不查origin，后续p/journal/root/step边须真实deferred，CHECK/UK不延迟。
+
+真实request自动birth、command+reserve新版guard/validator、exact-link、精确ACL与actual LOGIN是A0–A6显式前置；不能把函数叠到旧账户v1而绕过非command的PP906。下一根尚未实施，完整writer/profile及R2仍待交付。来源Complete=false、Qualified空，无公共Check；legacy精确cut、历史absence/完整首配、B-HO1、业务资格/逐对象依赖、完整Base/aggregate继续保留。715/482/173列、旧迁移/profile及线上/部署/权限无结构变更；当前模块与源码入口见[统一架构](../architecture/README.md#b-p4-动态快照与必要-dml-续片)。

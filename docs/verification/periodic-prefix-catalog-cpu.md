@@ -53,3 +53,32 @@ TimingDiagnostic是独立显式启用的定位工具；profile文件亦须额外
 | `.local/b-p3-catalog-decoder-fuzz-1000.txt` | 557 | `77ddfb063705f2c2e3bf720d0a2cd883128c3bf6f15c526bbd3710c9259227d0` |
 | `.local/b-p3-catalog-timing-standard.jsonl` | 3585 | `82ad8ee4d8d1246b3e34c160eddcddfff42de1be43a4b1044e37a1a81db0fc10` |
 | `.local/b-p3-catalog-cpu-standard.pprof` | 19966 | `fa30ffd2423775f1bfb88eef0e4a6710093f04564175502fedb8cda5773d1b9b` |
+
+## 2026-11-04：相同期限的 race 诊断复核
+
+在基线 `6c03c15` 上没有继续修改解码器、SQL、根或权限，只对真实专库串行重验。命令使用 `/usr/bin/caffeinate -di` 包裹原诊断，显式设置 `C0_CATALOG_DATABASE_URL`、`C0_CATALOG_TIMING_DIAGNOSTIC=1` 与独立 profile 路径，执行 `go test -race -p=1 -json ./internal/fundinglotcatalog -run '^TestPeriodicPrefixCatalogTimingDiagnostic$' -count=1 -timeout=5m`。
+
+诊断完成原 LegacyV1、WalletReadV2、候选安装及 actual APP 的完整 V3 发行；测试 PASS 22.56s，包 PASS 55.974s，零 SKIP/FAIL。selected issuer 194 queries，elapsed 4400ms、driver 322ms，原共同5秒界保持。该单次通过只证明这次诊断完整执行，不将 driver 之外的时间全部归为 CPU，也不改判此前失败的唯一原因；双轮多 variant、受控 drift 及旧 profile 拒绝候选必须另行实际执行。诊断不计入正式 catalog 矩阵，不关闭 B-P3 或生产性能门禁。
+
+| 本地原件 | 字节 | SHA-256 |
+| --- | ---: | --- |
+| `.local/b-p3-catalog-6c03c15-race-diagnostic.json` | 4601 | `840a2f8f647a805694c7615de46296112492d8b357fb71d693b014bbe1d7aed7` |
+| `.local/b-p3-catalog-6c03c15-race-diagnostic.pprof` | 32462 | `8b6e8dbc02cfdc105774563836c9b232ef8b4b1ad72ba63183216480c7d10374` |
+
+## 正式 catalog race 矩阵复验
+
+上述诊断之后，以相同显式专库、保醒命令和原共同5秒发行期限串行执行正式矩阵；没有修改 catalog 实现、固定 root、权限、负例或产品期限：
+
+```sh
+go test -race -p=1 -json ./internal/fundinglotcatalog \
+  -run '^(TestPeriodicPrefixCatalogIndependentInstallations|TestPeriodicPrefixCatalogRejectsDrift|TestCatalogOriginalProfilesRejectCompletePeriodicPrefixCandidate)$' \
+  -count=1 -timeout=15m
+```
+
+**3顶层/37子项全部PASS，0 SKIP/FAIL，包660.458s**。独立安装437.94s、受控drift170.83s、旧profile拒绝完整候选18.47s。双轮各含五种ordinary与full-sandbox，重新创建的角色/关系OID均检查，真实APP/各runtime发行、完整投影及指定业务历史均执行；ordinary10种、sandbox11种权限/正文/trigger/FK/dependency drift在原事务中拒绝，并核rollback后的完整root恢复。旧接口继续拒绝新候选。随机schema/角色和variant清理由原fixture实际执行。
+
+这关闭本页此前保留的这套 catalog 专项 race 复验缺口；旧失败仍保留，不据一次后续通过确定其唯一根因。它不关闭采购历史命题、B-P3整体、完整新writer/profile、R2或生产验收，也不是网关TTFB/TTFT基准。完整包中的其他opt-in专项不由这三个顶层代验。
+
+| 本地原件 | 字节 | SHA-256 |
+| --- | ---: | --- |
+| `.local/b-p3-catalog-6c03c15-race-formal.json` | 48695 | `0d8c4ea102ff108c1c99af55fc62557efa0b7190640f922a6b91c01c898a52cc` |

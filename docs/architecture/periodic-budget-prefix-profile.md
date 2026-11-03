@@ -103,4 +103,4 @@ APP 取得三表和原三字段的精确读写权限，generated/source 不可�
 
 B-P3整体未完成。[采购历史证据缺口](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)保留合法approved提案的更正前revision；当前reservation已递增时，原checker仍返回`ProposalBarrierUnproven`，完整aggregate与owned V3 Plan必须关闭。无该缺证的跨窗、客户/key和供应商释放历史可独立验收，但不能替代合同要求的采购成本更正后完整成功。后续须先设计不可变审批消费的revision、完整evidence集与唯一成本事件绑定，不向历史行补造证明。 绝对更正同时保留`CostRecordedEligibilityUnproven`；同一共享采购账户包含多个来源及已终态事件时，原core另保留`AccountAdmissionOrderUnproven`。这两类历史的PB prefix可分别完整，但均不足以让完整aggregate取得资格，准确集合按对应规格与测试分别断言。
 
-[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)记录了固定权限行的受限解码优化及等价回退边界；SQL、root、权限面和总5秒期限保持。标准无race完整诊断通过不抵消原LegacyV1 baseline的catalog race时限失败，该门禁仍未关闭；局部解码基准也不代表网关TTFB/TTFT或生产性能。
+[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)记录了固定权限行的受限解码优化及等价回退边界；SQL、root、权限面和总5秒期限保持。2026-11-04正式双轮安装、drift与旧profile拒绝候选race矩阵已在原5秒界通过，先前失败仍保留；局部解码基准也不代表网关TTFB/TTFT或生产性能。

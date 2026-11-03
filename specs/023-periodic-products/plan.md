@@ -78,6 +78,7 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 - [x] 原Gate/Snapshot中显式V3 Begin/Installation与kind6/7共用once；受保护pre71→basis112→writer→post87→fresh证据→唯一提交，Init首读前固定锁128表。
 - [x] 新停服observer、ordinary/sandbox actual APP组合与共用12项历史/current映射；保留原事务/实际身份/总预算和sandbox本地原件。
 - [ ] 完成catalog双轮多variant/权限/正文负例、genuine sandbox与全场景交叉验收，汇总旧接口回归、专项race及最终仓库检查；实际PASS/SKIP与清理按[组合验证](../../docs/verification/periodic-budget-prefix-profile.md)记录，叶子通过不关闭整个B-P3。
+- [x] catalog专项续验：原5秒发行界下完成双轮五种ordinary+full-sandbox、权限/正文/触发器/FK/dependency drift和旧profile拒绝候选，3顶层/37子项race全PASS且零SKIP/FAIL；[原失败与本次结果](../../docs/verification/periodic-prefix-catalog-cpu.md)分账。上项全场景及采购历史门禁仍未完成。
 - [x] 由集成人复核HLD/LLD、统一架构正文/源码链接和能力状态，刷新与只读检查后提交、推送并核精确远端源码/CI。交付提交 `0b150c5` 的10/10任务已成功，默认C0 opt-in跳过仍不计PG验收，见[精确CI记录](../../docs/verification/periodic-budget-prefix-profile-ci.json)。
 
 实现已落地，scanner、basis和ordinary全阶段已有专项PG证据，其他门禁按记录继续。正式迁移/provision/维护CLI/startup与在线资金接线不在本候选交付中；本片不能关闭R2或把本地fixture当正式供应商、生产支付、1Panel/HA和性能验收。完整细图见[组合架构](../../docs/architecture/periodic-budget-prefix-profile.md)。
@@ -102,10 +103,13 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 - [x] D1-R1来源关系续片：PB两列严格JSON与行内绑定、四类command及typed audit/outbox内容归属、cause→mutation→link，以及真实ledger/客户与供应商PB精确效果集合已实施，见[本轮验证](../../docs/verification/procurement-source-relations.md)；完整PB/历史观察、业务资格和逐对象Q仍缺。
 - [x] D1-R1观察设计：形成[B-HO1独立版本草案](b-procurement-historical-observation-design.md)，request/scope六表仅设计，未实施/安装/验收，原715列不改签；完整writer/guard/ACL/read/profile责任须另冻结。
 - [x] D1-R1 PB关系与更正原件：先冻结三份关系合同，独立绑定correction全局操作/内容、PB配置及观察完整关系、事件镜像与三层桶；动态command快照及历史absence仍后续，见[本轮记录](../../docs/verification/procurement-pb-relations.md)。
+- [x] D1-R1 PB动态快照：独立按covered command的event_seq资金cut和window出生ordinal核carry/H/S/revision/latest-tail；重复bucket线性处理、foreign引用归属及可靠坏后缀反例已修，纯核最终220顶层/1123子项race PASS；legacy cut/absence与Q仍后续，见[续片记录](../../docs/verification/procurement-pb-snapshot-dml.md)。
 - [ ] D1-R1完整：补齐来源全部闭包、AttemptCost、同次原Base真实调用、十一对象依赖交集与最终aggregate，再开放唯一完整Check；现有叶子不替代完整核心交付。
 - [x] D1-W0材料：冻结[账户writer合同](b-procurement-account-writer-contract.md)，落盘[20函数/29触发器与精确账户ACL隔离候选](../../internal/procurementaccountwriter/materials.go)；仅create/configure，不接线上或完整profile。
 - [x] D1-W0基础专项：actual APP LOGIN专库create/configure/noop/拒绝/重放、并发operation与CAS、失权/权限攻击、撤validator后COMMIT全回滚、timeout协议、SQL NULL及精确清理通过；准确范围见[记录](../../docs/verification/procurement-account-prefix.md)。
 - [x] D1-W0 APP提交故障子矩阵：203项有效grant逐项撤销、两锁超时/取消4例，九表完整快照回滚；真实专库整账户包7顶层/221子例PASS、无SKIP。固定SQL/ACL不改，不关闭下面全部W写故障与其他根。
+- [x] D1-W0必要W DML子矩阵：138个必要grant、232次create/changed-configure原42501故障，25项未使用journal授权另做50次成功回滚；精确ACL与九表全行恢复。最终真实PG账户包10顶层/478子项race全PASS；首轮测试扫描错误及修复重验保留。
+- [x] D1-W1设计前置：[完整attempt出生根](b-procurement-attempt-birth-writer-contract.md)和四份上位合同已冻结真实admitted_at末序hook、原件/source先后、nullable replay及A0–A6依赖；尚无下一根SQL/adapter/guard/权限实现，不作I1/A0验收。
 - [ ] D1-W0完整故障矩阵：继续覆盖全部坏来源/额外来源、必要grant逐项撤销、超时取消、极限计数、未知COMMIT与完整原APP/PB经营路径，不以基础专项替代I1/A0。
 - [x] D1-X原语：冻结[宽TEXT精确链接候选](b-procurement-exact-link-contract.md)与[268 PK/UK、291 FK清单](b-procurement-exact-link-inventory-v1.json)，独立RC实验6组PG race场景通过；685项关系未改，全域替换/guard/权限及接受集门禁仍未完成。
 - [ ] D1：冻结完整可执行DDL与根/helper/validator/guard正文、精确约束与全部权限装配、原表新增列及固定全量reader/basis/catalog/profile材料；32新表列布局不替代这些义务。

@@ -174,7 +174,7 @@ readonly validators固定为`pp_validate_root(text)`、`pp_validate_request(text
 必须满足以下时序，不允许用任意AFTER读取最终值补历史：
 
 1. request INSERT：原018零售价约束及020出生stamp完成后，新的AFTER birth trigger在真实NEW上产生RequestOrigin/head与request_birth root。它只认证实际初态/冻结字段；retail_priced_at沿原较早选价时点，不另假证完整客户reserve。原reservation、资金、PB仍在原事务完整闭合。
-2. attempt INSERT：只在§6受控根内执行；既有020 stamp完成，再由同根私有完成显式managed/unmanaged。AFTER INSERT不得因p尚未生成自行判unmanaged。新attempt反向deferred要求唯一完整origin。
+2. attempt INSERT：只在§6受控根内执行；允许真实upstream原件先于origin，既有`pb_attempt_stamp`→`pb_dispatch_guard`完成后，由同根私有closure完成显式managed/unmanaged，AFTER INSERT不得因p尚未生成自行判unmanaged。managed的p BEFORE INSERT按字典序`pb_procurement_stamp`→`procurement_reservation_identity`→新`zz_pp_attempt_birth_p`；新hook读取原020已生成的真实NEW.pb_admitted_at，一次完整出生origin/reserved transition并派生p pointers，随后p本体才写入。相关p/journal/root/step边须真实deferred，不建pending source；新attempt反向deferred要求唯一完整origin。准确phase与原guard责任见[出生根合同§5](b-procurement-attempt-birth-writer-contract.md#5-admitted_at-的具体出生位置与私有-phase)。
 3. 真实dispatch：早期invoker guard在原pb_dispatch_guard之前先拒APP旁路；原PB在实际prepared→sending时填pb_dispatch_checked_at；后期固定校验核实际NEW、source及许可pointer。候选不能把guard全部放到PB之后而允许伪造sending先触发窗口副作用。
 4. 原cost/latest/p/PE与共享原件：消费已经出生source后，BEFORE核准确OLD/目标和本次输出pointer；AFTER只核RETURNING结果与维护必要投影；根最后seal，所有双向与末项检查在COMMIT闭合。根内与APP顶层COMMIT身份/只读权限分别验证。
 
@@ -196,7 +196,7 @@ pp_record_attempt(tenant text,request text,sequence integer,
                   expected_output_rate bigint,expected_basis bytea)
 ```
 
-公开参数不接attempt/root/source ID或报价选择时点。DB生成attempt ID；普通幂等已有序号时沿原返回原Attempt全部5字段，不新造root/origin。成功typed返回`outcome(applied|replay),root_id?,source_id?,attempt_id,request_id,sequence,delivery_state,cost_status`，source_id为自然attempt_id；Go仍重建原Attempt结构，不输出额外capability。
+公开参数不接attempt/root/source ID或报价选择时点。DB生成attempt ID；普通幂等已有序号时沿原返回原Attempt全部5字段，不新造root/origin、不补旧证据。成功typed返回`outcome(applied|replay),root_id?,source_id?,attempt_id,request_id,sequence,delivery_state,cost_status`；applied的root/source完整，source_id为自然attempt_id；replay的root_id/source_id均SQL NULL。Go仍重建原Attempt结构，不输出额外capability。
 
 完整根严格按原RecordAttempt先输入/route_decisions→原parent/request/customer-reservation锁→readAttemptChecks→checkAttemptCostQuote→INSERT ON CONFLICT→managed admission/真实origin闭合的业务顺序执行，不能提前用旧attempt快返绕过原checks。DB在原currentAttemptCostSQL位置采一次quote_selected_at，按effective_at/created_at/id DESC选择实际quote，并将时点写pp_quote_selected_at；无quote仍有该次真实采时，费用/basis默认仍沿原unknown。unmanaged不在后来closure重新选择current quote；managed保持原account/PB等待后的复核和原admission时刻deadline/报价重核，不把首次选择当后续发送许可。
 
@@ -205,6 +205,8 @@ has_expected_quote=false时四个expected参数全NULL；true时两个BYTEA均�
 每项route decision准确五字段channel_id/version_id/priority/weight/reason，priority保持部署64位Go int域、weight为1..MaxUint64，不能cast BIGINT截掉上半区。固定字段顺序沿routing.Decision，字符串用原Go JSON编码，DB重建该规范JSON的UTF8长度独立核界，不接caller长度。空输入统一[]；唯一channel、validID原接受集、封闭reason及selected匹配由DB重复核验，不能只信Go已验证。物理传输JSONB::text可因空格大于原Go字节界，reader对这两个字段的transport界与262144业务界分离，详见[读集合同](b-procurement-replay-read-contract.md)。
 
 固定保留私有`pp_complete_attempt_birth(tenant text,request text,attempt text)`，返回TABLE(root_id text,management_mode text,account_id text,reserved_event_id text,account_journal_id text,admitted_at timestamptz)。它无APP/PUBLIC/peer EXECUTE，只读取完整根刚生成的实际受控INSERT和pp_quote_selected_at，已有origin拒绝，不登记任意caller写的attempt；helper完成来源及效果后最后seal，外层完整根之后仅重建返回。managed账户/事件/journal身份及admitted_at完整，unmanaged均NULL。APP不再有upstream_attempts INSERT，普通旧构造器仍沿原路径，候选无失败回退。
+
+本根必须先有真实request自动birth、新版command+reserve账户guard/validator及相关exact-link实际正文。现有account writer v1仍硬拒非command/p/PE，不能绕过或叠函数后冒称可写；旧材料/摘要不改，新候选显式扩充接受集。完整缺失正文与A0–A6依赖见[出生根实施切片](b-procurement-attempt-birth-writer-contract.md#8-实施切片和实际尚缺正文)，冻结不表示已实现或验收。
 
 单个DB根整体受原statement_timeout=5s，不将每条内部SPI当新的5s；锁仍3s，上层绝对期限/原重试不变。该语句装配与旧多条SQL的总耗时边界不同，必须实际多等待与原接口回归，不宣称时间接受集完全相同。
 
