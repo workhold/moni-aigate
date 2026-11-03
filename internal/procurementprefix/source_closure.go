@@ -75,6 +75,12 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if err := s.pbPayloadRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
+	if err := s.pbOperationRelations(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	if err := s.pbEventRelationRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := s.semanticRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
@@ -97,6 +103,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 		return sourceClosureResult{}, err
 	}
 	if err := s.payloadRelationRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	if err := s.correctionRelationRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
 	if err := s.effectRelations(); err != nil {
@@ -130,8 +139,8 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	s.stats.AccountChainRows = uint64(len(s.bad["account_chain"]))
 	s.stats.EvidenceChainRows = uint64(len(s.bad["evidence_chain"]))
 	return sourceClosureResult{Stats: s.stats, Qualified: make(map[string]keySet), ReconciliationLegacyCases: manual.LegacyCases, Complete: false, Unimplemented: []string{
-		"remaining cross-row source/original semantics and actual business cause/decision eligibility; implemented command snapshots, typed audit/outbox slots, cost cause-mutation-link and declared ledger/PB effects do not qualify their sources",
-		"complete historical PB control/version/calendar/window/observation/effect prefixes and absence bridges; operation JSON/fingerprint and declared customer/supplier effect relations are implemented",
+		"remaining cross-row source/original semantics and actual business cause/decision eligibility; implemented command snapshots, typed audit/outbox slots, correction-original contents, cost cause-mutation-link and declared ledger/PB effects do not qualify their sources",
+		"historical PB command dynamic snapshot amounts/revision/latest-tail prefixes, complete initial membership and historical scope existence/absence bridges; raw configuration/version/calendar/observation relations and event/current projection replay are implemented",
 		"historical latest/sent observation for Reconcile branches without a derived request decision; existing decision-predecessor, attempt continuity and positive PB event bridges do not prove the missing observations",
 		"per-object dependency closure and SourceClosure Qualified key construction after all remaining obligations are implemented",
 	}}, nil

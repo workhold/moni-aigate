@@ -3518,3 +3518,47 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-source-relations.md`
 
 </details>
+
+## 2026-11-03T18:27:46Z · d5bfff58c94a
+
+按冻结合同接入更正原件、PB配置观察与事件三层重放，新增actual APP 203项提交撤权及4锁故障；同步模块图、HLD/LLD、README和验证边界，线上迁移权限不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1791 个源文件；本次 21 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/procurement-account-prefix.md`
+- added `docs/verification/procurement-pb-relations.md`
+- added `internal/procurementaccountwriter/account_fault_postgres_test.go`
+- modified `internal/procurementprefix/source_closure.go`
+- added `internal/procurementprefix/source_closure_correction_relations.go`
+- added `internal/procurementprefix/source_closure_correction_relations_test.go`
+- added `internal/procurementprefix/source_closure_pb_event_relations.go`
+- added `internal/procurementprefix/source_closure_pb_event_relations_test.go`
+- added `internal/procurementprefix/source_closure_pb_operation_relations.go`
+- added `internal/procurementprefix/source_closure_pb_operation_relations_test.go`
+- added `internal/procurementprefix/source_closure_pb_relations_integration_test.go`
+- added `specs/023-periodic-products/b-procurement-account-writer-fault-matrix.md`
+- added `specs/023-periodic-products/b-procurement-correction-original-relations-contract.md`
+- added `specs/023-periodic-products/b-procurement-pb-event-relations-contract.md`
+- added `specs/023-periodic-products/b-procurement-pb-operation-relations-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-closure-plan.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T18:28:28Z · 69bae45fac04
+
+归档最终205顶层1053子例纯核race、7顶层221子例实际PG账户回归与独立反例；make check和二进制构建通过，复核能力边界不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1791 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-pb-relations.md`
+
+</details>

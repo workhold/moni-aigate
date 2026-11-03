@@ -69,3 +69,9 @@ RequestHead认证latest/sticky序；last decision可以是conflict，此时lates
 ## 5. 历史观察独立版本草案
 
 现已形成[B-HO1设计](b-procurement-historical-observation-design.md)：request序与scope序六表候选，明确原正向桥、全writer/锁图同步、完整首配导入、legacy与独立新reader/replay/ACL/basis/catalog责任。此为设计草案，未实现/未安装/未验收；不就地修改V1的715列，不关闭上文历史观察或资格门禁。
+
+## 6. 本轮PB关系与更正原件续片
+
+按[更正原件合同](b-procurement-correction-original-relations-contract.md)、[PB操作合同](b-procurement-pb-operation-relations-contract.md)和[PB事件合同](b-procurement-pb-event-relations-contract.md)补三组独立关系：原correction全局operation/内容与真实scope/proposal桥，完整配置/version/changed-noop/审计及origin-head-journal，真实客户/供应商source镜像与三层金额重放/当前投影。验收见[最新记录](../../docs/verification/procurement-pb-relations.md)。
+
+这使§4所列configuration/calendar/window/event的可证关系落地，但命令动态carry/window held/spent和revision/latest-tail仍缺完整前缀，历史scope absence、首配完整成员及B-HO1仍未实施；legacy residual仅守恒不证明effect cut。更正原件内容不替代AttemptCost/AccountPrefix/RequestIncoming资格。逐对象Q、完整Base和aggregate继续后续，无公共Check。账户203项APP提交撤权与4锁故障是独立专库子矩阵，不关闭完整writer/guard/profile/R2。

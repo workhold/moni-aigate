@@ -78,3 +78,9 @@ TEST_DATABASE_URL="$TEST_DATABASE_URL" go test -race -p 1 ./internal/procurement
 前置提交 `cff5bef` 的 [CI run 41616788662](https://github.com/workhold/moni-aigate/actions/runs/41616788662) 已只读核验 10/10 success；它只覆盖前置提交。本片新提交 CI 以对应精确 SHA 的远端结果为准，不继承该结论。
 
 README 已核对本地构建、首次经营配置和 API 示例，补齐 001–022 与候选材料边界、Compose 本机 HTTP 试用、一次性任务状态/日志及 1Panel 容器环回网络前提。Docker/1Panel 实际运行、正式供应商、生产支付和性能对标仍未验，不把文档核对或数据库专项算作这些阶段交付。
+
+## 203项提交撤权与真实等待续片（2026-11-04）
+
+[故障矩阵合同](../../specs/023-periodic-products/b-procurement-account-writer-fault-matrix.md)先于[新测试](../../internal/procurementaccountwriter/account_fault_postgres_test.go)冻结。实际PG16.15专库、actual APP LOGIN逐项撤销9函数EXECUTE与194列SELECT，先完成根再撤权，COMMIT均保留42501且九表完整快照不变；operation/account锁各经pg_blocking_pids确认后执行3秒超时55P03和准确连接取消57014。每项精确恢复grant并核有效权限，全部随机schema/角色精确清理。
+
+根最终 `go test -race -json -count=1 -timeout=180s ./internal/procurementaccountwriter` 显式配置专库，**7顶层/221子例PASS，0 SKIP/FAIL，11.351s**。专项与整包不重复累计；[完整本轮记录](procurement-pb-relations.md)列出准确矩阵。此续片没有改SQL/ACL/线上接线；全部W写撤权、其他根、坏/额外来源、极限计数、未知COMMIT与完整APP/PB经营验收仍未完成。
