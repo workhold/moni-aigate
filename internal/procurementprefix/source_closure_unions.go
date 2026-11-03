@@ -96,7 +96,8 @@ func (s *sourceClosureState) semanticRows() error {
 				case 'H', 'h', 'I', 'i', 'L', 'l':
 					// All new integer fields are nonnegative; deltas only occur in the
 					// ledger companion. Previous ordinals retain the generated zero.
-					if name != "signed_delta" && strings.HasPrefix(text, "-") {
+					signedBalance := table == "pp_customer_finish_ledger_effects" && sourceText(raw.value, "account_kind") == "REVENUE" && sourceOneOf(name, "before_balance", "after_balance")
+					if name != "signed_delta" && !signedBalance && strings.HasPrefix(text, "-") {
 						valid = false
 					}
 					positive := name == "step_no" || name == "step_count" || name == "sequence" || name == "member_ordinal" || name == "account_ordinal_cut" || name == "version" || strings.Contains(name, "revision") && name != "route_revision" || name == "input_bound"
@@ -145,9 +146,9 @@ func sourceUnion(table string, r reflect.Value) bool {
 	case "pp_request_heads":
 		return sourceTail(r, "ordinal", "last_decision_id")
 	case "pp_attempt_origins":
-		quote := all(false, "cost_version_id", "cost_input_rate", "cost_output_rate") && txt("cost_basis") == "unknown" || all(true, "cost_version_id", "cost_input_rate", "cost_output_rate") && sourceOneOf(txt("cost_basis"), "contract", "invoice")
+		quote := all(false, "cost_version_id", "cost_input_rate", "cost_output_rate") && txt("cost_basis") == "unknown" || all(true, "cost_version_id") && sourceOneOf(txt("cost_basis"), "unknown", "contract", "invoice")
 		initial := txt("initial_delivery_state") == "prepared" && txt("initial_cost_status") == "unknown" && all(false, "initial_cost_amount")
-		managed := txt("management_mode") == "managed" && all(true, "account_id", "binding_id", "procurement_transition_id", "reserved_event_id", "account_journal_id", "admitted_at")
+		managed := txt("management_mode") == "managed" && all(true, "cost_version_id", "cost_input_rate", "cost_output_rate", "account_id", "binding_id", "procurement_transition_id", "reserved_event_id", "account_journal_id", "admitted_at") && sourceOneOf(txt("cost_basis"), "contract", "invoice")
 		unmanaged := txt("management_mode") == "unmanaged" && all(false, "account_id", "binding_id", "procurement_transition_id", "reserved_event_id", "account_journal_id", "admitted_at")
 		return quote && initial && (managed || unmanaged)
 	case "pp_attempt_heads":

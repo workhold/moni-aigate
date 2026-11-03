@@ -50,7 +50,7 @@ RequestHead认证latest/sticky序；last decision可以是conflict，此时lates
 
 ## 4. Qualified依赖与实施顺序
 
-仍需完成原件业务标量/其余JSON、语义NULL联合、ledger/PB精确槽、attempt/member跨序连续性，以及下面的逐对象依赖认证。业务叶子已实现的计价、p变动和member核验可以提供私有有效对象集合，但必须先冻结集合的身份与责任；不能用某域Stats全0推定全部来源有效。
+后续[来源值与连续性续片](../../docs/verification/procurement-source-values-continuity.md)已实施40类原件本地值、采购命令/audit/outbox严格JSON、补充业务行内联合和attempt/account/member连续性。仍需完成PB两列操作JSON与完整calendar/configuration/window闭包、原件ledger/PB跨行精确效果槽、历史观察依据，以及下面的逐对象依赖认证。局部值/行内联合与连续性不代替逐对象cause和完整效果选择；业务叶子的计价、p变动和member核验须先冻结有效对象集合的身份与责任，不能用某域Stats全0推定全部来源有效。
 
 共同资格Q至少包含对象所属root/全部step、唯一canonical child、精确companion/原件、origin、相关完整链与当前投影。复合身份按(物理表,自然主键)，跨表同ID不能合并。建议先以本地合法对象建立候选，沿缺失/坏依赖反向剔除至稳定，或等价处理强连通分量；双向约束不能采用从空集只加已全qualified父对象的算法，否则合法环永远无法进入。
 

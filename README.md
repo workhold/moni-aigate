@@ -83,6 +83,16 @@ flowchart LR
 [统一系统架构](docs/architecture/README.md)集中展示模块依赖、请求时序、资金与采购链路、数据关系、权限、worker、部署和故障恢复，并链接到源码。
 [HLD](docs/design/HLD.md)与[LLD](docs/design/LLD.md)保留详细设计和决策，能力状态以统一架构与验证记录为准。
 
+## 选择启动方式
+
+| 场景 | 方式 | 准备条件 |
+| --- | --- | --- |
+| 开发与联调 | [源码 / 本地启动](#本地启动) | Go、Node、独立 PostgreSQL 数据库与三个角色 |
+| 自托管试用 | [Docker Compose](#docker-compose--1panel) | Docker Engine、Compose v2、完整源码；镜像构建包含前端 |
+| 1Panel 管理 | [导入编排并配置反向代理](docs/runbooks/deployment.md#首次安装) | 完整源码构建上下文、私有环境配置与可达的代理网络 |
+
+三种方式运行同一应用。首次安装都须创建管理员、配置渠道与价格、授予客户模型权限并完成核款，之后才可使用 API；未预置可调用的演示模型或固定测试账号。
+
 ## 本地启动
 
 需要 **Go ≥1.26、Node 22.12+（22 系列）、PostgreSQL 16**，以及 Git、Make。首次运行请使用专用数据库。
@@ -222,7 +232,7 @@ make verify-mvp
 
 采购历史设计的[字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它核对候选新表的列与设计物料，不执行数据库安装，也不代表完整历史证明已经实现。
 另有[隔离关系 SQL 材料](specs/023-periodic-products/b-procurement-original-ddl-contract.md)，用于验证采购来源、账户和成本的数据库关系；它是开发期候选，不参与上面的正式迁移、部署启动或在线资金写入。
-[账户命令基础](docs/verification/procurement-account-prefix.md)和[独立历史重放叶子](docs/verification/procurement-replay-leaves.md)按独立规格推进；[采购成本与客户结算校验](docs/verification/procurement-cost-finish-replay.md)核对上游成本、客户收费、账本和周期预算效果。另已补齐[当前记录、派发许可与时钟校验](docs/verification/procurement-current-source-clocks.md)，以及[人工对账顺序、批准前驱与结算分支校验](docs/verification/procurement-reconciliation-order.md)；[模块细图](docs/architecture/procurement-replay.md)展示实际模块与待证对象。完整历史闭合与生产接线尚未完成，安装时无需手工执行这些候选 SQL。
+[账户命令基础](docs/verification/procurement-account-prefix.md)和[独立历史重放叶子](docs/verification/procurement-replay-leaves.md)按独立规格推进；[采购成本与客户结算校验](docs/verification/procurement-cost-finish-replay.md)核对上游成本、客户收费、账本和周期预算效果。另已补齐[当前记录、派发许可与时钟校验](docs/verification/procurement-current-source-clocks.md)、[人工对账顺序、批准前驱与结算分支校验](docs/verification/procurement-reconciliation-order.md)，以及[来源字段、严格消息格式与跨链连续性](docs/verification/procurement-source-values-continuity.md)的私有校验；[模块细图](docs/architecture/procurement-replay.md)展示实际模块与待证对象。完整历史闭合与生产接线尚未完成，安装时无需手工执行这些候选 SQL。
 
 ## Roadmap
 

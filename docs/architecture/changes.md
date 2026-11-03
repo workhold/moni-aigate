@@ -3416,3 +3416,48 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-reconciliation-order.md`
 
 </details>
+
+## 2026-11-03T17:14:38Z · f22631eb6b39
+
+采购来源纯核续片：40类原件本地值、命令与采购audit/outbox严格JSON、补充业务联合和attempt/account/member连续性；交叉修正PB可空UUID、unknown与超额异常及dispute精确键、错账户map顺序。更新README启动方式和验证入口、HLD/LLD与统一架构；明确PB JSON、跨行精确效果/历史观察/逐对象资格未齐。无正式迁移、HTTP、ACL或线上资金接线变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1767 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/procurement-source-values-continuity.md`
+- modified `internal/procurementprefix/source_closure.go`
+- added `internal/procurementprefix/source_closure_business_unions.go`
+- added `internal/procurementprefix/source_closure_business_unions_test.go`
+- added `internal/procurementprefix/source_closure_continuity.go`
+- added `internal/procurementprefix/source_closure_continuity_test.go`
+- added `internal/procurementprefix/source_closure_original_values.go`
+- added `internal/procurementprefix/source_closure_original_values_test.go`
+- added `internal/procurementprefix/source_closure_payloads.go`
+- added `internal/procurementprefix/source_closure_payloads_test.go`
+- modified `internal/procurementprefix/source_closure_routes_test.go`
+- modified `internal/procurementprefix/source_closure_unions.go`
+- modified `specs/023-periodic-products/b-procurement-replay-closure-plan.md`
+- modified `specs/023-periodic-products/b-procurement-replay-implementation-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T17:15:19Z · 9d52ef061931
+
+归档来源值与连续性根集成：144顶层/845子例race、旧checker回归、前端286项及make check通过，README使用部署独立核对完成；补准确跨行和PB五类剩余义务，代码测试依赖无后续修改。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1767 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/procurement-source-values-continuity.md`
+
+</details>

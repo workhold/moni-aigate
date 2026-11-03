@@ -41,8 +41,8 @@ func (s *sourceClosureState) mark(kind, table, key string) {
 }
 
 // checkSourceClosure checks genuine, independently computed structural leaves.
-// Complete is deliberately false: the checked structural leaves do not replace
-// remaining business scalar/NULL, current projection and state-continuity work.
+// Complete is deliberately false: local values, payloads and continuity do not
+// replace the remaining PB payload/history, exact effect and dependency work.
 // The domain cannot supply Qualified object keys until every obligation exists.
 func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if w == nil || w.b.ctx == nil {
@@ -60,16 +60,25 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if err := s.originalUnions(); err != nil {
 		return sourceClosureResult{}, err
 	}
+	if err := s.originalValueRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := s.routeRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
 	if err := s.usagePayloadRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
+	if err := s.payloadRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := s.semanticRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
 	if err := s.finishUnionRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	if err := s.businessUnionRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
 	if err := s.generated(rows.PrefixRows); err != nil {
@@ -94,6 +103,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if err := s.chains(rows.PrefixRows); err != nil {
 		return sourceClosureResult{}, err
 	}
+	if err := s.continuityRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := w.b.check(); err != nil {
 		return sourceClosureResult{}, err
 	}
@@ -109,10 +121,10 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	s.stats.AccountChainRows = uint64(len(s.bad["account_chain"]))
 	s.stats.EvidenceChainRows = uint64(len(s.bad["evidence_chain"]))
 	return sourceClosureResult{Stats: s.stats, Qualified: make(map[string]keySet), ReconciliationLegacyCases: manual.LegacyCases, Complete: false, Unimplemented: []string{
-		"remaining original business scalar and closed JSON contracts, including command snapshots and audit/outbox payload shapes; strict route_decisions and original Usage JSON are implemented",
-		"remaining semantic NULL and value unions for management/quote and other source branches; Reconciliation/finish row-local role, proposal, result and clock unions are implemented",
+		"strict periodic_budget_operations safe_input and result_snapshot JSON contracts; original projected local values, command snapshots, selected audit/outbox, route_decisions and Usage payloads are implemented",
+		"cross-row source/original contents, actual cause and decision eligibility dependencies; management, quote, procurement-event and Reconciliation/finish row-local unions do not independently qualify their sources",
 		"remaining exact original ledger and PB effect sets; request/attempt current pointers, permanent dispatch identity and procurement reservation origin/last links are implemented",
-		"attempt-node ordered delivery, current-cost and procurement before/after continuity, and evidence-choice member-cut continuity; request latest and account Config/Buckets continuity are implemented",
+		"historical latest/sent observation for Reconcile branches without a derived request decision, and complete PB calendar/configuration/window/absence bridges; attempt delivery/cost/procurement and member-cut continuity are implemented",
 		"per-object dependency closure and SourceClosure Qualified key construction after all remaining obligations are implemented",
 	}}, nil
 }

@@ -108,7 +108,7 @@ func TestSourceRouteRowCountTransportAndCancellation(t *testing.T) {
 }
 func TestSourceRouteIntegrationAndNaturalRowCounts(t *testing.T) {
 	stamp := Time{Valid: true, Time: time.Date(2026, 11, 3, 1, 2, 3, 0, time.UTC)}
-	base := UpstreamAttemptRow{ID: "attempt", Sequence: "1", CreatedAt: stamp, RouteDecisions: "[]"}
+	base := UpstreamAttemptRow{ID: "attempt", Sequence: "1", DeliveryState: "prepared", CostBasis: "unknown", CostStatus: "unknown", CreatedAt: stamp, RouteDecisions: "[]"}
 	rows := Rows{OriginalRows: OriginalRows{UpstreamAttempts: []UpstreamAttemptRow{base}}}
 	run := func(rows Rows) sourceClosureResult {
 		w, _, err := newReplayWork(context.Background(), rows)
