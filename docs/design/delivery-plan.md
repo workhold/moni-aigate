@@ -174,8 +174,10 @@ GitHub第二轮41339443048已失败并保留完整JSONL：身份通过，两个�
 
 ## B-P4 设计前置与当前下一步
 
-[采购历史设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)已完成D0汇合：账户真实准入前缀、成本资格、审批消费、完整evidence成员、incoming冲突与request级finalization前驱共同映射原十一项缺证。它是设计进展，尚无新SQL/Go运行能力；B-P3整体仍未完成。
+[采购历史设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)已完成D0汇合：账户真实准入前缀、成本资格、审批消费、完整evidence成员、incoming冲突与request级finalization前驱共同映射原十一项缺证。D1现已冻结[writer权限/事务方向](../../specs/023-periodic-products/b-procurement-writer-authority-contract.md)，并先冻后实现[纯身份SQL叶子](../../specs/023-periodic-products/b-procurement-identity-contract.md)。真实PG/race差分通过，PB namespace实验也确认受信schema首位的锁域要求；它们不等于完整writer、D1或B-P3完成，详见[实际验证](../verification/procurement-identity-leaf.md)。
 
-下一串行关口D1先冻结逐字段DDL/受控写函数/最小权限、全部来源出生点与双向绑定、同事务多根和完整锁序、纯DTO及固定新profile材料。其后I1写证与独立纯重放、I2读集/basis/catalog可按明确所有权并行，维护/runtime由根集成，实际PG严格串行；A0要求新原件真实生成后的完整成功及旧历史继续拒绝，不能用三个窄例或缺证拒绝代替完整验收。正式R2、C1/C2/C3、商品/扩展、供应商/支付、容器/1Panel、生产/HA及最终性能的依赖保持。
+下一串行关口D1继续冻结共同root/source/step、逐字段DDL/受控根/最小权限、全部来源出生点与双向绑定、同事务多根和完整锁序、PB闭包、纯DTO及固定新profile材料。[账户](../../specs/023-periodic-products/b-procurement-account-d1-proposal.md)与[成本/request](../../specs/023-periodic-products/b-procurement-cost-request-d1-proposal.md)两份工作提案尚未全冻。其后I1写证与独立纯重放、I2读集/basis/catalog可按明确所有权并行，维护/runtime由根集成，实际PG严格串行；A0要求新原件真实生成后的完整成功及旧历史继续拒绝，不能用三个窄例或缺证拒绝代替完整验收。正式R2、C1/C2/C3、商品/扩展、供应商/支付、容器/1Panel、生产/HA及最终性能的依赖保持。
 
-GitHub首页与贡献指南已整理特点、使用、源码构建、Docker/1Panel及验证方式，并保留未完成与许可边界。上片精确提交 `0b150c5` 的CI10/10成功已[记录](../verification/periodic-budget-prefix-profile.md#精确提交的远端-ci)，独立C0 opt-in未执行部分不计PG验收。本轮为文档交付，无模块/数据库/权限结构变化，统一架构入口和快照同步维护。
+GitHub首页与贡献指南已整理特点、使用、源码构建、Docker/1Panel及验证方式，并保留未完成与许可边界。精确提交 `0b150c5` 与后续文档提交 `d93f609` 的CI均10/10成功，后者[终态摘要](../verification/github-readme-design-ci.json)不覆盖本轮身份代码。当前模块图仅增加无默认调用方的纯SQL材料，CI仅other命令级启用叶子PG差分；业务数据库、权限与部署结构不变；统一架构、快照及本片验证同步维护并随源码提交推送。
+
+本片`make check`、独立build及identity实际PG/race通过；整仓回归50包PASS/2包FAIL/4无测试、前端286PASS。三个现有超时用例的定向复现通过、自有临时资源清理确认，但整仓失败及原B-P3/catalog/R2门禁仍保留，见[分层记录](../verification/procurement-identity-leaf.md#本轮整仓集成与未通过项)。不能据定向成功宣布完整验收。

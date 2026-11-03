@@ -107,6 +107,12 @@ make verify-mvp
 
 直接运行 `go test` 而未设置 `TEST_DATABASE_URL` 会跳过数据库测试；`make verify-mvp` 则在变量缺失时直接失败。默认测试不启用 C0 等独立 opt-in 专项，这些专项及固定 catalog profile 按各自验证合同执行。这样的跳过结果不能替代完整验收。CI 环境及四类包归属、十组执行合同见[CI 验证](../verification/github-ci-profile.md)，第三轮与T2发布精确源码结果分别见[第三轮记录](../verification/github-ci-third-run.md)、[T2发布记录](../verification/github-ci-authority-run.md)；容量测试需显式开关，复现见[容量报告](../verification/capacity.md)。
 
+B-P4 的纯采购身份 SQL 材料使用独立开关，可在同一专库串行运行；它不安装完整业务 writer。CI 仅在 `other` 分区命令级显式启用，精确差分与权限范围见[叶子验证](../verification/procurement-identity-leaf.md)。
+
+```sh
+PROCUREMENT_IDENTITY_DATABASE_URL="$TEST_DATABASE_URL" go test -race ./internal/procurementidentity -count=1 -timeout 120s
+```
+
 B-P1 周期预算观察来源是独立 SQL 候选，不由普通迁移安装。使用上述专库可单独执行：
 
 ```sh

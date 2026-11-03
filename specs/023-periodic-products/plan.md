@@ -87,10 +87,14 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 
 承接[采购缺口](b-prefix-procurement-barrier-gap.md)与[设计稿v0.1](b-procurement-prefix-design.md)。不能以窄总upper定理或当前proposal/reservation相等替代历史消费证据；B-P3整体验收保持未完成。
 
-- [x] D0：汇合账户/成本两路源码审查，明确十一项Unproven对应原始来源、正常/冲突/审批时序、无变化decision及历史不可回填原则；交付设计稿，未实施。
+- [x] D0：汇合账户/成本两路源码审查，明确十一项Unproven对应原始来源、正常/冲突/审批时序、无变化decision及历史不可回填原则；交付设计稿，完整writer尚未实施。
+- [x] D1-A：冻结[权限/事务方向](b-procurement-writer-authority-contract.md)：闭合DB mutation与最小NOLOGIN writer；真实namespace实验确认与原PB锁域同步所需search_path。它不是全DDL或权限攻击验收。
+- [x] D1-I：先冻结[身份字节合同](b-procurement-identity-contract.md)，实现独立六函数SQL材料与原Go ABI差分；真实PG/race 2顶层/8含子项PASS，无SKIP。无默认业务import、安装器或授予财务权限，见[验证](../../docs/verification/procurement-identity-leaf.md)。
 - [ ] D1：冻结逐字段DDL、受控写入口与权限、source双向闭合、同事务多根/锁图、纯DTO与完整读集、固定新profile和负面验收合同。
 - [ ] I1：在D1之后并行实施受控写证与独立纯重放/手算oracle；业务共享文件单一owner，PG串行。
 - [ ] I2：在完整固定材料后接入scanner/basis/catalog、protected pre/post、observer和actual APP runtime；旧Base、V3固定材料与缺证边界保留。
 - [ ] A0：实际APP完整成功/失败矩阵、旧接口回归、最终仓库与精确CI、统一架构和推送收口；不得把SKIP或纯模块通过当完整验收。
 
 正式migration/provision/维护CLI/startup/在线资金接线仍为R2独立合同，不随设计稿或候选完成自动启用。
+
+当前[账户](b-procurement-account-d1-proposal.md)与[成本/request](b-procurement-cost-request-d1-proposal.md)为D1工作提案；共同root/source/step与PB闭包仍待汇合冻结。纯identity与namespace实验不解决原十一项历史缺证，不改旧checker、V3固定材料或B-P3门禁。

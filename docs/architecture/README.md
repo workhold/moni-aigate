@@ -124,6 +124,7 @@ flowchart TD
     SandboxCaptureReader[billing sandbox-capture direct-link reader\nfunding_receipts + payment_captures\n两表完整C序分页与EOF]
     ProcurementReader[billing procurement history reader\n19 relations / shared budget / complete C-order EOF]
     subgraph PureModules[纯算法/核验基础层：不接入在线资金写入或媒体运行链]
+      ProcurementIdentity[procurementidentity\n六函数固定SQL身份材料 / 原Go ABI\n不安装、不授权、无默认业务调用方]
       ProofCodec[fundinglotproof\n严格V1与V2 canonical / owned bytes\n纯格式 / 不授数据库或启动权限]
       InitPlanner[fundinglotinit.Build\n旧业务与账本独立核对 / 确定开账写集\n纯描述性计划 / 无stamp与权限]
       LotPlanner[billing lot_plan\nFIFO / 原收费分配 / 逆原来源退回]
@@ -330,6 +331,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 周期预算核心（023-B） | 020追加迁移、billing预占/采购/派发/原窗收尾、受限角色与启动核验已接线；Reader/Commander与HTTP/控制台已接线，核心全Go/HTTP专项/前端/真实多tab/隔离main浏览器通过；最终020相关回归与预览升级通过，独立三态只读核验器和CLI专项通过，交叉回归继续 | [纯基础层](../../internal/periodicbudget)、[HTTP冻结片](../../specs/023-periodic-products/b-http-contract.md)、[Tx合同](../../specs/023-periodic-products/b-tx-contract.md)、[Reader合同](../../specs/023-periodic-products/b-reader-contract.md)、[Commander合同](../../specs/023-periodic-products/b-commander-contract.md)、[核心接线](../../specs/023-periodic-products/b-integration-contract.md)、[020迁移](../../migrations/020_periodic_budgets.sql)、[核心验证](../verification/periodic-budgets.md) |
 | 周期预算离线核验 | 实际owner LOGIN、六表owner及完整最新迁移，同一RR只读快照核19类异常与3类历史缺证；0/2/3/1退出码，不修复数据 | [Verifier](../../internal/periodicbudget/verifier.go)、[CLI](../../cmd/moni-aigate/periodic_verify.go)、[迁移快照核验](../../migrations/verify_readonly.go)、[精确合同](../../specs/023-periodic-products/b-verifier-contract.md) |
 | 周期预算命令前缀（023-B-P1..P3） | 纯核验与隔离 SQL 候选已接显式 V3：71表来源、87表钱包、112表basis、128表catalog、受保护开账/observer/APP runtime；保留旧Base与legacy缺证；采购历史屏障缺证与catalog race时限门禁未关闭，B-P3整体未完成，尚未接正式迁移/启动/在线来源钱包 | [纯包](../../internal/periodicbudgetprefix)、[完整组合合同](../../specs/023-periodic-products/b-prefix-profile-contract.md)、[候选 SQL](../../specs/023-periodic-products/b-prefix-candidate.sql)、[完整组合架构](periodic-budget-prefix-profile.md)、[验证](../verification/periodic-budget-prefix-profile.md) |
+| 采购身份 SQL 材料（023-B-P4-D1-I） | 六函数纯 codec 已实现，原 Go JSON/摘要 ABI 的真实 PG/race 差分通过；不查询业务表、不安装或授予业务权限，普通 main 无依赖；完整 writer/来源/历史重放与新 profile 尚待实现 | [材料包](../../internal/procurementidentity/materials.go)、[冻结合同](../../specs/023-periodic-products/b-procurement-identity-contract.md)、[验证](../verification/procurement-identity-leaf.md) |
 | 支付资金接缝（022-B2） | 021追加完整支付SQL、第三来源helper、十方向核验与三角色最小权限；真实PG专项通过；订单领域/worker/HTTP现由B3接线 | [021](../../migrations/021_payment_sandbox.sql)、[第三来源](../../internal/billing/funding_sandbox.go)、[角色](../../internal/operations/payment_roles.go)、[冻结合同](../../specs/022-self-service-payments/b2-funding-contract.md)、[B3设计](../../specs/022-self-service-payments/b3-http-ui-contract.md) |
 | 应用支付闭环（022-B3） | 订单/通知/安全视图、双manifest/022证明、独立真实worker、2网络/4证据槽、HTTP/UI和main已接线；专项PG/race及两轮真实主进程、最终浏览器整链通过限定本地验收；在途SIGTERM/真实Guard失权独立真实进程补验通过 | [领域与运行](../../internal/payments)、[HTTP](../../internal/server/payment_handlers.go)、[准入](../../internal/server/payment_admission.go)、[启动](../../cmd/moni-aigate/payment_startup.go)、[022](../../migrations/022_payment_runtime_attestation.sql)、[前端](../../web/src/components/PaymentsPage.vue)、[分层证据](../verification/payment-application.md) |
 | 资金来源分配算法（022-C0窄切片） | 仅package-private纯FIFO/finish/逆原charged边refund算法及race专项通过；无DB/网络/资金入口，C0正式DDL与维护仍候选 | [算法](../../internal/billing/lot_plan.go)、[冻结范围](../../specs/022-self-service-payments/c0-lot-contract.md#12-根冻结纯分配算法切片2026-11-01)、[验证](../verification/funding-lot-planners.md) |
@@ -1397,12 +1399,20 @@ Gate在唯一Begin时固定profile，V3 Init在首个SELECT前一条C序LOCK锁1
 B-P3整体未完成：[采购绝对成本更正的历史提案屏障缺证](../../specs/023-periodic-products/b-prefix-procurement-barrier-gap.md)继续产生`ProposalBarrierUnproven`，owned V3 Plan必须拒绝，不能以拒绝通过替代采购更正后完整成功的合同门禁；下一片须先设计不可变审批消费证据。[catalog CPU诊断](../verification/periodic-prefix-catalog-cpu.md)保留原5秒预算，标准无race诊断与局部解码差分已通过，但原LegacyV1 baseline的catalog race时限仍未通过；该诊断不属于网关TTFB/TTFT性能验收。
 
 
-### 采购账户与成本完整历史证据（B-P4，设计稿）
+### 采购账户与成本完整历史证据（B-P4）
 
-下一片的[设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)已汇合账户及成本两路源码审查，尚未实施。拟增加真实账户操作前缀、reservation/evidence/cost decision、审批实际消费屏障，以及冲突incoming和request级finalization前驱；原采购图十一项Unproven逐项映射，不以当前余额或revision代替历史。受控写入路径与权限、精确DDL/读集/新profile须先完成D1冻结，再并行实施。
+[设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)已汇合账户及成本两路源码审查。拟增加真实账户操作前缀、reservation/evidence/cost decision、审批实际消费屏障，以及冲突incoming和request级finalization前驱；原采购图十一项Unproven逐项映射，不以当前余额或revision代替历史。
 
-本次仅设计、GitHub首页/贡献文档及精确CI证据更新，现有模块图、请求链路、数据库关系、运行权限、正式迁移和启动行为均未变化。当前B-P3的采购缺证、专项catalog race时限和R2在线资金门禁继续保留；新设计不回填旧历史、不修改V3固定材料或旧算法。实现计划与验收矩阵见设计稿，实际状态仍以能力表及各片验证为准。
+[权限与事务合同](../../specs/023-periodic-products/b-procurement-writer-authority-contract.md)已选择固定闭合数据库 mutation 与独立最小 NOLOGIN writer：DB 在真实锁内读取 before、执行 gate、生成业务来源及见证；APP 不得 raw 改投影后补见证。writer 非表/schema owner，根对准确 APP 开放，私有 helper 不开放；完整角色闭包与PB权限仍待逐字段合同冻结。definer 固定受信业务 schema、pg_catalog、pg_temp 的顺序，以保留原020基于 current_schema 的 PB namespace 锁域，隔离真实 LOGIN 实验已验证该选择；它不是完整权限攻击验收。
+
+独立[身份字节合同](../../specs/023-periodic-products/b-procurement-identity-contract.md)先冻后实现：`procurementidentity` 只嵌入六函数 SQL 模板及固定 SHA，生成原 Go Usage/finalization/evidence 前像和摘要，PUBLIC EXECUTE 全部撤销。真实 PG/race 使用原 Go 类型、encoding/json 和 SHA 独立差分通过；模块图仅在纯基础层增加材料节点，没有生产调用边或业务数据库关系。它不承担业务资格检查，也不改变默认 billing、迁移、provision、main 或启动权限。现有CI仅other分区的测试命令显式启用identity专库开关，保留分区/期限和其他C0 opt-in边界；远端结果按本片精确源码另验。
+
+[账户工作提案](../../specs/023-periodic-products/b-procurement-account-d1-proposal.md)及[成本/request工作提案](../../specs/023-periodic-products/b-procurement-cost-request-d1-proposal.md)尚未冻结完整共同 root/source/step、DDL、锁图、PB 闭包、独立纯重放和新读集/profile。D1整体未完成，现有采购十一项缺证、catalog专项race时限及R2门禁保持；旧历史不回填，V3固定材料和旧算法不改签。实际叶子、namespace实验与清理边界见[本片验证](../verification/procurement-identity-leaf.md)。
+
+本轮`make check`及独立二进制构建通过；整仓回归仍未通过：Go56包中50通过、2失败、4无测试，前端286通过，新identity包实际PG/race通过。失败为原隔离并发用例的statement timeout和两个原main用例的临时资源清理timeout；本次准确自有资源已清理至零。三个用例按原期限定向复现均通过，不能替换整仓失败或证明超时原因，精确终态分别保存在本片验证中。
 
 交付提交 `0b150c5` 的远端10/10任务已终态成功；新增测试53项完整执行，另13套PG及1诊断未由CI验收（含5个父PASS/子SKIP），见[准确CI范围](../verification/periodic-budget-prefix-profile-ci.json)。这不覆盖本机既有资金timeout或专项race缺口。
 
 GitHub首页、贡献指南和本设计稿的交付范围及本轮实际静态/构建检查见[文档交付记录](../verification/github-readme-design-delivery.md)，不作为新采购行为或生产部署验收。
+
+文档交付 `d93f609` 的远端10/10任务已终态成功，准确范围见[CI摘要](../verification/github-readme-design-ci.json)。该CI不覆盖随后新增的身份材料与测试；本片检查和推送后CI分别计账。

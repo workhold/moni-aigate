@@ -1,0 +1,252 @@
+{
+  "date": "2026-11-03",
+  "baseline": "d93f6096b471bd365bf1708dfbda98b847f5ca7a",
+  "scope": "pure SQL identity ABI leaf and independent namespace design experiment; not B-P4 business writer or complete D1 acceptance",
+  "material_sha256": "05f4476b25158624ed08d1e6497ac41580bb3c50550ff7164f7ea08c8be3eacc",
+  "runs": [
+    {
+      "local_log": ".local/b-p4-identity-postgres-first.jsonl",
+      "sha256": "c85bd3eb2f3e66be28614e6b3daa5d16ec1672639ace6e01d2730e4839c43fe6",
+      "top_level": {
+        "pass": 1
+      },
+      "including_children": {
+        "pass": 7
+      },
+      "packages": [
+        {
+          "Time": "2026-11-03T14:06:27.136757+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+          "Elapsed": 3.448
+        }
+      ],
+      "source_note": "first run predates final session-setting escaping/domain assertions; final run covers delivered test source"
+    },
+    {
+      "local_log": ".local/b-p4-identity-postgres-final.jsonl",
+      "sha256": "81bee3a6a8a05c04d284183120500a7c86a392f1b8ace477ed084a191f75277e",
+      "top_level": {
+        "pass": 2
+      },
+      "including_children": {
+        "pass": 8
+      },
+      "packages": [
+        {
+          "Time": "2026-11-03T14:09:12.275816+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+          "Elapsed": 2.5789999999999997
+        }
+      ],
+      "source_note": "exact delivered leaf source"
+    },
+    {
+      "local_log": ".local/b-p4-identity-pure.jsonl",
+      "sha256": "cd2b1898dc90e95007e6400a89b21b317b42124b81d5f92f35602ae0af5fa5c7",
+      "top_level": {
+        "pass": 1
+      },
+      "including_children": {
+        "pass": 1
+      },
+      "packages": [
+        {
+          "Time": "2026-11-03T14:07:34.203067+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/procurementidentity",
+          "Elapsed": 2.936
+        }
+      ],
+      "source_note": "exact delivered material bytes; material-only targeted run predates PG-test strengthening; final whole-package run covers delivered test source"
+    }
+  ],
+  "namespace_experiment": {
+    "actual_app_login": true,
+    "bad_bypassed_existing_namespace": true,
+    "bad_pg_catalog_first_namespace": "pg_catalog",
+    "cleanup_confirmed": true,
+    "good_blocked_by_existing_account_namespace": true,
+    "good_lock_wait_ms": 150,
+    "good_trusted_schema_namespace": true,
+    "original020_function_sha256": {
+      "pb_require_read_committed": "859c21bc09b4fea5e85f6c07f6c57065ac799ea2ee4033191286b3c77f53529d",
+      "pb_scope_sync": "0d16654e290330ad8aeff44a40a784130f0fffb2540f97bfb65c47f8012bf07d",
+      "pb_uuid": "8f6909baf84322ec9abc8793625c240dfdcb53b112742f40d0cb95cd131f83ce"
+    },
+    "owned_security_definers": true,
+    "pass": true,
+    "postgres_version": "16.15 (Homebrew)",
+    "scope": "isolated prospective authority design experiment, not B-P4 implementation acceptance",
+    "writer_nologin": true,
+    "local_log_sha256": "3b8f8c9f16fc37126d2f607b9bd0c34673f8ea577eaaf5d41c68ec9410e8b52d",
+    "limitations": [
+      "Only the namespace decision is checked. PUBLIC helper execution and role/default ACL/definer attack matrices are not full B-P4 acceptance.",
+      "Cleanup uses the original owner connection; an owner disconnect may prevent cleanup and reports failure. No disconnect fault-injection acceptance. Cleanup operations have independent five-second contexts."
+    ]
+  },
+  "leaf_source_sha256": {
+    "internal/procurementidentity/identity_postgres_test.go": "4e1f7865df87bfb470e3553f800329b1dfc9604d20ddc4bee10ffba76ae61fcb",
+    "internal/procurementidentity/materials/identity-v1.sql": "05f4476b25158624ed08d1e6497ac41580bb3c50550ff7164f7ea08c8be3eacc",
+    "internal/procurementidentity/materials.go": "e1db1fcd0148a4d852423e4d891a6c4bb5a8c28782748f4b95d998d37e4b0ce6",
+    "internal/procurementidentity/materials_test.go": "fbcf53bddbca979ca977dc016e045492e82851dd2143b7fd55994c8be9548573"
+  },
+  "namespace_probe_source_sha256": "dc6dba442cf9992c4665b0708790d3a506cc41b2603d2abd8ff3fb4612e3fb3d",
+  "ordinary_main_dependency_absent": true,
+  "runtime_boundary": "No default billing/procurement/main/migrate/provision path imports or installs the new leaf. Pure codec does not validate UUIDs, business usage, roles, account gates or historical completeness.",
+  "ci_configuration": {
+    "partition": "other",
+    "scope": "command-local PROCUREMENT_IDENTITY_DATABASE_URL=$TEST_DATABASE_URL",
+    "disposable_database": "existing per-job PostgreSQL16",
+    "preserved": [
+      "test partitions",
+      "test deadlines",
+      "PB_PREFIX_DATABASE_URL",
+      "other C0 opt-in boundaries"
+    ],
+    "namespace_probe_enabled": false,
+    "remote_acceptance": "pending exact pushed SHA and JSONL"
+  },
+  "integration": {
+    "make_check": {
+      "local_log": ".local/b-p4-identity-make-check-final.log",
+      "sha256": "e2f46b022f4aa4555f9b8edf22390a1cfc59ec1d63c5fb3025e19ea64b6cc506",
+      "exit_code": 0,
+      "includes": [
+        "read-only architecture check",
+        "go vet ./...",
+        "TypeScript and Vite build"
+      ]
+    },
+    "make_verify_mvp": {
+      "local_log": ".local/b-p4-identity-verify-mvp.log",
+      "sha256": "834037fdac31e6d45bb49301940fba53581380ddd62aefe0532ecfb9e0108ace",
+      "exit_code": 2,
+      "result": "failed; focused reruns do not replace this result",
+      "command_environment": [
+        "TEST_DATABASE_URL dedicated cluster",
+        "PROCUREMENT_IDENTITY_DATABASE_URL same cluster"
+      ],
+      "package_terminals": {
+        "ok": 50,
+        "?": 4,
+        "FAIL": 2
+      },
+      "package_total": 56,
+      "front_end": {
+        "pass": 286,
+        "fail": 0,
+        "skip": 0
+      },
+      "top_level_failures": [
+        "TestPostgresBindingIsolationSharesChannelLock",
+        "TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery",
+        "TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay"
+      ],
+      "identity_package_pass_seconds": 3.751,
+      "per_test_skip_counts": "not available from this non-JSON whole run; other C0 and PB_PREFIX independent opt-ins were not enabled",
+      "make_steps_after_go_failure": "vet and build not reached by make; make check vet and separate binary build accounted independently"
+    },
+    "isolation_focused_rerun": {
+      "local_log": ".local/b-p4-identity-isolation-repro.jsonl",
+      "sha256": "624461b562b1f38e92e1dd162f2b72a0c5bd358ae1c14e95c91033c79bb2027e",
+      "top_level": {
+        "pass": 1
+      },
+      "including_children": {
+        "pass": 3
+      },
+      "packages": [
+        {
+          "Time": "2026-11-03T15:02:16.553179+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "Elapsed": 4.586
+        }
+      ],
+      "exit_code": 0,
+      "scope": "one original top-level test with both original subtests, race and original 3s/5s business limits unchanged; no broad rerun or product change"
+    },
+    "separate_binary_build": {
+      "local_log": ".local/b-p4-identity-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "command": "go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate"
+    },
+    "own_failed_test_residue_cleanup": {
+      "scope": "only exact own failed-test names from PostgreSQL DROP statements within this run",
+      "pre_cleanup_owner": "moni_test",
+      "pre_cleanup_connections_per_database": 0,
+      "force": false,
+      "operations": [
+        {
+          "kind": "DATABASE",
+          "name": "moni_alert_main_6cefef40ffb1",
+          "exit_code": 0
+        },
+        {
+          "kind": "DATABASE",
+          "name": "moni_shutdown_323c99867a67",
+          "exit_code": 0
+        },
+        {
+          "kind": "ROLE",
+          "name": "moni_alert_main_6cefef40ffb1_app",
+          "exit_code": 0
+        },
+        {
+          "kind": "ROLE",
+          "name": "moni_alert_main_6cefef40ffb1_projector",
+          "exit_code": 0
+        },
+        {
+          "kind": "ROLE",
+          "name": "moni_shutdown_323c99867a67_app",
+          "exit_code": 0
+        },
+        {
+          "kind": "ROLE",
+          "name": "moni_shutdown_323c99867a67_projection",
+          "exit_code": 0
+        }
+      ],
+      "remaining_databases": 0,
+      "remaining_roles": 0,
+      "confirmed": true,
+      "local_log_sha256": "d061df42e2ff3c14e82451fd0c3bd3de552a6aa3e05691f0af32dbce1202ade6",
+      "attribution": {
+        "pg_drop_excerpt_local_log": ".local/b-p4-identity-cleanup-pg-drop.txt",
+        "sha256": "8304f11df7455a8c3dd826975e113e7cfa96d174a88c33750f191818071979d9",
+        "drop_statement_times": [
+          "2026-11-03 14:48:47.249",
+          "2026-11-03 14:55:32.537"
+        ],
+        "whole_run_log_file_birth_local": "2026-11-03T14:23:42.813570",
+        "pre_cleanup_query_observation": "root tool output: both exact databases existed, each owner moni_test and zero pg_stat_activity rows; four exact low-privilege fixture roles existed",
+        "observation_limit": "pre-cleanup query result is transcribed from the trusted tool result, not a separately captured raw psql log"
+      }
+    },
+    "server_focused_rerun": {
+      "local_log": ".local/b-p4-identity-main-repro.jsonl",
+      "sha256": "20c46310f6ed80e90ec7a4de2048dbe1f996fd2b1e760e4c723854297fada029",
+      "exit_code": 0,
+      "top_level": {
+        "pass": 2
+      },
+      "including_children": {
+        "pass": 2
+      },
+      "packages": [
+        {
+          "Time": "2026-11-03T15:03:47.303712+08:00",
+          "Action": "pass",
+          "Package": "github.com/moni-ai/moni-aigate/internal/server",
+          "Elapsed": 33.259
+        }
+      ],
+      "scope": "original two server tests including their complete cleanup, race and all original business/context deadlines unchanged; no broad rerun or product change; does not supersede failed whole run"
+    },
+    "source_boundary": "billing, procurement, existing migrations, default main and go.mod/go.sum have no changes relative to d93f609; not evidence for a specific timeout cause"
+  }
+}

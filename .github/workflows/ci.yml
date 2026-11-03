@@ -175,11 +175,12 @@ jobs:
             expression="^($(paste -sd '|' "$RUNNER_TEMP/ci-tests-$GO_TEST_SHARD.txt"))$"
             run_filter=(-run "$expression")
           fi
-          # The prefix candidate owns random schemas in this job's disposable
-          # database. It does not change migrations or ordinary startup.
+          # Prefix and pure identity acceptance own random schemas in this
+          # job's disposable database. Neither changes ordinary startup.
           test_env=()
           if [[ "$GO_TEST_SHARD" == other ]]; then
             test_env+=("PB_PREFIX_DATABASE_URL=$TEST_DATABASE_URL")
+            test_env+=("PROCUREMENT_IDENTITY_DATABASE_URL=$TEST_DATABASE_URL")
           fi
           env "${test_env[@]}" go test -json -race -count=1 -timeout=10m "${run_filter[@]}" "${packages[@]}" \
             | tee "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"

@@ -957,4 +957,10 @@ actual APP专库test-only reader不等于生产scanner或authority。精确安�
 
 正常路径在`recordAttemptCost`之后才`finalizeProcurement`，冲突路径没有正常finalization；应在真实分支捕获成本资格和原incoming。批准消费提案出生时完整成员屏障，同额更正允许before/after revision相等但仍有唯一decision/event/correction/outbox；request级sticky delivery使用真实latest前驱。新纯层拟保留Base和原全部Unproven，逐项独立重放，不清零旧计数。
 
-本片仍是D0设计稿：逐字段SQL、source双向闭合、函数权限/角色闭包、锁与同事务多根关联、读集/basis/catalog/历史兼容及资源界均须D1先冻。未改现有生产Go/SQL、旧迁移、权限或任何main/ready/在线资金入口；真实PG验收须等待候选实现，不能引用旧CI作为新行为通过。
+[权限合同](../../specs/023-periodic-products/b-procurement-writer-authority-contract.md)冻结闭合数据库 mutation、独立 NOLOGIN 最小writer及实际session_user绑定方向。definer使用精确受信schema、pg_catalog、pg_temp，函数/关系schema限定；schema禁止APP/peer CREATE。原020 `pb_scope_sync`使用current_schema计算namespace锁，真实APP/NOLOGIN writer实验确认schema首位等待原锁得到55P03，pg_catalog首位会绕开。实验只证明锁域选择，未完成全ACL/default ACL/角色攻击或断连故障验收。
+
+独立冻结的[字节合同](../../specs/023-periodic-products/b-procurement-identity-contract.md)已实现为`internal/procurementidentity`：Version=1与固定SQL SHA、`SQLTemplate()`；六函数为STRICT/IMMUTABLE/PARALLEL SAFE/SECURITY INVOKER，PUBLIC EXECUTE撤销，无GRANT或安装器。TEXT转Go JSON字符串，Usage固定五个BIGINT，finalization固定17参数，ObservedAt归零且raw stage/content先编码；evidence保留Usage/Reason声明顺序，UTF8前像用内建sha256得到小写hex。NULL经STRICT为NULL；PG不可表示的NUL/非法UTF8不在等价域，业务UUID/usage校验另属未来根。
+
+真实受限APP LOGIN在随机schema上与原`billing.FinalizationInput/Usage`、encoding/json及Go SHA独立差分：768组Unicode/int64向量、控制/HTML字符、逐token极值、NULL、session字符串设置与search_path等通过，2顶层/8含子项PASS，无SKIP。精确材料、源码SHA与实验范围见[验证](../verification/procurement-identity-leaf.md)。默认main依赖不含新包；没有修改旧迁移或在线入口。CI仅在other分区命令环境显式启用identity专库开关，沿原独立PG、JSONL和期限；namespace实验/其他C0专项不自动开启，实际远端结论另验。
+
+共同root/source/step、逐字段DDL、双向deferred闭合、完整角色与PB调用权限、全部入口锁图、纯重放/读集/basis/catalog/历史兼容及资源界仍待D1配套冻结。账户与成本/request文档为工作提案，D1整体与I1 writer尚未实现；本叶子不解除十一项Unproven，不计完整经营验收。

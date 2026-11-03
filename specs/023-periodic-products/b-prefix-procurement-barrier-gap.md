@@ -38,4 +38,4 @@ PB 局部成功、完整来源缺证拒绝、其他单 source 历史的 pre71 �
 本地跨窗组合沿用既有 B-P1 的独占 fixture clock 策略：只在来源出生前固定 `pb_now`；报价在 INSERT 出生时显式声明早于全部历史准入的 effective_at（数据库实际时间前 7 天），不更新任何既有行时间或报价。完整 V3 验证前从 SHA 固定的 original020 恢复函数，再由独立固定 V3 catalog 核验。它是本地历史 fixture，不是生产时钟配置接口。
 
 
-2026-11-03设计后续：[B-P4设计稿v0.1](b-procurement-prefix-design.md)已汇合原采购十一项缺证的证据需求和实施关口。当前只完成D0，精确DDL/权限/写入口/读集与新profile仍待D1冻结，无新增历史证明或完整成功验收；本文的B-P3拒绝边界保持。
+2026-11-03设计后续：[B-P4设计稿v0.1](b-procurement-prefix-design.md)已汇合原采购十一项缺证的证据需求和实施关口。[权限/事务方向](b-procurement-writer-authority-contract.md)已冻结，[独立身份叶子](b-procurement-identity-contract.md)已实现并获限定PG差分验证；完整DDL/受控根/ACL、来源/锁图、读集与新profile仍待D1汇合冻结。尚无新增完整采购历史证明或完整成功验收，本文的B-P3拒绝边界保持。

@@ -3019,3 +3019,66 @@ B-P3显式prefix读集、basis/catalog、受保护开账与observer/APP组合；
 - added `docs/verification/github-readme-design-delivery.md`
 
 </details>
+
+## 2026-11-03T06:20:54Z · d047e658d54b
+
+B-P4先冻结writer权限事务方向与纯identity ABI并交付六函数固定SQL材料和独立PG差分；模块图仅新增无默认调用的纯材料节点，请求/数据库关系/运行权限/部署未变，D1提案与完整writer及11项缺证门禁保留；复核HLD/LLD/计划和精确CI范围
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1648 个源文件；本次 19 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/github-readme-design-ci.json`
+- modified `docs/verification/github-readme-design-delivery.md`
+- added `docs/verification/procurement-identity-leaf.json`
+- added `docs/verification/procurement-identity-leaf.md`
+- added `docs/verification/testdata/procurement-writer-namespace/main.go`
+- added `internal/procurementidentity/identity_postgres_test.go`
+- added `internal/procurementidentity/materials.go`
+- added `internal/procurementidentity/materials/identity-v1.sql`
+- added `internal/procurementidentity/materials_test.go`
+- modified `specs/023-periodic-products/b-prefix-procurement-barrier-gap.md`
+- added `specs/023-periodic-products/b-procurement-account-d1-proposal.md`
+- added `specs/023-periodic-products/b-procurement-cost-request-d1-proposal.md`
+- added `specs/023-periodic-products/b-procurement-identity-contract.md`
+- modified `specs/023-periodic-products/b-procurement-prefix-design.md`
+- added `specs/023-periodic-products/b-procurement-writer-authority-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T06:23:28Z · 81491fee5ec7
+
+汇合独立复核后为纯identity叶子追加other命令级PG回归开关及开发复现入口；保持原PB/分区/期限和其他C0边界，未改变业务writer、运行权限或部署结构
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1648 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/github-ci-profile.md`
+- modified `docs/verification/procurement-identity-leaf.json`
+- modified `docs/verification/procurement-identity-leaf.md`
+- modified `specs/023-periodic-products/b-procurement-identity-contract.md`
+
+</details>
+
+## 2026-11-03T07:07:40Z · 79f2682b7a32
+
+B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测试、三超时用例定向成功及准确自有资源清理，保留整仓失败和D1/B-P3/R2门禁；只有纯材料及other专项CI新增，运行链/业务关系/权限/部署不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1648 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/delivery-plan.md`
+- modified `docs/verification/procurement-identity-leaf.json`
+- modified `docs/verification/procurement-identity-leaf.md`
+
+</details>

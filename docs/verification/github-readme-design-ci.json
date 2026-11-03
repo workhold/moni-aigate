@@ -1,0 +1,137 @@
+{
+  "commit": "d93f6096b471bd365bf1708dfbda98b847f5ca7a",
+  "run_id": 41585242075,
+  "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "contracts (billing-2)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:11Z",
+      "completedAt": "2026-11-03T05:44:22Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078546"
+    },
+    {
+      "name": "contracts (other)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:10Z",
+      "completedAt": "2026-11-03T06:04:18Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078719"
+    },
+    {
+      "name": "contracts (server-2)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:21Z",
+      "completedAt": "2026-11-03T05:45:18Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078733"
+    },
+    {
+      "name": "contracts (server-0)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:10Z",
+      "completedAt": "2026-11-03T05:44:55Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078739"
+    },
+    {
+      "name": "contracts (billing-3)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:10Z",
+      "completedAt": "2026-11-03T05:44:02Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078760"
+    },
+    {
+      "name": "contracts (identity)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:10Z",
+      "completedAt": "2026-11-03T05:49:23Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078813"
+    },
+    {
+      "name": "contracts (billing-0)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:10Z",
+      "completedAt": "2026-11-03T05:44:07Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078818"
+    },
+    {
+      "name": "contracts (server-3)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:11Z",
+      "completedAt": "2026-11-03T05:44:51Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078840"
+    },
+    {
+      "name": "contracts (server-1)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:11Z",
+      "completedAt": "2026-11-03T05:44:59Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078853"
+    },
+    {
+      "name": "contracts (billing-1)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T05:40:10Z",
+      "completedAt": "2026-11-03T05:43:31Z",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41585242075/job/125749078945"
+    }
+  ],
+  "all_job_count": 10,
+  "successful_job_count": 10,
+  "artifact_count": 10,
+  "only_documentation_changed": true,
+  "runtime_and_ci_unchanged_vs_0b150c5": true,
+  "top_level_test_outcomes": {
+    "pass": 1677,
+    "skip": 114
+  },
+  "including_children_outcomes": {
+    "pass": 9463,
+    "skip": 220
+  },
+  "unique_package_count": 55,
+  "package_outcomes": {
+    "pass": 51,
+    "no_test_files": 4
+  },
+  "top_level_and_skip_outcomes_match_baseline": true,
+  "dynamic_subtest_name_difference": "Only two runtime clock labels differ; both corresponding subtests PASS in baseline and current. After explicit clock normalization all 9683 test outcomes match.",
+  "new_top_level_genuinely_executed_and_passed": 53,
+  "parent_pass_with_all_postgres_children_skipped": 5,
+  "new_postgres_suites_not_accepted_in_ci": 13,
+  "new_diagnostic_skipped": 1,
+  "pb_prefix_top_level": {
+    "pass": 24
+  },
+  "pb_prefix_including_children": {
+    "pass": 101
+  },
+  "architecture_verification": {
+    "files": 1636,
+    "snapshot_prefix": "8eb92f0764cb",
+    "result": "pass"
+  },
+  "frontend_test_and_build": "success; 286 tests pass, 0 skipped",
+  "go_vet_all": "success",
+  "production_go_build": "success",
+  "opt_in_boundary_unchanged": true,
+  "boundary": "CI does not supply MONI_TEST_DATABASE_URL, C0_CATALOG_DATABASE_URL, C0_MAINTENANCE_DATABASE_URL, or C0_CATALOG_TIMING_DIAGNOSTIC. A PASS parent with all PostgreSQL children skipped does not establish business PostgreSQL acceptance. No new implementation or B-P4 acceptance is claimed by this documentation run.",
+  "evidence_files": {
+    "run-final.json": "bae6d6283a1464132315c554d02f68c7232ae593f295e7635180ee43ddf31453",
+    "artifacts-final.json": "736bb2c9182dcd8f1dc963ae612f52bd68b0467a5794de55392342f7379f10f5",
+    "source-boundary.json": "0a564ff6a223d09df705b0eb284b384455e6eca3a47ef8091d7319def110c1ae",
+    "test-summary.json": "63eba9009633237ee6bb2aa7f2102bfb06e70ff7ee51f8c6c0d2cb606739232a",
+    "opt-in-boundary.json": "fc9925aac0358763b1453e276c67f4068b48c97f72673f94cc083b8ca3f8d495",
+    "other-job.log": "202fddd04e374e6756188f24ffabe579602299f21547ae7dadb9e086db175afc"
+  }
+}

@@ -542,4 +542,8 @@ B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../spec
 
 [设计稿 v0.1](../../specs/023-periodic-products/b-procurement-prefix-design.md)面向多渠道共享收费账户与可审计成本：在真实业务事务内记录账户配置/金额/阻断前缀、正常成本决定和双人更正实际消费的证据。incoming冲突来源与request级finalization前驱单独保存，以覆盖原采购图全部十一项历史命题；它们不能由账户余额、PB journal或approval witness互相替代。
 
-当前只完成D0设计稿与源代码依据审查，尚未冻结精确DDL、权限和数据库闭合写路径。下一步D1先确定全锁图、typed来源、同事务多操作语义、完整读集和新profile，再分工实施。旧算法、B-P3/V3材料和历史缺证保留，正式迁移及在线来源钱包仍按R2独立交付；设计稿不能计为已运行能力。统一架构的现有模块/部署图无需结构调整，本轮只更新设计入口及CI证据边界。
+已冻结[权限与事务方向](../../specs/023-periodic-products/b-procurement-writer-authority-contract.md)：采用固定闭合数据库 mutation 与独立最小 NOLOGIN writer，在真实业务锁内以同组 before 执行 gate 和生成历史证据。writer 不成为业务表/schema owner，APP 不得直接改受保护来源/投影后补见证；完整受控根、typed来源、DDL、全锁图、PB写闭包及新profile仍待配套合同冻结。账户及成本/request两份D1工作提案保留未冻结状态。
+
+先行独立完成[原采购身份 SQL 叶子](../../specs/023-periodic-products/b-procurement-identity-contract.md)：固定六函数材料在数据库独立重现原 Go JSON 与摘要，真实PG/race差分通过。它只有纯材料API，没有默认业务调用、安装器或财务权限。独立namespace实验确认definer须以受信业务schema居首，才能与原PB锁域同步；实验不代替完整writer权限/经营验收。模块图新增纯材料节点，现有请求、数据关系、正式部署和权限结构未变。
+
+D1整体和完整writer仍未完成；旧算法、B-P3/V3材料、采购全部历史缺证及catalog专项race门禁保留。正式迁移及在线来源钱包仍按R2独立交付。实现及实测边界见[统一架构](../architecture/README.md#采购账户与成本完整历史证据b-p4)和[验证记录](../verification/procurement-identity-leaf.md)，不引用前一文档提交CI作为新代码验收。

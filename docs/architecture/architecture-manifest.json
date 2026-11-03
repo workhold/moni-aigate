@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-03T05:39:39Z",
-  "review_reason": "补齐GitHub首页与B-P4 D0文档交付验证记录：make check、链接和Shell语法已通过。并行审查已汇合，源码与图源未变；只追加准确验证范围，保留旧资金timeout、catalog race及采购缺证，无运行结构变化。",
-  "snapshot_sha256": "8eb92f0764cbb8cb83f5d27cc7d3a91cf9c4490241938efcd24f001fced70987",
-  "architecture_sha256": "9fd3f6ed53114cfad47b9ab8bac202b3c69078438f0c669c2ba3ce9e7e5fd985",
-  "history_sha256": "31394a4b36ab3e4e4730f52e5329e8dec93b4611afb8a07b854594767e22649d",
+  "reviewed_at": "2026-11-03T07:07:40Z",
+  "review_reason": "B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测试、三超时用例定向成功及准确自有资源清理，保留整仓失败和D1/B-P3/R2门禁；只有纯材料及other专项CI新增，运行链/业务关系/权限/部署不变",
+  "snapshot_sha256": "79f2682b7a32738cd35170086e20080c23b3abd5a7c481779e479a91106537de",
+  "architecture_sha256": "ee933b186442b2efa378adacd04af8ecef8767ff92fe79ae39267c89da4005be",
+  "history_sha256": "108f1cbc4cfc1acee80d92aa0a7cb6d2a7fa1a93c8bc23b0d233678a49fc6292",
   "files": [
     {
       "path": ".dockerignore",
@@ -29,7 +29,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "9aaf6c17e95ea7e147e7025937d4079e8a063dc730bc6554bc0575746b8703b4"
+      "sha256": "aae3024364280bd619320eceb2014fd3e4aeb53133b8a44e072e0b6a804f8ed0"
     },
     {
       "path": ".gitignore",
@@ -141,15 +141,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "74239b207d3c628054a77c9aafba25c6d0e8dce93483feea4fed35b32cfc4f13"
+      "sha256": "b81212f41a62da0d1ff5ddefa6974bbd232798f20cd04c78cd25ae37646f2a61"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "6acace328ba4edb69f7ebf26a2f3f5fa00398818ea29ec5cc50c8b143731df98"
+      "sha256": "613976752460aa877fea2d2da7bcd0aa17f3e0cf0a2f6859321e47a34579df81"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "20743c8ee3084a63dab775c7708d54ec26ed7d59f4a20df7487e32d3778b0c19"
+      "sha256": "1ade3d3ec66502bafbda79f04080df5573f8ed1ff0c2a3a12cdd496c3c87f31c"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -197,7 +197,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "1f7c6f82e7d08bbe2e00150b139c70002d026b21b0da18e25271a8d5caa88690"
+      "sha256": "d4eb7fa1c2c52d9888280fd4183c6a7bc6e3cde4ff6633006a33d0ce312ed550"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -1101,7 +1101,7 @@
     },
     {
       "path": "docs/verification/github-ci-profile.md",
-      "sha256": "4833cd5082a17142fce198ea12bfed16f54dddfc6fea0fa159c01ea1d34e8496"
+      "sha256": "7b7c90be88aa7c61759805de63801464880179e75e078a6e7aeb959d31ebd95b"
     },
     {
       "path": "docs/verification/github-ci-second-run.json",
@@ -1128,8 +1128,12 @@
       "sha256": "5026b5886026d17d1e60ccae7a2309b2aafe4f7a33c2e7689b79c81a3758bf29"
     },
     {
+      "path": "docs/verification/github-readme-design-ci.json",
+      "sha256": "61a97cffd40363f51cfa4c0fa5d793d3af2ba7853e3ba1abe0c4639021984e6e"
+    },
+    {
       "path": "docs/verification/github-readme-design-delivery.md",
-      "sha256": "694f1d261df9b452c5ca2a54ded93cff85c59b4109a7db12bd89a20f02c394f3"
+      "sha256": "1f0940f070400cff2b9669fba796ce08f1874c964131bc10637db53663cf69d8"
     },
     {
       "path": "docs/verification/implementation.md",
@@ -1500,6 +1504,14 @@
       "sha256": "dd8d17588d3fea664f82aa750113295c920394ec0279f2141b732e4ff6cad403"
     },
     {
+      "path": "docs/verification/procurement-identity-leaf.json",
+      "sha256": "94893df056f22a89614f128af9663e91161801927738edf68a6138d530d8148e"
+    },
+    {
+      "path": "docs/verification/procurement-identity-leaf.md",
+      "sha256": "fdd60bc5b008361408bed2f9563f034569bf4e6d1f9086cc51bef417f84383ec"
+    },
+    {
       "path": "docs/verification/protected-init-phase.json",
       "sha256": "ceb0a82d164e9982e17706c1f28e4552e498e40f04ef864bd504c2dc131c4dea"
     },
@@ -1598,6 +1610,10 @@
     {
       "path": "docs/verification/tenant-pricing.md",
       "sha256": "29a7d9c3eebc62e0ddabd4f6970a198f0f9495a88d7f931b09490229bb41b9ba"
+    },
+    {
+      "path": "docs/verification/testdata/procurement-writer-namespace/main.go",
+      "sha256": "dc6dba442cf9992c4665b0708790d3a506cc41b2603d2abd8ff3fb4612e3fb3d"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -4320,6 +4336,22 @@
       "sha256": "098f9bc4a667928a992b10e36155ecd076072bd73a37b21a1f9b3208ceb786f0"
     },
     {
+      "path": "internal/procurementidentity/identity_postgres_test.go",
+      "sha256": "4e1f7865df87bfb470e3553f800329b1dfc9604d20ddc4bee10ffba76ae61fcb"
+    },
+    {
+      "path": "internal/procurementidentity/materials.go",
+      "sha256": "e1db1fcd0148a4d852423e4d891a6c4bb5a8c28782748f4b95d998d37e4b0ce6"
+    },
+    {
+      "path": "internal/procurementidentity/materials/identity-v1.sql",
+      "sha256": "05f4476b25158624ed08d1e6497ac41580bb3c50550ff7164f7ea08c8be3eacc"
+    },
+    {
+      "path": "internal/procurementidentity/materials_test.go",
+      "sha256": "fbcf53bddbca979ca977dc016e045492e82851dd2143b7fd55994c8be9548573"
+    },
+    {
       "path": "internal/productvalue/fuzz_test.go",
       "sha256": "fe178fcca5a1c9952086056a0fefe9e00e40423eb02705071341445d23e50aeb"
     },
@@ -5877,7 +5909,7 @@
     },
     {
       "path": "specs/023-periodic-products/b-prefix-procurement-barrier-gap.md",
-      "sha256": "f98b226a563e6b253fbc25d68c215f4cb039576087b44f37311f61d47a3128fa"
+      "sha256": "f07cef794507e9331d8fa331303ede1ba6ff073f67f34157b134799390c2429f"
     },
     {
       "path": "specs/023-periodic-products/b-prefix-profile-contract.md",
@@ -5888,8 +5920,24 @@
       "sha256": "2dad293610e6b63adf3306b37a1b2629d26f1de4bcc93eb1c40ddc13688bd4a3"
     },
     {
+      "path": "specs/023-periodic-products/b-procurement-account-d1-proposal.md",
+      "sha256": "7f3df7d86e743d43f84c561c591adff85fc27e89de19d131e088a1fbe18ca36d"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-cost-request-d1-proposal.md",
+      "sha256": "3359ea519f8682884210003d2ff478c89fe50297d537aa491fb761289d6bc171"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-identity-contract.md",
+      "sha256": "b1df33e929f9d950124f8f052150ed9180a82cbbd5446f302d903f6b907da352"
+    },
+    {
       "path": "specs/023-periodic-products/b-procurement-prefix-design.md",
-      "sha256": "3cfd15f631e9a361af58f9513113c5a9e5017cc3ba0e618ae873f1eaac3492ed"
+      "sha256": "58784c5218dcd8c84c9624ecc6a2f2154a1e45013bb864183afd76ab21c68c25"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-writer-authority-contract.md",
+      "sha256": "edfa7c449d453eeee5ac439c11c2bf2421d038d825f4e6cb2a8f8645afba39fb"
     },
     {
       "path": "specs/023-periodic-products/b-reader-contract.md",
@@ -5921,7 +5969,7 @@
     },
     {
       "path": "specs/023-periodic-products/plan.md",
-      "sha256": "b178bfffeacabb665b3bc10bd6ddac9ddc71a96c2239ef6110a494fe4f76c845"
+      "sha256": "c26227a700b21e20344973a93544f14c41b8dadb2b747cc33f0b71da169f69ed"
     },
     {
       "path": "specs/023-periodic-products/review.md",

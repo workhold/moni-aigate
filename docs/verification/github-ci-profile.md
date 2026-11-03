@@ -20,3 +20,7 @@
 ## B-P1 候选的后续测试接线
 
 2026-11-03新增预算观察来源候选后，原十分区划分保持；仅在`other`的最终Go执行处通过`env`传入`PB_PREFIX_DATABASE_URL=$TEST_DATABASE_URL`，复用本job独立PG16/loopback/trust，测试各自创建随机schema与实际受限APP。原JSONL、pipefail、包/顶层完整分区校验及期限保持，其他九个分区与生产运行不安装候选。Homebrew专库已验，首次Linux CI按新提交另验；精确范围与后续结果见[本片记录](periodic-budget-prefix.md)，不改写本页历史失败或旧SHA。
+
+## B-P4 纯身份材料的后续测试接线
+
+2026-11-03按[独立合同](../../specs/023-periodic-products/b-procurement-identity-contract.md)在同一`other`命令级环境追加`PROCUREMENT_IDENTITY_DATABASE_URL=$TEST_DATABASE_URL`，原PB开关、十分区、期限、race与JSONL保持。测试仅在随机schema安装六个纯身份函数，以独立受限APP LOGIN与原Go ABI差分；没有完整采购writer、正式迁移或启动接线。namespace设计实验和其他C0专项不自动开启。实际远端须按新提交与JSONL另验，当前本机专项证据见[记录](procurement-identity-leaf.md)，本节不改写此前CI失败或原SHA的结果。

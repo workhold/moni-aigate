@@ -22,3 +22,5 @@
 基线提交的[远端CI](https://github.com/workhold/moni-aigate/actions/runs/41581210176)10/10任务成功，已独立核对SHA及artifact。实际PASS/SKIP和父PASS/子SKIP边界保存在[机器记录](periodic-budget-prefix-profile-ci.json)，说明见[组合验证](periodic-budget-prefix-profile.md#精确提交的远端-ci)。它只属于该精确提交；本次文档提交的后续CI须按自己的SHA核对，不能借用此结果。
 
 原本机整仓两项资金timeout、catalog专项race时限及采购历史缺证未因文档交付关闭。仓库配置了部署路径不等于目标环境已验收；发布许可证仍未决定。
+
+推送后补验：上述文档交付提交`d93f6096b471bd365bf1708dfbda98b847f5ca7a`的[CI 41585242075](https://github.com/workhold/moni-aigate/actions/runs/41585242075)已10/10任务成功。运行代码/CI相对`0b150c5`无变化，51个有测试包PASS、4包无测试，前端286项PASS；原独立PG opt-in边界保持，见[精确终态](github-readme-design-ci.json)。该结果不是后续B-P4叶子或完整业务验收。
