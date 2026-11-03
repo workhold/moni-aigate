@@ -973,4 +973,8 @@ actual APP专库test-only reader不等于生产scanner或authority。精确安�
 
 [读取重放合同](../../specs/023-periodic-products/b-procurement-replay-read-contract.md)固定单core四域、全部原件/来源双向读取与旧十一项逐对象补证；原Base不清零。候选105/121表、144 basis/160 catalog及V4需完整新物料和实际保护链，旧V3/history/current不暗升。pure核OID宽度/一致性，实际APP身份由受审根与owned catalog/pins核定。RequestHead不将当前status永久绑定历史decision；原INET client_ip投影为PG16文本，不能跨类型直接FK。原PB实时检查另按八表sidecar授SELECT(xmin)，V4采集负attnum原始/effective ACL，旧collector与历史DTO/basis不扩xmin；账户command_created_at由独立DBclock写source，再由BEFORE派生原件，不以诊断时刻猜DEFAULT。
 
-[只读列检查](../../scripts/check-procurement-layout/main.go)及[候选物料](../../specs/023-periodic-products/b-procurement-column-layout-v1.json)展开32新表711列、64 generated；不执行SQL，不包括原表扩列或完整约束。Make/CI加入只读比对，更新须显式--write。D1整体仍缺完整可执行DDL/函数正文/ACL装配、独立DTO/纯重放、最终reader/basis/catalog/profile与实际APP矩阵；I1 writer未实施，不解除十一项Unproven、catalog时限或R2门禁。无正式迁移、默认业务import或权限装配变化。
+[只读列检查](../../scripts/check-procurement-layout/main.go)及[候选物料](../../specs/023-periodic-products/b-procurement-column-layout-v1.json)现展开32新表715列、68 generated；四个新generated字段用于delivery多态cause、reset反向cause与new-settlement槽。647个非generated列不变；前版711列验证保留历史。[procurementprefixschema.SQL(schema)](../../internal/procurementprefixschema/materials.go)先验证六份原始SHA，校验schema合法UTF8/非NUL/1..63字节并quote一次，按columns→original columns→全部keys→checks→FK装配。所有FK显式schema限定、validated且DEFERRABLE INITIALLY DEFERRED；PK/UK非deferred。原18表准确110新增列无默认或backfill，逐组NULL/role CHECK和typed/RootStep边按[原件DDL合同](../../specs/023-periodic-products/b-procurement-original-ddl-contract.md)闭合。
+
+结构测试按original001–022+B-P1候选隔离安装，读catalog与固定布局比对，并核历史迁移、旧列/default、函数/user-trigger/ACL无变化；命名约束正负例只证明各声明边，不证明完整owner图或APP writer。宽TEXT复合UK存在btree大小和接受集风险，nullable MATCH SIMPLE外的NULL精确值及跨行闭合仍是实际validator义务。验证入口见[关系材料记录](../verification/procurement-relation-materials.md)。Make/CI只读布局检查不安装该SQL。
+
+D1整体仍缺受控根/validator/guard正文与触发顺序、完整ACL装配、独立DTO/纯重放、最终reader/basis/catalog/profile与实际APP矩阵；I1 writer未实施，不解除十一项Unproven、catalog时限或R2门禁。无正式迁移、默认业务import或权限装配变化。

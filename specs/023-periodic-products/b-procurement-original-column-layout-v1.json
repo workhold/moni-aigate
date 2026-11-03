@@ -1,0 +1,648 @@
+{
+  "schema": 1,
+  "status": "design-only-original-column-additions",
+  "table_count": 18,
+  "column_count": 110,
+  "tables": [
+    {
+      "name": "request_records",
+      "columns": [
+        {
+          "name": "pp_origin_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_xid",
+          "type": "xid8",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_decision_id",
+          "type": "text",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "upstream_attempts",
+      "columns": [
+        {
+          "name": "pp_origin_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_xid",
+          "type": "xid8",
+          "nullable": true
+        },
+        {
+          "name": "pp_quote_selected_at",
+          "type": "timestamptz",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_cost_mutation_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_delivery_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_xid",
+          "type": "xid8",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_account_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_dispatch_journal_id",
+          "type": "text",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_accounts",
+      "columns": [
+        {
+          "name": "pp_version",
+          "type": "int2",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_journal_id",
+          "type": "text",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_reservations",
+      "columns": [
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        },
+        {
+          "name": "pp_origin_journal_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_journal_id",
+          "type": "text",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_budget_events",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_transition_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_journal_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_commands",
+      "columns": [
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        },
+        {
+          "name": "pp_account_journal_id",
+          "type": "text",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "metering_events",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "metering_event_conflicts",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "finalization_records",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_evidence_identities",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "procurement_cost_proposals",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_approval_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "provider_cost_corrections",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "reconciliation_cases",
+      "columns": [
+        {
+          "name": "pp_last_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_last_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "settlements",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "journals",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "journal_lines",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "audit_events",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "projection_outbox",
+      "columns": [
+        {
+          "name": "pp_root_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_root_step",
+          "type": "int8",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_kind",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_id",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_source_role",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "pp_created_xid",
+          "type": "xid8",
+          "nullable": true
+        }
+      ]
+    }
+  ]
+}

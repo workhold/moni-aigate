@@ -218,6 +218,7 @@ make verify-mvp
 每次代码、测试、依赖、迁移、部署、CI 或设计合同变化，都同步复核统一架构并保留[变更记录](docs/architecture/changes.md)与 [SHA-256 清单](docs/architecture/architecture-manifest.json)。Make / CI 默认只读检查，不自动刷新；具体流程见[贡献指南](CONTRIBUTING.md#架构同步与检查)和 [AGENTS.md](AGENTS.md)。
 
 采购历史设计的[字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它核对候选新表的列与设计物料，不执行数据库安装，也不代表完整历史证明已经实现。
+另有[隔离关系 SQL 材料](specs/023-periodic-products/b-procurement-original-ddl-contract.md)，用于验证采购来源、账户和成本的数据库关系；它是开发期候选，不参与上面的正式迁移、部署启动或在线资金写入。
 
 ## Roadmap
 
@@ -252,7 +253,7 @@ make verify-mvp
 
 ## 反馈与贡献
 
-功能建议与可复现问题请提交到 [GitHub Issues](https://github.com/workhold/moni-aigate/issues)。开发流程、测试环境和 PR 要求见[贡献指南](CONTRIBUTING.md)；仓库约定见 [AGENTS.md](AGENTS.md)。问题描述和日志中请移除密钥、个人信息及真实请求正文。
+功能建议与可复现问题请提交到 [GitHub Issues](https://github.com/workhold/moni-aigate/issues)。安全问题请按[安全报告说明](SECURITY.md)提交。开发流程、测试环境和 PR 要求见[贡献指南](CONTRIBUTING.md)；仓库约定见 [AGENTS.md](AGENTS.md)。问题描述和日志中请移除密钥、个人信息及真实请求正文。
 
 ## License 与来源
 

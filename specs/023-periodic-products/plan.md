@@ -100,3 +100,7 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 正式migration/provision/维护CLI/startup/在线资金接线仍为R2独立合同，不随设计稿或候选完成自动启用。
 
 原两份D1工作提案保留当期记录；当前共同/账户/成本逻辑合同和PB最小闭包已汇合。D1整体仍缺完整可执行DDL/函数正文/约束/ACL装配、独立DTO/重放与固定全量新profile材料；逻辑列ACL/锁图和新表列布局已交付，不能当作实际权限验收。纯identity及两个锁实验不解决原十一项历史缺证，不改旧checker、V3材料或B-P3门禁。精确2223e40的[远端CI](../../docs/verification/procurement-identity-ci.md)10/10成功；旧本机整仓失败与专项SKIP保持分别计账。
+
+## B-P4 D1关系材料切片（2026-11-03）
+
+先冻结[source](b-procurement-source-ddl-contract.md)、[account](b-procurement-account-ddl-contract.md)、[cost](b-procurement-cost-ddl-contract.md)、[原件](b-procurement-original-ddl-contract.md)逐边合同，再交付固定摘要的纯SQL装配包。候选新表从711改715列，647普通/68 generated，原18表110列无默认扩展。专用PG按原001–022+B-P1串行安装并独立核结构和命名声明边，具体范围与结果见[验证](../../docs/verification/procurement-relation-materials.md)。D1整体不勾选完成：受控根、validator/guard、完整ACL/触发顺序、宽索引兼容策略、全量DTO/重放/readset/profile与actual APP矩阵仍缺。正式迁移/启动/在线资金及其他既有门禁保持。

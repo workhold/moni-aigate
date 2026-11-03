@@ -41,7 +41,7 @@ make check
 
 `make check` 包含只读架构与候选采购列布局检查、Go vet 和前端构建，不运行完整测试套件。`make test` 运行 Go race 和前端测试，但未提供数据库配置时部分测试会跳过。
 
-修改[采购字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)时，先复核宏、列、类型与 generated 表达式，再显式运行 `go run ./scripts/check-procurement-layout --write` 更新候选 JSON，随后用 `make procurement-layout-check` 只读比对。该物料只覆盖新表列，不是安装 SQL 或完整 catalog/reader 注册表；不得用它替代数据库与权限验收。
+修改[采购字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)时，先复核宏、列、类型与 generated 表达式，再显式运行 `go run ./scripts/check-procurement-layout --write` 更新候选 JSON，随后用 `make procurement-layout-check` 只读比对。该物料只覆盖新表列，不是安装 SQL 或完整 catalog/reader 注册表；不得用它替代数据库与权限验收。[候选关系 DDL](internal/procurementprefixschema/)是独立材料，不参与正式数据库迁移。
 
 ## 商业链路验证
 

@@ -186,7 +186,7 @@ before_delivery_state,after_delivery_state,
 dispatch_account_id?,dispatch_journal_id?,dispatch_xid?,pb_dispatch_checked_at?
 ```
 
-normal finalization 后无条件按 completed→completed、failed→failed、其余→unknown 写原 delivery，即使值相等也保留该实际动作；conflict 不伪造此 normal 动作。finalization的cause_source精确引用本次RequestDecision(branch=normal)，由其finalization_id确定目标；recovery引用本次RecoverySource。二者dispatch专有字段全NULL。dispatch使用同一`pp_attempt_delivery_sources`的mode=dispatch_permit，cause_source为NULL，**没有另一张DispatchSource**；真实prepared→sending与其managed account journal为companion，不能为同次发送再建第二child。首次sending的实际pointer/xid/PB checked_at之后不可改，delivery后续completed/failed/unknown不抹permit；managed的dispatch_account/journal全有，unmanaged两项均NULL，但真实upstream pointer/xid/PB时刻仍有。
+normal finalization 后无条件按 completed→completed、failed→failed、其余→unknown 写原 delivery，即使值相等也保留该实际动作；conflict 不伪造此 normal 动作。补充generated d_finalization/d_recovery分别按mode输出cause_source_id，仅对应模式非NULL，供完整R/A身份deferred FK。finalization的cause_source精确引用本次RequestDecision(branch=normal)，由其finalization_id确定目标；recovery引用本次RecoverySource。二者dispatch专有字段全NULL。dispatch使用同一`pp_attempt_delivery_sources`的mode=dispatch_permit，cause_source为NULL，**没有另一张DispatchSource**；真实prepared→sending与其managed account journal为companion，不能为同次发送再建第二child。首次sending的实际pointer/xid/PB checked_at之后不可改，delivery后续completed/failed/unknown不抹permit；managed的dispatch_account/journal全有，unmanaged两项均NULL，但真实upstream pointer/xid/PB时刻仍有。
 
 ### 5.2 NormalCostDecision
 
@@ -236,7 +236,7 @@ procurement_state_before?,policy(applied|suppressed_adjudicated),cost_mutation_i
 
 新采购 dispute 的 reset 必须 applied；外层 incoming conflict 在 managed p 已 settled/released 时 suppressed，不擦除 invoice，否则 applied；unmanaged 没 p，外层 reset 为 applied。原流程可能先采购 dispute reset、再外层 conflict reset，第二次即使 unknown→unknown 仍是独立真实 mutation。采购 state 先变后读的外层 suppression 与采购变更前 before 分别存，不能混成一个状态字段。
 
-procurement_dispute的cause_source指本root的ProcurementTransition(type=evidence_disputed)；incoming_conflict的cause_source指本root的ConflictSource companion（以conflict_id及其完整C/incoming/meter-choice复合键定位）。applied恰有对应reset mutation，suppressed必须没有；不能把普通normal证据或其他root的dispute当reset资格。
+procurement_dispute的cause_source指本root的ProcurementTransition(type=evidence_disputed)；incoming_conflict的cause_source指本root的ConflictSource companion（以conflict_id及其完整C/incoming/meter-choice复合键定位）。新增generated mutation_cause_kind：applied时为cause_kind追加`_reset`，否则NULL，反向输出按完整身份、映射后的cause_kind与本reset ID闭合；不能只核mutation ID存在。applied恰有对应reset mutation，suppressed必须没有；不能把普通normal证据或其他root的dispute当reset资格。
 
 ### 5.4 CostOutboxLink 与 audit
 
@@ -479,6 +479,8 @@ existing_settlement不新增资金/journal/PB/billing audit/outbox。pending同�
 本次真正受影响的ledger账户用`pp_customer_finish_ledger_effects`精确companion行组保存 `finish_outcome_id,C,tenant_id,account_id,account_tenant_id?,account_kind,before_balance,after_balance,signed_delta,journal_line_id`，PK(finish_outcome_id,account_id)，逐行双向绑定原journal line与真实account。AVAILABLE/HELD的account_tenant_id=本tenant，平台REVENUE为NULL，不能强作客户账户。new_settlement的实际line集合为HELD/AVAILABLE及最终charge>0时REVENUE，无漏或多行；此前因拟收费而锁住REVENUE、最终deadline使charge=0时，没有该账户effect行。每行after=before+delta、delta和为0、客户两账户非负、Key held/spent与reservation/customerPB一同守恒。existing/pending不得伪造本组。原funding-lot等完整资金来源继续由原独立checker核，本组不认证其他历史。
 
 profile-block列仅实际raw>R的原分支非NULL，按原billing_profile_blocks的(model_id,profile_version)复合自然键，不编造原表不存在的ID；disposition仅created/reused，旧row被复用不强绑其request为当前request。原ON CONFLICT不新增block仍有本次profile-block audit，逐值保存真实动作，不改原输出。
+
+generated `d_new_settlement = CASE WHEN result_kind = 'new_settlement' THEN settlement_id ELSE NULL END` 仅新结算分支非NULL；PB companion以(finish_outcome_id,original_source_id)绑定(id,d_new_settlement)，防止existing/pending伪造新PB效果。
 
 新finish对应的tenant/key PB效果用`pp_customer_finish_pb_effects`行组保存 `finish_outcome_id,C,scope,control_id,allocation_id,event_id,original_source_kind(settlement),original_source_id(settlement_id)`，PK(finish_outcome_id,scope)，逐条精确双向绑定原periodic event。不能用一个多义PB事件ID代表两个scope。control未配置才允许相应scope无event，须按原PB锁/来源证明；配置的各scope不许漏effect。原current/window/source守恒仍由PB完整链/deferred核验，不用此集合替代。
 

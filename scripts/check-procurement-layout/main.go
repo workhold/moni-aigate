@@ -77,7 +77,7 @@ var (
 	fieldPattern      = regexp.MustCompile(`^([a-z][a-z0-9_]*):([A-Z]+)(\?)?(?: generated(?:\(([^()]*)\)|(\?)))?$`)
 	callPattern       = regexp.MustCompile(`^([A-Z])\(([^()]*)\)(\?)?$`)
 	tailPattern       = regexp.MustCompile(`^随后(?:§3的)?([1-9][0-9]*)列(generated discriminator|cause discriminator)$`)
-	casePattern       = regexp.MustCompile(`^CASE WHEN (kind|cause_kind|source_kind) = '([a-z][a-z0-9_]*)' THEN ([a-z][a-z0-9_]*) ELSE NULL END$`)
+	casePattern       = regexp.MustCompile(`^CASE WHEN (kind|cause_kind|source_kind|mode|result_kind) = '([a-z][a-z0-9_]*)' THEN ([a-z][a-z0-9_]*) ELSE NULL END$`)
 )
 
 func main() {
@@ -594,7 +594,7 @@ func finishGenerated(draft *tableDraft, specs []generatedSpec) error {
 			}
 			col.GeneratedExpression = &expression
 		} else {
-			if draft.appendCount == 0 || !strings.HasPrefix(spec.name, "d_") {
+			if draft.appendCount == 0 || (!strings.HasPrefix(spec.name, "d_") && !(draft.Name == "pp_cost_reset_decisions" && spec.name == "mutation_cause_kind")) {
 				return fmt.Errorf("unexpected appended generated column %s", spec.name)
 			}
 			indexes[spec.name] = len(draft.Columns)
@@ -630,12 +630,35 @@ func finishGenerated(draft *tableDraft, specs []generatedSpec) error {
 }
 
 func validateCase(tableName string, spec generatedSpec, columns []column) error {
+	if tableName == "pp_cost_reset_decisions" && spec.name == "mutation_cause_kind" {
+		if spec.expression != "CASE WHEN policy = 'applied' AND cause_kind = 'procurement_dispute' THEN 'procurement_dispute_reset' WHEN policy = 'applied' AND cause_kind = 'incoming_conflict' THEN 'incoming_conflict_reset' ELSE NULL END" {
+			return errors.New("reset mutation kind has mismatched generated mapping")
+		}
+		for _, name := range []string{"policy", "cause_kind"} {
+			found := false
+			for _, col := range columns {
+				if col.Name == name && col.Type == "TEXT" && col.GeneratedExpression == nil {
+					found = true
+				}
+			}
+			if !found {
+				return fmt.Errorf("reset mutation kind references missing ordinary TEXT column %s", name)
+			}
+		}
+		return nil
+	}
 	match := casePattern.FindStringSubmatch(spec.expression)
 	if match == nil {
 		return fmt.Errorf("unsupported generated CASE for %s", spec.name)
 	}
 	condition, value, result := match[1], match[2], match[3]
 	wantCondition, wantResult := "cause_kind", "cause_source_id"
+	if tableName == "pp_attempt_delivery_sources" {
+		wantCondition = "mode"
+	}
+	if tableName == "pp_customer_finish_outcomes" {
+		wantCondition, wantResult = "result_kind", "settlement_id"
+	}
 	if tableName == "pp_root_steps" {
 		wantCondition, wantResult = "kind", "source_id"
 	}

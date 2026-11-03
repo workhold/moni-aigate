@@ -12,8 +12,8 @@
     "database_or_production_acceptance"
   ],
   "table_count": 32,
-  "column_count": 711,
-  "generated_column_count": 64,
+  "column_count": 715,
+  "generated_column_count": 68,
   "nongenerated_column_count": 647,
   "tables": [
     {
@@ -1432,8 +1432,8 @@
     },
     {
       "name": "pp_attempt_delivery_sources",
-      "column_count": 16,
-      "generated_column_count": 1,
+      "column_count": 18,
+      "generated_column_count": 3,
       "nongenerated_column_count": 15,
       "columns": [
         {
@@ -1531,6 +1531,18 @@
           "type": "TIMESTAMPTZ",
           "nullable": true,
           "generated_expression": null
+        },
+        {
+          "name": "d_finalization",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN mode = 'finalization' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "d_recovery",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN mode = 'recovery' THEN cause_source_id ELSE NULL END"
         }
       ]
     },
@@ -2366,8 +2378,8 @@
     },
     {
       "name": "pp_cost_reset_decisions",
-      "column_count": 15,
-      "generated_column_count": 3,
+      "column_count": 16,
+      "generated_column_count": 4,
       "nongenerated_column_count": 12,
       "columns": [
         {
@@ -2459,6 +2471,12 @@
           "type": "TEXT",
           "nullable": true,
           "generated_expression": "CASE WHEN cause_kind = 'incoming_conflict' THEN cause_source_id ELSE NULL END"
+        },
+        {
+          "name": "mutation_cause_kind",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN policy = 'applied' AND cause_kind = 'procurement_dispute' THEN 'procurement_dispute_reset' WHEN policy = 'applied' AND cause_kind = 'incoming_conflict' THEN 'incoming_conflict_reset' ELSE NULL END"
         }
       ]
     },
@@ -4078,8 +4096,8 @@
     },
     {
       "name": "pp_customer_finish_outcomes",
-      "column_count": 47,
-      "generated_column_count": 1,
+      "column_count": 48,
+      "generated_column_count": 2,
       "nongenerated_column_count": 46,
       "columns": [
         {
@@ -4363,6 +4381,12 @@
           "type": "TEXT",
           "nullable": true,
           "generated_expression": null
+        },
+        {
+          "name": "d_new_settlement",
+          "type": "TEXT",
+          "nullable": true,
+          "generated_expression": "CASE WHEN result_kind = 'new_settlement' THEN settlement_id ELSE NULL END"
         }
       ]
     },

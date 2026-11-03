@@ -3148,3 +3148,51 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-prefix-layout.md`
 
 </details>
+
+## 2026-11-03T10:06:57Z · 671ea0c852d3
+
+按SDD落实采购关系SQL：32表715列/68 generated与原18表110列，685约束固定摘要及phase装配，专库PG结构和12声明边race通过；同步架构模块图、HLD/LLD/计划、README/SECURITY与验证边界；无正式迁移/业务调用/权限部署变化，保留宽TEXT与完整writer/profile门禁
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1680 个源文件；本次 25 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/procurement-relation-materials.md`
+- added `internal/procurementprefixschema/materials.go`
+- added `internal/procurementprefixschema/materials/account-constraints-v1.sql`
+- added `internal/procurementprefixschema/materials/cost-constraints-v1.sql`
+- added `internal/procurementprefixschema/materials/original-columns-v1.sql`
+- added `internal/procurementprefixschema/materials/original-constraints-v1.sql`
+- added `internal/procurementprefixschema/materials/source-constraints-v1.sql`
+- added `internal/procurementprefixschema/materials/tables-v1.sql`
+- added `internal/procurementprefixschema/materials_postgres_test.go`
+- added `internal/procurementprefixschema/materials_test.go`
+- modified `scripts/check-procurement-layout/main.go`
+- modified `scripts/check-procurement-layout/main_test.go`
+- added `specs/023-periodic-products/b-procurement-account-ddl-contract.md`
+- modified `specs/023-periodic-products/b-procurement-column-layout-v1.json`
+- added `specs/023-periodic-products/b-procurement-cost-ddl-contract.md`
+- modified `specs/023-periodic-products/b-procurement-cost-request-contract.md`
+- added `specs/023-periodic-products/b-procurement-original-column-layout-v1.json`
+- added `specs/023-periodic-products/b-procurement-original-ddl-contract.md`
+- modified `specs/023-periodic-products/b-procurement-schema-contract.md`
+- added `specs/023-periodic-products/b-procurement-source-ddl-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T10:07:48Z · 44cd0435044a
+
+补记采购关系材料最终验证：685约束PG/race和12命名声明边通过，Make静态检查通过；已再次复核README使用/部署、安全报告、模块图和所有候选边界，无线上架构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1680 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-relation-materials.md`
+
+</details>

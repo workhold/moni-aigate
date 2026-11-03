@@ -38,19 +38,19 @@ func TestContractIndependentCountsAndSemantics(t *testing.T) {
 		{"pp_attempt_origins", 29, 1}, {"pp_attempt_heads", 6, 0},
 		{"pp_attempt_nodes", 9, 1}, {"pp_account_origins", 9, 1},
 		{"pp_account_heads", 12, 0}, {"pp_account_journal", 54, 4},
-		{"pp_account_command_sources", 23, 1}, {"pp_attempt_delivery_sources", 15, 1},
+		{"pp_account_command_sources", 23, 1}, {"pp_attempt_delivery_sources", 15, 3},
 		{"pp_incoming_sources", 25, 1}, {"pp_meter_choices", 15, 1},
 		{"pp_meter_origins", 6, 1}, {"pp_conflict_sources", 10, 1},
 		{"pp_request_decisions", 19, 2}, {"pp_normal_cost_decisions", 28, 1},
-		{"pp_cost_mutations", 13, 6}, {"pp_cost_reset_decisions", 12, 3},
+		{"pp_cost_mutations", 13, 6}, {"pp_cost_reset_decisions", 12, 4},
 		{"pp_evidence_choices", 35, 1}, {"pp_evidence_members", 11, 2},
 		{"pp_procurement_transitions", 36, 5}, {"pp_proposal_births", 22, 1},
 		{"pp_approval_consumptions", 39, 1}, {"pp_unmanaged_correction_sources", 21, 1},
 		{"pp_recovery_sources", 21, 1}, {"pp_cost_outbox_links", 10, 4},
-		{"pp_reconciliation_sources", 45, 1}, {"pp_customer_finish_outcomes", 46, 1},
+		{"pp_reconciliation_sources", 45, 1}, {"pp_customer_finish_outcomes", 46, 2},
 		{"pp_customer_finish_ledger_effects", 13, 1}, {"pp_customer_finish_pb_effects", 11, 1},
 	}
-	if layout.Schema != 1 || layout.Status != layoutStatus || layout.Source != contractPath || layout.TableCount != 32 || layout.ColumnCount != 711 || layout.GeneratedColumnCount != 64 || layout.NongeneratedColumnCount != 647 {
+	if layout.Schema != 1 || layout.Status != layoutStatus || layout.Source != contractPath || layout.TableCount != 32 || layout.ColumnCount != 715 || layout.GeneratedColumnCount != 68 || layout.NongeneratedColumnCount != 647 {
 		t.Fatalf("wrong manifest metadata/counts: %+v", layout)
 	}
 	if len(layout.Tables) != len(oracle) {
@@ -103,6 +103,9 @@ func TestContractIndependentCountsAndSemantics(t *testing.T) {
 		{"pp_root_steps", "d_request_birth", "TEXT", true, "CASE WHEN kind = 'request_birth' THEN source_id ELSE NULL END"},
 		{"pp_attempt_nodes", "previous_ordinal", "BIGINT", false, "ordinal - 1"},
 		{"pp_evidence_members", "previous_member_ordinal", "BIGINT", false, "member_ordinal - 1"},
+		{"pp_attempt_delivery_sources", "d_finalization", "TEXT", true, "CASE WHEN mode = 'finalization' THEN cause_source_id ELSE NULL END"},
+		{"pp_attempt_delivery_sources", "d_recovery", "TEXT", true, "CASE WHEN mode = 'recovery' THEN cause_source_id ELSE NULL END"},
+		{"pp_cost_reset_decisions", "mutation_cause_kind", "TEXT", true, "CASE WHEN policy = 'applied' AND cause_kind = 'procurement_dispute' THEN 'procurement_dispute_reset' WHEN policy = 'applied' AND cause_kind = 'incoming_conflict' THEN 'incoming_conflict_reset' ELSE NULL END"},
 		{"pp_meter_origins", "source_id", "TEXT", false, ""},
 		{"pp_meter_origins", "step_kind", "TEXT", false, "'meter_choice'::text"},
 	}
@@ -171,6 +174,10 @@ func TestStrictContractRejections(t *testing.T) {
 		{"missing inline ordinal input", "id:T,attempt_id:T,ordinal:I,previous_node_id:", "id:T,attempt_id:T,wrong_ordinal:I,previous_node_id:", "requires ordinary BIGINT"},
 		{"generated duplicates ordinary column", "command_operation_id:T generated?", "command_operation_id:T?", "duplicates an inline or ordinary column"},
 		{"unknown generated table", genRow, strings.Replace(genRow, "pp_root_steps", "pp_missing_table", 1), "unknown table"},
+		{"wrong finish branch", "CASE WHEN result_kind = 'new_settlement' THEN settlement_id ELSE NULL END", "CASE WHEN result_kind = 'pending' THEN settlement_id ELSE NULL END", "does not match"},
+		{"wrong finish result", "CASE WHEN result_kind = 'new_settlement' THEN settlement_id ELSE NULL END", "CASE WHEN result_kind = 'new_settlement' THEN customer_journal_id ELSE NULL END", "mismatched source columns"},
+		{"wrong delivery mode", "CASE WHEN mode = 'finalization' THEN cause_source_id ELSE NULL END", "CASE WHEN mode = 'recovery' THEN cause_source_id ELSE NULL END", "does not match"},
+		{"wrong reset mapping", "CASE WHEN policy = 'applied' AND cause_kind = 'procurement_dispute' THEN 'procurement_dispute_reset' WHEN policy = 'applied' AND cause_kind = 'incoming_conflict' THEN 'incoming_conflict_reset' ELSE NULL END", "CASE WHEN policy = 'applied' AND cause_kind = 'procurement_dispute' THEN 'procurement_dispute_reset' WHEN policy = 'applied' AND cause_kind = 'incoming_conflict' THEN 'wrong' ELSE NULL END", "mismatched generated mapping"},
 		{"unknown tail suffix", "；随后5列cause discriminator", "；随后5列anything", "unsupported generated tail"},
 		{"wrong tail count", "；随后5列cause discriminator", "；随后4列cause discriminator", "requires 4 columns, got 5"},
 		{"long table", "| pp_operation_roots |", "| pp_" + strings.Repeat("a", 61) + " |", "exceeds 63 bytes"},
