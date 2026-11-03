@@ -28,6 +28,12 @@ Required只从本次raw原件的无损旧Base投影独立计算，不接收旧Re
 
 ## 实施责任与完整门禁
 
+### 来源续片：当前指针与 Usage
+
+来源域在已有四链结构检查后，独立把原 request 的 `pp_last_decision_id` 和 current latest 对照 request decision 完整链末项；只核这两个指针，不将普通 dispatch/finish 的 status 或 billing_status 永久绑定最后 decision。原 attempt 的 last mutation/delivery 由其 node ordinal 筛选实际对应来源，空链回到 origin 初态；末项 ID 与当前值分别比较。dispatch 许可是该 attempt 唯一 `dispatch_permit`，四列永久身份、原 PB checked_at、managed account/journal 逐值对照原件，即使后续 delivery 改变也不能把许可换成最近 delivery。managed p 的 origin 指向同出生根的 reserve journal，last 指向该 attempt 在所属账户序中最后一个 p 动作；其他 attempt 和配置可以穿插，不使用账户全局最后 journal 代替。本片关系错误沿用 OriginalPointerRows 的(物理表,自然主键)去重，source 缺原件和原件错末项各保留其真实物理对象，不按错误原因重复计数。完整链已报结构矛盾时不能据被丢弃的序列补造空链证明。
+
+Usage 续片检查原 meter、conflict 的 normalized_usage 与 case 非 NULL proposed_usage 的真实六字段 JSON；SQL NULL、JSON null、缺字段与零值分开。严格解码、业务 int64/子集/confirmed 总数规则独立计算，共享原 work/deadline，按原物理行计 InvalidScalarRows。此片不包含 command/audit/outbox 其他 JSON、全部语义联合、历史 Reconcile 观察 cut 或最终 Qualified；这些义务继续显式保留。
+
 ### AttemptCost 的两个私有实施子域
 
 成本历史入口为 `checkAttemptCostHistory(work, Rows)`，拥有出生/quote、delivery、normal/reset/mutation、更正、恢复、outbox与当前成本的固定前九项计数和三个attempt命题候选。`checkReconciliationFinish(work, Rows)`拥有ReconciliationRows、CustomerFinishRows、CustomerLedgerRows、CustomerPBRows，独立核三种action、无attempt派生incoming及finish的结果和真实效果；两者都只读取本次raw输入，共享同一work。子结果的Complete只描述其明确的子范围，不是整个AttemptCost或来源闭合。最终AttemptCost必须等两者全部义务实施并执行后才能完整；本片不能因任一子域通过开放公共Check。

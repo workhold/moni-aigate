@@ -87,7 +87,10 @@ func (s *sourceClosureState) chains(rows PrefixRows) error {
 	if err = s.attemptChain(rows, attempts, members); err != nil {
 		return err
 	}
-	return s.accountChain(rows, accounts)
+	if err = s.accountChain(rows, accounts); err != nil {
+		return err
+	}
+	return s.currentPointers(requests, attempts, accounts)
 }
 
 func (s *sourceClosureState) requestChain(rows PrefixRows, chains map[string][]sourceRawRow) error {

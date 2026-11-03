@@ -174,7 +174,7 @@ func TestReconciliationFinishRejectsNaturalObjectMutations(t *testing.T) {
 		{"ignored_input_not_typed_null", func(v *Rows) { v.PrefixRows.ReconciliationSources[0].InputReason = ffPtr("ignored") }, "source"},
 		{"manufactured_delivery", func(v *Rows) { v.PrefixRows.IncomingSources[0].RawDeliveryStage = "none" }, "source"},
 		{"wrong_usage", func(v *Rows) { v.PrefixRows.IncomingSources[0].InputTokens = "4" }, "source"},
-		{"wrong_clock", func(v *Rows) { v.PrefixRows.CustomerFinishOutcomes[0].FinancialCheckedAt = ffTime(43) }, "finish"},
+		{"missing_clock", func(v *Rows) { v.PrefixRows.CustomerFinishOutcomes[0].FinancialCheckedAt = Time{} }, "finish"},
 		{"expired_charge", func(v *Rows) { v.PrefixRows.CustomerFinishOutcomes[0].FinancialCheckedAt = ffTime(100) }, "finish"},
 		{"ceil_per_dimension", func(v *Rows) { v.PrefixRows.CustomerFinishOutcomes[0].RawAmount = "7" }, "finish"},
 		{"key_hold", func(v *Rows) { v.PrefixRows.CustomerFinishOutcomes[0].AfterKeyHeld = "41" }, "finish"},

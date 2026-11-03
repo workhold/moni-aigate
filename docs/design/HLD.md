@@ -1,6 +1,6 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-03（受保护开账事务与旧 tenant TEXT 边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-04（采购当前指针、Usage与非单调墙钟校验）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 目标、前提与边界
 
@@ -551,6 +551,8 @@ B-P3整体未完成：[采购绝对成本更正的历史屏障缺证](../../spec
 当前新增两条隔离实施线。[纯核基础](../../internal/procurementprefix/types.go)已按[DTO合同](../../specs/023-periodic-products/b-procurement-core-dto-contract.md)覆盖40类原件482列和32类前缀715列，先对72数组执行100000行/16MiB共享预检，再[无损投影旧23数组173字段](../../internal/procurementprefix/base_projection.go)；定向race通过。随后按[实施合同](../../specs/023-periodic-products/b-procurement-replay-implementation-contract.md)加入私有来源/请求/账户重放叶子与十一命题Required自然对象集合，精确算法边界及局部候选见[架构细图](../architecture/procurement-replay.md)和[验证](../verification/procurement-replay-leaves.md)。它没有导出Check，完整来源、AttemptCost剩余历史cut、完整Base调用与aggregate仍未完成，不能发行一致或coverage结论。[账户命令writer](../../internal/procurementaccountwriter/materials.go)按[独立合同](../../specs/023-periodic-products/b-procurement-account-writer-contract.md)提供20函数/29触发器及精确账户ACL候选，actual APP LOGIN限定专项已通过，完整故障矩阵仍待完成；没有正式迁移、默认main import或在线权限变更。
 
 续片实现[成本历史](../../internal/procurementprefix/attempt_cost.go)与[Reconcile/finish](../../internal/procurementprefix/finish_replay.go)两个私有子域，分别核冻结采购价与客户售价、node成本变化、三action和最终资金时钟、真实账本/PB效果；来源新增严格路由JSON、原18表追踪联合及request26/attempt15冻结列双向核验。账户提案/批准audit金额已校准真实Money字符串ABI。finish历史request/delivery cut、reconcile最新人工来源序及历史PB闭包尚未齐，Complete=false；两个子域不冒充完整AttemptCost。完整范围和回归见[续片验证](../verification/procurement-cost-finish-replay.md)。
+
+2026-11-04续片补齐来源域current request/attempt末项、永久dispatch身份及managed journal、p出生/自身最后journal和三处严格Usage JSON；完整链坏序不能充作空历史，新source也不能借legacy NULL豁免。finish按各自deadline使用三个独立墙钟样本，允许时间回退，已释放分支不得恢复收费；[专项与回归](../verification/procurement-current-source-clocks.md)记录实际范围。[收口计划](../../specs/023-periodic-products/b-procurement-replay-closure-plan.md)明确人工action偏序和派生decision已有可用依据，未派生/sent与PB absence仍需历史观察桥接；这些后续算法未实现，未修改715列或开放公共Check。
 
 D1整体仍待剩余受控根/全域validator/guard、触发顺序和完整权限装配、独立四域重放、固定全列读集及新profile；I1完整writer、A0和B-P3均未完成。旧算法/V3材料、采购十一项缺证及catalog专项race门禁保留；正式迁移及在线来源钱包按R2独立交付。此前本机整仓失败与远端通过分别保留，本片结果见[记录](../verification/procurement-account-prefix.md)，边界和候选关系图见[统一架构](../architecture/README.md#采购账户与成本完整历史证据b-p4)。
 

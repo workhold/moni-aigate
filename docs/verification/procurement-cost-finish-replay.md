@@ -4,6 +4,8 @@
 
 没有公共 `Check`，不发行新 scope/profile，也不改变旧 checker 的十一项 Unproven。这里的 `Complete` 仅描述指定私有子域的实施范围；真实完整来源、跨域依赖交集和最终 aggregate 尚未完成。普通服务、SQL writer、迁移、启动、钱包资金和维护权限均没有接入这些新增纯核。
 
+本页保留 `028b5a5` 交付时的范围和测试结果。后续当前指针、Usage与非单调墙钟修正见[2026-11-04续片](procurement-current-source-clocks.md)，不把后续测试改签为本片结果。
+
 ## 成本历史
 
 [checkAttemptCostHistory](../../internal/procurementprefix/attempt_cost.go)从 prepared、unknown/NULL 开始，按 attempt node ordinal 消费 delivery、normal eligibility、reset/mutation、evidence/p、approval、unmanaged correction、recovery 和 cost outbox。它独立按冻结采购两维费率大整数求和后单次 ceil，更正采用绝对金额，保留同额及 basis-only 历史；current 必须等最后 mutation。自身 cost_outbox canonical 身份不能跳到 cause。

@@ -3330,3 +3330,46 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-cost-finish-replay.md`
 
 </details>
+
+## 2026-11-03T16:10:53Z · 6299c2eb784c
+
+采购来源续片：核当前request/attempt末项、永久dispatch和p origin/last双向关系及严格Usage，修复finish墙钟回退误拒；独立反例复验，补逐对象依赖与观察收口设计，同步README/HLD/LLD/架构与验证；无715列、旧checker/profile、正式迁移或在线权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1752 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/procurement-cost-finish-replay.md`
+- added `docs/verification/procurement-current-source-clocks.md`
+- modified `internal/procurementprefix/finish_replay.go`
+- added `internal/procurementprefix/finish_replay_clocks_test.go`
+- modified `internal/procurementprefix/finish_replay_test.go`
+- modified `internal/procurementprefix/source_closure.go`
+- modified `internal/procurementprefix/source_closure_birth_snapshots_test.go`
+- modified `internal/procurementprefix/source_closure_chains.go`
+- added `internal/procurementprefix/source_closure_current_pointers.go`
+- added `internal/procurementprefix/source_closure_current_pointers_test.go`
+- added `internal/procurementprefix/source_closure_usage_payloads.go`
+- added `internal/procurementprefix/source_closure_usage_payloads_test.go`
+- added `specs/023-periodic-products/b-procurement-replay-closure-plan.md`
+- modified `specs/023-periodic-products/b-procurement-replay-implementation-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-read-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T16:11:43Z · d18c15f69049
+
+归档来源当前指针与独立墙钟续片：98顶层576子例race、旧checker回归及make check通过；复核1752文件和README使用部署边界，代码测试依赖无后续修改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1752 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-current-source-clocks.md`
+
+</details>

@@ -96,6 +96,8 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 - [x] D1-R0：先冻结[DTO与旧Base投影合同](b-procurement-core-dto-contract.md)，实现[40原件482列/32前缀715列DTO](../../internal/procurementprefix/types.go)、全部72数组共享预算和[旧23数组173字段无损投影](../../internal/procurementprefix/base_projection.go)；独立旧scanner/readset/110扩列测试与定向race通过。未导出Check，完整四域与aggregate未完成。
 - [x] D1-R1叶子：先冻结[私有实施合同](b-procurement-replay-implementation-contract.md)，加入来源/请求/账户私有重放及十一类Required自然对象集合；手算对象与原checker差分、域专项和最终结果见[本轮记录](../../docs/verification/procurement-replay-leaves.md)。局部Candidates不发行Proven，来源未完整时Qualified为空。
 - [x] D1-R1成本/finish叶子：独立成本历史子域与Reconcile/finish局部核验、严格路由/原件追踪联合及冻结出生快照已实现；[续片记录](../../docs/verification/procurement-cost-finish-replay.md)保留三项finish历史cut与来源闭包余项，不将两个子域视作完整AttemptCost。
+- [x] D1-R1当前原件续片：原request/attempt末项、永久dispatch及managed journal、p出生/自身最后journal与三处Usage JSON已核；纠正finish误假定墙钟单调，详见[验证](../../docs/verification/procurement-current-source-clocks.md)。来源资格和完整AttemptCost仍未完成。
+- [x] D1-R1收口审查：形成[依赖与观察计划](b-procurement-replay-closure-plan.md)，区分人工action偏序/派生decision的可实施关系与未派生/sent、PB absence的跨序观察缺口；尚未实现人工偏序，也未改715列物料。
 - [ ] D1-R1完整：补齐来源全部闭包、AttemptCost、同次原Base真实调用、十一对象依赖交集与最终aggregate，再开放唯一完整Check；现有叶子不替代完整核心交付。
 - [x] D1-W0材料：冻结[账户writer合同](b-procurement-account-writer-contract.md)，落盘[20函数/29触发器与精确账户ACL隔离候选](../../internal/procurementaccountwriter/materials.go)；仅create/configure，不接线上或完整profile。
 - [x] D1-W0基础专项：actual APP LOGIN专库create/configure/noop/拒绝/重放、并发operation与CAS、失权/权限攻击、撤validator后COMMIT全回滚、timeout协议、SQL NULL及精确清理通过；准确范围见[记录](../../docs/verification/procurement-account-prefix.md)。

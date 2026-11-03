@@ -110,6 +110,12 @@ func TestSourceBirthSnapshotEntryAndPhysicalRowDedup(t *testing.T) {
 		return got
 	}
 	rows := sourceSnapshotFixture()
+	// This entry fixture has no attempt nodes. The narrow birthSnapshot test
+	// above deliberately uses later values; the complete entry now also checks
+	// that current values follow the actual mutation/delivery chain.
+	rows.OriginalRows.UpstreamAttempts[0].DeliveryState = "prepared"
+	rows.OriginalRows.UpstreamAttempts[0].CostStatus = "unknown"
+	rows.OriginalRows.UpstreamAttempts[0].CostAmount = nil
 	if got := run(rows); got.Stats.OriginalPointerRows != 0 {
 		t.Fatalf("complete source/original pointer fixture rejected: %+v", got.Stats)
 	}

@@ -60,6 +60,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if err := s.routeRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
+	if err := s.usagePayloadRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := s.semanticRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
@@ -96,9 +99,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	s.stats.AccountChainRows = uint64(len(s.bad["account_chain"]))
 	s.stats.EvidenceChainRows = uint64(len(s.bad["evidence_chain"]))
 	return sourceClosureResult{Stats: s.stats, Qualified: make(map[string]keySet), Complete: false, Unimplemented: []string{
-		"remaining original business scalar and closed JSON contracts, including command snapshots, audit/outbox payload shapes and Usage JSON; strict route_decisions are implemented",
+		"remaining original business scalar and closed JSON contracts, including command snapshots and audit/outbox payload shapes; strict route_decisions and original Usage JSON are implemented",
 		"remaining semantic NULL and value unions, including reconciliation proposal/role groups, full management/quote and clock branches",
-		"complete original payload/current projection slots: request/attempt current last pointers and persistent dispatch exact source identity, procurement reservation origin/last, exact ledger and PB effect sets",
+		"remaining exact original ledger and PB effect sets; request/attempt current pointers, permanent dispatch identity and procurement reservation origin/last links are implemented",
 		"mutable reconciliation last-source ordering; current implementation verifies an exact historical target but does not establish that it is the last manual action",
 		"attempt-node ordered delivery, current-cost and procurement before/after continuity, and evidence-choice member-cut continuity; request latest and account Config/Buckets continuity are implemented",
 		"per-object dependency closure and SourceClosure Qualified key construction after all remaining obligations are implemented",

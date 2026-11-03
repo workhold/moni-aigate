@@ -434,12 +434,9 @@ func (r *finishReplay) finish(o CustomerFinishOutcomeRow) {
 	if s.Action == "approve" && o.SelectedMode != "recovery" || s.Action == "release" && o.SelectedMode != "release" {
 		bad()
 	}
-	if finite(s.ApprovalCheckedAt) && finite(o.SettlementDecisionCheckedAt) && o.SettlementDecisionCheckedAt.Time.Before(s.ApprovalCheckedAt.Time) {
-		bad()
-	}
-	if finite(o.FinancialCheckedAt) && finite(o.SettlementDecisionCheckedAt) && o.FinancialCheckedAt.Time.Before(o.SettlementDecisionCheckedAt.Time) {
-		bad()
-	}
+	// These are independent samples of clock_timestamp(), which can regress.
+	// Execution order comes from the source/root contract; each sample controls
+	// only its original branch and is compared to that branch's deadline.
 	if s.Action == "release" && !nullTime(o.SettlementDecisionCheckedAt) {
 		bad()
 	}
