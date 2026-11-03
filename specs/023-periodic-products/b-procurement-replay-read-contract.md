@@ -370,7 +370,7 @@ catalog的raw/normalized bounds由固定expected的multiset multiplicity推导�
 
 目前已交付[32新表候选列布局](b-procurement-column-layout-v1.json)：715列（647可INSERT列、68 generated）及只读layout lint；此前711/64验证保留原历史。随后[固定关系材料](../../internal/procurementprefixschema/materials.go)已经展开上述新表、18原表110新增列及685项候选关系约束，隔离结构和命名声明边的既有验收见[关系记录](../../docs/verification/procurement-relation-materials.md)。完整根/trigger/ACL/profile不属于该关系包，宽TEXT复合索引接受集亦未因此解决。
 
-本轮[40原件union物料](b-procurement-original-core-layout-v1.json)与[procurementprefix静态DTO](../../internal/procurementprefix/types.go)覆盖40表482列和32表715列，完整72数组具名计数；[scalar预检](../../internal/procurementprefix/scalar.go)和[旧Base投影](../../internal/procurementprefix/base_projection.go)已实现，独立旧readset/全部110扩列/旧scanner173字段的定向race通过。原Base checker未修改；本片尚不调用完整四域或发行结果，因此**没有导出的Check**，类型Report的存在不等于新scope已可执行。
+本轮[40原件union物料](b-procurement-original-core-layout-v1.json)与[procurementprefix静态DTO](../../internal/procurementprefix/types.go)覆盖40表482列和32表715列，完整72数组具名计数；[scalar预检](../../internal/procurementprefix/scalar.go)和[旧Base投影](../../internal/procurementprefix/base_projection.go)已实现，独立旧readset/全部110扩列/旧scanner173字段的定向race通过。原Base checker未修改。后续按[私有实施合同](b-procurement-replay-implementation-contract.md)加入来源/请求/账户叶子与十一Required精确键集合，范围和测试见[本轮验证](../../docs/verification/procurement-replay-leaves.md)；完整来源、AttemptCost、同次Base执行与aggregate仍未完成，因此**没有导出的Check**，类型Report和局部Candidates的存在不等于新scope已可执行。
 
 [账户命令writer材料](../../internal/procurementaccountwriter/materials.go)按[独立合同](b-procurement-account-writer-contract.md)交付20函数/29触发器与精确账户ACL隔离候选，两个公开根只处理create/configure；actual APP LOGIN限定专项已通过，实际范围和未验矩阵见[本片记录](../../docs/verification/procurement-account-prefix.md)。当前执行错误合同为81个PP状态，含PP906旧未受证/尚未实施域拒绝；不能把局部账户校验器视作全部五个全域validator已经完成。
 

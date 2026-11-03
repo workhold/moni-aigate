@@ -222,7 +222,7 @@ make verify-mvp
 
 采购历史设计的[字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它核对候选新表的列与设计物料，不执行数据库安装，也不代表完整历史证明已经实现。
 另有[隔离关系 SQL 材料](specs/023-periodic-products/b-procurement-original-ddl-contract.md)，用于验证采购来源、账户和成本的数据库关系；它是开发期候选，不参与上面的正式迁移、部署启动或在线资金写入。
-后续[账户命令与历史校验基础](docs/verification/procurement-account-prefix.md)也按独立规格和专库测试推进；完整历史重放与生产接线尚未完成，安装时无需手工执行这些候选 SQL。
+[账户命令基础](docs/verification/procurement-account-prefix.md)和[独立历史重放叶子](docs/verification/procurement-replay-leaves.md)按独立规格推进；[模块细图](docs/architecture/procurement-replay.md)展示请求、账户、来源与待证对象的关系。完整历史重放与生产接线尚未完成，安装时无需手工执行这些候选 SQL。
 
 ## Roadmap
 

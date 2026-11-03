@@ -3235,3 +3235,48 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `specs/023-periodic-products/plan.md`
 
 </details>
+
+## 2026-11-03T13:23:20Z · db2ecf8b56f9
+
+新增采购历史私有来源/请求/账户重放、共享资源排序和十一Required自然对象集合；独立复核修复transport reason、账户/attempt顺序及计数身份，更新README/HLD/LLD/计划与模块细图。来源仍不完整且Qualified为空，AttemptCost/Base聚合未接通，无公共Check、迁移、权限或线上调用变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1729 个源文件；本次 34 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- added `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/procurement-replay-leaves.md`
+- added `internal/procurementprefix/account_replay.go`
+- added `internal/procurementprefix/account_replay_barriers.go`
+- added `internal/procurementprefix/account_replay_evidence.go`
+- added `internal/procurementprefix/account_replay_json.go`
+- added `internal/procurementprefix/account_replay_test.go`
+- added `internal/procurementprefix/replay_support.go`
+- added `internal/procurementprefix/replay_support_test.go`
+- added `internal/procurementprefix/request_replay.go`
+- added `internal/procurementprefix/request_replay_counters_test.go`
+- added `internal/procurementprefix/request_replay_input.go`
+- added `internal/procurementprefix/request_replay_test.go`
+- added `internal/procurementprefix/required.go`
+- added `internal/procurementprefix/required_parse.go`
+- added `internal/procurementprefix/required_test.go`
+- added `internal/procurementprefix/source_closure.go`
+- added `internal/procurementprefix/source_closure_canonical.go`
+- added `internal/procurementprefix/source_closure_chains.go`
+- added `internal/procurementprefix/source_closure_chains_test.go`
+- added `internal/procurementprefix/source_closure_companions.go`
+- added `internal/procurementprefix/source_closure_generated.go`
+- added `internal/procurementprefix/source_closure_generated_test.go`
+- added `internal/procurementprefix/source_closure_layout.go`
+- added `internal/procurementprefix/source_closure_pointers.go`
+- added `internal/procurementprefix/source_closure_templates_test.go`
+- added `internal/procurementprefix/source_closure_test.go`
+- added `internal/procurementprefix/source_closure_unions.go`
+- added `specs/023-periodic-products/b-procurement-replay-implementation-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-read-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>

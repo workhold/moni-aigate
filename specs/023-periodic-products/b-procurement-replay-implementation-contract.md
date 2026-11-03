@@ -1,0 +1,33 @@
+# B-P4 独立重放实施与私有对象集合
+
+2026-11-03；基线 `5e5dcdf6867b58a1107abe889895e08320b66cfc`。本页实施[完整读取/重放合同](b-procurement-replay-read-contract.md)与[DTO合同](b-procurement-core-dto-contract.md)，不缩减四域和十一命题的最终义务，不修改旧 checker、SQL writer 或已有 V3 物料。
+
+## 私有接口与预算
+
+包内 `newReplayWork(ctx, Rows)` 先运行全72数组的100000行/16MiB预检，再创建单一 `replayWork`；其 `b budget` 保存原 context 与绝对 deadline，所有域通过 `tick()` 共用该工作状态。后续不得逐域重开deadline或将大对象解析移到预算之前。输入拒绝、取消、超时或资源错误均返回零结果，不将执行失败转成数据通过。
+
+对象键使用无歧义的 `tupleKey(parts ...string)`：逐分量写十进制UTF8字节长度、冒号和原始字符串，不用分隔符拼接代替复合身份。单ID也用该编码。`keySet` 与 `propositionKeys` 均为包私有；后者的11字段与固定 `Propositions` 逐名对应，不能接受调用方提交的证明集合。
+
+三个业务域与来源域分别采用私有 `checkSourceClosure`、`checkRequestIncoming`、`checkAttemptCost`、`checkAccountPrefix`。每域接收同一work与本次完整raw Rows；私有结果包括相应固定Stats、局部Candidates/Qualified、Complete，以及明确的未实现列表。**Complete只表示本域全部算法已实施且执行，不代表数据有效或有完整来源。** 数据矛盾记录固定自然键去重Stats，缺历史来源保留gap；未实施分支使Complete=false，来源域未完整时不返回Qualified。业务域Candidate只有在该对象全部本域依赖成功后生成，最终还须与来源域及其他必需域逐对象合并，不能直接赋Proven。
+
+固定Stats遵守读取合同§3.3：同一字段按自然对象身份去重，before/after/hold/计价等错误原因不是新的对象。同一字段涉及不同物理对象族时在键内显式加类型，不能把跨表相同ID互相抵消；缺原件用对应预期对象键，真正孤立来源保留自己的类型与自然键。测试同时覆盖单对象多缺陷只计一次和不同对象同ID分别计数。
+
+在四域、准确Required枚举、完整Base调用与最终aggregate全部实施并通过之前，继续不导出 `Check`。不得为了接线而加success stub，也不能以Partial/Complete=false的局部报告冒充完整核心交付。已实现叶子须实际检查原件并有独立fixture/变异测试；未完成列表保留最终交付义务，后续继续落实。
+
+## Required的独立枚举
+
+Required只从本次raw原件的无损旧Base投影独立计算，不接收旧Report或caller计数。新枚举器以旧三份证据算法的实际条件为兼容边界，保留原去重、合法标量、候选来源、配置版本与条件分支；不能用表总行数代替。自然键逐项固定为读取合同§7的finalization/request/conflict/identity/attempt/proposal/account键。
+
+实现必须返回真实键集合，另将集合长度逐项与同次原 `CheckProcurementEvidenceGraph` 的十一Unproven交叉核验。保留旧Base所有字段原值；任何不等是实现或数据矛盾，不能调整Required使计数凑齐。测试须有手算对象集合，覆盖complex事件>1、同值更正、conflict tenant、managed/unmanaged成本、proposal当前屏障落后及配置自动pause等条件，也须覆盖乱序与重复身份。旧有mismatch不因新枚举被掩盖。
+
+## 账户序与 attempt 序的交叉检查
+
+读取合同§6.1与§6.4要求相同p动作在两条局部链中有共同的先后关系。按account ordinal重放时，每attempt的reserve/dispatch/采购effect对应canonical node ordinal必须严格递增；金额同值、零delta或相同revision不能放宽该顺序。否则两次同额更正可被交换account journal而不改变任何桶，仍会错误认证屏障。
+
+对于EvidenceChoice、ProposalBirth、ApprovalConsumed与Recovery的观察source，按同attempt动作node序定位观察node前最后动作与后首动作。source的account cut须大于等于前动作的account ordinal，且严格小于后动作的account ordinal；两端缺失按真实起点/末界处理。其他attempt可合法插入账户动作，但不能据此观察本attempt的未来动作或退回其过去状态。Recovery使用其实际effect journal之前的cut；无effect来源同样必须核区间。任一桥接失败记录对应域矛盾并撤销依赖该账户/提案的本域候选。
+
+## 实施责任与完整门禁
+
+来源域独立检查32表全部scalar/NULL联合/68 generated、18 canonical/root模板、companion与原件反向槽、request/node/account/member四链；业务域按原合同逐项重放请求输入/meter/sticky、attempt quote/cost/finish、account gate/成员/采购效果/提案/恢复。不复用writer或SQLcodec作为计算expected，不用今天当前状态填补过去before，不按时间/UUID排序。
+
+工作文件单一owner：来源域 `source_closure*.go`，请求域 `request_replay*.go`，账户域 `account_replay*.go`，共享support与Required由根集成；attempt成本域随后按同一完整合同继续。所有结果汇合后根复核精确实际范围、HLD/LLD/统一架构与验证，再按AGENTS刷新/只读检查/Make。PG仍仅根独占串行；纯核没有DB、supplier或资金权限。
