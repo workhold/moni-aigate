@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-03T17:15:19Z",
-  "review_reason": "归档来源值与连续性根集成：144顶层/845子例race、旧checker回归、前端286项及make check通过，README使用部署独立核对完成；补准确跨行和PB五类剩余义务，代码测试依赖无后续修改。",
-  "snapshot_sha256": "9d52ef061931eb5d486f15757f1b472faa5d705d6973d528c64b932bc883d76b",
-  "architecture_sha256": "f059d49e61b83cc7a9ee95aeecb24bc0faa838194c792b2c74557ff6a63e3878",
-  "history_sha256": "4d0a7a47f6ca0515c2b86c3a745f7268763d2aba64a8473f8c3952586c62afba",
+  "reviewed_at": "2026-11-03T17:59:24Z",
+  "review_reason": "归档冻结后173顶层905子例完整race、旧checker回归、最终make check及Go构建的实际结果；只更新验证记录，已复核模块图、来源/Q与B-HO1草案边界，行为代码、部署结构及权限未再变化。",
+  "snapshot_sha256": "04cc63a976ce5f12aa76cc01c5bc15903188b2ad4130f3f0f44be3821b663748",
+  "architecture_sha256": "4ff6ba0f743cdab5d353adb0e051a75af742c7e53f0298f6859a1e3cfeb823a6",
+  "history_sha256": "1f5899eb5e44eafb3f9c27dabbdeb24193ca88ab5cc2e9b66ee578cacba76afd",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "a14ec9c585bbab832b93822fef2db9f84a6d51a9a0474c851153116a1239c9f0"
+      "sha256": "6aea20155d933a9b0e5684c83b81b9a8b3edf3fd865ec4e2e3883dac9bb06d3b"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -117,7 +117,7 @@
     },
     {
       "path": "docs/architecture/procurement-replay.md",
-      "sha256": "be2701ec3abf98f15d17e2bb6a6d37de670ceac9157c4b9e417e27e398012c52"
+      "sha256": "4fa8fcdb574f1731d0ad6bc80c1fdf1c8360c6379412d85b2a4aecbbdd4492ee"
     },
     {
       "path": "docs/architecture/runtime-composer.md",
@@ -145,11 +145,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "9868cc77ffdde69c9211196897c2ac19918ae0700513e84c9f8889f5afd12488"
+      "sha256": "ee9ad15fdee862155be33b408c7dc9014bad4785469f33a50920a90d5ddb23da"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "a2efd65f21a31390379bbbbb387274f7f41e693b0e5fdc565c5e4f7070a51f92"
+      "sha256": "33e57bcb4c65a807e1fd6fb8ad320f93ea21cf719488d7ecb7db9fef30f1b5ee"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1558,6 +1558,10 @@
     {
       "path": "docs/verification/procurement-replay-leaves.md",
       "sha256": "c644821a7bc44f2c3232fa11bf01abbd261e62c9c077814be94ff2c5ab7b8980"
+    },
+    {
+      "path": "docs/verification/procurement-source-relations.md",
+      "sha256": "9bd1b3a94a1d947dac2fa3243c0d691a34edba2ccc07d0be17d61055d4f7b387"
     },
     {
       "path": "docs/verification/procurement-source-values-continuity.md",
@@ -4549,7 +4553,7 @@
     },
     {
       "path": "internal/procurementprefix/source_closure.go",
-      "sha256": "e967a47ced42b3e671a78ce53d2bc931d8538001e90a15cb761854c1553b67f4"
+      "sha256": "00fee9793342ca3022656019ab97ff6c60d577e5d391968761093912d062ec13"
     },
     {
       "path": "internal/procurementprefix/source_closure_birth_snapshots.go",
@@ -4600,6 +4604,14 @@
       "sha256": "daad27bce08913e93134e2208489991ad5623b06e9b7f3de479f4239ea7e80ea"
     },
     {
+      "path": "internal/procurementprefix/source_closure_effect_relations.go",
+      "sha256": "3f38fe3ccf81be63cd4927992084c818a58f3136a65f550bffc52fca2a12be3c"
+    },
+    {
+      "path": "internal/procurementprefix/source_closure_effect_relations_test.go",
+      "sha256": "e23b973a8ef63d1775644e29b5306706ba3d054e3a72c40733a7ec197749216c"
+    },
+    {
       "path": "internal/procurementprefix/source_closure_finish_unions.go",
       "sha256": "28efdb289c148f48632c56f94b1678ce6da004429309f20ad404dd19ea6634d4"
     },
@@ -4636,12 +4648,28 @@
       "sha256": "cf503150ca49204a7fdb59b870e8b6265ae46d87c1498bc211a80dd3169c4c77"
     },
     {
+      "path": "internal/procurementprefix/source_closure_payload_relations.go",
+      "sha256": "bf6610f0adda2a0b795b9b72daffc2af611750968512c9f9a5e6f59594a615e2"
+    },
+    {
+      "path": "internal/procurementprefix/source_closure_payload_relations_test.go",
+      "sha256": "1600b2a195990bba041c9b073ef4bc1122f69b5cc32d06f6c2bc72c6a60bbfd0"
+    },
+    {
       "path": "internal/procurementprefix/source_closure_payloads.go",
       "sha256": "dc211b9780ac033c0a39c36f4d26a0e29037b4371ecd3a8df6180993d3edbd2f"
     },
     {
       "path": "internal/procurementprefix/source_closure_payloads_test.go",
       "sha256": "04be6bf438c2c8ede839f76a644974e3407f0f181779c41ccb1059a2249dc19b"
+    },
+    {
+      "path": "internal/procurementprefix/source_closure_pb_payloads.go",
+      "sha256": "96d061bbc593d405384cc76dee4b47eb64b3aff7648635d3beaae1895d32ac9a"
+    },
+    {
+      "path": "internal/procurementprefix/source_closure_pb_payloads_test.go",
+      "sha256": "2a3f82ac13f5ddaf1d43dbb641629113d88063868971eaae439ec7076ef1d336"
     },
     {
       "path": "internal/procurementprefix/source_closure_pointers.go",
@@ -4669,7 +4697,7 @@
     },
     {
       "path": "internal/procurementprefix/source_closure_test.go",
-      "sha256": "ef36c0dd06b539b92371cbd7977c7c6eabc791648838eafc31e3d6e916e572c1"
+      "sha256": "2ddfd15afe510f476e314e8752d3c5fc3c805fccb8708dfe866d0e806bddc0fc"
     },
     {
       "path": "internal/procurementprefix/source_closure_unions.go",
@@ -6348,6 +6376,10 @@
       "sha256": "3359ea519f8682884210003d2ff478c89fe50297d537aa491fb761289d6bc171"
     },
     {
+      "path": "specs/023-periodic-products/b-procurement-effect-relations-contract.md",
+      "sha256": "c3bd7a253495bc9ce5ef749601db089dd2347d3df98538f455c6b87d24015e02"
+    },
+    {
       "path": "specs/023-periodic-products/b-procurement-exact-link-contract.md",
       "sha256": "c82fc69b8cd485e0c7a197c662b47449d8aec39f048846d5690950cc8dc269d0"
     },
@@ -6362,6 +6394,10 @@
     {
       "path": "specs/023-periodic-products/b-procurement-full-acl-contract.md",
       "sha256": "d96dd9457499e102eecd039579c6b152a6b2b15dda3df2209d94c8c3caa18013"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-historical-observation-design.md",
+      "sha256": "0498aa653b08d8cad516231469bfd8d9d1d88bad2589d94271dca4108577ccab"
     },
     {
       "path": "specs/023-periodic-products/b-procurement-identity-contract.md",
@@ -6380,8 +6416,16 @@
       "sha256": "7404ca91b301d2a334b9f949ed1a498d3d3013015fcfa59903baf8bbd25c7b03"
     },
     {
+      "path": "specs/023-periodic-products/b-procurement-payload-relations-contract.md",
+      "sha256": "4164f3eddfb373e6d4d1076528536c6c26de3975498d43d8c921b1e9022ce0e0"
+    },
+    {
       "path": "specs/023-periodic-products/b-procurement-pb-acl-contract.md",
       "sha256": "c8d41289b76daed96ac0d74146662a8537a1233552dfd6f515719a181cc12132"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-pb-json-contract.md",
+      "sha256": "dac92b42f29a774f63b3744ab0ab66bebe5b8a37e3b6ca0cd7cee79a0e4a68d1"
     },
     {
       "path": "specs/023-periodic-products/b-procurement-prefix-design.md",
@@ -6389,11 +6433,11 @@
     },
     {
       "path": "specs/023-periodic-products/b-procurement-replay-closure-plan.md",
-      "sha256": "a93b7206ffb8a9a88841a9a90d87e22bfc8c044f6d97597de477e1d3ac5a3bae"
+      "sha256": "d88877e7c9c47618121a6c0dda2215cc216e2cbd0b05d788c254a89cdcb415f8"
     },
     {
       "path": "specs/023-periodic-products/b-procurement-replay-implementation-contract.md",
-      "sha256": "4919d0dab4fca8dd2c15f7d8ba36b5407a500cd93dd949fb5133d10a1155c100"
+      "sha256": "5d783e3008892f0f7f96cc26efb94a5a6c5b08d75b686b5a925b2d55c5854df6"
     },
     {
       "path": "specs/023-periodic-products/b-procurement-replay-read-contract.md",
@@ -6445,7 +6489,7 @@
     },
     {
       "path": "specs/023-periodic-products/plan.md",
-      "sha256": "eb86f6512920faf7e9cf566f48bfffac0e1707d260d6280da525aacc8cbe317c"
+      "sha256": "48c28dbff677a2d5b61d03904c278305dd6745b55a7a482eb529c7647ff06f78"
     },
     {
       "path": "specs/023-periodic-products/review.md",

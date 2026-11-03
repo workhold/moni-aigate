@@ -99,6 +99,8 @@ A的实施/验收见[验证记录](../../docs/verification/tenant-pricing.md)，
 - [x] D1-R1当前原件续片：原request/attempt末项、永久dispatch及managed journal、p出生/自身最后journal与三处Usage JSON已核；纠正finish误假定墙钟单调，详见[验证](../../docs/verification/procurement-current-source-clocks.md)。来源资格和完整AttemptCost仍未完成。
 - [x] D1-R1收口审查：形成[依赖与观察计划](b-procurement-replay-closure-plan.md)；后续已实现人工P→A→R、原case最后人工来源与派生decision前驱桥，见[人工顺序验证](../../docs/verification/procurement-reconciliation-order.md)。未派生/sent与PB absence的跨序观察仍缺，715列物料不变。
 - [x] D1-R1来源值/连续性续片：40类原件本地值、采购命令/audit/outbox严格JSON、补充业务联合与attempt/account/member连续性已实施，见[验证](../../docs/verification/procurement-source-values-continuity.md)；PB两列操作JSON、完整跨行效果与逐对象Qualified仍未齐，无公共Check。
+- [x] D1-R1来源关系续片：PB两列严格JSON与行内绑定、四类command及typed audit/outbox内容归属、cause→mutation→link，以及真实ledger/客户与供应商PB精确效果集合已实施，见[本轮验证](../../docs/verification/procurement-source-relations.md)；完整PB/历史观察、业务资格和逐对象Q仍缺。
+- [x] D1-R1观察设计：形成[B-HO1独立版本草案](b-procurement-historical-observation-design.md)，request/scope六表仅设计，未实施/安装/验收，原715列不改签；完整writer/guard/ACL/read/profile责任须另冻结。
 - [ ] D1-R1完整：补齐来源全部闭包、AttemptCost、同次原Base真实调用、十一对象依赖交集与最终aggregate，再开放唯一完整Check；现有叶子不替代完整核心交付。
 - [x] D1-W0材料：冻结[账户writer合同](b-procurement-account-writer-contract.md)，落盘[20函数/29触发器与精确账户ACL隔离候选](../../internal/procurementaccountwriter/materials.go)；仅create/configure，不接线上或完整profile。
 - [x] D1-W0基础专项：actual APP LOGIN专库create/configure/noop/拒绝/重放、并发operation与CAS、失权/权限攻击、撤validator后COMMIT全回滚、timeout协议、SQL NULL及精确清理通过；准确范围见[记录](../../docs/verification/procurement-account-prefix.md)。

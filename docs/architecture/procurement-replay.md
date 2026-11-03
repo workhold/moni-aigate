@@ -1,6 +1,6 @@
 # 采购历史独立重放
 
-本页对应 [B-P4 读取合同](../../specs/023-periodic-products/b-procurement-replay-read-contract.md)与[本轮实施合同](../../specs/023-periodic-products/b-procurement-replay-implementation-contract.md)。它展示开发中的纯核，正式运行入口与剩余门禁见[统一架构](README.md)、[首轮叶子验证](../verification/procurement-replay-leaves.md)、[成本与结算续片](../verification/procurement-cost-finish-replay.md)、[当前指针与时钟续片](../verification/procurement-current-source-clocks.md)、[人工顺序续片](../verification/procurement-reconciliation-order.md)和[来源值与连续性](../verification/procurement-source-values-continuity.md)。后续逐对象依赖与观察缺口见[收口计划](../../specs/023-periodic-products/b-procurement-replay-closure-plan.md)。
+本页对应 [B-P4 读取合同](../../specs/023-periodic-products/b-procurement-replay-read-contract.md)与[本轮实施合同](../../specs/023-periodic-products/b-procurement-replay-implementation-contract.md)。它展示开发中的纯核，正式运行入口与剩余门禁见[统一架构](README.md)、[首轮叶子验证](../verification/procurement-replay-leaves.md)、[成本与结算续片](../verification/procurement-cost-finish-replay.md)、[当前指针与时钟续片](../verification/procurement-current-source-clocks.md)、[人工顺序续片](../verification/procurement-reconciliation-order.md)、[来源值与连续性](../verification/procurement-source-values-continuity.md)和[来源内容与真实效果](../verification/procurement-source-relations.md)。后续逐对象依赖与观察缺口见[收口计划](../../specs/023-periodic-products/b-procurement-replay-closure-plan.md)。
 
 ## 模块与数据流
 
@@ -9,7 +9,11 @@ flowchart TD
     Raw[本次完整原始行\n40 原件表 + 32 前缀表] --> Budget[共享预检\n100000 行 / 16 MiB / 原绝对 deadline]
     Budget --> Source[来源闭合\n标量、Usage、NULL 联合、68 generated\n根语言、companion、四条链及当前指针\n人工P→A→R、finish行内联合]
     Source --> OriginalLocal[40类原件本地值\n金额、NULL、桶与原标识接受集]
-    Source --> PayloadLocal[采购命令 / audit / outbox\n严格JSON与ABI / PB两JSON尚缺]
+    Source --> PayloadLocal[采购命令 / audit / outbox\n严格JSON与原始ABI]
+    Source --> PBJSON[PB操作两列严格JSON\n原生bool、UTC6日历、八段指纹]
+    Source --> PayloadRelations[命令快照与audit/outbox真实内容\n归属、cause→mutation→link、双向集合]
+    Source --> Effects[真实账本 / 客户与供应商PB效果\n原件与声明双向精确集合]
+    Source -. 后续独立版本草案 .-> HO[历史观察B-HO1\nrequest序 + PB scope序 / 六表未实现]
     Source --> BusinessLocal[补充来源行内联合\nquote / gate / revision / effect算术]
     Source --> Continuity[跨链状态连续\nattempt node / account p动作 / member cut]
     Budget --> Request[请求重放\n原始输入摘要、meter 归属与完整 cut\nsticky/latest、conflict、身份绑定]
@@ -28,7 +32,7 @@ flowchart TD
     Base -. 原值与逐项计数核对 .-> Aggregate
 ```
 
-实线是本轮已有私有执行路径，虚线是未接通的完整聚合路径。当前没有导出的 `Check`，不发行新 scope 的一致或覆盖结论。普通服务、数据库迁移、SQL writer、固定读取 profile 与维护权限均没有接入此包。
+实线是本轮已有私有执行路径，虚线表示尚未接通的聚合路径或标注的独立版本设计草案。当前没有导出的 `Check`，不发行新 scope 的一致或覆盖结论。普通服务、数据库迁移、SQL writer、固定读取 profile 与维护权限均没有接入此包。
 
 ## 职责与源码
 
@@ -40,7 +44,10 @@ flowchart TD
 | 当前指针与原件 Usage | request latest/last decision、attempt最后mutation/delivery及当前值、永久dispatch六列/真实PB时点与managed journal、p出生及自身最后journal双向核验；三处六字段Usage严格JSON | [当前指针](../../internal/procurementprefix/source_closure_current_pointers.go)、[Usage](../../internal/procurementprefix/source_closure_usage_payloads.go) |
 | 人工顺序与行内联合 | P→A→R固定偏序、唯一action、proposal/actor消费、真实pending承接与case六列last；行内NULL/角色/result/金额/profile与mode/reason/deadline独立校验 | [人工偏序](../../internal/procurementprefix/source_closure_reconciliation_order.go)、[行内联合](../../internal/procurementprefix/source_closure_finish_unions.go) |
 | 原件本地值 | 40类安全投影逐表核金额/枚举/NULL/余额桶/PB本地组；旧TEXT身份不新增UUID约束，原procurement nil UUID与PB非零UUID分别保留 | [原件值](../../internal/procurementprefix/source_closure_original_values.go) |
-| 命令与消息payload | 四kind命令快照、固定采购audit和cost/本次Reconcile outbox严格对象与原金额ABI；未知共享族与PB两JSON保留独立义务 | [payload](../../internal/procurementprefix/source_closure_payloads.go) |
+| 命令与消息payload | 四kind命令快照、固定采购audit和cost/本次Reconcile outbox严格对象与原金额ABI；其他普通共享族保持原范围 | [payload](../../internal/procurementprefix/source_closure_payloads.go) |
+| PB操作JSON | safe_input四字段、result十二字段/窗口五字段；原生bool、UTC6自然日/月、changed/no-op候选、路径/时间/八段长度framing指纹行内绑定；未认证真实配置与absence | [PB payload](../../internal/procurementprefix/source_closure_pb_payloads.go) |
+| 命令与消息内容 | 四类command快照、typed audit及outbox内容/真实归属；cause→mutation→link、正反向与已知业务槽集合，保留legacy动态历史缺证 | [内容关系](../../internal/procurementprefix/source_closure_payload_relations.go) |
+| 来源效果关系 | 新settlement/journal、HELD/AVAILABLE及正charge时REVENUE的完整line集合；客户tenant/Key PB和supplier PB真实event/allocation/origin/window及delta；不以当前配置证明absence | [效果关系](../../internal/procurementprefix/source_closure_effect_relations.go) |
 | 补充业务联合 | 选中部分未知quote、managed完整价、Usage/digest、成本分支、账户gate/桶/revision、八PE目标与合并ceil、signed收入余额行内算术 | [业务联合](../../internal/procurementprefix/source_closure_business_unions.go) |
 | 来源连续性 | 按attempt node推进delivery/cost/p，dispatch经真实journal推进p；account筛同attempt动作同序，观察cut区间、member出生/复用与历史前缀相等 | [连续性](../../internal/procurementprefix/source_closure_continuity.go) |
 | 请求 | 独立复算原 Go JSON/SHA ABI；保留 meter 首次出生归属，按 ordinal 核完整竞争集合和 witness；重放跨 attempt 或无 attempt 的 sticky/latest 与 conflict | [request_replay.go](../../internal/procurementprefix/request_replay.go)、[输入 ABI](../../internal/procurementprefix/request_replay_input.go) |
@@ -59,7 +66,7 @@ Required 的十一类对象依次是 finalization、request、conflict、两个 
 
 当前原件的last与immutable出生快照分别核验。request末decision可以是conflict而latest仍为旧normal；attempt最新delivery可以是收尾而永久permit仍是初次dispatch。p.last按账户全序筛选本attempt，允许其他配置和attempt穿插；新journal不能借全NULL追踪列伪装旧p，也不能指向另一账户的同ID attempt。真正全NULL且无新来源的旧行保留缺证，不倒造历史。
 
-来源续片独立核原件值、采购payload、补充业务联合及跨链before/after；不调用writer或其他域的Stats来决定通过。unmanaged可冻结选中但部分未知的报价，managed仍须完整known价；cost_recorded金额可达NUMERIC100，人工Money仍为int64，REVENUE余额保留signed。坏序非空历史不能降成空链，跨表同ID分开计数，执行错误返回零结果。PB操作的safe_input/result_snapshot及完整calendar/configuration/window关系、原件ledger/PB精确效果集合和逐对象Qualified仍未收口；不以新增叶子替代这些义务。
+来源续片独立核原件值、采购payload、补充业务联合及跨链before/after；不调用writer或其他域的Stats来决定通过。unmanaged可冻结选中但部分未知的报价，managed仍须完整known价；cost_recorded金额可达NUMERIC100，人工Money仍为int64，REVENUE余额保留signed。坏序非空历史不能降成空链，跨表同ID分开计数，执行错误返回零结果。后续三个来源叶子已补PB两列严格JSON、采购命令与消息内容、以及真实ledger/客户与供应商PB正反向效果集合；同业务身份的额外全NULL原件不能降成旧件。完整calendar/configuration/window/absence、实际业务资格与逐对象Qualified仍未收口；不以这些叶子替代剩余义务。
 
 finish 只核本次历史局部 before/after 与真实输出，不把今天 Key/ledger 余额、已退款金额或旧 profile-block.request 倒填到过去。租户/Key PB 使用原 admission window、真实 reserve/import event 和本次 settlement event，客户不允许 legacy catchup。人工source按P→A→R固定语言核proposal/actor与case最后人工pointer，不对自动reason/完整客户状态历史发明总序；新A已结算不能再新R，A后新R必须由准确pending outcome承接。派生incoming唯一normal decision精确绑定source.prior_latest，同内容不能换ID；meter与完整request序仍由RequestIncoming负责。旧缺P/A或全NULL last的case保留私有LegacyCases，不作完整uncovered集合或资格。finish现保留两项缺口：未派生decision的历史latest/sent观察，以及历史control absence和完整配置/窗口链。两个成本私有子域不等于完整 AttemptCost；来源和最终 aggregate 也继续未完成。
 
@@ -68,3 +75,5 @@ finish 只核本次历史局部 before/after 与真实输出，不把今天 Key/
 纯核不连接数据库，不读取供应商密钥，不发模型请求，不修改钱包、采购余额或历史。执行失败返回错误与零结果；数据矛盾保留固定分类计数，不能包装成执行错误后忽略，也不能因缺证而隐藏确定矛盾。
 
 完整来源闭合、AttemptCost 的剩余历史 cut、完整 Base 调用及 aggregate 仍是交付前置；当前局部算法不解除旧十一项历史 Unproven。最终还需要完整固定 scanner/readset、V4 profile、basis/catalog、protected pre/post、actual APP 全路径与独立验收；正式迁移/启动和在线资金接线继续由 R2 合同控制。已完成与未完成算法的逐项范围以[成本与结算验证](../verification/procurement-cost-finish-replay.md)为准。
+
+历史观察另见[B-HO1独立版本设计草案](../../specs/023-periodic-products/b-procurement-historical-observation-design.md)。六表候选未实施、未安装、未验收；现有正常decision前驱与真实PB event桥继续复用，未派生decision/latest/sent与scope absence/首次配置完整导入须由全writer同步和新版本材料补证，不能在现715列上回填。

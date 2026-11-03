@@ -3461,3 +3461,60 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-source-values-continuity.md`
 
 </details>
+
+## 2026-11-03T17:55:27Z · fc70a145af86
+
+采购来源续片按三个合同实现PB操作严格JSON/指纹、命令审计消息内容归属与真实ledger/客户及供应商PB效果双向集合，补业务身份和物理owner唯一门禁；已语义复核模块调用图、HLD/LLD、能力状态和README；新增B-HO1仅为历史观察设计草案，普通finish来源、legacy分支和全writer锁图待独立冻结，正式迁移/权限/部署及在线资金不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1778 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/procurement-source-relations.md`
+- modified `internal/procurementprefix/source_closure.go`
+- added `internal/procurementprefix/source_closure_effect_relations.go`
+- added `internal/procurementprefix/source_closure_effect_relations_test.go`
+- added `internal/procurementprefix/source_closure_payload_relations.go`
+- added `internal/procurementprefix/source_closure_payload_relations_test.go`
+- added `internal/procurementprefix/source_closure_pb_payloads.go`
+- added `internal/procurementprefix/source_closure_pb_payloads_test.go`
+- modified `internal/procurementprefix/source_closure_test.go`
+- added `specs/023-periodic-products/b-procurement-effect-relations-contract.md`
+- added `specs/023-periodic-products/b-procurement-historical-observation-design.md`
+- added `specs/023-periodic-products/b-procurement-payload-relations-contract.md`
+- added `specs/023-periodic-products/b-procurement-pb-json-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-closure-plan.md`
+- modified `specs/023-periodic-products/b-procurement-replay-implementation-contract.md`
+- modified `specs/023-periodic-products/plan.md`
+
+</details>
+
+## 2026-11-03T17:58:29Z · 8d2b50822af4
+
+独立复核补齐effect直接枚举的owner及admission/supplier event物理唯一门禁并持久回归；最终完整新包173顶层905子例race全通过。再次语义复核来源域职责、错误归属、未完成观察/Q边界及B-HO1冻结前门禁，部署和资金授权不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1778 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-source-relations.md`
+- modified `internal/procurementprefix/source_closure_effect_relations.go`
+- modified `internal/procurementprefix/source_closure_effect_relations_test.go`
+
+</details>
+
+## 2026-11-03T17:59:24Z · 04cc63a976ce
+
+归档冻结后173顶层905子例完整race、旧checker回归、最终make check及Go构建的实际结果；只更新验证记录，已复核模块图、来源/Q与B-HO1草案边界，行为代码、部署结构及权限未再变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1778 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-source-relations.md`
+
+</details>

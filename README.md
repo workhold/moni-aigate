@@ -232,7 +232,7 @@ make verify-mvp
 
 采购历史设计的[字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它核对候选新表的列与设计物料，不执行数据库安装，也不代表完整历史证明已经实现。
 另有[隔离关系 SQL 材料](specs/023-periodic-products/b-procurement-original-ddl-contract.md)，用于验证采购来源、账户和成本的数据库关系；它是开发期候选，不参与上面的正式迁移、部署启动或在线资金写入。
-[账户命令基础](docs/verification/procurement-account-prefix.md)和[独立历史重放叶子](docs/verification/procurement-replay-leaves.md)按独立规格推进；[采购成本与客户结算校验](docs/verification/procurement-cost-finish-replay.md)核对上游成本、客户收费、账本和周期预算效果。另已补齐[当前记录、派发许可与时钟校验](docs/verification/procurement-current-source-clocks.md)、[人工对账顺序、批准前驱与结算分支校验](docs/verification/procurement-reconciliation-order.md)，以及[来源字段、严格消息格式与跨链连续性](docs/verification/procurement-source-values-continuity.md)的私有校验；[模块细图](docs/architecture/procurement-replay.md)展示实际模块与待证对象。完整历史闭合与生产接线尚未完成，安装时无需手工执行这些候选 SQL。
+[账户命令基础](docs/verification/procurement-account-prefix.md)和[独立历史重放叶子](docs/verification/procurement-replay-leaves.md)按独立规格推进；[采购成本与客户结算校验](docs/verification/procurement-cost-finish-replay.md)核对上游成本、客户收费、账本和周期预算效果。另已补齐[当前记录、派发许可与时钟校验](docs/verification/procurement-current-source-clocks.md)、[人工对账顺序、批准前驱与结算分支校验](docs/verification/procurement-reconciliation-order.md)，以及[来源字段、严格消息格式与跨链连续性](docs/verification/procurement-source-values-continuity.md)的私有校验；[模块细图](docs/architecture/procurement-replay.md)展示实际模块与待证对象。另已实现[预算操作格式、消息归属与真实资金效果核验](docs/verification/procurement-source-relations.md)，并形成[历史观察证据设计草案](specs/023-periodic-products/b-procurement-historical-observation-design.md)。完整历史闭合与生产接线尚未完成，安装时无需手工执行这些候选 SQL。
 
 ## Roadmap
 

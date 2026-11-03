@@ -41,8 +41,8 @@ func (s *sourceClosureState) mark(kind, table, key string) {
 }
 
 // checkSourceClosure checks genuine, independently computed structural leaves.
-// Complete is deliberately false: local values, payloads and continuity do not
-// replace the remaining PB payload/history, exact effect and dependency work.
+// Complete is deliberately false: local payloads, declared output relations and
+// continuity do not replace full historical observations and eligibility work.
 // The domain cannot supply Qualified object keys until every obligation exists.
 func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if w == nil || w.b.ctx == nil {
@@ -72,6 +72,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if err := s.payloadRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
+	if err := s.pbPayloadRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := s.semanticRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
@@ -91,6 +94,12 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 		return sourceClosureResult{}, err
 	}
 	if err := s.originalPointers(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	if err := s.payloadRelationRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	if err := s.effectRelations(); err != nil {
 		return sourceClosureResult{}, err
 	}
 	manual, err := s.reconciliationOrder()
@@ -121,10 +130,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	s.stats.AccountChainRows = uint64(len(s.bad["account_chain"]))
 	s.stats.EvidenceChainRows = uint64(len(s.bad["evidence_chain"]))
 	return sourceClosureResult{Stats: s.stats, Qualified: make(map[string]keySet), ReconciliationLegacyCases: manual.LegacyCases, Complete: false, Unimplemented: []string{
-		"strict periodic_budget_operations safe_input and result_snapshot JSON contracts; original projected local values, command snapshots, selected audit/outbox, route_decisions and Usage payloads are implemented",
-		"cross-row source/original contents, actual cause and decision eligibility dependencies; management, quote, procurement-event and Reconciliation/finish row-local unions do not independently qualify their sources",
-		"remaining exact original ledger and PB effect sets; request/attempt current pointers, permanent dispatch identity and procurement reservation origin/last links are implemented",
-		"historical latest/sent observation for Reconcile branches without a derived request decision, and complete PB calendar/configuration/window/absence bridges; attempt delivery/cost/procurement and member-cut continuity are implemented",
+		"remaining cross-row source/original semantics and actual business cause/decision eligibility; implemented command snapshots, typed audit/outbox slots, cost cause-mutation-link and declared ledger/PB effects do not qualify their sources",
+		"complete historical PB control/version/calendar/window/observation/effect prefixes and absence bridges; operation JSON/fingerprint and declared customer/supplier effect relations are implemented",
+		"historical latest/sent observation for Reconcile branches without a derived request decision; existing decision-predecessor, attempt continuity and positive PB event bridges do not prove the missing observations",
 		"per-object dependency closure and SourceClosure Qualified key construction after all remaining obligations are implemented",
 	}}, nil
 }
@@ -207,6 +215,9 @@ func sourcePhysicalCell(v reflect.Value, kind byte) bool {
 }
 
 func sourceField(row reflect.Value, name string) reflect.Value {
+	if !row.IsValid() || row.Kind() != reflect.Struct {
+		return reflect.Value{}
+	}
 	for i := 0; i < row.NumField(); i++ {
 		if row.Type().Field(i).Tag.Get("json") == name {
 			return row.Field(i)

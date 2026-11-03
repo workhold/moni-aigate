@@ -50,7 +50,7 @@ RequestHead认证latest/sticky序；last decision可以是conflict，此时lates
 
 ## 4. Qualified依赖与实施顺序
 
-后续[来源值与连续性续片](../../docs/verification/procurement-source-values-continuity.md)已实施40类原件本地值、采购命令/audit/outbox严格JSON、补充业务行内联合和attempt/account/member连续性。仍需完成PB两列操作JSON与完整calendar/configuration/window闭包、原件ledger/PB跨行精确效果槽、历史观察依据，以及下面的逐对象依赖认证。局部值/行内联合与连续性不代替逐对象cause和完整效果选择；业务叶子的计价、p变动和member核验须先冻结有效对象集合的身份与责任，不能用某域Stats全0推定全部来源有效。
+后续[来源值与连续性续片](../../docs/verification/procurement-source-values-continuity.md)已实施40类原件本地值、采购命令/audit/outbox严格JSON、补充业务行内联合和attempt/account/member连续性。后续已按[PB JSON合同](b-procurement-pb-json-contract.md)、[内容关系合同](b-procurement-payload-relations-contract.md)和[效果关系合同](b-procurement-effect-relations-contract.md)实施三组来源叶子，见[验证](../../docs/verification/procurement-source-relations.md)。仍需完成完整calendar/configuration/window/absence闭包、历史观察依据、实际业务资格，以及下面的逐对象依赖认证。局部值/行内联合与连续性不代替逐对象cause和完整效果选择；业务叶子的计价、p变动和member核验须先冻结有效对象集合的身份与责任，不能用某域Stats全0推定全部来源有效。
 
 共同资格Q至少包含对象所属root/全部step、唯一canonical child、精确companion/原件、origin、相关完整链与当前投影。复合身份按(物理表,自然主键)，跨表同ID不能合并。建议先以本地合法对象建立候选，沿缺失/坏依赖反向剔除至稳定，或等价处理强连通分量；双向约束不能采用从空集只加已全qualified父对象的算法，否则合法环永远无法进入。
 
@@ -65,3 +65,7 @@ RequestHead认证latest/sticky序；last decision可以是conflict，此时lates
 | account pause及admission | 全账户配置与p动作、真实blocker/gate、永久permit与PB效果；其cause递归依赖对应域 |
 
 凡incoming带ReconcileSourceID，额外依赖真实Reconcile语义及适用finish，不因source字符串相同就授资格。Q使用物理行身份，Required使用命题对象身份，二者不能直接按同字符串求交。每个命题i先定义 `EligibleQ_i={k ∈ Required_i | deps_i(k)全部位于Q}`，再以 `Proven_i=Required_i ∩ Candidate_i ∩ EligibleQ_i` 计数。Candidate_i必须按上表逐对象映射其全部必需业务依赖，例如attempt通过origin.account_id定位账户候选，不直接将attempt键集合与account键集合相交。保留同次旧Base逐值与十一计数交叉核验。来源、四域、Base和aggregate未齐前继续不开放公共Check。
+
+## 5. 历史观察独立版本草案
+
+现已形成[B-HO1设计](b-procurement-historical-observation-design.md)：request序与scope序六表候选，明确原正向桥、全writer/锁图同步、完整首配导入、legacy与独立新reader/replay/ACL/basis/catalog责任。此为设计草案，未实现/未安装/未验收；不就地修改V1的715列，不关闭上文历史观察或资格门禁。

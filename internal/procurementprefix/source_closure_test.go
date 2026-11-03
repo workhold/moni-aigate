@@ -75,7 +75,17 @@ func TestSourcePhysicalValuesAndDuplicateNaturalKeys(t *testing.T) {
 
 func sourcePointerFixture() Rows {
 	p := sourcePtr
-	return Rows{PrefixRows: PrefixRows{AccountCommandSources: []AccountCommandSourceRow{{ID: "source", RootID: "root", StepNo: "1", StepKind: "account_command", CreatedXID: "12", OperationID: "operation", AuditID: "audit"}}}, OriginalRows: OriginalRows{ProcurementCommands: []ProcurementCommandRow{{OperationID: "operation", PPSourceID: p("source"), PPRootID: p("root"), PPRootStep: p("1"), PPCreatedXID: p("12")}}, AuditEvents: []AuditEventRow{{ID: "audit", PPRootID: p("root"), PPRootStep: p("1"), PPSourceKind: p("account_command"), PPSourceID: p("source"), PPSourceRole: p("account_command"), PPCreatedXID: p("12")}}}}
+	at := Time{Time: time.Date(2026, 11, 4, 0, 0, 0, 0, time.UTC), Valid: true}
+	// Keep the pointer-only fixture's declared output valid at the complete
+	// private entry too: later leaves now authenticate command/audit contents.
+	const digest = "bd7aa8f33b3a6a0c417bc6d511142158644059ec3f8d74cb87ea36b2a7f0da65"
+	return Rows{
+		PrefixRows: PrefixRows{AccountCommandSources: []AccountCommandSourceRow{{ID: "source", RootID: "root", StepNo: "1", StepKind: "account_command", CreatedXID: "12", OperationID: "operation", AuditID: "audit", ActorID: "admin", Kind: "account_configure", InputTargetID: "account", InputExpectedRevision: p("1"), InputLabel: "label", InputProvider: "provider", InputState: "active", InputLimitAmount: "100", TargetID: "account", InputDigest: digest, CommandStatus: "rejected", CommandReason: "not_found", CommandCreatedAt: at}}},
+		OriginalRows: OriginalRows{
+			ProcurementCommands: []ProcurementCommandRow{{OperationID: "operation", Actor: "admin", Kind: "account_configure", TargetID: "account", InputDigest: digest, Status: "rejected", Reason: "not_found", BeforeState: "null", AfterState: "null", CreatedAt: at, PPSourceID: p("source"), PPRootID: p("root"), PPRootStep: p("1"), PPCreatedXID: p("12")}},
+			AuditEvents:         []AuditEventRow{{ID: "audit", Actor: "admin", Action: "procurement.command.rejected", Target: "operation", SanitizedDiff: `{"kind":"account_configure","status":"rejected"}`, CreatedAt: at, PPRootID: p("root"), PPRootStep: p("1"), PPSourceKind: p("account_command"), PPSourceID: p("source"), PPSourceRole: p("account_command"), PPCreatedXID: p("12")}},
+		},
+	}
 }
 func TestSourceOriginalPointerSlotsAndEntryCall(t *testing.T) {
 	for _, tc := range []struct {
