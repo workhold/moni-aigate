@@ -14,6 +14,9 @@ type sourceClosureResult struct {
 	Qualified     map[string]keySet
 	Complete      bool
 	Unimplemented []string
+	// Only manual-action legacy cases; this is not the complete uncovered-case
+	// set, nor an authorization result for another replay domain.
+	ReconciliationLegacyCases keySet
 }
 
 type sourceClosureState struct {
@@ -66,6 +69,9 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	if err := s.semanticRows(); err != nil {
 		return sourceClosureResult{}, err
 	}
+	if err := s.finishUnionRows(); err != nil {
+		return sourceClosureResult{}, err
+	}
 	if err := s.generated(rows.PrefixRows); err != nil {
 		return sourceClosureResult{}, err
 	}
@@ -76,6 +82,10 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 		return sourceClosureResult{}, err
 	}
 	if err := s.originalPointers(); err != nil {
+		return sourceClosureResult{}, err
+	}
+	manual, err := s.reconciliationOrder()
+	if err != nil {
 		return sourceClosureResult{}, err
 	}
 	if err := s.birthSnapshots(); err != nil {
@@ -98,11 +108,10 @@ func checkSourceClosure(w *replayWork, rows Rows) (sourceClosureResult, error) {
 	s.stats.AttemptChainRows = uint64(len(s.bad["attempt_chain"]))
 	s.stats.AccountChainRows = uint64(len(s.bad["account_chain"]))
 	s.stats.EvidenceChainRows = uint64(len(s.bad["evidence_chain"]))
-	return sourceClosureResult{Stats: s.stats, Qualified: make(map[string]keySet), Complete: false, Unimplemented: []string{
+	return sourceClosureResult{Stats: s.stats, Qualified: make(map[string]keySet), ReconciliationLegacyCases: manual.LegacyCases, Complete: false, Unimplemented: []string{
 		"remaining original business scalar and closed JSON contracts, including command snapshots and audit/outbox payload shapes; strict route_decisions and original Usage JSON are implemented",
-		"remaining semantic NULL and value unions, including reconciliation proposal/role groups, full management/quote and clock branches",
+		"remaining semantic NULL and value unions for management/quote and other source branches; Reconciliation/finish row-local role, proposal, result and clock unions are implemented",
 		"remaining exact original ledger and PB effect sets; request/attempt current pointers, permanent dispatch identity and procurement reservation origin/last links are implemented",
-		"mutable reconciliation last-source ordering; current implementation verifies an exact historical target but does not establish that it is the last manual action",
 		"attempt-node ordered delivery, current-cost and procurement before/after continuity, and evidence-choice member-cut continuity; request latest and account Config/Buckets continuity are implemented",
 		"per-object dependency closure and SourceClosure Qualified key construction after all remaining obligations are implemented",
 	}}, nil

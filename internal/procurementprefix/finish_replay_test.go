@@ -58,6 +58,7 @@ func ffFixture(action string) Rows {
 		originals.FinalizationRecords = []FinalizationRecordRow{{ID: "prior", TenantID: "tenant", RequestID: "request", ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true, FinishReason: "stop"}, {ID: "final", TenantID: "tenant", RequestID: "request", EventID: "meter", ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true, FinishReason: "stop"}}
 		originals.MeteringEvents = []MeteringEventRow{{ID: "meter", TenantID: "tenant", RequestID: "request", NormalizedUsage: usage}}
 		prefix.IncomingSources = []IncomingSourceRow{{ID: "incoming", RootID: "root", StepNo: "2", StepKind: "incoming", CreatedXID: "123", TenantID: "tenant", RequestID: "request", InputFinalizationID: "final", Source: "approved_reconciliation", SourceEventID: "case", UsageStatus: "confirmed_final", InputTokens: "3", OutputTokens: "5", TotalTokens: "8", CachedTokens: "1", ReasoningTokens: "2", ProtocolOutcome: "completed", TransportEndReason: "done", RawDeliveryStage: "content", RawContentWritten: true, FinishReason: "stop", ReconcileSourceID: ffPtr("source")}}
+		prefix.RequestDecisions = []RequestDecisionRow{{ID: "decision", RootID: "root", StepNo: "4", StepKind: "request_decision", CreatedXID: "123", TenantID: "tenant", RequestID: "request", IncomingSourceID: "incoming", Branch: "normal", BeforeLatestID: ffPtr("prior"), AfterLatestID: ffPtr("final"), FinalizationID: ffPtr("final")}}
 		originals.AuditEvents[0] = ffAudit("reconcile-audit", "checker", "reconciliation.approved", "case", "reconciliation", `{"outcome":"settled"}`)
 	}
 	if action == "propose" {
@@ -126,7 +127,7 @@ func ffClean(t *testing.T, rows Rows) {
 	if v.Stats != (AttemptCost{}) {
 		t.Fatalf("mismatch: %+v", v.Stats)
 	}
-	if v.Complete || len(v.Unimplemented) != 3 {
+	if v.Complete || len(v.Unimplemented) != 2 {
 		t.Fatalf("partial domain issued complete: %+v", v)
 	}
 }

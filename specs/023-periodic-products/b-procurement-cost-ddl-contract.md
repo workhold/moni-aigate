@@ -89,7 +89,7 @@ periodic_budget_events(id,control_id,allocation_id,source_kind,source_id)
 4. 受保护原件的新行不能全NULL逃逸；action/kind/role槽、audit/outbox JSON与原ABI/版本/时间逐值；六G只授权实际root消费，不认证caller自报。
 5. Reconcile角色实际失权/幂等先后、实际case proposal输入、source-first、子finalize只同root且无attempt、内部conflict全回滚、三时钟及最终资金deadline。case current反向pointer只表示最近人工动作，不把自动finish/markPending误认证成手工历史。
 6. settlement.finalization_id的NULL精确相等，old existing result不改旧G；journal actor=system/currency、created_txid与实际top-xid；profile created/reused真实存在性与本次audit。原NULL FK的MATCH SIMPLE不作为NULL相等证明。
-7. ledger集合精确为HELD/AVAILABLE及最终charge>0才REVENUE；逐行delta与父R/charge相等且合计0，不能只数行；真实locked余额before/target/RETURNING和tenant/key守恒。PB按当时scope配置/原window逐event完整，缺control才可无effect，不能用今天配置证明历史absence。
+7. ledger集合精确为HELD/AVAILABLE及最终charge>0才REVENUE；逐行delta与父R/charge相等且合计0，不能只数行；真实locked余额before/target/RETURNING和tenant/key守恒。PB按当时scope配置/原window与真实allocation逐event完整，保留原helper的缺control及跟踪前已关闭、marker为空且无allocation的无效果分支；不能用今天control或缺event证明历史absence，缺历史桥接保留gap。
 8. owner/角色/列ACL/PUBLIC/defaultACL、即时与APP COMMIT身份、不可变拒写/TRUNCATE、source/root seal、取消/超时/回滚/未知COMMIT只读观察和原资金/PB组合。所有实现/PG检查仍未由静态DDL材料验收。
 
 本片不改旧checker/Base/十一Unproven、V3读集/roots/golden、已应用迁移或生产环境。root汇总全体材料后才可语义复核架构、更新清单并运行真实集成验证。

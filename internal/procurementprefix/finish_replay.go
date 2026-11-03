@@ -31,6 +31,7 @@ type finishReplay struct {
 	finals                map[string]FinalizationRecordRow
 	meters                map[string]MeteringEventRow
 	incoming              map[string]IncomingSourceRow
+	decisionsFor          map[string][]RequestDecisionRow
 	audits                map[string]AuditEventRow
 	outbox                map[string]ProjectionOutboxRow
 	settlements           map[string]SettlementRow
@@ -100,8 +101,7 @@ func checkReconciliationFinish(w *replayWork, rows Rows) (reconciliationFinishRe
 	return reconciliationFinishResult{
 		Stats: AttemptCost{ReconciliationRows: uint64(len(r.hits[0])), CustomerFinishRows: uint64(len(r.hits[1])), CustomerLedgerRows: uint64(len(r.hits[2])), CustomerPBRows: uint64(len(r.hits[3]))},
 		Unimplemented: []string{
-			"request historical latest/attempt-delivery cut for reconciliation and no-latest settlement absence",
-			"mutable reconciliation last-source total order including intervening automatic customer flows",
+			"request historical latest/attempt-delivery cut for reconciliation without a derived decision and no-latest settlement absence; the derived decision predecessor bridge is implemented",
 			"historical customer-control absence and complete PB configuration/window closure",
 		},
 	}, nil
@@ -118,6 +118,13 @@ func (r *finishReplay) index() {
 	r.finals = finishIndex(r, o.FinalizationRecords, func(v FinalizationRecordRow) string { return v.ID })
 	r.meters = finishIndex(r, o.MeteringEvents, func(v MeteringEventRow) string { return v.ID })
 	r.incoming = finishIndex(r, p.IncomingSources, func(v IncomingSourceRow) string { return v.ID })
+	r.decisionsFor = make(map[string][]RequestDecisionRow)
+	for _, d := range p.RequestDecisions {
+		if !r.tick() {
+			return
+		}
+		r.decisionsFor[d.IncomingSourceID] = append(r.decisionsFor[d.IncomingSourceID], d)
+	}
 	r.audits = finishIndex(r, o.AuditEvents, func(v AuditEventRow) string { return v.ID })
 	r.outbox = finishIndex(r, o.ProjectionOutbox, func(v ProjectionOutboxRow) string { return v.EventID })
 	r.settlements = finishIndex(r, o.Settlements, func(v SettlementRow) string { return v.ID })
@@ -317,6 +324,24 @@ func (r *finishReplay) approvedIncoming(s ReconciliationSourceRow, u requestUsag
 	if !ok || !uok || got != u || in.AttemptID != nil || in.Source != "approved_reconciliation" || in.SourceEventID != s.CaseID || in.TenantID != s.TenantID || in.RequestID != s.RequestID || in.RootID != s.RootID || in.CreatedXID != s.CreatedXID || !requestPointer(in.ReconcileSourceID, s.ID) || !requestPointer(s.FinalizationID, in.InputFinalizationID) || in.ProtocolOutcome != f.ProtocolOutcome || in.TransportEndReason != f.TransportEndReason || in.RawDeliveryStage != f.DeliveryStage || in.RawContentWritten != f.ContentWritten || in.FinishReason != f.FinishReason {
 		bad()
 	}
+	ds := r.decisionsFor[in.ID]
+	if len(ds) != 1 {
+		bad()
+		return
+	}
+	d := ds[0]
+	if in.StepKind != "incoming" || d.StepKind != "request_decision" || d.RootID != s.RootID || d.CreatedXID != s.CreatedXID || d.TenantID != s.TenantID || d.RequestID != s.RequestID || !finishStepBefore(s.StepNo, in.StepNo) || !finishStepBefore(in.StepNo, d.StepNo) || d.Branch != "normal" || d.ConflictSourceID != nil || !requestSameOptional(d.FinalizationID, s.FinalizationID) || !requestSameOptional(d.AfterLatestID, s.FinalizationID) || !requestSameOptional(d.BeforeLatestID, s.PriorLatestID) {
+		bad()
+	}
+}
+
+func finishStepBefore(a, b string) bool {
+	if !unsignedInteger(a, 63, true) || !unsignedInteger(b, 63, true) {
+		return false
+	}
+	x, _ := strconv.ParseInt(a, 10, 64)
+	y, _ := strconv.ParseInt(b, 10, 64)
+	return x < y
 }
 
 type finishDecision struct {

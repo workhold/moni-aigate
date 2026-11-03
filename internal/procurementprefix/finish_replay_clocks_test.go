@@ -10,6 +10,7 @@ func ffLateApproval(v *Rows, latest bool) {
 	s.ApprovalCheckedAt = ffTime(100)
 	s.DerivedIncomingSourceID, s.FinalizationID = nil, nil
 	v.PrefixRows.IncomingSources = nil
+	v.PrefixRows.RequestDecisions = nil
 	o := &v.PrefixRows.CustomerFinishOutcomes[0]
 	o.LatestFinalizationID = s.PriorLatestID
 	if !latest {

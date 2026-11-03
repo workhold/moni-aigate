@@ -3373,3 +3373,46 @@ B-P4纯identity最终集成复核：同步完整回归50包通过2失败4无测�
 - modified `docs/verification/procurement-current-source-clocks.md`
 
 </details>
+
+## 2026-11-03T16:36:10Z · 64771a166af7
+
+采购历史纯核续片：补齐人工P→A→R及case最后人工来源、派生normal decision真实before_latest桥、Reconciliation/finish行内NULL角色结果与独立deadline联合；同步README/HLD/LLD/收口计划和验证。复核旧人工缺证、无派生latest/sent与历史PB两项边界；无正式DDL、HTTP、writer权限、默认main或部署结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1758 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-replay.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/procurement-current-source-clocks.md`
+- added `docs/verification/procurement-reconciliation-order.md`
+- modified `internal/procurementprefix/finish_replay.go`
+- added `internal/procurementprefix/finish_replay_binding_test.go`
+- modified `internal/procurementprefix/finish_replay_clocks_test.go`
+- modified `internal/procurementprefix/finish_replay_test.go`
+- modified `internal/procurementprefix/source_closure.go`
+- added `internal/procurementprefix/source_closure_finish_unions.go`
+- added `internal/procurementprefix/source_closure_finish_unions_test.go`
+- added `internal/procurementprefix/source_closure_reconciliation_order.go`
+- added `internal/procurementprefix/source_closure_reconciliation_order_test.go`
+- modified `specs/023-periodic-products/b-procurement-cost-ddl-contract.md`
+- modified `specs/023-periodic-products/b-procurement-cost-request-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-closure-plan.md`
+- modified `specs/023-periodic-products/b-procurement-replay-implementation-contract.md`
+- modified `specs/023-periodic-products/b-procurement-replay-read-contract.md`
+
+</details>
+
+## 2026-11-03T16:37:03Z · 932dc21f982e
+
+归档人工对账顺序续片的根集成证据：113顶层/706子例race与原checker回归、make check及README使用部署只读审查均通过；复核未派生cut与历史PB两项缺口、旧人工LegacyCases和未开放Check边界。仅验证记录变化，无代码、依赖、权限或部署结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1758 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/procurement-reconciliation-order.md`
+
+</details>

@@ -482,7 +482,7 @@ profile-block列仅实际raw>R的原分支非NULL，按原billing_profile_blocks
 
 generated `d_new_settlement = CASE WHEN result_kind = 'new_settlement' THEN settlement_id ELSE NULL END` 仅新结算分支非NULL；PB companion以(finish_outcome_id,original_source_id)绑定(id,d_new_settlement)，防止existing/pending伪造新PB效果。
 
-新finish对应的tenant/key PB效果用`pp_customer_finish_pb_effects`行组保存 `finish_outcome_id,C,scope,control_id,allocation_id,event_id,original_source_kind(settlement),original_source_id(settlement_id)`，PK(finish_outcome_id,scope)，逐条精确双向绑定原periodic event。不能用一个多义PB事件ID代表两个scope。control未配置才允许相应scope无event，须按原PB锁/来源证明；配置的各scope不许漏effect。原current/window/source守恒仍由PB完整链/deferred核验，不用此集合替代。
+新finish对应的tenant/key PB效果用`pp_customer_finish_pb_effects`行组保存 `finish_outcome_id,C,scope,control_id,allocation_id,event_id,original_source_kind(settlement),original_source_id(settlement_id)`，PK(finish_outcome_id,scope)，逐条精确双向绑定原periodic event。不能用一个多义PB事件ID代表两个scope。受跟踪且有真实allocation的scope不许漏effect；control未配置时没有本scope效果。保留原`FinishCustomerTx`对“control开始跟踪前已关闭、marker为空且没有allocation”的合法无效果分支，不因今天control存在就新增customer catchup或拒绝；该历史分支的资格仍须由原PB/source前缀证明，现材料不足时保留gap，不能把absence直接当通过。原current/window/source守恒仍由PB完整链/deferred核验，不用此集合替代。
 
 保留原 settleRequest(recovery) 的证据/delivery/时间/价格规则，实际 charge≤R、raw独立大整数、waived=raw-charge。finish 取得原 model/customer-PB/ledger locks 后**再次读取 DB时钟**，到硬 deadline 释放而不收费；第一次审批 checked_at 不能延长财务期限。原 postLocked/唯一 settlement、recovery job清理、profile block 与资金 audit/outbox 不省略。客户 finish 的完整 SQL、原资金来源及准确列 ACL 仍为联合实施义务，本页不以“调用旧Go即可”宣称候选闭合；此结果companion仅证明本次reconcile实际消费/输出，不扩大为客户全部资金历史认证，后者仍由独立完整source checker负责。
 

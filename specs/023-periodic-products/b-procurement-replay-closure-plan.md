@@ -6,21 +6,27 @@
 
 ## 1. 已落实的关系
 
-本片落实原件当前指针与永久dispatch身份、p的出生/最后journal、三处原件Usage JSON，并纠正finish对墙钟单调性的错误假设；实现与实际测试以[续片验证](../../docs/verification/procurement-current-source-clocks.md)为准。
+前片落实原件当前指针与永久dispatch身份、p的出生/最后journal、三处原件Usage JSON，并纠正finish对墙钟单调性的错误假设；实现与实际测试以[续片验证](../../docs/verification/procurement-current-source-clocks.md)为准。本片基于`9eaabe75092868a610c127f810c4a674b18f559c`继续补齐以下两个顺序桥与Reconciliation/finish完整行内联合，见[本片验证](../../docs/verification/procurement-reconciliation-order.md)。没有新增持久字段或公共Check。
 
 RequestHead认证latest/sticky序；last decision可以是conflict，此时latest仍是先前normal finalization。它不认证完整request.status/billing_status生命周期。attempt最后delivery来源与永久dispatch许可是两个不同指针，后续finalization/recovery不覆盖许可。p.last取所属账户全序中该attempt的最后p动作，不能取全账户最后配置或其他attempt动作。
 
-## 2. 不扩字段即可继续实施的顺序
+## 2. 不扩字段已补齐的顺序
 
 ### 2.1 批准实际派生incoming
 
-当Reconcile确实派生incoming和RequestDecision时，必须精确消费该同root decision的before_latest；`PriorLatestID`与它逐值相等，再沿完整request序证明sticky与新latest。现有decision提供了可信顺序，应先把此依赖接齐，不能把所有Reconcile都笼统写成缺cut。
+当Reconcile确实派生incoming和RequestDecision时，现已精确消费该同root decision的before_latest；`PriorLatestID`与它逐值相等。source→incoming→唯一normal decision核同root/xid、tenant/request与严格递增正step，finalization/after_latest精确相等；重复decision不能任选。同delivery内容不允许替换前驱ID，NULL与空串分开。完整request序、meter选择与sticky仍依赖RequestIncoming，不由这个桥独自认证；不能把所有Reconcile都笼统写成缺cut。
 
 ### 2.2 最近人工来源
 
 按真实Reconcile状态机，每case的新人工来源最多各一个propose、approve、release。新propose后proposal不可变，重复同输入快返；新approve后状态approved，后续approve快返；release终结reservation，其后操作快返或拒绝。因而合法人工来源只能是 `P → A → R` 的允许子路径，也可直接R。若A本身产生新settlement，不能再出现新R；A后仍能出现新R时，A必须留下pending客户预占。
 
-下一片应基于这套固定语言核重复action、角色/提案消费、允许的before状态以及原case `pp_last_*` 的精确最后人工来源。自动pending/finish可修改reason、关闭非approved case，但不会更换last-manual指针；不要要求当前case所有业务字段永久等于最后人工source.after，也不要把完整自动状态历史混作人工pointer总序缺口。这个算法尚未实现，必须用交叉自动finish/pending的正反例复核后才能删除相应Unimplemented。
+现已基于这套固定语言核重复action、角色/提案消费、允许的before状态以及原case `pp_last_*` 的精确最后人工来源；多错误沿物理表/自然PK去重。A→R必须消费A真实pending outcome，已结算A后不能新R。自动pending/finish可修改reason、关闭非approved case，但不会更换last-manual指针，因此不要求当前case所有业务字段永久等于最后人工source.after，也不把完整自动状态历史混作人工pointer总序缺口。当前proposal/actor与可推导state分别核验，交错自动reason变化保留合法接受集。
+
+没有P的A、孤立R消费旧proposal/actor、无新人工source且last六列全NULL的case保留私有LegacyCases。孤立open R无proposal/actor不要求P；已有tracked P却缺A、R反而消费approved是确定矛盾。有source缺原case同样报pointer矛盾。LegacyCases只描述人工历史缺证，不是完整uncovered集合或来源资格。人工last-source项已从Unimplemented删除；未派生观察与PB两项继续保留。
+
+### 2.3 完整行内联合
+
+来源域现独立核三action的消费/忽略字段、角色与case/input状态、派生deadline，以及finish的new/existing/pending、金额/Key、profile与独立optional PB scope。new/recovery只可charged_usage/no_delivery/deadline，decision或financial任一到期当且仅当reason=deadline；new/release只有financial时钟，到期当且仅当reason=deadline，否则为reconciliation。existing两个时钟NULL且历史reason保持开放，pending必须decision<deadline。墙钟不互排，decision到期后financial回退仍合法释放；该局部联合不替代真实历史cut或PB absence证明。
 
 ## 3. 仍须补足的历史观察依据
 

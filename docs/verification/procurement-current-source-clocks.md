@@ -38,3 +38,5 @@ env -u TEST_DATABASE_URL go test -race ./internal/fundinglotverify -run '^TestCh
 SourceClosure继续Complete=false、Qualified为空；finish继续保留三项Unimplemented。其他原件标量与payload、剩余语义NULL、ledger/PB效果槽、跨链连续性、逐对象资格、同次Base和aggregate尚未完成。没有公共Check、正式reader/profile、schema升级、writer授权或线上资金接线；32表715列、旧checker/V3和历史十一项Unproven不改签。
 
 本片未访问PostgreSQL、真实供应商、支付、Docker或1Panel环境；B-P3、完整writer/ACL/guard、宽TEXT切换、R2正式迁移/CLI/启动/在线资金、后续商品/原路退款/拒付、生产与性能门禁继续独立验收。
+
+后续人工来源偏序、派生decision前驱桥和完整行内联合已另见[顺序续片](procurement-reconciliation-order.md)。本页98/576与三项Unimplemented描述保留本片当时范围，不改签后续结果。
