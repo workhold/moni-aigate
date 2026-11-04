@@ -10,6 +10,8 @@
 
 [只读Observe详细合同](../../specs/023-periodic-products/b-procurement-executor-observation-contract.md)本轮仅设计：14组固定投影、原Go JSON SHA256、同一新RR RO快照、准确回执与反向来源、缺行/PP902/PP906边界。测试中的独立APP只读事实oracle不是生产Observe。现有validator只认证既定PB金额/来源关系，不覆盖完整PB配置/operations/B-P1观察整图。完整A4/A5/S4、PB异常域兼容、全域profile、R2与供应商/生产验收继续开放。
 
+后续生产Observe已实现并完成限定实际APP验收，准确范围、保留矩阵与独立计数见[观察器续片](procurement-execution-observer.md)；本页保留S2/S3当期结果。
+
 ## 实际运行结果
 
 专库为原独立PG16 LOGIN/database、127.0.0.1:55439；实际APP由原fixture核 `session_user=current_user=随机APP`，W保持NOLOGIN。根集成人串行执行数据库测试，无新grant、SET ROLE替代身份、时钟压缩或手工来源补造。fixture仍180s，业务锁/语句仍3s/5s。

@@ -1,6 +1,6 @@
 # B-P4 A5-S2：未知提交的只读回执观察合同
 
-2026-11-04；**本页先冻结详细设计，尚未实现或执行本页观察验收**。承接[A5 总合同 §7](b-procurement-prospective-executor-contract.md#7-unknown-commit-与只读观察)、[事务运行器合同](b-procurement-executor-transaction-contract.md)、[执行合同](b-procurement-execution-contract.md)和[A2 安装合同](b-procurement-attempt-installation-contract.md)。不修改三根 SQL、材料摘要、catalog、ACL 或业务 DTO，不启用默认服务、HTTP、恢复任务或模型调用。上位合同 §7 不因本页扩张。
+2026-11-04；本页先冻结详细设计，随后已实现显式Observe并通过限定实际APP验收，准确源码、结果与未验矩阵见[验证记录](../../docs/verification/procurement-execution-observer.md)。承接[A5 总合同 §7](b-procurement-prospective-executor-contract.md#7-unknown-commit-与只读观察)、[事务运行器合同](b-procurement-executor-transaction-contract.md)、[执行合同](b-procurement-execution-contract.md)和[A2 安装合同](b-procurement-attempt-installation-contract.md)。不修改三根 SQL、材料摘要、catalog、ACL 或业务 DTO，不启用默认服务、HTTP、恢复任务或模型调用。上位合同 §7 不因本页扩张；本片不关闭完整A4/A5/S4或R2。
 
 ## 1. 结论、API 与状态
 
@@ -234,7 +234,7 @@ validator 要求真实 `session_user` 等于安装绑定 APP OID，当前角色�
 
 ## 8. 验收门与交付范围
 
-纯测试可先核客户端固定语句/投影/OID/NULL/比较/错误/清理；它们不能替代受限 APP 的真实 RR RO、权限、validator、wire COMMIT 未知正反控或商业验收。本页没有执行结果，不能因文件/测试存在而标 PASS。
+纯测试核客户端固定语句/投影/OID/NULL/比较/错误/清理；它们不能替代受限 APP 的真实 RR RO、权限、validator、wire COMMIT 未知正反控或商业验收。以下保留完整验收要求；本片实际完成子集见[实际APP合同](b-procurement-observer-acceptance-contract.md)和[验证记录](../../docs/verification/procurement-execution-observer.md)，不能因本表存在而将各行整体标PASS。
 
 | 层 | 必需证据 |
 | --- | --- |
@@ -247,4 +247,10 @@ validator 要求真实 `session_user` 等于安装绑定 APP OID，当前角色�
 | PB actual APP | 出生无control、已有control新allocation、真实Commander后配legacy_import；金额/window/admission/xid/source/mirror反向关系；全普通业务表前后逐行无变更，不以fixture补历史 |
 | wire与snapshot | 三根提交前后确认丢失正反控，unknown零mutation DTO；一个snapshot读证且并发提交不拼快照；读不到不触发重放、PrepareDispatch、provider或后台生成 |
 
-并行结果汇总后由集成人更新统一架构中的候选 observer 节点、Run→unknown handle→显式只读 Observe 链路、无经营授权边界、actual APP 权限和能力状态；HLD/LLD/验证记录准确区分设计、实现、纯验证与实际 PG/wire 验收，再执行仓库要求的 `check-architecture --refresh --reviewed --reason ...` 与只读检查。此文件单独交付时是设计稿，不宣称 observer、完整 A4/A5、PB异常域或 R2 已完成。
+并行结果汇总后由集成人更新统一架构中的候选 observer 节点、Run→unknown handle→显式只读 Observe 链路、无经营授权边界、actual APP 权限和能力状态；HLD/LLD/验证记录准确区分设计、实现、纯验证与实际 PG/wire 验收，再执行仓库要求的 `check-architecture --refresh --reviewed --reason ...` 与只读检查。Observe实现及限定验收不代表完整A4/A5、PB异常域或R2已完成。
+
+## 9. 本片实施状态与保留矩阵
+
+[Observe生命周期](../../internal/procurementexecution/observe.go)、[固定codec](../../internal/procurementexecution/observe_rows.go)、[共享root/step/journal](../../internal/procurementexecution/observe_shared.go)、[账户](../../internal/procurementexecution/observe_account.go)和[attempt](../../internal/procurementexecution/observe_attempt.go)已实现。最终完整纯race为65顶层/1427子项PASS、1.743秒；真实APP首轮为6顶层/21子项、77.623秒，codec主因分类修复后同名单最终复验为6/21、29.357秒，均0FAIL/SKIP。实际PG覆盖三根已提交unknown、未发送COMMIT负控、账户全部现有分支/replay及后续合法账户前缀、managed/unmanaged与已有PB三形态、四种准确失权/恢复、fresh RR RO/一次Acquire/34表无写及无效issuer。
+
+true legacy在当前固定根的BEFORE INSERT来源认证处先PP906，未进入decoder/COMMIT，不能发行有效handle；本轮实证此capture前置门，不称完整Observe legacy PG通过。坏关系/额外反向边的实际PG、并发snapshot交错、完整grant/后继域和更广PB图仍按原要求未验；不制造origin、破坏已提交图或用sealedhandle纯测试替代。本页保留范围是事实边界，不自动将所有历史/兼容proof列为MVP能力开发的前置条件；后续优先级由[交付计划](../../docs/design/delivery-plan.md)及用户最新指令决定。

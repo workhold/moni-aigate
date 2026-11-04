@@ -252,11 +252,13 @@ make verify-mvp
 每项行为先补齐规格、状态机、接口/数据合同、故障与验收边界，再修改实现。
 主要入口：[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
 
+MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优先完成架构与业务能力：新功能以当前模型为准，开发库必要时重建，不承诺未发布版本的数据兼容，不增加新旧双写或自动回退。隔离历史核验候选暂不扩展，不作为经营功能交付的前置条件。
+
 每次代码、测试、依赖、迁移、部署、CI 或设计合同变化，都同步复核统一架构并保留[变更记录](docs/architecture/changes.md)与 [SHA-256 清单](docs/architecture/architecture-manifest.json)。Make / CI 默认只读检查，不自动刷新；具体流程见[贡献指南](CONTRIBUTING.md#架构同步与检查)和 [AGENTS.md](AGENTS.md)。
 
 采购历史核验仍是开发期候选，普通启动不会安装对应 SQL。源码关系、当前已实现的校验与剩余观察缺口见[采购模块细图](docs/architecture/procurement-replay.md)；数据库材料与当前执行接缝见[采购尝试验收](docs/verification/procurement-attempt-birth.md)和[显式执行器验收](docs/verification/procurement-execution-runner.md)。局部校验通过不代表完整历史证明或正式迁移已交付。
 
-当前正推进请求与采购尝试的来源保护：原路由/报价规则已完成独立数据库差分，请求来源已补验预算组合、价格快照、父行与预算控制行等待、资金回滚、权限防护及提交回执丢失；数据库对象与权限也有独立漂移检查。按[装配合同](specs/023-periodic-products/b-procurement-attempt-installation-contract.md)形成的独立候选已实现账户命令、真实请求与采购尝试出生及预占组合，并持续补验逐项撤权、共享账户并发与超时。显式候选现已实现三个固定入口的事务执行、业务返回格式和 HTTP 错误适配，提交结果未知时保留私有观察材料且不自动重做；实际验证范围见[执行器验收](docs/verification/procurement-execution-runner.md)。只读观察器已完成[详细设计](specs/023-periodic-products/b-procurement-executor-observation-contract.md)，尚未实现。阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)。完整来源认证、PB 异常域兼容、正式迁移和常规启动接线尚未交付；这些候选材料不属于常规部署步骤。
+采购历史核验候选已实现固定三入口的事务、业务/HTTP 适配和[只读回执观察](docs/verification/procurement-execution-observer.md)。提交结果未知时，可在新只读快照中核对准确原件，观察结果不授权重新派发或重复写入。实际事务范围见[执行器验收](docs/verification/procurement-execution-runner.md)，模块关系见[采购架构](docs/architecture/procurement-attempt-birth.md)。完整历史认证与常规启动接线尚未交付；候选材料不属于部署步骤，MVP 前暂不继续扩展其历史兼容范围。
 
 [字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它只比对候选表列与设计物料，不安装数据库；部署请遵循上面的常规迁移与启动步骤。
 
@@ -264,8 +266,8 @@ make verify-mvp
 
 按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
 
-1. 完成预算证据的完整经营验收与资金来源全路径、维护工具、正式迁移和启动接线，再推进原路退款、拒付及正式支付；详细依赖与阶段状态见[交付计划](docs/design/delivery-plan.md)。
-2. 完成商品/订阅、媒体协议与扩展运行能力；已有周期预算或纯计量模块不视为这些能力交付。
+1. 优先补齐经营报表、渠道成本分析、对账导出、客户与渠道运营，再推进商品/套餐和选定支付服务；详细范围见[交付计划](docs/design/delivery-plan.md)。
+2. 围绕单一现行数据模型交付可用能力；原路退款、媒体协议与扩展能力单独设计，历史兼容与完整证明候选另行排期。
 3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
 4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。
 5. 在完整商业检查下优化首字节与完成延迟，并执行固定环境的竞品对照。

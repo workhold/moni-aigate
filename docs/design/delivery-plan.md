@@ -2,6 +2,20 @@
 
 2026-11-02。目标是对外API商业运营：六协议统一接入、渠道经营、客户权限/钱包/账单，以及可解释的上游采购成本和调配。业务完整性优先，性能专项后置。当前系统视图见[统一架构](../architecture/README.md)，逐项产品差距见[New API路线图](new-api-roadmap.md)。本文件给出依赖与工作边界，不把规划当成交付。
 
+## 当前执行顺序（2026-11-04 用户调整）
+
+本节与[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)优先于下文历史排期：MVP 前以架构完整、设计合理和用户可用能力为重点，不承诺未发布版本兼容。新功能只使用现行正式模型与领域入口；开发库可明确重建，不新增双写、自动版本探测、旧格式分支或失败回退。历史记录中的未完成项保持事实，不再全部作为业务功能的串行门禁。
+
+| 优先级 | 下一工作 | 完成出口 |
+| --- | --- | --- |
+| 当前收口 | 已实现采购回执观察器的专项、文档与推送 | 交付准确范围后冻结隔离候选，不继续扩展 legacy/历史兼容矩阵 |
+| 1 | 经营报表：请求时间窗口、模型维度收入/退款/成本、渠道采购成本、对账导出 | 平台控制台与实际数据查询接通；未知成本不当零，客户收入不因多attempt重复，金额精确，权限隔离 |
+| 2 | 客户与渠道经营、商品/套餐及选定支付服务 | 每片按场景补必要合同，领域→HTTP→控制台纵向交付；不依赖离线全历史proof或旧profile兼容 |
+| 3 | 当前版本单实例部署、首次配置、备份恢复与实际供应商使用 | Docker/1Panel可复现手册及实际环境验证；缺目标环境/密钥的门单列，不阻塞本地能力 |
+| 后续 | 原路退款/拒付、媒体/异步/长连接、HA与完整历史认证 | 按明确产品范围独立排期，未完成不写成支持；性能在主要能力稳定后优化 |
+
+资金正确性、租户隔离、硬预占、唯一结算、报价快照和未知消费不重发模型请求继续是现行架构不变量。此前C0/B-P3/B-P4候选、兼容profile及全历史证明暂缓扩展；普通serve路径没有因本次排期切换为候选，也不因暂缓而被标作验收通过。
+
 ## 018–020 已交付工作面
 
 | 工作面 | 先补什么设计 | 实现边界 | 汇合点 |
@@ -217,4 +231,4 @@ legacy cut/absence/完整首配、B-HO1、全部业务资格/逐对象Q与Base/a
 
 之后继续其余D1/I1根与独立全域重放/profile、B-P3历史缺证、R2正式迁移/启动/全资金接线，再到C1退款/C2拒付/C3恢复、商品订阅、扩展、生产/HA和最终性能。阶段验证及提交不等于整个持续目标完成，正式供应商/支付/目标1Panel等外部验收边界保持。
 
-本轮S2事务运行器和S3显式适配已实现，按先行[事务](../../specs/023-periodic-products/b-procurement-executor-transaction-contract.md)/[适配](../../specs/023-periodic-products/b-procurement-executor-adapter-contract.md)/[验收](../../specs/023-periodic-products/b-procurement-executor-transaction-acceptance-contract.md)合同核实际APP三根与提交未知，准确计数/失败历史见[记录](../verification/procurement-execution-runner.md)。正常New/main/provision与001–022不变；没有完整A5/R2上线。下一片实现已冻结的[只读观察合同](../../specs/023-periodic-products/b-procurement-executor-observation-contract.md)，完成新RR RO精准回执、已提交/未提交正反控与legacy/反向关系/现有PB范围验收，再收完整S4和PB异常域版本方案。observer目前只有设计，S2测试内独立只读oracle不冒充其实现。
+本轮S2事务运行器和S3显式适配已实现，按先行[事务](../../specs/023-periodic-products/b-procurement-executor-transaction-contract.md)/[适配](../../specs/023-periodic-products/b-procurement-executor-adapter-contract.md)/[验收](../../specs/023-periodic-products/b-procurement-executor-transaction-acceptance-contract.md)合同核实际APP三根与提交未知，准确计数/失败历史见[记录](../verification/procurement-execution-runner.md)。正常New/main/provision与001–022不变；没有完整A5/R2上线。[只读观察合同](../../specs/023-periodic-products/b-procurement-executor-observation-contract.md)对应的生产Observe已实现：新RR RO精准回执、三根真实提交ACK丢失与未发送COMMIT正反控、账户分支及旧回执、managed/unmanaged和已有PB三形态、必要失权/恢复均有本片限定证据。最终纯race65顶层/1427子项、实际APP6顶层/21子项均PASS、零FAIL/SKIP；准确范围、两轮结果、codec修复与失败历史见[观察器记录](../verification/procurement-execution-observer.md)。真实legacy当前在捕获handle前安全拒绝，完整legacy Observe、坏关系/额外反向边PG和并发snapshot交错仍未实证；这些历史专项按[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)暂缓扩展，后续执行顶部MVP能力排期，不将本片扩大为完整S4/A5/R2验收。

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-04T02:54:12Z",
-  "review_reason": "A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发布与unknown不重放；同步候选模块/权限/14组只读观察设计和限定实际APP/wire验证；普通New/main/provision及001–022不变，完整A4/A5/PB异常域/R2继续开放",
-  "snapshot_sha256": "36603856b09843afc3826be533c9c8fc9b80812c4587b673d8fda87b3c3c38d3",
-  "architecture_sha256": "5ea075630ac16784946759543f94cf644905d3de6c87f7275a2cb3e63e6b6cb0",
-  "history_sha256": "642e41ebc86a2e22f71939e6a0a49173a201c58040e3cd9b64de7294eaa9ddfd",
+  "reviewed_at": "2026-11-04T03:23:17Z",
+  "review_reason": "实现库级采购回执只读Observe及专项；同步来源/root/步骤/validator与RR只读清理边界、源码和验证。依据用户要求新增ADR-005，MVP采用现行单路径、冻结历史兼容候选，优先经营能力；README使用部署步骤经源码复核。",
+  "snapshot_sha256": "aec37a375a32cc622511f1b5ecf86a144003a75d5d8ad575396b4db0403e1ad1",
+  "architecture_sha256": "5ee794f27e23d74509c043bb7d139e667c274d389e31064d55816586ebfa38fb",
+  "history_sha256": "04904167b839778dc72633bb6737a4d1de8b7109446681b02122d890236cbf2f",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "6ae46174690de39907e93c085c0ae6ab817c182370f98d5ab184913f0fe45c13"
+      "sha256": "d41ceca75d824dc34573b5b64cbea8c302dc192f445e8d6bf5843c1d666ad8b8"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -117,7 +117,7 @@
     },
     {
       "path": "docs/architecture/procurement-attempt-birth.md",
-      "sha256": "73351157e548c6bee728cc9537ea208269d8d4e11f00caf95cc96b671923f619"
+      "sha256": "f3a86b1bcf74f5d5929a555c94e4c6a92e7efdd0ecfdfe4e9e825b92eaa21293"
     },
     {
       "path": "docs/architecture/procurement-replay.md",
@@ -148,16 +148,20 @@
       "sha256": "7775a0a854684ae718cdcf7ce904badce49990ad71d370829b1b3e0ca34e9552"
     },
     {
+      "path": "docs/decisions/ADR-005-pre-mvp-single-path.md",
+      "sha256": "3fa3336fd76fb92f9ec239ff54dc37eefa07c9837c0eb8d45df6031cc0f042f4"
+    },
+    {
       "path": "docs/design/HLD.md",
-      "sha256": "d9ae535ec50fc9c4aa809e92d568b385d15ed8cc6210982a85784683ffd587db"
+      "sha256": "e3064442efa9915e847d2fc620038ec1f621b1981a1957801a5160ec325392d2"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "07bc56f9a6a19267606ee1833af22718555fa23771b95a601aa4c1df4454c064"
+      "sha256": "8cfeb794f16b1ecc94807ce806bb972c0a7eddc9cca70c69c8abfee362e987f1"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "973e5d3d205b097c05783e183214baa6a8b48e2e0d632b0c16e99b0fb1237c83"
+      "sha256": "979121082524ce8c5de4e730fe7a84014ed2f836b3275ab6cd2dd686ac386959"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -165,7 +169,7 @@
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "b1242f2a2475cfbac561f3fb11e3d853b79617ae09e0f34e5b8df6811b9de02d"
+      "sha256": "b8c2928b8a06c05b71dfa51c336c41bf7360be2392bcccafced55e10f4e3b9e4"
     },
     {
       "path": "docs/design/overview.md",
@@ -1353,7 +1357,7 @@
     },
     {
       "path": "docs/verification/mvp-status.md",
-      "sha256": "b630f56dd1f7da5ed931d37d05f50b0843816b3cd2cf82789d1ba237c247656c"
+      "sha256": "cf60dd5ffe4564e62ddaf12e7e783d57232581d555c30a04b2f1213811cb3adb"
     },
     {
       "path": "docs/verification/native-protocols.md",
@@ -1564,6 +1568,14 @@
       "sha256": "f3174854ccba09fc66c916e3f5c4f622acb5843d1f13c791c1a73f5088a6034d"
     },
     {
+      "path": "docs/verification/procurement-execution-observer.json",
+      "sha256": "de8fb3802bed2a722aadcb2f954be5c4f4457ba3df0ce16c7e8fdb8233c4768d"
+    },
+    {
+      "path": "docs/verification/procurement-execution-observer.md",
+      "sha256": "56e939bff709787a23dad45942ea3f439515b4740ba96e48325aef5eb80b5801"
+    },
+    {
       "path": "docs/verification/procurement-execution-protocol.json",
       "sha256": "13769f8a64abd21917ce003bc8e398587f46346e4279a210c9d4245f74296b13"
     },
@@ -1577,7 +1589,7 @@
     },
     {
       "path": "docs/verification/procurement-execution-runner.md",
-      "sha256": "75ab3c45516ba3892b38c79dcb6f4a8a1f12ccb2f0e3f4389eaa4869c557a677"
+      "sha256": "3b5f609575c4e5096de301ac894d4a789fb680e09ba059bdc985f26a8d2b9bdd"
     },
     {
       "path": "docs/verification/procurement-identity-ci.json",
@@ -4628,6 +4640,14 @@
       "sha256": "5aa9882ad6951c9e3c35175a16756fae4adcf1545b2199000d2fa3589bab94bd"
     },
     {
+      "path": "internal/procurementattemptbirth/observer_postgres_test.go",
+      "sha256": "21c0e6df918b4212376636dc08c2dd31dad123baedbe303f4d26721b9b02ac6b"
+    },
+    {
+      "path": "internal/procurementattemptbirth/observer_wire_test.go",
+      "sha256": "86e3b197a61bb44b56708e2921d7e91ca524545b0ff4838e4782fd7eb5d5ad28"
+    },
+    {
       "path": "internal/procurementattemptbirth/request_compat_postgres_test.go",
       "sha256": "2196b80db788924f6d66f4c6357b2c511ad6f007063890d5d19d9f99e26744e4"
     },
@@ -4670,6 +4690,42 @@
     {
       "path": "internal/procurementexecution/errors_test.go",
       "sha256": "c662e5d2e453539bde7022432a49da91bbba412bbe842e33c74e077c966f19dd"
+    },
+    {
+      "path": "internal/procurementexecution/observe.go",
+      "sha256": "b6e08eaa950a704b5e1edf195e38307e3b359728744f429b32b3d9ae7fad43a0"
+    },
+    {
+      "path": "internal/procurementexecution/observe_account.go",
+      "sha256": "547ad14998e0770a063e93a6ee9c0e239d5646777bceb51dc575c878eb377eb3"
+    },
+    {
+      "path": "internal/procurementexecution/observe_account_test.go",
+      "sha256": "014a31a838fec78dcebfc626a4a6b2395cb06f38e004ac83cafc11eeb768715d"
+    },
+    {
+      "path": "internal/procurementexecution/observe_attempt.go",
+      "sha256": "aee51cea717eea60429ffbd13211ffa6972cbab748c36f8a26068c1a81776e5f"
+    },
+    {
+      "path": "internal/procurementexecution/observe_attempt_test.go",
+      "sha256": "87a74cd4c53f82a52b80919a58915653441ce404d323940124a51606ef9d9d90"
+    },
+    {
+      "path": "internal/procurementexecution/observe_rows.go",
+      "sha256": "94a137c245bc56b52f99048215073f6212eb76e06b8cc208a219b6ee2d7b8bf5"
+    },
+    {
+      "path": "internal/procurementexecution/observe_rows_test.go",
+      "sha256": "0b8d5bc48ed8ed46e3a7e9bd2de52e8d5f994b17df618dc8c261305cc5afc9dc"
+    },
+    {
+      "path": "internal/procurementexecution/observe_shared.go",
+      "sha256": "f755dce9d7ed9b68e9601af6c4a3488c7d01f69e443ac879eb74a39f1249ed7e"
+    },
+    {
+      "path": "internal/procurementexecution/observe_test.go",
+      "sha256": "a9ce6dcc140292d98cc9020103085a00b4063545d30da4127d4c8cf1a3301107"
     },
     {
       "path": "internal/procurementexecution/query.go",
@@ -6809,7 +6865,7 @@
     },
     {
       "path": "specs/023-periodic-products/b-procurement-executor-observation-contract.md",
-      "sha256": "5fa859629d12ea4ad8bf0e8e99bf21a30a0493a717f57a5f70d05b65f53840b4"
+      "sha256": "9c3815610aae7d46921c24d37beb96d1c67b9feb3d3c91d19eaa4afa76d19fa3"
     },
     {
       "path": "specs/023-periodic-products/b-procurement-executor-transaction-acceptance-contract.md",
@@ -6830,6 +6886,10 @@
     {
       "path": "specs/023-periodic-products/b-procurement-identity-contract.md",
       "sha256": "b1df33e929f9d950124f8f052150ed9180a82cbbd5446f302d903f6b907da352"
+    },
+    {
+      "path": "specs/023-periodic-products/b-procurement-observer-acceptance-contract.md",
+      "sha256": "3186fc8c398e3114cf259cc7f618408a3a0e6434e075b57c80a45ca6730950c9"
     },
     {
       "path": "specs/023-periodic-products/b-procurement-original-column-layout-v1.json",

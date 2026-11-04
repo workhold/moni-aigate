@@ -41,12 +41,15 @@ flowchart TD
     ABI["A5-S1 固定三根协议<br/>参数快照 / typed行 / PP分类与cause"] --> Runner
     Runner -->|仅固定三个根| Functions
     Runner --> Unknown["可能已提交：unknown / opaque handle<br/>不重做 / 不调用模型"]
-    Unknown -. "只读观察详细设计，未实现" .-> Future["剩余A4 / A5观察与完整矩阵<br/>PB异常域 / 全域profile / R2 / 供应商与生产"]
+    Unknown -->|调用方显式提供新 context| Observe["Runner.Observe：已实现的库级候选<br/>新 RR READ ONLY / 14 固定投影 / 原 digest"]
+    Observe -->|同一快照核正反关系| ReadOnly["三个既有只读 validator<br/>准确原件 / root / steps / journal / PB限定关系"]
+    ReadOnly --> Observation["ROLLBACK 与清理后：presence / unresolved<br/>不返回业务 DTO / 不授予重发许可"]
+    Observation -. "后续专项，非 MVP 能力前置" .-> Future["历史核验完整矩阵 / PB异常域 / 全域profile<br/>正式迁移与装配须另设计"]
     A2PG -. "后续独立门禁" .-> Future
     Sync -. "范围以专项记录为准" .-> Future
 ```
 
-实线为已实现的材料依赖、调用与隔离测试关系，不代表相应测试均已通过。虚线为同源定义或后续交付门禁；A2 不在已运行的 A1 writer 上叠装。A0/A1/A2 的实际执行均限于显式专库装配；材料包没有数据库连接或自动安装。S2 Runner 通过固定三根调用数据库，S3 两个显式构造器保留原业务校验与DTO；普通 New/main/provision 不选择候选。只读 Observe 仍为设计，opaque handle 不授予派发或经营许可；[实际专项证据](../verification/procurement-execution-runner.md)不关闭完整 A5/R2。
+实线为已实现的材料依赖、调用与隔离测试关系，不代表相应测试均已通过。虚线为同源定义或后续专项；A2 不在已运行的 A1 writer 上叠装。A0/A1/A2 的实际执行均限于显式专库装配；材料包没有数据库连接或自动安装。S2 Runner 通过固定三根调用数据库，S3 两个显式构造器保留原业务校验与DTO；普通 New/main/provision 不选择候选。[只读 Observe](../../internal/procurementexecution/observe.go)已实现，opaque handle 和观察结果不授予派发或经营许可；实际范围分别见[事务验收](../verification/procurement-execution-runner.md)与[观察验收](../verification/procurement-execution-observer.md)。按[MVP 架构决策](../decisions/ADR-005-pre-mvp-single-path.md)，尚未完成的历史核验专项不再阻塞业务能力开发，也不因此标为完成。
 
 ## A0 的实际规则边界
 
@@ -206,6 +209,9 @@ unmanaged 不进入账户/PB效果：冻结首次 Q1，仅 origin/head0、step1 
 | [procurementexecution/query.go](../../internal/procurementexecution/query.go) | 三根受信schema限定查询和私有参数快照；quote BYTEA/nullable rate及JSON bytes保持；不是SQL运行器 |
 | [receipt.go](../../internal/procurementexecution/receipt.go) | 固定列型/恰一行、NULL union、原replay TEXT与NUMERIC100；协议失败零回执，独立晚到执行错误保持cause |
 | [errors.go](../../internal/procurementexecution/errors.go) | 固定入口域PP分类与原cause；没有业务包/HTTP包装、PB文本推断或自动重试 |
-| [A5冻结合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md) | S2事务与S3显式构造器/API/HTTP已实现并限定验证；Observe仅详细设计，完整S4/默认服务装配仍后续，见[本轮记录](../verification/procurement-execution-runner.md) |
+| [A5冻结合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md) | S2事务、Observe与S3显式构造器/API/HTTP已实现并限定验证；完整S4/默认服务装配仍后续，见[事务](../verification/procurement-execution-runner.md)及[观察验收](../verification/procurement-execution-observer.md) |
+| [observe.go](../../internal/procurementexecution/observe.go)、[固定查询](../../internal/procurementexecution/observe_rows.go) | 本Runner过程内handle、新caller预算至多5秒、一次Acquire与RR只读；列名/OID/NULL、排流、准确错误主因，ROLLBACK及独立共享5秒清理后才发布结果 |
+| [账户核验](../../internal/procurementexecution/observe_account.go)、[attempt核验](../../internal/procurementexecution/observe_attempt.go)、[共享关系](../../internal/procurementexecution/observe_shared.go) | 14组固定原件投影、独立Go摘要、原回执/来源/root/steps/journal，managed/unmanaged与必需V1/V2/V3；不查询当前资格代替历史回执，不返回DTO或修改业务表 |
+| [实际PG观察专项](../../internal/procurementattemptbirth/observer_postgres_test.go)、[wire控制](../../internal/procurementattemptbirth/observer_wire_test.go) | 真实成功COMMIT丢确认正控、发送前断开反控、账户分支和重放、managed/unmanaged/PB、权限恢复与实际APP只读生命周期；完整legacy、坏关系与并发snapshot仍未验 |
 
 S1的[纯协议验证](../verification/procurement-execution-protocol.md)不证明数据库或财务提交。普通billing/procurement.New不探测候选、不失败fallback；正式001–022不变。PB异常没有可信域tag时继续保留原执行错，全等价门不靠开放PG Message/Context猜测关闭。

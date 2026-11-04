@@ -3891,3 +3891,38 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/023-periodic-products/b-procurement-prospective-executor-contract.md`
 
 </details>
+
+## 2026-11-04T03:23:17Z · aec37a375a32
+
+实现库级采购回执只读Observe及专项；同步来源/root/步骤/validator与RR只读清理边界、源码和验证。依据用户要求新增ADR-005，MVP采用现行单路径、冻结历史兼容候选，优先经营能力；README使用部署步骤经源码复核。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1913 个源文件；本次 24 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-attempt-birth.md`
+- added `docs/decisions/ADR-005-pre-mvp-single-path.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/procurement-execution-observer.json`
+- added `docs/verification/procurement-execution-observer.md`
+- modified `docs/verification/procurement-execution-runner.md`
+- added `internal/procurementattemptbirth/observer_postgres_test.go`
+- added `internal/procurementattemptbirth/observer_wire_test.go`
+- added `internal/procurementexecution/observe.go`
+- added `internal/procurementexecution/observe_account.go`
+- added `internal/procurementexecution/observe_account_test.go`
+- added `internal/procurementexecution/observe_attempt.go`
+- added `internal/procurementexecution/observe_attempt_test.go`
+- added `internal/procurementexecution/observe_rows.go`
+- added `internal/procurementexecution/observe_rows_test.go`
+- added `internal/procurementexecution/observe_shared.go`
+- added `internal/procurementexecution/observe_test.go`
+- modified `specs/023-periodic-products/b-procurement-executor-observation-contract.md`
+- added `specs/023-periodic-products/b-procurement-observer-acceptance-contract.md`
+
+</details>
