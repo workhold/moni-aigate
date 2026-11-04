@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-04（采购当前指针、Usage与非单调墙钟校验）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-04（026当前请求窗口经营报表与CSV）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -1050,3 +1050,13 @@ raw专项6顶层/92子项覆盖等价21列INSERT与原reservation companion、�
 [Observe详细合同](../../specs/023-periodic-products/b-procurement-executor-observation-contract.md)已由[observe.go](../../internal/procurementexecution/observe.go)、[rows](../../internal/procurementexecution/observe_rows.go)、[共享关系](../../internal/procurementexecution/observe_shared.go)及[账户](../../internal/procurementexecution/observe_account.go)/[attempt](../../internal/procurementexecution/observe_attempt.go)实现。Acquire前核原Runner/stamp、schema/query/参数及捕获身份；一个新的caller子context最多5秒覆盖唯一Acquire、RR READ ONLY、固定LOCAL设置、14组投影和必需validator。每次核列名/OID/NULL、精确基数并排流，NUMERIC100/xid8不截断；独立Go JSON SHA256与准确回执匹配，当前probe主因先分类，再连接旧COMMIT cause。ROLLBACK和必要Close共享新的绝对5秒清理预算，健康idle才Release，Release后不再读取连接；清理失败覆盖presence。仅返回State/Reason，不发行mutation/dispatch许可。PB配置/operations/B-P1观察整图并非当前validator已认证范围；[真实APP观察专项](../verification/procurement-execution-observer.md)不替代完整legacy/损坏关系/并发snapshot验证。
 
 MVP前的新功能按[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)只接现行正式schema及业务入口；不增加旧协议DTO、历史字段联合或新旧双运行适配。遇到未发布的数据模型调整，明确升级为开发库重建或一次性迁移，避免长期兼容分支。已隔离的proof候选不进入默认main/HTTP/worker，也不作为新功能依赖；后续采用新模型时须显式替换并清理旧实现。租户/资金/预算/用量正确性继续由领域事务和有意义的实际PG测试保证。
+
+## 当前请求窗口经营报表（026）
+
+[reporting.Read](../../internal/reporting/read.go)校验带时区起止时间和可选UUID，`[from,to)`最长31天；按数据库微秒精度向上取整边界以保持纳秒输入语义。一次Acquire和最多5秒工作context内开启RR READ ONLY，读取`clock_timestamp()`作为as_of与固定3s/5s设置，再按时间/ID倒序读取至多5001个request。超过5000返回零报告与`ErrRangeTooLarge`；其余只读这些ID的全部attempt，最多每请求两次。rows关闭排流，Rollback与必要Close共享独立5秒清理预算，健康idle才Release；清理错误同样清空结果。
+
+[聚合](../../internal/reporting/report.go)先按request保存唯一settlement的charged/refunded，再关联attempt与channel；用big.Int核规范NUMERIC100字符串，禁止重复request/attempt、超两次尝试或非法金额。contract/invoice且金额非NULL才累加已知成本；其余增加未知计数。summary/model/request只在未结算与未知计数均零时给出可为负的毛利；channel仅含请求去重计数、attempt和成本。空队列返回空数组、零金额及零毛利，模型/渠道按ID稳定排序。
+
+[HTTP](../../internal/server/operating_reports.go)提供平台GET `reports/operations`及`.csv`，沿现有平台角色中间件；重复/未知参数400，上限422，读取/超时503且不泄露cause。JSON沿标准envelope，CSV完整生成后发送no-store/UTF-8/nosniff与固定安全文件名；[CSV](../../internal/reporting/csv.go)对文本公式前缀转义，保留微元整数与负毛利，null毛利留空。无迁移、写权限或报表后台任务。
+
+[控制台](../../web/src/components/OperatingReport.vue)默认7天，筛选变化同步清除旧结果并推进generation；请求与下载各持sequence，身份/路由/卸载后旧响应失效。请求明细在同一报告本地分页，CSV每次独立新快照并标明与屏幕可能不同；下载走同源Cookie、现有认证事件及类型检查，object URL及时回收。与reports-v1累计钱包投影的区别及验收见[当前架构](../architecture/operating-reports.md)和[验证记录](../verification/operating-reports.md)。

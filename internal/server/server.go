@@ -188,6 +188,8 @@ func (s *Server) Engine() *gin.Engine {
 	p.POST("/reconciliations/:id/approve", s.approveResolve)
 	p.GET("/audit", s.audits)
 	p.GET("/reports/summary", s.platformReport)
+	p.GET("/reports/operations", s.operatingReport)
+	p.GET("/reports/operations.csv", s.operatingReportCSV)
 	p.GET("/costs", s.costs)
 	p.GET("/probes", s.probesList)
 	p.POST("/cost-corrections", s.correctCost)

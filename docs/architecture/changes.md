@@ -3926,3 +3926,50 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - added `specs/023-periodic-products/b-procurement-observer-acceptance-contract.md`
 
 </details>
+
+## 2026-11-04T03:47:24Z · 84281fd5dd4e
+
+026现行经营报表纵向交付：新增只读reporting与平台JSON/CSV、控制台筛选和精确成本汇总；同步模块图/源码/权限/能力口径及HLD/LLD/SDD/README与专项边界；ADR-005用白话明确不维护未发布内部旧结构与旧格式组合，保留外部协议支持。已完成并行汇合和语义复核，无迁移或资金写入口变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1929 个源文件；本次 23 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- added `docs/architecture/operating-reports.md`
+- modified `docs/decisions/ADR-005-pre-mvp-single-path.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/operating-reports.json`
+- added `docs/verification/operating-reports.md`
+- added `internal/reporting/csv.go`
+- added `internal/reporting/read.go`
+- added `internal/reporting/read_postgres_test.go`
+- added `internal/reporting/report.go`
+- added `internal/reporting/report_test.go`
+- added `internal/reporting/types.go`
+- added `internal/server/operating_reports.go`
+- added `internal/server/operating_reports_integration_test.go`
+- added `internal/server/operating_reports_test.go`
+- modified `internal/server/server.go`
+- added `specs/026-operating-reports/spec.md`
+- added `web/src/components/OperatingReport.vue`
+- added `web/src/operating-report.ts`
+- modified `web/src/views/ReportsView.vue`
+- added `web/tests/operating-report.test.mjs`
+
+</details>
+
+## 2026-11-04T03:49:17Z · 71e2af35925d
+
+026最终验证记录收口：专项PG/HTTP、299前端、浏览器筛选、Mermaid渲染、make check和CLI build已执行；仅更新证据与准确边界，复核模块/数据/权限/能力正文，无新增实现或架构结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1929 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/operating-reports.json`
+- modified `docs/verification/operating-reports.md`
+
+</details>

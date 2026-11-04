@@ -7,6 +7,7 @@ import PageHeader from '../components/PageHeader.vue'
 import ErrorNotice from '../components/ErrorNotice.vue'
 import RouteAttempts from '../components/RouteAttempts.vue'
 import MetricMoney from '../components/MetricMoney.vue'
+import OperatingReport from '../components/OperatingReport.vue'
 import { errorText, request, stableOperationKey } from '../api'
 import { cnyToMicro, integer, label, shortId, time } from '../format'
 import { providerCostText } from '../reporting'
@@ -70,10 +71,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <PageHeader :eyebrow="platform ? 'OPERATING REPORTS & PROVIDER COSTS' : 'WORKSPACE REPORTS'" :title="platform ? '运营与成本报表' : '用量与资金报表'" :description="platform ? '查看累计业务事实，区分客户资金、已知成本与仍待核对的费用。' : '按累计钱包入账、消费、退款与释放，查看本工作空间的资金与请求情况。'"><el-button :icon="Refresh" :loading="loading" @click="load()">刷新</el-button></PageHeader>
+  <PageHeader :eyebrow="platform ? 'OPERATING REPORTS & PROVIDER COSTS' : 'WORKSPACE REPORTS'" :title="platform ? '运营与成本报表' : '用量与资金报表'" :description="platform ? '上方按请求创建窗口核对经营事实，下方查看累计钱包指标与供应商成本更正。' : '按累计钱包入账、消费、退款与释放，查看本工作空间的资金与请求情况。'"><el-button :icon="Refresh" :loading="loading" @click="load()">刷新累计指标</el-button></PageHeader>
   <el-alert v-if="!allowed" title="当前角色没有资金报表查看权限。请联系租户所有者。" type="info" :closable="false" />
   <template v-else>
-    <section v-if="platform" class="panel"><div class="filters"><span class="muted">统计范围</span><el-select v-model="tenantId" clearable filterable placeholder="全部客户" style="width:250px" aria-label="报表客户范围" @change="filterTenant"><el-option v-for="tenant in tenants" :key="tenant.id" :label="tenant.name" :value="tenant.id" /></el-select><span class="muted small-text">全生命周期累计 · CNY</span></div></section>
+    <OperatingReport v-if="platform" />
+    <section v-if="platform" class="panel"><div class="filters"><span class="muted">累计钱包指标与成本核对</span><el-select v-model="tenantId" clearable filterable placeholder="全部客户" style="width:250px" aria-label="报表客户范围" @change="filterTenant"><el-option v-for="tenant in tenants" :key="tenant.id" :label="tenant.name" :value="tenant.id" /></el-select><span class="muted small-text">全生命周期累计 · CNY</span></div></section>
     <ErrorNotice :message="error" @retry="load()" />
     <el-alert v-if="summary?.projection_pending" type="warning" :closable="false" show-icon :title="`还有 ${integer(summary.projection_pending)} 条业务事件等待报表更新，累计指标可能暂未包含最新操作。钱包余额以同步账本为准。`" style="margin-bottom:22px" />
     <div v-loading="loading" class="metric-grid">
@@ -101,7 +103,7 @@ onMounted(async () => {
       </el-table><div class="table-footer"><span>当前页 {{ costs.length }} 条 · 各次尝试单独核对</span><div><el-button size="small" :disabled="!cursors.length || loading" @click="previous">上一页</el-button><el-button size="small" :disabled="!nextCursor || loading" @click="next">下一页</el-button></div></div>
     </section>
     <section v-else class="panel"><div class="panel-body"><div class="panel-title">资金余额与明细</div><p class="muted small-text" style="margin:12px 0 18px">累计指标由业务事件更新。当前可用余额、冻结和逐笔流水请在钱包查看；逐次模型调用请在调用记录中核对。</p><router-link to="/wallet"><el-button>查看钱包与流水</el-button></router-link><router-link to="/requests" style="margin-left:10px"><el-button>查看调用记录</el-button></router-link></div></section>
-    <p class="section-note"><el-icon><InfoFilled /></el-icon><span>统计时点：{{ time(summary?.as_of) }}。报表异步更新，不用于付费请求准入或替代同步资金账本。{{ platform ? '平台探测不归属于具体客户，探测待核对次数始终单列全平台数量。' : '' }}</span></p>
+    <p class="section-note"><el-icon><InfoFilled /></el-icon><span>累计钱包指标统计时点：{{ time(summary?.as_of) }}。累计指标异步更新，不用于付费请求准入或替代同步资金账本。{{ platform ? '上方经营窗口报表独立读取同一只读快照。平台探测不归属于具体客户，探测待核对次数始终单列全平台数量。' : '' }}</span></p>
   </template>
   <el-dialog v-model="attemptsOpen" title="路由与尝试" width="950px" destroy-on-close><div class="muted small-text">请求 ID <code class="mono">{{ attemptsRequest }}</code></div><RouteAttempts v-if="platform && attemptsOpen" :request-id="attemptsRequest" /></el-dialog>
   <el-dialog v-model="correctionOpen" title="更正供应商成本" width="540px" destroy-on-close :close-on-click-modal="false" @closed="form = { amount: '', basis: 'invoice', evidence_ref: '' }; correction = null">

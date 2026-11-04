@@ -54,7 +54,7 @@ flowchart LR
 
 目标供应商为OpenAI/Codex相关API模型、Claude、DeepSeek、Gemini、GLM，以及硅基流动等第三方平台。每个平台分别认证协议profile、硬计量边界、采购报价和账户，不按模型同名继承认证；当前实现与正式认证之间的差别见[逐渠道接入计划](../design/provider-qualification-plan.md)。
 
-技术栈为 Go/Gin、pgx/PostgreSQL、Vue 3/TypeScript/Element Plus；前端构建嵌入单个 Go 可执行文件。无需 Redis/Kafka。PostgreSQL 同时承担事务事实源、恢复任务与 outbox，统计通过独立角色投影，不直接参与模型响应的网络过程。
+技术栈为 Go/Gin、pgx/PostgreSQL、Vue 3/TypeScript/Element Plus；前端构建嵌入单个 Go 可执行文件。无需 Redis/Kafka。PostgreSQL 同时承担事务事实源、恢复任务与 outbox；累计钱包统计通过独立角色投影，026经营报表经APP读取同一业务快照，两者不直接参与模型响应的网络过程。
 
 <!-- architecture:modules -->
 ## 模块、依赖与源码地图
@@ -106,6 +106,7 @@ flowchart TD
     Provider[provider\n协议、usage、SSE、网络]
     Billing[billing\n预占、结算、成本、双审券、统一入账与投影]
     Procurement[procurement\n共享采购账户、永久绑定、命令回执]
+    Reporting[reporting\n当前请求窗口 / 精确经营汇总与CSV]
     Operations[operations\n实例保护、角色配置、恢复闸门]
     Mail[mailworker / maildeliver\n独立生命周期、SMTP与清理]
     AlertWorker[alertworker\n双槽 / 专用双连接 / Guard]
@@ -288,6 +289,7 @@ flowchart TD
     HTTP --> Provider
     HTTP --> Billing
     HTTP --> Procurement
+    HTTP --> Reporting
     HTTP --> Operations
     HTTP --> Alerts
     HTTP -->|周期预算Reader / Commander| PeriodicBudget
@@ -301,6 +303,7 @@ flowchart TD
     Catalog --> PG
     Billing --> PG
     Procurement --> PG
+    Reporting -->|同一有界RR只读快照| PG
     Operations --> PG
     Routing -->|端点与协议类型| Provider
     HTTP -. 公共支撑 .-> Security
@@ -330,6 +333,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 路由 | 优先级/权重、健康隔离、采购比价与单价上限、渠道与成员双容量、候选解释 | [routing](../../internal/routing)、[成本策略](../../internal/routing/cost.go)、[018 合同](../../specs/018-cost-aware-routing/spec.md)、[路由决策集成验证](../../internal/server/route_decisions_integration_test.go) |
 | 协议与出口 | 请求约束、响应/usage 校验、SSE、SSRF/DNS/重定向限制 | [provider](../../internal/provider)、[协议合同](../../specs/001-commercial-mvp/contracts/provider.md) |
 | 财务与恢复 | 客户硬预占、不可变证据、唯一结算/释放、成本、补偿、恢复/投影 | [billing](../../internal/billing)、[计费合同](../../specs/001-commercial-mvp/contracts/billing.md) |
+| 经营报表与对账（026） | 当前请求创建窗口、模型消费收入/退款/毛利、全部attempt成本与渠道汇总、请求级CSV；平台只读，同一有界快照，未知成本不算零 | [reporting](../../internal/reporting)、[HTTP](../../internal/server/operating_reports.go)、[控制台](../../web/src/components/OperatingReport.vue)、[细图与口径](operating-reports.md)、[验证](../verification/operating-reports.md) |
 | 共同入账与双审券（022-A） | 人工核款/运营赠额唯一入账、六命令回执、独立HMAC、一次codes、来源查询与未知提交保护 | [funding](../../internal/billing/funding.go)、[核验](../../internal/billing/funding_verify.go)、[券命令](../../internal/billing/voucher_commands.go)、[安全查询](../../internal/billing/voucher_query.go)、[keyring](../../internal/security/voucher.go)、[HTTP](../../internal/server/commerce_handlers.go)、[017迁移](../../migrations/017_funding_vouchers.sql)、[证据](../verification/funding-vouchers.md) |
 | 分组售价（023-A） | 单tenant单组、绝对价/缺价拒绝、不可变请求快照、原操作回执及缺价预览；已完成限定本地集成验收 | [Tx helper](../../internal/pricing/pricing.go)、[管理](../../internal/catalog/pricing_commands.go)、[查询](../../internal/catalog/pricing_queries.go)、[HTTP](../../internal/server/pricing_handlers.go)、[018迁移](../../migrations/018_tenant_pricing.sql)、[精确合同](../../specs/023-periodic-products/a-contract.md) |
 | 独立本地支付沙箱（022-B0） | P协议、M模拟器/receiver/持久回调和私密运行证明已编码；专项真实PG/race和真实进程短程通过，长程故障验收按记录推进；独立M/Q进程限定验证；应用接线另见B3 | [协议](../../internal/paymentproto)、[模拟器](../../internal/mockpsp)、[接收器](../../internal/paymentreceiver)、[运行证明](../../internal/paymentruntime)、[版本1 SQL/inventory](../../internal/paymentsandboxschema)、[离线QA](../../internal/paymentsandboxqa)、[精确合同](../../specs/022-self-service-payments/b-runtime-contract.md)、[验证记录](../verification/payment-sandbox.md) |
@@ -1053,6 +1057,7 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 来源追踪核验基础 | C0完整来源读取与库级候选受保护开账已接线 | [68表合同](../../specs/022-self-service-payments/c0-complete-source-reader-contract.md)与[实现](../../internal/fundinglotscan/reader.go)：同lease扫描固定列并集，七算法、ordinary精确排除、原生时间资格、共享100000行/16MiB；[维护入口](../../internal/maintenancescan/complete_sources.go)绑定原Permit与第六kind。旧五局部scope不变；物理EOF与业务coverage独立，Unproven不授资格。另有[84表八算法](../../internal/fundinglotscan/wallet.go)与[第七kind维护入口](../../internal/maintenancescan/source_wallet.go)，实际调用lot重放并绑定原Permit；另有109表basis与strict v2独立叶子；[受保护开账](../verification/protected-init-phase.md)已装配；新增库级独立停服epoch观察，见[观察流程](#独立停服-epoch-观察)；独立[APP完整运行核验](#独立-app-完整资金运行核验)实现已汇合；限定验证见记录、完整经营验收仍有PB门禁；正式迁移、进程startup/ready、线上资金接线和生产CLI仍后续；[读取验收](../verification/source-wallet-reader.md) |
 | 商品价值/期限纯算法 | C-V已实现，无生产接线 | [productvalue](../../internal/productvalue/value.go)精确端点价值差、原本金分区索引归因、UTC6原锚点月/半开term；[合同与专项](../../specs/023-periodic-products/c-value-contract.md)，无购买/权益发放/退款授权 |
 | 上游模型成本 | 已实现 | 每渠道精确上游模型的输入/输出单价、生效版本、每attempt快照及unknown；受控采购更正双人审批，尚无自动供应商账单同步 |
+| 经营报表与CSV | 026已接平台HTTP/控制台，限定专项验收见记录 | 最长31天/5000请求；消费收入一次、全部尝试成本、退款净额，未知成本或未结算时毛利待核对；独立于累计钱包异步投影，[架构](operating-reports.md)、[验证](../verification/operating-reports.md) |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
 | 共享采购账户/预算 | 019已实现，限定本地验收通过 | [冻结合同](../../specs/019-procurement-accounts/contract.md)；跨渠道/Key/租户共享累计预算、逐attempt预占、未知占用和双人更正；周期硬预算已由023-B扩展；余额仅人工证据，供应商余额/账单自动同步待后续 |
 | 公开模型目录 | 020已实现，限定本地验收通过 | 默认私有、安全DTO、当前价、筛选/分页、独立准入与admin公开CAS；[020验证](../verification/public-catalog.md) |

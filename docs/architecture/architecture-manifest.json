@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-04T03:23:17Z",
-  "review_reason": "实现库级采购回执只读Observe及专项；同步来源/root/步骤/validator与RR只读清理边界、源码和验证。依据用户要求新增ADR-005，MVP采用现行单路径、冻结历史兼容候选，优先经营能力；README使用部署步骤经源码复核。",
-  "snapshot_sha256": "aec37a375a32cc622511f1b5ecf86a144003a75d5d8ad575396b4db0403e1ad1",
-  "architecture_sha256": "5ee794f27e23d74509c043bb7d139e667c274d389e31064d55816586ebfa38fb",
-  "history_sha256": "04904167b839778dc72633bb6737a4d1de8b7109446681b02122d890236cbf2f",
+  "reviewed_at": "2026-11-04T03:49:17Z",
+  "review_reason": "026最终验证记录收口：专项PG/HTTP、299前端、浏览器筛选、Mermaid渲染、make check和CLI build已执行；仅更新证据与准确边界，复核模块/数据/权限/能力正文，无新增实现或架构结构变化。",
+  "snapshot_sha256": "71e2af35925d722c93ada899791568d6aeedbd72f5003aa6ba1bbefe4037396d",
+  "architecture_sha256": "dbccd78dea0bd4e13ed21b9b14d758553eaf27023bccf3177112d34cbae30892",
+  "history_sha256": "97b959a062eb6ea1758d539e3d957524b82d7bfa4382e800f2c8f1c7bf76f9f1",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "d41ceca75d824dc34573b5b64cbea8c302dc192f445e8d6bf5843c1d666ad8b8"
+      "sha256": "248b1e1c8be02b3c9f1b936b00de064dbaf306c1d607ac655bdb7beddceed787"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -104,6 +104,10 @@
       "sha256": "fca4752bef685ffb1c8665a4a20208dbdc00701baf28904915561a24d0243bbd"
     },
     {
+      "path": "docs/architecture/operating-reports.md",
+      "sha256": "b24d33ba2f666ac111fa5c813d195b9129db8dd91acc173b4ab3aaa27fcf8348"
+    },
+    {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
       "sha256": "80731da1da2622453934adcbb8b7512333450f06989263f733505ae968f135f4"
     },
@@ -149,19 +153,19 @@
     },
     {
       "path": "docs/decisions/ADR-005-pre-mvp-single-path.md",
-      "sha256": "3fa3336fd76fb92f9ec239ff54dc37eefa07c9837c0eb8d45df6031cc0f042f4"
+      "sha256": "ae6ff64154fcf19cb18346175fbba7605049a2dd1136d75984974757b3d8a153"
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "e3064442efa9915e847d2fc620038ec1f621b1981a1957801a5160ec325392d2"
+      "sha256": "ed8a49c693b46849854cba9aa3ce11116ac82b546149a7d31fcf56ace08f57e5"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "8cfeb794f16b1ecc94807ce806bb972c0a7eddc9cca70c69c8abfee362e987f1"
+      "sha256": "6cb012060e03b16ec421debd9f815925b00a5932db4e36099c66be4c56a27c15"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "979121082524ce8c5de4e730fe7a84014ed2f836b3275ab6cd2dd686ac386959"
+      "sha256": "312fba2a6a92d33b23f6a1a797e0681bd11ec6f596a9e31ff32cf8af0b3ae576"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -1366,6 +1370,14 @@
     {
       "path": "docs/verification/native-sdk.md",
       "sha256": "4e54458a90718c4d26b805b38ac7f5f0ec4d3d76433c551fd7b4c711b987cc5d"
+    },
+    {
+      "path": "docs/verification/operating-reports.json",
+      "sha256": "6e3b074b95ac2b88a98dc271af26958b89b3712e3f6b7cb42fb226e765596c37"
+    },
+    {
+      "path": "docs/verification/operating-reports.md",
+      "sha256": "8401686f3458972851f81aba3a080b3d02af826f861d0214fd8fa132d6e8813a"
     },
     {
       "path": "docs/verification/operations-alerts-024-browser.json",
@@ -5324,6 +5336,30 @@
       "sha256": "89c9ee97223c3a607160ea1559086c8e906a38f1537daa3ea78a17207b62f8eb"
     },
     {
+      "path": "internal/reporting/csv.go",
+      "sha256": "ee7d155349f6a477460bf21180b7ee208bb57dc32d6e429f9cdfce365af960e5"
+    },
+    {
+      "path": "internal/reporting/read.go",
+      "sha256": "2319a70bf1a7fb05effc982819543421d19e9e0f93aa27d8851724c17d7d5923"
+    },
+    {
+      "path": "internal/reporting/read_postgres_test.go",
+      "sha256": "b24f9a1ea5fd2bc9db4b7eb33d38b4d0927f6415a35521693c3d5e7980edd2eb"
+    },
+    {
+      "path": "internal/reporting/report.go",
+      "sha256": "7ae873b485fac0cb9464fc83a8493cdd54de7aac141ff858b5665ad89b9c88a0"
+    },
+    {
+      "path": "internal/reporting/report_test.go",
+      "sha256": "20959cc861604c3efcd460f6efed744a209b487cae76a1b604b6b6cce29f735b"
+    },
+    {
+      "path": "internal/reporting/types.go",
+      "sha256": "b155fa42c5d93ea710839518be99a720d73f1ef066a7fd9055ff3eecf9affd18"
+    },
+    {
       "path": "internal/routing/cost.go",
       "sha256": "becc3508062378a2475959792e2a72ce03bf299c04f8f1be192c19bcf704ab68"
     },
@@ -5568,6 +5604,18 @@
       "sha256": "f270cdeb143ff3bfde375006682dc3bdbb0ee940be8c7ea72b6506bb4ebe0323"
     },
     {
+      "path": "internal/server/operating_reports.go",
+      "sha256": "8e5d61fcd135a69224562045f58f360891278a712ae1d126d9cc585cb41f8460"
+    },
+    {
+      "path": "internal/server/operating_reports_integration_test.go",
+      "sha256": "273d4df6b739fa8df625898d76b7db22f6e3db391db1c1d52285ba00a57b34c4"
+    },
+    {
+      "path": "internal/server/operating_reports_test.go",
+      "sha256": "b7743aee3172f70e5c04988f46259855e074384f1033b556e79844fc36c7dc2d"
+    },
+    {
       "path": "internal/server/payment_admission.go",
       "sha256": "2c1d609c5c77cdf747ef9aa30b5e5a2229f75765585447e47a81ffd744bfbdef"
     },
@@ -5713,7 +5761,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "80b31e89d07d345a5c460a609ca20f602c7841fe118e584e367f338d4f8987cc"
+      "sha256": "2817c717f576b0b74ffb43d67b26d09e619f3954ae1ec7ee6bb728c9d3d78a1d"
     },
     {
       "path": "internal/server/static.go",
@@ -7104,6 +7152,10 @@
       "sha256": "35867933e103ceee22966008232f7c309d8876e97afad523b080ccd42f18eefa"
     },
     {
+      "path": "specs/026-operating-reports/spec.md",
+      "sha256": "54eaa24f064318667ce5a8bbb7dc4e54200917d5fe1846e5cb67ec72b5aca51e"
+    },
+    {
       "path": "web/.gitignore",
       "sha256": "15689fa52ea2524a9dcedf68d8b74e6bd461f2f41844e440a72f5033be2df316"
     },
@@ -7224,6 +7276,10 @@
       "sha256": "4b4be5bc8f38edb3a6d2b9acbba4287c464f673504d5e0ac0b1df377ff29d3da"
     },
     {
+      "path": "web/src/components/OperatingReport.vue",
+      "sha256": "1c32d1af76528079b2f3f1dd448354bd363f161917051efc452b2d207cb540d6"
+    },
+    {
       "path": "web/src/components/PageHeader.vue",
       "sha256": "1da3e88ca4f5fbaabe0c4e921acc665ae47a8b40fdd294cb559b6141160751d9"
     },
@@ -7326,6 +7382,10 @@
     {
       "path": "web/src/model-contract.ts",
       "sha256": "7face84388a4948f2d26f7a175036b9906bd010162364af611e39c8b2b37f15c"
+    },
+    {
+      "path": "web/src/operating-report.ts",
+      "sha256": "96f710d905f16874976b63aef57b1c67787780c0281cc84fe3c2149ea933b3de"
     },
     {
       "path": "web/src/payments-journal.ts",
@@ -7477,7 +7537,7 @@
     },
     {
       "path": "web/src/views/ReportsView.vue",
-      "sha256": "4c4b77a1ec709b65a49c4fd9d8a40cea2bd1a8ab8f763da3c0942c3eb1551345"
+      "sha256": "b90d1464336a89d0e46214c54dbd83815b7f255911f1234d3bb2ef7726243605"
     },
     {
       "path": "web/src/views/RequestsView.vue",
@@ -7574,6 +7634,10 @@
     {
       "path": "web/tests/money.test.mjs",
       "sha256": "b01a15715779cf01d46edc36b3a0a48f1a1b01457c4f4da0fe4120a250bcdaaa"
+    },
+    {
+      "path": "web/tests/operating-report.test.mjs",
+      "sha256": "13582011dddcbc552c0ce34709808dd9d1d59e0c62a2f88e4c4f798957123001"
     },
     {
       "path": "web/tests/payments-indexeddb.browser.mjs",

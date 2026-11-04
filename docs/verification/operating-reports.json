@@ -1,0 +1,290 @@
+{
+  "schema": "moni.operating-reports.v1",
+  "date": "2026-11-04",
+  "status": "Implemented on the current production model; bounded local reporting/HTTP/frontend/browser checks and repository check/build passed. Production supplier and deployment qualification remain separate.",
+  "scope": "Current request-created-window report and request CSV; platform-only read of six current business tables. No new migration, role, write, model request, historical proof or version compatibility path.",
+  "commands": {
+    "reporting_complete_pure": "go test -race -json ./internal/reporting -run '^Test(Filter|Operating|CSV|ReadSQL)' -count=1",
+    "reporting_vet": "go vet ./internal/reporting",
+    "current_source_integrated": "TEST_DATABASE_URL=<dedicated PG16> go test -json -race -p 1 -count=1 -timeout 5m ./internal/reporting ./internal/server -run '^(TestOperatingReport|TestPostgresReadOperatingReport)'"
+  },
+  "results": {
+    "reporting_complete_pure": {
+      "packages": {
+        "github.com/moni-ai/moni-aigate/internal/reporting": {
+          "top_level_pass": 6,
+          "subtest_pass": 22,
+          "fail": 0,
+          "skip": 0,
+          "unique_ordered_terminal_per_run": true,
+          "tests": [
+            "TestFilterAndMicrosecondWindow",
+            "TestFilterAndMicrosecondWindow/valid",
+            "TestFilterAndMicrosecondWindow/exact_31_days",
+            "TestFilterAndMicrosecondWindow/one_nanosecond_over",
+            "TestFilterAndMicrosecondWindow/empty",
+            "TestFilterAndMicrosecondWindow/reverse",
+            "TestFilterAndMicrosecondWindow/missing",
+            "TestFilterAndMicrosecondWindow/tenant_invalid",
+            "TestFilterAndMicrosecondWindow/model_invalid",
+            "TestFilterAndMicrosecondWindow/scoped",
+            "TestOperatingReportExactRequestAndAttemptAccounting",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/null_invoice",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/null_contract",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/unknown_nonzero",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/other_state",
+            "TestOperatingReportEmptyLimitAndCorruptFacts",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/partial_settlement",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/refund_exceeds_sale",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/noncanonical_amount",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/negative_amount",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/duplicate_request",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/foreign_attempt",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/duplicate_attempt",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/over_two_attempts",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/invalid_known_cost",
+            "TestCSVExactNumbersQuotedTextAndFormulaProtection",
+            "TestReadSQLHasBoundedCurrentFactsOnly"
+          ],
+          "elapsed_seconds": 1.676
+        }
+      },
+      "evidence": {
+        "path": ".local/operating-reports-pure-final.jsonl",
+        "bytes": 27299,
+        "sha256": "c4352d8dd852bc9eadb5e80effb76d8ba4518c8d0a1759b487178fe988f3ae56"
+      }
+    },
+    "current_source_integrated": {
+      "packages": {
+        "github.com/moni-ai/moni-aigate/internal/reporting": {
+          "top_level_pass": 6,
+          "subtest_pass": 13,
+          "fail": 0,
+          "skip": 0,
+          "unique_ordered_terminal_per_run": true,
+          "tests": [
+            "TestPostgresReadOperatingReportRangeLimit",
+            "TestPostgresReadOperatingReportScopesAndNumeric100",
+            "TestPostgresReadOperatingReportUsesOneReadOnlySnapshot",
+            "TestOperatingReportExactRequestAndAttemptAccounting",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/null_invoice",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/null_contract",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/unknown_nonzero",
+            "TestOperatingReportExactLargeAmountsAndUnknownUnions/other_state",
+            "TestOperatingReportEmptyLimitAndCorruptFacts",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/partial_settlement",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/refund_exceeds_sale",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/noncanonical_amount",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/negative_amount",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/duplicate_request",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/foreign_attempt",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/duplicate_attempt",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/over_two_attempts",
+            "TestOperatingReportEmptyLimitAndCorruptFacts/invalid_known_cost"
+          ],
+          "elapsed_seconds": 1.999
+        },
+        "github.com/moni-ai/moni-aigate/internal/server": {
+          "top_level_pass": 3,
+          "subtest_pass": 5,
+          "fail": 0,
+          "skip": 0,
+          "unique_ordered_terminal_per_run": true,
+          "tests": [
+            "TestOperatingReportPostgresCommercialFlowAndAuthorization",
+            "TestOperatingReportPostgresCommercialFlowAndAuthorization/one_sale_all_attempts_and_unknown_margin",
+            "TestOperatingReportPostgresCommercialFlowAndAuthorization/current_cost_facts_and_real_wallet_refund",
+            "TestOperatingReportPostgresCommercialFlowAndAuthorization/half_open_window_and_current_filters",
+            "TestOperatingReportPostgresCommercialFlowAndAuthorization/csv_has_one_request_and_exact_micro_units",
+            "TestOperatingReportPostgresCommercialFlowAndAuthorization/platform_roles_allowed_customer_roles_denied",
+            "TestOperatingReportStrictFilter",
+            "TestOperatingReportFailureDoesNotDownloadJSON"
+          ],
+          "elapsed_seconds": 9.856
+        }
+      },
+      "evidence": {
+        "path": ".local/026-integrated-final.jsonl",
+        "bytes": 28899,
+        "sha256": "4ea03f68be355a762975c05850539f33327c80e4e4d4e91dfdea0fe76221e345"
+      }
+    },
+    "frontend": {
+      "pass": 299,
+      "fail": 0,
+      "skip": 0,
+      "new_operating_report_tests": 13,
+      "evidence": {
+        "path": ".local/operating-report-026-frontend-tests.txt",
+        "bytes": 75552,
+        "sha256": "fae7f11c6a9e3fa2cbdd1b4d3a7465ba99fe3d8da3c4b4893a3bd059d8168250"
+      }
+    },
+    "frontend_strict_build": {
+      "status": "pass",
+      "checks": [
+        "vue-tsc --noEmit",
+        "vite build"
+      ],
+      "vite_seconds": 2.65,
+      "evidence": {
+        "path": ".local/operating-report-026-frontend-build.txt",
+        "bytes": 6086,
+        "sha256": "76cb704c6a1606bd667ee399ae4cc390996067042a5fe14ef814458070f20913"
+      }
+    },
+    "reporting_vet": {
+      "status": "pass",
+      "provenance": "Implementer reported successful go vet after final pure run; not falsely represented as redirected raw output."
+    }
+  },
+  "count_boundary": "Complete pure reporting 6/22 overlaps integrated reporting 3 pure top-level tests. Integrated reporting total 6/13 includes those 3 plus 3 actual query-PG tests. Integrated server 3/5 includes 2 pure and 1 actual commercial-PG test. Do not add runs or overlapping test sets.",
+  "source_sha256": {
+    "internal/reporting/csv.go": "ee7d155349f6a477460bf21180b7ee208bb57dc32d6e429f9cdfce365af960e5",
+    "internal/reporting/read.go": "2319a70bf1a7fb05effc982819543421d19e9e0f93aa27d8851724c17d7d5923",
+    "internal/reporting/read_postgres_test.go": "b24f9a1ea5fd2bc9db4b7eb33d38b4d0927f6415a35521693c3d5e7980edd2eb",
+    "internal/reporting/report.go": "7ae873b485fac0cb9464fc83a8493cdd54de7aac141ff858b5665ad89b9c88a0",
+    "internal/reporting/report_test.go": "20959cc861604c3efcd460f6efed744a209b487cae76a1b604b6b6cce29f735b",
+    "internal/reporting/types.go": "b155fa42c5d93ea710839518be99a720d73f1ef066a7fd9055ff3eecf9affd18",
+    "internal/server/operating_reports.go": "8e5d61fcd135a69224562045f58f360891278a712ae1d126d9cc585cb41f8460",
+    "internal/server/operating_reports_test.go": "b7743aee3172f70e5c04988f46259855e074384f1033b556e79844fc36c7dc2d",
+    "internal/server/operating_reports_integration_test.go": "273d4df6b739fa8df625898d76b7db22f6e3db391db1c1d52285ba00a57b34c4",
+    "internal/server/server.go": "2817c717f576b0b74ffb43d67b26d09e619f3954ae1ec7ee6bb728c9d3d78a1d",
+    "web/src/operating-report.ts": "96f710d905f16874976b63aef57b1c67787780c0281cc84fe3c2149ea933b3de",
+    "web/src/components/OperatingReport.vue": "1c32d1af76528079b2f3f1dd448354bd363f161917051efc452b2d207cb540d6",
+    "web/src/views/ReportsView.vue": "b90d1464336a89d0e46214c54dbd83815b7f255911f1234d3bb2ef7726243605",
+    "web/tests/operating-report.test.mjs": "13582011dddcbc552c0ce34709808dd9d1d59e0c62a2f88e4c4f798957123001"
+  },
+  "source_binding": "Implementers froze reporting and frontend source. Integrator reran current reporting/server source after the final as_of clock_timestamp adjustment; recorded source snapshot follows that run.",
+  "fixture_boundaries": {
+    "reporting_query_pg": "Dedicated PostgreSQL with isolated minimal six-table query fixture. Tests row limit, NUMERIC100, filters and actual RR concurrent snapshot; not commercial writer/role acceptance.",
+    "commercial_http_pg": "Real 001-022 gateway fixture, two real model HTTP attempts and one settlement; existing cost correction and dual-approval wallet refund; platform/customer JSON+CSV authorization. Local provider fixture, not official supplier certification."
+  },
+  "commercial_expected_micro_cny": {
+    "charged": "20",
+    "refunded": "5",
+    "net_revenue": "15",
+    "known_provider_cost": "18",
+    "gross_margin": "-3",
+    "request_count": 1,
+    "attempt_count": 2
+  },
+  "browser": {
+    "provenance": "Integrator observed the IAB page of an isolated actual 001-022 business fixture; distinct from the two-attempt HTTP fixture.",
+    "expected_micro_cny": {
+      "charged": "20",
+      "known_provider_cost": "7",
+      "gross_margin": "13"
+    },
+    "observed": [
+      "Initial report correct",
+      "Changing model ID clears old report immediately",
+      "Nonexistent UUID query yields empty report",
+      "Clearing filter and requery restores report",
+      "Console error and warn arrays empty"
+    ],
+    "screenshot": {
+      "path": ".local/026-operating-report-full.png",
+      "bytes": 168582,
+      "sha256": "83fdeec79a103f9cfd54f9b58e7356f30f9da788d8467f9a77281edfad43aa70"
+    },
+    "fixture_log": {
+      "path": ".local/026-browser-fixture.log",
+      "bytes": 1478,
+      "sha256": "64997c12e7e65f16acd0ef239d3a576646e8fe2232ee51c704b08ff6a7b4666b"
+    },
+    "fixture_pass_top_level": 1,
+    "fixture_package_elapsed_seconds": 309.925,
+    "cleanup_reported": [
+      "Fixture stopped gracefully",
+      "Temporary test deleted",
+      "Private fixture state deleted",
+      "QA tab closed"
+    ],
+    "not_executed": [
+      "Browser CSV download",
+      "Mobile viewport",
+      "Request-attempt drilldown"
+    ]
+  },
+  "retained_initial_evidence": [
+    {
+      "slice": "reporting_query_pg",
+      "path": ".local/026-reporting-pg-first.jsonl",
+      "bytes": 3423,
+      "sha256": "e99a6942ee67ac130afdad0bf00279efd2aafeab7492c5bb70e87134fa1e2128",
+      "note": "Retained initial PASS run; final current-source integrated run below is authoritative, no duplicate counting."
+    },
+    {
+      "slice": "http_pure",
+      "path": ".local/026-http-pure.jsonl",
+      "bytes": 4188,
+      "sha256": "ff2e7238a25361297babf157019dd65eb4942ac7b9a16948a8accbcd075cd912",
+      "note": "Retained initial PASS run; final current-source integrated run below is authoritative, no duplicate counting."
+    },
+    {
+      "slice": "commercial_http_pg",
+      "path": ".local/026-http-pg-first.jsonl",
+      "bytes": 7685,
+      "sha256": "6b19a63d4f418f8eb786ff327ea51a56a7e42ac87d2478793b31eef421ccad75",
+      "note": "Retained initial PASS run; final current-source integrated run below is authoritative, no duplicate counting."
+    },
+    {
+      "path": ".local/026-reporting-pure-first.jsonl",
+      "bytes": 27284,
+      "sha256": "77c1f692dba6c8e1cf1464864d9850f4312cd07e4d09d67a8c1f3f84e77eb5f4",
+      "note": "Earlier root-run pure slice, not added to final counts; final implementer slice follows as_of timestamp adjustment."
+    }
+  ],
+  "exclusions": [
+    "Cash flow or full platform net profit",
+    "Supplier invoice synchronization",
+    "Durable screen snapshot CSV",
+    "Asynchronous large reports",
+    "Production or performance qualification"
+  ],
+  "remaining_delivery": [
+    "Commit/push by integrator; remote CI is not represented as passed."
+  ],
+  "cleanup": {
+    "provenance": "Integrator actual SQL and filesystem observations reported in tool conversation; no invented redirected raw file.",
+    "other_backends": 0,
+    "reporting_and_auth_temporary_schemas": 0,
+    "private_fixture_file_deleted": true,
+    "existing_gateway_schema_preserved": true,
+    "existing_gateway_schema_scope": "Ownership of one pre-existing empty-request gateway schema could not be attributed to this slice. Preserved; this browser user absent. No assertion that entire database has zero schemas."
+  },
+  "mermaid": {
+    "version": "12.2.0",
+    "detail": {
+      "pass": true,
+      "report": ".local/architecture-mermaid-check/operating-reports-detail-20261104/report.json",
+      "diagram_count": 1,
+      "visual_review": true
+    },
+    "module_graph": {
+      "pass": true,
+      "report": ".local/architecture-mermaid-check/operating-reports-modules-20261104/report.json",
+      "readme_source_diagram_index": 2,
+      "diagram_count": 1,
+      "note": "First isolated render timed out; retry completed without source changes. Existing full graph remains large; this is rendering evidence, not a claim of overview readability or production validation."
+    }
+  },
+  "final_repository": {
+    "make_check": {
+      "pass": true,
+      "path": ".local/026-make-check.log",
+      "sha256": "9e21fe92927b844c38f030cae196c53854edcc5cfce21dabfe9cf3a516c04f17"
+    },
+    "cli_build": {
+      "pass": true,
+      "command": "go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate",
+      "path": ".local/026-cli-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "note": "Architecture reviewed refresh and final read-only check accompany this record; this is not a full repository PostgreSQL regression."
+  }
+}
