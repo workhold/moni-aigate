@@ -38,7 +38,11 @@ func TestFilterAndMicrosecondWindow(t *testing.T) {
 		{"scoped", func(f *Filter) {
 			f.TenantID = "10000000-0000-0000-0000-000000000001"
 			f.ModelID = "10000000-0000-0000-0000-000000000002"
+			f.Protocol = "openai_chat"
+			f.ExecutionKind = "synchronous"
 		}, true},
+		{"unknown protocol", func(f *Filter) { f.Protocol = "chat" }, false},
+		{"unknown execution", func(f *Filter) { f.ExecutionKind = "async" }, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := base
@@ -212,7 +216,7 @@ func TestCSVExactNumbersQuotedTextAndFormulaProtection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 3 || len(rows[0]) != 15 || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[2][14] != "" {
+	if len(rows) != 3 || len(rows[0]) != 21 || rows[0][15] != "protocol" || rows[0][20] != "variant_key" || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[2][14] != "" {
 		t.Fatal("CSV precision/escaping/unknown contract differs", rows)
 	}
 	want := errors.New("writer unavailable")
@@ -226,7 +230,7 @@ type failingWriter struct{ err error }
 func (w failingWriter) Write([]byte) (int, error) { return 0, w.err }
 
 func TestReadSQLHasBoundedCurrentFactsOnly(t *testing.T) {
-	if !strings.Contains(requestsSQL, "LIMIT 5001") || !strings.Contains(requestsSQL, "r.created_at >= $1 AND r.created_at < $2") || !strings.Contains(attemptsSQL, "ANY($1::pg_catalog.text[])") {
+	if !strings.Contains(requestsSQL, "LIMIT 5001") || !strings.Contains(requestsSQL, "r.created_at >= $1 AND r.created_at < $2") || !strings.Contains(requestsSQL, "request_meter_snapshots") || strings.Contains(requestsSQL, "m.profile") || !strings.Contains(attemptsSQL, "ANY($1::pg_catalog.text[])") {
 		t.Fatal("cohort bound or exact interval removed")
 	}
 	for _, sql := range []string{requestsSQL, attemptsSQL} {

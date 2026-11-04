@@ -1,6 +1,7 @@
 package billing
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -155,4 +156,48 @@ func TestPostgresProcurementAdjudicatedOriginalEvidenceDoesNotReopen(t *testing.
 	if err = f.pool.QueryRow(f.ctx, `SELECT p.state,a.cost_amount::text FROM procurement_reservations p JOIN upstream_attempts a ON a.id=p.attempt_id WHERE p.attempt_id=$1`, a.ID).Scan(&state, &amount); err != nil || state != "settled" || amount != "25" {
 		t.Fatal("reobserved original usage erased an already adjudicated supplier fact", state, amount, err)
 	}
+	var evidence, revision int64
+	if err = f.pool.QueryRow(f.ctx, `SELECT (SELECT count(*) FROM procurement_evidence_identities WHERE attempt_id=$1),(SELECT revision FROM procurement_reservations WHERE attempt_id=$1)`, a.ID).Scan(&evidence, &revision); err != nil {
+		t.Fatal(err)
+	}
+	tx, err := f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proposalID, operationID := uuid.NewString(), uuid.NewString()
+	if _, err = tx.Exec(f.ctx, `INSERT INTO procurement_cost_proposals(id,tenant_id,attempt_id,amount,basis,evidence_ref,reason,requester,expected_reservation_revision,expected_evidence_count,state,approver,approval_operation_id,approved_at)
+ VALUES($1,$2,$3,99,'invoice','invoice:other','other claim',$4,$7,$8,'approved',$5,$6,clock_timestamp())`, proposalID, f.tenant, a.ID, f.operator, f.approver, operationID, revision, evidence); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `UPDATE procurement_reservations SET updated_at=clock_timestamp() WHERE attempt_id=$1`, a.ID); err == nil {
+		err = tx.Commit(f.ctx)
+	}
+	if err == nil || !strings.Contains(err.Error(), "procurement reservation does not match its budget events") {
+		t.Fatal("approved proposal diverged from the reservation", err)
+	}
+	_ = tx.Rollback(f.ctx)
+	tx, err = f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `INSERT INTO procurement_cost_proposals(id,tenant_id,attempt_id,amount,basis,evidence_ref,reason,requester,expected_reservation_revision,expected_evidence_count,state,approver,approval_operation_id,approved_at)
+ VALUES($1,$2,$3,25,'invoice','invoice:stale','stale evidence',$4,$7,$8,'approved',$5,$6,clock_timestamp())`, uuid.NewString(), f.tenant, a.ID, f.operator, f.approver, uuid.NewString(), revision, evidence+1); err == nil {
+		err = tx.Commit(f.ctx)
+	}
+	if err == nil || !strings.Contains(err.Error(), "procurement proposal evidence is stale") {
+		t.Fatal("stale proposal evidence committed", err)
+	}
+	_ = tx.Rollback(f.ctx)
+	tx, err = f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `INSERT INTO procurement_cost_proposals(id,tenant_id,attempt_id,amount,basis,evidence_ref,reason,requester,expected_reservation_revision,expected_evidence_count,state,approver,approval_operation_id,approved_at)
+ VALUES($1,$2,$3,25,'invoice','invoice:old-revision','old revision',$4,$7,$8,'approved',$5,$6,clock_timestamp())`, uuid.NewString(), f.tenant, a.ID, f.operator, f.approver, uuid.NewString(), revision+2, evidence); err == nil {
+		err = tx.Commit(f.ctx)
+	}
+	if err == nil || !strings.Contains(err.Error(), "procurement proposal revision is stale") {
+		t.Fatal("stale proposal revision committed", err)
+	}
+	_ = tx.Rollback(f.ctx)
 }

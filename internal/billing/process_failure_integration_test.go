@@ -55,7 +55,7 @@ func TestMVPBillingCrashHelperProcess(t *testing.T) {
 	}
 	defer pool.Close()
 	store := New(pool)
-	r, err := store.Reserve(ctx, ReserveInput{Principal: Principal{TenantID: in.Tenant, UserID: in.User, KeyID: in.Key}, RequestID: in.Request, ModelID: in.Model, IdempotencyKey: in.Idempotency, RequestHMAC: "crash-test-digest", ProfileVersion: "v1", InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(2 * time.Second)})
+	r, err := store.Reserve(ctx, ReserveInput{Principal: Principal{TenantID: in.Tenant, UserID: in.User, KeyID: in.Key}, RequestID: in.Request, ModelID: in.Model, IdempotencyKey: in.Idempotency, RequestHMAC: "crash-test-digest", ProfileVersion: fixtureProfileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(2 * time.Second)})
 	if err != nil {
 		t.Fatal(err)
 	}

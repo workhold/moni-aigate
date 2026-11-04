@@ -235,7 +235,7 @@ func (s *Store) GroupPrices(ctx context.Context, actor, group, rawCursor string)
 			at = c.CreatedAt
 			id = c.ID
 		}
-		rows, e := tx.Query(ctx, `SELECT id,model_id,price_group_id,currency,input_rate::text,output_rate::text,pricing_time(effective_at),pricing_time(created_at) FROM price_versions WHERE price_group_id=$1 AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::text)) ORDER BY created_at DESC,id DESC LIMIT 51`, group, at, id)
+		rows, e := tx.Query(ctx, `SELECT id,model_id,price_group_id,currency,meter_price_million(id,'text_input_token')::text,meter_price_million(id,'text_output_token')::text,pricing_time(effective_at),pricing_time(created_at) FROM price_versions WHERE price_group_id=$1 AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::text)) ORDER BY created_at DESC,id DESC LIMIT 51`, group, at, id)
 		if e != nil {
 			return e
 		}
@@ -282,7 +282,7 @@ func (s *Store) OwnTenantPricing(ctx context.Context, actor, tenant string) (Ass
 	return v, pricingDBError(e)
 }
 
-const retailPriceProjection = `jsonb_build_object('model_id',m.id,'source',CASE WHEN t.price_group_id IS NULL THEN 'default' ELSE 'group' END,'status',CASE WHEN p.id IS NULL THEN 'unavailable' ELSE 'available' END,'price_group_id',t.price_group_id,'price_version_id',p.id,'currency','CNY','input_rate',p.input_rate::text,'output_rate',p.output_rate::text,'effective_at',pricing_time(p.effective_at),'as_of',pricing_time(instant.at))`
+const retailPriceProjection = `jsonb_build_object('model_id',m.id,'source',CASE WHEN t.price_group_id IS NULL THEN 'default' ELSE 'group' END,'status',CASE WHEN p.id IS NULL THEN 'unavailable' ELSE 'available' END,'price_group_id',t.price_group_id,'price_version_id',p.id,'currency','CNY','input_rate',meter_price_million(p.id,'text_input_token')::text,'output_rate',meter_price_million(p.id,'text_output_token')::text,'effective_at',pricing_time(p.effective_at),'as_of',pricing_time(instant.at))`
 
 func (s *Store) RetailPrice(ctx context.Context, actor, tenant, model string) (RetailPriceView, error) {
 	var v RetailPriceView
@@ -291,7 +291,7 @@ func (s *Store) RetailPrice(ctx context.Context, actor, tenant, model string) (R
 	}
 	var raw []byte
 	e := s.pricingCustomerRead(ctx, func(ctx context.Context, tx pgx.Tx) error {
-		return tx.QueryRow(ctx, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT `+retailPriceProjection+` FROM instant CROSS JOIN tenants t JOIN memberships mb ON mb.tenant_id=t.id AND mb.user_id=$1 JOIN users u ON u.id=mb.user_id JOIN tenant_model_grants g ON g.tenant_id=t.id JOIN models m ON m.id=g.model_id LEFT JOIN LATERAL (SELECT id,input_rate,output_rate,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NOT DISTINCT FROM t.price_group_id AND effective_at<=instant.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true WHERE t.id=$2 AND m.id=$3 AND t.status='active' AND mb.status='active' AND u.status='active' AND m.enabled AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=t.id AND mg.user_id=$1 AND mg.model_id=m.id))`, actor, tenant, model).Scan(&raw)
+		return tx.QueryRow(ctx, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT `+retailPriceProjection+` FROM instant CROSS JOIN tenants t JOIN memberships mb ON mb.tenant_id=t.id AND mb.user_id=$1 JOIN users u ON u.id=mb.user_id JOIN tenant_model_grants g ON g.tenant_id=t.id JOIN models m ON m.id=g.model_id LEFT JOIN LATERAL (SELECT id,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NOT DISTINCT FROM t.price_group_id AND effective_at<=instant.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true WHERE t.id=$2 AND m.id=$3 AND t.status='active' AND mb.status='active' AND u.status='active' AND m.enabled AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=t.id AND mg.user_id=$1 AND mg.model_id=m.id))`, actor, tenant, model).Scan(&raw)
 	})
 	if e == nil {
 		e = json.Unmarshal(raw, &v)
@@ -322,7 +322,7 @@ func (s *Store) PreviewTenantPricing(ctx context.Context, actor, tenant string, 
 		e := tx.QueryRow(ctx, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at), context AS MATERIALIZED (
    SELECT t.id,t.status,t.price_group_id,t.pricing_revision,g.id AS target_id,g.state AS target_state,instant.at FROM tenants t CROSS JOIN instant LEFT JOIN price_groups g ON g.id=$3 WHERE t.id=$2 AND ($3::text IS NULL OR g.id IS NOT NULL) AND EXISTS(SELECT 1 FROM users WHERE id=$1 AND status='active' AND platform_role IN ('admin','finance_operator','finance_approver'))
   ), page AS (
-   SELECT m.id,m.public_name,coalesce(nullif(m.profile->>'protocol',''),'openai_chat') AS protocol,p.id AS price_id,p.input_rate,p.output_rate,p.effective_at FROM context c JOIN tenant_model_grants g ON g.tenant_id=c.id JOIN models m ON m.id=g.model_id LEFT JOIN LATERAL (SELECT id,input_rate,output_rate,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NOT DISTINCT FROM $3::text AND effective_at<=c.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true WHERE m.enabled AND ($4::text IS NULL OR (m.public_name COLLATE "C",m.id)>($4::text COLLATE "C",$5::text)) ORDER BY m.public_name COLLATE "C",m.id LIMIT 51
+   SELECT m.id,m.public_name,coalesce(nullif(meter_model_profile(m.id)->>'protocol',''),'openai_chat') AS protocol,p.id AS price_id,meter_price_million(p.id,'text_input_token') AS input_rate,meter_price_million(p.id,'text_output_token') AS output_rate,p.effective_at FROM context c JOIN tenant_model_grants g ON g.tenant_id=c.id JOIN models m ON m.id=g.model_id LEFT JOIN LATERAL (SELECT id,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NOT DISTINCT FROM $3::text AND effective_at<=c.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true WHERE m.enabled AND ($4::text IS NULL OR (m.public_name COLLATE "C",m.id)>($4::text COLLATE "C",$5::text)) ORDER BY m.public_name COLLATE "C",m.id LIMIT 51
   ) SELECT jsonb_build_object('tenant_id',c.id,'tenant_status',c.status,'current_price_group_id',c.price_group_id,'current_pricing_revision',c.pricing_revision::text,'target_price_group_id',$3::text,'target_group_state',c.target_state,'assignable',($3::text IS NULL OR c.target_state='active'),'as_of',pricing_time(c.at)),coalesce((SELECT jsonb_agg(jsonb_build_object('model_id',p.id,'public_name',p.public_name,'protocol',p.protocol,'retail_price',jsonb_build_object('model_id',p.id,'source',CASE WHEN $3::text IS NULL THEN 'default' ELSE 'group' END,'status',CASE WHEN p.price_id IS NULL THEN 'unavailable' ELSE 'available' END,'price_group_id',$3::text,'price_version_id',p.price_id,'currency','CNY','input_rate',p.input_rate::text,'output_rate',p.output_rate::text,'effective_at',pricing_time(p.effective_at),'as_of',pricing_time(c.at))) ORDER BY p.public_name COLLATE "C",p.id) FROM page p),'[]'::jsonb) FROM context c`, actor, tenant, group, name, id).Scan(&contextJSON, &modelsJSON)
 		if e != nil {
 			return e

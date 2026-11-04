@@ -1,6 +1,6 @@
 # 统一计量与共同值域（028-U）
 
-2026-11-04。当前新增的是共同纯领域，**尚未接入serve的报价、预占和结算**。当前六文本仍沿现行正式模型运行；U集成将一次替换内部Token专用计算链，不增加运行模式或旧DTO fallback。图片、音频、任务和Realtime端点尚未交付。
+2026-11-04。共同纯领域已接入当前文本模型的报价、预占、结算和终态投影。`024` 只安装空库，不改 001–023，也不转换已有历史。UUID 档案在 HMAC 就绪时写入计划 canonical，观察必须绑定已有尝试，请求和尝试各有四行用量界。计划就绪时请求和尝试快照写入 inference 报价外壳。纯核报价摘要、六协议 HTTP/UI 和媒体仍未完成。
 
 规格入口：[总体](../../specs/028-unified-metering-media/spec.md)、[共同域精确合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md)。当前经营/资金链分别见[026报表](operating-reports.md)与[027来源](wallet-sources.md)。
 
@@ -37,7 +37,7 @@ Observation必须绑定原tenant/request/attempt/profile/schema/variant/plan。�
 
 ## 生产集成与经营报表
 
-存储草案定义在同一当前模型中升级schema、rate lines、原request/attempt快照、事件量与双侧终态；沿现有一份finalization原件、一个客户settlement及每attempt采购事实，不建媒体钱包或第二结算器。正式迁移全文、SQL guard/精确权限和实际PG原型仍待实施；001–023不改写，旧历史库不自动转换。
+`024_unified_text_metering.sql` 在同一当前模型中安装两维文本 schema、有理费率、请求/尝试快照、事件数量行和双侧终态投影；沿现有一份 finalization、一个客户 settlement 及每 attempt 采购事实，不建媒体钱包或第二结算器。提交时核对事件行、已知采购报价、请求价格归属、尝试与请求一致，以及终态投影等于事件行按 `moni-aigate.inference.final.v1` 重建的结果。已知供应商金额必须等于原费率对终态用量的一次 ceil；授权更正等于更正原件；未发送或认证无消费只能为 0。人工核对不能确认供应商侧。应用角色只能 SELECT/INSERT 计量表。001–023 不改写，旧历史库不自动转换。受管采购的单次预占必须等于该尝试的预算事件合计；已批准提案必须等于预占消费，结算时还要等于供应商金额。批准时证据条数必须仍是提案记下的条数，修订号必须是当时的值或批准这一步加一。用量事件必须指向同一次请求上已经存在的尝试，不能改挂到别的请求，也不能在没有尝试时补造观察。没有尝试的恢复仍按原政策释放。档案版本是 UUID 且请求 HMAC 为 64 位十六进制时，请求快照保存共同 request 计划，尝试快照保存由它派生的 attempt 计划。自由版本号仍不能生成计划。请求和尝试快照各有四行用量界，输入等于档案硬界，输出等于本次选定值。计划就绪时，报价外壳与 inference 的 `moni-aigate.inference.quote.v1` 一致；计划未就绪时报价列为空。纯核报价摘要仍未落库。完整九组 guard 尚未齐。
 
 026继续只读唯一settlement收入/消费退款和全部attempt采购金额；opening不计销售。U计划从原request不可变快照补protocol/execution/schema/variant与筛选/CSV/UI，不从当前模型回填，也不从vector重算金额。未知采购仍使毛利待核对。任务poll/下载、实时heartbeat不产生第二笔收入。该元数据扩展尚未接线。
 

@@ -236,7 +236,7 @@ func TestPostgresCostChangeAfterSendingKeepsFrozenCostAndSettlement(t *testing.T
 	}
 	var cost, basis, version string
 	var settlements int
-	if err = f.pool.QueryRow(f.ctx, `SELECT cost_amount::text,cost_basis,cost_version_id,(SELECT count(*) FROM settlements WHERE request_id=$2) FROM upstream_attempts WHERE id=$1`, a.ID, r.RequestID).Scan(&cost, &basis, &version, &settlements); err != nil || cost != "30" || basis != "contract" || version != in.CostQuote.VersionID || settlements != 1 {
+	if err = f.pool.QueryRow(f.ctx, `SELECT a.cost_amount::text,s.cost_basis,s.cost_version_id,(SELECT count(*) FROM settlements WHERE request_id=$2) FROM upstream_attempts a JOIN attempt_meter_snapshots s ON s.attempt_id=a.id WHERE a.id=$1`, a.ID, r.RequestID).Scan(&cost, &basis, &version, &settlements); err != nil || cost != "30" || basis != "contract" || version != in.CostQuote.VersionID || settlements != 1 {
 		t.Fatal("later cost configuration changed history", cost, basis, version, settlements, err)
 	}
 	f.wallet(t, 985, 0)

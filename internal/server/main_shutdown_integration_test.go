@@ -401,7 +401,7 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 		t.Helper()
 		var status, usage string
 		var settlements, attempts, events, charge, spent, held int64
-		if err := owner.QueryRow(ctx, `SELECT r.billing_status,(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),(SELECT count(*) FROM finalization_records WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0),coalesce(m.normalized_usage->>'status','') FROM request_records r LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id LEFT JOIN metering_events m ON m.id=z.event_id WHERE r.id=$1`, requestID).Scan(&status, &settlements, &attempts, &events, &charge, &usage); err != nil {
+		if err := owner.QueryRow(ctx, `SELECT r.billing_status,(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),(SELECT count(*) FROM finalization_records WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0),coalesce(m.retail_usage_state,'') FROM request_records r LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id LEFT JOIN metering_events m ON m.id=z.event_id WHERE r.id=$1`, requestID).Scan(&status, &settlements, &attempts, &events, &charge, &usage); err != nil {
 			t.Fatal(err)
 		}
 		wallet, err := store.Wallet(ctx, billing.Query{TenantID: tenant})

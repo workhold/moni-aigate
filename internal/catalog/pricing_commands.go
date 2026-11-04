@@ -257,7 +257,7 @@ func (s *Store) PublishGroupPrice(ctx context.Context, a PricingActor, c GroupPr
 	c.EffectiveAt = c.EffectiveAt.UTC()
 	r, replay, e := s.pricingCommand(ctx, pricingCommand{id: c.OperationID, kind: "group_price.publish", actor: a.UserID, scope: "platform", target: "/api/platform/price-groups/" + c.GroupID + "/price-versions", safe: map[string]any{"model_id": c.ModelID, "input_rate": pricingUint(c.InputRate), "output_rate": pricingUint(c.OutputRate), "effective_at": pricingStamp(c.EffectiveAt)}, prepare: func(ctx context.Context, tx pgx.Tx) (pricingWrite, error) {
 		var profileJSON []byte
-		if e := tx.QueryRow(ctx, `SELECT profile FROM models WHERE id=$1 FOR SHARE`, c.ModelID).Scan(&profileJSON); e != nil {
+		if e := tx.QueryRow(ctx, `SELECT meter_model_profile(id) FROM models WHERE id=$1 FOR SHARE`, c.ModelID).Scan(&profileJSON); e != nil {
 			return pricingWrite{}, e
 		}
 		var profile provider.Profile
@@ -274,7 +274,7 @@ func (s *Store) PublishGroupPrice(ctx context.Context, a PricingActor, c GroupPr
 		id := uuid.NewString()
 		v := GroupPriceView{id, c.ModelID, c.GroupID, "CNY", pricingUint(c.InputRate), pricingUint(c.OutputRate), pricingStamp(c.EffectiveAt), pricingStamp(time.Time{})}
 		return pricingWrite{resource: id, result: v, apply: func(ctx context.Context, tx pgx.Tx, at time.Time) error {
-			_, e := tx.Exec(ctx, `INSERT INTO price_versions(id,model_id,price_group_id,pricing_operation_id,input_rate,output_rate,effective_at,created_by,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, id, c.ModelID, c.GroupID, c.OperationID, c.InputRate, c.OutputRate, c.EffectiveAt, a.UserID, at)
+			_, e := tx.Exec(ctx, `SELECT meter_insert_token_price($1,$2,$3,$4,$5,$6,$7,$8,$9)`, id, c.ModelID, c.InputRate, c.OutputRate, c.EffectiveAt, a.UserID, c.GroupID, c.OperationID, at)
 			return e
 		}}, nil
 	}})

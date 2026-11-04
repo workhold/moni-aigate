@@ -83,9 +83,9 @@ func TestPostgresGeminiThinkingAndCacheSettleOnce(t *testing.T) {
 		t.Fatal("Gemini settlement did not release unused 120", released, err)
 	}
 	var storedInput, storedOutput, storedTotal, storedReasoning, storedCache int64
-	if err = f.pool.QueryRow(f.ctx, `SELECT (e.normalized_usage->>'input_tokens')::bigint,
- (e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint,
- (e.normalized_usage->>'reasoning_tokens')::bigint,(e.normalized_usage->>'cached_tokens')::bigint
+	if err = f.pool.QueryRow(f.ctx, `SELECT (meter_event_usage(e.id)->>'input_tokens')::bigint,
+ (meter_event_usage(e.id)->>'output_tokens')::bigint,(meter_event_usage(e.id)->>'total_tokens')::bigint,
+ (meter_event_usage(e.id)->>'reasoning_tokens')::bigint,(meter_event_usage(e.id)->>'cached_tokens')::bigint
  FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id
  JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, r.RequestID).Scan(&storedInput, &storedOutput, &storedTotal, &storedReasoning, &storedCache); err != nil || storedInput != 10 || storedOutput != 5 || storedTotal != 15 || storedReasoning != 2 || storedCache != 3 {
 		t.Fatal("Gemini durable normalized usage differs", storedInput, storedOutput, storedTotal, storedReasoning, storedCache, err)

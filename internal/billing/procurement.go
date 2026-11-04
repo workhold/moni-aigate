@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/security"
 )
@@ -86,22 +87,23 @@ func recordProcurementAttempt(ctx context.Context, tx pgx.Tx, r financialRequest
 	}
 	var input, output int64
 	var eligible bool
-	if err = tx.QueryRow(ctx, `SELECT input_upper_bound,output_limit,clock_timestamp()<request_deadline FROM request_records WHERE id=$1`, r.ID).Scan(&input, &output, &eligible); err != nil {
+	var schemaID string
+	if err = tx.QueryRow(ctx, `SELECT s.schema_id,s.input_bound,s.output_bound,clock_timestamp()<r.request_deadline FROM request_records r JOIN request_meter_snapshots s ON s.request_id=r.id WHERE r.id=$1`, r.ID).Scan(&schemaID, &input, &output, &eligible); err != nil {
 		return err
 	}
 	if !eligible {
 		return fail("request_deadline", "request deadline expired while waiting for procurement")
 	}
-	upper, err := Calculate(input, output, Money(*current.InputRate), Money(*current.OutputRate))
+	upper, err := schemaReservation(ctx, tx, schemaID, metering.Supplier, input, output, *current.InputRate, *current.OutputRate)
 	if err != nil {
 		return fail("procurement_bound_invalid", "procurement hard upper bound cannot be represented")
 	}
-	n := big.NewInt(int64(upper))
+	n := big.NewInt(upper)
 	if err = procurementAdmission(ctx, tx, account, n); err != nil {
 		return err
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,input_bound,output_bound,upper_amount,held_amount,spent_amount,state)
- VALUES($1,$2,$3,$4,$5,$6::numeric,$6::numeric,0,'prepared')`, attempt, account, binding, input, output, n.String()); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,upper_amount,held_amount,spent_amount,state)
+ VALUES($1,$2,$3,$4::numeric,$4::numeric,0,'prepared')`, attempt, account, binding, n.String()); err != nil {
 		return err
 	}
 	admission, err := periodicbudget.AdmitSupplierTx(ctx, tx, periodic, attempt, periodicbudget.Amount{Decimal: n.String()})
@@ -139,8 +141,8 @@ func readProcurementHold(ctx context.Context, tx pgx.Tx, attempt string) (*procu
 	}
 	h := &procurementHold{Attempt: attempt, Account: account, periodic: periodic}
 	var upper, held, spent string
-	err = tx.QueryRow(ctx, `SELECT binding_id,input_bound,output_bound,upper_amount::text,held_amount::text,spent_amount::text,state,anomaly,revision
- FROM procurement_reservations WHERE attempt_id=$1 FOR UPDATE`, attempt).Scan(&h.Binding, &h.Input, &h.Output, &upper, &held, &spent, &h.State, &h.Anomaly, &h.Revision)
+	err = tx.QueryRow(ctx, `SELECT p.binding_id,s.input_bound,s.output_bound,p.upper_amount::text,p.held_amount::text,p.spent_amount::text,p.state,p.anomaly,p.revision
+ FROM procurement_reservations p JOIN attempt_meter_snapshots s ON s.attempt_id=p.attempt_id WHERE p.attempt_id=$1 FOR UPDATE OF p`, attempt).Scan(&h.Binding, &h.Input, &h.Output, &upper, &held, &spent, &h.State, &h.Anomaly, &h.Revision)
 	if err != nil {
 		return nil, err
 	}
@@ -262,10 +264,11 @@ func finalizeProcurement(ctx context.Context, tx pgx.Tx, attempt, event string, 
 		return updateProcurementHold(ctx, tx, h, h.Held, h.Spent, "unknown", false, "unknown:"+attempt, "consumption_unknown", event)
 	}
 	var inputRate, outputRate int64
-	if err = tx.QueryRow(ctx, `SELECT cost_input_rate,cost_output_rate FROM upstream_attempts WHERE id=$1`, attempt).Scan(&inputRate, &outputRate); err != nil {
+	var schemaID string
+	if err = tx.QueryRow(ctx, `SELECT schema_id,meter_cost_million(cost_version_id,'text_input_token'),meter_cost_million(cost_version_id,'text_output_token') FROM attempt_meter_snapshots WHERE attempt_id=$1`, attempt).Scan(&schemaID, &inputRate, &outputRate); err != nil {
 		return err
 	}
-	n, err := rawAmount(usage.InputTokens, usage.OutputTokens, Money(inputRate), Money(outputRate))
+	n, err := schemaAmount(ctx, tx, schemaID, metering.Supplier, usage.InputTokens, usage.OutputTokens, inputRate, outputRate)
 	if err != nil {
 		return err
 	}

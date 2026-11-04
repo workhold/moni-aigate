@@ -74,9 +74,9 @@ func SelectEffectiveTx(ctx context.Context, tx pgx.Tx, modelID string, domain Do
 	var inputRate, outputRate *int64
 	var effectiveAt *time.Time
 	err := tx.QueryRow(ctx, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at)
- SELECT instant.at,p.id,p.input_rate,p.output_rate,p.effective_at
+ SELECT instant.at,p.id,meter_price_million(p.id,'text_input_token'),meter_price_million(p.id,'text_output_token'),p.effective_at
  FROM instant LEFT JOIN LATERAL (
-  SELECT id,input_rate,output_rate,effective_at FROM price_versions
+  SELECT id,effective_at FROM price_versions
   WHERE model_id=$1 AND price_group_id IS NOT DISTINCT FROM $2::text
     AND effective_at<=instant.at
   ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1

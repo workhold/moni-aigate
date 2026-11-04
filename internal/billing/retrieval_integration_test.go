@@ -123,8 +123,8 @@ func TestPostgresRetrievalInputOnlyReserveAndSettle(t *testing.T) {
 				t.Fatal("input-only settlement replay duplicated financial facts", again, err)
 			}
 			var storedInput, storedOutput, storedTotal int64
-			if err = f.pool.QueryRow(f.ctx, `SELECT (e.normalized_usage->>'input_tokens')::bigint,
- (e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint
+			if err = f.pool.QueryRow(f.ctx, `SELECT (meter_event_usage(e.id)->>'input_tokens')::bigint,
+ (meter_event_usage(e.id)->>'output_tokens')::bigint,(meter_event_usage(e.id)->>'total_tokens')::bigint
  FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id
  JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, r.RequestID).Scan(&storedInput, &storedOutput, &storedTotal); err != nil || storedInput != 10 || storedOutput != 0 || storedTotal != 10 {
 				t.Fatal("normalized retrieval usage changed", storedInput, storedOutput, storedTotal, err)

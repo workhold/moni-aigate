@@ -4114,3 +4114,429 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `docs/verification/unified-metering.md`
 
 </details>
+
+## 2026-11-04T10:25:30Z · 3c8071daae7b
+
+028-U追加024空库文本schema、有理费率和请求快照；事件用量、完整guard和六协议切换仍未完成。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1981 个源文件；本次 14 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/catalog/cost_policy.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- modified `internal/pricing/pricing.go`
+- modified `internal/server/queries.go`
+- added `migrations/024_unified_text_metering.sql`
+- added `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T10:35:06Z · 65bda41e74df
+
+选路、尝试记录、派发复验、公开目录和请求详情改为读取024有理费率；事件用量仍未切换。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1981 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/cost_policy.go`
+- modified `internal/catalog/pricing_queries.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/store.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/reports.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T10:47:23Z · 4d2ac5cdef18
+
+024为每次上游尝试保存不可变采购报价快照，并删除attempt上的成本标量列。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1981 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/cost_policy.go`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/procurement.go`
+- modified `internal/operations/operations.go`
+- modified `internal/server/reports.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T10:56:56Z · 34bd039f6f06
+
+客户用量事件改为按输入/输出token数量行保存，结算从这些行读回用量。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1981 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/settle.go`
+- modified `internal/operations/operations.go`
+- modified `internal/server/billing_handlers.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:01:42Z · 3a8abbd65506
+
+平台探测完成时写入纯核supplier数量canonical；客户事件保留用量JSON供缓存和推理token核对。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1981 个源文件；本次 13 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/gemini_integration_test.go`
+- modified `internal/billing/retrieval_integration_test.go`
+- modified `internal/server/gateway_integration_test.go`
+- modified `internal/server/gemini_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- modified `internal/server/native_protocols_integration_test.go`
+- modified `internal/server/probe.go`
+- modified `internal/server/probe_integration_test.go`
+- modified `internal/server/retrieval_integration_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `scripts/browser-qa/model_lifecycle_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:05:40Z · 9320f254ba28
+
+预占、客户结算和采购金额改为按已发布schema调用metering一次ceil。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1983 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/procurement.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/settle.go`
+- added `internal/billing/vector_amount.go`
+- added `internal/billing/vector_amount_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:07:40Z · dc4ece2bd4c8
+
+应用角色只可读取和插入新增计量表并执行meter函数；投影角色和PUBLIC没有这些权限。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `internal/operations/meter_roles.go`
+- added `internal/operations/meter_roles_test.go`
+- modified `internal/operations/operations.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:14:15Z · 80c59fdff4ad
+
+提交时检查用量事件恰有两行token数量，已知采购报价的费率行与canonical一致。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:18:24Z · c417ee8dc6a6
+
+提交时核对请求价格属于同一模型和schema，尝试快照与原请求一致，未知成本不能带金额。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:30:52Z · bd436cf7b39a
+
+终态两侧用量按 inference 终态域从事件行重建；人工核对不能确认供应商侧。请求指针和收费结算必须指向同一请求。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/store_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:50:04Z · 3dc656331566
+
+已知供应商金额必须等于原费率对终态用量的一次 ceil；授权更正等于更正原件；未发送只能记 0。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `internal/billing/cost_policy_integration_test.go`
+- modified `internal/billing/store_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T11:50:15Z · edb27e7e823b
+
+已知供应商金额必须等于原费率对终态用量的一次 ceil；授权更正等于更正原件；未发送只能记 0。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+
+</details>
+
+## 2026-11-04T11:55:25Z · e8ce25e2ec6a
+
+受管采购的单次预占必须等于该尝试的预算事件合计；已批准提案必须等于预占消费和结算时的供应商金额。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/procurement_review_integration_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:04:01Z · fcf1254392ba
+
+批准受管采购提案时，证据条数必须仍是提案记下的条数，修订号必须是当时的值或批准这一步加一。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/procurement_review_integration_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:07:53Z · 267617b22506
+
+请求已经有尝试时，用量事件必须指向同一次请求的原尝试；只有一次或先前终态已记下时，漏写会绑回那一次，不另造尝试。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/store_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:14:29Z · f86cf4773ced
+
+UUID 档案且请求 HMAC 为 64 位十六进制时，请求快照写入与 inference 一致的 request 计划 canonical。自由版本号仍无计划。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/reserve.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:22:39Z · c5c3da42b397
+
+UUID 档案的尝试快照写入由原请求计划派生的 attempt 计划，字节与 inference ForAttempt 一致。自由版本号仍无计划。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:27:29Z · 2a609ad28f55
+
+经营报表请求明细从不可变请求和计费快照读取协议、执行种类、profile、schema 与 variant。金额仍读原结算和全部尝试成本。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/operating-reports.md`
+- modified `internal/reporting/csv.go`
+- modified `internal/reporting/read.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/reporting/types.go`
+- modified `internal/server/operating_reports.go`
+- modified `internal/server/operating_reports_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `web/src/components/OperatingReport.vue`
+- modified `web/src/operating-report.ts`
+
+</details>
+
+## 2026-11-04T12:32:16Z · 1ffa3159569f
+
+用量事件必须指向一次已经存在的尝试。没有尝试时不造观察，恢复仍可按原政策释放。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/recovery.go`
+- modified `internal/billing/store_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:38:54Z · ea87606cb9a0
+
+当前周期预算客户夹具和现行维护业务夹具在记用量前先写真实尝试。没有尝试时仍不造观察。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/maintenancetrust/funding_lots_observe_business_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_phase_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_runtime_integration_test.go`
+- modified `internal/periodicbudget/billing_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:45:29Z · 548ac23cd8cc
+
+主计费夹具改用 UUID 档案和 64 位十六进制 HMAC，预占与尝试都会落下计划。其他自由版本号夹具仍不生成计划。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/batch_integration_test.go`
+- modified `internal/billing/process_failure_integration_test.go`
+- modified `internal/billing/retail_price_integration_test.go`
+- modified `internal/billing/store_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T12:51:45Z · 5b8111f37e8b
+
+当前模型创建只接受 UUID 档案版本。历史前缀夹具仍保留原来的自由版本号。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 10 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/maintenancetrust/funding_lots_observe_business_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_phase_integration_test.go`
+- modified `internal/periodicbudget/billing_dispatch_integration_test.go`
+- modified `internal/periodicbudget/billing_integration_test.go`
+- modified `internal/periodicbudget/billing_procurement_integration_test.go`
+- modified `internal/periodicbudget/billing_recovery_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-04T13:04:00Z · 330cde5d825e
+
+请求和尝试快照现在各写四行用量界。输入等于档案硬界，输出等于本次选定值。报价 canonical 列仍未落库。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 11 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/maintenancetrust/funding_lots_observe_business_integration_test.go`
+- modified `internal/operations/meter_roles.go`
+- modified `internal/operations/operations.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
+
+## 2026-11-04T13:12:54Z · dfb7fc3e9b55
+
+计划就绪时，请求和尝试快照写入 inference 报价外壳。计划未就绪时报价列为空。纯核报价摘要仍未落库。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1985 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/store_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>

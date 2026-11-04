@@ -25,7 +25,7 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	qa := pgx.Identifier{appRole}.Sanitize()
 	qp := pgx.Identifier{projectionRole}.Sanitize()
 	table := func(name string) string { return pgx.Identifier{schema, name}.Sanitize() }
-	immutable := []string{"journals", "journal_lines", "audit_events", "price_versions", "cost_versions", "model_capability_versions", "channel_versions", "channel_version_credentials", "route_policy_versions", "model_bindings", "metering_events", "finalization_records", "metering_event_conflicts", "projection_outbox", "provider_cost_corrections", "delivery_observations", "route_binding_isolations", "channel_model_discoveries", "channel_model_discovery_results", "channel_batch_operations", "credential_procurement_bindings", "procurement_budget_events", "procurement_evidence_identities", "procurement_commands", "procurement_balance_observations", "funding_receipts", "commerce_commands", "commerce_operation_receipts", "vouchers", "voucher_redemptions", "voucher_revocations", "voucher_revocation_decisions"}
+	immutable := []string{"journals", "journal_lines", "audit_events", "price_versions", "cost_versions", "model_capability_versions", "channel_versions", "channel_version_credentials", "route_policy_versions", "model_bindings", "metering_events", "finalization_records", "metering_event_conflicts", "projection_outbox", "provider_cost_corrections", "delivery_observations", "route_binding_isolations", "channel_model_discoveries", "channel_model_discovery_results", "channel_batch_operations", "credential_procurement_bindings", "procurement_budget_events", "procurement_evidence_identities", "procurement_commands", "procurement_balance_observations", "funding_receipts", "commerce_commands", "commerce_operation_receipts", "vouchers", "voucher_redemptions", "voucher_revocations", "voucher_revocation_decisions", "meter_schemas", "meter_schema_dimensions", "model_capability_variants", "model_capability_bound_lines", "price_rate_lines", "cost_rate_lines", "binding_cost_rate_limits", "request_meter_snapshots", "attempt_meter_snapshots", "request_meter_bound_lines", "attempt_meter_bound_lines", "meter_event_quantities"}
 	for i := range immutable {
 		immutable[i] = table(immutable[i])
 	}
@@ -115,6 +115,12 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 		return e
 	}
 	if e = provisionPaymentRoles(ctx, tx, schema, appRole, projectionRole); e != nil {
+		return e
+	}
+	if e = grantMeterFunctions(ctx, tx, schema, appRole); e != nil {
+		return e
+	}
+	if e = verifyMeterRoles(ctx, tx, schema, appRole, projectionRole); e != nil {
 		return e
 	}
 	return tx.Commit(ctx)

@@ -339,7 +339,11 @@ func TestFundingLotsRuntimePostgresOperatingBasisAndPagination(t *testing.T) {
 	b.run(func(tx pgx.Tx) { b.fund(tx, lot) })
 	var request, reservation, allocation string
 	b.run(func(tx pgx.Tx) { request, reservation, allocation = b.reserve(tx, lot) })
-	final, e := billing.New(pool).RecordFinalization(ctx, billing.FinalizationInput{TenantID: b.tenant, RequestID: request, Source: "gateway", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 80, TotalTokens: 80}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"})
+	attempt, e := billing.New(pool).RecordAttempt(ctx, billing.AttemptInput{TenantID: b.tenant, RequestID: request, Sequence: 1, ChannelID: b.channel, ChannelVersionID: b.version, CredentialID: b.credential, UpstreamModel: "observer"})
+	if e != nil {
+		t.Fatal("operating attempt", e)
+	}
+	final, e := billing.New(pool).RecordFinalization(ctx, billing.FinalizationInput{TenantID: b.tenant, RequestID: request, AttemptID: attempt.ID, Source: "gateway", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 80, TotalTokens: 80}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"})
 	if e != nil {
 		t.Fatal("operating finalization")
 	}

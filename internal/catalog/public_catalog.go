@@ -137,12 +137,12 @@ const publicCatalogSQL = `WITH instant AS MATERIALIZED (SELECT clock_timestamp()
   SELECT m.id AS lookup_id,true AS present,
    CASE WHEN octet_length(m.id)=36 THEN m.id END AS id,
    CASE WHEN octet_length(m.public_name) BETWEEN 1 AND 100 THEN m.public_name END AS public_name,
-   CASE WHEN octet_length(m.profile::text)<=16384 THEN m.profile END AS profile,
-   octet_length(m.profile::text)<=16384 AS profile_bounded
+   CASE WHEN octet_length(meter_model_profile(m.id)::text)<=16384 THEN meter_model_profile(m.id) END AS profile,
+   octet_length(meter_model_profile(m.id)::text)<=16384 AS profile_bounded
   FROM models m
   WHERE m.public_visible AND m.enabled
    AND m.public_name LIKE $1 ESCAPE '\'
-   AND ($2='' OR COALESCE(NULLIF(m.profile->>'protocol',''),'openai_chat')=$2)
+   AND ($2='' OR COALESCE(NULLIF(meter_model_profile(m.id)->>'protocol',''),'openai_chat')=$2)
    AND ($3='' OR (m.public_name COLLATE "C",m.id COLLATE "C")>($3 COLLATE "C",$4 COLLATE "C"))
    AND ($5='' OR m.id=$5)
   ORDER BY m.public_name COLLATE "C",m.id COLLATE "C" LIMIT 51
@@ -152,7 +152,7 @@ const publicCatalogSQL = `WITH instant AS MATERIALIZED (SELECT clock_timestamp()
  FROM instant LEFT JOIN selected m ON true
  LEFT JOIN LATERAL (
   SELECT true AS present,CASE WHEN octet_length(id)=36 THEN id END AS id,
-   CASE WHEN currency='CNY' THEN 'CNY' END AS currency,input_rate,output_rate,effective_at FROM price_versions
+   CASE WHEN currency='CNY' THEN 'CNY' END AS currency,meter_price_million(id,'text_input_token') AS input_rate,meter_price_million(id,'text_output_token') AS output_rate,effective_at FROM price_versions
   WHERE model_id=m.lookup_id AND price_group_id IS NULL AND effective_at<=instant.at
   ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1
  ) p ON true

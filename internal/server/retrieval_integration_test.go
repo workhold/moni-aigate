@@ -84,7 +84,7 @@ func retrievalAssertSettled(t *testing.T, f *gatewayFixture, request string) {
 		t.Fatalf("retrieval final charge/hold: %+v posts=%d", v, f.posts.Load())
 	}
 	var input, output, total, outputLimit, outputRate int64
-	err := f.pool.QueryRow(context.Background(), `SELECT (e.normalized_usage->>'input_tokens')::bigint,(e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint,r.output_limit,r.output_rate FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, request).Scan(&input, &output, &total, &outputLimit, &outputRate)
+	err := f.pool.QueryRow(context.Background(), `SELECT meter_event_quantity(e.id,'text_input_token'),meter_event_quantity(e.id,'text_output_token'),meter_event_quantity(e.id,'text_input_token'),s.output_bound,meter_price_million(s.price_version_id,'text_output_token') FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN metering_events e ON e.id=z.event_id JOIN request_meter_snapshots s ON s.request_id=r.id WHERE r.id=$1`, request).Scan(&input, &output, &total, &outputLimit, &outputRate)
 	if err != nil || input != 10 || output != 0 || total != 10 || outputLimit != 0 || outputRate != 0 {
 		t.Fatalf("retrieval durable usage %d/%d/%d limit/rate=%d/%d err=%v", input, output, total, outputLimit, outputRate, err)
 	}
@@ -246,7 +246,7 @@ func TestRetrievalProbeVerifiesUsageWithoutCustomerFunds(t *testing.T) {
 					t.Fatalf("probe %d %s %v", response.status, response.body, response.err)
 				}
 				var status, usage string
-				if err := f.pool.QueryRow(context.Background(), "SELECT status,normalized_usage->>'status' FROM platform_probe_attempts").Scan(&status, &usage); err != nil {
+				if err := f.pool.QueryRow(context.Background(), "SELECT status,usage_state FROM platform_probe_attempts").Scan(&status, &usage); err != nil {
 					t.Fatal(err)
 				}
 				wantStatus, wantUsage := "completed", "confirmed_final"

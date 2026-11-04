@@ -45,7 +45,7 @@ func TestPBBillingRecoverProcurementExpiresActualPreparedAndSendingSources(t *te
 			var deadline time.Time
 			pbTxMust(t, "choose legal short real request deadline before Reserve", f.app.QueryRow(f.ctx, `SELECT clock_timestamp()+interval '2 seconds'`).Scan(&deadline))
 			r, err := d.store.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key, ClientIP: "127.0.0.1"},
-				RequestID: uuid.NewString(), ModelID: f.model, RequestHMAC: uuid.NewString(), IdempotencyKey: uuid.NewString(), ProfileVersion: "v1", PolicyVersion: "r3",
+				RequestID: uuid.NewString(), ModelID: f.model, RequestHMAC: uuid.NewString(), IdempotencyKey: uuid.NewString(), ProfileVersion: f.profileVersion, PolicyVersion: "r3",
 				InputUpperBound: 100, OutputLimit: 20, RequestDeadline: deadline})
 			pbTxMust(t, "Reserve actual customer source with original short deadline", err)
 			t.Cleanup(func() { d.store.EndRequest(r.RequestID) })

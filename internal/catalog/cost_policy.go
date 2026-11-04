@@ -135,7 +135,7 @@ func (s *Store) PublishCostVersion(ctx context.Context, actor string, in CostVer
 		return result, ErrConflict
 	}
 	result.ID = uuid.NewString()
-	if _, err = tx.Exec(ctx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,$2,$3,$4,$5,$6,coalesce($7::timestamptz,clock_timestamp()))`, result.ID, in.ChannelID, in.UpstreamModel, input, output, in.Basis, effective); err != nil {
+	if _, err = tx.Exec(ctx, `SELECT meter_insert_token_cost($1,$2,$3,$4,$5,$6,coalesce($7::timestamptz,clock_timestamp()))`, result.ID, in.ChannelID, in.UpstreamModel, input, output, in.Basis, effective); err != nil {
 		var postgres *pgconn.PgError
 		if errors.As(err, &postgres) && postgres.Code == "23505" {
 			return CostVersionPublished{}, ErrConflict

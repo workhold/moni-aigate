@@ -19,6 +19,15 @@ func TestOperatingReportStrictFilter(t *testing.T) {
 	if err != nil || f.From.Location() != time.UTC || f.From.Hour() != 0 || f.To.Sub(f.From) != 24*time.Hour || f.TenantID != valid.Get("tenant_id") {
 		t.Fatal("incorrect UTC filter", f, err)
 	}
+	scoped := url.Values{}
+	for key, value := range valid {
+		scoped[key] = value
+	}
+	scoped.Set("protocol", "openai_chat")
+	scoped.Set("execution_kind", "synchronous")
+	if f, err = operatingReportFilter(scoped.Encode()); err != nil || f.Protocol != "openai_chat" || f.ExecutionKind != "synchronous" {
+		t.Fatal("text protocol filter rejected", f, err)
+	}
 	for _, raw := range []string{
 		"", "from=2026-11-01&to=2026-11-02", valid.Encode() + "&from=2026-11-01T00:00:00Z",
 		valid.Encode() + "&cursor=ignored", valid.Encode() + "&model_id=", valid.Encode() + "&broken=%xx",
@@ -27,6 +36,8 @@ func TestOperatingReportStrictFilter(t *testing.T) {
 		"from=2026-11-01T00:00:00Z&to=2026-11-01T00:00:00Z",
 		"from=2026-09-01T00:00:00Z&to=2026-11-01T00:00:00Z",
 		"from=2026-11-01T00:00:00Z&to=2026-11-02T00:00:00Z&model_id=invalid",
+		"from=2026-11-01T00:00:00Z&to=2026-11-02T00:00:00Z&protocol=chat",
+		"from=2026-11-01T00:00:00Z&to=2026-11-02T00:00:00Z&execution_kind=async",
 	} {
 		if _, err := operatingReportFilter(raw); !errors.Is(err, reporting.ErrInvalidFilter) {
 			t.Errorf("filter accepted or wrong error: %q %v", raw, err)

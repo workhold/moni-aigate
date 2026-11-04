@@ -48,7 +48,7 @@ async function download() {
   } catch (cause) { flow.finishDownload(ticket, cause) }
   finally { sync() }
 }
-watch(() => [filters.value.from, filters.value.to, filters.value.tenant_id, filters.value.model_id], invalidate, { flush: 'sync' })
+watch(() => [filters.value.from, filters.value.to, filters.value.tenant_id, filters.value.model_id, filters.value.protocol, filters.value.execution_kind], invalidate, { flush: 'sync' })
 watch(context, () => { invalidate(); if (allowed.value) void load() }, { immediate: true, flush: 'sync' })
 onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequest.value = ''; sync() })
 </script>
@@ -64,6 +64,8 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
           <el-form-item label="结束时间（不含，本地时间）"><el-date-picker v-model="filters.to" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" format="YYYY-MM-DD HH:mm:ss" placeholder="选择结束时间" aria-label="经营报表结束时间" /></el-form-item>
           <el-form-item label="客户 ID（可选）"><el-input v-model="filters.tenant_id" clearable placeholder="客户 UUID；留空为全部客户" aria-label="经营报表客户 ID" /></el-form-item>
           <el-form-item label="模型 ID（可选）"><el-input v-model="filters.model_id" clearable placeholder="模型 UUID；留空为全部模型" aria-label="经营报表模型 ID" /></el-form-item>
+          <el-form-item label="协议（可选）"><el-select v-model="filters.protocol" clearable placeholder="全部协议" aria-label="经营报表协议"><el-option v-for="item in ['openai_chat','openai_responses','anthropic_messages','openai_embeddings','jina_rerank','gemini_generate_content']" :key="item" :label="item" :value="item" /></el-select></el-form-item>
+          <el-form-item label="执行种类（可选）"><el-select v-model="filters.execution_kind" clearable placeholder="全部执行种类" aria-label="经营报表执行种类"><el-option label="synchronous" value="synchronous" /></el-select></el-form-item>
           <div class="report-actions"><el-button native-type="submit" type="primary" :icon="Refresh" :loading="state.loading">查询报表</el-button><el-button :icon="Download" :loading="state.downloading" @click="download">下载 CSV</el-button></div>
         </el-form>
         <p class="report-note">默认最近 7 天，单次最多 31 天、5,000 个请求。修改筛选会清除旧结果，点击查询后读取新范围。</p>
@@ -120,6 +122,7 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
             <el-table-column label="请求 / 创建时间" min-width="195"><template #default="{ row }"><el-button link type="primary" class="mono" :title="row.request_id" @click="showAttempts(row.request_id)">{{ shortId(row.request_id) }}</el-button><div class="muted small-text">{{ time(row.created_at) }}</div></template></el-table-column>
             <el-table-column label="客户 / 模型" min-width="195"><template #default="{ row }"><div :title="row.tenant_id">{{ row.tenant_name || shortId(row.tenant_id) }}</div><div class="muted small-text" :title="row.model_id">{{ row.model_name || shortId(row.model_id) }}</div></template></el-table-column>
             <el-table-column label="请求 / 收费状态" min-width="140"><template #default="{ row }"><div>{{ label(row.status) }}</div><div class="muted small-text">{{ label(row.billing_status) }}</div></template></el-table-column>
+            <el-table-column label="协议 / schema" min-width="180"><template #default="{ row }"><div>{{ row.protocol || '未记录' }}</div><div class="mono muted small-text" :title="row.schema_digest">{{ row.schema_id ? shortId(row.schema_id) : '未记录' }} · {{ row.variant_key || '未记录' }}</div></template></el-table-column>
             <el-table-column label="消费收入" min-width="165"><template #default="{ row }">{{ money(row.charged) }}</template></el-table-column>
             <el-table-column label="消费退款" min-width="165"><template #default="{ row }">{{ money(row.refunded) }}</template></el-table-column>
             <el-table-column label="净消费收入" min-width="165"><template #default="{ row }">{{ money(row.net_revenue) }}</template></el-table-column>

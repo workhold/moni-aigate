@@ -74,7 +74,7 @@ func (d *pbBillDispatchFixture) prepared(t *testing.T) (billing.Reservation, bil
 	var requestDeadline time.Time
 	pbTxMust(t, "sample real request deadline independent of simulated period clock", f.app.QueryRow(f.ctx, `SELECT clock_timestamp()+interval '5 minutes'`).Scan(&requestDeadline))
 	r, err := d.store.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key, ClientIP: "127.0.0.1"},
-		RequestID: uuid.NewString(), ModelID: f.model, RequestHMAC: uuid.NewString(), IdempotencyKey: uuid.NewString(), ProfileVersion: "v1", PolicyVersion: "r3",
+		RequestID: uuid.NewString(), ModelID: f.model, RequestHMAC: uuid.NewString(), IdempotencyKey: uuid.NewString(), ProfileVersion: f.profileVersion, PolicyVersion: "r3",
 		InputUpperBound: 100, OutputLimit: 20, RequestDeadline: requestDeadline})
 	pbTxMust(t, "actual billing Reserve with both customer scopes", err)
 	t.Cleanup(func() { d.store.EndRequest(r.RequestID) })

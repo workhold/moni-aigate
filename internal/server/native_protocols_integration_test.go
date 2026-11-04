@@ -104,7 +104,7 @@ func TestNativeProtocolsCommercialRoundTrip(t *testing.T) {
 				id := res.Header.Get("X-Request-ID")
 				var status string
 				var amount, input, output, cached int64
-				if err := f.pool.QueryRow(context.Background(), `SELECT s.status,s.charged_amount,(e.normalized_usage->>'input_tokens')::bigint,(e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'cached_tokens')::bigint FROM settlements s JOIN finalization_records f ON f.id=s.finalization_id JOIN metering_events e ON e.id=f.event_id WHERE s.request_id=$1`, id).Scan(&status, &amount, &input, &output, &cached); err != nil {
+				if err := f.pool.QueryRow(context.Background(), `SELECT s.status,s.charged_amount,(meter_event_usage(e.id)->>'input_tokens')::bigint,(meter_event_usage(e.id)->>'output_tokens')::bigint,(meter_event_usage(e.id)->>'cached_tokens')::bigint FROM settlements s JOIN finalization_records f ON f.id=s.finalization_id JOIN metering_events e ON e.id=f.event_id WHERE s.request_id=$1`, id).Scan(&status, &amount, &input, &output, &cached); err != nil {
 					t.Fatal(err)
 				}
 				if status != "settled" || amount != 20 || input != 10 || output != 5 || cached != 3 || f.posts.Load() != 1 {

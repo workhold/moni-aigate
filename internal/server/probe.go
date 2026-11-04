@@ -37,13 +37,9 @@ func (s *Server) releaseProbe() {
 }
 
 func (s *Server) saveProbe(id, status string, usage provider.Usage) error {
-	raw, err := json.Marshal(usage)
-	if err != nil {
-		return err
-	}
 	ctx, cancel := cleanupContext()
 	defer cancel()
-	_, err = s.Pool.Exec(ctx, "UPDATE platform_probe_attempts SET status=$2,normalized_usage=$3,completed_at=clock_timestamp() WHERE id=$1", id, status, raw)
+	_, err := s.Pool.Exec(ctx, `SELECT meter_finish_probe($1,$2,$3,$4,$5)`, id, status, string(usage.Status), usage.InputTokens, usage.OutputTokens)
 	return err
 }
 
@@ -69,7 +65,7 @@ func (s *Server) probe(c *gin.Context) {
 	var weight uint64
 	// A probe uses one complete published binding. Updating current_version
 	// without publishing must not combine a new endpoint with an old binding.
-	err = tx.QueryRow(ctx, `SELECT m.id,b.upstream_model,m.profile_version,m.profile,b.channel_version_id,b.max_inflight,b.priority,b.weight FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id JOIN models m ON m.id=p.model_id AND m.active_revision=p.revision WHERE b.channel_id=$1 AND m.enabled AND NOT EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) ORDER BY m.id LIMIT 1 FOR SHARE OF m`, c.Param("id")).Scan(&modelID, &upstream, &profileVersion, &profileJSON, &version, &maxInflight, &priority, &weight)
+	err = tx.QueryRow(ctx, `SELECT m.id,b.upstream_model,m.profile_version,meter_model_profile(m.id),b.channel_version_id,b.max_inflight,b.priority,b.weight FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id JOIN models m ON m.id=p.model_id AND m.active_revision=p.revision WHERE b.channel_id=$1 AND m.enabled AND NOT EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) ORDER BY m.id LIMIT 1 FOR SHARE OF m`, c.Param("id")).Scan(&modelID, &upstream, &profileVersion, &profileJSON, &version, &maxInflight, &priority, &weight)
 	if errors.Is(err, pgx.ErrNoRows) {
 		s.fail(c, 400, "probe_model_required", "请先将渠道发布到一个已启用模型，再发起平台探测")
 		return

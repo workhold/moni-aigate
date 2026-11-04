@@ -276,7 +276,7 @@ func (f *gatewayFixture) state(t *testing.T, request string) gatewayState {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	v := gatewayState{}
-	err := f.pool.QueryRow(ctx, `SELECT r.billing_status,v.status,v.amount,coalesce(z.transport_end_reason,''),coalesce(z.delivery_stage,''),coalesce(z.content_written,false),coalesce(m.normalized_usage->>'status',''),(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0) FROM request_records r JOIN reservations v ON v.request_id=r.id LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id LEFT JOIN metering_events m ON m.id=z.event_id WHERE r.id=$1`, request).Scan(&v.billing, &v.reservation, &v.amount, &v.reason, &v.stage, &v.content, &v.usage, &v.settlements, &v.attempts, &v.charge)
+	err := f.pool.QueryRow(ctx, `SELECT r.billing_status,v.status,v.amount,coalesce(z.transport_end_reason,''),coalesce(z.delivery_stage,''),coalesce(z.content_written,false),coalesce(m.retail_usage_state,''),(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0) FROM request_records r JOIN reservations v ON v.request_id=r.id LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id LEFT JOIN metering_events m ON m.id=z.event_id WHERE r.id=$1`, request).Scan(&v.billing, &v.reservation, &v.amount, &v.reason, &v.stage, &v.content, &v.usage, &v.settlements, &v.attempts, &v.charge)
 	if err != nil {
 		t.Fatal(err)
 	}

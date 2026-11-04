@@ -228,14 +228,20 @@ func (s *Store) Reconcile(ctx context.Context, in ReconcileInput) (Reconciliatio
 					return err
 				}
 			}
-			approved, semantic, err := recordFinalization(ctx, tx, r, FinalizationInput{ID: uuid.NewString(), TenantID: r.TenantID, RequestID: r.ID, Source: "approved_reconciliation", SourceEventID: result.ID, Usage: usage, ProtocolOutcome: f.ProtocolOutcome, TransportEndReason: f.TransportEndReason, DeliveryStage: f.DeliveryStage, ContentWritten: f.ContentWritten, FinishReason: f.FinishReason})
-			if err != nil {
+			var attempts int
+			if err = tx.QueryRow(ctx, `SELECT count(*) FROM upstream_attempts WHERE tenant_id=$1 AND request_id=$2`, r.TenantID, r.ID).Scan(&attempts); err != nil {
 				return err
 			}
-			if semantic != nil {
-				return semantic
+			if attempts > 0 {
+				approved, semantic, err := recordFinalization(ctx, tx, r, FinalizationInput{ID: uuid.NewString(), TenantID: r.TenantID, RequestID: r.ID, Source: "approved_reconciliation", SourceEventID: result.ID, Usage: usage, ProtocolOutcome: f.ProtocolOutcome, TransportEndReason: f.TransportEndReason, DeliveryStage: f.DeliveryStage, ContentWritten: f.ContentWritten, FinishReason: f.FinishReason})
+				if err != nil {
+					return err
+				}
+				if semantic != nil {
+					return semantic
+				}
+				r.LatestFinalization = &approved.ID
 			}
-			r.LatestFinalization = &approved.ID
 		}
 		settled, err := settleRequest(ctx, tx, r, "recovery")
 		if err != nil {

@@ -22,6 +22,7 @@ type fundingLotsObservationBusiness struct {
 	pool                             *pgxpool.Pool
 	tenant, user, operator, approver string
 	model, price, key, epoch         string
+	channel, version, credential     string
 	accounts                         map[string]string
 }
 
@@ -55,10 +56,15 @@ func (f *fundingLotsObservationBusiness) seed(tx pgx.Tx) {
 	// fixture never supplies fl_created_xid or manufactures a genesis operation.
 	f.exec(tx, `INSERT INTO tenants(id,name) VALUES($1,'post-cutover observer business')`, f.tenant)
 	f.exec(tx, `INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)`, f.tenant, f.user)
-	f.exec(tx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$1,'{"version":"v1","model":"observer-business","input_token_upper_bound":120,"context_limit":121,"output_limit":1,"default_output_limit":1,"output_limit_field":"max_tokens"}','v1')`, f.model)
+	f.exec(tx, `SELECT meter_insert_text_model($1,'observer-business',$2::jsonb,'10000000-0000-4000-8000-0000000000b1')`, f.model, `{"version":"10000000-0000-4000-8000-0000000000b1","model":"observer-business","protocol":"openai_chat","input_token_upper_bound":120,"context_limit":121,"output_limit":1,"default_output_limit":1,"output_limit_field":"max_tokens"}`)
 	f.exec(tx, `INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, f.tenant, f.model)
 	f.exec(tx, `INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'observer business',$1,$1,$4,1000)`, f.key, f.tenant, f.user, []string{f.model})
-	f.exec(tx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1000000,0,clock_timestamp()-interval '1 day',$3)`, f.price, f.model, f.operator)
+	f.exec(tx, `SELECT meter_insert_token_price($1,$2,1000000,0,clock_timestamp()-interval '1 day',$3,NULL,NULL,NULL)`, f.price, f.model, f.operator)
+	f.channel, f.version, f.credential = uuid.NewString(), uuid.NewString(), uuid.NewString()
+	f.exec(tx, `INSERT INTO channels(id,name,current_version) VALUES($1,'observer',$2)`, f.channel, f.version)
+	f.exec(tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused')`, f.credential, f.channel)
+	f.exec(tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, f.version, f.channel, f.credential)
+	f.exec(tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,10)`, f.version, f.channel, f.credential)
 	for _, kind := range []string{"AVAILABLE", "HELD", "REVENUE", "FUNDING_CLEARING"} {
 		var tenant any
 		if kind == "AVAILABLE" || kind == "HELD" {
@@ -155,7 +161,13 @@ func (f *fundingLotsObservationBusiness) reserve(tx pgx.Tx, lot string) (request
 	f.lock(tx)
 	request, reservation, allocation = uuid.NewString(), uuid.NewString(), uuid.NewString()
 	// One unit per input token: ceil((120*1e6 + 1*0)/1e6)=120.
-	f.exec(tx, `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming,pricing_group_id,tenant_pricing_revision,retail_priced_at) VALUES($1,$2,$3,$4,$5,$6,1000000,0,120,1,'v1','r3','observer-business',clock_timestamp()+interval '300 seconds','observer-business',false,NULL,1,clock_timestamp())`, request, f.tenant, f.key, f.user, f.model, f.price)
+	f.exec(tx, `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming) VALUES($1,$2,$3,$4,$5,'10000000-0000-4000-8000-0000000000b1','openai_chat','synchronous','json','r3','observer-business',clock_timestamp()+interval '300 seconds','observer-business',false)`, request, f.tenant, f.key, f.user, f.model)
+	f.exec(tx, `INSERT INTO request_meter_snapshots(tenant_id,request_id,model_id,profile_version,schema_id,schema_digest,variant_key,price_version_id,tenant_pricing_revision,retail_priced_at,input_bound,output_bound)
+ SELECT $1,$2,$3,'10000000-0000-4000-8000-0000000000b1',c.schema_id,c.schema_digest,'default',$4,1,clock_timestamp(),120,1 FROM model_capability_versions c WHERE c.id='10000000-0000-4000-8000-0000000000b1' AND c.model_id=$3`, f.tenant, request, f.model, f.price)
+	f.exec(tx, `INSERT INTO request_meter_bound_lines(tenant_id,request_id,side,dimension,unit,quantity)
+ SELECT $1,$2,side,dimension,'token', CASE dimension WHEN 'text_input_token' THEN 120 ELSE 1 END
+ FROM (VALUES ('retail'),('supplier')) AS s(side)
+ CROSS JOIN (VALUES ('text_input_token'),('text_output_token')) AS d(dimension)`, f.tenant, request)
 	f.exec(tx, `INSERT INTO reservations(id,tenant_id,request_id,amount,deadline) VALUES($1,$2,$3,120,clock_timestamp()+interval '300 seconds')`, reservation, f.tenant, request)
 	journal := f.post(tx, reservation, "reserve", request, f.user, map[string]int64{"AVAILABLE": -120, "HELD": 120})
 	f.audit(tx, f.user, "billing.reserve", journal, request, `{"amount":"120"}`)
@@ -233,7 +245,11 @@ func TestFundingLotsObservationPostgresOperatingGraphKeepsHistoricalBasis(t *tes
 	b.run(func(tx pgx.Tx) { request, reservation, allocation = b.reserve(tx, lot) })
 	// Use the original API for digest, metering raw JSON and latest-finalization
 	// identity; the fixture does not invent a matching evidence report.
-	finalization, err := billing.New(pool).RecordFinalization(ctx, billing.FinalizationInput{TenantID: b.tenant, RequestID: request, Source: "gateway", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 80, TotalTokens: 80}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"})
+	attempt, err := billing.New(pool).RecordAttempt(ctx, billing.AttemptInput{TenantID: b.tenant, RequestID: request, Sequence: 1, ChannelID: b.channel, ChannelVersionID: b.version, CredentialID: b.credential, UpstreamModel: "observer"})
+	if err != nil {
+		t.Fatal("original post-cutover attempt failed", err)
+	}
+	finalization, err := billing.New(pool).RecordFinalization(ctx, billing.FinalizationInput{TenantID: b.tenant, RequestID: request, AttemptID: attempt.ID, Source: "gateway", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 80, TotalTokens: 80}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"})
 	if err != nil || finalization.ID == "" {
 		t.Fatal("original post-cutover finalization failed")
 	}

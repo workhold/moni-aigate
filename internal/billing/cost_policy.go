@@ -11,7 +11,7 @@ import (
 // A single sampled DB clock chooses a quote deterministically, including legacy
 // equal-effective-time rows. Call only after the channel synchronization lock.
 const currentAttemptCostSQL = `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at)
- SELECT c.id,c.input_rate,c.output_rate,c.basis FROM cost_versions c,instant
+ SELECT c.id,meter_cost_million(c.id,'text_input_token'),meter_cost_million(c.id,'text_output_token'),c.basis FROM cost_versions c,instant
  WHERE c.channel_id=$1 AND c.upstream_model=$2 AND c.effective_at<=instant.at
  ORDER BY c.effective_at DESC,c.created_at DESC,c.id DESC LIMIT 1`
 
@@ -43,7 +43,9 @@ func checkAttemptCostQuote(ctx context.Context, tx pgx.Tx, r financialRequest, i
 	}
 	var policy routing.CostPolicy
 	var maxIn, maxOut *int64
-	err := tx.QueryRow(ctx, `SELECT p.cost_mode,p.unknown_cost_policy,b.max_input_cost_rate,b.max_output_cost_rate
+	err := tx.QueryRow(ctx, `SELECT p.cost_mode,p.unknown_cost_policy,
+ (SELECT ((numerator::numeric*1000000)/denominator)::bigint FROM binding_cost_rate_limits WHERE binding_id=b.id AND dimension='text_input_token'),
+ (SELECT ((numerator::numeric*1000000)/denominator)::bigint FROM binding_cost_rate_limits WHERE binding_id=b.id AND dimension='text_output_token')
  FROM route_policy_versions p JOIN model_bindings b ON b.route_policy_version_id=p.id
  WHERE p.model_id=$1 AND p.revision=$2 AND b.channel_id=$3 AND b.channel_version_id=$4 AND b.upstream_model=$5`,
 		r.ModelID, r.RouteRevision, in.ChannelID, in.ChannelVersionID, in.UpstreamModel).Scan(&policy.Mode, &policy.UnknownCostPolicy, &maxIn, &maxOut)
@@ -80,12 +82,14 @@ func checkDispatchCostQuote(ctx context.Context, tx pgx.Tx, tenant, attempt stri
 	var frozen, current attemptCost
 	var currentBasis *string
 	err := tx.QueryRow(ctx, `WITH instant AS MATERIALIZED (SELECT $3::timestamptz AS at)
- SELECT coalesce(p.cost_mode,'manual'),coalesce(p.unknown_cost_policy,'allow'),b.max_input_cost_rate,b.max_output_cost_rate,
- a.cost_version_id,a.cost_input_rate,a.cost_output_rate,a.cost_basis,c.id,c.input_rate,c.output_rate,c.basis
- FROM upstream_attempts a JOIN request_records r ON r.id=a.request_id
+ SELECT coalesce(p.cost_mode,'manual'),coalesce(p.unknown_cost_policy,'allow'),
+ (SELECT ((numerator::numeric*1000000)/denominator)::bigint FROM binding_cost_rate_limits WHERE binding_id=b.id AND dimension='text_input_token'),
+ (SELECT ((numerator::numeric*1000000)/denominator)::bigint FROM binding_cost_rate_limits WHERE binding_id=b.id AND dimension='text_output_token'),
+ s.cost_version_id,meter_cost_million(s.cost_version_id,'text_input_token'),meter_cost_million(s.cost_version_id,'text_output_token'),s.cost_basis,c.id,meter_cost_million(c.id,'text_input_token'),meter_cost_million(c.id,'text_output_token'),c.basis
+ FROM upstream_attempts a JOIN request_records r ON r.id=a.request_id JOIN attempt_meter_snapshots s ON s.attempt_id=a.id
  LEFT JOIN route_policy_versions p ON p.model_id=r.model_id AND p.revision=r.route_revision
  LEFT JOIN model_bindings b ON b.route_policy_version_id=p.id AND b.channel_id=a.channel_id AND b.channel_version_id=a.channel_version_id AND b.upstream_model=a.upstream_model
- LEFT JOIN LATERAL (SELECT cv.id,cv.input_rate,cv.output_rate,cv.basis FROM cost_versions cv,instant
+ LEFT JOIN LATERAL (SELECT cv.id,cv.basis FROM cost_versions cv,instant
  WHERE cv.channel_id=a.channel_id AND cv.upstream_model=a.upstream_model AND cv.effective_at<=instant.at
  ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) c ON true
  WHERE a.tenant_id=$1 AND a.id=$2`, tenant, attempt, at).Scan(&policy.Mode, &policy.UnknownCostPolicy, &maxIn, &maxOut,
