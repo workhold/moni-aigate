@@ -90,10 +90,7 @@ func (s *Store) CreateModel(ctx context.Context, actor string, in ModelInput) (s
 	}
 	defer tx.Rollback(ctx)
 	id := uuid.NewString()
-	if _, e = tx.Exec(ctx, "INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$2,$3,$4)", id, in.PublicName, body, p.Version); e != nil {
-		return "", e
-	}
-	if _, e = tx.Exec(ctx, "INSERT INTO model_capability_versions(id,model_id,profile) VALUES($1,$2,$3)", p.Version, id, body); e != nil {
+	if _, e = tx.Exec(ctx, "SELECT meter_insert_text_model($1,$2,$3,$4)", id, in.PublicName, body, p.Version); e != nil {
 		return "", e
 	}
 	if e = audit(ctx, tx, actor, "model.create", id); e != nil {
@@ -355,8 +352,19 @@ func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, 
 		if isolated {
 			return 0, ErrInvalid
 		}
-		if _, e = tx.Exec(ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,max_input_cost_rate,max_output_cost_rate) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, policy, b.ChannelID, ver, b.UpstreamModel, b.Priority, b.Weight, b.MaxInflight, maxInput, maxOutput); e != nil {
+		var bindingID string
+		if e = tx.QueryRow(ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,$5,$6,$7,'default') RETURNING id`, policy, b.ChannelID, ver, b.UpstreamModel, b.Priority, b.Weight, b.MaxInflight).Scan(&bindingID); e != nil {
 			return 0, e
+		}
+		if maxInput != nil {
+			if _, e = tx.Exec(ctx, `SELECT meter_insert_token_cap($1,'text_input_token',$2)`, bindingID, *maxInput); e != nil {
+				return 0, e
+			}
+		}
+		if maxOutput != nil {
+			if _, e = tx.Exec(ctx, `SELECT meter_insert_token_cap($1,'text_output_token',$2)`, bindingID, *maxOutput); e != nil {
+				return 0, e
+			}
 		}
 	}
 	if _, e = tx.Exec(ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", model, revision+1); e != nil {
@@ -383,7 +391,7 @@ func (s *Store) PublishPrice(ctx context.Context, actor, model, input, output st
 	defer tx.Rollback(ctx)
 	var id string
 	var profileJSON []byte
-	if e = tx.QueryRow(ctx, "SELECT id,profile FROM models WHERE id=$1 FOR SHARE", model).Scan(&id, &profileJSON); e != nil {
+	if e = tx.QueryRow(ctx, "SELECT id,meter_model_profile(id) FROM models WHERE id=$1 FOR SHARE", model).Scan(&id, &profileJSON); e != nil {
 		return "", e
 	}
 	var profile provider.Profile
@@ -395,7 +403,7 @@ func (s *Store) PublishPrice(ctx context.Context, actor, model, input, output st
 	if !effective.IsZero() {
 		effectiveArg = effective
 	}
-	if _, e = tx.Exec(ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by,price_group_id,pricing_operation_id) VALUES($1,$2,$3,$4,COALESCE($5::timestamptz,clock_timestamp()),$6,NULL,NULL)`, id, model, in, out, effectiveArg, actor); e != nil {
+	if _, e = tx.Exec(ctx, `SELECT meter_insert_token_price($1,$2,$3,$4,COALESCE($5::timestamptz,clock_timestamp()),$6,NULL,NULL,NULL)`, id, model, in, out, effectiveArg, actor); e != nil {
 		return "", e
 	}
 	if e = audit(ctx, tx, actor, "price.create", id); e != nil {
@@ -413,7 +421,7 @@ type Model struct {
 func (s *Store) AuthorizedModel(ctx context.Context, tenant, user, key, name string) (Model, error) {
 	m := Model{}
 	var raw []byte
-	e := s.Pool.QueryRow(ctx, `SELECT m.id,m.public_name,m.profile_version,m.active_revision,m.profile FROM models m JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1 JOIN memberships mb ON mb.tenant_id=$1 AND mb.user_id=$2 JOIN api_keys k ON k.id=$3 AND k.tenant_id=$1 WHERE m.public_name=$4 AND m.enabled AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=$1 AND mg.user_id=$2 AND mg.model_id=m.id)) AND (m.id=ANY(k.scopes) OR '*'=ANY(k.scopes))`, tenant, user, key, name).Scan(&m.ID, &m.Name, &m.ProfileVersion, &m.Revision, &raw)
+	e := s.Pool.QueryRow(ctx, `SELECT m.id,m.public_name,m.profile_version,m.active_revision,meter_model_profile(m.id) FROM models m JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1 JOIN memberships mb ON mb.tenant_id=$1 AND mb.user_id=$2 JOIN api_keys k ON k.id=$3 AND k.tenant_id=$1 WHERE m.public_name=$4 AND m.enabled AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=$1 AND mg.user_id=$2 AND mg.model_id=m.id)) AND (m.id=ANY(k.scopes) OR '*'=ANY(k.scopes))`, tenant, user, key, name).Scan(&m.ID, &m.Name, &m.ProfileVersion, &m.Revision, &raw)
 	if e == nil {
 		e = json.Unmarshal(raw, &m.Profile)
 	}
@@ -450,7 +458,7 @@ func (s *Store) Candidates(ctx context.Context, model string, revision int64) ([
 // CandidateSnapshot preserves exclusion metadata for explaining an admitted
 // choice. Unavailable credentials are never decrypted or made dispatchable.
 func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision int64) ([]Candidate, error) {
-	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,v.base_url,v.region,v.allowed_cidrs,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,b.max_input_cost_rate,b.max_output_cost_rate,coalesce(q.id,''),q.input_rate,q.output_rate,coalesce(q.basis,'unknown'),(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.input_rate,cv.output_rate,cv.basis FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
+	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,v.base_url,v.region,v.allowed_cidrs,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,(SELECT ((numerator::numeric*1000000)/denominator)::bigint FROM binding_cost_rate_limits WHERE binding_id=b.id AND dimension='text_input_token'),(SELECT ((numerator::numeric*1000000)/denominator)::bigint FROM binding_cost_rate_limits WHERE binding_id=b.id AND dimension='text_output_token'),coalesce(q.id,''),meter_cost_million(q.id,'text_input_token'),meter_cost_million(q.id,'text_output_token'),coalesce(q.basis,'unknown'),(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.basis FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
 	if e != nil {
 		return nil, e
 	}

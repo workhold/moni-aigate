@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/pricing"
 	"github.com/moni-ai/moni-aigate/internal/security"
@@ -105,16 +106,27 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		}
 		price, inputRate, outputRate := selected.VersionID, selected.InputRate, selected.OutputRate
 		pricedAt := now
+		var schemaID string
+		var schemaDigest []byte
+		var protocol string
+		if err = tx.QueryRow(ctx, `SELECT schema_id,schema_digest,protocol FROM model_capability_versions WHERE id=$1 AND model_id=$2`, auth.ProfileVersion, in.ModelID).Scan(&schemaID, &schemaDigest, &protocol); err != nil {
+			return err
+		}
+		resultKind := "json"
+		if in.Streaming {
+			resultKind = "events"
+		}
 		if inputOnly && outputRate != 0 {
 			return fail("invalid_price", "input-only models require a zero output rate")
 		}
 		if !in.RequestDeadline.After(now) || in.RequestDeadline.After(now.Add(301*time.Second)) {
 			return fail("request_deadline", "request deadline is invalid or expired")
 		}
-		amount, err := Calculate(in.InputUpperBound, in.OutputLimit, Money(inputRate), Money(outputRate))
+		reserved, err := schemaReservation(ctx, tx, schemaID, metering.Retail, in.InputUpperBound, in.OutputLimit, inputRate, outputRate)
 		if err != nil {
 			return err
 		}
+		amount := Money(reserved)
 		spentHeld := new(big.Int).Add(big.NewInt(auth.Spent), big.NewInt(auth.Held))
 		spentHeld.Add(spentHeld, big.NewInt(int64(amount)))
 		if !spentHeld.IsInt64() {
@@ -148,7 +160,17 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		}
 		result = Reservation{ID: uuid.NewString(), RequestID: in.RequestID, TenantID: in.Principal.TenantID, Amount: amount, Status: "reserved", Deadline: now.Add(24 * time.Hour), PriceVersionID: price, InputRate: Money(inputRate), OutputRate: Money(outputRate), PricingGroupID: auth.PriceGroupID, TenantPricingRevision: auth.PricingRevision, RetailPricedAt: pricedAt}
 		create := &pgx.Batch{}
-		create.Queue("INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision,client_ip,pricing_group_id,tenant_pricing_revision,retail_priced_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NULLIF($18,'')::inet,$19,$20,$21)", in.RequestID, in.Principal.TenantID, in.Principal.KeyID, in.Principal.UserID, in.ModelID, price, inputRate, outputRate, in.InputUpperBound, in.OutputLimit, auth.ProfileVersion, in.PolicyVersion, in.RequestHMAC, in.RequestDeadline, s.instanceID, in.Streaming, in.RouteRevision, clientIP, auth.PriceGroupID, auth.PricingRevision, pricedAt)
+		create.Queue("INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision,client_ip) VALUES($1,$2,$3,$4,$5,$6,$7,'synchronous',$8,$9,$10,$11,$12,$13,$14,NULLIF($15,'')::inet)", in.RequestID, in.Principal.TenantID, in.Principal.KeyID, in.Principal.UserID, in.ModelID, auth.ProfileVersion, protocol, resultKind, in.PolicyVersion, in.RequestHMAC, in.RequestDeadline, s.instanceID, in.Streaming, in.RouteRevision, clientIP)
+		create.Queue(`INSERT INTO request_meter_snapshots(tenant_id,request_id,model_id,profile_version,schema_id,schema_digest,variant_key,price_version_id,pricing_group_id,tenant_pricing_revision,retail_priced_at,input_bound,output_bound,plan_canonical,plan_digest,retail_quote_canonical,retail_quote_digest)
+ VALUES($1,$2,$3,$4,$5,$6,'default',$7,$8,$9,$10,$11,$12,
+  CASE WHEN meter_plan_ready($4,$13) THEN meter_request_plan_canonical($4,$3,$5,$6,$12,$14,$13) END,
+  CASE WHEN meter_plan_ready($4,$13) THEN meter_plan_digest($6, meter_request_plan_canonical($4,$3,$5,$6,$12,$14,$13)) END,
+  CASE WHEN meter_plan_ready($4,$13) THEN meter_retail_quote_canonical($5,$6, meter_plan_digest($6, meter_request_plan_canonical($4,$3,$5,$6,$12,$14,$13)), $7, $11, $12) END,
+  CASE WHEN meter_plan_ready($4,$13) THEN meter_quote_digest($6, meter_retail_quote_canonical($5,$6, meter_plan_digest($6, meter_request_plan_canonical($4,$3,$5,$6,$12,$14,$13)), $7, $11, $12)) END)`, in.Principal.TenantID, in.RequestID, in.ModelID, auth.ProfileVersion, schemaID, schemaDigest, price, auth.PriceGroupID, auth.PricingRevision, pricedAt, in.InputUpperBound, in.OutputLimit, in.RequestHMAC, in.Streaming)
+		create.Queue(`INSERT INTO request_meter_bound_lines(tenant_id,request_id,side,dimension,unit,quantity)
+ SELECT $1,$2,side,dimension,'token', CASE dimension WHEN 'text_input_token' THEN $3::bigint ELSE $4::bigint END
+ FROM (VALUES ('retail'),('supplier')) AS s(side)
+ CROSS JOIN (VALUES ('text_input_token'),('text_output_token')) AS d(dimension)`, in.Principal.TenantID, in.RequestID, in.InputUpperBound, in.OutputLimit)
 		create.Queue("INSERT INTO reservations(id,tenant_id,request_id,amount,deadline) VALUES($1,$2,$3,$4,$5)", result.ID, result.TenantID, result.RequestID, int64(amount), result.Deadline)
 		if err = tx.SendBatch(ctx, create).Close(); err != nil {
 			return err

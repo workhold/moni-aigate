@@ -64,7 +64,7 @@ func (s *Server) report(c *gin.Context, tid string, platform bool) {
 	s.ok(c, data)
 }
 func (s *Server) costs(c *gin.Context) {
-	s.page(c, `SELECT a.id,a.tenant_id,t.name AS tenant_name,a.request_id,a.channel_id,ch.name AS channel_name,a.upstream_model,a.cost_amount::text AS cost_amount,a.cost_status,a.cost_version_id,a.cost_basis,a.created_at FROM upstream_attempts a JOIN tenants t ON t.id=a.tenant_id JOIN channels ch ON ch.id=a.channel_id WHERE ($1='' OR a.tenant_id=$1)`, c.Query("tenant_id"))
+	s.page(c, `SELECT a.id,a.tenant_id,t.name AS tenant_name,a.request_id,a.channel_id,ch.name AS channel_name,a.upstream_model,a.cost_amount::text AS cost_amount,a.cost_status,s.cost_version_id,s.cost_basis,a.created_at FROM upstream_attempts a JOIN tenants t ON t.id=a.tenant_id JOIN channels ch ON ch.id=a.channel_id JOIN attempt_meter_snapshots s ON s.attempt_id=a.id WHERE ($1='' OR a.tenant_id=$1)`, c.Query("tenant_id"))
 }
 func (s *Server) correctCost(c *gin.Context) {
 	if !s.financial(c, false) || !s.financialKey(c) {
@@ -95,7 +95,7 @@ func (s *Server) costVersions(c *gin.Context) {
 	if !s.admin(c) {
 		return
 	}
-	s.page(c, `SELECT v.id,v.channel_id,ch.name AS channel_name,ch.management_revision::text AS channel_revision,v.upstream_model,v.input_rate::text AS input_rate,v.output_rate::text AS output_rate,v.basis,v.effective_at,v.created_at FROM cost_versions v JOIN channels ch ON ch.id=v.channel_id`)
+	s.page(c, `SELECT v.id,v.channel_id,ch.name AS channel_name,ch.management_revision::text AS channel_revision,v.upstream_model,meter_cost_million(v.id,'text_input_token')::text AS input_rate,meter_cost_million(v.id,'text_output_token')::text AS output_rate,v.basis,v.effective_at,v.created_at FROM cost_versions v JOIN channels ch ON ch.id=v.channel_id`)
 }
 func (s *Server) publishCost(c *gin.Context) {
 	if !s.admin(c) {

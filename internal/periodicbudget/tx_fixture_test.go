@@ -34,6 +34,7 @@ type pbTxFixture struct {
 	schema, appRole, projectionRole                      string
 	tenant, user, operator, approver, key, model, price  string
 	channel, version, credential, account, binding, cost string
+	profileVersion                                       string
 	historical                                           bool
 }
 
@@ -74,7 +75,10 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")
 	f := &pbTxFixture{ctx: ctx, historical: !latest, schema: "pb_tx_" + suffix, appRole: "pb_tx_app_" + suffix, projectionRole: "pb_tx_projection_" + suffix,
 		tenant: uuid.NewString(), user: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), key: uuid.NewString(), model: uuid.NewString(), price: uuid.NewString(),
-		channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString()}
+		channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString(), profileVersion: "v1"}
+	if latest {
+		f.profileVersion = "10000000-0000-4000-8000-0000000000a1"
+	}
 	// Cleanup captures exact generated identities; no prefix deletion or preview DB.
 	t.Cleanup(func() {
 		if f.app != nil {
@@ -199,15 +203,27 @@ func (f *pbTxFixture) seedCatalog(t *testing.T) {
 		f.exec(t, tx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'unused',$3)`, u.id, u.id+"@fixture.invalid", u.role)
 	}
 	f.exec(t, tx, `INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)`, f.tenant, f.user)
-	f.exec(t, tx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$1,'{"version":"v1","model":"model","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}','v1')`, f.model)
+	if f.historical {
+		f.exec(t, tx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$1,'{"version":"v1","model":"model","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}','v1')`, f.model)
+	} else {
+		f.exec(t, tx, `SELECT meter_insert_text_model($1,'model',$2::jsonb,$3)`, f.model, `{"version":"`+f.profileVersion+`","model":"model","protocol":"openai_chat","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`, f.profileVersion)
+	}
 	f.exec(t, tx, `INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, f.tenant, f.model)
 	f.exec(t, tx, `INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'fixture','fixture',$1,$4,1000000)`, f.key, f.tenant, f.user, []string{f.model})
-	f.exec(t, tx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1000000,1000000,clock_timestamp()-interval '1 day',$3)`, f.price, f.model, f.user)
+	if f.historical {
+		f.exec(t, tx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1000000,1000000,clock_timestamp()-interval '1 day',$3)`, f.price, f.model, f.user)
+	} else {
+		f.exec(t, tx, `SELECT meter_insert_token_price($1,$2,1000000,1000000,clock_timestamp()-interval '1 day',$3,NULL,NULL,NULL)`, f.price, f.model, f.user)
+	}
 	f.exec(t, tx, `INSERT INTO channels(id,name,current_version) VALUES($1,'fixture',$2)`, f.channel, f.version)
 	f.exec(t, tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused-fixture')`, f.credential, f.channel)
 	f.exec(t, tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, f.version, f.channel, f.credential)
 	f.exec(t, tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'fixture',1,10)`, f.version, f.channel, f.credential)
-	f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,$2,'upstream',2000000,2000000,'contract')`, f.cost, f.channel)
+	if f.historical {
+		f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,$2,'upstream',2000000,2000000,'contract')`, f.cost, f.channel)
+	} else {
+		f.exec(t, tx, `SELECT meter_insert_token_cost($1,$2,'upstream',2000000,2000000,'contract',NULL)`, f.cost, f.channel)
+	}
 	f.exec(t, tx, `INSERT INTO procurement_accounts(id,label,provider,state,limit_amount) VALUES($1,'fixture','fixture','active',1000000)`, f.account)
 	f.exec(t, tx, `INSERT INTO credential_procurement_bindings(id,credential_id,channel_id,account_id,operation_id) VALUES($1,$2,$3,$4,$5)`, f.binding, f.credential, f.channel, f.account, uuid.NewString())
 	pbTxMust(t, "commit static catalog seed", tx.Commit(f.ctx))

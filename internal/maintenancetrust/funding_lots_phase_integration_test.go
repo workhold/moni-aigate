@@ -267,12 +267,13 @@ func fundingLotsMixedHistory(t *testing.T, f *snapshotFixture, pool *pgxpool.Poo
 	reserve := func(tenant, user string, amount int64) billing.Reservation {
 		t.Helper()
 		model, key := uuid.NewString(), uuid.NewString()
-		profile := `{"version":"v1","model":"fixture","input_token_upper_bound":1000000,"context_limit":1000001,"output_limit":1,"default_output_limit":1,"output_limit_field":"max_tokens"}`
-		exec(`INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$1,$2,'v1')`, model, profile)
+		version := uuid.NewString()
+		profile := `{"version":"` + version + `","model":"fixture","protocol":"openai_chat","input_token_upper_bound":1000000,"context_limit":1000001,"output_limit":1,"default_output_limit":1,"output_limit_field":"max_tokens"}`
+		exec(`SELECT meter_insert_text_model($1,'fixture',$2::jsonb,$3)`, model, profile, version)
 		exec(`INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, tenant, model)
 		exec(`INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes) VALUES($1,$2,$3,'fixture',$1,$1,$4)`, key, tenant, user, []string{model})
-		exec(`INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,0,clock_timestamp()-interval '1 day',$3)`, model, amount, operator)
-		r, e := store.Reserve(ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: tenant, UserID: user, KeyID: key}, RequestID: uuid.NewString(), ModelID: model, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture", ProfileVersion: "v1", InputUpperBound: 1000000, OutputLimit: 1, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
+		exec(`SELECT meter_insert_token_price(NULL,$1,$2,0,clock_timestamp()-interval '1 day',$3,NULL,NULL,NULL)`, model, amount, operator)
+		r, e := store.Reserve(ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: tenant, UserID: user, KeyID: key}, RequestID: uuid.NewString(), ModelID: model, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture", ProfileVersion: version, InputUpperBound: 1000000, OutputLimit: 1, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
 		if e != nil || int64(r.Amount) != amount {
 			t.Fatal("mixed reserve", e)
 		}
@@ -281,7 +282,16 @@ func fundingLotsMixedHistory(t *testing.T, f *snapshotFixture, pool *pgxpool.Poo
 	credit(tenantA, 100)
 	grant(tenantA, userA, 70)
 	r := reserve(tenantA, userA, 60)
-	if _, e = store.RecordFinalization(ctx, billing.FinalizationInput{TenantID: tenantA, RequestID: r.RequestID, Source: "gateway", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 500000, TotalTokens: 500000}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"}); e != nil {
+	channel, version, credential := uuid.NewString(), uuid.NewString(), uuid.NewString()
+	exec(`INSERT INTO channels(id,name,current_version) VALUES($1,'mixed',$2)`, channel, version)
+	exec(`INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused')`, credential, channel)
+	exec(`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, version, channel, credential)
+	exec(`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,10)`, version, channel, credential)
+	attempt, e := store.RecordAttempt(ctx, billing.AttemptInput{TenantID: tenantA, RequestID: r.RequestID, Sequence: 1, ChannelID: channel, ChannelVersionID: version, CredentialID: credential, UpstreamModel: "mixed"})
+	if e != nil {
+		t.Fatal("mixed attempt", e)
+	}
+	if _, e = store.RecordFinalization(ctx, billing.FinalizationInput{TenantID: tenantA, RequestID: r.RequestID, AttemptID: attempt.ID, Source: "gateway", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 500000, TotalTokens: 500000}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"}); e != nil {
 		t.Fatal("mixed finalization", e)
 	}
 	s, e := store.Settle(ctx, billing.SettleInput{TenantID: tenantA, RequestID: r.RequestID})

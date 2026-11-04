@@ -174,7 +174,7 @@ func readModelState(ctx context.Context, live *privateModelLifecycle, b modelBus
  (SELECT balance FROM ledger_accounts WHERE tenant_id=$1 AND kind='AVAILABLE'),(SELECT balance FROM ledger_accounts WHERE tenant_id=$1 AND kind='HELD'),
  (SELECT count(*) FROM request_records),(SELECT count(*) FROM upstream_attempts),(SELECT count(*) FROM finalization_records),(SELECT count(*) FROM metering_events),
  (SELECT count(*) FROM settlements),(SELECT coalesce(sum(charged_amount),0)::bigint FROM settlements),(SELECT count(*) FROM journals),(SELECT count(*) FROM procurement_budget_events),
- EXISTS(SELECT 1 FROM finalization_records f JOIN metering_events e ON e.id=f.event_id WHERE f.request_id=r.id AND f.content_written AND e.normalized_usage->>'status'='confirmed_final')
+ EXISTS(SELECT 1 FROM finalization_records f JOIN metering_events e ON e.id=f.event_id WHERE f.request_id=r.id AND f.content_written AND e.retail_usage_state='confirmed_final')
  FROM request_records r JOIN reservations v ON v.request_id=r.id JOIN upstream_attempts a ON a.request_id=r.id
  JOIN procurement_reservations p ON p.attempt_id=a.id JOIN procurement_accounts ac ON ac.id=p.account_id JOIN api_keys k ON k.id=r.key_id
  WHERE r.tenant_id=$1 AND k.id=$2 AND ac.id=$3`, b.tenant, b.key, b.account).Scan(&s.request, &s.attempt, &s.deadline, &s.customer, &s.amount, &s.delivery, &s.purchase, &s.purchaseHeld, &s.purchaseSpent, &s.accountHeld, &s.accountSpent, &s.keyHeld, &s.keySpent, &s.available, &s.held, &s.requests, &s.attempts, &s.finals, &s.metering, &s.settlements, &s.charge, &s.journals, &s.events, &s.finalConfirmedContent)

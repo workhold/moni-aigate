@@ -170,6 +170,24 @@ request Plan中的candidate_profile_digests保留共同canonical形状，但U必
 
 请求 root→恰一份 snapshot 的 reverse complete trigger 必须在 COMMIT 检查；只建 snapshot→request FK 不能阻止少快照的 raw request 提交。快照及 bounds 行只能同 request 出生事务写入，之后 status/最终 pointer/PB正常收尾不改快照。
 
+#### 5.1.1 用量界行（2026-11-04）
+
+本片只落数量行，不落 `retail_bounds_canonical`、`supplier_bounds_canonical` 或报价外壳列。那些列仍按本节全文，等报价 canonical 片。
+
+每个请求快照在出生事务写入恰好四行 `request_meter_bound_lines`：`retail`/`supplier` × `text_input_token`/`text_output_token`，单位固定 `token`。输入数量等于快照 `input_bound`，并且等于该档案两侧 capability 界的输入硬界。输出数量等于快照 `output_bound`，并且不超过该档案两侧的输出硬界。两侧同名维度数量必须相等。计划未就绪、`plan_canonical` 为空时，这四行仍然必须存在，不能因为没有计划而省略。计划已就绪时，计划函数已经要求计划内两侧界等于这两列；界行再要求等于这两列，从而与计划一致。本片不另加“对话输出界不得为 0”；该限制仍只在计划就绪时由计划函数执行。
+
+每个尝试快照由 `meter_insert_attempt_snapshot` 在同一函数写入恰好四行 `attempt_meter_bound_lines`。数量等于该尝试快照的两列，也等于同一请求的请求界。U 不接受调用方另交更小的尝试界。
+
+缺行、多行、单位不符、输入不等于档案硬界，或输出超过档案硬界，提交时分别拒绝为 `request bounds are incomplete`、`attempt bounds are incomplete`。行不可更新或删除。应用角色只有 SELECT/INSERT，投影角色和 PUBLIC 没有权限。预占金额等于向量 `ReservationAmount` 的复核仍不在本片。
+
+#### 5.1.2 报价外壳（2026-11-04）
+
+本片只落 inference 外层报价：请求快照的 `retail_quote_canonical`/`retail_quote_digest`，尝试快照的 `supplier_quote_canonical`/`supplier_quote_digest`。两列要么同空，要么 canonical 不超过 16384 字节且 digest 为 32 字节。不另存 `retail_bounds_canonical`、`supplier_bounds_canonical`、重复的 rates canonical，也不另存纯核 `metering.QuoteDigest`。外层 canonical 已经嵌进两侧界和费率原字节。
+
+计划未就绪时，这两列必须为空。不能因为没有计划摘要而编一份报价。计划就绪时，请求报价是 known 的零售报价：`plan_digest` 等于请求计划摘要，`version_id` 等于价格版本且必须是非零 UUID，`unknown_reason` 为 null，bounds 等于该快照的零售界，rates 逐字节等于原价格的 `rates_canonical`。摘要域是 `moni-aigate.inference.quote.v1`。不一致拒绝为 `request quote does not match price`。
+
+尝试报价绑定尝试计划。known 使用原成本版本和供应商费率；`version_missing` 的版本和费率都是 null；`basis_unknown` 保留原成本版本、费率为 null。零售侧不能是 unknown。不一致拒绝为 `attempt quote does not match cost`。报价列与快照一样不可更新。
+
 ### 5.2 `upstream_attempts` / `attempt_meter_snapshots`
 
 保留原attempt tenant/request/sequence/channel/version/credential/upstream_model、delivery_state、route_decisions、created_at及PB stamp。删除cost_version_id/cost_input_rate/cost_output_rate/cost_basis镜像列；原cost_status/cost_amount保留受约束的当前成本投影。增加latest_cost_finalization_id TEXT NULL、latest_cost_correction_id TEXT NULL；二者互斥，后者指原provider_cost_corrections同tenant/attempt原件，不能凭pointer造金额。correction父端增UK`(tenant_id,attempt_id,id)`以供复合FK；pointer与projection只能同事务更新，未知初态二者均NULL且amount=NULL。

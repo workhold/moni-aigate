@@ -49,4 +49,4 @@ flowchart LR
 
 027四来源入账及非现金opening都不进入settlement消费收入；来源分配不join到收入聚合，避免一个request分配多lot后重复计收入。实际023后报表/CSV及四来源305入账但经营收入0的证据见[来源验证](../verification/wallet-sources.md)。
 
-028计划从原request不可变快照增加protocol/execution_kind/profile/schema/variant，筛选、JSON、CSV及前端按同一合同扩展；**这些元数据尚未接线**，不能从当前model profile推断历史。金额继续读原settlement和全部attempt投影，不从向量重算，也不因人工客户量确认而把上游未知成本改成0。任务生成归原提交request，实时按收费轮次request；poll/下载/heartbeat不增加收入。跨维度数量若另行汇总须按schema/dimension/unit/side分组，不把Token、图片、字符和时长相加。实施范围见[028消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)与[阶段出口](../../specs/028-unified-metering-media/tasks.md)。
+请求明细带有原请求的 protocol、execution_kind，以及当时计费快照的 profile_version、schema_id、schema_digest、variant_key。筛选只接受六种文本协议和 synchronous；缺失留空，不从当前模型补成 Chat。CSV 在原金额列之后追加这六列。金额继续读原 settlement 和全部 attempt 投影，不从向量重算，也不因人工客户量确认而把上游未知成本改成 0。任务生成归原提交 request，实时按收费轮次 request；poll/下载/heartbeat 不增加收入。跨维度数量若另行汇总须按 schema/dimension/unit/side 分组，不把 Token、图片、字符和时长相加。实施范围见[028消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)与[阶段出口](../../specs/028-unified-metering-media/tasks.md)。

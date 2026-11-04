@@ -52,7 +52,7 @@ func pbBillProcurementReserve(t *testing.T, f *pbTxFixture, s *billing.Store) bi
 	pbTxMust(t, "read actual request deadline clock", f.app.QueryRow(f.ctx, `SELECT clock_timestamp()`).Scan(&now))
 	id := uuid.NewString()
 	r, err := s.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key},
-		RequestID: id, ModelID: f.model, IdempotencyKey: id, RequestHMAC: id, ProfileVersion: "v1", PolicyVersion: "r3",
+		RequestID: id, ModelID: f.model, IdempotencyKey: id, RequestHMAC: id, ProfileVersion: f.profileVersion, PolicyVersion: "r3",
 		InputUpperBound: 100, OutputLimit: 20, RequestDeadline: now.Add(2 * time.Minute)})
 	pbTxMust(t, "reserve one actual customer wallet source", err)
 	if r.Amount != 120 {

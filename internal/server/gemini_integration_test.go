@@ -86,7 +86,7 @@ func geminiAssertUsage(t *testing.T, f *gatewayFixture, id string, attempts int6
 	retrievalResourcesReleased(t, f)
 	f.assertSettled(t, id, attempts)
 	var input, output, total, thoughts, cached int64
-	err := f.pool.QueryRow(context.Background(), `SELECT (e.normalized_usage->>'input_tokens')::bigint,(e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint,(e.normalized_usage->>'reasoning_tokens')::bigint,(e.normalized_usage->>'cached_tokens')::bigint FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, id).Scan(&input, &output, &total, &thoughts, &cached)
+	err := f.pool.QueryRow(context.Background(), `SELECT (meter_event_usage(e.id)->>'input_tokens')::bigint,(meter_event_usage(e.id)->>'output_tokens')::bigint,(meter_event_usage(e.id)->>'total_tokens')::bigint,(meter_event_usage(e.id)->>'reasoning_tokens')::bigint,(meter_event_usage(e.id)->>'cached_tokens')::bigint FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, id).Scan(&input, &output, &total, &thoughts, &cached)
 	if err != nil || input != 10 || output != 5 || total != 15 || thoughts != 2 || cached != 3 {
 		t.Fatalf("Gemini durable usage %d/%d/%d thinking=%d cache=%d err=%v", input, output, total, thoughts, cached, err)
 	}
