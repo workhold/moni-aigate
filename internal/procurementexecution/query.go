@@ -1,6 +1,6 @@
-// Package procurementexecution contains the prospective three-root protocol.
-// It does not acquire connections, run transactions, install SQL, or select a
-// serving profile. An Invocation is data for a separately reviewed executor.
+// Package procurementexecution contains the prospective three-root protocol
+// and its explicit transaction runner. It does not install SQL or select a
+// serving profile. Invocation construction and decoding do not use connections.
 package procurementexecution
 
 import (

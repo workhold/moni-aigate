@@ -169,6 +169,9 @@ func (s *Store) CreateAccount(ctx context.Context, actor string, in CreateInput)
 	if !configuration(in.Label, in.Provider, in.State, in.LimitAmount) {
 		return Command{}, ErrInvalid
 	}
+	if s.prospective != nil {
+		return s.prospective.create(ctx, actor, in)
+	}
 	return s.mutate(ctx, actor, in.OperationID, "account_create", "", in, func(tx pgx.Tx, root commandRoot) (Command, error) {
 		id := uuid.NewString()
 		value, err := scanAccount(tx.QueryRow(ctx, `INSERT INTO procurement_accounts(id,label,provider,state,limit_amount) VALUES($1,$2,$3,$4,$5::bigint) RETURNING `+accountColumns, id, in.Label, in.Provider, in.State, in.LimitAmount))
@@ -181,6 +184,9 @@ func (s *Store) CreateAccount(ctx context.Context, actor string, in CreateInput)
 func (s *Store) ConfigureAccount(ctx context.Context, actor, id string, in ConfigurationInput) (Command, error) {
 	if !canonicalID(id) || !canonicalNumber(in.ExpectedRevision, true) || !configuration(in.Label, in.Provider, in.State, in.LimitAmount) {
 		return Command{}, ErrInvalid
+	}
+	if s.prospective != nil {
+		return s.prospective.configure(ctx, actor, id, in)
 	}
 	return s.mutate(ctx, actor, in.OperationID, "account_configure", id, in, func(tx pgx.Tx, root commandRoot) (Command, error) {
 		before, err := scanAccount(tx.QueryRow(ctx, `SELECT `+accountColumns+` FROM procurement_accounts WHERE id=$1 FOR NO KEY UPDATE`, id))

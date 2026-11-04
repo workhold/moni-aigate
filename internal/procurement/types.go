@@ -17,7 +17,10 @@ var ErrInvalid = errors.New("invalid_procurement_configuration")
 var ErrConflict = errors.New("procurement_operation_conflict")
 var ErrForbidden = errors.New("procurement_forbidden")
 
-type Store struct{ Pool *pgxpool.Pool }
+type Store struct {
+	Pool        *pgxpool.Pool
+	prospective *prospectiveAccount
+}
 
 func New(pool *pgxpool.Pool) *Store { return &Store{Pool: pool} }
 

@@ -3848,3 +3848,46 @@ A4新增真实绑定/PB首配双向同步、双租户共享采购硬界与精确
 - added `specs/023-periodic-products/b-procurement-prospective-executor-contract.md`
 
 </details>
+
+## 2026-11-04T02:54:12Z · 36603856b098
+
+A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发布与unknown不重放；同步候选模块/权限/14组只读观察设计和限定实际APP/wire验证；普通New/main/provision及001–022不变，完整A4/A5/PB异常域/R2继续开放
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1898 个源文件；本次 32 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/procurement-attempt-birth.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/verification/github-ci-43f3801.json`
+- added `docs/verification/procurement-execution-runner.json`
+- added `docs/verification/procurement-execution-runner.md`
+- modified `internal/billing/evidence.go`
+- added `internal/billing/prospective.go`
+- added `internal/billing/prospective_test.go`
+- modified `internal/billing/types.go`
+- added `internal/procurement/prospective.go`
+- added `internal/procurement/prospective_test.go`
+- modified `internal/procurement/store.go`
+- modified `internal/procurement/types.go`
+- added `internal/procurementattemptbirth/executor_adapter_postgres_test.go`
+- added `internal/procurementattemptbirth/executor_postgres_test.go`
+- added `internal/procurementattemptbirth/executor_wire_test.go`
+- modified `internal/procurementexecution/query.go`
+- added `internal/procurementexecution/runner.go`
+- added `internal/procurementexecution/runner_test.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/gateway.go`
+- added `internal/server/procurement_execution_errors.go`
+- added `internal/server/procurement_execution_errors_test.go`
+- modified `internal/server/server.go`
+- added `specs/023-periodic-products/b-procurement-executor-adapter-contract.md`
+- added `specs/023-periodic-products/b-procurement-executor-observation-contract.md`
+- added `specs/023-periodic-products/b-procurement-executor-transaction-acceptance-contract.md`
+- added `specs/023-periodic-products/b-procurement-executor-transaction-contract.md`
+- modified `specs/023-periodic-products/b-procurement-prospective-executor-contract.md`
+
+</details>

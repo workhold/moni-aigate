@@ -302,6 +302,9 @@ func (s *Server) error(c *gin.Context, e error) {
 	if e == nil {
 		return
 	}
+	if procurementExecutionError(c, s, e) {
+		return
+	}
 	if errors.Is(e, identity.ErrReauth) {
 		s.fail(c, 403, "reauth_required", "敏感操作需要再次验证身份")
 		return
@@ -354,12 +357,12 @@ func (s *Server) error(c *gin.Context, e error) {
 		s.fail(c, 409, "conflict", "资源状态或版本冲突")
 		return
 	}
+	if billingError(c, s, e) {
+		return
+	}
 	var pe *pgconn.PgError
 	if errors.As(e, &pe) && (pe.Code == "23505" || pe.Code == "23503" || pe.Code == "23514") {
 		s.fail(c, 409, "conflict", "资源重复或关联约束不满足")
-		return
-	}
-	if billingError(c, s, e) {
 		return
 	}
 	s.fail(c, 503, "system_unavailable", "服务暂不可用，请凭 request_id 查询结果")

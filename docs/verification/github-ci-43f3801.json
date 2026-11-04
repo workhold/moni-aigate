@@ -1,0 +1,100 @@
+{
+  "schema": "moni.github-ci-run-status.v1",
+  "run_id": 41751306813,
+  "commit": "43f38011b65c19797e336f37f42a9dd4874cf76c",
+  "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "contracts (attempt-0)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773569"
+    },
+    {
+      "name": "contracts (identity)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773841"
+    },
+    {
+      "name": "contracts (server-1)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773860"
+    },
+    {
+      "name": "contracts (billing-3)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773863"
+    },
+    {
+      "name": "contracts (server-0)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773866"
+    },
+    {
+      "name": "contracts (billing-2)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773908"
+    },
+    {
+      "name": "contracts (attempt-1)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773946"
+    },
+    {
+      "name": "contracts (billing-0)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316773986"
+    },
+    {
+      "name": "contracts (server-2)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316774001"
+    },
+    {
+      "name": "contracts (attempt-3)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316774023"
+    },
+    {
+      "name": "contracts (other)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316774067"
+    },
+    {
+      "name": "contracts (billing-1)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316774080"
+    },
+    {
+      "name": "contracts (server-3)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316774086"
+    },
+    {
+      "name": "contracts (attempt-2)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/workhold/moni-aigate/actions/runs/41751306813/job/126316774100"
+    }
+  ],
+  "evidence": {
+    "path": ".local/a5-ci-43f3801/run-completed.json",
+    "bytes": 43109,
+    "sha256": "afdd6f9711add9aca3beb703e190114774331aa225fa6eba846b41faf7da2913"
+  },
+  "scope": "Exact published commit workflow/job terminal status only. This record does not independently audit artifacts, individual Go tests, skips or totals, and does not cover subsequent uncommitted changes."
+}

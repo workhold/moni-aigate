@@ -38,9 +38,10 @@ func (e *Error) Error() string        { return e.Code + ": " + e.Message }
 func fail(code, message string) error { return &Error{Code: code, Message: message} }
 
 type Store struct {
-	pool       *pgxpool.Pool
-	instanceID string
-	active     sync.Map
+	pool        *pgxpool.Pool
+	instanceID  string
+	active      sync.Map
+	prospective *prospectiveAttempt
 }
 
 func New(pool *pgxpool.Pool) *Store          { return &Store{pool: pool, instanceID: uuid.NewString()} }

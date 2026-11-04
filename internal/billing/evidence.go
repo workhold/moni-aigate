@@ -78,6 +78,9 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 	if err != nil {
 		return result, err
 	}
+	if s.prospective != nil {
+		return s.prospective.record(ctx, in, decisions)
+	}
 	err = s.transaction(ctx, func(tx pgx.Tx) error {
 		r, err := lockRequestWithChannel(ctx, tx, in.TenantID, in.RequestID, in.ChannelID)
 		if err != nil {

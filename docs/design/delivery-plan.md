@@ -216,3 +216,5 @@ legacy cut/absence/完整首配、B-HO1、全部业务资格/逐对象Q与Base/a
 [A5合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md)已冻结；首片[S1无连接协议](../verification/procurement-execution-protocol.md)交付固定三根ABI、参数快照、恰一行/NULL union与固定PP cause分类，不接默认服务。随后依序完成S2显式事务/确认回滚重试/unknown只读观察、S3原Go API显式构造器及HTTP错误优先级、S4实际APP差分与故障。A4可与无连接叶子并行补验，完整A5验收仍依赖A4；PB错误域的精确兼容另先设计，不能通过开放PG文本猜测完成。
 
 之后继续其余D1/I1根与独立全域重放/profile、B-P3历史缺证、R2正式迁移/启动/全资金接线，再到C1退款/C2拒付/C3恢复、商品订阅、扩展、生产/HA和最终性能。阶段验证及提交不等于整个持续目标完成，正式供应商/支付/目标1Panel等外部验收边界保持。
+
+本轮S2事务运行器和S3显式适配已实现，按先行[事务](../../specs/023-periodic-products/b-procurement-executor-transaction-contract.md)/[适配](../../specs/023-periodic-products/b-procurement-executor-adapter-contract.md)/[验收](../../specs/023-periodic-products/b-procurement-executor-transaction-acceptance-contract.md)合同核实际APP三根与提交未知，准确计数/失败历史见[记录](../verification/procurement-execution-runner.md)。正常New/main/provision与001–022不变；没有完整A5/R2上线。下一片实现已冻结的[只读观察合同](../../specs/023-periodic-products/b-procurement-executor-observation-contract.md)，完成新RR RO精准回执、已提交/未提交正反控与legacy/反向关系/现有PB范围验收，再收完整S4和PB异常域版本方案。observer目前只有设计，S2测试内独立只读oracle不冒充其实现。

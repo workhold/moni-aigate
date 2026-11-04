@@ -1,6 +1,6 @@
 # B-P4 A5：显式 prospective executor 合同
 
-2026-11-04；先冻结合同，再交付 §10 的 S1 无连接叶子。承接[出生根合同](b-procurement-attempt-birth-writer-contract.md)、[A2 安装合同](b-procurement-attempt-installation-contract.md)、[执行与恢复合同](b-procurement-execution-contract.md)和[A2 验证记录](../../docs/verification/procurement-attempt-birth.md)。本页冻结 Go 接缝、协议、错误、事务及观察边界；**只实现无连接协议叶子，未实现事务 executor、未接通普通运行路径、未运行本页新增 PostgreSQL 验收，不关闭 A4/A5 或 R2**。原 `birth-exact-link-a2-v1` SQL、catalog、ACL 与固定摘要均不因本合同改变。
+2026-11-04；先冻结合同，再依切片交付。承接[出生根合同](b-procurement-attempt-birth-writer-contract.md)、[A2 安装合同](b-procurement-attempt-installation-contract.md)、[执行与恢复合同](b-procurement-execution-contract.md)和[A2 验证记录](../../docs/verification/procurement-attempt-birth.md)。本页冻结 Go 接缝、协议、错误、事务及观察边界；**S1协议、S2事务运行器与S3显式业务适配已实现并限定验证，只读观察仅详细设计；未接通普通运行路径，不关闭完整A4/A5/S4或R2**。原 `birth-exact-link-a2-v1` SQL、catalog、ACL 与固定摘要均不因本合同改变。
 
 ## 1. 范围、依赖与交付状态
 
@@ -13,9 +13,9 @@ A2 已有真实 request/账户/attempt 出生、reserved 效果与限定实际 A
 | 切片 | 本页状态 | 完成条件及不能扩称的范围 |
 | --- | --- | --- |
 | S1 无连接协议叶子 | 已实现并纯 race 验证，见 §10 | 固定三根 ABI/参数编码、恰一行 typed decoder/NULL union、固定 PP 分类与 cause；无连接、无事务、无构造器接线，不称完整 executor |
-| S2 事务与只读观察 | 仅冻结，未实现 | 显式 Acquire/清理、提交状态机、准确重试、unknown 与只读观察；完整实际数据库故障证据另由 S4 交付 |
-| S3 业务及 HTTP 适配 | 仅冻结，未实现 | 显式 `NewProspective`、原外层校验、原公开 DTO/错误与 HTTP 优先级；普通 `New` 不变 |
-| S4 actual APP 完整验收 | 未执行 | A4 所需前置证据及本页矩阵全部复核；PB 错误域兼容缺口未解决前不得宣称全等价 |
+| S2 事务与只读观察 | 事务已实现并限定验证；观察仅详细设计 | [事务合同](b-procurement-executor-transaction-contract.md)与[观察合同](b-procurement-executor-observation-contract.md)分开记录，不能以独立APP只读事实oracle冒充生产Observe实现 |
+| S3 业务及 HTTP 适配 | 已实现并纯/实际APP限定验证 | [适配合同](b-procurement-executor-adapter-contract.md)：显式 `NewProspective`、原外层校验、原公开 DTO/错误与 HTTP 优先级；普通 `New` 不变 |
+| S4 actual APP 完整验收 | 已执行事务与适配窄矩阵，整体未完成 | [本轮范围](../../docs/verification/procurement-execution-runner.md)不替代完整A4/观察与其余矩阵；PB错误域兼容缺口未解决前不得宣称全等价 |
 | A6 集成 | 未执行 | 汇总并行结果、语义复核架构/验证记录，再 reviewed refresh 与只读检查；不代替 R2 |
 
 ## 2. 包边界与显式选择
@@ -227,7 +227,7 @@ S1 可以先行实施；S2 依赖 S1，S3 依赖其使用的 S1/S2 合同；S4 �
 
 本页新增会影响统一架构中的候选模块、错误/提交边界、观察链路、权限边界和能力状态；集成人在全部并行结果汇总后更新正文/验证记录并说明哪些仅设计、哪些仅实现、哪些实际通过，再执行仓库要求的 reviewed refresh 与只读架构检查。S1 无连接叶子完成时也只能标记该片，不能将图中的规划 constructor/executor 或观察箭头画成默认在线链路。
 
-## 10. S1 源码与纯验证记录
+## 10. S1 历史源码与纯验证记录
 
 [query.go](../../internal/procurementexecution/query.go)交付 `Root`、三种内部 input、不可变 `Invocation` 和 `NewCreateAccount/NewConfigureAccount/NewRecordAttempt`；构造固定 schema-qualified SELECT 与参数私有快照，`Query/Arguments/Root` 只返回数据，不执行 SQL。每次 Arguments 重新复制 byte slice，quote 的 rate 在构造时去引用，空 expected bytes 保持非 nil。这里三个 `New*` 只是 SQL 调用数据构造器，不是 §2 的 Store.NewProspective，也不执行原业务校验。
 

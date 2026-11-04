@@ -26,6 +26,8 @@ func billingError(c *gin.Context, s *Server, e error) bool {
 		status = 409
 	case "procurement_not_found":
 		status = 404
+	case "procurement_execution_forbidden", "procurement_history_invariant", "procurement_execution_protocol", "procurement_history_resource", "procurement_history_exhausted", "procurement_prefix_untracked_domain", "procurement_outcome_unknown":
+		status = 503
 	case "procurement_periodic_budget_exceeded", "periodic_clock_regression", "periodic_budget_invariant", "periodic_budget_unavailable", "channel_unavailable", "profile_blocked", "no_price", "price_unavailable", "cost_quote_stale", "cost_unknown", "cost_limit_exceeded", "procurement_paused", "procurement_budget_exceeded", "procurement_binding_changed", "procurement_bound_invalid", "procurement_invariant":
 		status = 503
 	}

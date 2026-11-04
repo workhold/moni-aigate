@@ -1,0 +1,389 @@
+{
+  "schema": "moni.procurement-execution-s2-s3.v1",
+  "date": "2026-11-04",
+  "base_commit": "43f38011b65c19797e336f37f42a9dd4874cf76c",
+  "scope": "Explicit candidate Runner plus business/HTTP adapters. Observer detailed design only. No default serving, formal migration, PB exception-domain equivalence or production qualification.",
+  "commands": {
+    "protocol_runner": "env -u TEST_DATABASE_URL go test -json -race -p 1 -count=1 ./internal/procurementexecution",
+    "adapter_pure_http": "env -u TEST_DATABASE_URL go test -json -race -p 1 -count=1 ./internal/billing ./internal/procurement ./internal/server -run '^TestProspective|^TestProcurementExecutionHTTP'",
+    "actual_app_and_wire": "TEST_DATABASE_URL=<dedicated PG16> go test -json -race -p 1 -count=1 -timeout 10m ./internal/procurementattemptbirth -run '^TestPostgresExecutor|^TestExecutor'"
+  },
+  "results": {
+    "protocol_runner": {
+      "top_level_pass": 36,
+      "subtest_pass": 79,
+      "skip": 0,
+      "fail": 0,
+      "unique_terminal_per_run": true,
+      "top_level_names": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerFixedRootsUseOneTransactionAndOriginalContext"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerRejectsInvalidInputsBeforeAcquire"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerSchemaParsingPreservesQuotedIdentifiers"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerPrecommitFailuresRollbackAndNeverPublish"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerQueryErrorClosesRowsAndKeepsLateCause"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerCanceledBeforeCommitRollsBackWithoutSendingCommit"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerAttemptRetriesOnlyConfirmedDeadlockOrSerialization"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerAttemptStopsAtThreeAndAccountNeverRetries"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerNoRetryForOtherStatesOrProtocolFailure"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerCleanupSharesOneIndependentAbsoluteBudget"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerUnknownCommitNeverRetriesPublishesOrRollsBack"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerKnownCommitFailuresReturnZeroAndConfirmedSuccessSurvivesDestroy"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerBeginAcquireAndPanicCleanup"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerOpaqueHandleAndUnknownFormattingNeverExposeEvidence"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerRetriesDoNotReusePriorDecodedIdentity"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestRunnerReleasePanicNeverTouchesTransferredConnection"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestFixedAttemptPPClassificationKeepsCauseAndMessage"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestAccountAndClosureErrorsStayInTheirDomains"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestLookupIsNoRowsWithoutLosingPgError"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestUnknownPPAndAllNonPPErrorsAreTransparent"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestFixedQueriesBindAllBusinessInput"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestSchemaValidationIsLocalAndByteBounded"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestIgnoredQuoteAndRouteBytesArePrivateSnapshots"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestQuoteNullUnionDoesNotFoldEmptyOrNullableRates"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestAttemptAppliedAndOriginalReplayText"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestAttemptNullAndIdentityUnionRejectsZeroResult"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestExactlyOneAndRealScanFailureCausality"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestServerErrorsWinOverLocalShapeFailures"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestAccountBranchUnionIncludingNumeric100AndNoop"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestAccountRejectsSQLNullWrongIdentityAndIllegalUnion"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestAccountSnapshotStrictTypesAndDecimalBounds"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestConfigureNoopAtMaxRevisionDoesNotOverflow"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestWrongDecoderAndNilRowsDoNotPublish"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestFixedColumnTypesRejectCodecConvertibleWrongABI"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestFixedColumnNamesCountAndAllTypePositions"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "test": "TestWrongABIStillDrainsAndPreservesServerOrStreamCause"
+        }
+      ],
+      "packages": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+          "action": "pass",
+          "elapsed_seconds": 1.326
+        }
+      ],
+      "evidence": {
+        "path": ".local/a5-s2-protocol-runner-final.jsonl",
+        "bytes": 117578,
+        "sha256": "06d05c3e8812ae49ae9a61484cab012711f25cb0e06b78f46e29b5436815ad1d"
+      }
+    },
+    "adapter_pure_http": {
+      "top_level_pass": 11,
+      "subtest_pass": 64,
+      "skip": 0,
+      "fail": 0,
+      "unique_terminal_per_run": true,
+      "top_level_names": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "test": "TestProspectiveBillingConstructionDoesNotConnect"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "test": "TestProspectiveBillingOriginalValidationAndByteEncoding"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "test": "TestProspectiveBillingErrorsPreserveCauseAndZeroResult"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "test": "TestProspectiveBillingUnknownPrecedesReachableBusinessFailure"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "test": "TestProspectiveProcurementConstructionDoesNotConnect"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "test": "TestProspectiveProcurementValidationAndImmutableDTO"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "test": "TestProspectiveProcurementErrorsPreserveSentinelCauseAndZeroResult"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "test": "TestProspectiveProcurementUnknownPrecedesReachableBusinessFailure"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/server",
+          "test": "TestProcurementExecutionHTTPTypedErrorsPrecedeRawConstraintCause"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/server",
+          "test": "TestProcurementExecutionHTTPAllClosureCodesAreExplicitlyUnavailable"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/server",
+          "test": "TestProcurementExecutionHTTPAdmissionUnknownPrecedesContextCause"
+        }
+      ],
+      "packages": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/billing",
+          "action": "pass",
+          "elapsed_seconds": 1.546
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurement",
+          "action": "pass",
+          "elapsed_seconds": 1.333
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/server",
+          "action": "pass",
+          "elapsed_seconds": 1.83
+        }
+      ],
+      "evidence": {
+        "path": ".local/a5-s3-pure-accepted.jsonl",
+        "bytes": 108269,
+        "sha256": "842871a42f7d9b2daf5b6fa6f9b0bf2a7c71c08857411b3527047fcfd090bd9d"
+      }
+    },
+    "actual_app_and_wire": {
+      "top_level_pass": 9,
+      "subtest_pass": 29,
+      "skip": 0,
+      "fail": 0,
+      "unique_terminal_per_run": true,
+      "top_level_names": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestPostgresExecutorAdapterAccountPublicDTOAndReplay"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestPostgresExecutorAdapterAttemptPublicDTOBudgetAndConflict"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestPostgresExecutorAccountRootsPublishOnlyCommittedReceipts"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestPostgresExecutorAttemptRootsPreserveIgnoredBytesAndReplay"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestPostgresExecutorDeferredPermissionFailurePublishesNoReceipt"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestPostgresExecutorOuterCommit23514IsNotBusinessOrUnknown"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestPostgresExecutorCommitAckLostKeepsUnknownAndCommittedFacts"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestExecutorCommitUnknownWireControls"
+        },
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "test": "TestExecutorTransportStartupAndExactCancellationControls"
+        }
+      ],
+      "packages": [
+        {
+          "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+          "action": "pass",
+          "elapsed_seconds": 16.943
+        }
+      ],
+      "evidence": {
+        "path": ".local/a5-s2-s3-accepted-pg.jsonl",
+        "bytes": 42290,
+        "sha256": "4f66cf18c172c939eb4bc5bc0fd4c26e934add1472ef59a003b264b0355b88ee"
+      },
+      "actual_postgres_top_level": 7,
+      "actual_postgres_subtests": 15,
+      "pure_wire_top_level": 2,
+      "pure_wire_subtests": 14
+    }
+  },
+  "source_sha256": {
+    "internal/procurementexecution/runner.go": "6cf410b2a4a9c5f4bd6c9c9322ba002dc953294b5550d0a65183474572112036",
+    "internal/procurementexecution/runner_test.go": "b6926bcfcbce578a2d67ce03ccb060f2ca4a216bdfcac230914831c5522472a1",
+    "internal/procurementexecution/query.go": "5c2e9e0b61e11772e9ca59e80c736d8b7b9c85083917b1a852719d7714354f35",
+    "internal/billing/prospective.go": "ed20f802f280388c44522a5e6adfdb79bb5d4c64b2eab3c6028b37584843e7fd",
+    "internal/billing/prospective_test.go": "595f536665055657c7818a178739652d4584e74d7d0871e021ec0a3aebed3f86",
+    "internal/billing/evidence.go": "3191ee0713c7aeee2cf6a5bc304597c1e0bf29a89c7e705931fda36aa1af6af5",
+    "internal/billing/types.go": "09caa604c74e254c1a727611cc31322f48356624627ddc81682226b9c9774d76",
+    "internal/procurement/prospective.go": "c314edc203e35f657543ff6739a2f1038fa1426da36c86cc5a65073a51985f1b",
+    "internal/procurement/prospective_test.go": "a0427f97980fa6701c8e6a9f85e90a3e1de49c15f60344abd1b39fe5d8ea64b8",
+    "internal/procurement/types.go": "59ba9c5feae23f8c93ab50ac5e14e13c4cc8a56dc9ec06e19822b11edfdeadc5",
+    "internal/procurement/store.go": "f0e83f2ed3e1ee9de8aaaaf572b7d3f6459023dc7fe2c34abd6d3b4c08be6f6e",
+    "internal/server/procurement_execution_errors.go": "cf9d247125240c7465660c5556d9121b43baa023171d9b5baf24a12dbe0caaa2",
+    "internal/server/procurement_execution_errors_test.go": "51d3fb6680522da3b5093c9474636e4261084486990cebef9fbac4e56035a325",
+    "internal/server/server.go": "80b31e89d07d345a5c460a609ca20f602c7841fe118e584e367f338d4f8987cc",
+    "internal/server/gateway.go": "86712ee3fcdb087490b388eedc68e94921644c8b2365a5ef60312f6b8a41e7e2",
+    "internal/server/billing_handlers.go": "497bdb28ac2b896458754c315ca9e4d8b6d1631f058e689a382c7033e4f83725",
+    "internal/procurementattemptbirth/executor_postgres_test.go": "d2ddbd0c63ab2c099b48389d23915318e4c685f3b3f6c06ce0e8577a9c1a3abc",
+    "internal/procurementattemptbirth/executor_wire_test.go": "e89c05f7eea8afb5cca936b1eadde5061ca2e8c54ee9ba9c3b45adafdbf9acaf",
+    "internal/procurementattemptbirth/executor_adapter_postgres_test.go": "d75eb007ef457e34f0af2e92a81c921938584a6ce94e8eb961b6b1d06fadffac"
+  },
+  "retained_attempts": [
+    {
+      "path": ".local/a5-s2-first-pg.jsonl",
+      "bytes": 19148,
+      "sha256": "12be292a8c58a4b460971d3bcbafa008bf26c1cbce30085603f502914a8a1b01",
+      "explanation": "First actual PG run: both lost-ACK controls incorrectly counted pgx EOF cleanup CancelRequest sockets as business reconnects; four other top-level tests passed."
+    },
+    {
+      "path": ".local/a5-s2-s3-diagnostic-pg.jsonl",
+      "bytes": 11627,
+      "sha256": "fbed8c68b6ac91548bbdfd0cefdd753bfde71706f0432708b4a243eec3e5fb98",
+      "explanation": "Printed exact one query/reply/drop and two raw dials; adapter invalid credential correctly hit PP101 before PP116."
+    },
+    {
+      "path": ".local/a5-s3-adapter-pg.jsonl",
+      "bytes": 2229,
+      "sha256": "7517835657e9aa559dc0346d399b447eb0439da5a98c40095111bc898179a8db",
+      "explanation": "Build-only failure while concurrently edited harness changed dial audit type; no PostgreSQL tests ran."
+    },
+    {
+      "path": ".local/a5-s2-s3-final-pg.jsonl",
+      "bytes": 42958,
+      "sha256": "b5cf55b9ff44744b5aff4a9279ea2dd41fde9db411c0b7085b8271ba2082c241",
+      "explanation": "Runner and wire passed; adapter tried adding membership after immutable channel version creation transaction and original P0001 correctly rejected it. Final fixture publishes a separate valid original version and its pool in one transaction before candidate installation."
+    }
+  ],
+  "cleanup": {
+    "schemas": 0,
+    "roles": 0,
+    "backends": 0,
+    "installer_default_public_function_execute": true,
+    "version": "16.15 (Homebrew)",
+    "timezone": "Asia/Shanghai",
+    "fsync": "on",
+    "synchronous_commit": "on",
+    "full_page_writes": "on"
+  },
+  "cleanup_evidence": {
+    "path": ".local/a5-s2-s3-cleanup.json",
+    "bytes": 231,
+    "sha256": "ad26c6558ca221df3c162e1d886eb3eb6cc50f7feb015a4414f68058c5a12786"
+  },
+  "remaining": [
+    "Observe implementation and actual APP snapshot/absence/legacy/reverse relations matrix",
+    "Full A4/A5/S4 and trusted PB exception-domain version contract",
+    "Full procurement profile and R2 formal migration/startup wiring",
+    "Real suppliers/payments and target container/1Panel qualification"
+  ],
+  "mermaid_evidence": {
+    "path": ".local/architecture-mermaid-check/procurement-executor-s2-s3-20261104/report.json",
+    "bytes": 1507,
+    "sha256": "5d5232429e7dc3d897335e51c2c7c790c99b0af8c3b91f2d6eac1274e5ea2559",
+    "note": "Both detail diagrams parsed and rendered with official Mermaid 12.2.0 and isolated Chrome; changed overview visually reviewed. Narrative-only table update afterward does not change Mermaid blocks."
+  }
+}

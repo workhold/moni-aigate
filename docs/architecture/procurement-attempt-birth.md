@@ -37,13 +37,16 @@ flowchart TD
     Request --> A2PG["A2 限定race PASS：47顶层 / 1648子项<br/>整链 / 规则 / 请求兼容 / 授权 / catalog"]
     Effects --> A2PG
     Effects --> Sync["A4 同步与期限专项<br/>绑定 / PB先后 / 双租户 / 准确PID / 累计5s"]
-    ABI["A5-S1 procurementexecution：无连接协议叶子<br/>固定参数快照 / typed行 / PP分类与cause"]
-    ABI -. "S2/S3尚未接线" .-> Future["剩余A4 / A5事务、观察与业务适配<br/>全域profile / R2 / 供应商与生产"]
+    Adapter["S3 显式 NewProspective<br/>原 validators / 公开 DTO / typed HTTP"] --> Runner["S2 procurementexecution.Runner<br/>RC / 3s锁 / 5s语句 / 确认 COMMIT"]
+    ABI["A5-S1 固定三根协议<br/>参数快照 / typed行 / PP分类与cause"] --> Runner
+    Runner -->|仅固定三个根| Functions
+    Runner --> Unknown["可能已提交：unknown / opaque handle<br/>不重做 / 不调用模型"]
+    Unknown -. "只读观察详细设计，未实现" .-> Future["剩余A4 / A5观察与完整矩阵<br/>PB异常域 / 全域profile / R2 / 供应商与生产"]
     A2PG -. "后续独立门禁" .-> Future
     Sync -. "范围以专项记录为准" .-> Future
 ```
 
-实线为已实现的材料依赖、调用与隔离测试关系，不代表相应测试均已通过。虚线为同源定义或后续交付门禁；A2 不在已运行的 A1 writer 上叠装。A0/A1/A2 的实际执行均限于显式专库装配；材料包没有数据库连接或自动安装，测试中的 `billing` 导入不将候选接入生产路径。A5-S1 是独立协议数据和解码模块，没有实际调用数据库的箭头；它不提供事务或运行构造器。
+实线为已实现的材料依赖、调用与隔离测试关系，不代表相应测试均已通过。虚线为同源定义或后续交付门禁；A2 不在已运行的 A1 writer 上叠装。A0/A1/A2 的实际执行均限于显式专库装配；材料包没有数据库连接或自动安装。S2 Runner 通过固定三根调用数据库，S3 两个显式构造器保留原业务校验与DTO；普通 New/main/provision 不选择候选。只读 Observe 仍为设计，opaque handle 不授予派发或经营许可；[实际专项证据](../verification/procurement-execution-runner.md)不关闭完整 A5/R2。
 
 ## A0 的实际规则边界
 
@@ -203,6 +206,6 @@ unmanaged 不进入账户/PB效果：冻结首次 Q1，仅 origin/head0、step1 
 | [procurementexecution/query.go](../../internal/procurementexecution/query.go) | 三根受信schema限定查询和私有参数快照；quote BYTEA/nullable rate及JSON bytes保持；不是SQL运行器 |
 | [receipt.go](../../internal/procurementexecution/receipt.go) | 固定列型/恰一行、NULL union、原replay TEXT与NUMERIC100；协议失败零回执，独立晚到执行错误保持cause |
 | [errors.go](../../internal/procurementexecution/errors.go) | 固定入口域PP分类与原cause；没有业务包/HTTP包装、PB文本推断或自动重试 |
-| [A5冻结合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md) | 后续S2显式Acquire/清理/COMMIT与只读观察、S3显式构造器/API/HTTP、S4实际APP完整矩阵；当前均未接线 |
+| [A5冻结合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md) | S2事务与S3显式构造器/API/HTTP已实现并限定验证；Observe仅详细设计，完整S4/默认服务装配仍后续，见[本轮记录](../verification/procurement-execution-runner.md) |
 
 S1的[纯协议验证](../verification/procurement-execution-protocol.md)不证明数据库或财务提交。普通billing/procurement.New不探测候选、不失败fallback；正式001–022不变。PB异常没有可信域tag时继续保留原执行错，全等价门不靠开放PG Message/Context猜测关闭。

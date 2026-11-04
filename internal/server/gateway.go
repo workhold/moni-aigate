@@ -272,6 +272,9 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 }
 
 func (s *Server) admissionError(c *gin.Context, err error) {
+	if procurementExecutionError(c, s, err) {
+		return
+	}
 	if errors.Is(err, errAdmissionQueueFull) {
 		s.fail(c, 429, "concurrency_limited", "当前并发已满，请稍后重试")
 	} else if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {

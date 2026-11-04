@@ -1042,3 +1042,9 @@ raw专项6顶层/92子项覆盖等价21列INSERT与原reservation companion、�
 [A5合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md)分S1协议、S2事务/观察、S3原API/HTTP、S4真实APP矩阵。[procurementexecution](../../internal/procurementexecution/query.go)首片只依赖标准库/pgx，不导入业务包：固定三根限定查询、参数私有快照、quote原字节BYTEA及SQL NULL联合；恰一行typed decoder关闭/排空Rows，scan/codec形状错误为本地PP903且保留原cause，独立服务器/stream错误不被零行掩盖。账户before/after的JSON null与SQL NULL区分，NUMERIC100不截int64；attempt replay保留旧TEXT ID和非标准cost_status，applied才核新UUID/prepared/unknown。
 
 固定PP按入口域分类，禁止从Message/Context推断PB异常域。原三根A2材料没有可信PB域tag，因而S1保留非PP原执行错误，完整兼容门仍开放。无连接叶子不提供事务、unknown观察器、NewProspective或HTTP；后续构造器保留原外层validator，普通New不探测候选或失败fallback。只有确定COMMIT后发布DTO，可能已提交则unknown且不重放；S2–S4实际实现/验证仍须单独交付，详见[协议验证](../verification/procurement-execution-protocol.md)。
+
+[S3适配合同](../../specs/023-periodic-products/b-procurement-executor-adapter-contract.md)先冻结局部接线：原billing Sequence/UpstreamModel→route validator后调用固定根，quote不经TEXT/float中转；账户configuration/target/expected与actor/operation校验顺序保持，校验后ParseInt。私有runner接缝只供包内测试；公开构造器仅接受pool/schema，不探测SQL。错误全零DTO；billing As、采购sentinel Is及原PG cause同时保留。HTTP执行域与unknown显式503、typed业务先于raw23514，未分类数据库错误仍用原fallback。
+
+本轮S2/S3已实现并完成[限定验收](../verification/procurement-execution-runner.md)：Runner保留Acquire连接直到确认COMMIT或清理，attempt最多三次仅对确认rollback/idle的40P01/40001，account不重试；不替换caller总ctx。真实COMMIT成功整帧被截断后零DTO/typed unknown且独立APP RR RO可见唯一已提交事实。驱动EOF清理的第二socket逐首包认证为准确原PID/secret的16字节CancelRequest，不能误称第二业务会话；仅一个Startup。共享5s清理预算涵盖rollback与Close，Release后无权再Hijack。原HTTP admissionError也先处理unknown避免context cause降级504，原raw context/队列仍504/429。
+
+[Observe详细合同](../../specs/023-periodic-products/b-procurement-executor-observation-contract.md)只设计未实现：14组固定投影的列/OID/NULL、独立原Go JSON SHA256、准确捕获回执、同一新RR RO快照与既有validator反向闭包；receipt_present不发行mutation/dispatch许可，缺行、损坏与未支持域不降级。PB配置/operations/B-P1观察整图并非当前validator已认证范围，不增加grant或修改固定材料补假保证。
