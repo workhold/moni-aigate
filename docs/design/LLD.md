@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-04（026当前请求窗口经营报表与CSV）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-04（026经营报表、027现行来源与028一体化设计）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -1060,3 +1060,17 @@ MVP前的新功能按[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)只�
 [HTTP](../../internal/server/operating_reports.go)提供平台GET `reports/operations`及`.csv`，沿现有平台角色中间件；重复/未知参数400，上限422，读取/超时503且不泄露cause。JSON沿标准envelope，CSV完整生成后发送no-store/UTF-8/nosniff与固定安全文件名；[CSV](../../internal/reporting/csv.go)对文本公式前缀转义，保留微元整数与负毛利，null毛利留空。无迁移、写权限或报表后台任务。
 
 [控制台](../../web/src/components/OperatingReport.vue)默认7天，筛选变化同步清除旧结果并推进generation；请求与下载各持sequence，身份/路由/卸载后旧响应失效。请求明细在同一报告本地分页，CSV每次独立新快照并标明与屏幕可能不同；下载走同源Cookie、现有认证事件及类型检查，object URL及时回收。与reports-v1累计钱包投影的区别及验收见[当前架构](../architecture/operating-reports.md)和[验证记录](../verification/operating-reports.md)。
+
+## 027现行来源闭环与028媒体统一设计
+
+[整体设计](integrated-wallet-media.md)把来源、计量、同步媒体、任务/会话和经营报表放在同一链路；[027规格](../../specs/027-wallet-sources/spec.md)与[现行架构](../architecture/wallet-sources.md)给出已实现来源合同，[028规格](../../specs/028-unified-metering-media/spec.md)保留后续精确设计与验收要求。
+
+027追加023正式迁移，四资金写入口直接维护六表来源和三桶余额，按全部账户ID→lot_id锁序；数据库核对FIFO、事件/分配/钱包/原journal，消费退款逆原收费边。离线开账必须停服、维护模式、真实owner与既有服务锁；只对未使用空钱包导入非现金初值。同业务引用重读原件，未知COMMIT不自动重试。APP仅修改余额允许列，来源/事件/边不可变，开账原件只读；worker只获capture入账所需来源三表和七个安全函数，projector无来源权限。客户/平台API与控制台可读来源、请求分配及只读核对。
+
+MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金融历史/非零余额拒绝并回滚，保留原库，使用独立新当前库。此方案替代旧C0尚未接入服务的生产计划；历史重放/catalog/profile/proof候选冻结，不作为新能力依赖。
+
+028使用同一当前schema/quantity/rates/quote与结算路径，先完整替换六文本内部Token专用计量，再接同步图片/语音、异步视频与Realtime逐轮预占；零售与采购各自完整确认，未知成本不填0。媒体资源许可先于大body读取，异步queued不落入同步无交付释放分支，实时首收费帧先预占并禁止自动生成旁路。外部已声明文本协议保持；不保留token/vector双运行或第二个目录。具体共享DDL/接口及首供应商profile尚须D0冻结，本段不表示媒体已实现。
+
+026按原request创建窗口统计唯一收入/退款和全部attempt成本；opening不算销售收入。媒体/任务/实时将复用同一事实，不另开收入总账。供应商与部署验收独立记录；性能在完整能力后进行。
+
+027的入账摘要与回执过滤统一为四来源，wallet_opening_amount是必填精确金额；开账只计钱包入账，不计模型销售收入。通用查询时间统一UTC并保留精度和分页instant；来源/分配UI保持严格校验。实际受限APP/worker/projector、HTTP、浏览器与经营CSV验证见[027记录](../verification/wallet-sources.md)。

@@ -4,17 +4,21 @@ import (
 	"bufio"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/alerts"
 	"github.com/moni-ai/moni-aigate/internal/alertworker"
@@ -58,6 +62,9 @@ func run() error {
 	}
 	if command == "verify-periodic-budgets" {
 		return periodicVerificationFailure(runPeriodicVerification(os.Args[2:], os.Stdout))
+	}
+	if command == "open-wallet" || command == "check-wallet-sources" {
+		return runWalletSourcesCommand(command, os.Args[2:], os.Stdout)
 	}
 	c, e := config.Load()
 	if e != nil {
@@ -470,6 +477,100 @@ func run() error {
 		return nil
 	}
 	return fmt.Errorf("HTTP service stopped")
+}
+
+// Wallet maintenance runs without serving secrets, listeners or workers.
+func runWalletSourcesCommand(command string, args []string, output io.Writer) error {
+	flags := flag.NewFlagSet(command, flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	tenant := flags.String("tenant", "", "tenant UUID")
+	var reference, actor, amount *string
+	if command == "open-wallet" {
+		reference = flags.String("reference", "", "unique controlled external reference")
+		actor = flags.String("actor", "", "active administrator UUID")
+		amount = flags.String("amount", "", "positive canonical micro-CNY integer")
+	} else if command != "check-wallet-sources" {
+		return fmt.Errorf("wallet command invalid")
+	}
+	if flags.Parse(args) != nil || flags.NArg() != 0 {
+		return fmt.Errorf("wallet command arguments invalid")
+	}
+	if *tenant != "" {
+		id, err := uuid.Parse(*tenant)
+		if err != nil || id == uuid.Nil || id.String() != *tenant {
+			return fmt.Errorf("wallet command tenant invalid")
+		}
+	}
+	opening := billing.WalletOpeningInput{}
+	if command == "open-wallet" {
+		parsed, err := strconv.ParseInt(*amount, 10, 64)
+		if err != nil || parsed <= 0 || strconv.FormatInt(parsed, 10) != *amount || *tenant == "" || !security.ValidReference(*reference, 160) {
+			return fmt.Errorf("wallet opening arguments invalid")
+		}
+		id, err := uuid.Parse(*actor)
+		if err != nil || id == uuid.Nil || id.String() != *actor {
+			return fmt.Errorf("wallet opening administrator invalid")
+		}
+		if os.Getenv("MAINTENANCE_MODE") != "true" {
+			return fmt.Errorf("stop the service and set MAINTENANCE_MODE=true before opening a wallet")
+		}
+		opening = billing.WalletOpeningInput{TenantID: *tenant, ActorID: *actor, ExternalRef: *reference, Amount: billing.Money(parsed), MaintenanceMode: true}
+	}
+	raw := os.Getenv("DATABASE_URL")
+	if command == "open-wallet" && os.Getenv("MIGRATION_DATABASE_URL") != "" {
+		raw = os.Getenv("MIGRATION_DATABASE_URL")
+	}
+	if raw == "" {
+		return fmt.Errorf("wallet command database configuration required")
+	}
+	cfg, err := pgxpool.ParseConfig(raw)
+	if err != nil {
+		return fmt.Errorf("wallet command database configuration invalid")
+	}
+	cfg.MaxConns = 2
+	cfg.MinConns = 0
+	cfg.ConnConfig.ConnectTimeout = 5 * time.Second
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("wallet command database unavailable")
+	}
+	defer pool.Close()
+	if err = pool.Ping(ctx); err != nil {
+		return fmt.Errorf("wallet command database unavailable")
+	}
+	if err = migrations.Verify(ctx, pool); err != nil {
+		return fmt.Errorf("wallet command requires the complete current schema")
+	}
+	store := billing.New(pool)
+	if command == "open-wallet" {
+		result, e := store.OpenWallet(ctx, opening)
+		if e != nil {
+			var failure *billing.Error
+			if errors.As(e, &failure) {
+				return fmt.Errorf("%s: %s", failure.Code, failure.Message)
+			}
+			return fmt.Errorf("wallet opening failed")
+		}
+		if json.NewEncoder(output).Encode(result) != nil {
+			return fmt.Errorf("wallet opening committed; unable to write its result, verify the original reference")
+		}
+		return nil
+	}
+	result, err := store.CheckWalletSources(ctx, *tenant)
+	if err != nil {
+		return fmt.Errorf("wallet source verification failed")
+	}
+	if json.NewEncoder(output).Encode(result) != nil {
+		return fmt.Errorf("wallet source verification output failed")
+	}
+	if !result.Balanced {
+		return fmt.Errorf("wallet source mismatch")
+	}
+	return nil
 }
 func initEnv() error {
 	flags := flag.NewFlagSet("init-env", flag.ContinueOnError)

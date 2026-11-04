@@ -167,7 +167,7 @@ func lockAccounts(ctx context.Context, tx pgx.Tx, tenant string, required ...str
 	kinds := []string{}
 	seen := map[string]bool{}
 	for _, kind := range required {
-		if !oneOf(kind, "AVAILABLE", "HELD", "FUNDING_CLEARING", "REVENUE", "OPERATING_GRANT_CLEARING", "SANDBOX_FUNDING_CLEARING") {
+		if !oneOf(kind, "AVAILABLE", "HELD", "FUNDING_CLEARING", "REVENUE", "OPERATING_GRANT_CLEARING", "SANDBOX_FUNDING_CLEARING", "WALLET_OPENING_CLEARING") {
 			return nil, fail("invalid_account", "unknown account kind")
 		}
 		if !seen[kind] {

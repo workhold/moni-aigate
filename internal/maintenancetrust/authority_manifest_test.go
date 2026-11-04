@@ -13,12 +13,21 @@ import (
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
-func copyAuthorityMigrationFiles(t *testing.T) fstest.MapFS {
+func copyAuthorityOriginal22MigrationFiles(t *testing.T) fstest.MapFS {
 	t.Helper()
 	names, err := fs.Glob(migrations.Files, "*.sql")
 	if err != nil {
 		t.Fatal(err)
 	}
+	// These pure fixtures retain the original 001-022 identity. Mutations
+	// for negative cases are applied afterward and remain visible in full.
+	sort.Strings(names)
+	const originalThrough = "022_payment_runtime_attestation.sql"
+	last := sort.SearchStrings(names, originalThrough)
+	if last == len(names) || names[last] != originalThrough || last+1 != 22 {
+		t.Fatal("original 001-022 fixture prefix drift")
+	}
+	names = names[:last+1]
 	files := fstest.MapFS{}
 	for _, name := range names {
 		body, err := migrations.Files.ReadFile(name)
@@ -31,7 +40,7 @@ func copyAuthorityMigrationFiles(t *testing.T) fstest.MapFS {
 }
 
 func TestAuthorityManifestUsesFixedCompleteEmbeddedBytes(t *testing.T) {
-	b, maxName, err := authorityManifestCanonical(migrations.Files)
+	b, maxName, err := authorityManifestCanonical(copyAuthorityOriginal22MigrationFiles(t))
 	if err != nil || len(b) != 2459 {
 		t.Fatal("fixed complete manifest")
 	}
@@ -67,7 +76,7 @@ func TestAuthorityManifestUsesFixedCompleteEmbeddedBytes(t *testing.T) {
 func TestAuthorityManifestRejectsChangedUnreviewedSources(t *testing.T) {
 	for _, kind := range []string{"missing", "extra", "renamed", "modified"} {
 		t.Run(kind, func(t *testing.T) {
-			files := copyAuthorityMigrationFiles(t)
+			files := copyAuthorityOriginal22MigrationFiles(t)
 			name := "001_core.sql"
 			switch kind {
 			case "missing":
@@ -91,7 +100,7 @@ func TestAuthorityManifestRejectsChangedUnreviewedSources(t *testing.T) {
 }
 
 func TestAuthorityManifestEvidenceCannotRebindOrAcceptAlteredCanonical(t *testing.T) {
-	b, _, err := authorityManifestCanonical(migrations.Files)
+	b, _, err := authorityManifestCanonical(copyAuthorityOriginal22MigrationFiles(t))
 	if err != nil {
 		t.Fatal(err)
 	}

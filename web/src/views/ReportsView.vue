@@ -79,7 +79,7 @@ onMounted(async () => {
     <ErrorNotice :message="error" @retry="load()" />
     <el-alert v-if="summary?.projection_pending" type="warning" :closable="false" show-icon :title="`还有 ${integer(summary.projection_pending)} 条业务事件等待报表更新，累计指标可能暂未包含最新操作。钱包余额以同步账本为准。`" style="margin-bottom:22px" />
     <div v-loading="loading" class="metric-grid">
-      <div class="metric-card"><div class="metric-label">累计钱包入账</div><MetricMoney :value="summary?.credited" /><div class="metric-note">含人工核款与运营赠额，非现金收入</div></div>
+      <div class="metric-card"><div class="metric-label">累计钱包入账</div><MetricMoney :value="summary?.credited" /><div class="metric-note">含人工核款、赠额、模拟入账及非现金开账，不等于现金收款</div></div>
       <div class="metric-card"><div class="metric-label">累计客户消费</div><MetricMoney :value="summary?.charged" /><div class="metric-note">已结算收费，退款另记</div></div>
       <div class="metric-card"><div class="metric-label">累计钱包退款</div><MetricMoney :value="summary?.refunded" /><div class="metric-note">消费退款补偿，非现金退款</div></div>
       <div class="metric-card"><div class="metric-label">累计释放冻结</div><MetricMoney :value="summary?.released" /><div class="metric-note">预占未消费部分的释放</div></div>

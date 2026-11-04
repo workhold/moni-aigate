@@ -3973,3 +3973,88 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `docs/verification/operating-reports.md`
 
 </details>
+
+## 2026-11-04T05:28:27Z · 1299eb4ff3fb
+
+027单一现行来源模型：正式023、四资金入口FIFO/退款、非现金停服开账、受限角色与双向核对、HTTP及控制台四来源摘要/余额/分配；通用DTO UTC规范化。026经营收入/全部attempt成本与CSV在023下复验。028补统一计量/媒体/任务/实时总体设计及D0缺口，仍未实现。冻结原001–022研究材料与历史helper身份修正、旧descriptor当前源码拒绝及覆盖缩减；不新增023 proof/profile或在线兼容依赖。已语义复核模块图、资金链路、数据权限、能力边界、源码与验证链接。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1960 个源文件；本次 74 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/wallet_commands_test.go`
+- added `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- added `docs/design/integrated-wallet-media.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/wallet-sources.json`
+- added `docs/verification/wallet-sources.md`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_sandbox_integration_test.go`
+- modified `internal/billing/funding_verify.go`
+- added `internal/billing/lot_runtime.go`
+- added `internal/billing/lot_runtime_integration_test.go`
+- modified `internal/billing/orders.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/settle.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_types.go`
+- added `internal/billing/wallet_opening.go`
+- added `internal/billing/wallet_opening_integration_test.go`
+- added `internal/billing/wallet_opening_test.go`
+- added `internal/billing/wallet_sources_application_test.go`
+- added `internal/billing/wallet_sources_constraints_test.go`
+- added `internal/billing/wallet_sources_read.go`
+- added `internal/billing/wallet_sources_read_test.go`
+- added `internal/billing/wallet_sources_summary_test.go`
+- modified `internal/fundinglotbasis/basis_test.go`
+- modified `internal/fundinglotruntime/runtime_history.go`
+- modified `internal/fundinglotruntime/runtime_history_test.go`
+- modified `internal/fundinglotruntime/runtime_materials.go`
+- modified `internal/fundinglotruntime/runtime_materials_test.go`
+- modified `internal/maintenancetrust/authority_manifest_test.go`
+- modified `internal/maintenancetrust/funding_lots_observed_proof_test.go`
+- modified `internal/maintenancetrust/funding_lots_proof_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- added `internal/operations/wallet_sources_roles_test.go`
+- modified `internal/qa/c0candidate/fixture_test.go`
+- modified `internal/server/commerce_handlers.go`
+- modified `internal/server/queries.go`
+- added `internal/server/queries_test.go`
+- modified `internal/server/server.go`
+- added `internal/server/wallet_sources.go`
+- added `internal/server/wallet_sources_integration_test.go`
+- added `migrations/023_wallet_sources.sql`
+- added `migrations/wallet_sources_postgres_test.go`
+- modified `scripts/funding-lot-descriptor/main_test.go`
+- added `specs/027-wallet-sources/spec.md`
+- added `specs/028-unified-metering-media/spec.md`
+- modified `web/src/App.vue`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/FundingPanel.vue`
+- added `web/src/components/RequestFunding.vue`
+- added `web/src/components/WalletSourceAudit.vue`
+- added `web/src/components/WalletSources.vue`
+- modified `web/src/format.ts`
+- modified `web/src/router.ts`
+- modified `web/src/views/ReportsView.vue`
+- modified `web/src/views/RequestsView.vue`
+- added `web/src/views/WalletSourcesView.vue`
+- modified `web/src/views/WalletView.vue`
+- added `web/src/wallet-source-details.ts`
+- added `web/src/wallet-sources.ts`
+- modified `web/tests/commerce.test.mjs`
+- added `web/tests/wallet-source-details.test.mjs`
+- added `web/tests/wallet-sources.test.mjs`
+
+</details>

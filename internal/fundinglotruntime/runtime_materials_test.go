@@ -126,10 +126,18 @@ func TestRuntimeMaterialExactBytesManifestAndSixMappings(t *testing.T) {
 		t.Fatal("complete frozen material or a mapping differs from independent literals")
 	}
 	paths, err := filepath.Glob(filepath.Join("..", "..", "migrations", "*.sql"))
-	if err != nil || len(paths) != 22 || len(m.Manifest) != 22 {
-		t.Fatal("current migration count drift")
+	if err != nil || len(m.Manifest) != 22 {
+		t.Fatal("original 001-022 migration inventory drift")
 	}
 	sort.Strings(paths)
+	// The compatibility artifact is frozen at the original 001-022 schema;
+	// compare that exact source prefix rather than the evolving current set.
+	originalThrough := filepath.Join("..", "..", "migrations", "022_payment_runtime_attestation.sql")
+	last := sort.SearchStrings(paths, originalThrough)
+	if last == len(paths) || paths[last] != originalThrough || last+1 != 22 {
+		t.Fatal("original 001-022 migration prefix drift")
+	}
+	paths = paths[:last+1]
 	maxName := 0
 	for i, path := range paths {
 		body, err := os.ReadFile(path)

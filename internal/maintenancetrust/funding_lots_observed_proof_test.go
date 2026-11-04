@@ -10,7 +10,6 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotproof"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotscan"
-	"github.com/moni-ai/moni-aigate/migrations"
 )
 
 // This fixture represents untrusted values for pure comparison. It does not
@@ -35,7 +34,7 @@ func observedProofFixtureRows(t *testing.T, sandbox bool) observedProofFixture {
 	if sandbox {
 		pins, _ = predecessorRowsFixture(t)
 	}
-	manifest, _, err := authorityManifestCanonical(migrations.Files)
+	manifest, _, err := authorityManifestCanonical(copyAuthorityOriginal22MigrationFiles(t))
 	if err != nil {
 		t.Fatal("fixed observer manifest")
 	}

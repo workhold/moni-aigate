@@ -32,7 +32,12 @@ const paymentSchemaObjectOwnerSQL = `(CASE WHEN n.nspowner='pg_database_owner'::
 
 var paymentTableNames = []string{
 	"payment_sandbox_environment", "payment_runtime_attestations", "payment_policy", "payment_skus", "payment_sku_versions", "payment_sku_changes", "payment_orders", "payment_cancel_intents", "payment_command_outbox", "payment_command_observations", "payment_query_attempts", "payment_inbox", "payment_event_conflicts", "payment_verified_queries", "payment_query_conflicts", "payment_verified_evidence", "payment_evidence_processing", "payment_provider_revisions", "payment_transaction_identities", "payment_order_capture_selections", "payment_captures", "payment_effects", "payment_review_facts",
+	"wallet_openings", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots",
 }
+
+// The pre-existing ledger is part of the current wallet privilege boundary,
+// but not the extension's presence count used by offline historical fixtures.
+var paymentBoundaryTableNames = append(slices.Clone(paymentTableNames), "ledger_accounts")
 
 type paymentTableGrant struct {
 	selectAll, insertAll               bool
@@ -50,12 +55,16 @@ func paymentGrants(role PaymentDatabaseRole) map[string]paymentTableGrant {
 		}
 	}
 	if role == PaymentApplicationRole {
+		add("wallet_openings funding_lots funding_lot_balances funding_lot_events funding_reservation_lots funding_settlement_lots funding_consumption_refund_lots ledger_accounts", true, false)
+		add("funding_lots funding_lot_balances funding_lot_events funding_reservation_lots funding_settlement_lots funding_consumption_refund_lots ledger_accounts", false, true)
 		add("payment_sandbox_environment payment_runtime_attestations payment_policy payment_skus payment_sku_versions payment_sku_changes payment_orders payment_cancel_intents payment_command_outbox payment_command_observations payment_query_attempts payment_inbox payment_event_conflicts payment_verified_queries payment_verified_evidence payment_evidence_processing payment_provider_revisions payment_transaction_identities payment_order_capture_selections payment_captures payment_effects payment_review_facts", true, false)
 		add("payment_skus payment_sku_versions payment_sku_changes payment_orders payment_cancel_intents payment_command_outbox payment_inbox payment_event_conflicts payment_verified_evidence payment_evidence_processing", false, true)
 		for name, cols := range map[string][]string{
-			"payment_policy": {"enabled"},
-			"payment_skus":   {"revision", "last_version", "enabled", "current_version_id", "last_change_operation_id"},
-			"payment_orders": {"id"},
+			"payment_policy":       {"enabled"},
+			"payment_skus":         {"revision", "last_version", "enabled", "current_version_id", "last_change_operation_id"},
+			"payment_orders":       {"id"},
+			"ledger_accounts":      {"balance"},
+			"funding_lot_balances": {"available_amount", "held_amount", "consumed_amount", "revision"},
 		} {
 			v := m[name]
 			v.updateCols = cols
@@ -63,12 +72,14 @@ func paymentGrants(role PaymentDatabaseRole) map[string]paymentTableGrant {
 		}
 	}
 	if role == PaymentWorkerRole {
+		add("funding_lots funding_lot_balances funding_lot_events", true, true)
 		add("payment_sandbox_environment payment_runtime_attestations payment_sku_versions payment_orders payment_cancel_intents payment_command_outbox payment_command_observations payment_query_attempts payment_inbox payment_event_conflicts payment_verified_queries payment_query_conflicts payment_verified_evidence payment_evidence_processing payment_provider_revisions payment_transaction_identities payment_order_capture_selections payment_captures payment_effects payment_review_facts ledger_accounts journals journal_lines funding_receipts projection_outbox audit_events schema_migrations", true, false)
 		add("payment_command_outbox payment_command_observations payment_query_attempts payment_verified_queries payment_query_conflicts payment_verified_evidence payment_evidence_processing payment_provider_revisions payment_transaction_identities payment_order_capture_selections payment_captures payment_effects payment_review_facts journals journal_lines funding_receipts projection_outbox audit_events", false, true)
 		for name, cols := range map[string][]string{
 			"tenants": {"id"}, "payment_orders": {"id"}, "ledger_accounts": {"balance"},
 			"payment_command_outbox":      {"state", "generation", "attempt_count", "current_query_id", "next_attempt_at", "lease_until", "last_error_code", "last_submission_unknown_at"},
 			"payment_evidence_processing": {"state", "generation", "attempt_count", "next_attempt_at", "lease_until", "last_error_code"},
+			"funding_lot_balances":        {"available_amount", "held_amount", "consumed_amount", "revision"},
 		} {
 			v := m[name]
 			v.updateCols = cols
@@ -230,7 +241,8 @@ func ProvisionPaymentWorkerFor(ctx context.Context, pool *pgxpool.Pool, schema, 
 	return nil
 }
 
-// Only historical prefixes with all 23 tables absent may skip this extension.
+// Only historical offline prefixes with the entire extension absent may skip it.
+// Runtime verification always requires the complete current wallet boundary.
 // This hook shares ProvisionFor's transaction, so a failure rolls back blanket grants.
 func provisionPaymentRoles(ctx context.Context, tx pgx.Tx, schema, app, projection string) error {
 	n, e := paymentTableCount(ctx, tx, schema)
@@ -267,7 +279,7 @@ func provisionPaymentRoleACL(ctx context.Context, tx pgx.Tx, schema, name string
 	if _, e := tx.Exec(ctx, "GRANT USAGE ON SCHEMA "+qs+" TO "+qrole+"; REVOKE CREATE ON SCHEMA "+qs+" FROM "+qrole); e != nil {
 		return ErrPaymentRolePrivileges
 	}
-	rows, e := tx.Query(ctx, `SELECT c.relname,ARRAY(SELECT a.attname::text FROM pg_catalog.pg_attribute a WHERE a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relkind IN ('r','p','v','m','f') AND ($2 OR c.relname=ANY($3::text[])) ORDER BY c.relname`, schema, role == PaymentWorkerRole, paymentTableNames)
+	rows, e := tx.Query(ctx, `SELECT c.relname,ARRAY(SELECT a.attname::text FROM pg_catalog.pg_attribute a WHERE a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relkind IN ('r','p','v','m','f') AND ($2 OR c.relname=ANY($3::text[])) ORDER BY c.relname`, schema, role == PaymentWorkerRole, paymentBoundaryTableNames)
 	if e != nil {
 		return ErrPaymentRolePrivileges
 	}
@@ -426,7 +438,7 @@ const paymentPrivilegesSQL = `SELECT c.relname,c.relkind::text,pg_catalog.pg_has
  FROM pg_catalog.pg_class c WHERE c.relnamespace=$2::oid AND c.relkind IN ('r','p','v','m','f') AND ($3 OR c.relname=ANY($4::text[])) ORDER BY c.relname`
 
 func verifyPaymentTables(ctx context.Context, tx pgx.Tx, schemaOID, oid uint32, role PaymentDatabaseRole, required bool) error {
-	rows, e := tx.Query(ctx, paymentPrivilegesSQL, oid, schemaOID, role == PaymentWorkerRole, paymentTableNames)
+	rows, e := tx.Query(ctx, paymentPrivilegesSQL, oid, schemaOID, role == PaymentWorkerRole, paymentBoundaryTableNames)
 	if e != nil {
 		return ErrPaymentRolePrivileges
 	}
@@ -441,7 +453,7 @@ func verifyPaymentTables(ctx context.Context, tx pgx.Tx, schemaOID, oid uint32, 
 		if rows.Scan(&name, &kind, &owner, &table, &grantable, &cols, &sel, &ins, &upd, &refs, &public) != nil {
 			return ErrPaymentRolePrivileges
 		}
-		isPayment := slices.Contains(paymentTableNames, name)
+		isPayment := slices.Contains(paymentBoundaryTableNames, name)
 		if owner || grantable || isPayment && (kind != "r" || public) {
 			return ErrPaymentRolePrivileges
 		}
@@ -472,7 +484,7 @@ func verifyPaymentTables(ctx context.Context, tx pgx.Tx, schemaOID, oid uint32, 
 	if rows.Err() != nil {
 		return ErrPaymentRolePrivileges
 	}
-	for _, name := range paymentTableNames {
+	for _, name := range paymentBoundaryTableNames {
 		if !seen[name] {
 			return ErrPaymentRolePrivileges
 		}
@@ -491,10 +503,12 @@ type paymentFunctionSpec struct {
 	worker                                                             bool
 }
 
+const paymentFunctionDefinitionsSQL = `SELECT p.proname,p.proargtypes::text,p.proargnames,p.prorettype::oid::text,l.lanname,p.provolatile::text,p.prosrc,
+ p.prokind='f' AND NOT p.prosecdef AND NOT p.proisstrict AND NOT p.proleakproof AND NOT p.proretset AND p.proparallel='u' AND p.pronargdefaults=0 AND p.provariadic=0 AND p.proargmodes IS NULL AND p.proallargtypes IS NULL AND p.proargdefaults IS NULL AND p.probin IS NULL AND p.prosqlbody IS NULL AND p.prosupport=0 AND p.protrftypes IS NULL AND p.proconfig=ARRAY['search_path='||pg_catalog.quote_ident($1)||', pg_catalog, pg_temp'] AND p.proowner=` + paymentSchemaObjectOwnerSQL + `
+ FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace JOIN pg_catalog.pg_language l ON l.oid=p.prolang WHERE n.nspname=$1 AND (left(p.proname,8)='payment_' OR left(p.proname,7)='wallet_' OR p.proname IN ('funding_journal_valid','funding_fact_guard')) ORDER BY p.proname,p.proargtypes`
+
 func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema string) error {
-	rows, e := tx.Query(ctx, `SELECT p.proname,p.proargtypes::text,p.proargnames,p.prorettype::oid::text,l.lanname,p.provolatile::text,p.prosrc,
- p.prokind='f' AND NOT p.prosecdef AND NOT p.proisstrict AND NOT p.proleakproof AND NOT p.proretset AND p.proparallel='u' AND p.pronargdefaults=0 AND p.provariadic=0 AND p.proargmodes IS NULL AND p.proallargtypes IS NULL AND p.proargdefaults IS NULL AND p.probin IS NULL AND p.prosqlbody IS NULL AND p.prosupport=0 AND p.protrftypes IS NULL AND p.proconfig=ARRAY['search_path='||pg_catalog.quote_ident($1)||', pg_catalog, pg_temp'] AND p.proowner=`+paymentSchemaObjectOwnerSQL+`
- FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace JOIN pg_catalog.pg_language l ON l.oid=p.prolang WHERE n.nspname=$1 AND (left(p.proname,8)='payment_' OR p.proname IN ('funding_journal_valid','funding_fact_guard')) ORDER BY p.proname,p.proargtypes`, schema)
+	rows, e := tx.Query(ctx, paymentFunctionDefinitionsSQL, schema)
 	if e != nil {
 		return ErrPaymentRolePrivileges
 	}

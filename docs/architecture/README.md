@@ -59,6 +59,36 @@ flowchart LR
 <!-- architecture:modules -->
 ## 模块、依赖与源码地图
 
+当前 `serve` 和普通领域入口的主干如下。来源分配直接参与原账务事务，026经营报表只读同一份事实；028媒体统一计量仍是设计，不在此图中假装已接线。
+
+```mermaid
+flowchart TD
+    Main[主程序 / 单实例保护] --> Server[HTTP 与生命周期编排]
+    Web[Vue 控制台] --> Server
+    Server --> Identity[身份 / 租户 / Key]
+    Server --> Catalog[模型 / 渠道 / 不可变价格与路由]
+    Server --> Route[选路 / 健康 / 容量]
+    Server --> Provider[六种协议 / 受控网络]
+    Server --> Billing[唯一账务事务 / 客户与采购]
+    Billing --> Pricing[分组售价 / 原报价快照]
+    Billing --> PB[客户与采购周期预算]
+    Billing --> Sources[027 来源 / FIFO / 结算与逆序退款]
+    Server --> Report[026 经营报表 / 对账 CSV]
+    Maintenance[离线开账 / 只读来源核对] --> Billing
+    Main --> Workers[恢复 / 投影 / 邮件 / 告警 / 支付沙箱]
+    Identity --> DB[(PostgreSQL)]
+    Catalog --> DB
+    Billing --> DB
+    Report -->|有界只读快照| DB
+    Workers --> DB
+    Provider --> Upstream[官方模型 / 第三方收费平台]
+```
+
+现行来源链路详见[资金来源与开账](wallet-sources.md)，整体下一阶段设计见[资金、媒体与经营一体化设计](../design/integrated-wallet-media.md)。以下完整源码关系图同时保留隔离研究模块，默认折叠；它们有明确身份和边界，不能作为经营功能的依赖清单。
+
+<details>
+<summary>展开完整源码与隔离研究关系图</summary>
+
 ```mermaid
 flowchart TD
     CLI[cmd/moni-aigate\n装配、CLI、启动与排空]
@@ -309,9 +339,11 @@ flowchart TD
     HTTP -. 公共支撑 .-> Security
 ```
 
+</details>
+
 图中实线表示主要装配、调用或存储关系，不代表每一条Go import。`productvalue`是独立数学模块，无生产调用方，详见[C-V合同](../../specs/023-periodic-products/c-value-contract.md)。维护集成的单向依赖由[合同§7](../../specs/022-self-service-payments/c0-read-lease-contract.md#7-ci-启动回归后的维护集成隔离根冻结)和可执行依赖门禁另外约束：普通业务与领域测试不得反向导入维护/catalog。`provider`不写财务状态、不自动重试生成请求；`routing`管理内存健康与容量，不替代数据库最新准入；`server`将各阶段串联，网络调用始终在数据库事务之外。
 
-本轮GitHub入口交付将根README、首次启动和部署路径统一到当前001–022。首次远端CI发现SCRAM与旧无密码LOGIN fixture、Docker bridge与固定SQL loopback endpoint不符，以及时间内部表示/远端退出观察竞态；原四组修订保留[历史证据](../verification/github-ci-profile.md)。第二轮身份组通过，billing/server仍耗尽累计600秒，支付模拟器另因UTC反解析文本与固定Shanghai库存不符被严格拒绝。按[CI合同](../verification/ci-profile-contract.md)将两个大包各按实际完整顶层名单分四组，加identity/other共十个独立runner/数据库；临时PG显式Asia/Shanghai及真实loopback，就绪SQL核验，全部子测、race、各进程10分钟及业务期限保留。相同临时fixture原始Open在UTC拒绝、Shanghai两组件均成功，证据和新远端边界见[第二轮记录](../verification/github-ci-second-run.md)。前端、架构、vet、嵌入构建仍执行，不把配置修订视作新远端通过。最终本地make check及指定专库make verify-mvp均通过，286项前端/全默认Go race/vet/build见[集成记录](../verification/maintenance-snapshot-integration.md)。B0回调测试按[冻结oracle](../../specs/022-self-service-payments/b-runtime-contract.md#103-根冻结双网络槽与prepare竞争的独立测试oracle)区分双HTTP槽与合法保守lease：网络槽测试仅在fixture使用同实际LOGIN单连接pool，另以标准多连接真实gate竞争证明Prepare deferred不改原租约/attempt或制造IO证据。生产pool、两槽调度、Guard和全部预算保持原合同；整仓结果与原失败见[本轮集成记录](../verification/github-initial-delivery.md)。
+此前GitHub入口交付将README、首次启动和部署路径统一到当时001–022；当前027采用001–023与新钱包历史，旧记录不作为升级承诺。首次远端CI发现SCRAM与旧无密码LOGIN fixture、Docker bridge与固定SQL loopback endpoint不符，以及时间内部表示/远端退出观察竞态；原四组修订保留[历史证据](../verification/github-ci-profile.md)。第二轮身份组通过，billing/server仍耗尽累计600秒，支付模拟器另因UTC反解析文本与固定Shanghai库存不符被严格拒绝。按[CI合同](../verification/ci-profile-contract.md)将两个大包各按实际完整顶层名单分四组，加identity/other共十个独立runner/数据库；临时PG显式Asia/Shanghai及真实loopback，就绪SQL核验，全部子测、race、各进程10分钟及业务期限保留。相同临时fixture原始Open在UTC拒绝、Shanghai两组件均成功，证据和新远端边界见[第二轮记录](../verification/github-ci-second-run.md)。前端、架构、vet、嵌入构建仍执行，不把配置修订视作新远端通过。最终本地make check及指定专库make verify-mvp均通过，286项前端/全默认Go race/vet/build见[集成记录](../verification/maintenance-snapshot-integration.md)。B0回调测试按[冻结oracle](../../specs/022-self-service-payments/b-runtime-contract.md#103-根冻结双网络槽与prepare竞争的独立测试oracle)区分双HTTP槽与合法保守lease：网络槽测试仅在fixture使用同实际LOGIN单连接pool，另以标准多连接真实gate竞争证明Prepare deferred不改原租约/attempt或制造IO证据。生产pool、两槽调度、Guard和全部预算保持原合同；整仓结果与原失败见[本轮集成记录](../verification/github-initial-delivery.md)。
 
 独立纯基础层没有连接到当前请求链；LotPlanner只处理候选快照，Metering只处理完整已知向量，RefundProto只验证封闭退款协议及原capture绑定，LedgerRows只核调用方传入的三类账本行。它们不证明数据库已读全、来源、授权、真实外部退款或供应商计量，不授资金写入能力。C0生产来源、C1原路退款、023-C商品和024-B0-I媒体接线仍须各自完成SQL/权限、全路径与真实验收。
 
@@ -350,7 +382,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 采购历史写入合同（023-B-P4-D1-S） | 共同/账户/成本及PB、81个PP错误（含PP906）、完整ACL/锁图和四域重放读取合同已冻结；关系材料与纯核基础已交，完整受控writer/独立重放/新profile未完成；宽TEXT exact-link RC原语实验通过，685项候选关系未改 | [共同协议](../../specs/023-periodic-products/b-procurement-source-contract.md)、[账户](../../specs/023-periodic-products/b-procurement-account-contract.md)、[成本/request](../../specs/023-periodic-products/b-procurement-cost-request-contract.md)、[精确链接候选](../../specs/023-periodic-products/b-procurement-exact-link-contract.md) |
 | 支付资金接缝（022-B2） | 021追加完整支付SQL、第三来源helper、十方向核验与三角色最小权限；真实PG专项通过；订单领域/worker/HTTP现由B3接线 | [021](../../migrations/021_payment_sandbox.sql)、[第三来源](../../internal/billing/funding_sandbox.go)、[角色](../../internal/operations/payment_roles.go)、[冻结合同](../../specs/022-self-service-payments/b2-funding-contract.md)、[B3设计](../../specs/022-self-service-payments/b3-http-ui-contract.md) |
 | 应用支付闭环（022-B3） | 订单/通知/安全视图、双manifest/022证明、独立真实worker、2网络/4证据槽、HTTP/UI和main已接线；专项PG/race及两轮真实主进程、最终浏览器整链通过限定本地验收；在途SIGTERM/真实Guard失权独立真实进程补验通过 | [领域与运行](../../internal/payments)、[HTTP](../../internal/server/payment_handlers.go)、[准入](../../internal/server/payment_admission.go)、[启动](../../cmd/moni-aigate/payment_startup.go)、[022](../../migrations/022_payment_runtime_attestation.sql)、[前端](../../web/src/components/PaymentsPage.vue)、[分层证据](../verification/payment-application.md) |
-| 资金来源分配算法（022-C0窄切片） | 仅package-private纯FIFO/finish/逆原charged边refund算法及race专项通过；无DB/网络/资金入口，C0正式DDL与维护仍候选 | [算法](../../internal/billing/lot_plan.go)、[冻结范围](../../specs/022-self-service-payments/c0-lot-contract.md#12-根冻结纯分配算法切片2026-11-01)、[验证](../verification/funding-lot-planners.md) |
+| 来源分配算法与027生产接线 | 原package-private FIFO/finish/逆序refund算法已复用到四个现行资金入口；旧C0历史重放/证明仍冻结，不作前置 | [算法](../../internal/billing/lot_plan.go)、[冻结范围](../../specs/022-self-service-payments/c0-lot-contract.md#12-根冻结纯分配算法切片2026-11-01)、[验证](../verification/funding-lot-planners.md) |
 | 独立账本与来源关联纯核验（022-C0-V0-L/T3窄片） | ledger三类原始行十方向大整数检查；新增manual/voucher receipt双向关联core；均不接DB或authority，来源core由固定reader使用，不授全源coverage | [纯包](../../internal/fundinglotverify)、[账本合同](../../specs/022-self-service-payments/c0-verifier-contract.md#12-首个有界实施片-v0-l原始账本行独立纯重放根冻结)、[来源合同](../../specs/022-self-service-payments/c0-source-link-contract.md)、[账本验证](../verification/funding-ledger-rows.md)、[来源验证](../verification/funding-source-links.md) |
 | 同RR账本读取（022-C0-V0-R） | 私有caller-owned RR、实际LOGIN、四表窄shape/history与函数解析前置；三表128条keyset至完整EOF后独立核算，保留journal额外事实；原15项真实PG/race与vet专项保留，读取core现与T3共用；该原入口自身不发proof | [reader](../../internal/billing/funding_ledger_read.go)、[共享core](../../internal/billing/funding_ledger_query.go)、[冻结合同](../../specs/022-self-service-payments/c0-ledger-reader-contract.md)、[原验证](../verification/funding-ledger-reader.md) |
 | C0离线结构与权限导出 | 固定001–022/DDL/ACL/provision与工具源码；ordinary/sandbox各自before/after，双轮十文件一致、失败DDL清理通过；只生成未审候选 | [生成器](../../scripts/funding-lot-descriptor/main.go)、[冻结窄片](../../specs/022-self-service-payments/c0-schema-check-contract.md#9-根冻结窄片metadata-only-离线-descriptor-生成器)、[元数据证据](../verification/funding-lot-descriptor.md) |
@@ -432,6 +464,16 @@ sequenceDiagram
 mock的16张自有表分为环境/版本/key、命令/processing/results、订单/transition/capture、永久query、control/fault以及notification/delivery/attempt/observation；receiver六表是环境/版本/key、inbox、receipt和conflict。canonical业务体及回执不可变；target session gate先于merchant/行锁，网络不持锁。过期租约与退避可恢复通知投递；每次实际claim消耗次数，第20代转review并保留迟到证据，禁止第21代。这些代码规则的真实长程与崩溃覆盖按[验证记录](../verification/payment-sandbox.md)分别标注，不将短PG或SQL checkpoint当作完整运行验收。
 
 <!-- architecture:protocols -->
+## 现行资金来源与钱包开账（027）
+
+023正式迁移新增六张来源表及开账原件；[运行 helper](../../internal/billing/lot_runtime.go)在 `ApplyFundingTx`、`Reserve`、`finish`、`ApproveRefund` 原事务内维护来源。来源FIFO、结算沿原分配收费/释放、消费退款逆原收费边，不恢复Key/周期已消费额度。数据库对事件、余额、分配、journal、账户及租户复合FK建立约束；角色/函数在启动前只读验证，支付worker不获人工/券/开账读取权。[明细架构](wallet-sources.md)列出数据、锁序、API、权限与故障边界。
+
+开账是停服后owner通过 `open-wallet` 向未使用空钱包显式导入非现金初始余额；同业务意图重读原件，不改造旧历史。`check-wallet-sources` 与平台核对为5秒RR只读观察，不修钱。023拒绝已有金融历史/非零余额；已有开发库保留，当前版本使用独立新库。此决策不增加旧余额导入、旧退款或双模型兼容路径。
+
+来源回执/筛选与累计摘要统一覆盖四来源，新增必填`wallet_opening_amount`；来源余额三桶和原件累计分别展示，不将开账计为销售收入。通用查询DTO输出UTC并保留精度和分页instant，前端保持严格UTC解析。浏览器已核对来源分配、平台零差异及026经营报表/CSV；实际APP/worker/projector四来源与HTTP开账验收见[本片记录](../verification/wallet-sources.md)。
+
+隔离研究只修正原001–022材料及历史helper的固定基线身份，不接受023或新增proof/profile，也未进入serve。旧descriptor继续对当前迁移/provision漂移拒绝；旧checkout镜像正例及其变异矩阵不再作为当前测试，其覆盖边界缩减与首轮失败保留在本片记录。
+
 ## 对外协议与产品能力
 
 正式渠道目标已明确为OpenAI/Codex、Claude、DeepSeek、Gemini、GLM及硅基流动等第三方平台，逐渠道profile、采购费率和实际用量认证范围见[接入计划](../design/provider-qualification-plan.md)。当前协议实现不等于这些平台所有模型已获可售认证。
@@ -1001,6 +1043,8 @@ flowchart LR
 <!-- architecture:status -->
 ## 后续实施的依赖与并行边界
 
+当前实施顺序由[027现行来源](../../specs/027-wallet-sources/spec.md)、[一体化设计](../design/integrated-wallet-media.md)和[028统一计量/媒体规格](../../specs/028-unified-metering-media/spec.md)决定：来源闭环 → 六文本统一向量计量 → 同步媒体 → 异步任务与实时轮次 → 部署/供应商验收 → 性能。下面旧候选依赖图保留研究背景，不再把catalog/profile/proof或其历史组合列为现行媒体前置。
+
 下图是实施依赖，虚线表示可独立推进的设计或纯算法切片；它不表示当前运行时已调用这些模块。当前资金和请求链仍以上文实线系统图为准。阶段完成后先收口证据、更新本页和HLD/LLD，再推进依赖方。
 
 ```mermaid
@@ -1058,12 +1102,13 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 商品价值/期限纯算法 | C-V已实现，无生产接线 | [productvalue](../../internal/productvalue/value.go)精确端点价值差、原本金分区索引归因、UTC6原锚点月/半开term；[合同与专项](../../specs/023-periodic-products/c-value-contract.md)，无购买/权益发放/退款授权 |
 | 上游模型成本 | 已实现 | 每渠道精确上游模型的输入/输出单价、生效版本、每attempt快照及unknown；受控采购更正双人审批，尚无自动供应商账单同步 |
 | 经营报表与CSV | 026已接平台HTTP/控制台，限定专项验收见记录 | 最长31天/5000请求；消费收入一次、全部尝试成本、退款净额，未知成本或未结算时毛利待核对；独立于累计钱包异步投影，[架构](operating-reports.md)、[验证](../verification/operating-reports.md) |
+| 资金来源与钱包开账 | 027已实现现行四写入口、正式023、CLI、HTTP与控制台，专项验收见记录 | 六表来源与开账原件，非现金opening、FIFO和逆序消费退款；新库策略，无历史无损升级或真实原路现金退款；[架构](wallet-sources.md)、[验证](../verification/wallet-sources.md) |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
 | 共享采购账户/预算 | 019已实现，限定本地验收通过 | [冻结合同](../../specs/019-procurement-accounts/contract.md)；跨渠道/Key/租户共享累计预算、逐attempt预占、未知占用和双人更正；周期硬预算已由023-B扩展；余额仅人工证据，供应商余额/账单自动同步待后续 |
 | 公开模型目录 | 020已实现，限定本地验收通过 | 默认私有、安全DTO、当前价、筛选/分页、独立准入与admin公开CAS；[020验证](../verification/public-catalog.md) |
 | 自助商业化 | 021与022-A完成限定本地验收；B0独立沙箱已编码并通过专项PG，真实进程短程通过、旧版本20代长程完成、最新补丁/精确故障另验；023-A完成限定本地验收 | [A证据](../verification/funding-vouchers.md)、[A1冻结接口](../../specs/022-self-service-payments/a-domain-contract.md)、[B0运行合同](../../specs/022-self-service-payments/b-runtime-contract.md)及[运行证据](../verification/payment-sandbox.md)区分纯协议、实际沙箱、未验故障；B1资金/身份/代次核心已冻结并通过SQL原型，B2已追加021并实现Go第三来源/十方向资金核验/三角色权限，真实PG专项通过；B3领域/worker/HTTP/UI/main已接线，专项与真实进程/浏览器整链通过限定本地验收，真实在途SIGTERM与Guard失权补验已通过；[023草案](../../specs/023-periodic-products/spec.md)、[A0精确合同](../../specs/023-periodic-products/a-contract.md)及[根复核](../../specs/023-periodic-products/review.md)已完成，A已通过[真实PG/浏览器/预览验收](../verification/tenant-pricing.md) |
 | 站内经营告警 | 024-A已实现，限定本地验收通过 | 四固定来源、站内第一ACK、完整历史与命令、默认off双槽评估、独立准入与有效数据库角色核验；[024证据](../verification/operations-alerts.md) |
-| 更多协议与运行形态 | 仅024-B0-P纯计量层已实现；B0生产接线及其余B–F仍候选 | [024](../../specs/024-extension-platform/spec.md)划分站内告警、媒体计量/异步/长连接/外部身份；[告警精确合同](../../specs/024-extension-platform/a-contract.md)经独立反例审查修正后冻结019，隔离DDL/行为/权限/源EXPLAIN原型通过；生产领域/worker/HTTP/UI已接通，真实PG/HTTP/浏览器/主进程故障、全量race与019预览均通过，架构只读检查和make check通过；[025](../../specs/025-production-ha/spec.md)定义真实进程故障、共享许可/HA与生产出口；媒体/Realtime/多活尚未完成 |
+| 更多协议与运行形态 | 024纯计量已实现；028统一文本/媒体/任务/Realtime合同已形成，生产替换仍待实施 | [024](../../specs/024-extension-platform/spec.md)划分站内告警、媒体计量/异步/长连接/外部身份；[告警精确合同](../../specs/024-extension-platform/a-contract.md)经独立反例审查修正后冻结019，隔离DDL/行为/权限/源EXPLAIN原型通过；生产领域/worker/HTTP/UI已接通，真实PG/HTTP/浏览器/主进程故障、全量race与019预览均通过，架构只读检查和make check通过；[025](../../specs/025-production-ha/spec.md)定义真实进程故障、共享许可/HA与生产出口；媒体/Realtime/多活尚未完成 |
 | 容器/生产与正式供应商 | 部分未验收 | 025-A0静态透传和隔离Compose实际渲染已验，实际容器未验；正式渠道 usage/硬界、网络分区/异地灾备与发行许可仍是门禁 |
 | 性能 | 目标未达成 | 历史 007 本机 100 并发额外首字节 P95 61.56–69.74ms；目标 4vCPU/8GB 下 ≤50ms，未完成 Rust LiteLLM/Bifrost 同条件对比 |
 

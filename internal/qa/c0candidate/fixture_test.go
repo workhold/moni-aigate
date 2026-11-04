@@ -7,11 +7,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -110,18 +108,16 @@ func dedicatedConfig(t *testing.T) *pgxpool.Config {
 
 func newCandidateFixture(t *testing.T, sandbox bool) *candidateFixture {
 	t.Helper()
+	cfg := dedicatedConfig(t)
 	// Detect candidate/base drift before even opening the dedicated connection.
 	candidateFile(t, "c0-production-schema.sql", schemaSHA256)
 	candidateFile(t, "c0-production-permissions.sql", permissionsSHA256)
-	names, err := fs.Glob(migrations.Files, "*.sql")
-	if err != nil || len(names) != 22 {
-		t.Fatal("candidate requires reviewed exact 001--022 embedded migration baseline")
+	// This candidate describes the frozen historical material, not the current
+	// migration inventory. Added migrations do not extend its reviewed profile.
+	_, err := migrations.Original22Manifest()
+	if err != nil {
+		t.Fatal("candidate original001--022 migration material changed")
 	}
-	sort.Strings(names)
-	if names[0] != "001_core.sql" || names[21] != "022_payment_runtime_attestation.sql" {
-		t.Fatal("candidate migration baseline identity changed")
-	}
-	cfg := dedicatedConfig(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	f := &candidateFixture{t: t, ctx: ctx, sandbox: sandbox, tenant: uuid.NewString(), user: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), key: uuid.NewString(), model: uuid.NewString(), price: uuid.NewString(), epoch: uuid.NewString(), accounts: make(map[string]string), schema: "flqa_" + randomSuffix(t)}
 	defer func() {

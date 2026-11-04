@@ -14,6 +14,18 @@ import (
 
 var monetary = map[string]bool{"input_rate": true, "output_rate": true, "amount": true, "balance": true, "available": true, "held": true, "spent": true, "lifetime_limit": true, "charged_amount": true, "reserved_amount": true, "refunded_amount": true, "waived_retail_amount": true, "raw_retail_amount": true, "delta": true}
 
+func queryValue(name string, value any) any {
+	// pgx may decode timestamptz in the process's local timezone. Keep the
+	// instant and full precision while giving HTTP and cursors canonical UTC.
+	if at, ok := value.(time.Time); ok {
+		return at.UTC()
+	}
+	if monetary[name] && value != nil {
+		return fmt.Sprint(value)
+	}
+	return value
+}
+
 func (s *Server) query(ctx context.Context, sql string, args ...any) ([]map[string]any, error) {
 	rows, e := s.Pool.Query(ctx, sql, args...)
 	if e != nil {
@@ -30,10 +42,7 @@ func (s *Server) query(ctx context.Context, sql string, args ...any) ([]map[stri
 		m := map[string]any{}
 		for i, v := range vals {
 			name := fields[i].Name
-			if monetary[name] && v != nil {
-				v = fmt.Sprint(v)
-			}
-			m[name] = v
+			m[name] = queryValue(name, v)
 		}
 		all = append(all, m)
 	}

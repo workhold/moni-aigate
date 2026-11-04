@@ -28,7 +28,7 @@ const labels: Record<string, string> = {
   reserved: '已冻结', held: '冻结中', settled: '已结算', released: '已释放', pending_reconciliation: '待核对', pending: '待审批', proposed: '待复核', approved: '已批准', rejected: '已拒绝',
   confirmed_final: '最终量已确认', provisional: '临时累计量', estimated: '估算', missing: '用量缺失', conflicting: '用量冲突', unknown: '待核对',
   contract: '合同依据', invoice: '账单依据',
-  credit: '人工核款入账', funding: '钱包入账', voucher_grant: '运营赠额入账', sandbox_capture: '本地模拟入账', reserve: '费用冻结', settlement: '消费结算', settle: '消费结算', release: '冻结释放', refund: '退回钱包',
+  credit: '人工核款入账', funding: '钱包入账', voucher_grant: '运营赠额入账', sandbox_capture: '本地模拟入账', wallet_opening: '初始余额导入（非现金）', reserve: '费用冻结', settlement: '消费结算', settle: '消费结算', release: '冻结释放', refund: '退回钱包',
   owner: '所有者', member: '成员', billing_viewer: '账单查看者', admin: '平台管理员', platform_admin: '平台管理员', finance: '财务', finance_operator: '财务制单', finance_approver: '财务审批', none: '客户账号',
 }
 export function label(value: unknown): string { const s = String(value ?? ''); return labels[s] || s || '—' }

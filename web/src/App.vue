@@ -35,6 +35,7 @@ const platformLinks = computed(() => [
   { path: '/platform/procurement', title: '采购账户与对账', icon: Wallet, show: hasPlatform.value },
   { path: '/platform/vouchers', title: '运营赠额券', icon: Tickets, show: hasPlatform.value },
   { path: '/platform/payments', title: '支付与商品', icon: Money, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
+  { path: '/platform/wallet-sources', title: '资金来源与核对', icon: Wallet, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/alerts', title: '经营告警', icon: CircleCheck, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/reports', title: '运营与成本报表', icon: DataAnalysis, show: hasPlatform.value },
   { path: '/platform/credits', title: '人工核款', icon: Money, show: isFinance.value },

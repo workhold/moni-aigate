@@ -18,27 +18,54 @@ import (
 )
 
 func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
-	body, e := migrations.Files.ReadFile("021_payment_sandbox.sql")
-	if e != nil {
-		t.Fatal("reviewed migration unavailable")
+	// Later reviewed definitions replace earlier bodies by the same name. These
+	// expected bytes come only from source, never from the database under test.
+	functions := make(map[string]string)
+	definitions := regexp.MustCompile(`(?s)CREATE(?: OR REPLACE)? FUNCTION ([a-z_]+)\([^$]*?\$\$(.*?)\$\$;`)
+	for _, source := range []struct{ file, digest string }{
+		{"021_payment_sandbox.sql", paymentRoleMigrationSHA256},
+		{"023_wallet_sources.sql", walletSourcesRoleMigrationSHA256},
+	} {
+		body, e := migrations.Files.ReadFile(source.file)
+		if e != nil {
+			t.Fatal("reviewed migration unavailable")
+		}
+		if fmt.Sprintf("%x", sha256.Sum256(body)) != source.digest {
+			t.Fatal("reviewed payment/wallet function baseline requires explicit review after migration change")
+		}
+		if source.file == "023_wallet_sources.sql" {
+			// CREATE OR REPLACE does not retain SET configuration. The current
+			// policy must cover the replaced dispatcher as well as new wallet_*.
+			policy := regexp.MustCompile(`(?s)DO \$\$ DECLARE f RECORD; BEGIN.*?END \$\$;`).Find(body)
+			for _, required := range []string{"left(p.proname,7)='wallet_'", "p.proname='funding_journal_valid'", "SECURITY INVOKER", "SET search_path TO %I,pg_catalog,pg_temp", "FROM PUBLIC"} {
+				if !strings.Contains(string(policy), required) {
+					t.Fatal("replaced funding dispatcher must restore the fixed invoker/search-path/PUBLIC policy")
+				}
+			}
+		}
+		for _, match := range definitions.FindAllSubmatch(body, -1) {
+			functions[string(match[1])] = fmt.Sprintf("%x", sha256.Sum256(match[2]))
+		}
 	}
-	if fmt.Sprintf("%x", sha256.Sum256(body)) != paymentRoleMigrationSHA256 {
-		t.Fatal("reviewed payment function baseline requires explicit review after migration change")
-	}
-	if len(paymentFunctionSpecs) != 43 {
-		t.Fatal("payment function allowlist incomplete")
+	if len(paymentFunctionSpecs) != 55 || len(functions) != len(paymentFunctionSpecs) {
+		t.Fatal("current payment/wallet function allowlist incomplete")
 	}
 	worker := 0
 	for _, f := range paymentFunctionSpecs {
 		if f.worker {
 			worker++
 		}
-		if len(f.bodySHA) != 64 {
-			t.Fatal("function body digest unavailable")
+		if len(f.bodySHA) != 64 || functions[f.name] != f.bodySHA {
+			t.Fatal("function body digest differs from reviewed source")
 		}
 	}
-	if worker != 31 || paymentFunctionSpecs["payment_legacy_funding_journal_valid"].worker || paymentFunctionSpecs["payment_check_human"].worker || paymentFunctionSpecs["payment_audit_guard"].worker || paymentFunctionSpecs["payment_audit_complete"].worker {
+	if worker != 38 || paymentFunctionSpecs["payment_legacy_funding_journal_valid"].worker || paymentFunctionSpecs["payment_check_human"].worker || paymentFunctionSpecs["payment_audit_guard"].worker || paymentFunctionSpecs["payment_audit_complete"].worker {
 		t.Fatal("worker function allowlist differs from frozen matrix")
+	}
+	for _, name := range []string{"wallet_opening_journal_valid", "wallet_reservation_fifo_guard", "wallet_reservation_valid", "wallet_settlement_valid", "wallet_refund_valid"} {
+		if paymentFunctionSpecs[name].worker {
+			t.Fatal("worker may not execute opening or customer consumption validators")
+		}
 	}
 	for _, role := range []PaymentDatabaseRole{PaymentApplicationRole, PaymentWorkerRole, PaymentProjectionRole, "invalid"} {
 		if e := VerifyPaymentRole(context.Background(), nil, role); e != ErrPaymentRolePrivileges {
@@ -119,7 +146,10 @@ func newPaymentRoleFixture(t *testing.T, historical bool) *paymentRoleFixture {
 		e = migrations.Apply(ctx, f.owner)
 	}
 	paymentRoleMust(t, "schema installation", e)
-	paymentRoleMust(t, "initial ProvisionFor", ProvisionFor(ctx, f.owner, f.schema, f.appRole, f.projectionRole))
+	if err := ProvisionFor(ctx, f.owner, f.schema, f.appRole, f.projectionRole); err != nil {
+		paymentRoleDiagnostics(t, f)
+		paymentRoleMust(t, "initial ProvisionFor", err)
+	}
 	for i, role := range roles {
 		login := cfg.Copy()
 		login.ConnConfig.User = role

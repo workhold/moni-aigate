@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { commerceKinds, commerceTime, commerceWrite, fundingSourceLabel, parseCommerceCapabilities, parseCommercePage, parseCommerceReceipt, parseCommerceWriteResult, parseFundingReceipt, parseFundingSummary, parseVoucherBatch, parseVoucherPolicy, parseVoucherRedemption, parseVoucherRevocation, voucherCode } from '../src/commerce.ts'
+import { commerceKinds, commerceTime, commerceWrite, fundingReceiptsPath, fundingSourceKinds, fundingSourceLabel, parseCommerceCapabilities, parseCommercePage, parseCommerceReceipt, parseCommerceWriteResult, parseFundingReceipt, parseFundingReceiptsPage, parseFundingSummary, parseVoucherBatch, parseVoucherPolicy, parseVoucherRedemption, parseVoucherRevocation, voucherCode } from '../src/commerce.ts'
+import { label, money } from '../src/format.ts'
 
 const actor = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', checker = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', tenant = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', otherTenant = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', operation = '11111111-1111-4111-8111-111111111111', batchID = '22222222-2222-4222-8222-222222222222', voucherID = '33333333-3333-4333-8333-333333333333', proposalID = '44444444-4444-4444-8444-444444444444'
 const at = '2026-11-01T00:00:00.000001Z', expiry = '2026-11-08T00:00:00.000001Z'
@@ -83,17 +84,51 @@ test('one-time code envelopes are validated; safe GET/replay never invents codes
 test('funding sources preserve legacy TEXT identity and reject cross-tenant data', () => {
   const value = { id: voucherID, tenant_id: tenant, source_kind: 'manual_credit', source_id: 'legacy-credit:text-id', amount: '9007199254740993', currency: 'CNY', journal_id: proposalID, created_at: at }
   assert.equal(parseFundingReceipt(value, tenant).source_id, value.source_id)
-  for (const patch of [{ tenant_id: otherTenant }, { source_kind: 'sandbox_capture' }, { currency: 'USD' }, { source_kind: 'voucher_grant' }, { proof_ref: 'not-public' }]) assert.throws(() => parseFundingReceipt({ ...value, ...patch }, tenant))
+  for (const patch of [{ tenant_id: otherTenant }, { source_kind: 'sandbox_capture' }, { currency: 'USD' }, { source_kind: 'voucher_grant' }, { source_kind: 'wallet_opening' }, { proof_ref: 'not-public' }]) assert.throws(() => parseFundingReceipt({ ...value, ...patch }, tenant))
 })
 
 test('synchronous funding summary validates NUMERIC totals without treating it as wallet availability', () => {
-  const amount = '9'.repeat(90), value = { currency: 'CNY', total_amount: (BigInt(amount) + 9007199254740994n).toString(), manual_credit_amount: amount, voucher_grant_amount: '1', sandbox_capture_amount: '9007199254740993', as_of: at }
+  const amount = '9'.repeat(90), opening = '9223372036854775807', value = { currency: 'CNY', total_amount: (BigInt(amount) + 9007199254740994n + BigInt(opening)).toString(), manual_credit_amount: amount, voucher_grant_amount: '1', sandbox_capture_amount: '9007199254740993', wallet_opening_amount: opening, as_of: at }
   assert.deepEqual(parseFundingSummary(value), value)
-  for (const patch of [{ total_amount: amount }, { total_amount: 12 }, { voucher_grant_amount: '-1' }, { sandbox_capture_amount: '-1' }, { sandbox_capture_amount: 9007199254740993 }, { available: amount }, { currency: 'USD' }]) assert.throws(() => parseFundingSummary({ ...value, ...patch }))
-  const { sandbox_capture_amount: omitted, ...oldShape } = value
-  assert.throws(() => parseFundingSummary(oldShape))
-  const zero = { ...value, total_amount: '0', manual_credit_amount: '0', voucher_grant_amount: '0', sandbox_capture_amount: '0' }
+  for (const patch of [{ total_amount: amount }, { total_amount: 12 }, { total_amount: (BigInt(value.total_amount) - BigInt(opening)).toString() }, { voucher_grant_amount: '-1' }, { sandbox_capture_amount: '-1' }, { sandbox_capture_amount: 9007199254740993 }, { wallet_opening_amount: '-1' }, { wallet_opening_amount: '01' }, { wallet_opening_amount: 9007199254740993 }, { available: amount }, { currency: 'USD' }]) assert.throws(() => parseFundingSummary({ ...value, ...patch }))
+  for (const field of ['sandbox_capture_amount', 'wallet_opening_amount']) {
+    const incomplete = { ...value }; delete incomplete[field]
+    assert.throws(() => parseFundingSummary(incomplete))
+  }
+  const zero = { ...value, total_amount: '0', manual_credit_amount: '0', voucher_grant_amount: '0', sandbox_capture_amount: '0', wallet_opening_amount: '0' }
   assert.deepEqual(parseFundingSummary(zero), zero)
+})
+
+test('opening receipts retain exact principal and identify a noncash opening rather than cash collection', () => {
+  const value = { id: voucherID, tenant_id: tenant, source_kind: 'wallet_opening', source_id: batchID, amount: '9223372036854775807', currency: 'CNY', journal_id: proposalID, created_at: at }
+  assert.deepEqual(parseFundingReceipt(value, tenant), value)
+  assert.equal(money(parseFundingReceipt(value, tenant).amount), '¥9,223,372,036,854.775807')
+  assert.equal(fundingSourceLabel(value.source_kind), '初始余额导入（非现金）')
+  assert.equal(label('wallet_opening'), fundingSourceLabel(value.source_kind))
+  for (const patch of [{ source_id: 'legacy:text-id' }, { source_id: '00000000-0000-0000-0000-000000000000' }, { amount: '9223372036854775808' }, { amount: 9007199254740993 }, { amount: '0' }, { external_ref: 'private-opening-reference' }, { refund_class: 'cash_original' }]) assert.throws(() => parseFundingReceipt({ ...value, ...patch }, tenant))
+  assert.throws(() => parseFundingReceipt(value, otherTenant))
+})
+
+test('the existing receipt endpoint filters all four sources and refuses rows outside the chosen source or tenant', () => {
+  assert.deepEqual(fundingSourceKinds, ['manual_credit', 'voucher_grant', 'sandbox_capture', 'wallet_opening'])
+  const value = { id: voucherID, tenant_id: tenant, source_kind: 'wallet_opening', source_id: batchID, amount: '9007199254740993', currency: 'CNY', journal_id: proposalID, created_at: at }
+  assert.equal(fundingReceiptsPath(), '/wallet/funding-receipts')
+  assert.equal(fundingReceiptsPath('wallet_opening', 'a_B-c'), '/wallet/funding-receipts?source_kind=wallet_opening&cursor=a_B-c')
+  assert.deepEqual(parseFundingReceiptsPage([value], null, tenant, 'wallet_opening'), { rows: [value], next: '' })
+  assert.deepEqual(parseFundingReceiptsPage([value], null, tenant), { rows: [value], next: '' })
+  for (const source_kind of fundingSourceKinds) {
+    const row = { ...value, source_kind }
+    assert.equal(new URL(fundingReceiptsPath(source_kind), 'https://console.test').searchParams.get('source_kind'), source_kind)
+    assert.deepEqual(parseFundingReceiptsPage([row], null, tenant, source_kind).rows, [row])
+    if (source_kind !== 'wallet_opening') assert.throws(() => parseFundingReceiptsPage([row], null, tenant, 'wallet_opening'))
+  }
+  assert.throws(() => parseFundingReceiptsPage([value], null, otherTenant, 'wallet_opening'))
+  assert.throws(() => parseFundingReceiptsPage([value], 'same-cursor', tenant, 'wallet_opening', 'same-cursor'))
+  for (const kind of ['cash', 'future_source', 'wallet_opening&tenant_id=private']) {
+    assert.throws(() => fundingReceiptsPath(kind))
+    assert.throws(() => parseFundingReceiptsPage([value], null, tenant, kind))
+  }
+  for (const cursor of ['bad?tenant_id=private', 'x'.repeat(1025)]) assert.throws(() => fundingReceiptsPath('wallet_opening', cursor))
 })
 
 test('sandbox sources have canonical capture identity and an explicit simulation label', () => {

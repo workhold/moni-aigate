@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/migrations"
 )
 
 type historyTestTx struct {
@@ -61,6 +62,16 @@ func (r *historyTestRows) Scan(dest ...any) error {
 				return errors.New("fake_history_string")
 			}
 			*d = v
+		case **string:
+			if value == nil {
+				*d = nil
+				continue
+			}
+			v, ok := value.(string)
+			if !ok {
+				return errors.New("fake_history_nullable_string")
+			}
+			*d = &v
 		default:
 			return errors.New("fake_history_destination")
 		}
@@ -103,8 +114,7 @@ func historyTestFixture(t *testing.T) (*historyTestTx, map[string]*historyTestRo
 	rows := map[string]*historyTestRows{
 		runtimeHistoryGuardSQL("fixture_app"): {data: [][]any{{true}}},
 		runtimeHistorySettingsSQL:             {data: [][]any{{"repeatable read", "on"}}},
-		runtimeHistoryExistsSQL:               {data: [][]any{{true}}},
-		runtimeHistoryRowsSQL:                 {data: data},
+		runtimeHistoryRowsSQL("fixture_app"):  {data: data},
 	}
 	tx := &historyTestTx{}
 	tx.query = func(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
@@ -126,7 +136,7 @@ func TestRuntimeHistoryGuardAndOriginalHelper(t *testing.T) {
 	if err := verifyRuntimeHistory(w, tx, "fixture_app"); err != nil {
 		t.Fatal(err)
 	}
-	if len(tx.calls) != 4 || tx.calls[0] != runtimeHistoryGuardSQL("fixture_app") || tx.calls[3] != runtimeHistoryRowsSQL {
+	if len(tx.calls) != 3 || tx.calls[0] != runtimeHistoryGuardSQL("fixture_app") || tx.calls[2] != runtimeHistoryRowsSQL("fixture_app") {
 		t.Fatal("history guard/helper order changed")
 	}
 	for _, r := range rows {
@@ -145,14 +155,18 @@ func TestRuntimeHistoryGuardAndOriginalHelper(t *testing.T) {
 }
 
 func TestRuntimeHistoryRejectsIncompleteOrCorruptHistory(t *testing.T) {
-	for _, name := range []string{"guard_false", "checksum", "missing", "duplicate", "extra", "name_36", "checksum_63", "scan", "next_err"} {
+	for _, name := range []string{"guard_false", "read_write", "read_committed", "checksum", "missing", "duplicate", "extra", "current_023", "null_name", "null_checksum", "name_36", "checksum_63", "scan", "next_err"} {
 		t.Run(name, func(t *testing.T) {
 			w := historyTestWindow(t)
 			tx, rows := historyTestFixture(t)
-			r := rows[runtimeHistoryRowsSQL]
+			r := rows[runtimeHistoryRowsSQL("fixture_app")]
 			switch name {
 			case "guard_false":
 				rows[runtimeHistoryGuardSQL("fixture_app")].data[0][0] = false
+			case "read_write":
+				rows[runtimeHistorySettingsSQL].data[0][1] = "off"
+			case "read_committed":
+				rows[runtimeHistorySettingsSQL].data[0][0] = "read committed"
 			case "checksum":
 				r.data[0][1] = strings.Repeat("0", 64)
 			case "missing":
@@ -161,6 +175,16 @@ func TestRuntimeHistoryRejectsIncompleteOrCorruptHistory(t *testing.T) {
 				r.data[21] = r.data[20]
 			case "extra":
 				r.data = append(r.data, []any{"999_unknown.sql", strings.Repeat("0", 64)})
+			case "current_023":
+				body, err := migrations.Files.ReadFile("023_wallet_sources.sql")
+				if err != nil {
+					t.Fatal(err)
+				}
+				r.data = append(r.data, []any{"023_wallet_sources.sql", runtimeSHA(body)})
+			case "null_name":
+				r.data[0][0] = nil
+			case "null_checksum":
+				r.data[0][1] = nil
 			case "name_36":
 				r.data[0][0] = strings.Repeat("n", 36)
 			case "checksum_63":
@@ -179,7 +203,7 @@ func TestRuntimeHistoryRejectsIncompleteOrCorruptHistory(t *testing.T) {
 			if name == "guard_false" && len(tx.calls) != 1 {
 				t.Fatal("helper ran after failed guard")
 			}
-			if (name == "extra" || name == "scan" || name == "name_36" || name == "checksum_63" || name == "next_err") && r.closeCount != 0 {
+			if (name == "extra" || name == "current_023" || name == "null_name" || name == "null_checksum" || name == "scan" || name == "name_36" || name == "checksum_63" || name == "next_err") && r.closeCount != 0 {
 				t.Fatal("failed history explicitly drained the driver")
 			}
 		})
@@ -218,22 +242,22 @@ func TestRuntimeHistoryAbsoluteDeadlineAtDriverBoundaries(t *testing.T) {
 func TestRuntimeHistoryPrivateQueryRejectsPendingAndArbitrarySQL(t *testing.T) {
 	w := historyTestWindow(t)
 	tx, _ := historyTestFixture(t)
-	h := &runtimeHistoryTx{Tx: tx, window: w, guard: runtimeHistoryGuardSQL("fixture_app")}
+	h := &runtimeHistoryTx{Tx: tx, window: w, guard: runtimeHistoryGuardSQL("fixture_app"), history: runtimeHistoryRowsSQL("fixture_app")}
 	if _, err := h.Query(w.ctx, "SELECT secret"); err != ErrRuntime || len(tx.calls) != 0 {
 		t.Fatal("arbitrary SQL reached original transaction")
 	}
 	w = historyTestWindow(t)
 	tx, rows := historyTestFixture(t)
-	h = &runtimeHistoryTx{Tx: tx, window: w, guard: runtimeHistoryGuardSQL("fixture_app")}
-	r, err := h.Query(w.ctx, runtimeHistoryRowsSQL)
+	h = &runtimeHistoryTx{Tx: tx, window: w, guard: runtimeHistoryGuardSQL("fixture_app"), history: runtimeHistoryRowsSQL("fixture_app")}
+	r, err := h.Query(w.ctx, runtimeHistoryRowsSQL("fixture_app"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	r.Close()
-	if !h.failed || h.pending == nil || rows[runtimeHistoryRowsSQL].closeCount != 0 {
+	if !h.failed || h.pending == nil || rows[runtimeHistoryRowsSQL("fixture_app")].closeCount != 0 {
 		t.Fatal("early close cleared pending or drained unread driver")
 	}
-	if _, err := h.Query(context.Background(), runtimeHistoryExistsSQL); err != ErrRuntime || len(tx.calls) != 1 {
+	if _, err := h.Query(context.Background(), runtimeHistorySettingsSQL); err != ErrRuntime || len(tx.calls) != 1 {
 		t.Fatal("poisoned history query was reused")
 	}
 }

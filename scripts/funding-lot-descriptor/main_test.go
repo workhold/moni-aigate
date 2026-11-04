@@ -1,14 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moni-ai/moni-aigate/migrations"
 )
 
 func atRoot(t *testing.T) {
@@ -24,77 +28,73 @@ func atRoot(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(old) })
 }
 
-func TestFixedInputs(t *testing.T) {
+func TestFixedOriginal22Materials(t *testing.T) {
 	atRoot(t)
-	in, e := loadInputs()
-	if e != nil || len(in.manifest) != 22 || len(in.tools) < 7 {
-		t.Fatal("fixed source pins differ", e)
+	raw, err := migrations.Original22Manifest()
+	if err != nil || len(raw) != 2459 || digest(raw) != manifestSHA {
+		t.Fatal("fixed original22 manifest identity changed", err)
+	}
+	var manifest []sourcePin
+	if json.Unmarshal(raw, &manifest) != nil || len(manifest) != 22 {
+		t.Fatal("original22 manifest is not its frozen closed set")
+	}
+	encoded, err := canonical(manifest)
+	if err != nil || !bytes.Equal(encoded, raw) {
+		t.Fatal("original22 manifest canonical bytes changed", err)
+	}
+	for _, pin := range manifest {
+		body, err := migrations.Files.ReadFile(pin.Name)
+		live, diskErr := os.ReadFile(filepath.Join("migrations", pin.Name))
+		if err != nil || diskErr != nil || digest(body) != pin.SHA256 || !bytes.Equal(live, body) {
+			t.Fatalf("original22 SQL material changed: %s", pin.Name)
+		}
+	}
+	for _, pin := range []sourcePin{{ddlName, ddlSHA}, {aclName, aclSHA}} {
+		body, err := os.ReadFile(pin.Name)
+		if err != nil || digest(body) != pin.SHA256 {
+			t.Fatalf("historical descriptor candidate material changed: %s", pin.Name)
+		}
 	}
 }
 
-func TestInputDiskSetAndBytesClosed(t *testing.T) {
+func TestCurrentSourceDriftRejectsHistoricalDescriptorInputs(t *testing.T) {
 	atRoot(t)
-	root, e := os.Getwd()
-	if e != nil {
-		t.Fatal(e)
+	// The old positive mirror and its mutation matrix require a checkout with
+	// the exact original22 provision sources. They do not establish coverage of
+	// this current023 checkout; do not repin that exporter or adapt its profiles.
+	names, err := fs.Glob(migrations.Files, "*.sql")
+	if err != nil || len(names) <= 22 {
+		t.Fatal("expected current migrations to extend the frozen original22 set", err)
 	}
-	in, e := loadInputs()
-	if e != nil {
-		t.Fatal(e)
+	var current []sourcePin
+	for _, name := range names {
+		body, err := migrations.Files.ReadFile(name)
+		if err != nil {
+			t.Fatal("read current embedded migration", err)
+		}
+		current = append(current, sourcePin{name, digest(body)})
 	}
-	paths := []string{"go.mod", ddlName, aclName}
-	for _, p := range provisionPins {
-		paths = append(paths, p.Name)
+	raw, err := canonical(current)
+	if err != nil || digest(raw) == manifestSHA {
+		t.Fatal("current migration inventory was confused with original22 material", err)
 	}
-	for _, p := range in.manifest {
-		paths = append(paths, filepath.Join("migrations", p.Name))
-	}
-	for _, p := range in.tools {
-		paths = append(paths, filepath.Join("scripts/funding-lot-descriptor", p.Name))
-	}
-	mirror := t.TempDir()
-	for _, p := range paths {
-		b, e := os.ReadFile(p)
-		if e != nil || os.MkdirAll(filepath.Dir(filepath.Join(mirror, p)), 0700) != nil || os.WriteFile(filepath.Join(mirror, p), b, 0600) != nil {
-			t.Fatal("source mirror")
+	var changed []string
+	for _, pin := range provisionPins {
+		body, err := os.ReadFile(pin.Name)
+		if err != nil {
+			t.Fatalf("current provision source missing: %s", pin.Name)
+		}
+		if digest(body) != pin.SHA256 {
+			changed = append(changed, pin.Name)
 		}
 	}
-	if os.Chdir(mirror) != nil {
-		t.Fatal("source mirror cwd")
+	if len(changed) == 0 {
+		t.Fatal("current role provisioning unexpectedly has no historical-source drift")
 	}
-	t.Cleanup(func() { _ = os.Chdir(root) })
-	if _, e := loadInputs(); e != nil {
-		t.Fatal("unchanged source mirror rejected")
+	if _, err := loadInputs(); !errors.Is(err, errStage) {
+		t.Fatal("historical exporter accepted current migration/provision source drift", err)
 	}
-	for _, p := range []string{"migrations/023_unreviewed.sql", "scripts/funding-lot-descriptor/unreviewed.go"} {
-		if os.WriteFile(p, []byte("unreviewed"), 0600) != nil {
-			t.Fatal("extra input")
-		}
-		if _, e := loadInputs(); e == nil {
-			t.Fatal("new disk input ignored")
-		}
-		if os.Remove(p) != nil {
-			t.Fatal("extra input cleanup")
-		}
-	}
-	for _, p := range []string{ddlName, aclName, provisionPins[0].Name, filepath.Join("migrations", in.manifest[0].Name), filepath.Join("scripts/funding-lot-descriptor", in.tools[0].Name)} {
-		b, e := os.ReadFile(p)
-		if e != nil || os.WriteFile(p, append(append([]byte(nil), b...), '\n'), 0600) != nil {
-			t.Fatal("modify source mirror")
-		}
-		if _, e := loadInputs(); e == nil {
-			t.Fatal("changed input bytes accepted")
-		}
-		if os.Remove(p) != nil {
-			t.Fatal("remove source mirror")
-		}
-		if _, e := loadInputs(); e == nil {
-			t.Fatal("missing input accepted")
-		}
-		if os.WriteFile(p, b, 0600) != nil {
-			t.Fatal("restore source mirror")
-		}
-	}
+	t.Logf("historical exporter remains closed: %d current migrations, %d changed provision sources; no current023 descriptor generated", len(names), len(changed))
 }
 
 func TestDatabaseDestinationClosed(t *testing.T) {

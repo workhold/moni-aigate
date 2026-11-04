@@ -31,6 +31,7 @@ export const router = createRouter({
     { path: '/platform/periodic-budget', component: () => import('./views/PeriodicBudgetView.vue'), meta: { title: '周期预算', platform: true } },
     { path: '/platform/vouchers', component: () => import('./views/VouchersView.vue'), meta: { title: '运营赠额券', platform: true } },
     { path: '/platform/payments', component: () => import('./components/PaymentsPage.vue'), meta: { title: '支付与商品', platform: true } },
+    { path: '/platform/wallet-sources', component: () => import('./views/WalletSourcesView.vue'), meta: { title: '资金来源与核对', platform: true } },
     { path: '/platform/alerts', component: () => import('./views/AlertsView.vue'), meta: { title: '经营告警', platform: true } },
     { path: '/platform/price-groups', component: () => import('./views/PriceGroupsView.vue'), meta: { title: '价格组与租户定价', platform: true } },
     { path: '/platform/:resource', component: () => import('./views/PlatformView.vue'), meta: { title: '平台管理', platform: true } },
@@ -48,7 +49,7 @@ router.beforeEach(async to => {
   if (to.meta.tenant && !session.me?.tenant) return '/'
   if (to.meta.owner && session.me?.tenant?.role !== 'owner') return '/'
   if (to.meta.platform && !hasPlatform.value) return '/'
-  if (['/platform/alerts', '/platform/periodic-budget', '/platform/payments'].includes(to.path) && !['admin','finance_operator','finance_approver'].includes(session.me?.user.platform_role || '')) return '/'
+  if (['/platform/alerts', '/platform/periodic-budget', '/platform/payments', '/platform/wallet-sources'].includes(to.path) && !['admin','finance_operator','finance_approver'].includes(session.me?.user.platform_role || '')) return '/'
   if (to.path === '/payments' && !['owner','billing_viewer'].includes(session.me?.tenant?.role || '')) return '/'
   if (to.meta.platform && ['tenants', 'users', 'channels', 'catalog', 'prices', 'cost-versions'].includes(String(to.params.resource)) && !isAdmin.value) return '/'
   document.title = `${String(to.meta.title || '控制台')} · moni-aigate`

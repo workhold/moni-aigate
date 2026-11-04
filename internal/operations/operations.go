@@ -44,6 +44,13 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e != nil {
 		return e
 	}
+	// Customer money changes only the balance, never account ownership or kind.
+	// The current payment/wallet ACL pass below also clears any old column grants.
+	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;
+ GRANT UPDATE(balance) ON %s TO %s;`, table("ledger_accounts"), qa, table("ledger_accounts"), qa))
+	if e != nil {
+		return e
+	}
 	// Blanket grants above must not expose immutable identity ownership or a
 	// general mail-payload replacement permission to the online application.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;

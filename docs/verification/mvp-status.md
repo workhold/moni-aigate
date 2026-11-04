@@ -4,7 +4,7 @@
 
 当前扩展状态以此表及[统一架构](../architecture/README.md)为准；下文各轮测试、预览PID与二进制摘要保留当期范围，不表示所有轮次已部署到当前预览。
 
-2026-11-04按用户最新要求，[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)将MVP主线调整为单一现行架构与能力交付。下表的隔离来源/历史认证候选保留未完成身份，暂不扩展兼容矩阵，也不再作为其他经营功能的前置条件。当前工作顺序以[交付计划首节](../design/delivery-plan.md#当前执行顺序2026-11-04-用户调整)为准；不会用暂缓替代现行资金与租户正确性验收。
+2026-11-04按用户最新要求，[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)将MVP主线调整为单一现行架构与能力交付。下表的隔离来源/历史认证候选保留未完成身份，不再扩展旧历史组合兼容，也不再作为其他经营功能的前置条件。当前工作顺序以[交付计划首节](../design/delivery-plan.md#当前执行顺序2026-11-04-用户调整)为准；不会用暂缓替代现行资金与租户正确性验收。
 
 采购历史候选最新续片见[来源值、严格消息与跨链连续性](procurement-source-values-continuity.md)：40类原件本地值、采购payload与行内业务联合、显式链连续性已有纯核回归；完整来源资格、历史观察与生产资金接线仍未完成，不据此关闭下列经营验收门禁。
 
@@ -12,8 +12,8 @@
 | --- | --- | --- |
 | 自助经营 | 021邮箱证明/恢复、022-A双审券、023-A分组售价与023-B周期预算，均限定本地验收 | 正式SMTP、023-C商品/订阅 |
 | 应用支付 | 022-B3普通main/受限worker/HTTP/UI及本地模拟整链；在途SIGTERM/Guard失权恢复已验 | 正式PSP、main数据库COMMIT回包丢失及外部事实灾备 |
-| 来源与退款 | 原68/84表来源、109表basis、受保护开账/observer与APP运行组合已有库级实现；新增显式V3的71/87表来源、112表basis、128表catalog和共用12条历史映射；按[当前分项记录](periodic-budget-prefix-profile.md)验证，C1-P纯退款协议专项通过 | 完整经营矩阵及证据缺口、正式migration/provision/CLI/main与全部在线来源资金路径；C1原路退款、C2拒付/债务、C3交叉恢复 |
-| 扩展和生产 | 024-A站内告警、024-B0-P纯计量；025-A0隔离Compose实际渲染、025-A1-M两邮件真实SIGKILL窗口已验 | 媒体/异步/长连接接线、容器/1Panel、HA、正式渠道及最后性能 |
+| 来源与退款 | [027现行来源](wallet-sources.md)：正式023、四写入口、非现金开账CLI、来源/分配HTTP与控制台、只读核对已实现；真实专项范围见记录。旧C0历史proof候选冻结 | 真实原路现金退款、拒付/债务、外部事实灾备；旧金融历史不自动迁移 |
+| 扩展和生产 | 026经营报表/CSV、024-A告警、纯计量；028一体化设计已有，025部署/邮件各自限定验证 | 媒体/异步/长连接接线、容器/1Panel、HA、正式渠道及最后性能 |
 
 [来源候选回归](funding-lot-candidate.md)、[纯退款协议](payment-refund-protocol-v2.md)、[计量](metering-vectors.md)、[Compose渲染](compose-render-025.json)和[邮件进程](mail-lifecycle-025.md)分别说明各自边界；纯层和QA工具不产生生产资金能力。
 
@@ -50,6 +50,9 @@
 融合的是New API/One API的统一模型接入、渠道经营与客户自助控制台，以及1Panel公开展示的自托管治理/部署流程。实现独立，额外坚持租户隔离、不可变版本、持久硬预占、未知消费不重放、双人财务与可核对账本；未继承竞品全功能或复制其代码。
 
 ## 验证入口
+
+- [027来源与开账](wallet-sources.md)：四资金入口、FIFO/退款、开账及真实COMMIT未知、当前权限、旧库拒迁、HTTP/UI。
+- [026经营报表](operating-reports.md)：唯一收入/全部attempt成本、未知毛利和CSV；027后续重跑范围另记来源记录。
 
 - [003协议与联调](native-protocols.md)：真实PG/HTTP/SSE与客户端SDK的限定范围验证。
 - [009检索协议](retrieval-protocols.md)：Embeddings与Jina Rerank、输入独立计费、五协议Playground与本地验收状态。

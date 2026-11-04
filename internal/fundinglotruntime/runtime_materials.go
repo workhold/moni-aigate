@@ -7,9 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
-	"io/fs"
 	"reflect"
-	"sort"
 	"sync"
 
 	"github.com/moni-ai/moni-aigate/internal/fundinglotcatalog"
@@ -83,18 +81,20 @@ func decodeMaterials(raw []byte) (*runtimeMaterials, error) {
 		m.ManifestBytes != 2459 || m.MaxNameBytes != 35 || len(m.Manifest) != 22 || len(m.Mappings) != 6 {
 		return nil, ErrRuntime
 	}
-	names, err := fs.Glob(migrations.Files, "*.sql")
-	if err != nil || len(names) != 22 {
+	// These reviewed compatibility mappings cover only the original 001-022
+	// schema. New current migrations cannot extend their historical identity.
+	original, err := migrations.Original22Manifest()
+	var entries []fundinglotproof.Migration
+	if err != nil || json.Unmarshal(original, &entries) != nil || len(entries) != 22 || !reflect.DeepEqual(entries, m.Manifest) {
 		return nil, ErrRuntime
 	}
-	sort.Strings(names)
 	maxName := 0
-	for i, name := range names {
-		body, err := migrations.Files.ReadFile(name)
-		if err != nil || m.Manifest[i] != (fundinglotproof.Migration{Name: name, SHA256: runtimeSHA(body)}) {
+	for _, entry := range entries {
+		body, err := migrations.Files.ReadFile(entry.Name)
+		if err != nil || runtimeSHA(body) != entry.SHA256 {
 			return nil, ErrRuntime
 		}
-		maxName = max(maxName, len(name))
+		maxName = max(maxName, len(entry.Name))
 	}
 	manifest, err := json.Marshal(m.Manifest)
 	if err != nil || len(manifest) != m.ManifestBytes || runtimeSHA(manifest) != m.ManifestDigest || maxName != m.MaxNameBytes {

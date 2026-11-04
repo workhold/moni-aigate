@@ -131,6 +131,21 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		if err != nil {
 			return err
 		}
+		lotPlan, err := prepareFundingReserveTx(ctx, tx, in.Principal.TenantID, amount)
+		if err != nil {
+			return err
+		}
+		// The request INSERT stamps its periodic admission time. All account
+		// and lot waits must finish before that INSERT, including for expiry.
+		if err = tx.QueryRow(ctx, "SELECT clock_timestamp()").Scan(&now); err != nil {
+			return err
+		}
+		if auth.KeyExpiresAt != nil && !auth.KeyExpiresAt.After(now) {
+			return fail("invalid_key", "key is not active")
+		}
+		if !in.RequestDeadline.After(now) {
+			return fail("request_deadline", "request deadline expired")
+		}
 		result = Reservation{ID: uuid.NewString(), RequestID: in.RequestID, TenantID: in.Principal.TenantID, Amount: amount, Status: "reserved", Deadline: now.Add(24 * time.Hour), PriceVersionID: price, InputRate: Money(inputRate), OutputRate: Money(outputRate), PricingGroupID: auth.PriceGroupID, TenantPricingRevision: auth.PricingRevision, RetailPricedAt: pricedAt}
 		create := &pgx.Batch{}
 		create.Queue("INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision,client_ip,pricing_group_id,tenant_pricing_revision,retail_priced_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NULLIF($18,'')::inet,$19,$20,$21)", in.RequestID, in.Principal.TenantID, in.Principal.KeyID, in.Principal.UserID, in.ModelID, price, inputRate, outputRate, in.InputUpperBound, in.OutputLimit, auth.ProfileVersion, in.PolicyVersion, in.RequestHMAC, in.RequestDeadline, s.instanceID, in.Streaming, in.RouteRevision, clientIP, auth.PriceGroupID, auth.PricingRevision, pricedAt)
@@ -144,6 +159,9 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		}
 		journal, err := postLocked(ctx, tx, result.TenantID, result.ID, "reserve", result.RequestID, in.Principal.UserID, map[string]int64{"AVAILABLE": -int64(amount), "HELD": int64(amount)}, accounts)
 		if err != nil {
+			return err
+		}
+		if err = applyFundingReserveTx(ctx, tx, result, journal, lotPlan); err != nil {
 			return err
 		}
 		if err = periodicbudget.RecordCustomerReserveTx(ctx, tx, controls, admission, result.RequestID); err != nil {

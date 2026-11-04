@@ -451,12 +451,27 @@ func TestPostgresFundingSandboxCheckedOverflowLeavesNoMoney(t *testing.T) {
 
 func sandboxFundingOverflowTest(t *testing.T, clearing bool) {
 	x := sandboxFundingTest(t)
-	// Owner-only cache fixture in the random schema; the helper must identify its
-	// checkedAdd error before any money batch is sent, without catching SQL 22003.
+	// Deliberately corrupt one balance projection as the owner in this isolated
+	// schema. This is a negative control for checkedAdd, not a valid wallet
+	// history or a complete commercial flow. Re-enable the source guard before
+	// the actual restricted worker executes; it must fail before any money batch
+	// is sent rather than catch PostgreSQL 22003 after a partial write.
+	fault, err := x.pool.Begin(x.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fault.Rollback(x.ctx)
+	x.exec(t, fault, `ALTER TABLE ledger_accounts DISABLE TRIGGER wallet_source_fact`)
 	if clearing {
-		x.exec(t, x.pool, `INSERT INTO ledger_accounts(kind,balance) VALUES('SANDBOX_FUNDING_CLEARING',$1)`, int64(math.MinInt64))
+		x.exec(t, fault, `INSERT INTO ledger_accounts(kind,balance) VALUES('SANDBOX_FUNDING_CLEARING',$1)`, int64(math.MinInt64))
 	} else {
-		x.exec(t, x.pool, `UPDATE ledger_accounts SET balance=$2 WHERE tenant_id=$1 AND kind='AVAILABLE'`, x.tenant, int64(math.MaxInt64))
+		x.exec(t, fault, `UPDATE ledger_accounts SET balance=$2 WHERE tenant_id=$1 AND kind='AVAILABLE'`, x.tenant, int64(math.MaxInt64))
+	}
+	// Drain the other owner-permitted deferred triggers before the ALTER.
+	x.exec(t, fault, `SET CONSTRAINTS ALL IMMEDIATE`)
+	x.exec(t, fault, `ALTER TABLE ledger_accounts ENABLE TRIGGER wallet_source_fact`)
+	if err = fault.Commit(x.ctx); err != nil {
+		t.Fatal(err)
 	}
 	order, evidence := x.evidence(t)
 	tx, capture := x.source(t, order, evidence)

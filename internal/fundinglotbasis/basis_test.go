@@ -272,6 +272,14 @@ func TestMaterialsPinnedAndEmbeddedMigrationCrosscheck(t *testing.T) {
 		t.Fatal(e)
 	}
 	sort.Strings(names)
+	// These research materials describe the original 001-022 schema. Later
+	// current migrations must not silently change that frozen identity.
+	const originalThrough = "022_payment_runtime_attestation.sql"
+	last := sort.SearchStrings(names, originalThrough)
+	if last == len(names) || names[last] != originalThrough || last+1 != 22 {
+		t.Fatal("original 001-022 migration prefix drift")
+	}
+	names = names[:last+1]
 	var entries []manifestEntry
 	for _, name := range names {
 		b, e := migrations.Files.ReadFile(name)

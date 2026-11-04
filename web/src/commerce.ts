@@ -9,9 +9,10 @@ export interface VoucherPolicy { enabled: boolean; revision: string; effective_e
 export interface VoucherBatch { id: string; state: 'proposed' | 'active' | 'voided' | 'revoked'; face_amount: string; count: number; expires_at: string; purpose_ref: string; reason: string; maker: string; approver: string | null; activated_at: string | null; terminal_actor: string | null; terminal_at: string | null; revision: string; redeemed_count: string; remaining_count: string; created_at: string; expired: boolean; observed_at: string }
 export interface VoucherDecision { id: string; operation_id: string; status: 'accepted' | 'rejected'; reason: string; approver: string; decided_at: string }
 export interface VoucherRevocation { id: string; batch_id: string; expected_revision: string; expected_redeemed_count: string; reason: string; maker: string; created_at: string; decision: VoucherDecision | null }
-export type FundingSourceKind = 'manual_credit' | 'voucher_grant' | 'sandbox_capture'
+export const fundingSourceKinds = ['manual_credit', 'voucher_grant', 'sandbox_capture', 'wallet_opening'] as const
+export type FundingSourceKind = typeof fundingSourceKinds[number]
 export interface FundingReceipt { id: string; tenant_id: string; source_kind: FundingSourceKind; source_id: string; amount: string; currency: 'CNY'; journal_id: string; created_at: string }
-export interface FundingSummary { currency: 'CNY'; total_amount: string; manual_credit_amount: string; voucher_grant_amount: string; sandbox_capture_amount: string; as_of: string }
+export interface FundingSummary { currency: 'CNY'; total_amount: string; manual_credit_amount: string; voucher_grant_amount: string; sandbox_capture_amount: string; wallet_opening_amount: string; as_of: string }
 export interface VoucherRedemption { id: string; operation_id: string; tenant_id: string; voucher_id: string; batch_id: string; actor: string; amount: string; currency: 'CNY'; funding_receipt_id: string; journal_id: string; created_at: string }
 
 export function commerceObject(value: unknown, fields: readonly string[]): Record<string, unknown> {
@@ -98,9 +99,9 @@ export function parseVoucherRevocation(value: unknown, batchID?: string): Vouche
 export function parseFundingReceipt(value: unknown, tenantID: string): FundingReceipt {
   const raw = commerceObject(value, ['id', 'tenant_id', 'source_kind', 'source_id', 'amount', 'currency', 'journal_id', 'created_at'])
   if (typeof raw.source_id !== 'string' || !raw.source_id.length) throw new Error('原资金来源标识无效。')
-  const result: FundingReceipt = { id: commerceUUID(raw.id), tenant_id: commerceUUID(raw.tenant_id), source_kind: enumeration(raw.source_kind, ['manual_credit', 'voucher_grant', 'sandbox_capture']), source_id: raw.source_id, amount: commerceDecimal(raw.amount, true), currency: enumeration(raw.currency, ['CNY']), journal_id: commerceUUID(raw.journal_id), created_at: commerceTime(raw.created_at) }
+  const result: FundingReceipt = { id: commerceUUID(raw.id), tenant_id: commerceUUID(raw.tenant_id), source_kind: enumeration(raw.source_kind, fundingSourceKinds), source_id: raw.source_id, amount: commerceDecimal(raw.amount, true), currency: enumeration(raw.currency, ['CNY']), journal_id: commerceUUID(raw.journal_id), created_at: commerceTime(raw.created_at) }
   if (result.tenant_id !== tenantID) throw new Error('资金来源不属于当前租户。')
-  if (result.source_kind === 'voucher_grant' || result.source_kind === 'sandbox_capture') commerceUUID(result.source_id)
+  if (result.source_kind !== 'manual_credit') commerceUUID(result.source_id)
   return result
 }
 export function fundingSourceLabel(kind: FundingSourceKind): string {
@@ -108,14 +109,29 @@ export function fundingSourceLabel(kind: FundingSourceKind): string {
     case 'manual_credit': return '人工核款'
     case 'voucher_grant': return '运营赠额'
     case 'sandbox_capture': return '本地模拟入账'
+    case 'wallet_opening': return '初始余额导入（非现金）'
     default: throw new Error('资金来源类型无效。')
   }
 }
 export function parseFundingSummary(value: unknown): FundingSummary {
-  const raw = commerceObject(value, ['currency', 'total_amount', 'manual_credit_amount', 'voucher_grant_amount', 'sandbox_capture_amount', 'as_of'])
-  const result: FundingSummary = { currency: enumeration(raw.currency, ['CNY']), total_amount: commerceDecimal(raw.total_amount, false, 100), manual_credit_amount: commerceDecimal(raw.manual_credit_amount, false, 100), voucher_grant_amount: commerceDecimal(raw.voucher_grant_amount, false, 100), sandbox_capture_amount: commerceDecimal(raw.sandbox_capture_amount, false, 100), as_of: commerceTime(raw.as_of) }
-  if (BigInt(result.total_amount) !== BigInt(result.manual_credit_amount) + BigInt(result.voucher_grant_amount) + BigInt(result.sandbox_capture_amount)) throw new Error('资金来源摘要合计不一致。')
+  const raw = commerceObject(value, ['currency', 'total_amount', 'manual_credit_amount', 'voucher_grant_amount', 'sandbox_capture_amount', 'wallet_opening_amount', 'as_of'])
+  const result: FundingSummary = { currency: enumeration(raw.currency, ['CNY']), total_amount: commerceDecimal(raw.total_amount, false, 100), manual_credit_amount: commerceDecimal(raw.manual_credit_amount, false, 100), voucher_grant_amount: commerceDecimal(raw.voucher_grant_amount, false, 100), sandbox_capture_amount: commerceDecimal(raw.sandbox_capture_amount, false, 100), wallet_opening_amount: commerceDecimal(raw.wallet_opening_amount, false, 100), as_of: commerceTime(raw.as_of) }
+  if (BigInt(result.total_amount) !== BigInt(result.manual_credit_amount) + BigInt(result.voucher_grant_amount) + BigInt(result.sandbox_capture_amount) + BigInt(result.wallet_opening_amount)) throw new Error('资金来源摘要合计不一致。')
   return result
+}
+export function fundingReceiptsPath(sourceKind = '', cursor = ''): string {
+  if (sourceKind) enumeration(sourceKind, fundingSourceKinds)
+  if (cursor && (cursor.length > 1024 || !/^[A-Za-z0-9_-]+$/.test(cursor))) throw new Error('来源分页游标无效。')
+  const query = new URLSearchParams()
+  if (sourceKind) query.set('source_kind', sourceKind)
+  if (cursor) query.set('cursor', cursor)
+  return `/wallet/funding-receipts${query.size ? `?${query}` : ''}`
+}
+export function parseFundingReceiptsPage(value: unknown, next: unknown, tenantID: string, sourceKind = '', cursor = ''): { rows: FundingReceipt[]; next: string } {
+  if (sourceKind) enumeration(sourceKind, fundingSourceKinds)
+  const page = parseCommercePage(value, next, raw => parseFundingReceipt(raw, tenantID))
+  if (page.rows.some(row => sourceKind && row.source_kind !== sourceKind) || cursor && page.next === cursor) throw new Error('来源筛选或分页响应不一致。')
+  return page
 }
 export function parseVoucherRedemption(value: unknown, tenantID: string, expectedID: string): VoucherRedemption {
   const raw = commerceObject(value, ['id', 'operation_id', 'tenant_id', 'voucher_id', 'batch_id', 'actor', 'amount', 'currency', 'funding_receipt_id', 'journal_id', 'created_at'])

@@ -195,6 +195,7 @@ type FundingSummaryView struct {
 	ManualCreditAmount   string    `json:"manual_credit_amount"`
 	VoucherGrantAmount   string    `json:"voucher_grant_amount"`
 	SandboxCaptureAmount string    `json:"sandbox_capture_amount"`
+	WalletOpeningAmount  string    `json:"wallet_opening_amount"`
 	AsOf                 time.Time `json:"as_of"`
 }
 type VoucherReader struct{ ActorID, TenantID string }

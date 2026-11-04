@@ -2,7 +2,21 @@
 
 本版要求 Go ≥1.26、Node 22.12+（22 系列）、PostgreSQL 16。使用独立数据库，应用仅一个活动实例；不使用SQLite或Redis代替资金事实。
 
-当前源码迁移范围为 **001–022**。下文带规格编号的升级与测试记录保留各阶段的历史范围；新部署始终使用当前完整迁移及 `provision`，不按历史清单裁剪。
+当前源码迁移范围为 **001–023**。下文带规格编号的升级与测试记录保留各阶段的历史范围；新部署始终使用当前完整迁移及 `provision`，不按历史清单裁剪。
+
+
+当前023来源模型仅支持新钱包历史：遇到既有journal、receipt、预占/结算/退款/核款单或非零余额会拒绝并回滚。保留原库和备份，建立独立当前数据库后按完整迁移与provision初始化；不要删除历史、篡改checksum或导入伪造来源。旧C0维护证明是隔离研究，不能替代现行027开账命令。
+
+停服空钱包的显式非现金开账与核对（先在私有环境中填入目标tenant、唯一业务号、正微元整数与active管理员ID）：
+
+```sh
+MAINTENANCE_MODE=true DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate open-wallet \
+  --tenant "$TENANT_ID" --reference "$OPENING_REFERENCE" \
+  --amount "$OPENING_MICRO_CNY" --actor "$ADMIN_USER_ID"
+./bin/moni-aigate check-wallet-sources --tenant "$TENANT_ID"
+```
+
+开账须真实owner及服务同实例锁，只允许未使用的零余额钱包；初始余额不算现金收款，不赋予原路退款资格。同意图重读原件、异意图冲突；未知提交先只读核查原业务引用，不自动重试。核对只报告差异，不修余额；返回不平衡时CLI非零退出。平台控制台的“资金来源”页提供同租户明细和只读核对。精确设计见[027](../../specs/027-wallet-sources/spec.md)。
 
 ```sh
 npm --prefix web ci
@@ -130,7 +144,7 @@ fixture 现按B-P2明确应用原001–022，以固定历史材料和同事务�
 
 T0/T1 的历史专项结果见[Gate](../verification/maintenance-gate.md)和[Snapshot](../verification/maintenance-snapshot.md)；本轮 T2 的[真实 PostgreSQL race 专项](../verification/maintenance-authority.md)已通过，333.879秒、89顶层/832父子终态全部PASS；第三轮CI仍只证明其精确旧源码。专项使用独立 `C0_MAINTENANCE_DATABASE_URL` 显式选择上述专库；ordinary public profile 会创建并精确清理随机数据库，不使用父库的 public 作为安装目标。
 
-维护装配位于独立 `internal/maintenancescan`，单向依赖billing、periodicbudget及maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不依赖维护或catalog，依赖门禁同时检查生产与测试图。真正维护消费者仍在初始化时完整认证固定catalog，普通服务不为未调用的维护能力支付初始化成本。Compose与1Panel没有维护装配，也没有生产维护CLI、basis或epoch开账入口；库级新增第七kind的84表来源+lot读取，保留旧68表入口，原Permit绑定的受控读取结果不发行初始化或资金权限；规格目录中的C0 SQL尚非已追加的应用迁移，常规安装继续执行完整001–022与`provision`。
+维护装配位于独立 `internal/maintenancescan`，单向依赖billing、periodicbudget及maintenancetrust→fundinglotcatalog；普通billing/PB/main及领域测试不依赖维护或catalog，依赖门禁同时检查生产与测试图。真正维护消费者仍在初始化时完整认证固定catalog，普通服务不为未调用的维护能力支付初始化成本。Compose与1Panel没有维护装配，也没有生产维护CLI、basis或epoch开账入口；库级新增第七kind的84表来源+lot读取，保留旧68表入口，原Permit绑定的受控读取结果不发行初始化或资金权限；规格目录中的C0 SQL尚非已追加的应用迁移，现行027安装执行完整001–023与`provision`，不执行这些历史候选SQL。
 
 T3首片提供`Permit.BeginScan`、封闭`ReadLease`与账本/PB维护reader。领域包保留原public入口及唯一固定读取算法；窄raw-facts接缝只返回不可信局部事实，不接受或发行authority。maintenancescan仅接受真实`*ReadLease`，私有adapter执行Require→固定schema SELECT与算法→Finish后才构造绑定原Permit的私有结果，不接收外部provider、报告或通过位。两个摘要仍仅为`supplied_ledger_rows`和`periodic_budget_rows`，不发行全来源或开账许可。独立专项使用同一专库的`C0_MAINTENANCE_DATABASE_URL`，重PG测试必须串行；默认`make verify-mvp`不自动打开此专项。实际命令及取消/资源边界见[T3专项](../verification/maintenance-read-lease.md)，整仓结果见[集成记录](../verification/maintenance-read-lease-integration.md)。当前没有可调用的生产维护CLI，请勿据这些库接口自行跳过完整来源/basis/epoch门禁。
 

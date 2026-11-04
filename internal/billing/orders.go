@@ -193,7 +193,7 @@ func (s *Store) ApproveRefund(ctx context.Context, in ApprovalInput) (RefundOrde
 		if err = tx.QueryRow(ctx, "SELECT request_id FROM settlements WHERE tenant_id=$1 AND id=$2", in.TenantID, o.SettlementID).Scan(&requestID); err != nil {
 			return err
 		}
-		_, err = lockRequest(ctx, tx, in.TenantID, requestID)
+		r, err := lockRequest(ctx, tx, in.TenantID, requestID)
 		if err != nil {
 			return err
 		}
@@ -205,7 +205,15 @@ func (s *Store) ApproveRefund(ctx context.Context, in ApprovalInput) (RefundOrde
 		if int64(o.Amount) > charged-refunded {
 			return fail("refund_exceeds_charge", "refund exceeds remaining charge")
 		}
-		journal, err := post(ctx, tx, in.TenantID, o.ID, "refund", o.SettlementID, in.ActorID, map[string]int64{"AVAILABLE": int64(o.Amount), "REVENUE": -int64(o.Amount)})
+		accounts, err := lockAccounts(ctx, tx, in.TenantID, "AVAILABLE", "REVENUE")
+		if err != nil {
+			return err
+		}
+		lotPlan, err := prepareFundingRefundTx(ctx, tx, r, o.SettlementID, charged, refunded, o.Amount)
+		if err != nil {
+			return err
+		}
+		journal, err := postLocked(ctx, tx, in.TenantID, o.ID, "refund", o.SettlementID, in.ActorID, map[string]int64{"AVAILABLE": int64(o.Amount), "REVENUE": -int64(o.Amount)}, accounts)
 		if err != nil {
 			return err
 		}
@@ -213,6 +221,9 @@ func (s *Store) ApproveRefund(ctx context.Context, in ApprovalInput) (RefundOrde
 			return err
 		}
 		if _, err = tx.Exec(ctx, "UPDATE refund_orders SET state='approved',approver=$2,journal_id=$3 WHERE id=$1", o.ID, in.ActorID, journal); err != nil {
+			return err
+		}
+		if err = applyFundingRefundTx(ctx, tx, in.TenantID, o.ID, o.SettlementID, journal, lotPlan); err != nil {
 			return err
 		}
 		if err = audit(ctx, tx, in.TenantID, in.ActorID, "refund.approved", o.ID, requestID, map[string]any{"amount": o.Amount}); err != nil {

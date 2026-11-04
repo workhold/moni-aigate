@@ -17,7 +17,6 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/fundinglotinit"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotproof"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotverify"
-	"github.com/moni-ai/moni-aigate/migrations"
 )
 
 // All fixtures below describe untrusted format rows. They do not manufacture
@@ -37,7 +36,7 @@ func fundingLotsProofFormatFixture(t *testing.T, sandbox bool) fundinglotproof.V
 			BasisVersion: 1, CatalogDescriptorVersion: 2, CatalogPostgresMajor: 16,
 			CatalogExpectedDigest: strings.Repeat("8", 64), CatalogSchemaDigest: strings.Repeat("9", 64), CatalogRolesDigest: strings.Repeat("a", 64)}
 	}
-	manifest, _, err := authorityManifestCanonical(migrations.Files)
+	manifest, _, err := authorityManifestCanonical(copyAuthorityOriginal22MigrationFiles(t))
 	if err != nil || json.Unmarshal(manifest, &input.MigrationManifest) != nil {
 		t.Fatal("fixed manifest fixture")
 	}

@@ -1,0 +1,919 @@
+{
+  "date": "2026-11-04",
+  "slice": "027 current wallet sources and noncash opening",
+  "scope": "Single current 001–023 model; local acceptance only; no external providers, real PSP, production deployment or performance claim.",
+  "postgres_final_core": {
+    "evidence": {
+      "path": ".local/027-acceptance-current.jsonl",
+      "bytes": 139955,
+      "sha256": "5ff3fcdbafcc1015d458e69116ba014819fdcd5f4feee639f756183dbfa14e97"
+    },
+    "packages": {
+      "github.com/moni-ai/moni-aigate/migrations": {
+        "top_pass": 2,
+        "child_pass": 3,
+        "top_skip": 0,
+        "child_skip": 0,
+        "fail": 0,
+        "status": "pass",
+        "elapsed_seconds": 4.395
+      },
+      "github.com/moni-ai/moni-aigate/internal/operations": {
+        "top_pass": 3,
+        "child_pass": 38,
+        "top_skip": 0,
+        "child_skip": 0,
+        "fail": 0,
+        "status": "pass",
+        "elapsed_seconds": 3.6710000000000003
+      },
+      "github.com/moni-ai/moni-aigate/internal/billing": {
+        "top_pass": 28,
+        "child_pass": 34,
+        "top_skip": 0,
+        "child_skip": 0,
+        "fail": 0,
+        "status": "pass",
+        "elapsed_seconds": 28.731
+      },
+      "github.com/moni-ai/moni-aigate/internal/server": {
+        "top_pass": 6,
+        "child_pass": 15,
+        "top_skip": 0,
+        "child_skip": 0,
+        "fail": 0,
+        "status": "pass",
+        "elapsed_seconds": 27.795
+      }
+    }
+  },
+  "postgres_final_four_source_summary_http": {
+    "evidence": {
+      "path": ".local/027-opening-summary-current.jsonl",
+      "bytes": 12118,
+      "sha256": "fa1a990826398d8cb002c23d86fe2d2a43c0b994d5cdc51b5411e107a9d79af3"
+    },
+    "packages": {
+      "github.com/moni-ai/moni-aigate/internal/billing": {
+        "top_pass": 2,
+        "child_pass": 0,
+        "top_skip": 0,
+        "child_skip": 0,
+        "fail": 0,
+        "status": "pass",
+        "elapsed_seconds": 2.974
+      },
+      "github.com/moni-ai/moni-aigate/internal/server": {
+        "top_pass": 6,
+        "child_pass": 3,
+        "top_skip": 0,
+        "child_skip": 0,
+        "fail": 0,
+        "status": "pass",
+        "elapsed_seconds": 5.041
+      }
+    }
+  },
+  "count_boundary": "Core 39 top/90 child and summary 8 top/3 child overlap QueryTimestamp and prior summary test. Do not add runs as a unique test count. Core predates the added fourth-source summary and HTTP filter; their current-source supplementary run is separate.",
+  "postgres_command_core": "TEST_DATABASE_URL=<dedicated loopback> go test -json -race -p 1 -count=1 -timeout 5m ./migrations ./internal/operations ./internal/billing ./internal/server -run '^TestPostgresWallet|^TestWalletSourcesRoles|^TestWalletSourcesHTTP|^TestQueryTimestamp|^TestPostgresFundingSandbox|^TestPostgresVoucher(Lifecycle|OneHundred|Restricted|Overflow|FundingInfrastructure|FundingSummary)|^TestOperatingReportPostgresCommercial|^TestNativeProtocolsCommercialRoundTrip'",
+  "postgres_command_supplement": "TEST_DATABASE_URL=<dedicated loopback> go test -json -race -p 1 -count=1 -timeout 5m ./internal/billing ./internal/server -run '^TestPostgresWalletSourcesSummary|^TestWalletSourcesHTTPOpening|^TestHTTPCommerce|^TestPostgresVoucherFundingSummary|^TestQueryTimestamp'",
+  "postgres_boundary": "Dedicated moni_test at literal 127.0.0.1:55439, random schemas and temporary roles; serial root execution. Actual APP/worker/projector LOGIN and independent owner setup; no paid model requests.",
+  "frontend": {
+    "pass": 328,
+    "fail": 0,
+    "skip": 0,
+    "source_details_and_audit_specialized": 27,
+    "commerce_specialized": 28,
+    "evidence": {
+      "path": ".local/027-opening-frontend-tests.log",
+      "bytes": 82699,
+      "sha256": "0777e841e376175f3e6b9c74c3dd2ac7d0a91a9990b19262e3a02f82950ecc6a"
+    },
+    "strict_build": "vue-tsc and Vite passed, reported by implementing agent; final make check rebuilds after explanatory ReportsView copy change."
+  },
+  "frozen_materials": {
+    "initial_global_no_db": {
+      "evidence": {
+        "path": ".local/027-all-nondb.jsonl",
+        "bytes": 13753383,
+        "sha256": "ac6afc9766a39f1bdc80e55eed653536a87962e2687a84cd0b0e91108cbb9bb3"
+      },
+      "packages": {
+        "github.com/moni-ai/moni-aigate/cmd/moni-aigate": {
+          "top_pass": 10,
+          "child_pass": 0,
+          "top_skip": 1,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.889
+        },
+        "github.com/moni-ai/moni-aigate/cmd/moni-payment-sandbox": {
+          "top_pass": 0,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "skip",
+          "elapsed_seconds": 0
+        },
+        "github.com/moni-ai/moni-aigate/internal/alerts": {
+          "top_pass": 11,
+          "child_pass": 6,
+          "top_skip": 13,
+          "child_skip": 11,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.591
+        },
+        "github.com/moni-ai/moni-aigate/internal/alertworker": {
+          "top_pass": 4,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.499
+        },
+        "github.com/moni-ai/moni-aigate/internal/billing": {
+          "top_pass": 123,
+          "child_pass": 595,
+          "top_skip": 109,
+          "child_skip": 228,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 20.81
+        },
+        "github.com/moni-ai/moni-aigate/internal/catalog": {
+          "top_pass": 10,
+          "child_pass": 66,
+          "top_skip": 31,
+          "child_skip": 9,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.6560000000000001
+        },
+        "github.com/moni-ai/moni-aigate/internal/config": {
+          "top_pass": 8,
+          "child_pass": 43,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.529
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotbasis": {
+          "top_pass": 29,
+          "child_pass": 76,
+          "top_skip": 2,
+          "child_skip": 0,
+          "fail": 1,
+          "status": "fail",
+          "elapsed_seconds": 21.184
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog": {
+          "top_pass": 60,
+          "child_pass": 63,
+          "top_skip": 20,
+          "child_skip": 45,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 143.862
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotinit": {
+          "top_pass": 14,
+          "child_pass": 57,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.9300000000000002
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotprefixcompat": {
+          "top_pass": 3,
+          "child_pass": 12,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.528
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotproof": {
+          "top_pass": 25,
+          "child_pass": 266,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.9300000000000002
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotruntime": {
+          "top_pass": 17,
+          "child_pass": 480,
+          "top_skip": 0,
+          "child_skip": 1,
+          "fail": 202,
+          "status": "fail",
+          "elapsed_seconds": 33.937
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotscan": {
+          "top_pass": 69,
+          "child_pass": 373,
+          "top_skip": 4,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 8.628
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotverify": {
+          "top_pass": 171,
+          "child_pass": 961,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 5.136
+        },
+        "github.com/moni-ai/moni-aigate/internal/identity": {
+          "top_pass": 15,
+          "child_pass": 6,
+          "top_skip": 42,
+          "child_skip": 24,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.634
+        },
+        "github.com/moni-ai/moni-aigate/internal/maildeliver": {
+          "top_pass": 5,
+          "child_pass": 10,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.6099999999999999
+        },
+        "github.com/moni-ai/moni-aigate/internal/mailworker": {
+          "top_pass": 5,
+          "child_pass": 12,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.585
+        },
+        "github.com/moni-ai/moni-aigate/internal/maintenancescan": {
+          "top_pass": 18,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 34.028
+        },
+        "github.com/moni-ai/moni-aigate/internal/maintenancetrust": {
+          "top_pass": 121,
+          "child_pass": 1866,
+          "top_skip": 71,
+          "child_skip": 41,
+          "fail": 64,
+          "status": "fail",
+          "elapsed_seconds": 39.775
+        },
+        "github.com/moni-ai/moni-aigate/internal/metering": {
+          "top_pass": 11,
+          "child_pass": 49,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 2.088
+        },
+        "github.com/moni-ai/moni-aigate/internal/mockpsp": {
+          "top_pass": 29,
+          "child_pass": 95,
+          "top_skip": 6,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.641
+        },
+        "github.com/moni-ai/moni-aigate/internal/operations": {
+          "top_pass": 6,
+          "child_pass": 0,
+          "top_skip": 63,
+          "child_skip": 23,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.476
+        },
+        "github.com/moni-ai/moni-aigate/internal/paymentproto": {
+          "top_pass": 12,
+          "child_pass": 14,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.643
+        },
+        "github.com/moni-ai/moni-aigate/internal/paymentreceiver": {
+          "top_pass": 3,
+          "child_pass": 9,
+          "top_skip": 1,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.6219999999999999
+        },
+        "github.com/moni-ai/moni-aigate/internal/paymentrefundproto": {
+          "top_pass": 14,
+          "child_pass": 22,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.946
+        },
+        "github.com/moni-ai/moni-aigate/internal/paymentruntime": {
+          "top_pass": 3,
+          "child_pass": 0,
+          "top_skip": 3,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.62
+        },
+        "github.com/moni-ai/moni-aigate/internal/payments": {
+          "top_pass": 24,
+          "child_pass": 667,
+          "top_skip": 36,
+          "child_skip": 3,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 5.593
+        },
+        "github.com/moni-ai/moni-aigate/internal/paymentsandboxqa": {
+          "top_pass": 1,
+          "child_pass": 0,
+          "top_skip": 2,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.62
+        },
+        "github.com/moni-ai/moni-aigate/internal/paymentsandboxschema": {
+          "top_pass": 1,
+          "child_pass": 2,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.5310000000000001
+        },
+        "github.com/moni-ai/moni-aigate/internal/periodicbudget": {
+          "top_pass": 49,
+          "child_pass": 127,
+          "top_skip": 56,
+          "child_skip": 51,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.678
+        },
+        "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefix": {
+          "top_pass": 19,
+          "child_pass": 208,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 2.05
+        },
+        "github.com/moni-ai/moni-aigate/internal/periodicbudgetprefixschema": {
+          "top_pass": 3,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.536
+        },
+        "github.com/moni-ai/moni-aigate/internal/pricing": {
+          "top_pass": 0,
+          "child_pass": 0,
+          "top_skip": 9,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.589
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurement": {
+          "top_pass": 6,
+          "child_pass": 12,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.596
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementaccountwriter": {
+          "top_pass": 3,
+          "child_pass": 0,
+          "top_skip": 7,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.624
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth": {
+          "top_pass": 23,
+          "child_pass": 14,
+          "top_skip": 48,
+          "child_skip": 71,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 2.1189999999999998
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementattemptrules": {
+          "top_pass": 3,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.516
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementbirthschema": {
+          "top_pass": 4,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.592
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementexecution": {
+          "top_pass": 65,
+          "child_pass": 1427,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.79
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementidentity": {
+          "top_pass": 1,
+          "child_pass": 0,
+          "top_skip": 1,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.584
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementprefix": {
+          "top_pass": 220,
+          "child_pass": 1123,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 4.868
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementprefixschema": {
+          "top_pass": 5,
+          "child_pass": 0,
+          "top_skip": 2,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 2.071
+        },
+        "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth": {
+          "top_pass": 12,
+          "child_pass": 6,
+          "top_skip": 20,
+          "child_skip": 29,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.689
+        },
+        "github.com/moni-ai/moni-aigate/internal/productvalue": {
+          "top_pass": 11,
+          "child_pass": 7,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.605
+        },
+        "github.com/moni-ai/moni-aigate/internal/provider": {
+          "top_pass": 71,
+          "child_pass": 271,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 3.143
+        },
+        "github.com/moni-ai/moni-aigate/internal/qa/c0candidate": {
+          "top_pass": 0,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 5,
+          "status": "fail",
+          "elapsed_seconds": 0.631
+        },
+        "github.com/moni-ai/moni-aigate/internal/reporting": {
+          "top_pass": 6,
+          "child_pass": 22,
+          "top_skip": 3,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.6139999999999999
+        },
+        "github.com/moni-ai/moni-aigate/internal/routing": {
+          "top_pass": 28,
+          "child_pass": 43,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.573
+        },
+        "github.com/moni-ai/moni-aigate/internal/security": {
+          "top_pass": 9,
+          "child_pass": 19,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.502
+        },
+        "github.com/moni-ai/moni-aigate/internal/server": {
+          "top_pass": 98,
+          "child_pass": 126,
+          "top_skip": 115,
+          "child_skip": 101,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 3.6959999999999997
+        },
+        "github.com/moni-ai/moni-aigate/internal/telemetry": {
+          "top_pass": 5,
+          "child_pass": 2,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.532
+        },
+        "github.com/moni-ai/moni-aigate/internal/testsupport/funding019": {
+          "top_pass": 2,
+          "child_pass": 0,
+          "top_skip": 3,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.593
+        },
+        "github.com/moni-ai/moni-aigate/internal/testsupport/periodicprefix": {
+          "top_pass": 2,
+          "child_pass": 6,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.9300000000000002
+        },
+        "github.com/moni-ai/moni-aigate/migrations": {
+          "top_pass": 9,
+          "child_pass": 15,
+          "top_skip": 14,
+          "child_skip": 7,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.366
+        },
+        "github.com/moni-ai/moni-aigate/scripts": {
+          "top_pass": 0,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "skip",
+          "elapsed_seconds": 0
+        },
+        "github.com/moni-ai/moni-aigate/scripts/browser-qa": {
+          "top_pass": 16,
+          "child_pass": 4,
+          "top_skip": 4,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.688
+        },
+        "github.com/moni-ai/moni-aigate/scripts/check-architecture": {
+          "top_pass": 10,
+          "child_pass": 19,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.593
+        },
+        "github.com/moni-ai/moni-aigate/scripts/check-procurement-layout": {
+          "top_pass": 5,
+          "child_pass": 34,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.616
+        },
+        "github.com/moni-ai/moni-aigate/scripts/export-native-sdk-fixtures": {
+          "top_pass": 0,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "skip",
+          "elapsed_seconds": 0
+        },
+        "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor": {
+          "top_pass": 9,
+          "child_pass": 0,
+          "top_skip": 2,
+          "child_skip": 0,
+          "fail": 2,
+          "status": "fail",
+          "elapsed_seconds": 0.599
+        },
+        "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa": {
+          "top_pass": 7,
+          "child_pass": 0,
+          "top_skip": 4,
+          "child_skip": 19,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 34.475
+        },
+        "github.com/moni-ai/moni-aigate/scripts/online-dependency-qa": {
+          "top_pass": 1,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.702
+        },
+        "github.com/moni-ai/moni-aigate/scripts/payment-application-qa": {
+          "top_pass": 3,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.6360000000000001
+        },
+        "github.com/moni-ai/moni-aigate/scripts/payment-sandbox-qa": {
+          "top_pass": 4,
+          "child_pass": 6,
+          "top_skip": 1,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.603
+        },
+        "github.com/moni-ai/moni-aigate/web": {
+          "top_pass": 0,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "skip",
+          "elapsed_seconds": 0
+        }
+      }
+    },
+    "five_package_supplement_before_last_history_fix": {
+      "evidence": {
+        "path": ".local/027-frozen-materials-final.jsonl",
+        "bytes": 3249227,
+        "sha256": "2fc3435841d20b3f9016a926d2c6119944627ab736e0b959a67e7c1b2acc7035"
+      },
+      "packages": {
+        "github.com/moni-ai/moni-aigate/internal/fundinglotbasis": {
+          "top_pass": 30,
+          "child_pass": 76,
+          "top_skip": 2,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 22.229
+        },
+        "github.com/moni-ai/moni-aigate/internal/fundinglotruntime": {
+          "top_pass": 33,
+          "child_pass": 718,
+          "top_skip": 0,
+          "child_skip": 1,
+          "fail": 1,
+          "status": "fail",
+          "elapsed_seconds": 35.347
+        },
+        "github.com/moni-ai/moni-aigate/internal/maintenancetrust": {
+          "top_pass": 133,
+          "child_pass": 1945,
+          "top_skip": 71,
+          "child_skip": 41,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 43.048
+        },
+        "github.com/moni-ai/moni-aigate/internal/qa/c0candidate": {
+          "top_pass": 0,
+          "child_pass": 0,
+          "top_skip": 5,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.436
+        },
+        "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor": {
+          "top_pass": 11,
+          "child_pass": 0,
+          "top_skip": 2,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 1.42
+        }
+      }
+    },
+    "final_runtime": {
+      "status": "pass",
+      "command": "go test -race ./internal/fundinglotruntime -count=1",
+      "elapsed_seconds": 37.702,
+      "provenance": "Implementing agent executed full package after final original22 helper repair; successful tool output reported to integrator, not represented as a redirected JSONL artifact."
+    },
+    "boundary": "Global initial no-DB run failed in five frozen-material packages. Four passed full package rerun; runtime then passed its full package after final history-helper repair. PG skips stay skips. No single final whole-repository PostgreSQL pass is asserted. Descriptor old-checkout positive mirror/alteration matrix removed because current sources are no longer that baseline; current tests verify exact original22 material and actual current-source rejection."
+  },
+  "retained_failed_runs": [
+    {
+      "reason": "APP test illegally reused same channel for two attempts; then used input bound different from published profile. Production constraints unchanged; corrected legal two-channel route and moved valid full release before spending.",
+      "evidence": {
+        "path": ".local/027-acceptance-final.jsonl",
+        "bytes": 135359,
+        "sha256": "26f498e4f8fc527736e574e58d2947387824f3c7f1e30bbb24b160f4f0a4458b"
+      }
+    },
+    {
+      "reason": "First standalone APP correction still used invalid release bounds; corrected fixture sequence then final core passed.",
+      "evidence": {
+        "path": ".local/027-app-role-rerun.jsonl",
+        "bytes": 2046,
+        "sha256": "dfe37eaabe8323e0a014ec907a67c6a77f2920552c4b42f63b8f6d8c625cd91e"
+      }
+    },
+    {
+      "reason": "Root added HTTP test compared Money to string, server did not compile; billing tests passed. Fixed test type and reran supplement successfully.",
+      "evidence": {
+        "path": ".local/027-opening-summary-final.jsonl",
+        "bytes": 3928,
+        "sha256": "ce41f0e10795818bf14d1a5ed628190c4510702dc90ffafd92ca70095c0e472c"
+      }
+    }
+  ],
+  "browser": {
+    "fixture": {
+      "evidence": {
+        "path": ".local/027-browser-final.jsonl",
+        "bytes": 1653,
+        "sha256": "c132a185701862cb2151541309be10b488c0268d9127e7e50dc2fde5ed33a714"
+      },
+      "packages": {
+        "github.com/moni-ai/moni-aigate/internal/server": {
+          "top_pass": 1,
+          "child_pass": 0,
+          "top_skip": 0,
+          "child_skip": 0,
+          "fail": 0,
+          "status": "pass",
+          "elapsed_seconds": 240.262
+        }
+      }
+    },
+    "environment": "Isolated current 001–023 gateway fixture and real local provider HTTP call; existing 58123 review preview preserved on 026/001–022.",
+    "observed": [
+      "Wallet lot principal1000/available980/held0/consumed20 exact micro-CNY",
+      "Request FIFO index1/reserved140/charged20/released120/refunded0",
+      "Explicit tenant platform check: four mismatch counts0",
+      "Operating report: charged20/provider cost7/gross margin13",
+      "Actual browser CSV download: one row, same exact amounts; console error/warn arrays empty"
+    ],
+    "screenshots": [
+      {
+        "path": ".local/027-wallet-sources-browser.jpg",
+        "bytes": 99372,
+        "sha256": "d669d2319ff3dea348339a82cae5f0a3ad6025d1aeb3335d4c8c05390fcc1844"
+      },
+      {
+        "path": ".local/027-operating-report-browser.jpg",
+        "bytes": 216981,
+        "sha256": "fb505e348405bce5cfd0eb2f35e76fc2c012abd455d77fe6544737ca7fb7ed1c"
+      }
+    ],
+    "csv": {
+      "path": ".local/027-operating-report-browser.csv",
+      "bytes": 392,
+      "sha256": "c6553aa2835a9ccc7181869756a756162df17e76744523d9d0a1470653421429"
+    },
+    "limitations": [
+      "First browser run found non-UTC time parsing defect; fixed server DTO serialization and current final browser run passed",
+      "Payment service intentionally uninitialized in temporary gateway fixture: old commerce-capabilities endpoint unavailable; not counted as payment-page acceptance",
+      "Fourth-source legacy summary/receipt UI changes landed after browser fixture; verified by 328 frontend tests and actual PG/HTTP supplement, not relabeled as browser-tested",
+      "No mobile viewport or real supplier/PSP/1Panel acceptance"
+    ],
+    "cleanup": [
+      "Temporary Go browser fixture removed",
+      "Private state and stop marker removed",
+      "QA browser tab closed",
+      "Fixture stopped successfully and ran normal schema cleanup"
+    ]
+  },
+  "source_sha256": {
+    "cmd/moni-aigate/main.go": "2307f7f908d1f4eb94711c662b9ef3013165dd6e5e9f20a3fe7215e9bf7f381e",
+    "cmd/moni-aigate/wallet_commands_test.go": "7ad6c436c65aefc7bfc6855f6febc16f522f695b476b97de3b05dbc6afe6881a",
+    "internal/billing/funding.go": "319c762a87c4f3f3942f4f9a143914ddf751a78fbd4ac317e18467e11546b1e6",
+    "internal/billing/funding_sandbox_integration_test.go": "3ab726376f3861952107849f1b58919a63d31d8fe5bfd3d232d6bd8387304f84",
+    "internal/billing/funding_verify.go": "6f72973195a99d925d8792472cf76b2e8d18b75c35977987a74724aa4a24d943",
+    "internal/billing/lot_runtime.go": "d2cebeb76f22cdf44f357df2c3dd6a25305d9d28fa3e9e6548182fded04de6fe",
+    "internal/billing/lot_runtime_integration_test.go": "dc5ea1929a813900f3338c35db9f69532f4105656624ebc798b7e1d5b685a11d",
+    "internal/billing/orders.go": "33bc38f5cf8e8c1bc2aec80cb8e4155208ab4d45914bfe65266f1a827d259452",
+    "internal/billing/reserve.go": "272d54dbcd3996436647598c0b4d99f6524f63fc51236527b9f311390f7ed893",
+    "internal/billing/settle.go": "b49beca952f0362be3a5fef4e00e52f0db1cdcdcb904bb053d6a4c5aef3bd726",
+    "internal/billing/store.go": "f81fc2442664cbf5f60e58ba3f50565fbc0716be1bccb7379ee040450d4b964b",
+    "internal/billing/voucher_query.go": "4570c67b0580afb1b675dd684522438795233ebd7133ac75e661edf1cf383363",
+    "internal/billing/voucher_types.go": "d9b84ef64d3438f195073af57a14f518919de22b933aebf1948b8ad187c5c3ff",
+    "internal/billing/wallet_opening.go": "7714ff07f33a8fed812b7f1d4ae9b7d8f6a21630d40f704dcab2640f27d2b50a",
+    "internal/billing/wallet_opening_integration_test.go": "aecc31337fa96a76152c6336277e82661786696fd95e463cf9832d8e3abb3867",
+    "internal/billing/wallet_opening_test.go": "b99373a18105151275b733a3ecd1d5033e91c77362e8ba2fddd05f1023650d7f",
+    "internal/billing/wallet_sources_application_test.go": "ddd4524c4f9ba309bb048b3a70d8857fcd503f4c8748e4eb90d2af9830849bd1",
+    "internal/billing/wallet_sources_constraints_test.go": "40736d34f63c158f3dba2ca76f560291c11522941e6d89e61ac12598208aa1c7",
+    "internal/billing/wallet_sources_read.go": "71101a7f394f7aec9937a3ca4ecd03368c64ac935f155fa4c5e9666714ac3ec9",
+    "internal/billing/wallet_sources_read_test.go": "a8d4c6d9915437a4ce488ae69bca5f07211da8ad113ebbcd52d17ddbb3d7149a",
+    "internal/billing/wallet_sources_summary_test.go": "84cb09fc4ae5fa911c4d434840206c15431a199fdf0f2b6ad783a39a75e51c05",
+    "internal/fundinglotbasis/basis_test.go": "d4a5392ea718dc9e77602f5a0bb7a4016a0ad0d7d7b92d758cd79a21097be5b4",
+    "internal/fundinglotruntime/runtime_history.go": "3808594527cce3467a4231e5f0a59cc7583ad8e1a10ed8e20b0d00b195dae82b",
+    "internal/fundinglotruntime/runtime_history_test.go": "780865dba69f768ecb99c71d5fdbc61690c51be2287ce2326a7843bd4af469b8",
+    "internal/fundinglotruntime/runtime_materials.go": "3656426dc55fa8bcc1c7d178aa6d8b981805d5c8203338073f2e1555b0438e5f",
+    "internal/fundinglotruntime/runtime_materials_test.go": "28dd91183286bc2376c0d156a1ffa235343fe1c20f472e53c12ad97ab053ecc1",
+    "internal/maintenancetrust/authority_manifest_test.go": "91e28faf6fdcad682c37f62e7f68ed350c9e166a064de2c21dc2ffee96539471",
+    "internal/maintenancetrust/funding_lots_observed_proof_test.go": "45cfb000c233e89f5b4335a405e9be2caab0c2d6aa5f0bac936914507c34d1dd",
+    "internal/maintenancetrust/funding_lots_proof_test.go": "bba19567e7767fdaf93e8712b046d436930e4c612e92a14a370d6470b30980f9",
+    "internal/operations/operations.go": "e121d34ee2774e02497beba7b2651f18a3b97a23a2551cdeba13c698443b830a",
+    "internal/operations/payment_roles.go": "2d3e4912007701cedfea08a6f4665afe9df547d1b5c80d16d88b9867be895856",
+    "internal/operations/payment_roles_functions.go": "7407aada99a7244c7388330a70f5087db6e6f4244b4f558568c6a65aa113982a",
+    "internal/operations/payment_roles_test.go": "117340c5668a839b5fd32ac51338c40e3f1281985692e996249e73bab40617ef",
+    "internal/operations/wallet_sources_roles_test.go": "57d433645a257ce8ebadf1630cbfa0714bf6cfdff3b445eb37719d44146a9856",
+    "internal/qa/c0candidate/fixture_test.go": "c4da40dc6b0da6b222d0063dc289fc83867484bbe2896029880aa4a34a366f00",
+    "internal/server/commerce_handlers.go": "62047c0c7e68a7d96654a9589543b6223d853ffd63999f2a9784f8b6abfead5d",
+    "internal/server/queries.go": "73a5116873f9edf46bdf8cda056597608de24cca6ac682989a25c953efabe0f5",
+    "internal/server/queries_test.go": "debaa978b4289aac98db404452399170389c4649424fe1bcb06ef0188c393818",
+    "internal/server/server.go": "fef535f4a953cbf2666624d998aebc7dfd669e09511c6fe84cfd37238c7ae1ca",
+    "internal/server/wallet_sources.go": "471bd715996789dd074766a160b7591fe39bd2e05627f641a84e1c32cf1d4f0f",
+    "internal/server/wallet_sources_integration_test.go": "bd624dddc53d3cef1257f74c05d7cddd9f8b2bc76a880a5c5c0f63624c92cbe8",
+    "migrations/023_wallet_sources.sql": "67e8289f1e550ea826f4890b1b046e2d10d502537b764e0441d2cb0ae3f5eb4a",
+    "migrations/wallet_sources_postgres_test.go": "ab52b642f74491ad4f1ba4155ecaaf412488b651aa62d9a5e6ba793d7e51135d",
+    "scripts/funding-lot-descriptor/main_test.go": "3dc324fd793cf9923f7d55a8f482dce74ddf051ac172941648e064bc5ba3bc59",
+    "web/src/App.vue": "b28611b57efa72fe5a7c612445b0a2002d9449b6cad9e7821a6402e1a096cdee",
+    "web/src/commerce.ts": "dca4bbb1fbc1c9f11fef72343902855767c40c4a383985ca3ceee66485785c61",
+    "web/src/components/FundingPanel.vue": "153d946939f0f2162fa50e05743921d4efd5d38a5256bc48c59a0e26eefbb068",
+    "web/src/components/RequestFunding.vue": "b909de2a18740091db74b59971623f3493b87927d8f8656ecffca32e2e08e051",
+    "web/src/components/WalletSourceAudit.vue": "7fa61bfed6ff3e159458dcf64b3a6f8baafe31dcbb14d8ca0fa9c477fa6db1ed",
+    "web/src/components/WalletSources.vue": "f5e0c163e9204698f97a1ccea88562620b9bb8ecd74832fdb187acac3b523017",
+    "web/src/format.ts": "ac0d874a6c088cffc0eb328359f20df4c688bbc305916d26291a55c5b1c89ce0",
+    "web/src/router.ts": "a43f05ffe6f9f60ea3d9fa3d624d86dc006f43650fa05d0da2ed101b0dce9f6d",
+    "web/src/views/ReportsView.vue": "bb9f02ab932738ce2b1fb0fcfb767da7c0d12422997bca19ed470e568045114a",
+    "web/src/views/RequestsView.vue": "379e97228c422215da62ae650f06dd1a13b1ff99dcc77dd38f9ea6b7894de360",
+    "web/src/views/WalletSourcesView.vue": "5527ff363fbd59d22dd70fffc20fd947451684e064ba6bbf48f8f575c5439dce",
+    "web/src/views/WalletView.vue": "444ad4187486b172d4f6a42aa999cbc06fddeb8b590824bbbb41dc040ba475f6",
+    "web/src/wallet-source-details.ts": "84a59a8e309a43d6c17b1755de58c4b2e4379848667f64ff3ced9f4ed225b95c",
+    "web/src/wallet-sources.ts": "4dc67c2d40e98dc1020af4e8901a8abd43a8be3b548b1b485c8591e1653f2c27",
+    "web/tests/commerce.test.mjs": "50c4b815d04161b01e602eb48f308f9662dac7c99f8f8d59fc40dee5275168a8",
+    "web/tests/wallet-source-details.test.mjs": "1f3217b7fb498dec73264608ff81b4155faeaa89492948ea2e5c58c8ed7ecc6b",
+    "web/tests/wallet-sources.test.mjs": "d17788a3033a7be8e55859095ce73d131f2e46827a1df6f6da8936c78f79f0ba"
+  },
+  "not_executed": [
+    "Full current PostgreSQL repository suite / make verify-mvp",
+    "Real model supplier or PSP account/bill certification",
+    "Container runtime, target 1Panel, HA, backup disaster recovery",
+    "New performance benchmark",
+    "028 unified production metering/media/task/Realtime implementation"
+  ],
+  "financial_review": [
+    "Unknown COMMIT may already have committed; no result permit and no automatic retry",
+    "Opening included in funding receipts/credited projection, excluded from sales income",
+    "Source facts, customer accounting and procurement cost remain separate",
+    "Current migration rejects existing financial history without modifying retained legacy database"
+  ]
+}

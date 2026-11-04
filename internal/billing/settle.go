@@ -142,6 +142,10 @@ func finish(ctx context.Context, tx pgx.Tx, r financialRequest, charge int64, ra
 	if err != nil {
 		return result, err
 	}
+	lotPlan, err := prepareFundingFinishTx(ctx, tx, r)
+	if err != nil {
+		return result, err
+	}
 	// Callers hold the same reservation lock. Recheck financial time immediately before money writes.
 	var now time.Time
 	if err := tx.QueryRow(ctx, "SELECT clock_timestamp()").Scan(&now); err != nil {
@@ -175,6 +179,9 @@ func finish(ctx context.Context, tx pgx.Tx, r financialRequest, charge int64, ra
 	}
 	_, err = tx.Exec(ctx, "INSERT INTO settlements(id,tenant_id,request_id,finalization_id,charged_amount,raw_retail_amount,waived_retail_amount,status,reason,journal_id) VALUES($1,$2,$3,$4,$5,$6::text::numeric,$7::text::numeric,$8,$9,$10)", id, r.TenantID, r.ID, finalID, charge, raw.String(), waived.String(), status, reason, journal)
 	if err != nil {
+		return result, err
+	}
+	if err = applyFundingFinishTx(ctx, tx, r, id, journal, Money(charge), lotPlan); err != nil {
 		return result, err
 	}
 	if _, err = tx.Exec(ctx, "UPDATE api_keys SET held=held-$3,spent=spent+$4 WHERE tenant_id=$1 AND id=$2", r.TenantID, r.KeyID, r.Amount, charge); err != nil {

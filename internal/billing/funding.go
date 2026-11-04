@@ -15,6 +15,7 @@ const (
 	FundingManualCredit   FundingSourceKind = "manual_credit"
 	FundingVoucherGrant   FundingSourceKind = "voucher_grant"
 	FundingSandboxCapture FundingSourceKind = "sandbox_capture"
+	FundingWalletOpening  FundingSourceKind = "wallet_opening"
 )
 
 type FundingSourceRef struct {
@@ -86,6 +87,9 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 			if !valid || receipt.TenantID != scope.TenantID || receipt.JournalID != o.JournalID {
 				return result, fail("funding_integrity", "funding source integrity failed")
 			}
+			if e = verifyFundingReceiptLotTx(ctx, tx, receipt); e != nil {
+				return result, e
+			}
 			result.Receipt = receipt
 			return result, nil
 		}
@@ -125,10 +129,43 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 			return result, e
 		}
 		if sandbox.Receipt != nil {
+			if e = verifyFundingReceiptLotTx(ctx, tx, *sandbox.Receipt); e != nil {
+				return result, e
+			}
 			result.Receipt = *sandbox.Receipt
 			return result, nil
 		}
 		amount, clearing = sandbox.Amount, "SANDBOX_FUNDING_CLEARING"
+	case FundingWalletOpening:
+		if scope.CommandID != "" || !voucherID(source.ID) {
+			return result, fail("invalid_funding_source", "opening source unavailable")
+		}
+		var tenant, actor string
+		if e := tx.QueryRow(ctx, `SELECT tenant_id,amount,actor FROM wallet_openings WHERE id=$1`, source.ID).Scan(&tenant, &amount, &actor); e != nil {
+			return result, e
+		}
+		if tenant != scope.TenantID || actor != scope.ActorID || amount <= 0 {
+			return result, fail("funding_integrity", "funding source integrity failed")
+		}
+		receipt, e := fundingReceiptRow(ctx, tx, source.Kind, source.ID)
+		if e == nil {
+			var valid bool
+			if e = tx.QueryRow(ctx, `SELECT funding_journal_valid($1)`, receipt.JournalID).Scan(&valid); e != nil {
+				return result, e
+			}
+			if !valid || receipt.TenantID != tenant || receipt.Amount != amount {
+				return result, fail("funding_integrity", "funding source integrity failed")
+			}
+			if e = verifyFundingReceiptLotTx(ctx, tx, receipt); e != nil {
+				return result, e
+			}
+			result.Receipt = receipt
+			return result, nil
+		}
+		if !errors.Is(e, pgx.ErrNoRows) {
+			return result, e
+		}
+		clearing = "WALLET_OPENING_CLEARING"
 	default:
 		return result, fail("invalid_funding_source", "funding source unavailable")
 	}
@@ -172,6 +209,16 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 			return result, fail("funding_integrity", "funding source integrity failed")
 		}
 		kind, reference = "sandbox_capture", current.OrderID
+	case FundingWalletOpening:
+		var stable bool
+		if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM wallet_openings WHERE id=$1 AND tenant_id=$2 AND actor=$3 AND amount=$4)
+ AND NOT EXISTS(SELECT 1 FROM funding_receipts WHERE source_kind='wallet_opening' AND source_id=$1)`, source.ID, scope.TenantID, scope.ActorID, int64(amount)).Scan(&stable); e != nil {
+			return result, e
+		}
+		if !stable {
+			return result, fail("funding_integrity", "funding source integrity failed")
+		}
+		kind = "wallet_opening"
 	default:
 		return result, fail("invalid_funding_source", "funding source unavailable")
 	}
@@ -192,10 +239,15 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 		result.RedemptionID = operation
 	case FundingSandboxCapture:
 		// The caller owns payment audit and the final processing-generation CAS.
+	case FundingWalletOpening:
+		// The owner command owns the immutable opening source and audit.
 	default:
 		return result, fail("invalid_funding_source", "funding source unavailable")
 	}
 	if _, e = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at) VALUES($1,$2,$3,$4,$5,'CNY',$6,$7)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now); e != nil {
+		return FundingResult{}, e
+	}
+	if e = createFundingLotTx(ctx, tx, receipt, operation); e != nil {
 		return FundingResult{}, e
 	}
 	if e = emit(ctx, tx, scope.TenantID, operation, "credited", map[string]any{"amount": amount}); e != nil {

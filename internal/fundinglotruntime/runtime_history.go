@@ -25,13 +25,19 @@ func runtimeHistoryGuardSQL(schema string) string {
  FROM (SELECT name, checksum FROM ONLY ` + pgx.Identifier{schema, "schema_migrations"}.Sanitize() + ` LIMIT 23) AS guarded_history`
 }
 
-const runtimeHistorySettingsSQL = `SELECT current_setting('transaction_isolation'),current_setting('transaction_read_only')`
-const runtimeHistoryExistsSQL = `SELECT to_regclass('schema_migrations') IS NOT NULL`
-const runtimeHistoryRowsSQL = `SELECT name,checksum FROM schema_migrations ORDER BY name`
+const runtimeHistorySettingsSQL = `SELECT pg_catalog.current_setting('transaction_isolation'),pg_catalog.current_setting('transaction_read_only')`
+
+func runtimeHistoryRowsSQL(schema string) string {
+	return `SELECT CASE WHEN pg_catalog.octet_length(name) OPERATOR(pg_catalog.>=) 1::pg_catalog.int4
+ AND pg_catalog.octet_length(name) OPERATOR(pg_catalog.<=) 35::pg_catalog.int4 THEN name ELSE NULL END,
+ CASE WHEN pg_catalog.octet_length(checksum) OPERATOR(pg_catalog.=) 64::pg_catalog.int4 THEN checksum ELSE NULL END
+ FROM ONLY ` + pgx.Identifier{schema, "schema_migrations"}.Sanitize() + ` LIMIT 23`
+}
 
 // The guard authenticates complete physical uniqueness and bounds before the
 // historical helper may build its map. Both reads use the same caller-owned RR
-// snapshot; the helper remains the authority on current embedded checksums.
+// snapshot; the helper remains the authority on the frozen original 001-022
+// checksums, independently of later current migrations.
 func verifyRuntimeHistory(w *verificationWindow, tx pgx.Tx, schema string) error {
 	if w.check() != nil || tx == nil {
 		return ErrRuntime
@@ -40,13 +46,13 @@ func verifyRuntimeHistory(w *verificationWindow, tx pgx.Tx, schema string) error
 	if err != nil || m == nil || m.ManifestBytes != 2459 || len(m.Manifest) != 22 || m.MaxNameBytes != 35 || w.check() != nil {
 		return ErrRuntime
 	}
-	h := &runtimeHistoryTx{Tx: tx, window: w, guard: runtimeHistoryGuardSQL(schema)}
+	h := &runtimeHistoryTx{Tx: tx, window: w, guard: runtimeHistoryGuardSQL(schema), history: runtimeHistoryRowsSQL(schema)}
 	var bounded bool
 	if h.QueryRow(w.ctx, h.guard).Scan(&bounded) != nil || !bounded || h.check() != nil || h.pending != nil {
 		h.fail()
 		return ErrRuntime
 	}
-	if migrations.VerifyReadOnlyTx(w.ctx, h) != nil || h.check() != nil || h.pending != nil || w.check() != nil {
+	if migrations.VerifyOriginal22SnapshotTx(w.ctx, h, schema) != nil || h.check() != nil || h.pending != nil || w.check() != nil {
 		h.fail()
 		return ErrRuntime
 	}
@@ -60,6 +66,7 @@ type runtimeHistoryTx struct {
 	pgx.Tx
 	window  *verificationWindow
 	guard   string
+	history string
 	pending *runtimeHistoryRows
 	failed  bool
 }
@@ -81,9 +88,18 @@ func (h *runtimeHistoryTx) fail() error {
 }
 
 func (h *runtimeHistoryTx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
-	if h.check() != nil || h.pending != nil || ctx == nil || ctx.Err() != nil || len(args) != 0 ||
-		sql != h.guard && sql != runtimeHistorySettingsSQL && sql != runtimeHistoryExistsSQL && sql != runtimeHistoryRowsSQL {
+	if h.check() != nil || h.pending != nil || ctx == nil || ctx.Err() != nil ||
+		sql != h.guard && sql != runtimeHistorySettingsSQL && sql != h.history {
 		return nil, h.fail()
+	}
+	if len(args) != 0 {
+		if len(args) != 1 || sql != h.history {
+			return nil, h.fail()
+		}
+		mode, ok := args[0].(pgx.QueryExecMode)
+		if !ok || mode != pgx.QueryExecModeSimpleProtocol {
+			return nil, h.fail()
+		}
 	}
 	driver, err := h.Tx.Query(h.window.ctx, sql, pgx.QueryExecModeSimpleProtocol)
 	if err != nil || nilDriver(driver) {
@@ -215,6 +231,10 @@ func (r *runtimeHistoryRows) Scan(dest ...any) error {
 			if v != nil {
 				local[i] = new(string)
 			}
+		case **string:
+			if v != nil && r.source == r.owner.history {
+				local[i] = new(*string)
+			}
 		case *bool:
 			if v != nil {
 				local[i] = new(bool)
@@ -228,14 +248,36 @@ func (r *runtimeHistoryRows) Scan(dest ...any) error {
 		return r.owner.fail()
 	}
 	for i, value := range local {
-		if text, ok := value.(*string); ok {
+		var text *string
+		switch pointer := value.(type) {
+		case *string:
+			text = pointer
+		case **string:
+			if *pointer == nil {
+				return r.owner.fail()
+			}
+			text = *pointer
+		}
+		if text != nil {
 			// Actual history fields have already passed the tighter 35/64 guard.
 			// The remaining strings are built-in isolation/access constants.
-			if len(*text) > 65536 || r.source == runtimeHistoryRowsSQL && (i == 0 && (len(*text) < 1 || len(*text) > 35) || i == 1 && len(*text) != 64) {
+			if len(*text) > 65536 || r.source == r.owner.history && (i == 0 && (len(*text) < 1 || len(*text) > 35) || i == 1 && len(*text) != 64) {
 				return r.owner.fail()
 			}
 			local[i] = new(string)
 			*local[i].(*string) = strings.Clone(*text)
+		}
+	}
+	// The shared original22 helper also serves offline RW snapshots. This
+	// runtime composer retains its stricter caller-owned RR READ ONLY boundary.
+	if r.source == runtimeHistorySettingsSQL {
+		if len(local) != 2 {
+			return r.owner.fail()
+		}
+		isolation, isolationOK := local[0].(*string)
+		access, accessOK := local[1].(*string)
+		if !isolationOK || !accessOK || *isolation != "repeatable read" || *access != "on" {
+			return r.owner.fail()
 		}
 	}
 	if r.owner.check() != nil {
@@ -245,6 +287,8 @@ func (r *runtimeHistoryRows) Scan(dest ...any) error {
 		switch v := d.(type) {
 		case *string:
 			*v = *local[i].(*string)
+		case **string:
+			*v = local[i].(*string)
 		case *bool:
 			*v = *local[i].(*bool)
 		}

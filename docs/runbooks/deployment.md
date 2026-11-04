@@ -2,9 +2,23 @@
 
 交付的是可运行开发版，尚未在当前机器实际构建/启动容器。Docker daemon不可用，下面是待目标环境验收的部署路径；不触碰本机其他Docker/Colima环境。正式发布前须完成[剩余验收](../verification/acceptance-execution.md)，特别是目标容量与选定真实渠道的usage契约。
 
-当前源码要求完整 **001–022** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染已验证，容器、1Panel 和正式供应商仍按目标环境分别验收。
+当前源码要求完整 **001–023** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染已验证，容器、1Panel 和正式供应商仍按目标环境分别验收。
 
-022-C0 的停服维护已有库级 `Attest(ctx, snapshot)`、`Permit.Verify(ctx)` 与受控 ReadLease，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；真实 PostgreSQL 专项与历史 CI 结果分别记录。维护读取集中在独立 `internal/maintenancescan`，普通billing/PB/main及领域测试不依赖维护或catalog；真正维护消费者仍完整认证固定catalog。保留单租约68表业务来源入口，新增84表/八算法的同session来源与lot/FIFO/消费退款读取核验；库级候选protected phase、basis和epoch开账已见[当前架构](../architecture/README.md#受保护钱包初始化事务)；独立停服只读epoch观察已有库级候选实现；独立APP完整运行核验已汇合，限定实际验证见记录，完整经营验收仍有PB门禁，见[细化架构](../architecture/runtime-composer.md)与[验证记录](../verification/runtime-composer.md)；正式迁移、维护CLI、V2材料及进程startup/ready装配仍后续。普通main、Compose和1Panel没有这些维护装配或新增正式迁移；部署继续使用001–022，C0规格SQL不属于安装或升级步骤。
+
+当前023来源模型仅支持新钱包历史：遇到既有journal、receipt、预占/结算/退款/核款单或非零余额会拒绝并回滚。保留原库和备份，建立独立当前数据库后按完整迁移与provision初始化；不要删除历史、篡改checksum或导入伪造来源。旧C0维护证明是隔离研究，不能替代现行027开账命令。
+
+停服空钱包的显式非现金开账与核对（先在私有环境中填入目标tenant、唯一业务号、正微元整数与active管理员ID）：
+
+```sh
+MAINTENANCE_MODE=true DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate open-wallet \
+  --tenant "$TENANT_ID" --reference "$OPENING_REFERENCE" \
+  --amount "$OPENING_MICRO_CNY" --actor "$ADMIN_USER_ID"
+./bin/moni-aigate check-wallet-sources --tenant "$TENANT_ID"
+```
+
+开账须真实owner及服务同实例锁，只允许未使用的零余额钱包；初始余额不算现金收款，不赋予原路退款资格。同意图重读原件、异意图冲突；未知提交先只读核查原业务引用，不自动重试。核对只报告差异，不修余额；返回不平衡时CLI非零退出。平台控制台的“资金来源”页提供同租户明细和只读核对。精确设计见[027](../../specs/027-wallet-sources/spec.md)。
+
+022-C0 的停服维护已有库级 `Attest(ctx, snapshot)`、`Permit.Verify(ctx)` 与受控 ReadLease，绑定原 Gate/Snapshot、实际维护身份和同事务前驱；真实 PostgreSQL 专项与历史 CI 结果分别记录。维护读取集中在独立 `internal/maintenancescan`，普通billing/PB/main及领域测试不依赖维护或catalog；真正维护消费者仍完整认证固定catalog。保留单租约68表业务来源入口，新增84表/八算法的同session来源与lot/FIFO/消费退款读取核验；库级候选protected phase、basis和epoch开账已见[当前架构](../architecture/README.md#受保护钱包初始化事务)；独立停服只读epoch观察已有库级候选实现；独立APP完整运行核验已汇合，限定实际验证见记录，完整经营验收仍有PB门禁，见[细化架构](../architecture/runtime-composer.md)与[验证记录](../verification/runtime-composer.md)；正式迁移、维护CLI、V2材料及进程startup/ready装配仍后续。普通main、Compose和1Panel没有这些维护装配或新增正式迁移；该历史研究仍无生产装配；现行027使用正式001–023，C0候选SQL不属于安装步骤。
 
 维护依赖隔离的旧 `f572bbd` / CI run 41359784155 观察期限失败保留原结论；后续 `824e4e5` 精确实现提交十组CI全部成功，进程、真实reader与整仓重新验收见[隔离记录](../verification/maintenance-integration-isolation.md)。68表与84表范围分别见[业务读取记录](../verification/complete-source-reader.md)和[来源与钱包读取记录](../verification/source-wallet-reader.md)。这些本地及CI证据不扩大为容器、1Panel、供应商或生产验收；权限与接线边界见[维护架构](../architecture/maintenance-gate.md)。
 
@@ -51,7 +65,7 @@ docker compose up -d app
 4. 检查ready、账本平衡、只读目录与控制台、一个预算内的受控真实渠道样例，监控未知usage/冻结/成本待核对。真实样例预算由经营者自己确定，本次未发生。
 5. 只在数据库schema仍兼容时回退旧镜像。涉及不兼容数据恢复时走[恢复手册](backup-restore.md)，不能覆盖数据库后立刻开放充值/收费。
 
-本版没有自动down migration。当前完整schema为001–022，后续升级只能追加新迁移，不编辑已应用文件。以下010–013为对应阶段的历史变更说明。010为Key新增规范来源列表和独立`access_policy_revision`，并为请求新增不可更新的`client_ip INET`；旧Key来源默认不限、旧请求来源为NULL，不伪造历史来源。011为Key增加默认60RPM/burst20/并发16的三元组及独立`limit_revision`，数据库限制范围并防止直接指定版本绕过。012追加独立`configuration_revision`，只随名称/模型/地域/累计额度/期限实际变化递增，不改写历史字段，也不为旧字段增加会阻断资金更新的严格CHECK。013增加不可变路由成本策略、binding两维采购单价上限及成本INSERT的渠道同步触发器；旧路由manual/allow，历史同刻报价保留并确定性选择，新同刻报价拒绝。成本发布与已有渠道management_revision/CAS共同生效，调价不追溯改变sending后的采购快照。三版本及spent/held互不干扰，app/projector不因此扩大权限。先排空旧实例，再以owner完成迁移及provision，受限serve只读Verify。财务历史不会因应用回滚删除；015及016最终执行状态分别见[来源报告](../verification/key-access-policy.md)与[运行限额报告](../verification/key-runtime-limits.md)，017专项/全量及隔离浏览器、58123迁移/角色/资源核对已通过限定本地验收，见[基本配置记录](../verification/key-configuration.md)。018实现、013迁移后的受限预览/29项静态资源与权限核对见[成本路由记录](../verification/cost-aware-routing.md)；本地通过不等同目标容器/1Panel验收。
+本版没有自动down migration。当前完整schema为001–023，后续升级只能追加新迁移，不编辑已应用文件。以下010–013为对应阶段的历史变更说明。010为Key新增规范来源列表和独立`access_policy_revision`，并为请求新增不可更新的`client_ip INET`；旧Key来源默认不限、旧请求来源为NULL，不伪造历史来源。011为Key增加默认60RPM/burst20/并发16的三元组及独立`limit_revision`，数据库限制范围并防止直接指定版本绕过。012追加独立`configuration_revision`，只随名称/模型/地域/累计额度/期限实际变化递增，不改写历史字段，也不为旧字段增加会阻断资金更新的严格CHECK。013增加不可变路由成本策略、binding两维采购单价上限及成本INSERT的渠道同步触发器；旧路由manual/allow，历史同刻报价保留并确定性选择，新同刻报价拒绝。成本发布与已有渠道management_revision/CAS共同生效，调价不追溯改变sending后的采购快照。三版本及spent/held互不干扰，app/projector不因此扩大权限。先排空旧实例，再以owner完成迁移及provision，受限serve只读Verify。财务历史不会因应用回滚删除；015及016最终执行状态分别见[来源报告](../verification/key-access-policy.md)与[运行限额报告](../verification/key-runtime-limits.md)，017专项/全量及隔离浏览器、58123迁移/角色/资源核对已通过限定本地验收，见[基本配置记录](../verification/key-configuration.md)。018实现、013迁移后的受限预览/29项静态资源与权限核对见[成本路由记录](../verification/cost-aware-routing.md)；本地通过不等同目标容器/1Panel验收。
 
 ## Key运行限额与进程生命周期（016）
 
@@ -79,7 +93,7 @@ Key可配置RPM 1..6000、burst 1..200、并发1..16，平台固定6000RPM/burst
 
 ## 024-A经营告警与角色核验
 
-024-A验收版本要求001–019；当前源码已追加至001–022，启动始终校验完整当前迁移，不能用旧版本清单启动新程序。019追加站内告警与两类未决来源部分索引；排空旧实例后，离线owner执行migrate/provision，完成后启动APP及独立PROJECTOR。`OPERATIONS_ALERTS_ENABLED`默认false，Compose已透传；开关只控制评估，恢复模式只读，不开启也须满足新表最小权限。
+024-A验收版本要求001–019；当前源码已追加至001–023，启动始终校验完整当前迁移，不能用旧版本清单启动新程序。019追加站内告警与两类未决来源部分索引；排空旧实例后，离线owner执行migrate/provision，完成后启动APP及独立PROJECTOR。`OPERATIONS_ALERTS_ENABLED`默认false，Compose已透传；开关只控制评估，恢复模式只读，不开启也须满足新表最小权限。
 
 provision在同一事务配置并核验六表有效权限；serve在worker/HTTP前核验两条真实连接。禁止表/列越权、GRANT OPTION、schemaCREATE、owner、高权属性及SET/ADMIN可提升路径；无害group允许存在。外部group越权由离线运维修正，不自动撤销共享group授权。owner登录后SET ROLE不能视为受限服务连接。失败在监听前终止，不以授予owner绕过。
 
