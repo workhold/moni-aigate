@@ -112,7 +112,7 @@ MVP 不维护旧内部历史的迁移与退款分支。023 在发现既有资金
 
 ### 4.2 数量与金额
 
-所有协议在边界归一为同一个现行 `schema + bounds + quantities + rates` 合同。[028](../../specs/028-unified-metering-media/spec.md)建议以无数据库/网络的 `internal/inference` 持有不可变 Profile、ParsedRequest、BoundPlan、QuoteSnapshot 和 Observation，供 provider、billing、任务和会话共享。文本协议把实际 Token 映射到数量向量，不保留第二条旧 Token 金额路径；旧字段在替换时一次性调整调用和 DTO，不进行运行时 profile 探测或失败 fallback。
+所有协议在边界归一为同一个现行 `schema + bounds + quantities + rates` 合同。[028-U共同域](../../specs/028-unified-metering-media/u-domain-contract.md)冻结无数据库/网络的 `internal/inference`，持有不可变Profile、BoundPlan、QuoteSnapshot、Observation和FinalQuantities。provider独占六文本parser；共同包接已验证材料，不再复制ParseJSON。共同包与metering复用strictjson语法层。文本协议把实际Token映射到数量向量，生产切换时替换旧金额路径及DTO；共同纯域实现不等于当前serve已完成切换。准确阶段出口见[任务清单](../../specs/028-unified-metering-media/tasks.md)。
 
 现有纯层只有八个 registry 名称：音频输入/输出毫秒、图片输出张数、请求数、文本输入/输出 Token、文本输入 Unicode scalar 和 UTF-8 字节。**这不等于能准确计费现代图片或 Realtime**。生产接线须按被选供应商补齐音频/图片 Token、缓存收费叶子和视频时长等所需定义，并测试来源字段、单位及互斥关系。
 

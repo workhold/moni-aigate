@@ -625,3 +625,9 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 026按原request创建窗口统计唯一收入/退款和全部attempt成本；opening不算销售收入。媒体/任务/实时将复用同一事实，不另开收入总账。供应商与部署验收独立记录；性能在完整能力后进行。
 
 027的入账摘要与回执过滤统一为四来源，wallet_opening_amount是必填精确金额；开账只计钱包入账，不计模型销售收入。通用查询时间统一UTC并保留精度和分页instant；来源/分配UI保持严格校验。实际受限APP/worker/projector、HTTP、浏览器与经营CSV验证见[027记录](../verification/wallet-sources.md)。
+
+## 028-U共同纯域与生产替换边界
+
+[共同域合同](../../specs/028-unified-metering-media/u-domain-contract.md)冻结并实施`inference`：opaque Profile/BoundPlan/QuoteSnapshot/Observation/FinalQuantities，provider独占六文本parser，底层数量/费率/数学只有metering一套，两包共用strictjson。文本stream选择json/events；retrieval明确0输出价/界/量。known/unknown报价区分缺版本与显式unknown原版本，unknown不生成零金额。Observation分侧确认，人工客户核对绝不据此确认供应商成本。
+
+当前新增为纯包，尚无serve资金调用边或新正式迁移；[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)和[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)是下一次完整替换的实施输入。U当前发布仍每模型唯一capability，纯算法候选max/收紧不代表已发布异构路由。026保留收入一次/全部attempt成本和opening不计销售的口径，协议/执行种类/schema/variant将从原请求快照扩展，JSON/CSV/UI同步。架构、信任边界与未验项见[细图](../architecture/unified-metering.md)；准确阶段出口见[任务](../../specs/028-unified-metering-media/tasks.md)。

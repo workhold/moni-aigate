@@ -89,6 +89,7 @@ type Bounds struct{ vector vector }
 type Quantities struct{ vector vector }
 type Rates struct {
 	binding
+	dimensions   []string
 	numerators   []int64
 	denominators []int64
 	canonical    []byte

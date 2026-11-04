@@ -186,8 +186,9 @@ func ParseRates(schema Schema, side Side, raw []byte) (Rates, error) {
 		return Rates{}, err
 	}
 	wire := make([]rateWire, len(entries))
-	result := Rates{binding: schema.bind(side), numerators: make([]int64, len(entries)), denominators: make([]int64, len(entries))}
+	result := Rates{binding: schema.bind(side), dimensions: make([]string, len(entries)), numerators: make([]int64, len(entries)), denominators: make([]int64, len(entries))}
 	for i, entry := range entries {
+		result.dimensions[i] = entry.dimension
 		wire[i] = rateWire{entry.dimension, entry.unit, strconv.FormatInt(entry.numerator, 10), strconv.FormatInt(entry.denominator, 10)}
 		result.numerators[i], result.denominators[i] = entry.numerator, entry.denominator
 	}

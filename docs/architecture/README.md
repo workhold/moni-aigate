@@ -165,6 +165,8 @@ flowchart TD
       InitPlanner[fundinglotinit.Build\n旧业务与账本独立核对 / 确定开账写集\n纯描述性计划 / 无stamp与权限]
       LotPlanner[billing lot_plan\nFIFO / 原收费分配 / 逆原来源退回]
       Metering[metering\n八维完整向量 / 精确费率 / 上界与摘要]
+      Inference[inference\n不可变计划 / 原报价 / 分侧观察\n028-U纯域，尚无serve接线]
+      StrictJSON[strictjson\n唯一有界JSON语法层 / 无损Unicode]
       RefundProto[paymentrefundproto\n退款v2封闭协议 / v1只读桥 / 三用途签名]
       LedgerRows[fundinglotverify\n大整数账本检查 + 人工/券/沙箱直接关联\n局部raw facts算法 / 无authority]
       ProcurementBudgetCore[fundinglotverify\n采购账户 / reservations / budget event投影核验\nbig.Int局部算法 / 无authority]
@@ -180,6 +182,9 @@ flowchart TD
       WalletSequenceCore[fundinglotverify.CheckWalletSequenceRows\n七投影全序 / journal与事件声明\n纯前置检查]
       WalletLotsCore[fundinglotverify.CheckWalletLotsRows\n25组原行 / FIFO与三桶 / 逆序退款\n纯核验 / 84表维护reader已接线]
     end
+    Inference --> Metering
+    Inference --> StrictJSON
+    Metering --> StrictJSON
     WalletLotsCore -->|内部原行投影 / 结构计数| WalletSequenceCore
     RefundProto -->|仅已验证capture值的只读桥| PaymentProto
     LedgerReader -->|读取后整份独立核算| LedgerRows
@@ -396,6 +401,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 受控维护读取与五个局部reader（022-C0-T3） | ReadLease、封闭codec、完整Rows生命周期、原authority入口/出口重核；固定五reader为ledger、PB、manual/voucher、sandbox capture直接关联及采购；其中采购有五项局部摘要；本行五类scope不提供全来源coverage/basis/epoch，生产CLI仍未实现 | [lease](../../internal/maintenancetrust/lease.go)、[Rows](../../internal/maintenancetrust/lease_rows.go)、[codec](../../internal/maintenancetrust/lease_codec.go)、[集成包](../../internal/maintenancescan)、[manual/voucher reader](../../internal/billing/funding_source_read.go)、[sandbox reader](../../internal/billing/funding_source_capture_read.go)、[采购reader](../../internal/billing/procurement_attempt_read.go)、[采购历史reader](../../internal/billing/procurement_command_read.go)、[历史读取合同](../../specs/022-self-service-payments/c0-procurement-history-read-contract.md)、[命令观察合同](../../specs/022-self-service-payments/c0-procurement-command-contract.md)、[成本消息合同](../../specs/022-self-service-payments/c0-procurement-cost-journal-contract.md)、[账本core](../../internal/billing/funding_ledger_query.go)、[纯核验core](../../internal/fundinglotverify)、[PB core/guard](../../internal/periodicbudget/verifier_maintenance.go)、[采购预算合同](../../specs/022-self-service-payments/c0-procurement-budget-contract.md)、[attempt合同](../../specs/022-self-service-payments/c0-procurement-attempt-contract.md)、[sandbox窄合同](../../specs/022-self-service-payments/c0-sandbox-capture-link-contract.md)、[T3租约合同](../../specs/022-self-service-payments/c0-read-lease-contract.md)、[采购验证状态](../verification/procurement-budget-maintenance.md)、[此前来源reader证据](../verification/funding-source-links.md)、[T3历史专项](../verification/maintenance-read-lease.md)、[T3集成记录](../verification/maintenance-read-lease-integration.md) |
 | 退款v2纯协议（022-C1-P） | v1已验capture只读桥、严格六种DTO、四摘要域与三用途HMAC、不可变opaque；独立Python向量及race/vet/fuzz通过，无运行接线 | [纯包](../../internal/paymentrefundproto)、[精确合同](../../specs/022-self-service-payments/c1-protocol-v2-contract.md)、[独立向量](../verification/payment-refund-v2-golden.json)、[验证](../verification/payment-refund-protocol-v2.md) |
 | 通用向量计量纯层（024-B0-P） | 闭合八维、两侧完整schema绑定、有理率总和一次ceil、上界/actual区分、规范摘要和旧token等价adapter；专项race/vet/fuzz通过，尚未被网关运行模块调用 | [纯模块](../../internal/metering)、[冻结合同](../../specs/024-extension-platform/b0-pure-contract.md)、[证据](../verification/metering-vectors.md) |
+| 统一计量共同值域（028-U纯片） | 六文本不可变profile/计划、原known/unknown报价、分侧用量及人工客户量/采购隔离；与metering复用strictjson。正式DDL、六文本资金/HTTP/UI切换及媒体尚未完成 | [当前细图与边界](unified-metering.md)、[共同合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md) |
 | 采购资金 | 平台共享账户、永久凭据绑定、累计预算、逐attempt预占、未知占用、双人更正与人工观察 | [procurement](../../internal/procurement)、[采购账务](../../internal/billing/procurement.go)、[019合同](../../specs/019-procurement-accounts/contract.md)、[014迁移](../../migrations/014_procurement_accounts.sql) |
 | 运维与安全 | 最小数据库角色、实例 advisory lock、恢复闸门、密钥轮换 | [operations](../../internal/operations)、[security](../../internal/security)、[telemetry](../../internal/telemetry)、[config](../../internal/config) |
 | 自助身份 | 邮箱证明后最小权限开户、当前MFA下恢复密码、全部会话撤销、加密邮件队列/有界投递与清理；默认关闭注册与邮件 | [身份事务](../../internal/identity/self_service.go)、[匿名HTTP](../../internal/server/self_service_handlers.go)、[outbox](../../internal/identity/mail_outbox.go)、[worker](../../internal/mailworker/worker.go)、[SMTP](../../internal/maildeliver/smtp.go)、[021合同](../../specs/021-self-service-identity/contract.md) |

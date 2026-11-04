@@ -1,6 +1,6 @@
 # 028：统一向量计量与媒体、任务、实时协议
 
-2026-11-04；状态：**设计合同草案，待集成人与供应商资料审查后分片冻结；没有新增生产能力**。本文按[ADR-005](../../docs/decisions/ADR-005-pre-mvp-single-path.md)建立一套现行计量与资金路径。当前六种外部文本协议保留其已声明的支持范围，内部统一转成向量；图片、音频、视频任务与实时轮次使用同一价格、请求、attempt、证据和结算模型。不建立 `token_v1/vector_v1` 双运行，不新增 `/v2` 目录，不为未发布的内部 DTO 保留旧字段联合或自动 fallback。
+2026-11-04；状态：**总体设计合同草案；U共同纯域已单独冻结实施，生产DDL/六文本接线仍未完成，没有新增可售媒体能力**。本文按[ADR-005](../../docs/decisions/ADR-005-pre-mvp-single-path.md)建立一套现行计量与资金路径。当前六种外部文本协议保留其已声明的支持范围，内部统一转成向量；图片、音频、视频任务与实时轮次使用同一价格、请求、attempt、证据和结算模型。不建立 `token_v1/vector_v1` 双运行，不新增 `/v2` 目录，不为未发布的内部 DTO 保留旧字段联合或自动 fallback。
 
 依据：[统一架构](../../docs/architecture/README.md)、[HLD](../../docs/design/HLD.md)、[LLD](../../docs/design/LLD.md)、[整体设计与本轮官方资料](../../docs/design/integrated-wallet-media.md)、[024纯计量核](../024-extension-platform/b0-pure-contract.md)、[026经营报表](../026-operating-reports/spec.md)、[027现行来源资金](../027-wallet-sources/spec.md)、019采购与023周期预算的现行业务合同。027的六来源核心表、四写入口及023正式迁移已实现，限定本地验收见其记录；本文只在其现行模型上接线，不引用旧C0/proof/profile作为运行前提。028导出签名和正式迁移号由集成人统一冻结，不能将未实现接口写成已实现。
 
@@ -59,61 +59,31 @@
 
 ## 4. 共同 Go 类型与包责任
 
-推荐新增 `internal/inference` 作为**无DB/网络/环境/凭据**的共同领域包，仅依赖纯 `metering`。它持有协议枚举、profile、解析后的请求计划、观察、原报价快照和封闭资源限制；provider负责网络与供应商协议，billing负责事务。最终包名由集成人冻结一次，不能各媒体任务另建同义类型。
+共同纯领域包冻结为 `internal/inference`，最小签名、canonical、错误和信任边界以 [U共同域合同](u-domain-contract.md)为准。它仅依赖 `metering` 和共享的 `strictjson` 语法层，无DB/网络/环境/时钟/凭据。provider继续独占六文本严格请求/响应解析，不在共同包增加第二份 `ParseJSON`。已解析的原profile、input HMAC、output和stream进入受限工厂；billing负责重读受权配置、完整候选闭包和资金事务。
 
 ```go
-type Protocol string
-type ExecutionKind string // synchronous | asynchronous | realtime_turn
-type ResultKind string    // json | image_inline | audio_binary | video_artifact | events
-type UsageState string    // confirmed_final | provisional | missing | conflicting
-
 type Profile struct { /* private immutable validated definition */ }
-type ParsedRequest struct { /* private input, expectations, Plan; no credentials */ }
-type BoundPlan struct { /* private profile/schema/variant/input binding + both Bounds */ }
-type QuoteSnapshot struct { /* private version/side/schema/variant/Rates/Bounds/digests */ }
+type BoundPlan struct { /* private schema/variant/input binding + both Bounds */ }
+type QuoteSnapshot struct { /* private known/unknown union and original quote */ }
 type Observation struct { /* private identity + dimension states + safe metadata */ }
 type FinalQuantities struct { /* private complete confirmed side-bound Quantities */ }
 
-type ResourceLimits struct {
-    RequestBytes, UploadBytes, ResponseBytes, DecodedBytes int64
-    EventBytes, SessionBytes, TurnBytes int64
-    MaxInputDurationMS, MaxOutputDurationMS int64
-    MaxTaskObservations, MaxSessionTurns int64
-    RequestTimeout, TurnTimeout, SessionTimeout time.Duration
-}
-
-func ParseProfile(raw []byte) (Profile, error)
-func ParseJSON(protocol Protocol, raw []byte, p Profile) (ParsedRequest, error)
-func ParseParts(protocol Protocol, fields []Field, parts []BoundedPart, p Profile) (ParsedRequest, error)
-func (r ParsedRequest) Plan() BoundPlan
-func (p BoundPlan) Bounds(side metering.Side) (metering.Bounds, error)
-func (p BoundPlan) Digest() ([32]byte, error)
-func (p BoundPlan) CanonicalJSON() ([]byte, error)
-func ParseQuoteSnapshot(raw []byte, p Profile, plan BoundPlan, side metering.Side) (QuoteSnapshot, error)
-func ParseObservation(raw []byte, p Profile) (Observation, error)
+func NewTextProfile(TextProfileInput) (Profile, error)
+func NewTextPlan(TextPlanInput) (BoundPlan, error)
+func (p BoundPlan) ForAttempt(Profile) (BoundPlan, error)
+func ParseQuoteSnapshot(raw []byte, plan BoundPlan, side metering.Side) (QuoteSnapshot, error)
+func ParseObservation(raw []byte, expected ObservationBinding) (Observation, error)
 func (o Observation) Confirmed(side metering.Side) (FinalQuantities, error)
 func (q FinalQuantities) Quantities() (metering.Quantities, error)
 ```
 
-`Field/BoundedPart` 是严格有界 parser 的输入材料：字段名称、已验证 MIME、规范长度、只读内容；构造时复制内存并检查重复/集合，不能将文件路径、随意 `io.Reader` 或客户端自报 duration 当已验证部分。具体 codecs 与 multipart读取在协议适配文件；共同类型不执行解码器插件。零值拒绝，返回的 byte/slice/maps均复制；不存在 `Trusted:true`、公开可写 amount、可变 profile指针或 setter。
+U只发布六文本、同步json/events与default variant；retrieval不允许stream。普通路由当前所有binding引用唯一model capability，route reader按profile digest去重，再由billing重建核对；纯域候选max/attempt收紧算法不表示已发布异构profile路由。后续媒体的multipart、codec、ResourceLimits和任务/会话工厂随S/A/R精确合同追加，U不安装无writer的任务表，不开放占位端点。所有opaque零值拒绝，返回bytes/slices复制，不存在 `Trusted:true`、可写amount或setter。
 
 `ParseQuoteSnapshot` 仅由受权DB reader从已选原版本和完整rate集合构造，校验version、side、schema、variant、bounds与rate绑定；它不按raw自报R/U授准入。`ParseObservation` 仅供受信适配器/任务观察服务构造规范事实，结构校验不证明供应商真实性；客户HTTP没有直接提交该结构的入口。上述parser失败返回零opaque对象和受控error，不返回部分合法向量。价格快照和观察wire大小分别≤16KiB/32KiB，raw中不含模型正文/二进制。
 
-`Profile` 必含：非空协议和执行类别、不可变 profile/version、公开模型、供应商合同标识、schema/digest、有限 variant政策、两侧维度上界策略、结果类型与限制、已知 usage/子集/兼容零字段、无消费证据策略、可用读状态/结果/取消能力及认证状态。profile中认证标识只由受权发布配置，不能凭一份管理JSON自动产生认证。所有 protocol switch显式穷举，空协议只在模型创建默认选择处显式定为 Chat，此后不再有空值 fallback。
+U的共同Profile绑定完整不可变provider合同摘要、模型/版本、schema、default variant、协议和强制界。工具、参数、usage语义、无消费资格等完整provider合同仍在唯一协议配置中，由发布端及billing核摘要；共同包不重新实现该parser。未来媒体认证身份和资源限制在对应profile合同补齐。空协议只可在模型创建入口明确选Chat，此后空/未知枚举一律拒绝。
 
-`Observation` 的结构化输入合同为：
-
-```text
-ObservationInput{
- tenant_id,request_id,attempt_id,source,source_event_id,profile_version,
- schema_id,schema_digest,variant_key,provider_reference,
- observed_at,protocol_outcome,transport_end_reason,delivery_stage,
- quantities:[{dimension,unit,status,quantity:string|null,safe_reason:null|Code}],
- diagnostics:[{name,value}],unexpected_charge_reason:null|Code
-}
-```
-
-observed_at是元数据；资金/周期时间取DB。必需量缺失为null，不能填0。诊断字段为代码固定字典，不含正文/自由URL；新增 diagnostic必须明确不收费，未知嵌套或额外非零收费量不能丢弃。完整相同身份不同内容进入冲突，不覆盖原证据；累计量替换并校验关系，不相加重复快照。
+U的Observation精确wire以[共同域合同](u-domain-contract.md)§5为准：包含原tenant/request/attempt/profile/schema/variant/plan绑定、安全来源和终态/交付/finish_reason、完整维度状态及nullable quantity。没有自由diagnostics map；cached/reasoning和Messages cache拆分由provider严格验证及原生wire保留，不作为重复收费维度。观察时间是元数据，资金/周期时间取DB；必需量缺失为null，不能填0。无法归属的额外收费明确阻止相应侧确认。所有Observation绑定原attempt；无attempt准入失败直接Release，人工approved_reconciliation也绑定原attempt且永不能确认supplier量。相同来源事实幂等、异体进入分侧冲突，不覆盖原证据；累计量替换并校验单调/包含关系，不重复相加。
 
 retail/supplier各自只在其完整 mask 最终确认时得到 `FinalQuantities`。供应商独有维度缺量可令采购unknown、客户仍按已确认自身完整向量结算；若未知费用无法安全归属或改变共用量，则两侧均不确认。这是明确的分侧规则，替代024旧候选笼统“任一未知两侧整体不确定”的安排。供应商价格basis unknown与供应商实际量missing分别记录；首批媒体派发前仍要求完整已知采购价。
 

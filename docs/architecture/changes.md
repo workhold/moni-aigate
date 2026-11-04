@@ -4058,3 +4058,59 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - added `web/tests/wallet-sources.test.mjs`
 
 </details>
+
+## 2026-11-04T06:00:57Z · 209b55a0670c
+
+028-U共同纯域与共享strictjson实施，明确无serve调用边；同步计划/报价/分侧观察与只读描述、生产存储草案/消费者和阶段出口，026保留唯一收入及全部采购金额并规划原请求元数据，027远端CI未启动边界；正式DDL与媒体仍未实现
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1979 个源文件；本次 32 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/operating-reports.md`
+- added `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/integrated-wallet-media.md`
+- modified `docs/verification/mvp-status.md`
+- added `docs/verification/unified-metering.json`
+- added `docs/verification/unified-metering.md`
+- modified `docs/verification/wallet-sources.md`
+- added `internal/inference/inference_test.go`
+- added `internal/inference/json.go`
+- added `internal/inference/observation.go`
+- added `internal/inference/pipeline_test.go`
+- added `internal/inference/plan.go`
+- added `internal/inference/profile.go`
+- added `internal/inference/quote.go`
+- added `internal/inference/types.go`
+- added `internal/metering/describe.go`
+- added `internal/metering/describe_test.go`
+- modified `internal/metering/json.go`
+- modified `internal/metering/parse.go`
+- modified `internal/metering/types.go`
+- added `internal/strictjson/parse.go`
+- added `internal/strictjson/parse_test.go`
+- modified `specs/024-extension-platform/b0-pure-contract.md`
+- modified `specs/028-unified-metering-media/spec.md`
+- added `specs/028-unified-metering-media/tasks.md`
+- added `specs/028-unified-metering-media/u-consumer-inventory.md`
+- added `specs/028-unified-metering-media/u-domain-contract.md`
+- added `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
+
+## 2026-11-04T06:01:58Z · 4408153655c6
+
+028-U纯域最终race、双fuzz与make check/构建证据收口；复核模块、当前无资金/媒体接线、026/027口径及未验边界，仅验证记录补充无新增运行权限
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1979 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.json`
+- modified `docs/verification/unified-metering.md`
+
+</details>

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-04T05:28:27Z",
-  "review_reason": "027单一现行来源模型：正式023、四资金入口FIFO/退款、非现金停服开账、受限角色与双向核对、HTTP及控制台四来源摘要/余额/分配；通用DTO UTC规范化。026经营收入/全部attempt成本与CSV在023下复验。028补统一计量/媒体/任务/实时总体设计及D0缺口，仍未实现。冻结原001–022研究材料与历史helper身份修正、旧descriptor当前源码拒绝及覆盖缩减；不新增023 proof/profile或在线兼容依赖。已语义复核模块图、资金链路、数据权限、能力边界、源码与验证链接。",
-  "snapshot_sha256": "1299eb4ff3fb508c2ce137c07e6dacef157defa42460245cd7c052b0ed46040e",
-  "architecture_sha256": "961590787a82f1ba7e1efe9093b3f717ba0b8180a4c5dc329272a5a70eb00071",
-  "history_sha256": "9f778cea8d53d01f99c91399fb3f01d4e31ab0b1e0f8e5e812904d955a93fa0f",
+  "reviewed_at": "2026-11-04T06:01:58Z",
+  "review_reason": "028-U纯域最终race、双fuzz与make check/构建证据收口；复核模块、当前无资金/媒体接线、026/027口径及未验边界，仅验证记录补充无新增运行权限",
+  "snapshot_sha256": "4408153655c61fff17887d081883d3fd937ae497e2f8ce2955aca45dfc1a270a",
+  "architecture_sha256": "3152e36a84373117d57dd47ac96f8bea4d7933a1f8f8840b40d6eaf3f17a3072",
+  "history_sha256": "c68f9a912ebe1b6e143e868a28b9b971771aa08882a328dd169d22bd825fc762",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "41074c48125612b126e7419067b128afd62abcc0194d2b63f8e2213e389041da"
+      "sha256": "9b6f24bbf6c7e997962698997a27e64cd2aaec1cd8a4e975850ad2647215c3f8"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -109,7 +109,7 @@
     },
     {
       "path": "docs/architecture/operating-reports.md",
-      "sha256": "b24d33ba2f666ac111fa5c813d195b9129db8dd91acc173b4ab3aaa27fcf8348"
+      "sha256": "519b4bee1958db98f9ff98cdc6acd22ae27d459c3f1afaf7f85e8d4102e737d5"
     },
     {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
@@ -140,6 +140,10 @@
       "sha256": "75621dca00eea55d19735a9e0cdbc2a2d575e4f0f69145be41a2cd7903464777"
     },
     {
+      "path": "docs/architecture/unified-metering.md",
+      "sha256": "93caea20eb87227ee6d7e0593d442826720f07e0d82dd1adec6701a906ffbef4"
+    },
+    {
       "path": "docs/architecture/wallet-sources.md",
       "sha256": "c39e27d109518bc2da80d6dd7532cc715eec0502d8c8dc29397981e48fdc9749"
     },
@@ -165,15 +169,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "589c3c59b9a62faf675cceb03ee036ef4fe53619856b47ebf27247269eccf11f"
+      "sha256": "8a8b48ade6a491ecf318dc4556d44fb7120bf88defc3dd04592e7f7d1e4159a5"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "304af49c345a8997d449603e090420ccc4a99b728ed8ed5bf42375284a46fd74"
+      "sha256": "13fffaee11610a5c598fd7cd796912c06ddd7770986c83a2ef6d462ff99bdcc4"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "70759f441ef841ca5809e0ace3f8d8d1687a8740c5b40838f0d462810d1a7ec3"
+      "sha256": "d011874beb7f1e72ad2f6dd8d8da13027ab7241bf17c5beecd17901eb75ec130"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -181,7 +185,7 @@
     },
     {
       "path": "docs/design/integrated-wallet-media.md",
-      "sha256": "e07bce1a765e4feaa07dff09b6cf9e911df8ac59dd769b6cce540ba1e22a8fb9"
+      "sha256": "1191efd3f6649ba8af84666bcf0907ba67252a1dd7e49f2a1460e52d086474da"
     },
     {
       "path": "docs/design/new-api-roadmap.md",
@@ -1373,7 +1377,7 @@
     },
     {
       "path": "docs/verification/mvp-status.md",
-      "sha256": "a11de6554eeaf62bb93b784a4911cc13dc489fb208e208d039f3afb31b048931"
+      "sha256": "313c45b67dff8881cf337fa23b9246f6f001ef88aaf8beb3507d1e7cb3317ced"
     },
     {
       "path": "docs/verification/native-protocols.md",
@@ -1776,6 +1780,14 @@
       "sha256": "dc6dba442cf9992c4665b0708790d3a506cc41b2603d2abd8ff3fb4612e3fb3d"
     },
     {
+      "path": "docs/verification/unified-metering.json",
+      "sha256": "20c25c061fa645664c6c2b06985ee26a47b87d136a8647263e1f7c09610f09fa"
+    },
+    {
+      "path": "docs/verification/unified-metering.md",
+      "sha256": "5e588f5c69ea5b22c141e5f537f4a06c1b35b369504a3b5d437ca80372ae0715"
+    },
+    {
       "path": "docs/verification/wallet-lots-rows.json",
       "sha256": "7e6bb6f425c7e4b4e83534aaa8c3dab9f60b8739192c485934deac3e065cfd54"
     },
@@ -1797,7 +1809,7 @@
     },
     {
       "path": "docs/verification/wallet-sources.md",
-      "sha256": "fb0a6bc12179400a2738d9e2970a712c5f11ecbc16552fd03cd14ae11a29fd15"
+      "sha256": "61a0d80b397dea2444f8889e798d336fbf1c4c8bb6e29894252bc9081aadc860"
     },
     {
       "path": "go.mod",
@@ -3248,6 +3260,38 @@
       "sha256": "d589dc3a96dbcaa3e6a5ae1d483329272ef51fd17b1f0609c38db7f05203d675"
     },
     {
+      "path": "internal/inference/inference_test.go",
+      "sha256": "6140ef0ac64d46d5b7157556eda58ebed4b838f0172009ebee02b696d5698a11"
+    },
+    {
+      "path": "internal/inference/json.go",
+      "sha256": "5e15813bb5fdb19fca089e5acbe3d6d83caaef51b4c8481c7f7b3f5eac88a6b9"
+    },
+    {
+      "path": "internal/inference/observation.go",
+      "sha256": "7f674a75f225ada52775c95fabff5ac46307e65abb27c7c4357ce917e2433409"
+    },
+    {
+      "path": "internal/inference/pipeline_test.go",
+      "sha256": "bc15f005cc2718ef91d6c0171f6b07b7800da5519d53f44488822e8f6ed499dc"
+    },
+    {
+      "path": "internal/inference/plan.go",
+      "sha256": "680ad4e8e455190becb41de1b866df3c626fa276e62cbb23f5f6d732005dfb14"
+    },
+    {
+      "path": "internal/inference/profile.go",
+      "sha256": "057d63fe64e423787b53913e9a0314e55b97fd1860a94b9d717ecf9d68922c2d"
+    },
+    {
+      "path": "internal/inference/quote.go",
+      "sha256": "94ae8d6e2853bc354d45ed6948333268d5a7830e3d62528a69109ee2c6007ad5"
+    },
+    {
+      "path": "internal/inference/types.go",
+      "sha256": "156b03cc66b2d8bc1d094119e040f5456d271f4d903ebca1a4f8b85c981bf104"
+    },
+    {
       "path": "internal/maildeliver/smtp.go",
       "sha256": "cfa88ef972a5703b46c7b015b2ce60006476beb632af862a91c31be2880f4dfa"
     },
@@ -3668,6 +3712,14 @@
       "sha256": "de06ec87b9335457c4364f52da842f22cefa7466c8b812aecaceb6c3765911db"
     },
     {
+      "path": "internal/metering/describe.go",
+      "sha256": "284ddef84b2e3f914ef69a44d39463e23e9f25e22c75c8b1c1c5176fa49f9697"
+    },
+    {
+      "path": "internal/metering/describe_test.go",
+      "sha256": "d0e122c20f5014ed93f17625468fc928e92b670984327666e3f6eaeaaff44de0"
+    },
+    {
       "path": "internal/metering/digest.go",
       "sha256": "3ca055ec4a70175574f4434822f4bd6dac49a5c35fc26450bd9674b1b773eff4"
     },
@@ -3677,7 +3729,7 @@
     },
     {
       "path": "internal/metering/json.go",
-      "sha256": "8ae48f08b80d09b6acb9280364c72f5fbddae3852a01fef07a4cdd024b9c2f73"
+      "sha256": "ab5cd4c0000d6e70590e93614de578213358f32c2ddbe9700dd4c5b2fff8e39e"
     },
     {
       "path": "internal/metering/legacy.go",
@@ -3689,11 +3741,11 @@
     },
     {
       "path": "internal/metering/parse.go",
-      "sha256": "2496f6588f4cd746904dd3c3547148482351f5c7e330a92a7f5497ff49bc5b81"
+      "sha256": "b91b3151e399dc0fc97b2aa810b66abcff7adfa2634431e5878b0ee82e34a054"
     },
     {
       "path": "internal/metering/types.go",
-      "sha256": "440ccf20863f3275094b0c7adeb5862f3cf890124588bcb3650891c82211003d"
+      "sha256": "85dce5c7013c403b25b0c69755bef98a3d6ac413e9e4fe271536bcdca2312d35"
     },
     {
       "path": "internal/mockpsp/config.go",
@@ -5848,6 +5900,14 @@
       "sha256": "bd624dddc53d3cef1257f74c05d7cddd9f8b2bc76a880a5c5c0f63624c92cbe8"
     },
     {
+      "path": "internal/strictjson/parse.go",
+      "sha256": "a56cb1f3455259869cc4d72c06f6b34e54861e012ae6a95163fc4df9db93c3ff"
+    },
+    {
+      "path": "internal/strictjson/parse_test.go",
+      "sha256": "6ac8d55407f6b00528324dff6cc7ce58be846b1869465ad018cef7b3a1ce09e1"
+    },
+    {
       "path": "internal/telemetry/telemetry.go",
       "sha256": "b07b3f25ba6e5b36441e25fb97a7c46829ab5f25063b79c27f1952ddf8855228"
     },
@@ -7185,7 +7245,7 @@
     },
     {
       "path": "specs/024-extension-platform/b0-pure-contract.md",
-      "sha256": "7d62f9d809077f15e96f18d3a9f9c3ea0337cfa681fc7991e228811dce1dccde"
+      "sha256": "2c6ece8dfa1214292af53c1ee347f7448cff43e1cf7fc7ae6e50177adcaeeb22"
     },
     {
       "path": "specs/024-extension-platform/contract.md",
@@ -7245,7 +7305,23 @@
     },
     {
       "path": "specs/028-unified-metering-media/spec.md",
-      "sha256": "3033a337007f9fd1b9a44eea7dc0c7f442cd584fef6da670b401b63393345c23"
+      "sha256": "a0d6f4f06a70076a995477316dfe32a53267f150f1ebde444a6a7d85de1ee608"
+    },
+    {
+      "path": "specs/028-unified-metering-media/tasks.md",
+      "sha256": "7ae73c8436dd5df0b1663da74537536a7fb01f7346412f731ad3e2a21ad175d3"
+    },
+    {
+      "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
+      "sha256": "e29c000e008f8a6002dc0b8148f6ce1f5aa5d3434c0fb1dffbdbb17fc2a85897"
+    },
+    {
+      "path": "specs/028-unified-metering-media/u-domain-contract.md",
+      "sha256": "0b23d185dbc50cd3d24ac0fb44b928773a6decb51a97809e098e2d1b19d03750"
+    },
+    {
+      "path": "specs/028-unified-metering-media/u-storage-contract.md",
+      "sha256": "2aad57e5f04a4246b40d432b23b51d9291cbde847aced84f02b15a493b46799a"
     },
     {
       "path": "web/.gitignore",

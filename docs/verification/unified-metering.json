@@ -1,0 +1,406 @@
+{
+  "date": "2026-11-04",
+  "baseline_commit": "be601a0ea4d628a7332f717ced474e5e49c171c1",
+  "scope": "028-U common pure domain; no current serving or PostgreSQL wiring",
+  "command": "go test -json -race ./internal/metering ./internal/strictjson ./internal/inference -count=1",
+  "result": "pass",
+  "raw": {
+    "path": ".local/028-common-final.jsonl",
+    "bytes": 188658,
+    "sha256": "0e0b65ce955f9bc76e9a0b1a549b82da64d099d1bd26ae3c749ffcb1b149eeee"
+  },
+  "packages": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/inference",
+      "result": "pass",
+      "elapsed_seconds": 2.611,
+      "top_level_pass": [
+        "TestDomainGoldenAndExactAmount",
+        "TestSixProtocolsAndClosedProfiles",
+        "TestCandidateUnionTighteningAndOwnership",
+        "TestKnownUnknownQuotesAndZero",
+        "TestUnknownQuoteUnionAndOverflow",
+        "TestIndependentFinalQuantitiesAndManualSupplier",
+        "TestObservationStrictValuesBindingAndIdentity",
+        "TestStrictGrammarSizeAndErrorOrder",
+        "TestImmutableReadValuesRace",
+        "TestOpaqueZeroValues",
+        "TestPipelineKnownQuotesToIndependentSideAmounts",
+        "TestPipelineUnknownSupplierPriceAndManualRetailEvidence",
+        "FuzzInferenceEnvelopes"
+      ],
+      "child_pass": [
+        "TestDomainGoldenAndExactAmount/schema",
+        "TestDomainGoldenAndExactAmount/profile",
+        "TestDomainGoldenAndExactAmount/request",
+        "TestDomainGoldenAndExactAmount/attempt",
+        "TestDomainGoldenAndExactAmount/quote",
+        "TestDomainGoldenAndExactAmount/observation",
+        "TestDomainGoldenAndExactAmount/final",
+        "TestSixProtocolsAndClosedProfiles/openai_chat",
+        "TestSixProtocolsAndClosedProfiles/openai_responses",
+        "TestSixProtocolsAndClosedProfiles/anthropic_messages",
+        "TestSixProtocolsAndClosedProfiles/gemini_generate_content",
+        "TestSixProtocolsAndClosedProfiles/openai_embeddings",
+        "TestSixProtocolsAndClosedProfiles/jina_rerank",
+        "TestSixProtocolsAndClosedProfiles/empty_protocol",
+        "TestSixProtocolsAndClosedProfiles/unknown_protocol",
+        "TestSixProtocolsAndClosedProfiles/old_version",
+        "TestSixProtocolsAndClosedProfiles/nil_version",
+        "TestSixProtocolsAndClosedProfiles/empty_variant",
+        "TestSixProtocolsAndClosedProfiles/foreign_variant",
+        "TestSixProtocolsAndClosedProfiles/zero_input",
+        "TestSixProtocolsAndClosedProfiles/above_schema",
+        "TestSixProtocolsAndClosedProfiles/no_generation_output",
+        "TestSixProtocolsAndClosedProfiles/input_only_generation",
+        "TestSixProtocolsAndClosedProfiles/control_model",
+        "TestSixProtocolsAndClosedProfiles/invalid_unicode",
+        "TestSixProtocolsAndClosedProfiles/missing_contract",
+        "TestCandidateUnionTighteningAndOwnership/empty",
+        "TestCandidateUnionTighteningAndOwnership/zero_hmac",
+        "TestCandidateUnionTighteningAndOwnership/zero_profile",
+        "TestCandidateUnionTighteningAndOwnership/duplicate",
+        "TestCandidateUnionTighteningAndOwnership/same_version_changed_contract",
+        "TestCandidateUnionTighteningAndOwnership/oversize",
+        "TestCandidateUnionTighteningAndOwnership/output_zero",
+        "TestCandidateUnionTighteningAndOwnership/output_too_large",
+        "TestCandidateUnionTighteningAndOwnership/schema",
+        "TestCandidateUnionTighteningAndOwnership/model",
+        "TestCandidateUnionTighteningAndOwnership/protocol",
+        "TestKnownUnknownQuotesAndZero/version_missing",
+        "TestKnownUnknownQuotesAndZero/basis_unknown",
+        "TestKnownUnknownQuotesAndZero/unknown_retail",
+        "TestKnownUnknownQuotesAndZero/known_no_version",
+        "TestKnownUnknownQuotesAndZero/known_no_rates",
+        "TestKnownUnknownQuotesAndZero/missing_dimension",
+        "TestKnownUnknownQuotesAndZero/foreign_plan",
+        "TestKnownUnknownQuotesAndZero/malformed_plan",
+        "TestKnownUnknownQuotesAndZero/foreign_schema",
+        "TestKnownUnknownQuotesAndZero/malformed_schema",
+        "TestKnownUnknownQuotesAndZero/variant_type",
+        "TestKnownUnknownQuotesAndZero/changed_bound",
+        "TestKnownUnknownQuotesAndZero/binding_plus_rate_lexical",
+        "TestKnownUnknownQuotesAndZero/binding_plus_bad_version",
+        "TestKnownUnknownQuotesAndZero/caller_amount",
+        "TestUnknownQuoteUnionAndOverflow/missing_with_version",
+        "TestUnknownQuoteUnionAndOverflow/basis_without_version",
+        "TestUnknownQuoteUnionAndOverflow/no_reason",
+        "TestUnknownQuoteUnionAndOverflow/unknown_reason",
+        "TestUnknownQuoteUnionAndOverflow/false_zero_rates",
+        "TestIndependentFinalQuantitiesAndManualSupplier/supplier_missing",
+        "TestIndependentFinalQuantitiesAndManualSupplier/supplier_conflict",
+        "TestIndependentFinalQuantitiesAndManualSupplier/supplier_provisional",
+        "TestIndependentFinalQuantitiesAndManualSupplier/all_final",
+        "TestIndependentFinalQuantitiesAndManualSupplier/unmapped_supplier",
+        "TestIndependentFinalQuantitiesAndManualSupplier/unattributable",
+        "TestIndependentFinalQuantitiesAndManualSupplier/manual_retail_only",
+        "TestIndependentFinalQuantitiesAndManualSupplier/manual_conflict_precedence",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_request",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_profile",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_schema_digest",
+        "TestObservationStrictValuesBindingAndIdentity/malformed_hex",
+        "TestObservationStrictValuesBindingAndIdentity/malformed_variant",
+        "TestObservationStrictValuesBindingAndIdentity/null_attempt",
+        "TestObservationStrictValuesBindingAndIdentity/missing_has_zero",
+        "TestObservationStrictValuesBindingAndIdentity/confirmed_null",
+        "TestObservationStrictValuesBindingAndIdentity/negative",
+        "TestObservationStrictValuesBindingAndIdentity/number",
+        "TestObservationStrictValuesBindingAndIdentity/overflow",
+        "TestObservationStrictValuesBindingAndIdentity/leading_zero",
+        "TestObservationStrictValuesBindingAndIdentity/extra_dimension",
+        "TestObservationStrictValuesBindingAndIdentity/wrong_order",
+        "TestObservationStrictValuesBindingAndIdentity/wrong_unit",
+        "TestObservationStrictValuesBindingAndIdentity/source",
+        "TestObservationStrictValuesBindingAndIdentity/url_reference",
+        "TestObservationStrictValuesBindingAndIdentity/unknown_charge",
+        "TestObservationStrictValuesBindingAndIdentity/noncanonical_time",
+        "TestObservationStrictValuesBindingAndIdentity/inconsistent_delivery",
+        "TestObservationStrictValuesBindingAndIdentity/finish_reason_type",
+        "TestObservationStrictValuesBindingAndIdentity/finish_reason_control",
+        "TestObservationStrictValuesBindingAndIdentity/finish_reason_size",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_plus_quantity",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_plus_source",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_plus_delivery",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_plus_time",
+        "TestObservationStrictValuesBindingAndIdentity/foreign_plus_other_set",
+        "TestStrictGrammarSizeAndErrorOrder/duplicate",
+        "TestStrictGrammarSizeAndErrorOrder/escaped_duplicate",
+        "TestStrictGrammarSizeAndErrorOrder/isolated_high_surrogate",
+        "TestStrictGrammarSizeAndErrorOrder/isolated_low_surrogate",
+        "TestStrictGrammarSizeAndErrorOrder/invalid_utf8",
+        "TestStrictGrammarSizeAndErrorOrder/bom",
+        "TestStrictGrammarSizeAndErrorOrder/tail",
+        "TestStrictGrammarSizeAndErrorOrder/depth",
+        "FuzzInferenceEnvelopes/seed#0",
+        "FuzzInferenceEnvelopes/seed#1",
+        "FuzzInferenceEnvelopes/seed#2",
+        "FuzzInferenceEnvelopes/seed#3",
+        "FuzzInferenceEnvelopes/seed#4"
+      ],
+      "fail": [],
+      "skip": []
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/metering",
+      "result": "pass",
+      "elapsed_seconds": 1.725,
+      "top_level_pass": [
+        "TestSchemaDescriptionIsImmutable",
+        "TestSchemaDescriptionRejectsZeroAndInvalidSide",
+        "TestRateDescriptionsPreserveBindingsAndAmounts",
+        "TestStrictSchemaAndJSON",
+        "TestAllRegistryAndDifferentSideMasks",
+        "TestVectorStrictValuesAndErrorPrecedence",
+        "TestCanonicalRationalRates",
+        "TestExactAmountReservationAndComparison",
+        "TestBindingZeroValuesAndImmutableCanonical",
+        "TestLegacyTokenAmountIndependentOracle",
+        "TestImmutableObjectsConcurrentUse",
+        "TestCanonicalDigestGoldenAndDomains",
+        "FuzzStrictParsers",
+        "FuzzAmountMonotonicity"
+      ],
+      "child_pass": [
+        "TestStrictSchemaAndJSON/empty",
+        "TestStrictSchemaAndJSON/BOM",
+        "TestStrictSchemaAndJSON/invalid_UTF8",
+        "TestStrictSchemaAndJSON/trailing_object",
+        "TestStrictSchemaAndJSON/deep",
+        "TestStrictSchemaAndJSON/duplicate_escaped",
+        "TestStrictSchemaAndJSON/duplicate_nested",
+        "TestStrictSchemaAndJSON/bad_high_surrogate",
+        "TestStrictSchemaAndJSON/bad_low_surrogate",
+        "TestStrictSchemaAndJSON/bad_surrogate_pair",
+        "TestStrictSchemaAndJSON/valid_nonregistry_pair",
+        "TestStrictSchemaAndJSON/top_null",
+        "TestStrictSchemaAndJSON/top_array",
+        "TestStrictSchemaAndJSON/number_version",
+        "TestStrictSchemaAndJSON/nil_UUID",
+        "TestStrictSchemaAndJSON/uppercase_UUID",
+        "TestStrictSchemaAndJSON/extra_schema_field",
+        "TestStrictSchemaAndJSON/unknown_registry",
+        "TestStrictSchemaAndJSON/unit_mismatch",
+        "TestStrictSchemaAndJSON/leading_zero",
+        "TestStrictSchemaAndJSON/maximum_number",
+        "TestStrictSchemaAndJSON/maximum_overflow",
+        "TestStrictSchemaAndJSON/missing_mask",
+        "TestStrictSchemaAndJSON/mask_duplicate",
+        "TestStrictSchemaAndJSON/mask_unordered",
+        "TestStrictSchemaAndJSON/uncovered_dimension",
+        "TestVectorStrictValuesAndErrorPrecedence/quantity_leading_zero",
+        "TestVectorStrictValuesAndErrorPrecedence/quantity_negative",
+        "TestVectorStrictValuesAndErrorPrecedence/quantity_plus",
+        "TestVectorStrictValuesAndErrorPrecedence/quantity_exponential",
+        "TestVectorStrictValuesAndErrorPrecedence/quantity_null",
+        "TestVectorStrictValuesAndErrorPrecedence/quantity_number",
+        "TestVectorStrictValuesAndErrorPrecedence/quantity_overflow",
+        "TestVectorStrictValuesAndErrorPrecedence/global_maximum",
+        "TestVectorStrictValuesAndErrorPrecedence/missing_dimension",
+        "TestVectorStrictValuesAndErrorPrecedence/wrong_field_type",
+        "TestVectorStrictValuesAndErrorPrecedence/unit_mismatch",
+        "TestVectorStrictValuesAndErrorPrecedence/version_null",
+        "TestVectorStrictValuesAndErrorPrecedence/unknown_side",
+        "TestVectorStrictValuesAndErrorPrecedence/other_side",
+        "TestVectorStrictValuesAndErrorPrecedence/other_schema",
+        "TestVectorStrictValuesAndErrorPrecedence/extra_diagnostic",
+        "FuzzStrictParsers/seed#0",
+        "FuzzStrictParsers/seed#1",
+        "FuzzStrictParsers/seed#2",
+        "FuzzStrictParsers/seed#3",
+        "FuzzStrictParsers/seed#4",
+        "FuzzAmountMonotonicity/seed#0",
+        "FuzzAmountMonotonicity/seed#1"
+      ],
+      "fail": [],
+      "skip": []
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/strictjson",
+      "result": "pass",
+      "elapsed_seconds": 2.027,
+      "top_level_pass": [
+        "TestParseRejectsAmbiguousAndLossyInputs",
+        "TestParsePreservesValuesAndOwnsOutput",
+        "TestParseEnforcesByteLimitBeforeSyntax"
+      ],
+      "child_pass": [
+        "TestParseRejectsAmbiguousAndLossyInputs/depth",
+        "TestParseRejectsAmbiguousAndLossyInputs/raw_control",
+        "TestParseRejectsAmbiguousAndLossyInputs/trailing_object",
+        "TestParseRejectsAmbiguousAndLossyInputs/truncated_unicode",
+        "TestParseRejectsAmbiguousAndLossyInputs/truncated",
+        "TestParseRejectsAmbiguousAndLossyInputs/invalid_UTF8",
+        "TestParseRejectsAmbiguousAndLossyInputs/nested_duplicate",
+        "TestParseRejectsAmbiguousAndLossyInputs/high_surrogate",
+        "TestParseRejectsAmbiguousAndLossyInputs/low_surrogate",
+        "TestParseRejectsAmbiguousAndLossyInputs/invalid_escape",
+        "TestParseRejectsAmbiguousAndLossyInputs/empty_array_depth",
+        "TestParseRejectsAmbiguousAndLossyInputs/empty_object_depth",
+        "TestParseRejectsAmbiguousAndLossyInputs/empty",
+        "TestParseRejectsAmbiguousAndLossyInputs/BOM",
+        "TestParseRejectsAmbiguousAndLossyInputs/duplicate",
+        "TestParseRejectsAmbiguousAndLossyInputs/escaped_duplicate",
+        "TestParseRejectsAmbiguousAndLossyInputs/unpaired_surrogate",
+        "TestParseRejectsAmbiguousAndLossyInputs/trailing_scalar"
+      ],
+      "fail": [],
+      "skip": []
+    }
+  ],
+  "fuzz": [
+    {
+      "command": "GOMAXPROCS=2 go test ./internal/metering -run '^$' -fuzz '^FuzzStrictParsers$' -fuzztime=4s",
+      "result": "pass",
+      "executions": 174750,
+      "elapsed_seconds": 5.64,
+      "raw": {
+        "path": ".local/028-strict-fuzz.log",
+        "bytes": 373,
+        "sha256": "16e27a72905557eb0b5f3d063ce92851af576233dbeccae2c3d056c8506d54c7"
+      }
+    },
+    {
+      "command": "GOMAXPROCS=2 go test ./internal/inference -run '^$' -fuzz '^FuzzInferenceEnvelopes$' -fuzztime=4s",
+      "result": "pass",
+      "executions": 188967,
+      "elapsed_seconds": 5.525,
+      "raw": {
+        "path": ".local/028-inference-fuzz.log",
+        "bytes": 364,
+        "sha256": "b6a4d6e298b7a2c64bca3257fca3afc3dae3b873f0c1002c73c3db848a860064"
+      }
+    }
+  ],
+  "static_checks": [
+    {
+      "command": "go vet ./internal/metering ./internal/strictjson ./internal/inference",
+      "result": "pass"
+    },
+    {
+      "command": "go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate",
+      "result": "pass"
+    },
+    {
+      "command": "make check",
+      "result": "pass",
+      "scope": "read-only architecture check, procurement layout, repository-wide go vet, frontend strict TypeScript and Vite production build",
+      "raw": {
+        "path": ".local/028-make-check.log",
+        "bytes": 7265,
+        "sha256": "a8ccdd9aa706b67fdbfc970fe2b640243b6c8e6e0832115bd80ce7b6c0345218"
+      }
+    }
+  ],
+  "source_files": [
+    {
+      "path": "internal/inference/inference_test.go",
+      "bytes": 37480,
+      "sha256": "6140ef0ac64d46d5b7157556eda58ebed4b838f0172009ebee02b696d5698a11"
+    },
+    {
+      "path": "internal/inference/json.go",
+      "bytes": 3591,
+      "sha256": "5e15813bb5fdb19fca089e5acbe3d6d83caaef51b4c8481c7f7b3f5eac88a6b9"
+    },
+    {
+      "path": "internal/inference/observation.go",
+      "bytes": 11599,
+      "sha256": "7f674a75f225ada52775c95fabff5ac46307e65abb27c7c4357ce917e2433409"
+    },
+    {
+      "path": "internal/inference/pipeline_test.go",
+      "bytes": 10478,
+      "sha256": "bc15f005cc2718ef91d6c0171f6b07b7800da5519d53f44488822e8f6ed499dc"
+    },
+    {
+      "path": "internal/inference/plan.go",
+      "bytes": 6002,
+      "sha256": "680ad4e8e455190becb41de1b866df3c626fa276e62cbb23f5f6d732005dfb14"
+    },
+    {
+      "path": "internal/inference/profile.go",
+      "bytes": 3490,
+      "sha256": "057d63fe64e423787b53913e9a0314e55b97fd1860a94b9d717ecf9d68922c2d"
+    },
+    {
+      "path": "internal/inference/quote.go",
+      "bytes": 6427,
+      "sha256": "94ae8d6e2853bc354d45ed6948333268d5a7830e3d62528a69109ee2c6007ad5"
+    },
+    {
+      "path": "internal/inference/types.go",
+      "bytes": 4094,
+      "sha256": "156b03cc66b2d8bc1d094119e040f5456d271f4d903ebca1a4f8b85c981bf104"
+    },
+    {
+      "path": "internal/metering/amount.go",
+      "bytes": 2352,
+      "sha256": "de06ec87b9335457c4364f52da842f22cefa7466c8b812aecaceb6c3765911db"
+    },
+    {
+      "path": "internal/metering/describe.go",
+      "bytes": 1623,
+      "sha256": "284ddef84b2e3f914ef69a44d39463e23e9f25e22c75c8b1c1c5176fa49f9697"
+    },
+    {
+      "path": "internal/metering/describe_test.go",
+      "bytes": 5918,
+      "sha256": "d0e122c20f5014ed93f17625468fc928e92b670984327666e3f6eaeaaff44de0"
+    },
+    {
+      "path": "internal/metering/digest.go",
+      "bytes": 1993,
+      "sha256": "3ca055ec4a70175574f4434822f4bd6dac49a5c35fc26450bd9674b1b773eff4"
+    },
+    {
+      "path": "internal/metering/fuzz_test.go",
+      "bytes": 4700,
+      "sha256": "fa47d5caee2525e9433d5146dae5bbd73f72e193ed97779f326ba34ad4bc6c24"
+    },
+    {
+      "path": "internal/metering/json.go",
+      "bytes": 1943,
+      "sha256": "ab5cd4c0000d6e70590e93614de578213358f32c2ddbe9700dd4c5b2fff8e39e"
+    },
+    {
+      "path": "internal/metering/legacy.go",
+      "bytes": 2219,
+      "sha256": "92bc9a379d401739c7ea70ad6afd49a83ba98d3869f62b087eff39967bd4d0a7"
+    },
+    {
+      "path": "internal/metering/metering_test.go",
+      "bytes": 24807,
+      "sha256": "9b99f9e9d9011b0378cb16035055fc2bfc7e9aa0307ddbb91c6b9d2f85fbaab8"
+    },
+    {
+      "path": "internal/metering/parse.go",
+      "bytes": 6755,
+      "sha256": "b91b3151e399dc0fc97b2aa810b66abcff7adfa2634431e5878b0ee82e34a054"
+    },
+    {
+      "path": "internal/metering/types.go",
+      "bytes": 3872,
+      "sha256": "85dce5c7013c403b25b0c69755bef98a3d6ac413e9e4fe271536bcdca2312d35"
+    },
+    {
+      "path": "internal/strictjson/parse.go",
+      "bytes": 3099,
+      "sha256": "a56cb1f3455259869cc4d72c06f6b34e54861e012ae6a95163fc4df9db93c3ff"
+    },
+    {
+      "path": "internal/strictjson/parse_test.go",
+      "bytes": 2928,
+      "sha256": "6ac8d55407f6b00528324dff6cc7ce58be846b1869465ad018cef7b3a1ce09e1"
+    }
+  ],
+  "not_executed": [
+    "028 production migration and actual APP PostgreSQL lifecycle",
+    "current provider/billing/catalog/routing/HTTP/UI vector replacement",
+    "026 report metadata/filters/CSV/UI extension",
+    "media/task/Realtime serving",
+    "official providers/PSP/1Panel production qualification",
+    "performance comparison"
+  ],
+  "ci": "Previous exact commit be601a0 Actions 41779659566: all jobs not started because GitHub account payment/spending limit; not a code-test failure or CI pass.",
+  "architecture_review": "Root reviewed module graph, actual/no serving call edges, snapshots and tenant/money/source boundaries, planned production DDL and report metadata, immutable source links, capability states, and external acceptance limits; refreshed explicitly after all agent results."
+}

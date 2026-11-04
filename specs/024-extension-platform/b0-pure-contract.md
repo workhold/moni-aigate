@@ -1,5 +1,9 @@
 # 024-B0-P：纯计量层精确合同（仅纯层已冻结）
 
+2026-11-04（028-U描述接口补充）：为统一领域验证已解析schema而无需反解析canonical JSON，新增`Schema.ID() (string,error)`、`Schema.Dimensions() ([]Dimension,error)`及`Schema.Mask(Side) ([]string,error)`。`Dimension`仅含`Dimension string`、`Unit string`、`MaximumQuantity int64`。`Rates.Entries() ([]Rate,error)`返回已验证完整mask的费率，`Rate{Dimension,Unit string; Numerator,Denominator int64}`；input-only可据此拒绝非零output率，路由可精确比较逐维成本上限，不能因output bound=0掩盖错误价格。返回顺序沿原canonical C序，slice为独立副本。零值schema或Rates返回`ErrInvalidValue`及零结果；有效schema的非法side返回`ErrSide`及nil。描述值不是构造器，修改副本不能改变schema、摘要、向量绑定或可接受数量。没有新增registry、算钱算法、wire格式或权限；028生产接线仍单独验收。
+
+同次抽出内部`strictjson.Parse(raw []byte, maximum int) (any,error)`：原UTF8/escape/重复member/EOF解析移动至单一共享实现，固定深度≤8，无I/O/环境/时钟；只使用标准库。metering映射回既有`ErrTooLarge/ErrInvalidJSON`，其原错误优先序、领域校验、canonical及所有摘要不变。共同inference外壳复用该语法层，再自行验证精确字段及绑定；数量/费率/schema解析仍只有metering一套。Parse失败仅返回nil和固定sentinel，不提供部分值。
+
 2026-11-01。根已接受[B0方向](b0-metering-contract.md)中的最多8收费维度、有理率末尾单次ceil、两侧完整硬界与旧token等价adapter，并已审查冻结**本文纯层精确合同，授权仅新增`internal/metering/`及纯测试**。B0生产数据/资金接线和B1仍为候选，不在本片授权内。不修改provider、billing、routing、catalog、DB、配置或运行行为，不注册媒体端点。subset/diagnostic尚无精确registry，本片一律不解析、不猜字段。
 
 ## 1. 范围和信任边界
