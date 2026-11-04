@@ -175,7 +175,7 @@ READ COMMITTED、lock_timeout=3s、statement_timeout=5s由原外层在frontend s
 | A5 adapter/actual PG | 显式prospective executor接缝、typed结果/SQLSTATE适配，真实APP LOGIN全根/旧路径差分、故障/并发/撤权矩阵 | A4；原普通profile不自动启用，失败无回退；不在默认main安装 |
 | A6 集成/文档 | 正文/SQL/权限/验证一致，架构模块/请求/数据/权限/状态/源码链接复核，refresh+只读check，相关make门禁 | 所有并行结果汇总后执行；正式迁移/provision/在线资金/profile另R2；纯核Complete/Qualified不擅自升级 |
 
-当前真实缺失不仅是 `pp_record_attempt` 函数声明，还包括：完整原检查SQL/原错误顺序；Go编码路由纯叶子；request自动出生与保护；upstream/p出生guard和新hook；私有closure及source效果helper；command+reserve账户认证/暂态控制；单attempt node推进；双向原件/root模板validator；精确trigger/deferred/ACL/catalog装配；真实候选executor/受限LOGIN验收。关系材料与私有纯重放中有同名DTO不代表这些DB正文已实现。
+本页初次冻结时，上述正文全部列为缺失。2026-11-04当前范围已由独立A0规则叶子、A1父请求出生/保护和A2 command＋request＋managed/unmanaged/reserved材料及实际APP装配交付；A2最终47顶层/1648子项专库race通过，见[验证记录](../../docs/verification/procurement-attempt-birth.md)。这不关闭整个A4矩阵：剩余组合/顺序、同步、真实期限与未知提交仍逐项补验；显式A5 executor、全域profile及R2正式接线仍待交付。关系材料、私有纯重放或局部PASS不替代这些剩余门禁。
 
 ## 9. 专库验收与故障矩阵
 

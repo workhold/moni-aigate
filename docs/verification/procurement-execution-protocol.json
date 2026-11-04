@@ -1,0 +1,37 @@
+{
+  "schema": "moni.procurement-execution-s1.v1",
+  "date": "2026-11-04",
+  "scope": "No-connection protocol leaf only. No PostgreSQL, transaction, observer, public business/HTTP adapter or serving wiring.",
+  "command": "env -u TEST_DATABASE_URL go test -json -race -p 1 -count=1 ./internal/procurementexecution",
+  "go": "go version go1.27.2 darwin/arm64",
+  "source_sha256": {
+    "internal/procurementexecution/errors.go": "ad277eabc6a202bfc1ae910cd7a09b2cfd06e772c1e8a22d474043f842d72414",
+    "internal/procurementexecution/errors_test.go": "c662e5d2e453539bde7022432a49da91bbba412bbe842e33c74e077c966f19dd",
+    "internal/procurementexecution/query.go": "e1f2ccdef96bada51f8ac089da7e3b7e9bb051da6f82214c6ab5d7e57d80c575",
+    "internal/procurementexecution/query_test.go": "06c908807b400c57fae14c392d31e97dc936f30899ebf7ccead09b6f272bdee8",
+    "internal/procurementexecution/receipt.go": "bf665fabba6a297bfadc51c1caa8f4a15e0dc3a368764edd38254e0cfdbb45da",
+    "internal/procurementexecution/receipt_test.go": "c5e022cf929a95a394954d9029d5acd01bee4bdde74880f6b8a54a9c0076ed8d"
+  },
+  "result": {
+    "top_level_pass": 20,
+    "subtest_pass": 56,
+    "fail": 0,
+    "skip": 0,
+    "package": {
+      "Time": "2026-11-04T08:55:55.314636+08:00",
+      "Action": "pass",
+      "Package": "github.com/moni-ai/moni-aigate/internal/procurementexecution",
+      "Elapsed": 1.297
+    }
+  },
+  "evidence": {
+    "path": ".local/a5-s1-root-final.jsonl",
+    "bytes": 77378,
+    "sha256": "e5dcdcd37e7b8d9b3f03892ef99471190981525e9b9c95a462816ca0349c4ca2"
+  },
+  "mermaid_evidence": {
+    "path": ".local/architecture-mermaid-check/procurement-attempt-a4-s1-20261104/report.json",
+    "bytes": 1506,
+    "sha256": "2af4b97c9b70f484f63d04aa5df1f95a43ff124867a2f9ea4415542252aedc3d"
+  }
+}

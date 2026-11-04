@@ -256,7 +256,7 @@ make verify-mvp
 
 采购历史核验仍是开发期候选，普通启动不会安装对应 SQL。源码关系、当前已实现的校验与剩余观察缺口见[采购模块细图](docs/architecture/procurement-replay.md)；最新实现与真实数据库故障范围见[采购关系与预算重放](docs/verification/procurement-pb-relations.md)和[账户 writer 验证](docs/verification/procurement-account-prefix.md)。局部校验通过不代表完整历史证明或正式迁移已交付。
 
-当前正推进请求与采购尝试的来源保护：原路由/报价规则已完成独立数据库差分，请求来源已补验预算组合、价格快照、父行与预算控制行等待、资金回滚、权限防护及提交回执丢失；数据库对象与权限也有独立漂移检查。按[装配合同](specs/023-periodic-products/b-procurement-attempt-installation-contract.md)形成的独立候选已实现账户命令、真实请求与采购尝试出生及预占组合，规则、逐项撤权和对象漂移反例仍按专项扩展验证。阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)、[请求验收](docs/verification/procurement-request-birth.md)和[采购尝试验收](docs/verification/procurement-attempt-birth.md)。完整来源认证、正式迁移和在线接线尚未交付；这些候选材料不属于常规部署步骤。
+当前正推进请求与采购尝试的来源保护：原路由/报价规则已完成独立数据库差分，请求来源已补验预算组合、价格快照、父行与预算控制行等待、资金回滚、权限防护及提交回执丢失；数据库对象与权限也有独立漂移检查。按[装配合同](specs/023-periodic-products/b-procurement-attempt-installation-contract.md)形成的独立候选已实现账户命令、真实请求与采购尝试出生及预占组合，并持续补验逐项撤权、共享账户并发与超时。新的无连接协议层为显式执行器准备参数、结果与错误合同，事务和业务接线仍在后续。阶段状态见[请求与采购尝试架构](docs/architecture/procurement-attempt-birth.md)、[请求验收](docs/verification/procurement-request-birth.md)和[采购尝试验收](docs/verification/procurement-attempt-birth.md)。完整来源认证、正式迁移和在线接线尚未交付；这些候选材料不属于常规部署步骤。
 
 [字段布局合同](specs/023-periodic-products/b-procurement-schema-contract.md)可用 `make procurement-layout-check` 单独检查。它只比对候选表列与设计物料，不安装数据库；部署请遵循上面的常规迁移与启动步骤。
 

@@ -1,0 +1,1836 @@
+{
+  "status": "PASS_FULL_CI_WITH_EXPLICIT_SKIPS",
+  "generated_at": "2026-11-04T00:57:25.746746+00:00",
+  "run_id": 41727566485,
+  "run_url": "https://github.com/workhold/moni-aigate/actions/runs/41727566485",
+  "head_sha": "9688929cf692aa95abcbc0566f6970dfb110bb7e",
+  "workflow_status": "completed",
+  "workflow_conclusion": "success",
+  "scope": "Independent raw-artifact and exact-source audit of all 14 Linux CI jobs; no local tests, PostgreSQL, CI restart/cancel or watch. This verifies this exact commit and opt-in boundaries only, not current uncommitted A4/S1 work or providers/deployment/production.",
+  "jobs_completed_success": 14,
+  "package_inventory_count": 64,
+  "distinct_package_terminals": {
+    "pass": 60,
+    "skip_no_test_files": 4,
+    "fail": 0
+  },
+  "test_run_events": 14075,
+  "raw_test_terminals": {
+    "pass": 13855,
+    "skip": 220,
+    "fail": 0
+  },
+  "top_level_terminals": {
+    "pass": 2009,
+    "skip": 114,
+    "fail": 0
+  },
+  "subtest_terminals": {
+    "pass": 11846,
+    "skip": 106,
+    "fail": 0
+  },
+  "run_terminal_correspondence_unique_and_ordered": true,
+  "no_duplicate_package_test_identity_across_all_14": true,
+  "package_classes_mutually_exclusive_exhaustive_and_all_artifacts_identical": true,
+  "all_skip_details": [
+    {
+      "shard": "billing-1",
+      "package": "github.com/moni-ai/moni-aigate/internal/billing",
+      "test": "TestMVPBillingCrashHelperProcess",
+      "reason_lines": [
+        "process_failure_integration_test.go:35: subprocess helper only"
+      ]
+    },
+    {
+      "shard": "server-1",
+      "package": "github.com/moni-ai/moni-aigate/internal/server",
+      "test": "TestCapacityConcurrentStreams",
+      "reason_lines": [
+        "capacity_test.go:73: set MONI_CAPACITY_TEST=true and TEST_DATABASE_URL to run the local capacity fixture"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotbasis",
+      "test": "TestIndependentPostgresBasis",
+      "reason_lines": [
+        "independent_postgres_test.go:371: MONI_TEST_DATABASE_URL required for dedicated basis PostgreSQL acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotbasis",
+      "test": "TestIndependentPostgresPrefixBasis",
+      "reason_lines": [
+        "prefix_postgres_test.go:44: MONI_TEST_DATABASE_URL required for dedicated basis PostgreSQL acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogRawPreflightRejectsBeforeDeparse",
+      "reason_lines": [
+        "collector_preflight_test.go:27: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPrivilegeArraysPreserveFullPeerVectors",
+      "reason_lines": [
+        "collector_privilege_plan_test.go:46: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogDependencySemijoinsPreserveRowsAndPlan",
+      "reason_lines": [
+        "collector_query_plan_test.go:16: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestExpectedRawJSONLargeBounds",
+      "reason_lines": [
+        "expected_raw_parser_test.go:158: explicit memory-bound differential run"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerCaptureReviewMetadata",
+      "reason_lines": [
+        "peer_capture_test.go:29: offline candidate metadata capture is explicitly opt-in"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerBaselineAndActualLogins",
+      "reason_lines": [
+        "peer_fixture_test.go:344: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerRejectsForeignPrivilegesMembershipAndOwnership",
+      "reason_lines": [
+        "peer_fixture_test.go:376: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerPublicAPIs",
+      "reason_lines": [
+        "peer_fixture_test.go:475: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerPublicAPIRejectsSameRRPeerDrift",
+      "reason_lines": [
+        "peer_fixture_test.go:513: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryRuntimeOwnerOutsideProtectedSchemaRejected",
+      "reason_lines": [
+        "peer_fixture_test.go:568: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryDatabasePrivilegeElevationRejected",
+      "reason_lines": [
+        "peer_fixture_test.go:678: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogSandboxDatabasePrivilegeElevationRejected",
+      "reason_lines": [
+        "peer_fixture_test.go:683: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerReadTimings",
+      "reason_lines": [
+        "peer_timing_test.go:18: explicit catalog performance diagnostic only"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogTimingDiagnostic",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:607: requires explicit C0_CATALOG_TIMING_DIAGNOSTIC=1; diagnostic only"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_1/named-isolated",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_1/named-minimal-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_1/named-image-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_1/public-minimal-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_1/public-image-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_1/full-sandbox",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:638: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_2/named-isolated",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_2/named-minimal-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_2/named-image-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_2/public-minimal-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_2/public-image-login",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:640: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogIndependentInstallations/round_2/full-sandbox",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:638: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogRejectsDrift/ordinary",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:724: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogRejectsDrift/sandbox",
+      "reason_lines": [
+        "prefix_profile_integration_test.go:725: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOriginalProfilesRejectCompletePeriodicPrefixCandidate/legacy_v1",
+      "reason_lines": [
+        "prefix_rejection_integration_test.go:23: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOriginalProfilesRejectCompletePeriodicPrefixCandidate/wallet_read_v2",
+      "reason_lines": [
+        "prefix_rejection_integration_test.go:23: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryPublicIssuersAndBindings/named-isolated",
+      "reason_lines": [
+        "proof_integration_test.go:39: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryPublicIssuersAndBindings/named-minimal-login",
+      "reason_lines": [
+        "proof_integration_test.go:39: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryPublicIssuersAndBindings/named-image-login",
+      "reason_lines": [
+        "proof_integration_test.go:39: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryPublicIssuersAndBindings/public-minimal-login",
+      "reason_lines": [
+        "proof_integration_test.go:39: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryPublicIssuersAndBindings/public-image-login",
+      "reason_lines": [
+        "proof_integration_test.go:39: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogCanceledAbortedAndDisconnectedTransactions",
+      "reason_lines": [
+        "proof_integration_test.go:106: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogRejectsSameTransactionDriftWithoutCommitting",
+      "reason_lines": [
+        "proof_integration_test.go:151: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogInstallationEmptinessIsAnIssueFact",
+      "reason_lines": [
+        "proof_integration_test.go:196: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogRejectsWrongPinsAndAuthentication",
+      "reason_lines": [
+        "proof_integration_test.go:227: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInstallExactACL/named-isolated",
+      "reason_lines": [
+        "variants_fixture_test.go:500: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInstallExactACL/named-minimal-login",
+      "reason_lines": [
+        "variants_fixture_test.go:500: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInstallExactACL/named-image-login",
+      "reason_lines": [
+        "variants_fixture_test.go:500: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInstallExactACL/public-minimal-login",
+      "reason_lines": [
+        "variants_fixture_test.go:500: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInstallExactACL/public-image-login",
+      "reason_lines": [
+        "variants_fixture_test.go:500: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-isolated",
+      "reason_lines": [
+        "variants_fixture_test.go:567: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-minimal-login",
+      "reason_lines": [
+        "variants_fixture_test.go:567: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInjectedDDLFailureCleanup/named-image-login",
+      "reason_lines": [
+        "variants_fixture_test.go:567: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInjectedDDLFailureCleanup/public-minimal-login",
+      "reason_lines": [
+        "variants_fixture_test.go:567: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantsInjectedDDLFailureCleanup/public-image-login",
+      "reason_lines": [
+        "variants_fixture_test.go:567: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantCandidateReproducibility",
+      "reason_lines": [
+        "variants_fixture_test.go:740: explicit metadata candidate export only; formal expected is never auto-accepted"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantLegacyProjection",
+      "reason_lines": [
+        "variants_fixture_test.go:825: requires explicit previously verified four-role descriptor directory; no live runtime filtering"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_1/named-isolated",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_1/named-minimal-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_1/named-image-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_1/public-minimal-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_1/public-image-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_2/named-isolated",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_2/named-minimal-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_2/named-image-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_2/public-minimal-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileOrdinaryIndependentInstallations/round_2/public-image-login",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:223: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileSandboxIndependentInstallations/round_1",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:237: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileSandboxIndependentInstallations/round_2",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:237: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileRejectsPrivilegeDrift/ordinary",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:310: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestWalletProfileRejectsPrivilegeDrift/sandbox",
+      "reason_lines": [
+        "wallet_profile_integration_test.go:311: requires explicit dedicated C0_CATALOG_DATABASE_URL; no catalog database acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotruntime",
+      "test": "TestApplicationLoaderFileBoundaries/wrong_owner",
+      "reason_lines": [
+        "application_state_test.go:302: changing file ownership requires privilege"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresPrefixSourceWalletReader",
+      "reason_lines": [
+        "prefix_reader_postgres_test.go:102: MONI_TEST_DATABASE_URL required for isolated complete-source PostgreSQL tests"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresCompleteSourceReader",
+      "reason_lines": [
+        "reader_postgres_test.go:237: MONI_TEST_DATABASE_URL required for isolated complete-source PostgreSQL tests"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresSourceWalletReaderNonemptyC0",
+      "reason_lines": [
+        "wallet_reader_postgres_test.go:122: MONI_TEST_DATABASE_URL required for isolated complete-source PostgreSQL tests"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresLegacySeedProjection",
+      "reason_lines": [
+        "seed_projection_postgres_test.go:146: MONI_TEST_DATABASE_URL required for dedicated legacy seed PostgreSQL tests"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresPredecessorCPUBudgetClosesOriginalSocket",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresOrdinaryImageProfile",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresPublicOwnerProfiles/public-minimal-login",
+      "reason_lines": [
+        "authority_profiles_integration_test.go:321: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresPublicOwnerProfiles/public-image-login",
+      "reason_lines": [
+        "authority_profiles_integration_test.go:321: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresNOLOGINOwnerAndSetRoleRejected",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthoritySandboxPostgresPlanInitAndOriginalV1",
+      "reason_lines": [
+        "authority_sandbox_integration_test.go:18: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthoritySandboxPostgresFiveFreshRuntimeRoles",
+      "reason_lines": [
+        "authority_sandbox_integration_test.go:102: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthoritySandboxPostgresPredecessorContentRefusals",
+      "reason_lines": [
+        "authority_sandbox_integration_test.go:158: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresFundedLegacyTextTenants",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresOperatingGraphKeepsHistoricalBasis",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresUninitializedAndMatched",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresBusyCancellationAndCleanup",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresMixedNumericHistory",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresSandbox",
+      "reason_lines": [
+        "funding_lots_observe_integration_test.go:193: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresLiveRuntimeAndHistory",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresUnknownAndRollback",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresCorruptEpochAndCatalog/epoch_missing",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresCorruptEpochAndCatalog/proof_changed",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresCorruptEpochAndCatalog/historical_counts",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresCorruptEpochAndCatalog/catalog_acl",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresEmptyAndZeroLegacyTenants/empty_installation",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresEmptyAndZeroLegacyTenants/old_empty_text_and_unicode_tenants",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresMixedOriginalBusinessAndNumeric",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresGenuineSandboxPreservesV1AndFunds",
+      "reason_lines": [
+        "funding_lots_phase_integration_test.go:335: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresExpectedDriftAndFailureCannotCommit",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresLostCommitReplyNeverReinitializes/reply_loss",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresLostCommitReplyNeverReinitializes/caller_cancel_after_durable_commit",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresCancellationDuringWriterRetainsBusy",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresActualBirthAndPostTamperingFailClosed/non_null_birth",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresActualBirthAndPostTamperingFailClosed/missing_zero_opening",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresActualBirthAndPostTamperingFailClosed/legal_sha_wrong_proof_binding",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresActualBirthAndPostTamperingFailClosed/non68_basis_change",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresBusinessCrossWindowAndConcurrentObservation",
+      "reason_lines": [
+        "funding_lots_prefix_business_integration_test.go:443: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresAbsoluteCostCorrectionRemainsUnproven",
+      "reason_lines": [
+        "funding_lots_prefix_business_integration_test.go:595: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresNonemptyActualApplication",
+      "reason_lines": [
+        "funding_lots_prefix_integration_test.go:134: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresSourceBudgetAbandonsInit",
+      "reason_lines": [
+        "funding_lots_prefix_integration_test.go:243: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresInstallationSelectionConsumesOnce",
+      "reason_lines": [
+        "funding_lots_prefix_integration_test.go:282: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresLegacyEpochCompatibility/original109_epoch_current_v3_with_new_observations",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresLegacyEpochCompatibility/real_preexisting_control_without_origin_remains_rejected",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresGenuineSandboxActualApplication",
+      "reason_lines": [
+        "funding_lots_prefix_sandbox_integration_test.go:246: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresNamedMixedAndLifetime/A",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresNamedMixedAndLifetime/B",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresIdentityAndHistoryRefusals",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresOperatingBasisAndPagination",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresAllOrdinaryDomainsRejectCorruption",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresRealRowsCancelAndFreshCleanup",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresPermissionDriftAndLockedSQL",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresActiveProcurementCost",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresPublicProfiles",
+      "reason_lines": [
+        "funding_lots_runtime_profiles_integration_test.go:234: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresGenuineSandboxProfiles",
+      "reason_lines": [
+        "funding_lots_runtime_profiles_integration_test.go:260: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresActualTransportBounds",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresAcquireAndReverseClose",
+      "reason_lines": [
+        "gate_integration_test.go:388: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresWaitsForSecondLock",
+      "reason_lines": [
+        "gate_integration_test.go:428: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPartialCancellation/parent_deadline",
+      "reason_lines": [
+        "gate_integration_test.go:494: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPartialCancellation/explicit_cancel",
+      "reason_lines": [
+        "gate_integration_test.go:494: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresThirtySecondEntranceBudget",
+      "reason_lines": [
+        "gate_integration_test.go:546: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresUnknownLockReplyPhysicallyCloses",
+      "reason_lines": [
+        "gate_integration_test.go:576: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresUnknownUnlockReplyPhysicallyCloses",
+      "reason_lines": [
+        "gate_integration_test.go:614: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresRejectsLockAndTransactionAnomalies/extra",
+      "reason_lines": [
+        "gate_integration_test.go:650: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresRejectsLockAndTransactionAnomalies/lost",
+      "reason_lines": [
+        "gate_integration_test.go:650: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresRejectsLockAndTransactionAnomalies/shared",
+      "reason_lines": [
+        "gate_integration_test.go:650: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresRejectsLockAndTransactionAnomalies/two_int",
+      "reason_lines": [
+        "gate_integration_test.go:650: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresRejectsLockAndTransactionAnomalies/nonidle",
+      "reason_lines": [
+        "gate_integration_test.go:650: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/database_oid",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/schema_oid",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/owner_oid",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/owner_name",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/current_schema",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/null_schema",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/system_schema",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/config_login_mapping",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/session_auth_mapping",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/existing_lock",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/actual_ip",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPreflightRejectsActualIdentityDrift/actual_port",
+      "reason_lines": [
+        "gate_integration_test.go:676: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresConcurrentCloseRejectsWithoutSQL",
+      "reason_lines": [
+        "gate_integration_test.go:765: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresCleanupUsesIndependentFiveSecondBudget",
+      "reason_lines": [
+        "gate_integration_test.go:791: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresOrdinaryDNSAndNonOwnerAreOnlyPreflight",
+      "reason_lines": [
+        "gate_integration_test.go:830: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPublicEffectiveOwnerTargetBinding",
+      "reason_lines": [
+        "gate_integration_test.go:861: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestCompleteSourceReadLeasePostgresOrdinaryPlanInitModeAndProof",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresPlanInitRowsAndProof",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresBusyOwnershipAndOmissions",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresRejectsRawConnectionCallbacks",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresCancellationAndExitRuntime",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresOrdinaryPlanInitAndTerminalRevocation",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresFreshRuntimeSampling",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresHistoryGuardAndSameSnapshot",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresAllAccountLocksAndPlanNoLocks",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresBusyCancellationAndExitRuntime",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateOrdinaryAllHistoryAndBypasses",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateOrdinaryForeignKeyAndPolicy",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateOriginalMockSafeProjectionAndFinite",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateSentinelsEOFAndResources",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresOptionsFixedOrderAndOriginalProof",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresWriterBarrierCreatesSnapshotAfterLockWait",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresAllTablesStopWritesButPermitSelect",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresMissingLateTableClosesPartialBegin",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCatalogRejectsDriftBeforeBusinessReads/rls",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCatalogRejectsDriftBeforeBusinessReads/incoming_inheritance",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresEvidenceBusyRejectsWithoutSQL",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresParentCancellationClosesIdleAndActiveSQL/idle_CPU_gap",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresParentCancellationClosesIdleAndActiveSQL/catalog_SQL_reply",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresEarlierDeadlineAndShortBudgetReject",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresDefaultThirtySecondIdleDeadline",
+      "reason_lines": [
+        "snapshot_integration_test.go:439: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitConfirmedAndDeferredRollback",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitLostReplyIsUnknownWithoutRetry",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresRollbackLostReplyAbandons",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCloseOpenSnapshotAbandonsWithoutRollback",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCallerCancellationCannotBeIgnored",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresRollbackIndependentFiveSecondBudget",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitCallerAlreadyCancelledSendsNothing",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitReplyCancellationRetainsUnknown",
+      "reason_lines": [
+        "snapshot_fixture_test.go:68: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateWalletGraph",
+      "reason_lines": [
+        "candidate_test.go:33: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateOldZeroOpening",
+      "reason_lines": [
+        "candidate_test.go:97: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateSavepointTopXID",
+      "reason_lines": [
+        "candidate_test.go:107: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidatePermissions",
+      "reason_lines": [
+        "candidate_test.go:151: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateLegacyRefundCumulative",
+      "reason_lines": [
+        "legacy_fixture_test.go:14: C0_CANDIDATE_DATABASE_URL required; candidate PostgreSQL mechanisms were not exercised"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestMailLifecycleRealMainRecovery",
+      "reason_lines": [
+        "mail_lifecycle_test.go:381: explicit isolated mail real-main opt-in required"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestBrowserQARealMainLifecycle",
+      "reason_lines": [
+        "main_test.go:203: explicit isolated main lifecycle opt-in required"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestBrowserQAFailedBootstrapCleansOwnedResources",
+      "reason_lines": [
+        "main_test.go:410: explicit PostgreSQL lifecycle opt-in required"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestModelLifecycleRealMainRecovery",
+      "reason_lines": [
+        "model_lifecycle_test.go:474: explicit isolated model real-main opt-in required"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+      "test": "TestRealDescriptorReproducibility",
+      "reason_lines": [
+        "main_test.go:267: requires explicit dedicated database; no descriptor acceptance"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+      "test": "TestRealFailureCleanup",
+      "reason_lines": [
+        "main_test.go:307: requires explicit dedicated database"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceCompleteSourceEdgesPostgresResource",
+      "reason_lines": [
+        "complete_source_edges_test.go:78: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceCompleteSourceEdgesPostgresNativeInfinity",
+      "reason_lines": [
+        "complete_source_edges_test.go:119: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceCompleteSourceEdgesPostgresBusyOwner",
+      "reason_lines": [
+        "complete_source_edges_test.go:179: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceConsumersPostgresFundedSnapshot/plan",
+      "reason_lines": [
+        "maintenance_integration_test.go:43: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceConsumersPostgresFundedSnapshot/init",
+      "reason_lines": [
+        "maintenance_integration_test.go:43: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresPreEpochPlanInit/plan",
+      "reason_lines": [
+        "periodic_prefix_integration_test.go:172: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresPreEpochPlanInit/init",
+      "reason_lines": [
+        "periodic_prefix_integration_test.go:172: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/prefix_on_legacy/source_kind6",
+      "reason_lines": [
+        "periodic_prefix_integration_test.go:264: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/prefix_on_legacy/wallet_kind7",
+      "reason_lines": [
+        "periodic_prefix_integration_test.go:264: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/legacy_on_prefix/source_kind6",
+      "reason_lines": [
+        "periodic_prefix_integration_test.go:262: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicPrefixPostgresProfileRejectionSharesOnce/legacy_on_prefix/wallet_kind7",
+      "reason_lines": [
+        "periodic_prefix_integration_test.go:262: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/below",
+      "reason_lines": [
+        "periodic_resources_test.go:136: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/at",
+      "reason_lines": [
+        "periodic_resources_test.go:136: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresFieldUTF8Bytes/over",
+      "reason_lines": [
+        "periodic_resources_test.go:136: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresTotalBytes/below",
+      "reason_lines": [
+        "periodic_resources_test.go:165: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresTotalBytes/at",
+      "reason_lines": [
+        "periodic_resources_test.go:165: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresTotalBytes/over",
+      "reason_lines": [
+        "periodic_resources_test.go:165: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresTotalRows/below",
+      "reason_lines": [
+        "periodic_resources_test.go:213: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresTotalRows/at",
+      "reason_lines": [
+        "periodic_resources_test.go:213: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenancePeriodicResourcesPostgresTotalRows/over",
+      "reason_lines": [
+        "periodic_resources_test.go:213: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/plan",
+      "reason_lines": [
+        "source_wallet_integration_test.go:64: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceSourceWalletPostgresPreEpochPlanInit/init",
+      "reason_lines": [
+        "source_wallet_integration_test.go:64: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    },
+    {
+      "shard": "other",
+      "package": "github.com/moni-ai/moni-aigate/scripts/maintenance-scan-qa",
+      "test": "TestMaintenanceSourceWalletPostgresResourceAborts",
+      "reason_lines": [
+        "source_wallet_integration_test.go:128: C0_MAINTENANCE_DATABASE_URL not set"
+      ]
+    }
+  ],
+  "web": {
+    "tests": 286,
+    "pass": 286,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "arch_layout_vet_build": {
+    "Run go run ./scripts/check-architecture": "PASS",
+    "Run go run ./scripts/check-procurement-layout": "PASS",
+    "Run go vet ./...": "PASS",
+    "Run go build -trimpath ./cmd/moni-aigate": "PASS"
+  },
+  "boundaries": [
+    "220 test SKIPs retain exact names/reasons; one other subtest TestApplicationLoaderFileBoundaries/wrong_owner was skipped because changing file ownership requires privilege; the remaining other skips are explicit opt-in/dedicated-environment gates. Four package SKIPs are no-test-files, not skipped database acceptance.",
+    "CI explicitly enables PB_PREFIX_DATABASE_URL, PROCUREMENT_IDENTITY_DATABASE_URL and billing PROCUREMENT_ATTEMPT_RULES_DATABASE_URL only; other opt-in basis/catalog/maintenance/runtime/payment/native-SDK/capacity experiments remain excluded as recorded.",
+    "The prior 13-job snapshot/audit is preserved verbatim as historical partial evidence; final results above add other rather than rewriting that snapshot."
+  ],
+  "raw_audit": {
+    "path": ".local/moni-ci-9688929-audit/final-audit.json",
+    "bytes": 909801,
+    "sha256": "ab54b863123b80e7fe65484ce15d4a0418a819f42ccb9e4424fa5b5f8a342819"
+  },
+  "other_raw": {
+    "job_id": 126236257492,
+    "artifact_id": 13278455074,
+    "artifact_archive_digest_metadata": "sha256:ce644473ff245e8f1f38e9b5ff27fff794e9452ba1400453ea6258569d89b4da",
+    "jsonl": ".local/moni-ci-9688929-audit/artifacts/go-tests-other/go-tests-other.jsonl",
+    "jsonl_sha256": "8550f57faa866b25a82509d63abfb36e8302fdbf2106b731ff926acadec2fcd8",
+    "package_count": 60,
+    "run_events": 10595,
+    "all_runs_have_unique_ordered_terminal": true,
+    "all_top_level_tests_match_exact_commit_source": true,
+    "job_log": ".local/moni-ci-9688929-audit/other-job.log",
+    "job_log_sha256": "55876872b285e6406884925f5bc0195e1bc9d01d878e8c363526d78116baf6cf",
+    "checkout_head_in_raw_log": "9688929cf692aa95abcbc0566f6970dfb110bb7e"
+  }
+}

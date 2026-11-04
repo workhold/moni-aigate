@@ -205,4 +205,14 @@ legacy cut/absence/完整首配、B-HO1、全部业务资格/逐对象Q与Base/a
 
 2026-11-04续片补齐父行八项资格重读/两种提前约束、原PB控制行跨价/过期、真实server成功后丢COMMIT回执和独立catalog/全部grantee。最终actual APP原Reserve整包32顶层/528子项race全PASS、零SKIP/FAIL、62.292s，含旧23/423；五顶层静态/纯wire，其余27真实PG。catalog五关系/七函数/20trigger及全ACL认证、78项同事务漂移均实跑；只在测试显式调用，不据此发行Qualified/profile。原SQL/摘要/fixture/001–022不改，首轮提前约束与OID表示失败分别保留。README经独立复核源码/Compose/1Panel/首次管理员流程，补Gemini认证限制与race工具链依赖；已核GitHub默认分支为codex/initial-mvp，clone会取得交付分支。
 
-独立 [A2材料](../../internal/procurementattemptbirth/materials.go)已实现38函数/68trigger、12表262列/七原表38扩列/137约束及精确ACL，完整command＋request＋managed/unmanaged/reserved的限定实际APP组合与catalog验收为12顶层/25子项race PASS、零SKIP/FAIL、18.045s（8顶层真实PG，4静态）。账户create→reserve→configure→reserve、supplierPB新建/后配导入、15DML故障、共享硬限额争用与等待跨scheduled报价均实跑；每次安装在COMMIT前核固定catalog，另核提交后。birth→p复用原双列UK保持NULL激活，未新增宽索引。完整A1差分、逐grant/漂移攻击、未知提交、A5 executor/全域profile和R2正式接线仍开放，普通billing.New与001–022不变。范围与首轮失败/修复见[A2验证](../verification/procurement-attempt-birth.md)。 模块、时序和角色责任见[细图](../architecture/procurement-attempt-birth.md)。
+独立 [A2材料](../../internal/procurementattemptbirth/materials.go)已实现38函数/68trigger、12表262列/七原表38扩列/137约束及精确ACL。首轮12顶层/25子项后补齐原规则/Reserve兼容、逐grant失权与catalog漂移，最终actual APP专库race为47顶层/1648子项PASS、零SKIP/FAIL、535.086s（41顶层真实PG，六静态）；详细[验证及保留失败](../verification/procurement-attempt-birth.md)与[机器记录](../verification/procurement-attempt-birth-hardening.json)分别给出范围和原件。1339项grant实验包含1334必要失权与五项真实撤权后提交成功的控制；110项漂移属于13类、15个隔离fixture，不把保守授权清单解释为每项都必需。账户/供应商PB配置、15处DML故障、共享硬限额与等待跨scheduled报价均实跑；每次安装在COMMIT前核固定catalog，另核提交后。birth→p复用原双列UK保持NULL激活，未新增宽索引。A4剩余组合/同步/期限/未知提交、A5 executor、全域profile与R2正式接线仍开放；普通billing.New与001–022不变。模块、时序和角色责任见[细图](../architecture/procurement-attempt-birth.md)。
+
+## 当前下一切片：A4 收口与 A5 显式 executor
+
+2026-11-04先设计再实现[同步](../../specs/023-periodic-products/b-procurement-attempt-synchronization-contract.md)与[期限](../../specs/023-periodic-products/b-procurement-attempt-fault-deadline-contract.md)专项：原BindCredential/Commander双向等待、真实双租户共享采购预算、锁后paused、原生超时/取消、Key/request过期和单SQL累计5秒；最终结果单独见[A4记录](../verification/procurement-attempt-synchronization.md)，不把前轮47/1648与新专项重复相加。真实24小时财务期限、active周期cap及跨UTC窗口继续保留。
+
+当前完整A2＋A4四分片准确并集56顶层/1652子项全部PASS、0 FAIL/SKIP；前三片保留PASS，第四片跨低电量休眠的失败保留并在唤醒后按原名单/源码/期限整片复验通过。所有临时schema/role/backend归零。S1根复核20顶层/56子项纯race全PASS；没有数据库、事务或普通服务接线。前一精确提交9688929的[14组远端CI](../verification/ci-package-isolation.md#精确提交-9688929-的最终远端审计)也已全部通过，220项测试SKIP明确列出；该远端结果不冒充当前新代码CI。
+
+[A5合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md)已冻结；首片[S1无连接协议](../verification/procurement-execution-protocol.md)交付固定三根ABI、参数快照、恰一行/NULL union与固定PP cause分类，不接默认服务。随后依序完成S2显式事务/确认回滚重试/unknown只读观察、S3原Go API显式构造器及HTTP错误优先级、S4实际APP差分与故障。A4可与无连接叶子并行补验，完整A5验收仍依赖A4；PB错误域的精确兼容另先设计，不能通过开放PG文本猜测完成。
+
+之后继续其余D1/I1根与独立全域重放/profile、B-P3历史缺证、R2正式迁移/启动/全资金接线，再到C1退款/C2拒付/C3恢复、商品订阅、扩展、生产/HA和最终性能。阶段验证及提交不等于整个持续目标完成，正式供应商/支付/目标1Panel等外部验收边界保持。

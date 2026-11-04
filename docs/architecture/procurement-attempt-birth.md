@@ -36,10 +36,14 @@ flowchart TD
     Relations --> Effects
     Request --> A2PG["A2 限定race PASS：47顶层 / 1648子项<br/>整链 / 规则 / 请求兼容 / 授权 / catalog"]
     Effects --> A2PG
-    A2PG -. "后续独立门禁" .-> Future["完整A4漂移与授权矩阵 / A5 executor<br/>全域profile / R2 / 供应商与生产"]
+    Effects --> Sync["A4 同步与期限专项<br/>绑定 / PB先后 / 双租户 / 准确PID / 累计5s"]
+    ABI["A5-S1 procurementexecution：无连接协议叶子<br/>固定参数快照 / typed行 / PP分类与cause"]
+    ABI -. "S2/S3尚未接线" .-> Future["剩余A4 / A5事务、观察与业务适配<br/>全域profile / R2 / 供应商与生产"]
+    A2PG -. "后续独立门禁" .-> Future
+    Sync -. "范围以专项记录为准" .-> Future
 ```
 
-实线为已实现的材料依赖、调用与隔离测试关系，不代表相应测试均已通过。第一条虚线是只复用 A1 关系定义，第二条是后续交付门禁；A2 不在已运行的 A1 writer 上叠装。A0/A1/A2 的实际执行均限于显式专库装配；材料包没有数据库连接或自动安装，测试中的 `billing` 导入不将候选接入生产路径。
+实线为已实现的材料依赖、调用与隔离测试关系，不代表相应测试均已通过。虚线为同源定义或后续交付门禁；A2 不在已运行的 A1 writer 上叠装。A0/A1/A2 的实际执行均限于显式专库装配；材料包没有数据库连接或自动安装，测试中的 `billing` 导入不将候选接入生产路径。A5-S1 是独立协议数据和解码模块，没有实际调用数据库的箭头；它不提供事务或运行构造器。
 
 ## A0 的实际规则边界
 
@@ -184,6 +188,21 @@ unmanaged 不进入账户/PB效果：冻结首次 Q1，仅 origin/head0、step1 
 
 首次unmanaged可空FK激活错误已按上一节修复。首次完整七业务PG顶层中，account-wait用例自身在持account后发布成本价，反转原channel→account锁序而死锁；现先按原channel顺序真实发布1500ms后生效报价，再持account等待跨生效，保持原3s/5s且不改生产锁序。修订后包含在上述整包通过中；不把失败删成未发生，也不将等待用例扩大成全部时钟/父锁验收。
 
-完整A4的全部grantee提升路径、原Reserve/A1与command-only逐grant及剩余来源攻击，A5显式prospective Go executor与typed错误适配，完整A1差分、全部原checks/route字节/quote/expiry/双向等待/累计超时/未知COMMIT，以及active cap/真实跨UTC周期继续按[安装合同](../../specs/023-periodic-products/b-procurement-attempt-installation-contract.md)独立收口。当前授权矩阵只覆盖冻结managed first-window场景，不泛化其它路径。未实现dispatch/delivery、finalization/incoming、cost/member/correction、proposal/approval、case/recovery/finish/outbox；保留列或generated discriminator不表示启用这些域。没有正式迁移、线上安装/profile、默认provision或失败回退。
+剩余矩阵继续按[安装合同](../../specs/023-periodic-products/b-procurement-attempt-installation-contract.md)逐项收口，不能笼统抹去已完成的原规则/路由字节/quote/Reserve兼容、逐grant及漂移攻击。本轮新增绑定/PB双向等待、双租户及累计期限的准确范围另见下节；同request同序号并发、排队降限、supplier disabled、unmanaged跨新报价不重价、更多来源/seal攻击、具名A1差分及未知COMMIT仍开放。当前1339项授权限于managed first-window，不泛化其它路径；active cap/真实跨UTC周期及24小时财务cut仍未验。未实现dispatch/delivery、finalization/incoming、cost/member/correction、proposal/approval、case/recovery/finish/outbox；保留列或generated discriminator不表示启用这些域。没有正式迁移、线上安装/profile、默认provision或失败回退。
 
 实际测试、失败修正和当前保留边界分别见[A0原规则](../verification/procurement-attempt-rules.md)、[A1真实父请求](../verification/procurement-request-birth.md)与[A2出生/效果](../verification/procurement-attempt-birth.md)。来源纯核仍 `Complete=false`、Qualified为空、无公共Check；D1/I1、B-P3历史命题、全域profile、R2、生产支付、真实供应商、目标容器/1Panel、HA与最终性能阶段没有因局部通过而关闭。
+
+## A4 同步/期限与 A5-S1 协议
+
+新增[同步测试](../../internal/procurementattemptbirth/attempt_sync_postgres_test.go)使用原BindCredential/ConfigureProcurement和实际APP独立backend。准确阻塞PID与namespace模式核绑定/首配的两种先后：只让新请求应用新绑定，后配预算只导入真实旧hold，不回填出生时的control/admission。两租户共享300采购预算时仅一个240hold成功；paused等待用完整34表扣除已独立核准的合法configure增量，账户/head其余字段逐值同旧。
+
+[期限测试](../../internal/procurementattemptbirth/attempt_deadline_postgres_test.go)核真实55P03/定向57014、Key/request跨cut与同根两次等待累计5秒；故障后旧来源/资金前缀保持，独立新request恢复控制另验。保持180秒fixture/RC/3s/5s，不伪造24小时财务期限或active周期。实际执行、测试数据唯一性失败和主机休眠影响均保留于[A4记录](../verification/procurement-attempt-synchronization.md)，最终数字以该记录为准，不与前轮47/1648累加。
+
+| 新模块 / 入口 | 当前责任及尚未开放的边 |
+| --- | --- |
+| [procurementexecution/query.go](../../internal/procurementexecution/query.go) | 三根受信schema限定查询和私有参数快照；quote BYTEA/nullable rate及JSON bytes保持；不是SQL运行器 |
+| [receipt.go](../../internal/procurementexecution/receipt.go) | 固定列型/恰一行、NULL union、原replay TEXT与NUMERIC100；协议失败零回执，独立晚到执行错误保持cause |
+| [errors.go](../../internal/procurementexecution/errors.go) | 固定入口域PP分类与原cause；没有业务包/HTTP包装、PB文本推断或自动重试 |
+| [A5冻结合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md) | 后续S2显式Acquire/清理/COMMIT与只读观察、S3显式构造器/API/HTTP、S4实际APP完整矩阵；当前均未接线 |
+
+S1的[纯协议验证](../verification/procurement-execution-protocol.md)不证明数据库或财务提交。普通billing/procurement.New不探测候选、不失败fallback；正式001–022不变。PB异常没有可信域tag时继续保留原执行错，全等价门不靠开放PG Message/Context猜测关闭。

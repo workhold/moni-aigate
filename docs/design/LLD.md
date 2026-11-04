@@ -1031,4 +1031,14 @@ raw专项6顶层/92子项覆盖等价21列INSERT与原reservation companion、�
 
 最终整个包32顶层/528子项race PASS，零SKIP/FAIL，62.292s；五顶层静态/纯wire，其余27真实PG，包含前轮23/423。rb_*残留0/0，catalog仅显式测试调用，不自动升级安装资格/profile。active预算cap/争用、真实UTC窗口跨期、旧父锁全体撤权和其余未验攻击另验；fresh控制遵原020下周期生效。正向settled须真实finalization/decision链，A1不临时赋latest或补造证据，详见[记录](../verification/procurement-request-birth.md)。
 
-独立 [A2材料](../../internal/procurementattemptbirth/materials.go)已实现38函数/68trigger、12表262列/七原表38扩列/137约束及精确ACL，完整command＋request＋managed/unmanaged/reserved的限定实际APP组合与catalog验收为12顶层/25子项race PASS、零SKIP/FAIL、18.045s（8顶层真实PG，4静态）。账户create→reserve→configure→reserve、supplierPB新建/后配导入、15DML故障、共享硬限额争用与等待跨scheduled报价均实跑；每次安装在COMMIT前核固定catalog，另核提交后。birth→p复用原双列UK保持NULL激活，未新增宽索引。完整A1差分、逐grant/漂移攻击、未知提交、A5 executor/全域profile和R2正式接线仍开放，普通billing.New与001–022不变。范围与首轮失败/修复见[A2验证](../verification/procurement-attempt-birth.md)。 模块、时序和角色责任见[细图](../architecture/procurement-attempt-birth.md)。
+独立 [A2材料](../../internal/procurementattemptbirth/materials.go)已实现38函数/68trigger、12表262列/七原表38扩列/137约束及精确ACL。首轮12顶层/25子项后补齐原规则/Reserve兼容、逐grant失权与catalog漂移，最终actual APP专库race为47顶层/1648子项PASS、零SKIP/FAIL、535.086s（41顶层真实PG，六静态）；详细[验证及保留失败](../verification/procurement-attempt-birth.md)与[机器记录](../verification/procurement-attempt-birth-hardening.json)分别给出范围和原件。1339项grant实验包含1334必要失权与五项真实撤权后提交成功的控制；110项漂移属于13类、15个隔离fixture，不把保守授权清单解释为每项都必需。账户/供应商PB配置、15处DML故障、共享硬限额与等待跨scheduled报价均实跑；每次安装在COMMIT前核固定catalog，另核提交后。birth→p复用原双列UK保持NULL激活，未新增宽索引。A4剩余组合/同步/期限/未知提交、A5 executor、全域profile与R2正式接线仍开放；普通billing.New与001–022不变。模块、时序和角色责任见[细图](../architecture/procurement-attempt-birth.md)。
+
+## A4 同步/期限与 A5-S1 协议叶子
+
+新增[同步合同](../../specs/023-periodic-products/b-procurement-attempt-synchronization-contract.md)和[期限合同](../../specs/023-periodic-products/b-procurement-attempt-fault-deadline-contract.md)使用独立实际APP backend/PID、精确pg_blocking_pids和namespace锁对象确认顺序。管理绑定先提交则新attempt为managed；attempt先提交则保留unmanaged历史，后来绑定不补生旧采购事实。supplier首次配置先行生成new allocation；attempt先行由原Commander真实legacy_import，不改原admission marker。并发configure只允许已准确核准的合法增量，账户/head完整其余字段必须逐值保持；双租户共享300预算只允许一笔240采购hold。
+
+锁故障核原55P03与定向57014，等待跨Key/request期限核PP103/PP409；同一frontend根先等tenant后等account，query_start一致，首锁在2.5秒附近释放，第二锁不足3秒时由累计5秒statement timeout终止。全34表快照、旧已提交前缀和新request恢复控制分别核对。真实24小时financial deadline不能在180秒fixture内压缩伪造；准确范围与原件见[A4验证](../verification/procurement-attempt-synchronization.md)。
+
+[A5合同](../../specs/023-periodic-products/b-procurement-prospective-executor-contract.md)分S1协议、S2事务/观察、S3原API/HTTP、S4真实APP矩阵。[procurementexecution](../../internal/procurementexecution/query.go)首片只依赖标准库/pgx，不导入业务包：固定三根限定查询、参数私有快照、quote原字节BYTEA及SQL NULL联合；恰一行typed decoder关闭/排空Rows，scan/codec形状错误为本地PP903且保留原cause，独立服务器/stream错误不被零行掩盖。账户before/after的JSON null与SQL NULL区分，NUMERIC100不截int64；attempt replay保留旧TEXT ID和非标准cost_status，applied才核新UUID/prepared/unknown。
+
+固定PP按入口域分类，禁止从Message/Context推断PB异常域。原三根A2材料没有可信PB域tag，因而S1保留非PP原执行错误，完整兼容门仍开放。无连接叶子不提供事务、unknown观察器、NewProspective或HTTP；后续构造器保留原外层validator，普通New不探测候选或失败fallback。只有确定COMMIT后发布DTO，可能已提交则unknown且不重放；S2–S4实际实现/验证仍须单独交付，详见[协议验证](../verification/procurement-execution-protocol.md)。

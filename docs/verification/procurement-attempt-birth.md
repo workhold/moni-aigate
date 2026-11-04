@@ -123,8 +123,10 @@ catalog拒绝只接受预期语义分类；SQL执行、reference重建、取消�
 
 ## 仍未关闭的边界
 
-上述扩展仍不关闭安装合同的完整矩阵：全部原checks与组合错误优先序、所有路由/重试分支及幂等冲突、绑定/首次PB配置双向等待、资格/expiry/真实UTC预算窗口跨期、active cap、原Reserve/A1与command-only逐grant、全部grantee提升路径、完整来源篡改/额外来源、真实取消/锁超时/整体5s、死锁重试和未知COMMIT继续逐项验收。当前1339授权仅覆盖冻结managed first-window场景，110漂移仅覆盖固定test-only inspector，不能泛化全域生产认证；DML故障也不等于全部来源攻击已验。
+本页47/1648之后继续新增[同步与期限专项](procurement-attempt-synchronization.md)：绑定/首次PB配置双向等待、两租户共享限额、锁后paused、Key/request期限、原生取消/锁超时及同SQL累计5s均已实际通过。最终完整清单56顶层/1652子项在四份准确并集中PASS、0 FAIL/SKIP，首轮第四片跨主机休眠失败及完整复验分别保留；不与本页历史数字叠加。
 
-D1/I1、B-P3 历史命题、全域认证/完整 profile、A5 prospective executor、R2 正式迁移/权限/运行接线继续开放。没有接通真实模型生成或后台重发；供应商、正式支付、容器/1Panel、HA、生产验收和最后性能指标必须独立完成，不能由本地 fixture PASS 代替。
+仍不关闭安装合同的完整矩阵：剩余组合错误优先序及路由/重试、同request同序号并发、排队降限、supplier disabled、unmanaged跨schedule仍冻结Q1、更多错源/seal攻击、具名A1差分、active cap/真实UTC窗口、24小时财务cut、逐路径授权和未知COMMIT。当前1339授权仅覆盖冻结managed first-window场景，110漂移仅覆盖固定test-only inspector，不能泛化全域生产认证；15处attempt及9处Reserve DML故障不等于全部来源攻击已验。已有规则/JSON字节/quote、原Reserve兼容和上述同步/期限证据不能再笼统称为整个类别缺失。
+
+D1/I1、B-P3历史命题、全域认证/完整profile、R2正式迁移/权限/运行接线继续开放。A5仅[无连接S1协议](procurement-execution-protocol.md)已实现并通过纯race，事务/观察、业务/API和完整实际APP矩阵仍未交付。没有接通候选的真实模型生成或后台重发；供应商、正式支付、容器/1Panel、HA、生产验收和最后性能指标必须独立完成，不能由本地fixture PASS代替。
 
 本片影响统一架构的模块、request→attempt→reserved 时序、来源/账户/PB 关系、身份/列权限及能力状态。集成人须在汇总代码与实际证据后更新[统一架构](../architecture/README.md)及[细图](../architecture/procurement-attempt-birth.md)，执行 reviewed refresh 与只读检查；固定catalog检查只用于测试；本片不自动启用普通运行profile。

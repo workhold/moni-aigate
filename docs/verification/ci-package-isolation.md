@@ -1,6 +1,6 @@
 # CI 同库包隔离与默认函数权限
 
-2026-11-04。本记录核对实际GitHub失败日志与当前执行合同；未启动新的PostgreSQL测试，不宣称修订后的CI通过。此次修改涉及测试调度和复现说明，生产请求链路、SQL材料、业务权限与数据关系保持原范围。统一架构及快照由集成人汇总全部并行结果后复核。
+2026-11-04。本记录先保留实际GitHub失败与调度修订，再于末节追加精确新提交的14组最终原件审计。生产请求链路、SQL材料、业务权限与数据关系保持原范围；CI通过不等于未开启的专项、供应商或生产验收通过。
 
 ## 远端日志事实
 
@@ -69,3 +69,20 @@ go test -json -race -p 1 -count=1 -timeout=10m \
 A2完整专库race最终47顶层/1648子项PASS、0 FAIL/SKIP，535.086秒，见[精确机器记录](procurement-attempt-birth-hardening.json)。其结束后再串行显式设置`PB_PREFIX_DATABASE_URL`，重跑上轮CI失败的四个周期预算顶层：`TestCommanderLimitsRevisionEndpoint`、`TestPBPrefixPGLegacyControlRemainsUncovered`、`TestPBPrefixPGPrecreatedOriginCannotEnrollControl`、`TestPBPrefixPGFaultRealDeadlockRetryBound`。结果4顶层/5子项全部PASS、0 FAIL/SKIP，5.567秒；installer的global FUNCTION默认PUBLIC EXECUTE已恢复为true。原件`.local/moni-release-pb-ci-regression.json`为9996字节，SHA-256 `d29ff47c24c302d4abb14661f17643206bf55ad0ee168ae4eab71be934aa58c8`。这是本地串行回归，不能充作新14组远端CI通过。
 
 本次日志诊断与文档校准不构成新的Linux、整仓或供应商验收。修订后的精确提交须重新运行14组CI，并以完整JSONL、名单和实际run终态记录结果；本地串行通过、配置语法正确或旧run中的九组通过均不能代替新CI证据。
+
+## 精确提交 9688929 的最终远端审计
+
+以上为修订时的保留记录。后续运行[41727566485](https://github.com/workhold/moni-aigate/actions/runs/41727566485)，head精确为`9688929cf692aa95abcbc0566f6970dfb110bb7e`，现已14组全部completed/success。独立审计重新下载全部artifact，逐项核JSONL、完整包/顶层名单、运行与终态顺序，以及other的原checkout/架构/布局/Web/vet/build日志；[机器记录](github-ci-9688929.json)保存数量、原件摘要及全部220项测试SKIP名称/理由。这次远端结果只对应该提交，不覆盖本轮A4/S1新增代码。
+
+| 原件覆盖 | 实际终态 |
+| --- | --- |
+| 64个独立包 | 60 PASS、4无测试文件、0 FAIL；分区互斥穷尽 |
+| 14075个测试run | 每项有唯一有序终态：13855 PASS、220 SKIP、0 FAIL |
+| 顶层／子项 | 顶层2009 PASS＋114 SKIP；子项11846 PASS＋106 SKIP，不与包终态累加 |
+| A2四分片 | 原47顶层／1648子项全部PASS、0 SKIP/FAIL，实际run与分区名单一致 |
+| Web | 原日志286条逐项ok与汇总286 PASS、0 FAIL/SKIP；vue-tsc/Vite构建成功 |
+| 架构／布局／vet／嵌入构建 | 原命令和后续步骤核通过；架构1864文件/24c3d9996b4e，布局32表715列 |
+
+不能把绿色CI解释为全专项零跳过。220测试SKIP中，135项未设置C0维护专库、59项未设置catalog专库，其余包括显式进程/容量/诊断及其它专库门；`TestApplicationLoaderFileBoundaries/wrong_owner`还因缺少改变文件所有者权限而跳过，不能归为全部opt-in。四个包的`[no test files]`另列，不算数据库测试通过或上述220项测试SKIP。专项本地证据仍依各自记录，不能由CI结论补造。
+
+原13组partial审计和最后other明细分别保留在`.local/moni-ci-9688929-audit/`；最终总审计及原始other日志的SHA-256见[机器记录](github-ci-9688929.json)，逐项SKIP名称与原理由也一并保留。
