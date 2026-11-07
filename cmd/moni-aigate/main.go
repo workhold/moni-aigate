@@ -305,9 +305,14 @@ func run() error {
 		if e == nil {
 			e = operations.VerifyPaymentRole(roleCheck, projectionPool, operations.PaymentProjectionRole)
 		}
+		if e != nil {
+			finishRoleCheck()
+			return fmt.Errorf("periodic budget database role verification failed")
+		}
+		e = operations.VerifyMeterRoles(roleCheck, pool, projectUser)
 		finishRoleCheck()
 		if e != nil {
-			return fmt.Errorf("periodic budget database role verification failed")
+			return fmt.Errorf("metering database role verification failed")
 		}
 		projector = billing.New(projectionPool)
 	} else {

@@ -31,6 +31,8 @@ type credentialPoolFixture struct {
 	channel, model             string
 }
 
+const poolPricingActorID = "10000000-0000-4000-8000-000000000002"
+
 func credentialPoolDB(t *testing.T, apply bool) *credentialPoolFixture {
 	t.Helper()
 	raw := os.Getenv("TEST_DATABASE_URL")
@@ -75,6 +77,12 @@ func credentialPoolDB(t *testing.T, apply bool) *credentialPoolFixture {
 		return f
 	}
 	if err = migrations.Apply(ctx, f.owner); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.owner.Exec(ctx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES('pool-admin','pool-admin@fixture.invalid','fixture','admin')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.owner.Exec(ctx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'fixture','admin')`, poolPricingActorID, poolPricingActorID+"@fixture.invalid"); err != nil {
 		t.Fatal(err)
 	}
 	if err = operations.ProvisionFor(ctx, f.owner, f.schema, f.appRole, f.projector); err != nil {

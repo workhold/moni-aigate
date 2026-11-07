@@ -7,16 +7,18 @@ export interface OperatingTotals {
 }
 export interface OperatingModel extends OperatingTotals { model_id: string; model_name: string }
 export interface OperatingChannel { channel_id: string; channel_name: string; request_count: number; attempt_count: number; unknown_provider_costs: number; known_provider_cost: string }
-export interface OperatingRequest extends OperatingTotals { request_id: string; tenant_id: string; tenant_name: string; model_id: string; model_name: string; status: string; billing_status: string; created_at: string }
+export type OperatingProtocol = 'openai_chat' | 'openai_responses' | 'anthropic_messages' | 'openai_embeddings' | 'jina_rerank' | 'gemini_generate_content'
+export type OperatingExecutionKind = 'synchronous'
+export interface OperatingRequest extends OperatingTotals { request_id: string; tenant_id: string; tenant_name: string; model_id: string; model_name: string; status: string; billing_status: string; created_at: string; protocol: OperatingProtocol; execution_kind: OperatingExecutionKind; profile_version: string; schema_id: string; schema_digest: string; variant_key: 'default' }
 export interface OperatingReport {
   from: string; to: string; as_of: string; currency: 'CNY'; amount_unit: 'micro_cny'; scope: 'request_created_window'
   summary: OperatingTotals; models: OperatingModel[]; channels: OperatingChannel[]; requests: OperatingRequest[]
 }
-export interface OperatingFilterDraft { from: string | null; to: string | null; tenant_id: string; model_id: string }
-export interface OperatingFilter { from: string; to: string; tenant_id?: string; model_id?: string }
+export interface OperatingFilterDraft { from: string | null; to: string | null; tenant_id: string; model_id: string; protocol: OperatingProtocol | ''; execution_kind: OperatingExecutionKind | '' }
+export interface OperatingFilter { from: string; to: string; tenant_id?: string; model_id?: string; protocol?: OperatingProtocol; execution_kind?: OperatingExecutionKind }
 
 export function defaultOperatingFilter(now = new Date()): OperatingFilterDraft {
-  return { from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(), to: now.toISOString(), tenant_id: '', model_id: '' }
+  return { from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(), to: now.toISOString(), tenant_id: '', model_id: '', protocol: '', execution_kind: '' }
 }
 
 function reportTime(value: string | null): Date {
@@ -40,6 +42,10 @@ export function operatingFilter(draft: OperatingFilterDraft): OperatingFilter {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) throw new Error(`${field === 'tenant_id' ? '客户' : '模型'} ID 须为 UUID。`)
     filter[field] = value
   }
+  if (draft.protocol && !['openai_chat', 'openai_responses', 'anthropic_messages', 'openai_embeddings', 'jina_rerank', 'gemini_generate_content'].includes(draft.protocol)) throw new Error('协议筛选无效。')
+  if (draft.execution_kind && draft.execution_kind !== 'synchronous') throw new Error('执行类型筛选无效。')
+  if (draft.protocol) filter.protocol = draft.protocol
+  if (draft.execution_kind) filter.execution_kind = draft.execution_kind
   return filter
 }
 
@@ -47,6 +53,8 @@ export function operatingReportPath(filter: OperatingFilter, csv = false): strin
   const query = new URLSearchParams({ from: filter.from, to: filter.to })
   if (filter.tenant_id) query.set('tenant_id', filter.tenant_id)
   if (filter.model_id) query.set('model_id', filter.model_id)
+  if (filter.protocol) query.set('protocol', filter.protocol)
+  if (filter.execution_kind) query.set('execution_kind', filter.execution_kind)
   return `/platform/reports/operations${csv ? '.csv' : ''}?${query}`
 }
 

@@ -316,5 +316,13 @@ func EventsListSQL() string {
 	return `SELECT id,event_key,account_id,attempt_id,held_delta::text AS held_delta,spent_delta::text AS spent_delta,type,evidence_ref,created_at FROM procurement_budget_events WHERE account_id=$1`
 }
 func ReservationsListSQL() string {
-	return `SELECT p.attempt_id AS id,p.attempt_id,p.account_id,p.binding_id,p.input_bound::text AS input_bound,p.output_bound::text AS output_bound,p.upper_amount::text AS upper_amount,p.held_amount::text AS held_amount,p.spent_amount::text AS spent_amount,p.state,p.anomaly,p.revision::text AS revision,p.created_at,p.updated_at,a.tenant_id,a.request_id,a.channel_id FROM procurement_reservations p JOIN upstream_attempts a ON a.id=p.attempt_id WHERE p.account_id=$1`
+	// Keep reservations as the root: broken originals must raise through the
+	// projection rather than disappear through an inner join. Money is read
+	// from the original hold, never recomputed from the displayed quantities.
+	return `SELECT p.attempt_id AS id,p.attempt_id,p.account_id,p.binding_id,p.upper_amount::text AS upper_amount,p.held_amount::text AS held_amount,p.spent_amount::text AS spent_amount,p.state,p.anomaly,p.revision::text AS revision,p.created_at,p.updated_at,a.tenant_id,a.request_id,a.channel_id,s.profile_version,encode(s.schema_digest,'hex') AS schema_digest,s.variant_key,
+ meter_attempt_supplier_bounds(a.tenant_id,a.request_id,p.attempt_id) AS supplier_bounds
+ FROM procurement_reservations p
+ LEFT JOIN upstream_attempts a ON a.id=p.attempt_id
+ LEFT JOIN attempt_meter_snapshots s ON s.tenant_id=a.tenant_id AND s.request_id=a.request_id AND s.attempt_id=p.attempt_id
+ WHERE p.account_id=$1`
 }

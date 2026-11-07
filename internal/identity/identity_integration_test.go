@@ -76,7 +76,9 @@ func newIdentityFixture(t *testing.T) *identityFixture {
 		t.Fatal(e)
 	}
 	for _, id := range []string{f.model1, f.model2} {
-		if _, e = pool.Exec(ctx, "INSERT INTO models(id,public_name,profile) VALUES($1,$1,'{}'::jsonb)", id); e != nil {
+		version := uuid.NewString()
+		profile := `{"version":"` + version + `","model":"` + id + `","protocol":"openai_chat","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`
+		if _, e = pool.Exec(ctx, "SELECT meter_insert_text_model($1,$1,$2::jsonb,$3)", id, profile, version); e != nil {
 			t.Fatal(e)
 		}
 		if _, e = pool.Exec(ctx, "INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", f.tenant, id); e != nil {

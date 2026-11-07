@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/provider"
@@ -83,10 +84,11 @@ func retrievalAssertSettled(t *testing.T, f *gatewayFixture, request string) {
 	if v.billing != "settled" || v.reservation != "settled" || v.amount != 100 || v.charge != 10 || v.settlements != 1 || v.attempts != 1 || v.available != 990 || v.held != 0 || v.spent != 10 || v.keyHeld != 0 || v.usage != "confirmed_final" || f.posts.Load() != 1 {
 		t.Fatalf("retrieval final charge/hold: %+v posts=%d", v, f.posts.Load())
 	}
-	var input, output, total, outputLimit, outputRate int64
-	err := f.pool.QueryRow(context.Background(), `SELECT (e.normalized_usage->>'input_tokens')::bigint,(e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint,r.output_limit,r.output_rate FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, request).Scan(&input, &output, &total, &outputLimit, &outputRate)
-	if err != nil || input != 10 || output != 0 || total != 10 || outputLimit != 0 || outputRate != 0 {
-		t.Fatalf("retrieval durable usage %d/%d/%d limit/rate=%d/%d err=%v", input, output, total, outputLimit, outputRate, err)
+	var quantities, rates string
+	var outputLimit int64
+	err := f.pool.QueryRow(context.Background(), `SELECT convert_from(z.retail_quantities_canonical,'UTF8'),convert_from(s.retail_rates_canonical,'UTF8'),s.output_bound FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN request_meter_snapshots s ON s.request_id=r.id WHERE r.id=$1`, request).Scan(&quantities, &rates, &outputLimit)
+	if err != nil || !strings.Contains(quantities, `"quantity":"10"`) || !strings.Contains(quantities, `"quantity":"0"`) || outputLimit != 0 || !strings.Contains(rates, `"numerator":"0"`) {
+		t.Fatalf("retrieval durable vector quantities=%s rates=%s output_bound=%d err=%v", quantities, rates, outputLimit, err)
 	}
 	ledger, err := f.server.Billing.VerifyLedger(context.Background(), billing.Query{})
 	if err != nil || !ledger.Balanced {
@@ -246,7 +248,7 @@ func TestRetrievalProbeVerifiesUsageWithoutCustomerFunds(t *testing.T) {
 					t.Fatalf("probe %d %s %v", response.status, response.body, response.err)
 				}
 				var status, usage string
-				if err := f.pool.QueryRow(context.Background(), "SELECT status,normalized_usage->>'status' FROM platform_probe_attempts").Scan(&status, &usage); err != nil {
+				if err := f.pool.QueryRow(context.Background(), "SELECT status,usage_state FROM platform_probe_attempts").Scan(&status, &usage); err != nil {
 					t.Fatal(err)
 				}
 				wantStatus, wantUsage := "completed", "confirmed_final"
@@ -267,7 +269,16 @@ func TestRetrievalCatalogRejectsGenerationConfigurationAndOutputPrice(t *testing
 		t.Run(protocol, func(t *testing.T) {
 			f := newGatewayFixtureConfigured(t, []http.HandlerFunc{func(w http.ResponseWriter, r *http.Request) { t.Error("catalog test dispatched") }}, nil, 8, protocol)
 			ctx := context.Background()
-			if _, err := f.server.Catalog.PublishPrice(ctx, "catalog-test", f.model, "1", "1", time.Time{}); !errors.Is(err, catalog.ErrInvalid) {
+			var schema, digest string
+			if err := f.pool.QueryRow(ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id WHERE m.id=$1`, f.model).Scan(&schema, &digest); err != nil {
+				t.Fatal(err)
+			}
+			actor := uuid.NewString()
+			if _, err := f.pool.Exec(ctx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'fixture','admin')`, actor, actor+"@catalog.invalid"); err != nil {
+				t.Fatal(err)
+			}
+			_, err := f.server.Catalog.PublishDefaultPrice(ctx, catalog.PricingActor{UserID: actor}, catalog.DefaultPriceCommand{OperationID: uuid.NewString(), ModelID: f.model, SchemaID: schema, SchemaDigest: digest, VariantKey: "default", InputRate: 1, OutputRate: 1, EffectiveAt: time.Now().UTC().Truncate(time.Microsecond)})
+			if err == nil || !strings.Contains(err.Error(), "invalid_price") {
 				t.Fatal("input-only accepted output price", err)
 			}
 			for i, change := range []func(*provider.Profile){

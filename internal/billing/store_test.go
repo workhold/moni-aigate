@@ -1,11 +1,13 @@
 package billing
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"math"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -14,8 +16,13 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
+
+const fixtureProfileVersion = "10000000-0000-4000-8000-000000000001"
+const fixtureRequestHMAC = "abababababababababababababababababababababababababababababababab"
+const fixtureRouteRevision int64 = 99
 
 func TestMoney(t *testing.T) {
 	for _, tc := range []struct {
@@ -108,15 +115,21 @@ func integration(t *testing.T) *fixture {
 		exec("INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'unused',$3)", u.id, u.id+"@test.invalid", u.role)
 	}
 	exec("INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)", f.tenant, f.user)
-	exec("INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,'model',$2,'v1')", f.model, `{"version":"v1","model":"model","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`)
+	exec("SELECT meter_insert_text_model($1,'model',$2,$3)", f.model, `{"version":"`+fixtureProfileVersion+`","model":"model","protocol":"openai_chat","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`, fixtureProfileVersion)
 	exec("INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", f.tenant, f.model)
 	exec("INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'test','key','digest',$4,1000)", f.key, f.tenant, f.user, []string{f.model})
-	exec("INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,1000000,1000000,clock_timestamp()-interval '1 day',$2)", f.model, f.operator)
+	meterquote.PublishDefaultPrice(t, ctx, tx, meterquote.DefaultPrice{ModelID: f.model, Actor: f.operator, InputRate: 1000000, OutputRate: 1000000, EffectiveAt: time.Now().UTC().Add(-time.Hour)})
 	exec("INSERT INTO channels(id,name,current_version) VALUES($1,'test',$2)", f.channel, f.version)
 	exec("INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'not-a-real-secret')", f.credential, f.channel)
 	exec("INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)", f.version, f.channel, f.credential)
 	exec("INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,1000)", f.version, f.channel, f.credential)
-	exec("INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'upstream',2000000,2000000,'contract')", f.channel)
+	policy := uuid.NewString()
+	exec("INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,$3,'manual','allow')", policy, f.model, fixtureRouteRevision)
+	for _, upstream := range []string{"upstream", "unknown", "missing", "unpriced-upstream", "unpriced"} {
+		exec("INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,0,1,10,'default')", policy, f.channel, f.version, upstream)
+	}
+	exec("UPDATE models SET active_revision=$2 WHERE id=$1", f.model, fixtureRouteRevision)
+	meterquote.PublishCost(t, ctx, tx, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.admin, Basis: "contract", InputRate: billingRate(2000000), OutputRate: billingRate(2000000)})
 	if err = tx.Commit(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +148,44 @@ func (f *fixture) fund(t *testing.T, amount Money) {
 	}
 }
 func (f *fixture) input() ReserveInput {
-	return ReserveInput{Principal: Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "request-digest", ProfileVersion: "v1", InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)}
+	return ReserveInput{Principal: Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, RouteRevision: fixtureRouteRevision, IdempotencyKey: uuid.NewString(), RequestHMAC: fixtureRequestHMAC, ProfileVersion: fixtureProfileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)}
+}
+
+type fixtureRouteBinding struct {
+	channel, version, upstream string
+}
+
+func publishFixtureRouteWithBindings(t *testing.T, f *fixture, revision int64, bindings ...fixtureRouteBinding) string {
+	t.Helper()
+	tx, err := f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(f.ctx)
+	policy := uuid.NewString()
+	if _, err = tx.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,$3)", policy, f.model, revision); err != nil {
+		t.Fatal(err)
+	}
+	for _, binding := range bindings {
+		if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,$4,1,10)", policy, binding.channel, binding.version, binding.upstream); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", f.model, revision); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(f.ctx); err != nil {
+		t.Fatal(err)
+	}
+	return policy
+}
+
+func publishFixtureRoute(t *testing.T, f *fixture, revision int64, upstreams ...string) string {
+	bindings := make([]fixtureRouteBinding, 0, len(upstreams))
+	for _, upstream := range upstreams {
+		bindings = append(bindings, fixtureRouteBinding{channel: f.channel, version: f.version, upstream: upstream})
+	}
+	return publishFixtureRouteWithBindings(t, f, revision, bindings...)
 }
 func (f *fixture) reserve(t *testing.T) Reservation {
 	t.Helper()
@@ -145,9 +195,25 @@ func (f *fixture) reserve(t *testing.T) Reservation {
 	}
 	return r
 }
+func (f *fixture) ensureAttempt(t *testing.T, request string) string {
+	t.Helper()
+	var id string
+	err := f.pool.QueryRow(f.ctx, `SELECT id FROM upstream_attempts WHERE tenant_id=$1 AND request_id=$2 ORDER BY sequence LIMIT 1`, f.tenant, request).Scan(&id)
+	if err == nil {
+		return id
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatal(err)
+	}
+	attempt, err := f.store.RecordAttempt(f.ctx, AttemptInput{TenantID: f.tenant, RequestID: request, ChannelID: f.channel, ChannelVersionID: f.version, CredentialID: f.credential, UpstreamModel: "upstream", Sequence: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return attempt.ID
+}
 func (f *fixture) final(t *testing.T, r Reservation, usage Usage, protocol, reason, stage string, content bool) Finalization {
 	t.Helper()
-	v, err := f.store.RecordFinalization(f.ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, Source: "gateway", SourceEventID: uuid.NewString(), Usage: usage, ProtocolOutcome: protocol, TransportEndReason: reason, DeliveryStage: stage, ContentWritten: content})
+	v, err := f.store.RecordFinalization(f.ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, AttemptID: f.ensureAttempt(t, r.RequestID), Source: "gateway", SourceEventID: uuid.NewString(), Usage: usage, ProtocolOutcome: protocol, TransportEndReason: reason, DeliveryStage: stage, ContentWritten: content})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,6 +260,31 @@ func TestPostgresLifecycle(t *testing.T) {
 	_, err = f.store.Reserve(f.ctx, replay)
 	assertCode(t, err, "idempotency_conflict")
 	f.final(t, r, confirmed(), "completed", "done", "none", false)
+	var requestPlan, attemptPlan, parentPlan []byte
+	if err = f.pool.QueryRow(f.ctx, `SELECT s.plan_digest,a.plan_digest,a.parent_plan_digest FROM request_meter_snapshots s JOIN attempt_meter_snapshots a ON a.request_id=s.request_id WHERE s.request_id=$1`, r.RequestID).Scan(&requestPlan, &attemptPlan, &parentPlan); err != nil || len(requestPlan) != 32 || len(attemptPlan) != 32 || !bytes.Equal(requestPlan, parentPlan) || bytes.Equal(requestPlan, attemptPlan) {
+		t.Fatal("request and attempt plans were not stored", err)
+	}
+	var requestLines, attemptLines int
+	if err = f.pool.QueryRow(f.ctx, `SELECT (SELECT count(*) FROM request_meter_bound_lines WHERE request_id=$1 AND quantity IN (100,20)), (SELECT count(*) FROM attempt_meter_bound_lines b JOIN attempt_meter_snapshots a ON a.attempt_id=b.attempt_id WHERE a.request_id=$1 AND b.quantity IN (100,20))`, r.RequestID).Scan(&requestLines, &attemptLines); err != nil || requestLines != 4 || attemptLines != 4 {
+		t.Fatal("bound lines were not stored", requestLines, attemptLines, err)
+	}
+	var retailQuote, supplierQuote []byte
+	if err = f.pool.QueryRow(f.ctx, `SELECT s.retail_quote_digest,a.supplier_quote_digest FROM request_meter_snapshots s JOIN attempt_meter_snapshots a ON a.request_id=s.request_id WHERE s.request_id=$1`, r.RequestID).Scan(&retailQuote, &supplierQuote); err != nil || len(retailQuote) != 32 || len(supplierQuote) != 32 || bytes.Equal(retailQuote, supplierQuote) {
+		t.Fatal("request and attempt quotes were not stored", err)
+	}
+	var requestVectors, attemptVectors bool
+	if err = f.pool.QueryRow(f.ctx, `SELECT
+ s.retail_bounds_digest=meter_bounds_digest(s.schema_digest,'retail',s.retail_bounds_canonical)
+ AND s.supplier_bounds_digest=meter_bounds_digest(s.schema_digest,'supplier',s.supplier_bounds_canonical)
+ AND s.retail_rates_digest=meter_rates_digest(s.schema_digest,'retail',s.retail_rates_canonical)
+ AND s.retail_meter_quote_digest=meter_pure_quote_digest(s.schema_digest,'retail',s.retail_bounds_canonical,s.retail_rates_canonical),
+ a.retail_bounds_digest=meter_bounds_digest(a.schema_digest,'retail',a.retail_bounds_canonical)
+ AND a.supplier_bounds_digest=meter_bounds_digest(a.schema_digest,'supplier',a.supplier_bounds_canonical)
+ AND a.supplier_rates_digest=meter_rates_digest(a.schema_digest,'supplier',a.supplier_rates_canonical)
+ AND a.supplier_meter_quote_digest=meter_pure_quote_digest(a.schema_digest,'supplier',a.supplier_bounds_canonical,a.supplier_rates_canonical)
+ FROM request_meter_snapshots s JOIN attempt_meter_snapshots a ON a.request_id=s.request_id WHERE s.request_id=$1`, r.RequestID).Scan(&requestVectors, &attemptVectors); err != nil || !requestVectors || !attemptVectors {
+		t.Fatal("pure metering vectors were not stored or did not match their digests", err)
+	}
 	settled, err := f.store.Settle(f.ctx, SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
 	if err != nil || settled.ChargedAmount != 15 {
 		t.Fatalf("settlement %+v %v", settled, err)
@@ -447,12 +538,53 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 	if err = f.store.PrepareDispatch(f.ctx, DispatchInput{TenantID: f.tenant, AttemptID: a.ID}); err == nil {
 		t.Fatal("dispatch replay allowed")
 	}
-	input := FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "provider", SourceEventID: a.ID + ":final", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}
+	input := FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "adapter", SourceEventID: a.ID + ":final", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}
 	for i := 0; i < 2; i++ {
 		if _, err = f.store.RecordFinalization(f.ctx, input); err != nil {
 			t.Fatal(err)
 		}
 	}
+	var retailState, supplierState string
+	var retailDigest, supplierDigest []byte
+	if err = f.pool.QueryRow(f.ctx, `SELECT retail_usage_state,supplier_usage_state,retail_quantities_digest,supplier_quantities_digest FROM finalization_records WHERE id=$1`, input.ID).Scan(&retailState, &supplierState, &retailDigest, &supplierDigest); err != nil {
+		t.Fatal(err)
+	}
+	if retailState != "confirmed_final" || supplierState != "confirmed_final" || len(retailDigest) != 32 || len(supplierDigest) != 32 || string(retailDigest) == string(supplierDigest) {
+		t.Fatalf("final projection retail=%s supplier=%s", retailState, supplierState)
+	}
+	var observation []byte
+	var observationDigest []byte
+	if err = f.pool.QueryRow(f.ctx, `SELECT e.observation_canonical,e.observation_digest FROM metering_events e WHERE e.id=(SELECT event_id FROM finalization_records WHERE id=$1)`, input.ID).Scan(&observation, &observationDigest); err != nil || len(observation) == 0 || len(observationDigest) != 32 || !strings.Contains(string(observation), `"quantities"`) || strings.Contains(string(observation), `"input_tokens"`) {
+		t.Fatalf("inference observation was not persisted: digest=%d body=%s err=%v", len(observationDigest), observation, err)
+	}
+	var costFinalization, costCorrection *string
+	if err = f.pool.QueryRow(f.ctx, `SELECT latest_cost_finalization_id,latest_cost_correction_id FROM upstream_attempts WHERE id=$1`, a.ID).Scan(&costFinalization, &costCorrection); err != nil || costFinalization == nil || *costFinalization != input.ID || costCorrection != nil {
+		t.Fatalf("cost source pointers finalization=%v correction=%v err=%v", costFinalization, costCorrection, err)
+	}
+	tx, err := f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `UPDATE upstream_attempts SET cost_amount=cost_amount+1 WHERE id=$1`, a.ID); err == nil {
+		err = tx.Commit(f.ctx)
+	}
+	if err == nil || !strings.Contains(err.Error(), "supplier cost does not match final usage") {
+		t.Fatal("altered supplier cost committed", err)
+	}
+	_ = tx.Rollback(f.ctx)
+	tx, err = f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `INSERT INTO finalization_records(id,tenant_id,request_id,event_id,input_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,policy_version,attempt_id,retail_usage_state,supplier_usage_state,retail_quantities_canonical,retail_quantities_digest,supplier_quantities_canonical,supplier_quantities_digest)
+ SELECT $1,e.tenant_id,e.request_id,e.id,'bad','completed','done','content',true,'stop','r3',e.attempt_id,'confirmed_final','confirmed_final',convert_to('{}','UTF8'),decode(repeat('ab',32),'hex'),convert_to('{}','UTF8'),decode(repeat('cd',32),'hex')
+ FROM metering_events e WHERE e.id=(SELECT event_id FROM finalization_records WHERE id=$2)`, uuid.NewString(), input.ID); err == nil {
+		err = tx.Commit(f.ctx)
+	}
+	if err == nil || !strings.Contains(err.Error(), "finalization does not match event") {
+		t.Fatal("mismatched finalization committed", err)
+	}
+	_ = tx.Rollback(f.ctx)
 	input.ID = uuid.NewString()
 	input.ContentWritten = false
 	input.DeliveryStage = "none"
@@ -482,6 +614,36 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 	if err != nil || approved.Settlement == nil || approved.Settlement.ChargedAmount != 15 {
 		t.Fatal(approved, err)
 	}
+	var approvedSupplier string
+	var approvedSupplierNull bool
+	var approvedAttempt string
+	if err = f.pool.QueryRow(f.ctx, `SELECT f.supplier_usage_state, f.supplier_quantities_canonical IS NULL, e.attempt_id
+ FROM finalization_records f JOIN metering_events e ON e.id=f.event_id
+ WHERE f.request_id=$1 AND e.source='approved_reconciliation'`, r.RequestID).Scan(&approvedSupplier, &approvedSupplierNull, &approvedAttempt); err != nil || approvedSupplier != "missing" || !approvedSupplierNull || approvedAttempt != a.ID {
+		t.Fatal("approved reconciliation confirmed supplier", approvedSupplier, approvedSupplierNull, approvedAttempt, err)
+	}
+	tx, err = f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	missingEvent := uuid.NewString()
+	if _, err = tx.Exec(f.ctx, `INSERT INTO metering_events(id,tenant_id,request_id,source,source_event_id,happened_at,profile_version,schema_id,schema_digest,variant_key,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,retail_usage_state,supplier_usage_state)
+ SELECT $1,s.tenant_id,s.request_id,'adapter','missing-attempt',clock_timestamp(),s.profile_version,s.schema_id,s.schema_digest,'default','failed','not_sent','none',false,'','missing','missing'
+ FROM request_meter_snapshots s WHERE s.request_id=$2`, missingEvent, r.RequestID); err != nil {
+		_ = tx.Rollback(f.ctx)
+		if !strings.Contains(err.Error(), "null value in column") || !strings.Contains(err.Error(), "attempt_id") {
+			t.Fatal(err)
+		}
+		err = nil
+	} else {
+		if _, err = tx.Exec(f.ctx, `SELECT meter_record_event_quantities($1,$2,'missing',0,0)`, missingEvent, f.tenant); err == nil {
+			err = tx.Commit(f.ctx)
+		}
+		if err == nil || !strings.Contains(err.Error(), "observation requires the original attempt") {
+			t.Fatal("observation without its attempt committed", err)
+		}
+		_ = tx.Rollback(f.ctx)
+	}
 	f.wallet(t, 985, 0)
 	correction := CostCorrectionInput{TenantID: f.tenant, AttemptID: a.ID, OperationID: "invoice:1", EvidenceRef: "invoice:controlled", Basis: "invoice", Amount: 20}
 	for i := 0; i < 2; i++ {
@@ -492,6 +654,10 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 	f.wallet(t, 985, 0)
 	correction.Amount = 21
 	assertCode(t, f.store.RecordCostCorrection(f.ctx, correction), "idempotency_conflict")
+	var correctedFinalization, correctedCorrection *string
+	if err = f.pool.QueryRow(f.ctx, `SELECT a.latest_cost_finalization_id,a.latest_cost_correction_id FROM upstream_attempts a WHERE a.id=$1`, a.ID).Scan(&correctedFinalization, &correctedCorrection); err != nil || correctedFinalization != nil || correctedCorrection == nil {
+		t.Fatalf("cost correction pointers finalization=%v correction=%v err=%v", correctedFinalization, correctedCorrection, err)
+	}
 	report, err := f.store.Report(f.ctx, Query{TenantID: f.tenant})
 	if err != nil || report.KnownProviderCost != "20" || report.UnknownProviderCosts != 0 {
 		t.Fatal(report, err)
@@ -523,9 +689,7 @@ func TestPostgresRecoveryAndFreeModel(t *testing.T) {
 		}
 	}
 	f.wallet(t, 1000, 0)
-	if _, err := f.pool.Exec(f.ctx, "INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,0,0,clock_timestamp(),$2)", f.model, f.operator); err != nil {
-		t.Fatal(err)
-	}
+	publishBillingDefault(t, f, f.model, 0, 0, time.Now().UTC())
 	free := f.reserve(t)
 	if free.Amount != 0 {
 		t.Fatal("free price did not apply", free)
@@ -616,9 +780,7 @@ func TestPostgresCapSnapshotAndRebuild(t *testing.T) {
 	f := integration(t)
 	r := f.reserve(t)
 	// Editing the catalog after T1 cannot change the retail snapshot in this request.
-	if _, err := f.pool.Exec(f.ctx, "INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,9000000,9000000,clock_timestamp(),$2)", f.model, f.operator); err != nil {
-		t.Fatal(err)
-	}
+	publishBillingDefault(t, f, f.model, 9000000, 9000000, time.Now().UTC())
 	f.final(t, r, Usage{Status: "confirmed_final", InputTokens: 200, OutputTokens: 20, TotalTokens: 220}, "completed", "done", "content", true)
 	settled, err := f.store.Settle(f.ctx, SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
 	if err != nil || settled.ChargedAmount != 120 || settled.RawRetailAmount != "220" || settled.WaivedRetailAmount != "100" {
@@ -879,7 +1041,7 @@ func TestPostgresRetryNeedsLatestSafeEvidence(t *testing.T) {
 func TestPostgresAppendReplayAfterDeliveryProgress(t *testing.T) {
 	f := integration(t)
 	r := f.reserve(t)
-	original := FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, Source: "adapter", SourceEventID: "stable-usage", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"}
+	original := FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: f.ensureAttempt(t, r.RequestID), Source: "adapter", SourceEventID: "stable-usage", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "none"}
 	if _, err := f.store.RecordFinalization(f.ctx, original); err != nil {
 		t.Fatal(err)
 	}
@@ -972,7 +1134,7 @@ func TestPostgresNarrowAccountAndSharedModelLocks(t *testing.T) {
 	if err != nil {
 		t.Fatal("reservation acquired unrelated global funding lock", err)
 	}
-	if _, err = f.store.RecordFinalization(ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, Source: "adapter", SourceEventID: "normal", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}); err != nil {
+	if _, err = f.store.RecordFinalization(ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, AttemptID: f.ensureAttempt(t, r.RequestID), Source: "adapter", SourceEventID: "normal", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}); err != nil {
 		t.Fatal("normal finalization required exclusive model lock", err)
 	}
 	settled, err := f.store.Settle(ctx, SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
@@ -986,16 +1148,8 @@ func TestPostgresNarrowAccountAndSharedModelLocks(t *testing.T) {
 
 func TestPostgresPublishedRouteSnapshot(t *testing.T) {
 	f := integration(t)
-	policy1, policy2 := uuid.NewString(), uuid.NewString()
-	if _, err := f.pool.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,1)", policy1, f.model); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := f.pool.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", policy1, f.channel, f.version); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := f.pool.Exec(f.ctx, "UPDATE models SET active_revision=1 WHERE id=$1", f.model); err != nil {
-		t.Fatal(err)
-	}
+	publishFixtureRoute(t, f, 1, "upstream")
+	policy2 := uuid.NewString()
 	in := f.input()
 	in.RouteRevision = 1
 	r, err := f.store.Reserve(f.ctx, in)
@@ -1005,10 +1159,23 @@ func TestPostgresPublishedRouteSnapshot(t *testing.T) {
 	attempt := AttemptInput{TenantID: f.tenant, RequestID: r.RequestID, ChannelID: f.channel, ChannelVersionID: f.version, CredentialID: f.credential, UpstreamModel: "unpublished", Sequence: 1}
 	_, err = f.store.RecordAttempt(f.ctx, attempt)
 	assertCode(t, err, "unpublished_binding")
-	if _, err = f.pool.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,2)", policy2, f.model); err != nil {
+	tx, err := f.pool.Begin(f.ctx)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.pool.Exec(f.ctx, "UPDATE models SET active_revision=2 WHERE id=$1", f.model); err != nil {
+	if _, err = tx.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,2)", policy2, f.model); err != nil {
+		_ = tx.Rollback(f.ctx)
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", policy2, f.channel, f.version); err != nil {
+		_ = tx.Rollback(f.ctx)
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=2 WHERE id=$1", f.model); err != nil {
+		_ = tx.Rollback(f.ctx)
+		t.Fatal(err)
+	}
+	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}
 	// An already reserved request still uses its immutable revision 1 snapshot.
@@ -1076,18 +1243,7 @@ CREATE TRIGGER injected BEFORE INSERT ON audit_events FOR EACH ROW EXECUTE FUNCT
 
 func TestPostgresPreciseBindingIsolationAdmission(t *testing.T) {
 	f := integration(t)
-	policy := uuid.NewString()
-	if _, err := f.pool.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,1)", policy, f.model); err != nil {
-		t.Fatal(err)
-	}
-	for _, upstream := range []string{"upstream", "unaffected-model"} {
-		if _, err := f.pool.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,$4,1,10)", policy, f.channel, f.version, upstream); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if _, err := f.pool.Exec(f.ctx, "UPDATE models SET active_revision=1 WHERE id=$1", f.model); err != nil {
-		t.Fatal(err)
-	}
+	publishFixtureRoute(t, f, 1, "upstream", "unaffected-model")
 	reserveAt := func(revision int64) Reservation {
 		t.Helper()
 		in := f.input()
@@ -1131,22 +1287,30 @@ func TestPostgresPreciseBindingIsolationAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	newVersion, newCredential, newPolicy := uuid.NewString(), uuid.NewString(), uuid.NewString()
-	if _, err = f.pool.Exec(f.ctx, "INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'fixture-new')", newCredential, f.channel); err != nil {
+	tx, err = f.pool.Begin(f.ctx)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.pool.Exec(f.ctx, `WITH version AS (INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3) RETURNING id,channel_id,credential_id) INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) SELECT id,channel_id,credential_id,1,'primary',1,1000 FROM version`, newVersion, f.channel, newCredential); err != nil {
+	defer tx.Rollback(f.ctx)
+	if _, err = tx.Exec(f.ctx, "INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'fixture-new')", newCredential, f.channel); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.pool.Exec(f.ctx, "UPDATE channels SET current_version=$2 WHERE id=$1", f.channel, newVersion); err != nil {
+	if _, err = tx.Exec(f.ctx, `WITH version AS (INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3) RETURNING id,channel_id,credential_id) INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) SELECT id,channel_id,credential_id,1,'primary',1,1000 FROM version`, newVersion, f.channel, newCredential); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.pool.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,2)", newPolicy, f.model); err != nil {
+	if _, err = tx.Exec(f.ctx, "UPDATE channels SET current_version=$2 WHERE id=$1", f.channel, newVersion); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.pool.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", newPolicy, f.channel, newVersion); err != nil {
+	if _, err = tx.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,2)", newPolicy, f.model); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.pool.Exec(f.ctx, "UPDATE models SET active_revision=2 WHERE id=$1", f.model); err != nil {
+	if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", newPolicy, f.channel, newVersion); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=2 WHERE id=$1", f.model); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}
 	newer := reserveAt(2)

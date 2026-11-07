@@ -62,6 +62,26 @@ func TestParsePreservesValuesAndOwnsOutput(t *testing.T) {
 	}
 }
 
+func TestParseHandlesEscapedStringBoundariesWithoutCollapsingSyntax(t *testing.T) {
+	for _, raw := range []string{
+		`{"quote":"\\\"","slash":"\\\\","unicode":"\\u0061"}`,
+		`["\\\\\\\"",{"nested":"\\uD834\\uDD1E"}]`,
+	} {
+		if _, err := strictjson.Parse([]byte(raw), len(raw)); err != nil {
+			t.Fatalf("valid escaped string rejected: %q: %v", raw, err)
+		}
+	}
+	for _, raw := range []string{
+		`{"quote":"\\\"}`,       // escaped quote without a closing JSON quote
+		`{"slash":"\\\"}`,       // escaped backslash followed by an unterminated string
+		`{"unicode":"\uD834x"}`, // high surrogate must be followed by a low surrogate
+	} {
+		if value, err := strictjson.Parse([]byte(raw), len(raw)); value != nil || !errors.Is(err, strictjson.ErrInvalidJSON) {
+			t.Fatalf("invalid escaped string returned data or wrong error: %q: %v", raw, err)
+		}
+	}
+}
+
 func TestParseEnforcesByteLimitBeforeSyntax(t *testing.T) {
 	for _, raw := range [][]byte{[]byte(`{}`), []byte(`{x`)} {
 		if value, err := strictjson.Parse(raw, 1); value != nil || !errors.Is(err, strictjson.ErrTooLarge) {

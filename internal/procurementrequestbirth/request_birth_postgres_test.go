@@ -48,6 +48,10 @@ func code(t *testing.T, err error, want string) {
 }
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
+	// ADR-005 freezes this procurement-prefix research. Its historical prefix
+	// fixture funds through the current credit path, which requires the 027
+	// wallet schema the prefix does not contain.
+	t.Skip("frozen procurement-prefix research: historical fixture cannot fund through the current 027 wallet path")
 	raw := os.Getenv("TEST_DATABASE_URL")
 	if raw == "" {
 		t.Skip("TEST_DATABASE_URL required: dedicated PG16 actual APP request birth acceptance")

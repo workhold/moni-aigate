@@ -72,7 +72,8 @@ func newReadFixture(t *testing.T) readFixture {
 	_, err = pool.Exec(ctx, `CREATE TABLE tenants(id text PRIMARY KEY,name text NOT NULL);
 CREATE TABLE models(id text PRIMARY KEY,public_name text NOT NULL);
 CREATE TABLE channels(id text PRIMARY KEY,name text NOT NULL);
-CREATE TABLE request_records(id text PRIMARY KEY,tenant_id text NOT NULL,model_id text NOT NULL,status text NOT NULL DEFAULT 'accepted',billing_status text NOT NULL DEFAULT 'reserved',created_at timestamptz NOT NULL);
+CREATE TABLE request_records(id text PRIMARY KEY,tenant_id text NOT NULL,model_id text NOT NULL,status text NOT NULL DEFAULT 'accepted',billing_status text NOT NULL DEFAULT 'reserved',protocol text,execution_kind text,created_at timestamptz NOT NULL);
+CREATE TABLE request_meter_snapshots(tenant_id text NOT NULL,request_id text PRIMARY KEY,profile_version text NOT NULL,schema_id text NOT NULL,schema_digest bytea NOT NULL,variant_key text NOT NULL);
 CREATE TABLE settlements(request_id text PRIMARY KEY,tenant_id text NOT NULL,charged_amount bigint NOT NULL,refunded_amount bigint NOT NULL);
 CREATE TABLE upstream_attempts(id text PRIMARY KEY,request_id text NOT NULL,channel_id text NOT NULL,sequence integer NOT NULL,cost_status text NOT NULL,cost_amount numeric(100,0));`)
 	if err != nil {

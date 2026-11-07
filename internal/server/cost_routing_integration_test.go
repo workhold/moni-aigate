@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/provider"
@@ -34,7 +35,7 @@ func TestCostRoutingSelectsLowerCostAndKeepsRetailPrice(t *testing.T) {
 	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t), gatewaySuccess(t), gatewaySuccess(t)}, nil)
 	channels := publishCostTestRoute(t, f, routing.CostPolicy{Mode: "cost_first", UnknownCostPolicy: "deny"}, nil)
 	for i, rate := range []int64{9000000, 1000000} {
-		authExec(t, f.pool, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'provider-model',$2,$2,'contract')`, channels[i], rate)
+		publishCostFixture(t, f, channels[i], "provider-model", "contract", costRate(rate), costRate(rate), time.Time{})
 	}
 	response := f.request(t, context.Background(), false, false)
 	raw, _ := io.ReadAll(response.Body)
@@ -47,7 +48,7 @@ func TestCostRoutingSelectsLowerCostAndKeepsRetailPrice(t *testing.T) {
 	}
 	var selected, cost, basis string
 	var decisions []byte
-	if err := f.pool.QueryRow(context.Background(), `SELECT channel_id,cost_amount::text,cost_basis,route_decisions FROM upstream_attempts WHERE request_id=$1`, response.Header.Get("X-Request-ID")).Scan(&selected, &cost, &basis, &decisions); err != nil || selected != channels[1] || cost != "15" || basis != "contract" {
+	if err := f.pool.QueryRow(context.Background(), `SELECT a.channel_id,a.cost_amount::text,s.cost_basis,a.route_decisions FROM upstream_attempts a JOIN attempt_meter_snapshots s ON s.attempt_id=a.id WHERE a.request_id=$1`, response.Header.Get("X-Request-ID")).Scan(&selected, &cost, &basis, &decisions); err != nil || selected != channels[1] || cost != "15" || basis != "contract" {
 		t.Fatal("cheaper procurement channel not used", selected, cost, basis, err)
 	}
 	var ds []routing.Decision
@@ -79,7 +80,7 @@ func TestCostRoutingUnknownAndRateCapsApplyToAllSixProtocols(t *testing.T) {
 			}
 			for _, stage := range []string{"unknown", "over-cap"} {
 				if stage == "over-cap" {
-					authExec(t, f.pool, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'provider-model',1,0,'contract')`, channels[0])
+					publishCostFixture(t, f, channels[0], "provider-model", "contract", costRate(1), costRate(0), time.Time{})
 				}
 				got := call()
 				if got.Code != 503 || strings.Contains(got.Body.String(), "cost_version") || f.posts.Load() != 0 {
@@ -100,8 +101,13 @@ func TestCostRoutingQueuedQuoteChangeDoesNotSendOrReplan(t *testing.T) {
 	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t), gatewaySuccess(t)}, nil)
 	channels := publishCostTestRoute(t, f, routing.CostPolicy{Mode: "cost_first", UnknownCostPolicy: "deny"}, nil)
 	for i, ch := range channels {
-		authExec(t, f.pool, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'provider-model',$2,$2,'contract')`, ch, int64(i+1)*1000000)
+		publishCostFixture(t, f, ch, "provider-model", "contract", costRate(int64(i+1)*1000000), costRate(int64(i+1)*1000000), time.Time{})
 	}
+	procurementMeterApplication(t, f)
+	forbidScalarQuoteReads(t, f)
+	f.http.Close()
+	f.http = httptest.NewServer(f.server.Engine())
+	t.Cleanup(f.http.Close)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	release, err := f.server.admission.acquire(ctx, f.key)
@@ -128,7 +134,7 @@ func TestCostRoutingQueuedQuoteChangeDoesNotSendOrReplan(t *testing.T) {
 		done <- probeHTTPResult{status: response.StatusCode, body: body, err: err}
 	}()
 	admissionAwait(t, "quoted request in admission queue", func() bool { return admissionQueueDepth(&f.server.admission, f.key) == 2 })
-	authExec(t, f.pool, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'provider-model',9000000,9000000,'contract')`, channels[0])
+	publishCostFixture(t, f, channels[0], "provider-model", "contract", costRate(9000000), costRate(9000000), time.Time{})
 	release()
 	got := <-done
 	if got.err != nil || got.status != 503 || !strings.Contains(string(got.body), "cost_quote_stale") || f.posts.Load() != 0 {
@@ -148,11 +154,19 @@ func TestCostVersionHTTPStrictCASAndSafeProjection(t *testing.T) {
 	if err := f.pool.QueryRow(context.Background(), "SELECT management_revision::text FROM channels WHERE id=$1", channel).Scan(&revision); err != nil {
 		t.Fatal(err)
 	}
-	valid := fmt.Sprintf(`{"channel_id":%q,"upstream_model":"provider-model","input_rate":"9223372036854775807","output_rate":"0","basis":"contract","expected_channel_revision":%q}`, channel, revision)
+	var sid, digest string
+	if err := f.pool.QueryRow(context.Background(), `SELECT schema_id,encode(schema_digest,'hex') FROM model_capability_versions WHERE model_id=$1`, f.model).Scan(&sid, &digest); err != nil {
+		t.Fatal(err)
+	}
+	valid := fmt.Sprintf(`{"operation_id":%q,"channel_id":%q,"schema_id":%q,"schema_digest":%q,"variant_key":"default","upstream_model":"provider-model","input_rate":"9223372036854775807","output_rate":"0","basis":"contract","effective_at":"2026-11-01T00:00:00.000001Z","expected_channel_revision":%q}`, uuid.NewString(), channel, sid, digest, revision)
 	call := func(raw string) *httptest.ResponseRecorder {
+		f.server.pricing = pricingAdmission{}
 		return keyPolicyHTTP(t, f.server.Engine(), "POST", "/api/platform/cost-versions", raw, session, csrf, f.server.Config.Origin, "", nil)
 	}
 	for _, raw := range []string{
+		strings.Replace(valid, fmt.Sprintf(`"schema_id":%q,`, sid), "", 1),
+		strings.Replace(valid, fmt.Sprintf(`"schema_digest":%q`, digest), `"schema_digest":"bad"`, 1),
+		strings.Replace(valid, `"variant_key":"default"`, `"variant_key":"other"`, 1),
 		strings.Replace(valid, `"basis":"contract"`, `"basis":"contract","basis":"invoice"`, 1),
 		strings.Replace(valid, `"basis":"contract"`, `"BASIS":"contract"`, 1),
 		strings.Replace(valid, `"basis":"contract"`, `"basis":"contract","secret":"marker"`, 1),
@@ -166,26 +180,36 @@ func TestCostVersionHTTPStrictCASAndSafeProjection(t *testing.T) {
 		}
 	}
 	got := call(valid)
-	if got.Code != 200 || !strings.Contains(got.Body.String(), "channel_revision") {
+	if got.Code != 201 || !strings.Contains(got.Body.String(), "channel_revision") || !strings.Contains(got.Body.String(), sid) || !strings.Contains(got.Body.String(), digest) {
 		t.Fatal("valid cost not published", got.Code, got.Body.String())
 	}
-	if got = call(valid); got.Code != 409 {
-		t.Fatal("old cost revision not rejected", got.Code)
+	if got = call(valid); got.Code != 200 {
+		t.Fatal("same cost operation did not replay original receipt", got.Code)
 	}
 	view := authHTTP(t, f.server, "GET", "/api/platform/cost-versions", session, csrf, "", nil)
-	if view.Code != 200 || !strings.Contains(view.Body.String(), `"input_rate":"9223372036854775807"`) || strings.Contains(view.Body.String(), "local-fixture-secret") {
+	if view.Code != 200 || !strings.Contains(view.Body.String(), `"rates"`) || strings.Contains(view.Body.String(), `"input_rate"`) || strings.Contains(view.Body.String(), `"output_rate"`) || !strings.Contains(view.Body.String(), sid) || !strings.Contains(view.Body.String(), digest) || strings.Contains(view.Body.String(), "local-fixture-secret") {
 		t.Fatal("cost projection lost precision or leaked secrets", view.Code, view.Body.String())
+	}
+	models := authHTTP(t, f.server, "GET", "/api/platform/models", session, csrf, "", nil)
+	if models.Code != 200 || !strings.Contains(models.Body.String(), sid) || !strings.Contains(models.Body.String(), digest) || !strings.Contains(models.Body.String(), `"variant_key":"default"`) {
+		t.Fatal("model selector omitted immutable cost domain", models.Code, models.Body.String())
 	}
 }
 
 func TestCostQuoteActivationDuringCredentialWaitRecordsNotSentZeroCost(t *testing.T) {
 	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t)}, nil)
 	channels := publishCostTestRoute(t, f, routing.CostPolicy{Mode: "cost_first", UnknownCostPolicy: "deny"}, nil)
-	authExec(t, f.pool, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'provider-model',1000000,1000000,'contract')`, channels[0])
+	publishCostFixture(t, f, channels[0], "provider-model", "contract", costRate(1000000), costRate(1000000), time.Time{})
+	procurementMeterApplication(t, f)
+	forbidScalarQuoteReads(t, f)
+	f.http.Close()
+	f.http = httptest.NewServer(f.server.Engine())
+	t.Cleanup(f.http.Close)
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 	var effective time.Time
-	if err := f.pool.QueryRow(ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,'provider-model',9000000,9000000,'contract',clock_timestamp()+interval '1 second') RETURNING effective_at`, channels[0]).Scan(&effective); err != nil {
+	costID := publishCostFixture(t, f, channels[0], "provider-model", "contract", costRate(9000000), costRate(9000000), time.Now().Add(time.Second))
+	if err := f.pool.QueryRow(ctx, `SELECT effective_at FROM cost_versions WHERE id=$1`, costID).Scan(&effective); err != nil {
 		t.Fatal(err)
 	}
 	blocker, err := f.pool.Begin(ctx)

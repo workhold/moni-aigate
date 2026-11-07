@@ -1,23 +1,36 @@
 package operations
 
-import "testing"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"testing"
+	"time"
 
-// Metadata-only fixtures use a same-transaction zero reservation after 020.
-// They do not post money or stand in for the separately tested Reserve API.
-func operationMetadataSource(t *testing.T, f *operationFixture, request, query string, args ...any) {
+	"github.com/google/uuid"
+	"github.com/moni-ai/moni-aigate/internal/billing"
+)
+
+// operationMetadataRequest births one complete current request through the
+// actual APP billing path, so its snapshot, bounds, reservation and wallet
+// source facts are production rows rather than hand-written metadata.
+func operationMetadataRequest(t *testing.T, f *operationFixture, clientIP string) string {
 	t.Helper()
-	tx, err := f.app.Begin(f.ctx)
+	fundingApproveCredit(t, f, uuid.NewString())
+	request := uuid.NewString()
+	digest := sha256.Sum256([]byte(request))
+	_, err := billing.New(f.app).Reserve(f.ctx, billing.ReserveInput{
+		RouteRevision:   1,
+		Principal:       billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key, ClientIP: clientIP},
+		RequestID:       request,
+		ModelID:         f.model,
+		IdempotencyKey:  uuid.NewString(),
+		RequestHMAC:     hex.EncodeToString(digest[:]),
+		InputUpperBound: 100,
+		OutputLimit:     20,
+		RequestDeadline: time.Now().UTC().Add(5 * time.Minute),
+	})
 	if err != nil {
-		t.Fatal("begin metadata fixture")
+		t.Fatal("reserve metadata fixture request:", err)
 	}
-	defer tx.Rollback(f.ctx)
-	if _, err = tx.Exec(f.ctx, query, args...); err != nil {
-		t.Fatal("insert metadata fixture source")
-	}
-	if _, err = tx.Exec(f.ctx, `INSERT INTO reservations(id,tenant_id,request_id,amount,deadline) VALUES(gen_random_uuid()::text,$1,$2,0,clock_timestamp()+interval '24 hours')`, f.tenant, request); err != nil {
-		t.Fatal("insert metadata fixture zero reservation")
-	}
-	if err = tx.Commit(f.ctx); err != nil {
-		t.Fatal("commit metadata fixture")
-	}
+	return request
 }

@@ -2,6 +2,7 @@ package routing
 
 import (
 	"context"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"math"
 	"testing"
 )
@@ -43,12 +44,11 @@ func TestProcurementFiltersManualRoutesUsingExactSharedBudget(t *testing.T) {
 	attempt.Finish(Neutral)
 	a.InputUpperBound = math.MaxInt64
 	a.OutputLimit = math.MaxInt64
-	a.CostQuote.InputRate = costRate(math.MaxInt64)
-	a.CostQuote.OutputRate = costRate(math.MaxInt64)
+	a.CostQuote = testCostQuote("exhausted", "m", "cost", "contract", math.MaxInt64, math.MaxInt64)
 	if got := ProcurementExclusion(a); got != "procurement_bound_invalid" {
 		t.Fatal("large hard bound wrapped", got)
 	}
-	a.CostQuote.OutputRate = nil
+	a.CostQuote = routecost.Quote{}
 	if got := ProcurementExclusion(a); got != "cost_unknown" {
 		t.Fatal(got)
 	}

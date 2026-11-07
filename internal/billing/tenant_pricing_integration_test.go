@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func TestPostgresTenantPricingExactDomainAndImmutableSnapshot(t *testing.T) {
@@ -26,7 +27,7 @@ func TestPostgresTenantPricingExactDomainAndImmutableSnapshot(t *testing.T) {
 	if e = f.pool.QueryRow(f.ctx, `SELECT count(*) FROM request_records`).Scan(&count); e != nil || count != 0 {
 		t.Fatal(count, e)
 	}
-	quote, e := c.PublishGroupPrice(f.ctx, actor, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: g.Result.ID, ModelID: f.model, InputRate: 2000000, OutputRate: 3000000, EffectiveAt: time.Now().Add(-time.Minute).UTC().Truncate(time.Microsecond)})
+	quote, e := c.PublishGroupPrice(f.ctx, actor, meterquote.BindGroup(t, f.ctx, f.pool, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: g.Result.ID, ModelID: f.model, InputRate: 2000000, OutputRate: 3000000, EffectiveAt: time.Now().Add(-time.Minute).UTC().Truncate(time.Microsecond)}))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -88,6 +89,10 @@ func TestPostgresTenantPricingCommitRejectionRetryBound(t *testing.T) {
 	for _, pgcode := range []string{"40P01", "40001", "23514"} {
 		t.Run(pgcode, func(t *testing.T) {
 			f := integration(t)
+			var before int
+			if scan := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM pricing_operations`).Scan(&before); scan != nil {
+				t.Fatal(scan)
+			}
 			if _, e := f.pool.Exec(f.ctx, `CREATE SEQUENCE pricing_retry_count; CREATE FUNCTION pricing_retry_commit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF nextval('pricing_retry_count')<3 THEN RAISE EXCEPTION 'synthetic rollback' USING ERRCODE='`+pgcode+`'; END IF; RETURN NULL; END $$; CREATE CONSTRAINT TRIGGER pricing_retry_commit AFTER INSERT ON pricing_operations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION pricing_retry_commit()`); e != nil {
 				t.Fatal(e)
 			}
@@ -98,10 +103,10 @@ func TestPostgresTenantPricingCommitRejectionRetryBound(t *testing.T) {
 				t.Fatal(scan)
 			}
 			if pgcode == "23514" {
-				if e == nil || attempts != 1 || groups != 0 || receipts != 0 {
+				if e == nil || attempts != 1 || groups != 0 || receipts != before {
 					t.Fatal(out, e, attempts, groups, receipts)
 				}
-			} else if e != nil || attempts != 3 || groups != 1 || receipts != 1 {
+			} else if e != nil || attempts != 3 || groups != 1 || receipts != before+1 {
 				t.Fatal(out, e, attempts, groups, receipts)
 			}
 		})

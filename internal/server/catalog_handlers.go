@@ -3,7 +3,6 @@ package server
 import (
 	"net/netip"
 	"net/url"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
@@ -91,35 +90,6 @@ func (s *Server) publishBindings(c *gin.Context) {
 		return
 	}
 	s.ok(c, gin.H{"revision": revision})
-}
-func (s *Server) publishPrice(c *gin.Context) {
-	if !s.admin(c) {
-		return
-	}
-	var in struct {
-		ModelID   string `json:"model_id"`
-		Input     string `json:"input_rate"`
-		Output    string `json:"output_rate"`
-		Effective string `json:"effective_at"`
-	}
-	if !s.bind(c, &in) {
-		return
-	}
-	var when time.Time
-	var e error
-	if in.Effective != "" {
-		when, e = time.Parse(time.RFC3339, in.Effective)
-		if e != nil {
-			s.fail(c, 400, "invalid_request", "生效时间格式无效")
-			return
-		}
-	}
-	id, e := s.Catalog.PublishPrice(c.Request.Context(), sessionOf(c).User.ID, in.ModelID, in.Input, in.Output, when)
-	if e != nil {
-		s.error(c, e)
-		return
-	}
-	s.ok(c, gin.H{"id": id})
 }
 func networkPolicy(raw string, cidrs []string) provider.NetworkPolicy {
 	return catalog.NetworkPolicy(raw, cidrs)

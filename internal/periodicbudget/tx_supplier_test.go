@@ -7,29 +7,47 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 // All source mutations use the actual APP LOGIN and retain 014's full
 // account = immutable events = reservation conservation at transaction commit.
+// pbTxPrepareSupplier writes one prepared attempt whose U is the original
+// supplier bounds (100/20) times a known quote: the fixture quote gives 240 and
+// an older zero quote gives 0. The database recomputes U independently.
 func pbTxPrepareSupplier(t *testing.T, f *pbTxFixture, tx pgx.Tx, request string, upper int64) (string, SupplierLocks, string) {
 	t.Helper()
-	attempt := uuid.NewString()
-	cost := f.cost
-	if upper == 0 {
-		cost = uuid.NewString()
-		f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,$2,'upstream',0,0,'contract')`, cost, f.channel)
-	}
-	f.exec(t, tx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,cost_version_id,cost_input_rate,cost_output_rate,cost_basis)
- SELECT $1,$2,$3,1,$4,$5,$6,'upstream',id,input_rate,output_rate,basis FROM cost_versions WHERE id=$7`, attempt, f.tenant, request, f.channel, f.version, f.credential, cost)
+	attempt := pbTxSupplierAttempt(t, f, tx, request, upper)
 	f.exec(t, tx, `SELECT id FROM procurement_accounts WHERE id=$1 FOR NO KEY UPDATE`, f.account)
 	locks, err := LockSupplierTx(f.ctx, tx, f.account)
 	pbTxMust(t, "lock exact supplier account control", err)
-	f.exec(t, tx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,input_bound,output_bound,upper_amount,held_amount,spent_amount,state) VALUES($1,$2,$3,100,20,$4,$4,0,'prepared')`, attempt, f.account, f.binding, upper)
+	f.exec(t, tx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,upper_amount,held_amount,spent_amount,state) VALUES($1,$2,$3,$4,$4,0,'prepared')`, attempt, f.account, f.binding, upper)
 	source := uuid.NewString()
 	f.exec(t, tx, `INSERT INTO procurement_budget_events(id,event_key,account_id,attempt_id,held_delta,spent_delta,type) VALUES($1,$2,$3,$4,$5,0,'reserved')`, source, "reserve:"+attempt, f.account, attempt, upper)
 	f.exec(t, tx, `UPDATE procurement_accounts SET held_amount=held_amount+$2 WHERE id=$1`, f.account, upper)
 	return attempt, locks, source
 }
+
+func pbTxSupplierAttempt(t *testing.T, f *pbTxFixture, tx pgx.Tx, request string, upper int64) string {
+	t.Helper()
+	cost := f.cost
+	switch upper {
+	case 240:
+	case 0:
+		var zero int64
+		cost = meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
+			ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
+			Basis: "contract", InputRate: &zero, OutputRate: &zero, EffectiveAt: f.catalogEffectiveAt(t, tx, "30 days"),
+		})
+	default:
+		t.Fatal("unsupported fixture supplier upper amount", upper)
+	}
+	attempt := uuid.NewString()
+	f.exec(t, tx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, attempt, f.tenant, request, f.channel, f.version, f.credential)
+	f.exec(t, tx, `SELECT meter_insert_attempt_snapshot($1,$2,$3,$4,'contract')`, f.tenant, attempt, request, cost)
+	return attempt
+}
+
 func pbTxChangeSupplier(t *testing.T, f *pbTxFixture, tx pgx.Tx, attempt string, held, spent int64, state string) string {
 	t.Helper()
 	var oldHeld, oldSpent int64
@@ -71,6 +89,7 @@ func pbTxAssertSupplierConserved(t *testing.T, f *pbTxFixture) {
 }
 
 func TestTxSupplierFullUpperOriginalWindowAndIdempotency(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	control := f.configure(t, "procurement", true, 240)
 	f.setClock(t, time.Date(2026, 12, 10, 12, 0, 0, 0, time.UTC))
@@ -113,6 +132,7 @@ func TestTxSupplierFullUpperOriginalWindowAndIdempotency(t *testing.T) {
 }
 
 func TestTxSupplierCapAndSourceProofFailuresRollback(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	f.configure(t, "procurement", true, 239)
 	f.setClock(t, time.Date(2026, 12, 10, 12, 0, 0, 0, time.UTC))
@@ -163,6 +183,7 @@ func TestTxSupplierCapAndSourceProofFailuresRollback(t *testing.T) {
 }
 
 func TestTxSupplierZeroUpperAndLegacyCatchup(t *testing.T) {
+	pbHandwrittenSource(t)
 	t.Run("real_zero_price_U0", func(t *testing.T) {
 		f := newPBTxFixture(t)
 		f.configure(t, "procurement", true, 0)
@@ -216,6 +237,7 @@ func TestTxSupplierZeroUpperAndLegacyCatchup(t *testing.T) {
 }
 
 func TestTxPermitDispatchRequiresActualPreparedFullScopeFact(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	f.configure(t, "tenant", true, 120)
 	f.configure(t, "key", true, 120)
@@ -292,6 +314,7 @@ func TestTxPermitDispatchRequiresActualPreparedFullScopeFact(t *testing.T) {
 }
 
 func TestTxPermitExplicitNoProcurementRequiresNoBindingOrSource(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	tx := f.begin(t)
 	cl := pbTxCustomerLocks(t, f, tx, "")

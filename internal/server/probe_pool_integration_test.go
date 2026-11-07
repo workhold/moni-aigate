@@ -13,6 +13,7 @@ import (
 
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 const probeSecondarySecret = "local-probe-secondary-secret"
@@ -175,7 +176,11 @@ func TestPostgresProbePoolSharesCredentialAndChannelCapacity(t *testing.T) {
 		_, _ = io.WriteString(w, probeJSON)
 	})
 	f.server.Routing = routing.NewEngine(routing.Config{RandN: func(uint64) uint64 { return 0 }})
-	primary := routing.Candidate{ChannelID: channel, VersionID: pool.ChannelVersionID, CredentialID: pool.Members[0].CredentialID, Model: "provider-model", Region: "global", HealthKey: pool.Members[0].CredentialID + ":" + f.model, Priority: 1, Weight: 1, MaxInflight: 4, CredentialWeight: 1, CredentialMaxInflight: 1, Enabled: true}
+	quote, err := meterquote.Select(context.Background(), f.pool, f.model, channel, "provider-model")
+	if err != nil {
+		t.Fatal(err)
+	}
+	primary := routing.Candidate{ChannelID: channel, VersionID: pool.ChannelVersionID, CredentialID: pool.Members[0].CredentialID, Model: "provider-model", Region: "global", HealthKey: pool.Members[0].CredentialID + ":" + f.model, Priority: 1, Weight: 1, MaxInflight: 4, CredentialWeight: 1, CredentialMaxInflight: 1, Enabled: true, CostQuote: quote}
 	plan, err := routing.NewPlan([]routing.Candidate{primary}, 1)
 	if err != nil {
 		t.Fatal(err)

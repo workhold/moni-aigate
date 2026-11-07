@@ -130,7 +130,7 @@ func TestPostgresProbeUsesPublishedVersionAndPlatformAudit(t *testing.T) {
 	}
 	var version, status, usage string
 	var audits int
-	err := f.pool.QueryRow(ctx, `SELECT p.channel_version_id,p.status,p.normalized_usage->>'status',(SELECT count(*) FROM audit_events a WHERE a.action='channel.probe' AND a.target=p.id) FROM platform_probe_attempts p`).Scan(&version, &status, &usage, &audits)
+	err := f.pool.QueryRow(ctx, `SELECT p.channel_version_id,p.status,p.usage_state,(SELECT count(*) FROM audit_events a WHERE a.action='channel.probe' AND a.target=p.id) FROM platform_probe_attempts p`).Scan(&version, &status, &usage, &audits)
 	if err != nil || version != publishedVersion || status != "completed" || usage != "confirmed_final" || audits != 1 || len(f.server.global) != 0 || len(f.server.probes) != 0 {
 		t.Fatalf("probe audit/version/resources: %s %s %s audit=%d err=%v", version, status, usage, audits, err)
 	}
@@ -327,7 +327,7 @@ func TestPostgresProbeCancellationClosesSocketAndReleasesSharedLease(t *testing.
 	var failed int
 	deadline := time.Now().Add(3 * time.Second)
 	for time.Now().Before(deadline) {
-		if err := f.pool.QueryRow(context.Background(), "SELECT count(*) FROM platform_probe_attempts WHERE status='failed' AND normalized_usage->>'status'='missing'").Scan(&failed); err != nil {
+		if err := f.pool.QueryRow(context.Background(), "SELECT count(*) FROM platform_probe_attempts WHERE status='failed' AND usage_state='missing'").Scan(&failed); err != nil {
 			t.Fatal(err)
 		}
 		if failed == 1 && len(f.server.global) == 0 && len(f.server.probes) == 0 {

@@ -110,6 +110,18 @@ CHECK(retail OR supplier)
 
 随后扩大同schema的profile/route界时也必须复核其可能选中的生效/已排期零售与known采购价的最坏R/U；不能因为价曾在较小profile通过而自动授予更大界。Reserve/RecordAttempt仍各自重算并拒绝溢出，是独立最后门禁；不把巨大上界截MaxInt64。
 
+#### 4.1.1 客户选价、预占与失败边界（2026-11-05 冻结）
+
+`pricing.SelectEffectiveTx`在调用方已持tenant/model与assigned group原锁后，以一个SQL语句取得新DB priced_at、该model当前唯一capability/default的schema及同域当期原价。必须完整限定model/group/schema_id/schema_digest/default，排序沿effective_at/created_at/id逆序；不可从另一schema或默认域补组缺价。没有合法capability/schema是pricing_invariant；有效schema但没有当期价格才是unavailable。未来价不能提前生效，完整零向量是有效价。
+
+现行Selection只有原version/group/effective_at/priced_at、profile version、variant以及opaque Schema/Rates，不再返回InputRate/OutputRate。schema canonical、DB ID/digest与Rates canonical/digest必须逐byte匹配完整retail mask、side和CNY，错误返回pricing_invariant，不能退回meter_price_million、丢维度、零价或另一版本。schema/费率读取和选价clock同一语句快照；结果不保留调用方可变group指针，不在钱包等待后重新选价。
+
+Reserve独立核Selection.profile/schema等于原锁定capability；由其Schema和本次已验证文本界构造retail Bounds，直接调用metering.ReservationAmount(bounds,selected.Rates)得到唯一R。溢出以amount_overflow拒绝，不通过Amount+截断或自行ceil。input-only的输出率必须显式0。原Key/PB/027来源/账户锁序、选价时刻早于钱包等待、全部等待后期限重验及出生事务保持。价格/界/金额失败必须回滚idempotency、request、reservation、Key/PB、来源/账本/audit/outbox，不得留半成品。
+
+Reservation是资金回执，只携原version/domain/revision/priced_at和原金额/状态等资金身份；移除仅为标量回显的InputRate/OutputRate，不为本次删字段再添加legacy DTO、空值联合或第二套quote。原完整Rates仍在不可变价格/请求快照，外层inference报价身份不变，计划未就绪门禁不变。管理端每百万token输入仍保留；采购路由/预占DTO与发布operation/指纹是后续片，不能据此标全线切换完成。
+
+历史前缀研究仍只检查原迁移范围、自由profile版本与旧列。因现行资金回执删字段而必需的测试编译调整，只可把其原费率断言移到原request旧列，不给它升级schema或补当前vector兼容。不改历史pins、原型宽ABI或001–023。验收需以当前PG夹具禁用标量反算函数，覆盖默认/组价、零价/缺价/未来价、schema域隔离、原价跨model/group/wallet等待、input-only、单次ceil/溢出与回滚；专用55439夹具继续只编译，不用5432冒充。
+
 ### 4.2 `cost_versions` / `cost_rate_lines`
 
 保留 `id/channel_id/upstream_model/basis/effective_at/created_at`；删除 input_rate/output_rate。增加 `schema_id TEXT`、`schema_digest BYTEA`、`variant_key TEXT`、`currency TEXT CHECK(currency='CNY')`、`rates_canonical BYTEA NULL`、`rates_digest BYTEA NULL`、`pricing_operation_id TEXT`、`created_by TEXT`、`created_xid XID8`。schema FK同上；pricing operation FK deferred+UNIQUE，created_by FK users。rate/quote status不从NULL数字猜测。
@@ -118,7 +130,39 @@ CHECK(retail OR supplier)
 
 报价域为 `(channel_id,upstream_model,schema_id,variant_key)`，增加同域+effective_at UK，索引同域+原三项确定逆序。沿现行channel共享报价语义，不加入凭据专价或新supplier合同身份；选中attempt另冻结实际channel/version/credential/upstream/profile合同。`synchronize_cost_version_insert` 仍先 UPDATE channel 与派发 SHARE 串行并递增 management_revision；同刻冲突改为完整域，不继续用旧 channel/model 两键误挡另一 schema/variant。发布沿原admin/CAS/audit，并以cost_price.publish纳入已有pricing_operations同一原件/指纹规则。
 
+#### 4.2.1 采购报价域隔离与失败边界（2026-11-05 冻结）
+
+管理端继续输入每百万token整数，但必须显式提交已发布模型的 `schema_id`、64位小写hex `schema_digest` 与 `variant_key='default'`；列表/发布成功响应回显相同身份。选择器从不可变capability取身份，不按模型名称、最近创建时间或当前全局schema猜测。缺身份、nil/大写UUID、错摘要、未发布schema或非default变体在写入前拒绝，不能兼容旧请求省略身份；渠道CAS、报价和audit须整体回滚。
+
+SQL入口 `meter_insert_token_cost(cost_id,channel_id,upstream_model,schema_id,input_per_million,output_per_million,basis,effective_at)` 的schema_id是必填定位，摘要由同一不可变schema重读；只允许已有capability/default引用的两维文本schema。known输入只收完整两价；输出maximum为0的input-only schema仅接受零输出价。raw root插入也须核schema发布资格与input-only零价，不能绕过函数。unknown仍没有费率行/canonical/digest，不能伪装免费。
+
+候选读取沿原route的profile取得schema，attempt准入与采购锁后复验沿原request snapshot取得schema，派发复验沿原attempt snapshot取得schema；所有选价必须同时限定channel/upstream/schema_id/schema_digest/variant，之后才按原三项倒序。另一个schema的更新、unknown、排期价或同刻版本既不能挤掉本域原价，也不能补本域缺价；缺价仍为version_missing。所有快照（含计划未就绪和basis_unknown）在提交时独立校验报价与真实attempt的channel/upstream及原schema/variant完整一致，不能仅核known rates canonical。跨schema/跨channel/跨upstream即使费率全零或unknown也整笔拒绝，原快照不追溯改价。
+
+为实现上述原route定位，本片同时落第3节的route.profile_version与出生stamp。BEFORE INSERT锁定model并从其唯一当前capability派生profile；若调用方显式给出另一profile则拒绝，绝不按最新capability全局查找。profile/model复合FK和原route不可变约束保留；model非零active_revision必须指向同profile的原route。请求快照的非零route_revision也须绑定该profile，避免调用方将另一schema的当前profile接到旧route；route_revision=0派发旁路的整体删除仍在后续guard片，不能据此标成完整路由门禁。
+
+本片先关闭上述域隔离缺口；不将仍待改造的向量DTO、pricing_operations全量接线和精确发布指纹写成已完成，也不授予异构profile路由资格。
+
 route 的逐维 cap 以 `quote.numerator*cap.denominator <= cap.numerator*quote.denominator` 精确比较。任一 cap、cost_first 或 unknown=deny 都要求完整 known quote。最高 priority 池先用完整 supplier bound 和 Rates 的**未 ceil 有理总费用**比较，再沿现行 weighted tie。不能逐维比后只取 input、按已 ceil U 排序或用零售价评分。
+
+#### 4.2.2 完整候选报价值与分片接入边界（2026-11-05 冻结）
+
+先行片实现独立纯域 `internal/routecost`；后续在线片已将当前候选/采购/派发DTO原子替换为该完整选择值，删除 `routing.CostQuote`、两价成本评分及内部两价cap镜像，不启用shadow计算、双运行或兼容回退。显式冻结原型使用独立输入和Store，不消费新Quote。当前接入与限定验收如下；这不表示发布operation/全部HTTP/完整guard或U商业出口已完成。
+
+`routecost.Quote` 是不可变选择值工厂：完整Schema/default、实际channel/upstream、原cost version/basis与完整supplier Rates；known/unknown保持第4.2节联合，missing version与显式unknown版本可区分。零值无效；known须原version非空及完整率（含明确零），unknown允许缺version或有显式version，但Rates必须无效/缺失。仅报价选择值不新增canonical/digest算法或第二个inference报价身份，不证明供应商真实性、版本归属、派发或资金权限。直接构造传入的Rates必须与完整schema定义/摘要及supplier侧一致，不能仅核schema UUID。
+
+`StoredInput` 与已解析 `Input` 分离，存储读端逐byte核schema/率canonical及摘要：JSON可解析但非规范、摘要缺失或不等、错side/错schema、known缺率均返回 `ErrInvalidQuote`，绝不降级为unknown；unknown两率字段须真NULL（nil），空BYTEA也拒绝。解析不接受调用方额外传入已解析Rates来覆盖原件，不调用meter_cost_million或由int64每百万镜像重建。该纯函数不能代替SQL同tenant/request/attempt/channel/upstream/原域归属guard。
+
+`routecost.Limits` 是同schema supplier mask上的可选有理上限集合；无行表示无cap，0/1是明确零上限。每行维度/单位、C序无重复、规范int64字符串、非负分子、1≤分母≤1_000_000、约分必须成立；JSON仅收恰四键的数组行，拒重复键/尾数据/非整数字符串/超界。工厂与只读描述都copy数组。空Limits为无cap；非空须匹配Quote完整schema摘要。`Exceeded` 只做 `quote.numerator*cap.denominator > cap.numerator*quote.denominator` 的big.Int精确比较，不ceil或反算每百万。零Quote是ErrInvalidQuote，非空cap错绑定是ErrInvalidLimits，合法unknown即使无cap也返回ErrUnknownQuote；是否manual/allow由现行调用方策略决定，纯层不能把unknown判成免费或擅自批准。金额和成本比较仍只由metering提供。
+
+在线接入合同（本续片已接线）：候选读取完整同域Rates，成本优先通过metering.CompareExactCost比较完整supplier Bounds与Rates，采购初筛由ReservationAmount单次ceil；原priority层内精确并列后才沿channel/credential权重。管理端每百万token输入保留，只在发布入口约分；不得允许异构profile路由。RecordAttempt在原锁/按序batch后读取同request域完整报价，managed/cap/受管采购与预期报价完整相等；identity/schema/variant/version/basis/任一率变更是cost_quote_stale，坏原件是invalid_meter_snapshot，unknown按原政策cost_unknown。account/PB等待后新RC语句复验；PrepareDispatch沿原attempt与既有最后锁后DB决策时刻复验，不采另一时钟，不改原U/客户价或回填未就绪canonical。
+
+普通billing与显式NewProspective的完整输入已隔离：冻结原型保留原13参scalar/历史TEXT/字节ABI和原SQL/pins/旧差分依据，不把新Quote降维喂给原型，也不让当前路径获得旧运行权。在线切换验收在禁两标量反算函数后的受限SET ROLE APP上覆盖候选→RecordAttempt→采购→PrepareDispatch→唯一结算：六协议paid/known-zero、unknown政策及排期报价跨凭据等待均有局部专项；精确cap/同ceil异精确排序及错schema由纯域/计划测试验证，原报价域/采购account等待由PG专项验证。不能把这些不同层级合称实际LOGIN或全部负控均在受限APP上跑过。55439专库/浏览器/供应商及完整六文本商业出口仍另验。
+
+4.2.2a 输入隔离：显式NewProspective返回独立ProspectiveStore，仅接受FrozenAttemptInput及procurementexecution.CostQuote原13参字节联合；它不嵌入普通Store，不提升当前资金方法，也不接受routecost.Quote。普通Store删除prospective配置字段/运行分支；构造器和方法类型不能交叉代入。路由解释只共用不含报价的纯身份/Decision校验，顺序、固定错误、nil/空字节和未知COMMIT分类保持原样。冻结执行器原SQL、映射、观察器实现与pins不变；历史fixture只有必要输入类型/编译边界调整，不能据此说历史业务运行验收不变或已通过，具体限制见4.2.2c。实际APP执行仍需原资格/专库，类型隔离不赋予current运行资格；在线接入不可通过该独立Store绕回标量。
+
+4.2.2b 候选计划门禁：Limits.ValidFor只验证Quote有效和非空cap完整schema摘要一致，允许合法unknown参与manual/allow后续政策；它不是批准。NewPlan必须先校Quote实际channel/upstream、完整schema一致及文本Bounds不超过原schema硬界，坏值不能延迟到成本排序或变成cost_unknown。跨channel报价/相同UUID不同schema内容、无效零值、错cap绑定或超界均拒绝整个计划；候选仍全部来自每模型唯一capability。CostExclusion返回(reason,error)，先验证policy/原件，只有合法unknown才按manual/allow放行；无效policy返回ErrInvalidPolicy，无效报价/错cap返回原routecost错误，reason为空，不能吞成cost_unknown。Engine遇错误整次拒绝，不生成安全原因词汇之外的Decision；billing将非法存储策略/原件统一拒为invalid_meter_snapshot，合法未知和超cap沿原业务错误。排序只委托metering.CompareExactCost，初筛U只委托ReservationAmount，不恢复旧CostScore或两价公式。
+
+4.2.2c 冻结fixture的编译隔离：固定022/019的报价行继续读原旧列到测试专属DTO，不能构造routecost或调用current SQL读端。已不适用的current billing方法不能作为旧库运行兼容承诺：冻结夹具调用当前attempt API时，经测试专属强类型边界返回明确“current vector billing rejects frozen scalar attempt input”失败，禁止丢弃旧报价、伪造schema或降维转换后继续资金操作；在原研究专库真正恢复历史business oracle前，该类旧组合只编译，不宣称运行验收。纯旧报价差分仍以测试专属原Equal/原SQL检查，不改SQL/pins或迁移范围。显式NewProspective有自己FrozenAttemptInput，仍按原13参原型执行，不经过这个拒绝边界。当前迁移的periodicbudget billing夹具另用原canonical报价，历史seed不改；55439未就绪只编译。
 
 ### 4.3 定价 operation 的精确变更
 
@@ -136,6 +180,45 @@ route 的逐维 cap 以 `quote.numerator*cap.denominator <= cap.numerator*quote.
 group从受权target路径绑定，不可让body再指定另一group。三个target分别沿现行`/api/platform/price-versions`、`/api/platform/price-groups/{group_id}/price-versions`、`/api/platform/cost-versions`，SQL从kind和原资源身份精确重建，不接受自由target。发布返回精确版本身份+完整rates或明确unknown+effective_at+DB created_at；采购还保留操作前后channel revision与原CAS效果。默认/组价audit沿`pricing.price.publish`，采购价用`pricing.cost.publish`，均含原operation_id/target/安全after，恰一条且同事务。原result_schema当前形状直接升级，不写legacy/null/fallback联合。
 
 `pricing_fingerprint`保留现有pricing_frame的带长度/NULL framing。零售publish frames为`[kind,actor,scope,target,model_id,schema_id,schema_digest,variant_key,currency,UTF8(rates_canonical),UTC6(effective_at)]`；成本为`[kind,actor,scope,target,channel_id,upstream_model,schema_id,schema_digest,variant_key,currency,basis,UTF8(rates_canonical)|NULL,UTC6(effective_at),expected_channel_revision]`。rates先验证C序，不能排序接收乱序输入。禁止请求raw JSON/hash、JSONB::text或仅version ID意图指纹。相同operation同语义返回原回执；另一rate/schema/variant/effective_at/actor/target或成本CAS均冲突；重放不产生第二版本/audit。bounds不在publish输入，global maximum已绑定schema摘要。
+
+### 4.3.1 组价发布先行片：失败与重放边界（2026-11-05）
+
+本片只切已存在operation的group_price.publish；默认/采购的operation接入仍待后续，不把现有默认/采购裸发布算已收口。组价管理HTTP继续收input_rate/output_rate每百万整数，但必须显式提交schema_id/schema_digest/variant_key；缺身份不猜当前schema。Go在同一operation事务内先核原操作/actor，再锁model、核当前唯一capability完整schema和该输入身份，构造retail Rates；safe_input与指纹只保留上述4.3的完整Rates，不保留两价镜像。有效输入必须UTC6微秒精度；不能静默截断改变意图。缺/错schema、非default、input-only非零输出、非规范/越int64价格、完整最大R溢出均拒绝，不留operation/版本/率行/audit。单位/顺序/约分/side/schema绑定在SQL及读端独立检查。
+
+已存在operation重放须在读取当前模型/组状态之前比较原完整意图；退休组或模型停用不抹掉历史回执。身份匹配还要求原actor仍有管理员权限；异rate/schema/digest/default/effective_at/target/actor冲突。两价管理输入只在边缘经显式schema的不可变原件转换一次；原operation重放与结果读取也只依赖该不可变schema，不查询当前model/group来重建意图。操作ID锁、原model→group SHARE序、DB created_at与不可变回执/audit同事务保持。新价跨等待不得重选当前schema，任何写入或audit失败整笔回滚；COMMIT不明沿原pricing_busy/只读查询原ID，不换ID重发。
+
+组价结果与组价历史列表改为同一闭集：id/model_id/price_group_id/schema_id/schema_digest/variant_key/currency/rates/effective_at/created_at，无input_rate/output_rate字段。Rates是纯核规范wire；解析可以从JSONB重排的对象键恢复字段顺序，但维度数组不允许重排、缺维、重复、错单位或非约分。不得从这些Rates反算两个每百万回显字段供内部资金使用。HTTP、TS指纹、原回执校验、组价列表与UI在同片切换；旧响应不fallback。其余retail/public/preview标量读取属于后续HTTP片，不据此说全部已切换。
+
+SQL在COMMIT核原model/schema/variant、完整费率canonical、same-tx operation/resource/actor/created_at/target、safe_input/指纹/结果和恰一条原audit。原guard不允许借拼合合法operation换模型/组/schema/费率；schema或率错误即使金额仍0也拒绝。验收须包括APP禁两标量函数后发布/原回执/列表，Go/SQL/TS独立framing黄金值、同意图并发唯一版本、异体冲突、退休后重放、错域/非规范/溢出及audit失败回滚。固定018/022历史SQL夹具继续只核原范围，不升级024；缺55439仍只编译。
+
+审计出生先核引用的组价operation存在且created_txid等于当前顶层事务，提交时再核完整after/身份及唯一计数；禁止事后补审计，也不以tuple xmin代替顶层事务身份（同一事务中的合法SAVEPOINT子事务仍可写原audit）。重放先以可规范表示的完整Rates比原意图，最大金额及input-only可售性只在新发布准备阶段验证，不能把异rate的同ID重放误报为新价错误。
+
+### 4.3.2 默认价与采购价发布 operation（2026-11-05 冻结）
+
+本片把默认零售价与渠道采购价接入同一 `pricing_operations`，删除 `Store.PublishPrice`/`Store.PublishCostVersion` 两条无 operation 的裸发布及其 `price.create`/`cost.version` 审计。三类发布从此同一框架：operation advisory 门 → 当前 admin `users FOR SHARE` → 资源锁 → 写 operation → 写资源 → 恰一条审计 → COMMIT；COMMIT 不明沿 `pricing_busy` 并只读原 operation，不换 ID。
+
+HTTP 精确合同（两者都经 `pricingWriter`：当前 admin、近期再认证、无 query）：
+
+- `POST /api/platform/price-versions` 请求体恰为 `{operation_id,model_id,schema_id,schema_digest,variant_key,input_rate,output_rate,effective_at}`。`input_rate/output_rate` 是每百万 token 的非负规范十进制整数（管理端单位，仅在入口经显式 schema 原件一次转 Rates）；`effective_at` 必填，RFC3339 且微秒精度，存储为 UTC。
+- `POST /api/platform/cost-versions` 请求体恰为 `{operation_id,channel_id,upstream_model,schema_id,schema_digest,variant_key,basis,input_rate,output_rate,effective_at,expected_channel_revision}`。known(`contract|invoice`) 两率必为规范十进制字符串，`unknown` 两率必为 JSON null；`effective_at` 必填同上；`expected_channel_revision` 为正规范十进制字符串。
+- 新建 201、同意图重放 200，响应 `{data:{operation,result},request_id}`；`GET /api/platform/pricing-operations/:id` 对两种新 kind 同样返回原回执。operation 的 revision 为 null。
+
+result 精确闭集：默认价为 `{id,model_id,price_group_id:null,schema_id,schema_digest,variant_key,currency,rates,effective_at,created_at}`（与组价同形，`price_group_id` 恒 null）；采购价为 `{id,channel_id,upstream_model,schema_id,schema_digest,variant_key,currency,basis,rates,effective_at,created_at,expected_channel_revision,channel_revision}`，known 时 `rates` 为 supplier 侧完整纯核 RatesWire，unknown 时为 null，`channel_revision` 恰为 `expected_channel_revision+1`（报价插入的同步 trigger 只推进一次渠道 management_revision）。两者 `created_at` 等于 operation 的 DB `created_at`，资源行 `created_at` 同值。
+
+safe_input 与指纹按 4.3：默认价 frames `[kind,actor,scope,target,model_id,schema_id,schema_digest,variant_key,currency,UTF8(rates_canonical),UTC6(effective_at)]`；采购价 frames `[kind,actor,scope,target,channel_id,upstream_model,schema_id,schema_digest,variant_key,currency,basis,UTF8(rates_canonical)|NULL,UTC6(effective_at),expected_channel_revision]`。target 分别固定为 `/api/platform/price-versions`、`/api/platform/cost-versions`。
+
+错误与重放：新 operation 的渠道 CAS 不等为 409 `pricing_revision_conflict`，`expected_channel_revision` 已是 int64 上限为 409 `pricing_revision_exhausted`；同域同刻冲突（默认价 `price_versions_domain_effective_key`、采购价 `cost_version_effective_instant`）为 409 `price_effective_conflict`；未发布 schema、错摘要、非 default、input-only 非零输出、超 int64 或最坏 R 溢出为 400 `invalid_price`；模型/渠道不存在为 404。同 operation 重放在读取当前渠道/模型状态之前，以原回执的身份字段及经同一不可变 schema 重建的完整 Rates 比较原意图；同意图即使渠道已前进也返回原回执，异体 409 `policy_operation_conflict`。
+
+SQL 必须独立核验，不信任 Go：
+
+1. `pricing_operations.kind` 增 `default_price.publish`、`cost_price.publish`；三类 publish 的 revision 必为 NULL，其余 kind 原合同不变。`guard_pricing_operation_insert` 对三类 publish 都把 DB created_at 写回 result_snapshot。
+2. `price_versions.pricing_operation_id`、`cost_versions.pricing_operation_id/created_by` 全部 NOT NULL 且 operation 列 UNIQUE；删除 018 的"默认价 operation 为 NULL"CHECK。
+3. 资源出生 BEFORE INSERT guard：价格按 `price_group_id` 是否为空要求 kind 恰为 `default_price.publish`/`group_price.publish`，采购价要求 `cost_price.publish`；operation 必须本顶层事务出生、`resource_id=NEW.id`、`actor=NEW.created_by`，且价格的 schema/digest/default 必须等于该模型当前唯一 capability。
+4. `require_pricing_operation_result` 对两种新 kind 从资源原件重建 expected safe_input、完整 result 与指纹逐值相等；默认价另核 target、`price_group_id IS NULL`、created_at 与最坏 R 可表示及 input-only 零输出；采购价另核 target、渠道当前 management_revision 等于 result.channel_revision 且等于 expected+1。
+5. 审计：默认价沿 `pricing.price.publish`，采购价新 `pricing.cost.publish`；均恰一条、同顶层事务出生，`sanitized_diff={operation_id,target,after:result}`，COMMIT 时双向核验，不能事后补。
+6. `meter_insert_token_price/meter_insert_token_cost` 仍是资源行的唯一 SQL 写入函数，但 operation ID 及 created_at 成为必填参数；没有 operation 的调用在出生 guard 即失败，不保留"NULL operation"捷径。
+
+夹具边界：当前 024 夹具不得再以 NULL operation 写价格/成本。测试专用 `internal/testsupport/meterquote` 提供在单一事务内写入 operation→资源→审计的发布助手，actor 可为夹具已有的任意 active 用户（DB 不授权 actor，管理员资格由 Go 入口负责，相关 HTTP/Store 专项另测）；助手不被 serve 引用，不提供兼容或 fallback。固定 001–023 历史前缀夹具只按原 SQL 合同运行，不升级到本片。
 
 ## 5. 原请求、原 attempt 与快照
 
@@ -170,9 +253,45 @@ request Plan中的candidate_profile_digests保留共同canonical形状，但U必
 
 请求 root→恰一份 snapshot 的 reverse complete trigger 必须在 COMMIT 检查；只建 snapshot→request FK 不能阻止少快照的 raw request 提交。快照及 bounds 行只能同 request 出生事务写入，之后 status/最终 pointer/PB正常收尾不改快照。
 
+#### 5.1.1 用量界行（2026-11-04）
+
+本片只落数量行，不落 `retail_bounds_canonical`、`supplier_bounds_canonical` 或报价外壳列。那些列仍按本节全文，等报价 canonical 片。
+
+每个请求快照在出生事务写入恰好四行 `request_meter_bound_lines`：`retail`/`supplier` × `text_input_token`/`text_output_token`，单位固定 `token`。输入数量等于快照 `input_bound`，并且等于该档案两侧 capability 界的输入硬界。输出数量等于快照 `output_bound`，并且不超过该档案两侧的输出硬界。两侧同名维度数量必须相等。计划未就绪、`plan_canonical` 为空时，这四行仍然必须存在，不能因为没有计划而省略。计划已就绪时，计划函数已经要求计划内两侧界等于这两列；界行再要求等于这两列，从而与计划一致。本片不另加“对话输出界不得为 0”；该限制仍只在计划就绪时由计划函数执行。
+
+每个尝试快照由 `meter_insert_attempt_snapshot` 在同一函数写入恰好四行 `attempt_meter_bound_lines`。数量等于该尝试快照的两列，也等于同一请求的请求界。U 不接受调用方另交更小的尝试界。
+
+缺行、多行、单位不符、输入不等于档案硬界，或输出超过档案硬界，提交时分别拒绝为 `request bounds are incomplete`、`attempt bounds are incomplete`。行不可更新或删除。应用角色只有 SELECT/INSERT，投影角色和 PUBLIC 没有权限。预占金额等于向量 `ReservationAmount` 的复核仍不在本片。
+
+#### 5.1.2 报价外壳（2026-11-04）
+
+本片只落 inference 外层报价：请求快照的 `retail_quote_canonical`/`retail_quote_digest`，尝试快照的 `supplier_quote_canonical`/`supplier_quote_digest`。两列要么同空，要么 canonical 不超过 16384 字节且 digest 为 32 字节。不另存 `retail_bounds_canonical`、`supplier_bounds_canonical`、重复的 rates canonical，也不另存纯核 `metering.QuoteDigest`。外层 canonical 已经嵌进两侧界和费率原字节。
+
+计划未就绪时，这两列必须为空。不能因为没有计划摘要而编一份报价。计划就绪时，请求报价是 known 的零售报价：`plan_digest` 等于请求计划摘要，`version_id` 等于价格版本且必须是非零 UUID，`unknown_reason` 为 null，bounds 等于该快照的零售界，rates 逐字节等于原价格的 `rates_canonical`。摘要域是 `moni-aigate.inference.quote.v1`。不一致拒绝为 `request quote does not match price`。
+
+尝试报价绑定尝试计划。known 使用原成本版本和供应商费率；`version_missing` 的版本和费率都是 null；`basis_unknown` 保留原成本版本、费率为 null。零售侧不能是 unknown。不一致拒绝为 `attempt quote does not match cost`。报价列与快照一样不可更新。
+
+#### 5.1.3 纯核界、费率与报价摘要（本片冻结）
+
+计划就绪时，本片把报价外壳内部依赖的纯核原件也落库。请求快照保存 `retail_bounds_canonical`、`retail_bounds_digest`、`supplier_bounds_canonical`、`supplier_bounds_digest`、`retail_rates_canonical`、`retail_rates_digest` 和 `retail_meter_quote_digest`；尝试快照保存两侧 bounds canonical/digest、已知时的 `supplier_rates_canonical`/`supplier_rates_digest` 以及 `supplier_meter_quote_digest`。这些字段均为同一快照出生事务产生的不可变原件；不能由调用方提交另一份正文，也不能用当前 profile、price 或 cost version 回填旧行。
+
+`*_bounds_canonical` 必须是对应 `metering.Bounds.CanonicalJSON` 的字节，`*_bounds_digest` 使用 `moni-aigate.metering.bounds.v1`；费率使用 `metering.Rates.CanonicalJSON` 和 `moni-aigate.metering.rates.v1`；纯核报价摘要使用 `metering.QuoteDigest` 的 `moni-aigate.metering.quote.v1`。三种摘要都采用 schema digest、side 和 canonical 的长度 framing。计划就绪的请求必须有 `retail_meter_quote_digest`；`supplier_meter_quote_digest` 只有尝试计划就绪、known 且两维费率完整时存在。
+
+请求和尝试的 bounds canonical 必须从各自快照的四条界行和同一 schema 重建，并逐字节核对摘要。请求零售 rates 必须逐字节等于 price snapshot 的 `rates_canonical`；尝试 supplier rates 必须逐字节等于 cost snapshot 的 rates。任一 canonical、digest、side、schema、dimension、unit、rate 或绑定不一致，提交回滚并返回对应 snapshot mismatch 错误；不能降级为空、采用另一版本、按当前费率重算或把外层 `inference.quote.v1` 摘要当作纯核摘要。
+
+计划未就绪时，计划、外层报价，以及本节所有纯核 bounds/rates canonical 和 digest 列必须同为 NULL，即使选中了 known 价格也不能单独写入这些列。原四条界行与原 price/cost version 绑定仍必须完整，不能因 canonical 为空省略原合同。计划就绪后缺任一必需列、canonical/digest 只有一侧、错 side/schema、错费率、纯核摘要错误，或计划未就绪却携带任一上述列，均拒绝整笔事务。supplier unknown 且计划就绪时保留两侧 bounds 和外层 unknown quote，supplier rates 与纯核 supplier quote 摘要为空。只在快照出生时按该就绪状态写入，后续不可补写或升级。
+
 ### 5.2 `upstream_attempts` / `attempt_meter_snapshots`
 
 保留原attempt tenant/request/sequence/channel/version/credential/upstream_model、delivery_state、route_decisions、created_at及PB stamp。删除cost_version_id/cost_input_rate/cost_output_rate/cost_basis镜像列；原cost_status/cost_amount保留受约束的当前成本投影。增加latest_cost_finalization_id TEXT NULL、latest_cost_correction_id TEXT NULL；二者互斥，后者指原provider_cost_corrections同tenant/attempt原件，不能凭pointer造金额。correction父端增UK`(tenant_id,attempt_id,id)`以供复合FK；pointer与projection只能同事务更新，未知初态二者均NULL且amount=NULL。
+
+#### 5.2.1 成本终态指针与投影（本片冻结）
+
+attempt 出生时 `cost_status='unknown'`、`cost_amount=NULL`、`latest_cost_finalization_id=NULL`、`latest_cost_correction_id=NULL` 必须同时成立。可信终态由原 `finalization_records` 产生时，原子写入 `cost_amount`/`cost_status` 和 `latest_cost_finalization_id`，并清空 correction 指针；人工或受管采购更正产生时，原子插入唯一 correction 原件、写入 `cost_amount`/`cost_status` 和 `latest_cost_correction_id`，并清空 finalization 指针。两个指针始终互斥。
+
+known 成本必须恰有一个指针，unknown 成本必须两个指针都为空且金额为空。finalization 指针只能指向同 tenant、同 attempt 的不可变 finalization；correction 指针只能指向同 tenant、同 attempt 的不可变 `provider_cost_corrections`。指针目标的金额和 basis 必须与 attempt 当前投影逐字段相等，不能只凭 ID 存在通过。插入 correction、更新 pointer、更新 cost projection 必须在同一事务中完成；operation 重放若正文不同返回冲突，不能改写原 correction 或切换指针。
+
+供应商事实冲突、受管采购重新进入 unknown 或其他明确无权威成本的状态，必须同时清空两个指针和金额；不能保留旧 finalization 指针再把状态改成 unknown。缺 pointer、双 pointer、跨 attempt/tenant pointer、金额/basis 不一致、pointer 与 correction/finalization 缺边时，提交回滚。该指针只说明当前成本投影的原件来源，不创建第二份结算或采购账本。
 
 `attempt_meter_snapshots`：
 
@@ -196,9 +315,13 @@ FK(tenant_id,attempt_id,request_id) -> upstream_attempts(tenant_id,id,request_id
 FK(tenant_id,request_id) -> request_meter_snapshots(tenant_id,request_id) deferred
 ```
 
+本片单独落库 `parent_plan_digest`。attempt 计划为空时，`parent_plan_digest` 必须为空；attempt 计划存在时，`parent_plan_digest` 必须是同一 `(tenant_id,request_id)` 请求快照的 `plan_digest`，长度为32字节，并且不能从 attempt canonical 中解析后自行重算或接受调用方另传值。attempt 的 `plan_digest` 与 parent digest 是两个不同身份：前者摘要 attempt Plan，后者精确指向原 request Plan。
+
+写入 attempt snapshot 时必须在同一事务读取并绑定请求快照；跨请求、跨租户、缺失请求计划、parent digest 不等或只写一侧的 plan/parent pair 均回滚。请求计划未就绪时，attempt 也不能伪造 parent digest；请求计划已经存在但 attempt parent 缺失时，不能降级为“没有父计划”。旧历史前缀和自由版本号仍保持原拒绝边界，不通过补写 parent digest 获得 current 资格。
+
 attempt父端新增上述复合UK；snapshot另有profile/schema复合FK。model/protocol/schema完整digest/variant及profile_version必须与原request相同，选中原route binding不能自带另一profile。两侧attempt bounds必须**精确等于**共同`requestPlan.ForAttempt(originalProfile)`结果；U只有唯一profile，所以两侧界自然等于公共原界。不能caller随意提交更小数字。parent_plan_digest精确指向原公共Plan；attempt Plan≤65536bytes，snapshot两侧canonical由它重建。增加`attempt_meter_bound_lines(tenant_id,attempt_id,side,dimension,unit,quantity)`，PK`(attempt_id,side,dimension)`及带tenant FK到snapshot；恰完整两mask。纯域未来的收紧不作为本U异构路由发布资格，禁止从今天profile重算历史。
 
-成本version若非NULL，须与实际channel/upstream_model/schema/variant同域。quote精确联合：known的unknown_reason=NULL、cost_version_id及rates/digest/数值quote/U全非NULL、basis为contract/invoice；version_missing时ID=NULL，basis_unknown时保留实际unknown原version，二者rates/digest/数值quote/U均NULL、basis=unknown。外层supplier_quote_canonical/digest即使unknown也非NULL，因为它绑定未知原因/原version/Plan；不得与缺失的纯核数值quote混淆。bound本身无论报价是否known均保留完整原件。
+成本version若非NULL，须与实际channel/upstream_model/schema/variant同域。quote精确联合：known的unknown_reason=NULL、cost_version_id非NULL、basis为contract/invoice，计划就绪时rates/digest/数值quote全非NULL；version_missing时ID=NULL，basis_unknown时保留实际unknown原version，二者rates/digest/数值quote/U均NULL、basis=unknown。计划就绪时外层supplier_quote_canonical/digest即使unknown也非NULL，因为它绑定未知原因/原version/Plan；不得与缺失的纯核数值quote混淆。计划未就绪时按第5.1.3节所有canonical/digest同空，完整bound行与版本绑定仍保留。
 
 未绑定受管采购时，binding/account两个字段同时NULL；已绑定时同时非NULL，并复合FK至现行 credential_procurement_bindings 的 `(id,credential_id,channel_id,account_id)`，其 credential/channel 由 attempt 精确核对。对受管采购、cost_first、任何单价 cap 和 unknown=deny，unknown snapshot 一律拒绝。对现行文本 manual/allow、无cap、无采购绑定，允许明确 unknown，不能借此适用于未来媒体。
 
@@ -209,6 +332,12 @@ known U必须独立从原 supplier bound/rates 重算。受管采购恰有同 te
 ### 6.1 `metering_events` / `meter_event_quantities`
 
 保留原id/tenant/request/attempt/source/source_event_id/happened_at/received_at与source UK，但将attempt升级为NOT NULL。删去Token专用normalized_usage和不再使用的schema_version，新增`profile_version TEXT/schema_id TEXT/schema_digest BYTEA/variant_key TEXT/plan_digest BYTEA`、`observation_canonical BYTEA`、`observation_digest BYTEA`、`retail_usage_state TEXT/supplier_usage_state TEXT`、`created_xid XID8`。usage state仅confirmed_final/provisional/missing/conflicting；状态由完整mask的量、source资格和受审profile规则计算，不接受调用方给个status就确认。
+
+#### 6.1.1 inference Observation 原件（本片冻结）
+
+`observation_canonical` 必须是 `inference.Observation.CanonicalJSON` 的完整字节，字段顺序、nullable quantity、来源闭集和安全元数据与 `inference.ParseObservation` 一致；旧的 `Usage` JSON、`input_tokens`/`output_tokens` 平铺对象不能继续写入该列。`observation_digest` 必须是 `inference.Observation.Digest` 的 `moni-aigate.inference.observation.v1` 身份摘要，计算时去掉 `observed_at`，但 canonical 原件保留观察时间。
+
+当前数据库写入口从已锁定的 request/attempt snapshot 取 profile/schema/plan 绑定和已验证的 Finalization 元数据，生成唯一 canonical；不接受客户 HTTP 直接提交观察。source 只允许 `adapter`、`retrieval`、`gateway`、`approved_reconciliation`，且事件必须绑定同 request 的真实 attempt。相同 `(tenant,source,source_event_id)` 同正文重放返回原事实，异体只追加 conflict，不覆盖原 canonical/digest。数据库 deferred guard 会从事件列和两行 quantity 重新构建 canonical 与 identity digest，任一字节或摘要不一致即回滚。
 
 增加`UNIQUE(tenant_id,id)`、`UNIQUE(tenant_id,request_id,id)`、`UNIQUE(tenant_id,request_id,attempt_id,id)`。request/attempt FK带tenant且检查attempt.request_id；不能靠两个独立tenant FK接受同租户另一请求的attempt。全部Observation必须有原真实attempt；source闭集为adapter/retrieval/gateway/approved_reconciliation。无attempt准入失败直接Release，可无finalization结算，不伪造event/attempt；人工核对也必须定位原真实attempt，不能清另一attempt消费。
 
@@ -253,6 +382,16 @@ CHECK((status IN ('confirmed_final','provisional') AND quantity IS NOT NULL)
 
 供应商投影的写入另有deferred exact validator：cost_finalization pointer的可信supplier量+原known Rates，或精确not_sent/no-consumption事实，必须与cost_status/amount相同；unknown时cost_amount=NULL。latest_cost_correction pointer须为现行provider_cost_corrections同tenant/attempt原件；受管采购还必须匹配双审proposal、原revision/evidence与预算事件。更正不修改原quote/量，不伪造“该金额可从模型rates重算”。后到旧usage不能覆盖已受权invoice/contract更正，冲突继续按原019 disputed/held/anomaly规则记录。
 
+#### 6.2.1 当前结算读端的原向量与失败边界（2026-11-05 冻结）
+
+客户结算只沿原 `request_meter_snapshots.price_version_id`、schema/digest/default 与价格组读取不可变价格 root 的完整 `rates_canonical/rates_digest`；供应商成本及采购实际消费只沿原 attempt 的 cost version、channel/upstream/schema/digest/default 读取原完整费率。不得调用 `meter_price_million/meter_cost_million` 把库存有理率反算成两价再用于实际金额，不得读取最新价格。这里直接读取原版本不是报价 fallback：即使计划未就绪、快照 rates 列按既定门禁为 NULL，原版本 FK 和完整费率仍是唯一数值原件，不能补写计划或快照。
+
+读端先验证 schema canonical/digest、费率完整 mask、side、currency、canonical 逐 byte 与 rates digest；缺失、乱序、错 side/schema、非规范率或摘要不符均以 `invalid_meter_snapshot` 回滚本次资金事务，不能降级为免费、unknown、当前价或标量路径。actual 直接解析同 tenant/request/attempt 的 finalization 对应侧 `*_quantities_canonical`，只在该侧 `confirmed_final` 时计算；其 canonical 必须是完整、同 schema/side 的纯核 Quantities bytes。外层 final digest 仍由既有 DB guard 按 `inference.final.v1` 核验，不能当作纯核 quantities digest比较。
+
+known 全零费率仍返回真实 0 actual；`basis_unknown/version_missing` 无数值费率，成本保持 unknown，不把客户完整量当供应商量。人工核对的 supplier state 为 missing，采购 hold 不释放；明确 not_sent/认证无消费仍按原政策记 0，不改变已有冲突/更正优先级。客户 raw 仍由 `metering.Amount` 对原完整向量求和后一次 ceil，charged≤R；供应商 actual 不截 U，超界异常继续沿原采购状态机。重复 Settle、截止释放、退款/来源与恢复不重发行为保持。
+
+本片只替换实际结算的内部数值读端；准入的 pricing/routing DTO、预占入口及 HTTP/UI 发布指纹仍在后续切片，不将它们写成已完成。不改冻结研究/原型的宽标量 ABI，不新增金额公式、表、角色或报价身份。验收需包括 ready/unready、原价冻结、known 零价/unknown、完整双方量、单次 ceil、actual 超界和人工客户核对；在隔离当前 fixture 中令两种 scalar 反算函数拒绝调用后，上述结算仍须通过。
+
 ### 6.3 人工核对与平台 probe 的必要接线
 
 `reconciliation_cases.proposed_usage`替换为`proposed_observation_canonical BYTEA NULL`与`proposed_observation_digest BYTEA NULL`，与state/requester/evidence等组成精确NULL联合。proposal必须绑定原request的真实attempt/profile/schema/variant/Plan，只能提出完整retail向量；不能伪造attempt或因人工共享量而确认supplier成本。审批仍双人并产生source=approved_reconciliation的普通event/finalization，supplier永远不可Confirmed；24h后不再收费。审批快照不按今天价重算。
@@ -260,6 +399,26 @@ CHECK((status IN ('confirmed_final','provisional') AND quantity IS NOT NULL)
 `platform_probe_attempts.normalized_usage`替换为nullable `quantities_canonical BYTEA/quantities_digest BYTEA`和独立`usage_state TEXT`，增加与原profile一致的schema_id/schema_digest/variant_key；完成probe验证同一纯核向量数值合同，但不构造缺失tenant/request/attempt的伪inference.Observation。confirmed_final时supplier Quantities规范bytes与纯核`metering.Quantities.Digest`非NULL，否则均NULL；此字段不使用inference.FinalQuantities外层摘要。协议状态和usage_state分开。probe保留独立平台资源及当前unknown采购口径，不创建客户request/reservation/settlement，也不塞进nullable tenant事件表。U只开放六文本probe；unknown成本不清零。未来纳入受管采购须另冻平台资金合同。
 
 ## 7. 现行采购、周期预算与来源合同保持
+
+### 7.1 采购 U 原向量计算与独立复核（2026-11-05 冻结）
+
+recordProcurementAttempt在原account/PB锁后仍按原政策复验同域当期报价及预期版本；U的数值只沿已出生的同tenant/request/attempt snapshot、实际attempt的channel/upstream、原schema/digest/default和known cost version完整域读取不可变Rates，并从该attempt的supplier bound lines构造完整Bounds。不得从request另复制界、从当前价换算U、调用meter_cost_million或经schemaAmount反构造每百万价。计划未就绪时仍用原版本与原界行，不能补写canonical列。unknown、错绑定、缺维/错unit、canonical或digest错误均失败；不产生免费U或选择fallback。此片不完成路由/预期CostQuote的向量DTO隔离，其当前标量接缝须在后续移除，不增加第二种在线报价或兼容选择开关。
+
+Go数值原件先复核schema及完整supplier Rates的规范字节/摘要、Bounds的完整mask/side/schema/规范字节，再调用唯一metering.ReservationAmount；int64溢出为procurement_bound_invalid，坏原件为invalid_meter_snapshot，读不到原绑定同样失败。沿原同一个pgx.Tx回滚attempt、snapshot/界行、采购reservation/预算事件/PB与账户投影，原客户R/来源不受失败的新attempt影响；无attempt失败不伪造观察。现行标量重构helper schemaAmount/schemaReservation失去最后消费者后删除，不保留备用路径。
+
+024新增meter_procurement_bound_matches约束触发器，挂procurement_reservations INSERT/UPDATE、DEFERRABLE INITIALLY DEFERRED、SECURITY INVOKER。它必须独立用原attempt snapshot/实际attempt/channel/upstream/schema/digest/default/known cost与恰两条supplier界及恰两条完整采购率调用SQL meter_token_amount，一次ceil后核0≤U≤MaxInt64且等于原upper_amount，不能只核held=upper或账户/event自洽。缺snapshot、unknown、错域、缺量、错单位、重复/额外维度、U偏低/偏高/溢出都拒绝；SET CONSTRAINTS该触发器IMMEDIATE在缺必要原件时也必须拒绝。子行与原价不可变/完整性guard继续独立执行，原U不可变且每次采购状态更新重验原U，不以今天价或最终actual改U。PUBLIC/projector/payment worker不获此meter函数权限，APP按既有meter_%闭包执行，未增加资金写权或根锁。
+
+验收分别证明受限APP下向量数值读取/预占、raw自洽伪造U被DB拒绝、ready/unready/零价/input-only/溢出、原价跨account等待及新attempt失败回滚；不能将仍调用旧CostQuote的准入/派发说成完全禁scalar链路。55439周期预算等原专库套件仍按原边界，不以5432隔离专项替代。
+
+### 7.2 管理端采购预占的原界读取（2026-11-05 冻结）
+
+`GET /api/platform/procurement-accounts/:id/reservations` 与控制台一次切换，不再发行 `input_bound/output_bound`，不提供旧列或旧schema fallback。每行保留原身份、U/held/spent、state/anomaly、revision与时间，新增原attempt快照的 `profile_version`、小写hex `schema_digest`、`variant_key="default"` 和 `supplier_bounds`。后者直接使用纯核Bounds的wire：`{schema_id,version:"1",side:"supplier",bounds:[{dimension,unit,quantity}]}`；恰两条text_input_token/text_output_token，ASCII顺序、unit=token、quantity为非负int64规范十进制字符串。输入型协议的零输出界必须显式保留。schema digest只是原schema身份，不新增quote/plan身份，不向响应暴露canonical字节、HMAC、计划/报价digest、上游URL或凭据。
+
+024新增只读 `meter_attempt_supplier_bounds(tenant_id TEXT,request_id TEXT,attempt_id TEXT) RETURNS JSONB`，SECURITY INVOKER、STABLE、固定部署schema+pg_catalog+pg_temp，PUBLIC撤EXECUTE；APP沿现有meter_%闭包执行，projector/payment worker不获权限。它在原tenant/request/attempt完整绑定及原schema/digest下读取supplier bound lines，核恰两条、schema supplier mask/维度/单位/范围与tenant一致，数量逐维等于原snapshot的文本界；缺snapshot/schema/attempt、错绑定、缺/额外维或错单位均报错。列表以采购reservation为根，tenant由原attempt PK关联取得（本片不声称已安装第7.1节尚待完整guard验收的采购tenant列）；缺关联不通过INNER JOIN静默丢行。整页失败映射原安全503，不输出半页、NULL/空界或零量替代。只读投影不计算金额、不加资金锁、不读取当前模型/当前价；原U和已裁定spent仍只读原采购事实。
+
+计划未就绪时同样从已存在的原界行读取向量；不得回填快照canonical或把投影当作已存新canonical。原account筛选与(created_at,id)倒序游标/每页50条保持，排序/裁页后只读取候选行的向量，不因向量聚合改变分页基数。无记录和不存在账户沿现行空页语义；无权限先403，非法UUID/游标先400，不触发原界读取。
+
+TS严格验证新向量的键/闭集/单位/顺序/完整性与int64字符串，拒旧两界字段、缺失/错side/错variant/schema digest；保留白名单投影不携任意额外秘密。界面按维度和unit显示原界，与金额分列，不转Number或从U反算量。专项须覆盖受限APP真实列表、两个账户/多个租户及attempt、50+1分页、原件不受新价/当前模型影响、计划未就绪和input-only的0输出、错误原件整页失败及权限；该局部验收不能替代完整六文本商业链或浏览器验收。
 
 `procurement_reservations` 保留原 attempt PK/account/binding/U/held/spent/state/anomaly/revision/时间及020 PB stamp，增加 `tenant_id TEXT`，FK `(tenant_id,attempt_id)`→attempt快照与原attempt。删除 input_bound/output_bound；原界来自该attempt的唯一supplier snapshot，禁止复制一组新的可变界。`guard_procurement_reservation_identity` 改核tenant/attempt/account/binding/原U/created_at不可变，并验证snapshot identity。prepared/sending必须held=U、spent=0且无anomaly；unknown/disputed按原规则保守hold；settled/released的hold为0；released spent=0。真实known actual可超U并暂停账户，NUMERIC100投影不截int64。
 
@@ -302,6 +461,28 @@ CHECK/PK/UK不可deferred；循环root↔child定位FK和上述complete constrai
 新current写路径只允许READ COMMITTED，保留3秒锁/5秒语句/10秒总事务预算并取caller较短。读取不可变父后插新子仍需当前出生事务校验；可变父指针更新和子完整检查按统一根锁序串行，不能凭deferred查询在RR产生write skew。所有带可变引用的触发器在必要父锁等待后，以**新语句**重读而非复用锁前查询快照。不可变schema/价格本身不需要资金等待后再取前层写锁。
 
 完整性函数执行 `SECURITY INVOKER`，固定 `search_path` 到精确部署schema+pg_catalog+pg_temp并显式限定业务关系，PUBLIC撤EXECUTE。不通过给projector/支付worker附赠客户权限来满足函数闭包。若将来确需新definer根，必须另列全writer/owner/EXECUTE闭包；本U草案不预授权。
+
+### 8.1 本片补齐的独立金额与结构 guard（2026-11-05 冻结）
+
+下列 checker 在 024 中补齐；均为 `SECURITY INVOKER`、固定 search_path、撤 PUBLIC，数值只用 `meter_token_amount` 对原行整数重算，不读 Go 结果、当前价或调用方金额：
+
+1. **客户预占 R**：`reservations` INSERT（deferred）要求同 tenant/request 的请求快照存在，且 `amount` 恰等于原 `price_version_id` 的两条 retail 率行与请求 retail 两条界行的单次 ceil 金额，并 ≤ int64。零价得 0，仍需完整快照与界行。
+2. **客户结算金额**：`settlements` INSERT（deferred）。`reason='charged_usage'` 时必须 `status='settled'`、有 finalization 且 retail 已 confirmed_final，`raw_retail_amount` 恰等于原请求价格率行乘该 finalization 事件的 retail 两维终态量（单次 ceil，不截断），`charged_amount=min(raw,原 reservation.amount)`，`waived_retail_amount=raw-charged`；其余 reason 必须 `status='released'` 且三项金额均为 0。
+3. **能力版本完整**：`model_capability_versions`/`model_capability_variants`/`model_capability_bound_lines` INSERT（deferred）。每个 capability 恰一 `default` variant、恰四条界行（两侧×两维、unit=token），两侧输入界等于 profile `input_token_upper_bound`、输出界等于 `output_limit`，且不超过 schema 最大量；`protocol` 等于 profile 协议，input-only 协议输出界为 0；`contract_digest/profile_digest` 等于 profile 原 JSON 文本的 SHA-256。
+4. **路由出生与 cap**：`model_bindings` INSERT 前要求所属 route 在本顶层事务出生；`binding_cost_rate_limits` INSERT 前要求所属 binding 在本顶层事务出生，维度/单位属于 route profile schema 的 supplier 维度，分子分母已约分。已提交的 route/binding 不能再追加子行。
+5. **删除 route_revision=0 旁路**：`request_records.route_revision` 必须 >0；Reserve 只接受等于模型当前非零 active route 的版本，否则 `route_changed`/`model_unavailable`；RecordAttempt、证据与成本策略不再对 0 跳过路由绑定与 cost policy 校验；请求快照的 route/profile 一致性检查无条件执行。模型可以已配置但未发布路由，此时不可调用。
+
+当前夹具若依赖"无路由也能建请求"，必须改为先发布真实路由（含所用渠道/版本/上游模型 binding）；不提供跳过开关。
+
+### 8.1.1 route complete 的提交边界（2026-11-07 冻结）
+
+route root、binding 和可选 cap 必须在同一个当前发布事务内组成一个可执行的不可变路由集合。deferred `route complete` checker 至少拒绝以下情况：
+
+- route 在提交时没有任何 binding；不能先写空 route、再把模型的 `active_revision` 指向它，或把空 route 当作“暂未配置”留在历史中。
+- binding 的 `channel_id` 与 `channel_version_id` 不相符，或 channel version 在出生时没有同 channel 的有效 credential 关联；binding 的 `profile_version`、`variant_key` 必须来自该 route 的唯一 capability/default。
+- 已提交 route 上追加 binding 或 cap；可选 cap 仍只能是 supplier schema 的两条 token 维度、规范约分有理数，0 条表示无 cap，不能用半套 cap 改写既有 route。
+
+该 checker 只验证当前 route 出生时的结构和供应商接缝，不把后续 credential 撤销或渠道轮换回写历史 route。任何失败都必须回滚 route、active pointer、binding、cap 和 audit，不能以空 route 或部分 route 进入当前选择器。
 
 ## 9. scalar撤除与 SQL/Go 依赖清单
 
@@ -370,6 +551,29 @@ SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报�
 7. 拒迁负控分别对已结清历史、零余额但有资金原件、旧纯配置、坏依赖/ACL进行；失败前后schema/行/权限逐值相等。旧开发库保留，不把它删掉再称升级成功。
 
 实施者先跑与变更相关的PG/Go/协议/前端检查，集成人汇总全部并行结果后，语义复核统一架构正文/能力状态/源码链接，再按AGENTS统一refresh和只读检查。本文是设计增量，统一架构状态必须仍写“028-U设计/未实现”，不能把候选DDL和媒体能力写为已完成。
+
+### 11.1 当前目录与历史夹具的失败边界（2026-11-05）
+
+路由发布和公共目录发布校验只从 `meter_model_profile` 读取当前不可变 capability；不回读已移除的 `models.profile`。公共 profile 超过16KiB时不把原件传回应用，发布拒绝，匿名读取返回安全 unavailable；私有未知字段不得进入公开白名单。测试只能在 capability 出生时放入这些反例，不允许 UPDATE 不可变历史或禁用 trigger。input-only 的非零输出价必须由当前 meter 发布入口拒绝，事务不能留下价格或 operation 半成品；没有价格时仍是 unavailable，不能报告为免费。
+
+当前 HTTP、成本路由与派发夹具按024的 meter 函数写入价格、成本和模型；尝试报价从 `attempt_meter_snapshots` 读取。原013成本重复时刻/排序和018之前的坏价属于独立历史夹具，只验证原schema的SQL不变量。带历史数据的023升级024必须拒绝并保留原数据，不能为了测试调用当前reader而增加旧schema fallback。周期预算HTTP仅在专用55439/moni_test执行，其他环境只编译。
+
+现行Gemini/Responses/Messages财务夹具只从quantity行断言归一化输入/输出；cached/reasoning的包含关系及原生字段由provider解析和协议wire验收，不从Observation中读取旧Usage字段，也不为了旧测试把诊断map重新加入财务原件。当前来源零价及成本等待夹具仍须验证原资金/锁等待语义，不能只改为能编译。
+
+现行quantity消费者直接使用已验证的 `meter_event_quantity`；旧 `meter_event_usage` JSON读取外壳无剩余调用方，024不再发行该函数。Observation原件仍在原列中按inference合同读取，不提供返回旧平铺Usage的兼容接口。
+
+### 11.2 当前 HTTP 读端的完整报价与标量投影撤除（2026-11-05 冻结）
+
+剩余读端一次切换，随后 024 删除 `meter_price_million`、`meter_cost_million` 两个反算函数；任何 HTTP/TS 不再输出或解析 `input_rate/output_rate` 价格字段、`input_tokens/output_tokens` 用量字段。管理端**输入**仍为每百万 token 整数（发布与路由 cap 入口），这是单位换算，不是读端投影。
+
+1. **零售价视图** `RetailPrice`（`/api/models/:id/retail-price`、`/api/models` 的 `retail_price`、平台定价预览行）精确为 `{model_id,source,status,price_group_id,price_version_id,schema_id,schema_digest,variant_key,currency,rates,effective_at,as_of}`。schema 三元组恒取该模型当前唯一 capability/default；available 时 `rates` 为 retail 侧完整 RatesWire，unavailable 时 `price_version_id/rates/effective_at` 同为 null。选价必须同时限定 model、价格组 NULL-safe 等值、`schema_id/schema_digest/variant_key='default'` 与 `effective_at<=as_of`，按 effective_at/created_at/id 逆序；另一 schema 的价不能被选中，组缺价不回落默认。
+2. **模型列表**：客户 `/api/models` 删除顶层 `input_rate/output_rate`，只保留上述 `retail_price`；平台 `/api/platform/models` 以 `default_price`（同 1 的形状，source=default、price_group_id=null）取代两标量。
+3. **价格版本列表** `/api/prices`：每行 `{id,model_id,model_name,price_group_id,schema_id,schema_digest,variant_key,currency,rates,effective_at,created_at}`。管理员读全部默认价版本（含历史 schema，各自携原 schema 身份）；客户只读本租户价格组域、已生效、且属于该模型当前 capability schema 的版本。
+4. **公开目录** `/api/public/models` 及详情：价格对象以 `{status,price_version_id,schema_id,schema_digest,variant_key,currency,rates,effective_at}` 取代两标量，规则同 1 的默认域；不公开采购或租户信息。
+5. **请求明细** `/api/requests`、`/api/requests/:id`：请求快照为内连接（每个请求恰一份），删除 `retail_snapshot_status`/`legacy`；以 `schema_id/schema_digest/variant_key`、`retail_rates`（原 price version 的完整 RatesWire）、`retail_bounds`（原请求 retail 界行的纯核 Bounds wire）取代两标量；用量以 `usage_status` 与 `retail_quantities`（原 finalization 所指事件的完整维度行 `[{dimension,unit,status,quantity|null}]`，未终结时为 null）取代 `input_tokens/output_tokens`。金额字段（reserved/charged 等）仍读原资金事实，不从向量重算。
+6. **采购报价列表** `/api/platform/cost-versions`：每行 `{id,channel_id,channel_name,channel_revision,upstream_model,schema_id,schema_digest,variant_key,currency,basis,rates,effective_at,created_at}`，known 为 supplier 侧完整 RatesWire，unknown 为 null。
+
+所有 `rates/bounds` 均直接取不可变原件 canonical（JSONB 只用于返回对象，维度数组顺序、单位、约分不重排）；读端不计算金额。TS 解析器严格校验键闭集、side、schema 绑定、维度顺序、约分、int64 字符串并保留大整数；页面展示每百万 token 价格时只做精确有理数显示（不能整除时显示分数），不转 Number、不从金额反算量或价。删除 `meter_price_million/meter_cost_million` 后，"禁两标量函数"类测试改为断言函数不存在。
 
 ## 12. U 必须与后续片 DDL 分界
 

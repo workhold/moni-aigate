@@ -15,7 +15,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/procurementexecution"
-	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/frozenattempt"
 )
 
 type abObserverCaptured struct {
@@ -333,7 +333,7 @@ func TestPostgresObserverLegacyCannotIssueHandle(t *testing.T) {
 		reservation, err := store.Reserve(before.ctx, abCompatInput(before))
 		must(t, "genuine original request before installing candidate", err)
 		request = reservation.RequestID
-		attempt, err := store.RecordAttempt(before.ctx, billing.AttemptInput{TenantID: before.tenant, RequestID: request, Sequence: 1, ChannelID: before.channel, ChannelVersionID: before.version, CredentialID: before.credential, UpstreamModel: "upstream", CostQuote: &routing.CostQuote{VersionID: before.cost, Basis: "contract"}})
+		attempt, err := frozenattempt.Reject(before.ctx, store, frozenattempt.Input{TenantID: before.tenant, RequestID: request, Sequence: 1, ChannelID: before.channel, ChannelVersionID: before.version, CredentialID: before.credential, UpstreamModel: "upstream", CostQuote: &procurementexecution.CostQuote{VersionID: before.cost, Basis: "contract"}})
 		must(t, "genuine original attempt before installing candidate", err)
 		originalAttempt = attempt.ID
 	})

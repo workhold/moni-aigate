@@ -23,10 +23,13 @@ export interface ProcurementReceipt {
 export interface ProcurementAccountDraft { label: string; provider: string; state: string; limit: string }
 export interface ProcurementObservationDraft { status: string; amount: string; source: string; semantic: string; observed_at: string; provider_as_of: string; evidence_ref: string }
 export interface ProcurementChannel { id: string; name: string; management_revision: string }
+export interface ProcurementBound { dimension: 'text_input_token' | 'text_output_token'; unit: 'token'; quantity: string }
+export interface ProcurementSupplierBounds { schema_id: string; version: '1'; side: 'supplier'; bounds: ProcurementBound[] }
 export interface ProcurementReservation {
   id: string; attempt_id: string; account_id: string; binding_id: string; tenant_id: string; request_id: string; channel_id: string
-  input_bound: string; output_bound: string; upper_amount: string; held_amount: string; spent_amount: string
-  state: 'prepared' | 'sending' | 'unknown' | 'disputed' | 'settled' | 'released'; anomaly: boolean; created_at: string
+  profile_version: string; schema_digest: string; variant_key: 'default'; supplier_bounds: ProcurementSupplierBounds
+  upper_amount: string; held_amount: string; spent_amount: string; revision: string
+  state: 'prepared' | 'sending' | 'unknown' | 'disputed' | 'settled' | 'released'; anomaly: boolean; created_at: string; updated_at: string
 }
 export interface ProcurementEvent { id: string; event_key: string; account_id: string; attempt_id: string; held_delta: string; spent_delta: string; type: string; evidence_ref: string; created_at: string }
 export interface ProcurementProposal {
@@ -103,12 +106,30 @@ export function parseProcurementObservation(value: unknown): ProcurementObservat
   if (row.currency !== 'CNY' || (status === 'known') !== (row.amount !== null)) throw new Error('余额观察金额与状态不一致。')
   return { id: procurementIdentity(row.id), account_id: procurementIdentity(row.account_id), operation_id: procurementOperationID(row.operation_id), actor: procurementIdentity(row.actor), status, amount: row.amount === null ? null : procurementInteger(row.amount), currency: 'CNY', source: procurementText(row.source, '观察来源', 100), semantic: procurementText(row.semantic, '余额语义', 100), observed_at: procurementTimestamp(row.observed_at), provider_as_of: row.provider_as_of === null ? null : procurementTimestamp(row.provider_as_of), evidence_ref: procurementText(row.evidence_ref, '证据引用'), created_at: procurementTimestamp(row.created_at) }
 }
+function boundObject(value: unknown, keys: string[]): Record<string, unknown> {
+  const row = record(value)
+  if (Object.keys(row).length !== keys.length || keys.some(key => !Object.hasOwn(row, key))) throw new Error('采购原界向量字段无效。')
+  return row
+}
+function supplierBounds(value: unknown): ProcurementSupplierBounds {
+  const row = boundObject(value, ['schema_id', 'version', 'side', 'bounds'])
+  if (row.version !== '1' || row.side !== 'supplier' || !Array.isArray(row.bounds) || row.bounds.length !== 2) throw new Error('采购原界向量不完整。')
+  const dimensions = ['text_input_token', 'text_output_token'] as const
+  const bounds = row.bounds.map((value, index): ProcurementBound => {
+    const entry = boundObject(value, ['dimension', 'unit', 'quantity'])
+    if (entry.dimension !== dimensions[index] || entry.unit !== 'token' || typeof entry.quantity !== 'string' || entry.quantity.length > 19) throw new Error('采购原界维度、单位或数量无效。')
+    return { dimension: dimensions[index]!, unit: 'token', quantity: procurementInteger(entry.quantity, false, true) }
+  })
+  return { schema_id: procurementIdentity(row.schema_id), version: '1', side: 'supplier', bounds }
+}
 export function parseProcurementReservation(value: unknown): ProcurementReservation {
   const row = record(value)
+  if (Object.hasOwn(row, 'input_bound') || Object.hasOwn(row, 'output_bound')) throw new Error('不接受旧采购标量界响应。')
+  if (row.variant_key !== 'default' || typeof row.schema_digest !== 'string' || !/^[0-9a-f]{64}$/.test(row.schema_digest)) throw new Error('采购原计量身份无效。')
   if (!['prepared', 'sending', 'unknown', 'disputed', 'settled', 'released'].includes(String(row.state)) || typeof row.anomaly !== 'boolean') throw new Error('采购预占状态无效。')
   const attempt = procurementIdentity(row.attempt_id)
   if (row.id !== attempt) throw new Error('采购预占与尝试标识不一致。')
-  return { id: attempt, attempt_id: attempt, account_id: procurementIdentity(row.account_id), binding_id: procurementIdentity(row.binding_id), tenant_id: procurementIdentity(row.tenant_id), request_id: procurementIdentity(row.request_id), channel_id: procurementIdentity(row.channel_id), input_bound: procurementInteger(row.input_bound), output_bound: procurementInteger(row.output_bound), upper_amount: procurementInteger(row.upper_amount), held_amount: procurementInteger(row.held_amount), spent_amount: procurementInteger(row.spent_amount), state: row.state as ProcurementReservation['state'], anomaly: row.anomaly, created_at: procurementTimestamp(row.created_at) }
+  return { id: attempt, attempt_id: attempt, account_id: procurementIdentity(row.account_id), binding_id: procurementIdentity(row.binding_id), tenant_id: procurementIdentity(row.tenant_id), request_id: procurementIdentity(row.request_id), channel_id: procurementIdentity(row.channel_id), profile_version: procurementIdentity(row.profile_version), schema_digest: row.schema_digest, variant_key: 'default', supplier_bounds: supplierBounds(row.supplier_bounds), upper_amount: procurementInteger(row.upper_amount, false, true), held_amount: procurementInteger(row.held_amount), spent_amount: procurementInteger(row.spent_amount), revision: procurementRevision(row.revision), state: row.state as ProcurementReservation['state'], anomaly: row.anomaly, created_at: procurementTimestamp(row.created_at), updated_at: procurementTimestamp(row.updated_at) }
 }
 export function parseProcurementEvent(value: unknown): ProcurementEvent {
   const row = record(value)

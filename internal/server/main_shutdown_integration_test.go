@@ -31,6 +31,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/operations"
 	"github.com/moni-ai/moni-aigate/internal/security"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -255,9 +256,7 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 	execSQL(`INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, tenant, model)
 	token := "mg_" + security.Random(24)
 	execSQL(`INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'actual-main','mg_fixture',$4,$5,1000)`, key, tenant, user, secrets.Digest(token), []string{model})
-	if _, err = c.PublishPrice(ctx, operator, model, "1000000", "2000000", time.Now().Add(-time.Hour)); err != nil {
-		t.Fatal(err)
-	}
+	meterquote.PublishDefaultPrice(t, ctx, owner, meterquote.DefaultPrice{ModelID: model, Actor: operator, InputRate: 1000000, OutputRate: 2000000, EffectiveAt: time.Now().Add(-time.Hour)})
 	var posts atomic.Int32
 	finish := make(chan struct{})
 	var finishOnce sync.Once
@@ -401,7 +400,7 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 		t.Helper()
 		var status, usage string
 		var settlements, attempts, events, charge, spent, held int64
-		if err := owner.QueryRow(ctx, `SELECT r.billing_status,(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),(SELECT count(*) FROM finalization_records WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0),coalesce(m.normalized_usage->>'status','') FROM request_records r LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id LEFT JOIN metering_events m ON m.id=z.event_id WHERE r.id=$1`, requestID).Scan(&status, &settlements, &attempts, &events, &charge, &usage); err != nil {
+		if err := owner.QueryRow(ctx, `SELECT r.billing_status,(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),(SELECT count(*) FROM finalization_records WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0),coalesce(z.retail_usage_state,'') FROM request_records r LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id WHERE r.id=$1`, requestID).Scan(&status, &settlements, &attempts, &events, &charge, &usage); err != nil {
 			t.Fatal(err)
 		}
 		wallet, err := store.Wallet(ctx, billing.Query{TenantID: tenant})

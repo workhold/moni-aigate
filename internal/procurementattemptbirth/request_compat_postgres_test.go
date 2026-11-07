@@ -1,6 +1,7 @@
 package procurementattemptbirth_test
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -19,6 +20,23 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/provider"
 )
 
+func historicalPublishPrice(ctx context.Context, store *catalog.Store, actor, model, input, output string, effective time.Time) (string, error) {
+	in, err := strconv.ParseInt(input, 10, 64)
+	if err != nil {
+		return "", err
+	}
+	out, err := strconv.ParseInt(output, 10, 64)
+	if err != nil {
+		return "", err
+	}
+	var schema, digest string
+	if err = store.Pool.QueryRow(ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id WHERE m.id=$1`, model).Scan(&schema, &digest); err != nil {
+		return "", err
+	}
+	result, err := store.PublishDefaultPrice(ctx, catalog.PricingActor{UserID: actor}, catalog.DefaultPriceCommand{OperationID: uuid.NewString(), ModelID: model, SchemaID: schema, SchemaDigest: digest, VariantKey: "default", InputRate: in, OutputRate: out, EffectiveAt: effective.UTC().Truncate(time.Microsecond)})
+	return result.Result.ID, err
+}
+
 // A2 differential request acceptance. Every tested mutation uses actual APP;
 // owner prepares original parents, observes rows, and injects exact faults.
 // This file covers the declared groups below, not the entire historical A1
@@ -27,6 +45,15 @@ import (
 
 func abCompatInput(f *fixture) billing.ReserveInput {
 	return billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "a2-request-compat", ProfileVersion: "v1", InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(5 * time.Minute)}
+}
+
+// The current reservation receipt no longer mirrors two prices. Keep this
+// frozen fixture's rate evidence on its original request columns, not 024.
+func abCompatOriginalRates(t *testing.T, f *fixture, request, input, output string) bool {
+	t.Helper()
+	var exact bool
+	must(t, "read original request rate evidence", f.owner.QueryRow(f.ctx, `SELECT input_rate::text=$2 AND output_rate::text=$3 FROM request_records WHERE id=$1`, request, input, output).Scan(&exact))
+	return exact
 }
 
 func abCompatLegacyFixture(t *testing.T) (*fixture, string) {
@@ -648,7 +675,7 @@ func TestPostgresA2RequestCompatBudgetZeroPriceAndInputOnly(t *testing.T) {
 				must(t, "read actually published profile version", f.app.QueryRow(f.ctx, "SELECT profile_version FROM models WHERE id=$1", model).Scan(&in.ProfileVersion))
 				amount, inputRate = 200, "2000000"
 			}
-			price, err := store.PublishPrice(f.ctx, admin, in.ModelID, inputRate, "0", time.Time{})
+			price, err := historicalPublishPrice(f.ctx, store, admin, in.ModelID, inputRate, "0", time.Now())
 			must(t, "publish actual effective zero/output-zero price", err)
 			if kind == "input_only" {
 				before := abCompatSnapshot(t, f)
@@ -659,13 +686,13 @@ func TestPostgresA2RequestCompatBudgetZeroPriceAndInputOnly(t *testing.T) {
 				if !errors.As(err, &business) || business.Code != "invalid_bounds" || abCompatSnapshot(t, f) != before {
 					t.Fatal("input-only nonzero output was accepted or left partial facts")
 				}
-				_, err = store.PublishPrice(f.ctx, admin, in.ModelID, inputRate, "1", time.Time{})
+				_, err = historicalPublishPrice(f.ctx, store, admin, in.ModelID, inputRate, "1", time.Now())
 				if !errors.Is(err, catalog.ErrInvalid) || abCompatSnapshot(t, f) != before {
 					t.Fatal("original catalog accepted input-only output price or wrote partial configuration")
 				}
 			}
 			r := abCompatReserve(t, f, in, amount)
-			if r.PriceVersionID != price || r.OutputRate != 0 {
+			if r.PriceVersionID != price || !abCompatOriginalRates(t, f, r.RequestID, inputRate, "0") {
 				t.Fatal("zero/input-only request did not freeze the real published price")
 			}
 			abCompatEffects(t, f, r, controls, false)
@@ -691,7 +718,7 @@ func TestPostgresA2RequestCompatBudgetPriceGroupSnapshotAndNoFallback(t *testing
 	price, err := store.PublishGroupPrice(f.ctx, actor, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: group.Result.ID, ModelID: f.model, InputRate: 2000000, OutputRate: 3000000, EffectiveAt: abCompatClock(t, f).Add(-time.Minute)})
 	must(t, "publish actual immutable group price", err)
 	r := abCompatReserve(t, f, abCompatInput(f), 260)
-	if r.PriceVersionID != price.Result.ID || r.PricingGroupID == nil || *r.PricingGroupID != group.Result.ID || strconv.FormatInt(r.TenantPricingRevision, 10) != assigned.Result.PricingRevision || r.InputRate != 2000000 || r.OutputRate != 3000000 {
+	if r.PriceVersionID != price.Result.ID || r.PricingGroupID == nil || *r.PricingGroupID != group.Result.ID || strconv.FormatInt(r.TenantPricingRevision, 10) != assigned.Result.PricingRevision || !abCompatOriginalRates(t, f, r.RequestID, "2000000", "3000000") {
 		t.Fatal("group price ID, exact dimensions or tenant revision differ from real command receipts")
 	}
 	frozen := abCompatFrozen(t, f, r.RequestID)

@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/procurement"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func procurementAdmin(t *testing.T, f *operationFixture) string {
@@ -274,15 +275,13 @@ func TestProcurementBudgetProjectionAndReservationIdentityAreDatabaseProtected(t
 	admin := procurementAdmin(t, f)
 	a := procurementAccount(t, f, s, admin)
 	b := procurementBind(t, f, s, admin, a.ID)
-	request, attempt := uuid.NewString(), uuid.NewString()
-	operationMetadataSource(t, f, request, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at)
- INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming,pricing_group_id,tenant_pricing_revision,retail_priced_at)
- SELECT $1,$2,$3,$4,m.id,p.id,p.input_rate,p.output_rate,100,20,m.profile_version,'fixture','fixture',instant.at+interval '1 hour','fixture',false,t.price_group_id,t.pricing_revision,instant.at
- FROM instant CROSS JOIN tenants t CROSS JOIN models m JOIN LATERAL
-  (SELECT id,input_rate,output_rate FROM price_versions WHERE model_id=m.id
-   AND price_group_id IS NOT DISTINCT FROM t.price_group_id AND effective_at<=instant.at
-   ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1) p ON true
- WHERE t.id=$2 AND m.id=$5`, request, f.tenant, f.key, f.user, f.model)
+	request, attempt := operationMetadataRequest(t, f, ""), uuid.NewString()
+	// Output 0.5 micro-CNY per token over the original 100/20 bounds keeps U=10.
+	inputRate, outputRate := int64(0), int64(500000)
+	cost := meterquote.PublishCost(t, f.ctx, f.app, meterquote.CostPrice{
+		ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: admin,
+		Basis: "contract", InputRate: &inputRate, OutputRate: &outputRate,
+	})
 	_, err := f.app.Exec(f.ctx, `UPDATE procurement_accounts SET held_amount=10 WHERE id=$1`, a.ID)
 	requirePoolSQLState(t, err, "23514")
 	tx, err := f.app.Begin(f.ctx)
@@ -297,7 +296,8 @@ func TestProcurementBudgetProjectionAndReservationIdentityAreDatabaseProtected(t
 		sql  string
 		args []any
 	}{
-		{`INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,input_bound,output_bound,upper_amount,held_amount,state) VALUES($1,$2,$3,100,20,10,10,'prepared')`, []any{attempt, a.ID, b.ID}},
+		{`SELECT meter_insert_attempt_snapshot($1,$2,$3,$4,'contract')`, []any{f.tenant, attempt, request, cost}},
+		{`INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,upper_amount,held_amount,state) VALUES($1,$2,$3,10,10,'prepared')`, []any{attempt, a.ID, b.ID}},
 		{`UPDATE procurement_accounts SET held_amount=10,revision=999 WHERE id=$1`, []any{a.ID}},
 		{`INSERT INTO procurement_budget_events(event_key,account_id,attempt_id,held_delta,spent_delta,type) VALUES($1,$2,$3,10,0,'reserve')`, []any{"reserve:" + attempt, a.ID, attempt}},
 	} {
@@ -312,7 +312,7 @@ func TestProcurementBudgetProjectionAndReservationIdentityAreDatabaseProtected(t
 	if err != nil || after.HeldAmount != "10" || after.Revision != "1" {
 		t.Fatalf("budget updates altered config revision %+v %v", after, err)
 	}
-	_, err = f.app.Exec(f.ctx, `UPDATE procurement_reservations SET input_bound=101 WHERE attempt_id=$1`, attempt)
+	_, err = f.app.Exec(f.ctx, `UPDATE procurement_reservations SET upper_amount=11 WHERE attempt_id=$1`, attempt)
 	requirePoolSQLState(t, err, "P0001")
 	var rev string
 	if err = f.app.QueryRow(f.ctx, `UPDATE procurement_reservations SET state='sending',revision=999 WHERE attempt_id=$1 RETURNING revision::text`, attempt).Scan(&rev); err != nil || rev != "2" {

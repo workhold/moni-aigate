@@ -309,6 +309,59 @@ func TestExactAmountReservationAndComparison(t *testing.T) {
 	}
 }
 
+func TestQuoteDigestAndBoundsFailClosedAcrossBindings(t *testing.T) {
+	s := mustSchema(t, tokenSchemaJSON)
+	bounds := mustBounds(t, s, metering.Supplier, 100, 20)
+	actual, err := metering.ParseQuantities(s, metering.Supplier, []byte(quantityJSON("quantities", metering.Supplier, "101", "20")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if within, err := metering.WithinBounds(actual, bounds); err != nil || within {
+		t.Fatalf("actual overage was accepted: within=%v err=%v", within, err)
+	}
+	if _, err := metering.ParseBounds(s, metering.Supplier, []byte(quantityJSON("bounds", metering.Supplier, "101", "20"))); !errors.Is(err, metering.ErrInvalidVector) {
+		t.Fatalf("bound over schema maximum was accepted: %v", err)
+	}
+
+	low := mustRates(t, s, metering.Supplier, [2]string{"1", "0"}, [2]string{"3", "1"})
+	high := mustRates(t, s, metering.Supplier, [2]string{"1", "0"}, [2]string{"2", "1"})
+	lowAmount, err := metering.ReservationAmount(bounds, low)
+	if err != nil {
+		t.Fatal(err)
+	}
+	highAmount, err := metering.ReservationAmount(bounds, high)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lowAmount != 34 || highAmount != 50 {
+		t.Fatalf("unexpected single-ceil amounts: low=%d high=%d", lowAmount, highAmount)
+	}
+	if comparison, err := metering.CompareExactCost(bounds, low, bounds, high); err != nil || comparison >= 0 {
+		t.Fatalf("exact rational ordering was lost: comparison=%d err=%v", comparison, err)
+	}
+	lowDigest, err := metering.QuoteDigest(bounds, low)
+	if err != nil {
+		t.Fatal(err)
+	}
+	highDigest, err := metering.QuoteDigest(bounds, high)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lowDigest == highDigest {
+		t.Fatal("quote digest collapsed distinct exact rates")
+	}
+
+	foreignSchema := mustSchema(t, strings.Replace(tokenSchemaJSON, `"100"`, `"99"`, 1))
+	foreignBounds := mustBounds(t, foreignSchema, metering.Supplier, 99, 20)
+	foreignRates := mustRates(t, foreignSchema, metering.Supplier, [2]string{"1", "0"}, [2]string{"3", "1"})
+	if _, err := metering.QuoteDigest(foreignBounds, low); !errors.Is(err, metering.ErrBindingMismatch) {
+		t.Fatalf("cross-schema quote digest was accepted: %v", err)
+	}
+	if _, err := metering.Amount(actual, foreignRates); !errors.Is(err, metering.ErrBindingMismatch) {
+		t.Fatalf("cross-schema amount was accepted: %v", err)
+	}
+}
+
 func TestBindingZeroValuesAndImmutableCanonical(t *testing.T) {
 	raw := []byte(tokenSchemaJSON)
 	s, err := metering.ParseSchema(raw)

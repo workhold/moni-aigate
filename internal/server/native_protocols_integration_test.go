@@ -103,12 +103,16 @@ func TestNativeProtocolsCommercialRoundTrip(t *testing.T) {
 				}
 				id := res.Header.Get("X-Request-ID")
 				var status string
-				var amount, input, output, cached int64
-				if err := f.pool.QueryRow(context.Background(), `SELECT s.status,s.charged_amount,(e.normalized_usage->>'input_tokens')::bigint,(e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'cached_tokens')::bigint FROM settlements s JOIN finalization_records f ON f.id=s.finalization_id JOIN metering_events e ON e.id=f.event_id WHERE s.request_id=$1`, id).Scan(&status, &amount, &input, &output, &cached); err != nil {
+				var amount, input, output int64
+				if err := f.pool.QueryRow(context.Background(), `SELECT s.status,s.charged_amount,meter_event_quantity(e.id,'text_input_token'),meter_event_quantity(e.id,'text_output_token') FROM settlements s JOIN finalization_records f ON f.id=s.finalization_id JOIN metering_events e ON e.id=f.event_id WHERE s.request_id=$1`, id).Scan(&status, &amount, &input, &output); err != nil {
 					t.Fatal(err)
 				}
-				if status != "settled" || amount != 20 || input != 10 || output != 5 || cached != 3 || f.posts.Load() != 1 {
-					t.Fatalf("settlement=%s %d usage=%d/%d/%d posts=%d", status, amount, input, output, cached, f.posts.Load())
+				cacheField := `"cached_tokens":3`
+				if protocol == provider.ProtocolMessages {
+					cacheField = `"cache_read_input_tokens":3`
+				}
+				if status != "settled" || amount != 20 || input != 10 || output != 5 || !bytes.Contains(body, []byte(cacheField)) || f.posts.Load() != 1 {
+					t.Fatalf("settlement=%s %d usage=%d/%d cache=%v posts=%d", status, amount, input, output, bytes.Contains(body, []byte(cacheField)), f.posts.Load())
 				}
 				wallet, err := f.server.Billing.Wallet(context.Background(), billing.Query{TenantID: f.tenant})
 				if err != nil || wallet.Available != 980 || wallet.Held != 0 {
@@ -247,7 +251,7 @@ func TestModelProtocolCreationDefaultsAndValidation(t *testing.T) {
 			t.Fatal(err)
 		}
 		var raw []byte
-		if err = f.pool.QueryRow(context.Background(), "SELECT profile FROM models WHERE id=$1", id).Scan(&raw); err != nil {
+		if err = f.pool.QueryRow(context.Background(), "SELECT meter_model_profile($1)", id).Scan(&raw); err != nil {
 			t.Fatal(err)
 		}
 		var p provider.Profile
@@ -337,7 +341,7 @@ func TestModelDefaultInputBoundUsesWholeContext(t *testing.T) {
 			t.Fatal(err)
 		}
 		var bound int64
-		if err = f.pool.QueryRow(context.Background(), "SELECT (profile->>'input_token_upper_bound')::bigint FROM models WHERE id=$1", id).Scan(&bound); err != nil || bound != 120 {
+		if err = f.pool.QueryRow(context.Background(), "SELECT (meter_model_profile($1)->>'input_token_upper_bound')::bigint", id).Scan(&bound); err != nil || bound != 120 {
 			t.Fatal(bound, err)
 		}
 	}

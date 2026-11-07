@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/operations"
-	"github.com/moni-ai/moni-aigate/internal/testsupport/funding019"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -21,7 +20,7 @@ func (e *Environment) fund(ctx context.Context) error {
 		return err
 	}
 	defer project.Close()
-	if migrations.VerifyThrough(ctx, p, "019_operations_alerts.sql") != nil || operations.VerifyAlertRole(ctx, p, operations.AlertApplicationRole) != nil || operations.VerifyAlertRole(ctx, project, operations.AlertProjectionRole) != nil {
+	if migrations.Verify(ctx, p) != nil || operations.VerifyAlertRole(ctx, p, operations.AlertApplicationRole) != nil || operations.VerifyAlertRole(ctx, project, operations.AlertProjectionRole) != nil {
 		return stage("actual_application_roles")
 	}
 	for _, pair := range []struct {
@@ -72,7 +71,7 @@ func (e *Environment) fund(ctx context.Context) error {
 	if _, err = billing.New(project).Project(ctx, billing.ProjectInput{}); err != nil {
 		return stage("projection")
 	}
-	funding, err := funding019.Verify(ctx, p, tenant)
+	funding, err := s.VerifyFunding(ctx, tenant)
 	if err != nil || !funding.Balanced {
 		return stage("funding")
 	}
@@ -99,6 +98,9 @@ const fundingSnapshotSQL = `SELECT encode(sha256(convert_to(jsonb_build_object(
  'receipts',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.id) FROM funding_receipts x),'[]'::jsonb),
  'sources',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.id) FROM credit_orders x),'[]'::jsonb),
  'accounts',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.id) FROM ledger_accounts x),'[]'::jsonb),
+ 'lots',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.id) FROM funding_lots x),'[]'::jsonb),
+ 'lot_balances',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.lot_id) FROM funding_lot_balances x),'[]'::jsonb),
+ 'lot_events',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.id) FROM funding_lot_events x),'[]'::jsonb),
  'outbox',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.event_id) FROM projection_outbox x),'[]'::jsonb),
  'idempotency',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.tenant_id,x.operation,x.key) FROM financial_idempotency x),'[]'::jsonb),
  'audit',coalesce((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.id) FROM audit_events x),'[]'::jsonb))::text,'UTF8')),'hex')`

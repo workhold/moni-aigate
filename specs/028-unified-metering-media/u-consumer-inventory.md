@@ -4,6 +4,14 @@
 
 ## 1. 按实际装配区分现行与冻结研究
 
+2026-11-05实施进展附记（下表仍保留最初盘点语境）：当前Selection已改为完整Schema/Rates和原capability/default身份，客户Reserve直接ReservationAmount；Selection、Reservation和financialRequest两价镜像已删除。结算/attempt成本/采购实际金额直接读原Rates和对应侧终态Quantities；采购准入/完整Quote已在本次续片接入；发布operation指纹及HTTP/TS全面替换仍未完成。历史前缀仅因删回执字段把必要费率断言移到原request旧列，迁移范围/自由版本/pins不变，不表示当前reader兼容历史库。阶段状态以[tasks](tasks.md)和[验证](../../docs/verification/unified-metering.md)为准，不能由本附记勾选生产出口。
+
+采购U数值已改读原attempt完整supplier界和同域原Rates，数据库新增独立数值guard；采购预期Quote及派发检查已在本次续片切完整原件，详细范围见下段。实际管理端[采购预占列表](../../internal/procurement/store.go)已按存储合同7.2切换原attempt快照/界行，返回supplier Bounds wire及原profile/schema/default，原旧列503已修复；TS/UI同步撤旧字段，缺失/错绑整页失败。[受限APP读取专项](../../internal/server/procurement_meter_integration_test.go)只证明当前局部出口，冻结研究reader仍保持原合同，不顺手改成当前读取。
+
+2026-11-05完整报价续片已将[routecost](../../internal/routecost/quote.go)接入A类[catalog候选](../../internal/catalog/store.go)、[routing](../../internal/routing/cost.go)、[billing报价复验](../../internal/billing/cost_policy.go)与[采购锁后](../../internal/billing/procurement.go)，删除routing.CostQuote/CostScore与内部两价cap镜像。读取原完整canonical/digest，精确有理cap和CompareExactCost不反算每百万，金额只委托metering。普通Store已无prospective分支；显式[ProspectiveStore](../../internal/billing/prospective.go)只接受独立冻结输入，不接受新Quote或提升当前资金方法。它不是B类兼容层，不增报价身份，也不代表已收口全部HTTP/发布指纹/完整guard。
+
+当前[受限APP报价链](../../internal/server/cost_vector_application_integration_test.go)以SET ROLE验证六文本paid/known-zero与unknown政策，另有原价排期跨锁测试；不是独立LOGIN或完整六文本商业出口。B类历史SQL/旧列/迁移范围/pins不升级；原来把current billing当历史业务oracle的组合，现经[test-only编译拒绝边界](../../internal/testsupport/frozenattempt/attempt.go)明确失败，**仅编译，没有恢复历史业务oracle**，也没有以固定错误冒充原业务结果。显式冻结适配器的13参字节单测仍独立通过，实际原库验收须另补；periodicbudget现行billing夹具使用当前canonical测试选择器，55439缺库仍只编译。
+
 `serve` 的实际路径是 [main](../../cmd/moni-aigate/main.go) → [server.New](../../internal/server/server.go) → `catalog.New`、`billing.New`、`procurement.New`、`provider.NewClient`、`routing.NewEngine`。六文本入口由 [gateway](../../internal/server/gateway.go) 编排。现行钱包来源 HTTP 及 `check-wallet-sources` CLI 直接调用 [Store.CheckWalletSources](../../internal/billing/wallet_sources_read.go)，不是扫描旧 proof/profile 后取得运行权。
 
 必须区分以下三类，不以文件位于 `internal/billing` 或存在静态 import 作为在线接线证据：
@@ -80,14 +88,14 @@ B类定位依据：[金融事实维护组合](../../internal/maintenancescan/fun
 
 现有口径保持：同一RR READ ONLY、5秒预算，31天/5000请求上限；按request创建窗口读唯一settlement一次，所有生成attempt成本逐个累加；未知成本/未结算使毛利为null。异步提交按原request归窗，实时按收费轮次request归窗，poll/下载/heartbeat不加收入或生成attempt。收入与成本不从向量重算，不join来源分配边造成金额倍增。
 
-028真正缺少的是**尚未实现的元数据合同**：
+028 已接通请求元数据合同，当前仍需持续回归其不可变快照边界：
 
-1. 从原不可变request快照读取protocol、execution_kind、profile_version、schema_id/schema_digest、variant_key；不能从模型当前profile推断历史请求，也不以缺失值默认Chat。
-2. protocol/execution_kind筛选在同一cohort SQL中生效，并保留当前资源上限；共同枚举冻结后同步Filter.Validate、HTTP严格query集合、JSON/TS类型、UI筛选和CSV精确列合同。CSV扩列顺序由集成人冻结后实施，元数据文本继续防公式注入；本清单没有新增当前CSV列。
+1. 从原不可变request快照读取protocol、execution_kind、profile_version、schema_id/schema_digest、variant_key；不能从模型当前profile推断历史请求，也不以缺失值默认Chat。当前请求明细、报表JSON和CSV已沿该快照接线，缺失仍留空。
+2. protocol/execution_kind筛选在同一cohort SQL中生效，并保留当前资源上限；Filter.Validate、HTTP严格query集合、JSON/TS类型、UI筛选和CSV精确列合同已同步。CSV扩列继续保持固定顺序，元数据文本继续防公式注入。
 3. 请求下钻关联原retail/supplier快照及最终证据，显示缺量/冲突/未知状态；客户视图不泄露上游凭据、成本或内部URL。现行金额汇总保持原来源，无需引入第二结算器。
 4. U片不强制增加跨维度数量合计。如果后续增加，按 `(schema_digest,dimension,unit,side)` 分组，只读最终证据；任一缺量保留unknown计数/nullable总量，不把token、字符、图片、毫秒相加，不将金额报表里的0误当实际量0。
 
-以上是028计划缺口，不是026已实现能力。不得用“报表目前无token列”跳过请求元数据、CSV/HTTP与前端的统一设计。
+以上是当前回归边界，不再把元数据合同描述为待实现能力。不得用“报表目前无token列”跳过请求快照、CSV/HTTP与前端已经接入的统一设计；金额仍不从向量重算。
 
 ## 5. C类fixture、并行边界与集成验收
 

@@ -6,12 +6,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/metering"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func managedCostRequest(t *testing.T, f *fixture) (Reservation, AttemptInput) {
 	t.Helper()
 	policy := uuid.NewString()
+	tx, err := f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(f.ctx)
 	for _, q := range []struct {
 		sql  string
 		args []any
@@ -20,9 +27,12 @@ func managedCostRequest(t *testing.T, f *fixture) (Reservation, AttemptInput) {
 		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,4)`, []any{policy, f.channel, f.version}},
 		{`UPDATE models SET active_revision=1 WHERE id=$1`, []any{f.model}},
 	} {
-		if _, err := f.pool.Exec(f.ctx, q.sql, q.args...); err != nil {
+		if _, err := tx.Exec(f.ctx, q.sql, q.args...); err != nil {
 			t.Fatal(err)
 		}
+	}
+	if err = tx.Commit(f.ctx); err != nil {
+		t.Fatal(err)
 	}
 	in := f.input()
 	in.RouteRevision = 1
@@ -31,8 +41,8 @@ func managedCostRequest(t *testing.T, f *fixture) (Reservation, AttemptInput) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { f.store.EndRequest(r.RequestID) })
-	var q routing.CostQuote
-	if err = f.pool.QueryRow(f.ctx, currentAttemptCostSQL, f.channel, "upstream").Scan(&q.VersionID, &q.InputRate, &q.OutputRate, &q.Basis); err != nil {
+	q, err := scanCostQuote(f.pool.QueryRow(f.ctx, currentAttemptCostSQL, f.channel, "upstream", r.RequestID), f.channel, "upstream")
+	if err != nil {
 		t.Fatal(err)
 	}
 	a := dispatchBatchAttemptInput(f, r)
@@ -48,13 +58,27 @@ func TestPostgresManagedAttemptRequiresExactSelectedQuote(t *testing.T) {
 			switch kind {
 			case "missing":
 				in.CostQuote = nil
-			case "version":
-				in.CostQuote.VersionID = uuid.NewString()
-			case "rate":
-				v := int64(1)
-				in.CostQuote.OutputRate = &v
-			case "basis":
-				in.CostQuote.Basis = "invoice"
+			case "version", "rate", "basis":
+				var err error
+				q := *in.CostQuote
+				rates, _ := q.Rates()
+				value := routecost.Input{ChannelID: f.channel, UpstreamModel: "upstream", VersionID: q.VersionID(), Basis: q.Basis(), VariantKey: "default", Schema: q.Schema(), Rates: rates}
+				switch kind {
+				case "version":
+					value.VersionID = uuid.NewString()
+				case "basis":
+					value.Basis = "invoice"
+				case "rate":
+					value.Rates, err = metering.LegacyTokenRates(q.Schema(), metering.Supplier, 2000000, 1)
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+				changed, e := routecost.NewQuote(value)
+				if e != nil {
+					t.Fatal(e)
+				}
+				in.CostQuote = &changed
 			}
 			a, err := f.store.RecordAttempt(f.ctx, in)
 			if kind == "valid" {
@@ -100,9 +124,7 @@ func TestPostgresCostPublicationWaitersSeeNewQuote(t *testing.T) {
 				t.Fatal(err)
 			}
 			// INSERT itself must hold the common channel UPDATE barrier.
-			if _, err = blocker.Exec(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'upstream',9000000,9000000,'contract')`, f.channel); err != nil {
-				t.Fatal(err)
-			}
+			meterquote.PublishCost(t, f.ctx, blocker, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.admin, Basis: "contract", InputRate: billingRate(9000000), OutputRate: billingRate(9000000)})
 			ctx, cancel := context.WithTimeout(f.ctx, 5*time.Second)
 			defer cancel()
 			done := make(chan error, 1)
@@ -147,7 +169,9 @@ func TestPostgresScheduledCostActivationAfterAllDispatchLockWaits(t *testing.T) 
 				}
 			}
 			var effective time.Time
-			if err = f.pool.QueryRow(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,'upstream',3000000,4000000,'invoice',clock_timestamp()+interval '300 milliseconds') RETURNING effective_at`, f.channel).Scan(&effective); err != nil {
+			costID := uuid.NewString()
+			meterquote.PublishCost(t, f.ctx, f.pool, meterquote.CostPrice{ID: costID, ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.admin, Basis: "invoice", InputRate: billingRate(3000000), OutputRate: billingRate(4000000), EffectiveAt: time.Now().UTC().Add(300 * time.Millisecond)})
+			if err = f.pool.QueryRow(f.ctx, `SELECT effective_at FROM cost_versions WHERE id=$1`, costID).Scan(&effective); err != nil {
 				t.Fatal(err)
 			}
 			blocker, err := f.pool.Begin(f.ctx)
@@ -223,9 +247,7 @@ func TestPostgresCostChangeAfterSendingKeepsFrozenCostAndSettlement(t *testing.T
 	if err = f.store.PrepareDispatch(f.ctx, DispatchInput{TenantID: f.tenant, AttemptID: a.ID}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.pool.Exec(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,basis) VALUES($1,'upstream','unknown')`, f.channel); err != nil {
-		t.Fatal(err)
-	}
+	meterquote.PublishCost(t, f.ctx, f.pool, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.admin, Basis: "unknown"})
 	if _, err = f.store.RecordFinalization(f.ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "adapter", SourceEventID: a.ID + ":final", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}); err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +258,7 @@ func TestPostgresCostChangeAfterSendingKeepsFrozenCostAndSettlement(t *testing.T
 	}
 	var cost, basis, version string
 	var settlements int
-	if err = f.pool.QueryRow(f.ctx, `SELECT cost_amount::text,cost_basis,cost_version_id,(SELECT count(*) FROM settlements WHERE request_id=$2) FROM upstream_attempts WHERE id=$1`, a.ID, r.RequestID).Scan(&cost, &basis, &version, &settlements); err != nil || cost != "30" || basis != "contract" || version != in.CostQuote.VersionID || settlements != 1 {
+	if err = f.pool.QueryRow(f.ctx, `SELECT a.cost_amount::text,s.cost_basis,s.cost_version_id,(SELECT count(*) FROM settlements WHERE request_id=$2) FROM upstream_attempts a JOIN attempt_meter_snapshots s ON s.attempt_id=a.id WHERE a.id=$1`, a.ID, r.RequestID).Scan(&cost, &basis, &version, &settlements); err != nil || cost != "30" || basis != "contract" || version != in.CostQuote.VersionID() || settlements != 1 {
 		t.Fatal("later cost configuration changed history", cost, basis, version, settlements, err)
 	}
 	f.wallet(t, 985, 0)

@@ -2,10 +2,11 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { errorText } from '../api'
-import { money, time } from '../format'
+import { time } from '../format'
 import { session } from '../session'
 import { parsePricingAssignment, parsePricingEnvelope, parsePricingPreview, pricingID, pricingPreviewPath, pricingRequest } from '../pricing'
 import type { PricingAssignment, PricingPreviewRow } from '../pricing'
+import { ratePerMillionText } from '../metering-wire'
 import { createPricingEpoch, createPricingPager, pricingContext } from '../pricing-state'
 import PricingWriter from './PricingWriter.vue'
 const emit = defineEmits<{ changed: [] }>(), route = useRoute()
@@ -13,6 +14,7 @@ const context = computed(() => pricingContext(session.me?.user.id, session.me?.t
 const tenant = ref(typeof route.query.tenant === 'string' ? route.query.tenant : ''), target = ref('default'), loading = ref(false), error = ref(''), assignment = ref<PricingAssignment | null>(null), writer = ref(false)
 const gate = createPricingEpoch(), pager = createPricingPager<PricingPreviewRow>(), preview = ref(pager.snapshot())
 const admin = computed(() => session.me?.user.platform_role === 'admin' && !session.mfaPending)
+function rate(row: PricingPreviewRow, dimension: 'text_input_token' | 'text_output_token') { return ratePerMillionText(row.retail_price.rates, dimension) }
 function selectedTarget() { return target.value === 'default' ? null : pricingID(target.value) }
 function resetPreview() { pager.reset(`${context.value}:${tenant.value}:${target.value}`); preview.value = pager.snapshot(); writer.value = false }
 function resetAll() { gate.reset(`${context.value}:${tenant.value}`); assignment.value = null; loading.value = false; error.value = ''; resetPreview() }
@@ -56,7 +58,7 @@ onBeforeUnmount(() => { gate.dispose(); pager.dispose() })
       <el-alert v-if="preview.message" :title="preview.message" type="error" :closable="false" />
       <div v-if="preview.context" class="preview-context"><span>第 {{ preview.page }} 页 · 当前页 {{ preview.rows.length }} 个模型</span><span>租户 {{ preview.context.tenant_status === 'active' ? '启用' : '暂停' }} · 目标{{ preview.context.target_group_state === null ? '公共默认' : preview.context.target_group_state === 'active' ? '启用组' : '退休组（不能新分配）' }}</span><span :title="preview.context.as_of">DB观察 {{ time(preview.context.as_of) }} · {{ preview.context.as_of }}</span></div>
       <el-alert v-if="preview.context && !contextMatches" title="预览时的当前归属与已读取版本不同，请明确重新读取当前归属，再核查预览；页面不会自动换版本提交。" type="warning" :closable="false" />
-      <el-table v-if="preview.loaded || preview.loading" v-loading="preview.loading" :data="preview.rows" empty-text="当前观察范围没有启用且获授权的模型"><el-table-column prop="public_name" label="模型" min-width="190" /><el-table-column prop="protocol" label="协议" min-width="175" /><el-table-column label="目标报价" width="110"><template #default="{ row }"><el-tag :type="row.retail_price.status === 'available' ? 'success' : 'danger'">{{ row.retail_price.status === 'available' ? '当时有价' : '缺价' }}</el-tag></template></el-table-column><el-table-column label="输入 / 百万 Tokens" min-width="185"><template #default="{ row }">{{ money(row.retail_price.input_rate) }}</template></el-table-column><el-table-column label="输出 / 百万 Tokens" min-width="185"><template #default="{ row }">{{ money(row.retail_price.output_rate) }}</template></el-table-column><el-table-column label="生效时刻" min-width="235"><template #default="{ row }"><span :title="row.retail_price.effective_at || ''">{{ row.retail_price.effective_at ?? '暂无有效版本' }}</span></template></el-table-column></el-table>
+      <el-table v-if="preview.loaded || preview.loading" v-loading="preview.loading" :data="preview.rows" empty-text="当前观察范围没有启用且获授权的模型"><el-table-column prop="public_name" label="模型" min-width="190" /><el-table-column prop="protocol" label="协议" min-width="175" /><el-table-column label="目标报价" width="110"><template #default="{ row }"><el-tag :type="row.retail_price.status === 'available' ? 'success' : 'danger'">{{ row.retail_price.status === 'available' ? '当时有价' : '缺价' }}</el-tag></template></el-table-column><el-table-column label="Schema / default" min-width="260"><template #default="{ row }"><span class="mono">{{ row.retail_price.schema_id }}</span><br /><span>{{ row.retail_price.variant_key }}</span></template></el-table-column><el-table-column label="输入 / 百万 Tokens" min-width="185"><template #default="{ row }">{{ rate(row, 'text_input_token') }}</template></el-table-column><el-table-column label="输出 / 百万 Tokens" min-width="185"><template #default="{ row }">{{ rate(row, 'text_output_token') }}</template></el-table-column><el-table-column label="生效时刻" min-width="235"><template #default="{ row }"><span :title="row.retail_price.effective_at || ''">{{ row.retail_price.effective_at ?? '暂无有效版本' }}</span></template></el-table-column></el-table>
       <div v-if="preview.loaded" class="preview-footer"><el-button v-if="preview.next" :loading="preview.loading" @click="loadPreview(false)">读取下一页</el-button><span v-else>当前分页已到末页</span><span>逐页观察不能证明未来所有模型均可调用；本页缺价数不代表全租户总数。</span></div>
     </template>
   </section>

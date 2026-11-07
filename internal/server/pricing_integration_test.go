@@ -48,9 +48,13 @@ func TestPricingHTTPBusinessAndCurrentDomainIsolation(t *testing.T) {
 		t.Fatal(e)
 	}
 	authExec(t, pool, `INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, tenant, model)
-	requireAuthStatus(t, call("POST", "/api/platform/price-versions", map[string]any{"model_id": model, "input_rate": "900", "output_rate": "900", "effective_at": time.Now().Add(-time.Hour).UTC().Format(time.RFC3339Nano)}), 200)
+	var schema, digest string
+	if e = pool.QueryRow(context.Background(), `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version WHERE m.id=$1`, model).Scan(&schema, &digest); e != nil {
+		t.Fatal(e)
+	}
+	requireAuthStatus(t, call("POST", "/api/platform/price-versions", map[string]any{"operation_id": uuid.NewString(), "model_id": model, "schema_id": schema, "schema_digest": digest, "variant_key": "default", "input_rate": "900", "output_rate": "900", "effective_at": time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond).Format("2006-01-02T15:04:05.000000Z")}), 201)
 	now := time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond).Format("2006-01-02T15:04:05.000000Z")
-	requireAuthStatus(t, call("POST", "/api/platform/price-groups/"+group+"/price-versions", map[string]any{"operation_id": uuid.NewString(), "model_id": model, "input_rate": "123", "output_rate": "456", "effective_at": now}), 201)
+	requireAuthStatus(t, call("POST", "/api/platform/price-groups/"+group+"/price-versions", map[string]any{"operation_id": uuid.NewString(), "model_id": model, "schema_id": schema, "schema_digest": digest, "variant_key": "default", "input_rate": "123", "output_rate": "456", "effective_at": now}), 201)
 	requireAuthStatus(t, call("PUT", "/api/platform/tenants/"+tenant+"/pricing", map[string]any{"operation_id": uuid.NewString(), "expected_revision": "1", "price_group_id": group}), 200)
 	for _, path := range []string{"/api/models", "/api/prices", "/api/models/" + model + "/retail-price"} {
 		w := authHTTP(t, s, "GET", path, customer, cc, "", nil)
@@ -60,7 +64,7 @@ func TestPricingHTTPBusinessAndCurrentDomainIsolation(t *testing.T) {
 		}
 	}
 	adminPrice := call("GET", "/api/prices", nil)
-	if !strings.Contains(adminPrice.Body.String(), `"900"`) || strings.Contains(adminPrice.Body.String(), `"123"`) {
+	if !strings.Contains(adminPrice.Body.String(), `"numerator":"9"`) || !strings.Contains(adminPrice.Body.String(), `"denominator":"10000"`) || strings.Contains(adminPrice.Body.String(), `"numerator":"123"`) {
 		t.Fatal(adminPrice.Body.String())
 	}
 	preview := authHTTP(t, s, "GET", "/api/platform/tenants/"+tenant+"/pricing-preview?price_group_id=default", fin, fc, "", nil)

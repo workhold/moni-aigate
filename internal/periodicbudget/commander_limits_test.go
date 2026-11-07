@@ -30,10 +30,8 @@ func pbCommandSupplierSources(t *testing.T, f *pbTxFixture, tx pgx.Tx, requests 
 	f.exec(t, tx, `SELECT id FROM procurement_accounts WHERE id=$1 FOR NO KEY UPDATE`, f.account)
 	ids := make([]string, 0, len(requests))
 	for _, request := range requests {
-		attempt := uuid.NewString()
-		f.exec(t, tx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,cost_version_id,cost_input_rate,cost_output_rate,cost_basis)
- SELECT $1,$2,$3,1,$4,$5,$6,'upstream',id,input_rate,output_rate,basis FROM cost_versions WHERE id=$7`, attempt, f.tenant, request, f.channel, f.version, f.credential, f.cost)
-		f.exec(t, tx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,input_bound,output_bound,upper_amount,held_amount,spent_amount,state) VALUES($1,$2,$3,100,20,240,240,0,'prepared')`, attempt, f.account, f.binding)
+		attempt := pbTxSupplierAttempt(t, f, tx, request, 240)
+		f.exec(t, tx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,upper_amount,held_amount,spent_amount,state) VALUES($1,$2,$3,240,240,0,'prepared')`, attempt, f.account, f.binding)
 		f.exec(t, tx, `INSERT INTO procurement_budget_events(id,event_key,account_id,attempt_id,held_delta,spent_delta,type) VALUES($1,$2,$3,$4,240,0,'reserved')`, uuid.NewString(), "reserve:"+attempt, f.account, attempt)
 		ids = append(ids, attempt)
 	}
@@ -44,13 +42,14 @@ func pbCommandSupplierSources(t *testing.T, f *pbTxFixture, tx pgx.Tx, requests 
 func TestCommanderLimits1001RejectsThenExactly1000ImportsAllScopes(t *testing.T) {
 	f := newPBTxFixture(t)
 	pbCommandFund(t, f)
-	seed := f.begin(t)
-	f.customerRoots(t, seed, "")
-	f.walletLocks(t, seed)
+	// Legacy sources exist before the first configuration, at real time.
+	f.realClock(t)
 	requests := make([]string, 0, 1001)
 	for i := 0; i < 1001; i++ {
-		requests = append(requests, f.createCustomerSource(t, seed))
+		requests = append(requests, f.reserveCustomer(t))
 	}
+	f.setClock(t, time.Date(2026, 11, 10, 12, 0, 0, 123456000, time.UTC))
+	seed := f.begin(t)
 	attempts := pbCommandSupplierSources(t, f, seed, requests)
 	pbTxMust(t, "commit exactly 1001 complete unresolved sources", seed.Commit(f.ctx))
 	pbTxAssertSupplierConserved(t, f)
@@ -68,10 +67,9 @@ func TestCommanderLimits1001RejectsThenExactly1000ImportsAllScopes(t *testing.T)
 	// Close one source of each kind through complete money/event paths. One
 	// remaining supplier is disputed with pre-configuration spent=70; import
 	// must freeze that baseline rather than charge it to a synthetic old window.
+	_, err := billing.New(f.app).Release(f.ctx, billing.ReleaseInput{TenantID: f.tenant, RequestID: requests[1000], Reason: "not_sent"})
+	pbTxMust(t, "release one genuine customer source", err)
 	finish := f.begin(t)
-	f.customerRoots(t, finish, requests[1000])
-	f.walletLocks(t, finish)
-	f.finishCustomerSource(t, finish, requests[1000], 0)
 	f.exec(t, finish, `SELECT id FROM upstream_attempts WHERE id=$1 FOR UPDATE`, attempts[1000])
 	f.exec(t, finish, `SELECT id FROM procurement_accounts WHERE id=$1 FOR NO KEY UPDATE`, f.account)
 	pbTxChangeSupplier(t, f, finish, attempts[1000], 0, 0, "released")
@@ -112,10 +110,10 @@ func TestCommanderLimits1001RejectsThenExactly1000ImportsAllScopes(t *testing.T)
 
 func TestCommanderLimitsImportDoesNotLockBusinessSources(t *testing.T) {
 	f := newPBTxFixture(t)
+	f.realClock(t)
+	request := f.reserveCustomer(t)
+	f.setClock(t, time.Date(2026, 11, 10, 12, 0, 0, 123456000, time.UTC))
 	seed := f.begin(t)
-	f.customerRoots(t, seed, "")
-	f.walletLocks(t, seed)
-	request := f.createCustomerSource(t, seed)
 	attempt := pbCommandSupplierSources(t, f, seed, []string{request})[0]
 	pbTxMust(t, "commit real legacy sources for reverse-lock check", seed.Commit(f.ctx))
 	blocker := f.begin(t)

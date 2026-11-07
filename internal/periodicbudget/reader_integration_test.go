@@ -134,6 +134,7 @@ func TestReaderPGOriginalOperationAndClockRegression(t *testing.T) {
 	readerWantCode(t, e, "forbidden")
 }
 func TestReaderPGFixedPagesCOrderAndCursorBinding(t *testing.T) {
+	pbFutureClockTraffic(t)
 	f := newPBTxFixture(t)
 	r := pbReader(t, f)
 	c := f.configure(t, "tenant", false, 100000)
@@ -180,13 +181,11 @@ func TestReaderPGFixedPagesCOrderAndCursorBinding(t *testing.T) {
 	}
 	_, e = r.WalletWindows(f.ctx, f.user, f.tenant, first.NextCursor)
 	readerWantCode(t, e, "invalid_cursor")
-	// Same DB-created_at for all allocations exercises the C-ordered UUID tie.
-	tx = f.begin(t)
-	locks := pbTxCustomerLocks(t, f, tx, "")
+	// The pinned periodic clock gives every allocation the same created_at,
+	// which exercises the C-ordered UUID tie.
 	for i := 0; i < 51; i++ {
-		f.newCustomer(t, tx, locks)
+		f.reserveCustomer(t)
 	}
-	pbTxMust(t, "commit 51 complete customer reserves", tx.Commit(f.ctx))
 	f.verifyFinance(t)
 	before = f.snapshot(t)
 	a, e := r.PlatformTenantAllocations(f.ctx, f.user, f.tenant, "")

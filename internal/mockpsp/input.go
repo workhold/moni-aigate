@@ -120,6 +120,20 @@ func mockInputControl(r ControlInput) bool {
 		case "before_command_commit_disconnect_once", "after_command_commit_drop_reply_once", "hold_checkout_before_effect", "hold_cancel_before_effect":
 			return command
 		}
+	case "refund_confirmed":
+		return command && r.Scenario == "normal"
+	case "refund_final_no_effect":
+		switch r.Scenario {
+		case "refund_limit_exceeded", "refund_policy_rejected", "capture_not_refundable":
+			return command
+		}
+	case "refund_conflict":
+		switch r.Scenario {
+		case "identity_conflict", "fact_conflict", "capture_limit_conflict":
+			return command
+		}
+	case "refund_not_seen":
+		return command && r.Scenario == "normal"
 	}
 	return false
 }

@@ -39,6 +39,7 @@ func TestAcquisitionDecisionsCoverEveryCandidate(t *testing.T) {
 		candidates[i].Endpoint.URL = "https://sensitive.invalid"
 		candidates[i].Endpoint.APIKey = "sensitive-secret"
 		candidates[i].Model = "sensitive-model"
+		candidates[i].CostQuote = testCostQuote(candidates[i].ChannelID, "sensitive-model", "", "unknown", 0, 0)
 		candidates[i].CredentialID = "sensitive-credential"
 	}
 

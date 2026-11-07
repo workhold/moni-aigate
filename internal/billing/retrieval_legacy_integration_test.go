@@ -2,30 +2,25 @@ package billing
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
-	"io/fs"
+	"encoding/json"
+	"errors"
 	"os"
-	"sort"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/moni-ai/moni-aigate/internal/operations"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
-// This is an upgrade fixture, not a way to weaken the current price guard.
-// The bad price is a committed fact on 001–017, before 018 exists; current
-// migrations and role provisioning run before any admission is exercised.
-func retrievalLegacyPriceFixture(t *testing.T, protocol string) (*fixture, ReserveInput) {
-	t.Helper()
+// This fixture contains pre-018 bad prices. It verifies their historical
+// preservation and 024 refusal, never a current reader on an old schema.
+func TestLegacyRetrievalPriceMigration(t *testing.T) {
 	raw := os.Getenv("TEST_DATABASE_URL")
 	if raw == "" {
-		t.Skip("TEST_DATABASE_URL required for isolated legacy-price upgrade test")
+		t.Skip("TEST_DATABASE_URL required for legacy-price migration test")
 	}
 	cfg, err := pgxpool.ParseConfig(raw)
 	if err != nil || cfg.ConnConfig.Host != "127.0.0.1" || cfg.ConnConfig.Port != 55439 || cfg.ConnConfig.Database != "moni_test" || cfg.ConnConfig.User != "moni_test" {
@@ -36,120 +31,59 @@ func retrievalLegacyPriceFixture(t *testing.T, protocol string) (*fixture, Reser
 	if err != nil {
 		t.Fatal(err)
 	}
-	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")[:12]
-	schema, appRole, projectorRole := "retrieval_legacy_"+suffix, "retrieval_app_"+suffix, "retrieval_proj_"+suffix
-	var owner, app *pgxpool.Pool
-	t.Cleanup(func() {
-		if app != nil {
-			app.Close()
-		}
-		if owner != nil {
-			owner.Close()
-		}
-		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if _, e := admin.Exec(cleanup, "DROP SCHEMA IF EXISTS "+pgx.Identifier{schema}.Sanitize()+" CASCADE"); e != nil {
-			t.Error("clean legacy schema:", e)
-		}
-		for _, role := range []string{appRole, projectorRole} {
-			_, _ = admin.Exec(cleanup, "DROP OWNED BY "+pgx.Identifier{role}.Sanitize())
-			if _, e := admin.Exec(cleanup, "DROP ROLE IF EXISTS "+pgx.Identifier{role}.Sanitize()); e != nil {
-				t.Error("clean legacy role:", e)
-			}
-		}
-		admin.Close()
-	})
-	for _, q := range []string{
-		"CREATE SCHEMA " + pgx.Identifier{schema}.Sanitize(),
-		"CREATE ROLE " + pgx.Identifier{appRole}.Sanitize() + " NOLOGIN NOINHERIT NOSUPERUSER",
-		"CREATE ROLE " + pgx.Identifier{projectorRole}.Sanitize() + " NOLOGIN NOINHERIT NOSUPERUSER",
-	} {
-		if _, err = admin.Exec(ctx, q); err != nil {
-			t.Fatal(err)
-		}
-	}
-	ownerCfg := cfg.Copy()
-	ownerCfg.ConnConfig.RuntimeParams["search_path"] = schema
-	ownerCfg.MaxConns = 4
-	if owner, err = pgxpool.NewWithConfig(ctx, ownerCfg); err != nil {
+	defer admin.Close()
+	schema := "retrieval_legacy_" + strings.ReplaceAll(uuid.NewString(), "-", "")[:12]
+	if _, err = admin.Exec(ctx, "CREATE SCHEMA "+pgx.Identifier{schema}.Sanitize()); err != nil {
 		t.Fatal(err)
 	}
-	applyRetrievalLegacyBaseline(t, ctx, owner)
-	f := &fixture{ctx: ctx, pool: owner, store: New(owner), tenant: uuid.NewString(), user: uuid.NewString(), key: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), admin: uuid.NewString()}
-	if _, err = owner.Exec(ctx, `INSERT INTO tenants(id,name) VALUES($1,'legacy retrieval')`, f.tenant); err != nil {
-		t.Fatal(err)
-	}
-	for _, user := range []struct{ id, role string }{{f.user, "none"}, {f.operator, "finance_operator"}, {f.approver, "finance_approver"}, {f.admin, "admin"}} {
-		if _, err = owner.Exec(ctx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'unused',$3)`, user.id, user.id+"@legacy.invalid", user.role); err != nil {
-			t.Fatal(err)
+	defer func() {
+		if _, e := admin.Exec(ctx, "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE"); e != nil {
+			t.Error(e)
 		}
-	}
-	if _, err = owner.Exec(ctx, `INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)`, f.tenant, f.user); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = owner.Exec(ctx, `INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'legacy','test',$1,ARRAY[]::text[],1000)`, f.key, f.tenant, f.user); err != nil {
-		t.Fatal(err)
-	}
-	in := retrievalBillingInput(t, f, protocol, 1, nil)
-	f.model = in.ModelID
-	if err = migrations.Apply(ctx, owner); err != nil {
-		t.Fatal("upgrade legacy price to current migrations:", err)
-	}
-	if err = migrations.Verify(ctx, owner); err != nil {
-		t.Fatal("verify actual upgraded migration checksums:", err)
-	}
-	if err = operations.ProvisionFor(ctx, owner, schema, appRole, projectorRole); err != nil {
-		t.Fatal("provision only after upgrade:", err)
-	}
-	appCfg := ownerCfg.Copy()
-	appCfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		_, e := conn.Exec(ctx, "SET ROLE "+pgx.Identifier{appRole}.Sanitize())
-		return e
-	}
-	if app, err = pgxpool.NewWithConfig(ctx, appCfg); err != nil {
-		t.Fatal(err)
-	}
-	f.pool, f.store = app, New(app)
-	f.fund(t, 1000)
-	return f, in
-}
-
-func applyRetrievalLegacyBaseline(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
-	t.Helper()
-	if _, err := pool.Exec(ctx, `CREATE TABLE schema_migrations(name TEXT PRIMARY KEY,checksum TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp())`); err != nil {
-		t.Fatal(err)
-	}
-	names, err := fs.Glob(migrations.Files, "*.sql")
+	}()
+	cfg.ConnConfig.RuntimeParams["search_path"] = schema
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	sort.Strings(names)
-	count := 0
-	for _, name := range names {
-		if name >= "018" {
-			break
-		}
-		body, e := migrations.Files.ReadFile(name)
-		if e != nil {
-			t.Fatal(e)
-		}
-		tx, e := pool.Begin(ctx)
-		if e != nil {
-			t.Fatal(e)
-		}
-		if _, e = tx.Exec(ctx, string(body)); e == nil {
-			_, e = tx.Exec(ctx, `INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)`, name, fmt.Sprintf("%x", sha256.Sum256(body)))
-		}
-		if e != nil {
-			_ = tx.Rollback(ctx)
-			t.Fatal(name, e)
-		}
-		if e = tx.Commit(ctx); e != nil {
-			t.Fatal(e)
-		}
-		count++
+	defer pool.Close()
+	if err = migrations.ApplyThrough(ctx, pool, "017_funding_vouchers.sql"); err != nil {
+		t.Fatal(err)
 	}
-	if count != 17 {
-		t.Fatal("legacy baseline must apply exactly 001–017", count)
+	actor := uuid.NewString()
+	if _, err = pool.Exec(ctx, `INSERT INTO users(id,email,password_hash) VALUES($1,$2,'unused')`, actor, actor+"@legacy.invalid"); err != nil {
+		t.Fatal(err)
+	}
+	for _, protocol := range []string{"openai_embeddings", "jina_rerank"} {
+		model, version := uuid.NewString(), uuid.NewString()
+		body, err := json.Marshal(map[string]any{"version": version, "model": "legacy-" + model, "protocol": protocol, "input_token_upper_bound": 100, "context_limit": 100, "output_limit": 0, "default_output_limit": 0, "output_limit_field": ""})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err = pool.Exec(ctx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$2,$3,$4)`, model, "legacy-"+model, body, version); err != nil {
+			t.Fatal(err)
+		}
+		if _, err = pool.Exec(ctx, `INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,1,1,clock_timestamp(),$2)`, model, actor); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err = migrations.ApplyThrough(ctx, pool, "023_wallet_sources.sql"); err != nil {
+		t.Fatal(err)
+	}
+	var model string
+	if err = pool.QueryRow(ctx, `SELECT id FROM models ORDER BY id LIMIT 1`).Scan(&model); err != nil {
+		t.Fatal(err)
+	}
+	_, err = pool.Exec(ctx, `INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,1,1,clock_timestamp(),$2)`, model, actor)
+	var pg *pgconn.PgError
+	if !errors.As(err, &pg) || pg.Message != "input-only price requires zero output rate" {
+		t.Fatal("018 accepted a new bad price", err)
+	}
+	if err = migrations.Apply(ctx, pool); err == nil || !strings.Contains(err.Error(), "refuses existing models history") {
+		t.Fatal("024 converted legacy retrieval data", err)
+	}
+	var prices, installed int
+	if err = pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM price_versions WHERE output_rate=1),(SELECT count(*) FROM schema_migrations WHERE name='024_unified_text_metering.sql')`).Scan(&prices, &installed); err != nil || prices != 2 || installed != 0 {
+		t.Fatal("failed migration changed historical data", prices, installed, err)
 	}
 }

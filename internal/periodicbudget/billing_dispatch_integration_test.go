@@ -9,7 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	budget "github.com/moni-ai/moni-aigate/internal/periodicbudget"
-	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 type pbBillDispatchFixture struct {
@@ -18,7 +19,7 @@ type pbBillDispatchFixture struct {
 	commander                          *budget.Commander
 	now, sourceAt                      time.Time
 	channel, version, credential, cost string
-	quote                              routing.CostQuote
+	quote                              routecost.Quote
 	revisions, controls                map[string]string
 }
 
@@ -39,11 +40,16 @@ func pbBillDispatchNew(t *testing.T) *pbBillDispatchFixture {
 	f.exec(t, tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused-fixture')`, d.credential, d.channel)
 	f.exec(t, tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, d.version, d.channel, d.credential)
 	f.exec(t, tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'dispatch',1,10)`, d.version, d.channel, d.credential)
-	f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,$2,'upstream',2000000,2000000,'contract',$3)`, d.cost, d.channel, d.now.AddDate(0, 0, -3))
+	rate := int64(2000000)
+	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
+		ID: d.cost, ChannelID: d.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
+		Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: d.now.AddDate(0, 0, -3),
+	})
 	f.exec(t, tx, `INSERT INTO credential_procurement_bindings(id,credential_id,channel_id,account_id,operation_id) VALUES($1,$2,$3,$4,$5)`, uuid.NewString(), d.credential, d.channel, f.account, uuid.NewString())
 	pbTxMust(t, "commit APP dispatch catalog and managed quote", tx.Commit(f.ctx))
-	rate := int64(2000000)
-	d.quote = routing.CostQuote{VersionID: d.cost, InputRate: &rate, OutputRate: &rate, Basis: "contract"}
+	var err error
+	d.quote, err = meterquote.Select(f.ctx, f.app, f.model, d.channel, "upstream")
+	pbTxMust(t, "read dispatch original vector cost", err)
 	f.setClock(t, d.now.AddDate(0, 0, -2))
 	for _, scope := range []string{"tenant", "key", "procurement"} {
 		d.cap(t, scope, "1000")
@@ -156,7 +162,7 @@ func (d *pbBillDispatchFixture) finishBelowTightCaps(t *testing.T, r billing.Res
 		d.cap(t, scope, "0")
 	}
 	_, err := d.store.RecordFinalization(f.ctx, billing.FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID,
-		Source: "periodic-dispatch-fixture", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 30, OutputTokens: 5, TotalTokens: 35},
+		Source: "adapter", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 30, OutputTokens: 5, TotalTokens: 35},
 		ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true, FinishReason: "stop"})
 	pbTxMust(t, "favorable supplier evidence despite all caps tightened to zero", err)
 	s, err := d.store.Settle(f.ctx, billing.SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
@@ -292,7 +298,11 @@ func TestPBBillingDispatchFinalAccountWaitRechecksPeriodExpiryAndQuote(t *testin
 			} else if boundary == "scheduled_cost" {
 				publish := d.f.begin(t)
 				d.f.exec(t, publish, `SELECT id FROM channels WHERE id=$1 FOR UPDATE`, d.channel)
-				d.f.exec(t, publish, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,$2,'upstream',3000000,3000000,'contract',$3)`, uuid.NewString(), d.channel, d.now.Add(time.Minute))
+				rate := int64(3000000)
+				meterquote.PublishCost(t, d.f.ctx, publish, meterquote.CostPrice{
+					ChannelID: d.channel, UpstreamModel: "upstream", ModelID: d.f.model, Actor: d.f.user,
+					Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: d.now.Add(time.Minute),
+				})
 				pbTxMust(t, "APP publish scheduled quote before dispatch owns its channel", publish.Commit(d.f.ctx))
 				finalAt, want = d.now.Add(2*time.Minute), "cost_quote_stale"
 			}

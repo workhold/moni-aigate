@@ -48,7 +48,11 @@ func (r *Repository) Control(parent context.Context, in CanonicalControl) (Contr
 		replay = false
 		var raw, parameters []byte
 		var digest string
-		err := tx.QueryRow(ctx, `SELECT canonical_parameters,parameter_digest,result_body FROM mock_controls WHERE operation_id=$1`, in.request.OperationID).Scan(&parameters, &digest, &raw)
+		receiptTable := "mock_controls"
+		if refundControlAction(in.request.Action) {
+			receiptTable = "mock_refund_controls"
+		}
+		err := tx.QueryRow(ctx, `SELECT canonical_parameters,parameter_digest,result_body FROM `+receiptTable+` WHERE operation_id=$1`, in.request.OperationID).Scan(&parameters, &digest, &raw)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
 		}
@@ -99,6 +103,8 @@ func (r *Repository) Control(parent context.Context, in CanonicalControl) (Contr
 			reply, err = r.releaseTx(ctx, tx, in, ids)
 		case "arm_fault":
 			reply, err = r.armFaultTx(ctx, tx, in)
+		case "refund_confirmed", "refund_final_no_effect", "refund_conflict", "refund_not_seen":
+			reply, err = r.controlRefundTx(ctx, tx, in, ids)
 		default:
 			return fail("invalid_request")
 		}

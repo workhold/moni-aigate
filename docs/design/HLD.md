@@ -628,6 +628,18 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 ## 028-U共同纯域与生产替换边界
 
+2026-11-05完整候选报价在线续片已将[routecost](../../internal/routecost/quote.go)按[存储4.2.2](../../specs/028-unified-metering-media/u-storage-contract.md)接入catalog/routing/普通billing：不可变原schema/default/channel/upstream/version/basis与supplier Rates、同schema精确有理cap、规范原件/摘要与完整相等性。删除routing.CostQuote/CostScore及内部两价cap；最高priority层内共用CompareExactCost，采购初筛共用ReservationAmount。原attempt/采购account与PB等待/派发复验一起切换，派发复用原最后锁后DB时刻，坏原件不降级成unknown，不变更原客户价/U或未就绪门禁。普通Store不再有prospective运行分支，显式ProspectiveStore独立保留原冻结13参输入，既不接受向量也不提升当前资金方法；历史研究SQL/pins不升级，依赖旧current运行时的历史组合只编译、未恢复业务oracle。6a–6d 已继续切换发布operation、读端、独立金额/结构guard、route complete 和非零route边界，并在55439完成catalog/billing/server/operations/migrations回归；受限SET ROLE APP六协议链、默认/组价组合、退款来源和过期恢复不重生成仍是局部验收，不等同于完整六文本商业出口、浏览器或生产部署验收。不新增资金事实、报价身份、金额算法或fallback，U生产项仍未勾。
+
 [共同域合同](../../specs/028-unified-metering-media/u-domain-contract.md)冻结并实施`inference`：opaque Profile/BoundPlan/QuoteSnapshot/Observation/FinalQuantities，provider独占六文本parser，底层数量/费率/数学只有metering一套，两包共用strictjson。文本stream选择json/events；retrieval明确0输出价/界/量。known/unknown报价区分缺版本与显式unknown原版本，unknown不生成零金额。Observation分侧确认，人工客户核对绝不据此确认供应商成本。
 
-当前新增为纯包，尚无serve资金调用边或新正式迁移；[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)和[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)是下一次完整替换的实施输入。U当前发布仍每模型唯一capability，纯算法候选max/收紧不代表已发布异构路由。026保留收入一次/全部attempt成本和opening不计销售的口径，协议/执行种类/schema/variant将从原请求快照扩展，JSON/CSV/UI同步。架构、信任边界与未验项见[细图](../architecture/unified-metering.md)；准确阶段出口见[任务](../../specs/028-unified-metering-media/tasks.md)。
+2026-11-05采购报价域隔离续片：发布显式指定schema/digest/default；route冻结唯一profile，候选与请求/attempt的报价读取沿原schema/variant，不以其他schema的最新价补缺或改价。跨channel/upstream/schema快照（包括unknown与无计划）由DB独立拒绝。资金/结算与权限主干未新增，完整向量DTO、发布operation/指纹及商业出口仍待收口。
+
+2026-11-05实际金额续片：结算、attempt成本与采购实际消费直接使用原完整Rates和对应侧finalization Quantities，不经每百万两价反算；financialRequest删除两价。数值原件错绑定/非规范/摘要错失败回滚，计划未就绪沿原版本但不补快照；零价、未知成本及人工核对仅客户侧的边界不变。未新增资金事实、角色或结算器，采购准入与发布完整向量合同仍待实施。
+
+2026-11-05客户预占续片：价格组与当前唯一capability/schema/default完整限定选价，同语句取得完整Schema/Rates及新DB时刻，坏原件拒绝而非回落。Selection与Reservation删除两价镜像，预占直接调用ReservationAmount，金额只做一次ceil；原Key/PB/来源锁序、钱包等待前冻价、全部等待后重验期限及失败原子性保持。新增受限APP预占限定专项不替代六文本完整商业链，采购准入DTO与发布operation/向量指纹等后续项仍未收口。
+
+2026-11-05采购U续片：受管采购数值沿原attempt supplier界和同域原成本完整率调用ReservationAmount，DB独立核U等于原向量单次ceil；原锁后报价复验、客户资金隔离与无计划快照政策不变。采购路由/预期报价仍未去标量，商业出口不得勾选。
+
+2026-11-05采购列表续片：先冻结存储合同7.2，管理HTTP与TS/UI同步只读原attempt供应商界向量/原profile/schema/default，不再返回两界标量，修复024旧列503。缺原件整页失败，保留账户/游标及平台财务权限，不回填未就绪快照、不重算采购金额。只读meter函数沿现有APP权限闭包，PUBLIC/投影/支付worker不获权；原资金时序、来源与报表金额不变。局部受限APP验证不等于完整六文本或浏览器验收。
+
+候选024已部分接入当前文本报价/预占/结算：请求与尝试保存共同计划、原报价和纯核快照，观察采用inference canonical，计划未就绪时相关canonical/digest同空。6c 已增加客户R、结算金额、capability完整性、route complete、route/binding出生及非零route_revision检查；6d 已有受限APP六协议局部链和HTTP读端证据。[存储合同](../../specs/028-unified-metering-media/u-storage-contract.md)与[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)仍约束未完成的九组完整guard与商业出口矩阵。U仍每模型唯一capability；026元数据已从原请求快照接线，金额口径保持唯一收入/全部attempt成本。完整商业链及后续媒体未验收，出口见[阶段任务](../../specs/028-unified-metering-media/tasks.md)。

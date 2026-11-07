@@ -10,7 +10,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
+	"github.com/moni-ai/moni-aigate/internal/procurementexecution"
 	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/frozenattempt"
 )
 
 // These cases exercise the complete actual-LOGIN root, rather than only the
@@ -223,7 +225,7 @@ func TestPostgresA2AttemptReplayChecksMatchOriginalErrors(t *testing.T) {
 				call.credential = original.CredentialID
 			}
 			before := f.snapshot(t)
-			_, oldErr := billing.New(f.owner).RecordAttempt(f.ctx, original)
+			_, oldErr := frozenattempt.Reject(f.ctx, billing.New(f.owner), frozenattempt.Input{TenantID: original.TenantID, RequestID: original.RequestID, ChannelID: original.ChannelID, ChannelVersionID: original.ChannelVersionID, CredentialID: original.CredentialID, UpstreamModel: original.UpstreamModel, Sequence: original.Sequence, RouteDecisions: original.RouteDecisions})
 			var business *billing.Error
 			if !errors.As(oldErr, &business) {
 				t.Fatalf("original error oracle reached an unexpected path: %v", oldErr)
@@ -276,7 +278,7 @@ func TestPostgresA2AttemptManagedQuoteRejectionsAndZeroUpper(t *testing.T) {
 			r := f.reserve(t)
 			in := abRuleBase(f, r.RequestID)
 			in.model = tc.model
-			quote := &routing.CostQuote{VersionID: f.cost, Basis: "contract", InputRate: abRuleRate(2000000), OutputRate: abRuleRate(2000000)}
+			quote := &procurementexecution.CostQuote{VersionID: f.cost, Basis: "contract", InputRate: abRuleRate(2000000), OutputRate: abRuleRate(2000000)}
 			if tc.noExpected {
 				in.hasExpected, in.expectedVersion, in.expectedInput, in.expectedOutput, in.expectedBasis = false, nil, nil, nil, nil
 				quote = nil
@@ -286,7 +288,7 @@ func TestPostgresA2AttemptManagedQuoteRejectionsAndZeroUpper(t *testing.T) {
 				quote.VersionID, quote.Basis = string([]byte{0xff, 0}), string([]byte{0xfe, 0})
 			}
 			before := f.snapshot(t)
-			_, oldErr := billing.New(f.owner).RecordAttempt(f.ctx, billing.AttemptInput{TenantID: f.tenant, RequestID: r.RequestID, ChannelID: f.channel, ChannelVersionID: f.version, CredentialID: f.credential, UpstreamModel: tc.model, Sequence: 1, CostQuote: quote})
+			_, oldErr := frozenattempt.Reject(f.ctx, billing.New(f.owner), frozenattempt.Input{TenantID: f.tenant, RequestID: r.RequestID, ChannelID: f.channel, ChannelVersionID: f.version, CredentialID: f.credential, UpstreamModel: tc.model, Sequence: 1, CostQuote: quote})
 			var business *billing.Error
 			if !errors.As(oldErr, &business) {
 				t.Fatalf("original quote rejection oracle reached unexpected path: %v", oldErr)

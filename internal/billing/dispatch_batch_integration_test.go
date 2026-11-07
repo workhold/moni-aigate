@@ -260,10 +260,11 @@ func TestPostgresAttemptReadBatchKeepsMissingCostUnknown(t *testing.T) {
 		t.Fatal("missing cost prevented an attempt or invented a cost", a, err)
 	}
 	var id, amount *string
+	var rates, ratesDigest []byte
 	var input, output *int64
 	var basis, status string
-	err = f.pool.QueryRow(f.ctx, "SELECT cost_version_id,cost_input_rate,cost_output_rate,cost_basis,cost_status,cost_amount::text FROM upstream_attempts WHERE id=$1", a.ID).Scan(&id, &input, &output, &basis, &status, &amount)
-	if err != nil || id != nil || input != nil || output != nil || amount != nil || basis != "unknown" || status != "unknown" {
+	err = f.pool.QueryRow(f.ctx, `SELECT s.cost_version_id,s.supplier_rates_canonical,s.supplier_rates_digest,s.cost_basis,a.cost_status,a.cost_amount::text FROM upstream_attempts a JOIN attempt_meter_snapshots s ON s.attempt_id=a.id WHERE a.id=$1`, a.ID).Scan(&id, &rates, &ratesDigest, &basis, &status, &amount)
+	if err != nil || id != nil || rates != nil || ratesDigest != nil || amount != nil || basis != "unknown" || status != "unknown" {
 		t.Fatal("missing cost was not stored as NULL/unknown", id, input, output, basis, status, amount, err)
 	}
 	if err = f.store.PrepareDispatch(f.ctx, DispatchInput{TenantID: f.tenant, AttemptID: a.ID}); err != nil {
@@ -277,19 +278,7 @@ func TestPostgresAttemptReadBatchEarlyRefusalsDrain(t *testing.T) {
 		t.Run(boundary, func(t *testing.T) {
 			f := integration(t)
 			dispatchBatchSingleConnectionStore(t, f)
-			policy := uuid.NewString()
-			for _, q := range []struct {
-				sql  string
-				args []any
-			}{
-				{"INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,1)", []any{policy, f.model}},
-				{"INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", []any{policy, f.channel, f.version}},
-				{"UPDATE models SET active_revision=1 WHERE id=$1", []any{f.model}},
-			} {
-				if _, err := f.pool.Exec(f.ctx, q.sql, q.args...); err != nil {
-					t.Fatal(err)
-				}
-			}
+			publishFixtureRoute(t, f, 1, "upstream")
 			reserve := f.input()
 			reserve.RouteRevision = 1
 			r, err := f.store.Reserve(f.ctx, reserve)

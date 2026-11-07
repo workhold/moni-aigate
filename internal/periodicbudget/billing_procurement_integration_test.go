@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
-	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 type pbBillProcurementChannel struct{ channel, version, credential string }
@@ -23,8 +23,11 @@ func pbBillProcurementCatalog(t *testing.T, f *pbTxFixture) pbBillProcurementCha
 	f.exec(t, tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused-local-fixture')`, g.credential, g.channel)
 	f.exec(t, tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, g.version, g.channel, g.credential)
 	f.exec(t, tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'periodic-fixture',1,10)`, g.version, g.channel, g.credential)
-	f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis,effective_at)
- VALUES($1,$2,'upstream',2000000,2000000,'contract',clock_timestamp()-interval '7 days')`, uuid.NewString(), g.channel)
+	rate := int64(2000000)
+	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
+		ChannelID: g.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
+		Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: f.catalogEffectiveAt(t, tx, "7 days"),
+	})
 	f.exec(t, tx, `INSERT INTO credential_procurement_bindings(id,credential_id,channel_id,account_id,operation_id) VALUES($1,$2,$3,$4,$5)`, uuid.NewString(), g.credential, g.channel, f.account, uuid.NewString())
 	pbTxMust(t, "commit actual APP managed channel and historical-effective quote", tx.Commit(f.ctx))
 	return g
@@ -64,10 +67,8 @@ func pbBillProcurementReserve(t *testing.T, f *pbTxFixture, s *billing.Store) bi
 
 func pbBillProcurementAttemptInput(t *testing.T, f *pbTxFixture, r billing.Reservation, g pbBillProcurementChannel, sequence int) billing.AttemptInput {
 	t.Helper()
-	var quote routing.CostQuote
-	pbTxMust(t, "read current actual procurement quote", f.app.QueryRow(f.ctx, `WITH at AS MATERIALIZED (SELECT clock_timestamp() AS stamp)
- SELECT id,input_rate,output_rate,basis FROM cost_versions,at WHERE channel_id=$1 AND upstream_model='upstream' AND effective_at<=at.stamp
- ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1`, g.channel).Scan(&quote.VersionID, &quote.InputRate, &quote.OutputRate, &quote.Basis))
+	quote, err := meterquote.Select(f.ctx, f.app, f.model, g.channel, "upstream")
+	pbTxMust(t, "read current actual vector quote", err)
 	return billing.AttemptInput{TenantID: f.tenant, RequestID: r.RequestID, ChannelID: g.channel, ChannelVersionID: g.version, CredentialID: g.credential,
 		UpstreamModel: "upstream", Sequence: sequence, CostQuote: &quote}
 }
@@ -81,7 +82,7 @@ func pbBillProcurementAttempt(t *testing.T, f *pbTxFixture, s *billing.Store, r 
 
 func pbBillProcurementFinal(r billing.Reservation, a billing.Attempt, usage billing.Usage, reason string) billing.FinalizationInput {
 	in := billing.FinalizationInput{ID: uuid.NewString(), TenantID: r.TenantID, RequestID: r.RequestID, AttemptID: a.ID,
-		Source: "periodic-billing-procurement", SourceEventID: uuid.NewString(), Usage: usage,
+		Source: "adapter", SourceEventID: uuid.NewString(), Usage: usage,
 		ProtocolOutcome: "completed", TransportEndReason: reason, DeliveryStage: "content", ContentWritten: true}
 	if reason == "not_sent" || reason == "rejected_no_consumption" {
 		in.ProtocolOutcome, in.DeliveryStage, in.ContentWritten = "failed", "none", false

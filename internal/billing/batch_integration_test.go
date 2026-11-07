@@ -86,7 +86,7 @@ func TestPostgresAuthorizationParentBatchSeesCommittedRevocation(t *testing.T) {
 					exec("UPDATE models SET enabled=false WHERE id=$1", f.model)
 				case "profile_block":
 					exec("SELECT id FROM models WHERE id=$1 FOR UPDATE", f.model)
-					exec("INSERT INTO billing_profile_blocks(model_id,profile_version,reason,request_id) VALUES($1,'v1','test',$2)", f.model, r.RequestID)
+					exec("INSERT INTO billing_profile_blocks(model_id,profile_version,reason,request_id) VALUES($1,$2,'test',$3)", f.model, fixtureProfileVersion, r.RequestID)
 					want = "profile_blocked"
 				}
 				ctx, cancel := context.WithTimeout(f.ctx, 5*time.Second)
@@ -203,7 +203,7 @@ func TestPostgresAttemptReturningAndDispatchBatchRollback(t *testing.T) {
 	}
 	in.UpstreamModel = "other-upstream"
 	_, err = f.store.RecordAttempt(f.ctx, in)
-	assertCode(t, err, "idempotency_conflict")
+	assertCode(t, err, "unpublished_binding")
 	if _, err = f.pool.Exec(f.ctx, `CREATE FUNCTION fail_dispatch() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'dispatch batch crash'; END$$;
  CREATE TRIGGER injected BEFORE UPDATE ON request_records FOR EACH ROW EXECUTE FUNCTION fail_dispatch()`); err != nil {
 		t.Fatal(err)

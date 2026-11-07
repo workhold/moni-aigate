@@ -10,12 +10,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/moni-ai/moni-aigate/internal/provider"
+	"github.com/moni-ai/moni-aigate/internal/metering"
 )
 
 type pricingCommand struct {
 	id, kind, actor, scope, target, tenant string
 	safe                                   map[string]any
+	resolveSafe                            func(context.Context, pgx.Tx) (map[string]any, error)
+	replayCheck                            func(PricingOperationReceipt) error
 	prepare                                func(context.Context, pgx.Tx) (pricingWrite, error)
 }
 type pricingWrite struct {
@@ -27,7 +29,7 @@ type pricingWrite struct {
 
 const pricingOperationSQL = `SELECT operation_id,kind,scope,actor,target,input_fingerprint,resource_id,revision::text,pricing_time(created_at),result_schema,result_snapshot FROM pricing_operations WHERE operation_id=$1`
 
-func scanPricingOperation(row pgx.Row) (PricingOperationReceipt, error) {
+func scanPricingOperation(ctx context.Context, tx pgx.Tx, row pgx.Row) (PricingOperationReceipt, error) {
 	var r PricingOperationReceipt
 	var schema int
 	var raw []byte
@@ -35,10 +37,21 @@ func scanPricingOperation(row pgx.Row) (PricingOperationReceipt, error) {
 	if e != nil {
 		return r, e
 	}
-	if schema != 1 || !pricingID(r.Operation.OperationID) || !pricingID(r.Operation.Actor) || !pricingID(r.Operation.ResourceID) || !pricingWireTime(r.Operation.CreatedAt) || len(r.Operation.InputFingerprint) != 64 || (r.Operation.Kind == "group_price.publish" && r.Operation.Revision != nil) || (r.Operation.Kind != "group_price.publish" && (r.Operation.Revision == nil || !pricingDecimal(*r.Operation.Revision, true))) {
+	publish := r.Operation.Kind == "group_price.publish" || r.Operation.Kind == "default_price.publish" || r.Operation.Kind == "cost_price.publish"
+	if schema != 1 || !pricingID(r.Operation.OperationID) || !pricingID(r.Operation.Actor) || !pricingID(r.Operation.ResourceID) || !pricingWireTime(r.Operation.CreatedAt) || !pricingDigest(r.Operation.InputFingerprint) || publish != (r.Operation.Revision == nil) || !publish && !pricingDecimal(*r.Operation.Revision, true) {
 		return r, pricingFail("pricing_invariant")
 	}
 	r.Result, e = pricingDecodeResult(r.Operation.Kind, raw)
+	if e == nil {
+		switch v := r.Result.(type) {
+		case *GroupPriceView:
+			e = validatePublishedRates(ctx, tx, v.SchemaID, v.SchemaDigest, metering.Retail, &v.Rates)
+		case *DefaultPriceView:
+			e = validatePublishedRates(ctx, tx, v.SchemaID, v.SchemaDigest, metering.Retail, &v.Rates)
+		case *CostPriceView:
+			e = validatePublishedRates(ctx, tx, v.SchemaID, v.SchemaDigest, metering.Supplier, &v.Rates)
+		}
+	}
 	return r, e
 }
 func pricingAdmin(ctx context.Context, tx pgx.Tx, actor string) error {
@@ -68,6 +81,9 @@ func pricingDBError(e error) error {
 	var pg *pgconn.PgError
 	if errors.As(e, &pg) {
 		if pg.Code == "23505" && pg.ConstraintName == "price_versions_domain_effective_key" {
+			return pricingFail("price_effective_conflict")
+		}
+		if pg.Code == "23505" && pg.ConstraintName == "cost_version_effective_instant" {
 			return pricingFail("price_effective_conflict")
 		}
 		if pg.Code == "55P03" || pg.Code == "57014" || pg.Code == "40P01" || pg.Code == "40001" {
@@ -107,10 +123,20 @@ func (s *Store) pricingCommandOnce(ctx context.Context, c pricingCommand) (Prici
 	if _, e = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended('pricing-op:'||$1,0))`, c.id); e != nil {
 		return out, false, e
 	}
-	old, e := scanPricingOperation(tx.QueryRow(ctx, pricingOperationSQL, c.id))
+	old, e := scanPricingOperation(ctx, tx, tx.QueryRow(ctx, pricingOperationSQL, c.id))
 	if e == nil {
 		if e = pricingAdmin(ctx, tx, c.actor); e != nil {
 			return out, false, e
+		}
+		if c.resolveSafe != nil {
+			if c.replayCheck != nil {
+				if e = c.replayCheck(old); e != nil {
+					return out, false, e
+				}
+			}
+			if c.safe, e = c.resolveSafe(ctx, tx); e != nil {
+				return out, false, e
+			}
 		}
 		op := old.Operation
 		if op.Kind != c.kind || op.Actor != c.actor || op.Scope != c.scope || op.Target != c.target || op.InputFingerprint != pricingFingerprint(c.kind, c.actor, c.scope, c.target, c.safe) {
@@ -142,6 +168,11 @@ func (s *Store) pricingCommandOnce(ctx context.Context, c pricingCommand) (Prici
 	if tenantMissing {
 		return out, false, pgx.ErrNoRows
 	}
+	if c.resolveSafe != nil {
+		if c.safe, e = c.resolveSafe(ctx, tx); e != nil {
+			return out, false, e
+		}
+	}
 	w, e := c.prepare(ctx, tx)
 	if e != nil {
 		return out, false, e
@@ -164,16 +195,16 @@ func (s *Store) pricingCommandOnce(ctx context.Context, c pricingCommand) (Prici
 			return out, false, e
 		}
 	}
-	out, e = scanPricingOperation(tx.QueryRow(ctx, pricingOperationSQL, c.id))
+	out, e = scanPricingOperation(ctx, tx, tx.QueryRow(ctx, pricingOperationSQL, c.id))
 	if e != nil {
 		return out, false, e
 	}
 	diff, _ := json.Marshal(map[string]any{"operation_id": c.id, "target": c.target, "after": out.Result})
-	action := map[string]string{"price_group.create": "pricing.group.create", "price_group.update": "pricing.group.update", "group_price.publish": "pricing.price.publish", "tenant_pricing.assign": "pricing.tenant.assign"}[c.kind]
+	action := map[string]string{"price_group.create": "pricing.group.create", "price_group.update": "pricing.group.update", "group_price.publish": "pricing.price.publish", "default_price.publish": "pricing.price.publish", "cost_price.publish": "pricing.cost.publish", "tenant_pricing.assign": "pricing.tenant.assign"}[c.kind]
 	if _, e = tx.Exec(ctx, `INSERT INTO audit_events(actor,tenant_scope,action,target,sanitized_diff) VALUES($1,NULLIF($2,''),$3,$4,$5)`, c.actor, c.tenant, action, c.target, diff); e != nil {
 		return out, false, e
 	}
-	out, e = scanPricingOperation(tx.QueryRow(ctx, pricingOperationSQL, c.id))
+	out, e = scanPricingOperation(ctx, tx, tx.QueryRow(ctx, pricingOperationSQL, c.id))
 	if e != nil {
 		return out, false, e
 	}
@@ -251,17 +282,43 @@ func (s *Store) UpdatePriceGroup(ctx context.Context, a PricingActor, c GroupUpd
 }
 func (s *Store) PublishGroupPrice(ctx context.Context, a PricingActor, c GroupPriceCommand) (PricingOperationResult[GroupPriceView], error) {
 	var out PricingOperationResult[GroupPriceView]
-	if !pricingID(c.GroupID) || !pricingID(c.ModelID) || c.InputRate < 0 || c.OutputRate < 0 || c.EffectiveAt.IsZero() || c.EffectiveAt.Year() < 1 || c.EffectiveAt.Year() > 9999 || c.EffectiveAt.Nanosecond()%1000 != 0 {
+	if !pricingID(c.GroupID) || !pricingID(c.ModelID) || !pricingID(c.SchemaID) || !pricingDigest(c.SchemaDigest) || c.VariantKey != "default" || c.InputRate < 0 || c.OutputRate < 0 || c.EffectiveAt.IsZero() || c.EffectiveAt.Year() < 1 || c.EffectiveAt.Year() > 9999 || c.EffectiveAt.Nanosecond()%1000 != 0 {
 		return out, pricingFail("invalid_request")
 	}
 	c.EffectiveAt = c.EffectiveAt.UTC()
-	r, replay, e := s.pricingCommand(ctx, pricingCommand{id: c.OperationID, kind: "group_price.publish", actor: a.UserID, scope: "platform", target: "/api/platform/price-groups/" + c.GroupID + "/price-versions", safe: map[string]any{"model_id": c.ModelID, "input_rate": pricingUint(c.InputRate), "output_rate": pricingUint(c.OutputRate), "effective_at": pricingStamp(c.EffectiveAt)}, prepare: func(ctx context.Context, tx pgx.Tx) (pricingWrite, error) {
-		var profileJSON []byte
-		if e := tx.QueryRow(ctx, `SELECT profile FROM models WHERE id=$1 FOR SHARE`, c.ModelID).Scan(&profileJSON); e != nil {
+	var rawRates json.RawMessage
+	var originalSchema metering.Schema
+	r, replay, e := s.pricingCommand(ctx, pricingCommand{id: c.OperationID, kind: "group_price.publish", actor: a.UserID, scope: "platform", target: "/api/platform/price-groups/" + c.GroupID + "/price-versions", replayCheck: func(old PricingOperationReceipt) error {
+		v, ok := old.Result.(*GroupPriceView)
+		if !ok || v.ModelID != c.ModelID || v.SchemaID != c.SchemaID || v.SchemaDigest != c.SchemaDigest || v.VariantKey != c.VariantKey {
+			return pricingFail("policy_operation_conflict")
+		}
+		return nil
+	}, resolveSafe: func(ctx context.Context, tx pgx.Tx) (map[string]any, error) {
+		schema, err := loadPricingSchema(ctx, tx, c.SchemaID, c.SchemaDigest)
+		if err != nil {
+			var pe *PricingError
+			if errors.Is(err, pgx.ErrNoRows) || errors.As(err, &pe) {
+				return nil, pricingFail("invalid_price")
+			}
+			return nil, err
+		}
+		rates, err := metering.LegacyTokenRates(schema, metering.Retail, c.InputRate, c.OutputRate)
+		if err != nil {
+			return nil, pricingFail("invalid_price")
+		}
+		rawRates, _ = rates.CanonicalJSON()
+		originalSchema = schema
+		return groupPriceSafe(c, rawRates), nil
+	}, prepare: func(ctx context.Context, tx pgx.Tx) (pricingWrite, error) {
+		var schemaID, digest string
+		if e := tx.QueryRow(ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id JOIN model_capability_variants v ON v.profile_version=c.id AND v.variant_key=$2 WHERE m.id=$1 FOR SHARE OF m`, c.ModelID, c.VariantKey).Scan(&schemaID, &digest); e != nil {
 			return pricingWrite{}, e
 		}
-		var profile provider.Profile
-		if json.Unmarshal(profileJSON, &profile) != nil || profile.Validate() != nil || profile.InputOnly() && c.OutputRate != 0 {
+		if schemaID != c.SchemaID || digest != c.SchemaDigest {
+			return pricingWrite{}, pricingFail("invalid_price")
+		}
+		if err := validatePriceRates(&rawRates, originalSchema, metering.Retail); err != nil {
 			return pricingWrite{}, pricingFail("invalid_price")
 		}
 		var state string
@@ -272,9 +329,9 @@ func (s *Store) PublishGroupPrice(ctx context.Context, a PricingActor, c GroupPr
 			return pricingWrite{}, pricingFail("price_group_retired")
 		}
 		id := uuid.NewString()
-		v := GroupPriceView{id, c.ModelID, c.GroupID, "CNY", pricingUint(c.InputRate), pricingUint(c.OutputRate), pricingStamp(c.EffectiveAt), pricingStamp(time.Time{})}
+		v := GroupPriceView{ID: id, ModelID: c.ModelID, PriceGroupID: c.GroupID, Currency: "CNY", SchemaID: c.SchemaID, SchemaDigest: c.SchemaDigest, VariantKey: c.VariantKey, Rates: rawRates, EffectiveAt: pricingStamp(c.EffectiveAt), CreatedAt: pricingStamp(time.Time{})}
 		return pricingWrite{resource: id, result: v, apply: func(ctx context.Context, tx pgx.Tx, at time.Time) error {
-			_, e := tx.Exec(ctx, `INSERT INTO price_versions(id,model_id,price_group_id,pricing_operation_id,input_rate,output_rate,effective_at,created_by,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, id, c.ModelID, c.GroupID, c.OperationID, c.InputRate, c.OutputRate, c.EffectiveAt, a.UserID, at)
+			_, e := tx.Exec(ctx, `SELECT meter_insert_token_price($1,$2,$3,$4,$5,$6,$7,$8,$9)`, id, c.ModelID, c.InputRate, c.OutputRate, c.EffectiveAt, a.UserID, c.GroupID, c.OperationID, at)
 			return e
 		}}, nil
 	}})

@@ -4114,3 +4114,358 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `docs/verification/unified-metering.md`
 
 </details>
+
+## 2026-11-04T13:10:35Z · 2a366dc184b8
+
+新增C1-M本地退款模拟的独立协议输入、schema资源与命令/查询仓储骨架；复核确认尚未接入沙箱schema版本/catalog、终局fact控制、签名HTTP或钱包Q/F资金效果
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1987 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `internal/mockpsp/refund_input.go`
+- added `internal/mockpsp/refund_input_test.go`
+- added `internal/mockpsp/repo_refunds.go`
+- modified `internal/mockpsp/types.go`
+- added `internal/paymentrefundschema/c1m.sql`
+- added `internal/paymentrefundschema/schema.go`
+- added `internal/paymentrefundschema/schema_test.go`
+- added `specs/022-self-service-payments/c1-m-mock-contract.md`
+- added `specs/022-self-service-payments/c1-m-mock-schema.sql`
+
+</details>
+
+## 2026-11-04T13:19:33Z · 3b1f4393cc60
+
+修正C1-M候选SQL：parameter_digest与fact_digest按C1-P domain-framing摘要校验，避免合法协议摘要与普通SHA-256 CHECK不一致；仍未接入运行schema/catalog或资金入口
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 1987 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/paymentrefundschema/c1m.sql`
+- modified `specs/022-self-service-payments/c1-m-mock-schema.sql`
+
+</details>
+
+## 2026-11-07T05:13:50Z · e0fe954dad51
+
+028-U阶段1 6c–6e当前域收口：统一RatesWire读写、非零路由与绑定证据、能力/界/结算守卫、现行受限APP验证；完整商业链、供应商、部署和浏览器验收仍未完成
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2022 个源文件；本次 186 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/alerts/source_integration_test.go`
+- modified `internal/billing/batch_integration_test.go`
+- modified `internal/billing/bounds_integration_test.go`
+- added `internal/billing/cost_domain_integration_test.go`
+- modified `internal/billing/cost_policy.go`
+- modified `internal/billing/cost_policy_integration_test.go`
+- modified `internal/billing/credential_pool_integration_test.go`
+- modified `internal/billing/dispatch_batch_integration_test.go`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/billing/gemini_integration_test.go`
+- modified `internal/billing/key_configuration_integration_test.go`
+- modified `internal/billing/lot_runtime_integration_test.go`
+- added `internal/billing/meter_snapshot_integration_test.go`
+- modified `internal/billing/process_failure_integration_test.go`
+- modified `internal/billing/procurement.go`
+- modified `internal/billing/procurement_attempt_rules_postgres_test.go`
+- modified `internal/billing/procurement_integration_test.go`
+- modified `internal/billing/prospective.go`
+- modified `internal/billing/prospective_test.go`
+- modified `internal/billing/recovery.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/retail_price_integration_test.go`
+- modified `internal/billing/retrieval_integration_test.go`
+- modified `internal/billing/retrieval_legacy_integration_test.go`
+- modified `internal/billing/route_decisions.go`
+- modified `internal/billing/settle.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/tenant_pricing_concurrency_integration_test.go`
+- modified `internal/billing/tenant_pricing_integration_test.go`
+- added `internal/billing/test_cost_helpers_test.go`
+- modified `internal/billing/types.go`
+- added `internal/billing/vector_actual.go`
+- added `internal/billing/vector_actual_integration_test.go`
+- added `internal/billing/vector_actual_test.go`
+- added `internal/billing/vector_procurement.go`
+- added `internal/billing/vector_procurement_integration_test.go`
+- added `internal/billing/vector_procurement_test.go`
+- added `internal/billing/vector_rates.go`
+- added `internal/billing/vector_reserve_integration_test.go`
+- modified `internal/billing/wallet_sources_application_test.go`
+- modified `internal/billing/wallet_sources_read_test.go`
+- added `internal/catalog/cost_domain_integration_test.go`
+- modified `internal/catalog/cost_policy.go`
+- modified `internal/catalog/cost_policy_integration_test.go`
+- modified `internal/catalog/cost_policy_test.go`
+- modified `internal/catalog/credential_pool_integration_test.go`
+- added `internal/catalog/group_price_vector_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_concurrency_integration_test.go`
+- modified `internal/catalog/pricing_integration_test.go`
+- added `internal/catalog/pricing_publish.go`
+- modified `internal/catalog/pricing_queries.go`
+- modified `internal/catalog/pricing_types.go`
+- added `internal/catalog/pricing_vector.go`
+- added `internal/catalog/pricing_vector_test.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_integration_test.go`
+- modified `internal/catalog/public_catalog_legacy_integration_test.go`
+- modified `internal/catalog/public_catalog_test.go`
+- modified `internal/catalog/store.go`
+- modified `internal/identity/identity_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_prefix_business_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_runtime_procurement_integration_test.go`
+- modified `internal/operations/key_policy_integration_test.go`
+- modified `internal/operations/metadata_fixture_test.go`
+- added `internal/operations/meter_roles.go`
+- added `internal/operations/meter_roles_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/operations_integration_test.go`
+- modified `internal/operations/pricing_roles_integration_test.go`
+- modified `internal/operations/procurement_integration_test.go`
+- modified `internal/payments/processor_safety_test.go`
+- modified `internal/paymentsandboxqa/funding.go`
+- modified `internal/paymentsandboxqa/install.go`
+- modified `internal/periodicbudget/billing_dispatch_integration_test.go`
+- modified `internal/periodicbudget/billing_integration_test.go`
+- modified `internal/periodicbudget/billing_procurement_integration_test.go`
+- modified `internal/periodicbudget/commander_integration_test.go`
+- modified `internal/periodicbudget/commander_limits_test.go`
+- modified `internal/periodicbudget/reader_integration_test.go`
+- modified `internal/periodicbudget/tx_customer_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/tx_supplier_test.go`
+- modified `internal/periodicbudget/verifier_integration_test.go`
+- modified `internal/pricing/pricing.go`
+- modified `internal/pricing/pricing_integration_test.go`
+- added `internal/pricing/vector_integration_test.go`
+- modified `internal/procurement/store.go`
+- modified `internal/procurementattemptbirth/attempt_postgres_test.go`
+- modified `internal/procurementattemptbirth/attempt_rules_postgres_test.go`
+- modified `internal/procurementattemptbirth/executor_adapter_postgres_test.go`
+- modified `internal/procurementattemptbirth/observer_postgres_test.go`
+- modified `internal/procurementattemptbirth/request_compat_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_budget_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_grant_fault_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_pb_wait_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_wait_postgres_test.go`
+- modified `internal/reporting/csv.go`
+- modified `internal/reporting/read.go`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/reporting/types.go`
+- added `internal/routecost/quote.go`
+- added `internal/routecost/quote_test.go`
+- modified `internal/routing/cost.go`
+- modified `internal/routing/cost_test.go`
+- modified `internal/routing/decisions_test.go`
+- modified `internal/routing/pool_test.go`
+- modified `internal/routing/procurement.go`
+- modified `internal/routing/procurement_test.go`
+- modified `internal/routing/routing.go`
+- modified `internal/routing/routing_test.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/binding_isolation_integration_test.go`
+- modified `internal/server/catalog_handlers.go`
+- modified `internal/server/cost_routing_integration_test.go`
+- added `internal/server/cost_vector_application_integration_test.go`
+- modified `internal/server/gateway.go`
+- modified `internal/server/gateway_integration_test.go`
+- modified `internal/server/gemini_integration_test.go`
+- added `internal/server/group_price_vector_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- modified `internal/server/native_protocols_integration_test.go`
+- modified `internal/server/operating_reports.go`
+- modified `internal/server/operating_reports_integration_test.go`
+- modified `internal/server/periodic_budget_integration_test.go`
+- modified `internal/server/pricing_handlers.go`
+- modified `internal/server/pricing_integration_test.go`
+- added `internal/server/pricing_publish_http_integration_test.go`
+- modified `internal/server/probe.go`
+- modified `internal/server/probe_integration_test.go`
+- modified `internal/server/probe_pool_integration_test.go`
+- modified `internal/server/procurement_integration_test.go`
+- added `internal/server/procurement_meter_integration_test.go`
+- modified `internal/server/public_catalog_integration_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/reports.go`
+- modified `internal/server/retrieval_integration_test.go`
+- modified `internal/server/server.go`
+- added `internal/server/test_cost_helpers_test.go`
+- added `internal/testsupport/frozenattempt/attempt.go`
+- added `internal/testsupport/frozenattempt/attempt_test.go`
+- modified `internal/testsupport/funding019/verify_test.go`
+- added `internal/testsupport/meterquote/group.go`
+- added `internal/testsupport/meterquote/publish.go`
+- added `internal/testsupport/meterquote/quote.go`
+- added `migrations/024_unified_text_metering.sql`
+- added `migrations/unified_text_metering_postgres_test.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `scripts/browser-qa/model_lifecycle_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-consumer-inventory.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+- modified `web/src/components/CostEditor.vue`
+- modified `web/src/components/OperatingReport.vue`
+- modified `web/src/components/PricingWriter.vue`
+- modified `web/src/components/TenantPricing.vue`
+- modified `web/src/cost-aware-routing.ts`
+- modified `web/src/customer-pricing.ts`
+- added `web/src/metering-wire.ts`
+- modified `web/src/operating-report.ts`
+- modified `web/src/pricing.ts`
+- modified `web/src/procurement.ts`
+- modified `web/src/public-catalog.ts`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PriceGroupsView.vue`
+- modified `web/src/views/PricingView.vue`
+- modified `web/src/views/ProcurementView.vue`
+- modified `web/src/views/RequestsView.vue`
+- modified `web/tests/cost-aware-routing.test.mjs`
+- added `web/tests/metering-wire.test.mjs`
+- modified `web/tests/operating-report.test.mjs`
+- modified `web/tests/pricing.test.mjs`
+- modified `web/tests/procurement.test.mjs`
+- modified `web/tests/public-catalog-state.test.mjs`
+- modified `web/tests/public-catalog.test.mjs`
+
+</details>
+
+## 2026-11-07T06:55:47Z · 561f97f5a253
+
+028-U route complete 结构守卫：空 route、错误 channel/version 与无有效 credential 的 binding 在提交时拒绝；route/binding/cap/active pointer 原子出生，55439 migrations/catalog/billing/server/operations 回归通过
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2022 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/store_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
+
+## 2026-11-07T07:05:37Z · e5f108ec127e
+
+补充 route complete 错 channel/version 负控后的语义复核：空 route 与 supplier contract 脱离的 binding 均在 COMMIT 拒绝；当前PG专项复跑通过
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2022 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `migrations/unified_text_metering_postgres_test.go`
+
+</details>
+
+## 2026-11-07T10:42:46Z · a287b583ff79
+
+028-U受限APP默认/组价六协议组合与退款来源专项验证，仍保留完整guard和商业出口未验收边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2022 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/server/cost_vector_application_integration_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-07T14:32:45Z · 0c5250705416
+
+028-U受限APP默认/组价、退款来源和恢复不重生成续片，保持完整guard与商业出口未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2022 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/server/cost_vector_application_integration_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-07T15:00:08Z · 5e24c625cae9
+
+新增001–028整体交付盘点，修正026元数据消费者清单过期描述；确认主链合理并划分互斥并行写集合
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2023 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/overall-delivery-inventory.md`
+- modified `specs/028-unified-metering-media/u-consumer-inventory.md`
+
+</details>
+
+## 2026-11-07T15:57:21Z · 42cf10fd1e97
+
+完成001–028整体盘点，补充028-U角色/纯域/六协议商业反例证据并同步未完成边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2024 个源文件；本次 9 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/metering/metering_test.go`
+- modified `internal/operations/meter_roles_test.go`
+- added `internal/server/parallel_commercial_gap_test.go`
+- modified `internal/strictjson/parse_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `web/tests/operating-report.test.mjs`
+
+</details>
+
+## 2026-11-07T18:11:34Z · 2e3492334f47
+
+核对两个工作目录并汇合028拒迁负控、021邮件故障窗口、022-C1-M隔离退款模拟证据
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2029 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- added `docs/verification/payment-refund-c1-m.md`
+- modified `docs/verification/self-service-identity.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/dispatch_batch_integration_test.go`
+- added `internal/mailworker/worker_process_integration_test.go`
+- modified `internal/mockpsp/input.go`
+- added `internal/mockpsp/refund_controls.go`
+- added `internal/mockpsp/refund_integration_test.go`
+- modified `internal/mockpsp/repo_controls.go`
+- modified `internal/mockpsp/repo_refunds.go`
+- modified `migrations/024_unified_text_metering.sql`
+- added `migrations/unified_text_metering_rejection_postgres_test.go`
+- modified `specs/022-self-service-payments/c1-m-mock-schema.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

@@ -283,7 +283,7 @@ func (s *Store) RecordCostCorrection(ctx context.Context, in CostCorrectionInput
 			}
 			return nil
 		}
-		if _, err = tx.Exec(ctx, `UPDATE upstream_attempts SET cost_amount=$2,cost_status=$3 WHERE id=$1`, in.AttemptID, int64(in.Amount), in.Basis); err != nil {
+		if _, err = tx.Exec(ctx, `UPDATE upstream_attempts SET cost_amount=$2,cost_status=$3,latest_cost_finalization_id=NULL,latest_cost_correction_id=$4 WHERE id=$1`, in.AttemptID, int64(in.Amount), in.Basis, id); err != nil {
 			return err
 		}
 		if err = audit(ctx, tx, in.TenantID, costActor(in.ActorID), "cost.corrected", id, request, map[string]any{"amount": in.Amount, "basis": in.Basis}); err != nil {

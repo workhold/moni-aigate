@@ -24,6 +24,27 @@ type prospectiveAttemptStub struct {
 	err        error
 }
 
+func TestProspectiveStoreCannotAcceptCurrentAttemptOrPromoteFundsMethods(t *testing.T) {
+	type currentRecorder interface {
+		RecordAttempt(context.Context, AttemptInput) (Attempt, error)
+	}
+	type frozenRecorder interface {
+		RecordAttempt(context.Context, FrozenAttemptInput) (Attempt, error)
+	}
+	if _, ok := any(&ProspectiveStore{}).(currentRecorder); ok {
+		t.Fatal("frozen adapter accepted current vector input")
+	}
+	if _, ok := any(&Store{}).(frozenRecorder); ok {
+		t.Fatal("current store accepted frozen scalar input")
+	}
+	if _, ok := any(&ProspectiveStore{}).(frozenRecorder); !ok {
+		t.Fatal("frozen ABI disappeared")
+	}
+	if _, ok := reflect.TypeOf(&ProspectiveStore{}).MethodByName("Reserve"); ok {
+		t.Fatal("frozen adapter promoted current funding authority")
+	}
+}
+
 func (r *prospectiveAttemptStub) RunAttempt(_ context.Context, in procurementexecution.Invocation) (procurementexecution.AttemptReceipt, error) {
 	r.called++
 	r.invocation = in
@@ -36,12 +57,14 @@ func TestProspectiveBillingConstructionDoesNotConnect(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	if New(pool).prospective != nil {
-		t.Fatal("ordinary constructor selected candidate")
+	if _, ok := any(New(pool)).(interface {
+		RecordAttempt(context.Context, FrozenAttemptInput) (Attempt, error)
+	}); ok {
+		t.Fatal("ordinary Store accepts the frozen prototype input")
 	}
 	for _, schema := range []string{"public", `a.b"c`, "中文", strings.Repeat("a", 63)} {
 		s, err := NewProspective(pool, ProspectiveOptions{Schema: schema})
-		if err != nil || s.prospective == nil || s.prospective.schema != schema || s.pool != pool {
+		if err != nil || s.schema != schema || s.pool != pool {
 			t.Fatalf("local construction: %v", err)
 		}
 	}
@@ -60,8 +83,8 @@ func TestProspectiveBillingConstructionDoesNotConnect(t *testing.T) {
 
 func TestProspectiveBillingOriginalValidationAndByteEncoding(t *testing.T) {
 	stub := &prospectiveAttemptStub{}
-	s := &Store{prospective: &prospectiveAttempt{schema: `a.b"c`, runner: stub}}
-	in := AttemptInput{Sequence: 0, UpstreamModel: "m", RouteDecisions: make([]routing.Decision, 1001)}
+	s := &ProspectiveStore{schema: `a.b"c`, runner: stub}
+	in := FrozenAttemptInput{Sequence: 0, UpstreamModel: "m", RouteDecisions: make([]routing.Decision, 1001)}
 	_, err := s.RecordAttempt(nil, in)
 	var public *Error
 	if !errors.As(err, &public) || public.Message != "invalid attempt input" || stub.called != 0 {
@@ -78,7 +101,7 @@ func TestProspectiveBillingOriginalValidationAndByteEncoding(t *testing.T) {
 	in.UpstreamModel = "\x00" // original boundedString does not reject control bytes
 	in.RouteDecisions = []routing.Decision{{ChannelID: in.ChannelID, VersionID: in.ChannelVersionID, Priority: math.MinInt, Weight: math.MaxUint64, Reason: "selected"}}
 	negative := int64(-7)
-	in.CostQuote = &routing.CostQuote{VersionID: string([]byte{0xff, 0}), Basis: "", InputRate: &negative}
+	in.CostQuote = &procurementexecution.CostQuote{VersionID: string([]byte{0xff, 0}), Basis: "", InputRate: &negative}
 	stub.receipt = procurementexecution.AttemptReceipt{Outcome: "replay", AttemptID: "old text id", RequestID: in.RequestID, Sequence: 1, DeliveryState: "completed", CostStatus: "old cost status"}
 	got, err := s.RecordAttempt(context.Background(), in)
 	if err != nil || got.ID != "old text id" || got.CostStatus != "old cost status" || stub.called != 1 {
@@ -104,8 +127,8 @@ func TestProspectiveBillingErrorsPreserveCauseAndZeroResult(t *testing.T) {
 			cause := &pgconn.PgError{Code: state, Message: "PRIVATE_DATABASE_TEXT"}
 			classified := procurementexecution.ClassifyPP(procurementexecution.RecordAttempt, cause)
 			stub := &prospectiveAttemptStub{receipt: procurementexecution.AttemptReceipt{AttemptID: "must not escape"}, err: classified}
-			s := &Store{prospective: &prospectiveAttempt{schema: "public", runner: stub}}
-			got, err := s.RecordAttempt(context.Background(), AttemptInput{Sequence: 1, UpstreamModel: "model"})
+			s := &ProspectiveStore{schema: "public", runner: stub}
+			got, err := s.RecordAttempt(context.Background(), FrozenAttemptInput{Sequence: 1, UpstreamModel: "model"})
 			var pg *pgconn.PgError
 			if got != (Attempt{}) || !errors.As(err, &pg) || pg != cause {
 				t.Fatal("partial result or lost original cause", got, err)
@@ -131,8 +154,8 @@ func TestProspectiveBillingUnknownPrecedesReachableBusinessFailure(t *testing.T)
 	classified := procurementexecution.ClassifyPP(procurementexecution.RecordAttempt, &pgconn.PgError{Code: "PP115", Message: "private cause"})
 	chain := errors.Join(unknown, classified)
 	stub := &prospectiveAttemptStub{receipt: procurementexecution.AttemptReceipt{AttemptID: "must not escape"}, err: chain}
-	s := &Store{prospective: &prospectiveAttempt{schema: "public", runner: stub}}
-	got, err := s.RecordAttempt(context.Background(), AttemptInput{Sequence: 1, UpstreamModel: "model"})
+	s := &ProspectiveStore{schema: "public", runner: stub}
+	got, err := s.RecordAttempt(context.Background(), FrozenAttemptInput{Sequence: 1, UpstreamModel: "model"})
 	var public *Error
 	if got != (Attempt{}) || err != chain || errors.As(err, &public) {
 		t.Fatal("unknown was downgraded to reachable billing failure")

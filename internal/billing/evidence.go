@@ -10,7 +10,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
@@ -19,7 +21,7 @@ type financialRequest struct {
 	ID, TenantID, KeyID, OwnerID, ModelID, ProfileVersion, PolicyVersion, ReservationID, ReservationStatus, Status string
 	ClientIP                                                                                                       string
 	LatestFinalization                                                                                             *string
-	Amount, InputRate, OutputRate                                                                                  int64
+	Amount                                                                                                         int64
 	RequestDeadline, Deadline                                                                                      time.Time
 }
 
@@ -28,7 +30,7 @@ func lockRequest(ctx context.Context, tx pgx.Tx, tenant, id string) (financialRe
 }
 func lockRequestWithChannel(ctx context.Context, tx pgx.Tx, tenant, id, channel string) (financialRequest, error) {
 	var r financialRequest
-	err := tx.QueryRow(ctx, "SELECT id,tenant_id,key_id,owner_id,model_id,profile_version,policy_version,input_rate,output_rate,request_deadline,status,latest_finalization_id,route_revision,COALESCE(host(client_ip),'') FROM request_records WHERE tenant_id=$1 AND id=$2", tenant, id).Scan(&r.ID, &r.TenantID, &r.KeyID, &r.OwnerID, &r.ModelID, &r.ProfileVersion, &r.PolicyVersion, &r.InputRate, &r.OutputRate, &r.RequestDeadline, &r.Status, &r.LatestFinalization, &r.RouteRevision, &r.ClientIP)
+	err := tx.QueryRow(ctx, `SELECT r.id,r.tenant_id,r.key_id,r.owner_id,r.model_id,r.profile_version,r.policy_version,r.request_deadline,r.status,r.latest_finalization_id,r.route_revision,COALESCE(host(r.client_ip),'') FROM request_records r JOIN request_meter_snapshots s ON s.tenant_id=r.tenant_id AND s.request_id=r.id WHERE r.tenant_id=$1 AND r.id=$2`, tenant, id).Scan(&r.ID, &r.TenantID, &r.KeyID, &r.OwnerID, &r.ModelID, &r.ProfileVersion, &r.PolicyVersion, &r.RequestDeadline, &r.Status, &r.LatestFinalization, &r.RouteRevision, &r.ClientIP)
 	if err != nil {
 		return r, err
 	}
@@ -78,9 +80,6 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 	if err != nil {
 		return result, err
 	}
-	if s.prospective != nil {
-		return s.prospective.record(ctx, in, decisions)
-	}
 	err = s.transaction(ctx, func(tx pgx.Tx) error {
 		r, err := lockRequestWithChannel(ctx, tx, in.TenantID, in.RequestID, in.ChannelID)
 		if err != nil {
@@ -93,7 +92,7 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 		if err = checkAttemptCostQuote(ctx, tx, r, in, cost); err != nil {
 			return err
 		}
-		err = tx.QueryRow(ctx, "INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,cost_version_id,cost_input_rate,cost_output_rate,cost_basis,route_decisions) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT(request_id,sequence) DO NOTHING RETURNING id,request_id,sequence,delivery_state,cost_status", uuid.NewString(), in.TenantID, in.RequestID, in.Sequence, in.ChannelID, in.ChannelVersionID, in.CredentialID, in.UpstreamModel, cost.ID, cost.InputRate, cost.OutputRate, cost.Basis, decisions).Scan(&result.ID, &result.RequestID, &result.Sequence, &result.DeliveryState, &result.CostStatus)
+		err = tx.QueryRow(ctx, "INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,route_decisions) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(request_id,sequence) DO NOTHING RETURNING id,request_id,sequence,delivery_state,cost_status", uuid.NewString(), in.TenantID, in.RequestID, in.Sequence, in.ChannelID, in.ChannelVersionID, in.CredentialID, in.UpstreamModel, decisions).Scan(&result.ID, &result.RequestID, &result.Sequence, &result.DeliveryState, &result.CostStatus)
 		created := err == nil
 		if errors.Is(err, pgx.ErrNoRows) {
 			var channel, version, credential, model string
@@ -106,6 +105,9 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 			}
 		}
 		if err == nil && created {
+			if _, err = tx.Exec(ctx, `SELECT meter_insert_attempt_snapshot($1,$2,$3,$4,$5)`, in.TenantID, result.ID, in.RequestID, nullableCostVersion(cost), cost.Basis()); err != nil {
+				return err
+			}
 			return recordProcurementAttempt(ctx, tx, r, in, result.ID, cost)
 		}
 		return err
@@ -113,33 +115,31 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 	return result, err
 }
 
-type attemptCost struct {
-	ID                    *string
-	InputRate, OutputRate *int64
-	Basis                 string
+func nullableCostVersion(q routecost.Quote) any {
+	if q.VersionID() == "" {
+		return nil
+	}
+	return q.VersionID()
 }
 
 // The caller already holds the request's original parent/reservation locks and
 // has refreshed its evidence. Keep each read a separate ordered statement so
 // isolation and retry evidence use post-lock READ COMMITTED snapshots. Only
 // reads are queued: no attempt is inserted until all domain checks succeed.
-func readAttemptChecks(ctx context.Context, tx pgx.Tx, r financialRequest, in AttemptInput) (cost attemptCost, err error) {
-	cost.Basis = "unknown"
+func readAttemptChecks(ctx context.Context, tx pgx.Tx, r financialRequest, in AttemptInput) (cost routecost.Quote, err error) {
 	batch := &pgx.Batch{}
 	// lockRequestWithChannel already owns this Key's row lock. A new statement
 	// sees policy changes committed before that lock without applying the check
 	// to settlement/release paths that share the request-lock helper.
 	batch.Queue("SELECT k.allowed_client_cidrs,k.scopes,k.allowed_regions,k.revoked_at IS NOT NULL,k.expires_at,v.region,clock_timestamp() FROM api_keys k LEFT JOIN channel_versions v ON v.id=$3 WHERE k.tenant_id=$1 AND k.id=$2", r.TenantID, r.KeyID, in.ChannelVersionID)
 	batch.Queue(bindingIsolationSQL, in.ChannelVersionID, in.UpstreamModel)
-	if r.RouteRevision > 0 {
-		batch.Queue(`SELECT EXISTS(SELECT 1 FROM route_policy_versions p JOIN model_bindings b ON b.route_policy_version_id=p.id WHERE p.model_id=$1 AND p.revision=$2 AND b.channel_id=$3 AND b.channel_version_id=$4 AND b.upstream_model=$5)`, r.ModelID, r.RouteRevision, in.ChannelID, in.ChannelVersionID, in.UpstreamModel)
-	}
+	batch.Queue(`SELECT EXISTS(SELECT 1 FROM route_policy_versions p JOIN model_bindings b ON b.route_policy_version_id=p.id WHERE p.model_id=$1 AND p.revision=$2 AND b.channel_id=$3 AND b.channel_version_id=$4 AND b.upstream_model=$5)`, r.ModelID, r.RouteRevision, in.ChannelID, in.ChannelVersionID, in.UpstreamModel)
 	batch.Queue(`SELECT EXISTS(SELECT 1 FROM channel_version_credentials WHERE channel_version_id=$1 AND channel_id=$2 AND credential_id=$3)`, in.ChannelVersionID, in.ChannelID, in.CredentialID)
 	batch.Queue("SELECT clock_timestamp()<$1", r.RequestDeadline)
 	if in.Sequence == 2 && r.LatestFinalization != nil {
 		batch.Queue("SELECT EXISTS(SELECT 1 FROM finalization_records f JOIN metering_events e ON e.id=f.event_id JOIN upstream_attempts a ON a.id=e.attempt_id WHERE a.request_id=$1 AND a.sequence=1 AND f.id=$2 AND f.transport_end_reason IN ('not_sent','rejected_no_consumption') AND f.delivery_stage='none' AND NOT f.content_written)", in.RequestID, *r.LatestFinalization)
 	}
-	batch.Queue(currentAttemptCostSQL, in.ChannelID, in.UpstreamModel)
+	batch.Queue(currentAttemptCostSQL, in.ChannelID, in.UpstreamModel, r.ID)
 	results := tx.SendBatch(ctx, batch)
 	defer func() { err = closeBatch(results, err) }()
 	var clientCIDRs, scopes, regions []string
@@ -169,14 +169,12 @@ func readAttemptChecks(ctx context.Context, tx pgx.Tx, r financialRequest, in At
 	if r.ReservationStatus != "reserved" {
 		return cost, fail("request_finished", "request is not eligible for a new attempt")
 	}
-	if r.RouteRevision > 0 {
-		var published bool
-		if err = results.QueryRow().Scan(&published); err != nil {
-			return cost, err
-		}
-		if !published {
-			return cost, fail("unpublished_binding", "attempt is not part of the request route snapshot")
-		}
+	var published bool
+	if err = results.QueryRow().Scan(&published); err != nil {
+		return cost, err
+	}
+	if !published {
+		return cost, fail("unpublished_binding", "attempt is not part of the request route snapshot")
 	}
 	var credentialMember bool
 	if err = results.QueryRow().Scan(&credentialMember); err != nil {
@@ -207,10 +205,7 @@ func readAttemptChecks(ctx context.Context, tx pgx.Tx, r financialRequest, in At
 			return cost, fail("unsafe_retry", "prior attempt has no trustworthy non-consumption evidence")
 		}
 	}
-	err = results.QueryRow().Scan(&cost.ID, &cost.InputRate, &cost.OutputRate, &cost.Basis)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return cost, nil
-	}
+	cost, err = scanCostQuote(results.QueryRow(), in.ChannelID, in.UpstreamModel)
 	return cost, err
 }
 
@@ -423,36 +418,60 @@ func recordFinalization(ctx context.Context, tx pgx.Tx, r financialRequest, in F
 			in.DeliveryStage = "committed"
 		}
 	}
-	usageJSON, err := json.Marshal(in.Usage)
-	if err != nil {
-		return f, nil, err
-	}
 	eventID := uuid.NewString()
 	var attempt any
 	if in.AttemptID != "" {
 		attempt = in.AttemptID
+	} else {
+		bound, err := boundAttempt(ctx, tx, r)
+		if err != nil {
+			return f, nil, err
+		}
+		if bound != "" {
+			attempt = bound
+		}
 	}
-	tag, err := tx.Exec(ctx, "INSERT INTO metering_events(id,tenant_id,request_id,attempt_id,source,source_event_id,normalized_usage,happened_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(tenant_id,source,source_event_id) DO NOTHING", eventID, r.TenantID, r.ID, attempt, in.Source, in.SourceEventID, usageJSON, in.ObservedAt)
+	if attempt == nil {
+		return f, nil, fail("invalid_evidence", "observation requires the original attempt")
+	}
+	tag, err := tx.Exec(ctx, `INSERT INTO metering_events(id,tenant_id,request_id,attempt_id,source,source_event_id,happened_at,profile_version,schema_id,schema_digest,variant_key,plan_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,retail_usage_state,supplier_usage_state,observation_canonical,observation_digest)
+SELECT $1,$2,$3,$4,$5,$6,$7,COALESCE(a.profile_version,q.profile_version),COALESCE(a.schema_id,q.schema_id),COALESCE(a.schema_digest,q.schema_digest),'default',COALESCE(a.plan_digest,q.plan_digest),
+ $9,$10,$11,$12,$13,meter_usage_state($8),meter_usage_state($8),
+ meter_observation_canonical($2,$3,$4,$5,$6,COALESCE(a.profile_version,q.profile_version),COALESCE(a.schema_id,q.schema_id),COALESCE(a.schema_digest,q.schema_digest),COALESCE(a.plan_digest,q.plan_digest),$7,$9,$10,$11,$12,$13,NULL,meter_usage_state($8),$14,meter_usage_state($8),$15),
+ meter_observation_digest(COALESCE(a.schema_digest,q.schema_digest),meter_observation_identity_canonical($2,$3,$4,$5,$6,COALESCE(a.profile_version,q.profile_version),COALESCE(a.schema_id,q.schema_id),COALESCE(a.schema_digest,q.schema_digest),COALESCE(a.plan_digest,q.plan_digest),$9,$10,$11,$12,$13,NULL,meter_usage_state($8),$14,meter_usage_state($8),$15))
+ FROM request_meter_snapshots q JOIN attempt_meter_snapshots a ON a.attempt_id=$4 AND a.tenant_id=q.tenant_id AND a.request_id=q.request_id
+ WHERE q.tenant_id=$2 AND q.request_id=$3
+ ON CONFLICT(tenant_id,source,source_event_id) DO NOTHING`, eventID, r.TenantID, r.ID, attempt, in.Source, in.SourceEventID, in.ObservedAt, in.Usage.Status, in.ProtocolOutcome, in.TransportEndReason, in.DeliveryStage, in.ContentWritten, in.FinishReason, in.Usage.InputTokens, in.Usage.OutputTokens)
 	if err != nil {
 		return f, nil, err
 	}
 	conflict := false
+	if tag.RowsAffected() == 1 {
+		if _, err = tx.Exec(ctx, `SELECT meter_record_event_quantities($1,$2,$3,$4,$5)`, eventID, r.TenantID, in.Usage.Status, in.Usage.InputTokens, in.Usage.OutputTokens); err != nil {
+			return f, nil, err
+		}
+	}
 	if tag.RowsAffected() == 0 {
 		var equal bool
-		err = tx.QueryRow(ctx, "SELECT id,(normalized_usage=$4::jsonb AND request_id=$5 AND coalesce(attempt_id,'')=$6) FROM metering_events WHERE tenant_id=$1 AND source=$2 AND source_event_id=$3", r.TenantID, in.Source, in.SourceEventID, usageJSON, r.ID, in.AttemptID).Scan(&eventID, &equal)
+		err = tx.QueryRow(ctx, `SELECT e.id,(e.retail_usage_state=meter_usage_state($4) AND e.request_id=$5 AND coalesce(e.attempt_id,'')=$6 AND meter_event_quantity(e.id,'text_input_token') IS NOT DISTINCT FROM CASE WHEN meter_usage_state($4) IN ('missing','conflicting') THEN NULL ELSE $7::bigint END AND meter_event_quantity(e.id,'text_output_token') IS NOT DISTINCT FROM CASE WHEN meter_usage_state($4) IN ('missing','conflicting') THEN NULL ELSE $8::bigint END) FROM metering_events e WHERE e.tenant_id=$1 AND e.source=$2 AND e.source_event_id=$3`, r.TenantID, in.Source, in.SourceEventID, in.Usage.Status, r.ID, in.AttemptID, in.Usage.InputTokens, in.Usage.OutputTokens).Scan(&eventID, &equal)
 		if err != nil {
 			return f, nil, err
 		}
 		conflict = !equal
 	}
 	if !conflict && in.AttemptID != "" && in.Usage.Status == "confirmed_final" {
-		err = tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM metering_events WHERE tenant_id=$1 AND attempt_id=$2 AND id<>$3 AND normalized_usage->>'status'='confirmed_final' AND normalized_usage<>$4::jsonb)", r.TenantID, in.AttemptID, eventID, usageJSON).Scan(&conflict)
+		err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM metering_events e WHERE e.tenant_id=$1 AND e.attempt_id=$2 AND e.id<>$3 AND e.retail_usage_state='confirmed_final' AND (meter_event_quantity(e.id,'text_input_token') IS DISTINCT FROM $4 OR meter_event_quantity(e.id,'text_output_token') IS DISTINCT FROM $5))`, r.TenantID, in.AttemptID, eventID, in.Usage.InputTokens, in.Usage.OutputTokens).Scan(&conflict)
 		if err != nil {
 			return f, nil, err
 		}
 	}
 	if conflict {
-		if _, err = tx.Exec(ctx, "INSERT INTO metering_event_conflicts(event_id,normalized_usage) VALUES($1,$2)", eventID, usageJSON); err != nil {
+		raw, err := json.Marshal(in.Usage)
+		if err != nil {
+			return f, nil, err
+		}
+		sum := sha256.Sum256(raw)
+		if _, err = tx.Exec(ctx, "INSERT INTO metering_event_conflicts(tenant_id,event_id,candidate_canonical,candidate_digest) VALUES($1,$2,$3,$4)", r.TenantID, eventID, raw, sum[:]); err != nil {
 			return f, nil, err
 		}
 		if in.AttemptID != "" {
@@ -460,12 +479,12 @@ func recordFinalization(ctx context.Context, tx pgx.Tx, r financialRequest, in F
 			if err = tx.QueryRow(ctx, "SELECT id FROM upstream_attempts WHERE tenant_id=$1 AND id=$2 FOR UPDATE", r.TenantID, in.AttemptID).Scan(&lockedAttempt); err != nil {
 				return f, nil, err
 			}
-			if err = finalizeProcurement(ctx, tx, in.AttemptID, eventID, in.Usage, in.TransportEndReason, true); err != nil {
+			if err = finalizeProcurement(ctx, tx, in.AttemptID, eventID, "", in.Usage, in.TransportEndReason, true); err != nil {
 				return f, nil, err
 			}
 			// Repeated, already-adjudicated supplier evidence cannot erase the
 			// authoritative invoice fact. A new managed dispute is unknown.
-			if _, err = tx.Exec(ctx, `UPDATE upstream_attempts SET cost_status='unknown',cost_amount=NULL WHERE tenant_id=$1 AND id=$2
+			if _, err = tx.Exec(ctx, `UPDATE upstream_attempts SET cost_status='unknown',cost_amount=NULL,latest_cost_finalization_id=NULL,latest_cost_correction_id=NULL WHERE tenant_id=$1 AND id=$2
  AND NOT EXISTS(SELECT 1 FROM procurement_reservations p WHERE p.attempt_id=$2 AND p.state IN ('settled','released'))`, r.TenantID, in.AttemptID); err != nil {
 				return f, nil, err
 			}
@@ -479,7 +498,18 @@ func recordFinalization(ctx context.Context, tx pgx.Tx, r financialRequest, in F
 	if f.ID == "" {
 		f.ID = uuid.NewString()
 	}
-	tag, err = tx.Exec(ctx, "INSERT INTO finalization_records(id,tenant_id,request_id,event_id,input_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,policy_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT(id) DO NOTHING", f.ID, r.TenantID, r.ID, eventID, inputDigest, f.ProtocolOutcome, f.TransportEndReason, f.DeliveryStage, f.ContentWritten, f.FinishReason, r.PolicyVersion)
+	tag, err = tx.Exec(ctx, `INSERT INTO finalization_records(id,tenant_id,request_id,event_id,input_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,policy_version,attempt_id,retail_usage_state,supplier_usage_state,retail_quantities_canonical,retail_quantities_digest,supplier_quantities_canonical,supplier_quantities_digest)
+SELECT $1,$2,$3,e.id,$4,$5,$6,$7,$8,$9,$10,e.attempt_id,e.retail_usage_state,
+ CASE WHEN e.source='approved_reconciliation' AND e.supplier_usage_state<>'conflicting' THEN 'missing' ELSE e.supplier_usage_state END,
+ CASE WHEN e.retail_usage_state='confirmed_final' THEN meter_side_quantity_canonical(e.schema_id,'retail',qi.quantity,qo.quantity) END,
+ CASE WHEN e.retail_usage_state='confirmed_final' THEN meter_final_digest(e.schema_digest,'retail',meter_side_quantity_canonical(e.schema_id,'retail',qi.quantity,qo.quantity)) END,
+ CASE WHEN e.supplier_usage_state='confirmed_final' AND e.source<>'approved_reconciliation' THEN meter_side_quantity_canonical(e.schema_id,'supplier',qi.quantity,qo.quantity) END,
+ CASE WHEN e.supplier_usage_state='confirmed_final' AND e.source<>'approved_reconciliation' THEN meter_final_digest(e.schema_digest,'supplier',meter_side_quantity_canonical(e.schema_id,'supplier',qi.quantity,qo.quantity)) END
+FROM metering_events e
+JOIN meter_event_quantities qi ON qi.event_id=e.id AND qi.dimension='text_input_token'
+JOIN meter_event_quantities qo ON qo.event_id=e.id AND qo.dimension='text_output_token'
+WHERE e.id=$11 AND e.tenant_id=$2 AND e.request_id=$3
+ON CONFLICT(id) DO NOTHING`, f.ID, r.TenantID, r.ID, inputDigest, f.ProtocolOutcome, f.TransportEndReason, f.DeliveryStage, f.ContentWritten, f.FinishReason, r.PolicyVersion, eventID)
 	if err != nil {
 		return f, nil, err
 	}
@@ -507,14 +537,38 @@ func recordFinalization(ctx context.Context, tx pgx.Tx, r financialRequest, in F
 		if _, err = tx.Exec(ctx, "UPDATE upstream_attempts SET delivery_state=$2 WHERE id=$1", in.AttemptID, state); err != nil {
 			return f, nil, err
 		}
-		if err = recordAttemptCost(ctx, tx, r, in.AttemptID, in.Usage, in.TransportEndReason); err != nil {
+		if err = recordAttemptCost(ctx, tx, r, in.AttemptID, f.ID, in.TransportEndReason); err != nil {
 			return f, nil, err
 		}
-		if err = finalizeProcurement(ctx, tx, in.AttemptID, eventID, in.Usage, in.TransportEndReason, false); err != nil {
+		if err = finalizeProcurement(ctx, tx, in.AttemptID, eventID, f.ID, in.Usage, in.TransportEndReason, false); err != nil {
 			return f, nil, err
 		}
 	}
 	return f, nil, nil
+}
+
+func boundAttempt(ctx context.Context, tx pgx.Tx, r financialRequest) (string, error) {
+	var n int
+	var only *string
+	if err := tx.QueryRow(ctx, `SELECT count(*)::int, CASE WHEN count(*)=1 THEN min(id) END FROM upstream_attempts WHERE tenant_id=$1 AND request_id=$2`, r.TenantID, r.ID).Scan(&n, &only); err != nil {
+		return "", err
+	}
+	if n == 0 {
+		return "", nil
+	}
+	if n == 1 && only != nil {
+		return *only, nil
+	}
+	if r.LatestFinalization != nil {
+		var prior *string
+		if err := tx.QueryRow(ctx, `SELECT attempt_id FROM finalization_records WHERE tenant_id=$1 AND id=$2`, r.TenantID, *r.LatestFinalization).Scan(&prior); err != nil {
+			return "", err
+		}
+		if prior != nil && *prior != "" {
+			return *prior, nil
+		}
+	}
+	return "", fail("invalid_evidence", "observation requires the original attempt")
 }
 
 func requestStatus(f Finalization) string {
@@ -527,11 +581,10 @@ func requestStatus(f Finalization) string {
 	return "failed"
 }
 
-func recordAttemptCost(ctx context.Context, tx pgx.Tx, r financialRequest, attempt string, usage Usage, reason string) error {
-	var inputRate, outputRate *int64
-	var basis, status string
+func recordAttemptCost(ctx context.Context, tx pgx.Tx, r financialRequest, attempt, finalization, reason string) error {
+	var basis, status, supplierState string
 	var disputed bool
-	if err := tx.QueryRow(ctx, `SELECT cost_input_rate,cost_output_rate,cost_basis,cost_status,EXISTS(SELECT 1 FROM procurement_reservations p WHERE p.attempt_id=a.id AND p.state='disputed') FROM upstream_attempts a WHERE id=$1`, attempt).Scan(&inputRate, &outputRate, &basis, &status, &disputed); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT s.cost_basis,a.cost_status,f.supplier_usage_state,EXISTS(SELECT 1 FROM procurement_reservations p WHERE p.attempt_id=a.id AND p.state='disputed') FROM upstream_attempts a JOIN attempt_meter_snapshots s ON s.attempt_id=a.id AND s.tenant_id=a.tenant_id AND s.request_id=a.request_id JOIN finalization_records f ON f.tenant_id=a.tenant_id AND f.request_id=a.request_id AND f.attempt_id=a.id WHERE a.tenant_id=$1 AND a.request_id=$2 AND a.id=$3 AND f.id=$4`, r.TenantID, r.ID, attempt, finalization).Scan(&basis, &status, &supplierState, &disputed); err != nil {
 		return err
 	}
 	if status != "unknown" || disputed {
@@ -542,8 +595,8 @@ func recordAttemptCost(ctx context.Context, tx pgx.Tx, r financialRequest, attem
 		zero := "0"
 		amount = &zero
 		basis = "contract"
-	} else if usage.Status == "confirmed_final" && inputRate != nil && outputRate != nil && basis != "unknown" {
-		n, err := rawAmount(usage.InputTokens, usage.OutputTokens, Money(*inputRate), Money(*outputRate))
+	} else if supplierState == "confirmed_final" && oneOf(basis, "contract", "invoice") {
+		n, err := storedActualAmount(ctx, tx, r.TenantID, r.ID, finalization, attempt, metering.Supplier)
 		if err != nil {
 			return err
 		}
@@ -553,7 +606,7 @@ func recordAttemptCost(ctx context.Context, tx pgx.Tx, r financialRequest, attem
 	if amount == nil {
 		return nil
 	}
-	if _, err := tx.Exec(ctx, "UPDATE upstream_attempts SET cost_amount=$2::text::numeric,cost_status=$3 WHERE id=$1", attempt, *amount, basis); err != nil {
+	if _, err := tx.Exec(ctx, "UPDATE upstream_attempts SET cost_amount=$2::text::numeric,cost_status=$3,latest_cost_finalization_id=$4,latest_cost_correction_id=NULL WHERE id=$1", attempt, *amount, basis, finalization); err != nil {
 		return err
 	}
 	return emit(ctx, tx, r.TenantID, attempt, "cost_recorded", map[string]any{"attempt_id": attempt, "amount": *amount, "basis": basis})

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -118,7 +119,11 @@ func setupModelBusiness(ctx context.Context, live *privateModelLifecycle) (model
 	if b.key == "" || b.token == "" {
 		return b, stage("model_setup_key_empty")
 	}
-	if _, err = c.PublishPrice(ctx, admin, model, "1000000", "1000000", time.Now().Add(-time.Hour)); err != nil {
+	var schemaID, schemaDigest string
+	if err = live.owner.QueryRow(ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id WHERE m.id=$1`, model).Scan(&schemaID, &schemaDigest); err != nil {
+		return b, stage("model_setup_schema_failed")
+	}
+	if _, err = c.PublishDefaultPrice(ctx, catalog.PricingActor{UserID: admin}, catalog.DefaultPriceCommand{OperationID: uuid.NewString(), ModelID: model, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", InputRate: 1000000, OutputRate: 1000000, EffectiveAt: time.Now().UTC().Truncate(time.Microsecond)}); err != nil {
 		return b, stage("model_setup_price_failed")
 	}
 	channel, err := c.SaveChannel(ctx, admin, "", catalog.ChannelInput{Name: "Lifecycle loopback", BaseURL: live.provider.BaseURL, Secret: live.provider.Secret, Region: "global", AllowedCIDRs: []string{"127.0.0.1/32"}})
@@ -141,8 +146,12 @@ func setupModelBusiness(ctx context.Context, live *privateModelLifecycle) (model
 	if live.owner.QueryRow(ctx, `SELECT management_revision::text FROM channels WHERE id=$1`, channel).Scan(&revision) != nil {
 		return b, stage("model_setup_revision_failed")
 	}
-	rate := "1000000"
-	if _, err = c.PublishCostVersion(ctx, admin, catalog.CostVersionInput{ChannelID: channel, UpstreamModel: "qa-chat", InputRate: &rate, OutputRate: &rate, Basis: "contract", ExpectedChannelRevision: revision}); err != nil {
+	var expected int64
+	if _, err = fmt.Sscan(revision, &expected); err != nil {
+		return b, stage("model_setup_revision_parse_failed")
+	}
+	inputRate, outputRate := int64(1000000), int64(1000000)
+	if _, err = c.PublishCostPrice(ctx, catalog.PricingActor{UserID: admin}, catalog.CostPriceCommand{OperationID: uuid.NewString(), ChannelID: channel, UpstreamModel: "qa-chat", SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", Basis: "contract", InputRate: &inputRate, OutputRate: &outputRate, EffectiveAt: time.Now().UTC().Truncate(time.Microsecond), ExpectedChannelRevision: expected}); err != nil {
 		return b, stage("model_setup_cost_failed")
 	}
 	if _, err = c.Publish(ctx, admin, model, 0, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "qa-chat", Weight: 1, MaxInflight: 1}}); err != nil {

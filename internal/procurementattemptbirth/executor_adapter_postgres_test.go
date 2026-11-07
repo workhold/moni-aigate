@@ -10,7 +10,6 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/procurement"
 	"github.com/moni-ai/moni-aigate/internal/procurementexecution"
-	"github.com/moni-ai/moni-aigate/internal/routing"
 )
 
 func abAdapterCommandOracle(t *testing.T, f *fixture, got procurement.Command) {
@@ -81,7 +80,7 @@ func TestPostgresExecutorAdapterAttemptPublicDTOBudgetAndConflict(t *testing.T) 
 	must(t, "construct explicit billing adapter", err)
 	request := f.reserve(t)
 	q := abExecutorAttemptInput(f, request.RequestID)
-	in := billing.AttemptInput{TenantID: q.TenantID, RequestID: q.RequestID, Sequence: int(q.Sequence), ChannelID: q.ChannelID, ChannelVersionID: q.ChannelVersionID, CredentialID: q.CredentialID, UpstreamModel: q.UpstreamModel, CostQuote: &routing.CostQuote{VersionID: q.CostQuote.VersionID, InputRate: q.CostQuote.InputRate, OutputRate: q.CostQuote.OutputRate, Basis: q.CostQuote.Basis}}
+	in := billing.FrozenAttemptInput{TenantID: q.TenantID, RequestID: q.RequestID, Sequence: int(q.Sequence), ChannelID: q.ChannelID, ChannelVersionID: q.ChannelVersionID, CredentialID: q.CredentialID, UpstreamModel: q.UpstreamModel, CostQuote: q.CostQuote}
 	got, err := s.RecordAttempt(f.ctx, in)
 	must(t, "actual APP billing adapter committed attempt", err)
 	var root, source string
@@ -93,7 +92,7 @@ func TestPostgresExecutorAdapterAttemptPublicDTOBudgetAndConflict(t *testing.T) 
 	if replay != got || f.snapshot(t) != before {
 		t.Fatal("attempt adapter replay changed public DTO or state")
 	}
-	assertRejection := func(input billing.AttemptInput, code, state string) {
+	assertRejection := func(input billing.FrozenAttemptInput, code, state string) {
 		t.Helper()
 		before := f.snapshot(t)
 		zero, e := s.RecordAttempt(f.ctx, input)

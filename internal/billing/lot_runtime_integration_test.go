@@ -265,9 +265,7 @@ func TestPostgresWalletSourcesRuntimeReleaseAndZeroPrice(t *testing.T) {
 	if err = f.pool.QueryRow(f.ctx, `SELECT available_amount,held_amount,consumed_amount FROM funding_lot_balances WHERE tenant_id=$1`, f.tenant).Scan(&available, &held, &consumed); err != nil || available != 150 || held != 0 || consumed != 0 {
 		t.Fatal(available, held, consumed, err)
 	}
-	if _, err = f.pool.Exec(f.ctx, `INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,0,0,clock_timestamp(),$2)`, f.model, f.operator); err != nil {
-		t.Fatal(err)
-	}
+	publishBillingDefault(t, f, f.model, 0, 0, time.Now().UTC())
 	var eventCountBefore int
 	if err = f.pool.QueryRow(f.ctx, `SELECT count(*) FROM funding_lot_events WHERE tenant_id=$1`, f.tenant).Scan(&eventCountBefore); err != nil {
 		t.Fatal(err)

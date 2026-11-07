@@ -621,7 +621,9 @@ func TestPostgresFundingVerifierAndRebuildRejectEqualAmountSourceCorruption(t *t
 		t.Fatal(err)
 	}
 	defer tx.Rollback(context.Background())
-	if _, err = tx.Exec(f.ctx, `ALTER TABLE funding_receipts DISABLE TRIGGER immutable_funding_receipt`); err != nil {
+	// Replica mode bypasses every ordinary and deferred guard in this owner
+	// transaction, so the corrupted history really commits for the verifier.
+	if _, err = tx.Exec(f.ctx, `SET LOCAL session_replication_role='replica'`); err != nil {
 		t.Fatal(err)
 	}
 	temporary := uuid.NewString()
@@ -629,9 +631,6 @@ func TestPostgresFundingVerifierAndRebuildRejectEqualAmountSourceCorruption(t *t
 		if _, err = tx.Exec(f.ctx, `UPDATE funding_receipts SET source_id=$2 WHERE source_kind='manual_credit' AND source_id=$1`, pair.old, pair.next); err != nil {
 			t.Fatal(err)
 		}
-	}
-	if _, err = tx.Exec(f.ctx, `ALTER TABLE funding_receipts ENABLE TRIGGER immutable_funding_receipt`); err != nil {
-		t.Fatal(err)
 	}
 	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)

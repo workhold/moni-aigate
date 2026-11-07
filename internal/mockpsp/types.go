@@ -2,10 +2,12 @@
 package mockpsp
 
 import (
+	"bytes"
 	"errors"
 	"time"
 
 	"github.com/moni-ai/moni-aigate/internal/paymentproto"
+	"github.com/moni-ai/moni-aigate/internal/paymentrefundproto"
 )
 
 // Error exposes only an allowlisted code, never the original database, URL,
@@ -101,6 +103,20 @@ type CanonicalQueryReply struct {
 	request paymentproto.QueryReply
 }
 
+type CanonicalRefundReply struct {
+	raw     []byte
+	digest  string
+	env     paymentrefundproto.Environment
+	request paymentrefundproto.CommandReply
+}
+
+type CanonicalRefundQueryReply struct {
+	raw     []byte
+	digest  string
+	env     paymentrefundproto.Environment
+	request paymentrefundproto.QueryReply
+}
+
 func mockTypeCopyRaw(raw []byte, digest string) ([]byte, error) {
 	if len(raw) == 0 || len(raw) > 64<<10 || digest == "" || paymentproto.RequestDigest(raw) != digest {
 		return nil, fail("invalid_request")
@@ -116,6 +132,26 @@ func (v CanonicalCommandReply) Bytes() ([]byte, error) {
 	return mockTypeCopyRaw(v.raw, v.digest)
 }
 func (v CanonicalQueryReply) Bytes() ([]byte, error) { return mockTypeCopyRaw(v.raw, v.digest) }
+func (v CanonicalRefundReply) Bytes() ([]byte, error) {
+	if len(v.raw) == 0 || len(v.raw) > 64<<10 || v.digest == "" {
+		return nil, fail("invalid_request")
+	}
+	b, err := paymentrefundproto.CanonicalCommandReply(v.request)
+	if err != nil || !bytes.Equal(b, v.raw) {
+		return nil, fail("invalid_request")
+	}
+	return append([]byte(nil), v.raw...), nil
+}
+func (v CanonicalRefundQueryReply) Bytes() ([]byte, error) {
+	if len(v.raw) == 0 || len(v.raw) > 64<<10 || v.digest == "" {
+		return nil, fail("invalid_request")
+	}
+	b, err := paymentrefundproto.CanonicalQueryReply(v.request)
+	if err != nil || !bytes.Equal(b, v.raw) {
+		return nil, fail("invalid_request")
+	}
+	return append([]byte(nil), v.raw...), nil
+}
 
 type CommandOutcome struct {
 	Body     CanonicalCommandReply
@@ -123,6 +159,14 @@ type CommandOutcome struct {
 }
 type QueryOutcome struct {
 	Body     CanonicalQueryReply
+	Replayed bool
+}
+type RefundOutcome struct {
+	Body     CanonicalRefundReply
+	Replayed bool
+}
+type RefundQueryOutcome struct {
+	Body     CanonicalRefundQueryReply
 	Replayed bool
 }
 type ControlOutcome struct {

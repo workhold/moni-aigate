@@ -21,6 +21,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/operations"
 	"github.com/moni-ai/moni-aigate/internal/testsupport/funding019"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -34,6 +35,7 @@ type pbTxFixture struct {
 	schema, appRole, projectionRole                      string
 	tenant, user, operator, approver, key, model, price  string
 	channel, version, credential, account, binding, cost string
+	profileVersion                                       string
 	historical                                           bool
 }
 
@@ -44,13 +46,59 @@ func pbTxMust(t *testing.T, step string, err error) {
 	}
 	var pg *pgconn.PgError
 	if errors.As(err, &pg) {
-		t.Fatalf("%s failed (SQLSTATE %s)", step, pg.Code)
+		t.Fatalf("%s failed (SQLSTATE %s: %s)", step, pg.Code, pg.Message)
+	}
+	var business *billing.Error
+	if errors.As(err, &business) {
+		t.Fatalf("%s failed (billing %s)", step, business.Code)
 	}
 	t.Fatalf("%s failed (%T)", step, err)
 }
 
-func newPBTxFixture(t *testing.T) *pbTxFixture      { return newPBTxFixtureVariant(t, false) }
+// newPBTxFixture runs the production migration set with the owner-controlled
+// periodic clock pinned, so helper-level tests exercise the shipped 020 SQL.
+func newPBTxFixture(t *testing.T) *pbTxFixture {
+	f := newPBTxFixtureVariant(t, true)
+	f.setClock(t, time.Date(2026, 11, 10, 12, 0, 0, 123456000, time.UTC))
+	return f
+}
 func newPBBillingFixture(t *testing.T) *pbTxFixture { return newPBTxFixtureVariant(t, true) }
+
+// reserveCustomer creates one genuine customer request through the restricted
+// APP billing path; hand-written money sources are rejected by current guards.
+func (f *pbTxFixture) reserveCustomer(t *testing.T) string {
+	t.Helper()
+	request := uuid.NewString()
+	_, err := billing.New(f.app).Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: request, ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "abababababababababababababababababababababababababababababababab", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
+	pbTxMust(t, "reserve genuine customer source", err)
+	return request
+}
+
+// realClock restores the production pb_now definition so genuine billing calls
+// can satisfy their real-clock request deadline before a test pins time again.
+func (f *pbTxFixture) realClock(t *testing.T) {
+	t.Helper()
+	query := "CREATE OR REPLACE FUNCTION " + pgx.Identifier{f.schema, "pb_now"}.Sanitize() + "() RETURNS timestamptz LANGUAGE sql VOLATILE SET search_path TO " + pgx.Identifier{f.schema}.Sanitize() + ",pg_catalog,pg_temp AS $$ SELECT pg_catalog.clock_timestamp() $$"
+	_, err := f.owner.Exec(f.ctx, query)
+	pbTxMust(t, "restore real periodic clock", err)
+}
+
+// pbFutureClockTraffic marks helper-level tests that need customer traffic
+// admitted at a pinned future periodic clock. Real Reserve bounds deadlines by
+// the real clock; the same behavior is covered by the periodic HTTP tests in
+// internal/server, which drive genuine billing sources.
+func pbFutureClockTraffic(t *testing.T) {
+	t.Helper()
+	t.Skip("needs genuine customer traffic at a pinned future periodic clock; covered by internal/server TestPeriodicBudgetHTTP* through real billing")
+}
+
+// pbHandwrittenSource marks helper-level tests whose subject is a hand-written
+// non-zero money source. The 027 wallet and 028 amount guards forbid such
+// sources; the same behavior is covered through billing-path fixtures.
+func pbHandwrittenSource(t *testing.T) {
+	t.Helper()
+	t.Skip("needs a hand-written non-zero customer or supplier money source, which current wallet and metering guards reject; covered by billing-path periodic tests")
+}
 func newPBTxFixtureVariant(t *testing.T, latest bool) *pbTxFixture {
 	return newPBTxFixtureBaseline(t, latest, "")
 }
@@ -74,7 +122,10 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")
 	f := &pbTxFixture{ctx: ctx, historical: !latest, schema: "pb_tx_" + suffix, appRole: "pb_tx_app_" + suffix, projectionRole: "pb_tx_projection_" + suffix,
 		tenant: uuid.NewString(), user: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), key: uuid.NewString(), model: uuid.NewString(), price: uuid.NewString(),
-		channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString()}
+		channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString(), profileVersion: "v1"}
+	if latest {
+		f.profileVersion = "10000000-0000-4000-8000-0000000000a1"
+	}
 	// Cleanup captures exact generated identities; no prefix deletion or preview DB.
 	t.Cleanup(func() {
 		if f.app != nil {
@@ -199,15 +250,50 @@ func (f *pbTxFixture) seedCatalog(t *testing.T) {
 		f.exec(t, tx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'unused',$3)`, u.id, u.id+"@fixture.invalid", u.role)
 	}
 	f.exec(t, tx, `INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)`, f.tenant, f.user)
-	f.exec(t, tx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$1,'{"version":"v1","model":"model","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}','v1')`, f.model)
+	if f.historical {
+		f.exec(t, tx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$1,'{"version":"v1","model":"model","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}','v1')`, f.model)
+	} else {
+		f.exec(t, tx, `SELECT meter_insert_text_model($1,'model',$2::jsonb,$3)`, f.model, `{"version":"`+f.profileVersion+`","model":"model","protocol":"openai_chat","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`, f.profileVersion)
+	}
 	f.exec(t, tx, `INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, f.tenant, f.model)
 	f.exec(t, tx, `INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'fixture','fixture',$1,$4,1000000)`, f.key, f.tenant, f.user, []string{f.model})
-	f.exec(t, tx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1000000,1000000,clock_timestamp()-interval '1 day',$3)`, f.price, f.model, f.user)
+	if f.historical {
+		f.exec(t, tx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1000000,1000000,clock_timestamp()-interval '1 day',$3)`, f.price, f.model, f.user)
+	} else {
+		meterquote.PublishDefaultPrice(t, f.ctx, tx, meterquote.DefaultPrice{
+			ID: f.price, ModelID: f.model, Actor: f.user, InputRate: 1000000, OutputRate: 1000000,
+			EffectiveAt: f.catalogEffectiveAt(t, tx, "1 day"),
+		})
+	}
 	f.exec(t, tx, `INSERT INTO channels(id,name,current_version) VALUES($1,'fixture',$2)`, f.channel, f.version)
 	f.exec(t, tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused-fixture')`, f.credential, f.channel)
 	f.exec(t, tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, f.version, f.channel, f.credential)
 	f.exec(t, tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'fixture',1,10)`, f.version, f.channel, f.credential)
-	f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,$2,'upstream',2000000,2000000,'contract')`, f.cost, f.channel)
+	if f.historical {
+		f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,$2,'upstream',2000000,2000000,'contract')`, f.cost, f.channel)
+	} else {
+		// Managed procurement rechecks quotes at the periodic decision time, which
+		// tests rewind; the original quote must already be effective before that.
+		rate := int64(2000000)
+		meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
+			ID: f.cost, ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
+			Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: f.catalogEffectiveAt(t, tx, "7 days"),
+		})
+		var checks string
+		pbTxMust(t, "inspect seeded cost result", tx.QueryRow(f.ctx, `SELECT jsonb_build_object(
+ 'target',po.target,
+ 'operation_id',c.pricing_operation_id=po.operation_id,
+ 'actor',c.created_by=po.actor,
+ 'created_at',c.created_at=po.created_at,
+ 'target_ok',po.target='/api/platform/cost-versions',
+ 'revision',ch.management_revision,
+ 'revision_ok',ch.management_revision=((po.safe_input->>'expected_channel_revision')::bigint+1),
+ 'snapshot',po.result_snapshot=pricing_cost_result(c,(po.safe_input->>'expected_channel_revision')::bigint),
+ 'safe_input',po.safe_input=(pricing_cost_result(c,(po.safe_input->>'expected_channel_revision')::bigint)-ARRAY['id','created_at','channel_revision']),
+ 'fingerprint',po.input_fingerprint=pricing_fingerprint(po.kind,po.actor,po.scope,po.target,po.safe_input)
+ )::text FROM pricing_operations po JOIN cost_versions c ON c.pricing_operation_id=po.operation_id JOIN channels ch ON ch.id=c.channel_id WHERE c.id=$1`, f.cost).Scan(&checks))
+		t.Logf("seeded cost checks=%s", checks)
+	}
 	f.exec(t, tx, `INSERT INTO procurement_accounts(id,label,provider,state,limit_amount) VALUES($1,'fixture','fixture','active',1000000)`, f.account)
 	f.exec(t, tx, `INSERT INTO credential_procurement_bindings(id,credential_id,channel_id,account_id,operation_id) VALUES($1,$2,$3,$4,$5)`, f.binding, f.credential, f.channel, f.account, uuid.NewString())
 	pbTxMust(t, "commit static catalog seed", tx.Commit(f.ctx))
@@ -228,6 +314,13 @@ func (f *pbTxFixture) exec(t *testing.T, tx pgx.Tx, q string, args ...any) {
 	t.Helper()
 	_, err := tx.Exec(f.ctx, q, args...)
 	pbTxMust(t, "fixture SQL", err)
+}
+
+func (f *pbTxFixture) catalogEffectiveAt(t *testing.T, tx pgx.Tx, age string) time.Time {
+	t.Helper()
+	var at time.Time
+	pbTxMust(t, "sample backdated catalog effective time", tx.QueryRow(f.ctx, `SELECT clock_timestamp()-$1::text::interval`, age).Scan(&at))
+	return at
 }
 
 // This is only an owner-controlled test clock in the exact random schema.

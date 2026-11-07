@@ -23,18 +23,19 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/operations"
 	pb "github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/security"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 type periodicHTTPActor struct{ id, session, csrf string }
 type periodicHTTPFixture struct {
-	ctx                                                                                     context.Context
-	owner, app                                                                              *pgxpool.Pool
-	server                                                                                  *Server
-	engine                                                                                  http.Handler
-	schema, tenant, otherTenant, model, price, key, memberKey, viewerKey, otherKey, account string
-	actors                                                                                  map[string]periodicHTTPActor
-	writes                                                                                  map[string]int
-	lastWrite                                                                               map[string]time.Time
+	ctx                                                                                                     context.Context
+	owner, app                                                                                              *pgxpool.Pool
+	server                                                                                                  *Server
+	engine                                                                                                  http.Handler
+	schema, tenant, otherTenant, model, profileVersion, price, key, memberKey, viewerKey, otherKey, account string
+	actors                                                                                                  map[string]periodicHTTPActor
+	writes                                                                                                  map[string]int
+	lastWrite                                                                                               map[string]time.Time
 }
 
 func periodicHTTPMust(t *testing.T, step string, err error) {
@@ -117,16 +118,42 @@ func newPeriodicHTTPFixture(t *testing.T) *periodicHTTPFixture {
 	} {
 		f.actors[entry.name] = f.actor(t, entry.platform, entry.role, entry.tenant, true)
 	}
-	_, err = owner.Exec(f.ctx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$1,'{"version":"v1","model":"model","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}','v1')`, f.model)
+	profileVersion := uuid.NewString()
+	f.profileVersion = profileVersion
+	profile := `{"version":"` + profileVersion + `","model":"model","protocol":"openai_chat","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`
+	_, err = owner.Exec(f.ctx, `SELECT meter_insert_text_model($1,'model',$2::jsonb,$3)`, f.model, profile, profileVersion)
 	periodicHTTPMust(t, "seed static HTTP model", err)
+	// Current billing admission requires a published non-zero route. Birth the
+	// route and its binding in one transaction so this fixture exercises the
+	// same immutable route boundary as the runtime.
+	channel, version, credential, policy := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString()
+	tx, err := owner.Begin(f.ctx)
+	periodicHTTPMust(t, "open static HTTP route transaction", err)
+	defer tx.Rollback(f.ctx)
+	for _, query := range []struct {
+		sql  string
+		args []any
+	}{
+		{`INSERT INTO channels(id,name,current_version) VALUES($1,'periodic-http',$2)`, []any{channel, version}},
+		{`INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'fixture')`, []any{credential, channel}},
+		{`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, []any{version, channel, credential}},
+		{`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,1000)`, []any{version, channel, credential}},
+		{`INSERT INTO route_policy_versions(id,model_id,revision,profile_version) VALUES($1,$2,1,$3)`, []any{policy, f.model, profileVersion}},
+		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, []any{policy, channel, version}},
+		{`UPDATE models SET active_revision=1 WHERE id=$1`, []any{f.model}},
+	} {
+		if _, err = tx.Exec(f.ctx, query.sql, query.args...); err != nil {
+			periodicHTTPMust(t, "seed static HTTP published route", err)
+		}
+	}
+	periodicHTTPMust(t, "commit static HTTP published route", tx.Commit(f.ctx))
 	_, err = owner.Exec(f.ctx, `INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$3),($2,$3)`, f.tenant, f.otherTenant, f.model)
 	periodicHTTPMust(t, "seed static HTTP model grants", err)
 	for _, key := range []struct{ id, tenant, actor string }{{f.key, f.tenant, "owner"}, {f.memberKey, f.tenant, "member"}, {f.viewerKey, f.tenant, "viewer"}, {f.otherKey, f.otherTenant, "other"}} {
 		_, err = owner.Exec(f.ctx, `INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'periodic-http','fixture',$1,$4,1000000)`, key.id, key.tenant, f.actors[key.actor].id, []string{f.model})
 		periodicHTTPMust(t, "seed static HTTP Key", err)
 	}
-	_, err = owner.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1000000,1000000,clock_timestamp()-interval '1 day',$3)`, f.price, f.model, f.actors["admin"].id)
-	periodicHTTPMust(t, "seed static HTTP retail price", err)
+	meterquote.PublishDefaultPrice(t, f.ctx, owner, meterquote.DefaultPrice{ID: f.price, ModelID: f.model, Actor: f.actors["admin"].id, InputRate: 1000000, OutputRate: 1000000, EffectiveAt: time.Now().UTC().Add(-24 * time.Hour)})
 	_, err = owner.Exec(f.ctx, `INSERT INTO procurement_accounts(id,label,provider,state,limit_amount) VALUES($1,'periodic-http','fixture','active',1000000)`, f.account)
 	periodicHTTPMust(t, "seed static HTTP procurement catalog", err)
 	op := uuid.NewString()
@@ -345,7 +372,7 @@ func TestPeriodicBudgetHTTPRestrictedLifecycleAndOriginalReceipts(t *testing.T) 
 	}
 	// Use the actual restricted APP billing path to change held totals. An
 	// operation GET must still return the old immutable result, not current view.
-	r, err := f.server.Billing.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.actors["owner"].id, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "periodic-http-flow", ProfileVersion: "v1", InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
+	r, err := f.server.Billing.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.actors["owner"].id, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, RouteRevision: 1, IdempotencyKey: uuid.NewString(), RequestHMAC: "periodic-http-flow", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
 	periodicHTTPMust(t, "actual APP funds flow after original HTTP receipt", err)
 	old := periodicHTTPData[pb.CommandReceipt](t, f.call(t, "GET", "/api/platform/periodic-budget-operations/"+firstIn.OperationID, "", admin, nil), 200)
 	if !reflect.DeepEqual(old, first) {
@@ -488,7 +515,7 @@ func TestPeriodicBudgetHTTPAllocationPagesFromRealBillingSources(t *testing.T) {
 	f.setClock(t, now.AddDate(0, 0, -1))
 	requests := map[string]bool{}
 	for i := 0; i < 51; i++ {
-		r, err := f.server.Billing.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.actors["owner"].id, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "periodic-http-page", ProfileVersion: "v1", InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
+		r, err := f.server.Billing.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.actors["owner"].id, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, RouteRevision: 1, IdempotencyKey: uuid.NewString(), RequestHMAC: "periodic-http-page", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
 		periodicHTTPMust(t, "create complete real APP billing source for HTTP pagination", err)
 		if r.Amount != 120 || requests[r.RequestID] {
 			t.Fatal("HTTP pagination fixture lost exact complete R or source uniqueness")

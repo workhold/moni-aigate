@@ -17,8 +17,19 @@ var (
 )
 
 type Filter struct {
-	From, To          time.Time
-	TenantID, ModelID string
+	From, To                time.Time
+	TenantID, ModelID       string
+	Protocol, ExecutionKind string
+}
+
+var publicProtocols = map[string]struct{}{
+	"openai_chat": {}, "openai_responses": {}, "anthropic_messages": {},
+	"openai_embeddings": {}, "jina_rerank": {}, "gemini_generate_content": {},
+}
+
+func validProtocol(value string) bool {
+	_, ok := publicProtocols[value]
+	return ok
 }
 
 func (f Filter) Validate() error {
@@ -32,6 +43,12 @@ func (f Filter) Validate() error {
 				return ErrInvalidFilter
 			}
 		}
+	}
+	if f.Protocol != "" && !validProtocol(f.Protocol) {
+		return ErrInvalidFilter
+	}
+	if f.ExecutionKind != "" && f.ExecutionKind != "synchronous" {
+		return ErrInvalidFilter
 	}
 	return nil
 }
@@ -64,14 +81,20 @@ type ChannelReport struct {
 }
 
 type RequestRow struct {
-	RequestID     string    `json:"request_id"`
-	TenantID      string    `json:"tenant_id"`
-	TenantName    string    `json:"tenant_name"`
-	ModelID       string    `json:"model_id"`
-	ModelName     string    `json:"model_name"`
-	Status        string    `json:"status"`
-	BillingStatus string    `json:"billing_status"`
-	CreatedAt     time.Time `json:"created_at"`
+	RequestID      string    `json:"request_id"`
+	TenantID       string    `json:"tenant_id"`
+	TenantName     string    `json:"tenant_name"`
+	ModelID        string    `json:"model_id"`
+	ModelName      string    `json:"model_name"`
+	Status         string    `json:"status"`
+	BillingStatus  string    `json:"billing_status"`
+	CreatedAt      time.Time `json:"created_at"`
+	Protocol       string    `json:"protocol"`
+	ExecutionKind  string    `json:"execution_kind"`
+	ProfileVersion string    `json:"profile_version"`
+	SchemaID       string    `json:"schema_id"`
+	SchemaDigest   string    `json:"schema_digest"`
+	VariantKey     string    `json:"variant_key"`
 	Totals
 }
 

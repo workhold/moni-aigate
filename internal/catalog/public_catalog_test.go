@@ -40,15 +40,15 @@ func TestPublicCatalogInputBoundsAndCanonicalIDs(t *testing.T) {
 }
 
 func TestPublicCatalogUnavailablePriceHasExplicitNulls(t *testing.T) {
-	body, err := json.Marshal(PublicPricing{Status: "unavailable", Currency: "CNY", Unit: "micro_cny_per_million_tokens"})
+	body, err := json.Marshal(PublicPricing{Status: "unavailable", SchemaID: "10000000-0000-4000-8000-000000000001", SchemaDigest: strings.Repeat("a", 64), VariantKey: "default", Currency: "CNY"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	var fields map[string]json.RawMessage
-	if err = json.Unmarshal(body, &fields); err != nil || len(fields) != 7 {
+	if err = json.Unmarshal(body, &fields); err != nil || len(fields) != 8 {
 		t.Fatal(string(body), err)
 	}
-	for _, key := range []string{"price_version_id", "input_rate", "output_rate", "effective_at"} {
+	for _, key := range []string{"price_version_id", "rates", "effective_at"} {
 		if string(fields[key]) != "null" {
 			t.Fatal("missing pricing field is not explicit null", key, string(body))
 		}

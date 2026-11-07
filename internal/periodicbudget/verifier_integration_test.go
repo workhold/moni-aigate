@@ -14,6 +14,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/operations"
 	. "github.com/moni-ai/moni-aigate/internal/periodicbudget"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -34,7 +35,7 @@ func newPBVerifierFixture(t *testing.T) *pbTxFixture {
 	pbTxMust(t, "open verifier test admin", e)
 	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")
 	f := &pbTxFixture{ctx: ctx, schema: "pb_verify_" + suffix, appRole: "pb_verify_app_" + suffix, projectionRole: "pb_verify_projection_" + suffix,
-		tenant: uuid.NewString(), user: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), key: uuid.NewString(), model: uuid.NewString(), price: uuid.NewString(), channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString()}
+		tenant: uuid.NewString(), user: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), key: uuid.NewString(), model: uuid.NewString(), price: uuid.NewString(), channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString(), profileVersion: uuid.NewString()}
 	t.Cleanup(func() {
 		if f.app != nil {
 			f.app.Close()
@@ -132,11 +133,22 @@ func pbVerifierZeroCustomer(t *testing.T, f *pbTxFixture) string {
 	t.Helper()
 	tx := f.begin(t)
 	locks := pbTxCustomerLocks(t, f, tx, "")
-	price, request, reservation := uuid.NewString(), uuid.NewString(), uuid.NewString()
-	f.exec(t, tx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,0,0,clock_timestamp()-interval '1 day',$3)`, price, f.model, f.user)
-	f.exec(t, tx, `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming,pricing_group_id,tenant_pricing_revision,retail_priced_at)
- SELECT $1,t.id,$2,$3,$4,$5,0,0,100,20,'v1','r3','zero-verifier-fixture',clock_timestamp()+interval '5 minutes','fixture',false,t.price_group_id,t.pricing_revision,clock_timestamp() FROM tenants t WHERE t.id=$6`, request, f.key, f.user, f.model, price, f.tenant)
+	request, reservation := uuid.NewString(), uuid.NewString()
+	price := meterquote.PublishDefaultPrice(t, f.ctx, tx, meterquote.DefaultPrice{
+		ModelID: f.model, Actor: f.user, EffectiveAt: f.catalogEffectiveAt(t, tx, "1 day"),
+	})
+	f.exec(t, tx, `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming)
+ VALUES($1,$2,$3,$4,$5,$6,'openai_chat','synchronous','json','r3','zero-verifier-fixture',clock_timestamp()+interval '5 minutes','fixture',false)`, request, f.tenant, f.key, f.user, f.model, f.profileVersion)
+	f.exec(t, tx, `INSERT INTO request_meter_snapshots(tenant_id,request_id,model_id,profile_version,schema_id,schema_digest,variant_key,price_version_id,pricing_group_id,tenant_pricing_revision,retail_priced_at,input_bound,output_bound)
+ SELECT t.id,$2,c.model_id,c.id,c.schema_id,c.schema_digest,'default',$4,t.price_group_id,t.pricing_revision,clock_timestamp(),100,20 FROM tenants t JOIN model_capability_versions c ON c.id=$3 WHERE t.id=$1`, f.tenant, request, f.profileVersion, price)
+	f.exec(t, tx, `INSERT INTO request_meter_bound_lines(tenant_id,request_id,side,dimension,unit,quantity)
+ SELECT $1,$2,s.side,d.dimension,'token',d.quantity FROM (VALUES ('retail'),('supplier')) s(side) CROSS JOIN (VALUES ('text_input_token',100),('text_output_token',20)) d(dimension,quantity)`, f.tenant, request)
 	f.exec(t, tx, `INSERT INTO reservations(id,tenant_id,request_id,amount,deadline) VALUES($1,$2,$3,0,clock_timestamp()+interval '1 day')`, reservation, f.tenant, request)
+	// Like billing, a zero reserve still posts explicit zero AVAILABLE/HELD lines.
+	f.walletLocks(t, tx)
+	journal := uuid.NewString()
+	f.exec(t, tx, `INSERT INTO journals(id,tenant_id,operation_id,kind,reference,actor) VALUES($1,$2,$3,'reserve',$4,$5)`, journal, f.tenant, reservation, request, f.user)
+	f.exec(t, tx, `INSERT INTO journal_lines(journal_id,account_id,signed_delta) SELECT $1,id,0 FROM ledger_accounts WHERE tenant_id=$2 AND kind IN ('AVAILABLE','HELD')`, journal, f.tenant)
 	a, e := AdmitCustomerTx(f.ctx, tx, locks, request, Amount{"0"})
 	pbTxMust(t, "admit actual APP zero-price customer", e)
 	pbTxMust(t, "mirror actual APP zero original reserve", RecordCustomerReserveTx(f.ctx, tx, locks, a, request))

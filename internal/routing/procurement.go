@@ -1,6 +1,10 @@
 package routing
 
-import "math/big"
+import (
+	"math/big"
+
+	"github.com/moni-ai/moni-aigate/internal/metering"
+)
 
 // This snapshot is only an initial filter. Durable per-attempt admission owns
 // the cross-tenant account lock and remains the authority for spending.
@@ -12,24 +16,29 @@ func ProcurementExclusion(c Candidate) string {
 		return "procurement_paused"
 	}
 	q := c.CostQuote
-	if q.InputRate == nil || q.OutputRate == nil || q.VersionID == "" || (q.Basis != "contract" && q.Basis != "invoice") {
+	if !q.Known() {
 		return "cost_unknown"
 	}
-	if c.InputUpperBound <= 0 || c.OutputLimit < 0 || *q.InputRate < 0 || *q.OutputRate < 0 {
+	if c.InputUpperBound <= 0 || c.OutputLimit < 0 {
 		return "procurement_bound_invalid"
 	}
 	available, ok := new(big.Int).SetString(c.ProcurementAvailable, 10)
 	if !ok {
 		return "procurement_budget_unavailable"
 	}
-	n := new(big.Int).Mul(big.NewInt(c.InputUpperBound), big.NewInt(*q.InputRate))
-	n.Add(n, new(big.Int).Mul(big.NewInt(c.OutputLimit), big.NewInt(*q.OutputRate)))
-	n.Add(n, big.NewInt(999999))
-	n.Div(n, big.NewInt(1000000))
-	if !n.IsInt64() {
+	bounds, err := metering.LegacyTokenBounds(q.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
+	if err != nil {
 		return "procurement_bound_invalid"
 	}
-	if n.Cmp(available) > 0 {
+	rates, err := q.Rates()
+	if err != nil {
+		return "cost_unknown"
+	}
+	upper, err := metering.ReservationAmount(bounds, rates)
+	if err != nil {
+		return "procurement_bound_invalid"
+	}
+	if big.NewInt(upper).Cmp(available) > 0 {
 		return "procurement_budget_exceeded"
 	}
 	return ""

@@ -1,19 +1,26 @@
 package billing
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/moni-ai/moni-aigate/internal/routing"
+)
 
 // Route explanations are typed, bounded metadata. No URL, credential, model
 // payload or arbitrary diagnostic text may cross this persistence boundary.
 func validatedRouteDecisions(in AttemptInput) ([]byte, error) {
-	if len(in.RouteDecisions) > 1000 {
+	return validateRouteDecisions(in.ChannelID, in.ChannelVersionID, in.RouteDecisions)
+}
+
+func validateRouteDecisions(channel, version string, decisions []routing.Decision) ([]byte, error) {
+	if len(decisions) > 1000 {
 		return nil, fail("invalid_attempt", "too many route decisions")
 	}
-	if len(in.RouteDecisions) == 0 {
+	if len(decisions) == 0 {
 		return []byte("[]"), nil
 	}
 	selected := 0
 	seen := map[string]bool{}
-	for _, d := range in.RouteDecisions {
+	for _, d := range decisions {
 		if !validID(d.ChannelID) || !validID(d.VersionID) || seen[d.ChannelID] || d.Weight == 0 {
 			return nil, fail("invalid_attempt", "invalid route decision")
 		}
@@ -23,7 +30,7 @@ func validatedRouteDecisions(in AttemptInput) ([]byte, error) {
 		}
 		if d.Reason == "selected" {
 			selected++
-			if d.ChannelID != in.ChannelID || d.VersionID != in.ChannelVersionID {
+			if d.ChannelID != channel || d.VersionID != version {
 				return nil, fail("invalid_attempt", "selected route mismatch")
 			}
 		}
@@ -31,7 +38,7 @@ func validatedRouteDecisions(in AttemptInput) ([]byte, error) {
 	if selected != 1 {
 		return nil, fail("invalid_attempt", "route needs one selected candidate")
 	}
-	raw, err := json.Marshal(in.RouteDecisions)
+	raw, err := json.Marshal(decisions)
 	if err != nil || len(raw) > 262144 {
 		return nil, fail("invalid_attempt", "route decisions too large")
 	}

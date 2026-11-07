@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func pricingCode(t *testing.T, e error, want string) {
@@ -60,11 +62,11 @@ func TestTenantPricingCommandsAndOriginalReceipts(t *testing.T) {
 		t.Fatal(assigned, e)
 	}
 	at := time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)
-	price, e := f.store.PublishGroupPrice(f.ctx, actor, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: first.Result.ID, ModelID: f.model, InputRate: 0, OutputRate: 3, EffectiveAt: at})
-	if e != nil || price.Result.InputRate != "0" {
+	price, e := f.store.PublishGroupPrice(f.ctx, actor, meterquote.BindGroup(t, f.ctx, f.owner, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: first.Result.ID, ModelID: f.model, InputRate: 0, OutputRate: 3, EffectiveAt: at}))
+	if e != nil || !strings.Contains(string(price.Result.Rates), `"numerator":"0"`) {
 		t.Fatal(price, e)
 	}
-	_, e = f.store.PublishGroupPrice(f.ctx, actor, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: first.Result.ID, ModelID: f.model, InputRate: 2, OutputRate: 3, EffectiveAt: at})
+	_, e = f.store.PublishGroupPrice(f.ctx, actor, meterquote.BindGroup(t, f.ctx, f.owner, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: first.Result.ID, ModelID: f.model, InputRate: 2, OutputRate: 3, EffectiveAt: at}))
 	pricingCode(t, e, "price_effective_conflict")
 	if _, e = f.store.UpdatePriceGroup(f.ctx, actor, catalog.GroupUpdateCommand{OperationID: uuid.NewString(), GroupID: first.Result.ID, Label: "VIP", State: "retired", ExpectedRevision: 2}); e != nil {
 		t.Fatal(e)

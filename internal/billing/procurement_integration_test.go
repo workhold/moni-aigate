@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func procurementFixture(t *testing.T, f *fixture, limit int64) string {
@@ -44,12 +44,12 @@ func procurementSecondChannel(t *testing.T, f *fixture) *fixture {
 		{`INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'fixture')`, []any{g.credential, g.channel}},
 		{`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, []any{g.version, g.channel, g.credential}},
 		{`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'retry',1,1)`, []any{g.version, g.channel, g.credential}},
-		{`INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'upstream',2000000,2000000,'contract')`, []any{g.channel}},
 	} {
 		if _, err = tx.Exec(f.ctx, q.sql, q.args...); err != nil {
 			t.Fatal(err)
 		}
 	}
+	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{ChannelID: g.channel, UpstreamModel: "upstream", ModelID: g.model, Actor: f.admin, Basis: "contract", InputRate: billingRate(2000000), OutputRate: billingRate(2000000)})
 	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -58,8 +58,8 @@ func procurementSecondChannel(t *testing.T, f *fixture) *fixture {
 func procurementAttempt(t *testing.T, f *fixture, r Reservation) AttemptInput {
 	t.Helper()
 	in := dispatchBatchAttemptInput(f, r)
-	var q routing.CostQuote
-	if err := f.pool.QueryRow(f.ctx, currentAttemptCostSQL, f.channel, "upstream").Scan(&q.VersionID, &q.InputRate, &q.OutputRate, &q.Basis); err != nil {
+	q, err := scanCostQuote(f.pool.QueryRow(f.ctx, currentAttemptCostSQL, f.channel, "upstream", r.RequestID), f.channel, "upstream")
+	if err != nil {
 		t.Fatal(err)
 	}
 	in.CostQuote = &q
@@ -78,7 +78,7 @@ func procurementBalance(t *testing.T, f *fixture, id, held, spent string) {
 }
 func procurementFinal(t *testing.T, f *fixture, r Reservation, a Attempt, usage Usage, reason string) FinalizationInput {
 	t.Helper()
-	return FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "procurement-fixture", SourceEventID: uuid.NewString(), Usage: usage, ProtocolOutcome: "completed", TransportEndReason: reason, DeliveryStage: "content", ContentWritten: true}
+	return FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "adapter", SourceEventID: uuid.NewString(), Usage: usage, ProtocolOutcome: "completed", TransportEndReason: reason, DeliveryStage: "content", ContentWritten: true}
 }
 
 func TestPostgresProcurementSharedBudgetAcrossTenantsAndChannels(t *testing.T) {
@@ -107,22 +107,35 @@ func TestPostgresProcurementSharedBudgetAcrossTenantsAndChannels(t *testing.T) {
 		{`INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'fixture')`, []any{g.credential, g.channel}},
 		{`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, []any{g.version, g.channel, g.credential}},
 		{`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'second',1,1)`, []any{g.version, g.channel, g.credential}},
-		{`INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'upstream',2000000,2000000,'contract')`, []any{g.channel}},
 	} {
 		if _, err := tx.Exec(f.ctx, q.sql, q.args...); err != nil {
 			t.Fatal(err)
 		}
 	}
+	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{ChannelID: g.channel, UpstreamModel: "upstream", ModelID: g.model, Actor: f.admin, Basis: "contract", InputRate: billingRate(2000000), OutputRate: billingRate(2000000)})
 	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}
+	publishFixtureRouteWithBindings(t, f, 100,
+		fixtureRouteBinding{channel: f.channel, version: f.version, upstream: "upstream"},
+		fixtureRouteBinding{channel: g.channel, version: g.version, upstream: "upstream"},
+	)
 	g.fund(t, 1000)
 	procurementBind(t, f, account, g.channel, g.credential)
-	r1, r2 := f.reserve(t), g.reserve(t)
-	in1, in2 := procurementAttempt(t, f, r1), procurementAttempt(t, &g, r2)
+	in1, in2 := f.input(), g.input()
+	in1.RouteRevision, in2.RouteRevision = 100, 100
+	r1, err := f.store.Reserve(f.ctx, in1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r2, err := f.store.Reserve(f.ctx, in2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	attempt1, attempt2 := procurementAttempt(t, f, r1), procurementAttempt(t, &g, r2)
 	done := make(chan error, 2)
-	go func() { _, e := f.store.RecordAttempt(f.ctx, in1); done <- e }()
-	go func() { _, e := f.store.RecordAttempt(f.ctx, in2); done <- e }()
+	go func() { _, e := f.store.RecordAttempt(f.ctx, attempt1); done <- e }()
+	go func() { _, e := f.store.RecordAttempt(f.ctx, attempt2); done <- e }()
 	success := 0
 	for range 2 {
 		if e := <-done; e == nil {
@@ -326,7 +339,18 @@ func TestPostgresProcurementAccountWaitRechecksDeadlineAndPause(t *testing.T) {
 func TestPostgresProcurementSafeRetryOnlyReservesPerSupplierAttempt(t *testing.T) {
 	f := integration(t)
 	account := procurementFixture(t, f, 240)
-	r := f.reserve(t)
+	g := procurementSecondChannel(t, f)
+	procurementBind(t, f, account, g.channel, g.credential)
+	publishFixtureRouteWithBindings(t, f, 100,
+		fixtureRouteBinding{channel: f.channel, version: f.version, upstream: "upstream"},
+		fixtureRouteBinding{channel: g.channel, version: g.version, upstream: "upstream"},
+	)
+	inReserve := f.input()
+	inReserve.RouteRevision = 100
+	r, err := f.store.Reserve(f.ctx, inReserve)
+	if err != nil {
+		t.Fatal(err)
+	}
 	in := procurementAttempt(t, f, r)
 	a, err := f.store.RecordAttempt(f.ctx, in)
 	if err != nil {
@@ -347,8 +371,6 @@ func TestPostgresProcurementSafeRetryOnlyReservesPerSupplierAttempt(t *testing.T
 		t.Fatal(err)
 	}
 	procurementBalance(t, f, account, "0", "0")
-	g := procurementSecondChannel(t, f)
-	procurementBind(t, f, account, g.channel, g.credential)
 	in = procurementAttempt(t, g, r)
 	in.Sequence = 2
 	a, err = f.store.RecordAttempt(f.ctx, in)
@@ -412,7 +434,9 @@ func TestPostgresProcurementScheduledQuoteRecheckedAfterAccountLock(t *testing.T
 	account := procurementFixture(t, f, 1000)
 	r := f.reserve(t)
 	var when time.Time
-	if err := f.pool.QueryRow(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,'upstream',3000000,3000000,'contract',clock_timestamp()+interval '800 milliseconds') RETURNING effective_at`, f.channel).Scan(&when); err != nil {
+	costID := uuid.NewString()
+	meterquote.PublishCost(t, f.ctx, f.pool, meterquote.CostPrice{ID: costID, ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.admin, Basis: "contract", InputRate: billingRate(3000000), OutputRate: billingRate(3000000), EffectiveAt: time.Now().UTC().Add(800 * time.Millisecond)})
+	if err := f.pool.QueryRow(f.ctx, `SELECT effective_at FROM cost_versions WHERE id=$1`, costID).Scan(&when); err != nil {
 		t.Fatal(err)
 	}
 	a, err := f.store.RecordAttempt(f.ctx, procurementAttempt(t, f, r))

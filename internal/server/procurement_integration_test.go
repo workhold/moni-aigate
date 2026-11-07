@@ -203,7 +203,7 @@ func TestProcurementHTTPManagedCostWorkflowAndCustomerIsolation(t *testing.T) {
 	if receipt := procurementReceipt(t, call("POST", "procurement-bindings", procurementJSON(t, binding), session, csrf, nil)); receipt.Status != "applied" {
 		t.Fatal("credential not bound", receipt)
 	}
-	authExec(t, f.pool, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,'provider-model',1000000,1000000,'contract')`, channel)
+	publishCostFixture(t, f, channel, "provider-model", "contract", costRate(1000000), costRate(1000000), time.Time{})
 	response := f.request(t, context.Background(), false, false)
 	_, _ = io.Copy(io.Discard, response.Body)
 	_ = response.Body.Close()
@@ -261,8 +261,15 @@ func TestProcurementHTTPManagedCostWorkflowAndCustomerIsolation(t *testing.T) {
 	}
 	for _, path := range []string{"procurement-bindings?account_id=" + account.ID, "procurement-accounts/" + account.ID + "/events", "procurement-accounts/" + account.ID + "/reservations"} {
 		got = call("GET", path, "", operatorSession, "", nil)
-		if got.Code != 200 || strings.Contains(got.Body.String(), "local-fixture-secret") || strings.Contains(got.Body.String(), "base_url") || strings.Contains(got.Body.String(), "digest") {
+		if got.Code != 200 || strings.Contains(got.Body.String(), "local-fixture-secret") || strings.Contains(got.Body.String(), "base_url") || strings.Contains(got.Body.String(), "plan_digest") || strings.Contains(got.Body.String(), "quote_digest") || strings.Contains(got.Body.String(), "canonical") {
 			t.Fatal("financial projection unsafe", path, got.Code, got.Body.String())
+		}
+		if strings.HasSuffix(path, "/reservations") {
+			page := procurementMeterPage(t, got)
+			if len(page.Data) != 1 || page.Data[0].AttemptID != attempt || page.Data[0].UpperAmount != "120" || page.Data[0].SpentAmount != "17" || page.Data[0].HeldAmount != "0" {
+				t.Fatal("supplier vector display changed original U or approved cost", got.Body.String())
+			}
+			procurementMeterOriginal(t, f, page.Data[0])
 		}
 	}
 	if verify, err := f.server.Billing.VerifyLedger(context.Background(), billing.Query{}); err != nil || !verify.Balanced {

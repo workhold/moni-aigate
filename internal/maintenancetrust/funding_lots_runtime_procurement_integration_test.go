@@ -13,7 +13,8 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/fundinglotscan"
 	"github.com/moni-ai/moni-aigate/internal/fundinglotverify"
 	"github.com/moni-ai/moni-aigate/internal/procurement"
-	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/procurementexecution"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/frozenattempt"
 )
 
 type runtimeProcurementHistory struct {
@@ -111,14 +112,14 @@ func runtimePrepareActiveProcurementConfigured(t *testing.T, pool, business *pgx
 		t.Fatalf("original active procurement customer R=120: amount=%d error=%v", reserved.Amount, err)
 	}
 	defer store.EndRequest(h.request)
-	var quote routing.CostQuote
+	var quote procurementexecution.CostQuote
 	if pool.QueryRow(ctx, `WITH at AS MATERIALIZED (SELECT clock_timestamp() AS stamp)
  SELECT id,input_rate,output_rate,basis FROM cost_versions,at
  WHERE channel_id=$1 AND upstream_model='upstream' AND effective_at<=at.stamp
  ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1`, channel).Scan(&quote.VersionID, &quote.InputRate, &quote.OutputRate, &quote.Basis) != nil {
 		t.Fatal("active procurement original current quote")
 	}
-	attempt, err := store.RecordAttempt(ctx, billing.AttemptInput{TenantID: h.tenant, RequestID: h.request, ChannelID: channel,
+	attempt, err := frozenattempt.Reject(ctx, store, frozenattempt.Input{TenantID: h.tenant, RequestID: h.request, ChannelID: channel,
 		ChannelVersionID: version, CredentialID: credential, UpstreamModel: "upstream", Sequence: 1, CostQuote: &quote})
 	if err != nil {
 		t.Fatal("original active procurement attempt U=240", err)

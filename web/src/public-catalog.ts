@@ -7,12 +7,15 @@ export const publicProtocols = [
   { id: 'gemini_generate_content', title: 'Gemini 原生文本' },
 ] as const
 export type PublicProtocol = typeof publicProtocols[number]['id']
+import { parseTextRetailRates } from './pricing.ts'
+import { rateIsZero } from './metering-wire.ts'
+import type { TextRetailRates } from './pricing.ts'
 export interface PublicFilters { q: string; protocol: PublicProtocol | '' }
 export interface PublicModel {
   id: string; public_name: string; protocol: PublicProtocol
   capabilities: { streaming: boolean; tools: boolean; input_only: boolean; text_only: true }
   limits: { context_tokens: number; input_token_upper_bound: number; max_output_tokens: number; default_output_tokens: number }
-  pricing: { status: 'available' | 'unavailable'; currency: 'CNY'; unit: 'micro_cny_per_million_tokens'; price_version_id: string | null; input_rate: string | null; output_rate: string | null; effective_at: string | null }
+  pricing: { status: 'available' | 'unavailable'; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates | null; effective_at: string | null }
 }
 export interface PublicCatalogPage { data: PublicModel[]; request_id: string; next_cursor: string; as_of: string }
 export interface ModelPublication { id: string; public_name: string; enabled: boolean; public_visible: boolean; public_revision: string }
@@ -26,6 +29,7 @@ function object(value: unknown, keys: readonly string[]): Record<string, unknown
   return raw
 }
 function bytes(value: string) { return new TextEncoder().encode(value).length }
+function revision(value: unknown): string { if (typeof value !== 'string' || !/^[1-9][0-9]{0,18}$/.test(value) || BigInt(value) > 9223372036854775807n) throw invalid(); return value }
 export function catalogID(value: unknown): string {
   if (typeof value !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value) || value === '00000000-0000-0000-0000-000000000000') throw invalid()
   return value
@@ -39,14 +43,6 @@ export function catalogTimestamp(value: unknown): string {
   const date = new Date(value)
   if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 19) !== value.slice(0, 19)) throw invalid()
   return value
-}
-export function publicRate(value: unknown): string {
-  if (typeof value !== 'string' || !/^(0|[1-9][0-9]{0,18})$/.test(value) || BigInt(value) > 9223372036854775807n) throw invalid()
-  return value
-}
-export function publicRateCny(value: unknown): string {
-  const rate = BigInt(publicRate(value))
-  return `¥${(rate / 1000000n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${(rate % 1000000n).toString().padStart(6, '0')}`
 }
 function protocol(value: unknown): PublicProtocol {
   if (!publicProtocols.some(item => item.id === value)) throw invalid()
@@ -67,16 +63,19 @@ export function parsePublicModel(value: unknown): PublicModel {
   const limitsRaw = object(raw.limits, ['context_tokens', 'input_token_upper_bound', 'max_output_tokens', 'default_output_tokens'])
   const limits = { context_tokens: tokenLimit(limitsRaw.context_tokens), input_token_upper_bound: tokenLimit(limitsRaw.input_token_upper_bound), max_output_tokens: tokenLimit(limitsRaw.max_output_tokens), default_output_tokens: tokenLimit(limitsRaw.default_output_tokens) }
   if (!limits.context_tokens || !limits.input_token_upper_bound || limits.input_token_upper_bound > limits.context_tokens || (inputOnly ? limits.max_output_tokens !== 0 || limits.default_output_tokens !== 0 : limits.default_output_tokens <= 0 || limits.max_output_tokens < limits.default_output_tokens || limits.max_output_tokens > limits.context_tokens)) throw invalid()
-  const price = object(raw.pricing, ['status', 'currency', 'unit', 'price_version_id', 'input_rate', 'output_rate', 'effective_at'])
-  if (price.currency !== 'CNY' || price.unit !== 'micro_cny_per_million_tokens' || price.status !== 'available' && price.status !== 'unavailable') throw invalid()
+  const price = object(raw.pricing, ['status', 'price_version_id', 'schema_id', 'schema_digest', 'variant_key', 'currency', 'rates', 'effective_at'])
+  if (price.currency !== 'CNY' || price.variant_key !== 'default' || price.status !== 'available' && price.status !== 'unavailable') throw invalid()
+  const schema_id = catalogID(price.schema_id), schema_digest = price.schema_digest
+  if (typeof schema_digest !== 'string' || !/^[0-9a-f]{64}$/.test(schema_digest)) throw invalid()
   let pricing: PublicModel['pricing']
   if (price.status === 'unavailable') {
-    if ([price.price_version_id, price.input_rate, price.output_rate, price.effective_at].some(v => v !== null)) throw invalid()
-    pricing = { status: 'unavailable', currency: 'CNY', unit: 'micro_cny_per_million_tokens', price_version_id: null, input_rate: null, output_rate: null, effective_at: null }
+    if ([price.price_version_id, price.rates, price.effective_at].some(v => v !== null)) throw invalid()
+    pricing = { status: 'unavailable', currency: 'CNY', price_version_id: null, schema_id, schema_digest, variant_key: 'default', rates: null, effective_at: null }
   } else {
-    const input_rate = publicRate(price.input_rate), output_rate = publicRate(price.output_rate)
-    if (inputOnly && output_rate !== '0') throw invalid()
-    pricing = { status: 'available', currency: 'CNY', unit: 'micro_cny_per_million_tokens', price_version_id: catalogID(price.price_version_id), input_rate, output_rate, effective_at: catalogTimestamp(price.effective_at) }
+    if (price.price_version_id === null || price.effective_at === null) throw invalid()
+    const rates = parseTextRetailRates(price.rates, schema_id)
+    if (inputOnly && !rateIsZero(rates, 'text_output_token')) throw invalid()
+    pricing = { status: 'available', currency: 'CNY', price_version_id: catalogID(price.price_version_id), schema_id, schema_digest, variant_key: 'default', rates, effective_at: catalogTimestamp(price.effective_at) }
   }
   return { id, public_name, protocol: kind, capabilities: { ...capabilities, text_only: true }, limits, pricing }
 }
@@ -136,9 +135,8 @@ export function publicCatalogErrorText(error: unknown): string {
 export function parsePublication(value: unknown, expectedID?: string): ModelPublication {
   const raw = object(value, ['id', 'public_name', 'enabled', 'public_visible', 'public_revision']), id = catalogID(raw.id)
   if (expectedID !== undefined && id !== expectedID) throw new Error('公开配置返回了不同模型，请重新读取。')
-  const revision = publicRate(raw.public_revision)
-  if (revision === '0') throw invalid()
-  return { id, public_name: name(raw.public_name), enabled: bool(raw.enabled), public_visible: bool(raw.public_visible), public_revision: revision }
+  const version = revision(raw.public_revision)
+  return { id, public_name: name(raw.public_name), enabled: bool(raw.enabled), public_visible: bool(raw.public_visible), public_revision: version }
 }
 export function publicationPath(id: string) { return `/platform/models/${catalogID(id)}/publication` }
 export function publicationWrite(view: ModelPublication, visible: boolean): PublicationRequest {

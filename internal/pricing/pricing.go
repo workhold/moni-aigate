@@ -3,12 +3,14 @@
 package pricing
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/metering"
 )
 
 // Domain must come from the tenant row already held by the caller. A nil GroupID
@@ -21,10 +23,11 @@ type Domain struct {
 // Selection is the price observed by one SQL statement and its database clock.
 // Later publication, assignment, or wallet waiting must not replace this value.
 type Selection struct {
-	VersionID             string
-	GroupID               *string
-	InputRate, OutputRate int64
-	EffectiveAt, PricedAt time.Time
+	VersionID, ProfileVersion, VariantKey string
+	GroupID                               *string
+	Schema                                metering.Schema
+	Rates                                 metering.Rates
+	EffectiveAt, PricedAt                 time.Time
 }
 
 // Error exposes only a stable internal code; database errors remain unwrapped so
@@ -70,28 +73,55 @@ func SelectEffectiveTx(ctx context.Context, tx pgx.Tx, modelID string, domain Do
 		return nil, time.Time{}, &Error{Code: "invalid_domain"}
 	}
 	var pricedAt time.Time
-	var versionID *string
-	var inputRate, outputRate *int64
+	var versionID, profileVersion, schemaID *string
+	var schemaRaw, schemaDigest, ratesRaw, ratesDigest []byte
 	var effectiveAt *time.Time
 	err := tx.QueryRow(ctx, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at)
- SELECT instant.at,p.id,p.input_rate,p.output_rate,p.effective_at
+ SELECT instant.at,c.profile_version,c.schema_id,c.canonical,c.schema_digest,p.id,p.rates_canonical,p.rates_digest,p.effective_at
  FROM instant LEFT JOIN LATERAL (
-  SELECT id,input_rate,output_rate,effective_at FROM price_versions
-  WHERE model_id=$1 AND price_group_id IS NOT DISTINCT FROM $2::text
-    AND effective_at<=instant.at
-  ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1
- ) p ON true`, modelID, domain.GroupID).Scan(&pricedAt, &versionID, &inputRate, &outputRate, &effectiveAt)
+  SELECT v.id AS profile_version,v.schema_id,v.schema_digest,s.canonical
+  FROM models m JOIN model_capability_versions v ON v.id=m.profile_version AND v.model_id=m.id
+  JOIN model_capability_variants d ON d.profile_version=v.id AND d.variant_key='default'
+  JOIN meter_schemas s ON s.id=v.schema_id AND s.schema_digest=v.schema_digest WHERE m.id=$1
+ ) c ON true LEFT JOIN LATERAL (
+  SELECT p.id,p.rates_canonical,p.rates_digest,p.effective_at FROM price_versions p
+  WHERE p.model_id=$1 AND p.price_group_id IS NOT DISTINCT FROM $2::text
+    AND p.schema_id=c.schema_id AND p.schema_digest=c.schema_digest AND p.variant_key='default'
+    AND p.effective_at<=instant.at
+  ORDER BY p.effective_at DESC,p.created_at DESC,p.id COLLATE "C" DESC LIMIT 1
+ ) p ON true`, modelID, domain.GroupID).Scan(&pricedAt, &profileVersion, &schemaID, &schemaRaw, &schemaDigest, &versionID, &ratesRaw, &ratesDigest, &effectiveAt)
 	if err != nil {
 		return nil, time.Time{}, err
 	}
+	if profileVersion == nil || !canonicalID(*profileVersion) || schemaID == nil {
+		return nil, time.Time{}, &Error{Code: "pricing_invariant"}
+	}
+	schema, err := metering.ParseSchema(schemaRaw)
+	if err != nil {
+		return nil, time.Time{}, &Error{Code: "pricing_invariant"}
+	}
+	id, _ := schema.ID()
+	canonical, _ := schema.CanonicalJSON()
+	digest, _ := schema.Digest()
+	if id != *schemaID || !bytes.Equal(schemaRaw, canonical) || !bytes.Equal(schemaDigest, digest[:]) {
+		return nil, time.Time{}, &Error{Code: "pricing_invariant"}
+	}
 	if versionID == nil {
-		if inputRate != nil || outputRate != nil || effectiveAt != nil {
+		if ratesRaw != nil || ratesDigest != nil || effectiveAt != nil {
 			return nil, time.Time{}, &Error{Code: "pricing_invariant"}
 		}
 		return nil, pricedAt, nil
 	}
-	if !canonicalID(*versionID) || inputRate == nil || outputRate == nil || effectiveAt == nil ||
-		*inputRate < 0 || *outputRate < 0 || effectiveAt.After(pricedAt) {
+	if !canonicalID(*versionID) || effectiveAt == nil || effectiveAt.After(pricedAt) {
+		return nil, time.Time{}, &Error{Code: "pricing_invariant"}
+	}
+	rates, err := metering.ParseRates(schema, metering.Retail, ratesRaw)
+	if err != nil {
+		return nil, time.Time{}, &Error{Code: "pricing_invariant"}
+	}
+	canonical, _ = rates.CanonicalJSON()
+	digest, _ = rates.Digest()
+	if !bytes.Equal(ratesRaw, canonical) || !bytes.Equal(ratesDigest, digest[:]) {
 		return nil, time.Time{}, &Error{Code: "pricing_invariant"}
 	}
 	var groupID *string
@@ -100,8 +130,8 @@ func SelectEffectiveTx(ctx context.Context, tx pgx.Tx, modelID string, domain Do
 		groupID = &value
 	}
 	return &Selection{
-		VersionID: *versionID, GroupID: groupID,
-		InputRate: *inputRate, OutputRate: *outputRate,
+		VersionID: *versionID, GroupID: groupID, ProfileVersion: *profileVersion, VariantKey: "default",
+		Schema: schema, Rates: rates,
 		EffectiveAt: *effectiveAt, PricedAt: pricedAt,
 	}, pricedAt, nil
 }

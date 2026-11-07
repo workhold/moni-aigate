@@ -1,6 +1,7 @@
 package catalog_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -15,7 +16,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
+	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/pricing"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 // Successful Store retries must not hide a new pricing lock cycle.
@@ -189,7 +192,7 @@ func TestTenantPricingActiveGroupShareWinsBeforeRetirement(t *testing.T) {
 			go func() {
 				var e error
 				if kind == "publish" {
-					_, e = f.store.PublishGroupPrice(ctx, catalog.PricingActor{UserID: f.admin}, catalog.GroupPriceCommand{OperationID: operation, GroupID: group, ModelID: f.model, InputRate: 11, OutputRate: 22, EffectiveAt: time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)})
+					_, e = f.store.PublishGroupPrice(ctx, catalog.PricingActor{UserID: f.admin}, meterquote.BindGroup(t, f.ctx, f.owner, catalog.GroupPriceCommand{OperationID: operation, GroupID: group, ModelID: f.model, InputRate: 11, OutputRate: 22, EffectiveAt: time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)}))
 				} else {
 					_, e = f.store.AssignTenantPricing(ctx, catalog.PricingActor{UserID: f.admin}, catalog.TenantPricingCommand{OperationID: operation, TenantID: tenant, ExpectedRevision: 1, GroupID: &group})
 				}
@@ -220,7 +223,7 @@ func TestTenantPricingActiveGroupShareWinsBeforeRetirement(t *testing.T) {
 			}
 			if kind == "publish" {
 				v := receipt.Result.(*catalog.GroupPriceView)
-				if v.PriceGroupID != group || v.InputRate != "11" || v.OutputRate != "22" {
+				if v.PriceGroupID != group || !strings.Contains(string(v.Rates), `"numerator":"11","denominator":"1000000"`) || !strings.Contains(string(v.Rates), `"numerator":"11","denominator":"500000"`) {
 					t.Fatal(v)
 				}
 			} else {
@@ -246,7 +249,7 @@ func TestTenantPricingRetirementWinsBeforePublishAndAssignment(t *testing.T) {
 	publishOp, assignOp := uuid.NewString(), uuid.NewString()
 	publish, assign := make(chan error, 1), make(chan error, 1)
 	go func() {
-		_, e := f.store.PublishGroupPrice(ctx, catalog.PricingActor{UserID: f.admin}, catalog.GroupPriceCommand{OperationID: publishOp, GroupID: group, ModelID: f.model, InputRate: 11, OutputRate: 22, EffectiveAt: time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)})
+		_, e := f.store.PublishGroupPrice(ctx, catalog.PricingActor{UserID: f.admin}, meterquote.BindGroup(t, f.ctx, f.owner, catalog.GroupPriceCommand{OperationID: publishOp, GroupID: group, ModelID: f.model, InputRate: 11, OutputRate: 22, EffectiveAt: time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)}))
 		publish <- e
 	}()
 	go func() {
@@ -304,6 +307,20 @@ func pricingConcurrencySelection(t *testing.T, f *publicFixture, tenant string) 
 	return selected, at
 }
 
+func pricingConcurrencyRates(t *testing.T, s *pricing.Selection, input, output int64) bool {
+	t.Helper()
+	if s == nil {
+		return false
+	}
+	expected, err := metering.LegacyTokenRates(s.Schema, metering.Retail, input, output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, _ := expected.CanonicalJSON()
+	got, _ := s.Rates.CanonicalJSON()
+	return bytes.Equal(got, want)
+}
+
 func TestTenantPricingRetiredAssignedGroupActivatesPrepublishedFuturePrice(t *testing.T) {
 	f := pricingConcurrencyDB(t)
 	group := pricingConcurrencyGroup(t, f)
@@ -314,12 +331,12 @@ func TestTenantPricingRetiredAssignedGroupActivatesPrepublishedFuturePrice(t *te
 	if _, e := f.store.AssignTenantPricing(f.ctx, actor, catalog.TenantPricingCommand{OperationID: uuid.NewString(), TenantID: tenant, ExpectedRevision: 1, GroupID: &group}); e != nil {
 		t.Fatal(e)
 	}
-	old, e := f.store.PublishGroupPrice(f.ctx, actor, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: group, ModelID: f.model, InputRate: 10, OutputRate: 20, EffectiveAt: pricingConcurrencyNow(t, f).Add(-time.Minute)})
+	old, e := f.store.PublishGroupPrice(f.ctx, actor, meterquote.BindGroup(t, f.ctx, f.owner, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: group, ModelID: f.model, InputRate: 10, OutputRate: 20, EffectiveAt: pricingConcurrencyNow(t, f).Add(-time.Minute)}))
 	if e != nil {
 		t.Fatal(e)
 	}
 	effective := pricingConcurrencyNow(t, f).Add(time.Second)
-	future, e := f.store.PublishGroupPrice(f.ctx, actor, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: group, ModelID: f.model, InputRate: 30, OutputRate: 40, EffectiveAt: effective})
+	future, e := f.store.PublishGroupPrice(f.ctx, actor, meterquote.BindGroup(t, f.ctx, f.owner, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: group, ModelID: f.model, InputRate: 30, OutputRate: 40, EffectiveAt: effective}))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -327,7 +344,7 @@ func TestTenantPricingRetiredAssignedGroupActivatesPrepublishedFuturePrice(t *te
 		t.Fatal(e)
 	}
 	before, observed := pricingConcurrencySelection(t, f, tenant)
-	if !observed.Before(effective) || before == nil || before.VersionID != old.Result.ID || before.InputRate != 10 || before.OutputRate != 20 {
+	if !observed.Before(effective) || before == nil || before.VersionID != old.Result.ID || !pricingConcurrencyRates(t, before, 10, 20) {
 		t.Fatal("retirement changed the pre-activation selection", before, observed, effective)
 	}
 	quote, e := f.store.RetailPrice(f.ctx, f.customer, tenant, f.model)
@@ -340,7 +357,7 @@ func TestTenantPricingRetiredAssignedGroupActivatesPrepublishedFuturePrice(t *te
 		t.Fatal(e)
 	}
 	after, observed := pricingConcurrencySelection(t, f, tenant)
-	if observed.Before(effective) || after == nil || after.VersionID != future.Result.ID || after.InputRate != 30 || after.OutputRate != 40 || !after.EffectiveAt.Equal(effective) {
+	if observed.Before(effective) || after == nil || after.VersionID != future.Result.ID || !pricingConcurrencyRates(t, after, 30, 40) || !after.EffectiveAt.Equal(effective) {
 		t.Fatal("retired existing domain failed future activation", after, observed, effective)
 	}
 	quote, e = f.store.RetailPrice(ctx, f.customer, tenant, f.model)

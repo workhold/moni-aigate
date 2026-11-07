@@ -17,7 +17,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/moni-ai/moni-aigate/internal/operations"
 	"github.com/moni-ai/moni-aigate/internal/pricing"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
@@ -29,7 +28,10 @@ type fixture struct {
 	actor, tenant, model, key, legacy, defaultPrice, schema string
 }
 
-func newFixture(t *testing.T) *fixture {
+// newLegacyBaseline builds a genuine 001-017 database with one request whose
+// pricing columns predate snapshots. It is only the input of the refusal test:
+// the current migrations do not upgrade request history into a vector DB.
+func newLegacyBaseline(t *testing.T) *fixture {
 	t.Helper()
 	dsn := os.Getenv("TEST_DATABASE_URL")
 	if dsn == "" {
@@ -40,9 +42,7 @@ func newFixture(t *testing.T) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")
-	schema := "pricing_it_" + suffix
-	appRole, projectionRole := "pricing_app_"+suffix[:12], "pricing_projection_"+suffix[:12]
+	schema := "pricing_it_" + strings.ReplaceAll(uuid.NewString(), "-", "")
 	if _, err = admin.Exec(ctx, "CREATE SCHEMA "+pgx.Identifier{schema}.Sanitize()); err != nil {
 		admin.Close()
 		t.Fatal(err)
@@ -54,29 +54,20 @@ func newFixture(t *testing.T) *fixture {
 	cfg.ConnConfig.RuntimeParams["search_path"] = schema
 	cfg.ConnConfig.RuntimeParams["lock_timeout"] = "3s"
 	cfg.ConnConfig.RuntimeParams["statement_timeout"] = "5s"
-	cfg.MaxConns = 8
+	cfg.MaxConns = 4
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var app *pgxpool.Pool
 	t.Cleanup(func() {
-		if app != nil {
-			app.Close()
-		}
 		pool.Close()
 		_, e := admin.Exec(context.Background(), "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE")
-		for _, role := range []string{appRole, projectionRole} {
-			_, _ = admin.Exec(context.Background(), "DROP OWNED BY "+pgx.Identifier{role}.Sanitize())
-			_, _ = admin.Exec(context.Background(), "DROP ROLE "+pgx.Identifier{role}.Sanitize())
-		}
 		admin.Close()
 		if e != nil {
 			t.Errorf("cleanup schema: %v", e)
 		}
 	})
-	// Seed a genuine 001-017 request before applying the new snapshot guard.
-	// Record exact checksums so the production runner verifies retained migrations.
+	// Record exact checksums so the production runner treats 001-017 as applied.
 	if _, err = pool.Exec(ctx, `CREATE TABLE schema_migrations(name TEXT PRIMARY KEY,checksum TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp())`); err != nil {
 		t.Fatal(err)
 	}
@@ -108,57 +99,15 @@ func newFixture(t *testing.T) *fixture {
 	f.exec(`INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, f.tenant, f.model)
 	f.exec(`INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes) VALUES($1,$2,$3,'prototype','test','prototype-'||$1,ARRAY['*'])`, f.key, f.tenant, f.actor)
 	f.exec(`INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,10,20,clock_timestamp()-interval '1 hour',$3)`, f.defaultPrice, f.model, f.actor)
-	f.exec(requestInsert(false), f.legacy, f.tenant, f.key, f.actor, f.model, f.defaultPrice)
-	if err = migrations.Apply(ctx, pool); err != nil {
-		t.Fatal("production pricing upgrade:", err)
-	}
-	for _, role := range []string{appRole, projectionRole} {
-		if _, err = admin.Exec(ctx, "CREATE ROLE "+pgx.Identifier{role}.Sanitize()+" NOLOGIN NOINHERIT NOSUPERUSER"); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err = operations.ProvisionFor(ctx, pool, schema, appRole, projectionRole); err != nil {
-		t.Fatal(err)
-	}
-	appCfg := pool.Config()
-	appCfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		_, e := conn.Exec(ctx, "SET ROLE "+pgx.Identifier{appRole}.Sanitize())
-		return e
-	}
-	app, err = pgxpool.NewWithConfig(ctx, appCfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err = app.Ping(ctx); err != nil {
-		t.Fatal(err)
-	}
-	f.pool = app
-	t.Log("isolated schema:", schema)
+	f.exec(`INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming) VALUES($1,$2,$3,$4,$5,$6,10,20,1000,1000,'profile','policy','hmac',clock_timestamp()+interval '1 hour','prototype',false)`, f.legacy, f.tenant, f.key, f.actor, f.model, f.defaultPrice)
 	return f
 }
 
-func requestInsert(recorded bool) string {
-	base := `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming`
-	if recorded {
-		return base + `,pricing_group_id,tenant_pricing_revision,retail_priced_at) VALUES($1,$2,$3,$4,$5,$6,10,20,1000,1000,'profile','policy','hmac',clock_timestamp()+interval '1 hour','prototype',false,NULL,1,clock_timestamp())`
-	}
-	return base + `) VALUES($1,$2,$3,$4,$5,$6,10,20,1000,1000,'profile','policy','hmac',clock_timestamp()+interval '1 hour','prototype',false)`
-}
 func (f *fixture) exec(sql string, args ...any) {
 	f.t.Helper()
 	if _, err := f.pool.Exec(f.ctx, sql, args...); err != nil {
 		f.t.Fatal(err)
 	}
-}
-
-// New metadata-only requests need their zero reservation in the same APP
-// transaction after 020. This posts no money and does not test billing.Reserve.
-func (f *fixture) metadataSource(request, sql string, args ...any) {
-	f.t.Helper()
-	tx := f.tx()
-	mustExec(f.t, f.ctx, tx, sql, args...)
-	mustExec(f.t, f.ctx, tx, `INSERT INTO reservations(id,tenant_id,request_id,amount,deadline) VALUES(gen_random_uuid()::text,$1,$2,0,clock_timestamp()+interval '24 hours')`, f.tenant, request)
-	mustCommit(f.t, f.ctx, tx)
 }
 
 func (f *fixture) tx() pgx.Tx {
@@ -242,39 +191,26 @@ func (f *fixture) assign(group *string, expected int64) {
 	mustCommit(f.t, f.ctx, tx)
 }
 
-func TestPricingMigrationRetainsLegacyAndGuardsNewSnapshots(t *testing.T) {
-	f := newFixture(t)
-	var legacy bool
-	if err := f.pool.QueryRow(f.ctx, `SELECT pricing_group_id IS NULL AND tenant_pricing_revision IS NULL AND retail_priced_at IS NULL FROM request_records WHERE id=$1`, f.legacy).Scan(&legacy); err != nil || !legacy {
-		t.Fatal(legacy, err)
+// The current migration chain accepts no request history: 024 refuses and
+// rolls back as one transaction, leaving the legacy row and schema untouched.
+func TestPricingMigrationRefusesLegacyRequestHistory(t *testing.T) {
+	f := newLegacyBaseline(t)
+	err := migrations.Apply(f.ctx, f.owner)
+	if err == nil || !strings.Contains(err.Error(), "024_unified_text_metering.sql") || !strings.Contains(err.Error(), "refuses existing request_records history") {
+		t.Fatal("legacy request history was not refused by 024:", err)
 	}
-	f.exec(`UPDATE request_records SET status='dispatching' WHERE id=$1`, f.legacy)
-	for _, statement := range []string{
-		`UPDATE request_records SET tenant_pricing_revision=1,retail_priced_at=clock_timestamp() WHERE id=$1`,
-		`UPDATE request_records SET input_rate=11 WHERE id=$1`,
-		`UPDATE request_records SET price_version_id=gen_random_uuid()::text WHERE id=$1`,
-	} {
-		if _, err := f.pool.Exec(f.ctx, statement, f.legacy); err == nil {
-			t.Fatal("legacy mutation accepted", statement)
-		} else {
-			t.Log("rejected:", code(err))
-		}
-		if _, err := f.owner.Exec(f.ctx, statement, f.legacy); err == nil || !strings.HasPrefix(code(err), "P0001:") {
-			t.Fatalf("owner bypassed immutable legacy snapshot: %s: %v", statement, err)
-		}
+	var applied024, meterSchemas bool
+	var legacyRate int64
+	if err = f.owner.QueryRow(f.ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE name='024_unified_text_metering.sql'),to_regclass('meter_schemas') IS NOT NULL,(SELECT input_rate FROM request_records WHERE id=$1)`, f.legacy).Scan(&applied024, &meterSchemas, &legacyRate); err != nil {
+		t.Fatal(err)
 	}
-	if _, err := f.pool.Exec(f.ctx, requestInsert(false), uuid.NewString(), f.tenant, f.key, f.actor, f.model, f.defaultPrice); code(err) != "P0001:new request requires retail snapshot" {
-		t.Fatal("new legacy request did not fail the pricing snapshot guard", code(err))
-	}
-	current := uuid.NewString()
-	f.metadataSource(current, requestInsert(true), current, f.tenant, f.key, f.actor, f.model, f.defaultPrice)
-	if _, err := f.pool.Exec(f.ctx, `UPDATE price_versions SET price_group_id=NULL WHERE id=$1`, f.defaultPrice); err == nil {
-		t.Fatal("immutable price update accepted")
+	if applied024 || meterSchemas || legacyRate != 10 {
+		t.Fatal("refused 024 left partial state", applied024, meterSchemas, legacyRate)
 	}
 }
 
 func TestCommandsNoOpAndCrossDomain(t *testing.T) {
-	f := newFixture(t)
+	f := newVectorFixture(t)
 	a := f.createGroup("A")
 	b := f.createGroup("B")
 	f.assign(&a, 1)
@@ -316,16 +252,11 @@ func TestCommandsNoOpAndCrossDomain(t *testing.T) {
 	// Each model/domain may have the same timestamp, but a domain cannot duplicate it.
 	at := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
 	for _, g := range []string{a, b} {
-		tx := f.tx()
-		op, id := uuid.NewString(), uuid.NewString()
-		r, err := f.receipt(tx, op, "group_price.publish", "platform", "/api/platform/price-groups/"+g+"/price-versions", id, nil, wire(map[string]any{"model_id": f.model, "input_rate": "0", "output_rate": "0", "effective_at": at.Format("2006-01-02T15:04:05.000000Z")}), wire(map[string]any{"id": id, "model_id": f.model, "price_group_id": g, "currency": "CNY", "input_rate": "0", "output_rate": "0", "effective_at": at.Format("2006-01-02T15:04:05.000000Z")}))
-		if err != nil {
+		if _, err := f.publishRates(g, g, at, 0, 0); err != nil {
 			t.Fatal(err)
 		}
-		mustExec(t, f.ctx, tx, `INSERT INTO price_versions(id,model_id,price_group_id,pricing_operation_id,input_rate,output_rate,effective_at,created_by,created_at) VALUES($1,$2,$3,$4,0,0,$5,$6,$7)`, id, f.model, g, op, at, f.actor, r)
-		mustCommit(t, f.ctx, tx)
 	}
-	if _, err = f.pool.Exec(f.ctx, `INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) SELECT model_id,0,0,effective_at,created_by FROM price_versions WHERE id=$1`, f.defaultPrice); err == nil {
+	if _, err = f.owner.Exec(f.ctx, `SELECT meter_insert_token_price(NULL,model_id,0,0,effective_at,created_by,NULL,NULL,NULL) FROM price_versions WHERE id=$1`, f.defaultPrice); err == nil {
 		t.Fatal("duplicate NULL domain accepted")
 	} else {
 		t.Log("NULL-domain duplicate:", code(err))
@@ -333,7 +264,7 @@ func TestCommandsNoOpAndCrossDomain(t *testing.T) {
 }
 
 func TestSQLNullInputsRejected(t *testing.T) {
-	f := newFixture(t)
+	f := newVectorFixture(t)
 	g := f.createGroup("null-target")
 	for _, test := range []struct{ kind, input string }{
 		{"price_group.update", `{"expected_revision":null,"label":"null-target","state":"active"}`},
@@ -372,7 +303,7 @@ func TestSQLNullInputsRejected(t *testing.T) {
 }
 
 func TestLoginTenantNoKeyUpdateBarrier(t *testing.T) {
-	f := newFixture(t)
+	f := newVectorFixture(t)
 	for _, lock := range []string{"FOR NO KEY UPDATE", "FOR UPDATE"} {
 		t.Run(strings.ReplaceAll(lock, " ", "_"), func(t *testing.T) {
 			login := f.tx()
@@ -436,103 +367,16 @@ func TestLoginTenantNoKeyUpdateBarrier(t *testing.T) {
 	}
 }
 
-func (f *fixture) publish(g, targetGroup string, at time.Time) (string, error) {
-	return f.publishRates(g, targetGroup, at, 10, 20)
-}
-
-func (f *fixture) publishRates(g, targetGroup string, at time.Time, inputRate, outputRate int64) (string, error) {
-	tx, err := f.pool.Begin(f.ctx)
-	if err != nil {
-		return "", err
-	}
-	defer tx.Rollback(f.ctx)
-	op, id := uuid.NewString(), uuid.NewString()
-	instant := at.UTC().Format("2006-01-02T15:04:05.000000Z")
-	r, err := f.receipt(tx, op, "group_price.publish", "platform", "/api/platform/price-groups/"+targetGroup+"/price-versions", id, nil, wire(map[string]any{"model_id": f.model, "input_rate": fmt.Sprint(inputRate), "output_rate": fmt.Sprint(outputRate), "effective_at": instant}), wire(map[string]any{"id": id, "model_id": f.model, "price_group_id": g, "currency": "CNY", "input_rate": fmt.Sprint(inputRate), "output_rate": fmt.Sprint(outputRate), "effective_at": instant}))
-	if err != nil {
-		return "", err
-	}
-	_, err = tx.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,price_group_id,pricing_operation_id,input_rate,output_rate,effective_at,created_by,created_at) VALUES($1,$2,$3,$4,$8,$9,$5,$6,$7)`, id, f.model, g, op, at, f.actor, r, inputRate, outputRate)
-	if err != nil {
-		return "", err
-	}
-	return id, tx.Commit(f.ctx)
-}
-
-func TestPublicationTargetsRetirementAndRecordedRequest(t *testing.T) {
-	f := newFixture(t)
-	a := f.createGroup("existing")
-	b := f.createGroup("other")
-	at := time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)
-	if _, err := f.publish(a, b, at); err == nil {
-		t.Fatal("cross-target group publication committed")
-	} else {
-		t.Log("cross-target rejected:", code(err))
-	}
-	p, err := f.publish(a, a, at)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.publish(a, a, at); err == nil {
-		t.Fatal("same group/effective duplicate committed")
-	} else {
-		t.Log("same group time duplicate:", code(err))
-	}
-	f.assign(&a, 1)
-	req := uuid.NewString()
-	recorded := strings.Replace(requestInsert(true), "NULL,1,clock_timestamp()", "$7,2,clock_timestamp()", 1)
-	f.metadataSource(req, recorded, req, f.tenant, f.key, f.actor, f.model, p, a)
-	// Snapshot cannot borrow a version from another domain or change the locked revision.
-	if _, err = f.pool.Exec(f.ctx, requestInsert(true), uuid.NewString(), f.tenant, f.key, f.actor, f.model, p); code(err) != "P0001:request tenant pricing mismatch" {
-		t.Fatal("NULL domain request did not fail the pricing domain guard", code(err))
-	}
-	tx := f.tx()
-	var created time.Time
-	if err = tx.QueryRow(f.ctx, `SELECT created_at FROM price_groups WHERE id=$1 FOR NO KEY UPDATE`, a).Scan(&created); err != nil {
-		t.Fatal(err)
-	}
-	op := uuid.NewString()
-	_, err = f.receipt(tx, op, "price_group.update", "platform", "/api/platform/price-groups/"+a, a, int64(2), wire(map[string]any{"expected_revision": "1", "label": "existing", "state": "retired"}), wire(map[string]any{"id": a, "label": "existing", "state": "retired", "revision": "2", "created_at": created.UTC().Format("2006-01-02T15:04:05.000000Z")}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	mustExec(t, f.ctx, tx, `UPDATE price_groups SET state='retired',revision=2,last_operation_id=$2 WHERE id=$1`, a, op)
-	mustCommit(t, f.ctx, tx)
-	f.assign(&a, 2) // Existing retired assignment is a real no-op, not a new assignment.
-	var before int
-	if err = f.pool.QueryRow(f.ctx, `SELECT count(*) FROM pricing_operations`).Scan(&before); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.publish(a, a, at.Add(time.Second)); err == nil {
-		t.Fatal("retired publication committed")
-	} else {
-		t.Log("retired publication rejected:", code(err))
-	}
-	var after int
-	if err = f.pool.QueryRow(f.ctx, `SELECT count(*) FROM pricing_operations`).Scan(&after); err != nil || before != after {
-		t.Fatal("failed publish left receipt", before, after, err)
-	}
-	// Existing tenants continue to insert recorded requests on retired group prices.
-	retired := uuid.NewString()
-	f.metadataSource(retired, recorded, retired, f.tenant, f.key, f.actor, f.model, p, a)
-	f.assign(nil, 2)
-	f.exec(`UPDATE request_records SET billing_status='released',status='failed' WHERE id=$1`, req)
-	var stillA bool
-	if err = f.pool.QueryRow(f.ctx, `SELECT pricing_group_id=$2 AND tenant_pricing_revision=2 FROM request_records WHERE id=$1`, req, a).Scan(&stillA); err != nil || !stillA {
-		t.Fatal("historical snapshot changed", stillA, err)
-	}
-}
-
 func TestBidirectionalTenantSwap(t *testing.T) {
-	f := newFixture(t)
+	f := newVectorFixture(t)
 	a := f.createGroup("swap-a")
 	b := f.createGroup("swap-b")
 	f.assign(&a, 1)
 	tid2 := uuid.NewString()
 	f.exec(`INSERT INTO tenants(id,name) VALUES($1,'swap-tenant-2')`, tid2)
-	f2 := *f
-	f2.tenant = tid2
-	f2.assign(&b, 1)
+	second := *f.fixture
+	second.tenant = tid2
+	second.assign(&b, 1)
 	left, right := f.tx(), f.tx()
 	for _, v := range []struct {
 		tx             pgx.Tx
@@ -570,13 +414,13 @@ func TestBidirectionalTenantSwap(t *testing.T) {
 }
 
 func TestSelectEffectiveTxUsesExactDomainAndKeepsZero(t *testing.T) {
-	f := newFixture(t)
+	f := newVectorFixture(t)
 	group, emptyGroup := f.createGroup("selected"), f.createGroup("missing")
 	f.assign(&group, 1)
 	tx := f.tx()
 	selected, observed, err := pricing.SelectEffectiveTx(f.ctx, tx, f.model, pricing.Domain{TenantRevision: 1})
 	if err != nil || selected == nil || selected.VersionID != f.defaultPrice || selected.GroupID != nil ||
-		selected.InputRate != 10 || selected.OutputRate != 20 || !selected.PricedAt.Equal(observed) {
+		!selectionRates(t, selected, 10, 20) || !selected.PricedAt.Equal(observed) {
 		t.Fatalf("default selection: %+v at=%s error=%v", selected, observed, err)
 	}
 	missing, at, err := pricing.SelectEffectiveTx(f.ctx, tx, f.model, pricing.Domain{GroupID: &emptyGroup, TenantRevision: 1})
@@ -608,10 +452,10 @@ func TestSelectEffectiveTxUsesExactDomainAndKeepsZero(t *testing.T) {
 		t.Fatal(err)
 	}
 	zero, _, err := pricing.SelectEffectiveTx(f.ctx, tx, f.model, domain)
-	if err != nil || zero == nil || zero.VersionID != zeroID || zero.InputRate != 0 || zero.OutputRate != 0 {
+	if err != nil || zero == nil || zero.VersionID != zeroID || !selectionRates(t, zero, 0, 0) {
 		t.Fatalf("zero rates treated as unavailable or future selected: %+v %v", zero, err)
 	}
-	if current.VersionID != currentID || current.InputRate != 10 || current.OutputRate != 20 {
+	if current.VersionID != currentID || !selectionRates(t, current, 10, 20) {
 		t.Fatal("later price selection mutated an existing frozen value")
 	}
 	copyOfGroup := group
@@ -622,7 +466,7 @@ func TestSelectEffectiveTxUsesExactDomainAndKeepsZero(t *testing.T) {
 }
 
 func TestGroupLockWaitPrecedesSelectionClock(t *testing.T) {
-	f := newFixture(t)
+	f := newVectorFixture(t)
 	group := f.createGroup("waited")
 	f.assign(&group, 1)
 	var dbNow time.Time
@@ -693,7 +537,7 @@ func TestInvalidDomainAndMissingAssignedGroup(t *testing.T) {
 			t.Fatalf("invalid domain error: %v", err)
 		}
 	}
-	f := newFixture(t)
+	f := newVectorFixture(t)
 	tx := f.tx()
 	missing := uuid.NewString()
 	err := pricing.LockAssignedGroupTx(f.ctx, tx, pricing.Domain{GroupID: &missing, TenantRevision: 1})

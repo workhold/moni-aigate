@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/moni-ai/moni-aigate/internal/provider"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"github.com/moni-ai/moni-aigate/internal/routing"
 	"golang.org/x/time/rate"
 )
@@ -37,13 +38,9 @@ func (s *Server) releaseProbe() {
 }
 
 func (s *Server) saveProbe(id, status string, usage provider.Usage) error {
-	raw, err := json.Marshal(usage)
-	if err != nil {
-		return err
-	}
 	ctx, cancel := cleanupContext()
 	defer cancel()
-	_, err = s.Pool.Exec(ctx, "UPDATE platform_probe_attempts SET status=$2,normalized_usage=$3,completed_at=clock_timestamp() WHERE id=$1", id, status, raw)
+	_, err := s.Pool.Exec(ctx, "SELECT meter_finish_probe($1,$2,$3,$4,$5)", id, status, usage.Status, usage.InputTokens, usage.OutputTokens)
 	return err
 }
 
@@ -69,7 +66,7 @@ func (s *Server) probe(c *gin.Context) {
 	var weight uint64
 	// A probe uses one complete published binding. Updating current_version
 	// without publishing must not combine a new endpoint with an old binding.
-	err = tx.QueryRow(ctx, `SELECT m.id,b.upstream_model,m.profile_version,m.profile,b.channel_version_id,b.max_inflight,b.priority,b.weight FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id JOIN models m ON m.id=p.model_id AND m.active_revision=p.revision WHERE b.channel_id=$1 AND m.enabled AND NOT EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) ORDER BY m.id LIMIT 1 FOR SHARE OF m`, c.Param("id")).Scan(&modelID, &upstream, &profileVersion, &profileJSON, &version, &maxInflight, &priority, &weight)
+	err = tx.QueryRow(ctx, `SELECT m.id,b.upstream_model,m.profile_version,meter_model_profile(m.id),b.channel_version_id,b.max_inflight,b.priority,b.weight FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id JOIN models m ON m.id=p.model_id AND m.active_revision=p.revision WHERE b.channel_id=$1 AND m.enabled AND NOT EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) ORDER BY m.id LIMIT 1 FOR SHARE OF m`, c.Param("id")).Scan(&modelID, &upstream, &profileVersion, &profileJSON, &version, &maxInflight, &priority, &weight)
 	if errors.Is(err, pgx.ErrNoRows) {
 		s.fail(c, 400, "probe_model_required", "请先将渠道发布到一个已启用模型，再发起平台探测")
 		return
@@ -97,6 +94,25 @@ func (s *Server) probe(c *gin.Context) {
 	}
 	if isolated {
 		s.fail(c, 503, "probe_channel_unavailable", "当前渠道模型版本已隔离")
+		return
+	}
+	// Probes keep the unknown-procurement posture, but the routing plan still
+	// needs the same complete current quote identity as a customer candidate.
+	stored := routecost.StoredInput{ChannelID: channel, UpstreamModel: upstream}
+	err = tx.QueryRow(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at)
+ SELECT s.canonical,s.schema_digest,'default',coalesce(q.id,''),coalesce(q.basis,'unknown'),q.rates_canonical,q.rates_digest
+ FROM model_capability_versions c JOIN meter_schemas s ON s.id=c.schema_id AND s.schema_digest=c.schema_digest CROSS JOIN quote_clock clock
+ LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv WHERE cv.channel_id=$2 AND cv.upstream_model=$3
+  AND cv.schema_id=s.id AND cv.schema_digest=s.schema_digest AND cv.variant_key='default' AND cv.effective_at<=clock.at
+  ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true
+ WHERE c.id=$1 AND c.model_id=$4`, profileVersion, channel, upstream, modelID).Scan(&stored.SchemaCanonical, &stored.SchemaDigest, &stored.VariantKey, &stored.VersionID, &stored.Basis, &stored.RatesCanonical, &stored.RatesDigest)
+	if err != nil {
+		s.error(c, err)
+		return
+	}
+	quote, err := routecost.ParseStoredQuote(stored)
+	if err != nil {
+		s.fail(c, 503, "invalid_route_policy", "探测渠道配置不可用")
 		return
 	}
 	var profile provider.Profile
@@ -138,7 +154,7 @@ func (s *Server) probe(c *gin.Context) {
 	}
 	candidates := []routing.Candidate{}
 	for rows.Next() {
-		candidate := routing.Candidate{ChannelID: channel, VersionID: version, Model: upstream, Region: region, Priority: priority, Weight: weight, MaxInflight: maxInflight, Enabled: true, Endpoint: provider.Endpoint{URL: baseURL + suffix, Model: upstream, Network: networkPolicy(baseURL, cidrs)}}
+		candidate := routing.Candidate{ChannelID: channel, VersionID: version, Model: upstream, Region: region, Priority: priority, Weight: weight, MaxInflight: maxInflight, Enabled: true, CostQuote: quote, Endpoint: provider.Endpoint{URL: baseURL + suffix, Model: upstream, Network: networkPolicy(baseURL, cidrs)}}
 		var ciphertext string
 		var revoked bool
 		if err = rows.Scan(&candidate.CredentialID, &candidate.CredentialWeight, &candidate.CredentialMaxInflight, &ciphertext, &revoked); err != nil {

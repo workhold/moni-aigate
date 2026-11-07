@@ -2,6 +2,7 @@ package billing
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -10,22 +11,25 @@ func TestPostgresIndependentContextBoundsReserveAndSettle(t *testing.T) {
 	f := integration(t)
 	// A separate fixture profile leaves every old model/version untouched.
 	f.model = uuid.NewString()
-	profile := `{"version":"bounds-v1","model":"full-context","input_token_upper_bound":120,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`
+	version := uuid.NewString()
+	profile := `{"version":"` + version + `","model":"full-context","protocol":"openai_chat","input_token_upper_bound":120,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`
 	for _, q := range []struct {
 		sql  string
 		args []any
 	}{
-		{"INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,'full-context',$2,'bounds-v1')", []any{f.model, profile}},
+		{"SELECT meter_insert_text_model($1,'full-context',$2::jsonb,$3)", []any{f.model, profile, version}},
 		{"INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", []any{f.tenant, f.model}},
 		{"UPDATE api_keys SET scopes=array_append(scopes,$2) WHERE id=$1", []any{f.key, f.model}},
-		{"INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,1000000,1000000,clock_timestamp()-interval '1 day',$2)", []any{f.model, f.operator}},
 	} {
 		if _, err := f.pool.Exec(f.ctx, q.sql, q.args...); err != nil {
 			t.Fatal(err)
 		}
 	}
+	billingPoolPublish(t, f, f.version, 1)
+	publishBillingDefault(t, f, f.model, 1000000, 1000000, time.Now().UTC().Add(-time.Hour))
+	publishBillingCost(t, f, f.channel, "upstream", "contract", billingRate(2000000), billingRate(2000000), time.Time{})
 	in := f.input()
-	in.ProfileVersion = "bounds-v1"
+	in.ModelID, in.ProfileVersion, in.RouteRevision = f.model, version, 1
 	in.InputUpperBound = 120
 	r, err := f.store.Reserve(f.ctx, in)
 	if err != nil || r.Amount != 140 {

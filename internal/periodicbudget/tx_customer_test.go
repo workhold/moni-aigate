@@ -27,6 +27,7 @@ func pbTxCustomerLocks(t *testing.T, f *pbTxFixture, tx pgx.Tx, request string) 
 }
 
 func TestTxCustomerDoubleScopeSingleWallet(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	tenantControl := f.configure(t, "tenant", true, 120)
 	keyControl := f.configure(t, "key", true, 120)
@@ -89,6 +90,7 @@ func TestTxCustomerDoubleScopeSingleWallet(t *testing.T) {
 }
 
 func TestTxCustomerAdmissionTamperingRollsBackWholeSource(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	f.configure(t, "tenant", false, 10000)
 	f.configure(t, "key", false, 10000)
@@ -138,6 +140,7 @@ func TestTxCustomerAdmissionTamperingRollsBackWholeSource(t *testing.T) {
 }
 
 func TestTxCustomerAmountZeroTokenAndCapFailure(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	f.configure(t, "tenant", true, 119)
 	f.configure(t, "key", true, 120)
@@ -195,6 +198,7 @@ type pbTxNoncomparable struct {
 }
 
 func TestTxCustomerTransactionIdentityAndClosedSource(t *testing.T) {
+	pbHandwrittenSource(t)
 	f := newPBTxFixture(t)
 	f.configure(t, "tenant", false, 10000)
 	f.configure(t, "key", false, 10000)
@@ -234,6 +238,7 @@ func TestTxCustomerTransactionIdentityAndClosedSource(t *testing.T) {
 }
 
 func TestTxCustomerNoControlAndLegacyFinish(t *testing.T) {
+	pbHandwrittenSource(t)
 	t.Run("closed_before_configuration_has_no_catchup", func(t *testing.T) {
 		f := newPBTxFixture(t)
 		tx := f.begin(t)

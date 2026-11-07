@@ -1,22 +1,55 @@
 # 统一计量与共同值域（028-U）
 
-2026-11-04。当前新增的是共同纯领域，**尚未接入serve的报价、预占和结算**。当前六文本仍沿现行正式模型运行；U集成将一次替换内部Token专用计算链，不增加运行模式或旧DTO fallback。图片、音频、任务和Realtime端点尚未交付。
+2026-11-07。共同纯领域已接入当前文本模型的报价、预占、结算和终态投影。候选024只安装空库、不转换已有历史。请求和尝试保存原四条界行；UUID档案与64位小写hex HMAC就绪时写入计划、外层inference报价及纯核bounds/rates/QuoteDigest，未就绪时这些canonical/digest同空。6a–6d 已接入完整发布operation、读端、客户R/结算/capability/route complete guard、非零route_revision边界和受限APP六协议局部链；默认/组价组合、一次退款来源及过期未知用量恢复不重生成专项也已通过55439验证。用量事件绑定真实attempt，采用inference Observation。028-U完整存储/HTTP/UI/商业出口、浏览器和生产验收尚未收口。
 
 规格入口：[总体](../../specs/028-unified-metering-media/spec.md)、[共同域精确合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md)。当前经营/资金链分别见[026报表](operating-reports.md)与[027来源](wallet-sources.md)。
 
-## 已实现的纯依赖
+请求/尝试两侧bounds与known rates的纯核摘要从原价格/成本快照重建，外层报价继续使用 `moni-aigate.inference.quote.v1` 身份；unknown供应商不伪造数值quote。迁移、计费和角色局部专项已有PostgreSQL 16.15证据，当前轮次验证见[记录](../verification/unified-metering.md)。
+
+第 2 片进一步保存 attempt snapshot 到原 request Plan 的独立 `parent_plan_digest`，并在同一事务内重读 request snapshot 校验父子摘要关系；缺父计划、跨请求或只写一侧都会拒绝。
+
+attempt成本投影使用同tenant/attempt的finalization或correction来源指针，known恰有一个、unknown都为空；对应数据库专项已有局部通过证据。
+
+随后在指定 PostgreSQL 16.15 专库通过迁移、billing lifecycle/evidence/settlement 与 operations meter role boundary 专项；该验证只覆盖本片，028-U整体仍未完成。
+
+第 4 片把事件中的 `observation_canonical` 接到 inference Observation 的固定 canonical 和 `moni-aigate.inference.observation.v1` digest，补来源闭集、事件元数据和数据库重建 guard；迁移、billing、采购和角色边界专项已通过，HTTP/UI 与完整商业链路仍未完成。
+
+当前目录的路由发布、公共发布校验统一读取不可变capability；当前成本路由/公共目录夹具使用meter函数和快照，历史迁移夹具保持其原schema并验证拒迁。周期预算HTTP仅编译，55439专库仍待验收；完整六文本商业链及前端仍待收口。
+
+第5片续关闭采购报价域串价：发布HTTP/UI显式绑定schema_id/digest/default，SQL从指定schema重建摘要，不再取全局最近capability；route保存原profile与出生stamp，非零active route和请求route必须匹配profile。候选沿route、attempt/采购锁后沿request snapshot、派发沿attempt snapshot选择同channel/upstream/schema/digest/variant报价。跨域known零价或unknown既不补缺价也不使本域报价过期；快照独立检查真实attempt域，不因无计划/unknown而跳过。该片不新增资金表、结算器或供应商权限，原金额/来源与APP/投影/payment worker权限边界不变；新增meter函数同样拒PUBLIC及投影执行。完整向量DTO与pricing_operations/指纹仍是后续工作，不能据此标028-U完成。
+
+第5片的实际金额读端续片冻结存储合同6.2.1：客户结算、attempt成本和采购实际消费经[billing/vector_actual](../../internal/billing/vector_actual.go)只读取原版本完整Rates和对应侧finalization Quantities canonical。schema/费率摘要与规范字节由Go复核，终态外层digest仍由DB inference.final.v1 guard验证；缺失或错绑定回滚，不反算每百万两价或改用当前价。financialRequest两价已移除，计划未就绪不回填canonical。已知零价/unknown、人工客户核对/supplier missing、超界与唯一结算保持；完整DTO/指纹与九组guard仍待收口，存储复选框保持未勾。禁用反算函数的本地owner专项不等于受限APP六文本完整验收。
+
+客户预占续片按存储合同4.1.1实施：[pricing.Selection](../../internal/pricing/pricing.go)只携原版本/domain/profile/default、完整Schema/Rates及时刻；选价同时限定当前capability的schema/digest，逐byte核canonical和摘要，不再返回两rate。Reserve独立核原锁定capability后，以文本Bounds和原Rates调用metering.ReservationAmount；input-only输出率必须0，溢出返回amount_overflow，保留原锁序、等待前冻结与等待后期限复验。Reservation只作资金回执，移除两价镜像，不造legacy联合。受限APP隔离专项已在禁用两标量函数后通过默认/组价、零价、单ceil、input-only、缺价/未来价和溢出回滚/同幂等键重试；这是预占片，不是采购/退款/恢复完整出口。采购准入、发布指纹及完整HTTP/UI仍待切换，角色和计划未就绪门禁未改。
+
+采购U续片按存储合同7.1实施：[原向量读端](../../internal/billing/vector_procurement.go)绑定原attempt、实际channel/upstream、schema和known成本，解析原Rates及完整supplier界后共用ReservationAmount；计划未就绪仍沿原版本/界行，不回填快照。024的SECURITY INVOKER延迟guard固定隔离schema搜索路径，独立由原率和原界一次ceil核对U；缺失、未知、错误或溢出均拒绝。该采购U片当时的CostQuote标量复验已由后述在线续片替换；发布指纹/其余HTTP仍未去标量，不能称全线切换完成。
+
+采购列表续片按存储合同7.2将[当前SQL](../../internal/procurement/store.go)与[TS/UI](../../web/src/procurement.ts)同步切到原attempt的supplier Bounds wire、原profile/schema/default，修复旧列503并撤除HTTP两界字段。024新增只读meter_attempt_supplier_bounds，完整核原tenant/request/attempt/schema与supplier界；列表保持采购行为根，缺关联不静默消失，失败不返回半页。计划未就绪仍读原界行且不填canonical；金额原样读取，不重新计价。函数STABLE/SECURITY INVOKER/固定搜索路径，PUBLIC/projector/payment worker无执行权，APP沿既有meter闭包；原资金锁序、唯一结算/全部attempt成本和026金额读链均不变。受限APP局部专项覆盖50+1分页/账户与租户/两输入型协议/错误原件；完整HTTP/发布指纹、完整guard和六文本商业出口仍未收口，无浏览器验收。
+
+## 当前报价链与纯依赖
 
 ```mermaid
 flowchart LR
     Inference[inference\nProfile / BoundPlan\nQuote / Observation / FinalQuantities]
     Metering[metering\n完整向量 / 精确有理费用\n末尾一次ceil / schema绑定]
     JSON[strictjson\n字节和深度界 / 唯一member\n无损Unicode / 完整EOF]
+    RouteCost[routecost\n不可变选择值 / 有理cap\n严格原件核验]
+    Catalog[catalog 候选\n原route profile报价域]
+    Routing[routing\n完整schema计划门禁 / 精确排序]
+    Billing[billing\n尝试 / 采购锁后 / 派发复验]
+    Catalog --> RouteCost
+    Routing --> RouteCost
+    Routing --> Metering
+    Billing --> RouteCost
+    Billing --> Metering
     Inference --> Metering
     Inference --> JSON
     Metering --> JSON
+    RouteCost --> Metering
+    RouteCost --> JSON
 ```
 
-这三个包无数据库、网络、环境、时钟或资金写入。图中没有serve调用边，不代表已完成U生产接线。纯值解析成功不授模型派发、租户权限、供应商认证或资金许可。
+inference/metering/strictjson/routecost这四个纯包无数据库、网络、环境、时钟或资金写入。catalog/routing/billing是现行serve中的消费者；完整Quote不是新inference报价身份。6a–6d 已补当前发布operation、读端、独立金额/结构guard、route complete和非零route边界，并有受限APP六协议局部证据；图中接线仍不表示九组完整guard、完整商业出口、供应商认证或生产部署已完成。纯值解析成功不授模型派发、租户权限、供应商认证或资金许可。
 
 | 源码 | 责任与边界 |
 | --- | --- |
@@ -24,6 +57,9 @@ flowchart LR
 | [metering](../../internal/metering) | 完整schema/side绑定、数量与原界、规范有理率、精确金额和精确成本比较；不判断供应商真实性或业务收费资格 |
 | [只读描述](../../internal/metering/describe.go) | schema身份/维度/mask与已验证费率的copy；input-only可拒非零输出价，不用反解析canonical或暴露内部slice |
 | [strictjson](../../internal/strictjson/parse.go) | 从原metering提取唯一通用语法实现；拒重复键、非法UTF8/孤立surrogate、深度>8、尾JSON；各领域仍独占字段/值/绑定规则 |
+| [routecost](../../internal/routecost/quote.go) | 完整schema/default/channel/upstream/version/basis及supplier Rates的不可变选择值，原canonical/digest严格复核与可选有理cap；现由catalog/routing/billing消费，不新增报价摘要算法或金额计算 |
+
+2026-11-05在线续片按存储4.2.2接入完整候选、采购account/PB等待和PrepareDispatch：NewPlan先校实际channel/upstream、完整schema和原硬界，不把非法Quote/cap变成unknown；CostExclusion返回独立error，只有合法unknown才按manual/allow或deny政策处理。Limits精确有理比较，CompareExactCost排序不ceil，采购初筛和原U只用ReservationAmount。派发复用原最后锁后决策时刻，不改客户价/U、不补未就绪canonical。普通Store删除prospective分支，显式ProspectiveStore独立保留FrozenAttemptInput/原13参ABI；原研究SQL/pins和001–023不变，历史fixture的current业务oracle组合仅编译、明确拒绝，不能报运行验收。6a–6d 后续接入发布operation/读端、客户R/结算/capability/route guard和非零route边界；受限SET ROLE APP禁两标量函数覆盖六协议paid/known-zero、unknown策略与排期等待的局部矩阵。独立LOGIN、完整guard和六文本商业总矩阵仍未验，相关存储任务与商业出口继续未勾。
 
 ## 关键合同
 
@@ -37,8 +73,12 @@ Observation必须绑定原tenant/request/attempt/profile/schema/variant/plan。�
 
 ## 生产集成与经营报表
 
-存储草案定义在同一当前模型中升级schema、rate lines、原request/attempt快照、事件量与双侧终态；沿现有一份finalization原件、一个客户settlement及每attempt采购事实，不建媒体钱包或第二结算器。正式迁移全文、SQL guard/精确权限和实际PG原型仍待实施；001–023不改写，旧历史库不自动转换。
+计划、外层报价和快照纯核原件共享就绪门禁，四条界行及原价格/成本版本绑定始终保留，快照不可后补或更新。
 
-026继续只读唯一settlement收入/消费退款和全部attempt采购金额；opening不计销售。U计划从原request不可变快照补protocol/execution/schema/variant与筛选/CSV/UI，不从当前模型回填，也不从vector重算金额。未知采购仍使毛利待核对。任务poll/下载、实时heartbeat不产生第二笔收入。该元数据扩展尚未接线。
+`024_unified_text_metering.sql` 在同一当前模型中安装两维文本 schema、有理费率、请求/尝试快照、事件数量行和双侧终态投影；沿现有一份 finalization、一个客户 settlement 及每 attempt 采购事实，不建媒体钱包或第二结算器。提交时核对事件行、已知采购报价、请求价格归属、尝试与请求一致，以及终态投影等于事件行按 `moni-aigate.inference.final.v1` 重建的结果。已知供应商金额必须等于原费率对终态用量的一次 ceil；授权更正等于更正原件；未发送或认证无消费只能为 0。人工核对不能确认供应商侧。应用角色只能 SELECT/INSERT 计量表。001–023 不改写，旧历史库不自动转换。受管采购的单次预占必须等于该尝试的预算事件合计；已批准提案必须等于预占消费，结算时还要等于供应商金额。批准时证据条数必须仍是提案记下的条数，修订号必须是当时的值或批准这一步加一。用量事件必须指向同一次请求上已经存在的尝试，不能改挂到别的请求，也不能在没有尝试时补造观察。没有尝试的恢复仍按原政策释放。档案版本是 UUID 且请求 HMAC 为 64 位十六进制时，请求快照保存共同 request 计划，尝试快照保存由它派生的 attempt 计划。自由版本号仍不能生成计划。请求和尝试快照各有四行用量界，输入等于档案硬界，输出等于本次选定值。计划就绪时，报价外壳与 inference 的 `moni-aigate.inference.quote.v1` 一致；计划未就绪时报价列为空。纯核报价摘要已落库，计划未就绪时bounds/rates与摘要也为空。6c 已补客户R、结算金额、capability完整性、route complete、route/binding出生及非零route_revision guard；九组完整guard仍未齐。
 
-当前生产消费者与冻结研究逐个列在[清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)。旧proof/scan/prospective候选只保持其原身份、编译及拒绝current边界，不升级兼容矩阵，不成为U前置。后续验收必须覆盖实际受限APP的六文本、采购/周期预算/027来源/退款/恢复、026 JSON/CSV与控制台，纯包测试不能替代这些出口。
+026继续只读唯一settlement收入/消费退款和全部attempt采购金额；opening不计销售。protocol/execution/profile/schema/variant及筛选、CSV、UI已从原request快照接线，不从当前模型回填，不从vector重算金额。未知成本仍使毛利待核对；本轮Node已可用，前端329项测试（含报表合同）和strict/Vite构建通过，仍无本轮浏览器验收证据。阶段1盘点进一步独立证明 payment worker 对 024 计量表和 `meter_%` 函数无权限；这仍是角色负控，不等同正式生产 LOGIN/部署验收。
+
+候选 024 的建表前拒迁还会拒绝已有 api key/procurement held-spent、周期预算、funding lot child 与支付 capture/identity/effect 事实，并在失败后保持 `schema_migrations` 与计量表不变；这是局部拒迁负控，仍未覆盖 11.2 全部旧金融事实。
+
+当前生产消费者与冻结研究逐个列在[清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)。旧proof/scan/prospective候选只保持其原身份、编译及拒绝current边界，不升级兼容矩阵，不成为U前置。当前已有受限APP六协议局部链、周期预算HTTP和完整 server/billing race 证据；后续验收仍必须覆盖六文本全矩阵、采购/027来源/退款/恢复、026 JSON/CSV与控制台，纯包测试不能替代这些出口。

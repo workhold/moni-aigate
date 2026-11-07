@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
-	"github.com/moni-ai/moni-aigate/internal/catalog"
 )
 
 func (s *Server) customerReport(c *gin.Context) {
@@ -64,7 +63,7 @@ func (s *Server) report(c *gin.Context, tid string, platform bool) {
 	s.ok(c, data)
 }
 func (s *Server) costs(c *gin.Context) {
-	s.page(c, `SELECT a.id,a.tenant_id,t.name AS tenant_name,a.request_id,a.channel_id,ch.name AS channel_name,a.upstream_model,a.cost_amount::text AS cost_amount,a.cost_status,a.cost_version_id,a.cost_basis,a.created_at FROM upstream_attempts a JOIN tenants t ON t.id=a.tenant_id JOIN channels ch ON ch.id=a.channel_id WHERE ($1='' OR a.tenant_id=$1)`, c.Query("tenant_id"))
+	s.page(c, `SELECT a.id,a.tenant_id,t.name AS tenant_name,a.request_id,a.channel_id,ch.name AS channel_name,a.upstream_model,a.cost_amount::text AS cost_amount,a.cost_status,s.cost_version_id,s.cost_basis,a.created_at FROM upstream_attempts a JOIN tenants t ON t.id=a.tenant_id JOIN channels ch ON ch.id=a.channel_id JOIN attempt_meter_snapshots s ON s.attempt_id=a.id WHERE ($1='' OR a.tenant_id=$1)`, c.Query("tenant_id"))
 }
 func (s *Server) correctCost(c *gin.Context) {
 	if !s.financial(c, false) || !s.financialKey(c) {
@@ -95,23 +94,7 @@ func (s *Server) costVersions(c *gin.Context) {
 	if !s.admin(c) {
 		return
 	}
-	s.page(c, `SELECT v.id,v.channel_id,ch.name AS channel_name,ch.management_revision::text AS channel_revision,v.upstream_model,v.input_rate::text AS input_rate,v.output_rate::text AS output_rate,v.basis,v.effective_at,v.created_at FROM cost_versions v JOIN channels ch ON ch.id=v.channel_id`)
-}
-func (s *Server) publishCost(c *gin.Context) {
-	if !s.admin(c) {
-		return
-	}
-	var in catalog.CostVersionInput
-	if !decodeCanonicalJSON(c.Request.Body, &in, 16384, "channel_id", "upstream_model", "input_rate", "output_rate", "basis", "effective_at", "expected_channel_revision") {
-		s.fail(c, 400, "invalid_request", "成本版本参数无效")
-		return
-	}
-	result, e := s.Catalog.PublishCostVersion(c.Request.Context(), sessionOf(c).User.ID, in)
-	if e != nil {
-		s.error(c, e)
-		return
-	}
-	s.ok(c, result)
+	s.page(c, `SELECT v.id,v.channel_id,ch.name AS channel_name,ch.management_revision::text AS channel_revision,v.upstream_model,v.schema_id,encode(v.schema_digest,'hex') AS schema_digest,v.variant_key,v.currency,v.basis,CASE WHEN v.rates_canonical IS NULL THEN NULL ELSE convert_from(v.rates_canonical,'UTF8')::jsonb END AS rates,v.effective_at,v.created_at FROM cost_versions v JOIN channels ch ON ch.id=v.channel_id`)
 }
 func (s *Server) attempts(c *gin.Context) {
 	// Platform only: no credential value, endpoint, prompt, or output is returned.

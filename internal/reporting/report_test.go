@@ -212,7 +212,7 @@ func TestCSVExactNumbersQuotedTextAndFormulaProtection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 3 || len(rows[0]) != 15 || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[2][14] != "" {
+	if len(rows) != 3 || len(rows[0]) != 21 || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[2][14] != "" {
 		t.Fatal("CSV precision/escaping/unknown contract differs", rows)
 	}
 	want := errors.New("writer unavailable")

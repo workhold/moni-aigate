@@ -70,9 +70,7 @@ func TestPostgresModelIsolationSurvivesRestartAndRecoversOnlyNewPublishedVersion
 	if err = f.pool.QueryRow(ctx, "SELECT id FROM users WHERE platform_role='finance_operator' LIMIT 1").Scan(&actor); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.server.Catalog.PublishPrice(ctx, actor, other, "1000000", "2000000", time.Now().Add(-time.Hour)); err != nil {
-		t.Fatal(err)
-	}
+	publishDefaultFixture(t, f, other, actor, 1000000, 2000000, time.Now().Add(-time.Hour))
 	status, requestID := isolationRequest(t, f, "retail-model")
 	if status != 502 || f.posts.Load() != 1 {
 		t.Fatalf("model failure status=%d posts=%d", status, f.posts.Load())

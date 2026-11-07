@@ -48,7 +48,7 @@ async function download() {
   } catch (cause) { flow.finishDownload(ticket, cause) }
   finally { sync() }
 }
-watch(() => [filters.value.from, filters.value.to, filters.value.tenant_id, filters.value.model_id], invalidate, { flush: 'sync' })
+watch(() => [filters.value.from, filters.value.to, filters.value.tenant_id, filters.value.model_id, filters.value.protocol, filters.value.execution_kind], invalidate, { flush: 'sync' })
 watch(context, () => { invalidate(); if (allowed.value) void load() }, { immediate: true, flush: 'sync' })
 onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequest.value = ''; sync() })
 </script>
@@ -64,6 +64,8 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
           <el-form-item label="结束时间（不含，本地时间）"><el-date-picker v-model="filters.to" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" format="YYYY-MM-DD HH:mm:ss" placeholder="选择结束时间" aria-label="经营报表结束时间" /></el-form-item>
           <el-form-item label="客户 ID（可选）"><el-input v-model="filters.tenant_id" clearable placeholder="客户 UUID；留空为全部客户" aria-label="经营报表客户 ID" /></el-form-item>
           <el-form-item label="模型 ID（可选）"><el-input v-model="filters.model_id" clearable placeholder="模型 UUID；留空为全部模型" aria-label="经营报表模型 ID" /></el-form-item>
+          <el-form-item label="协议（可选）"><el-select v-model="filters.protocol" clearable placeholder="全部协议" aria-label="经营报表协议"><el-option label="OpenAI Chat" value="openai_chat" /><el-option label="OpenAI Responses" value="openai_responses" /><el-option label="Anthropic Messages" value="anthropic_messages" /><el-option label="OpenAI Embeddings" value="openai_embeddings" /><el-option label="Jina Rerank" value="jina_rerank" /><el-option label="Gemini Generate Content" value="gemini_generate_content" /></el-select></el-form-item>
+          <el-form-item label="执行类型（可选）"><el-select v-model="filters.execution_kind" clearable placeholder="全部执行类型" aria-label="经营报表执行类型"><el-option label="同步" value="synchronous" /></el-select></el-form-item>
           <div class="report-actions"><el-button native-type="submit" type="primary" :icon="Refresh" :loading="state.loading">查询报表</el-button><el-button :icon="Download" :loading="state.downloading" @click="download">下载 CSV</el-button></div>
         </el-form>
         <p class="report-note">默认最近 7 天，单次最多 31 天、5,000 个请求。修改筛选会清除旧结果，点击查询后读取新范围。</p>

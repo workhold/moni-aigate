@@ -288,7 +288,7 @@ func lockPrincipal(ctx context.Context, tx pgx.Tx, p Principal, model string, ke
 		batch.Queue("SELECT status,allow_all_models FROM memberships WHERE tenant_id=$1 AND user_id=$2 FOR SHARE", p.TenantID, p.UserID)
 		batch.Queue("SELECT status FROM users WHERE id=$1 FOR SHARE", p.UserID)
 		batch.Queue("SELECT owner_id,scopes,allowed_regions,spent,held,lifetime_limit,revoked_at IS NOT NULL,expires_at,allowed_client_cidrs FROM api_keys WHERE tenant_id=$1 AND id=$2 "+lock, p.TenantID, p.KeyID)
-		batch.Queue("SELECT enabled,profile_version,profile,active_revision FROM models WHERE id=$1 FOR SHARE", model)
+		batch.Queue("SELECT enabled,profile_version,meter_model_profile(id),active_revision FROM models WHERE id=$1 FOR SHARE", model)
 		results := tx.SendBatch(ctx, batch)
 		defer func() { err = closeBatch(results, err) }()
 		var status string

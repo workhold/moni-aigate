@@ -1,6 +1,6 @@
 # 021 自助身份与邮件验收
 
-2026-11-01。021已实现并通过限定本地验收，当前schema001–016；注册与邮件默认关闭。真实SMTP收件、域名信誉和生产反滥用仍待外部验证；指定窗口的真实强制终止/重启尚未执行，PG崩溃状态模拟不代替该项025故障演练。本记录不代表在线支付、订阅、媒体、HA或性能阶段完成。
+2026-11-01。021已实现并通过限定本地验收，当前schema001–016；注册与邮件默认关闭。真实SMTP收件、域名信誉和生产反滥用仍待外部验证；本地新增了真实子进程在 SMTP accepted→ACK 窗口被强制终止并由第二个 worker 恢复的证据，生产进程/主机故障演练仍属于025外部边界。本记录不代表在线支付、订阅、媒体、HA或性能阶段完成。
 
 ## 实现与信任边界
 
@@ -17,7 +17,7 @@
 - [身份并发](../../internal/identity/self_service_integration_test.go)及[签发](../../internal/identity/self_service_issuance_integration_test.go)：初始化/最小开户、同proof竞争、改密revision/全部family与Key独立、普通改密废旧proof、签发后启用MFA、恢复码与VerifyMFA竞争、family锁等待跨TTL整体回滚；持久限流/替换/跨用途和审计失败原子性。专项60.294s、8.419s；最终全包见下。
 - [迁移/最小角色](../../internal/operations/self_service_identity_integration_test.go)：015→016空/普通/admin回填、受限Bootstrap及失败审计回滚、revision/初始化不可伪造、app不可推进窗口/缩短冷却、owner双域rewrap/AAD与坏密文回滚。最终相关专项9.357s。
 - [outbox真实PG](../../internal/identity/mail_outbox_integration_test.go)：独占claim且不锁challenge、generation/旧ACK、接受后清密文、退避与第5次claim后崩溃状态模拟、失效/改密取消、7天清理/上限、密文AD/用途/收件人/token摘要绑定、真实provision app角色四方法；最终专项36.252s。
-- [worker](../../internal/mailworker/worker_test.go)：2槽/取消、Guard失败、按用途暂停、准备状态/剩余租约、非法投递和安全sender故障、disabled transport只清理。race1.520s。[SMTP测试](../../internal/maildeliver/smtp_test.go)含TLS/证书/降级拒绝、有限IO/取消和安全错误。
+- [worker](../../internal/mailworker/worker_test.go)：2槽/取消、Guard失败、按用途暂停、准备状态/剩余租约、非法投递和安全sender故障、disabled transport只清理。另有[真实进程窗口测试](../../internal/mailworker/worker_process_integration_test.go)：本地SMTP返回DATA的250 accepted后，子进程在FinishMail前被SIGKILL；父进程使租约到期并启动第二个真实worker，验证同一outbox的generation 2、同一Message-ID/证明链接和最终sent。该测试使用独立schema和本地fixture，不代表真实SMTP收件或生产故障演练。race通过。[SMTP测试](../../internal/maildeliver/smtp_test.go)含TLS/证书/降级拒绝、有限IO/取消和安全错误。
 - [HTTP真实PG](../../internal/server/self_service_integration_test.go)及[准入](../../internal/server/self_service_test.go)：有效能力/初始化/旧登录、统一202、严格匿名边界、单次reset与会话撤销/无Cookie、malformed proof统一错误且不hash、不签发session。最新根专项cmd/server 1.972s/19.860s。
 - 最终身份/HTTP/worker/迁移代码冻结后执行 `TEST_DATABASE_URL=本机专用moni_test go test -race ./... -count=1 -timeout=240s` 全部通过：identity223.619s、server215.029s、billing66.027s、operations19.432s；`go vet ./...`通过。随后仅运行器生命周期测试的等待断言修订，未更改应用实现；该最终断言另由下项opt-in补验。
 - 前端最终186/186、`npm run build`含strict typecheck通过。[proof交接](../../web/tests/identity-proof.test.mjs)、[匿名transport](../../web/tests/identity-public.test.mjs)、[页面状态](../../web/tests/identity-public-state.test.mjs)、[会话epoch](../../web/tests/session.test.mjs)覆盖Router前fragment/history.state清理、一次内存消费、omit凭据、无自动POST、未知锁定/晚回丢弃、旧me状态与401事件不能破坏新身份、MFA 128 UTF-8字节及空串边界。

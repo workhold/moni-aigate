@@ -111,7 +111,7 @@ func TestPostgresA1WalletWaitPreservesSelectedRetailQuote(t *testing.T) {
 	must(t, "release real wallet lock", blocker.Commit(f.ctx))
 	got := a1TakeResult(t, result)
 	must(t, "APP Reserve after scheduled publication", got.err)
-	if got.reservation.Amount != 120 || got.reservation.InputRate != 1000000 || got.reservation.OutputRate != 1000000 || got.reservation.PriceVersionID == newPrice {
+	if got.reservation.Amount != 120 || !birthOriginalRates(t, f, got.reservation.RequestID, "1000000", "1000000") || got.reservation.PriceVersionID == newPrice {
 		t.Fatal("wallet wait reselected the already frozen retail quote")
 	}
 	f.checkBirth(t, got.reservation.RequestID)

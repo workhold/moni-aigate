@@ -1,9 +1,7 @@
 package operations
 
 import (
-	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -82,16 +80,8 @@ func TestProvisionedKeyPolicyConstraintsAndRevision(t *testing.T) {
 
 func TestProvisionedRequestClientIPIsImmutableMetadata(t *testing.T) {
 	f := operationDB(t)
-	for i, source := range []string{"NULL", "'192.0.2.1'::inet", "'2001:db8::1'::inet"} {
-		request := uuid.NewString()
-		operationMetadataSource(t, f, request, fmt.Sprintf(`WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at)
- INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,price_version_id,input_rate,output_rate,input_upper_bound,output_limit,profile_version,policy_version,request_hmac,request_deadline,instance_id,streaming,client_ip,pricing_group_id,tenant_pricing_revision,retail_priced_at)
- SELECT $1,$2,$3,$4,m.id,p.id,p.input_rate,p.output_rate,1,1,m.profile_version,'fixture','fixture',instant.at+interval '1 hour','fixture',false,%s,t.price_group_id,t.pricing_revision,instant.at
- FROM instant CROSS JOIN tenants t CROSS JOIN models m JOIN LATERAL
-  (SELECT id,input_rate,output_rate FROM price_versions WHERE model_id=m.id
-   AND price_group_id IS NOT DISTINCT FROM t.price_group_id AND effective_at<=instant.at
-   ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1) p ON true
- WHERE t.id=$2 AND m.id=$5`, source), request, f.tenant, f.key, f.user, f.model)
+	for i, source := range []string{"", "192.0.2.1", "2001:db8::1"} {
+		request := operationMetadataRequest(t, f, source)
 		var err error
 		for _, pool := range []*pgxpool.Pool{f.app, f.owner} {
 			expected := "P0001"
@@ -115,7 +105,7 @@ func TestProvisionedRequestClientIPIsImmutableMetadata(t *testing.T) {
 		if err = f.app.QueryRow(f.ctx, `SELECT status,host(client_ip) FROM request_records WHERE id=$1`, request).Scan(&status, &ip); err != nil || status != "failed" {
 			t.Fatalf("request lifecycle status=%s err=%v", status, err)
 		}
-		if i == 0 && ip != nil || i > 0 && (ip == nil || !strings.Contains(source, *ip)) {
+		if i == 0 && ip != nil || i > 0 && (ip == nil || *ip != source) {
 			t.Fatalf("immutable source changed: source=%s actual=%v", source, ip)
 		}
 	}

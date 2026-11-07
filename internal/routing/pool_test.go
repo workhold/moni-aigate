@@ -95,6 +95,7 @@ func TestPoolCredentialCapacitySpansChannelsModelsAndVersions(t *testing.T) {
 	first.CredentialMaxInflight = 1
 	other := first
 	other.ChannelID, other.Model, other.VersionID, other.HealthKey = "new-channel", "other-model", "v2", "shared:other-model"
+	other.CostQuote = testCostQuote(other.ChannelID, other.Model, "", "unknown", 0, 0)
 	a, err := plan(t, first).Start(context.Background(), engine, admit)
 	if err != nil {
 		t.Fatal(err)

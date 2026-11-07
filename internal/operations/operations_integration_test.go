@@ -15,6 +15,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/security"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -115,9 +116,9 @@ func operationDB(t *testing.T) *operationFixture {
 	if _, err = c.Publish(ctx, f.operator, f.model, 0, []catalog.BindingInput{{ChannelID: f.channel, UpstreamModel: "upstream", Weight: 1, MaxInflight: 10}}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = c.PublishPrice(ctx, f.operator, f.model, "1000000", "1000000", time.Time{}); err != nil {
-		t.Fatal(err)
-	}
+	meterquote.PublishDefaultPrice(t, ctx, f.app, meterquote.DefaultPrice{
+		ModelID: f.model, Actor: f.operator, InputRate: 1000000, OutputRate: 1000000,
+	})
 	f.exec(t, "INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", f.tenant, f.model)
 	f.exec(t, "INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'fixture','fixture','fixture',$4,1000)", f.key, f.tenant, f.user, []string{f.model})
 	return f
@@ -385,15 +386,11 @@ func TestPersistentRecoveryGateAndDualApproval(t *testing.T) {
 	if _, err = f.owner.Exec(ctx, "UPDATE users SET status='active' WHERE id=$1", f.approver); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.owner.Exec(ctx, "UPDATE ledger_accounts SET balance=balance+1 WHERE tenant_id=$1 AND kind='AVAILABLE'", f.tenant); err != nil {
-		t.Fatal(err)
-	}
+	operationCorruptLedger(t, f, "UPDATE ledger_accounts SET balance=balance+1 WHERE tenant_id=$1 AND kind='AVAILABLE'", f.tenant)
 	if _, err = ApproveRecovery(ctx, f.app, approval); !errors.Is(err, ErrRecoveryConflict) {
 		t.Fatal("unbalanced ledger unlocked recovery", err)
 	}
-	if _, err = f.owner.Exec(ctx, "UPDATE ledger_accounts SET balance=balance-1 WHERE tenant_id=$1 AND kind='AVAILABLE'", f.tenant); err != nil {
-		t.Fatal(err)
-	}
+	operationCorruptLedger(t, f, "UPDATE ledger_accounts SET balance=balance-1 WHERE tenant_id=$1 AND kind='AVAILABLE'", f.tenant)
 	cleared, err := ApproveRecovery(ctx, f.app, approval)
 	if err != nil || cleared.Required || cleared.Approver != f.approver {
 		t.Fatal(cleared, err)
@@ -424,5 +421,26 @@ func TestPersistentRecoveryGateAndDualApproval(t *testing.T) {
 	required, err = RecoveryRequired(ctx, f.app)
 	if err != nil || !required {
 		t.Fatal("failed audit partially cleared recovery gate", required, err)
+	}
+}
+
+// operationCorruptLedger commits deliberately inconsistent history as the
+// schema owner. Replica mode keeps the current wallet guards from vetoing the
+// simulated corruption that the recovery gate itself must detect.
+func operationCorruptLedger(t *testing.T, f *operationFixture, query string, args ...any) {
+	t.Helper()
+	tx, err := f.owner.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(f.ctx)
+	if _, err = tx.Exec(f.ctx, `SET LOCAL session_replication_role='replica'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, query, args...); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(f.ctx); err != nil {
+		t.Fatal(err)
 	}
 }

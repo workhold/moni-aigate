@@ -14,6 +14,8 @@ const account = { id: accountID, label: '共享上游账户', provider: 'supplie
 const proposal = { id: operationID, tenant_id: tenantID, attempt_id: credentialID, amount: '9007199254740993', basis: 'invoice', evidence_ref: 'invoice:2026-001', reason: '核对供应商最终账单\n保留原报价', requester: maker, state: 'proposed', approver: null, approval_operation_id: null, created_at: at, approved_at: null, expected_revision: '9007199254740993', expected_evidence_count: '2' }
 const approved = { ...proposal, state: 'approved', approver: checker, approval_operation_id: approvalID, approved_at: at }
 const receipt = { operation_id: operationID, actor: maker, kind: 'account_create', target_id: accountID, status: 'applied', reason: '', before: null, after: account, created_at: at }
+const supplierBounds = { schema_id: channelID, version: '1', side: 'supplier', bounds: [{ dimension: 'text_input_token', unit: 'token', quantity: '9007199254740993' }, { dimension: 'text_output_token', unit: 'token', quantity: '16' }] }
+const reservation = { id: credentialID, attempt_id: credentialID, account_id: accountID, binding_id: operationID, tenant_id: tenantID, request_id: approvalID, channel_id: channelID, profile_version: operationID, schema_digest: 'ab'.repeat(32), variant_key: 'default', supplier_bounds: supplierBounds, upper_amount: '100', held_amount: '92', spent_amount: '8', revision: '9007199254740993', state: 'disputed', anomaly: true, created_at: at, updated_at: at }
 const proposalDraft = { tenant_id: tenantID, attempt_id: credentialID, amount: '9007199254.740993', basis: 'invoice', evidence_ref: proposal.evidence_ref, reason: proposal.reason }
 
 test('account money and revisions preserve int64 precision while cumulative numeric facts may exceed int64', () => {
@@ -67,14 +69,42 @@ test('manual observations distinguish unknown from known free and never submit s
 })
 
 test('unknown/disputed procurement projections and signed budget events remain exact and do not become customer money', () => {
-  const raw = { id: credentialID, attempt_id: credentialID, account_id: accountID, binding_id: operationID, tenant_id: tenantID, request_id: approvalID, channel_id: channelID, input_bound: '9007199254740993', output_bound: '16', upper_amount: '100', held_amount: '92', spent_amount: '8', state: 'disputed', anomaly: true, created_at: at, secret: 'hidden' }
+  const raw = { ...reservation, secret: 'hidden' }
   const hold = parseProcurementReservation(raw)
   assert.equal(hold.state, 'disputed'); assert.equal(hold.held_amount, '92'); assert.equal(hold.tenant_id, tenantID)
+  assert.equal(hold.supplier_bounds.bounds[0].quantity, '9007199254740993')
+  assert.equal(hold.revision, '9007199254740993')
   assert.doesNotMatch(JSON.stringify(hold), /secret|hidden/)
   assert.throws(() => parseProcurementReservation({ ...raw, id: channelID }), /不一致/)
   const event = parseProcurementEvent({ id: operationID, event_key: 'cost:one', account_id: accountID, attempt_id: credentialID, held_delta: '-9007199254740993', spent_delta: '9007199254740993', type: 'cost_recorded', evidence_ref: 'invoice:001', created_at: at })
   assert.equal(event.held_delta, '-9007199254740993')
   for (const invalid of ['-0', '+1', '01', 1]) assert.throws(() => procurementInteger(invalid, true))
+})
+
+test('procurement bounds accept only the complete original supplier vector and copy exact quantities', () => {
+  const raw = structuredClone(reservation)
+  raw.supplier_bounds.bounds[1].quantity = '0'
+  const parsed = parseProcurementReservation(raw)
+  assert.equal(parsed.supplier_bounds.bounds[1].quantity, '0', 'input-only output is an explicit known zero')
+  raw.supplier_bounds.bounds[0].quantity = '1'
+  assert.equal(parsed.supplier_bounds.bounds[0].quantity, '9007199254740993', 'no shared mutable entries')
+  for (const change of [
+    { supplier_bounds: null }, { supplier_bounds: undefined }, { profile_version: 'v1' },
+    { profile_version: '00000000-0000-0000-0000-000000000000' },
+    { schema_digest: 'AB'.repeat(32) }, { schema_digest: null }, { variant_key: 'image' },
+    { input_bound: '100' }, { output_bound: '0' }, { revision: '0' }, { upper_amount: '9223372036854775808' },
+  ]) assert.throws(() => parseProcurementReservation({ ...reservation, ...change }))
+  for (const change of [
+    { schema_id: 'v1' }, { version: 1 }, { side: 'retail' }, { bounds: [] },
+    { bounds: supplierBounds.bounds.slice(0, 1) }, { bounds: [...supplierBounds.bounds].reverse() },
+    { bounds: [supplierBounds.bounds[0], supplierBounds.bounds[0]] },
+    { bounds: [...supplierBounds.bounds, supplierBounds.bounds[0]] }, { rates: [] },
+  ]) assert.throws(() => parseProcurementReservation({ ...reservation, supplier_bounds: { ...supplierBounds, ...change } }))
+  for (const change of [
+    { dimension: 'image_output_count' }, { unit: 'image' }, { quantity: null }, { quantity: 1 },
+    ...['-1', '+1', '01', '1e3', '1.1', '', '9223372036854775808'].map(quantity => ({ quantity })),
+    { amount: '1' },
+  ]) assert.throws(() => parseProcurementReservation({ ...reservation, supplier_bounds: { ...supplierBounds, bounds: [{ ...supplierBounds.bounds[0], ...change }, supplierBounds.bounds[1]] } }))
 })
 
 test('HTTP-success rejected management receipts remain rejected and strip arbitrary before/after snapshots', () => {
@@ -174,6 +204,9 @@ test('procurement editors and independent platform route wire context/close epoc
   assert.match(writer, /procurement_evidence_stale/)
   assert.match(view, /watch\(\[context, tab\], resetPage/)
   assert.match(view, /scope\.invalidate\('proposal'\)/)
+  assert.match(view, /v-for="bound in row\.supplier_bounds\.bounds"/)
+  assert.match(view, /bound\.quantity.*bound\.unit/)
+  assert.doesNotMatch(view, /row\.(input_bound|output_bound)|Number\(bound\.quantity\)/)
   assert.match(router, /path: '\/platform\/procurement'.*ProcurementView/)
   assert.match(app, /path: '\/platform\/procurement'.*hasPlatform/)
   for (const reason of ['procurement_paused', 'procurement_budget_exceeded', 'procurement_bound_invalid', 'procurement_budget_unavailable']) assert.ok(attempts.includes(reason))

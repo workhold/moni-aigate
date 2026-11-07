@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
@@ -338,17 +337,20 @@ func (s *Server) publishGroupPrice(c *gin.Context) {
 	if !ok {
 		return
 	}
-	obj, ok := pricingBody(c, "operation_id", "model_id", "input_rate", "output_rate", "effective_at")
+	obj, ok := pricingBody(c, "operation_id", "model_id", "schema_id", "schema_digest", "variant_key", "input_rate", "output_rate", "effective_at")
 	if !ok {
 		s.commerceInvalid(c)
 		return
 	}
 	op, a := commerceID(obj["operation_id"])
 	model, b := commerceID(obj["model_id"])
+	schema, schemaOK := commerceID(obj["schema_id"])
+	digest, digestOK := commerceString(obj["schema_digest"])
+	variant, variantOK := commerceString(obj["variant_key"])
 	in, d := commerceInteger(obj["input_rate"], false)
 	out, e := commerceInteger(obj["output_rate"], false)
 	at, f := commerceExpiry(obj["effective_at"])
-	if !a || !b || !d || !e || !f || at.IsZero() || at.Year() < 1 || at.Year() > 9999 {
+	if !a || !b || !schemaOK || !digestOK || !variantOK || !d || !e || !f || at.IsZero() || at.Year() < 1 || at.Year() > 9999 || at.Nanosecond()%1000 != 0 {
 		s.commerceInvalid(c)
 		return
 	}
@@ -357,7 +359,92 @@ func (s *Server) publishGroupPrice(c *gin.Context) {
 		return
 	}
 	defer done()
-	v, err := s.Catalog.PublishGroupPrice(c.Request.Context(), catalog.PricingActor{UserID: sessionOf(c).User.ID}, catalog.GroupPriceCommand{OperationID: op, GroupID: id, ModelID: model, InputRate: in, OutputRate: out, EffectiveAt: at.UTC().Truncate(time.Microsecond)})
+	v, err := s.Catalog.PublishGroupPrice(c.Request.Context(), catalog.PricingActor{UserID: sessionOf(c).User.ID}, catalog.GroupPriceCommand{OperationID: op, GroupID: id, ModelID: model, SchemaID: schema, SchemaDigest: digest, VariantKey: variant, InputRate: in, OutputRate: out, EffectiveAt: at.UTC()})
+	if err != nil {
+		s.pricingError(c, err)
+		return
+	}
+	status := http.StatusCreated
+	if v.Replayed {
+		status = 200
+	}
+	s.pricingResult(c, status, v.Operation, v.Result)
+}
+func (s *Server) publishDefaultPrice(c *gin.Context) {
+	if !s.pricingWriter(c) {
+		return
+	}
+	obj, ok := pricingBody(c, "operation_id", "model_id", "schema_id", "schema_digest", "variant_key", "input_rate", "output_rate", "effective_at")
+	if !ok {
+		s.commerceInvalid(c)
+		return
+	}
+	op, a := commerceID(obj["operation_id"])
+	model, b := commerceID(obj["model_id"])
+	schema, d := commerceID(obj["schema_id"])
+	digest, e := commerceString(obj["schema_digest"])
+	variant, f := commerceString(obj["variant_key"])
+	in, g := commerceInteger(obj["input_rate"], false)
+	out, h := commerceInteger(obj["output_rate"], false)
+	at, i := commerceExpiry(obj["effective_at"])
+	if !a || !b || !d || !e || !f || !g || !h || !i || variant != "default" || at.IsZero() || at.Nanosecond()%1000 != 0 {
+		s.commerceInvalid(c)
+		return
+	}
+	done, ok := s.admitPricing(c, "write", "")
+	if !ok {
+		return
+	}
+	defer done()
+	v, err := s.Catalog.PublishDefaultPrice(c.Request.Context(), catalog.PricingActor{UserID: sessionOf(c).User.ID}, catalog.DefaultPriceCommand{OperationID: op, ModelID: model, SchemaID: schema, SchemaDigest: digest, VariantKey: variant, InputRate: in, OutputRate: out, EffectiveAt: at.UTC()})
+	if err != nil {
+		s.pricingError(c, err)
+		return
+	}
+	status := http.StatusCreated
+	if v.Replayed {
+		status = 200
+	}
+	s.pricingResult(c, status, v.Operation, v.Result)
+}
+func (s *Server) publishCostPrice(c *gin.Context) {
+	if !s.pricingWriter(c) {
+		return
+	}
+	obj, ok := pricingBody(c, "operation_id", "channel_id", "upstream_model", "schema_id", "schema_digest", "variant_key", "basis", "input_rate", "output_rate", "effective_at", "expected_channel_revision")
+	if !ok {
+		s.commerceInvalid(c)
+		return
+	}
+	op, a := commerceID(obj["operation_id"])
+	channel, b := commerceID(obj["channel_id"])
+	upstream, d := commerceString(obj["upstream_model"])
+	schema, e := commerceID(obj["schema_id"])
+	digest, f := commerceString(obj["schema_digest"])
+	variant, g := commerceString(obj["variant_key"])
+	basis, h := commerceString(obj["basis"])
+	rev, j := commerceInteger(obj["expected_channel_revision"], true)
+	at, k := commerceExpiry(obj["effective_at"])
+	var in, out *int64
+	parse := func(raw []byte) (*int64, bool) {
+		if string(raw) == "null" {
+			return nil, true
+		}
+		n, ok := commerceInteger(raw, false)
+		return &n, ok
+	}
+	in, l := parse(obj["input_rate"])
+	out, m := parse(obj["output_rate"])
+	if !a || !b || !d || !e || !f || !g || !h || !j || !k || !l || !m || variant != "default" || !((basis == "unknown" && in == nil && out == nil) || (basis != "unknown" && in != nil && out != nil)) || at.IsZero() || at.Nanosecond()%1000 != 0 {
+		s.commerceInvalid(c)
+		return
+	}
+	done, ok := s.admitPricing(c, "write", "")
+	if !ok {
+		return
+	}
+	defer done()
+	v, err := s.Catalog.PublishCostPrice(c.Request.Context(), catalog.PricingActor{UserID: sessionOf(c).User.ID}, catalog.CostPriceCommand{OperationID: op, ChannelID: channel, UpstreamModel: upstream, SchemaID: schema, SchemaDigest: digest, VariantKey: variant, Basis: basis, InputRate: in, OutputRate: out, EffectiveAt: at.UTC(), ExpectedChannelRevision: rev})
 	if err != nil {
 		s.pricingError(c, err)
 		return

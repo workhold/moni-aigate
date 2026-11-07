@@ -3,18 +3,31 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { cnyToMicro } from '../format'
 import { errorText, newOperationKey } from '../api'
 import { session } from '../session'
-import { parsePricingEnvelope, parsePricingReceipt, pricingCommand, pricingRequest } from '../pricing'
-import type { PriceGroup, PricingAssignment, PricingCommand, PricingKind, PricingReceipt } from '../pricing'
+import { parsePricingEnvelope, parsePricingReceipt, parsePricingModelChoice, pricingCommand, pricingRequest } from '../pricing'
+import type { PriceGroup, PricingAssignment, PricingCommand, PricingKind, PricingReceipt, PricingModelChoice } from '../pricing'
+import { readConfigurationRows } from '../cost-aware-routing'
 import { createPricingEpoch, pricingContext, pricingJournal } from '../pricing-state'
 
 const props = defineProps<{ modelValue: boolean; kind: PricingKind; group?: PriceGroup | null; assignment?: PricingAssignment | null; targetGroup?: string | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; changed: [] }>()
 const context = computed(() => pricingContext(session.me?.user.id, session.me?.tenant?.id, `${session.me?.user.platform_role}:${session.me?.tenant?.role}`, session.me?.csrf_token || '', session.mfaPending)), gate = createPricingEpoch()
 const busy = ref(false), error = ref(''), command = ref<PricingCommand | null>(null), receipt = ref<PricingReceipt | null>(null), unknown = ref(false), acceptedImpact = ref(false)
-const label = ref(''), state = ref<'active'|'retired'>('active'), model = ref(''), input = ref(''), output = ref(''), effective = ref(''), inputOnly = ref(false)
+const label = ref(''), state = ref<'active'|'retired'>('active'), model = ref(''), input = ref(''), output = ref(''), effective = ref('')
+const models = ref<PricingModelChoice[]>([]), modelLoading = ref(false), selectedModel = computed(() => models.value.find(row => row.id === model.value)), inputOnly = computed(() => selectedModel.value?.inputOnly ?? false)
 const permitted = computed(() => session.me?.user.platform_role === 'admin' && !session.mfaPending)
-const title = computed(() => ({ 'price_group.create': '创建价格组', 'price_group.update': '修改 / 退休价格组', 'group_price.publish': '追加组内售价版本', 'tenant_pricing.assign': '分配租户价格域' })[props.kind])
-function clear() { gate.reset(context.value); busy.value = false; error.value = ''; command.value = null; receipt.value = null; unknown.value = false; acceptedImpact.value = false; label.value = props.kind === 'price_group.update' ? props.group?.label || '' : ''; state.value = props.kind === 'price_group.update' ? props.group?.state || 'active' : 'active'; model.value = ''; input.value = ''; output.value = ''; effective.value = ''; inputOnly.value = false }
+const title = computed(() => ({ 'price_group.create': '创建价格组', 'price_group.update': '修改 / 退休价格组', 'group_price.publish': '追加组内售价版本', 'default_price.publish': '追加公共默认售价版本', 'cost_price.publish': '追加渠道采购报价', 'tenant_pricing.assign': '分配租户价格域' })[props.kind])
+const pricePublish = computed(() => props.kind === 'group_price.publish' || props.kind === 'default_price.publish')
+function clear() { gate.reset(context.value); busy.value = false; error.value = ''; command.value = null; receipt.value = null; unknown.value = false; acceptedImpact.value = false; label.value = props.kind === 'price_group.update' ? props.group?.label || '' : ''; state.value = props.kind === 'price_group.update' ? props.group?.state || 'active' : 'active'; model.value = ''; input.value = ''; output.value = ''; effective.value = ''; models.value = []; modelLoading.value = false; if (props.modelValue && pricePublish.value && permitted.value) void loadModels() }
+async function loadModels() {
+  const ticket = gate.ticket(); modelLoading.value = true
+  try {
+    const rows = await readConfigurationRows('/platform/models', () => gate.accepts(ticket))
+    const choices = rows.map(parsePricingModelChoice)
+    if (new Set(choices.map(row => row.id)).size !== choices.length) throw new Error('模型列表存在重复身份，请刷新核查。')
+    if (gate.accepts(ticket)) models.value = choices
+  } catch (cause) { if (gate.accepts(ticket)) error.value = errorText(cause) }
+  finally { if (gate.accepts(ticket)) modelLoading.value = false }
+}
 function close() { clear(); emit('update:modelValue', false) }
 function updateOpen(value: boolean) { if (!value) close() }
 async function submit() {
@@ -25,7 +38,7 @@ async function submit() {
   let original: PricingCommand | null = null
   try {
     const source = props.group, assignment = props.assignment
-    const body = kind === 'price_group.create' ? { label: label.value } : kind === 'price_group.update' ? { expected_revision: source?.revision, label: label.value, state: state.value } : kind === 'group_price.publish' ? { model_id: model.value, input_rate: cnyToMicro(input.value), output_rate: inputOnly.value ? '0' : cnyToMicro(output.value), effective_at: effective.value } : { expected_revision: assignment?.pricing_revision, price_group_id: props.targetGroup ?? null }
+    const body = kind === 'price_group.create' ? { label: label.value } : kind === 'price_group.update' ? { expected_revision: source?.revision, label: label.value, state: state.value } : kind === 'group_price.publish' || kind === 'default_price.publish' ? { model_id: model.value, schema_id: selectedModel.value?.schema_id, schema_digest: selectedModel.value?.schema_digest, variant_key: selectedModel.value?.variant_key, input_rate: cnyToMicro(input.value), output_rate: inputOnly.value ? '0' : cnyToMicro(output.value), effective_at: effective.value } : { expected_revision: assignment?.pricing_revision, price_group_id: props.targetGroup ?? null }
     original = await pricingCommand(kind, newOperationKey(), actor, body, kind === 'tenant_pricing.assign' ? assignment?.tenant_id : source?.id, kind === 'price_group.update' ? source || undefined : kind === 'tenant_pricing.assign' ? assignment || undefined : undefined)
     if (!gate.accepts(ticket)) return
     pricingJournal.begin(original); command.value = original; emit('changed')
@@ -72,10 +85,11 @@ onBeforeUnmount(() => { gate.dispose() })
         <el-alert v-if="state === 'retired'" type="warning" title="退休后不能新分配租户或发布组价；已分配租户继续使用该组及其预发版本。退休不取消授权，也不改历史账单。" :closable="false" />
         <p v-if="group" class="field-hint">组 {{ group.id }} · 原版本 {{ group.revision }}。退休组仍可修改名称。完全同值不增加版本；旧版本冲突须明确重读后再编辑。</p>
       </template>
-      <template v-else-if="kind === 'group_price.publish'">
-        <p class="field-hint">组 {{ group?.label }} · {{ group?.id }}。每次追加不可变版本，同一模型在同一组的生效时刻唯一。</p>
-        <el-form-item label="模型 ID"><el-input v-model="model" placeholder="已发布模型的规范 UUID" /></el-form-item>
-        <el-checkbox v-model="inputOnly">这是 Embeddings / Jina Rerank 输入计费模型（输出价固定 0）</el-checkbox>
+      <template v-else-if="pricePublish">
+        <p v-if="kind === 'group_price.publish'" class="field-hint">组 {{ group?.label }} · {{ group?.id }}。每次追加不可变版本，同一模型在同一组的生效时刻唯一。</p>
+        <p v-else class="field-hint">公共默认价适用于未分配价格组的租户。每次追加不可变版本，同一模型的默认价生效时刻唯一。</p>
+        <el-form-item label="模型与已发布计量域"><el-select v-model="model" filterable :loading="modelLoading" placeholder="明确选择模型与原 schema"><el-option v-for="row in models" :key="row.id" :value="row.id" :label="`${row.public_name} · ${row.schema_id}`" /></el-select><el-button link :disabled="busy || modelLoading" @click="loadModels">刷新模型</el-button></el-form-item>
+        <p v-if="selectedModel" class="field-hint">{{ selectedModel.schema_id }} · {{ selectedModel.schema_digest }} · default。{{ inputOnly ? '输入型模型：输出价固定为 0。' : '' }}</p>
         <div class="pricing-form-grid"><el-form-item label="输入价（CNY / 百万 Tokens）"><el-input v-model="input" inputmode="decimal" /></el-form-item><el-form-item label="输出价（CNY / 百万 Tokens）"><el-input v-model="output" :disabled="inputOnly" inputmode="decimal" /></el-form-item></div>
         <el-form-item label="明确生效时刻（UTC Z，最多六位微秒）"><el-input v-model="effective" placeholder="2026-11-01T00:00:00.000001Z" /><span class="field-hint">允许过去或未来时刻；新版本不重写已经冻结的请求。服务器仍按真实模型协议验证输出价。</span></el-form-item>
       </template>

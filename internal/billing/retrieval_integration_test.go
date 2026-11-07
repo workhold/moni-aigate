@@ -6,9 +6,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 // Each case publishes a separate immutable profile and price. Existing fixture
@@ -16,7 +18,18 @@ import (
 // output; only the mutable Key scope is extended to authorize the new model.
 func retrievalBillingInput(t *testing.T, f *fixture, protocol string, outputRate int64, change func(map[string]any)) ReserveInput {
 	t.Helper()
+	in, err := retrievalBillingInputResult(t, f, protocol, outputRate, change)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return in
+}
+
+func retrievalBillingInputResult(t *testing.T, f *fixture, protocol string, outputRate int64, change func(map[string]any)) (ReserveInput, error) {
+	t.Helper()
 	model, version := uuid.NewString(), uuid.NewString()
+	in := f.input()
+	in.ModelID, in.ProfileVersion, in.OutputLimit = model, version, 0
 	profile := map[string]any{
 		"protocol": protocol, "version": version, "model": "retrieval-" + model,
 		"input_token_upper_bound": int64(100), "context_limit": int64(100),
@@ -39,23 +52,28 @@ func retrievalBillingInput(t *testing.T, f *fixture, protocol string, outputRate
 		sql  string
 		args []any
 	}{
-		{"INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$2,$3,$4)", []any{model, "retrieval-" + model, body, version}},
-		{"INSERT INTO model_capability_versions(id,model_id,profile) VALUES($1,$2,$3)", []any{version, model, body}},
+		{"SELECT meter_insert_text_model($1,$2,$3::jsonb,$4)", []any{model, "retrieval-" + model, body, version}},
 		{"INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", []any{f.tenant, model}},
 		{"UPDATE api_keys SET scopes=array_append(scopes,$2) WHERE id=$1", []any{f.key, model}},
-		{"INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,1000000,$2,clock_timestamp()-interval '1 day',$3)", []any{model, outputRate, f.operator}},
 	} {
 		if _, err = tx.Exec(f.ctx, q.sql, q.args...); err != nil {
-			t.Fatal(err)
+			return in, err
 		}
 	}
-	if err = tx.Commit(f.ctx); err != nil {
-		t.Fatal(err)
+	policy := uuid.NewString()
+	if _, err = tx.Exec(f.ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,1,'manual','allow')`, policy, model); err != nil {
+		return in, err
 	}
-	in := f.input()
-	in.ModelID, in.ProfileVersion = model, version
-	in.OutputLimit = 0
-	return in
+	if _, err = tx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, policy, f.channel, f.version); err != nil {
+		return in, err
+	}
+	if _, err = tx.Exec(f.ctx, `UPDATE models SET active_revision=1 WHERE id=$1`, model); err != nil {
+		return in, err
+	}
+	in.RouteRevision = 1
+	meterquote.PublishDefaultPrice(t, f.ctx, tx, meterquote.DefaultPrice{ModelID: model, Actor: f.operator, InputRate: 1000000, OutputRate: outputRate, EffectiveAt: time.Now().UTC().Add(-time.Hour)})
+	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "upstream", ModelID: model, Actor: f.admin, Basis: "contract", InputRate: billingRate(2000000), OutputRate: billingRate(0)})
+	return in, tx.Commit(f.ctx)
 }
 
 func retrievalBillingFinal(t *testing.T, f *fixture, r Reservation, input int64) {
@@ -99,14 +117,16 @@ func TestPostgresRetrievalInputOnlyReserveAndSettle(t *testing.T) {
 			f := integration(t)
 			in := retrievalBillingInput(t, f, protocol, 0, nil)
 			r, err := f.store.Reserve(f.ctx, in)
-			if err != nil || r.Amount != 100 || r.InputRate != 1000000 || r.OutputRate != 0 {
+			if err != nil || r.Amount != 100 {
 				t.Fatal("input-only hard reservation was not 100", r, err)
 			}
+			retailAssertSnapshot(t, f, r, r.PriceVersionID, 1000000, 0)
 			defer f.store.EndRequest(r.RequestID)
 			f.wallet(t, 900, 100)
 			retrievalBillingKey(t, f, 0, 100)
 			var inputBound, outputBound, outputPrice int64
-			if err = f.pool.QueryRow(f.ctx, "SELECT input_upper_bound,output_limit,output_rate FROM request_records WHERE id=$1", r.RequestID).Scan(&inputBound, &outputBound, &outputPrice); err != nil || inputBound != 100 || outputBound != 0 || outputPrice != 0 {
+			if err = f.pool.QueryRow(f.ctx, `SELECT s.input_bound,s.output_bound,(l.numerator*1000000/l.denominator)::bigint
+ FROM request_meter_snapshots s JOIN price_rate_lines l ON l.price_version_id=s.price_version_id AND l.dimension='text_output_token' AND l.unit='token' WHERE s.request_id=$1`, r.RequestID).Scan(&inputBound, &outputBound, &outputPrice); err != nil || inputBound != 100 || outputBound != 0 || outputPrice != 0 {
 				t.Fatal("input-only request snapshot was not preserved", inputBound, outputBound, outputPrice, err)
 			}
 			retrievalBillingFinal(t, f, r, 10)
@@ -123,8 +143,8 @@ func TestPostgresRetrievalInputOnlyReserveAndSettle(t *testing.T) {
 				t.Fatal("input-only settlement replay duplicated financial facts", again, err)
 			}
 			var storedInput, storedOutput, storedTotal int64
-			if err = f.pool.QueryRow(f.ctx, `SELECT (e.normalized_usage->>'input_tokens')::bigint,
- (e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint
+			if err = f.pool.QueryRow(f.ctx, `SELECT meter_event_quantity(e.id,'text_input_token'),
+ meter_event_quantity(e.id,'text_output_token'),meter_event_quantity(e.id,'text_input_token')+meter_event_quantity(e.id,'text_output_token')
  FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id
  JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, r.RequestID).Scan(&storedInput, &storedOutput, &storedTotal); err != nil || storedInput != 10 || storedOutput != 0 || storedTotal != 10 {
 				t.Fatal("normalized retrieval usage changed", storedInput, storedOutput, storedTotal, err)
@@ -209,7 +229,7 @@ func TestPostgresRetrievalZeroOutputCannotRelaxOtherContracts(t *testing.T) {
 			}
 			t.Run(protocol+"/"+name, func(t *testing.T) {
 				f := integration(t)
-				in := retrievalBillingInput(t, f, protocol, 0, func(profile map[string]any) {
+				in, publishErr := retrievalBillingInputResult(t, f, protocol, 0, func(profile map[string]any) {
 					profile["output_limit"], profile["default_output_limit"] = profileOutput, profileOutput
 					if profileOutput > 0 {
 						profile["output_limit_field"] = "max_tokens"
@@ -218,6 +238,17 @@ func TestPostgresRetrievalZeroOutputCannotRelaxOtherContracts(t *testing.T) {
 						}
 					}
 				})
+				if protocol == "unknown_protocol" {
+					var pg *pgconn.PgError
+					if !errors.As(publishErr, &pg) || pg.Code != "23514" {
+						t.Fatal("unknown protocol was not rejected at publication", publishErr)
+					}
+					retrievalBillingNoRequest(t, f, in)
+					return
+				}
+				if publishErr != nil {
+					t.Fatal(publishErr)
+				}
 				_, err := f.store.Reserve(f.ctx, in)
 				assertCode(t, err, "invalid_bounds")
 				retrievalBillingNoRequest(t, f, in)
@@ -228,7 +259,7 @@ func TestPostgresRetrievalZeroOutputCannotRelaxOtherContracts(t *testing.T) {
 		for _, boundary := range []string{"profile_output", "default_output", "output_field", "tools", "parallel_tools", "requested_output", "input_bound"} {
 			t.Run(protocol+"/"+boundary, func(t *testing.T) {
 				f := integration(t)
-				in := retrievalBillingInput(t, f, protocol, 0, func(profile map[string]any) {
+				in, publishErr := retrievalBillingInputResult(t, f, protocol, 0, func(profile map[string]any) {
 					switch boundary {
 					case "profile_output":
 						profile["output_limit"] = int64(1)
@@ -242,6 +273,17 @@ func TestPostgresRetrievalZeroOutputCannotRelaxOtherContracts(t *testing.T) {
 						profile["supports_parallel_tool_calls"] = true
 					}
 				})
+				if boundary == "profile_output" {
+					var pg *pgconn.PgError
+					if !errors.As(publishErr, &pg) || pg.Message != "input-only model requires a zero output bound" {
+						t.Fatal("nonzero retrieval output was not rejected at publication", publishErr)
+					}
+					retrievalBillingNoRequest(t, f, in)
+					return
+				}
+				if publishErr != nil {
+					t.Fatal(publishErr)
+				}
 				if boundary == "requested_output" {
 					in.OutputLimit = 1
 				} else if boundary == "input_bound" {
@@ -260,22 +302,21 @@ func TestPostgresRetrievalZeroOutputCannotRelaxOtherContracts(t *testing.T) {
 func TestPostgresRetrievalNonzeroOutputPriceLeavesNoFinancialFacts(t *testing.T) {
 	for _, protocol := range []string{"openai_embeddings", "jina_rerank"} {
 		t.Run(protocol, func(t *testing.T) {
-			f, in := retrievalLegacyPriceFixture(t, protocol)
-			// The legacy row survives a real 001–017 -> current upgrade, while
-			// new malformed prices are rejected by 018 before they can exist.
+			f := integration(t)
+			in := retrievalBillingInput(t, f, protocol, 0, nil)
 			id := uuid.NewString()
-			_, err := f.pool.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1,1,clock_timestamp(),$3)`, id, in.ModelID, f.operator)
-			var pgerr *pgconn.PgError
-			if !errors.As(err, &pgerr) || pgerr.Code != "P0001" || !strings.Contains(pgerr.Where, "guard_group_price_insert") || pgerr.Message != "input-only price requires zero output rate" {
-				t.Fatal("new nonzero input-only price was not rejected by 018 guard", err)
+			_, err := meterquote.TryPublishDefaultPrice(f.ctx, f.pool, meterquote.DefaultPrice{ID: id, ModelID: in.ModelID, Actor: f.operator, InputRate: 1, OutputRate: 1, EffectiveAt: time.Now().UTC()})
+			if err == nil || !strings.Contains(err.Error(), "input-only price requires zero output rate") {
+				t.Fatal("nonzero input-only price was not rejected by current meter publisher", err)
 			}
 			var legacyRows, attemptedRows int
-			if err = f.pool.QueryRow(f.ctx, `SELECT count(*) FILTER (WHERE model_id=$1 AND output_rate=1),count(*) FILTER (WHERE id=$2) FROM price_versions`, in.ModelID, id).Scan(&legacyRows, &attemptedRows); err != nil || legacyRows != 1 || attemptedRows != 0 {
-				t.Fatal("upgrade changed the legacy price or retained the rejected insert", legacyRows, attemptedRows, err)
+			if err = f.pool.QueryRow(f.ctx, `SELECT
+ (SELECT count(*) FROM price_versions p JOIN price_rate_lines l ON l.price_version_id=p.id
+   WHERE p.model_id=$1 AND l.dimension='text_output_token' AND l.unit='token' AND l.numerator>0),
+ (SELECT count(*) FROM price_versions WHERE id=$2)`, in.ModelID, id).Scan(&legacyRows, &attemptedRows); err != nil || legacyRows != 0 || attemptedRows != 0 {
+				t.Fatal("rejected malformed price left persistent facts", legacyRows, attemptedRows, err)
 			}
 			for i := 0; i < 2; i++ {
-				_, err := f.store.Reserve(f.ctx, in)
-				assertCode(t, err, "invalid_price")
 				retrievalBillingNoRequest(t, f, in)
 			}
 		})

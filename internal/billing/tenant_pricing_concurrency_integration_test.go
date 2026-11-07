@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/operations"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 // A Store retry must not turn a new lock cycle into a passing barrier test.
@@ -107,7 +108,7 @@ func tenantPricingGroup(t *testing.T, f *fixture, c *catalog.Store, label string
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, err := c.PublishGroupPrice(f.ctx, catalog.PricingActor{UserID: f.admin}, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: g.Result.ID, ModelID: f.model, InputRate: in, OutputRate: out, EffectiveAt: retailNow(t, f).Add(-time.Minute).Truncate(time.Microsecond)})
+	p, err := c.PublishGroupPrice(f.ctx, catalog.PricingActor{UserID: f.admin}, meterquote.BindGroup(t, f.ctx, f.pool, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: g.Result.ID, ModelID: f.model, InputRate: in, OutputRate: out, EffectiveAt: retailNow(t, f).Add(-time.Minute).Truncate(time.Microsecond)}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +246,7 @@ func tenantPricingSnapshot(t *testing.T, f *fixture, r Reservation, group, price
 	var storedGroup *string
 	var storedRevision int64
 	var storedAt time.Time
-	if err := f.pool.QueryRow(f.ctx, `SELECT pricing_group_id,tenant_pricing_revision,retail_priced_at FROM request_records WHERE id=$1`, r.RequestID).Scan(&storedGroup, &storedRevision, &storedAt); err != nil {
+	if err := f.pool.QueryRow(f.ctx, `SELECT pricing_group_id,tenant_pricing_revision,retail_priced_at FROM request_meter_snapshots WHERE request_id=$1`, r.RequestID).Scan(&storedGroup, &storedRevision, &storedAt); err != nil {
 		t.Fatal(err)
 	}
 	if r.PricingGroupID == nil || *r.PricingGroupID != group || r.TenantPricingRevision != revision || r.RetailPricedAt.IsZero() || storedGroup == nil || *storedGroup != group || storedRevision != revision || !storedAt.Equal(r.RetailPricedAt) {
@@ -267,7 +268,7 @@ func TestPostgresTenantPricingWalletBarrierFreezesBackdatedGroupPrice(t *testing
 	tenantPricingWaiter(t, ctx, f, blocker.Conn().PgConn().PID())
 	// The newer effective time is already in the past, but its row did not exist
 	// at this request's observed cutoff. Rechecking latest would change the bill.
-	published, err := c.PublishGroupPrice(ctx, catalog.PricingActor{UserID: f.admin}, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: group, ModelID: f.model, InputRate: 4000000, OutputRate: 5000000, EffectiveAt: retailNow(t, f).Add(-time.Second).Truncate(time.Microsecond)})
+	published, err := c.PublishGroupPrice(ctx, catalog.PricingActor{UserID: f.admin}, meterquote.BindGroup(t, f.ctx, f.pool, catalog.GroupPriceCommand{OperationID: uuid.NewString(), GroupID: group, ModelID: f.model, InputRate: 4000000, OutputRate: 5000000, EffectiveAt: retailNow(t, f).Add(-time.Second).Truncate(time.Microsecond)}))
 	if err != nil {
 		t.Fatal("publication must coexist with held group SHARE", err)
 	}

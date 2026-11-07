@@ -1,6 +1,7 @@
 package billing
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -9,15 +10,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/moni-ai/moni-aigate/internal/metering"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func retailPrice(t *testing.T, f *fixture, input, output int64, effective time.Time) string {
 	t.Helper()
 	id := uuid.NewString()
-	if _, err := f.pool.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by)
- VALUES($1,$2,$3,$4,$5,$6)`, id, f.model, input, output, effective, f.operator); err != nil {
-		t.Fatal(err)
-	}
+	meterquote.PublishDefaultPrice(t, f.ctx, f.pool, meterquote.DefaultPrice{ID: id, ModelID: f.model, Actor: f.operator, InputRate: input, OutputRate: output, EffectiveAt: effective})
 	return id
 }
 
@@ -32,16 +32,25 @@ func retailNow(t *testing.T, f *fixture) time.Time {
 
 func retailAssertSnapshot(t *testing.T, f *fixture, reservation Reservation, price string, input, output Money) {
 	t.Helper()
-	if reservation.PriceVersionID != price || reservation.InputRate != input || reservation.OutputRate != output {
+	if reservation.PriceVersionID != price {
 		t.Fatalf("reservation has incorrect retail snapshot: %+v; want %s/%d/%d", reservation, price, input, output)
 	}
 	var storedPrice string
-	var storedInput, storedOutput Money
-	if err := f.pool.QueryRow(f.ctx, `SELECT price_version_id,input_rate,output_rate FROM request_records WHERE id=$1`, reservation.RequestID).Scan(&storedPrice, &storedInput, &storedOutput); err != nil {
+	var schemaRaw, ratesRaw []byte
+	if err := f.pool.QueryRow(f.ctx, `SELECT q.price_version_id,s.canonical,p.rates_canonical FROM request_meter_snapshots q JOIN price_versions p ON p.id=q.price_version_id JOIN meter_schemas s ON s.id=q.schema_id WHERE q.request_id=$1`, reservation.RequestID).Scan(&storedPrice, &schemaRaw, &ratesRaw); err != nil {
 		t.Fatal(err)
 	}
-	if storedPrice != price || storedInput != input || storedOutput != output {
-		t.Fatalf("request snapshot changed: %s/%d/%d; want %s/%d/%d", storedPrice, storedInput, storedOutput, price, input, output)
+	schema, err := metering.ParseSchema(schemaRaw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected, err := metering.LegacyTokenRates(schema, metering.Retail, int64(input), int64(output))
+	if err != nil {
+		t.Fatal(err)
+	}
+	canonical, _ := expected.CanonicalJSON()
+	if storedPrice != price || !bytes.Equal(ratesRaw, canonical) {
+		t.Fatalf("request vector snapshot changed: %s/%s; want %s/%d/%d", storedPrice, ratesRaw, price, input, output)
 	}
 }
 
@@ -50,10 +59,7 @@ func TestPostgresRetailPriceLatestEffectiveAndKnownZero(t *testing.T) {
 	now := retailNow(t, f)
 	// Insertion order and created_at cannot override the latest effective_at.
 	latest := uuid.NewString()
-	if _, err := f.pool.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_at,created_by)
- VALUES($1,$2,2000000,3000000,$3,$4,$5)`, latest, f.model, now.Add(-time.Minute), now.Add(-3*time.Hour), f.operator); err != nil {
-		t.Fatal(err)
-	}
+	meterquote.PublishDefaultPrice(t, f.ctx, f.pool, meterquote.DefaultPrice{ID: latest, ModelID: f.model, Actor: f.operator, InputRate: 2000000, OutputRate: 3000000, EffectiveAt: now.Add(-time.Minute)})
 	retailPrice(t, f, 4000000, 4000000, now.Add(-2*time.Minute))
 	retailPrice(t, f, 9000000, 9000000, now.Add(time.Hour))
 	r := f.reserve(t)
@@ -89,8 +95,7 @@ func TestPostgresRetailFutureOnlyPriceIsUnavailable(t *testing.T) {
 		sql  string
 		args []any
 	}{
-		{`INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,'future-only',
- '{"version":"v1","model":"future-only","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}','v1')`, []any{f.model}},
+		{`SELECT meter_insert_text_model($1,'future-only',$2::jsonb,$3)`, []any{f.model, `{"version":"20000000-0000-4000-8000-000000000002","model":"future-only","protocol":"openai_chat","input_token_upper_bound":100,"context_limit":120,"output_limit":20,"default_output_limit":20,"output_limit_field":"max_tokens"}`, "20000000-0000-4000-8000-000000000002"}},
 		{"INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", []any{f.tenant, f.model}},
 		{"UPDATE api_keys SET scopes=array_append(scopes,$2) WHERE id=$1", []any{f.key, f.model}},
 	} {
@@ -98,12 +103,14 @@ func TestPostgresRetailFutureOnlyPriceIsUnavailable(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	billingPoolPublish(t, f, f.version, 1)
 	retailPrice(t, f, 1000000, 1000000, retailNow(t, f).Add(time.Hour))
 	var journalsBefore int
 	if err := f.pool.QueryRow(f.ctx, "SELECT count(*) FROM journals").Scan(&journalsBefore); err != nil {
 		t.Fatal(err)
 	}
 	in := f.input()
+	in.ModelID, in.ProfileVersion, in.RouteRevision = f.model, "20000000-0000-4000-8000-000000000002", 1
 	_, err := f.store.Reserve(f.ctx, in)
 	assertCode(t, err, "price_unavailable")
 	var requests, reservations, journals int
@@ -232,7 +239,7 @@ func TestPostgresRetailWalletWaitKeepsAlreadyFrozenPrice(t *testing.T) {
 	}
 	defer f.store.EndRequest(got.reservation.RequestID)
 	retailAssertSnapshot(t, f, got.reservation, original, 1000000, 1000000)
-	if !got.reservation.Deadline.Add(-24 * time.Hour).Before(effective) {
+	if !got.reservation.RetailPricedAt.Before(effective) {
 		t.Fatal("test did not freeze the original price before the wallet wait", got.reservation, effective)
 	}
 	f.wallet(t, 880, 120)
@@ -275,8 +282,7 @@ func TestPostgresRetailSameEffectivePriceRemainsUnique(t *testing.T) {
 	if err := f.pool.QueryRow(f.ctx, "SELECT id,effective_at FROM price_versions WHERE model_id=$1", f.model).Scan(&original, &effective); err != nil {
 		t.Fatal(err)
 	}
-	_, err := f.pool.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by)
- VALUES($1,$2,2000000,3000000,$3,$4)`, uuid.NewString(), f.model, effective, f.operator)
+	_, err := meterquote.TryPublishDefaultPrice(f.ctx, f.pool, meterquote.DefaultPrice{ID: uuid.NewString(), ModelID: f.model, Actor: f.operator, InputRate: 2000000, OutputRate: 3000000, EffectiveAt: effective})
 	var databaseError *pgconn.PgError
 	if !errors.As(err, &databaseError) || databaseError.Code != "23505" {
 		t.Fatal("same-model same-effective_at retail version was not rejected by the original uniqueness constraint", err)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"github.com/moni-ai/moni-aigate/internal/routing"
 )
 
@@ -38,10 +39,9 @@ func (e *Error) Error() string        { return e.Code + ": " + e.Message }
 func fail(code, message string) error { return &Error{Code: code, Message: message} }
 
 type Store struct {
-	pool        *pgxpool.Pool
-	instanceID  string
-	active      sync.Map
-	prospective *prospectiveAttempt
+	pool       *pgxpool.Pool
+	instanceID string
+	active     sync.Map
 }
 
 func New(pool *pgxpool.Pool) *Store          { return &Store{pool: pool, instanceID: uuid.NewString()} }
@@ -69,8 +69,6 @@ type Reservation struct {
 	Status                string    `json:"status"`
 	Deadline              time.Time `json:"deadline"`
 	PriceVersionID        string    `json:"price_version_id"`
-	InputRate             Money     `json:"input_rate"`
-	OutputRate            Money     `json:"output_rate"`
 	PricingGroupID        *string   `json:"pricing_group_id"`
 	TenantPricingRevision int64     `json:"tenant_pricing_revision,string"`
 	RetailPricedAt        time.Time `json:"retail_priced_at"`
@@ -103,7 +101,7 @@ type AttemptInput struct {
 	TenantID, RequestID, ChannelID, ChannelVersionID, CredentialID, UpstreamModel string
 	Sequence                                                                      int
 	RouteDecisions                                                                []routing.Decision
-	CostQuote                                                                     *routing.CostQuote
+	CostQuote                                                                     *routecost.Quote
 }
 type Attempt struct {
 	ID            string `json:"id"`

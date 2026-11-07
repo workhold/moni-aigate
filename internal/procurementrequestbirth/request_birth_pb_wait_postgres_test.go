@@ -7,10 +7,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 )
+
+func historicalPublishPricePB(ctx context.Context, store *catalog.Store, actor, model string, input, output int64, effective time.Time) (string, error) {
+	var schema, digest string
+	if err := store.Pool.QueryRow(ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id WHERE m.id=$1`, model).Scan(&schema, &digest); err != nil {
+		return "", err
+	}
+	result, err := store.PublishDefaultPrice(ctx, catalog.PricingActor{UserID: actor}, catalog.DefaultPriceCommand{OperationID: uuid.NewString(), ModelID: model, SchemaID: schema, SchemaDigest: digest, VariantKey: "default", InputRate: input, OutputRate: output, EffectiveAt: effective.UTC().Truncate(time.Microsecond)})
+	return result.Result.ID, err
+}
 
 func a1PBWaitSetup(t *testing.T, scope string) (*fixture, string, map[string]string) {
 	t.Helper()
@@ -131,7 +141,7 @@ func TestPostgresA1PBControlWaitPreservesSelectedRetailQuote(t *testing.T) {
 			var oldPrice string
 			must(t, "read independent original retail version", f.owner.QueryRow(f.ctx, `SELECT id FROM price_versions WHERE model_id=$1 AND price_group_id IS NULL AND effective_at<=clock_timestamp() ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1`, f.model).Scan(&oldPrice))
 			cut := birthBudgetClock(t, f).Add(1500 * time.Millisecond)
-			newPrice, err := catalog.New(f.app, nil).PublishPrice(f.ctx, admin, f.model, "2000000", "3000000", cut)
+			newPrice, err := historicalPublishPricePB(f.ctx, catalog.New(f.app, nil), admin, f.model, 2000000, 3000000, cut)
 			must(t, "publish future retail version with the original catalog command", err)
 			var effective time.Time
 			must(t, "read actual immutable future retail instant", f.owner.QueryRow(f.ctx, "SELECT effective_at FROM price_versions WHERE id=$1", newPrice).Scan(&effective))
@@ -145,7 +155,7 @@ func TestPostgresA1PBControlWaitPreservesSelectedRetailQuote(t *testing.T) {
 			must(t, "actual APP Reserve after PB control wait", got.err)
 			after := birthBudgetClock(t, f)
 			r := got.reservation
-			if r.Amount != 120 || r.InputRate != 1000000 || r.OutputRate != 1000000 || r.PriceVersionID != oldPrice || r.PriceVersionID == newPrice {
+			if r.Amount != 120 || !birthOriginalRates(t, f, r.RequestID, "1000000", "1000000") || r.PriceVersionID != oldPrice || r.PriceVersionID == newPrice {
 				t.Fatal("PB control wait reselected or changed the frozen retail quote")
 			}
 			f.checkBirth(t, r.RequestID)

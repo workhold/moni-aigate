@@ -5,8 +5,10 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -16,12 +18,36 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
+	"github.com/moni-ai/moni-aigate/internal/metering"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"github.com/moni-ai/moni-aigate/internal/routing"
 	"github.com/moni-ai/moni-aigate/internal/security"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
+func quoteRatesEqual(q routecost.Quote, input, output int64) bool {
+	actual, err := q.Rates()
+	if err != nil {
+		return false
+	}
+	expected, err := metering.LegacyTokenRates(q.Schema(), metering.Supplier, input, output)
+	if err != nil {
+		return false
+	}
+	a, _ := actual.Digest()
+	b, _ := expected.Digest()
+	return a == b
+}
 func costText(value string) *string { return &value }
+
+func costRate(value string) *int64 {
+	v, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return &v
+}
 
 func costChannelRevision(t *testing.T, f *credentialPoolFixture) string {
 	t.Helper()
@@ -32,9 +58,21 @@ func costChannelRevision(t *testing.T, f *credentialPoolFixture) string {
 	return revision
 }
 
-func costInput(t *testing.T, f *credentialPoolFixture, model string, effective *time.Time) catalog.CostVersionInput {
+func costInput(t *testing.T, f *credentialPoolFixture, model string, effective *time.Time) catalog.CostPriceCommand {
 	t.Helper()
-	return catalog.CostVersionInput{ChannelID: f.channel, UpstreamModel: model, InputRate: costText("1000001"), OutputRate: costText("2000003"), Basis: "contract", EffectiveAt: effective, ExpectedChannelRevision: costChannelRevision(t, f)}
+	at := time.Now().UTC().Truncate(time.Microsecond)
+	if effective != nil {
+		at = effective.UTC().Truncate(time.Microsecond)
+	}
+	revision, err := strconv.ParseInt(costChannelRevision(t, f), 10, 64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := catalog.CostPriceCommand{OperationID: uuid.NewString(), ChannelID: f.channel, UpstreamModel: model, VariantKey: "default", InputRate: costRate("1000001"), OutputRate: costRate("2000003"), Basis: "contract", EffectiveAt: at, ExpectedChannelRevision: revision}
+	if err := f.owner.QueryRow(f.ctx, `SELECT schema_id,encode(schema_digest,'hex') FROM model_capability_versions WHERE model_id=$1`, f.model).Scan(&in.SchemaID, &in.SchemaDigest); err != nil {
+		t.Fatal(err)
+	}
+	return in
 }
 
 func costCandidate(t *testing.T, f *credentialPoolFixture, revision int64) catalog.Candidate {
@@ -55,7 +93,7 @@ func TestCostRoutePolicyRevisionCapsAndRollback(t *testing.T) {
 		t.Fatal("complete cost policy publish", revision, err)
 	}
 	first := costCandidate(t, f, 1)
-	if first.CostPolicy != policy || first.MaxInputCostRate == nil || *first.MaxInputCostRate != 0 || first.MaxOutputCostRate == nil || *first.MaxOutputCostRate != 9223372036854775807 || first.CostQuote.Known() || first.CostQuote.VersionID != "" {
+	if first.CostPolicy != policy || !reflect.DeepEqual(first.CostLimits.Entries(), []metering.Rate{{Dimension: "text_input_token", Unit: "token", Numerator: 0, Denominator: 1}, {Dimension: "text_output_token", Unit: "token", Numerator: 9223372036854775807, Denominator: 1000000}}) || first.CostQuote.Known() || first.CostQuote.VersionID() != "" {
 		t.Fatalf("cost policy/caps/unknown quote not frozen: %+v", first)
 	}
 	before := f.state(t)
@@ -94,11 +132,11 @@ func TestCostRoutePolicyRevisionCapsAndRollback(t *testing.T) {
 		t.Fatal(err)
 	}
 	second := costCandidate(t, f, 2)
-	if second.CostPolicy != routing.DefaultCostPolicy() || second.MaxInputCostRate != nil || second.MaxOutputCostRate != nil {
+	if second.CostPolicy != routing.DefaultCostPolicy() || !second.CostLimits.Empty() {
 		t.Fatal("legacy publisher did not preserve manual/allow", second)
 	}
 	retained := costCandidate(t, f, 1)
-	if retained.CostPolicy != policy || retained.MaxInputCostRate == nil || *retained.MaxInputCostRate != 0 {
+	if retained.CostPolicy != policy || !retained.CostLimits.Equal(first.CostLimits) {
 		t.Fatal("new revision mutated old cost policy", retained)
 	}
 	for _, mutation := range []struct{ statement, target string }{{`UPDATE route_policy_versions SET cost_mode='manual' WHERE model_id=$1`, f.model}, {`UPDATE model_bindings SET max_input_cost_rate=1 WHERE channel_id=$1`, f.channel}} {
@@ -127,54 +165,71 @@ func TestCostPublishCASCanonicalMoneyAndAuditAtomicity(t *testing.T) {
 	effective := time.Date(2026, 1, 2, 3, 4, 5, 123456789, time.FixedZone("fixture", 8*3600))
 	in := costInput(t, f, "upstream", &effective)
 	before := costState(t, f)
-	result, err := f.store.PublishCostVersion(f.ctx, "pool-admin", in)
+	result, err := f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, in)
 	if err != nil {
 		t.Fatal(err)
 	}
 	initial, _ := strconv.ParseInt(before.revision, 10, 64)
-	if result.ID == "" || result.ChannelRevision != strconv.FormatInt(initial+1, 10) {
+	if result.Result.ID == "" || result.Result.ChannelRevision != strconv.FormatInt(initial+1, 10) {
 		t.Fatal("cost insert did not advance channel CAS exactly once", result)
 	}
 	var at time.Time
-	var input, output, basis string
+	var canonical []byte
+	var basis string
 	var audits int
-	if err = f.owner.QueryRow(f.ctx, `SELECT effective_at,input_rate::text,output_rate::text,basis,(SELECT count(*) FROM audit_events WHERE action='cost.version' AND target=$1) FROM cost_versions WHERE id=$1`, result.ID).Scan(&at, &input, &output, &basis, &audits); err != nil || !at.Equal(effective.UTC().Truncate(time.Microsecond)) || input != "1000001" || output != "2000003" || basis != "contract" || audits != 1 {
-		t.Fatal("cost quote normalization or audit", at, input, output, basis, audits, err)
+	if err = f.owner.QueryRow(f.ctx, `SELECT effective_at,rates_canonical,basis,(SELECT count(*) FROM audit_events WHERE action='pricing.cost.publish' AND target='/api/platform/cost-versions') FROM cost_versions WHERE id=$1`, result.Result.ID).Scan(&at, &canonical, &basis, &audits); err != nil || !at.Equal(effective.UTC().Truncate(time.Microsecond)) || !strings.Contains(string(canonical), `"side":"supplier"`) || !strings.Contains(string(canonical), `"1000001"`) || !strings.Contains(string(canonical), `"2000003"`) || basis != "contract" || audits != 1 {
+		t.Fatal("cost quote normalization or audit", at, string(canonical), basis, audits, err)
 	}
 	after := costState(t, f)
-	if _, err = f.store.PublishCostVersion(f.ctx, "pool-admin", in); !errors.Is(err, catalog.ErrConflict) || costState(t, f) != after {
+	replay, err := f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, in)
+	if err != nil || !replay.Replayed || replay.Result.ID != result.Result.ID || costState(t, f) != after {
+		t.Fatal("same operation did not replay its original cost receipt", replay, err)
+	}
+	stale := in
+	stale.OperationID = uuid.NewString()
+	if _, err = f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, stale); err == nil || costState(t, f) != after {
 		t.Fatal("stale cost CAS changed state", err)
 	}
-	in.ExpectedChannelRevision = after.revision
-	if _, err = f.store.PublishCostVersion(f.ctx, "pool-admin", in); !errors.Is(err, catalog.ErrConflict) || costState(t, f) != after {
+	collision := in
+	collision.OperationID = uuid.NewString()
+	collision.ExpectedChannelRevision, _ = strconv.ParseInt(after.revision, 10, 64)
+	if _, err = f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, collision); err == nil || costState(t, f) != after {
 		t.Fatal("same effective instant changed state", err)
 	}
 	for _, tc := range []struct {
 		name string
-		edit func(*catalog.CostVersionInput)
+		edit func(*catalog.CostPriceCommand)
 	}{
-		{"expected_empty", func(v *catalog.CostVersionInput) { v.ExpectedChannelRevision = "" }},
-		{"expected_zero", func(v *catalog.CostVersionInput) { v.ExpectedChannelRevision = "0" }},
-		{"expected_leading_zero", func(v *catalog.CostVersionInput) { v.ExpectedChannelRevision = "01" }},
-		{"expected_overflow", func(v *catalog.CostVersionInput) { v.ExpectedChannelRevision = "9223372036854775808" }},
-		{"missing_input", func(v *catalog.CostVersionInput) { v.InputRate = nil }},
-		{"missing_output", func(v *catalog.CostVersionInput) { v.OutputRate = nil }},
-		{"unknown_with_rate", func(v *catalog.CostVersionInput) { v.Basis = "unknown" }},
-		{"basis", func(v *catalog.CostVersionInput) { v.Basis = "estimate" }},
-		{"negative", func(v *catalog.CostVersionInput) { v.InputRate = costText("-1") }},
-		{"leading_zero", func(v *catalog.CostVersionInput) { v.OutputRate = costText("00") }},
-		{"money_overflow", func(v *catalog.CostVersionInput) { v.OutputRate = costText("9223372036854775808") }},
-		{"empty_model", func(v *catalog.CostVersionInput) { v.UpstreamModel = "" }},
-		{"uppercase_channel", func(v *catalog.CostVersionInput) { v.ChannelID = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA" }},
-		{"utc_year_overflow", func(v *catalog.CostVersionInput) {
+		{"expected_zero", func(v *catalog.CostPriceCommand) { v.ExpectedChannelRevision = 0 }},
+		{"schema_missing", func(v *catalog.CostPriceCommand) { v.SchemaID = "" }},
+		{"schema_nil", func(v *catalog.CostPriceCommand) { v.SchemaID = "00000000-0000-0000-0000-000000000000" }},
+		{"schema_unpublished", func(v *catalog.CostPriceCommand) { v.SchemaID = uuid.NewString() }},
+		{"schema_digest_missing", func(v *catalog.CostPriceCommand) { v.SchemaDigest = "" }},
+		{"schema_uppercase", func(v *catalog.CostPriceCommand) { v.SchemaID = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA" }},
+		{"schema_digest_uppercase", func(v *catalog.CostPriceCommand) {
+			v.SchemaDigest = "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"
+		}},
+		{"schema_digest_wrong", func(v *catalog.CostPriceCommand) {
+			v.SchemaDigest = "abababababababababababababababababababababababababababababababab"
+		}},
+		{"variant_missing", func(v *catalog.CostPriceCommand) { v.VariantKey = "" }},
+		{"variant_other", func(v *catalog.CostPriceCommand) { v.VariantKey = "other" }},
+		{"missing_input", func(v *catalog.CostPriceCommand) { v.InputRate = nil }},
+		{"missing_output", func(v *catalog.CostPriceCommand) { v.OutputRate = nil }},
+		{"unknown_with_rate", func(v *catalog.CostPriceCommand) { v.Basis = "unknown" }},
+		{"basis", func(v *catalog.CostPriceCommand) { v.Basis = "estimate" }},
+		{"negative", func(v *catalog.CostPriceCommand) { v.InputRate = costRate("-1") }},
+		{"empty_model", func(v *catalog.CostPriceCommand) { v.UpstreamModel = "" }},
+		{"uppercase_channel", func(v *catalog.CostPriceCommand) { v.ChannelID = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA" }},
+		{"utc_year_overflow", func(v *catalog.CostPriceCommand) {
 			at := time.Date(9999, 12, 31, 23, 0, 0, 0, time.FixedZone("minus", -3600))
-			v.EffectiveAt = &at
+			v.EffectiveAt = at
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			bad := in
 			tc.edit(&bad)
-			if _, e := f.store.PublishCostVersion(f.ctx, "pool-admin", bad); !errors.Is(e, catalog.ErrInvalid) || costState(t, f) != after {
+			if _, e := f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, bad); e == nil || costState(t, f) != after {
 				t.Fatal("invalid cost changed state", e)
 			}
 		})
@@ -183,7 +238,7 @@ func TestCostPublishCASCanonicalMoneyAndAuditAtomicity(t *testing.T) {
 		t.Fatal(err)
 	}
 	newInput := costInput(t, f, "other-model", nil)
-	if _, err = f.store.PublishCostVersion(f.ctx, "pool-admin", newInput); err == nil || costState(t, f) != after {
+	if _, err = f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, newInput); err == nil || costState(t, f) != after {
 		t.Fatal("audit failure left cost quote/channel revision", err)
 	}
 	if _, err = f.owner.Exec(f.ctx, "GRANT INSERT ON audit_events TO "+pgx.Identifier{f.appRole}.Sanitize()); err != nil {
@@ -193,14 +248,14 @@ func TestCostPublishCASCanonicalMoneyAndAuditAtomicity(t *testing.T) {
 	unknown.Basis = "unknown"
 	unknown.InputRate = nil
 	unknown.OutputRate = nil
-	if _, err = f.store.PublishCostVersion(f.ctx, "pool-admin", unknown); err != nil {
+	if _, err = f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, unknown); err != nil {
 		t.Fatal("explicit unknown quote rejected", err)
 	}
 	zero := costInput(t, f, "free-model", nil)
-	zero.InputRate = costText("0")
-	zero.OutputRate = costText("0")
+	zero.InputRate = costRate("0")
+	zero.OutputRate = costRate("0")
 	zero.Basis = "invoice"
-	if _, err = f.store.PublishCostVersion(f.ctx, "pool-admin", zero); err != nil {
+	if _, err = f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, zero); err != nil {
 		t.Fatal("known free quote rejected", err)
 	}
 }
@@ -216,7 +271,9 @@ func TestCostPublishConcurrentCASHasSingleWinner(t *testing.T) {
 		go func() {
 			defer group.Done()
 			<-start
-			_, err := f.store.PublishCostVersion(f.ctx, "pool-admin", in)
+			candidate := in
+			candidate.OperationID = uuid.NewString()
+			_, err := f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, candidate)
 			results <- err
 		}()
 	}
@@ -227,14 +284,14 @@ func TestCostPublishConcurrentCASHasSingleWinner(t *testing.T) {
 	for err := range results {
 		if err == nil {
 			wins++
-		} else if errors.Is(err, catalog.ErrConflict) {
+		} else if strings.Contains(err.Error(), "pricing_revision_conflict") {
 			conflicts++
 		} else {
 			t.Fatal(err)
 		}
 	}
 	state := costState(t, f)
-	expected, _ := strconv.ParseInt(in.ExpectedChannelRevision, 10, 64)
+	expected := in.ExpectedChannelRevision
 	if wins != 1 || conflicts != 1 || state.costs != 1 || state.revision != strconv.FormatInt(expected+1, 10) {
 		t.Fatal("CAS did not give one winner", wins, conflicts, state)
 	}
@@ -244,23 +301,23 @@ func TestCostCandidateExactModelFutureActivationAndPoolQuote(t *testing.T) {
 	f := credentialPoolDB(t, true)
 	f.publish(t, 0)
 	initial := costCandidate(t, f, 1)
-	if initial.CostQuote.Known() || initial.CostQuote.VersionID != "" || initial.CostQuote.Basis != "unknown" {
+	if initial.CostQuote.Known() || initial.CostQuote.VersionID() != "" || initial.CostQuote.Basis() != "unknown" {
 		t.Fatal("missing quote became zero", initial.CostQuote)
 	}
 	past := time.Now().Add(-time.Hour)
 	wrong := costInput(t, f, "Upstream", &past)
-	if _, err := f.store.PublishCostVersion(f.ctx, "pool-admin", wrong); err != nil {
+	if _, err := f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, wrong); err != nil {
 		t.Fatal(err)
 	}
-	if v := costCandidate(t, f, 1); v.CostQuote.VersionID != "" {
+	if v := costCandidate(t, f, 1); v.CostQuote.VersionID() != "" {
 		t.Fatal("quote matched case-insensitive upstream name", v.CostQuote)
 	}
 	current := costInput(t, f, "upstream", &past)
-	published, err := f.store.PublishCostVersion(f.ctx, "pool-admin", current)
+	published, err := f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, current)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v := costCandidate(t, f, 1); v.CostQuote.VersionID != published.ID || !v.CostQuote.Known() || *v.CostQuote.InputRate != 1000001 {
+	if v := costCandidate(t, f, 1); v.CostQuote.VersionID() != published.Result.ID || !v.CostQuote.Known() || !quoteRatesEqual(v.CostQuote, 1000001, 2000003) {
 		t.Fatal("exact active quote missing", v.CostQuote)
 	}
 	var future time.Time
@@ -268,14 +325,14 @@ func TestCostCandidateExactModelFutureActivationAndPoolQuote(t *testing.T) {
 		t.Fatal(err)
 	}
 	scheduled := costInput(t, f, "upstream", &future)
-	scheduled.InputRate = costText("0")
-	scheduled.OutputRate = costText("0")
+	scheduled.InputRate = costRate("0")
+	scheduled.OutputRate = costRate("0")
 	scheduled.Basis = "invoice"
-	next, err := f.store.PublishCostVersion(f.ctx, "pool-admin", scheduled)
+	next, err := f.store.PublishCostPrice(f.ctx, catalog.PricingActor{UserID: poolPricingActorID}, scheduled)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v := costCandidate(t, f, 1); v.CostQuote.VersionID != published.ID {
+	if v := costCandidate(t, f, 1); v.CostQuote.VersionID() != published.Result.ID {
 		t.Fatal("future quote applied early", v.CostQuote)
 	}
 	deadline := time.Now().Add(3 * time.Second)
@@ -292,13 +349,13 @@ func TestCostCandidateExactModelFutureActivationAndPoolQuote(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	if v := costCandidate(t, f, 1); v.CostQuote.VersionID != next.ID || !v.CostQuote.Known() || *v.CostQuote.InputRate != 0 || *v.CostQuote.OutputRate != 0 {
+	if v := costCandidate(t, f, 1); v.CostQuote.VersionID() != next.Result.ID || !v.CostQuote.Known() || !quoteRatesEqual(v.CostQuote, 0, 0) {
 		t.Fatal("scheduled known free quote did not activate", v.CostQuote)
 	}
 	f.addSecondary(t)
 	f.publish(t, 1)
 	rows, err := f.store.CandidateSnapshot(f.ctx, f.model, 2)
-	if err != nil || len(rows) != 2 || !rows[0].CostQuote.Equal(rows[1].CostQuote) || rows[0].CostQuote.VersionID != next.ID {
+	if err != nil || len(rows) != 2 || !rows[0].CostQuote.Equal(rows[1].CostQuote) || rows[0].CostQuote.VersionID() != next.Result.ID {
 		t.Fatal("pool members received different procurement quote", rows, err)
 	}
 }
@@ -329,7 +386,7 @@ func TestCostRawInsertSynchronizesShareLockAndRejectsConcurrentDuplicate(t *test
 	before := costState(t, f)
 	done := make(chan error, 1)
 	go func() {
-		_, e := writer.Exec(ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,'raw',0,0,'contract',$2)`, f.channel, effective)
+		_, e := meterquote.TryPublishCost(ctx, writer, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "raw", ModelID: f.model, Actor: poolPricingActorID, Basis: "contract", InputRate: costRate("0"), OutputRate: costRate("0"), EffectiveAt: effective})
 		done <- e
 	}()
 	blocked := false
@@ -367,7 +424,7 @@ func TestCostRawInsertSynchronizesShareLockAndRejectsConcurrentDuplicate(t *test
 	for i := 0; i < 2; i++ {
 		go func() {
 			<-start
-			_, e := f.app.Exec(ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,'duplicate',1,2,'invoice',$2)`, f.channel, effective)
+			_, e := meterquote.TryPublishCost(ctx, f.app, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "duplicate", ModelID: f.model, Actor: poolPricingActorID, Basis: "invoice", InputRate: costRate("1"), OutputRate: costRate("2"), EffectiveAt: effective})
 			results <- e
 		}()
 	}
@@ -403,7 +460,7 @@ func TestCostProjectionCannotReadProcurementPolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer projector.Close()
-	for _, statement := range []string{`SELECT cost_mode,unknown_cost_policy FROM route_policy_versions`, `SELECT max_input_cost_rate,max_output_cost_rate FROM model_bindings`, `SELECT input_rate,output_rate FROM cost_versions`, `INSERT INTO cost_versions(channel_id,upstream_model) VALUES('forbidden','forbidden')`} {
+	for _, statement := range []string{`SELECT cost_mode,unknown_cost_policy FROM route_policy_versions`, `SELECT variant_key FROM model_bindings`, `SELECT rates_canonical,rates_digest FROM cost_versions`, `INSERT INTO cost_versions(channel_id,upstream_model) VALUES('forbidden','forbidden')`} {
 		_, e := projector.Exec(f.ctx, statement)
 		var pg *pgconn.PgError
 		if !errors.As(e, &pg) || pg.Code != "42501" {
@@ -436,7 +493,8 @@ func TestCostMigrationPreservesLegacyDuplicatesAndDeterministicQuotes(t *testing
 	if f.channel, err = f.store.SaveChannel(f.ctx, "pool-admin", "", catalog.ChannelInput{Name: "legacy-cost", BaseURL: "https://example.com/v1", Secret: "legacy-cost-secret"}); err != nil {
 		t.Fatal(err)
 	}
-	if f.model, err = f.store.CreateModel(f.ctx, "pool-admin", catalog.ModelInput{PublicName: "legacy-cost-model", ContextLimit: 100, InputUpperBound: 80, OutputLimit: 20, DefaultOutputLimit: 20}); err != nil {
+	f.model = uuid.NewString()
+	if _, err = f.owner.Exec(f.ctx, `INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,'legacy-cost-model',$2,'legacy')`, f.model, `{"version":"legacy","model":"legacy-cost-model","context_limit":100,"input_token_upper_bound":80,"output_limit":20,"default_output_limit":20}`); err != nil {
 		t.Fatal(err)
 	}
 	policy := uuid.NewString()
@@ -468,22 +526,20 @@ func TestCostMigrationPreservesLegacyDuplicatesAndDeterministicQuotes(t *testing
 	if _, err = f.owner.Exec(f.ctx, string(body)); err != nil {
 		t.Fatal("013 upgrade rejected old duplicate instants", err)
 	}
-	// The current catalog also projects procurement membership. Keep the
-	// historical 013 migration assertion, then upgrade before invoking it.
-	body, err = migrations.Files.ReadFile("014_procurement_accounts.sql")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.owner.Exec(f.ctx, string(body)); err != nil {
-		t.Fatal("014 upgrade rejected legacy cost history", err)
-	}
-	quote := costCandidate(t, f, 1)
-	if quote.CostPolicy != routing.DefaultCostPolicy() || quote.MaxInputCostRate != nil || quote.MaxOutputCostRate != nil || quote.CostQuote.VersionID != ids[2] || *quote.CostQuote.InputRate != 2 {
-		t.Fatal("legacy defaults or tie order changed", quote)
+	// Inspect the original 013 contract directly. Current catalog readers
+	// require 024 and must not grow a legacy-schema execution branch.
+	var mode, unknown, selected string
+	var inputCap, outputCap *int64
+	var selectedRate int64
+	if err = f.owner.QueryRow(f.ctx, `SELECT p.cost_mode,p.unknown_cost_policy,b.max_input_cost_rate,b.max_output_cost_rate,c.id,c.input_rate
+ FROM route_policy_versions p JOIN model_bindings b ON b.route_policy_version_id=p.id
+ JOIN LATERAL (SELECT id,input_rate FROM cost_versions WHERE channel_id=b.channel_id AND upstream_model=b.upstream_model AND effective_at<=clock_timestamp() ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1) c ON true WHERE p.id=$1`, policy).Scan(&mode, &unknown, &inputCap, &outputCap, &selected, &selectedRate); err != nil || mode != "manual" || unknown != "allow" || inputCap != nil || outputCap != nil || selected != ids[2] || selectedRate != 2 {
+		t.Fatal("legacy defaults or tie order changed", mode, unknown, selected, selectedRate, err)
 	}
 	before := costState(t, f)
-	duplicate := costInput(t, f, "legacy-upstream", &effective)
-	if _, err = f.store.PublishCostVersion(f.ctx, "pool-admin", duplicate); !errors.Is(err, catalog.ErrConflict) || costState(t, f) != before {
+	_, err = f.owner.Exec(f.ctx, `INSERT INTO cost_versions(channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,'legacy-upstream',9,0,'contract',$2)`, f.channel, effective)
+	var conflict *pgconn.PgError
+	if !errors.As(err, &conflict) || conflict.Code != "23505" || conflict.ConstraintName != "cost_version_effective_instant" || costState(t, f) != before {
 		t.Fatal("new duplicate of legacy instant allowed", err)
 	}
 	var count int

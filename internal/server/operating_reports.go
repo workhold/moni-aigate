@@ -17,7 +17,7 @@ func operatingReportFilter(raw string) (reporting.Filter, error) {
 		return reporting.Filter{}, reporting.ErrInvalidFilter
 	}
 	for key, value := range values {
-		if len(value) != 1 || (key != "from" && key != "to" && key != "tenant_id" && key != "model_id") {
+		if len(value) != 1 || (key != "from" && key != "to" && key != "tenant_id" && key != "model_id" && key != "protocol" && key != "execution_kind") {
 			return reporting.Filter{}, reporting.ErrInvalidFilter
 		}
 	}
@@ -26,7 +26,7 @@ func operatingReportFilter(raw string) (reporting.Filter, error) {
 	if e1 != nil || e2 != nil {
 		return reporting.Filter{}, reporting.ErrInvalidFilter
 	}
-	filter := reporting.Filter{From: from.UTC(), To: to.UTC(), TenantID: values.Get("tenant_id"), ModelID: values.Get("model_id")}
+	filter := reporting.Filter{From: from.UTC(), To: to.UTC(), TenantID: values.Get("tenant_id"), ModelID: values.Get("model_id"), Protocol: values.Get("protocol"), ExecutionKind: values.Get("execution_kind")}
 	if err = filter.Validate(); err != nil {
 		return reporting.Filter{}, err
 	}

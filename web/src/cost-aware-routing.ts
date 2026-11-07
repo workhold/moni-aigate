@@ -1,16 +1,19 @@
 import { ApiError, request } from './api.ts'
 import { cnyToMicro } from './format.ts'
 import { channelManagementRevision } from './channel-operations.ts'
+import { parseTextRates, pricingTime } from './pricing.ts'
+import type { TextSupplierRates } from './pricing.ts'
 
 export interface CostPolicy { mode: 'manual' | 'cost_first'; unknown_cost_policy: 'allow' | 'deny' }
 export interface CostBinding { channel_id: string; upstream_model: string; priority: number; weight: number; max_inflight: number; max_input_cost_rate: string | null; max_output_cost_rate: string | null }
 export interface RouteView { id: string; public_name: string; active_revision: number; cost_policy: CostPolicy; bindings: CostBinding[] }
 export interface BindingDraft extends Omit<CostBinding, 'max_input_cost_rate' | 'max_output_cost_rate'> { max_input_cost_rate: string; max_output_cost_rate: string }
 export interface CostChannel { id: string; name: string; management_revision: string; enabled: boolean }
-export interface CostDraft { upstream_model: string; basis: 'unknown' | 'contract' | 'invoice'; input_rate: string; output_rate: string; effective_at: string }
-export interface CostVersion { id: string; channel_id: string; channel_revision: string; upstream_model: string; basis: CostDraft['basis']; input_rate: string | null; output_rate: string | null; effective_at: string }
+export interface CostDomain { schema_id: string; schema_digest: string; variant_key: 'default' }
+export interface CostSchemaChoice extends CostDomain { public_name: string }
+export interface CostDraft extends CostDomain { upstream_model: string; basis: 'unknown' | 'contract' | 'invoice'; input_rate: string; output_rate: string; effective_at: string }
+export interface CostVersion extends CostDomain { id: string; channel_id: string; channel_revision: string; upstream_model: string; currency: 'CNY'; basis: CostDraft['basis']; rates: TextSupplierRates | null; effective_at: string; created_at: string }
 export interface RouteWrite { path: string; method: 'PUT'; body: { expected_revision: number; cost_policy: CostPolicy; bindings: CostBinding[] } }
-export interface CostWrite { path: string; method: 'POST'; body: { channel_id: string; expected_channel_revision: string; upstream_model: string; basis: CostDraft['basis']; input_rate: string | null; output_rate: string | null; effective_at: string | null } }
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('采购配置响应格式无效。')
@@ -75,31 +78,24 @@ export function parseCostChannel(value: unknown, expectedID?: string): CostChann
   if (typeof raw.name !== 'string' || typeof raw.enabled !== 'boolean') throw new Error('渠道元数据无效。')
   return { id, name: raw.name, enabled: raw.enabled, management_revision: channelManagementRevision(raw.management_revision) }
 }
-export function costWrite(channel: CostChannel, draft: CostDraft): CostWrite {
-  const selected = parseCostChannel(channel), model = draft.upstream_model.trim()
-  if (!model || /\p{Cc}/u.test(model) || new TextEncoder().encode(model).length > 200) throw new Error('请填写精确上游模型名称（最多 200 字节）。')
-  if (!['unknown', 'contract', 'invoice'].includes(draft.basis)) throw new Error('请选择成本依据。')
-  let effective: string | null = null
-  if (draft.effective_at) {
-    const date = new Date(draft.effective_at)
-    if (!Number.isFinite(date.getTime()) || date.getUTCFullYear() < 1 || date.getUTCFullYear() > 9999) throw new Error('请选择有效的生效时间。')
-    effective = date.toISOString()
-  }
-  if (draft.basis !== 'unknown' && (!draft.input_rate.trim() || !draft.output_rate.trim())) throw new Error('合同或账单依据须明确填写两维单价，免费请填 0。')
-  return freeze({ path: '/platform/cost-versions', method: 'POST', body: { channel_id: selected.id, expected_channel_revision: selected.management_revision, upstream_model: model, basis: draft.basis, input_rate: draft.basis === 'unknown' ? null : cnyToMicro(draft.input_rate), output_rate: draft.basis === 'unknown' ? null : cnyToMicro(draft.output_rate), effective_at: effective } })
+export function parseCostDomain(value: unknown): CostDomain {
+  const raw = record(value)
+  if (typeof raw.schema_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(raw.schema_id) || raw.schema_id === '00000000-0000-0000-0000-000000000000' || typeof raw.schema_digest !== 'string' || !/^[0-9a-f]{64}$/.test(raw.schema_digest) || raw.variant_key !== 'default') throw new Error('请选择已发布模型的完整计量 schema 与 default 变体。')
+  return { schema_id: raw.schema_id, schema_digest: raw.schema_digest, variant_key: 'default' }
 }
-export function acceptCostWrite(operation: CostWrite, value: unknown): { id: string; channel_revision: string } {
-  const raw = record(value), revision = channelManagementRevision(raw.channel_revision)
-  if (BigInt(revision) !== BigInt(operation.body.expected_channel_revision) + 1n) throw new Error('发布结果不能证明预期渠道版本，请只读核查。')
-  return { id: identity(raw.id), channel_revision: revision }
+export function parseCostSchemaChoice(value: unknown): CostSchemaChoice {
+  const raw = record(value), domain = parseCostDomain(raw)
+  return { ...domain, public_name: identity(raw.public_name) }
 }
 export function parseCostVersion(value: unknown): CostVersion {
   const raw = record(value)
-  if (!['unknown', 'contract', 'invoice'].includes(String(raw.basis)) || typeof raw.upstream_model !== 'string' || typeof raw.effective_at !== 'string' || !Number.isFinite(Date.parse(raw.effective_at))) throw new Error('成本版本响应无效。')
-  const input = rate(raw.input_rate), output = rate(raw.output_rate)
-  // Legacy rows may have incomplete dimensions. Keep history inspectable; a
-  // new known-price publication still requires both dimensions in costWrite.
-  return { id: identity(raw.id), channel_id: identity(raw.channel_id), channel_revision: channelManagementRevision(raw.channel_revision), upstream_model: raw.upstream_model, basis: raw.basis as CostVersion['basis'], input_rate: input, output_rate: output, effective_at: raw.effective_at }
+  const keys = ['id', 'channel_id', 'channel_revision', 'upstream_model', 'schema_id', 'schema_digest', 'variant_key', 'currency', 'basis', 'rates', 'effective_at', 'created_at']
+  if (Object.keys(raw).length !== keys.length || keys.some(key => !Object.hasOwn(raw, key))) throw new Error('成本版本响应含有未定义字段。')
+  if (!['unknown', 'contract', 'invoice'].includes(String(raw.basis)) || typeof raw.upstream_model !== 'string' || !raw.upstream_model || raw.upstream_model.trim() !== raw.upstream_model) throw new Error('成本版本响应无效。')
+  if (raw.currency !== 'CNY' || typeof raw.created_at !== 'string' || typeof raw.effective_at !== 'string') throw new Error('成本版本响应无效。')
+  const domain = parseCostDomain(raw), basis = raw.basis as CostVersion['basis']
+  const rates = basis === 'unknown' ? (raw.rates === null ? null : (() => { throw new Error('未知成本不能携带费率。') })()) : parseTextRates(raw.rates, domain.schema_id, 'supplier')
+  return { ...domain, id: identity(raw.id), channel_id: identity(raw.channel_id), channel_revision: channelManagementRevision(raw.channel_revision), upstream_model: raw.upstream_model, currency: 'CNY', basis, rates, effective_at: pricingTime(raw.effective_at), created_at: pricingTime(raw.created_at) }
 }
 
 export interface WriteReview<V, O> { mode: 'submitting' | 'conflict' | 'unknown' | 'saved'; view: V; submitted: O; observed?: V; previousUnknown: boolean }
@@ -153,7 +149,6 @@ export function createCostWriteJournal<V, O>(revision: (view: V) => bigint, same
   }
 }
 export const routeWriteJournal = createCostWriteJournal<RouteView, RouteWrite>(v => BigInt(v.active_revision), (a, b) => JSON.stringify(parseRouteView(a)) === JSON.stringify(parseRouteView(b)))
-export const costWriteJournal = createCostWriteJournal<CostChannel, CostWrite>(v => BigInt(v.management_revision), (a, b) => JSON.stringify(parseCostChannel(a)) === JSON.stringify(parseCostChannel(b)))
 
 export async function readConfigurationRows(path: '/platform/models' | '/platform/channels' | '/platform/cost-versions', active: () => boolean = () => true): Promise<unknown[]> {
   const rows: unknown[] = [], cursors = new Set<string>()

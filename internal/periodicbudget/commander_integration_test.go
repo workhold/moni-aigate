@@ -351,18 +351,14 @@ func TestCommanderPGReplayRevalidatesActorAndRevokedKey(t *testing.T) {
 }
 
 func TestCommanderPGOriginalReceiptSurvivesTrafficAndClockRegression(t *testing.T) {
+	pbFutureClockTraffic(t)
 	f := newPBTxFixture(t)
 	c := pbCommander(t, f)
 	in := pbCommandInput("0", "500")
 	first, err := c.ConfigureKey(f.ctx, f.user, f.tenant, f.key, in)
 	pbTxMust(t, "configure Key before new traffic", err)
 	f.setClock(t, time.Date(2026, 12, 10, 12, 0, 0, 123456000, time.UTC))
-	tx := f.begin(t)
-	f.customerRoots(t, tx, "")
-	locks, err := LockCustomerTx(f.ctx, tx, f.tenant, f.key)
-	pbTxMust(t, "lock customer budgets for actual financial reserve", err)
-	_, _ = f.newCustomer(t, tx, locks)
-	pbTxMust(t, "commit new traffic and budget facts", tx.Commit(f.ctx))
+	f.reserveCustomer(t)
 	f.setClock(t, time.Date(2026, 11, 10, 12, 0, 0, 123456000, time.UTC))
 	before := pbCommandSnapshot(t, f)
 	again, err := c.ConfigureKey(f.ctx, f.user, f.tenant, f.key, in)

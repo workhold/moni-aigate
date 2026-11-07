@@ -101,6 +101,14 @@ func TestPostgresCredentialPoolRecordAttemptRequiresFrozenMemberAndDrains(t *tes
 			if published {
 				revision = 1
 				billingPoolPublish(t, f, version, revision)
+			} else {
+				in := f.input()
+				in.RouteRevision = 0
+				_, err := f.store.Reserve(f.ctx, in)
+				assertCode(t, err, "route_changed")
+				f.wallet(t, 1000, 0)
+				f.check(t)
+				return
 			}
 			r := billingPoolReserve(t, f, revision)
 			// This credential belongs to the same channel, but a different

@@ -28,11 +28,10 @@ func TestPricingProvisionRemainsColumnScoped(t *testing.T) {
 			`UPDATE request_records SET key_id=key_id WHERE false`,
 			`UPDATE request_records SET owner_id=owner_id WHERE false`,
 			`UPDATE request_records SET model_id=model_id WHERE false`,
-			`UPDATE request_records SET price_version_id=price_version_id WHERE false`,
-			`UPDATE request_records SET input_rate=input_rate,output_rate=output_rate WHERE false`,
-			`UPDATE request_records SET pricing_group_id=pricing_group_id WHERE false`,
-			`UPDATE request_records SET tenant_pricing_revision=tenant_pricing_revision WHERE false`,
-			`UPDATE request_records SET retail_priced_at=retail_priced_at WHERE false`,
+			`UPDATE request_records SET profile_version=profile_version WHERE false`,
+			`UPDATE request_records SET protocol=protocol,execution_kind=execution_kind,result_kind=result_kind WHERE false`,
+			`UPDATE request_meter_snapshots SET price_version_id=price_version_id WHERE false`,
+			`UPDATE request_meter_snapshots SET pricing_group_id=pricing_group_id,tenant_pricing_revision=tenant_pricing_revision,retail_priced_at=retail_priced_at WHERE false`,
 			`UPDATE request_records SET client_ip=client_ip WHERE false`,
 		} {
 			_, err := f.app.Exec(f.ctx, sql)

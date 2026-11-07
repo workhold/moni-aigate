@@ -85,10 +85,10 @@ func geminiAssertUsage(t *testing.T, f *gatewayFixture, id string, attempts int6
 	t.Helper()
 	retrievalResourcesReleased(t, f)
 	f.assertSettled(t, id, attempts)
-	var input, output, total, thoughts, cached int64
-	err := f.pool.QueryRow(context.Background(), `SELECT (e.normalized_usage->>'input_tokens')::bigint,(e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint,(e.normalized_usage->>'reasoning_tokens')::bigint,(e.normalized_usage->>'cached_tokens')::bigint FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, id).Scan(&input, &output, &total, &thoughts, &cached)
-	if err != nil || input != 10 || output != 5 || total != 15 || thoughts != 2 || cached != 3 {
-		t.Fatalf("Gemini durable usage %d/%d/%d thinking=%d cache=%d err=%v", input, output, total, thoughts, cached, err)
+	var input, output int64
+	err := f.pool.QueryRow(context.Background(), `SELECT meter_event_quantity(e.id,'text_input_token'),meter_event_quantity(e.id,'text_output_token') FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, id).Scan(&input, &output)
+	if err != nil || input != 10 || output != 5 {
+		t.Fatalf("Gemini durable quantities %d/%d err=%v", input, output, err)
 	}
 }
 func TestGeminiCommercialJSONAndSSE(t *testing.T) {
@@ -101,7 +101,7 @@ func TestGeminiCommercialJSONAndSSE(t *testing.T) {
 			f := geminiFixture(t, []http.HandlerFunc{geminiHandler(t, stream, wire)}, nil)
 			res := nativeRequest(t, f, geminiPath(stream), geminiBody(), http.Header{"Authorization": []string{"Bearer " + f.token}})
 			body, err := io.ReadAll(res.Body)
-			if err != nil || res.StatusCode != 200 || bytes.Count(body, []byte("hello")) != 1 || !bytes.Contains(body, []byte(`"modelVersion":"retail-model"`)) || !bytes.Contains(body, []byte(`"thoughtsTokenCount":2`)) {
+			if err != nil || res.StatusCode != 200 || bytes.Count(body, []byte("hello")) != 1 || !bytes.Contains(body, []byte(`"modelVersion":"retail-model"`)) || !bytes.Contains(body, []byte(`"thoughtsTokenCount":2`)) || !bytes.Contains(body, []byte(`"cachedContentTokenCount":3`)) {
 				t.Fatalf("Gemini HTTP %d %s %v", res.StatusCode, body, err)
 			}
 			for _, private := range []string{"private-", "provider-model", "local-fixture-secret", "[DONE]"} {
@@ -285,9 +285,7 @@ func TestGeminiIdempotencyIncludesModelAndAction(t *testing.T) {
 	if _, err = f.pool.Exec(ctx, "UPDATE api_keys SET scopes=array_append(scopes,$2) WHERE id=$1", f.key, second); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.server.Catalog.PublishPrice(ctx, actor, second, "1000000", "2000000", time.Now().Add(-time.Hour)); err != nil {
-		t.Fatal(err)
-	}
+	publishDefaultFixture(t, f, second, actor, 1000000, 2000000, time.Now().Add(-time.Hour))
 	if _, err = f.server.Catalog.Publish(ctx, actor, second, 0, []catalog.BindingInput{{ChannelID: probeChannels(t, f)[0], UpstreamModel: "provider-model", Priority: 1, Weight: 1, MaxInflight: 4}}); err != nil {
 		t.Fatal(err)
 	}

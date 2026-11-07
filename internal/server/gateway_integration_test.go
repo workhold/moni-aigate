@@ -24,6 +24,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/config"
 	"github.com/moni-ai/moni-aigate/internal/provider"
 	"github.com/moni-ai/moni-aigate/internal/security"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -103,13 +104,13 @@ func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noCo
 	}
 	exec("INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)", f.tenant, user)
 	profile := &provider.Profile{Model: "retail-model", Protocol: protocol, InputTokenUpperBound: 100, ContextLimit: 120, OutputLimit: 20, DefaultOutputLimit: 20, NoConsumptionStatuses: noConsumption, UsageSemantics: "final"}
-	outputRate := "2000000"
+	outputRateValue := int64(2000000)
 	if protocol == provider.ProtocolGemini {
 		profile.UsageSemantics = "cumulative"
 	}
 	if profile.InputOnly() {
 		profile.OutputLimit, profile.DefaultOutputLimit = 0, 0
-		outputRate = "0"
+		outputRateValue = 0
 	}
 	f.model, err = s.Catalog.CreateModel(ctx, operator, catalog.ModelInput{PublicName: "retail-model", Profile: profile})
 	if err != nil {
@@ -117,9 +118,7 @@ func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noCo
 	}
 	exec("INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", f.tenant, f.model)
 	exec("INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'gateway fixture','mg_test',$4,$5,1000)", f.key, f.tenant, user, secrets.Digest(f.token), []string{f.model})
-	if _, err = s.Catalog.PublishPrice(ctx, operator, f.model, "1000000", outputRate, time.Now().Add(-time.Hour)); err != nil {
-		t.Fatal(err)
-	}
+	meterquote.PublishDefaultPrice(t, ctx, pool, meterquote.DefaultPrice{ModelID: f.model, Actor: operator, InputRate: 1000000, OutputRate: outputRateValue, EffectiveAt: time.Now().Add(-time.Hour)})
 	bindings := make([]catalog.BindingInput, 0, len(handlers))
 	for i, handler := range handlers {
 		upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -276,7 +275,7 @@ func (f *gatewayFixture) state(t *testing.T, request string) gatewayState {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	v := gatewayState{}
-	err := f.pool.QueryRow(ctx, `SELECT r.billing_status,v.status,v.amount,coalesce(z.transport_end_reason,''),coalesce(z.delivery_stage,''),coalesce(z.content_written,false),coalesce(m.normalized_usage->>'status',''),(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0) FROM request_records r JOIN reservations v ON v.request_id=r.id LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id LEFT JOIN metering_events m ON m.id=z.event_id WHERE r.id=$1`, request).Scan(&v.billing, &v.reservation, &v.amount, &v.reason, &v.stage, &v.content, &v.usage, &v.settlements, &v.attempts, &v.charge)
+	err := f.pool.QueryRow(ctx, `SELECT r.billing_status,v.status,v.amount,coalesce(z.transport_end_reason,''),coalesce(z.delivery_stage,''),coalesce(z.content_written,false),coalesce(z.retail_usage_state,''),(SELECT count(*) FROM settlements WHERE request_id=r.id),(SELECT count(*) FROM upstream_attempts WHERE request_id=r.id),coalesce((SELECT charged_amount FROM settlements WHERE request_id=r.id),0) FROM request_records r JOIN reservations v ON v.request_id=r.id LEFT JOIN finalization_records z ON z.id=r.latest_finalization_id WHERE r.id=$1`, request).Scan(&v.billing, &v.reservation, &v.amount, &v.reason, &v.stage, &v.content, &v.usage, &v.settlements, &v.attempts, &v.charge)
 	if err != nil {
 		t.Fatal(err)
 	}

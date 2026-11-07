@@ -24,6 +24,8 @@ import (
 type mvpCrashInput struct {
 	Schema, Stage, Upstream                          string
 	Tenant, User, Key, Model, Channel, Version, Cred string
+	ProfileVersion                                   string
+	RouteRevision                                    int64
 	Request, Idempotency                             string
 }
 
@@ -55,7 +57,7 @@ func TestMVPBillingCrashHelperProcess(t *testing.T) {
 	}
 	defer pool.Close()
 	store := New(pool)
-	r, err := store.Reserve(ctx, ReserveInput{Principal: Principal{TenantID: in.Tenant, UserID: in.User, KeyID: in.Key}, RequestID: in.Request, ModelID: in.Model, IdempotencyKey: in.Idempotency, RequestHMAC: "crash-test-digest", ProfileVersion: "v1", InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(2 * time.Second)})
+	r, err := store.Reserve(ctx, ReserveInput{Principal: Principal{TenantID: in.Tenant, UserID: in.User, KeyID: in.Key}, RequestID: in.Request, ModelID: in.Model, RouteRevision: in.RouteRevision, IdempotencyKey: in.Idempotency, RequestHMAC: "crash-test-digest", ProfileVersion: in.ProfileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(2 * time.Second)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +130,7 @@ func TestMVPPostgresSIGKILLRecoveryNeverReplaysGeneration(t *testing.T) {
 			}))
 			defer upstream.Close()
 			reserve := f.input()
-			in := mvpCrashInput{Schema: f.pool.Config().ConnConfig.RuntimeParams["search_path"], Stage: tc.stage, Upstream: upstream.URL, Tenant: f.tenant, User: f.user, Key: f.key, Model: f.model, Channel: f.channel, Version: f.version, Cred: f.credential, Request: reserve.RequestID, Idempotency: reserve.IdempotencyKey}
+			in := mvpCrashInput{Schema: f.pool.Config().ConnConfig.RuntimeParams["search_path"], Stage: tc.stage, Upstream: upstream.URL, Tenant: f.tenant, User: f.user, Key: f.key, Model: f.model, Channel: f.channel, Version: f.version, Cred: f.credential, ProfileVersion: fixtureProfileVersion, RouteRevision: fixtureRouteRevision, Request: reserve.RequestID, Idempotency: reserve.IdempotencyKey}
 			encoded, err := json.Marshal(in)
 			if err != nil {
 				t.Fatal(err)

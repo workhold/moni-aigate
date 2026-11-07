@@ -113,7 +113,11 @@ func drill() error {
 	if _, err = c.Publish(ctx, operator, model, 0, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "upstream", Weight: 1, MaxInflight: 10}}); err != nil {
 		return err
 	}
-	if _, err = c.PublishPrice(ctx, operator, model, "1000000", "1000000", time.Time{}); err != nil {
+	var schemaID, schemaDigest string
+	if err = source.QueryRow(ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id WHERE m.id=$1`, model).Scan(&schemaID, &schemaDigest); err != nil {
+		return err
+	}
+	if _, err = c.PublishDefaultPrice(ctx, catalog.PricingActor{UserID: operator}, catalog.DefaultPriceCommand{OperationID: uuid.NewString(), ModelID: model, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", InputRate: 1000000, OutputRate: 1000000, EffectiveAt: time.Now().UTC().Truncate(time.Microsecond)}); err != nil {
 		return err
 	}
 	if err = execSQL("INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", tenant, model); err != nil {

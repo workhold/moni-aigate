@@ -2,7 +2,8 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, CopyDocument, ArrowRight, Cpu } from '@element-plus/icons-vue'
-import { fetchPublicCatalog, publicFilters, publicProtocols, publicRateCny } from '../public-catalog'
+import { fetchPublicCatalog, publicFilters, publicProtocols } from '../public-catalog'
+import { ratePerMillionText } from '../metering-wire'
 import { createPublicCatalogPager } from '../public-catalog-state'
 import { integer, time } from '../format'
 
@@ -55,7 +56,7 @@ onBeforeUnmount(() => { clearTimeout(filterTimer); pager.dispose(); controller?.
           <div class="pricing-name"><h2>{{ row.model.public_name }}</h2><el-button text :icon="CopyDocument" :aria-label="`复制模型名称 ${row.model.public_name}`" @click="copy(row.model.public_name)" /></div>
           <div class="pricing-capabilities"><span>纯文本输入</span><span v-if="row.model.capabilities.streaming">SSE 流式</span><span v-if="row.model.capabilities.tools">客户端函数工具</span><span v-if="row.model.capabilities.input_only">仅输入计费</span></div>
           <dl class="pricing-limits"><dt>{{ row.model.capabilities.input_only ? '整请求输入容量' : '上下文窗口' }}</dt><dd>{{ integer(row.model.limits.context_tokens) }} Tokens</dd><dt>计费输入硬上界</dt><dd>{{ integer(row.model.limits.input_token_upper_bound) }} Tokens</dd><template v-if="!row.model.capabilities.input_only"><dt>最大 / 默认输出</dt><dd>{{ integer(row.model.limits.max_output_tokens) }} / {{ integer(row.model.limits.default_output_tokens) }}</dd></template></dl>
-          <div v-if="row.model.pricing.status === 'available'" class="pricing-rates"><div><span>输入 / 百万 Tokens</span><strong>{{ publicRateCny(row.model.pricing.input_rate) }}</strong></div><div><span>输出 / 百万 Tokens</span><strong>{{ publicRateCny(row.model.pricing.output_rate) }}</strong><small v-if="row.model.capabilities.input_only">固定为0，仅输入计费</small></div></div>
+          <div v-if="row.model.pricing.status === 'available'" class="pricing-rates"><div><span>输入 / 百万 Tokens</span><strong>{{ ratePerMillionText(row.model.pricing.rates, 'text_input_token') }}</strong></div><div><span>输出 / 百万 Tokens</span><strong>{{ ratePerMillionText(row.model.pricing.rates, 'text_output_token') }}</strong><small v-if="row.model.capabilities.input_only">固定为0，仅输入计费</small></div></div>
           <div v-else class="pricing-unavailable"><strong>暂无有效售价</strong><span>不能按免费模型处理，请稍后查看。</span></div>
           <div class="pricing-observed"><span :title="row.as_of">观察于 {{ time(row.as_of) }}</span><span v-if="row.model.pricing.effective_at" :title="row.model.pricing.effective_at">价格生效 {{ time(row.model.pricing.effective_at) }}</span></div>
         </article>

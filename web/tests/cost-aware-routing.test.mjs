@@ -4,15 +4,25 @@ import test from 'node:test'
 import { ref, reactive } from 'vue'
 import { ApiError, request, setCsrf } from '../src/api.ts'
 import { createKeyAccessScope, keyAccessContext } from '../src/key-access-policy.ts'
-import { acceptCostWrite, acceptRouteWrite, costPolicy, costRateToCny, costWrite, createCostWriteJournal, parseCostChannel, parseCostVersion, parseRouteView, readConfigurationRows, routeDrafts, routeWrite, unknownCostWriteResult } from '../src/cost-aware-routing.ts'
+import { acceptRouteWrite, costPolicy, costRateToCny, createCostWriteJournal, parseCostChannel, parseCostDomain, parseCostSchemaChoice, parseCostVersion, parseRouteView, readConfigurationRows, routeDrafts, routeWrite, unknownCostWriteResult } from '../src/cost-aware-routing.ts'
 
 const modelID = '6d772865-f77e-422c-aa5b-64c2a6b3fa66', channelID = '653b7cd7-d1ce-4d7b-8203-a8f2c1c9f5ad'
 const channel = { id: channelID, name: '采购渠道', management_revision: '9007199254740993', enabled: true }
 const binding = { channel_id: channelID, upstream_model: 'supplier/exact-model', priority: 4, weight: 2, max_inflight: 10, max_input_cost_rate: null, max_output_cost_rate: '0' }
 const model = { id: modelID, public_name: '公开模型', active_revision: 3, cost_policy: { mode: 'manual', unknown_cost_policy: 'deny' }, bindings: [binding] }
-const draft = { upstream_model: 'supplier/exact-model', basis: 'contract', input_rate: '9007199254.740993', output_rate: '0', effective_at: '' }
+const domain = { schema_id: '10000000-0000-4000-8000-000000000001', schema_digest: 'ab'.repeat(32), variant_key: 'default' }
+const draft = { ...domain, upstream_model: 'supplier/exact-model', basis: 'contract', input_rate: '9007199254.740993', output_rate: '0', effective_at: '' }
 const actor = keyAccessContext('admin-one', 'tenant-one', 'admin')
 const journal = () => createCostWriteJournal(v => BigInt(v.management_revision), (a, b) => JSON.stringify(parseCostChannel(a)) === JSON.stringify(parseCostChannel(b)))
+// The generic CAS journal keeps protecting route writes; this channel payload
+// only exercises its observe/resume rules, not the retired cost write path.
+const casOperation = view => Object.freeze({ path: '/platform/models/example/bindings', method: 'PUT', body: Object.freeze({ channel_id: view.id, expected_channel_revision: view.management_revision }) })
+
+test('cost domain choices are explicit and safe', () => {
+  assert.deepEqual(parseCostSchemaChoice({ ...domain, public_name: 'text-model', secret: 'never' }), { ...domain, public_name: 'text-model' })
+  for (const invalid of [{ schema_id: '' }, { schema_id: '00000000-0000-0000-0000-000000000000' }, { schema_id: 'AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA' }, { schema_digest: '' }, { schema_digest: 'AB'.repeat(32) }, { variant_key: '' }, { variant_key: 'other' }]) assert.throws(() => parseCostDomain({ ...domain, ...invalid }))
+  assert.deepEqual(parseCostDomain(draft), domain)
+})
 
 test('route projection keeps full cost policy, exact strings and safe fields only', () => {
   const view = parseRouteView({ ...model, secret: 'never-retain', bindings: [{ ...binding, secret: 'private', max_input_cost_rate: '9007199254740993' }] }, modelID)
@@ -64,31 +74,22 @@ test('route success validates precisely the next revision and treats malformed s
   assert.equal(unknownCostWriteResult(new Error('malformed success')), true)
 })
 
-test('cost publish captures channel CAS as int64 string and uses database immediate time', () => {
-  const operation = costWrite(channel, draft)
-  assert.deepEqual(operation.body, { channel_id: channelID, expected_channel_revision: channel.management_revision, upstream_model: draft.upstream_model, basis: 'contract', input_rate: '9007199254740993', output_rate: '0', effective_at: null })
-  assert.ok(Object.isFrozen(operation.body))
-  const result = acceptCostWrite(operation, { id: 'cost-one', channel_revision: '9007199254740994' })
-  assert.equal(result.channel_revision, '9007199254740994')
-  for (const value of [{ id: 'cost-one', channel_revision: '9007199254740993' }, { id: 'cost-one', channel_revision: 9007199254740994 }, { channel_revision: '9007199254740994' }]) assert.throws(() => acceptCostWrite(operation, value))
-  for (const value of [1, '0', '01', '9223372036854775808']) assert.throws(() => costWrite({ ...channel, management_revision: value }, draft))
-  for (const invalid of [{ input_rate: '' }, { output_rate: '' }, { basis: 'guess' }, { effective_at: 'tomorrow' }, { effective_at: '10000-01-01T00:00:00Z' }]) assert.throws(() => costWrite(channel, { ...draft, ...invalid }))
-  assert.equal(costWrite(channel, { ...draft, effective_at: '2026-11-01T00:00:00Z' }).body.effective_at, '2026-11-01T00:00:00.000Z')
-})
-
-test('unknown quote publishes null even after known prices were typed; metadata never retains secrets', () => {
-  const operation = costWrite(channel, { ...draft, basis: 'unknown' })
-  assert.equal(operation.body.input_rate, null); assert.equal(operation.body.output_rate, null)
+test('cost channel and version projections never retain secrets', () => {
   const parsed = parseCostChannel({ ...channel, secret: 'secret-one', base_url: 'private-url' })
   assert.deepEqual(parsed, channel)
-  const cost = parseCostVersion({ id: 'version-one', channel_id: channelID, channel_revision: '9007199254740994', upstream_model: draft.upstream_model, basis: 'unknown', input_rate: null, output_rate: null, effective_at: '2026-11-01T00:00:00Z', secret: 'secret-two' })
-  assert.equal(cost.input_rate, null)
-  assert.equal(parseCostVersion({ ...cost, basis: 'contract', input_rate: '1', output_rate: null }).output_rate, null, 'legacy incomplete quote remains readable, never a known-free output price')
+  const raw = { id: 'version-one', channel_id: channelID, channel_revision: '9007199254740994', upstream_model: draft.upstream_model, ...domain, currency: 'CNY', basis: 'unknown', rates: null, effective_at: '2026-11-01T00:00:00.000000Z', created_at: '2026-11-01T00:00:01.000000Z' }
+  assert.throws(() => parseCostVersion({ ...raw, secret: 'secret-two' }))
+  const cost = parseCostVersion(raw)
+  assert.equal(cost.rates, null)
+  const knownRates = { schema_id: domain.schema_id, version: '1', side: 'supplier', currency: 'CNY', rates: [{ dimension: 'text_input_token', unit: 'token', numerator: '1', denominator: '1' }, { dimension: 'text_output_token', unit: 'token', numerator: '0', denominator: '1' }] }
+  assert.deepEqual(parseCostVersion({ ...raw, basis: 'contract', rates: knownRates }).rates, knownRates)
+  assert.throws(() => parseCostVersion({ ...raw, basis: 'contract', rates: null }))
+  assert.throws(() => parseCostVersion({ ...raw, basis: 'contract', rates: 'not-an-object' }))
   assert.doesNotMatch(JSON.stringify([parsed, cost]), /secret|private-url/)
 })
 
 test('actual Vue ref and nested reactive metadata can enter the journal without DataCloneError', () => {
-  const view = ref(parseCostChannel(channel)), operation = reactive(costWrite(view.value, draft)), entries = journal()
+  const view = ref(parseCostChannel(channel)), operation = reactive({ ...casOperation(view.value) }), entries = journal()
   assert.doesNotThrow(() => entries.begin(actor, channelID, view.value, operation))
   view.value.name = 'late mutation'
   assert.equal(entries.get(actor, channelID).view.name, channel.name)
@@ -101,7 +102,7 @@ test('actual Vue ref and nested reactive metadata can enter the journal without 
 
 test('journal blocks duplicate submit, conflict and unknown until read-only observation plus explicit resume', () => {
   for (const failure of [new ApiError('revision_conflict', 'conflict', '', 409), new ApiError('network_error', 'unknown', '', 0), new ApiError('invalid_response', 'unknown', '', 200), new ApiError('unavailable', 'unknown', '', 503), new ApiError('timeout', 'unknown', '', 408), new Error('bad receipt')]) {
-    const entries = journal(), operation = costWrite(channel, draft)
+    const entries = journal(), operation = casOperation(channel)
     entries.begin(actor, channelID, channel, operation)
     assert.throws(() => entries.begin(actor, channelID, channel, operation), /已有/)
     assert.throws(() => entries.resume(actor, channelID), /只读/)
@@ -117,12 +118,12 @@ test('journal blocks duplicate submit, conflict and unknown until read-only obse
     assert.equal(resumed.view.management_revision, latest.management_revision)
     assert.equal(resumed.previousUnknown, failure.status !== 409)
     assert.equal(entries.hadUnknown(actor, channelID), failure.status !== 409)
-    assert.equal(costWrite(resumed.view, draft).body.expected_channel_revision, latest.management_revision)
+    assert.equal(casOperation(resumed.view).body.expected_channel_revision, latest.management_revision)
   }
 })
 
 test('observation cannot regress or alter a snapshot at the same revision and reads cannot resolve writes', () => {
-  const entries = journal(), operation = costWrite(channel, draft)
+  const entries = journal(), operation = casOperation(channel)
   entries.begin(actor, channelID, channel, operation); entries.fail(actor, channelID, new Error('unknown'))
   assert.throws(() => entries.observe(actor, channelID, { ...channel, management_revision: '9007199254740992' }), /版本/)
   assert.throws(() => entries.observe(actor, channelID, { ...channel, name: 'different' }), /版本/)
@@ -135,7 +136,7 @@ test('observation cannot regress or alter a snapshot at the same revision and re
 
 test('known 4xx rejection permits corrected edit; identities and targets isolate the tab-local journal', () => {
   for (const status of [400, 401, 403, 404, 422, 429]) {
-    const entries = journal(), operation = costWrite(channel, draft)
+    const entries = journal(), operation = casOperation(channel)
     entries.begin(actor, channelID, channel, operation)
     entries.fail(actor, channelID, new ApiError('rejected', 'rejected', '', status))
     assert.equal(entries.get(actor, channelID), null)
@@ -143,7 +144,7 @@ test('known 4xx rejection permits corrected edit; identities and targets isolate
     entries.saved(actor, channelID)
     assert.equal(entries.get(actor, channelID).mode, 'saved')
   }
-  const entries = journal(); entries.begin(actor, channelID, channel, costWrite(channel, draft))
+  const entries = journal(); entries.begin(actor, channelID, channel, casOperation(channel))
   assert.equal(entries.get(keyAccessContext('admin-two', 'tenant-one', 'admin'), channelID), null)
   assert.equal(entries.get(keyAccessContext('admin-one', 'tenant-two', 'admin'), channelID), null)
   assert.equal(entries.get(keyAccessContext('admin-one', 'tenant-one', 'finance_operator'), channelID), null)
@@ -152,7 +153,7 @@ test('known 4xx rejection permits corrected edit; identities and targets isolate
 
 test('close, page and identity epochs reject late observations and mutations; journal still records original outcome', async () => {
   const scope = createKeyAccessScope(), entries = journal()
-  scope.reset(actor); const write = scope.ticket('write'), operation = costWrite(channel, draft)
+  scope.reset(actor); const write = scope.ticket('write'), operation = casOperation(channel)
   entries.begin(actor, channelID, channel, operation)
   let release; const response = new Promise(resolve => { release = resolve }); let displayed = ''
   const late = (async () => { await response; entries.fail(actor, channelID, new Error('lost response')); if (scope.accepts(write)) displayed = 'must-not-restore' })()
@@ -190,10 +191,10 @@ test('paginated inspection rejects malformed lists and repeated cursors without 
 })
 
 test('uncertain publish performs no automatic replay and explicit inspection uses only safe GETs', async () => {
-  const original = globalThis.fetch, calls = [], entries = journal(), operation = costWrite(channel, draft)
+  const original = globalThis.fetch, calls = [], entries = journal(), operation = casOperation(channel)
   globalThis.fetch = async (url, options) => {
     calls.push({ url, options })
-    if (options.method === 'POST') throw new TypeError('lost connection')
+    if (options.method !== 'GET') throw new TypeError('lost connection')
     return new Response(JSON.stringify({ data: url.includes('/channels') ? [channel] : [], request_id: 'safe' }))
   }
   try {
@@ -203,7 +204,7 @@ test('uncertain publish performs no automatic replay and explicit inspection use
     await readConfigurationRows('/platform/cost-versions'); entries.observe(actor, channelID, current)
     assert.equal(entries.get(actor, channelID).mode, 'unknown')
     assert.throws(() => entries.begin(actor, channelID, current, operation))
-    assert.deepEqual(calls.map(call => call.options.method), ['POST', 'GET', 'GET'])
+    assert.deepEqual(calls.map(call => call.options.method), ['PUT', 'GET', 'GET'])
     assert.equal(calls[0].options.headers['X-CSRF-Token'], 'cost-csrf')
     assert.equal(calls[1].options.headers['X-CSRF-Token'], undefined)
     assert.ok(calls.every(call => call.options.credentials === 'include' && !call.options.headers.Authorization && !call.options.headers['Idempotency-Key']))
@@ -212,12 +213,15 @@ test('uncertain publish performs no automatic replay and explicit inspection use
 
 test('editors invalidate context and unmount while platform routes use only the dedicated cost editors', async () => {
   const [route, cost, platform] = await Promise.all(['../src/components/RouteEditor.vue', '../src/components/CostEditor.vue', '../src/views/PlatformView.vue'].map(path => readFile(new URL(path, import.meta.url), 'utf8')))
-  for (const source of [route, cost]) {
-    assert.match(source, /watch\(context,.*reset\(\).*false/)
-    assert.match(source, /onBeforeUnmount\(reset\)/)
-    assert.match(source, /scope\.accepts\(ticket\)/)
-    assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|stableOperationKey|v-html|console\./)
-  }
+  assert.match(route, /watch\(context,.*reset\(\).*false/)
+  assert.match(route, /onBeforeUnmount\(reset\)/)
+  assert.match(route, /scope\.accepts\(ticket\)/)
+  assert.match(cost, /watch\(context,.*reset\(\).*false/)
+  assert.match(cost, /onBeforeUnmount\(\(\) => \{ gate\.dispose\(\) \}\)/)
+  assert.match(cost, /gate\.accepts\(ticket\)/)
+  assert.match(cost, /pricingCommand\('cost_price\.publish'/)
+  assert.match(cost, /pricing-operations\/\$\{original\.operation_id\}/)
+  for (const source of [route, cost]) assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|stableOperationKey|v-html|console\./)
   assert.match(platform, /watch\(\[resource, platformContext\]/)
   assert.match(platform, /<RouteEditor/); assert.match(platform, /<CostEditor/)
   assert.doesNotMatch(platform, /async function saveRoute|routeBusy|routeError/)

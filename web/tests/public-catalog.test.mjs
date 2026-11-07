@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
-import { catalogTimestamp, fetchPublicCatalog, parsePublicCatalogPage, parsePublicModel, parsePublication, publicCatalogPath, publicFilters, publicProtocols, publicRateCny, publicationLabel, publicationWrite, PublicCatalogError } from '../src/public-catalog.ts'
+import { catalogTimestamp, fetchPublicCatalog, parsePublicCatalogPage, parsePublicModel, parsePublication, publicCatalogPath, publicFilters, publicProtocols, publicationLabel, publicationWrite, PublicCatalogError } from '../src/public-catalog.ts'
+import { ratePerMillionText } from '../src/metering-wire.ts'
 
-const id = '11111111-1111-4111-8111-111111111111', priceID = '22222222-2222-4222-8222-222222222222'
+const id = '11111111-1111-4111-8111-111111111111', priceID = '22222222-2222-4222-8222-222222222222', schemaID = '33333333-3333-4333-8333-333333333333'
+const rates = (input = '9007199254740993', output = '2000000') => { const reduce = (raw) => { let n = BigInt(raw), d = 1000000n; if (n === 0n) return ['0', '1']; const gcd = (a, b) => { while (b) { const next = a % b; a = b; b = next } return a }; const factor = gcd(n, d); return [String(n / factor), String(d / factor)] }; const [inN, inD] = reduce(input), [outN, outD] = reduce(output); return { schema_id: schemaID, version: '1', side: 'retail', currency: 'CNY', rates: [{ dimension: 'text_input_token', unit: 'token', numerator: inN, denominator: inD }, { dimension: 'text_output_token', unit: 'token', numerator: outN, denominator: outD }] } }
 function model(protocol = 'openai_chat') {
   const inputOnly = ['openai_embeddings', 'jina_rerank'].includes(protocol)
-  return { id, public_name: 'test-chat', protocol, capabilities: { streaming: !inputOnly, tools: !inputOnly && protocol !== 'gemini_generate_content', input_only: inputOnly, text_only: true }, limits: { context_tokens: 128000, input_token_upper_bound: 120000, max_output_tokens: inputOnly ? 0 : 8000, default_output_tokens: inputOnly ? 0 : 2000 }, pricing: { status: 'available', currency: 'CNY', unit: 'micro_cny_per_million_tokens', price_version_id: priceID, input_rate: '9007199254740993', output_rate: inputOnly ? '0' : '2000000', effective_at: '2026-11-01T00:00:00Z' } }
+  return { id, public_name: 'test-chat', protocol, capabilities: { streaming: !inputOnly, tools: !inputOnly && protocol !== 'gemini_generate_content', input_only: inputOnly, text_only: true }, limits: { context_tokens: 128000, input_token_upper_bound: 120000, max_output_tokens: inputOnly ? 0 : 8000, default_output_tokens: inputOnly ? 0 : 2000 }, pricing: { status: 'available', price_version_id: priceID, schema_id: schemaID, schema_digest: 'ab'.repeat(32), variant_key: 'default', currency: 'CNY', rates: rates('9007199254740993', inputOnly ? '0' : '2000000'), effective_at: '2026-11-01T00:00:00Z' } }
 }
 const page = data => ({ data, request_id: 'request-safe', next_cursor: '', as_of: '2026-11-01T01:00:00.000001Z' })
 
@@ -20,16 +22,16 @@ test('all six public protocols retain exact capability contracts and DTO key set
 })
 
 test('zero is a known price and absence is an all-null price, never free', () => {
-  const zero = { ...model(), pricing: { ...model().pricing, input_rate: '0', output_rate: '0' } }
-  assert.equal(parsePublicModel(zero).pricing.input_rate, '0')
-  const unavailable = { ...model(), pricing: { status: 'unavailable', currency: 'CNY', unit: 'micro_cny_per_million_tokens', price_version_id: null, input_rate: null, output_rate: null, effective_at: null } }
+  const zero = { ...model(), pricing: { ...model().pricing, rates: rates('0', '0') } }
+  assert.equal(parsePublicModel(zero).pricing.rates?.rates[0].numerator, '0')
+  const unavailable = { ...model(), pricing: { status: 'unavailable', price_version_id: null, schema_id: schemaID, schema_digest: 'ab'.repeat(32), variant_key: 'default', currency: 'CNY', rates: null, effective_at: null } }
   assert.equal(parsePublicModel(unavailable).pricing.status, 'unavailable')
-  for (const field of ['input_rate', 'output_rate', 'price_version_id', 'effective_at']) assert.throws(() => parsePublicModel({ ...unavailable, pricing: { ...unavailable.pricing, [field]: '0' } }))
-  assert.throws(() => parsePublicModel({ ...model('jina_rerank'), pricing: { ...model('jina_rerank').pricing, output_rate: '1' } }))
-  for (const value of [0, -1, null, '01', '+1', '-1', '1e6', '9223372036854775808']) assert.throws(() => parsePublicModel({ ...model(), pricing: { ...model().pricing, input_rate: value } }))
-  assert.equal(publicRateCny('0'), '¥0.000000')
-  assert.equal(publicRateCny('9007199254740993'), '¥9,007,199,254.740993')
-  assert.equal(publicRateCny('9223372036854775807'), '¥9,223,372,036,854.775807')
+  for (const field of ['price_version_id', 'rates', 'effective_at']) assert.throws(() => parsePublicModel({ ...unavailable, pricing: { ...unavailable.pricing, [field]: field === 'rates' ? rates() : '0' } }))
+  assert.throws(() => parsePublicModel({ ...model('jina_rerank'), pricing: { ...model('jina_rerank').pricing, rates: rates('1', '1') } }))
+  for (const value of [0, -1, null, '01', '+1', '-1', '1e6', '9223372036854775808']) assert.throws(() => parsePublicModel({ ...model(), pricing: { ...model().pricing, rates: { ...rates(), rates: [{ ...rates().rates[0], numerator: value }, rates().rates[1]] } } }))
+  assert.equal(ratePerMillionText(rates('0', '0'), 'text_input_token'), '¥0.000000')
+  assert.equal(ratePerMillionText(rates('9007199254740993', '0'), 'text_input_token'), '¥9,007,199,254.740993')
+  assert.equal(ratePerMillionText(rates('9223372036854775807', '0'), 'text_input_token'), '¥9,223,372,036,854.775807')
 })
 
 test('invalid limits, identities and dates fail closed without private fallback', () => {
@@ -69,7 +71,7 @@ test('anonymous transport omits credentials and private session/reauth side effe
   try {
     let init
     globalThis.fetch = async (path, options) => { init = options; assert.equal(path, '/api/public/models'); return { ok: true, status: 200, json: async () => page([model()]) } }
-    assert.equal((await fetchPublicCatalog({ q: '', protocol: '' })).data[0].pricing.input_rate, '9007199254740993')
+    assert.equal((await fetchPublicCatalog({ q: '', protocol: '' })).data[0].pricing.rates?.rates[0].numerator, '9007199254740993')
     assert.equal(init.credentials, 'omit'); assert.equal(init.cache, 'no-store'); assert.equal(init.redirect, 'error')
     assert.deepEqual(init.headers, { Accept: 'application/json' })
     for (const status of [401, 403, 429, 503]) {

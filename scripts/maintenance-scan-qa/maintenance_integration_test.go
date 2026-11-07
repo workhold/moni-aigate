@@ -29,8 +29,9 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/paymentsandboxqa"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/procurement"
-	"github.com/moni-ai/moni-aigate/internal/routing"
+	"github.com/moni-ai/moni-aigate/internal/procurementexecution"
 	"github.com/moni-ai/moni-aigate/internal/security"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/frozenattempt"
 )
 
 // This external consumer imports only public production entry points. It starts
@@ -771,13 +772,13 @@ func seedConsumerProcurementAttempt(t *testing.T, f *consumerFixture, ctx contex
 		t.Fatal("consumer genuine customer reservation failed", err)
 	}
 	defer store.EndRequest(f.procurementRequestID)
-	var quote routing.CostQuote
+	var quote procurementexecution.CostQuote
 	var inputRate, outputRate int64
 	if err = app.QueryRow(ctx, `SELECT id,input_rate,output_rate,basis FROM cost_versions WHERE channel_id=$1 AND upstream_model=$2 ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1`, f.procurementChannelID, "maintenance-upstream").Scan(&quote.VersionID, &inputRate, &outputRate, &quote.Basis); err != nil {
 		t.Fatal("consumer procurement cost quote read failed", err)
 	}
 	quote.InputRate, quote.OutputRate = &inputRate, &outputRate
-	attempt, err := store.RecordAttempt(ctx, billing.AttemptInput{
+	attempt, err := frozenattempt.Reject(ctx, store, frozenattempt.Input{
 		TenantID: f.env.ApplicationTenantID, RequestID: f.procurementRequestID, Sequence: 1,
 		ChannelID: f.procurementChannelID, ChannelVersionID: f.procurementVersionID,
 		CredentialID: f.procurementCredentialID, UpstreamModel: "maintenance-upstream", CostQuote: &quote,

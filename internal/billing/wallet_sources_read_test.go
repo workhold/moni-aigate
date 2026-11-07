@@ -131,10 +131,7 @@ func TestPostgresWalletSourcesReadLifecycle(t *testing.T) {
 	if after := walletSourcesReadSnapshot(t, f); before != after {
 		t.Fatal("read-only check changed current wallet or ledger facts")
 	}
-	if _, err := f.pool.Exec(f.ctx, `INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by)
- VALUES($1,0,0,clock_timestamp()-interval '1 hour',$2)`, f.model, f.operator); err != nil {
-		t.Fatal(err)
-	}
+	publishBillingDefault(t, f, f.model, 0, 0, time.Now().UTC().Add(-time.Hour))
 	zero := f.reserve(t)
 	if zero.Amount != 0 {
 		t.Fatalf("zero-price fixture reserved %v", zero.Amount)

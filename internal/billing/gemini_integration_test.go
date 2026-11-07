@@ -3,8 +3,10 @@ package billing
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 // Gemini cases publish their own immutable model/profile/price; the original
@@ -31,21 +33,34 @@ func geminiBillingInput(t *testing.T, f *fixture, profileOutput int64) ReserveIn
 		sql  string
 		args []any
 	}{
-		{"INSERT INTO models(id,public_name,profile,profile_version) VALUES($1,$2,$3,$4)", []any{model, "gemini-" + model, profile, version}},
-		{"INSERT INTO model_capability_versions(id,model_id,profile) VALUES($1,$2,$3)", []any{version, model, profile}},
+		{"SELECT meter_insert_text_model($1,$2,$3::jsonb,$4)", []any{model, "gemini-" + model, profile, version}},
 		{"INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", []any{f.tenant, model}},
 		{"UPDATE api_keys SET scopes=array_append(scopes,$2) WHERE id=$1", []any{f.key, model}},
-		{"INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,1000000,2000000,clock_timestamp()-interval '1 day',$2)", []any{model, f.operator}},
 	} {
 		if _, err = tx.Exec(f.ctx, q.sql, q.args...); err != nil {
 			t.Fatal(err)
 		}
 	}
+	policy := uuid.NewString()
+	if _, err = tx.Exec(f.ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,1,'manual','allow')`, policy, model); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, policy, f.channel, f.version); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `UPDATE models SET active_revision=1 WHERE id=$1`, model); err != nil {
+		t.Fatal(err)
+	}
+	outputRate := int64(2000000)
+	if profileOutput == 0 {
+		outputRate = 0
+	}
+	meterquote.PublishDefaultPrice(t, f.ctx, tx, meterquote.DefaultPrice{ModelID: model, Actor: f.operator, InputRate: 1000000, OutputRate: outputRate, EffectiveAt: time.Now().UTC().Add(-time.Hour)})
 	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}
 	in := f.input()
-	in.ModelID, in.ProfileVersion = model, version
+	in.ModelID, in.ProfileVersion, in.RouteRevision = model, version, 1
 	return in
 }
 
@@ -61,14 +76,20 @@ func TestPostgresGeminiThinkingAndCacheSettleOnce(t *testing.T) {
 	f := integration(t)
 	in := geminiBillingInput(t, f, 20)
 	r, err := f.store.Reserve(f.ctx, in)
-	if err != nil || r.Amount != 140 || r.InputRate != 1000000 || r.OutputRate != 2000000 {
+	if err != nil || r.Amount != 140 {
 		t.Fatal("Gemini hard reservation did not cover input and aggregate output", r, err)
 	}
+	retailAssertSnapshot(t, f, r, r.PriceVersionID, 1000000, 2000000)
 	defer f.store.EndRequest(r.RequestID)
 	f.wallet(t, 860, 140)
 	geminiBillingKey(t, f, 0, 140)
 	var inputBound, outputBound, inputRate, outputRate int64
-	if err = f.pool.QueryRow(f.ctx, "SELECT input_upper_bound,output_limit,input_rate,output_rate FROM request_records WHERE id=$1", r.RequestID).Scan(&inputBound, &outputBound, &inputRate, &outputRate); err != nil || inputBound != 100 || outputBound != 20 || inputRate != 1000000 || outputRate != 2000000 {
+	if err = f.pool.QueryRow(f.ctx, `SELECT s.input_bound,s.output_bound,
+ (li.numerator*1000000/li.denominator)::bigint,(lo.numerator*1000000/lo.denominator)::bigint
+ FROM request_meter_snapshots s
+ JOIN price_rate_lines li ON li.price_version_id=s.price_version_id AND li.dimension='text_input_token' AND li.unit='token'
+ JOIN price_rate_lines lo ON lo.price_version_id=s.price_version_id AND lo.dimension='text_output_token' AND lo.unit='token'
+ WHERE s.request_id=$1`, r.RequestID).Scan(&inputBound, &outputBound, &inputRate, &outputRate); err != nil || inputBound != 100 || outputBound != 20 || inputRate != 1000000 || outputRate != 2000000 {
 		t.Fatal("Gemini immutable reservation snapshot differs", inputBound, outputBound, inputRate, outputRate, err)
 	}
 	// The adapter has normalized P10/C3/H2/T15/K3. Cache is a subset of P;
@@ -82,13 +103,11 @@ func TestPostgresGeminiThinkingAndCacheSettleOnce(t *testing.T) {
 	if err = f.pool.QueryRow(f.ctx, "SELECT l.signed_delta FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id WHERE l.journal_id=$1 AND a.kind='AVAILABLE'", settled.JournalID).Scan(&released); err != nil || released != 120 {
 		t.Fatal("Gemini settlement did not release unused 120", released, err)
 	}
-	var storedInput, storedOutput, storedTotal, storedReasoning, storedCache int64
-	if err = f.pool.QueryRow(f.ctx, `SELECT (e.normalized_usage->>'input_tokens')::bigint,
- (e.normalized_usage->>'output_tokens')::bigint,(e.normalized_usage->>'total_tokens')::bigint,
- (e.normalized_usage->>'reasoning_tokens')::bigint,(e.normalized_usage->>'cached_tokens')::bigint
+	var storedInput, storedOutput int64
+	if err = f.pool.QueryRow(f.ctx, `SELECT meter_event_quantity(e.id,'text_input_token'),meter_event_quantity(e.id,'text_output_token')
  FROM request_records r JOIN finalization_records z ON z.id=r.latest_finalization_id
- JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, r.RequestID).Scan(&storedInput, &storedOutput, &storedTotal, &storedReasoning, &storedCache); err != nil || storedInput != 10 || storedOutput != 5 || storedTotal != 15 || storedReasoning != 2 || storedCache != 3 {
-		t.Fatal("Gemini durable normalized usage differs", storedInput, storedOutput, storedTotal, storedReasoning, storedCache, err)
+ JOIN metering_events e ON e.id=z.event_id WHERE r.id=$1`, r.RequestID).Scan(&storedInput, &storedOutput); err != nil || storedInput != 10 || storedOutput != 5 {
+		t.Fatal("Gemini durable normalized quantities differ", storedInput, storedOutput, err)
 	}
 	again, err := f.store.Settle(f.ctx, SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
 	if err != nil || again.ID != settled.ID || again.JournalID != settled.JournalID || again.ChargedAmount != 20 {

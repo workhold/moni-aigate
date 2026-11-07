@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func publicHTTPModel(t *testing.T, s *Server, actor, name string) string {
@@ -24,6 +25,21 @@ func publicHTTPModel(t *testing.T, s *Server, actor, name string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
+	return id
+}
+
+func publicHTTPModelWithMetadata(t *testing.T, pool *pgxpool.Pool, name string, metadata map[string]any) string {
+	t.Helper()
+	id, version := uuid.NewString(), uuid.NewString()
+	profile := map[string]any{"version": version, "model": name, "protocol": "openai_chat", "context_limit": 100, "input_token_upper_bound": 80, "output_limit": 20, "default_output_limit": 10, "supports_tools": true, "output_limit_field": "max_tokens"}
+	for key, value := range metadata {
+		profile[key] = value
+	}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	authExec(t, pool, `SELECT meter_insert_text_model($1,$2,$3::jsonb,$4)`, id, name, body, version)
 	return id
 }
 
@@ -49,9 +65,8 @@ func TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist(t *testing.T) {
 	s, pool := newAuthFixture(t)
 	actor, _ := authUser(t, s, pool, "admin")
 	session, csrf := authSession(t, s, pool, actor, "", false, true)
-	id := publicHTTPModel(t, s, actor, "public-catalog-model")
-	authExec(t, pool, `UPDATE models SET profile=profile||'{"internal_secret":"private-profile-canary","future_internal_field":"private-new-field-canary"}'::jsonb WHERE id=$1`, id)
-	authExec(t, pool, `INSERT INTO price_versions(model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,9007199254740993,0,clock_timestamp()-interval '1 day',$2)`, id, actor)
+	id := publicHTTPModelWithMetadata(t, pool, "public-catalog-model", map[string]any{"internal_secret": "private-profile-canary", "future_internal_field": "private-new-field-canary"})
+	meterquote.PublishDefaultPrice(t, context.Background(), pool, meterquote.DefaultPrice{ModelID: id, Actor: actor, InputRate: 9007199254740993, OutputRate: 0, EffectiveAt: time.Now().UTC().Add(-24 * time.Hour)})
 	engine := s.Engine()
 	count := 0
 	call := func(method, path, raw, cookie string) *httptest.ResponseRecorder {
@@ -111,9 +126,15 @@ func TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist(t *testing.T) {
 	model := publicJSONKeys(t, authData(t, detail), "id", "public_name", "protocol", "capabilities", "limits", "pricing")
 	publicJSONKeys(t, model["capabilities"], "streaming", "tools", "input_only", "text_only")
 	publicJSONKeys(t, model["limits"], "context_tokens", "input_token_upper_bound", "max_output_tokens", "default_output_tokens")
-	pricing := publicJSONKeys(t, model["pricing"], "status", "currency", "unit", "price_version_id", "input_rate", "output_rate", "effective_at")
-	if string(pricing["input_rate"]) != `"9007199254740993"` || string(pricing["output_rate"]) != `"0"` || string(model["protocol"]) != `"openai_chat"` {
-		t.Fatal("rate precision or legacy protocol normalization changed", string(pricing["input_rate"]))
+	pricing := publicJSONKeys(t, model["pricing"], "status", "price_version_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at")
+	var rates struct {
+		Rates []struct {
+			Dimension string `json:"dimension"`
+			Numerator string `json:"numerator"`
+		} `json:"rates"`
+	}
+	if json.Unmarshal(pricing["rates"], &rates) != nil || len(rates.Rates) != 2 || rates.Rates[0].Numerator != "9007199254740993" || rates.Rates[1].Numerator != "0" || string(model["protocol"]) != `"openai_chat"` {
+		t.Fatal("rate precision or legacy protocol normalization changed", string(pricing["rates"]))
 	}
 	publicJSONKeys(t, detail.Body.Bytes(), "data", "as_of", "request_id")
 	visiblePage := call("GET", "/api/public/models", "", "")
@@ -242,7 +263,8 @@ func TestPublicCatalogHTTPPaginationWithdrawAndInvalidProjection(t *testing.T) {
 	if second.Code != 200 || json.Unmarshal(second.Body.Bytes(), &last) != nil || len(last.Data) != 0 || last.Data == nil || last.NextCursor != "" || last.AsOf.Before(first.AsOf) {
 		t.Fatal("cursor returned withdrawn model or omitted empty-page clock", second.Code, second.Body.String())
 	}
-	authExec(t, pool, `UPDATE models SET profile=profile||jsonb_build_object('internal_secret',repeat('private-profile-canary',1000)) WHERE id=$1`, ids[0])
+	brokenID := publicHTTPModelWithMetadata(t, pool, "oversized-model", map[string]any{"internal_secret": strings.Repeat("private-profile-canary", 1000)})
+	authExec(t, pool, `UPDATE models SET public_visible=true WHERE id=$1`, brokenID)
 	broken := call("/api/public/models")
 	if broken.Code != 503 || !strings.Contains(broken.Body.String(), "public_catalog_unavailable") || strings.Contains(broken.Body.String(), "canary") || s.publicCatalog.inflight != 0 {
 		t.Fatal("invalid public profile was exposed or hidden as missing price", broken.Code, broken.Body.String())

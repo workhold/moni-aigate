@@ -11,10 +11,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	. "github.com/moni-ai/moni-aigate/internal/periodicbudget"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
 func pbBillCustomerInput(f *pbTxFixture) billing.ReserveInput {
-	return billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "periodic-billing-fixture", ProfileVersion: "v1", InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)}
+	return billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "abababababababababababababababababababababababababababababababab", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)}
 }
 
 func pbBillCustomerNow(t *testing.T, f *pbTxFixture) time.Time {
@@ -55,7 +56,11 @@ func pbBillCustomerReserve(t *testing.T, f *pbTxFixture, store *billing.Store) b
 
 func pbBillCustomerFinal(t *testing.T, f *pbTxFixture, store *billing.Store, r billing.Reservation) billing.Settlement {
 	t.Helper()
-	_, err := store.RecordFinalization(f.ctx, billing.FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, Source: "periodic-customer-fixture", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 10, OutputTokens: 5, TotalTokens: 15}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true})
+	q, err := meterquote.Select(f.ctx, f.app, f.model, f.channel, "upstream")
+	pbTxMust(t, "read original vector cost", err)
+	attempt, err := store.RecordAttempt(f.ctx, billing.AttemptInput{TenantID: f.tenant, RequestID: r.RequestID, Sequence: 1, ChannelID: f.channel, ChannelVersionID: f.version, CredentialID: f.credential, UpstreamModel: "upstream", CostQuote: &q})
+	pbTxMust(t, "record the original supplier attempt before customer usage", err)
+	_, err = store.RecordFinalization(f.ctx, billing.FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: attempt.ID, Source: "adapter", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 10, OutputTokens: 5, TotalTokens: 15}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true})
 	pbTxMust(t, "record actual trusted customer finalization", err)
 	s, err := store.Settle(f.ctx, billing.SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
 	pbTxMust(t, "settle through original financial and periodic chain", err)

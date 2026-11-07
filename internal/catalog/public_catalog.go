@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -56,13 +55,14 @@ type PublicLimits struct {
 }
 
 type PublicPricing struct {
-	Status         string     `json:"status"`
-	Currency       string     `json:"currency"`
-	Unit           string     `json:"unit"`
-	PriceVersionID *string    `json:"price_version_id"`
-	InputRate      *string    `json:"input_rate"`
-	OutputRate     *string    `json:"output_rate"`
-	EffectiveAt    *time.Time `json:"effective_at"`
+	Status         string          `json:"status"`
+	PriceVersionID *string         `json:"price_version_id"`
+	SchemaID       string          `json:"schema_id"`
+	SchemaDigest   string          `json:"schema_digest"`
+	VariantKey     string          `json:"variant_key"`
+	Currency       string          `json:"currency"`
+	Rates          json.RawMessage `json:"rates"`
+	EffectiveAt    *time.Time      `json:"effective_at"`
 }
 
 type PublicationView struct {
@@ -137,23 +137,25 @@ const publicCatalogSQL = `WITH instant AS MATERIALIZED (SELECT clock_timestamp()
   SELECT m.id AS lookup_id,true AS present,
    CASE WHEN octet_length(m.id)=36 THEN m.id END AS id,
    CASE WHEN octet_length(m.public_name) BETWEEN 1 AND 100 THEN m.public_name END AS public_name,
-   CASE WHEN octet_length(m.profile::text)<=16384 THEN m.profile END AS profile,
-   octet_length(m.profile::text)<=16384 AS profile_bounded
+   CASE WHEN octet_length(meter_model_profile(m.id)::text)<=16384 THEN meter_model_profile(m.id) END AS profile,
+   octet_length(meter_model_profile(m.id)::text)<=16384 AS profile_bounded
   FROM models m
   WHERE m.public_visible AND m.enabled
    AND m.public_name LIKE $1 ESCAPE '\'
-   AND ($2='' OR COALESCE(NULLIF(m.profile->>'protocol',''),'openai_chat')=$2)
+   AND ($2='' OR COALESCE(NULLIF(meter_model_profile(m.id)->>'protocol',''),'openai_chat')=$2)
    AND ($3='' OR (m.public_name COLLATE "C",m.id COLLATE "C")>($3 COLLATE "C",$4 COLLATE "C"))
    AND ($5='' OR m.id=$5)
   ORDER BY m.public_name COLLATE "C",m.id COLLATE "C" LIMIT 51
  )
  SELECT instant.at,m.present,m.id,m.public_name,m.profile,m.profile_bounded,
-  p.present,p.id,p.currency,p.input_rate::text,p.output_rate::text,p.effective_at
+  p.present,p.id,c.schema_id,encode(c.schema_digest,'hex'),p.variant_key,p.currency,
+  CASE WHEN p.id IS NULL THEN NULL ELSE convert_from(p.rates_canonical,'UTF8')::jsonb END,p.effective_at
  FROM instant LEFT JOIN selected m ON true
+ LEFT JOIN model_capability_versions c ON c.id=(SELECT profile_version FROM models WHERE id=m.lookup_id) AND c.model_id=m.lookup_id
  LEFT JOIN LATERAL (
   SELECT true AS present,CASE WHEN octet_length(id)=36 THEN id END AS id,
-   CASE WHEN currency='CNY' THEN 'CNY' END AS currency,input_rate,output_rate,effective_at FROM price_versions
-  WHERE model_id=m.lookup_id AND price_group_id IS NULL AND effective_at<=instant.at
+   CASE WHEN currency='CNY' THEN 'CNY' END AS currency,variant_key,rates_canonical,effective_at FROM price_versions
+  WHERE model_id=m.lookup_id AND price_group_id IS NULL AND schema_id=c.schema_id AND schema_digest=c.schema_digest AND variant_key='default' AND effective_at<=instant.at
   ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1
  ) p ON true
  ORDER BY m.public_name COLLATE "C",m.id COLLATE "C"`
@@ -172,9 +174,10 @@ func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id
 		var modelID, name *string
 		var body []byte
 		var bounded *bool
-		var priceID, currency, input, output *string
+		var priceID, schemaID, schemaDigest, variantKey, currency *string
+		var rates []byte
 		var effective *time.Time
-		if err = rows.Scan(&page.AsOf, &present, &modelID, &name, &body, &bounded, &pricePresent, &priceID, &currency, &input, &output, &effective); err != nil {
+		if err = rows.Scan(&page.AsOf, &present, &modelID, &name, &body, &bounded, &pricePresent, &priceID, &schemaID, &schemaDigest, &variantKey, &currency, &rates, &effective); err != nil {
 			return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 		}
 		page.AsOf = page.AsOf.UTC()
@@ -188,15 +191,18 @@ func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id
 		if invalid != nil {
 			return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 		}
-		price := PublicPricing{Status: "unavailable", Currency: "CNY", Unit: "micro_cny_per_million_tokens"}
+		price := PublicPricing{Status: "unavailable", SchemaID: "", SchemaDigest: "", VariantKey: "default", Currency: "CNY", Rates: nil}
 		if pricePresent != nil {
-			if priceID == nil || !canonicalPublicUUID(*priceID) || currency == nil || *currency != "CNY" || input == nil || output == nil || effective == nil || !canonicalPublicRate(*input) || !canonicalPublicRate(*output) || (p.InputOnly() && *output != "0") || effective.Year() < 0 || effective.Year() > 9999 {
+			if priceID == nil || !canonicalPublicUUID(*priceID) || schemaID == nil || !canonicalPublicUUID(*schemaID) || schemaDigest == nil || !pricingDigest(*schemaDigest) || variantKey == nil || *variantKey != "default" || currency == nil || *currency != "CNY" || len(rates) == 0 || effective == nil || effective.Year() < 0 || effective.Year() > 9999 {
 				return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 			}
 			at := effective.UTC()
-			price.Status, price.PriceVersionID, price.InputRate, price.OutputRate, price.EffectiveAt = "available", priceID, input, output, &at
-		} else if currency != nil || input != nil || output != nil || effective != nil {
-			return PublicCatalogPage{}, ErrPublicCatalogUnavailable
+			price.Status, price.PriceVersionID, price.SchemaID, price.SchemaDigest, price.VariantKey, price.Currency, price.Rates, price.EffectiveAt = "available", priceID, *schemaID, *schemaDigest, *variantKey, *currency, json.RawMessage(rates), &at
+		} else {
+			if schemaID == nil || !canonicalPublicUUID(*schemaID) || schemaDigest == nil || !pricingDigest(*schemaDigest) || variantKey != nil || currency != nil || len(rates) != 0 || effective != nil {
+				return PublicCatalogPage{}, ErrPublicCatalogUnavailable
+			}
+			price.SchemaID, price.SchemaDigest = *schemaID, *schemaDigest
 		}
 		page.Data = append(page.Data, PublicModel{
 			ID: *modelID, PublicName: *name, Protocol: p.ProtocolName(),
@@ -213,11 +219,6 @@ func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id
 		page.Data = page.Data[:50]
 	}
 	return page, nil
-}
-
-func canonicalPublicRate(value string) bool {
-	n, err := strconv.ParseInt(value, 10, 64)
-	return err == nil && n >= 0 && strconv.FormatInt(n, 10) == value
 }
 
 func (s *Store) PublicModels(ctx context.Context, filter PublicCatalogFilter) (PublicCatalogPage, error) {
@@ -304,7 +305,7 @@ func (s *Store) SetModelPublication(ctx context.Context, actor, id string, expec
 		// model lock was waiting. Oversized profiles stay in PostgreSQL.
 		var name string
 		var body []byte
-		if err = tx.QueryRow(ctx, `SELECT public_name,CASE WHEN octet_length(profile::text)<=16384 THEN profile END FROM models WHERE id=$1`, id).Scan(&name, &body); err != nil {
+		if err = tx.QueryRow(ctx, `SELECT public_name,CASE WHEN octet_length(meter_model_profile(id)::text)<=16384 THEN meter_model_profile(id) END FROM models WHERE id=$1`, id).Scan(&name, &body); err != nil {
 			return PublicationView{}, err
 		}
 		if _, err = publicProfile(name, body); err != nil {

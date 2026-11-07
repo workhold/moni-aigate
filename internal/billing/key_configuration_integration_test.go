@@ -231,7 +231,7 @@ func TestPostgresKeyConfigurationMissingAttemptVersionKeepsDomainError(t *testin
 	in := dispatchBatchAttemptInput(f, r)
 	in.ChannelVersionID = uuid.NewString()
 	_, err := f.store.RecordAttempt(f.ctx, in)
-	assertCode(t, err, "invalid_attempt")
+	assertCode(t, err, "unpublished_binding")
 	if _, err = f.store.RecordAttempt(f.ctx, dispatchBatchAttemptInput(f, r)); err != nil {
 		t.Fatal("missing version left batch unusable", err)
 	}
@@ -268,10 +268,51 @@ func TestPostgresKeyConfigurationSafeRetryUsesCurrentRestrictions(t *testing.T) 
 
 func TestPostgresKeyConfigurationSafeRetryKeepsSingleFrozenBudget(t *testing.T) {
 	f := integration(t)
-	r := f.reserve(t)
+	// The retry channel must be part of the immutable route before the
+	// request is reserved. Appending a binding after publication is forbidden.
+	retryChannel, retryVersion, retryCredential := uuid.NewString(), uuid.NewString(), uuid.NewString()
+	tx, err := f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(context.Background())
+	for _, query := range []struct {
+		sql  string
+		args []any
+	}{
+		{"INSERT INTO channels(id,name,current_version) VALUES($1,'synthetic retry',$2)", []any{retryChannel, retryVersion}},
+		{"INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'synthetic-only')", []any{retryCredential, retryChannel}},
+		{"INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)", []any{retryVersion, retryChannel, retryCredential}},
+		{"INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,1)", []any{retryVersion, retryChannel, retryCredential}},
+	} {
+		if _, err = tx.Exec(f.ctx, query.sql, query.args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	policy := uuid.NewString()
+	if _, err = tx.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,100)", policy, f.model); err != nil {
+		t.Fatal(err)
+	}
+	for _, binding := range []struct{ channel, version string }{{f.channel, f.version}, {retryChannel, retryVersion}} {
+		if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", policy, binding.channel, binding.version); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=100 WHERE id=$1", f.model); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(f.ctx); err != nil {
+		t.Fatal(err)
+	}
+	inReserve := f.input()
+	inReserve.RouteRevision = 100
+	r, err := f.store.Reserve(f.ctx, inReserve)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer f.store.EndRequest(r.RequestID)
 	a := dispatchBatchPrepared(t, f, r)
-	_, err := f.store.RecordFinalization(f.ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "adapter", SourceEventID: uuid.NewString(), Usage: Usage{Status: "missing"}, ProtocolOutcome: "failed", TransportEndReason: "not_sent", DeliveryStage: "none"})
+	_, err = f.store.RecordFinalization(f.ctx, FinalizationInput{TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "adapter", SourceEventID: uuid.NewString(), Usage: Usage{Status: "missing"}, ProtocolOutcome: "failed", TransportEndReason: "not_sent", DeliveryStage: "none"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -282,28 +323,7 @@ func TestPostgresKeyConfigurationSafeRetryKeepsSingleFrozenBudget(t *testing.T) 
 	in.Sequence = 2
 	// A safe retry must use a different channel; changing credentials on the
 	// original channel is deliberately forbidden by the existing contract.
-	in.ChannelID, in.ChannelVersionID, in.CredentialID = uuid.NewString(), uuid.NewString(), uuid.NewString()
-	tx, err := f.pool.Begin(f.ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer tx.Rollback(context.Background())
-	for _, query := range []struct {
-		sql  string
-		args []any
-	}{
-		{"INSERT INTO channels(id,name,current_version) VALUES($1,'synthetic retry',$2)", []any{in.ChannelID, in.ChannelVersionID}},
-		{"INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'synthetic-only')", []any{in.CredentialID, in.ChannelID}},
-		{"INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)", []any{in.ChannelVersionID, in.ChannelID, in.CredentialID}},
-		{"INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,1)", []any{in.ChannelVersionID, in.ChannelID, in.CredentialID}},
-	} {
-		if _, err = tx.Exec(f.ctx, query.sql, query.args...); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err = tx.Commit(f.ctx); err != nil {
-		t.Fatal(err)
-	}
+	in.ChannelID, in.ChannelVersionID, in.CredentialID = retryChannel, retryVersion, retryCredential
 	second, err := f.store.RecordAttempt(f.ctx, in)
 	if err != nil {
 		t.Fatal("safe retry demanded another reservation", err)

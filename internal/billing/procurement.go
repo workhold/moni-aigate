@@ -11,7 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
@@ -48,7 +50,7 @@ func procurementAdmission(ctx context.Context, tx pgx.Tx, account string, extra 
 	return nil
 }
 
-func recordProcurementAttempt(ctx context.Context, tx pgx.Tx, r financialRequest, in AttemptInput, attempt string, cost attemptCost) error {
+func recordProcurementAttempt(ctx context.Context, tx pgx.Tx, r financialRequest, in AttemptInput, attempt string, cost routecost.Quote) error {
 	var binding, account string
 	err := tx.QueryRow(ctx, `SELECT id,account_id FROM credential_procurement_bindings WHERE credential_id=$1 AND channel_id=$2`, in.CredentialID, in.ChannelID).Scan(&binding, &account)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -69,39 +71,33 @@ func recordProcurementAttempt(ctx context.Context, tx pgx.Tx, r financialRequest
 		return periodicError(err)
 	}
 	// The account lock may have waited across a scheduled price or deadline.
-	var current attemptCost
-	current.Basis = "unknown"
-	err = tx.QueryRow(ctx, currentAttemptCostSQL, in.ChannelID, in.UpstreamModel).Scan(&current.ID, &current.InputRate, &current.OutputRate, &current.Basis)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return fail("cost_unknown", "controlled procurement requires a complete quote")
-	}
+	current, err := scanCostQuote(tx.QueryRow(ctx, currentAttemptCostSQL, in.ChannelID, in.UpstreamModel, r.ID), in.ChannelID, in.UpstreamModel)
 	if err != nil {
 		return err
 	}
-	if !quoteOf(current).Equal(quoteOf(cost)) || in.CostQuote == nil || !in.CostQuote.Equal(quoteOf(current)) {
+	if !current.Equal(cost) || in.CostQuote == nil || !in.CostQuote.Equal(current) {
 		return fail("cost_quote_stale", "configured procurement quote changed before reservation")
 	}
-	if current.InputRate == nil || current.OutputRate == nil || !oneOf(current.Basis, "contract", "invoice") {
+	if !current.Known() {
 		return fail("cost_unknown", "controlled procurement requires both known cost dimensions")
 	}
-	var input, output int64
 	var eligible bool
-	if err = tx.QueryRow(ctx, `SELECT input_upper_bound,output_limit,clock_timestamp()<request_deadline FROM request_records WHERE id=$1`, r.ID).Scan(&input, &output, &eligible); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT clock_timestamp()<request_deadline FROM request_records WHERE tenant_id=$1 AND id=$2`, r.TenantID, r.ID).Scan(&eligible); err != nil {
 		return err
 	}
 	if !eligible {
 		return fail("request_deadline", "request deadline expired while waiting for procurement")
 	}
-	upper, err := Calculate(input, output, Money(*current.InputRate), Money(*current.OutputRate))
+	upper, err := storedSupplierReservationAmount(ctx, tx, r.TenantID, r.ID, attempt)
 	if err != nil {
-		return fail("procurement_bound_invalid", "procurement hard upper bound cannot be represented")
+		return err
 	}
-	n := big.NewInt(int64(upper))
+	n := big.NewInt(upper)
 	if err = procurementAdmission(ctx, tx, account, n); err != nil {
 		return err
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,input_bound,output_bound,upper_amount,held_amount,spent_amount,state)
- VALUES($1,$2,$3,$4,$5,$6::numeric,$6::numeric,0,'prepared')`, attempt, account, binding, input, output, n.String()); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO procurement_reservations(attempt_id,account_id,binding_id,upper_amount,held_amount,spent_amount,state)
+ VALUES($1,$2,$3,$4::numeric,$4::numeric,0,'prepared')`, attempt, account, binding, n.String()); err != nil {
 		return err
 	}
 	admission, err := periodicbudget.AdmitSupplierTx(ctx, tx, periodic, attempt, periodicbudget.Amount{Decimal: n.String()})
@@ -139,8 +135,8 @@ func readProcurementHold(ctx context.Context, tx pgx.Tx, attempt string) (*procu
 	}
 	h := &procurementHold{Attempt: attempt, Account: account, periodic: periodic}
 	var upper, held, spent string
-	err = tx.QueryRow(ctx, `SELECT binding_id,input_bound,output_bound,upper_amount::text,held_amount::text,spent_amount::text,state,anomaly,revision
- FROM procurement_reservations WHERE attempt_id=$1 FOR UPDATE`, attempt).Scan(&h.Binding, &h.Input, &h.Output, &upper, &held, &spent, &h.State, &h.Anomaly, &h.Revision)
+	err = tx.QueryRow(ctx, `SELECT p.binding_id,s.input_bound,s.output_bound,p.upper_amount::text,p.held_amount::text,p.spent_amount::text,p.state,p.anomaly,p.revision
+ FROM procurement_reservations p JOIN attempt_meter_snapshots s ON s.attempt_id=p.attempt_id WHERE p.attempt_id=$1 FOR UPDATE OF p`, attempt).Scan(&h.Binding, &h.Input, &h.Output, &upper, &held, &spent, &h.State, &h.Anomaly, &h.Revision)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +199,7 @@ func updateProcurementHold(ctx context.Context, tx pgx.Tx, h *procurementHold, h
 		}
 	}
 	if state == "disputed" {
-		if _, err := tx.Exec(ctx, `UPDATE upstream_attempts SET cost_status='unknown',cost_amount=NULL WHERE id=$1`, h.Attempt); err != nil {
+		if _, err := tx.Exec(ctx, `UPDATE upstream_attempts SET cost_status='unknown',cost_amount=NULL,latest_cost_finalization_id=NULL,latest_cost_correction_id=NULL WHERE id=$1`, h.Attempt); err != nil {
 			return err
 		}
 	}
@@ -212,7 +208,7 @@ func updateProcurementHold(ctx context.Context, tx pgx.Tx, h *procurementHold, h
 
 // Called only after the customer reservation and attempt have serialized the
 // evidence. It never checks current account eligibility or touches customer funds.
-func finalizeProcurement(ctx context.Context, tx pgx.Tx, attempt, event string, usage Usage, reason string, conflict bool) error {
+func finalizeProcurement(ctx context.Context, tx pgx.Tx, attempt, event, finalization string, usage Usage, reason string, conflict bool) error {
 	h, err := readProcurementHold(ctx, tx, attempt)
 	if err != nil || h == nil {
 		return err
@@ -255,17 +251,17 @@ func finalizeProcurement(ctx context.Context, tx pgx.Tx, attempt, event string, 
 	if oneOf(reason, "not_sent", "rejected_no_consumption") {
 		return updateProcurementHold(ctx, tx, h, big.NewInt(0), h.Spent, "released", false, "release:"+attempt, "released_no_consumption", event)
 	}
-	if usage.Status != "confirmed_final" {
+	var supplierState, tenant, request string
+	if err = tx.QueryRow(ctx, `SELECT supplier_usage_state,tenant_id,request_id FROM finalization_records WHERE id=$1 AND attempt_id=$2 AND event_id=$3`, finalization, attempt, event).Scan(&supplierState, &tenant, &request); err != nil {
+		return err
+	}
+	if supplierState != "confirmed_final" {
 		if h.State == "unknown" {
 			return nil
 		}
 		return updateProcurementHold(ctx, tx, h, h.Held, h.Spent, "unknown", false, "unknown:"+attempt, "consumption_unknown", event)
 	}
-	var inputRate, outputRate int64
-	if err = tx.QueryRow(ctx, `SELECT cost_input_rate,cost_output_rate FROM upstream_attempts WHERE id=$1`, attempt).Scan(&inputRate, &outputRate); err != nil {
-		return err
-	}
-	n, err := rawAmount(usage.InputTokens, usage.OutputTokens, Money(inputRate), Money(outputRate))
+	n, err := storedActualAmount(ctx, tx, tenant, request, finalization, attempt, metering.Supplier)
 	if err != nil {
 		return err
 	}
@@ -497,10 +493,11 @@ func (s *Store) ApproveProcurementCost(ctx context.Context, in ProcurementCostAp
 		if err = updateProcurementHold(ctx, tx, h, big.NewInt(0), amount, "settled", amount.Cmp(h.Upper) > 0, "correction:"+in.OperationID, "cost_corrected", p.EvidenceRef); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO provider_cost_corrections(id,tenant_id,attempt_id,operation_id,amount,basis,evidence_ref) VALUES($1,$2,$3,$4,$5,$6,$7)`, uuid.NewString(), p.TenantID, p.AttemptID, "procurement:"+in.OperationID, int64(p.Amount), p.Basis, p.EvidenceRef); err != nil {
+		correctionID := uuid.NewString()
+		if _, err = tx.Exec(ctx, `INSERT INTO provider_cost_corrections(id,tenant_id,attempt_id,operation_id,amount,basis,evidence_ref) VALUES($1,$2,$3,$4,$5,$6,$7)`, correctionID, p.TenantID, p.AttemptID, "procurement:"+in.OperationID, int64(p.Amount), p.Basis, p.EvidenceRef); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(ctx, `UPDATE upstream_attempts SET cost_amount=$2,cost_status=$3 WHERE id=$1`, p.AttemptID, int64(p.Amount), p.Basis); err != nil {
+		if _, err = tx.Exec(ctx, `UPDATE upstream_attempts SET cost_amount=$2,cost_status=$3,latest_cost_finalization_id=NULL,latest_cost_correction_id=$4 WHERE id=$1`, p.AttemptID, int64(p.Amount), p.Basis, correctionID); err != nil {
 			return err
 		}
 		if _, err = tx.Exec(ctx, `UPDATE procurement_cost_proposals SET state='approved',approver=$2,approval_operation_id=$3,approved_at=clock_timestamp() WHERE id=$1`, p.ID, in.ActorID, in.OperationID); err != nil {

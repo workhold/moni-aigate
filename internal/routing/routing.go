@@ -7,12 +7,13 @@ import (
 	"context"
 	"errors"
 	"math"
-	"math/big"
 	"math/rand/v2"
 	"sync"
 	"time"
 
+	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/provider"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 )
 
 var (
@@ -40,9 +41,8 @@ type Candidate struct {
 	Decisions             []Decision
 	Endpoint              provider.Endpoint
 	CostPolicy            CostPolicy
-	CostQuote             CostQuote
-	MaxInputCostRate      *int64
-	MaxOutputCostRate     *int64
+	CostQuote             routecost.Quote
+	CostLimits            routecost.Limits
 	InputUpperBound       int64
 	OutputLimit           int64
 	ProcurementManaged    bool
@@ -64,9 +64,6 @@ func clone(c Candidate) Candidate {
 	c.Endpoint.Network.AllowedCIDRs = append([]string(nil), c.Endpoint.Network.AllowedCIDRs...)
 	c.Endpoint.Network.AllowedPorts = append([]uint16(nil), c.Endpoint.Network.AllowedPorts...)
 	c.Decisions = append([]Decision(nil), c.Decisions...)
-	c.CostQuote = CloneCostQuote(c.CostQuote)
-	c.MaxInputCostRate = cloneCostRate(c.MaxInputCostRate)
-	c.MaxOutputCostRate = cloneCostRate(c.MaxOutputCostRate)
 	return c
 }
 
@@ -105,8 +102,18 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 		if c.CostPolicy == (CostPolicy{}) {
 			c.CostPolicy = DefaultCostPolicy()
 		}
-		if ValidateCostPolicy(c.CostPolicy) != nil || c.InputUpperBound < 0 || c.OutputLimit < 0 || c.CostPolicy.Mode == "cost_first" && c.InputUpperBound == 0 || c.MaxInputCostRate != nil && *c.MaxInputCostRate < 0 || c.MaxOutputCostRate != nil && *c.MaxOutputCostRate < 0 || c.CostQuote.InputRate != nil && *c.CostQuote.InputRate < 0 || c.CostQuote.OutputRate != nil && *c.CostQuote.OutputRate < 0 {
+		if ValidateCostPolicy(c.CostPolicy) != nil || c.InputUpperBound < 0 || c.OutputLimit < 0 || c.CostPolicy.Mode == "cost_first" && c.InputUpperBound == 0 || !c.CostQuote.Matches(c.ChannelID, c.Model) || !c.CostLimits.ValidFor(c.CostQuote) {
 			return nil, ErrInvalidPolicy
+		}
+		if _, err := metering.LegacyTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit); err != nil {
+			return nil, ErrInvalidPolicy
+		}
+		if len(p.candidates) > 0 {
+			a, _ := c.CostQuote.Schema().Digest()
+			b, _ := p.candidates[0].CostQuote.Schema().Digest()
+			if a != b {
+				return nil, ErrInvalidPolicy
+			}
 		}
 		if len(p.candidates) > 0 && (c.CostPolicy != p.candidates[0].CostPolicy || c.InputUpperBound != p.candidates[0].InputUpperBound || c.OutputLimit != p.candidates[0].OutputLimit) {
 			return nil, ErrInvalidPolicy
@@ -126,7 +133,7 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 			seen[c.ChannelID] = group
 		} else {
 			previous := group.candidate
-			if c.CredentialID == "" || previous.CredentialID == "" || c.VersionID != previous.VersionID || c.Model != previous.Model || c.Region != previous.Region || c.Priority != previous.Priority || c.Weight != previous.Weight || c.MaxInflight != previous.MaxInflight || !EqualCostQuote(c.CostQuote, previous.CostQuote) || !sameOptionalCostRate(c.MaxInputCostRate, previous.MaxInputCostRate) || !sameOptionalCostRate(c.MaxOutputCostRate, previous.MaxOutputCostRate) {
+			if c.CredentialID == "" || previous.CredentialID == "" || c.VersionID != previous.VersionID || c.Model != previous.Model || c.Region != previous.Region || c.Priority != previous.Priority || c.Weight != previous.Weight || c.MaxInflight != previous.MaxInflight || !c.CostQuote.Equal(previous.CostQuote) || !c.CostLimits.Equal(previous.CostLimits) {
 				return nil, ErrInvalidPolicy
 			}
 		}
@@ -330,14 +337,18 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 		eligible := group.members[:0]
 		for _, member := range group.members {
 			candidate := candidates[member]
+			costReason, err := CostExclusion(candidate.CostPolicy, candidate.CostQuote, candidate.CostLimits)
+			if err != nil {
+				return Candidate{}, 0, err
+			}
 			reason := ""
 			switch {
 			case !candidate.Enabled:
 				reason = exclusionReason(candidate)
 			case tried[candidate.ChannelID]:
 				reason = "already_tried"
-			case CostExclusion(candidate.CostPolicy, candidate.CostQuote, candidate.MaxInputCostRate, candidate.MaxOutputCostRate) != "":
-				reason = CostExclusion(candidate.CostPolicy, candidate.CostQuote, candidate.MaxInputCostRate, candidate.MaxOutputCostRate)
+			case costReason != "":
+				reason = costReason
 			case ProcurementExclusion(candidate) != "":
 				reason = ProcurementExclusion(candidate)
 			case e.inflight[candidate.ChannelID] >= candidate.MaxInflight || e.credentialInflight[credentialKey(candidate)] >= credentialCapacity(candidate):
@@ -398,19 +409,38 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 		return Candidate{}, 0, ErrUnavailable
 	}
 	if channels[pool[0]].candidate.CostPolicy.Mode == "cost_first" {
-		var lowest *big.Int
+		var lowest *Candidate
 		cheapest := make([]int, 0, len(pool))
 		for _, i := range pool {
 			c := channels[i].candidate
-			score, err := CostScore(c.InputUpperBound, c.OutputLimit, c.CostQuote)
+			bounds, err := metering.LegacyTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
 			if err != nil {
 				return Candidate{}, 0, err
 			}
-			if lowest == nil || score.Cmp(lowest) < 0 {
-				lowest = score
+			rates, err := c.CostQuote.Rates()
+			if err != nil {
+				return Candidate{}, 0, err
+			}
+			comparison := -1
+			if lowest != nil {
+				other, err := metering.LegacyTokenBounds(lowest.CostQuote.Schema(), metering.Supplier, lowest.InputUpperBound, lowest.OutputLimit)
+				if err != nil {
+					return Candidate{}, 0, err
+				}
+				otherRates, err := lowest.CostQuote.Rates()
+				if err != nil {
+					return Candidate{}, 0, err
+				}
+				comparison, err = metering.CompareExactCost(bounds, rates, other, otherRates)
+				if err != nil {
+					return Candidate{}, 0, err
+				}
+			}
+			if lowest == nil || comparison < 0 {
+				lowest = &channels[i].candidate
 				cheapest = cheapest[:0]
 			}
-			if score.Cmp(lowest) == 0 {
+			if comparison <= 0 {
 				cheapest = append(cheapest, i)
 			}
 		}

@@ -16,12 +16,25 @@ import (
 
 // Owner-only deterministic clock/budget/corruption injection in an isolated
 // test schema. No application/worker business success uses this path.
+// processorOwnerMutation commits deliberately corrupted history. Replica mode
+// bypasses user, deferred and foreign-key triggers alike, so the processor's
+// own integrity checks are what must detect the damage.
 func processorOwnerMutation(t *testing.T, f *serviceFixture, table, query string, args ...any) {
 	t.Helper()
-	serviceExec(t, f.owner, f.ctx, `ALTER TABLE `+pgx.Identifier{table}.Sanitize()+` DISABLE TRIGGER USER`)
-	defer serviceExec(t, f.owner, f.ctx, `ALTER TABLE `+pgx.Identifier{table}.Sanitize()+` ENABLE TRIGGER USER`)
-	serviceExec(t, f.owner, f.ctx, query, args...)
-
+	tx, err := f.owner.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(f.ctx)
+	if _, err = tx.Exec(f.ctx, `SET LOCAL session_replication_role='replica'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, query, args...); err != nil {
+		t.Fatal("corrupt", table, err)
+	}
+	if err = tx.Commit(f.ctx); err != nil {
+		t.Fatal(err)
+	}
 }
 func processorRunEvidence(t *testing.T, f *serviceFixture, processor *Processor) (EvidenceLease, ProcessResult) {
 	t.Helper()

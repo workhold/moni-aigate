@@ -19,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/provider"
+	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
@@ -59,8 +60,28 @@ func publicProfileJSON(t *testing.T, name, protocol string) []byte {
 
 func (f *publicFixture) modelWith(t *testing.T, name, protocol string, visible bool) string {
 	t.Helper()
+	body := publicProfileJSON(t, name, protocol)
+	var profile map[string]any
+	if err := json.Unmarshal(body, &profile); err != nil {
+		t.Fatal(err)
+	}
+	profile["secret_canary"] = "sk-DO-NOT-LEAK"
+	profile["upstream_model"] = "private-upstream"
+	profile["future_field"] = map[string]any{"key": "private"}
+	body, err := json.Marshal(profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f.modelWithProfile(t, name, body, visible)
+}
+
+func (f *publicFixture) modelWithProfile(t *testing.T, name string, body []byte, visible bool) string {
+	t.Helper()
 	id := uuid.NewString()
-	if _, err := f.app.Exec(f.ctx, `INSERT INTO models(id,public_name,profile,profile_version,public_visible) VALUES($1,$2,$3,'fixture',$4)`, id, name, publicProfileJSON(t, name, protocol), visible); err != nil {
+	if _, err := f.app.Exec(f.ctx, `SELECT meter_insert_text_model($1,$2,$3::jsonb,($3::jsonb->>'version'))`, id, name, body); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.owner.Exec(f.ctx, `UPDATE models SET public_visible=$2 WHERE id=$1`, id, visible); err != nil {
 		t.Fatal(err)
 	}
 	return id
@@ -69,10 +90,10 @@ func (f *publicFixture) modelWith(t *testing.T, name, protocol string, visible b
 func (f *publicFixture) price(t *testing.T, model string, input, output int64, delta time.Duration) string {
 	t.Helper()
 	id := uuid.NewString()
-	if _, err := f.app.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,$3,$4,clock_timestamp()+$5::interval,$6)`, id, model, input, output, fmt.Sprintf("%f seconds", delta.Seconds()), f.admin); err != nil {
-		t.Fatal(err)
-	}
-	return id
+	return meterquote.PublishDefaultPrice(t, f.ctx, f.app, meterquote.DefaultPrice{
+		ID: id, ModelID: model, Actor: f.admin, InputRate: input, OutputRate: output,
+		EffectiveAt: time.Now().UTC().Add(delta).Truncate(time.Microsecond),
+	})
 }
 
 func publication(t *testing.T, f *publicFixture, id string) catalog.PublicationView {
@@ -140,9 +161,6 @@ func TestPublicCatalogProjectionProtocolsPricesAndSecrets(t *testing.T) {
 	for i, protocol := range []string{"", provider.ProtocolResponses, provider.ProtocolMessages, provider.ProtocolEmbeddings, provider.ProtocolRerank, provider.ProtocolGemini} {
 		name := fmt.Sprintf("model-%d", i)
 		id := f.modelWith(t, name, protocol, true)
-		if _, err = f.owner.Exec(f.ctx, `UPDATE models SET profile=profile||'{"secret_canary":"sk-DO-NOT-LEAK","upstream_model":"private-upstream","future_field":{"key":"private"}}'::jsonb WHERE id=$1`, id); err != nil {
-			t.Fatal(err)
-		}
 		var current string
 		if i != 2 { // One valid model intentionally has no current price.
 			output := int64(9007199254740993)
@@ -165,11 +183,19 @@ func TestPublicCatalogProjectionProtocolsPricesAndSecrets(t *testing.T) {
 			t.Fatal("protocol capabilities were invented or lost", v)
 		}
 		if current == "" {
-			if v.Pricing.Status != "unavailable" || v.Pricing.PriceVersionID != nil || v.Pricing.InputRate != nil || v.Pricing.OutputRate != nil || v.Pricing.EffectiveAt != nil {
+			if v.Pricing.Status != "unavailable" || v.Pricing.PriceVersionID != nil || v.Pricing.Rates != nil || v.Pricing.EffectiveAt != nil {
 				t.Fatal("missing price was treated as free or partially populated", v)
 			}
-		} else if v.Pricing.Status != "available" || v.Pricing.PriceVersionID == nil || *v.Pricing.PriceVersionID != current || *v.Pricing.InputRate != "0" || (inputOnly && *v.Pricing.OutputRate != "0") || (!inputOnly && *v.Pricing.OutputRate != "9007199254740993") {
-			t.Fatal("future/zero/large price projection is wrong", v)
+		} else {
+			var wire struct {
+				Rates []struct {
+					Dimension string `json:"dimension"`
+					Numerator string `json:"numerator"`
+				} `json:"rates"`
+			}
+			if json.Unmarshal(v.Pricing.Rates, &wire) != nil || v.Pricing.Status != "available" || v.Pricing.PriceVersionID == nil || *v.Pricing.PriceVersionID != current || len(wire.Rates) != 2 || wire.Rates[0].Numerator != "0" || (inputOnly && (wire.Rates[1].Dimension != "text_output_token" || wire.Rates[1].Numerator != "0")) || (!inputOnly && wire.Rates[1].Numerator != "9007199254740993") {
+				t.Fatal("future/zero/large price projection is wrong", v)
+			}
 		}
 		encoded, err := json.Marshal(v)
 		if err != nil || strings.Contains(string(encoded), "DO-NOT-LEAK") || strings.Contains(string(encoded), "private") || strings.Contains(string(encoded), "profile") {
@@ -313,7 +339,10 @@ func TestPublicCatalogPublicationCASRoleRecheckAndAtomicAudit(t *testing.T) {
 	if _, err := f.store.SetModelPublication(f.ctx, f.admin, f.model, 1, true); !errors.Is(err, catalog.ErrPublicCatalogConflict) {
 		t.Fatal("old revision same value passed", err)
 	}
-	if _, err := f.owner.Exec(f.ctx, `UPDATE models SET enabled=true,active_revision=9 WHERE id=$1`, f.model); err != nil {
+	// Change the independent route revision through a real publication, not a
+	// dangling pointer rejected by the current profile/route domain guard.
+	f.publish(t, 0)
+	if _, err := f.owner.Exec(f.ctx, `UPDATE models SET enabled=true WHERE id=$1`, f.model); err != nil {
 		t.Fatal(err)
 	}
 	if _, _, err := f.store.PublicModel(f.ctx, f.model); err != nil || publication(t, f, f.model).PublicRevision != "2" {
@@ -337,17 +366,19 @@ func TestPublicCatalogPublicationCASRoleRecheckAndAtomicAudit(t *testing.T) {
 }
 
 func TestPublicCatalogBadProfilePriceAndBoundedPayload(t *testing.T) {
-	f, input := publicLegacyInputPriceDB(t)
-	bad := f.modelWith(t, "bad-profile", provider.ProtocolChat, false)
-	for _, mutation := range []string{
-		`UPDATE models SET profile='{}' WHERE id=$1`,
-		`UPDATE models SET profile=jsonb_build_object('padding',repeat('x',50000)) WHERE id=$1`,
-	} {
+	f := publicDB(t)
+	input := f.modelWith(t, "bad-input-price", provider.ProtocolEmbeddings, false)
+	profiles := []struct {
+		name string
+		body []byte
+	}{
+		{name: "bad-profile", body: []byte(fmt.Sprintf(`{"version":%q,"model":"bad-profile","protocol":"openai_chat","input_token_upper_bound":80,"context_limit":0,"output_limit":20,"default_output_limit":10,"output_limit_field":"max_tokens"}`, uuid.NewString()))},
+		{name: "oversized-profile", body: []byte(fmt.Sprintf(`{"version":%q,"model":"oversized-profile","protocol":"openai_chat","input_token_upper_bound":80,"context_limit":100,"output_limit":20,"default_output_limit":10,"output_limit_field":"max_tokens","padding":%q}`, uuid.NewString(), strings.Repeat("x", 50000)))},
+	}
+	for _, profile := range profiles {
+		bad := f.modelWithProfile(t, profile.name, profile.body, false)
 		var beforeRevision int64
 		if err := f.owner.QueryRow(f.ctx, `SELECT public_revision FROM models WHERE id=$1`, bad).Scan(&beforeRevision); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := f.owner.Exec(f.ctx, mutation, bad); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := f.store.SetModelPublication(f.ctx, f.admin, bad, beforeRevision, true); !errors.Is(err, catalog.ErrPublicCatalogInvalid) {
@@ -369,20 +400,20 @@ func TestPublicCatalogBadProfilePriceAndBoundedPayload(t *testing.T) {
 		}
 	}
 	newPrice := uuid.NewString()
-	_, err := f.app.Exec(f.ctx, `INSERT INTO price_versions(id,model_id,input_rate,output_rate,effective_at,created_by) VALUES($1,$2,1,1,clock_timestamp(),$3)`, newPrice, input, f.admin)
+	_, err := f.app.Exec(f.ctx, `SELECT meter_insert_token_price($1,$2,1,1,clock_timestamp(),$3,NULL,$4,clock_timestamp())`, newPrice, input, f.admin, uuid.NewString())
 	var priceError *pgconn.PgError
-	if !errors.As(err, &priceError) || priceError.Code != "P0001" || !strings.Contains(priceError.Where, "guard_group_price_insert") || priceError.Message != "input-only price requires zero output rate" {
-		t.Fatal("new malformed public price was not rejected by 018 guard", err)
+	if !errors.As(err, &priceError) || priceError.Code != "P0001" || !strings.Contains(priceError.Where, "meter_insert_token_price") || priceError.Message != "input-only price requires zero output rate" {
+		t.Fatal("new malformed public price was not rejected by current meter publisher", err)
 	}
 	var legacyRows, attemptedRows int
-	if err = f.owner.QueryRow(f.ctx, `SELECT count(*) FILTER (WHERE model_id=$1 AND output_rate=1),count(*) FILTER (WHERE id=$2) FROM price_versions`, input, newPrice).Scan(&legacyRows, &attemptedRows); err != nil || legacyRows != 1 || attemptedRows != 0 {
-		t.Fatal("upgrade changed the historical bad price or accepted a new one", legacyRows, attemptedRows, err)
+	if err = f.owner.QueryRow(f.ctx, `SELECT (SELECT count(*) FROM price_versions p WHERE p.model_id=$1 AND EXISTS (SELECT 1 FROM price_rate_lines l WHERE l.price_version_id=p.id AND l.dimension='text_output_token' AND l.numerator=1 AND l.denominator=1)),(SELECT count(*) FROM price_versions WHERE id=$2)`, input, newPrice).Scan(&legacyRows, &attemptedRows); err != nil || legacyRows != 0 || attemptedRows != 0 {
+		t.Fatal("malformed price was accepted", legacyRows, attemptedRows, err)
 	}
 	if _, err = f.app.Exec(f.ctx, `UPDATE models SET public_visible=true WHERE id=$1`, input); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := f.store.PublicModel(f.ctx, input); !errors.Is(err, catalog.ErrPublicCatalogUnavailable) {
-		t.Fatal("nonzero retrieval output was disguised as missing/free", err)
+	if view, _, err := f.store.PublicModel(f.ctx, input); err != nil || view.Pricing.Status != "unavailable" || view.Pricing.Rates != nil {
+		t.Fatal("rejected price left a free or partially published quote", view, err)
 	}
 	// The projector gains no model/profile or publication write access.
 	cfg := f.owner.Config()

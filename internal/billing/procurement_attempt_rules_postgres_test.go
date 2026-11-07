@@ -26,6 +26,33 @@ import (
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
+// Frozen 022 differential value; deliberately independent of current routecost.
+type originalRuleQuote struct {
+	VersionID             string
+	InputRate, OutputRate *int64
+	Basis                 string
+}
+
+func (q originalRuleQuote) Equal(other originalRuleQuote) bool {
+	same := func(a, b *int64) bool { return a == nil && b == nil || a != nil && b != nil && *a == *b }
+	return q.VersionID == other.VersionID && q.Basis == other.Basis && same(q.InputRate, other.InputRate) && same(q.OutputRate, other.OutputRate)
+}
+
+type originalRuleCost struct {
+	ID                    *string
+	InputRate, OutputRate *int64
+	Basis                 string
+}
+
+func originalRuleQuoteOf(c originalRuleCost) originalRuleQuote {
+	q := originalRuleQuote{InputRate: c.InputRate, OutputRate: c.OutputRate, Basis: c.Basis}
+	if c.ID != nil {
+		q.VersionID = *c.ID
+	}
+	return q
+}
+func originalRuleEqual(a, b originalRuleQuote) bool { return a.Equal(b) }
+
 type attemptRuleFixture struct {
 	ctx        context.Context
 	owner, app *pgxpool.Pool
@@ -336,7 +363,7 @@ func TestPostgresProcurementAttemptOriginalRules(t *testing.T) {
 	})
 	t.Run("expected_bytes_shape_and_original_equal", func(t *testing.T) {
 		rate := func(v int64) *int64 { return &v }
-		quotes := []routing.CostQuote{{}, {Basis: "unknown"}, {VersionID: baseID, Basis: "contract", InputRate: rate(0), OutputRate: rate(0)}, {VersionID: baseID, Basis: "invoice", InputRate: rate(math.MaxInt64), OutputRate: nil}, {VersionID: baseID, Basis: "unknown", InputRate: rate(-1), OutputRate: rate(math.MinInt64)}, {VersionID: "\x00\xff", Basis: "\xfe\x00", InputRate: rate(-1)}, {VersionID: "", Basis: ""}, {VersionID: strings.Repeat("z", 300000), Basis: "ignored"}}
+		quotes := []originalRuleQuote{{}, {Basis: "unknown"}, {VersionID: baseID, Basis: "contract", InputRate: rate(0), OutputRate: rate(0)}, {VersionID: baseID, Basis: "invoice", InputRate: rate(math.MaxInt64), OutputRate: nil}, {VersionID: baseID, Basis: "unknown", InputRate: rate(-1), OutputRate: rate(math.MinInt64)}, {VersionID: "\x00\xff", Basis: "\xfe\x00", InputRate: rate(-1)}, {VersionID: "", Basis: ""}, {VersionID: strings.Repeat("z", 300000), Basis: "ignored"}}
 		for i, expected := range quotes {
 			for j, actual := range quotes[:5] {
 				t.Run(fmt.Sprintf("%d_%d", i, j), func(t *testing.T) {
@@ -345,7 +372,7 @@ func TestPostgresProcurementAttemptOriginalRules(t *testing.T) {
 					var shape, equal bool
 					attemptRuleMust(t, "original Equal differential", f.app.QueryRow(f.ctx, "SELECT pp_at_expected_shape_v1($1,$2,$3,$4,$5),pp_at_quote_equal_v1($1,$2,$3,$4,$5,$6,$7,$8,$9)", args...).Scan(&shape, &equal))
 					if !shape || equal != expected.Equal(actual) {
-						t.Fatal("expected BYTEA union or original routing.CostQuote.Equal differs")
+						t.Fatal("expected BYTEA union or original originalRuleQuote.Equal differs")
 					}
 				})
 			}
@@ -407,18 +434,23 @@ func TestPostgresProcurementAttemptQuoteSampling(t *testing.T) {
 		attemptRuleMust(t, "finish quote rows", rows.Err())
 		attemptRuleMust(t, "sample after", f.app.QueryRow(f.ctx, "SELECT clock_timestamp()").Scan(&after))
 		sameString := id == nil && wantID == nil || id != nil && wantID != nil && *id == *wantID
-		if !sameString || !routing.EqualCostQuote(routing.CostQuote{VersionID: "same", InputRate: input, OutputRate: output, Basis: basis}, routing.CostQuote{VersionID: "same", InputRate: wantIn, OutputRate: wantOut, Basis: wantBasis}) || at.Before(before) || at.After(after) {
+		if !sameString || !originalRuleEqual(originalRuleQuote{VersionID: "same", InputRate: input, OutputRate: output, Basis: basis}, originalRuleQuote{VersionID: "same", InputRate: wantIn, OutputRate: wantOut, Basis: wantBasis}) || at.Before(before) || at.After(after) {
 			t.Fatal("quote choice, nullable dimensions, or real sampled instant differs")
 		}
-		var original attemptCost
-		err = f.app.QueryRow(f.ctx, currentAttemptCostSQL, f.channel, model).Scan(&original.ID, &original.InputRate, &original.OutputRate, &original.Basis)
+		var original originalRuleCost
+		// This fixture stops at 022: compare its original scalar query, not the
+		// current 024 reader, and do not broaden the frozen prototype's scope.
+		err = f.app.QueryRow(f.ctx, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at)
+ SELECT c.id,c.input_rate,c.output_rate,c.basis FROM cost_versions c,instant
+ WHERE c.channel_id=$1 AND c.upstream_model=$2 AND c.effective_at<=instant.at
+ ORDER BY c.effective_at DESC,c.created_at DESC,c.id DESC LIMIT 1`, f.channel, model).Scan(&original.ID, &original.InputRate, &original.OutputRate, &original.Basis)
 		if wantID == nil {
 			if !errors.Is(err, pgx.ErrNoRows) {
 				t.Fatal("original query unexpectedly found quote")
 			}
 		} else {
 			attemptRuleMust(t, "original current quote query", err)
-			if original.ID == nil || *original.ID != *wantID || !quoteOf(original).Equal(routing.CostQuote{VersionID: *wantID, InputRate: wantIn, OutputRate: wantOut, Basis: wantBasis}) {
+			if original.ID == nil || *original.ID != *wantID || !originalRuleQuoteOf(original).Equal(originalRuleQuote{VersionID: *wantID, InputRate: wantIn, OutputRate: wantOut, Basis: wantBasis}) {
 				t.Fatal("new choice differs from original query")
 			}
 		}

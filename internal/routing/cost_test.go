@@ -3,17 +3,60 @@ package routing
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/moni-ai/moni-aigate/internal/metering"
+	"github.com/moni-ai/moni-aigate/internal/routecost"
 )
 
+// Per-million fixture input only; production selectors never reconstruct it.
+func testCostQuote(channel, model, version, basis string, input, output int64) routecost.Quote {
+	s, err := metering.ParseSchema([]byte(`{"schema_id":"10000000-0000-4000-8000-000000000001","version":"1","dimensions":[{"dimension":"text_input_token","unit":"token","maximum_quantity":"9223372036854775807"},{"dimension":"text_output_token","unit":"token","maximum_quantity":"9223372036854775807"}],"retail_dimensions":["text_input_token","text_output_token"],"supplier_dimensions":["text_input_token","text_output_token"]}`))
+	if err != nil {
+		panic(err)
+	}
+	in := routecost.Input{ChannelID: channel, UpstreamModel: model, VersionID: version, Basis: basis, VariantKey: "default", Schema: s}
+	if basis != "unknown" {
+		in.Rates, err = metering.LegacyTokenRates(s, metering.Supplier, input, output)
+		if err != nil {
+			panic(err)
+		}
+	}
+	q, err := routecost.NewQuote(in)
+	if err != nil {
+		panic(err)
+	}
+	return q
+}
+func testCostCaps(q routecost.Quote, input, output *int64) routecost.Limits {
+	entries := []metering.Rate{}
+	for i, ptr := range []*int64{input, output} {
+		if ptr == nil {
+			continue
+		}
+		rates, err := metering.LegacyTokenRates(q.Schema(), metering.Supplier, *ptr, *ptr)
+		if err != nil {
+			panic(err)
+		}
+		rows, _ := rates.Entries()
+		entries = append(entries, rows[i])
+	}
+	caps, err := routecost.NewLimits(q.Schema(), entries)
+	if err != nil {
+		panic(err)
+	}
+	return caps
+}
 func costRate(n int64) *int64 { return &n }
 func pricedCandidate(id string, input, output int64) Candidate {
 	c := candidate(id, 10, 1)
 	c.CostPolicy = CostPolicy{Mode: "cost_first", UnknownCostPolicy: "deny"}
-	c.CostQuote = CostQuote{VersionID: "quote-" + id, InputRate: costRate(input), OutputRate: costRate(output), Basis: "contract"}
+	c.CostQuote = testCostQuote(id, "m", "quote-"+id, "contract", input, output)
 	c.InputUpperBound, c.OutputLimit = 100, 20
 	return c
 }
@@ -84,20 +127,27 @@ func TestCostFirstKeepsPriorityThenWeightedTiesAndPoolWeights(t *testing.T) {
 
 func TestCostUnknownAndUnitCapsAreHardFilters(t *testing.T) {
 	policy := DefaultCostPolicy()
-	unknown := CostQuote{Basis: "unknown"}
-	knownZero := CostQuote{VersionID: "zero", InputRate: costRate(0), OutputRate: costRate(0), Basis: "invoice"}
-	if CostExclusion(policy, unknown, nil, nil) != "" || CostExclusion(policy, unknown, costRate(0), nil) != "cost_unknown" || CostExclusion(policy, knownZero, costRate(0), costRate(0)) != "" {
-		t.Fatal("unknown was treated as zero or legacy default changed")
-	}
-	for _, quote := range []CostQuote{unknown, {VersionID: "partial", InputRate: costRate(1), Basis: "contract"}, {VersionID: "wrong-basis", InputRate: costRate(1), OutputRate: costRate(1), Basis: "unknown"}} {
-		if CostExclusion(CostPolicy{Mode: "manual", UnknownCostPolicy: "deny"}, quote, nil, nil) != "cost_unknown" {
-			t.Fatal("managed route accepted unknown cost")
+	unknown := testCostQuote("unknown", "m", "", "unknown", 0, 0)
+	knownZero := testCostQuote("zero", "m", "zero", "invoice", 0, 0)
+	for _, tc := range []struct {
+		q      routecost.Quote
+		caps   routecost.Limits
+		policy CostPolicy
+		want   string
+	}{
+		{unknown, routecost.Limits{}, policy, ""},
+		{unknown, testCostCaps(unknown, costRate(0), nil), policy, "cost_unknown"},
+		{knownZero, testCostCaps(knownZero, costRate(0), costRate(0)), policy, ""},
+		{unknown, routecost.Limits{}, CostPolicy{Mode: "manual", UnknownCostPolicy: "deny"}, "cost_unknown"},
+	} {
+		if reason, err := CostExclusion(tc.policy, tc.q, tc.caps); err != nil || reason != tc.want {
+			t.Fatal("unknown was treated as zero or policy changed", reason, err)
 		}
 	}
 	unknownCandidate := pricedCandidate("unknown", 1, 1)
 	unknownCandidate.CostQuote = unknown
 	overCap := pricedCandidate("over-cap", 1, 5)
-	overCap.MaxOutputCostRate = costRate(4)
+	overCap.CostLimits = testCostCaps(overCap.CostQuote, nil, costRate(4))
 	known := pricedCandidate("known", 10, 10)
 	a, err := plan(t, unknownCandidate, overCap, known).Start(context.Background(), NewEngine(Config{}), admit)
 	if err != nil || a.Candidate.ChannelID != "known" || a.Candidate.Decisions[0].Reason != "cost_unknown" || a.Candidate.Decisions[1].Reason != "cost_limit_exceeded" {
@@ -115,6 +165,121 @@ func TestCostUnknownAndUnitCapsAreHardFilters(t *testing.T) {
 		t.Fatal("manual default began minimizing cost")
 	}
 	a.Finish(Neutral)
+}
+
+func TestCostExclusionRejectsInvalidValuesWithoutUnknownDowngrade(t *testing.T) {
+	q := testCostQuote("channel", "m", "v", "contract", 1, 1)
+	raw, _ := q.Schema().CanonicalJSON()
+	other, err := metering.ParseSchema([]byte(strings.Replace(string(raw), "9223372036854775807", "100", 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrongCaps, err := routecost.NewLimits(other, []metering.Rate{{Dimension: "text_input_token", Unit: "token", Numerator: 0, Denominator: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		policy CostPolicy
+		q      routecost.Quote
+		caps   routecost.Limits
+		want   error
+	}{
+		{CostPolicy{}, q, routecost.Limits{}, ErrInvalidPolicy},
+		{DefaultCostPolicy(), routecost.Quote{}, routecost.Limits{}, routecost.ErrInvalidQuote},
+		{DefaultCostPolicy(), q, wrongCaps, routecost.ErrInvalidLimits},
+	} {
+		if reason, err := CostExclusion(tc.policy, tc.q, tc.caps); reason != "" || !errors.Is(err, tc.want) {
+			t.Fatal("invalid original became a business exclusion", reason, err)
+		}
+	}
+}
+
+func TestCostPlanRejectsWrongDomainSchemaCapsAndBounds(t *testing.T) {
+	base := pricedCandidate("a", 1, 1)
+	raw, _ := base.CostQuote.Schema().CanonicalJSON()
+	small, err := metering.ParseSchema([]byte(strings.ReplaceAll(string(raw), "9223372036854775807", "10")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rates, err := metering.LegacyTokenRates(small, metering.Supplier, 1, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	smallQuote, err := routecost.NewQuote(routecost.Input{ChannelID: "a", UpstreamModel: "m", VersionID: "v", Basis: "contract", VariantKey: "default", Schema: small, Rates: rates})
+	if err != nil {
+		t.Fatal(err)
+	}
+	smallCaps, err := routecost.NewLimits(small, []metering.Rate{{Dimension: "text_input_token", Unit: "token", Numerator: 1, Denominator: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, change := range map[string]func(*Candidate){
+		"channel":         func(c *Candidate) { c.ChannelID = "other" },
+		"upstream":        func(c *Candidate) { c.Model = "other" },
+		"cap_schema":      func(c *Candidate) { c.CostLimits = smallCaps },
+		"input_overflow":  func(c *Candidate) { c.CostQuote = smallQuote; c.InputUpperBound = 11; c.OutputLimit = 1 },
+		"output_overflow": func(c *Candidate) { c.CostQuote = smallQuote; c.InputUpperBound = 1; c.OutputLimit = 11 },
+	} {
+		t.Run(name, func(t *testing.T) {
+			c := base
+			change(&c)
+			if _, err := NewPlan([]Candidate{c}, 1); !errors.Is(err, ErrInvalidPolicy) {
+				t.Fatal("invalid domain accepted", err)
+			}
+		})
+	}
+	// Same schema UUID, different complete definition: neither quote identity
+	// nor a cross-channel plan may collapse these into one schema.
+	base.InputUpperBound, base.OutputLimit = 1, 1
+	second := base
+	second.ChannelID = "second"
+	second.CostQuote, err = routecost.NewQuote(routecost.Input{ChannelID: "second", UpstreamModel: "m", VersionID: "v", Basis: "contract", VariantKey: "default", Schema: small, Rates: rates})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewPlan([]Candidate{base, second}, 1); !errors.Is(err, ErrInvalidPolicy) {
+		t.Fatal("same UUID hid schema mismatch", err)
+	}
+}
+
+func TestCostExactRationalsDoNotRequirePerMillionMirrors(t *testing.T) {
+	makeQuote := func(c Candidate, numerator, denominator int64) routecost.Quote {
+		s := c.CostQuote.Schema()
+		id, _ := s.ID()
+		raw := fmt.Sprintf(`{"schema_id":%q,"version":"1","side":"supplier","currency":"CNY","rates":[{"dimension":"text_input_token","unit":"token","numerator":"%d","denominator":"%d"},{"dimension":"text_output_token","unit":"token","numerator":"0","denominator":"1"}]}`, id, numerator, denominator)
+		r, err := metering.ParseRates(s, metering.Supplier, []byte(raw))
+		if err != nil {
+			t.Fatal(err)
+		}
+		q, err := routecost.NewQuote(routecost.Input{ChannelID: c.ChannelID, UpstreamModel: c.Model, VersionID: "original", Basis: "contract", VariantKey: "default", Schema: s, Rates: r})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return q
+	}
+	a, b := pricedCandidate("one-third", 0, 0), pricedCandidate("two-sevenths", 0, 0)
+	a.InputUpperBound, a.OutputLimit, b.InputUpperBound, b.OutputLimit = 1, 0, 1, 0
+	a.CostQuote, b.CostQuote = makeQuote(a, 1, 3), makeQuote(b, 2, 7)
+	for _, cap := range []struct {
+		n, d int64
+		want string
+	}{{1, 3, ""}, {3, 10, "cost_limit_exceeded"}} {
+		limits, err := routecost.NewLimits(a.CostQuote.Schema(), []metering.Rate{{Dimension: "text_input_token", Unit: "token", Numerator: cap.n, Denominator: cap.d}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if reason, err := CostExclusion(a.CostPolicy, a.CostQuote, limits); err != nil || reason != cap.want {
+			t.Fatal("inexact cap comparison", reason, err)
+		}
+	}
+	selected, err := plan(t, a, b).Start(context.Background(), NewEngine(Config{RandN: func(uint64) uint64 { return 0 }}), admit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer selected.Finish(Neutral)
+	if selected.Candidate.ChannelID != b.ChannelID {
+		t.Fatal("equal ceil values hid different exact costs")
+	}
 }
 
 func TestCostFirstHealthCapacityAndSafeAttemptBudgetRemain(t *testing.T) {
@@ -160,16 +325,22 @@ func TestCostFirstHealthCapacityAndSafeAttemptBudgetRemain(t *testing.T) {
 func TestCostPlanValidatesAndFreezesQuotesAndCaps(t *testing.T) {
 	base := pricedCandidate("a", 2, 3)
 	base.CredentialID = "first"
-	base.MaxInputCostRate = costRate(2)
+	base.CostLimits = testCostCaps(base.CostQuote, costRate(2), nil)
 	p := plan(t, base)
-	*base.CostQuote.InputRate = 999
-	*base.MaxInputCostRate = 0
+	rates, _ := base.CostQuote.Rates()
+	entries, _ := rates.Entries()
+	entries[0].Numerator = 999
+	caps := base.CostLimits.Entries()
+	caps[0].Numerator = 0
 	a, err := p.Start(context.Background(), NewEngine(Config{}), admit)
-	if err != nil || *a.Candidate.CostQuote.InputRate != 2 || *a.Candidate.MaxInputCostRate != 2 {
+	if err != nil || !a.Candidate.CostQuote.Equal(testCostQuote("a", "m", "quote-a", "contract", 2, 3)) || a.Candidate.CostLimits.Entries()[0].Numerator != 1 {
 		t.Fatal("caller mutated frozen purchase policy", err)
 	}
 	a.Finish(Neutral)
-	for _, mutate := range []func(*Candidate){func(c *Candidate) { c.CostPolicy.UnknownCostPolicy = "allow" }, func(c *Candidate) { c.InputUpperBound = 0 }, func(c *Candidate) { c.OutputLimit = -1 }, func(c *Candidate) { c.MaxInputCostRate = costRate(-1) }, func(c *Candidate) { c.CostQuote.InputRate = costRate(-1) }} {
+	for _, mutate := range []func(*Candidate){func(c *Candidate) { c.CostPolicy.UnknownCostPolicy = "allow" }, func(c *Candidate) { c.InputUpperBound = 0 }, func(c *Candidate) { c.OutputLimit = -1 }, func(c *Candidate) {
+		c.CostLimits = testCostCaps(testCostQuote("x", "m", "x", "contract", 1, 1), costRate(0), nil)
+		c.CostQuote = routecost.Quote{}
+	}, func(c *Candidate) { c.CostQuote = routecost.Quote{} }} {
 		bad := pricedCandidate("bad", 1, 1)
 		mutate(&bad)
 		if _, err := NewPlan([]Candidate{bad}, 2); !errors.Is(err, ErrInvalidPolicy) {
@@ -180,7 +351,7 @@ func TestCostPlanValidatesAndFreezesQuotesAndCaps(t *testing.T) {
 	one.CredentialID = "first"
 	two := one
 	two.CredentialID = "second"
-	two.CostQuote.VersionID = "different"
+	two.CostQuote = testCostQuote("pool", "m", "different", "contract", 1, 1)
 	if _, err := NewPlan([]Candidate{one, two}, 2); !errors.Is(err, ErrInvalidPolicy) {
 		t.Fatal("pool mixed purchase quotes", err)
 	}

@@ -18,7 +18,7 @@ func (e *Environment) install(ctx context.Context) error {
 		return err
 	}
 	defer p.Close()
-	if migrations.ApplyThrough(ctx, p, "019_operations_alerts.sql") != nil {
+	if migrations.Apply(ctx, p) != nil {
 		return stage("application_migrations")
 	}
 	for i := 0; i < 2; i++ {
