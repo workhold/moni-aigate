@@ -466,6 +466,20 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 	_ = tx.Rollback(ctx)
 }
 
+func TestUnifiedTextMeteringDoesNotRetainRouteRevisionBypass(t *testing.T) {
+	sql, err := os.ReadFile("024_unified_text_metering.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(sql)
+	if strings.Contains(text, "route_revision<>0") || strings.Contains(text, "route_revision != 0") {
+		t.Fatal("024 retained a route_revision=0 compatibility bypass")
+	}
+	if !strings.Contains(text, "request_records_route_revision_check") || !strings.Contains(text, "CHECK(route_revision>0)") {
+		t.Fatal("024 no longer enforces a positive request route revision")
+	}
+}
+
 type quoteWire struct {
 	Version       string          `json:"version"`
 	Status        string          `json:"status"`

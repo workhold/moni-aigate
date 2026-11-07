@@ -94,7 +94,7 @@ CHECK(retail OR supplier)
 
 `models.profile_version` 改为 FK `(profile_version,id)`→capability `(id,model_id)`，deferred 允许 model 与其首版同事务出生；删去 `models.profile` 镜像列，全部读取通过不可变 capability。`models` 的 enabled/public/active_revision 等现行管理字段保留。模型指向新 profile 时，非零 active_revision 必须指向同一 profile 的路由版本，不能形成新 profile+旧路由组合。
 
-`route_policy_versions`增profile_version TEXT和created_xid XID8，FK`(profile_version,model_id)`→capability，绑定公开模型当前唯一profile。`model_bindings`只增variant_key TEXT和created_xid XID8，不增独立profile身份；全部binding沿该model/route原profile。原channel/version/credential/upstream及ContractDigest固定实际供应商合同，不建contract ID层。原UK`(route_policy_version_id,channel_id,upstream_model)`替换为含variant的UK。两root stamp均由DB覆盖以支持限额子行出生检查。保留不可变route/binding及cost_mode/unknown_cost_policy。U删除route_revision=0无route门禁旁路：可配置未完成，但不可调用。
+`route_policy_versions`增profile_version TEXT和created_xid XID8，FK`(profile_version,model_id)`→capability，绑定公开模型当前唯一profile。`model_bindings`只增variant_key TEXT和created_xid XID8，不增独立profile身份；全部binding沿该model/route原profile。原channel/version/credential/upstream及ContractDigest固定实际供应商合同，不建contract ID层。原UK`(route_policy_version_id,channel_id,upstream_model)`替换为含variant的UK。两root stamp均由DB覆盖以支持限额子行出生检查。保留不可变route/binding及cost_mode/unknown_cost_policy。U已删除route_revision=0无route门禁旁路：当前请求必须持有正数、同profile的route revision，未发布route不能进入计量快照。
 
 新 `binding_cost_rate_limits(binding_id TEXT,dimension TEXT,unit TEXT,numerator BIGINT,denominator BIGINT)`，PK `(binding_id,dimension)`，FK→model_bindings。每行是 supplier mask 的合法维度及相同单位，分数满足第 2 节；允许无上限行或仅部分维度上限，**无行是无限额，0/1 是明确零上限**。binding root 已经不可变，因此子限额必须同事务完整出生，修改限额通过发布新 route。删除原 `max_input_cost_rate/max_output_cost_rate`。
 
@@ -138,7 +138,7 @@ SQL入口 `meter_insert_token_cost(cost_id,channel_id,upstream_model,schema_id,i
 
 候选读取沿原route的profile取得schema，attempt准入与采购锁后复验沿原request snapshot取得schema，派发复验沿原attempt snapshot取得schema；所有选价必须同时限定channel/upstream/schema_id/schema_digest/variant，之后才按原三项倒序。另一个schema的更新、unknown、排期价或同刻版本既不能挤掉本域原价，也不能补本域缺价；缺价仍为version_missing。所有快照（含计划未就绪和basis_unknown）在提交时独立校验报价与真实attempt的channel/upstream及原schema/variant完整一致，不能仅核known rates canonical。跨schema/跨channel/跨upstream即使费率全零或unknown也整笔拒绝，原快照不追溯改价。
 
-为实现上述原route定位，本片同时落第3节的route.profile_version与出生stamp。BEFORE INSERT锁定model并从其唯一当前capability派生profile；若调用方显式给出另一profile则拒绝，绝不按最新capability全局查找。profile/model复合FK和原route不可变约束保留；model非零active_revision必须指向同profile的原route。请求快照的非零route_revision也须绑定该profile，避免调用方将另一schema的当前profile接到旧route；route_revision=0派发旁路的整体删除仍在后续guard片，不能据此标成完整路由门禁。
+为实现上述原route定位，本片同时落第3节的route.profile_version与出生stamp。BEFORE INSERT锁定model并从其唯一当前capability派生profile；若调用方显式给出另一profile则拒绝，绝不按最新capability全局查找。profile/model复合FK和原route不可变约束保留；model非零active_revision必须指向同profile的原route。请求快照的route_revision必须绑定该profile，避免调用方将另一schema的当前profile接到旧route；route_revision=0由正数约束和无条件快照 guard共同拒绝。
 
 本片先关闭上述域隔离缺口；不将仍待改造的向量DTO、pricing_operations全量接线和精确发布指纹写成已完成，也不授予异构profile路由资格。
 
@@ -470,7 +470,7 @@ CHECK/PK/UK不可deferred；循环root↔child定位FK和上述complete constrai
 2. **客户结算金额**：`settlements` INSERT（deferred）。`reason='charged_usage'` 时必须 `status='settled'`、有 finalization 且 retail 已 confirmed_final，`raw_retail_amount` 恰等于原请求价格率行乘该 finalization 事件的 retail 两维终态量（单次 ceil，不截断），`charged_amount=min(raw,原 reservation.amount)`，`waived_retail_amount=raw-charged`；其余 reason 必须 `status='released'` 且三项金额均为 0。
 3. **能力版本完整**：`model_capability_versions`/`model_capability_variants`/`model_capability_bound_lines` INSERT（deferred）。每个 capability 恰一 `default` variant、恰四条界行（两侧×两维、unit=token），两侧输入界等于 profile `input_token_upper_bound`、输出界等于 `output_limit`，且不超过 schema 最大量；`protocol` 等于 profile 协议，input-only 协议输出界为 0；`contract_digest/profile_digest` 等于 profile 原 JSON 文本的 SHA-256。
 4. **路由出生与 cap**：`model_bindings` INSERT 前要求所属 route 在本顶层事务出生；`binding_cost_rate_limits` INSERT 前要求所属 binding 在本顶层事务出生，维度/单位属于 route profile schema 的 supplier 维度，分子分母已约分。已提交的 route/binding 不能再追加子行。
-5. **删除 route_revision=0 旁路**：`request_records.route_revision` 必须 >0；Reserve 只接受等于模型当前非零 active route 的版本，否则 `route_changed`/`model_unavailable`；RecordAttempt、证据与成本策略不再对 0 跳过路由绑定与 cost policy 校验；请求快照的 route/profile 一致性检查无条件执行。模型可以已配置但未发布路由，此时不可调用。
+5. **删除 route_revision=0 旁路（已落地）**：`request_records.route_revision` 必须 >0；Reserve 只接受等于模型当前非零 active route 的版本，否则 `route_changed`/`model_unavailable`；RecordAttempt、证据与成本策略不再对 0 跳过路由绑定与 cost policy 校验；请求快照的 route/profile 一致性检查无条件执行。模型可以已配置但未发布路由，此时不可调用。旧冻结研究材料中的自由版本/旧旁路不升级到024。
 
 当前夹具若依赖"无路由也能建请求"，必须改为先发布真实路由（含所用渠道/版本/上游模型 binding）；不提供跳过开关。
 

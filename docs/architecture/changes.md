@@ -4469,3 +4469,44 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-07T19:04:59Z · 826ff1f54558
+
+收口008 journal纯核、024 route bypass removal、028 S/A/R纯域候选合同与状态机，生产媒体仍未接线
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2049 个源文件；本次 30 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/028-media-pure-candidates.md`
+- added `docs/verification/financial-write-batches.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- added `internal/billing/journal_batch.go`
+- added `internal/billing/journal_batch_test.go`
+- modified `internal/billing/store.go`
+- added `internal/media/input.go`
+- added `internal/media/json.go`
+- added `internal/media/media_test.go`
+- added `internal/media/profile.go`
+- added `internal/media/result.go`
+- added `internal/media/state.go`
+- added `internal/media/types.go`
+- added `internal/realtime/realtime.go`
+- added `internal/realtime/realtime_test.go`
+- added `internal/tasks/event.go`
+- added `internal/tasks/state.go`
+- added `internal/tasks/tasks_test.go`
+- added `internal/tasks/types.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/008-financial-write-batches/acceptance.md`
+- added `specs/028-unified-metering-media/a-contract.md`
+- added `specs/028-unified-metering-media/r-contract.md`
+- added `specs/028-unified-metering-media/s-contract.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>

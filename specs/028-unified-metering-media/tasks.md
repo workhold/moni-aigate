@@ -49,6 +49,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-07 阶段1续片：新增过期未知用量恢复专项。受限 APP 请求只产生一次上游 POST 和一次 attempt，恢复从持久 reservation/recovery job 释放冻结；重复 recovery 不生成第二次 attempt、结算或网络请求。该测试只证明当前文本恢复不重生成，超界、完整权限矩阵和外部出口仍未验收，复选框保持未勾。
 
+2026-11-08 028-S/A/R 纯域第一片：新增未发布同步图片的严格 profile/输入/PNG 结果与未知消费状态机、异步任务的提交幂等/`submission_unknown` 禁重发/事件 canonical/制品授权状态机，以及实时 session/turn、单用 Origin ticket、事件去重和首收费引用门禁。三个包只依赖标准库和纯边界，不含数据库、HTTP/WS、provider、wallet、billing、报表或正式供应商接线；`go test -race` 与 `go vet` 通过。输入合同另收紧了 UUID、制品引用/媒体类型和 retail usage digest。S/A/R 以及U存储/商业出口复选框保持未勾选。
+
 ## S / A / R / 交付
 
 - [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。

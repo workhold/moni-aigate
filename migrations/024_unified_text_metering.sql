@@ -1174,7 +1174,7 @@ BEGIN
  ) THEN
   RAISE EXCEPTION 'request price does not match model';
  END IF;
- IF EXISTS (SELECT 1 FROM request_records r WHERE r.tenant_id=NEW.tenant_id AND r.id=NEW.request_id AND r.route_revision<>0
+ IF EXISTS (SELECT 1 FROM request_records r WHERE r.tenant_id=NEW.tenant_id AND r.id=NEW.request_id
   AND NOT EXISTS (SELECT 1 FROM route_policy_versions p WHERE p.model_id=r.model_id AND p.revision=r.route_revision AND p.profile_version=NEW.profile_version)) THEN
   RAISE EXCEPTION 'request route does not match profile';
  END IF;

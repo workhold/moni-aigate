@@ -209,7 +209,7 @@ PostgreSQL 16.15、5432测试入口和随机隔离schema，Go测试均`-count=1`
 
 ## 2026-11-05：第5片续，采购报价域隔离
 
-先冻结存储合同4.2.1，再修改未发行024。采购发布显式提交schema_id/digest/default，SQL入口不再从全局最后创建的capability猜schema；成本列表、成功响应和管理UI选择器同步带同一身份。当前每百万token整数输入保留，不增加在线双运行或第二套报价身份。route落原profile和出生stamp，model非零active route及request非零route须匹配profile；尚未删除route_revision=0派发旁路，不称完整guard。
+先冻结存储合同4.2.1，再修改未发行024。采购发布显式提交schema_id/digest/default，SQL入口不再从全局最后创建的capability猜schema；成本列表、成功响应和管理UI选择器同步带同一身份。当前每百万token整数输入保留，不增加在线双运行或第二套报价身份。route落原profile和出生stamp，model非零active route及request正数route须匹配profile；本轮移除了 SQL 中 `route_revision<>0` 的旧旁路，路由一致性 guard 现在无条件执行。冻结研究材料中的自由版本/旧旁路保持原样，不升级到024。
 
 候选沿原route profile，attempt与采购锁后沿原request snapshot，派发复验沿原attempt snapshot，完整限定channel/upstream/schema/digest/variant后选价。快照guard对known、unknown及计划未就绪都核原attempt域；input-only非零输出价与未发布schema在API和raw SQL均拒绝。未新增金额公式、资金表、角色或结算器。历史022采购规则夹具改为直接比较原scalar SQL，不调用当前reader，不扩大其原schema或改签pins。
 

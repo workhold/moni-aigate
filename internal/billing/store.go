@@ -225,30 +225,16 @@ func post(ctx context.Context, tx pgx.Tx, tenant, operation, kind, reference, ac
 }
 
 func postLocked(ctx context.Context, tx pgx.Tx, tenant, operation, kind, reference, actor string, deltas map[string]int64, accounts []lockedAccount) (string, error) {
-	total := new(big.Int)
-	for _, delta := range deltas {
-		total.Add(total, big.NewInt(delta))
-	}
-	if total.Sign() != 0 || len(deltas) < 2 {
-		return "", fail("unbalanced_journal", "journal entries must balance")
-	}
 	id := uuid.NewString()
+	plan, err := buildJournalPlan(id, tenant, operation, kind, reference, actor, deltas, accounts)
+	if err != nil {
+		return "", err
+	}
 	batch := &pgx.Batch{}
-	batch.Queue("INSERT INTO journals(id,tenant_id,operation_id,kind,reference,actor) VALUES($1,$2,$3,$4,$5,$6)", id, tenant, operation, kind, reference, actor)
-	for _, a := range accounts {
-		delta, ok := deltas[a.kind]
-		if !ok {
-			continue
-		}
-		balance, addErr := checkedAdd(a.balance, delta)
-		if addErr != nil {
-			return "", addErr
-		}
-		if (a.kind == "AVAILABLE" || a.kind == "HELD") && balance < 0 {
-			return "", fail("insufficient_balance", "insufficient wallet balance")
-		}
-		batch.Queue("UPDATE ledger_accounts SET balance=$2 WHERE id=$1", a.id, balance)
-		batch.Queue("INSERT INTO journal_lines(journal_id,account_id,signed_delta) VALUES($1,$2,$3)", id, a.id, delta)
+	batch.Queue("INSERT INTO journals(id,tenant_id,operation_id,kind,reference,actor) VALUES($1,$2,$3,$4,$5,$6)", plan.id, plan.tenant, plan.operation, plan.kind, plan.reference, plan.actor)
+	for _, account := range plan.accounts {
+		batch.Queue("UPDATE ledger_accounts SET balance=$2 WHERE id=$1", account.id, account.balance)
+		batch.Queue("INSERT INTO journal_lines(journal_id,account_id,signed_delta) VALUES($1,$2,$3)", plan.id, account.id, account.delta)
 	}
 	// Validate every locked balance before sending. PostgreSQL still executes the
 	// statements in order in this transaction; Close drains every result so an
@@ -256,7 +242,7 @@ func postLocked(ctx context.Context, tx pgx.Tx, tenant, operation, kind, referen
 	if err := tx.SendBatch(ctx, batch).Close(); err != nil {
 		return "", err
 	}
-	return id, nil
+	return plan.id, nil
 }
 
 type authState struct {

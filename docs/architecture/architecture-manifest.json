@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-07T18:11:34Z",
-  "review_reason": "核对两个工作目录并汇合028拒迁负控、021邮件故障窗口、022-C1-M隔离退款模拟证据",
-  "snapshot_sha256": "2e3492334f471449575c23a07dd9664624cf1e7f0a507dc4a23006b640439f0d",
-  "architecture_sha256": "6a1f2de5db7247b6cc13047213dd3ccfe9f76a8dad982ac387793d24205e4bfd",
-  "history_sha256": "49d52854f01a2d75410ec3d740534b8846fba2a7ee53cf9d857cf5e6903bf081",
+  "reviewed_at": "2026-11-07T19:04:59Z",
+  "review_reason": "收口008 journal纯核、024 route bypass removal、028 S/A/R纯域候选合同与状态机，生产媒体仍未接线",
+  "snapshot_sha256": "826ff1f5455840c82d989a6c2492adf8538163e55418179ef5c3cd02b0979aed",
+  "architecture_sha256": "2824888de132e8c8ed6e8519c62324136a48950555f5048724f8c5dc1cb66d96",
+  "history_sha256": "02bc20d093ba4176eecc1ce68218a32eceff1166f7164954663d133833cb750f",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "b288397e1963f3cc45cf9097908b97aad9609b269a84514ecda0df370abce8d4"
+      "sha256": "751807146165470931702e28f2f3f002e9c5b48ab4ce0d727a15fa8254eaa058"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "8188c85b2801f80998e0b4813e559d0044fae1d6eaa404612960cbb5040d69f5"
+      "sha256": "9a00d3f7226021bb8b9611a4859aba2bde59252f9bc0ff3d335f502d10e3646b"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -230,6 +230,10 @@
     {
       "path": "docs/runbooks/development.md",
       "sha256": "f509779f890ae128c20531c2753f2a4dd6f2184667c748e3237c1543926b076c"
+    },
+    {
+      "path": "docs/verification/028-media-pure-candidates.md",
+      "sha256": "508ecb8ae8baa9bc1d732ca5c93bde948e2e6d3db61f07aca2fff5f1556880aa"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -1036,6 +1040,10 @@
       "sha256": "10cd6a0330081a107bfebac17f6affe4d17005218b5b9a5cfba2d60426f32a00"
     },
     {
+      "path": "docs/verification/financial-write-batches.md",
+      "sha256": "821f66cb815a3e957df8f3269f964f68209a37e204e1c89faaf9d17a29ca1b39"
+    },
+    {
       "path": "docs/verification/funding-financial-graph.md",
       "sha256": "5d41a3a8836c597ded067947ecff2f780b02257311d4d34f56523ff3500b1433"
     },
@@ -1425,7 +1433,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "bed998e246abeb03cdd22432aa819cd3c6b0d2e40bd1f6f3c95862b5a978de33"
+      "sha256": "63c11be946438644f8ead370ac5d651122cb23b372f6d384b0751bd9439bd0bd"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -1793,7 +1801,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "2cc7575ab9aff351becfa0e9d65f6f5490ff727095594c6a848e92dcbb3a4852"
+      "sha256": "4f42a1b319fcb2aa03d893ab6bd318c13bf778929f2c9c4ae523c46220b6e084"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -2016,6 +2024,14 @@
       "sha256": "752047978846d5c78c06015e314decea3a5d007a67cfdf46a65e06102fa4d7c9"
     },
     {
+      "path": "internal/billing/journal_batch.go",
+      "sha256": "ab43a4e628a18c52916902891b2f06056f77a5dbb9572b46ce34aafa0965710b"
+    },
+    {
+      "path": "internal/billing/journal_batch_test.go",
+      "sha256": "5cd2ee0686242855af9e8d0945f516e3f32d7bca77a0ad5194af106535fb9d6f"
+    },
+    {
       "path": "internal/billing/key_access_policy_integration_test.go",
       "sha256": "8921d42b0d9bf49023ce0fa72f0934409fe33bbbde60d79753bc01830d84e022"
     },
@@ -2153,7 +2169,7 @@
     },
     {
       "path": "internal/billing/store.go",
-      "sha256": "3632e0ed5e5a2e74ed16a131e198080f38670a81c17a1ba81ac4a4590450c257"
+      "sha256": "0366f5f94cfb5c974ace4b1bdc572ae73e8c3c1a5f6a1b1680e9303a23995206"
     },
     {
       "path": "internal/billing/store_test.go",
@@ -3782,6 +3798,34 @@
     {
       "path": "internal/maintenancetrust/v1_codec_compat_test.go",
       "sha256": "7241228df9f801734c01a1dbd0ec3ac5e96600df9903e23879cd15217a1a3788"
+    },
+    {
+      "path": "internal/media/input.go",
+      "sha256": "99e60978f6d94bdae545f1950714208691b879568367bfb0a4374b863359889a"
+    },
+    {
+      "path": "internal/media/json.go",
+      "sha256": "0ef0f515065f7aee7c8c437ec52bbdb1d0f98ac562ec7e47cdf4d4d02f7b4aec"
+    },
+    {
+      "path": "internal/media/media_test.go",
+      "sha256": "ce9a13429186727cd84fabd25bea01dce2eb147b159f8e6663c56ae839b30229"
+    },
+    {
+      "path": "internal/media/profile.go",
+      "sha256": "8c638ab2271aca2f067055e06d82c242f6a128a03c392397da7337d018696c71"
+    },
+    {
+      "path": "internal/media/result.go",
+      "sha256": "9f2b9989fbe97e7a8ee8d993af05fdc6ff529b7565fdab604f6a2a52666b9804"
+    },
+    {
+      "path": "internal/media/state.go",
+      "sha256": "226a3ca8d743bde481a22e56b296017061b73cf843c5504292cb92f3acf5b380"
+    },
+    {
+      "path": "internal/media/types.go",
+      "sha256": "d9761beb66b34c885a14865e13138bba065fecd20cfedccd7c2ceabf818ff551"
     },
     {
       "path": "internal/metering/amount.go",
@@ -5572,6 +5616,14 @@
       "sha256": "89c9ee97223c3a607160ea1559086c8e906a38f1537daa3ea78a17207b62f8eb"
     },
     {
+      "path": "internal/realtime/realtime.go",
+      "sha256": "22e6e59d369b6a0c3098109a549f88a61a23f274260322b55546e55267cbf6cb"
+    },
+    {
+      "path": "internal/realtime/realtime_test.go",
+      "sha256": "dc16c13474722d56ea8c91918f674e19939d9126e191282837dd1f6d7eba686b"
+    },
+    {
       "path": "internal/reporting/csv.go",
       "sha256": "049a0280a20dcab6fcae60299fe2548eea179c00611390e52916c14fa4f93d89"
     },
@@ -6060,6 +6112,22 @@
       "sha256": "f1196d1578e2992010c6b08bd3f9b8ced9fbf060b51dfb3d51b1268e895795a9"
     },
     {
+      "path": "internal/tasks/event.go",
+      "sha256": "51f080259530c17b9550368f5f977316c31a0af366d45dafd22e0272cc28afa3"
+    },
+    {
+      "path": "internal/tasks/state.go",
+      "sha256": "5638e5e6321f1feda39c93528785f07eaefbac505d49aecda15c77a8dc0235e7"
+    },
+    {
+      "path": "internal/tasks/tasks_test.go",
+      "sha256": "7fa40c93d16d8d086420866a7c4ac5a787399e8f7c7ff9ffb84deaaf3efc9c42"
+    },
+    {
+      "path": "internal/tasks/types.go",
+      "sha256": "ce265f7218dae9146e95bb89c12b55ccdef678da2182594d4f0a453b82e6385d"
+    },
+    {
       "path": "internal/telemetry/telemetry.go",
       "sha256": "b07b3f25ba6e5b36441e25fb97a7c46829ab5f25063b79c27f1952ddf8855228"
     },
@@ -6205,7 +6273,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "24c997833dc2924290e51155d63dbd7f6ae4a94a9139443273095fa81fdbdcbc"
+      "sha256": "e311ff4a304353796fa732599ee734a554997688557835c2a2a80cdce831b8a6"
     },
     {
       "path": "migrations/embed.go",
@@ -6233,7 +6301,7 @@
     },
     {
       "path": "migrations/unified_text_metering_postgres_test.go",
-      "sha256": "d3f3949d68650e248bdfd9e1ecd62eec0294d000d462c228c8a87d3b510d53f2"
+      "sha256": "b75d93fe4869f0c74a392ca4d276fe857518b3af7d8c7150868247888128213f"
     },
     {
       "path": "migrations/unified_text_metering_rejection_postgres_test.go",
@@ -6585,7 +6653,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/acceptance.md",
-      "sha256": "af9b714c0983847ed96b710d458902178d596334c6d98a1debfae52c5d9ed460"
+      "sha256": "be93bcf82ef84269c173380edcfde8889260187e91d1a052eb97d846bf46f708"
     },
     {
       "path": "specs/008-financial-write-batches/plan.md",
@@ -7496,12 +7564,24 @@
       "sha256": "ba5ce4aa49067ba34cf3a33e24529f26e40120a78be3fad2ce1383125c37c762"
     },
     {
+      "path": "specs/028-unified-metering-media/a-contract.md",
+      "sha256": "6c297ef7d34350936777d783e28d7d877a40e45552aab43c848ec35889b0075e"
+    },
+    {
+      "path": "specs/028-unified-metering-media/r-contract.md",
+      "sha256": "d8fcb74ed8b111c8052e0877d4061b4884e2787584dbe83a907a8bea65db38f0"
+    },
+    {
+      "path": "specs/028-unified-metering-media/s-contract.md",
+      "sha256": "ceca6a6eae3ccaab47b7795a00e372726409e33968bedcdda655c8678a63e5c1"
+    },
+    {
       "path": "specs/028-unified-metering-media/spec.md",
       "sha256": "a0d6f4f06a70076a995477316dfe32a53267f150f1ebde444a6a7d85de1ee608"
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "45076ba6652c5ba192125d7314c24f4d4bf9438e376e40439226c487322a6fa7"
+      "sha256": "c2dc28650803eaee7dcf7f90a6c7f1ecc947770015d664417a57079a6093e3d3"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
@@ -7513,7 +7593,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/u-storage-contract.md",
-      "sha256": "b804842631a24c137dffe2044ccb7c358500221e0c2aa1ede3c571c65b156968"
+      "sha256": "19798dbab0ab90d3934008885b61acd4f008c64f2389b6e4e67848a6676c91a1"
     },
     {
       "path": "web/.gitignore",

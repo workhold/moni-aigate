@@ -628,6 +628,8 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 ## 028-U共同纯域与生产替换边界
 
+2026-11-08 028-S/A/R 纯域候选第一片：新增未发布同步图片结果边界、异步任务提交/观察/制品状态机以及实时 session/turn/ticket/event 纯模块，并通过各自 race/vet。它们是生产接线前的合同实现，不改变共享账务或计量事实；没有数据库 writer、HTTP/WS、provider adapter 或正式外部验收，不能据此把媒体能力标为完成。
+
 2026-11-05完整候选报价在线续片已将[routecost](../../internal/routecost/quote.go)按[存储4.2.2](../../specs/028-unified-metering-media/u-storage-contract.md)接入catalog/routing/普通billing：不可变原schema/default/channel/upstream/version/basis与supplier Rates、同schema精确有理cap、规范原件/摘要与完整相等性。删除routing.CostQuote/CostScore及内部两价cap；最高priority层内共用CompareExactCost，采购初筛共用ReservationAmount。原attempt/采购account与PB等待/派发复验一起切换，派发复用原最后锁后DB时刻，坏原件不降级成unknown，不变更原客户价/U或未就绪门禁。普通Store不再有prospective运行分支，显式ProspectiveStore独立保留原冻结13参输入，既不接受向量也不提升当前资金方法；历史研究SQL/pins不升级，依赖旧current运行时的历史组合只编译、未恢复业务oracle。6a–6d 已继续切换发布operation、读端、独立金额/结构guard、route complete 和非零route边界，并在55439完成catalog/billing/server/operations/migrations回归；受限SET ROLE APP六协议链、默认/组价组合、退款来源和过期恢复不重生成仍是局部验收，不等同于完整六文本商业出口、浏览器或生产部署验收。不新增资金事实、报价身份、金额算法或fallback，U生产项仍未勾。
 
 [共同域合同](../../specs/028-unified-metering-media/u-domain-contract.md)冻结并实施`inference`：opaque Profile/BoundPlan/QuoteSnapshot/Observation/FinalQuantities，provider独占六文本parser，底层数量/费率/数学只有metering一套，两包共用strictjson。文本stream选择json/events；retrieval明确0输出价/界/量。known/unknown报价区分缺版本与显式unknown原版本，unknown不生成零金额。Observation分侧确认，人工客户核对绝不据此确认供应商成本。
