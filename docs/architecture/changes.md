@@ -4526,3 +4526,18 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/r-contract.md`
 
 </details>
+
+## 2026-11-07T19:45:32Z · 7930b2761181
+
+补齐008 finish尾写点故障回滚与幂等重试专项及验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2050 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/financial-write-batches.md`
+- added `internal/billing/finish_tail_integration_test.go`
+- modified `specs/008-financial-write-batches/acceptance.md`
+- modified `specs/008-financial-write-batches/spec.md`
+
+</details>

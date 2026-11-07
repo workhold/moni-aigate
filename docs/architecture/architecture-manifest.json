@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-07T19:14:47Z",
-  "review_reason": "补强008 journal写集拒绝同一ledger account重复kind并同步验证记录",
-  "snapshot_sha256": "9f8f27c9a92ba60c671030e602bd57350d6fb7f6a67fd1f93f35844a15fbad0a",
+  "reviewed_at": "2026-11-07T19:45:32Z",
+  "review_reason": "补齐008 finish尾写点故障回滚与幂等重试专项及验证记录",
+  "snapshot_sha256": "7930b2761181b58fe3a6f0e9afa4f87929624756a89407c866e703b054defea6",
   "architecture_sha256": "2824888de132e8c8ed6e8519c62324136a48950555f5048724f8c5dc1cb66d96",
-  "history_sha256": "141356498220c6e03643dd46ea2d2c4dc40ce6200bb6a3ef82dd11abb513da94",
+  "history_sha256": "bd47af8a2c9c60a3720bffc5ae444895f0f0d0dad3d0285edecd9b368b1ba0f1",
   "files": [
     {
       "path": ".dockerignore",
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "docs/verification/financial-write-batches.md",
-      "sha256": "30dd440447b94e7b3482c0171f40e0fceba773e2dec89198034d419d91820403"
+      "sha256": "2a37ea3e766766bad3219743411622e5d216c44186e2f1e957b5c1d77a4a92a5"
     },
     {
       "path": "docs/verification/funding-financial-graph.md",
@@ -1942,6 +1942,10 @@
     {
       "path": "internal/billing/evidence.go",
       "sha256": "094680c94b8efa9311c071ac1177ee25f930745e292ab0b894ed75dee7a551e9"
+    },
+    {
+      "path": "internal/billing/finish_tail_integration_test.go",
+      "sha256": "b6b15a21b6985d73ba7cda23519b76f983b4d334de020fdd6838390198ae6529"
     },
     {
       "path": "internal/billing/funding.go",
@@ -6653,7 +6657,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/acceptance.md",
-      "sha256": "be93bcf82ef84269c173380edcfde8889260187e91d1a052eb97d846bf46f708"
+      "sha256": "73f8737a548d199ae948dc455c428317649f7ae67b661d61bf3e98335c682dab"
     },
     {
       "path": "specs/008-financial-write-batches/plan.md",
@@ -6661,7 +6665,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/spec.md",
-      "sha256": "46a9e93a770dc30a58d7e07273f91c1fd4f4216f56cedd07b60f1d8b706dabf4"
+      "sha256": "5874220b7cc513f9bff6b10a7bf2863f57b19d0bba16f95bbaf5aa8d185df318"
     },
     {
       "path": "specs/009-retrieval-protocols/acceptance.md",

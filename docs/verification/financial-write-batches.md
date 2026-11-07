@@ -7,7 +7,8 @@
 证据：
 
 - `go test -count=1 -race ./internal/billing -run '^TestBuildJournalPlan'` 通过，覆盖不平衡、未锁账户、溢出、余额不足、确定性和完整写集；
+- `go test -count=1 -race ./internal/billing -run '^TestPostgresFinishTailWriteFailuresRollbackAndRetry$'` 通过，逐点注入 settlements、funding lot、Key、reservation/request、recovery、audit 和 outbox 写入故障，验证整笔回滚、恢复后同一结算重试和幂等重放；
 - `go vet ./internal/billing` 通过；
 - `TEST_DATABASE_URL=postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable go test -count=1 -race ./internal/billing -run 'TestPostgresAccountBatch|TestPostgresLifecycle|TestPostgresEvidenceAndReconciliation|TestPostgresSettlementPolicy|TestWallet'` 通过。
 
-这只是 008 的第一片。纯 journal 构建已经落地，并额外拒绝同一 ledger account 以多个 kind 重复进入写集；008 仍未完成：还需要逐条尾写入故障回滚、Reserve/finish 全链路取消与恢复/SIGKILL、完整并发预算与财务时钟边界、三对固定 binary 对照、最终嵌入预览和全量验收文档。局部通过不能替代这些出口。
+008 已完成 journal 纯构建和一组 finish 尾写点故障矩阵，但整体仍未完成：还需要 Reserve/finish 全链路取消与恢复/SIGKILL、周期预算与超界 profile block 写点、完整并发预算与财务时钟边界、三对固定 binary 对照、最终嵌入预览和全量验收文档。局部通过不能替代这些出口。
