@@ -65,3 +65,16 @@ func TestBuildJournalPlanIsDeterministicAndContainsCompleteWriteSet(t *testing.T
 		t.Fatalf("wrong projected balances: %+v", plan.accounts)
 	}
 }
+
+func TestBuildJournalPlanRejectsOneLedgerAccountUnderMultipleKinds(t *testing.T) {
+	_, err := buildJournalPlan("00000000-0000-0000-0000-000000000001", "tenant", "operation", "reserve", "request", "actor", map[string]int64{
+		"AVAILABLE": -7,
+		"HELD":      7,
+	}, []lockedAccount{
+		{id: "same", kind: "AVAILABLE", balance: 10},
+		{id: "same", kind: "HELD", balance: 0},
+	})
+	if err == nil || !strings.Contains(err.Error(), "invalid_account") {
+		t.Fatalf("duplicate ledger account was accepted: %v", err)
+	}
+}

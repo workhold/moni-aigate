@@ -4510,3 +4510,19 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/u-storage-contract.md`
 
 </details>
+
+## 2026-11-07T19:14:47Z · 9f8f27c9a92b
+
+补强008 journal写集拒绝同一ledger account重复kind并同步验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2049 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/financial-write-batches.md`
+- modified `internal/billing/journal_batch.go`
+- modified `internal/billing/journal_batch_test.go`
+- modified `specs/008-financial-write-batches/spec.md`
+- modified `specs/028-unified-metering-media/r-contract.md`
+
+</details>

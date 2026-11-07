@@ -51,11 +51,13 @@ func buildJournalPlan(id, tenant, operation, kind, reference, actor string, delt
 	accounts := append([]lockedAccount(nil), locked...)
 	sort.Slice(accounts, func(i, j int) bool { return accounts[i].id < accounts[j].id })
 	seen := make(map[string]bool, len(accounts))
+	seenIDs := make(map[string]bool, len(accounts))
 	for _, account := range accounts {
-		if account.id == "" || account.kind == "" || seen[account.kind] {
+		if account.id == "" || account.kind == "" || seen[account.kind] || seenIDs[account.id] {
 			return plan, fail("invalid_account", "journal accounts are not unique")
 		}
 		seen[account.kind] = true
+		seenIDs[account.id] = true
 	}
 	for account := range deltas {
 		if !seen[account] {

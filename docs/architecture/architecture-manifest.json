@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-07T19:04:59Z",
-  "review_reason": "收口008 journal纯核、024 route bypass removal、028 S/A/R纯域候选合同与状态机，生产媒体仍未接线",
-  "snapshot_sha256": "826ff1f5455840c82d989a6c2492adf8538163e55418179ef5c3cd02b0979aed",
+  "reviewed_at": "2026-11-07T19:14:47Z",
+  "review_reason": "补强008 journal写集拒绝同一ledger account重复kind并同步验证记录",
+  "snapshot_sha256": "9f8f27c9a92ba60c671030e602bd57350d6fb7f6a67fd1f93f35844a15fbad0a",
   "architecture_sha256": "2824888de132e8c8ed6e8519c62324136a48950555f5048724f8c5dc1cb66d96",
-  "history_sha256": "02bc20d093ba4176eecc1ce68218a32eceff1166f7164954663d133833cb750f",
+  "history_sha256": "141356498220c6e03643dd46ea2d2c4dc40ce6200bb6a3ef82dd11abb513da94",
   "files": [
     {
       "path": ".dockerignore",
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "docs/verification/financial-write-batches.md",
-      "sha256": "821f66cb815a3e957df8f3269f964f68209a37e204e1c89faaf9d17a29ca1b39"
+      "sha256": "30dd440447b94e7b3482c0171f40e0fceba773e2dec89198034d419d91820403"
     },
     {
       "path": "docs/verification/funding-financial-graph.md",
@@ -2025,11 +2025,11 @@
     },
     {
       "path": "internal/billing/journal_batch.go",
-      "sha256": "ab43a4e628a18c52916902891b2f06056f77a5dbb9572b46ce34aafa0965710b"
+      "sha256": "3f6d891597a3ce08f5d3d931aaaa96a2d40d28f712a2767df36a10b9e3feba2a"
     },
     {
       "path": "internal/billing/journal_batch_test.go",
-      "sha256": "5cd2ee0686242855af9e8d0945f516e3f32d7bca77a0ad5194af106535fb9d6f"
+      "sha256": "782083e253ddc708517d2d984d684e8630b7cfb8faa6a949e32a13259c026948"
     },
     {
       "path": "internal/billing/key_access_policy_integration_test.go",
@@ -6661,7 +6661,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/spec.md",
-      "sha256": "5b964d098be4490a907fd93e1133ddc3d5e0b9090bc5f005c6c22e8a078c0073"
+      "sha256": "46a9e93a770dc30a58d7e07273f91c1fd4f4216f56cedd07b60f1d8b706dabf4"
     },
     {
       "path": "specs/009-retrieval-protocols/acceptance.md",
@@ -7569,7 +7569,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/r-contract.md",
-      "sha256": "d8fcb74ed8b111c8052e0877d4061b4884e2787584dbe83a907a8bea65db38f0"
+      "sha256": "56764676fa097f3bc074cc3436217fbc8c46a6bb19df9d92c4f37321fc051d06"
     },
     {
       "path": "specs/028-unified-metering-media/s-contract.md",
