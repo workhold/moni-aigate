@@ -4760,3 +4760,15 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `internal/server/task_handlers.go`
 
 </details>
+
+## 2026-11-08T06:51:44Z · 9f1ceaf6ec3c
+
+任务HTTP改用标准Idempotency-Key并保持请求摘要不可变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2071 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/task_handlers.go`
+
+</details>

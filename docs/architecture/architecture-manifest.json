@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T06:49:39Z",
-  "review_reason": "复用单进程mock task adapter保证任务提交与观察状态连续",
-  "snapshot_sha256": "02afd7cfe7ab6abb9dc4fb96f3367c94ea56b2a8ee03d9171d836ddaf2e1d15f",
+  "reviewed_at": "2026-11-08T06:51:44Z",
+  "review_reason": "任务HTTP改用标准Idempotency-Key并保持请求摘要不可变",
+  "snapshot_sha256": "9f1ceaf6ec3c79086bccb302180896fb991768e6833fe1219acc598c3fe77055",
   "architecture_sha256": "4ad44efa864c74ad5f9e4ccb9b93cf6f8a5528660316a300b7ab0d379716de32",
-  "history_sha256": "2d3e98ae663c73f0cf048c4e90dbde0980e26561eec6bd8a3e9a87a283583ac9",
+  "history_sha256": "58613cca5c5f295916cca6a46171bc59e1b42aac07f3476f12b553d925993fb4",
   "files": [
     {
       "path": ".dockerignore",
@@ -6153,7 +6153,7 @@
     },
     {
       "path": "internal/server/task_handlers.go",
-      "sha256": "d9ba3f1f077f35390415d6c8096b7e9b996f305f6fc17f407e1c1f1d1e2e3318"
+      "sha256": "d954fa20a45beaf0a06783379ab24dcf87e755e8c808ac5bca0bab6f02f5d955"
     },
     {
       "path": "internal/server/test_cost_helpers_test.go",

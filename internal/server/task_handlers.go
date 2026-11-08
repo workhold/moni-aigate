@@ -24,7 +24,6 @@ type taskCreateRequest struct {
 	ProfileVersion string `json:"profile_version"`
 	SchemaID       string `json:"schema_id"`
 	SchemaDigest   string `json:"schema_digest"`
-	IdempotencyKey string `json:"idempotency_key"`
 	MaxArtifact    int64  `json:"max_artifact_bytes"`
 }
 
@@ -101,12 +100,17 @@ func (s *Server) createTask(c *gin.Context) {
 		s.fail(c, 400, "invalid_request", "schema_digest无效")
 		return
 	}
+	idempotencyKey := c.GetHeader("Idempotency-Key")
+	if idempotencyKey == "" {
+		s.fail(c, 400, "invalid_request", "需要Idempotency-Key")
+		return
+	}
 	if in.MaxArtifact <= 0 {
 		in.MaxArtifact = 1 << 30
 	}
 	now := time.Now().UTC()
 	digest := sha256.Sum256(raw)
-	input := tasks.SubmitInput{TaskID: tasks.ID(uuid.NewString()), Owner: tasks.Owner{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID)}, RequestID: requestID, ReservationID: reservationID, SourceID: sourceID, AttemptID: attemptID, ModelID: modelID, ProfileVersion: profile, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", IdempotencyKey: in.IdempotencyKey, RequestDigest: tasks.Digest(digest), CreatedAt: now, SubmitBy: now.Add(2 * time.Minute), ObserveUntil: now.Add(10 * time.Minute), ResultUntil: now.Add(time.Hour), MaxArtifactBytes: in.MaxArtifact}
+	input := tasks.SubmitInput{TaskID: tasks.ID(uuid.NewString()), Owner: tasks.Owner{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID)}, RequestID: requestID, ReservationID: reservationID, SourceID: sourceID, AttemptID: attemptID, ModelID: modelID, ProfileVersion: profile, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", IdempotencyKey: idempotencyKey, RequestDigest: tasks.Digest(digest), CreatedAt: now, SubmitBy: now.Add(2 * time.Minute), ObserveUntil: now.Add(10 * time.Minute), ResultUntil: now.Add(time.Hour), MaxArtifactBytes: in.MaxArtifact}
 	refs := tasks.References{RequestID: requestID, ReservationID: reservationID, AttemptID: attemptID, SourceID: sourceID}
 	if s.TaskStore == nil {
 		s.fail(c, 503, "unavailable", "任务服务未就绪")
