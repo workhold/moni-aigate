@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"image"
@@ -14,7 +13,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/moni-ai/moni-aigate/internal/identity"
@@ -34,14 +32,6 @@ type mediaReplay struct {
 	status      int
 	contentType string
 	body        []byte
-}
-
-type imageGenerationRequest struct {
-	Model          string `json:"model"`
-	Prompt         string `json:"prompt"`
-	N              int    `json:"n"`
-	Size           string `json:"size"`
-	ResponseFormat string `json:"response_format"`
 }
 
 type speechRequest struct {
@@ -120,57 +110,6 @@ func validMediaModel(p identity.Principal, model string) bool {
 	return model != "" && len(model) <= maxMediaModelBytes && mediaScopeAllowed(p, model)
 }
 
-func (s *Server) generateImage(c *gin.Context) {
-	p := c.MustGet("principal").(identity.Principal)
-	var in imageGenerationRequest
-	raw, err := readStrictMediaJSON(c, &in, media.MaxInputJSONBytes)
-	if err != nil || !validMediaModel(p, in.Model) || len(in.Prompt) == 0 || len(in.Prompt) > media.MaxPromptBytes || in.N != 1 || in.ResponseFormat != "b64_json" || !validImageSize(in.Size) {
-		s.fail(c, http.StatusBadRequest, "invalid_request", "图片生成参数无效")
-		return
-	}
-	digest := sha256.Sum256(raw)
-	replay, key, ok := s.mediaIdempotency(c, "image_generation", digest)
-	if !ok {
-		return
-	}
-	if replay != nil {
-		c.Data(replay.status, replay.contentType, replay.body)
-		return
-	}
-	adapter := s.MediaAdapter
-	if adapter == nil {
-		s.fail(c, http.StatusServiceUnavailable, "unavailable", "图片服务未就绪")
-		return
-	}
-	requestID := c.GetString("request_id")
-	result, err := adapter.GenerateImage(c.Request.Context(), provider.ImageRequest{RequestID: requestID, IdempotencyKey: key, Model: in.Model, Prompt: in.Prompt, N: in.N, Size: in.Size, ResponseFormat: in.ResponseFormat})
-	if err != nil || !result.Sent {
-		unknown := result.Sent
-		if providerErr, ok := err.(*provider.MediaError); ok {
-			unknown = unknown || providerErr.Sent || providerErr.Unknown
-		}
-		if unknown {
-			s.storeMediaReplay(p, "image_generation", key, mediaReplay{digest: digest, unknown: true, status: http.StatusConflict})
-			s.fail(c, http.StatusConflict, "provider_consumption_unknown", "供应商提交结果未知，禁止自动重试")
-			return
-		}
-		s.fail(c, http.StatusBadGateway, "provider_error", "图片供应商调用失败")
-		return
-	}
-	wantWidth, wantHeight := imageDimensions(in.Size)
-	if len(result.Data) == 0 || result.MediaType != "image/png" || result.Width != wantWidth || result.Height != wantHeight || !bytes.HasPrefix(result.Data, []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'}) || len(result.Data) > media.MaxDecodedBytes {
-		s.fail(c, http.StatusBadGateway, "provider_protocol_error", "图片供应商结果无效")
-		return
-	}
-	body, err := json.Marshal(gin.H{"created": time.Now().Unix(), "data": []gin.H{{"b64_json": base64.StdEncoding.EncodeToString(result.Data)}}})
-	if err != nil {
-		s.fail(c, http.StatusInternalServerError, "internal_error", "图片结果编码失败")
-		return
-	}
-	s.storeMediaReplay(p, "image_generation", key, mediaReplay{digest: digest, status: http.StatusOK, contentType: "application/json; charset=utf-8", body: body})
-	c.Data(http.StatusOK, "application/json; charset=utf-8", body)
-}
-
 func (s *Server) synthesizeSpeech(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
 	var in speechRequest
@@ -213,20 +152,6 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 	}
 	s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, status: http.StatusOK, contentType: result.MediaType, body: result.Data})
 	c.Data(http.StatusOK, result.MediaType, result.Data)
-}
-
-func validImageSize(size string) bool {
-	return size == "256x256" || size == "512x512" || size == "1024x1024"
-}
-
-func imageDimensions(size string) (int, int) {
-	parts := strings.Split(size, "x")
-	if len(parts) != 2 {
-		return 0, 0
-	}
-	width, _ := strconv.Atoi(parts[0])
-	height, _ := strconv.Atoi(parts[1])
-	return width, height
 }
 
 func newDefaultMediaAdapter() provider.SynchronousMediaAdapter {
