@@ -114,7 +114,11 @@ func (s *Server) realtimeOrigin(req *http.Request) (string, error) {
 func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p identity.Principal, model catalog.Model, origin string) {
 	ws.MaxPayloadBytes = realtime.DefaultMaxFrameBytes
 	ctx := c.Request.Context()
-	service := s.Realtime
+	service, err := s.realtimeServiceForTenant(p.TenantID)
+	if err != nil {
+		s.writeRealtimeError(ws, err)
+		return
+	}
 	sessionID := uuid.NewString()
 	turnID := uuid.NewString()
 	requestID := c.GetString("request_id")
@@ -145,7 +149,14 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 		}
 	}
 	routeID := fmt.Sprintf("mvp-route-%d", model.Revision)
-	if model.Revision < 1 {
+	if s.Pool != nil {
+		routeID, err = s.realtimeRouteID(ctx, model)
+		if err != nil {
+			_ = s.finalizeMediaRequest(context.Background(), billingRefs, "unknown", "unknown", 0)
+			s.writeRealtimeError(ws, err)
+			return
+		}
+	} else if model.Revision < 1 {
 		routeID = "mvp-route"
 	}
 	binding := realtime.TicketBinding{
