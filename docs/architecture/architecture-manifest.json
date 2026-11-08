@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T06:51:44Z",
-  "review_reason": "任务HTTP改用标准Idempotency-Key并保持请求摘要不可变",
-  "snapshot_sha256": "9f1ceaf6ec3c79086bccb302180896fb991768e6833fe1219acc598c3fe77055",
+  "reviewed_at": "2026-11-08T06:54:59Z",
+  "review_reason": "补齐video_generation结果授权与开发环境结果交付路径",
+  "snapshot_sha256": "31683400be58575affc52009184fd45290c5364492e2095ab6cc5c3068ca894c",
   "architecture_sha256": "4ad44efa864c74ad5f9e4ccb9b93cf6f8a5528660316a300b7ab0d379716de32",
-  "history_sha256": "58613cca5c5f295916cca6a46171bc59e1b42aac07f3476f12b553d925993fb4",
+  "history_sha256": "6312b9856435e894b0d292eea4ed761c5a82285639b2644ff52d0a3dc0107dfe",
   "files": [
     {
       "path": ".dockerignore",
@@ -6141,7 +6141,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "95c957995fe9ae363f14777ed8bf06aa1697d492c8fc2c24ca86f3c3143fbbda"
+      "sha256": "b929eaecb1172c5d51360edc8edac71f1e6976031bb72394e14f78975588dc08"
     },
     {
       "path": "internal/server/static.go",
@@ -6153,7 +6153,7 @@
     },
     {
       "path": "internal/server/task_handlers.go",
-      "sha256": "d954fa20a45beaf0a06783379ab24dcf87e755e8c808ac5bca0bab6f02f5d955"
+      "sha256": "750e2e9699ec18e308e4123a5e0bcfa47ba4a418895ee69f59bb845c4765c3e8"
     },
     {
       "path": "internal/server/test_cost_helpers_test.go",
@@ -6181,7 +6181,7 @@
     },
     {
       "path": "internal/tasks/postgres_store.go",
-      "sha256": "a72c7e7e2d6e131cf8c900ec09eb5a1d9c2a7265b83e137f9355259703fff5ab"
+      "sha256": "0f0b0091977b9c57c39ce03a683ec0116437d4a8e6bbf8837ceb7332205adbc9"
     },
     {
       "path": "internal/tasks/service.go",

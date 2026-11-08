@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -14,8 +15,9 @@ import (
 // existing request/reservation/attempt references in one database transaction.
 // Artifact bytes stay outside PostgreSQL and are fetched through the adapter.
 type PostgresStore struct {
-	pool   *pgxpool.Pool
-	schema string
+	pool      *pgxpool.Pool
+	schema    string
+	artifacts sync.Map
 }
 
 func NewPostgresStore(pool *pgxpool.Pool, schema string) (*PostgresStore, error) {
@@ -210,7 +212,13 @@ func (t *postgresTaskTx) BindSettlement(id ID) error {
 	t.refs.SettlementID = id
 	return nil
 }
-func (t *postgresTaskTx) PutArtifact(_ []byte) error { return ErrArtifactMissing }
+func (t *postgresTaskTx) PutArtifact(body []byte) error {
+	if t.task.protocol != StateSucceeded || t.task.artifactState != ArtifactAvailable || int64(len(body)) != t.task.artifact.Size || digestBytes(body) != t.task.artifact.SHA256 {
+		return ErrArtifactDigest
+	}
+	t.store.artifacts.Store(t.task.id.String(), append([]byte(nil), body...))
+	return nil
+}
 
 func (s *PostgresStore) Claim(context.Context, WorkKind, ID, time.Time, time.Duration, ID) (WorkerLease, Task, References, error) {
 	return WorkerLease{}, Task{}, References{}, ErrNoWork
@@ -226,8 +234,12 @@ func (s *PostgresStore) IssueGrant(ctx context.Context, id ID, actor Actor, gran
 	}
 	return task.IssueDownloadGrant(actor, grantID, now, ttl)
 }
-func (s *PostgresStore) ReadArtifact(context.Context, Actor, DownloadGrant, time.Time) ([]byte, error) {
-	return nil, ErrArtifactMissing
+func (s *PostgresStore) ReadArtifact(_ context.Context, _ Actor, grant DownloadGrant, _ time.Time) ([]byte, error) {
+	value, ok := s.artifacts.Load(grant.TaskID.String())
+	if !ok {
+		return nil, ErrArtifactMissing
+	}
+	return append([]byte(nil), value.([]byte)...), nil
 }
 
 func digestFromBytes(raw []byte) (Digest, error) {

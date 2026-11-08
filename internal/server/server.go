@@ -48,6 +48,7 @@ type Server struct {
 	Routing                *routing.Engine
 	TaskStore              *tasks.PostgresStore
 	TaskAdapter            *provider.MockTaskAdapter
+	TaskGrants             sync.Map
 	Log                    *telemetry.Logger
 	ready                  atomic.Bool
 	Requests               atomic.Uint64
@@ -227,6 +228,7 @@ func (s *Server) Engine() *gin.Engine {
 	v.POST("/tasks/:id/submit", s.submitTask)
 	v.POST("/tasks/:id/cancel", s.cancelTask)
 	v.POST("/tasks/:id/result-grant", s.taskResultGrant)
+	v.GET("/tasks/:id/result", s.taskResult)
 	v.POST("/chat/completions", s.chat)
 	v.POST("/responses", func(c *gin.Context) { s.inference(c, provider.ProtocolResponses) })
 	v.POST("/messages", func(c *gin.Context) { s.inference(c, provider.ProtocolMessages) })

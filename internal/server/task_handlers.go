@@ -206,5 +206,37 @@ func (s *Server) taskResultGrant(c *gin.Context) {
 		s.error(c, err)
 		return
 	}
+	s.TaskGrants.Store(grant.GrantID.String(), grant)
 	c.JSON(200, gin.H{"grant_id": grant.GrantID, "task_id": grant.TaskID, "artifact": grant.ArtifactRef, "expires_at": grant.ExpiresAt})
+}
+
+func (s *Server) taskResult(c *gin.Context) {
+	p := c.MustGet("principal").(identity.Principal)
+	id, err := tasks.ParseID(c.Param("id"))
+	if err != nil {
+		s.fail(c, 400, "invalid_request", "任务ID无效")
+		return
+	}
+	grantID, err := tasks.ParseID(c.Query("grant_id"))
+	if err != nil {
+		s.fail(c, 400, "invalid_request", "grant_id无效")
+		return
+	}
+	value, ok := s.TaskGrants.Load(grantID.String())
+	if !ok || value.(tasks.DownloadGrant).TaskID != id {
+		s.fail(c, 403, "task_forbidden", "结果授权无效")
+		return
+	}
+	service, err := s.taskService(p)
+	if err != nil {
+		s.fail(c, 503, "unavailable", "任务服务未就绪")
+		return
+	}
+	actor := tasks.Actor{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID), Permission: tasks.PermissionResultDownload}
+	body, err := service.Download(c.Request.Context(), actor, value.(tasks.DownloadGrant), time.Now().UTC())
+	if err != nil {
+		s.error(c, err)
+		return
+	}
+	c.Data(200, "application/octet-stream", body)
 }

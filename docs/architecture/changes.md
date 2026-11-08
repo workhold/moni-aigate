@@ -4772,3 +4772,17 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `internal/server/task_handlers.go`
 
 </details>
+
+## 2026-11-08T06:54:59Z · 31683400be58
+
+补齐video_generation结果授权与开发环境结果交付路径
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2071 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/server.go`
+- modified `internal/server/task_handlers.go`
+- modified `internal/tasks/postgres_store.go`
+
+</details>
