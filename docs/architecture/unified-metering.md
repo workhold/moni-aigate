@@ -3,6 +3,8 @@
 2026-11-08。共同纯领域已接入当前文本模型的报价、预占、结算和终态投影。候选024只安装空库、不转换已有历史。请求和尝试保存原四条界行；UUID档案与64位小写hex HMAC就绪时写入计划、外层inference报价及纯核bounds/rates/QuoteDigest，未就绪时这些canonical/digest同空。6a–6d 已接入完整发布operation、读端、客户R/结算/capability/route complete guard、非零route_revision边界和受限APP六协议局部链；本日又补齐每个 route binding 的 supplier cap 0/2 条完整性提交边界，并把 Reserve/finish 的 funding-lot 写集改为纯投影后单批次发送。超预占 profile block/audit 同样采用单 batch，过期 unknown 恢复和幂等一次收费已扩至六协议专项。默认/组价组合、一次退款来源专项也已通过55439验证。用量事件绑定真实attempt，采用inference Observation；人工核对收费提交现只接受绑定原请求 schema 的完整 `retail_quantities`，proposal 保存 canonical/digest，HTTP/UI不再接受两列 token 输入。028-U完整存储/HTTP/UI/商业出口、浏览器和生产验收尚未收口。
 2026-11-08 续片：024 的请求记录触发器现在把 `request_hmac`、`streaming` 和 `route_revision` 纳入不可变报价身份，固定函数搜索路径并撤销 PUBLIC 执行。人工核对服务层把 `settle` 明确映射为账务 `propose`，避免空动作进入账务入口。上述是当前入口守卫和错误映射的局部修复，attempt/supplier quote 完整守卫、028-U九组完整guard与完整商业出口仍按任务清单验收。
 
+2026-11-08 媒体扩展开发续片：当前 024 追加任务/实时关系只保存绑定、状态、事件和制品元数据，不保存媒体正文、不创建第二钱包或结算表；APP 的状态写权限由 `ProvisionFor` 独立收紧。S/A/R service 接口把原 request/reservation/attempt/settlement 引用作为外部事实传入，provider unknown 进入不可重发边界。该片仍属于开发接缝，HTTP/WS、mock provider、真实账务金额和结果交付尚未接线。
+
 规格入口：[总体](../../specs/028-unified-metering-media/spec.md)、[共同域精确合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md)。当前经营/资金链分别见[026报表](operating-reports.md)与[027来源](wallet-sources.md)。
 
 请求/尝试两侧bounds与known rates的纯核摘要从原价格/成本快照重建，外层报价继续使用 `moni-aigate.inference.quote.v1` 身份；unknown供应商不伪造数值quote。迁移、计费和角色局部专项已有PostgreSQL 16.15证据，当前轮次验证见[记录](../verification/unified-metering.md)。

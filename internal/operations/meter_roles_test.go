@@ -74,6 +74,16 @@ func TestMeterRoleBoundary(t *testing.T) {
 			t.Fatalf("payment worker unexpectedly has meter table privilege: %s", table)
 		}
 	}
+	for _, table := range mediaRuntimeTables {
+		qualified := pgx.Identifier{schema, table}.Sanitize()
+		var appSelect, appInsert, appUpdate, appDelete, projectionAny, workerAny, publicAny bool
+		if err = owner.QueryRow(ctx, `SELECT has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),has_table_privilege($1::name,$2::text,'DELETE'),has_table_privilege($3::name,$2::text,'SELECT') OR has_table_privilege($3::name,$2::text,'INSERT') OR has_table_privilege($3::name,$2::text,'UPDATE') OR has_table_privilege($3::name,$2::text,'DELETE'),has_table_privilege($4::name,$2::text,'SELECT') OR has_table_privilege($4::name,$2::text,'INSERT') OR has_table_privilege($4::name,$2::text,'UPDATE') OR has_table_privilege($4::name,$2::text,'DELETE'),has_table_privilege('public',$2::text,'SELECT') OR has_table_privilege('public',$2::text,'INSERT') OR has_table_privilege('public',$2::text,'UPDATE') OR has_table_privilege('public',$2::text,'DELETE')`, appRole, qualified, projectionRole, paymentWorkerRole).Scan(&appSelect, &appInsert, &appUpdate, &appDelete, &projectionAny, &workerAny, &publicAny); err != nil {
+			t.Fatal(err)
+		}
+		if !appSelect || !appInsert || !appUpdate || appDelete || projectionAny || workerAny || publicAny {
+			t.Fatalf("media runtime role boundary mismatch for %s", table)
+		}
+	}
 	var workerExecute bool
 	if err = owner.QueryRow(ctx, `SELECT COALESCE(bool_or(has_function_privilege($1::name,p.oid,'EXECUTE')),false)
 FROM pg_catalog.pg_proc p

@@ -20,6 +20,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-08 028-S/A/R 纯域候选第一片：`internal/media`、`internal/tasks`、`internal/realtime` 已分别冻结并通过纯 Go race/vet；它们只验证输入、状态、幂等和资源边界，不含数据库、HTTP/WS、provider、账务、wallet 或报表接线。对应复选框继续未勾，生产能力仍以后续纵向验收为准。
 
+2026-11-08 028-S/A/R 开发续片：S/A/R 已补可复用的 provider adapter、service、持久化接口、任务 lease、实时 ticket/session/turn/event 和单次收费引用边界；024 新增当前媒体任务/实时关系及状态/绑定 guard，ProvisionFor 收紧 APP 与 projector/payment worker 权限。当前仍缺 HTTP/WS、真实 PostgreSQL writer、mock provider 运行器和现有 billing/wallet/settlement 的纵向接线，不能标记媒体扩展完成。
+
 <!-- architecture:context -->
 ## 系统上下文与边界
 

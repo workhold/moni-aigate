@@ -59,7 +59,9 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 028-U入口守卫续片：024 请求记录 guard 纳入 request HMAC、streaming、route revision 等报价身份字段，防止快照出生后改变请求报价身份；人工核对 HTTP 的 `settle` 动作明确映射为账务 `propose`。迁移与 server 定向 race 在 55439 通过。attempt quote 的发送态完整不可变守卫、supplier quote 绑定和 U 完整九组 guard 仍未完成，复选框保持未勾。
 
-2026-11-08 028-S/A/R 纯域第一片：新增未发布同步图片的严格 profile/输入/PNG 结果与未知消费状态机、异步任务的提交幂等/`submission_unknown` 禁重发/事件 canonical/制品授权状态机，以及实时 session/turn、单用 Origin ticket、事件去重和首收费引用门禁。三个包只依赖标准库和纯边界，不含数据库、HTTP/WS、provider、wallet、billing、报表或正式供应商接线；`go test -race` 与 `go vet` 通过。输入合同另收紧了 UUID、制品引用/媒体类型和 retail usage digest。S/A/R 以及U存储/商业出口复选框保持未勾选。
+2026-11-08 028-S/A/R 纵向接口续片：S 新增 profile registry、显式发布授权、provider adapter、原 request/attempt/observation/settlement 引用和未知消费禁止重发；A 新增持久化 Store/TaskTx 合同、内存实现、worker lease、provider task adapter、幂等提交与制品 grant；R 新增 SessionStore/TurnStore/EventStore/Persistence 合同、内存实现、provider adapter、收费轮次引用和 pending 禁止重发。三片仍未接入 HTTP/WS、PostgreSQL writer、wallet/billing 结算和 worker 运行入口，复选框保持未勾。
+
+2026-11-08 028-S/A/R 当前存储片：024 追加 `media_tasks`、任务事件/制品引用、`realtime_sessions`、`realtime_turns`、`realtime_events`，加入同租户原 request/reservation/attempt/source 绑定、状态闭集、事件去重、终态和 session 单 inflight guard。`ProvisionFor` 为这些关系增加 APP SELECT/INSERT/UPDATE、禁止 DELETE，projector/PUBLIC/payment worker 无权限。迁移与角色边界专项通过 55439。HTTP/WS、PostgreSQL service writer、mock provider、媒体金额/预占/结算接线仍未完成。
 
 ## S / A / R / 交付
 

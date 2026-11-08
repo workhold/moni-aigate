@@ -2097,3 +2097,274 @@ END $$;
 CREATE CONSTRAINT TRIGGER meter_procurement_proposal_current AFTER INSERT OR UPDATE ON procurement_cost_proposals DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION meter_procurement_proposal_current();
 
 REVOKE ALL ON FUNCTION meter_frames(bytea[]), meter_gcd(bigint,bigint), meter_schema_stamp(), meter_schema_complete(), meter_text_schema(bigint,bigint), meter_insert_text_model(text,text,jsonb,text), meter_model_profile(text), meter_rate_canonical(text,text,bigint,bigint,bigint,bigint), meter_price_complete(), meter_reduce_million(bigint), meter_insert_token_price(text,text,bigint,bigint,timestamptz,text,text,text,timestamptz), meter_insert_token_cost(text,text,text,text,bigint,bigint,text,timestamptz,text,text,timestamptz), meter_insert_token_cap(text,text,bigint), meter_route_complete(), meter_request_snapshot_present(), meter_plan_ready(text,text), meter_profile_canonical(text,text,text,text,bytea,bytea,bigint,bigint), meter_profile_digest(bytea,bytea), meter_bounds_canonical(text,text,bigint,bigint), meter_bounds_digest(bytea,text,bytea), meter_rates_digest(bytea,text,bytea), meter_pure_quote_digest(bytea,text,bytea,bytea), meter_request_vectors(), meter_request_vectors_match(), meter_request_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_attempt_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_plan_digest(bytea,bytea), meter_request_plan_matches(), meter_attempt_plan_matches(), meter_request_price_matches(), meter_insert_attempt_snapshot(text,text,text,text,text), meter_attempt_snapshot_present(), meter_attempt_matches_request(), meter_usage_state(text), meter_record_event_quantities(text,text,text,bigint,bigint), meter_event_quantity(text,text), meter_side_quantity_canonical(text,text,bigint,bigint), meter_quantities_digest(bytea,text,bytea), meter_final_digest(bytea,text,bytea), meter_quantity_canonical(text,bigint,bigint), meter_reconciliation_proposal_complete(), meter_event_rows_complete(), meter_event_attempt_bound(), meter_cost_lines_complete(), meter_finish_probe(text,text,text,bigint,bigint), meter_finalization_complete(), meter_request_finalization_pointer(), meter_settlement_finalization(), meter_token_amount(bigint,bigint,bigint,bigint,bigint,bigint), meter_attempt_cost_matches(), meter_procurement_attempt_closed(), meter_procurement_proposal_current(), meter_request_bounds_complete(), meter_attempt_bounds_complete(), meter_quote_digest(bytea,bytea), meter_retail_quote_canonical(text,bytea,bytea,text,bigint,bigint), meter_supplier_quote_canonical(text,bytea,bytea,text,text,text,bytea,bigint,bigint), meter_request_quote_matches(), meter_attempt_quote_matches(), meter_attempt_vectors_match() FROM PUBLIC;
+
+-- 028-S/A/R current storage minimum. These tables are intentionally appended
+-- to 024. They contain only current identities and observations. They do not
+-- introduce a second wallet, generation path, or historical backfill.
+CREATE FUNCTION media_uuid(v text) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$
+ SELECT coalesce(v ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+   AND v <> '00000000-0000-0000-0000-000000000000', false)
+$$;
+
+CREATE TABLE media_tasks (
+ tenant_id text NOT NULL,
+ id text NOT NULL CHECK(media_uuid(id)),
+ request_id text NOT NULL,
+ owner_id text NOT NULL,
+ attempt_id text,
+ reservation_id text NOT NULL,
+ source_id text NOT NULL,
+ settlement_id text,
+ model_id text NOT NULL,
+ profile_version text NOT NULL,
+ schema_id text NOT NULL,
+ schema_digest bytea NOT NULL CHECK(octet_length(schema_digest)=32),
+ variant_key text NOT NULL DEFAULT 'default' CHECK(variant_key='default'),
+ idempotency_key text NOT NULL CHECK(idempotency_key ~ '^[A-Za-z0-9._:-]{1,128}$'),
+ submit_fingerprint bytea NOT NULL CHECK(octet_length(submit_fingerprint)=32),
+ input_digest bytea NOT NULL CHECK(octet_length(input_digest)=32),
+ status text NOT NULL DEFAULT 'prepared' CHECK(status IN ('prepared','submitting','queued','running','cancel_requested','submission_unknown','succeeded','failed','cancelled')),
+ observation_state text NOT NULL DEFAULT 'unobserved' CHECK(observation_state IN ('unobserved','fresh','blocked','expired')),
+ cancel_state text NOT NULL DEFAULT 'none' CHECK(cancel_state IN ('none','requested','accepted','rejected')),
+ artifact_state text NOT NULL DEFAULT 'none' CHECK(artifact_state IN ('none','available','expired')),
+ cancel_resume_state text CHECK(cancel_resume_state IS NULL OR cancel_resume_state IN ('queued','running','submission_unknown')),
+ provider_reference text CHECK(provider_reference IS NULL OR provider_reference !~ '://'),
+ submit_deadline timestamptz(6) NOT NULL CHECK(isfinite(submit_deadline)),
+ observe_deadline timestamptz(6) NOT NULL CHECK(isfinite(observe_deadline)),
+ result_deadline timestamptz(6) NOT NULL CHECK(isfinite(result_deadline)),
+ artifact_deadline timestamptz(6) NOT NULL CHECK(isfinite(artifact_deadline)),
+ max_artifact_bytes bigint NOT NULL CHECK(max_artifact_bytes>0),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,id),
+ UNIQUE(tenant_id,idempotency_key),
+ UNIQUE(tenant_id,provider_reference),
+ UNIQUE(tenant_id,id,request_id),
+ FOREIGN KEY(tenant_id,request_id) REFERENCES request_records(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,reservation_id) REFERENCES reservations(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,source_id) REFERENCES funding_receipts(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,owner_id) REFERENCES memberships(tenant_id,user_id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES upstream_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(model_id) REFERENCES models(id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(profile_version) REFERENCES model_capability_versions(id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(schema_id,schema_digest) REFERENCES meter_schemas(id,schema_digest) DEFERRABLE INITIALLY DEFERRED,
+ CHECK(submit_deadline<=observe_deadline AND result_deadline>=observe_deadline AND artifact_deadline>=result_deadline),
+ CHECK((status='cancel_requested')=(cancel_state='requested'))
+);
+
+CREATE FUNCTION media_task_identity_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE request_owner text; request_model text; reservation_request text; attempt_request text; profile_model text; profile_schema text; profile_digest bytea;
+BEGIN
+ IF TG_OP='UPDATE' THEN
+  IF ROW(NEW.tenant_id,NEW.id,NEW.request_id,NEW.owner_id,NEW.attempt_id,NEW.reservation_id,NEW.source_id,NEW.model_id,NEW.profile_version,NEW.schema_id,NEW.schema_digest,NEW.variant_key,NEW.idempotency_key,NEW.submit_fingerprint,NEW.input_digest,NEW.submit_deadline,NEW.observe_deadline,NEW.result_deadline,NEW.artifact_deadline,NEW.max_artifact_bytes,NEW.created_at)
+     IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.request_id,OLD.owner_id,OLD.attempt_id,OLD.reservation_id,OLD.source_id,OLD.model_id,OLD.profile_version,OLD.schema_id,OLD.schema_digest,OLD.variant_key,OLD.idempotency_key,OLD.submit_fingerprint,OLD.input_digest,OLD.submit_deadline,OLD.observe_deadline,OLD.result_deadline,OLD.artifact_deadline,OLD.max_artifact_bytes,OLD.created_at) THEN
+   RAISE EXCEPTION 'media task identity is immutable';
+  END IF;
+  IF OLD.provider_reference IS NOT NULL AND NEW.provider_reference IS DISTINCT FROM OLD.provider_reference THEN
+   RAISE EXCEPTION 'media provider reference is immutable';
+  END IF;
+  IF NEW.status IS DISTINCT FROM OLD.status AND NOT (
+   (OLD.status='prepared' AND NEW.status='submitting') OR
+   (OLD.status='submitting' AND NEW.status IN ('queued','submission_unknown')) OR
+   (OLD.status='queued' AND NEW.status IN ('running','cancel_requested','failed','succeeded')) OR
+   (OLD.status='running' AND NEW.status IN ('cancel_requested','failed','succeeded')) OR
+   (OLD.status='submission_unknown' AND NEW.status IN ('queued','running','failed','succeeded','cancel_requested')) OR
+   (OLD.status='cancel_requested' AND NEW.status IN ('queued','running','succeeded','failed','cancelled'))
+  ) THEN RAISE EXCEPTION 'invalid media task state transition'; END IF;
+  IF OLD.cancel_state='none' AND NEW.cancel_state NOT IN ('none','requested') THEN RAISE EXCEPTION 'invalid media cancel state'; END IF;
+  IF OLD.cancel_state='requested' AND NEW.cancel_state NOT IN ('requested','accepted','rejected') THEN RAISE EXCEPTION 'invalid media cancel state'; END IF;
+  IF OLD.cancel_state IN ('accepted','rejected') AND NEW.cancel_state IS DISTINCT FROM OLD.cancel_state THEN RAISE EXCEPTION 'media cancel state is terminal'; END IF;
+  IF OLD.artifact_state='none' AND NEW.artifact_state NOT IN ('none','available') THEN RAISE EXCEPTION 'invalid media artifact state'; END IF;
+  IF OLD.artifact_state='available' AND NEW.artifact_state NOT IN ('available','expired') THEN RAISE EXCEPTION 'invalid media artifact state'; END IF;
+  IF OLD.artifact_state='expired' AND NEW.artifact_state IS DISTINCT FROM OLD.artifact_state THEN RAISE EXCEPTION 'media artifact state is terminal'; END IF;
+  RETURN NEW;
+ END IF;
+ IF NEW.status<>'prepared' OR NEW.observation_state<>'unobserved' OR NEW.cancel_state<>'none' OR NEW.artifact_state<>'none' THEN
+  RAISE EXCEPTION 'media task must be born prepared';
+ END IF;
+ SELECT owner_id,model_id INTO request_owner,request_model FROM request_records WHERE tenant_id=NEW.tenant_id AND id=NEW.request_id;
+ SELECT request_id INTO reservation_request FROM reservations WHERE tenant_id=NEW.tenant_id AND id=NEW.reservation_id;
+ IF NEW.attempt_id IS NOT NULL THEN
+  SELECT request_id INTO attempt_request FROM upstream_attempts WHERE tenant_id=NEW.tenant_id AND id=NEW.attempt_id;
+ END IF;
+ SELECT c.model_id,c.schema_id,c.schema_digest INTO profile_model,profile_schema,profile_digest FROM model_capability_versions c WHERE c.id=NEW.profile_version;
+ IF request_owner IS NULL OR request_owner IS DISTINCT FROM NEW.owner_id OR request_model IS DISTINCT FROM NEW.model_id
+    OR reservation_request IS DISTINCT FROM NEW.request_id OR (NEW.attempt_id IS NOT NULL AND attempt_request IS DISTINCT FROM NEW.request_id)
+    OR profile_model IS DISTINCT FROM NEW.model_id OR profile_schema IS DISTINCT FROM NEW.schema_id OR profile_digest IS DISTINCT FROM NEW.schema_digest THEN
+  RAISE EXCEPTION 'media task binding mismatch';
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER media_task_identity BEFORE INSERT OR UPDATE ON media_tasks FOR EACH ROW EXECUTE FUNCTION media_task_identity_guard();
+CREATE TRIGGER media_task_immutable BEFORE DELETE ON media_tasks FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE media_task_artifacts (
+ tenant_id text NOT NULL, task_id text NOT NULL, artifact_reference text NOT NULL CHECK(length(artifact_reference) BETWEEN 1 AND 512 AND artifact_reference !~ '://'),
+ media_type text NOT NULL CHECK(media_type ~ '^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$'),
+ byte_length bigint NOT NULL CHECK(byte_length>0), sha256 bytea NOT NULL CHECK(octet_length(sha256)=32),
+ expires_at timestamptz(6) NOT NULL CHECK(isfinite(expires_at)), status text NOT NULL DEFAULT 'available' CHECK(status IN ('available','expired')),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,task_id,artifact_reference),
+ UNIQUE(tenant_id,task_id,sha256),
+ FOREIGN KEY(tenant_id,task_id) REFERENCES media_tasks(tenant_id,id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION media_artifact_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE task_status text; task_max bigint; task_artifact_state text;
+BEGIN
+ IF TG_OP='UPDATE' THEN
+  IF ROW(NEW.tenant_id,NEW.task_id,NEW.artifact_reference,NEW.media_type,NEW.byte_length,NEW.sha256,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.task_id,OLD.artifact_reference,OLD.media_type,OLD.byte_length,OLD.sha256,OLD.created_at) THEN RAISE EXCEPTION 'media artifact identity is immutable'; END IF;
+  IF OLD.status='expired' AND NEW.status IS DISTINCT FROM OLD.status THEN RAISE EXCEPTION 'media artifact is terminal'; END IF;
+  RETURN NEW;
+ END IF;
+ SELECT status,max_artifact_bytes,artifact_state INTO task_status,task_max,task_artifact_state FROM media_tasks WHERE tenant_id=NEW.tenant_id AND id=NEW.task_id;
+ IF task_status IS DISTINCT FROM 'succeeded' OR task_artifact_state='expired' OR NEW.byte_length>task_max THEN RAISE EXCEPTION 'media artifact is not allowed'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER media_artifact_guard BEFORE INSERT OR UPDATE ON media_task_artifacts FOR EACH ROW EXECUTE FUNCTION media_artifact_guard();
+CREATE TRIGGER media_artifact_immutable BEFORE DELETE ON media_task_artifacts FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE media_task_events (
+ tenant_id text NOT NULL, task_id text NOT NULL, event_id text NOT NULL CHECK(media_uuid(event_id)), sequence bigint NOT NULL CHECK(sequence>0),
+ source text NOT NULL CHECK(source IN ('adapter','signed_callback','original_query','approved_reconciliation')),
+ kind text NOT NULL CHECK(kind IN ('submission_accepted','submission_unknown','status_queued','status_running','status_succeeded','status_failed','status_cancelled','cancel_rejected','artifact_expired')),
+ observed_at timestamptz(6) NOT NULL CHECK(isfinite(observed_at)), provider_reference text CHECK(provider_reference IS NULL OR provider_reference !~ '://'),
+ artifact_reference text, artifact_media_type text, artifact_bytes bigint, artifact_sha256 bytea, artifact_expires_at timestamptz(6), failure_code text,
+ canonical bytea NOT NULL CHECK(octet_length(canonical) BETWEEN 1 AND 16384), digest bytea NOT NULL CHECK(octet_length(digest)=32 AND digest=sha256(canonical)),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,task_id,event_id), UNIQUE(tenant_id,task_id,sequence),
+ FOREIGN KEY(tenant_id,task_id) REFERENCES media_tasks(tenant_id,id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION media_task_event_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE s text; obs text; cancel_s text; artifact_s text; prior text; task_provider text;
+BEGIN
+ SELECT status,observation_state,cancel_state,artifact_state,cancel_resume_state,provider_reference INTO s,obs,cancel_s,artifact_s,prior,task_provider FROM media_tasks WHERE tenant_id=NEW.tenant_id AND id=NEW.task_id FOR UPDATE;
+ IF NEW.kind IN ('submission_accepted','status_queued') AND s<>'submitting' AND NOT (NEW.kind='status_queued' AND s='submission_unknown') THEN RAISE EXCEPTION 'media event state mismatch'; END IF;
+ IF NEW.kind='submission_unknown' AND s<>'submitting' THEN RAISE EXCEPTION 'media event state mismatch'; END IF;
+ IF NEW.kind='status_running' AND s NOT IN ('queued','submission_unknown') THEN RAISE EXCEPTION 'media event state mismatch'; END IF;
+ IF NEW.kind IN ('status_succeeded','status_failed') AND s NOT IN ('queued','running','submission_unknown') THEN RAISE EXCEPTION 'media event state mismatch'; END IF;
+ IF NEW.kind='status_cancelled' AND s<>'cancel_requested' THEN RAISE EXCEPTION 'media event state mismatch'; END IF;
+ IF NEW.kind='cancel_rejected' AND s<>'cancel_requested' THEN RAISE EXCEPTION 'media event state mismatch'; END IF;
+ IF NEW.kind='artifact_expired' AND (s<>'succeeded' OR artifact_s<>'available') THEN RAISE EXCEPTION 'media artifact expiration mismatch'; END IF;
+ IF NEW.kind IN ('submission_accepted','status_queued','status_running','status_succeeded') AND NEW.provider_reference IS NULL AND task_provider IS NULL THEN RAISE EXCEPTION 'media event requires provider reference'; END IF;
+ IF NEW.kind='status_succeeded' AND (NEW.artifact_reference IS NULL OR NEW.artifact_media_type IS NULL OR NEW.artifact_bytes IS NULL OR NEW.artifact_sha256 IS NULL OR NEW.artifact_expires_at IS NULL) THEN RAISE EXCEPTION 'media success requires artifact'; END IF;
+ IF NEW.kind='status_failed' AND (NEW.failure_code IS NULL OR NEW.failure_code !~ '^[a-z0-9_.:-]{1,64}$') THEN RAISE EXCEPTION 'media failure requires code'; END IF;
+ IF NEW.kind<>'status_succeeded' AND (NEW.artifact_reference IS NOT NULL OR NEW.artifact_media_type IS NOT NULL OR NEW.artifact_bytes IS NOT NULL OR NEW.artifact_sha256 IS NOT NULL OR NEW.artifact_expires_at IS NOT NULL) THEN RAISE EXCEPTION 'media event artifact is unexpected'; END IF;
+ IF NEW.kind<>'status_failed' AND NEW.failure_code IS NOT NULL THEN RAISE EXCEPTION 'media event failure is unexpected'; END IF;
+ IF NEW.kind='submission_unknown' AND NEW.provider_reference IS NOT NULL THEN RAISE EXCEPTION 'unknown submission has provider reference'; END IF;
+ RETURN NEW;
+END $$;
+CREATE FUNCTION media_task_event_apply() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE next_status text; next_cancel text; prior text; ref text;
+BEGIN
+ SELECT cancel_resume_state,provider_reference INTO prior,ref FROM media_tasks WHERE tenant_id=NEW.tenant_id AND id=NEW.task_id;
+ next_status:=CASE NEW.kind WHEN 'submission_accepted' THEN 'queued' WHEN 'status_queued' THEN 'queued' WHEN 'status_running' THEN 'running' WHEN 'status_succeeded' THEN 'succeeded' WHEN 'status_failed' THEN 'failed' WHEN 'status_cancelled' THEN 'cancelled' WHEN 'submission_unknown' THEN 'submission_unknown' WHEN 'cancel_rejected' THEN coalesce(prior,'queued') ELSE NULL END;
+ next_cancel:=CASE NEW.kind WHEN 'status_cancelled' THEN 'accepted' WHEN 'cancel_rejected' THEN 'rejected' ELSE NULL END;
+ UPDATE media_tasks SET status=coalesce(next_status,status), cancel_state=coalesce(next_cancel,cancel_state), provider_reference=coalesce(provider_reference,NEW.provider_reference), observation_state='fresh'
+  WHERE tenant_id=NEW.tenant_id AND id=NEW.task_id;
+ IF NEW.kind='status_succeeded' THEN
+  INSERT INTO media_task_artifacts(tenant_id,task_id,artifact_reference,media_type,byte_length,sha256,expires_at)
+  VALUES(NEW.tenant_id,NEW.task_id,NEW.artifact_reference,NEW.artifact_media_type,NEW.artifact_bytes,NEW.artifact_sha256,NEW.artifact_expires_at);
+  UPDATE media_tasks SET artifact_state='available' WHERE tenant_id=NEW.tenant_id AND id=NEW.task_id;
+ ELSIF NEW.kind='artifact_expired' THEN
+  UPDATE media_task_artifacts SET status='expired' WHERE tenant_id=NEW.tenant_id AND task_id=NEW.task_id AND status='available';
+  UPDATE media_tasks SET artifact_state='expired' WHERE tenant_id=NEW.tenant_id AND id=NEW.task_id;
+ END IF;
+ RETURN NULL;
+END $$;
+CREATE TRIGGER media_task_event_guard BEFORE INSERT ON media_task_events FOR EACH ROW EXECUTE FUNCTION media_task_event_guard();
+CREATE TRIGGER media_task_event_apply AFTER INSERT ON media_task_events FOR EACH ROW EXECUTE FUNCTION media_task_event_apply();
+CREATE TRIGGER media_task_event_immutable BEFORE UPDATE OR DELETE ON media_task_events FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE realtime_sessions (
+ tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), actor_id text NOT NULL, api_key_id text NOT NULL, model_id text NOT NULL, profile_version text NOT NULL, route_id text NOT NULL, origin text NOT NULL CHECK(origin ~ '^https?://[^/?#:@]+(:[0-9]+)?$'),
+ state text NOT NULL DEFAULT 'opening' CHECK(state IN ('opening','open','draining','closed')), expires_at timestamptz(6) NOT NULL CHECK(isfinite(expires_at)), max_turns integer NOT NULL DEFAULT 100 CHECK(max_turns BETWEEN 1 AND 100), created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,id,model_id,profile_version,route_id),
+ FOREIGN KEY(tenant_id,actor_id) REFERENCES memberships(tenant_id,user_id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,api_key_id) REFERENCES api_keys(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(model_id) REFERENCES models(id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(profile_version) REFERENCES model_capability_versions(id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(route_id) REFERENCES route_policy_versions(id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION realtime_session_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE profile_model text; route_model text;
+BEGIN
+ IF TG_OP='UPDATE' THEN
+  IF ROW(NEW.tenant_id,NEW.id,NEW.actor_id,NEW.api_key_id,NEW.model_id,NEW.profile_version,NEW.route_id,NEW.origin,NEW.expires_at,NEW.max_turns,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.actor_id,OLD.api_key_id,OLD.model_id,OLD.profile_version,OLD.route_id,OLD.origin,OLD.expires_at,OLD.max_turns,OLD.created_at) THEN RAISE EXCEPTION 'realtime session identity is immutable'; END IF;
+  IF NOT ((OLD.state='opening' AND NEW.state='open') OR (OLD.state='open' AND NEW.state='draining') OR (OLD.state='draining' AND NEW.state='closed') OR NEW.state=OLD.state) THEN RAISE EXCEPTION 'invalid realtime session state transition'; END IF;
+  RETURN NEW;
+ END IF;
+ SELECT model_id INTO profile_model FROM model_capability_versions WHERE id=NEW.profile_version;
+ SELECT model_id INTO route_model FROM route_policy_versions WHERE id=NEW.route_id;
+ IF profile_model IS DISTINCT FROM NEW.model_id OR route_model IS DISTINCT FROM NEW.model_id THEN RAISE EXCEPTION 'realtime session binding mismatch'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER realtime_session_guard BEFORE INSERT OR UPDATE ON realtime_sessions FOR EACH ROW EXECUTE FUNCTION realtime_session_guard();
+CREATE TRIGGER realtime_session_immutable BEFORE DELETE ON realtime_sessions FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE realtime_turns (
+ tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), session_id text NOT NULL, ordinal bigint NOT NULL CHECK(ordinal>0),
+ request_id text NOT NULL, reservation_id text NOT NULL, attempt_id text NOT NULL, state text NOT NULL DEFAULT 'reserved' CHECK(state IN ('reserved','sending','receiving','finalizing','pending','settled','released')),
+ response_reference text, created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,session_id,ordinal), UNIQUE(tenant_id,id,session_id),
+ FOREIGN KEY(tenant_id,session_id) REFERENCES realtime_sessions(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,request_id) REFERENCES request_records(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,reservation_id) REFERENCES reservations(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES upstream_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION realtime_turn_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE session_state text; session_tenant text; reserved_request text; attempt_request text;
+BEGIN
+ IF TG_OP='UPDATE' THEN
+  IF ROW(NEW.tenant_id,NEW.id,NEW.session_id,NEW.ordinal,NEW.request_id,NEW.reservation_id,NEW.attempt_id,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.session_id,OLD.ordinal,OLD.request_id,OLD.reservation_id,OLD.attempt_id,OLD.created_at) THEN RAISE EXCEPTION 'realtime turn identity is immutable'; END IF;
+  IF NEW.state IS DISTINCT FROM OLD.state AND NOT ((OLD.state='reserved' AND NEW.state IN ('sending','released')) OR (OLD.state='sending' AND NEW.state IN ('receiving','pending')) OR (OLD.state='receiving' AND NEW.state IN ('finalizing','pending')) OR (OLD.state='finalizing' AND NEW.state IN ('settled','pending')) OR (OLD.state='pending' AND NEW.state IN ('settled','released'))) THEN RAISE EXCEPTION 'invalid realtime turn state transition'; END IF;
+  IF OLD.response_reference IS NOT NULL AND NEW.response_reference IS DISTINCT FROM OLD.response_reference THEN RAISE EXCEPTION 'realtime response identity is immutable'; END IF;
+  RETURN NEW;
+ END IF;
+ SELECT state,tenant_id INTO session_state,session_tenant FROM realtime_sessions WHERE tenant_id=NEW.tenant_id AND id=NEW.session_id;
+ SELECT request_id INTO reserved_request FROM reservations WHERE tenant_id=NEW.tenant_id AND id=NEW.reservation_id;
+ SELECT request_id INTO attempt_request FROM upstream_attempts WHERE tenant_id=NEW.tenant_id AND id=NEW.attempt_id;
+ IF session_state IS DISTINCT FROM 'open' OR session_tenant IS NULL OR reserved_request IS DISTINCT FROM NEW.request_id OR attempt_request IS DISTINCT FROM NEW.request_id THEN RAISE EXCEPTION 'realtime turn binding mismatch'; END IF;
+ RETURN NEW;
+END $$;
+CREATE FUNCTION realtime_turn_inflight_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF (SELECT count(*) FROM realtime_turns WHERE tenant_id=NEW.tenant_id AND session_id=NEW.session_id AND state NOT IN ('settled','released'))>1 THEN RAISE EXCEPTION 'realtime session has multiple inflight turns'; END IF;
+ RETURN NULL;
+END $$;
+CREATE TRIGGER realtime_turn_guard BEFORE INSERT OR UPDATE ON realtime_turns FOR EACH ROW EXECUTE FUNCTION realtime_turn_guard();
+CREATE CONSTRAINT TRIGGER realtime_turn_inflight AFTER INSERT OR UPDATE ON realtime_turns DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION realtime_turn_inflight_guard();
+CREATE TRIGGER realtime_turn_immutable BEFORE DELETE ON realtime_turns FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE realtime_events (
+ tenant_id text NOT NULL, session_id text NOT NULL, event_id text NOT NULL CHECK(media_uuid(event_id)), turn_id text, type text NOT NULL CHECK(type IN ('input.text','input.audio','response.create','response.cancel','heartbeat','status')),
+ payload_bytes integer NOT NULL CHECK(payload_bytes>=0 AND payload_bytes<=1048576), payload_digest bytea NOT NULL CHECK(octet_length(payload_digest)=32), canonical bytea NOT NULL CHECK(octet_length(canonical) BETWEEN 1 AND 16384),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)), PRIMARY KEY(tenant_id,session_id,event_id),
+ FOREIGN KEY(tenant_id,session_id) REFERENCES realtime_sessions(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,turn_id,session_id) REFERENCES realtime_turns(tenant_id,id,session_id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION realtime_event_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE session_state text; turn_state text;
+BEGIN
+ IF NEW.payload_digest IS DISTINCT FROM sha256(NEW.canonical) THEN RAISE EXCEPTION 'realtime event digest mismatch'; END IF;
+ SELECT state INTO session_state FROM realtime_sessions WHERE tenant_id=NEW.tenant_id AND id=NEW.session_id;
+ IF NEW.type IN ('heartbeat','status') AND NEW.turn_id IS NOT NULL THEN RAISE EXCEPTION 'realtime control event cannot bind turn'; END IF;
+ IF NEW.type IN ('input.text','input.audio','response.create','response.cancel') AND NEW.turn_id IS NULL THEN RAISE EXCEPTION 'realtime event requires turn'; END IF;
+ IF NEW.turn_id IS NOT NULL THEN SELECT state INTO turn_state FROM realtime_turns WHERE tenant_id=NEW.tenant_id AND id=NEW.turn_id AND session_id=NEW.session_id; IF turn_state IS NULL OR turn_state IN ('settled','released') THEN RAISE EXCEPTION 'realtime event turn is terminal'; END IF; END IF;
+ IF session_state IS DISTINCT FROM 'open' AND NEW.type NOT IN ('heartbeat','status') THEN RAISE EXCEPTION 'realtime session is not open'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER realtime_event_guard BEFORE INSERT OR UPDATE ON realtime_events FOR EACH ROW EXECUTE FUNCTION realtime_event_guard();
+CREATE TRIGGER realtime_event_immutable BEFORE UPDATE OR DELETE ON realtime_events FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+DO $$ BEGIN
+ EXECUTE format('ALTER FUNCTION %I.media_uuid(text) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_task_identity_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_artifact_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_task_event_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_task_event_apply() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.realtime_session_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.realtime_turn_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.realtime_turn_inflight_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.realtime_event_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+END $$;
+REVOKE ALL ON TABLE media_tasks,media_task_events,media_task_artifacts,realtime_sessions,realtime_turns,realtime_events FROM PUBLIC;
+REVOKE ALL ON FUNCTION media_uuid(text),media_task_identity_guard(),media_artifact_guard(),media_task_event_guard(),media_task_event_apply(),realtime_session_guard(),realtime_turn_guard(),realtime_turn_inflight_guard(),realtime_event_guard() FROM PUBLIC;

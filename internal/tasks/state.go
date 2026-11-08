@@ -7,6 +7,15 @@ import "time"
 type SubmitInput struct {
 	TaskID           ID
 	Owner            Owner
+	RequestID        ID
+	ReservationID    ID
+	SourceID         ID
+	AttemptID        ID
+	ModelID          ID
+	ProfileVersion   ID
+	SchemaID         ID
+	SchemaDigest     Digest
+	VariantKey       string
 	IdempotencyKey   string
 	RequestDigest    Digest
 	CreatedAt        time.Time
@@ -50,6 +59,19 @@ func New(input SubmitInput) (Task, error) {
 	}
 	if err := input.Owner.valid(); err != nil {
 		return zero, err
+	}
+	for _, id := range []ID{input.RequestID, input.ReservationID, input.SourceID, input.ModelID, input.ProfileVersion, input.SchemaID} {
+		if id != "" {
+			if err := validateID(id); err != nil {
+				return zero, err
+			}
+		}
+	}
+	if input.VariantKey != "" && input.VariantKey != "default" {
+		return zero, ErrInvalidInput
+	}
+	if !input.SchemaDigest.IsZero() && validateDigest(input.SchemaDigest) != nil {
+		return zero, ErrInvalidDigest
 	}
 	if !validIdempotencyKey(input.IdempotencyKey) {
 		return zero, ErrInvalidInput
@@ -152,6 +174,10 @@ func (t Task) IsTerminal() bool {
 func (t Task) CanSubmit() bool { return t.protocol == StatePrepared }
 
 func (t Task) SubmissionUnknown() bool { return t.protocol == StateSubmissionUnknown }
+
+// ProviderReferenceForAdapter exposes only the opaque reference needed by the
+// provider boundary. It never exposes a URL, credential, or download token.
+func (t Task) ProviderReferenceForAdapter() string { return t.providerReference }
 
 // ReplaySubmit verifies the complete idempotency identity and returns the same
 // task unchanged. It is the only safe operation for a repeated submit request.

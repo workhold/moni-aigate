@@ -18,6 +18,35 @@ var meterHistoryTables = []string{
 	"attempt_meter_snapshots", "request_meter_bound_lines", "attempt_meter_bound_lines", "meter_event_quantities",
 }
 
+var mediaRuntimeTables = []string{
+	"media_tasks", "media_task_events", "media_task_artifacts",
+	"realtime_sessions", "realtime_turns", "realtime_events",
+}
+
+func provisionMediaRuntimeRoles(ctx context.Context, tx pgx.Tx, schema, appRole, projectionRole string) error {
+	qtables := make([]string, len(mediaRuntimeTables))
+	for i, name := range mediaRuntimeTables {
+		qtables[i] = pgx.Identifier{schema, name}.Sanitize()
+	}
+	list := strings.Join(qtables, ",")
+	app := pgx.Identifier{appRole}.Sanitize()
+	projection := pgx.Identifier{projectionRole}.Sanitize()
+	if _, err := tx.Exec(ctx, "REVOKE ALL ON TABLE "+list+" FROM "+projection+",PUBLIC; REVOKE DELETE ON "+list+" FROM "+app+"; GRANT SELECT,INSERT,UPDATE ON "+list+" TO "+app); err != nil {
+		return err
+	}
+	for _, table := range mediaRuntimeTables {
+		qualified := pgx.Identifier{schema, table}.Sanitize()
+		var selectOK, insertOK, updateOK, deleteOK, projectionAny, publicAny bool
+		if err := tx.QueryRow(ctx, `SELECT has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),has_table_privilege($1::name,$2::text,'DELETE'),has_table_privilege($3::name,$2::text,'SELECT') OR has_table_privilege($3::name,$2::text,'INSERT') OR has_table_privilege($3::name,$2::text,'UPDATE') OR has_table_privilege($3::name,$2::text,'DELETE'),has_table_privilege('public',$2::text,'SELECT') OR has_table_privilege('public',$2::text,'INSERT') OR has_table_privilege('public',$2::text,'UPDATE') OR has_table_privilege('public',$2::text,'DELETE')`, appRole, qualified, projectionRole).Scan(&selectOK, &insertOK, &updateOK, &deleteOK, &projectionAny, &publicAny); err != nil {
+			return err
+		}
+		if !selectOK || !insertOK || !updateOK || deleteOK || projectionAny || publicAny {
+			return fmt.Errorf("%w: media runtime table %s", ErrMeterRolePrivileges, table)
+		}
+	}
+	return nil
+}
+
 // provisionMeterRoles follows the payment and periodic-budget rule: only an
 // offline historical prefix with the entire 024 set absent may skip it. A
 // partial set fails, and runtime verification always requires the full set.

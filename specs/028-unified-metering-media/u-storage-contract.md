@@ -581,6 +581,22 @@ SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报�
 
 服务端从原请求的不可变 schema 原件验证并保留向量 canonical，不读取今天的模型、价格或界行来补齐输入。`action=release` 与 `action=approve` 不携带客户量；批准只消费已经保存的 proposal。核对批准只确认客户 retail 量，产生 `source=approved_reconciliation` 的普通观察/终结事实；supplier 侧继续为 `missing`，其 canonical、digest、cost pointer 和金额全部保持 NULL。列表和回执使用保存的完整向量或其状态，不输出两列 token 标量。
 
+### 11.2 028-S/A/R 当前最小存储扩展（2026-11-08）
+
+本节冻结 024 中允许安装的最小关系，供后续 writer 使用。它只提供身份、绑定、幂等、状态和事件事实，不发布媒体模型、供应商能力、HTTP/WS 或账务入口。所有关系只接受新当前数据库，不能从 001–023 历史关系转换或回填。
+
+`media_tasks` 保存异步任务主事实。主键为 `(tenant_id,id)`，并保存 `request_id`、`owner_id`、可空的 `attempt_id`、`model_id`、`profile_version`、`schema_id/schema_digest`、`variant_key`、`idempotency_key`、`submit_fingerprint`、`input_digest`、三组截止时间和 `max_artifact_bytes`。`request_id` 必须绑定同租户原请求，`owner_id` 必须等于原请求 owner 且属于该租户，attempt 一旦出现必须绑定同一 request/tenant。任务幂等键按租户唯一，任务状态闭集为 `prepared|submitting|queued|running|cancel_requested|submission_unknown|succeeded|failed|cancelled`，观察、取消、制品分别使用合同中的三个独立闭集状态轴。任务身份、原请求/attempt、profile/schema、截止时间和输入摘要出生后不可变。
+
+`media_task_events` 保存任务观察事实。事件 ID 在 `(tenant,task)` 内唯一，sequence 在任务内唯一且为正数，事件 canonical 与 digest 必须一一匹配。事件 kind 只接受 A 合同列出的提交、状态、取消拒绝和制品过期事件，事件 tenant/task 必须匹配。重复同体由唯一身份识别，异体不能覆盖原事件。事件应用只允许合同状态转移，终态不能被覆盖。
+
+`media_task_artifacts` 保存受控品引用、规范媒体类型、正字节数、SHA-256、过期时间和状态。artifact reference 在任务内唯一，制品只能绑定原任务，任务成功前不得出现可用制品，过期只改变制品轴，不改变任务终态。业务表不保存媒体正文。
+
+`realtime_sessions` 保存 session 的租户、actor、API key、model、profile、route、规范 Origin、期限和 session 状态。身份出生后不可变，actor、key、profile、route 必须属于同一租户和 model。状态闭集为 `opening|open|draining|closed`。
+
+`realtime_turns` 保存 session 内正数 ordinal 及唯一收费轮次，必须同时绑定同租户原 request、reservation 和 attempt，且三者的 request/tenant 一致。状态闭集为 `reserved|sending|receiving|finalizing|pending|settled|released`，同一 session 同时最多一个非终态 turn。`realtime_events` 保存 session 内唯一 client event ID、可选 turn、闭集 type、规范摘要和 digest。heartbeat/status 不得绑定 turn，收费输入和 response 控制事件必须绑定当前 turn，跨 session/turn、重复异体、终态覆盖和错误状态转移均由数据库拒绝。
+
+所有上述关系和 guard 固定为当前 schema 的 SECURITY INVOKER 路径，撤销 PUBLIC 对表、序列和函数的权限。APP 的 writer 权限由现有 provisioning 事务授予，PROJECTOR 与 PAYMENT_WORKER 不获得这些表或函数权限。writer 必须在同一事务中先写原 request/reservation/attempt，再写 task 或 turn，不能通过孤立媒体关系制造计量、钱包或结算事实。本片不声称 S/A/R 的 provider、worker、HTTP、WS、报表、部署和真实收费已经完成。
+
 ## 12. U 必须与后续片 DDL 分界
 
 | U 同次必须交付 | 留在后续 S/A/R 片，U 不安装 |

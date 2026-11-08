@@ -4688,3 +4688,34 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-08T06:16:23Z · 700e4f1ffee0
+
+028-S/A/R服务接口、当前存储表、状态guard与媒体运行时权限接入
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2068 个源文件；本次 20 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- added `internal/media/service.go`
+- added `internal/media/service_test.go`
+- modified `internal/operations/meter_roles.go`
+- modified `internal/operations/meter_roles_test.go`
+- modified `internal/operations/operations.go`
+- added `internal/provider/media_adapter.go`
+- added `internal/provider/realtime_adapter.go`
+- added `internal/provider/task_adapter.go`
+- added `internal/realtime/service.go`
+- added `internal/realtime/service_test.go`
+- added `internal/realtime/store.go`
+- added `internal/tasks/postgres_store.go`
+- added `internal/tasks/service.go`
+- added `internal/tasks/service_test.go`
+- modified `internal/tasks/state.go`
+- added `internal/tasks/store.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
