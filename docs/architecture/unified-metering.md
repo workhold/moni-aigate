@@ -93,3 +93,8 @@ Observation必须绑定原tenant/request/attempt/profile/schema/variant/plan。�
 候选 024 的建表前拒迁还会拒绝已有 api key/procurement held-spent、周期预算、funding lot child 与支付 capture/identity/effect 事实，并在失败后保持 `schema_migrations` 与计量表不变；这是局部拒迁负控，仍未覆盖 11.2 全部旧金融事实。
 
 当前生产消费者与冻结研究逐个列在[清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)。旧proof/scan/prospective候选只保持其原身份、编译及拒绝current边界，不升级兼容矩阵，不成为U前置。当前已有受限APP六协议局部链、周期预算HTTP和完整 server/billing race 证据；后续验收仍必须覆盖六文本全矩阵、采购/027来源/退款/恢复、026 JSON/CSV与控制台，纯包测试不能替代这些出口。
+### 2026-11-08 当前 MVP 媒体/任务/实时续片
+
+当前媒体写链继续只有一套 `Profile → Plan/Bound → Reserve → Attempt → Observe → Settle`。异步 `video_generation` 在 HTTP 创建时复用 `media_model_profiles` 和 `billing.ReserveMedia`，worker 通过租户 scoped adapter 在 submit 前进入 sending，并把终态 observation 收口到 `FinalizeMedia`。submission unknown、失败、取消和过期不重发模型请求。同步图片与 TTS 结算后追加不可变 `media_result_artifacts`，重置进程内缓存后仍按原租户、用户、Key、request/idempotency 读取结果。
+
+Realtime 在有数据库的 Server 路径按 tenant 绑定的 PostgreSQL persistence 写入 session、turn、event 三张现有表，复用原 request/reservation/attempt/source 引用，事件重复和状态转移不旁路账务。报表只读接入媒体 request、唯一 settlement 与全部 attempt，`raw_amount` 不当作供应商成本。当前证明来自 55439 迁移、角色、billing、server、reporting 和 realtime 定向 race，仍不覆盖供应商 session 恢复、对象存储、独立 worker 容器重启、浏览器和生产供应商。

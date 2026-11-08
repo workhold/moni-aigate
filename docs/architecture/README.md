@@ -1593,3 +1593,10 @@ README增加Python SDK使用示例，源码/Compose/1Panel步骤已按实际入�
 模块图、请求/数据关系、精确角色责任及源码入口已复核至[采购细图](procurement-attempt-birth.md)。README沿用实际启动、首次管理员、本地/Docker/1Panel与能力边界，并由独立源码复核确认；当前候选协议不加入常规部署步骤。
 
 最终本地完整清单为56顶层/1652子项race PASS、0 FAIL/SKIP，保留前三分片与休眠后原第四分片整片复验；原失败不删，50顶层实际PG与六静态区分。S1纯race20顶层/56子项另列，不计入该数据库清单。前一精确提交9688929的[14组远端CI](../verification/ci-package-isolation.md#精确提交-9688929-的最终远端审计)全部通过，220测试SKIP名称/理由保留；该结果不覆盖当前A4/S1新提交。
+### 2026-11-08 当前 MVP 媒体纵向接线续片
+
+异步 video task 通过现有 media wallet 入口完成当前本地纵向接线。`/v1/tasks` 创建在原文本 request/reservation/attempt/source 引用上建立 `video_generation` media reservation，submit 前标记 media attempt sending，worker 的 submit/observe/cancel/expire 由租户 scoped adapter 调用现有 FinalizeMedia。submission unknown、失败、取消和过期释放冻结，重复观察与 worker lease 重试不生成第二 attempt 或 settlement。`internal/tasks.PostgresStore` 读取 nullable provider/artifact，按 024 的 raw `sha256(canonical)` 保存事件摘要。
+
+图片与 TTS 在结算成功后把受保护 inline bytes 写入不可变 `media_result_artifacts`。读取同时校验 tenant、owner user、API key 和原 request 或 idempotency key，内存缓存只做加速。Realtime 的有数据库入口使用租户绑定的 PostgreSQL persistence 写入 `realtime_sessions`、`realtime_turns` 和 `realtime_events`，事件重复、状态转移和单 inflight 由事务与现有约束保护。经营报表读取媒体请求、唯一媒体结算和全部媒体 attempt，收入只在 request 侧计一次，缺供应商成本时保留 unknown。
+
+上述是 mock provider 与 55439 隔离专库的限定本地验收。provider session 重启恢复、独立 worker 容器重启、真实供应商成本、对象存储、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未完成。

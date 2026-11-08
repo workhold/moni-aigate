@@ -49,7 +49,9 @@ func (m *MockTaskAdapter) Query(_ context.Context, in TaskQuery) (TaskObservatio
 	}
 	obs := TaskObservation{EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_succeeded", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}
 	sha := sha256.Sum256(t.artifact)
-	obs.Artifact = &TaskArtifact{Reference: t.providerReference + "/artifact", MediaType: t.mediaType, Size: int64(len(t.artifact)), SHA256: fmtHex(sha[:]), ExpiresAt: time.Now().UTC().Add(time.Hour)}
+	// Keep the development artifact inside the task's result window. A real
+	// provider adapter must derive this from its durable artifact lease.
+	obs.Artifact = &TaskArtifact{Reference: t.providerReference + "/artifact", MediaType: t.mediaType, Size: int64(len(t.artifact)), SHA256: fmtHex(sha[:]), ExpiresAt: time.Now().UTC().Add(5 * time.Minute)}
 	return obs, nil
 }
 

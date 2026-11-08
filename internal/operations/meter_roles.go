@@ -83,6 +83,30 @@ func provisionMediaProfileRole(ctx context.Context, tx pgx.Tx, schema, appRole, 
 	return nil
 }
 
+func provisionMediaResultArtifactRole(ctx context.Context, tx pgx.Tx, schema, appRole, projectionRole string) error {
+	qualified := pgx.Identifier{schema, "media_result_artifacts"}.Sanitize()
+	var exists bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_result_artifacts')`, schema).Scan(&exists); err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+	app := pgx.Identifier{appRole}.Sanitize()
+	projection := pgx.Identifier{projectionRole}.Sanitize()
+	if _, err := tx.Exec(ctx, "REVOKE ALL ON TABLE "+qualified+" FROM "+app+","+projection+",PUBLIC; GRANT SELECT,INSERT ON "+qualified+" TO "+app); err != nil {
+		return err
+	}
+	var selectOK, insertOK, updateOK, deleteOK, projectionAny, publicAny bool
+	if err := tx.QueryRow(ctx, `SELECT has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),has_table_privilege($1::name,$2::text,'DELETE'),has_table_privilege($3::name,$2::text,'SELECT') OR has_table_privilege($3::name,$2::text,'INSERT') OR has_table_privilege($3::name,$2::text,'UPDATE') OR has_table_privilege($3::name,$2::text,'DELETE'),has_table_privilege('public',$2::text,'SELECT') OR has_table_privilege('public',$2::text,'INSERT') OR has_table_privilege('public',$2::text,'UPDATE') OR has_table_privilege('public',$2::text,'DELETE')`, appRole, qualified, projectionRole).Scan(&selectOK, &insertOK, &updateOK, &deleteOK, &projectionAny, &publicAny); err != nil {
+		return err
+	}
+	if !selectOK || !insertOK || updateOK || deleteOK || projectionAny || publicAny {
+		return fmt.Errorf("%w: media result artifact table", ErrMeterRolePrivileges)
+	}
+	return nil
+}
+
 // provisionMeterRoles follows the payment and periodic-budget rule: only an
 // offline historical prefix with the entire 024 set absent may skip it. A
 // partial set fails, and runtime verification always requires the full set.

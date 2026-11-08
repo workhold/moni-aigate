@@ -529,6 +529,12 @@ U后台恢复仅观察/收尾原request/attempt及原证据；无网络生成许
 
 ## 11. 拒迁、发布顺序与必须验收的边界
 
+### 11.4 同步媒体结果交付存储
+
+当前 MVP 的 inline 图片与 TTS 结果必须在同一租户、原 request、原 attempt 已完成结算后写入不可变的 `media_result_artifacts`。结果行包含 operation、media type、原始 bytes、SHA-256 和过期时间，主键为 `(tenant_id,request_id)`，并以外键绑定 `media_requests` 与 `media_attempts`。结果写入只允许 APP 在原结算事务完成后追加，任何 UPDATE/DELETE 和同一 request 的异体重放都拒绝。
+
+结果读取按租户、owner user、API Key 与 request 或原 idempotency key 同时过滤。进程内缓存只作为已完成请求的短期加速，不作为结果所有权或结果存在性的依据。数据库不可用、结果摘要不一致或原 request/attempt 绑定不一致时返回服务不可用，不从其他媒体结果或旧缓存补回。结果 bytes 属于受保护的 inline MVP 存储，后续对象存储只替换交付介质，不新增结算或计量路径。
+
 只支持独立新当前数据库。保留001–023原SQL与迁移checksum，新增迁移明确一次替换；迁移运行时不探测旧mode、不双写、不把旧request伪装成新snapshot。
 
 迁移必须在服务/生成writer/worker停止、持现行maintenance gate和真实migration owner时执行；第一阶段在任何DDL前验证PG≥15、恰为正式023基线及所需依赖形状，获得相关表锁并检查下列拒迁条件。拒绝必须单事务回滚、原schema/数据/权限/checksum不变，输出固定可理解错误，不自动删库或生成转换记录：

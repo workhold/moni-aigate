@@ -4935,3 +4935,33 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/u-storage-contract.md`
 
 </details>
+
+## 2026-11-08T16:04:08Z · eb145cf97303
+
+当前 MVP 媒体结果持久化、异步 video 统一账务、Realtime PostgreSQL 持久化、媒体报表只读接缝、任务事件与角色边界修正；保留真实供应商、容器重启、浏览器和完整 028/S/A/R 未验收边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2092 个源文件；本次 19 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/integrated-wallet-media.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/provider/mock_task.go`
+- modified `internal/server/realtime.go`
+- added `internal/server/realtime_persistence.go`
+- added `internal/server/realtime_persistence_test.go`
+- modified `internal/server/server.go`
+- modified `internal/server/task_handlers.go`
+- modified `internal/server/task_media_billing.go`
+- modified `internal/server/task_media_billing_integration_test.go`
+- modified `internal/tasks/postgres_store.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/worker.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

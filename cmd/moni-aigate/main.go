@@ -117,7 +117,7 @@ func run() error {
 		return e
 	}
 	if command == "worker" {
-		return runTaskWorker(ctx, pool)
+		return runTaskWorker(ctx, pool, c)
 	}
 	if command == "bootstrap" {
 		flags := flag.NewFlagSet("bootstrap", flag.ContinueOnError)
@@ -489,12 +489,26 @@ func run() error {
 	return fmt.Errorf("HTTP service stopped")
 }
 
-func runTaskWorker(ctx context.Context, pool *pgxpool.Pool) error {
+func runTaskWorker(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	store, err := tasks.NewPostgresStore(pool, "")
 	if err != nil {
 		return err
 	}
-	worker := tasks.Worker{Store: store, Adapter: provider.NewMockTaskAdapter(), Now: time.Now}
+	app := server.New(cfg, pool, web.FS, nil)
+	delegate := provider.NewMockTaskAdapter()
+	worker := tasks.Worker{
+		Store: store, Adapter: delegate, Now: time.Now,
+		AdapterFor: func(actor tasks.Actor) (provider.TaskAdapter, error) {
+			return app.NewTaskWorkerAdapter(identity.Principal{TenantID: actor.TenantID.String(), UserID: actor.SubjectID.String()}, delegate)
+		},
+		OnExpire: func(ctx context.Context, task tasks.Task, refs tasks.References) error {
+			view, snapshotErr := task.Snapshot()
+			if snapshotErr != nil {
+				return snapshotErr
+			}
+			return app.FinalizeExpiredTaskMedia(ctx, identity.Principal{TenantID: view.Owner.TenantID.String(), UserID: view.Owner.SubjectID.String()}, task, refs)
+		},
+	}
 	workerID := tasks.ID(uuid.NewString())
 	for {
 		progress := false

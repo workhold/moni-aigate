@@ -2580,3 +2580,23 @@ DO $$ BEGIN
  EXECUTE format('ALTER FUNCTION %I.wallet_event_valid(text) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
 END $$;
 REVOKE ALL ON FUNCTION wallet_event_valid(text) FROM PUBLIC;
+
+-- Inline MVP results are immutable protected artifacts. They remain attached to
+-- the original request and attempt so restart recovery cannot invent a second
+-- delivery or detach bytes from the charge that produced them.
+CREATE TABLE media_result_artifacts (
+ tenant_id text NOT NULL,
+ request_id text NOT NULL,
+ attempt_id text NOT NULL,
+ operation text NOT NULL CHECK(operation IN ('image_generation','tts')),
+ media_type text NOT NULL CHECK(length(media_type) BETWEEN 1 AND 128 AND media_type !~ '[[:space:]]'),
+ body bytea NOT NULL CHECK(octet_length(body) BETWEEN 1 AND 67108864),
+ sha256 bytea NOT NULL CHECK(octet_length(sha256)=32 AND sha256=sha256(body)),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ expires_at timestamptz(6) NOT NULL CHECK(isfinite(expires_at) AND expires_at>created_at),
+ PRIMARY KEY(tenant_id,request_id), UNIQUE(tenant_id,attempt_id),
+ FOREIGN KEY(tenant_id,request_id) REFERENCES media_requests(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES media_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE TRIGGER media_result_artifact_immutable BEFORE UPDATE OR DELETE ON media_result_artifacts FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+REVOKE ALL ON TABLE media_result_artifacts FROM PUBLIC;

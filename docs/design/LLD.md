@@ -1099,3 +1099,6 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 2026-11-05采购列表续片按存储合同7.2接线：ReservationsListSQL以采购行为根LEFT JOIN原attempt/snapshot，meter_attempt_supplier_bounds核完整身份、原schema mask及恰两条原supplier界，返回纯核Bounds wire；profile/schema_digest/default取原快照。量为int64规范字符串、金额沿原采购事实，不回读当前模型/价或构造新报价身份，未就绪快照不后补。缺/错原件抛错→原安全503，整页不半返回；分页仍50+1、原账户筛选和倒序边界。TS撤旧input_bound/output_bound并严格核向量，UI按维度/单位独立显示且加载失败不保留旧预占行。只读函数STABLE/SECURITY INVOKER/固定部署schema搜索路径且PUBLIC撤执行；角色装配与资金写权不增加。受限APP读取专项不替代全六文本、55439周期预算或浏览器验收。
 
 候选024及当前文本资金链已部分实施：纯核快照与inference计划/报价共享就绪门禁，观察绑定原attempt，成本投影绑定互斥finalization/correction原件；原四条界行、原价和唯一结算仍保持。当前目录读取不可变capability，历史夹具独立核原SQL并拒迁024。U当前仍每模型唯一capability；6d 的受限APP六协议链、默认/组价组合、退款来源和过期恢复不重生成已有局部验收，新增 route complete 结构守卫，但完整HTTP/UI、九组guard和商业出口总矩阵仍未收口。026元数据已从原请求快照扩展，收入一次/全部attempt成本不变。精确合同、能力状态及出口见[存储合同](../../specs/028-unified-metering-media/u-storage-contract.md)、[细图](../architecture/unified-metering.md)与[任务](../../specs/028-unified-metering-media/tasks.md)。
+### 2026-11-08 当前媒体 MVP 接线状态
+
+`video_generation` HTTP 创建复用 `ReserveMedia`，任务 worker 在调用 provider 前执行 `MarkMediaAttemptSending`，终态由 `FinalizeMedia` 幂等收尾。图片/TTS 将已结算 inline bytes 写入 `media_result_artifacts`，Realtime 的 tenant-bound persistence 写入 `realtime_sessions`、`realtime_turns`、`realtime_events`。这些入口的当前证据是 55439 专库定向 race，不能替代容器重启、provider session恢复和真实供应商验收。

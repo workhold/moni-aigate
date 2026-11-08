@@ -148,7 +148,11 @@ func (s *Service) Observe(ctx context.Context, id ID, now time.Time) (Task, erro
 	if err != nil {
 		return Task{}, err
 	}
-	if err := s.applyEvent(ctx, id, now, event); err != nil {
+	applyAt := now
+	if observation.ObservedAt.After(applyAt) {
+		applyAt = observation.ObservedAt
+	}
+	if err := s.applyEvent(ctx, id, applyAt, event); err != nil {
 		return Task{}, err
 	}
 	updated, _, err := s.store.Snapshot(ctx, id)
@@ -173,7 +177,11 @@ func (s *Service) observationEvent(taskID ID, observation provider.TaskObservati
 		}
 		artifact = &Artifact{Reference: observation.Artifact.Reference, MediaType: observation.Artifact.MediaType, Size: observation.Artifact.Size, SHA256: digest, ExpiresAt: observation.Artifact.ExpiresAt}
 	}
-	return NewEvent(EventInput{Version: "1", EventID: eventID, TaskID: taskID, Kind: kind, Sequence: observation.Sequence, ObservedAt: observation.ObservedAt, ProviderReference: observation.ProviderReference, FailureCode: observation.FailureCode, Artifact: artifact})
+	event, err := NewEvent(EventInput{Version: "1", EventID: eventID, TaskID: taskID, Kind: kind, Sequence: observation.Sequence, ObservedAt: observation.ObservedAt, ProviderReference: observation.ProviderReference, FailureCode: observation.FailureCode, Artifact: artifact})
+	if err != nil {
+		return Event{}, err
+	}
+	return event, nil
 }
 
 func (s *Service) applyEvent(ctx context.Context, id ID, now time.Time, event Event) error {

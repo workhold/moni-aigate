@@ -55,7 +55,7 @@ type Server struct {
 	RealtimeTimeout        time.Duration
 	Routing                *routing.Engine
 	TaskStore              *tasks.PostgresStore
-	TaskAdapter            *provider.MockTaskAdapter
+	TaskAdapter            provider.TaskAdapter
 	MediaAdapter           provider.SynchronousMediaAdapter
 	RealtimeService        *realtime.Service
 	TaskGrants             sync.Map

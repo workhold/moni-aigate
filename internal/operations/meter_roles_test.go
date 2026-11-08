@@ -84,6 +84,14 @@ func TestMeterRoleBoundary(t *testing.T) {
 			t.Fatalf("media runtime role boundary mismatch for %s", table)
 		}
 	}
+	var artifactSelect, artifactInsert, artifactUpdate, artifactDelete, artifactProjection, artifactWorker, artifactPublic bool
+	artifactTable := pgx.Identifier{schema, "media_result_artifacts"}.Sanitize()
+	if err = owner.QueryRow(ctx, `SELECT has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),has_table_privilege($1::name,$2::text,'DELETE'),has_table_privilege($3::name,$2::text,'SELECT') OR has_table_privilege($3::name,$2::text,'INSERT') OR has_table_privilege($3::name,$2::text,'UPDATE') OR has_table_privilege($3::name,$2::text,'DELETE'),has_table_privilege($4::name,$2::text,'SELECT') OR has_table_privilege($4::name,$2::text,'INSERT') OR has_table_privilege($4::name,$2::text,'UPDATE') OR has_table_privilege($4::name,$2::text,'DELETE'),has_table_privilege('public',$2::text,'SELECT') OR has_table_privilege('public',$2::text,'INSERT') OR has_table_privilege('public',$2::text,'UPDATE') OR has_table_privilege('public',$2::text,'DELETE')`, appRole, artifactTable, projectionRole, paymentWorkerRole).Scan(&artifactSelect, &artifactInsert, &artifactUpdate, &artifactDelete, &artifactProjection, &artifactWorker, &artifactPublic); err != nil {
+		t.Fatal(err)
+	}
+	if !artifactSelect || !artifactInsert || artifactUpdate || artifactDelete || artifactProjection || artifactWorker || artifactPublic {
+		t.Fatal("media result artifact role boundary mismatch")
+	}
 	var workerExecute bool
 	if err = owner.QueryRow(ctx, `SELECT COALESCE(bool_or(has_function_privilege($1::name,p.oid,'EXECUTE')),false)
 FROM pg_catalog.pg_proc p

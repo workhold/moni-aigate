@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"time"
@@ -36,7 +37,11 @@ func (s *Server) taskService(p identity.Principal) (*tasks.Service, error) {
 	if adapter == nil {
 		adapter = provider.NewMockTaskAdapter()
 	}
-	return tasks.NewService(tasks.ServiceOptions{Store: s.TaskStore, Adapter: adapter, NewID: func() tasks.ID { return tasks.ID(uuid.NewString()) }, Worker: worker})
+	billingAdapter, err := s.newTaskMediaAdapter(p, adapter)
+	if err != nil {
+		return nil, err
+	}
+	return tasks.NewService(tasks.ServiceOptions{Store: s.TaskStore, Adapter: billingAdapter, NewID: func() tasks.ID { return tasks.ID(uuid.NewString()) }, Worker: worker})
 }
 
 func readTaskBody(c *gin.Context, out any) ([]byte, error) {
@@ -54,6 +59,10 @@ func readTaskBody(c *gin.Context, out any) ([]byte, error) {
 
 func (s *Server) createTask(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if err := s.requireTaskMediaBilling(); err != nil {
+		s.error(c, err)
+		return
+	}
 	var in taskCreateRequest
 	raw, err := readTaskBody(c, &in)
 	if err != nil {
@@ -110,14 +119,45 @@ func (s *Server) createTask(c *gin.Context) {
 	}
 	now := time.Now().UTC()
 	digest := sha256.Sum256(raw)
-	input := tasks.SubmitInput{TaskID: tasks.ID(uuid.NewString()), Owner: tasks.Owner{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID)}, RequestID: requestID, ReservationID: reservationID, SourceID: sourceID, AttemptID: attemptID, ModelID: modelID, ProfileVersion: profile, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", IdempotencyKey: idempotencyKey, RequestDigest: tasks.Digest(digest), CreatedAt: now, SubmitBy: now.Add(2 * time.Minute), ObserveUntil: now.Add(10 * time.Minute), ResultUntil: now.Add(time.Hour), MaxArtifactBytes: in.MaxArtifact}
+	taskID := tasks.ID(uuid.NewString())
+	input := tasks.SubmitInput{TaskID: taskID, Owner: tasks.Owner{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID)}, RequestID: requestID, ReservationID: reservationID, SourceID: sourceID, AttemptID: attemptID, ModelID: modelID, ProfileVersion: profile, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", IdempotencyKey: idempotencyKey, RequestDigest: tasks.Digest(digest), CreatedAt: now, SubmitBy: now.Add(2 * time.Minute), ObserveUntil: now.Add(10 * time.Minute), ResultUntil: now.Add(time.Hour), MaxArtifactBytes: in.MaxArtifact}
 	refs := tasks.References{RequestID: requestID, ReservationID: reservationID, AttemptID: attemptID, SourceID: sourceID}
 	if s.TaskStore == nil {
 		s.fail(c, 503, "unavailable", "任务服务未就绪")
 		return
 	}
-	task, err := s.TaskStore.CreateTask(c.Request.Context(), input, refs)
+	mediaReservation, err := s.reserveTaskMedia(c.Request.Context(), p, input, digest, input.ObserveUntil)
 	if err != nil {
+		s.error(c, err)
+		return
+	}
+	if mediaReservation.RequestID != requestID.String() || mediaReservation.AttemptID != attemptID.String() {
+		s.fail(c, http.StatusConflict, "idempotency_conflict", "任务幂等键已绑定其他任务引用")
+		return
+	}
+	if mediaReservation.Existing {
+		existingID, found, findErr := s.findTaskIdempotency(c.Request.Context(), input.Owner, idempotencyKey, input, refs)
+		if findErr != nil {
+			if errors.Is(findErr, tasks.ErrIdempotencyConflict) {
+				s.fail(c, http.StatusConflict, "idempotency_conflict", "任务幂等键已用于其他请求")
+				return
+			}
+			s.error(c, findErr)
+			return
+		}
+		if found {
+			c.JSON(http.StatusAccepted, gin.H{"id": existingID, "object": "task", "type": "video_generation", "status": "created", "request_id": refs.RequestID})
+			return
+		}
+	}
+	task, err := s.createTaskRecord(c.Request.Context(), input, refs)
+	if err != nil {
+		if !mediaReservation.Existing {
+			if releaseErr := s.finalizeTaskMedia(c.Request.Context(), p.TenantID, input.RequestID.String(), input.AttemptID.String(), taskID.String(), "failed", "missing", 0, "task-create-failed"); releaseErr != nil {
+				s.error(c, errors.Join(err, releaseErr))
+				return
+			}
+		}
 		s.error(c, err)
 		return
 	}

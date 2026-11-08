@@ -129,6 +129,13 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 		c.Data(replay.status, replay.contentType, replay.body)
 		return
 	}
+	if stored, found, err := s.loadMediaArtifactByIdempotency(c.Request.Context(), p, "tts", key, digest); err != nil {
+		s.fail(c, http.StatusServiceUnavailable, "result_unavailable", "语音结果暂不可用")
+		return
+	} else if found {
+		c.Data(http.StatusOK, stored.MediaType, stored.Body)
+		return
+	}
 	requestID := c.GetString("request_id")
 	if _, err := uuid.Parse(requestID); err != nil {
 		requestID = uuid.NewString()
@@ -182,6 +189,10 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 	}
 	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", "confirmed_final", int64(len([]rune(in.Input)))); err != nil {
 		s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
+		return
+	}
+	if err = s.storeMediaArtifact(c.Request.Context(), billingRefs, "tts", result.MediaType, result.Data); err != nil {
+		s.fail(c, http.StatusServiceUnavailable, "result_unavailable", "语音结果暂不可用")
 		return
 	}
 	s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, status: http.StatusOK, contentType: result.MediaType, body: result.Data})

@@ -257,6 +257,17 @@ func (s *Server) imageGenerationResult(c *gin.Context) {
 	s.imageMu.Lock()
 	record := s.imageByID[id]
 	s.imageMu.Unlock()
+	if record == nil {
+		stored, found, err := s.loadMediaArtifactByRequest(c.Request.Context(), p, id)
+		if err != nil {
+			s.fail(c, http.StatusServiceUnavailable, "result_unavailable", "图片结果暂不可用")
+			return
+		}
+		if found {
+			c.Data(http.StatusOK, stored.MediaType, stored.Body)
+			return
+		}
+	}
 	if record == nil || record.tenantID != p.TenantID || record.userID != p.UserID || record.keyID != p.KeyID {
 		s.fail(c, http.StatusNotFound, "not_found", "图片结果不存在")
 		return
@@ -381,6 +392,10 @@ func (s *Server) executeImageRequest(c *gin.Context, p identity.Principal, input
 	}
 	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", "confirmed_final", 1); err != nil {
 		s.finishImageRecord(record, imageRequestFailed, http.StatusServiceUnavailable, "settlement_pending", "图片账务收尾暂不可用", nil)
+		return
+	}
+	if err = s.storeMediaArtifact(c.Request.Context(), billingRefs, "image_generation", "application/json", response); err != nil {
+		s.finishImageRecord(record, imageRequestFailed, http.StatusServiceUnavailable, "result_unavailable", "图片结果暂不可用", nil)
 		return
 	}
 	s.finishImageRecord(record, imageRequestCompleted, http.StatusOK, "", "", response)

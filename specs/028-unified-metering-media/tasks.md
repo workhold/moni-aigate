@@ -71,6 +71,12 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 媒体商业入口续片：024 追加当前 `media_model_profiles`、request/attempt/observation、reservation/settlement 和两侧 funding-lot edge。`billing.Store` 复用既有账户锁、journal、FIFO lot 和 wallet event validator，支持媒体预占、confirmed usage 收费、unknown/failed 释放、幂等和未知 attempt 禁止重发。图片 HTTP 与 TTS HTTP 在有数据库的 server fixture 已各完成一次真实 media reservation、attempt、observation、settlement 和 wallet 守恒核对；Realtime 有数据库路径接入单 turn media reservation/settlement，纯 WS fixture 保持 pending。异步 video task、媒体结果持久化/对象存储、数据库 session/turn writer、真实供应商、Compose 容器运行和完整部署验收仍未完成，S/A/R 纵向复选框保持未勾。
 
+2026-11-08 当前 MVP 纵向接线续片：异步 `video_generation` 的创建、提交、观察、取消与过期路径现在通过现有 `media_model_profiles` 和 `billing.Store` 复用 Reserve→Attempt→Observe→Settle。HTTP 创建按原 request/reservation/attempt/source 绑定预占，提交前进入 sending，终态成功按固定 mock task usage 收费，失败、取消、过期和 submission unknown 释放且不重发；worker 通过租户 scoped adapter 和幂等 expiry hook 使用同一路径。PostgreSQL task store 同时修正 nullable artifact/provider 读取、事件 raw SHA-256 canonical 和结果窗口边界。55439 race 已通过任务成功/unknown 释放/重复观察/唯一结算专项。独立 worker 重启、对象存储、真实供应商和 full task acceptance 仍未验收。
+
+2026-11-08 当前 MVP 结果与实时持久化续片：新增不可变 `media_result_artifacts`，图片与 TTS 在结算后保存受保护 inline bytes、media type 和 SHA-256，重置进程内缓存后按 tenant/user/key/request 或原 idempotency key读取，重复读取不创建第二 settlement。Realtime 有 DB 时使用租户绑定的 PostgreSQL persistence 写入 `realtime_sessions`、`realtime_turns`、`realtime_events`，保留事件幂等、状态迁移、单 inflight 和原商业引用；纯 WS fixture 仍保留内存路径。该片的 55439 migration/role/media HTTP/realtime/reporting 定向 race 已通过，provider session 重启恢复、真实 socket 故障和完整 commercial matrix 仍未验收。
+
+2026-11-08 当前 MVP 报表续片：经营报表把 `media_requests`、唯一 `media_settlements` 和全部 `media_attempts` 纳入同一只读快照。媒体收入只按 request 计一次，当前没有供应商成本字段时保留 unknown，不把 `raw_amount`解释为成本；支持 media operation、同步/异步 execution_kind 和安全模型筛选。报表接缝已通过 55439 race，但任务/实时完整写入、供应商成本和浏览器验收仍未完成。
+
 ## S / A / R / 交付
 
 - [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。

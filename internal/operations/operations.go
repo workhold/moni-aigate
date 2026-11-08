@@ -126,6 +126,9 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e = provisionMediaProfileRole(ctx, tx, schema, appRole, projectionRole); e != nil {
 		return e
 	}
+	if e = provisionMediaResultArtifactRole(ctx, tx, schema, appRole, projectionRole); e != nil {
+		return e
+	}
 	return tx.Commit(ctx)
 }
 

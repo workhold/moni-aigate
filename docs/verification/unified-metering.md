@@ -1,5 +1,17 @@
 # 028-U统一计量验证
 
+## 2026-11-08：当前 MVP 任务、结果、实时与报表续片
+
+使用 `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable'` 的 55439 专库通过：
+
+- `go test -count=1 -race ./internal/server -run '^TestVideoTaskUsesCurrentMediaWalletAcrossSubmitAndTerminalObservation$|^TestVideoTaskUnknownSubmissionReleasesMediaAndPreventsResubmit$'`
+- `go test -count=1 -race ./internal/server -run '^TestPostgresRealtimePersistence|^TestRealtimeWebSocket'`
+- `go test -count=1 -race ./internal/server -run '^Test(ImageGenerationHTTPUsesCurrentMediaWalletFacts|SpeechHTTPUsesCurrentMediaWalletFacts|MediaResultsSurviveProcessCacheReset)$'`
+- `go test -count=1 -race ./internal/reporting ./internal/server -run 'TestPostgresReadOperatingReportIncludesMediaOnceAndLeavesCostUnknown|TestOperatingReport'`
+- `go test -count=1 -race ./internal/operations -run '^TestMeterRoleBoundary$'`
+
+本片修正任务 PostgreSQL 事件 raw canonical 摘要、nullable provider/artifact 读取和 mock 制品结果窗口，新增 video task 的 media reservation/attempt/settlement、媒体结果持久化、Realtime PostgreSQL session/turn/event writer 和媒体报表只读接缝。结果正文仍是当前 inline MVP 存储，provider session、对象存储、独立 worker 容器重启、真实供应商、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未验收。
+
 ## 2026-11-08：媒体当前 wallet 入口与 HTTP/WS 局部验收
 
 024 新增媒体 profile、request/attempt/observation、reservation/settlement 和 funding-lot edge。`internal/billing/media.go` 复用当前 ledger account 锁、`media_amount` 单次 ceil、FIFO lot、journal 和扩展后的 `wallet_event_valid`，覆盖预占、confirmed usage 收费、unknown/failed 释放、幂等和未知 attempt 禁止重发。

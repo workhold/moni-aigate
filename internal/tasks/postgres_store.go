@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"sync"
@@ -72,7 +73,7 @@ func (s *PostgresStore) WithTask(ctx context.Context, id ID, fn func(TaskTx) err
 		return err
 	}
 	defer tx.Rollback(ctx)
-	task, refs, err := s.load(ctx, tx, `WHERE t.id=$1 FOR UPDATE`, id.String())
+	task, refs, err := s.load(ctx, tx, `WHERE t.id=$1 FOR UPDATE OF t`, id.String())
 	if err != nil {
 		return err
 	}
@@ -92,18 +93,21 @@ func (s *PostgresStore) load(ctx context.Context, runner interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
 }, where string, args ...any) (Task, References, error) {
 	q := fmt.Sprintf(`SELECT t.tenant_id,t.id,t.request_id,t.owner_id,t.attempt_id,t.reservation_id,t.source_id,t.idempotency_key,t.submit_fingerprint,t.input_digest,t.status,t.observation_state,t.cancel_state,t.artifact_state,t.provider_reference,t.submit_deadline,t.observe_deadline,t.result_deadline,t.artifact_deadline,t.max_artifact_bytes,t.created_at,
- COALESCE(e.sequence,0),COALESCE(e.event_id,''),COALESCE(e.digest,''::bytea),a.artifact_reference,a.media_type,a.byte_length,a.sha256,a.expires_at
+	 COALESCE(e.sequence,0),COALESCE(e.event_id,''),COALESCE(e.digest,''::bytea),COALESCE(e.canonical,''::bytea),a.artifact_reference,a.media_type,a.byte_length,a.sha256,a.expires_at
  FROM %s t
- LEFT JOIN LATERAL (SELECT event_id,sequence,digest FROM %s WHERE tenant_id=t.tenant_id AND task_id=t.id ORDER BY sequence DESC LIMIT 1) e ON true
+	 LEFT JOIN LATERAL (SELECT event_id,sequence,digest,canonical FROM %s WHERE tenant_id=t.tenant_id AND task_id=t.id ORDER BY sequence DESC LIMIT 1) e ON true
  LEFT JOIN LATERAL (SELECT artifact_reference,media_type,byte_length,sha256,expires_at FROM %s WHERE tenant_id=t.tenant_id AND task_id=t.id AND status='available' ORDER BY created_at DESC LIMIT 1) a ON true %s`, s.table("media_tasks"), s.table("media_task_events"), s.table("media_task_artifacts"), where)
 	var tenant, taskID, requestID, ownerID, attemptID, reservationID, sourceID, key string
-	var submitFP, inputDigest, eventDigest, artifactDigest []byte
-	var status, observation, cancel, artifactState, provider string
-	var submitBy, observeUntil, resultUntil, artifactUntil, createdAt, artifactExpires time.Time
-	var maxBytes, sequence, artifactBytes int64
+	var submitFP, inputDigest, eventDigest, eventCanonical, artifactDigest []byte
+	var status, observation, cancel, artifactState string
+	var providerRef *string
+	var submitBy, observeUntil, resultUntil, artifactUntil, createdAt time.Time
+	var artifactExpires *time.Time
+	var maxBytes, sequence int64
+	var artifactBytes *int64
 	var eventID, artifactRef, mediaType *string
 	row := runner.QueryRow(ctx, q, args...)
-	err := row.Scan(&tenant, &taskID, &requestID, &ownerID, &attemptID, &reservationID, &sourceID, &key, &submitFP, &inputDigest, &status, &observation, &cancel, &artifactState, &provider, &submitBy, &observeUntil, &resultUntil, &artifactUntil, &maxBytes, &createdAt, &sequence, &eventID, &eventDigest, &artifactRef, &mediaType, &artifactBytes, &artifactDigest, &artifactExpires)
+	err := row.Scan(&tenant, &taskID, &requestID, &ownerID, &attemptID, &reservationID, &sourceID, &key, &submitFP, &inputDigest, &status, &observation, &cancel, &artifactState, &providerRef, &submitBy, &observeUntil, &resultUntil, &artifactUntil, &maxBytes, &createdAt, &sequence, &eventID, &eventDigest, &eventCanonical, &artifactRef, &mediaType, &artifactBytes, &artifactDigest, &artifactExpires)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Task{}, References{}, ErrNotFound
 	}
@@ -138,19 +142,29 @@ func (s *PostgresStore) load(ctx context.Context, runner interface {
 		}
 	}
 	lastDigest := Digest{}
-	if len(eventDigest) != 0 {
+	if len(eventCanonical) != 0 {
+		lastEvent, parseErr := ParseEvent(eventCanonical)
+		if parseErr != nil {
+			return Task{}, References{}, ErrInvalidTask
+		}
+		lastDigest = lastEvent.Digest()
+	} else if len(eventDigest) != 0 {
 		lastDigest, err = digestFromBytes(eventDigest)
 		if err != nil {
 			return Task{}, References{}, ErrInvalidTask
 		}
 	}
+	provider := ""
+	if providerRef != nil {
+		provider = *providerRef
+	}
 	task := Task{id: tid, owner: Owner{TenantID: ownerTenant, SubjectID: subject}, idempotencyKey: key, requestDigest: input, createdAt: createdAt.UTC(), submitBy: submitBy.UTC(), observeUntil: observeUntil.UTC(), resultUntil: resultUntil.UTC(), maxArtifactBytes: maxBytes, protocol: ProtocolState(status), observation: ObservationState(observation), cancel: CancelState(cancel), artifactState: ArtifactState(artifactState), providerReference: provider, lastEventID: lastID, lastEventDigest: lastDigest, lastSequence: uint64(sequence)}
-	if artifactRef != nil && mediaType != nil && len(artifactDigest) == 32 {
+	if artifactRef != nil && mediaType != nil && artifactBytes != nil && artifactExpires != nil && len(artifactDigest) == 32 {
 		d, e := digestFromBytes(artifactDigest)
 		if e != nil {
 			return Task{}, References{}, e
 		}
-		task.artifact = Artifact{Reference: *artifactRef, MediaType: *mediaType, Size: artifactBytes, SHA256: d, ExpiresAt: artifactExpires.UTC()}
+		task.artifact = Artifact{Reference: *artifactRef, MediaType: *mediaType, Size: *artifactBytes, SHA256: d, ExpiresAt: artifactExpires.UTC()}
 	}
 	if err = task.valid(); err != nil {
 		return Task{}, References{}, err
@@ -197,9 +211,12 @@ func (t *postgresTaskTx) AppendEvent(event Event) error {
 		artifactDigest = artifact.SHA256[:]
 		ref, mediaType, expires, size = artifact.Reference, artifact.MediaType, artifact.ExpiresAt, artifact.Size
 	}
-	failure, _ := nullableString(event.failureCode)
-	eventDigest := event.Digest()
-	_, err = t.tx.Exec(context.Background(), fmt.Sprintf(`INSERT INTO %s(tenant_id,task_id,event_id,sequence,source,kind,observed_at,provider_reference,artifact_reference,artifact_media_type,artifact_bytes,artifact_sha256,artifact_expires_at,failure_code,canonical,digest) VALUES($1,$2,$3,$4,'adapter',$5,$6,NULLIF($7,''),$8,$9,$10,$11,$12,$13,$14,$15)`, t.store.table("media_task_events")), t.task.owner.TenantID.String(), t.task.id.String(), event.eventID.String(), event.sequence, event.kind, event.observedAt, event.providerReference, ref, mediaType, size, artifactDigest, expires, failure, canonical, eventDigest[:])
+	var failure any
+	if event.failureCode != "" {
+		failure = event.failureCode
+	}
+	rawDigest := sha256.Sum256(canonical)
+	_, err = t.tx.Exec(context.Background(), fmt.Sprintf(`INSERT INTO %s(tenant_id,task_id,event_id,sequence,source,kind,observed_at,provider_reference,artifact_reference,artifact_media_type,artifact_bytes,artifact_sha256,artifact_expires_at,failure_code,canonical,digest) VALUES($1,$2,$3,$4,'adapter',$5,$6,NULLIF($7,''),$8,$9,$10,$11,$12,$13,$14,$15)`, t.store.table("media_task_events")), t.task.owner.TenantID.String(), t.task.id.String(), event.eventID.String(), event.sequence, event.kind, event.observedAt, event.providerReference, ref, mediaType, size, artifactDigest, expires, failure, canonical, rawDigest[:])
 	return err
 }
 func (t *postgresTaskTx) BindSettlement(id ID) error {
