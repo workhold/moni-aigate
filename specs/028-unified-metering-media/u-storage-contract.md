@@ -597,6 +597,14 @@ SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报�
 
 所有上述关系和 guard 固定为当前 schema 的 SECURITY INVOKER 路径，撤销 PUBLIC 对表、序列和函数的权限。APP 的 writer 权限由现有 provisioning 事务授予，PROJECTOR 与 PAYMENT_WORKER 不获得这些表或函数权限。writer 必须在同一事务中先写原 request/reservation/attempt，再写 task 或 turn，不能通过孤立媒体关系制造计量、钱包或结算事实。本片不声称 S/A/R 的 provider、worker、HTTP、WS、报表、部署和真实收费已经完成。
 
+### 11.3 当前媒体商业事实（2026-11-08）
+
+024 追加 `media_model_profiles`、`media_requests`、`media_reservations`、`media_attempts`、`media_observations`、`media_reservation_lots`、`media_settlements` 与 `media_settlement_lots`。profile 以不可变 `model_key + operation + profile_version` 发布，保存业务 unit、每百万 unit 整数费率、最大预占量和结果大小。金额由 `media_amount(quantity, rate_per_million)` 只在该商业入口做一次整数 ceil，预占保存 rate 和 quantity bound，结算只读取原预占快照。
+
+媒体预占先锁 API key、客户 `AVAILABLE/HELD` 账户，再按 FIFO 锁 funding lot，写一个 `media.reserve` journal、lot reservation edges、held key 余额和 audit。结算锁原 media reservation 与账户，依据原 rate 和 confirmed observation 计算 charge，批量写 `media.settle` journal、lot finish edges、settlement、key spent/held 和 audit。unknown、missing、失败、取消和超界 usage 释放预占且 charged/raw 为零，供应商提交未知时 attempt 进入终态，恢复不得再次发送。媒体 lot event 已接入 023 wallet event validator 的同一 journal/lots 图，未创建第二钱包或第二账本。
+
+图片和 TTS 当前 HTTP 主线在有数据库的 Server 上使用上述 Reserve/Attempt/Observe/Settle 入口。无数据库的纯 handler fixture 只验证协议和 provider 边界，不能视为商业验收。Realtime 当前在有数据库时为单 turn 使用 `realtime_turn` profile 并收尾同一 media settlement，未接入数据库 session/turn writer。异步 video task 仍要求外部 task 引用并尚未接入上述 media reservation，不能勾选 A 的纵向商业项。
+
 ## 12. U 必须与后续片 DDL 分界
 
 | U 同次必须交付 | 留在后续 S/A/R 片，U 不安装 |

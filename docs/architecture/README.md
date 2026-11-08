@@ -30,6 +30,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-08 worker 部署续片：`cmd/moni-aigate worker` 和 Compose 独立 worker 服务已接入当前 task lease。worker 使用当前 mock task adapter，独立进程权限不扩大到计量、wallet 或 payment worker；Compose 静态配置通过，真实容器运行和重启验收仍未完成。
 
+2026-11-08 媒体商业入口续片：024 追加 `media_model_profiles`、media request/attempt/observation/reservation/settlement 与 funding-lot edge。图片/TTS HTTP 在有数据库的 Server 上复用 `internal/billing/media.go` 的当前 wallet journal，Realtime 单 turn 在有数据库时也使用 `realtime_turn` media profile，纯协议 fixture 仍保留 pending 边界。异步 video task 尚未接统一账务，媒体正文持久化、数据库 realtime writer、真实供应商和容器运行验收仍未完成。
+
 <!-- architecture:context -->
 ## 系统上下文与边界
 

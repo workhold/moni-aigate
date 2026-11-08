@@ -85,9 +85,9 @@ func paymentRoleDiagnostics(t *testing.T, f *paymentRoleFixture) {
 
 func reviewedWalletFunction(t *testing.T, name string) string {
 	t.Helper()
-	body, err := migrations.Files.ReadFile("023_wallet_sources.sql")
-	paymentRoleMust(t, "reviewed wallet source", err)
-	definition := regexp.MustCompile(`(?s)CREATE FUNCTION ` + regexp.QuoteMeta(name) + `\(.*?\$\$;`).FindString(string(body))
+	body, err := migrations.Files.ReadFile("024_unified_text_metering.sql")
+	paymentRoleMust(t, "reviewed current wallet source", err)
+	definition := regexp.MustCompile(`(?s)CREATE OR REPLACE FUNCTION ` + regexp.QuoteMeta(name) + `\(.*?\$\$;`).FindString(string(body))
 	if definition == "" {
 		t.Fatal("reviewed wallet definition unavailable")
 	}

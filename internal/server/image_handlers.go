@@ -36,19 +36,20 @@ const (
 )
 
 type imageRequestRecord struct {
-	mu            sync.Mutex
-	tenantID      string
-	userID        string
-	keyID         string
-	requestID     string
-	fingerprint   [32]byte
-	state         imageRequestState
-	status        int
-	errorCode     string
-	errorMessage  string
-	response      []byte
-	done          chan struct{}
-	finishStarted bool
+	mu             sync.Mutex
+	tenantID       string
+	userID         string
+	keyID          string
+	requestID      string
+	idempotencyKey string
+	fingerprint    [32]byte
+	state          imageRequestState
+	status         int
+	errorCode      string
+	errorMessage   string
+	response       []byte
+	done           chan struct{}
+	finishStarted  bool
 }
 
 type imageMediaAdapter struct {
@@ -320,7 +321,7 @@ func (s *Server) beginImageRequest(p identity.Principal, requestID, idempotency 
 	if !canonicalUUID(requestID) {
 		requestID = uuid.NewString()
 	}
-	record := &imageRequestRecord{tenantID: p.TenantID, userID: p.UserID, keyID: p.KeyID, requestID: requestID, fingerprint: fingerprint, state: imageRequestPending, done: make(chan struct{})}
+	record := &imageRequestRecord{tenantID: p.TenantID, userID: p.UserID, keyID: p.KeyID, requestID: requestID, idempotencyKey: idempotency, fingerprint: fingerprint, state: imageRequestPending, done: make(chan struct{})}
 	s.imageByIdempotency[key] = record
 	s.imageByID[requestID] = record
 	return record, true, false
@@ -328,11 +329,34 @@ func (s *Server) beginImageRequest(p identity.Principal, requestID, idempotency 
 
 func (s *Server) executeImageRequest(c *gin.Context, p identity.Principal, input media.Input, record *imageRequestRecord) {
 	defer s.writeImageRecord(c, record)
-	refs := media.RequestAttemptRef{TenantID: p.TenantID, RequestID: record.requestID, AttemptID: record.requestID + ":attempt-1"}
+	billingRefs, err := s.reserveMediaForRequest(c.Request.Context(), p.TenantID, p.UserID, p.KeyID, record.requestID, record.idempotencyKey, "image_generation", imageMockModel, imageProfileVersion, record.fingerprint, 1)
+	if err != nil {
+		s.finishImageRecord(record, imageRequestFailed, http.StatusPaymentRequired, "reservation_failed", "图片预占失败", nil)
+		return
+	}
+	if billingRefs.attemptID == "" {
+		billingRefs.attemptID = uuid.NewString()
+	}
+	if billingRefs.enabled && billingRefs.existing && billingRefs.state != "prepared" {
+		s.finishImageRecord(record, imageRequestUnknown, http.StatusConflict, "media_consumption_unknown", "图片请求已有未决供应商消费，禁止重发", nil)
+		return
+	}
+	if billingRefs.enabled {
+		if err = s.Billing.MarkMediaAttemptSending(c.Request.Context(), p.TenantID, billingRefs.attemptID); err != nil {
+			s.finishImageRecord(record, imageRequestFailed, http.StatusServiceUnavailable, "attempt_unavailable", "图片尝试无法进入发送态", nil)
+			return
+		}
+	}
+	refs := media.RequestAttemptRef{TenantID: p.TenantID, RequestID: record.requestID, AttemptID: billingRefs.attemptID}
 	execution, err := s.ImageService.Start(c.Request.Context(), media.ProfileSelector{Version: imageProfileVersion, VariantKey: "default"}, media.SubmitInput{Refs: refs, Profile: s.ImageProfile, Input: input})
 	if err != nil {
 		if execution != nil {
+			_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
 			s.finishImageRecord(record, imageRequestUnknown, http.StatusBadGateway, "media_consumption_unknown", "图片已提交但消费状态未知", nil)
+			return
+		}
+		if finalizeErr := s.finalizeMediaRequest(c.Request.Context(), billingRefs, "failed", "missing", 0); finalizeErr != nil {
+			s.finishImageRecord(record, imageRequestFailed, http.StatusServiceUnavailable, "settlement_pending", "图片账务收尾暂不可用", nil)
 			return
 		}
 		s.finishImageRecord(record, imageRequestFailed, imageProviderStatus(err), imageProviderCode(err), "图片生成失败", nil)
@@ -340,16 +364,23 @@ func (s *Server) executeImageRequest(c *gin.Context, p identity.Principal, input
 	}
 	result, err := execution.Result(c.Request.Context())
 	if err != nil {
+		_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
 		s.finishImageRecord(record, imageRequestUnknown, http.StatusBadGateway, "media_consumption_unknown", "图片已提交但消费状态未知", nil)
 		return
 	}
 	if err := execution.ConfirmUsage(c.Request.Context(), media.UsageRefs{ObservationID: record.requestID + ":observation", SettlementID: record.requestID + ":settlement"}); err != nil {
+		_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
 		s.finishImageRecord(record, imageRequestUnknown, http.StatusBadGateway, "media_consumption_unknown", "图片已提交但消费状态未知", nil)
 		return
 	}
 	response, err := buildImageResponseJSON(record.requestID, input, result)
 	if err != nil {
+		_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
 		s.finishImageRecord(record, imageRequestUnknown, http.StatusBadGateway, "media_consumption_unknown", "图片已提交但结果状态未知", nil)
+		return
+	}
+	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", "confirmed_final", 1); err != nil {
+		s.finishImageRecord(record, imageRequestFailed, http.StatusServiceUnavailable, "settlement_pending", "图片账务收尾暂不可用", nil)
 		return
 	}
 	s.finishImageRecord(record, imageRequestCompleted, http.StatusOK, "", "", response)

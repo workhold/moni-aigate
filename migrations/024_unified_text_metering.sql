@@ -2373,3 +2373,210 @@ DO $$ BEGIN
 END $$;
 REVOKE ALL ON TABLE media_tasks,media_task_events,media_task_artifacts,realtime_sessions,realtime_turns,realtime_events FROM PUBLIC;
 REVOKE ALL ON FUNCTION media_uuid(text),media_task_identity_guard(),media_artifact_guard(),media_task_event_guard(),media_task_event_apply(),realtime_session_guard(),realtime_turn_guard(),realtime_turn_inflight_guard(),realtime_event_guard() FROM PUBLIC;
+
+-- Current synchronous/asynchronous media commercial facts.  These tables use
+-- the same wallet journals and funding lots as text, but keep media units
+-- explicit instead of pretending that bytes or characters are text tokens.
+CREATE TABLE media_model_profiles (
+ model_key text PRIMARY KEY COLLATE "C" CHECK(length(model_key) BETWEEN 1 AND 256 AND model_key !~ '[[:space:]]'),
+ operation text NOT NULL CHECK(operation IN ('image_generation','tts','video_generation','realtime_turn')),
+ profile_version text NOT NULL CHECK(media_uuid(profile_version)),
+ unit text NOT NULL CHECK(unit IN ('image','character','task','realtime_byte')),
+ rate_per_million bigint NOT NULL CHECK(rate_per_million>=0),
+ max_quantity bigint NOT NULL CHECK(max_quantity>0),
+ max_result_bytes bigint NOT NULL CHECK(max_result_bytes>0),
+ enabled boolean NOT NULL DEFAULT true,
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ UNIQUE(operation,profile_version), UNIQUE(model_key,operation,profile_version)
+);
+CREATE FUNCTION media_profile_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF TG_OP='UPDATE' AND ROW(NEW.model_key,NEW.operation,NEW.profile_version,NEW.unit,NEW.rate_per_million,NEW.max_quantity,NEW.max_result_bytes,NEW.created_at)
+    IS DISTINCT FROM ROW(OLD.model_key,OLD.operation,OLD.profile_version,OLD.unit,OLD.rate_per_million,OLD.max_quantity,OLD.max_result_bytes,OLD.created_at) THEN
+  RAISE EXCEPTION 'media model profile identity is immutable';
+ END IF;
+ IF TG_OP='DELETE' THEN RAISE EXCEPTION 'media model profile is immutable'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER media_profile_immutable BEFORE UPDATE OR DELETE ON media_model_profiles FOR EACH ROW EXECUTE FUNCTION media_profile_immutable();
+
+INSERT INTO media_model_profiles(model_key,operation,profile_version,unit,rate_per_million,max_quantity,max_result_bytes)
+VALUES
+ ('mock-image-generation','image_generation','11111111-1111-4111-8111-111111111111','image',1000000,1,16777216),
+ ('mock-tts','tts','22222222-2222-4222-8222-222222222222','character',1000000,16384,16777216),
+ ('mock-video-generation','video_generation','33333333-3333-4333-8333-333333333333','task',1000000,1,67108864),
+ ('mock-realtime','realtime_turn','44444444-4444-4444-8444-444444444444','realtime_byte',1000000,67108864,16777216);
+
+CREATE FUNCTION media_amount(quantity bigint, rate_per_million bigint) RETURNS numeric
+LANGUAGE sql IMMUTABLE AS $$
+ SELECT CASE WHEN quantity IS NULL OR rate_per_million IS NULL OR quantity<0 OR rate_per_million<0 THEN NULL
+   ELSE div(quantity::numeric*rate_per_million+999999,1000000) END
+$$;
+
+CREATE TABLE media_requests (
+ tenant_id text NOT NULL REFERENCES tenants(id), id text NOT NULL CHECK(media_uuid(id)),
+ key_id text NOT NULL, owner_id text NOT NULL REFERENCES users(id), model_key text NOT NULL COLLATE "C",
+ operation text NOT NULL CHECK(operation IN ('image_generation','tts','video_generation','realtime_turn')),
+ profile_version text NOT NULL CHECK(media_uuid(profile_version)), idempotency_key text NOT NULL CHECK(length(idempotency_key) BETWEEN 1 AND 200),
+ request_digest bytea NOT NULL CHECK(octet_length(request_digest)=32), quantity_bound bigint NOT NULL CHECK(quantity_bound>0),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ deadline timestamptz(6) NOT NULL CHECK(isfinite(deadline)),
+ state text NOT NULL DEFAULT 'reserved' CHECK(state IN ('reserved','pending','settled','released')),
+ PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,operation,idempotency_key),
+ FOREIGN KEY(tenant_id,key_id) REFERENCES api_keys(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(model_key,operation,profile_version) REFERENCES media_model_profiles(model_key,operation,profile_version) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION media_request_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF TG_OP='UPDATE' THEN
+  IF ROW(NEW.tenant_id,NEW.id,NEW.key_id,NEW.owner_id,NEW.model_key,NEW.operation,NEW.profile_version,NEW.idempotency_key,NEW.request_digest,NEW.quantity_bound,NEW.created_at,NEW.deadline)
+     IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.key_id,OLD.owner_id,OLD.model_key,OLD.operation,OLD.profile_version,OLD.idempotency_key,OLD.request_digest,OLD.quantity_bound,OLD.created_at,OLD.deadline) THEN
+   RAISE EXCEPTION 'media request identity is immutable';
+  END IF;
+  IF NEW.state IS DISTINCT FROM OLD.state AND NOT ((OLD.state='reserved' AND NEW.state IN ('pending','settled','released')) OR (OLD.state='pending' AND NEW.state IN ('settled','released')) OR NEW.state=OLD.state) THEN
+   RAISE EXCEPTION 'invalid media request state transition';
+  END IF;
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER media_request_guard BEFORE INSERT OR UPDATE ON media_requests FOR EACH ROW EXECUTE FUNCTION media_request_guard();
+CREATE TRIGGER media_request_immutable BEFORE DELETE ON media_requests FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE media_reservations (
+ tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), request_id text NOT NULL, amount bigint NOT NULL CHECK(amount>=0),
+ rate_per_million bigint NOT NULL CHECK(rate_per_million>=0), quantity_bound bigint NOT NULL CHECK(quantity_bound>0),
+ status text NOT NULL DEFAULT 'reserved' CHECK(status IN ('reserved','pending_reconciliation','settled','released')),
+ deadline timestamptz(6) NOT NULL CHECK(isfinite(deadline)), journal_id text NOT NULL REFERENCES journals(id),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,request_id),
+ FOREIGN KEY(tenant_id,request_id) REFERENCES media_requests(tenant_id,id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION media_reservation_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE expected numeric;
+BEGIN
+ IF TG_OP='UPDATE' AND ROW(NEW.tenant_id,NEW.id,NEW.request_id,NEW.amount,NEW.rate_per_million,NEW.quantity_bound,NEW.deadline,NEW.journal_id,NEW.created_at)
+   IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.request_id,OLD.amount,OLD.rate_per_million,OLD.quantity_bound,OLD.deadline,OLD.journal_id,OLD.created_at) THEN RAISE EXCEPTION 'media reservation identity is immutable'; END IF;
+ IF TG_OP='UPDATE' THEN
+  IF NOT ((OLD.status='reserved' AND NEW.status IN ('pending_reconciliation','settled','released')) OR (OLD.status='pending_reconciliation' AND NEW.status IN ('settled','released')) OR NEW.status=OLD.status) THEN RAISE EXCEPTION 'invalid media reservation state transition'; END IF;
+ ELSE
+  expected:=media_amount(NEW.quantity_bound,NEW.rate_per_million);
+  IF expected IS NULL OR expected>9223372036854775807::numeric OR NEW.amount::numeric IS DISTINCT FROM expected THEN RAISE EXCEPTION 'media reservation amount mismatch'; END IF;
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER media_reservation_guard BEFORE INSERT OR UPDATE ON media_reservations FOR EACH ROW EXECUTE FUNCTION media_reservation_guard();
+CREATE TRIGGER media_reservation_immutable BEFORE DELETE ON media_reservations FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE media_attempts (
+ tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), request_id text NOT NULL, provider_reference text,
+ delivery_state text NOT NULL DEFAULT 'prepared' CHECK(delivery_state IN ('prepared','sending','completed','failed','unknown')),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,id,request_id),
+ FOREIGN KEY(tenant_id,request_id) REFERENCES media_requests(tenant_id,id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION media_attempt_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF TG_OP='UPDATE' AND ROW(NEW.tenant_id,NEW.id,NEW.request_id,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.request_id,OLD.created_at) THEN RAISE EXCEPTION 'media attempt identity is immutable'; END IF;
+ IF TG_OP='UPDATE' AND NOT ((OLD.delivery_state='prepared' AND NEW.delivery_state IN ('sending','failed','unknown')) OR (OLD.delivery_state='sending' AND NEW.delivery_state IN ('completed','failed','unknown')) OR NEW.delivery_state=OLD.delivery_state) THEN RAISE EXCEPTION 'invalid media attempt state transition'; END IF;
+ IF NEW.delivery_state='unknown' AND NEW.provider_reference IS NOT NULL THEN RAISE EXCEPTION 'unknown media attempt cannot expose provider reference'; END IF;
+ IF TG_OP='UPDATE' AND OLD.delivery_state='unknown' AND NEW.delivery_state IS DISTINCT FROM OLD.delivery_state THEN RAISE EXCEPTION 'unknown media attempt is terminal'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER media_attempt_guard BEFORE INSERT OR UPDATE ON media_attempts FOR EACH ROW EXECUTE FUNCTION media_attempt_guard();
+CREATE TRIGGER media_attempt_immutable BEFORE DELETE ON media_attempts FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE media_observations (
+ tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), request_id text NOT NULL, attempt_id text NOT NULL,
+ source text NOT NULL CHECK(source IN ('adapter','approved_reconciliation')), source_event_id text NOT NULL,
+ usage_state text NOT NULL CHECK(usage_state IN ('confirmed_final','missing','unknown','conflicting')), quantity bigint,
+ canonical bytea NOT NULL CHECK(octet_length(canonical) BETWEEN 1 AND 8192), digest bytea NOT NULL CHECK(octet_length(digest)=32 AND digest=sha256(canonical)),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,source,source_event_id), UNIQUE(tenant_id,request_id,attempt_id),
+ FOREIGN KEY(tenant_id,request_id) REFERENCES media_requests(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES media_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED,
+ CHECK((usage_state='confirmed_final' AND quantity IS NOT NULL AND quantity>=0) OR (usage_state<>'confirmed_final' AND quantity IS NULL))
+);
+CREATE FUNCTION media_observation_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF NEW.source='approved_reconciliation' AND NEW.usage_state='confirmed_final' THEN RAISE EXCEPTION 'reconciliation cannot confirm media supplier usage'; END IF;
+ RETURN NULL;
+END $$;
+CREATE CONSTRAINT TRIGGER media_observation_guard AFTER INSERT ON media_observations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION media_observation_guard();
+CREATE TRIGGER media_observation_immutable BEFORE UPDATE OR DELETE ON media_observations FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE media_reservation_lots (
+ tenant_id text NOT NULL, reservation_id text NOT NULL, allocation_index bigint NOT NULL CHECK(allocation_index>0), lot_id text NOT NULL, amount bigint NOT NULL CHECK(amount>0),
+ PRIMARY KEY(tenant_id,reservation_id,allocation_index), UNIQUE(tenant_id,reservation_id,lot_id),
+ FOREIGN KEY(tenant_id,reservation_id) REFERENCES media_reservations(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,lot_id) REFERENCES funding_lots(tenant_id,id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE TRIGGER media_reservation_lot_immutable BEFORE UPDATE OR DELETE ON media_reservation_lots FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+CREATE TABLE media_settlements (
+ tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), request_id text NOT NULL, reservation_id text NOT NULL, attempt_id text NOT NULL,
+ charged_amount bigint NOT NULL CHECK(charged_amount>=0), raw_amount numeric(100,0) NOT NULL CHECK(raw_amount>=0), released_amount numeric(100,0) NOT NULL CHECK(released_amount>=0),
+ status text NOT NULL CHECK(status IN ('settled','released')), reason text NOT NULL, journal_id text NOT NULL REFERENCES journals(id),
+ created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,request_id),
+ FOREIGN KEY(tenant_id,request_id) REFERENCES media_requests(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,reservation_id) REFERENCES media_reservations(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES media_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE FUNCTION media_settlement_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF NEW.status='released' AND (NEW.charged_amount<>0 OR NEW.raw_amount<>0) THEN RAISE EXCEPTION 'released media settlement must have zero charge'; END IF;
+ IF NEW.status='settled' AND NEW.charged_amount<0 THEN RAISE EXCEPTION 'invalid media settlement'; END IF;
+ RETURN NULL;
+END $$;
+CREATE CONSTRAINT TRIGGER media_settlement_guard AFTER INSERT ON media_settlements DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION media_settlement_guard();
+CREATE FUNCTION media_settlement_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF TG_OP='DELETE' OR (to_jsonb(NEW)-'refunded_amount') IS DISTINCT FROM (to_jsonb(OLD)-'refunded_amount') THEN RAISE EXCEPTION 'media settlement is immutable'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER media_settlement_immutable BEFORE UPDATE OR DELETE ON media_settlements FOR EACH ROW EXECUTE FUNCTION media_settlement_immutable();
+
+CREATE TABLE media_settlement_lots (
+ tenant_id text NOT NULL, settlement_id text NOT NULL, reservation_id text NOT NULL, allocation_index bigint NOT NULL, lot_id text NOT NULL,
+ charged_amount bigint NOT NULL CHECK(charged_amount>=0), released_amount bigint NOT NULL CHECK(released_amount>=0),
+ PRIMARY KEY(tenant_id,settlement_id,allocation_index), UNIQUE(tenant_id,settlement_id,allocation_index,lot_id),
+ FOREIGN KEY(tenant_id,settlement_id) REFERENCES media_settlements(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
+ FOREIGN KEY(tenant_id,reservation_id,allocation_index) REFERENCES media_reservation_lots(tenant_id,reservation_id,allocation_index) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE TRIGGER media_settlement_lot_immutable BEFORE UPDATE OR DELETE ON media_settlement_lots FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+
+DO $$ BEGIN
+ EXECUTE format('ALTER FUNCTION %I.media_profile_immutable() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_amount(bigint,bigint) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_request_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_reservation_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_attempt_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_observation_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_settlement_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.media_settlement_immutable() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+END $$;
+REVOKE ALL ON TABLE media_model_profiles,media_requests,media_reservations,media_attempts,media_observations,media_reservation_lots,media_settlements,media_settlement_lots FROM PUBLIC;
+REVOKE ALL ON FUNCTION media_profile_immutable(),media_amount(bigint,bigint),media_request_guard(),media_reservation_guard(),media_attempt_guard(),media_observation_guard(),media_settlement_guard(),media_settlement_immutable() FROM PUBLIC;
+
+-- Extend the existing 023 wallet validator for the current media lot edges.
+-- The wallet keeps one journal and one lot-event graph. Media rows only add
+-- their own reservation/settlement edge identities.
+CREATE OR REPLACE FUNCTION wallet_event_valid(event_ref TEXT) RETURNS BOOLEAN LANGUAGE plpgsql STABLE AS $$
+DECLARE event_kind TEXT;
+BEGIN
+ SELECT kind INTO event_kind FROM funding_lot_events WHERE id=event_ref;
+ CASE event_kind
+ WHEN 'funding' THEN RETURN EXISTS(SELECT 1 FROM funding_lot_events e JOIN journals j ON j.id=e.journal_id AND j.tenant_id=e.tenant_id AND j.operation_id=e.operation_id JOIN funding_lots l ON l.id=e.lot_id AND l.tenant_id=e.tenant_id JOIN funding_receipts f ON f.id=l.funding_receipt_id AND f.tenant_id=l.tenant_id WHERE e.id=event_ref AND e.revision=1 AND f.journal_id=j.id AND e.delta_available=l.issued_amount AND e.delta_held=0 AND e.delta_consumed=0 AND funding_journal_valid(j.id));
+ WHEN 'reserve' THEN RETURN EXISTS(SELECT 1 FROM funding_lot_events e JOIN journals j ON j.id=e.journal_id AND j.tenant_id=e.tenant_id AND j.operation_id=e.operation_id JOIN funding_reservation_lots a ON a.lot_id=e.lot_id AND a.tenant_id=e.tenant_id JOIN reservations r ON r.id=a.reservation_id AND r.tenant_id=a.tenant_id WHERE e.id=event_ref AND j.operation_id=r.id AND j.kind='reserve' AND j.reference=r.request_id AND a.request_id=r.request_id AND e.delta_available=-a.amount AND e.delta_held=a.amount AND e.delta_consumed=0)
+   OR EXISTS(SELECT 1 FROM funding_lot_events e JOIN journals j ON j.id=e.journal_id AND j.tenant_id=e.tenant_id AND j.operation_id=e.operation_id JOIN media_reservation_lots a ON a.lot_id=e.lot_id AND a.tenant_id=e.tenant_id JOIN media_reservations r ON r.id=a.reservation_id AND r.tenant_id=a.tenant_id WHERE e.id=event_ref AND j.operation_id=r.id AND j.kind='media.reserve' AND j.reference=r.request_id AND e.delta_available=-a.amount AND e.delta_held=a.amount AND e.delta_consumed=0);
+ WHEN 'finish' THEN RETURN EXISTS(SELECT 1 FROM funding_lot_events e JOIN journals j ON j.id=e.journal_id AND j.tenant_id=e.tenant_id AND j.operation_id=e.operation_id JOIN funding_settlement_lots a ON a.lot_id=e.lot_id AND a.tenant_id=e.tenant_id JOIN settlements s ON s.id=a.settlement_id AND s.tenant_id=a.tenant_id WHERE e.id=event_ref AND s.journal_id=j.id AND j.operation_id=s.id AND j.reference=s.request_id AND j.kind=s.status AND e.delta_available=a.released_amount AND e.delta_held::numeric=-(a.charged_amount::numeric+a.released_amount::numeric) AND e.delta_consumed=a.charged_amount)
+   OR EXISTS(SELECT 1 FROM funding_lot_events e JOIN journals j ON j.id=e.journal_id AND j.tenant_id=e.tenant_id AND j.operation_id=e.operation_id JOIN media_settlement_lots a ON a.lot_id=e.lot_id AND a.tenant_id=e.tenant_id JOIN media_settlements s ON s.id=a.settlement_id AND s.tenant_id=a.tenant_id WHERE e.id=event_ref AND s.journal_id=j.id AND j.operation_id=s.id AND j.kind='media.settle' AND j.reference=s.request_id AND e.delta_available=a.released_amount AND e.delta_held::numeric=-(a.charged_amount::numeric+a.released_amount::numeric) AND e.delta_consumed=a.charged_amount);
+ WHEN 'refund' THEN RETURN EXISTS(SELECT 1 FROM funding_lot_events e JOIN journals j ON j.id=e.journal_id AND j.tenant_id=e.tenant_id AND j.operation_id=e.operation_id JOIN funding_consumption_refund_lots a ON a.lot_id=e.lot_id AND a.tenant_id=e.tenant_id JOIN refund_orders r ON r.id=a.refund_order_id AND r.tenant_id=a.tenant_id WHERE e.id=event_ref AND r.state='approved' AND r.journal_id=j.id AND j.operation_id=r.id AND j.kind='refund' AND j.reference=r.settlement_id AND e.delta_available=a.amount AND e.delta_held=0 AND e.delta_consumed=-a.amount);
+ ELSE RETURN false;
+ END CASE;
+END $$;
+ALTER FUNCTION wallet_event_valid(text) SECURITY INVOKER;
+DO $$ BEGIN
+ EXECUTE format('ALTER FUNCTION %I.wallet_event_valid(text) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+END $$;
+REVOKE ALL ON FUNCTION wallet_event_valid(text) FROM PUBLIC;

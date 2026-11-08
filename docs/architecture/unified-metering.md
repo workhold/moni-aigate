@@ -5,6 +5,8 @@
 
 2026-11-08 媒体扩展开发续片：当前 024 追加任务/实时关系只保存绑定、状态、事件和制品元数据，不保存媒体正文、不创建第二钱包或结算表；APP 的状态写权限由 `ProvisionFor` 独立收紧。S/A/R service 接口把原 request/reservation/attempt/settlement 引用作为外部事实传入，provider unknown 进入不可重发边界。该片仍属于开发接缝，HTTP/WS、mock provider、真实账务金额和结果交付尚未接线。
 
+2026-11-08 媒体商业入口续片：024 追加 `media_model_profiles` 与当前媒体 request/attempt/observation/reservation/settlement 及 funding-lot edge。`internal/billing/media.go` 复用既有账本账户锁、FIFO lot 投影、journal 和 wallet event validator，图片/TTS HTTP 在有数据库的 Server 上走同一 Reserve→Attempt→Observe→Settle 入口，unknown 提交终止且不重发；Realtime 单 turn 同样接入 `realtime_turn` media profile，未接数据库 session/turn writer。media task 仍是引用既有外部商业事实的开发入口，尚未接统一账务和重启闭环。
+
 异步任务入口续片：`/v1/tasks` 当前要求客户端携带已经存在的 request、reservation、attempt、funding source 和不可变 profile/schema 身份，再写入 `media_tasks`。状态查询和提交使用相同 task identity，未知提交通过任务状态机阻止再次生成。该入口是当前开发接缝，尚未完成 Reserve/Attempt/Observe/Settle 的统一账务调用和独立 worker。
 
 异步 worker 续片：任务 lease 与 task 状态保存在同一当前表，claim 时使用 PostgreSQL 行锁和过期 lease 条件，状态操作完成后释放 lease。`tasks.Worker` 只操作任务和 provider adapter，不自行写 wallet 或 settlement，账务接缝仍由集成层补齐。

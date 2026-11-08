@@ -4844,3 +4844,62 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `internal/server/server.go`
 
 </details>
+
+## 2026-11-08T10:58:00Z · fcb3b10c7c56
+
+完成当前媒体 profile、media wallet Reserve Attempt Observe Settle 入口、图片/TTS/Realtime 账务接线、任务状态出口和 payment wallet validator 基线复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2087 个源文件；本次 32 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `README.md`
+- modified `compose.yaml`
+- modified `deploy/init-roles.sh`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/integrated-wallet-media.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/unified-metering.md`
+- added `internal/billing/media.go`
+- added `internal/billing/media_integration_test.go`
+- modified `internal/operations/meter_roles.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- added `internal/provider/mock_realtime.go`
+- added `internal/provider/realtime_test.go`
+- modified `internal/server/image_handlers.go`
+- added `internal/server/image_handlers_integration_test.go`
+- added `internal/server/media_billing.go`
+- added `internal/server/media_handlers.go`
+- added `internal/server/realtime.go`
+- added `internal/server/realtime_test.go`
+- modified `internal/server/server.go`
+- modified `internal/server/task_handlers.go`
+- added `internal/server/tts_handlers_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- added `scripts/deployment-qa.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
+
+## 2026-11-08T11:36:34Z · b2f67bb3c205
+
+补齐历史 schema 条件权限、payment wallet dispatcher 当前 024 审查基线并完成媒体专项后最终语义复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2087 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/operations/meter_roles.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+
+</details>

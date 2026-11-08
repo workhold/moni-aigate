@@ -4,6 +4,7 @@ package operations
 
 const paymentRoleMigrationSHA256 = "757721a8559ce6710972759aaa1eb4bbd1a4af6d0b1a058d45f69c121643323d"
 const walletSourcesRoleMigrationSHA256 = "67e8289f1e550ea826f4890b1b046e2d10d502537b764e0441d2cb0ae3f5eb4a"
+const legacyWalletEventValidSHA256 = "07545d756fa2c25d26fe4bf6d93777330e3839e179877298168ce3d502342b6f"
 
 var paymentFunctionSpecs = map[string]paymentFunctionSpec{
 	"funding_fact_guard":                   {"funding_fact_guard", "", "", "2279", "plpgsql", "v", "b82f809ec5663cfa681702e7044541207a08b3d167c051f4933cf2d152412885", nil, true},
@@ -53,7 +54,7 @@ var paymentFunctionSpecs = map[string]paymentFunctionSpec{
 	"wallet_lot_balance_guard":             {"wallet_lot_balance_guard", "", "", "2279", "plpgsql", "v", "425c2cefb7893ba51aff99d1e5692b4dc860fef820798095fb74bd0381a49839", nil, true},
 	"wallet_lot_event_stamp":               {"wallet_lot_event_stamp", "", "", "2279", "plpgsql", "v", "287edc8686fd1dc72209fca494ab1f9c7b7710bd7ef94de7f0ff50e9b4d3c437", nil, true},
 	"wallet_lot_valid":                     {"wallet_lot_valid", "text", "25", "16", "sql", "s", "040f32222d476d0f27143f7eb5502d154720214d9483a5a4836e98de3e5e38cf", []string{"lot_ref"}, true},
-	"wallet_event_valid":                   {"wallet_event_valid", "text", "25", "16", "plpgsql", "s", "07545d756fa2c25d26fe4bf6d93777330e3839e179877298168ce3d502342b6f", []string{"event_ref"}, true},
+	"wallet_event_valid":                   {"wallet_event_valid", "text", "25", "16", "plpgsql", "s", "cf1d5e4ba13a6427cd1ced2e0cbc4c75d082999ca427098e01bffd9b05d5b3c7", []string{"event_ref"}, true},
 	"wallet_reservation_fifo_guard":        {"wallet_reservation_fifo_guard", "", "", "2279", "plpgsql", "v", "6f966a203aa31f11b0bb1eae7fd4a95dd17976cd9eefedd1e6981ae7e1cd4d77", nil, false},
 	"wallet_reservation_valid":             {"wallet_reservation_valid", "text", "25", "16", "sql", "s", "af87dce7e1bdd19d2fae3dbeb267da2e767952a98af8f7f15b34ff513c3bf541", []string{"res_ref"}, false},
 	"wallet_settlement_valid":              {"wallet_settlement_valid", "text", "25", "16", "sql", "s", "4130762d279e5ab9fb5e9ae30ae38dd9bc586e7dfa1a0ae0c7157b307b2ec87d", []string{"set_ref"}, false},

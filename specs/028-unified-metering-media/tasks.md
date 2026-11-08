@@ -69,6 +69,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 worker 部署续片：新增 `moni-aigate worker` 命令和 Compose 独立 worker 服务。worker 只使用当前 task lease 与 mock adapter，未获得计量表、wallet 或 payment worker 权限。`docker-compose config` 通过，真实容器启动、worker 重启恢复和统一账务收尾仍待验收。
 
+2026-11-08 媒体商业入口续片：024 追加当前 `media_model_profiles`、request/attempt/observation、reservation/settlement 和两侧 funding-lot edge。`billing.Store` 复用既有账户锁、journal、FIFO lot 和 wallet event validator，支持媒体预占、confirmed usage 收费、unknown/failed 释放、幂等和未知 attempt 禁止重发。图片 HTTP 与 TTS HTTP 在有数据库的 server fixture 已各完成一次真实 media reservation、attempt、observation、settlement 和 wallet 守恒核对；Realtime 有数据库路径接入单 turn media reservation/settlement，纯 WS fixture 保持 pending。异步 video task、媒体结果持久化/对象存储、数据库 session/turn writer、真实供应商、Compose 容器运行和完整部署验收仍未完成，S/A/R 纵向复选框保持未勾。
+
 ## S / A / R / 交付
 
 - [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。

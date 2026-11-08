@@ -11,9 +11,9 @@ moni-aigate 对外出售模型 API，也向官方模型商和第三方平台采�
 | 范围 | 本文编写时的实际状态 | 本轮目标 |
 | --- | --- | --- |
 | 文本及检索 | 已有 Chat、Responses、Messages、Embeddings、Rerank、Gemini 六种声明协议；provider 与 billing 的生产 DTO 仍围绕输入/输出 Token | 外部已声明协议保留，内部统一接入现行计量合同 |
-| 通用计量 | [metering](../../internal/metering)纯层已实现：完整向量、精确有理费率、末尾一次向上取整；尚无 serving 调用方 | 成为文本、同步媒体、任务、会话共同的计价入口 |
+| 通用计量 | [metering](../../internal/metering)纯层已实现；文本和当前 media wallet 入口已各自使用不可变原件与单次 ceil | 成为文本、同步媒体、任务、会话共同的计价入口，仍需统一任务/Realtime持久 writer |
 | 来源与开账 | 027 正式迁移、四写入口、命令、HTTP及控制台已实现；限定本地验收见[记录](../verification/wallet-sources.md) | 四类来源、FIFO 预占、结算/释放、消费退款与只读核对全部接通 |
-| 媒体及 Realtime | 尚无媒体端点、持久任务或 WebSocket 资金运行链 | 按真实供应商的端点、用量和硬上界逐个 profile 发布 |
+| 媒体及 Realtime | 图片/TTS HTTP、mock provider、单 turn WS 与当前 media reservation/settlement 已接开发链；task 账务与 session/turn 持久 writer 未接 | 按真实供应商的端点、用量和硬上界逐个 profile 发布，并完成任务/Realtime恢复验收 |
 | 经营报表 | [026](../../specs/026-operating-reports/spec.md)已按请求窗口关联唯一客户结算及全部上游尝试 | 媒体及会话进入同一请求/尝试事实，展示真实计量单位 |
 
 ## 2. 一套架构与商业链路

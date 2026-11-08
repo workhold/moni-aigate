@@ -1,5 +1,17 @@
 # 028-U统一计量验证
 
+## 2026-11-08：媒体当前 wallet 入口与 HTTP/WS 局部验收
+
+024 新增媒体 profile、request/attempt/observation、reservation/settlement 和 funding-lot edge。`internal/billing/media.go` 复用当前 ledger account 锁、`media_amount` 单次 ceil、FIFO lot、journal 和扩展后的 `wallet_event_valid`，覆盖预占、confirmed usage 收费、unknown/failed 释放、幂等和未知 attempt 禁止重发。
+
+使用 `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable'` 的实际隔离 schema 通过：
+
+- `go test -count=1 -race -timeout 240s ./internal/billing -run 'TestPostgresMedia'`
+- `go test -count=1 -race -timeout 240s ./internal/server -run '^Test(SpeechHTTP|ImageGenerationHTTP)'`
+- `go test -count=1 -race ./internal/server ./internal/provider ./internal/realtime -run 'TestRealtime|TestMockRealtime|TestService'`
+
+图片和 TTS server fixture 各核对一次 media reservation、attempt、observation、settlement、charged amount 与 wallet 余额。Realtime 有数据库路径在单 turn 收尾时写 media settlement，纯 server WS fixture 因无 DB 继续返回 `response.pending`。异步 task 尚未接统一 Reserve/Settle，媒体结果正文仍是内存 mock，未完成数据库 session/turn writer、worker 重启、Compose 容器运行、真实供应商和完整 028/S/A/R 验收。
+
 2026-11-08 成本来源边界续片：024 的 `meter_attempt_cost_matches` 在 UPDATE 时拒绝把已有 correction pointer 清成空并改写为 late finalization，INSERT 不引用 `OLD`；已存在的 finalization→correction 更正路径保持可用。迁移 canonical/缺口专项和 billing 证据/更正回归在 55439 专库通过。该 guard 仍属于局部存储证据，不能替代 028-U 九组完整 guard 或正式供应商成本认证。
 
 ## 2026-11-08：route cap 完整性与 funding-lot 批次续片

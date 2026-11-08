@@ -142,7 +142,7 @@ func (s *Server) taskStatus(c *gin.Context) {
 		s.error(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "type": "video_generation", "status": view.Protocol, "observation": view.Observation, "artifact": view.Artifact})
+	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "type": "video_generation", "status": taskProtocolStatus(view), "observation": view.Observation, "artifact": view.Artifact})
 }
 
 func (s *Server) submitTask(c *gin.Context) {
@@ -163,7 +163,7 @@ func (s *Server) submitTask(c *gin.Context) {
 		return
 	}
 	view, _ := task.Snapshot()
-	c.JSON(202, gin.H{"id": view.TaskID, "object": "task", "status": view.Protocol})
+	c.JSON(202, gin.H{"id": view.TaskID, "object": "task", "status": taskProtocolStatus(view)})
 }
 
 func (s *Server) cancelTask(c *gin.Context) {
@@ -185,7 +185,23 @@ func (s *Server) cancelTask(c *gin.Context) {
 		return
 	}
 	view, _ := task.Snapshot()
-	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "status": view.Protocol, "cancel": view.Cancel})
+	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "status": taskProtocolStatus(view), "cancel": view.Cancel})
+}
+
+func taskProtocolStatus(view tasks.Snapshot) string {
+	if view.Observation == tasks.ObservationExpired {
+		return "expired"
+	}
+	switch view.Protocol {
+	case tasks.StatePrepared:
+		return "created"
+	case tasks.StateSubmitting, tasks.StateCancelRequested:
+		return "running"
+	case tasks.StateSubmissionUnknown:
+		return "unknown"
+	default:
+		return string(view.Protocol)
+	}
 }
 
 func (s *Server) taskResultGrant(c *gin.Context) {

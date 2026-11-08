@@ -21,9 +21,21 @@ var meterHistoryTables = []string{
 var mediaRuntimeTables = []string{
 	"media_tasks", "media_task_events", "media_task_artifacts",
 	"realtime_sessions", "realtime_turns", "realtime_events",
+	"media_requests", "media_reservations", "media_attempts", "media_observations",
+	"media_reservation_lots", "media_settlements", "media_settlement_lots",
 }
 
 func provisionMediaRuntimeRoles(ctx context.Context, tx pgx.Tx, schema, appRole, projectionRole string) error {
+	var count int
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname=ANY($2::text[])`, schema, mediaRuntimeTables).Scan(&count); err != nil {
+		return err
+	}
+	if count == 0 {
+		return nil
+	}
+	if count != len(mediaRuntimeTables) {
+		return fmt.Errorf("%w: partial media runtime schema", ErrMeterRolePrivileges)
+	}
 	qtables := make([]string, len(mediaRuntimeTables))
 	for i, name := range mediaRuntimeTables {
 		qtables[i] = pgx.Identifier{schema, name}.Sanitize()
@@ -43,6 +55,30 @@ func provisionMediaRuntimeRoles(ctx context.Context, tx pgx.Tx, schema, appRole,
 		if !selectOK || !insertOK || !updateOK || deleteOK || projectionAny || publicAny {
 			return fmt.Errorf("%w: media runtime table %s", ErrMeterRolePrivileges, table)
 		}
+	}
+	return nil
+}
+
+func provisionMediaProfileRole(ctx context.Context, tx pgx.Tx, schema, appRole, projectionRole string) error {
+	qualified := pgx.Identifier{schema, "media_model_profiles"}.Sanitize()
+	var exists bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles')`, schema).Scan(&exists); err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+	app := pgx.Identifier{appRole}.Sanitize()
+	projection := pgx.Identifier{projectionRole}.Sanitize()
+	if _, err := tx.Exec(ctx, "REVOKE ALL ON TABLE "+qualified+" FROM "+app+","+projection+",PUBLIC; GRANT SELECT ON "+qualified+" TO "+app); err != nil {
+		return err
+	}
+	var selectOK, insertOK, updateOK, deleteOK, projectionAny, publicAny bool
+	if err := tx.QueryRow(ctx, `SELECT has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),has_table_privilege($1::name,$2::text,'DELETE'),has_table_privilege($3::name,$2::text,'SELECT') OR has_table_privilege($3::name,$2::text,'INSERT') OR has_table_privilege($3::name,$2::text,'UPDATE') OR has_table_privilege($3::name,$2::text,'DELETE'),has_table_privilege('public',$2::text,'SELECT') OR has_table_privilege('public',$2::text,'INSERT') OR has_table_privilege('public',$2::text,'UPDATE') OR has_table_privilege('public',$2::text,'DELETE')`, appRole, qualified, projectionRole).Scan(&selectOK, &insertOK, &updateOK, &deleteOK, &projectionAny, &publicAny); err != nil {
+		return err
+	}
+	if !selectOK || insertOK || updateOK || deleteOK || projectionAny || publicAny {
+		return fmt.Errorf("%w: media profile table", ErrMeterRolePrivileges)
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -122,8 +123,26 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 	}
 	refs := realtime.CommercialRefs{
 		RequestID:     requestID,
-		ReservationID: "mvp-reservation-" + uuid.NewString(),
-		AttemptID:     "mvp-attempt-" + uuid.NewString(),
+		ReservationID: uuid.NewString(),
+		AttemptID:     uuid.NewString(),
+	}
+	billingRefs, err := s.reserveMediaForRequest(ctx, p.TenantID, p.UserID, p.KeyID, refs.RequestID, "realtime:"+refs.RequestID, "realtime_turn", "mock-realtime", "44444444-4444-4444-8444-444444444444", sha256.Sum256([]byte(refs.RequestID)), 1)
+	if err != nil {
+		s.writeRealtimeError(ws, err)
+		return
+	}
+	if billingRefs.attemptID == "" {
+		billingRefs.attemptID = refs.AttemptID
+	}
+	if billingRefs.enabled && billingRefs.existing && billingRefs.state != "prepared" {
+		_ = s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.pending", Data: map[string]any{"reason": "provider_consumption_unknown"}})
+		return
+	}
+	if billingRefs.enabled {
+		if err = s.Billing.MarkMediaAttemptSending(ctx, p.TenantID, billingRefs.attemptID); err != nil {
+			s.writeRealtimeError(ws, err)
+			return
+		}
 	}
 	routeID := fmt.Sprintf("mvp-route-%d", model.Revision)
 	if model.Revision < 1 {
@@ -140,9 +159,13 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 		Origin:    origin,
 	}
 	created := false
+	mediaSettled := false
 	defer func() {
 		if created {
 			s.disconnectRealtime(service, sessionID, "client_disconnect")
+		}
+		if billingRefs.enabled && !mediaSettled {
+			_ = s.finalizeMediaRequest(context.Background(), billingRefs, "unknown", "unknown", 0)
 		}
 		_ = ws.Close()
 	}()
@@ -223,10 +246,11 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 		}
 		switch event.Type {
 		case realtime.EventResponseCreate:
-			if err = s.completeRealtimeTurn(ctx, ws, service, sessionID, turnID, event); err != nil {
+			if err = s.completeRealtimeTurn(ctx, ws, service, sessionID, turnID, event, billingRefs); err != nil {
 				s.writeRealtimeError(ws, err)
 				s.disconnectRealtime(service, sessionID, "provider_error")
 				created = false
+				mediaSettled = billingRefs.enabled
 				return
 			}
 		case realtime.EventResponseCancel:
@@ -237,7 +261,7 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 	}
 }
 
-func (s *Server) completeRealtimeTurn(ctx context.Context, ws *websocket.Conn, service *realtime.Service, sessionID, turnID string, event realtime.ClientEvent) error {
+func (s *Server) completeRealtimeTurn(ctx context.Context, ws *websocket.Conn, service *realtime.Service, sessionID, turnID string, event realtime.ClientEvent, billingRefs mediaExecutionRefs) error {
 	snapshot, err := service.Dispatch(ctx, sessionID, turnID, realtime.ProviderPayload{EventID: event.ID, EventType: event.Type}, time.Now().UTC())
 	if err != nil {
 		return err
@@ -255,6 +279,14 @@ func (s *Server) completeRealtimeTurn(ctx context.Context, ws *websocket.Conn, s
 		"turn_id": turnID, "response_id": snapshot.ProviderResponseID, "bytes": snapshot.ForwardedBytes,
 	}}); err != nil {
 		return err
+	}
+	if billingRefs.enabled {
+		if err = s.finalizeMediaRequest(ctx, billingRefs, "completed", "confirmed_final", 1); err != nil {
+			return err
+		}
+		return s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.done", Data: map[string]any{
+			"turn_id": turnID, "response_id": snapshot.ProviderResponseID,
+		}})
 	}
 	return s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.pending", Data: map[string]any{
 		"turn_id": turnID, "response_id": snapshot.ProviderResponseID,

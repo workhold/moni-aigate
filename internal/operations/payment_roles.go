@@ -508,6 +508,10 @@ const paymentFunctionDefinitionsSQL = `SELECT p.proname,p.proargtypes::text,p.pr
  FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace JOIN pg_catalog.pg_language l ON l.oid=p.prolang WHERE n.nspname=$1 AND (left(p.proname,8)='payment_' OR left(p.proname,7)='wallet_' OR p.proname IN ('funding_journal_valid','funding_fact_guard')) ORDER BY p.proname,p.proargtypes`
 
 func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema string) error {
+	var currentMedia bool
+	if e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles')`, schema).Scan(&currentMedia); e != nil {
+		return ErrPaymentRolePrivileges
+	}
 	rows, e := tx.Query(ctx, paymentFunctionDefinitionsSQL, schema)
 	if e != nil {
 		return ErrPaymentRolePrivileges
@@ -522,7 +526,14 @@ func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema str
 			return ErrPaymentRolePrivileges
 		}
 		f, ok := paymentFunctionSpecs[name]
-		if !ok || f.argOIDs != argOIDs || f.resultOID != result || f.language != language || f.volatility != volatility || !slices.Equal(f.argNames, args) || fmt.Sprintf("%x", sha256.Sum256([]byte(body))) != f.bodySHA {
+		expectedBody := ""
+		if ok {
+			expectedBody = f.bodySHA
+			if name == "wallet_event_valid" && !currentMedia {
+				expectedBody = legacyWalletEventValidSHA256
+			}
+		}
+		if !ok || f.argOIDs != argOIDs || f.resultOID != result || f.language != language || f.volatility != volatility || !slices.Equal(f.argNames, args) || fmt.Sprintf("%x", sha256.Sum256([]byte(body))) != expectedBody {
 			return ErrPaymentRolePrivileges
 		}
 		seen[name] = true

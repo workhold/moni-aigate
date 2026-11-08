@@ -47,6 +47,18 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 			functions[string(match[1])] = fmt.Sprintf("%x", sha256.Sum256(match[2]))
 		}
 	}
+	// 024 is the unissued current baseline. It deliberately replaces the
+	// wallet event dispatcher to validate media lot edges while preserving the
+	// same payment-worker role contract.
+	current, e := migrations.Files.ReadFile("024_unified_text_metering.sql")
+	if e != nil {
+		t.Fatal("current media wallet override unavailable")
+	}
+	currentWallet := regexp.MustCompile(`(?s)CREATE OR REPLACE FUNCTION wallet_event_valid\([^$]*?\$\$(.*?)\$\$;`).FindSubmatch(current)
+	if len(currentWallet) != 2 {
+		t.Fatal("current media wallet dispatcher unavailable")
+	}
+	functions["wallet_event_valid"] = fmt.Sprintf("%x", sha256.Sum256(currentWallet[1]))
 	if len(paymentFunctionSpecs) != 55 || len(functions) != len(paymentFunctionSpecs) {
 		t.Fatal("current payment/wallet function allowlist incomplete")
 	}

@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/identity"
 	"github.com/moni-ai/moni-aigate/internal/media"
 	"github.com/moni-ai/moni-aigate/internal/provider"
@@ -24,6 +25,7 @@ const (
 	maxSpeechInputBytes = 16 * 1024
 	maxMediaModelBytes  = 256
 	maxVoiceBytes       = 128
+	ttsProfileVersion   = "22222222-2222-4222-8222-222222222222"
 )
 
 type mediaReplay struct {
@@ -127,27 +129,59 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 		c.Data(replay.status, replay.contentType, replay.body)
 		return
 	}
+	requestID := c.GetString("request_id")
+	if _, err := uuid.Parse(requestID); err != nil {
+		requestID = uuid.NewString()
+	}
+	billingRefs, err := s.reserveMediaForRequest(c.Request.Context(), p.TenantID, p.UserID, p.KeyID, requestID, key, "tts", "mock-tts", ttsProfileVersion, digest, int64(len([]rune(in.Input))))
+	if err != nil {
+		s.error(c, err)
+		return
+	}
+	if billingRefs.attemptID == "" {
+		billingRefs.attemptID = uuid.NewString()
+	}
+	if billingRefs.enabled && billingRefs.existing && billingRefs.state != "prepared" {
+		s.fail(c, http.StatusConflict, "provider_consumption_unknown", "语音请求已有未决供应商消费，禁止重发")
+		return
+	}
+	if billingRefs.enabled {
+		if err = s.Billing.MarkMediaAttemptSending(c.Request.Context(), p.TenantID, billingRefs.attemptID); err != nil {
+			s.error(c, err)
+			return
+		}
+	}
 	adapter := s.MediaAdapter
 	if adapter == nil {
 		s.fail(c, http.StatusServiceUnavailable, "unavailable", "语音服务未就绪")
 		return
 	}
-	result, err := adapter.SynthesizeSpeech(c.Request.Context(), provider.SpeechRequest{RequestID: c.GetString("request_id"), IdempotencyKey: key, Model: in.Model, Input: in.Input, Voice: in.Voice, ResponseFormat: in.ResponseFormat})
+	result, err := adapter.SynthesizeSpeech(c.Request.Context(), provider.SpeechRequest{RequestID: requestID, IdempotencyKey: key, Model: in.Model, Input: in.Input, Voice: in.Voice, ResponseFormat: in.ResponseFormat})
 	if err != nil || !result.Sent {
 		unknown := result.Sent
 		if providerErr, ok := err.(*provider.MediaError); ok {
 			unknown = unknown || providerErr.Sent || providerErr.Unknown
 		}
 		if unknown {
+			_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
 			s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, unknown: true, status: http.StatusConflict})
 			s.fail(c, http.StatusConflict, "provider_consumption_unknown", "供应商提交结果未知，禁止自动重试")
+			return
+		}
+		if finalizeErr := s.finalizeMediaRequest(c.Request.Context(), billingRefs, "failed", "missing", 0); finalizeErr != nil {
+			s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
 			return
 		}
 		s.fail(c, http.StatusBadGateway, "provider_error", "语音供应商调用失败")
 		return
 	}
 	if len(result.Data) == 0 || result.MediaType != "audio/wav" || len(result.Data) > media.MaxDecodedBytes {
+		_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
 		s.fail(c, http.StatusBadGateway, "provider_protocol_error", "语音供应商结果无效")
+		return
+	}
+	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", "confirmed_final", int64(len([]rune(in.Input)))); err != nil {
+		s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
 		return
 	}
 	s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, status: http.StatusOK, contentType: result.MediaType, body: result.Data})
