@@ -44,6 +44,16 @@ BEGIN
  END IF;
 END $$;
 
+-- 024 owns the empty current schema. Manual reconciliation keeps the exact
+-- vector bytes so JSONB key reordering cannot change an idempotency identity.
+ALTER TABLE reconciliation_cases DROP COLUMN proposed_usage;
+ALTER TABLE reconciliation_cases
+ ADD COLUMN proposed_observation_canonical BYTEA,
+ ADD COLUMN proposed_observation_digest BYTEA,
+ ADD CHECK ((proposed_observation_canonical IS NULL AND proposed_observation_digest IS NULL)
+        OR (octet_length(proposed_observation_canonical) BETWEEN 1 AND 8192
+            AND octet_length(proposed_observation_digest)=32));
+
 CREATE FUNCTION meter_frames(parts bytea[]) RETURNS bytea LANGUAGE plpgsql IMMUTABLE AS $$
 DECLARE part bytea; out bytea := ''::bytea;
 BEGIN
@@ -1610,12 +1620,60 @@ ALTER TABLE platform_probe_attempts
 CREATE FUNCTION meter_side_quantity_canonical(schema_id text, side text, input_tokens bigint, output_tokens bigint) RETURNS bytea LANGUAGE sql IMMUTABLE AS $$
  SELECT convert_to(format('{"schema_id":"%s","version":"1","side":"%s","quantities":[{"dimension":"text_input_token","unit":"token","quantity":"%s"},{"dimension":"text_output_token","unit":"token","quantity":"%s"}]}', schema_id, side, input_tokens, output_tokens), 'UTF8')
 $$;
+CREATE FUNCTION meter_quantities_digest(schema_digest bytea, side text, canonical bytea) RETURNS bytea LANGUAGE sql IMMUTABLE AS $$
+ SELECT sha256(meter_frames(ARRAY[convert_to('moni-aigate.metering.quantities.v1','UTF8'), schema_digest, convert_to(side,'UTF8'), canonical]))
+$$;
 CREATE FUNCTION meter_final_digest(schema_digest bytea, side text, canonical bytea) RETURNS bytea LANGUAGE sql IMMUTABLE AS $$
  SELECT sha256(meter_frames(ARRAY[convert_to('moni-aigate.inference.final.v1','UTF8'), schema_digest, convert_to(side,'UTF8'), canonical]))
 $$;
 CREATE FUNCTION meter_quantity_canonical(schema_id text, input_tokens bigint, output_tokens bigint) RETURNS bytea LANGUAGE sql IMMUTABLE AS $$
  SELECT meter_side_quantity_canonical(schema_id, 'supplier', input_tokens, output_tokens)
 $$;
+
+CREATE FUNCTION meter_reconciliation_proposal_complete() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE sid text; sd bytea; canonical bytea; input_quantity bigint; output_quantity bigint; input_max bigint; output_max bigint; value jsonb;
+BEGIN
+ IF NEW.state='open' THEN
+  IF NEW.proposed_observation_canonical IS NOT NULL OR NEW.proposed_observation_digest IS NOT NULL THEN
+   RAISE EXCEPTION 'open reconciliation cannot carry a proposal';
+  END IF;
+  RETURN NEW;
+ END IF;
+ IF NEW.state='closed' AND NEW.proposed_observation_canonical IS NULL AND NEW.proposed_observation_digest IS NULL THEN
+  RETURN NEW;
+ END IF;
+ IF NEW.state NOT IN ('proposed','approved','closed') THEN
+  RAISE EXCEPTION 'reconciliation state is invalid';
+ END IF;
+ IF NEW.proposed_observation_canonical IS NULL OR NEW.proposed_observation_digest IS NULL THEN
+  RAISE EXCEPTION 'reconciliation proposal vector is incomplete';
+ END IF;
+ SELECT s.schema_id,s.schema_digest INTO sid,sd FROM request_meter_snapshots s
+  WHERE s.tenant_id=NEW.tenant_id AND s.request_id=NEW.request_id;
+ IF sid IS NULL OR octet_length(sd)<>32 THEN RAISE EXCEPTION 'reconciliation request schema is missing'; END IF;
+ SELECT max(quantity) FILTER (WHERE dimension='text_input_token'),max(quantity) FILTER (WHERE dimension='text_output_token')
+  INTO input_max,output_max FROM request_meter_bound_lines WHERE tenant_id=NEW.tenant_id AND request_id=NEW.request_id AND side='retail';
+ value := convert_from(NEW.proposed_observation_canonical,'UTF8')::jsonb;
+ input_quantity := (value->'quantities'->0->>'quantity')::bigint;
+ output_quantity := (value->'quantities'->1->>'quantity')::bigint;
+ IF input_quantity IS NULL OR output_quantity IS NULL OR input_quantity<0 OR output_quantity<0 OR input_max IS NULL OR output_max IS NULL
+    OR input_quantity>input_max OR output_quantity>output_max THEN
+  RAISE EXCEPTION 'reconciliation proposal quantity exceeds the request schema';
+ END IF;
+ canonical := meter_side_quantity_canonical(sid,'retail',input_quantity,output_quantity);
+ IF NEW.proposed_observation_canonical IS DISTINCT FROM canonical
+    OR NEW.proposed_observation_digest IS DISTINCT FROM meter_quantities_digest(sd,'retail',canonical) THEN
+  RAISE EXCEPTION 'reconciliation proposal vector mismatch';
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER meter_reconciliation_proposal_complete BEFORE INSERT OR UPDATE ON reconciliation_cases
+ FOR EACH ROW EXECUTE FUNCTION meter_reconciliation_proposal_complete();
+DO $$ BEGIN
+ EXECUTE format('ALTER FUNCTION %I.meter_quantities_digest(bytea,text,bytea) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.meter_reconciliation_proposal_complete() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+END $$;
+REVOKE ALL ON FUNCTION meter_quantities_digest(bytea,text,bytea), meter_reconciliation_proposal_complete() FROM PUBLIC;
 
 CREATE FUNCTION meter_event_rows_complete() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE n integer; matched integer;
@@ -2016,4 +2074,4 @@ BEGIN
 END $$;
 CREATE CONSTRAINT TRIGGER meter_procurement_proposal_current AFTER INSERT OR UPDATE ON procurement_cost_proposals DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION meter_procurement_proposal_current();
 
-REVOKE ALL ON FUNCTION meter_frames(bytea[]), meter_gcd(bigint,bigint), meter_schema_stamp(), meter_schema_complete(), meter_text_schema(bigint,bigint), meter_insert_text_model(text,text,jsonb,text), meter_model_profile(text), meter_rate_canonical(text,text,bigint,bigint,bigint,bigint), meter_price_complete(), meter_reduce_million(bigint), meter_insert_token_price(text,text,bigint,bigint,timestamptz,text,text,text,timestamptz), meter_insert_token_cost(text,text,text,text,bigint,bigint,text,timestamptz,text,text,timestamptz), meter_insert_token_cap(text,text,bigint), meter_route_complete(), meter_request_snapshot_present(), meter_plan_ready(text,text), meter_profile_canonical(text,text,text,text,bytea,bytea,bigint,bigint), meter_profile_digest(bytea,bytea), meter_bounds_canonical(text,text,bigint,bigint), meter_bounds_digest(bytea,text,bytea), meter_rates_digest(bytea,text,bytea), meter_pure_quote_digest(bytea,text,bytea,bytea), meter_request_vectors(), meter_request_vectors_match(), meter_request_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_attempt_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_plan_digest(bytea,bytea), meter_request_plan_matches(), meter_attempt_plan_matches(), meter_request_price_matches(), meter_insert_attempt_snapshot(text,text,text,text,text), meter_attempt_snapshot_present(), meter_attempt_matches_request(), meter_usage_state(text), meter_record_event_quantities(text,text,text,bigint,bigint), meter_event_quantity(text,text), meter_side_quantity_canonical(text,text,bigint,bigint), meter_final_digest(bytea,text,bytea), meter_quantity_canonical(text,bigint,bigint), meter_event_rows_complete(), meter_event_attempt_bound(), meter_cost_lines_complete(), meter_finish_probe(text,text,text,bigint,bigint), meter_finalization_complete(), meter_request_finalization_pointer(), meter_settlement_finalization(), meter_token_amount(bigint,bigint,bigint,bigint,bigint,bigint), meter_attempt_cost_matches(), meter_procurement_attempt_closed(), meter_procurement_proposal_current(), meter_request_bounds_complete(), meter_attempt_bounds_complete(), meter_quote_digest(bytea,bytea), meter_retail_quote_canonical(text,bytea,bytea,text,bigint,bigint), meter_supplier_quote_canonical(text,bytea,bytea,text,text,text,bytea,bigint,bigint), meter_request_quote_matches(), meter_attempt_quote_matches(), meter_attempt_vectors_match() FROM PUBLIC;
+REVOKE ALL ON FUNCTION meter_frames(bytea[]), meter_gcd(bigint,bigint), meter_schema_stamp(), meter_schema_complete(), meter_text_schema(bigint,bigint), meter_insert_text_model(text,text,jsonb,text), meter_model_profile(text), meter_rate_canonical(text,text,bigint,bigint,bigint,bigint), meter_price_complete(), meter_reduce_million(bigint), meter_insert_token_price(text,text,bigint,bigint,timestamptz,text,text,text,timestamptz), meter_insert_token_cost(text,text,text,text,bigint,bigint,text,timestamptz,text,text,timestamptz), meter_insert_token_cap(text,text,bigint), meter_route_complete(), meter_request_snapshot_present(), meter_plan_ready(text,text), meter_profile_canonical(text,text,text,text,bytea,bytea,bigint,bigint), meter_profile_digest(bytea,bytea), meter_bounds_canonical(text,text,bigint,bigint), meter_bounds_digest(bytea,text,bytea), meter_rates_digest(bytea,text,bytea), meter_pure_quote_digest(bytea,text,bytea,bytea), meter_request_vectors(), meter_request_vectors_match(), meter_request_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_attempt_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_plan_digest(bytea,bytea), meter_request_plan_matches(), meter_attempt_plan_matches(), meter_request_price_matches(), meter_insert_attempt_snapshot(text,text,text,text,text), meter_attempt_snapshot_present(), meter_attempt_matches_request(), meter_usage_state(text), meter_record_event_quantities(text,text,text,bigint,bigint), meter_event_quantity(text,text), meter_side_quantity_canonical(text,text,bigint,bigint), meter_quantities_digest(bytea,text,bytea), meter_final_digest(bytea,text,bytea), meter_quantity_canonical(text,bigint,bigint), meter_reconciliation_proposal_complete(), meter_event_rows_complete(), meter_event_attempt_bound(), meter_cost_lines_complete(), meter_finish_probe(text,text,text,bigint,bigint), meter_finalization_complete(), meter_request_finalization_pointer(), meter_settlement_finalization(), meter_token_amount(bigint,bigint,bigint,bigint,bigint,bigint), meter_attempt_cost_matches(), meter_procurement_attempt_closed(), meter_procurement_proposal_current(), meter_request_bounds_complete(), meter_attempt_bounds_complete(), meter_quote_digest(bytea,bytea), meter_retail_quote_canonical(text,bytea,bytea,text,bigint,bigint), meter_supplier_quote_canonical(text,bytea,bytea,text,text,text,bytea,bigint,bigint), meter_request_quote_matches(), meter_attempt_quote_matches(), meter_attempt_vectors_match() FROM PUBLIC;

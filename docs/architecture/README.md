@@ -8,7 +8,7 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 **当前研发原则**：[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)采用单一现行模型，MVP 前优先架构完整与业务能力，不新增旧版本兼容、双写或自动回退。下面的隔离历史证明候选保留其事实与验证边界，暂不扩展，也不作为经营功能的前置依赖；它们没有接入默认服务。现行资金与租户正确性继续保持。
 
-2026-11-07 028-U阶段1续片：受限APP六协议默认价/组价组合、退款来源一致性和过期未知用量恢复不重生成已在55439专库通过，验证包含唯一结算、原组价快照、退款边、钱包来源核对和单次上游POST。该证据仍是本地fixture的局部验收；完整guard、超界、浏览器、正式供应商和部署/HA/性能仍未完成。
+2026-11-08 028-U续片：人工核对收费提交已切为绑定原请求 schema 的完整 `retail_quantities` 向量，proposal 保存 canonical/digest，批准继续沿 approved_reconciliation 观察和原结算链且 supplier 保持 missing；HTTP/UI删除 `input_tokens/output_tokens` 输入，并新增旧标量、未知字段、重复键负控。此前受限APP六协议默认价/组价组合、退款来源一致性和过期未知用量恢复不重生成已在55439专库通过，验证包含唯一结算、原组价快照、退款边、钱包来源核对和单次上游POST。该证据仍是本地fixture的局部验收；完整guard、超界、浏览器、正式供应商和部署/HA/性能仍未完成。
 
 2026-11-08 028-S/A/R 纯域候选第一片：`internal/media`、`internal/tasks`、`internal/realtime` 已分别冻结并通过纯 Go race/vet；它们只验证输入、状态、幂等和资源边界，不含数据库、HTTP/WS、provider、账务、wallet 或报表接线。对应复选框继续未勾，生产能力仍以后续纵向验收为准。
 

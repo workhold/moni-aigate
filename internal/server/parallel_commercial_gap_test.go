@@ -136,8 +136,12 @@ func TestParallelCommercialGapManualReconciliationKeepsSupplierUnknownWhenDelive
 			if protocol == provider.ProtocolEmbeddings || protocol == provider.ProtocolRerank {
 				output = 0
 			}
-			usage := billing.Usage{Status: "confirmed_final", InputTokens: input, OutputTokens: output, TotalTokens: input + output}
-			proposalInput := billing.ReconcileInput{TenantID: f.tenant, RequestID: requestID, ActorID: operator, Action: "propose", EvidenceRef: "invoice:parallel-customer-only", Reason: "confirm customer usage only", Usage: usage}
+			var retailQuantities []byte
+			if err := f.pool.QueryRow(context.Background(), `SELECT meter_side_quantity_canonical(schema_id,'retail',$2,$3)
+FROM request_meter_snapshots WHERE tenant_id=$1 AND request_id=$4`, f.tenant, input, output, requestID).Scan(&retailQuantities); err != nil {
+				t.Fatal(err)
+			}
+			proposalInput := billing.ReconcileInput{TenantID: f.tenant, RequestID: requestID, ActorID: operator, Action: "propose", EvidenceRef: "invoice:parallel-customer-only", Reason: "confirm customer usage only", RetailQuantitiesCanonical: retailQuantities}
 			proposal, err := f.server.Billing.Reconcile(context.Background(), proposalInput)
 			if err != nil || proposal.State != "proposed" {
 				t.Fatalf("customer-only reconciliation proposal failed: %+v err=%v", proposal, err)
@@ -146,8 +150,7 @@ func TestParallelCommercialGapManualReconciliationKeepsSupplierUnknownWhenDelive
 				t.Fatalf("identical proposal replay was not idempotent: %+v err=%v", replay, replayErr)
 			}
 			conflict := proposalInput
-			conflict.Usage.InputTokens++
-			conflict.Usage.TotalTokens++
+			conflict.RetailQuantitiesCanonical = []byte(strings.Replace(string(retailQuantities), `"quantity":"10"`, `"quantity":"11"`, 1))
 			if _, err = f.server.Billing.Reconcile(context.Background(), conflict); err == nil {
 				t.Fatal("changed proposal replaced the original customer evidence")
 			}

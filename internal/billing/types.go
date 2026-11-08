@@ -122,6 +122,7 @@ type Usage struct {
 type FinalizationInput struct {
 	ID, TenantID, RequestID, AttemptID, Source, SourceEventID        string
 	Usage                                                            Usage
+	RetailQuantitiesCanonical                                        []byte `json:"retail_quantities_canonical,omitempty"`
 	ProtocolOutcome, TransportEndReason, DeliveryStage, FinishReason string
 	ContentWritten                                                   bool
 	ObservedAt                                                       time.Time
@@ -174,7 +175,7 @@ type RefundOrder struct {
 }
 type ReconcileInput struct {
 	TenantID, RequestID, ActorID, Action, EvidenceRef, Reason string
-	Usage                                                     Usage
+	RetailQuantitiesCanonical                                 []byte
 }
 type Reconciliation struct {
 	ID         string      `json:"id"`

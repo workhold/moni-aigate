@@ -394,7 +394,7 @@ known 全零费率仍返回真实 0 actual；`basis_unknown/version_missing` 无
 
 ### 6.3 人工核对与平台 probe 的必要接线
 
-`reconciliation_cases.proposed_usage`替换为`proposed_observation_canonical BYTEA NULL`与`proposed_observation_digest BYTEA NULL`，与state/requester/evidence等组成精确NULL联合。proposal必须绑定原request的真实attempt/profile/schema/variant/Plan，只能提出完整retail向量；不能伪造attempt或因人工共享量而确认supplier成本。审批仍双人并产生source=approved_reconciliation的普通event/finalization，supplier永远不可Confirmed；24h后不再收费。审批快照不按今天价重算。
+`reconciliation_cases.proposed_usage`替换为`proposed_observation_canonical BYTEA NULL`与`proposed_observation_digest BYTEA NULL`，与state/requester/evidence等组成精确NULL联合。当前U片这两个proposal列保存绑定原request的完整retail `QuantitiesWire` 原件及 `moni-aigate.metering.quantities.v1` 摘要；它不是已经发生的inference Observation，审批时才由原attempt/profile/schema/variant/Plan和proposal向量生成source=approved_reconciliation的普通event/finalization。proposal不能伪造attempt或因人工共享量而确认supplier成本。审批仍双人，supplier永远不可Confirmed；24h后不再收费。审批快照不按今天价重算。
 
 `platform_probe_attempts.normalized_usage`替换为nullable `quantities_canonical BYTEA/quantities_digest BYTEA`和独立`usage_state TEXT`，增加与原profile一致的schema_id/schema_digest/variant_key；完成probe验证同一纯核向量数值合同，但不构造缺失tenant/request/attempt的伪inference.Observation。confirmed_final时supplier Quantities规范bytes与纯核`metering.Quantities.Digest`非NULL，否则均NULL；此字段不使用inference.FinalQuantities外层摘要。协议状态和usage_state分开。probe保留独立平台资源及当前unknown采购口径，不创建客户request/reservation/settlement，也不塞进nullable tenant事件表。U只开放六文本probe；unknown成本不清零。未来纳入受管采购须另冻平台资金合同。
 
@@ -498,7 +498,7 @@ route root、binding 和可选 cap 必须在同一个当前发布事务内组成
 | attempt cost_version/cost_input/cost_output/cost_basis镜像 | 原RecordAttempt INSERT/重放、cost policy、procurement/readHold/recordAttemptCost/成本更正投影；仅snapshot保留原quote |
 | procurement input_bound/output_bound | 014 identity trigger/读取器/预占与finalize；替换成原attempt snapshot，020 supplier source及budget projection继续只读金额 |
 | event normalized_usage/schema_version及conflict normalized_usage | evidence INSERT/源幂等/冲突/最终状态、Settle/recovery、人工approval、HTTP请求明细、报表/CSV/控制台量展示 |
-| reconciliation proposed_usage、probe normalized_usage | 各自严格向量wire和side合同、NULL联合、再认证/双审原权限；probe不转成客户请求 |
+| reconciliation proposed_observation_canonical/digest、probe normalized_usage | 各自严格向量wire和side合同、NULL联合、再认证/双审原权限；probe不转成客户请求 |
 | 新current关系/函数/列 | operations.ProvisionFor及payment/periodic角色传递闭包、serve启动角色核验、迁移固定摘要、专项测试与统一架构 |
 
 020现有SQL不直接引用上述Token scalar，但多个函数用 `%ROWTYPE` 和request/attempt/procurement结构，必须实际PG重建/执行验证，不因文本检索无命中宣称无依赖。023 source validator只依赖原R/settlement金额及身份，语义保持；须用真实商业flow确认同事务闭合。
@@ -574,6 +574,12 @@ SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报�
 6. **采购报价列表** `/api/platform/cost-versions`：每行 `{id,channel_id,channel_name,channel_revision,upstream_model,schema_id,schema_digest,variant_key,currency,basis,rates,effective_at,created_at}`，known 为 supplier 侧完整 RatesWire，unknown 为 null。
 
 所有 `rates/bounds` 均直接取不可变原件 canonical（JSONB 只用于返回对象，维度数组顺序、单位、约分不重排）；读端不计算金额。TS 解析器严格校验键闭集、side、schema 绑定、维度顺序、约分、int64 字符串并保留大整数；页面展示每百万 token 价格时只做精确有理数显示（不能整除时显示分数），不转 Number、不从金额反算量或价。删除 `meter_price_million/meter_cost_million` 后，"禁两标量函数"类测试改为断言函数不存在。
+
+#### 11.2.1 人工核对提交的完整客户向量
+
+人工核对提交是当前读端标量撤除的一部分。`POST /api/platform/reconciliations/:id/resolve` 在 `action=settle`（服务端内部映射为 `propose`）时只接受 `retail_quantities`，其值必须是当前请求 schema、`side=retail` 的完整 `QuantitiesWire` 原件：schema identity、维度顺序、单位和非负十进制 int64 字符串均按纯核合同校验。请求体不得再包含 `input_tokens` 或 `output_tokens`；旧字段、缺字段、未知字段、重复键、错误 schema/side、缺维度、多维度、非规范数量、越界或溢出都拒绝，且不写入核对状态、证据、审计或流水。
+
+服务端从原请求的不可变 schema 原件验证并保留向量 canonical，不读取今天的模型、价格或界行来补齐输入。`action=release` 与 `action=approve` 不携带客户量；批准只消费已经保存的 proposal。核对批准只确认客户 retail 量，产生 `source=approved_reconciliation` 的普通观察/终结事实；supplier 侧继续为 `missing`，其 canonical、digest、cost pointer 和金额全部保持 NULL。列表和回执使用保存的完整向量或其状态，不输出两列 token 标量。
 
 ## 12. U 必须与后续片 DDL 分界
 

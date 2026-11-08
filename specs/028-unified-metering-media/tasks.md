@@ -9,10 +9,10 @@
 - [x] 明确存储列/键/双向完整性、原来源与采购接缝、拒迁和角色边界：[存储草案](u-storage-contract.md)。这是实施输入，正式SQL全文与PG原型仍在下一项。
 - [x] 完成共同域实现、独立审查及纯专项；[验证记录](../../docs/verification/unified-metering.md)与[机器记录](../../docs/verification/unified-metering.json)记录准确源码/命令/结果。纯专项不能勾选下方生产项。
 - [ ] 集成人追加正式迁移全文、canonical/整数有理金额/guard/发布指纹/最小权限，实际PG原型验证后冻结生产DDL；不修改001–023原件。候选024已覆盖两维文本schema、有理率、请求/尝试快照及四条界行、请求/尝试计划与inference报价、纯核bounds/rates/QuoteDigest、独立parent_plan_digest、双侧终态与成本来源指针、受管采购证据及角色边界。6c 已补客户R、结算金额、capability完整性、route/binding出生、route complete 与非零route_revision guard，并在55439专库通过相关迁移/catalog/billing/server回归；本轮又补了 payment worker 对计量表和 `meter_%` 函数的独立拒绝负控，以及 api key/procurement held-spent、周期预算、funding lot child、payment capture/identity/effect 的候选拒迁负控。九组完整guard、11.2全部旧金融事实拒迁及生产级权限全矩阵仍未全部验收，本项保持未勾。
-- [ ] 并行改造provider、catalog/pricing/routing、billing/procurement与HTTP/UI，最终原子切换；移除在线scalar公式及旧内部DTO，不启用双运行。6a 已将默认/组价/采购发布接入完整向量 operation、指纹和不可变回执，6b 已切报表与采购读端，6c 已切当前准入/路由/账务复验，6d 已覆盖受限APP六协议的局部商业链；仍有完整guard、其余公开/私有出口、浏览器和生产部署验收待完成。
+- [ ] 并行改造provider、catalog/pricing/routing、billing/procurement与HTTP/UI，最终原子切换；移除在线scalar公式及旧内部DTO，不启用双运行。6a 已将默认/组价/采购发布接入完整向量 operation、指纹和不可变回执，6b 已切报表与采购读端，6c 已切当前准入/路由/账务复验，6d 已覆盖受限APP的局部商业链；本轮又将人工核对提交切为绑定原请求 schema 的完整 `retail_quantities`，删除 HTTP/UI 的 `input_tokens/output_tokens` 输入并为 proposal 增加 canonical/digest guard；仍有完整guard、其余公开/私有出口、浏览器和生产部署验收待完成。
 - [ ] 受限APP下六文本完整商业链：当前已通过六协议 paid/known-zero、unknown政策、组价HTTP回放、默认/组价六协议组合、等待期间原价/不重发、标量读取禁用、一次退款审批/重复审批和027来源一致性、过期未知用量恢复不重生成，以及本轮六协议超界/客户人工核对/供应商 unknown 反例专项；真实 supplier late、完整出口矩阵、浏览器和生产 LOGIN 仍未形成验收闭包。
 - [x] 026经营报表按原请求快照增加协议/执行种类/schema/variant元数据及对应筛选/CSV/UI；金额沿原结算/attempt事实，不从向量重算。2026-11-04 请求明细从不可变请求行读取 protocol/execution_kind，从 `request_meter_snapshots` 读取 profile/schema/variant；缺失留空，不回填当前模型，也不默认成 Chat。筛选、JSON、CSV 末尾六列和报表页同步。金额仍是原结算一次、全部尝试成本。
-- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；6e 复核与当前PG回归已通过，提交/推送待用户明确授权；未验外部供应商/目标部署单列。
+- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；本轮向量核对片的专项已通过，完整U语义复核、全仓回归和提交仍待完成；未验外部供应商/目标部署单列。
 
 U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先去重；共同算法支持候选最大界和收紧不表示已发布异构profile路由。多profile路由的绑定身份与参数兼容须另行设计。人工核对绑定原attempt、只确认客户用量，不能据此确认供应商采购。
 
@@ -48,6 +48,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 2026-11-07 阶段1续片：受限 APP 新增默认价/组价六协议组合（Chat、Responses、Messages、Embeddings、Rerank、Gemini），逐项核客户收入、采购成本、唯一结算、原组价快照及禁用标量读取；新增退款审批、重复审批、原 settlement/refund lot 边和 `CheckWalletSources` 一致性专项。两项均使用55439专库并通过，完整超界、恢复不重生成、生产角色/迁移全矩阵和外部出口仍未验收，复选框保持未勾。
 
 2026-11-07 阶段1续片：新增过期未知用量恢复专项。受限 APP 请求只产生一次上游 POST 和一次 attempt，恢复从持久 reservation/recovery job 释放冻结；重复 recovery 不生成第二次 attempt、结算或网络请求。该测试只证明当前文本恢复不重生成，超界、完整权限矩阵和外部出口仍未验收，复选框保持未勾。
+
+2026-11-08 028-U人工核对向量片：按存储合同11.2.1，`POST /api/platform/reconciliations/:id/resolve` 的收费提案只接受完整 `retail_quantities` QuantitiesWire；服务端从原请求不可变 schema 校验 canonical、schema/side、维度顺序、单位、int64和请求界，proposal 保存 canonical/digest，批准继续沿 `approved_reconciliation` 观察与原结算链且 supplier 保持 missing。旧 `input_tokens/output_tokens` HTTP/UI入口已删除，未知字段、重复键和旧标量请求有单测负控。024空库迁移、billing evidence/vector actual/人工核对和server输入边界在55439专库或纯单测通过；U存储与六文本完整商业链复选框仍未勾。
 
 2026-11-08 028-S/A/R 纯域第一片：新增未发布同步图片的严格 profile/输入/PNG 结果与未知消费状态机、异步任务的提交幂等/`submission_unknown` 禁重发/事件 canonical/制品授权状态机，以及实时 session/turn、单用 Origin ticket、事件去重和首收费引用门禁。三个包只依赖标准库和纯边界，不含数据库、HTTP/WS、provider、wallet、billing、报表或正式供应商接线；`go test -race` 与 `go vet` 通过。输入合同另收紧了 UUID、制品引用/媒体类型和 retail usage digest。S/A/R 以及U存储/商业出口复选框保持未勾选。
 

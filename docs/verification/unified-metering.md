@@ -1,5 +1,20 @@
 # 028-U统一计量验证
 
+## 2026-11-08：人工核对改为完整 retail 向量
+
+本片按 `u-storage-contract.md` 11.2.1 收口人工核对入口：收费提案从原请求不可变 schema 读取并严格验证完整 `retail_quantities` QuantitiesWire，proposal 保存 canonical/digest；批准仍生成 `approved_reconciliation` 观察和原有结算，supplier 侧保持 `missing`，不写供应商 canonical/digest 或成本金额。HTTP 请求拒绝 `input_tokens/output_tokens`、未知字段和重复键；控制台改为编辑向量 JSON，并保留每百万 token 管理输入之外的完整向量合同。
+
+涉及文件：[reconciliation_vector.go](../../internal/billing/reconciliation_vector.go)、[recovery.go](../../internal/billing/recovery.go)、[evidence.go](../../internal/billing/evidence.go)、[billing_handlers.go](../../internal/server/billing_handlers.go)、[PlatformView.vue](../../web/src/views/PlatformView.vue)、[024迁移](../../migrations/024_unified_text_metering.sql)。
+
+已通过：
+
+- `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' go test -count=1 -race ./migrations -run 'TestUnifiedTextMeteringCanonical|TestMeterCompletenessRejectsGaps'`
+- `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' go test -count=1 -race ./internal/billing -run 'TestPostgresEvidenceAndReconciliation|TestPostgresVectorActualKeepsOriginalCanonical'`
+- `go test -count=1 ./internal/server -run '^TestBindReconciliationResolve$'`
+- `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' go test -count=1 -race ./internal/server -run '^TestParallelCommercialGapOverBoundCapsOnceAcrossProtocols$'`
+
+上述证据仍是当前文本和本地专库专项；028-U存储/六文本完整商业链、浏览器、正式供应商、独立生产LOGIN、部署/HA/性能和S/A/R后续阶段仍未验收。
+
 ## 2026-11-07：整体盘点与角色/纯域负控续片
 
 本轮以 `codex/initial-mvp` 为唯一开发基线，完成 001–028 的交付盘点，明确把正式迁移、账务/采购、网关共享装配和最终架构检查留在主线；纯计量域、前端和独立商业反例可在互不重叠的工作区并行。盘点结果见[整体交付盘点](overall-delivery-inventory.md)。当前判断仍是“架构链路合理、生产验收未闭合”，没有把历史 `legacy`/`compat`/`prefix` 代码按名称删除，也没有把候选迁移当成已发行版本。

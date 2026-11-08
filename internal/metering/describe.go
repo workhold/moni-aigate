@@ -57,3 +57,15 @@ func (r Rates) Entries() ([]Rate, error) {
 	}
 	return entries, nil
 }
+
+// Entries returns a copy in the vector's canonical dimension order.
+func (q Quantities) Entries() ([]Quantity, error) {
+	if !q.vector.valid {
+		return nil, ErrInvalidValue
+	}
+	entries := make([]Quantity, len(q.vector.values))
+	for i, value := range q.vector.values {
+		entries[i] = Quantity{Dimension: q.vector.dimensions[i], Unit: q.vector.units[i], Quantity: value}
+	}
+	return entries, nil
+}

@@ -1,6 +1,7 @@
 package billing
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -102,7 +103,7 @@ func (s *Store) Reconcile(ctx context.Context, in ReconcileInput) (Reconciliatio
 		return result, fail("invalid_reconciliation", "unknown action")
 	}
 	if in.Action == "propose" {
-		if in.Usage.Status != "confirmed_final" || validateUsage(in.Usage) != nil || !security.ValidReference(in.EvidenceRef, 256) || !boundedString(in.Reason, 200) {
+		if len(in.RetailQuantitiesCanonical) == 0 || !security.ValidReference(in.EvidenceRef, 256) || !boundedString(in.Reason, 200) {
 			return result, fail("invalid_evidence", "trusted final usage and controlled evidence reference required")
 		}
 	}
@@ -118,11 +119,19 @@ func (s *Store) Reconcile(ctx context.Context, in ReconcileInput) (Reconciliatio
 		if err != nil {
 			return err
 		}
+		var proposedDigest []byte
+		if in.Action == "propose" {
+			canonical, digest, _, err := canonicalRetailQuantities(ctx, tx, r, in.RetailQuantitiesCanonical)
+			if err != nil {
+				return err
+			}
+			in.RetailQuantitiesCanonical, proposedDigest = canonical, digest
+		}
 		var state string
 		var requester *string
 		var payload []byte
 		var evidence, proposalReason *string
-		err = tx.QueryRow(ctx, `SELECT id,state,requester,proposed_usage,evidence_ref,proposal_reason FROM reconciliation_cases WHERE tenant_id=$1 AND request_id=$2 FOR UPDATE`, in.TenantID, in.RequestID).Scan(&result.ID, &state, &requester, &payload, &evidence, &proposalReason)
+		err = tx.QueryRow(ctx, `SELECT id,state,requester,proposed_observation_canonical,evidence_ref,proposal_reason FROM reconciliation_cases WHERE tenant_id=$1 AND request_id=$2 FOR UPDATE`, in.TenantID, in.RequestID).Scan(&result.ID, &state, &requester, &payload, &evidence, &proposalReason)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return fail("reconciliation_not_found", "request is not awaiting reconciliation")
 		}
@@ -161,25 +170,17 @@ func (s *Store) Reconcile(ctx context.Context, in ReconcileInput) (Reconciliatio
 				return fail("reconciliation_closed", "hold is no longer pending")
 			}
 			if state == "proposed" {
-				var prior Usage
-				if err = json.Unmarshal(payload, &prior); err != nil {
-					return err
-				}
-				if requester != nil && *requester == in.ActorID && evidence != nil && *evidence == in.EvidenceRef && proposalReason != nil && *proposalReason == in.Reason && prior == in.Usage {
+				if requester != nil && *requester == in.ActorID && evidence != nil && *evidence == in.EvidenceRef && proposalReason != nil && *proposalReason == in.Reason && bytes.Equal(payload, in.RetailQuantitiesCanonical) {
 					result.State = "proposed"
 					return nil
 				}
 				return fail("idempotency_conflict", "a proposed reconciliation is immutable pending checker decision")
 			}
-			proposed, err := json.Marshal(in.Usage)
-			if err != nil {
-				return err
-			}
-			if _, err = tx.Exec(ctx, `UPDATE reconciliation_cases SET state='proposed',requester=$2,approver=NULL,proposed_usage=$3,evidence_ref=$4,proposal_reason=$5 WHERE id=$1`, result.ID, in.ActorID, proposed, in.EvidenceRef, in.Reason); err != nil {
+			if _, err = tx.Exec(ctx, `UPDATE reconciliation_cases SET state='proposed',requester=$2,approver=NULL,proposed_observation_canonical=$3,proposed_observation_digest=$4,evidence_ref=$5,proposal_reason=$6 WHERE id=$1`, result.ID, in.ActorID, in.RetailQuantitiesCanonical, proposedDigest, in.EvidenceRef, in.Reason); err != nil {
 				return err
 			}
 			result.State = "proposed"
-			return audit(ctx, tx, in.TenantID, in.ActorID, "reconciliation.proposed", result.ID, r.ID, map[string]any{"usage": in.Usage, "evidence_ref": in.EvidenceRef, "reason": in.Reason})
+			return audit(ctx, tx, in.TenantID, in.ActorID, "reconciliation.proposed", result.ID, r.ID, map[string]any{"retail_quantities": json.RawMessage(in.RetailQuantitiesCanonical), "evidence_ref": in.EvidenceRef, "reason": in.Reason})
 		}
 		if requester != nil {
 			if err = role(ctx, tx, *requester, "finance_operator"); err != nil {
@@ -205,12 +206,9 @@ func (s *Store) Reconcile(ctx context.Context, in ReconcileInput) (Reconciliatio
 		if state != "proposed" || evidence == nil {
 			return fail("reconciliation_not_proposed", "trusted evidence must first be proposed")
 		}
-		var usage Usage
-		if err = json.Unmarshal(payload, &usage); err != nil {
+		canonical, _, _, err := canonicalRetailQuantities(ctx, tx, r, payload)
+		if err != nil {
 			return err
-		}
-		if usage.Status != "confirmed_final" || validateUsage(usage) != nil {
-			return fail("invalid_evidence", "invalid approved usage")
 		}
 		var now time.Time
 		if err = tx.QueryRow(ctx, "SELECT clock_timestamp()").Scan(&now); err != nil {
@@ -228,7 +226,7 @@ func (s *Store) Reconcile(ctx context.Context, in ReconcileInput) (Reconciliatio
 					return err
 				}
 			}
-			approved, semantic, err := recordFinalization(ctx, tx, r, FinalizationInput{ID: uuid.NewString(), TenantID: r.TenantID, RequestID: r.ID, Source: "approved_reconciliation", SourceEventID: result.ID, Usage: usage, ProtocolOutcome: f.ProtocolOutcome, TransportEndReason: f.TransportEndReason, DeliveryStage: f.DeliveryStage, ContentWritten: f.ContentWritten, FinishReason: f.FinishReason})
+			approved, semantic, err := recordFinalization(ctx, tx, r, FinalizationInput{ID: uuid.NewString(), TenantID: r.TenantID, RequestID: r.ID, Source: "approved_reconciliation", SourceEventID: result.ID, RetailQuantitiesCanonical: canonical, ProtocolOutcome: f.ProtocolOutcome, TransportEndReason: f.TransportEndReason, DeliveryStage: f.DeliveryStage, ContentWritten: f.ContentWritten, FinishReason: f.FinishReason})
 			if err != nil {
 				return err
 			}

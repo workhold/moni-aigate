@@ -5,6 +5,8 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/moni-ai/moni-aigate/internal/billing"
+	"github.com/moni-ai/moni-aigate/internal/strictjson"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -194,20 +196,58 @@ func (s *Server) approveRefund(c *gin.Context) {
 	s.ok(c, v)
 }
 func (s *Server) reconciliations(c *gin.Context) {
-	s.page(c, `SELECT x.id,x.request_id,x.tenant_id,x.reason,x.state,x.state AS status,x.proposed_usage,x.requester,x.approver,x.created_at,v.deadline FROM reconciliation_cases x JOIN reservations v ON v.request_id=x.request_id`)
+	s.page(c, `SELECT x.id,x.request_id,x.tenant_id,x.reason,x.state,x.state AS status,
+ CASE WHEN x.proposed_observation_canonical IS NULL THEN NULL ELSE convert_from(x.proposed_observation_canonical,'UTF8')::jsonb END AS retail_quantities,
+	 x.requester,x.approver,x.created_at,v.deadline,s.schema_id FROM reconciliation_cases x JOIN reservations v ON v.request_id=x.request_id JOIN request_meter_snapshots s ON s.tenant_id=x.tenant_id AND s.request_id=x.request_id`)
 }
+
+type reconciliationResolveRequest struct {
+	Action           string          `json:"action"`
+	Reason           string          `json:"reason"`
+	RetailQuantities json.RawMessage `json:"retail_quantities"`
+	EvidenceRef      string          `json:"evidence_ref"`
+}
+
+func bindReconciliationResolve(c *gin.Context, out *reconciliationResolveRequest) bool {
+	raw, err := io.ReadAll(io.LimitReader(c.Request.Body, 32*1024+1))
+	if err != nil || len(raw) > 32*1024 {
+		return false
+	}
+	value, err := strictjson.Parse(raw, 32*1024)
+	object, ok := value.(map[string]any)
+	if err != nil || !ok || len(object) < 2 || len(object) > 4 {
+		return false
+	}
+	for key := range object {
+		if key != "action" && key != "reason" && key != "retail_quantities" && key != "evidence_ref" {
+			return false
+		}
+	}
+	if err = json.Unmarshal(raw, out); err != nil {
+		return false
+	}
+	return true
+}
+
 func (s *Server) resolve(c *gin.Context) {
 	if !s.financialKey(c) {
 		return
 	}
-	var in struct {
-		Action       string `json:"action"`
-		Reason       string `json:"reason"`
-		InputTokens  int64  `json:"input_tokens"`
-		OutputTokens int64  `json:"output_tokens"`
-		EvidenceRef  string `json:"evidence_ref"`
+	var in reconciliationResolveRequest
+	if !bindReconciliationResolve(c, &in) {
+		s.fail(c, http.StatusBadRequest, "invalid_request", "JSON参数无效或请求过大")
+		return
 	}
-	if !s.bind(c, &in) {
+	if in.Action != "release" && in.Action != "settle" {
+		s.fail(c, http.StatusBadRequest, "invalid_request", "核对处理方式无效")
+		return
+	}
+	if in.Action == "release" && (len(in.RetailQuantities) != 0 || in.EvidenceRef != "") {
+		s.fail(c, http.StatusBadRequest, "invalid_request", "释放不得携带客户用量或收费证据")
+		return
+	}
+	if in.Action == "settle" && len(in.RetailQuantities) == 0 {
+		s.fail(c, http.StatusBadRequest, "invalid_request", "提交收费必须提供完整 retail_quantities")
 		return
 	}
 	if in.Action == "release" {
@@ -225,7 +265,7 @@ func (s *Server) resolve(c *gin.Context) {
 		s.error(c, e)
 		return
 	}
-	v, e := s.Billing.Reconcile(c.Request.Context(), billing.ReconcileInput{TenantID: tid, RequestID: rid, ActorID: sessionOf(c).User.ID, Action: in.Action, Reason: in.Reason, EvidenceRef: in.EvidenceRef, Usage: billing.Usage{Status: "confirmed_final", InputTokens: in.InputTokens, OutputTokens: in.OutputTokens, TotalTokens: in.InputTokens + in.OutputTokens}})
+	v, e := s.Billing.Reconcile(c.Request.Context(), billing.ReconcileInput{TenantID: tid, RequestID: rid, ActorID: sessionOf(c).User.ID, Action: map[string]string{"settle": "propose", "release": "release"}[in.Action], Reason: in.Reason, EvidenceRef: in.EvidenceRef, RetailQuantitiesCanonical: in.RetailQuantities})
 	if e != nil {
 		s.error(c, e)
 		return

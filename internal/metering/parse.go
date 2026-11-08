@@ -153,9 +153,10 @@ func parseQuantities(schema Schema, side Side, raw []byte, field string) (vector
 		return vector{}, err
 	}
 	wire := make([]quantityWire, len(entries))
-	result := vector{binding: schema.bind(side), values: make([]int64, len(entries))}
+	result := vector{binding: schema.bind(side), dimensions: make([]string, len(entries)), units: make([]string, len(entries)), values: make([]int64, len(entries))}
 	for i, entry := range entries {
 		wire[i] = quantityWire{entry.dimension, entry.unit, strconv.FormatInt(entry.quantity, 10)}
+		result.dimensions[i], result.units[i] = entry.dimension, entry.unit
 		result.values[i] = entry.quantity
 	}
 	if field == "bounds" {

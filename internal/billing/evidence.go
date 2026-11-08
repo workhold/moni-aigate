@@ -373,6 +373,14 @@ func recordFinalization(ctx context.Context, tx pgx.Tx, r financialRequest, in F
 	if in.ID == "" {
 		in.ID = uuid.NewString()
 	}
+	if len(in.RetailQuantitiesCanonical) != 0 {
+		canonical, _, usage, err := canonicalRetailQuantities(ctx, tx, r, in.RetailQuantitiesCanonical)
+		if err != nil {
+			return f, nil, err
+		}
+		in.RetailQuantitiesCanonical = canonical
+		in.Usage = usage
+	}
 	identity := in
 	identity.ObservedAt = time.Time{}
 	identityJSON, err := json.Marshal(identity)

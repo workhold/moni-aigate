@@ -82,8 +82,10 @@ type binding struct {
 }
 type vector struct {
 	binding
-	values    []int64
-	canonical []byte
+	dimensions []string
+	units      []string
+	values     []int64
+	canonical  []byte
 }
 type Bounds struct{ vector vector }
 type Quantities struct{ vector vector }
@@ -93,6 +95,15 @@ type Rates struct {
 	numerators   []int64
 	denominators []int64
 	canonical    []byte
+}
+
+// Quantity is one already validated member of a complete quantity vector.
+// It carries no authority beyond the schema binding that was checked while
+// parsing the parent vector.
+type Quantity struct {
+	Dimension string
+	Unit      string
+	Quantity  int64
 }
 
 func validSide(side Side) bool { return side == Retail || side == Supplier }

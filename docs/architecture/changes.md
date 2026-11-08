@@ -4541,3 +4541,47 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/008-financial-write-batches/spec.md`
 
 </details>
+
+## 2026-11-08T01:24:14Z · 559573b31708
+
+028-U人工核对改为绑定原请求schema的完整retail数量向量，新增proposal canonical/digest guard并移除HTTP旧标量入口
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2053 个源文件；本次 21 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/evidence.go`
+- added `internal/billing/reconciliation_vector.go`
+- added `internal/billing/reconciliation_vector_test.go`
+- modified `internal/billing/recovery.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/vector_actual_integration_test.go`
+- modified `internal/metering/describe.go`
+- modified `internal/metering/parse.go`
+- modified `internal/metering/types.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/parallel_commercial_gap_test.go`
+- added `internal/server/reconciliation_input_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+- modified `web/src/views/PlatformView.vue`
+
+</details>
+
+## 2026-11-08T01:25:57Z · 7c764445cdde
+
+028-U人工核对proposal列明确保存绑定请求的retail QuantitiesWire及纯核摘要，批准时才生成approved_reconciliation Observation；HTTP release/settle字段边界已收紧
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2053 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>

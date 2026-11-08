@@ -117,7 +117,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 | projection_outbox / projection_receipts | event_id, tenant_id, operation_id, kind, schema_version, sanitized_payload, created_at；与资金事务同写；消费回执以(consumer,event_id)唯一，投影更新与回执同事务 |
 | settlements | id, request_id, tenant_id, usage_snapshot, raw_retail_amount, charged_amount, waived_retail_amount, refunded_amount, basis；每请求唯一，退款累计封顶 |
 | credit_orders / refund_orders | tenant_id, business_ref, amount, state, requester, approver, proof_ref, journal_id；业务号唯一、申请人不可审批 |
-| reconciliation_cases | request_id, reason, evidence_ref, deadline, proposed_usage, requester, approver, resolution；每请求最多一个活动核对项 |
+| reconciliation_cases | request_id, reason, evidence_ref, deadline, `proposed_observation_canonical`/`proposed_observation_digest`, requester, approver, resolution；每请求最多一个活动核对项。当前028-U提案原件是绑定请求schema的完整retail QuantitiesWire |
 | audit_events | actor, tenant_scope, action, target, sanitized_diff, request_id, created_at；应用角色只追加 |
 
 跨租户关系通过 `(tenant_id,id)` 唯一键与复合外键保证，例如 `request_records(tenant_id,key_id)` 指向 `api_keys(tenant_id,id)`。平台共享渠道通过单独的模型绑定引用，不借用“tenant_id 为空”等于全局可见的隐式规则。所有客户查询仍必须带有效 tenant_id；外键不能替代查询授权。
@@ -154,7 +154,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 单价单位为微元/百万 Token：
 
 ```text
-amount_micro = ceil((input_tokens * input_rate + output_tokens * output_rate) / 1_000_000)
+amount_micro = metering.Amount(complete_quantities, complete_rates)；费率为约分有理数，金额只在该纯核函数末尾一次ceil
 ```
 
 对整次请求合并后向上取整一次，避免每 SSE 分片取整。乘加用带溢出检查的整数或大整数，最终验证 BIGINT 范围；金额/Token 必须非负。例：input_rate=2,000,000、output_rate=8,000,000，input=1,000、output=500，结果为 6,000 微元，即 ¥0.006。
@@ -283,7 +283,7 @@ stateDiagram-v2
 
 待核对默认期限从accepted_at起24小时，不因重试Worker重置。资金截止判定时尚未结算则一律释放，即使可信usage早已保存、只是Worker延后；按原因标记 `released_unverifiable` 或 `released_deadline`。后到供应商费用仅修正平台成本，不能自动再扣客户。重复取消/未知用量滥用触发人工风控或停用Key；不能靠不透明收费防滥用。
 
-人工核对如会新增客户收费，必须申请/复核分离：保存可信usage证据和提案，由不同财务账号批准后进入T2，仍遵守截止时间和收费上界。释放未消费冻结不增加客户净入账，可由审批员带理由执行；已经结算的退款仍走T3双人审批，不能用resolve绕过退款流程。
+人工核对如会新增客户收费，必须申请/复核分离：保存绑定原请求schema的完整retail QuantitiesWire及其canonical/digest，由不同财务账号批准后进入T2，仍遵守截止时间和收费上界。HTTP/UI拒绝input_tokens/output_tokens等旧平铺字段；批准只确认客户侧并保持supplier missing，不能借resolve确认供应商成本。释放未消费冻结不增加客户净入账，可由审批员带理由执行；已经结算的退款仍走T3双人审批，不能用resolve绕过退款流程。
 
 ## 8. 路由、健康与重试
 

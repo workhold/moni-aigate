@@ -161,6 +161,7 @@ async function save() {
       if (field.kind === 'money') body[field.key] = cnyToMicro(String(raw))
       else if (field.kind === 'integer') { if (!field.required && (raw === '' || raw === undefined || raw === null)) continue; const v = Number(raw); if (!Number.isSafeInteger(v) || (field.min !== undefined && v < field.min)) throw new Error(`${field.title}须为有效整数。`); body[field.key] = v }
       else if (field.kind === 'date') { const date = new Date(String(raw)); if (Number.isNaN(date.getTime())) throw new Error('请选择有效的生效时间。'); body[field.key] = date.toISOString() }
+      else if (field.key === 'retail_quantities') { let parsed: unknown; try { parsed = JSON.parse(String(raw)) } catch { throw new Error('retail_quantities 必须是有效 JSON。') } if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('retail_quantities 必须是完整对象。'); body[field.key] = parsed }
       else if (field.key === 'allowed_cidrs') body[field.key] = String(raw || '').split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
       else if (field.kind === 'password' && !field.required && !raw) continue
       else if (field.kind === 'password') body[field.key] = raw
@@ -221,7 +222,11 @@ function editPublication(row: Row) { if (isAdmin.value) { publicationModel.value
 function rowPublicationLabel(row: Row) { return typeof row.public_visible === 'boolean' ? publicationLabel({ enabled: row.enabled === true, public_visible: row.public_visible }) : '查看公开设置' }
 function resolve(row: Row, action: 'release' | 'settle') {
   const fs: Field[] = [{ key: 'reason', title: '处理理由', kind: 'textarea', required: true }]
-  if (action === 'settle') fs.push({ key: 'input_tokens', title: '可信最终输入 Tokens', kind: 'integer', required: true, min: 0, initial: 0 }, { key: 'output_tokens', title: '可信最终输出 Tokens', kind: 'integer', required: true, min: 0, initial: 0 }, { key: 'evidence_ref', title: '可信用量证据引用', required: true, hint: '不得以估算、临时累计量或最大预占代替最终量。' })
+  if (action === 'settle') {
+    const schemaID = String(row.schema_id || '')
+    const initial = JSON.stringify({ schema_id: schemaID, version: '1', side: 'retail', quantities: [{ dimension: 'text_input_token', unit: 'token', quantity: '0' }, { dimension: 'text_output_token', unit: 'token', quantity: '0' }] }, null, 2)
+    fs.push({ key: 'retail_quantities', title: '可信最终 retail 用量向量', kind: 'textarea', required: true, initial, hint: '必须完整填写当前请求 schema 的 QuantitiesWire；数量使用十进制字符串。不得填写 input_tokens/output_tokens 或估算值。' }, { key: 'evidence_ref', title: '可信用量证据引用', required: true, hint: '不得以估算、临时累计量或最大预占代替最终量。' })
+  }
   fs.push({ key: 'action', title: '处理方式', kind: 'select', required: true, initial: action, options: [{ label: action === 'release' ? '释放客户冻结' : '提交收费复核', value: action }] })
   openForm(action === 'release' ? '释放冻结' : '提交有证据收费', fs, `/platform/reconciliations/${encodeURIComponent(String(row.id))}/resolve`)
 }

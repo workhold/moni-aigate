@@ -605,7 +605,7 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 		t.Fatal(pending, err)
 	}
 	f.wallet(t, 880, 120)
-	proposal, err := f.store.Reconcile(f.ctx, ReconcileInput{TenantID: f.tenant, RequestID: r.RequestID, ActorID: f.operator, Action: "propose", EvidenceRef: "invoice:verified", Reason: "provider-confirmed", Usage: confirmed()})
+	proposal, err := f.store.Reconcile(f.ctx, ReconcileInput{TenantID: f.tenant, RequestID: r.RequestID, ActorID: f.operator, Action: "propose", EvidenceRef: "invoice:verified", Reason: "provider-confirmed", RetailQuantitiesCanonical: retailQuantitiesForRequest(t, f, r.RequestID, 10, 5)})
 	if err != nil || proposal.State != "proposed" {
 		t.Fatal(proposal, err)
 	}

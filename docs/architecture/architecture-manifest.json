@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-07T19:45:32Z",
-  "review_reason": "补齐008 finish尾写点故障回滚与幂等重试专项及验证记录",
-  "snapshot_sha256": "7930b2761181b58fe3a6f0e9afa4f87929624756a89407c866e703b054defea6",
-  "architecture_sha256": "2824888de132e8c8ed6e8519c62324136a48950555f5048724f8c5dc1cb66d96",
-  "history_sha256": "bd47af8a2c9c60a3720bffc5ae444895f0f0d0dad3d0285edecd9b368b1ba0f1",
+  "reviewed_at": "2026-11-08T01:25:57Z",
+  "review_reason": "028-U人工核对proposal列明确保存绑定请求的retail QuantitiesWire及纯核摘要，批准时才生成approved_reconciliation Observation；HTTP release/settle字段边界已收紧",
+  "snapshot_sha256": "7c764445cdde2429f42d25fc106743bf05bbc87a82b3b7ea9610ab71331ead55",
+  "architecture_sha256": "dce4796476f002247b377f8757bc60e40181f62579606ad2837661421e60c150",
+  "history_sha256": "ff9e8f2f73fd7bf197d5b7729f9e5a4b28bc158481654c6c6d0b98e571ebcbad",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "7ce2211da51ce65bc85ffaf6a0eb30f8eeb8e4b120b1c7007ee81230d39ef5cd"
+      "sha256": "3e2796dc1a35c06282c97b40d1d6ccffff2ab1854124c7905678f36f33637ecd"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "751807146165470931702e28f2f3f002e9c5b48ab4ce0d727a15fa8254eaa058"
+      "sha256": "f0694a3d5ba97384641056c3c3e898e7a2e45829c984f6aef735aea797b97f96"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "9a00d3f7226021bb8b9611a4859aba2bde59252f9bc0ff3d335f502d10e3646b"
+      "sha256": "cc914272986f84f2ee714652d2979e755af30e81cabc85e89d32b775b903384e"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1801,7 +1801,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "4f42a1b319fcb2aa03d893ab6bd318c13bf778929f2c9c4ae523c46220b6e084"
+      "sha256": "e1595d98fa345a52e68c09d2b40549a6e3c717d84d2824e74c38add4e2c917bd"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -1941,7 +1941,7 @@
     },
     {
       "path": "internal/billing/evidence.go",
-      "sha256": "094680c94b8efa9311c071ac1177ee25f930745e292ab0b894ed75dee7a551e9"
+      "sha256": "88be1221960a31604b61a9c65353bffdea969ae1611982b949a52c9ab2556ae6"
     },
     {
       "path": "internal/billing/finish_tail_integration_test.go",
@@ -2144,8 +2144,16 @@
       "sha256": "eb02a2d7d05900036e80a6c5a8db4cea60b008ae5a52f1a0e2264630225785d8"
     },
     {
+      "path": "internal/billing/reconciliation_vector.go",
+      "sha256": "bdf09148169e3c63e6a0de3a2eab5023bd5a9ba334969a2b73a6e5cfc1fda234"
+    },
+    {
+      "path": "internal/billing/reconciliation_vector_test.go",
+      "sha256": "6b19dbf86533611b022733d5e41a3577cf91cd588f168dbfdc15bdac3efa1fd5"
+    },
+    {
       "path": "internal/billing/recovery.go",
-      "sha256": "204f64df93edf242f0e29a5c05ce9cb9456fb39b5fbd72570a231093174c55a7"
+      "sha256": "57c286f27e6627744963d573a19859048d8a22a4b72a11063dd31efe16163ac5"
     },
     {
       "path": "internal/billing/reserve.go",
@@ -2177,7 +2185,7 @@
     },
     {
       "path": "internal/billing/store_test.go",
-      "sha256": "5e9113f0eb74c846446b7a683d240987eb78d84152271a07b0e3c1cfa2fc3afa"
+      "sha256": "aaafeeb373285727b962ba43430941347ad94758c52a618f40640d27dcf7cdd3"
     },
     {
       "path": "internal/billing/tenant_pricing_concurrency_integration_test.go",
@@ -2193,7 +2201,7 @@
     },
     {
       "path": "internal/billing/types.go",
-      "sha256": "f11aef02e3616cdb3a663dccf930c6ba162cb25d6b8ce2171a4e3807e576a6ce"
+      "sha256": "e79dc4015d71d5ae752489e1d128748f4e5f3223e263e961d1127116ebf931bb"
     },
     {
       "path": "internal/billing/vector_actual.go",
@@ -2201,7 +2209,7 @@
     },
     {
       "path": "internal/billing/vector_actual_integration_test.go",
-      "sha256": "f7e296483368d9524afdfc205e37bc58d7ae843a3fe58ebd169081c8a3a449b0"
+      "sha256": "54b25233529f2c4aafdb3af74bd0e3b1cfeb5a60a35c7034fd10be4777426d6e"
     },
     {
       "path": "internal/billing/vector_actual_test.go",
@@ -3837,7 +3845,7 @@
     },
     {
       "path": "internal/metering/describe.go",
-      "sha256": "284ddef84b2e3f914ef69a44d39463e23e9f25e22c75c8b1c1c5176fa49f9697"
+      "sha256": "ab6dc1474f98f1af55eb8d36f488ab4d32029f3ce50a283c2a0c556a75aebccf"
     },
     {
       "path": "internal/metering/describe_test.go",
@@ -3865,11 +3873,11 @@
     },
     {
       "path": "internal/metering/parse.go",
-      "sha256": "b91b3151e399dc0fc97b2aa810b66abcff7adfa2634431e5878b0ee82e34a054"
+      "sha256": "b8b41ae1e1ca52c003464313b8400629e2505d4a67d064405e9840ba88d231a0"
     },
     {
       "path": "internal/metering/types.go",
-      "sha256": "85dce5c7013c403b25b0c69755bef98a3d6ac413e9e4fe271536bcdca2312d35"
+      "sha256": "8415683b98a85fc31048641e1dac3f23ddba9c594fac2237af467319368caba1"
     },
     {
       "path": "internal/mockpsp/config.go",
@@ -5769,7 +5777,7 @@
     },
     {
       "path": "internal/server/billing_handlers.go",
-      "sha256": "ab72da7a7ac043ca31f3b80a46901bd4a0139c2b50bb1100df43ab4f336f67a8"
+      "sha256": "0c44c7848825f40bad3785d1aade9e2b2a5ddecfd9c0528c4920c289022b4354"
     },
     {
       "path": "internal/server/binding_isolation.go",
@@ -5925,7 +5933,7 @@
     },
     {
       "path": "internal/server/parallel_commercial_gap_test.go",
-      "sha256": "6a50865e03e18ea434f90b8007bf10eac0c015dcf82c4464840a3993938e40b8"
+      "sha256": "a166e29d840fa85b18f40f3f06fd5c20c497c0f2e9f45deaec833535e77ff7c3"
     },
     {
       "path": "internal/server/payment_admission.go",
@@ -6050,6 +6058,10 @@
     {
       "path": "internal/server/queries_test.go",
       "sha256": "debaa978b4289aac98db404452399170389c4649424fe1bcb06ef0188c393818"
+    },
+    {
+      "path": "internal/server/reconciliation_input_test.go",
+      "sha256": "9751cb3501e43c0d24ef2ee9ae053d95f8b11466dbf0d6037da01da9e696d234"
     },
     {
       "path": "internal/server/recovery_handlers.go",
@@ -6277,7 +6289,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "e311ff4a304353796fa732599ee734a554997688557835c2a2a80cdce831b8a6"
+      "sha256": "a0147a5d425ac906adaa128b84c233dc727283b7568dc3329c5f484ad668a23d"
     },
     {
       "path": "migrations/embed.go",
@@ -7585,7 +7597,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "c2dc28650803eaee7dcf7f90a6c7f1ecc947770015d664417a57079a6093e3d3"
+      "sha256": "380d19276b2a3fbff3ea9e09bb4464982de6324f73574da534bf9ba2effa9212"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
@@ -7597,7 +7609,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/u-storage-contract.md",
-      "sha256": "19798dbab0ab90d3934008885b61acd4f008c64f2389b6e4e67848a6676c91a1"
+      "sha256": "435f22ccbf93ce3bdb2f437467fe29c507285a3beaedcb904e311fa13a1ae024"
     },
     {
       "path": "web/.gitignore",
@@ -7973,7 +7985,7 @@
     },
     {
       "path": "web/src/views/PlatformView.vue",
-      "sha256": "9c4edea5ad36b6d3c1f331ed6494c6288e3085d3f272e69d60a748ffb5ea36e9"
+      "sha256": "14d74d6d28a423b65193a182156e17bafbf829ec9ea30097158d24be316357f8"
     },
     {
       "path": "web/src/views/PlaygroundView.vue",

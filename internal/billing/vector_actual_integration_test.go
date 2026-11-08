@@ -164,7 +164,7 @@ func TestPostgresVectorActualManualCustomerDoesNotConfirmSupplier(t *testing.T) 
 			if err != nil || pending.Status != "pending_reconciliation" {
 				t.Fatal(pending, err)
 			}
-			if _, err = f.store.Reconcile(f.ctx, ReconcileInput{TenantID: f.tenant, RequestID: r.RequestID, ActorID: f.operator, Action: "propose", EvidenceRef: "invoice:customer-only", Reason: "confirm customer usage only", Usage: confirmed()}); err != nil {
+			if _, err = f.store.Reconcile(f.ctx, ReconcileInput{TenantID: f.tenant, RequestID: r.RequestID, ActorID: f.operator, Action: "propose", EvidenceRef: "invoice:customer-only", Reason: "confirm customer usage only", RetailQuantitiesCanonical: retailQuantitiesForRequest(t, f, r.RequestID, 10, 5)}); err != nil {
 				t.Fatal(err)
 			}
 			approved, err := f.store.Reconcile(f.ctx, ReconcileInput{TenantID: f.tenant, RequestID: r.RequestID, ActorID: f.approver, Action: "approve"})
