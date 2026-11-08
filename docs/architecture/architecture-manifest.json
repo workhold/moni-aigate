@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T06:16:23Z",
-  "review_reason": "028-S/A/R服务接口、当前存储表、状态guard与媒体运行时权限接入",
-  "snapshot_sha256": "700e4f1ffee00b06d71517aac704ecd321f094e829caa82c23485523eaa0bdab",
+  "reviewed_at": "2026-11-08T06:37:18Z",
+  "review_reason": "新增同步媒体mock provider并复核当前MVP边界",
+  "snapshot_sha256": "744e8453bb5ace679163e5c4c7fbaa3bb0c1da8c171376f28e58a2072cd3eda1",
   "architecture_sha256": "2efbbe37eeb116c4d1b6966894431f290068e43d4e0ec0a3faa7d38c492b90fb",
-  "history_sha256": "244b48401e44cfa00c674388511c4881d28fc96ec80947a8fbf210e20b672510",
+  "history_sha256": "76810637b55c741a8a3aeede90fd1aec3866805cb3f418f403b48dc4309e3b2b",
   "files": [
     {
       "path": ".dockerignore",
@@ -5566,6 +5566,10 @@
     {
       "path": "internal/provider/media_adapter.go",
       "sha256": "d7e97b1303a733895cc6d7a73e860bef77cdb21af3e71bf38815c80a3df93880"
+    },
+    {
+      "path": "internal/provider/mock_media.go",
+      "sha256": "87e80e76e749a57f95091c0fd53826779c17e39dc1713830d36c2e00376cfa74"
     },
     {
       "path": "internal/provider/native_request.go",

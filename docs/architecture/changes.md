@@ -4719,3 +4719,15 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/u-storage-contract.md`
 
 </details>
+
+## 2026-11-08T06:37:18Z · 744e8453bb5a
+
+新增同步媒体mock provider并复核当前MVP边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2069 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `internal/provider/mock_media.go`
+
+</details>
