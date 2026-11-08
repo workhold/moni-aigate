@@ -77,6 +77,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 当前 MVP 报表续片：经营报表把 `media_requests`、唯一 `media_settlements` 和全部 `media_attempts` 纳入同一只读快照。媒体收入只按 request 计一次，当前没有供应商成本字段时保留 unknown，不把 `raw_amount`解释为成本；支持 media operation、同步/异步 execution_kind 和安全模型筛选。报表接缝已通过 55439 race，但任务/实时完整写入、供应商成本和浏览器验收仍未完成。
 
+2026-11-09 异步任务重启续片：`media_task_artifacts` 现在在成功 metadata 后支持一次性写入并校验正文 SHA-256，Postgres Store 读取已保存正文时不再调用 provider。新的 Store、新 grant 和拒绝下载 provider 已验证正文跨进程读取；新的 worker/provider adapter 可从持久 task 状态观察并结算一次，不重新提交生成。该片仍使用 deterministic mock provider，真实供应商 task handle、对象存储和容器重启验收仍未完成。
+
 ## S / A / R / 交付
 
 - [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。

@@ -303,4 +303,4 @@ Playground 按发布能力提供文本、图片/音频、任务和 Realtime 的�
 本次只形成整体设计并引用 027 冻结合同；没有通过本文新增迁移、运行能力、供应商资格或部署结果。027 实现、媒体生产规格与代码汇合后，由集成人更新 HLD/LLD、统一架构正文、changes 与 SHA 清单，并在 README 精确说明能力、配置、启动/部署和未开放边界后推送 GitHub。
 ## 2026-11-08 当前 MVP 纵向接线
 
-异步 `video_generation` task 已在当前媒体 wallet 入口上接入预占、attempt sending、终态观察和 settlement/release。租户 scoped worker adapter 只复用原 request/reservation/attempt/source，submission unknown、失败、取消和过期不重发。图片/TTS 结算后写入不可变 `media_result_artifacts`，Realtime 在有数据库时写入现有 session/turn/event 表并保留单 turn 状态约束。该片使用 mock provider 和 55439 专库，独立 worker 容器重启、provider session 恢复、对象存储、正式供应商与生产部署仍属于未验收边界。
+异步 `video_generation` task 已在当前媒体 wallet 入口上接入预占、attempt sending、终态观察和 settlement/release。租户 scoped worker adapter 只复用原 request/reservation/attempt/source，submission unknown、失败、取消和过期不重发。图片/TTS 结算后写入不可变 `media_result_artifacts`，异步制品正文在首次授权下载后写入 `media_task_artifacts.body`，Realtime 在有数据库时写入现有 session/turn/event 表并保留单 turn 状态约束。该片使用 mock provider 和 55439 专库，真实供应商 task handle、provider session 恢复、对象存储、正式供应商与生产部署仍属于未验收边界。

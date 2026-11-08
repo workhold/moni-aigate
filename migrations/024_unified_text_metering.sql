@@ -2206,6 +2206,7 @@ CREATE TABLE media_task_artifacts (
  tenant_id text NOT NULL, task_id text NOT NULL, artifact_reference text NOT NULL CHECK(length(artifact_reference) BETWEEN 1 AND 512 AND artifact_reference !~ '://'),
  media_type text NOT NULL CHECK(media_type ~ '^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$'),
  byte_length bigint NOT NULL CHECK(byte_length>0), sha256 bytea NOT NULL CHECK(octet_length(sha256)=32),
+ body bytea CHECK(body IS NULL OR (octet_length(body)=byte_length AND octet_length(body)<=67108864 AND sha256(body)=sha256)),
  expires_at timestamptz(6) NOT NULL CHECK(isfinite(expires_at)), status text NOT NULL DEFAULT 'available' CHECK(status IN ('available','expired')),
  created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
  PRIMARY KEY(tenant_id,task_id,artifact_reference),
@@ -2217,9 +2218,12 @@ DECLARE task_status text; task_max bigint; task_artifact_state text;
 BEGIN
  IF TG_OP='UPDATE' THEN
   IF ROW(NEW.tenant_id,NEW.task_id,NEW.artifact_reference,NEW.media_type,NEW.byte_length,NEW.sha256,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.task_id,OLD.artifact_reference,OLD.media_type,OLD.byte_length,OLD.sha256,OLD.created_at) THEN RAISE EXCEPTION 'media artifact identity is immutable'; END IF;
+  IF OLD.body IS NOT NULL AND NEW.body IS DISTINCT FROM OLD.body THEN RAISE EXCEPTION 'media artifact body is immutable'; END IF;
+  IF OLD.body IS NULL AND NEW.body IS NOT NULL AND (octet_length(NEW.body) IS DISTINCT FROM NEW.byte_length OR sha256(NEW.body) IS DISTINCT FROM NEW.sha256) THEN RAISE EXCEPTION 'media artifact body digest mismatch'; END IF;
   IF OLD.status='expired' AND NEW.status IS DISTINCT FROM OLD.status THEN RAISE EXCEPTION 'media artifact is terminal'; END IF;
   RETURN NEW;
  END IF;
+ IF NEW.body IS NOT NULL THEN RAISE EXCEPTION 'media artifact body must be written after success'; END IF;
  SELECT status,max_artifact_bytes,artifact_state INTO task_status,task_max,task_artifact_state FROM media_tasks WHERE tenant_id=NEW.tenant_id AND id=NEW.task_id;
  IF task_status IS DISTINCT FROM 'succeeded' OR task_artifact_state='expired' OR NEW.byte_length>task_max THEN RAISE EXCEPTION 'media artifact is not allowed'; END IF;
  RETURN NEW;

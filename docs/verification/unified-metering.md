@@ -9,8 +9,9 @@
 - `go test -count=1 -race ./internal/server -run '^Test(ImageGenerationHTTPUsesCurrentMediaWalletFacts|SpeechHTTPUsesCurrentMediaWalletFacts|MediaResultsSurviveProcessCacheReset)$'`
 - `go test -count=1 -race ./internal/reporting ./internal/server -run 'TestPostgresReadOperatingReportIncludesMediaOnceAndLeavesCostUnknown|TestOperatingReport'`
 - `go test -count=1 -race ./internal/operations -run '^TestMeterRoleBoundary$'`
+- `go test -count=1 -race ./internal/server -run '^TestVideoTask(ArtifactSurvivesStoreAndProviderRestart|ObservationSurvivesWorkerProviderRestart)$'`
 
-本片修正任务 PostgreSQL 事件 raw canonical 摘要、nullable provider/artifact 读取和 mock 制品结果窗口，新增 video task 的 media reservation/attempt/settlement、媒体结果持久化、Realtime PostgreSQL session/turn/event writer 和媒体报表只读接缝。结果正文仍是当前 inline MVP 存储，provider session、对象存储、独立 worker 容器重启、真实供应商、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未验收。
+本片修正任务 PostgreSQL 事件 raw canonical 摘要、nullable provider/artifact 读取和 mock 制品结果窗口，新增 video task 的 media reservation/attempt/settlement、同步媒体结果持久化、异步 task 制品正文持久化、Realtime PostgreSQL session/turn/event writer 和媒体报表只读接缝。已验证新 Store、新 grant 和拒绝下载 provider 可读取已保存正文，新的 worker/provider adapter 观察不重复提交或结算。provider session、对象存储、独立 worker 容器重启、真实供应商、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未验收。
 
 ## 2026-11-08：媒体当前 wallet 入口与 HTTP/WS 局部验收
 

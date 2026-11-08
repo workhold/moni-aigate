@@ -168,6 +168,104 @@ SELECT (SELECT delivery_state FROM media_attempts WHERE tenant_id=$1 AND request
 	}
 }
 
+func TestVideoTaskArtifactSurvivesStoreAndProviderRestart(t *testing.T) {
+	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t)}, nil)
+	fixture := createVideoTask(t, f, "video-artifact-restart")
+	ctx := context.Background()
+	principal := taskPrincipal(t, f)
+	service, err := f.server.taskService(principal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	taskID, err := tasks.ParseID(fixture.taskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.Submit(ctx, taskID, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.Observe(ctx, taskID, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	actor := tasks.Actor{TenantID: tasks.ID(f.tenant), SubjectID: tasks.ID(principal.UserID), Permission: tasks.PermissionTaskRead | tasks.PermissionTaskObserve | tasks.PermissionResultDownload}
+	grant, err := service.IssueDownloadGrant(ctx, actor, taskID, tasks.ID(uuid.NewString()), time.Now().UTC(), 10*time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := service.Download(ctx, actor, grant, time.Now().UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var storedBytes int
+	if err = f.pool.QueryRow(ctx, `SELECT octet_length(body) FROM media_task_artifacts WHERE tenant_id=$1 AND task_id=$2`, f.tenant, fixture.taskID).Scan(&storedBytes); err != nil {
+		t.Fatal(err)
+	}
+	if storedBytes != len(first) {
+		t.Fatalf("stored artifact bytes=%d first download=%d", storedBytes, len(first))
+	}
+	store, err := tasks.NewPostgresStore(f.pool, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	restarted, err := tasks.NewService(tasks.ServiceOptions{Store: store, Adapter: rejectedVideoAdapter{}, NewID: func() tasks.ID { return tasks.ID(uuid.NewString()) }, Worker: actor})
+	if err != nil {
+		t.Fatal(err)
+	}
+	newGrant, err := restarted.IssueDownloadGrant(ctx, actor, taskID, tasks.ID(uuid.NewString()), time.Now().UTC(), 10*time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := restarted.Download(ctx, actor, newGrant, time.Now().UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) {
+		t.Fatal("restart download differed from persisted artifact")
+	}
+}
+
+func TestVideoTaskObservationSurvivesWorkerProviderRestart(t *testing.T) {
+	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t)}, nil)
+	fixture := createVideoTask(t, f, "video-worker-restart")
+	ctx := context.Background()
+	principal := taskPrincipal(t, f)
+	firstService, err := f.server.taskService(principal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	taskID, err := tasks.ParseID(fixture.taskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = firstService.Submit(ctx, taskID, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	store, err := tasks.NewPostgresStore(f.pool, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	restartedServer := &Server{Pool: f.pool, Billing: f.server.Billing, TaskStore: store}
+	adapter, err := restartedServer.newTaskMediaAdapter(principal, provider.NewMockTaskAdapter())
+	if err != nil {
+		t.Fatal(err)
+	}
+	actor := tasks.Actor{TenantID: tasks.ID(f.tenant), SubjectID: tasks.ID(principal.UserID), Permission: tasks.PermissionTaskObserve | tasks.PermissionTaskRead}
+	restartedService, err := tasks.NewService(tasks.ServiceOptions{Store: store, Adapter: adapter, NewID: func() tasks.ID { return tasks.ID(uuid.NewString()) }, Worker: actor})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = restartedService.Observe(ctx, taskID, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	var attempts, settlements int
+	if err = f.pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM media_attempts WHERE tenant_id=$1 AND request_id=$2),(SELECT count(*) FROM media_settlements WHERE tenant_id=$1 AND request_id=$2)`, f.tenant, fixture.requestID).Scan(&attempts, &settlements); err != nil {
+		t.Fatal(err)
+	}
+	if attempts != 1 || settlements != 1 {
+		t.Fatalf("worker restart duplicated financial facts attempts=%d settlements=%d", attempts, settlements)
+	}
+}
+
 type rejectedVideoAdapter struct{}
 
 func (rejectedVideoAdapter) Submit(context.Context, provider.TaskSubmission) (provider.TaskSubmissionResult, error) {

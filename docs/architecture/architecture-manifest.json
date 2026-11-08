@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T16:04:08Z",
-  "review_reason": "当前 MVP 媒体结果持久化、异步 video 统一账务、Realtime PostgreSQL 持久化、媒体报表只读接缝、任务事件与角色边界修正；保留真实供应商、容器重启、浏览器和完整 028/S/A/R 未验收边界",
-  "snapshot_sha256": "eb145cf973035abaae7a77ce5a9a5549e9c57d877958fd3aa6f7ae8b5cf84f10",
-  "architecture_sha256": "e5ef5b50232121789d8aa9db32212f16580237d29e0e7f5c648e3c5a9756a8bc",
-  "history_sha256": "49c5ec8c69619e35eaed3f97b6d89b0d8f33528437228ea7e644078c079853f9",
+  "reviewed_at": "2026-11-08T16:47:21Z",
+  "review_reason": "异步任务制品正文一次性持久化、Store/短期 grant 跨进程读取、deterministic mock worker/provider 重启观察不重复提交；更新任务合同、架构与验证记录；真实供应商、对象存储和容器重启仍未验收",
+  "snapshot_sha256": "9bc80beec7e294a510fb3e73941e0fa528d21b14d62f11712ddf8eaef4a9d26b",
+  "architecture_sha256": "4dffc2cfe82cc16d2e83f58606d57b0e727e4d623c3d02ae770a1f2431b74737",
+  "history_sha256": "2c36945ee0e98b57ba90e19070b1b5101b24deb17009ed06cba25eab6932c6aa",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "31e6e6cce8d7c11bcc56bfd17e00202e216d553e84dfc78635f34bffd55fed1d"
+      "sha256": "8bcb9012360ab165950b4487307d5c5f9944dc059d678552e409a777613b8a7b"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "bef4e6a8240875ebe139c3112a40f498006daff7059ca9a4d74a720b8b0f0fb2"
+      "sha256": "3fc8ee8b7e1580ca0f4a892bbf9830c99ecdb81dec28e7d05cd0067dbf6b45f4"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "c5aff2a4f673526e4fb99fab70a8a1838af700fee8ccb27c1e3c51ee162c8761"
+      "sha256": "3e22084438966ddb1ff34fb13b755d3821666c0d19119677427cf895e9893504"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "f5ace986a86d8907b848d9fade5199b56a54e4cc0e4e02f0160d567078500a31"
+      "sha256": "1a49cacece35bc390d37b18f2b3b55c006bb17e974d5243965bbf057c2d75b8b"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -189,7 +189,7 @@
     },
     {
       "path": "docs/design/integrated-wallet-media.md",
-      "sha256": "97ac84c8628f451c4acc725e35a976ee5aa7a7098da43d0c60f7bfb5f468a3d8"
+      "sha256": "47c826da9971afa0d99da3d6a4efe66fd7e1e30ff58124792fc0f4861cadde30"
     },
     {
       "path": "docs/design/new-api-roadmap.md",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "8b1630f7a766834fa3c1f5f87516a836a1357e3ca26fa79469d2578033fc8916"
+      "sha256": "1adf0820ad1c4c640b51cd8b33383cfc5f876f9233c2617deb14652a0f7a5d8f"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -5589,7 +5589,7 @@
     },
     {
       "path": "internal/provider/mock_task.go",
-      "sha256": "dd600d225ca961f1d49cacf1cd2411a1707c8a772439928e2e7665d1ac1f22cd"
+      "sha256": "9eace72a0548623a75a72263132a1d8e8e7433da550fc5fdf65cf3065246ccf5"
     },
     {
       "path": "internal/provider/native_request.go",
@@ -6221,7 +6221,7 @@
     },
     {
       "path": "internal/server/task_media_billing_integration_test.go",
-      "sha256": "6a1fc7b8e05b6889a78af1de50278ed5958a6e9c93927841c62f231d4dfedc17"
+      "sha256": "18e917a497e4f701f93736868fecd25a903a2685481f84e05b55fcbe8db1c83b"
     },
     {
       "path": "internal/server/test_cost_helpers_test.go",
@@ -6253,11 +6253,11 @@
     },
     {
       "path": "internal/tasks/postgres_store.go",
-      "sha256": "8dd716af12284f63fe0660ad1e8f940f6da77c63375e9c165c73c8ee3bb43b2d"
+      "sha256": "f057990876234c9f3e4b392d08f3c5cda0b60dfbe9082aeeaa8bc39553e71d04"
     },
     {
       "path": "internal/tasks/service.go",
-      "sha256": "72b3a808d9ee6e00b5a25c825549f647111c273dfe03cf4b6d545a441265d707"
+      "sha256": "9ef75a5738a05ef7fa6c8906eddd8c4b4d29a2c5aec96e21af57fef7aa38f7fd"
     },
     {
       "path": "internal/tasks/service_test.go",
@@ -6433,7 +6433,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "52570739dd5462b42e751ce6e1fbf92e6416a7d0034c49bcbef9b3c0975d63de"
+      "sha256": "4fd106046232f18ed19828bb58ec9ad8df372f80f6c7c629a9633e94fdf1eadb"
     },
     {
       "path": "migrations/embed.go",
@@ -7753,7 +7753,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "5b28d2183f4eda071dabc5f1824c11254db5098103a3e64401088ddacad0ccaf"
+      "sha256": "9e7470ef33eaf4ea88b7963ea2e22a9d97920418dd5cb1fdd9ea94b6cc4dcd63"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
@@ -7765,7 +7765,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/u-storage-contract.md",
-      "sha256": "ffe799f54eb33abf49d24e24f171b927dca88acc2c0aeb172563bc44b5979aad"
+      "sha256": "bac0db9e68e9d041e5d23559fd5f6d2ab2f186494a8a0b779b991977a04a8e45"
     },
     {
       "path": "web/.gitignore",

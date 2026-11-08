@@ -1599,4 +1599,6 @@ README增加Python SDK使用示例，源码/Compose/1Panel步骤已按实际入�
 
 图片与 TTS 在结算成功后把受保护 inline bytes 写入不可变 `media_result_artifacts`。读取同时校验 tenant、owner user、API key 和原 request 或 idempotency key，内存缓存只做加速。Realtime 的有数据库入口使用租户绑定的 PostgreSQL persistence 写入 `realtime_sessions`、`realtime_turns` 和 `realtime_events`，事件重复、状态转移和单 inflight 由事务与现有约束保护。经营报表读取媒体请求、唯一媒体结算和全部媒体 attempt，收入只在 request 侧计一次，缺供应商成本时保留 unknown。
 
+异步制品 metadata 与正文现在共用 `media_task_artifacts`。首次下载正文通过原 provider 后一次性写入，新的 Store 和新的短期 grant 可以在进程重启后读取正文，不会再次调用 provider。mock task adapter 按 task ID 恢复观察，worker/provider 重启只产生一个 attempt 和 settlement。
+
 上述是 mock provider 与 55439 隔离专库的限定本地验收。provider session 重启恢复、独立 worker 容器重启、真实供应商成本、对象存储、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未完成。

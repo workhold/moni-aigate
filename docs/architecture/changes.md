@@ -4965,3 +4965,27 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-08T16:47:21Z · 9bc80beec7e2
+
+异步任务制品正文一次性持久化、Store/短期 grant 跨进程读取、deterministic mock worker/provider 重启观察不重复提交；更新任务合同、架构与验证记录；真实供应商、对象存储和容器重启仍未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2092 个源文件；本次 13 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/integrated-wallet-media.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/provider/mock_task.go`
+- modified `internal/server/task_media_billing_integration_test.go`
+- modified `internal/tasks/postgres_store.go`
+- modified `internal/tasks/service.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>

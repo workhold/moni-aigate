@@ -34,18 +34,31 @@ func (m *MockTaskAdapter) Submit(_ context.Context, in TaskSubmission) (TaskSubm
 		return TaskSubmissionResult{EventID: uuid.NewString(), TaskID: in.TaskID, ProviderReference: prior.providerReference, Sequence: 1, ObservedAt: in.SubmittedAt.UTC()}, nil
 	}
 	ref := "mock-video/" + in.TaskID
-	seed := sha256.Sum256([]byte(in.TaskID + ":video_generation"))
-	m.tasks[in.TaskID] = mockTask{providerReference: ref, artifact: seed[:], mediaType: "video/mp4", state: "queued"}
+	t := mockVideoTask(in.TaskID)
+	t.state = "queued"
+	m.tasks[in.TaskID] = t
 	return TaskSubmissionResult{EventID: uuid.NewString(), TaskID: in.TaskID, ProviderReference: ref, Sequence: 1, ObservedAt: in.SubmittedAt.UTC()}, nil
 }
 
 func (m *MockTaskAdapter) Query(_ context.Context, in TaskQuery) (TaskObservation, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	t := m.tasks[in.TaskID]
+	t, ok := m.tasks[in.TaskID]
+	if !ok {
+		// The development provider is deterministic by task ID. A new worker
+		// process can observe a durable task without replaying Submit.
+		t = mockVideoTask(in.TaskID)
+	}
+	if t.state == "cancelled" {
+		return TaskObservation{EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}, nil
+	}
 	if t.state == "queued" {
 		t.state = "succeeded"
 		m.tasks[in.TaskID] = t
+	}
+	if t.state == "" {
+		t = mockVideoTask(in.TaskID)
+		t.state = "succeeded"
 	}
 	obs := TaskObservation{EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_succeeded", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}
 	sha := sha256.Sum256(t.artifact)
@@ -58,7 +71,10 @@ func (m *MockTaskAdapter) Query(_ context.Context, in TaskQuery) (TaskObservatio
 func (m *MockTaskAdapter) Cancel(_ context.Context, in TaskCancel) (TaskObservation, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	t := m.tasks[in.TaskID]
+	t, ok := m.tasks[in.TaskID]
+	if !ok {
+		t = mockVideoTask(in.TaskID)
+	}
 	t.state = "cancelled"
 	m.tasks[in.TaskID] = t
 	return TaskObservation{EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}, nil
@@ -67,8 +83,16 @@ func (m *MockTaskAdapter) Cancel(_ context.Context, in TaskCancel) (TaskObservat
 func (m *MockTaskAdapter) Download(_ context.Context, in TaskDownload) (TaskDownloadResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	t := m.tasks[in.TaskID]
+	t, ok := m.tasks[in.TaskID]
+	if !ok {
+		t = mockVideoTask(in.TaskID)
+	}
 	return TaskDownloadResult{MediaType: t.mediaType, Body: append([]byte(nil), t.artifact...)}, nil
+}
+
+func mockVideoTask(taskID string) mockTask {
+	seed := sha256.Sum256([]byte(taskID + ":video_generation"))
+	return mockTask{providerReference: "mock-video/" + taskID, artifact: seed[:], mediaType: "video/mp4"}
 }
 
 func fmtHex(raw []byte) string {

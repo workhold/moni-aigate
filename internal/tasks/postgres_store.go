@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -14,11 +13,11 @@ import (
 
 // PostgresStore is the current task writer. It keeps task facts and the
 // existing request/reservation/attempt references in one database transaction.
-// Artifact bytes stay outside PostgreSQL and are fetched through the adapter.
+// Artifact metadata and downloaded bytes are persisted in PostgreSQL. A
+// provider download is used only until the first verified body write.
 type PostgresStore struct {
-	pool      *pgxpool.Pool
-	schema    string
-	artifacts sync.Map
+	pool   *pgxpool.Pool
+	schema string
 }
 
 func NewPostgresStore(pool *pgxpool.Pool, schema string) (*PostgresStore, error) {
@@ -233,7 +232,22 @@ func (t *postgresTaskTx) PutArtifact(body []byte) error {
 	if t.task.protocol != StateSucceeded || t.task.artifactState != ArtifactAvailable || int64(len(body)) != t.task.artifact.Size || digestBytes(body) != t.task.artifact.SHA256 {
 		return ErrArtifactDigest
 	}
-	t.store.artifacts.Store(t.task.id.String(), append([]byte(nil), body...))
+	result, err := t.tx.Exec(context.Background(), fmt.Sprintf(`UPDATE %s SET body=$4 WHERE tenant_id=$1 AND task_id=$2 AND artifact_reference=$3 AND status='available' AND body IS NULL`, t.store.table("media_task_artifacts")), t.task.owner.TenantID.String(), t.task.id.String(), t.task.artifact.Reference, body)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 1 {
+		return nil
+	}
+	var stored []byte
+	if err = t.tx.QueryRow(context.Background(), fmt.Sprintf(`SELECT body FROM %s WHERE tenant_id=$1 AND task_id=$2 AND artifact_reference=$3 AND status='available'`, t.store.table("media_task_artifacts")), t.task.owner.TenantID.String(), t.task.id.String(), t.task.artifact.Reference).Scan(&stored); errors.Is(err, pgx.ErrNoRows) {
+		return ErrArtifactMissing
+	} else if err != nil {
+		return err
+	}
+	if digestBytes(stored) != t.task.artifact.SHA256 || int64(len(stored)) != t.task.artifact.Size {
+		return ErrArtifactDigest
+	}
 	return nil
 }
 
@@ -301,12 +315,22 @@ func (s *PostgresStore) IssueGrant(ctx context.Context, id ID, actor Actor, gran
 	}
 	return task.IssueDownloadGrant(actor, grantID, now, ttl)
 }
-func (s *PostgresStore) ReadArtifact(_ context.Context, _ Actor, grant DownloadGrant, _ time.Time) ([]byte, error) {
-	value, ok := s.artifacts.Load(grant.TaskID.String())
-	if !ok {
+func (s *PostgresStore) ReadArtifact(ctx context.Context, actor Actor, grant DownloadGrant, now time.Time) ([]byte, error) {
+	if err := actor.valid(); err != nil || grant.valid() != nil || !validUTC(now) {
+		return nil, ErrForbidden
+	}
+	var body []byte
+	err := s.pool.QueryRow(ctx, fmt.Sprintf(`SELECT a.body FROM %s a JOIN %s t ON t.tenant_id=a.tenant_id AND t.id=a.task_id WHERE t.tenant_id=$1 AND t.id=$2 AND a.artifact_reference=$3 AND a.sha256=$4 AND a.status='available' AND a.body IS NOT NULL AND a.expires_at>$5`, s.table("media_task_artifacts"), s.table("media_tasks")), actor.TenantID.String(), grant.TaskID.String(), grant.ArtifactRef, grant.ArtifactSHA256[:], now.UTC()).Scan(&body)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrArtifactMissing
 	}
-	return append([]byte(nil), value.([]byte)...), nil
+	if err != nil {
+		return nil, err
+	}
+	if len(body) == 0 || digestBytes(body) != grant.ArtifactSHA256 || int64(len(body)) != grant.MaxBytes {
+		return nil, ErrArtifactDigest
+	}
+	return append([]byte(nil), body...), nil
 }
 
 func digestFromBytes(raw []byte) (Digest, error) {

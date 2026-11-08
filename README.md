@@ -42,7 +42,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 兑换券与经营告警 | 已实现，限定本地验收 | 双审赠额券、渠道隔离/采购余量/待核对积压告警；新券发行和告警评估默认关闭 |
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 资金来源与钱包开账 | 已实现，限定本地验收 | 四来源入账、FIFO预占、结算/释放、逆序消费退款、钱包与请求来源明细、平台只读核对；停服owner显式非现金开账。023使用新钱包历史，原路现金退款/拒付尚未交付 |
-| 媒体与实时协议 | 图片/TTS/Video/Realtime 开发链路已接，限定本地验收 | 图片、TTS 与异步 video task 已接 mock provider、当前 media wallet journal、幂等和未知提交保护；图片/TTS inline 结果已持久化，Realtime 已接单 turn WS 与 PostgreSQL session/turn/event writer。独立 worker 重启恢复、真实供应商、浏览器、Compose 实跑和生产验收未完成；[阶段清单](specs/028-unified-metering-media/tasks.md) |
+| 媒体与实时协议 | 图片/TTS/Video/Realtime 开发链路已接，限定本地验收 | 图片、TTS 与异步 video task 已接 mock provider、当前 media wallet journal、幂等和未知提交保护；图片/TTS inline 结果与异步 task 制品正文已持久化，Realtime 已接单 turn WS 与 PostgreSQL session/turn/event writer。真实供应商、浏览器、Compose 实跑和生产验收未完成；[阶段清单](specs/028-unified-metering-media/tasks.md) |
 | 容器、1Panel 与 HA | 配置/手册已有，目标环境未验 | Compose 静态渲染已验；容器实际运行、1Panel 实装和 HA/多活尚未完成 |
 
 采购报价支持按“渠道 + 精确上游模型”设置独立输入/输出单价与生效版本，不会把客户售价直接当作成本。

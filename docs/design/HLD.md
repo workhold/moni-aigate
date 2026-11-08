@@ -652,4 +652,4 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 候选024已部分接入当前文本报价/预占/结算：请求与尝试保存共同计划、原报价和纯核快照，观察采用inference canonical，计划未就绪时相关canonical/digest同空。6c 已增加客户R、结算金额、capability完整性、route complete、route/binding出生及非零route_revision检查；6d 已有受限APP六协议局部链和HTTP读端证据。[存储合同](../../specs/028-unified-metering-media/u-storage-contract.md)与[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)仍约束未完成的九组完整guard与商业出口矩阵。U仍每模型唯一capability；026元数据已从原请求快照接线，金额口径保持唯一收入/全部attempt成本。完整商业链及后续媒体未验收，出口见[阶段任务](../../specs/028-unified-metering-media/tasks.md)。
 ### 2026-11-08 当前媒体 MVP 接线状态
 
-当前图片、TTS 和 video task 复用同一媒体预占、attempt、观察和结算入口。Realtime 的数据库路径保存 session、turn、event，结果交付的 inline MVP 保存不可变媒体 artifact 并按原租户/用户/Key授权读取。报告只读媒体请求和唯一结算，媒体供应商成本缺失时保持 unknown。worker 重启、真实供应商和目标部署仍需独立验收。
+当前图片、TTS 和 video task 复用同一媒体预占、attempt、观察和结算入口。Realtime 的数据库路径保存 session、turn、event，结果交付的 inline MVP 保存不可变媒体 artifact 并按原租户/用户/Key授权读取。异步制品正文写入现有任务 artifact 表，新的 Store 可在重启后读取而不重复下载 provider。报告只读媒体请求和唯一结算，媒体供应商成本缺失时保持 unknown。真实供应商和目标部署仍需独立验收。

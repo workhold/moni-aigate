@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/moni-ai/moni-aigate/internal/provider"
@@ -260,6 +261,11 @@ func (s *Service) Download(ctx context.Context, actor Actor, grant DownloadGrant
 		return nil, err
 	}
 	if _, err := task.Download(actor, grant, now); err != nil {
+		return nil, err
+	}
+	if body, err := s.store.ReadArtifact(ctx, actor, grant, now); err == nil {
+		return body, nil
+	} else if !errors.Is(err, ErrArtifactMissing) {
 		return nil, err
 	}
 	result, err := s.adapter.Download(ctx, provider.TaskDownload{TaskID: grant.TaskID.String(), ProviderReference: task.ProviderReferenceForAdapter(), ArtifactReference: grant.ArtifactRef, ArtifactSHA256: grant.ArtifactSHA256.String(), MaxBytes: grant.MaxBytes})

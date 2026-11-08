@@ -535,6 +535,12 @@ U后台恢复仅观察/收尾原request/attempt及原证据；无网络生成许
 
 结果读取按租户、owner user、API Key 与 request 或原 idempotency key 同时过滤。进程内缓存只作为已完成请求的短期加速，不作为结果所有权或结果存在性的依据。数据库不可用、结果摘要不一致或原 request/attempt 绑定不一致时返回服务不可用，不从其他媒体结果或旧缓存补回。结果 bytes 属于受保护的 inline MVP 存储，后续对象存储只替换交付介质，不新增结算或计量路径。
 
+### 11.5 异步任务制品正文存储
+
+`media_task_artifacts` 的 metadata 与正文属于同一不可变制品身份。任务成功事件先追加 metadata，首次授权下载在 provider 返回后只允许把正文从 NULL 写成一次性 `body`，数据库校验 `octet_length(body)=byte_length` 且 `sha256(body)=sha256`。正文写入后禁止替换或删除，重复下载直接读取已保存正文，不再次调用 provider。
+
+新 worker 或 app 进程只从原 tenant、task、artifact reference、digest 和有效期读取正文。没有正文时才允许一次原 provider download，下载失败不改变任务或结算状态。重启不会因为 grant 丢失而丢失制品，客户端可以重新申请新的短期 grant；这条结果读取路径不创建新的 request、attempt、settlement 或收入。
+
 只支持独立新当前数据库。保留001–023原SQL与迁移checksum，新增迁移明确一次替换；迁移运行时不探测旧mode、不双写、不把旧request伪装成新snapshot。
 
 迁移必须在服务/生成writer/worker停止、持现行maintenance gate和真实migration owner时执行；第一阶段在任何DDL前验证PG≥15、恰为正式023基线及所需依赖形状，获得相关表锁并检查下列拒迁条件。拒绝必须单事务回滚、原schema/数据/权限/checksum不变，输出固定可理解错误，不自动删库或生成转换记录：
