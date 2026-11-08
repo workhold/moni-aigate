@@ -4666,3 +4666,25 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/008-financial-write-batches/acceptance.md`
 
 </details>
+
+## 2026-11-08T05:29:04Z · 70d3bbcf0cf4
+
+028-U请求报价身份guard、人工核对HTTP动作映射、008固定binary运行器与现行server夹具收口
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2056 个源文件；本次 11 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/financial-write-batches.md`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/cost_routing_integration_test.go`
+- modified `internal/server/reconciliation_input_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- added `scripts/financial-write-batch-qa/main.go`
+- added `scripts/financial-write-batch-qa/main_test.go`
+- modified `specs/008-financial-write-batches/acceptance.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
