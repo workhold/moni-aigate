@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T04:54:33Z",
-  "review_reason": "收口024成本来源互斥guard、现行周期预算完整route/catalog fixture与008/028-U验证记录；冻结历史fixture未升级；已完成语义复核",
-  "snapshot_sha256": "58691a000795714338fa981f27381f822a3909d0fef5b20f925e975ef7b08570",
+  "reviewed_at": "2026-11-08T05:01:17Z",
+  "review_reason": "补充008周期预算全包race与SIGKILL recovery验证记录",
+  "snapshot_sha256": "76c277fdcbc9f3a4873403fd218949ce30fa6bbae3e1e62b6d239648787eba22",
   "architecture_sha256": "2e13b1a6ff515d654dc298e0241554d2c1c5dbc5be877460dc13aaa9be671e50",
-  "history_sha256": "a8cb2a88287562436134a5e8cd219f626cd8c7f6f90ca53d01885ecada54a159",
+  "history_sha256": "8605f8b1d9b0cc5fec67594be9b8f01a0490df7ca9f08cd7eb54680d56969af6",
   "files": [
     {
       "path": ".dockerignore",
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "docs/verification/financial-write-batches.md",
-      "sha256": "f5ae459793146e5cc5fcd828c2bba23dff136bf1dba0d649467fed11568c39d0"
+      "sha256": "5819ce3dfe4a35a8dc1306e289d0bbc224a45a9955066c8b43583944aba49f78"
     },
     {
       "path": "docs/verification/funding-financial-graph.md",
@@ -6673,7 +6673,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/acceptance.md",
-      "sha256": "a18180037e4f9493a5c034ada247326f9c339b7b0f8df14d2e37bc435e60f1b8"
+      "sha256": "63154344678aefca22fd3e35f60cb67bd7af2a70b36c75c20ece047656430542"
     },
     {
       "path": "specs/008-financial-write-batches/plan.md",

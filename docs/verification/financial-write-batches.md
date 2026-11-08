@@ -19,4 +19,4 @@
 
 本轮又将超预占的 `billing_profile_blocks` 与 `billing.profile_blocked` audit 排入同一 PostgreSQL batch。profile 行或 audit 任一写点失败都会回滚结算、钱包、周期预算、来源 lot 和审计；重试只产生一笔 settlement/profile block，重复结算保持原 receipt。对应 `TestPostgresProfileBlockBatchRollsBackAndRetriesOnce` 与周期预算的超界专项通过 55439 race。
 
-2026-11-08 周期预算续片：现行 024 fixture 的额外 channel 通过完整 route publication 建立，成本价通过 catalog operation 发布，Reserve 使用当前非零 route revision；整个 `internal/periodicbudget` race 包在 55439 专库通过（71.379s），覆盖 dispatch、采购累计/日限额、第二 attempt、unknown 更正、恢复、verifier 与 Commander 限额。冻结的 001–019/prefix fixture 保持原 migration 和自由版本合同，没有因当前 fixture 适配而升级；008 的 SIGKILL、固定 binary、最终预览和其余总验收仍未完成。
+2026-11-08 周期预算续片：现行 024 fixture 的额外 channel 通过完整 route publication 建立，成本价通过 catalog operation 发布，Reserve 使用当前非零 route revision；整个 `internal/periodicbudget` race 包在 55439 专库通过（71.379s），覆盖 dispatch、采购累计/日限额、第二 attempt、unknown 更正、恢复、verifier 与 Commander 限额。billing 的 POSIX SIGKILL recovery 专项也在 55439 通过（14.933s），验证恢复不重发生成。冻结的 001–019/prefix fixture 保持原 migration 和自由版本合同，没有因当前 fixture 适配而升级；008 的固定 binary、最终预览、独立评审和其余总验收仍未完成。

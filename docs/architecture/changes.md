@@ -4653,3 +4653,16 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-08T05:01:17Z · 76c277fdcbc9
+
+补充008周期预算全包race与SIGKILL recovery验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2054 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/financial-write-batches.md`
+- modified `specs/008-financial-write-batches/acceptance.md`
+
+</details>
