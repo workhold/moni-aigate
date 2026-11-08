@@ -65,6 +65,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 异步任务 HTTP 续片：`/v1/tasks`、`/v1/tasks/:id`、`/submit`、`/cancel`、`/result-grant` 已接 API Key 鉴权、当前 Postgres task store、任务状态机和 mock video adapter。请求要求原 request/reservation/attempt/source 绑定并保留幂等摘要，提交沿 `submission_unknown` 禁止重发边界。worker、结果正文持久化、账务预占/结算和端到端任务恢复仍未完成。
 
+2026-11-08 异步 worker 续片：`media_tasks` 增加 lease owner/kind/expiry，Postgres Store 支持 `Claim/RenewLease/ReleaseLease`，`tasks.Worker` 按 submit/observe/cancel/expire 调用现有状态机。租约过期可被下一 worker 接管，生成提交仍受 task unknown 禁止重发约束。worker 进程入口、重启专项、统一账务收尾和对象存储仍未完成。
+
 ## S / A / R / 交付
 
 - [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。

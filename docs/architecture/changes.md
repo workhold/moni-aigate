@@ -4786,3 +4786,19 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `internal/tasks/postgres_store.go`
 
 </details>
+
+## 2026-11-08T07:02:26Z · 0dda8d34c856
+
+补齐media_tasks持久租约与tasks worker状态机
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2072 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `internal/tasks/postgres_store.go`
+- added `internal/tasks/worker.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

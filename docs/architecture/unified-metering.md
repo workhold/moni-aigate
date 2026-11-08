@@ -7,6 +7,8 @@
 
 异步任务入口续片：`/v1/tasks` 当前要求客户端携带已经存在的 request、reservation、attempt、funding source 和不可变 profile/schema 身份，再写入 `media_tasks`。状态查询和提交使用相同 task identity，未知提交通过任务状态机阻止再次生成。该入口是当前开发接缝，尚未完成 Reserve/Attempt/Observe/Settle 的统一账务调用和独立 worker。
 
+异步 worker 续片：任务 lease 与 task 状态保存在同一当前表，claim 时使用 PostgreSQL 行锁和过期 lease 条件，状态操作完成后释放 lease。`tasks.Worker` 只操作任务和 provider adapter，不自行写 wallet 或 settlement，账务接缝仍由集成层补齐。
+
 规格入口：[总体](../../specs/028-unified-metering-media/spec.md)、[共同域精确合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md)。当前经营/资金链分别见[026报表](operating-reports.md)与[027来源](wallet-sources.md)。
 
 请求/尝试两侧bounds与known rates的纯核摘要从原价格/成本快照重建，外层报价继续使用 `moni-aigate.inference.quote.v1` 身份；unknown供应商不伪造数值quote。迁移、计费和角色局部专项已有PostgreSQL 16.15证据，当前轮次验证见[记录](../verification/unified-metering.md)。

@@ -24,6 +24,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-08 异步任务入口续片：新增 API Key 保护的 `video_generation` 任务 HTTP 入口，创建、状态、提交、取消和结果授权均进入当前任务 Store/状态机，提交使用当前 mock adapter 并保留未知提交不可重发边界。该入口尚未接 worker 重启恢复、对象正文持久化或统一 billing/wallet/settlement，因此不标记异步能力完成。
 
+2026-11-08 异步 worker 续片：`media_tasks` 的持久 lease 支持 claim、续租和释放，`internal/tasks.Worker` 沿当前任务状态机执行一次 submit/observe/cancel/expire。该实现仍需接入实际 worker 运行入口、统一账务收尾和重启端到端验收。
+
 <!-- architecture:context -->
 ## 系统上下文与边界
 

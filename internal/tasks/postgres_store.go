@@ -220,13 +220,63 @@ func (t *postgresTaskTx) PutArtifact(body []byte) error {
 	return nil
 }
 
-func (s *PostgresStore) Claim(context.Context, WorkKind, ID, time.Time, time.Duration, ID) (WorkerLease, Task, References, error) {
-	return WorkerLease{}, Task{}, References{}, ErrNoWork
+func (s *PostgresStore) Claim(ctx context.Context, kind WorkKind, worker ID, now time.Time, ttl time.Duration, leaseID ID) (WorkerLease, Task, References, error) {
+	if _, err := ParseID(worker.String()); err != nil {
+		return WorkerLease{}, Task{}, References{}, ErrInvalidInput
+	}
+	if _, err := ParseID(leaseID.String()); err != nil || !validUTC(now) || ttl <= 0 || ttl > maxDownloadGrantTTL {
+		return WorkerLease{}, Task{}, References{}, ErrInvalidInput
+	}
+	if kind != WorkSubmit && kind != WorkObserve && kind != WorkCancel && kind != WorkExpire {
+		return WorkerLease{}, Task{}, References{}, ErrInvalidInput
+	}
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return WorkerLease{}, Task{}, References{}, err
+	}
+	defer tx.Rollback(ctx)
+	condition := map[WorkKind]string{WorkSubmit: "t.status='prepared'", WorkObserve: "t.status NOT IN ('succeeded','failed','cancelled')", WorkCancel: "t.cancel_state='requested'", WorkExpire: "t.status NOT IN ('succeeded','failed','cancelled') OR t.artifact_state='available'"}[kind]
+	var taskID string
+	if err = tx.QueryRow(ctx, fmt.Sprintf(`SELECT t.id FROM %s t WHERE (%s) AND (t.lease_until IS NULL OR t.lease_until<=$1) ORDER BY t.created_at,t.id FOR UPDATE SKIP LOCKED LIMIT 1`, s.table("media_tasks"), condition), now).Scan(&taskID); errors.Is(err, pgx.ErrNoRows) {
+		return WorkerLease{}, Task{}, References{}, ErrNoWork
+	} else if err != nil {
+		return WorkerLease{}, Task{}, References{}, err
+	}
+	until := now.Add(ttl)
+	if _, err = tx.Exec(ctx, fmt.Sprintf(`UPDATE %s SET lease_id=$2,lease_worker_id=$3,lease_kind=$4,lease_until=$5 WHERE id=$1`, s.table("media_tasks")), taskID, leaseID.String(), worker.String(), kind, until); err != nil {
+		return WorkerLease{}, Task{}, References{}, err
+	}
+	task, refs, err := s.load(ctx, tx, `WHERE t.id=$1 FOR UPDATE`, taskID)
+	if err != nil {
+		return WorkerLease{}, Task{}, References{}, err
+	}
+	if err = tx.Commit(ctx); err != nil {
+		return WorkerLease{}, Task{}, References{}, err
+	}
+	return WorkerLease{LeaseID: leaseID, TaskID: task.id, WorkerID: worker, Kind: kind, ExpiresAt: until}, task, refs, nil
 }
-func (s *PostgresStore) RenewLease(context.Context, WorkerLease, time.Time, time.Duration) (WorkerLease, error) {
-	return WorkerLease{}, ErrLeaseConflict
+func (s *PostgresStore) RenewLease(ctx context.Context, lease WorkerLease, now time.Time, ttl time.Duration) (WorkerLease, error) {
+	if err := lease.valid(); err != nil || !validUTC(now) || ttl <= 0 || ttl > maxDownloadGrantTTL {
+		return WorkerLease{}, ErrInvalidInput
+	}
+	until := now.Add(ttl)
+	result, err := s.pool.Exec(ctx, fmt.Sprintf(`UPDATE %s SET lease_until=$5 WHERE id=$1 AND lease_id=$2 AND lease_worker_id=$3 AND lease_kind=$4 AND lease_until>$6`, s.table("media_tasks")), lease.TaskID.String(), lease.LeaseID.String(), lease.WorkerID.String(), lease.Kind, until, now)
+	if err != nil || result.RowsAffected() != 1 {
+		return WorkerLease{}, ErrLeaseConflict
+	}
+	lease.ExpiresAt = until
+	return lease, nil
 }
-func (s *PostgresStore) ReleaseLease(context.Context, WorkerLease) error { return ErrLeaseConflict }
+func (s *PostgresStore) ReleaseLease(ctx context.Context, lease WorkerLease) error {
+	if err := lease.valid(); err != nil {
+		return err
+	}
+	result, err := s.pool.Exec(ctx, fmt.Sprintf(`UPDATE %s SET lease_id=NULL,lease_worker_id=NULL,lease_kind=NULL,lease_until=NULL WHERE id=$1 AND lease_id=$2 AND lease_worker_id=$3 AND lease_kind=$4`, s.table("media_tasks")), lease.TaskID.String(), lease.LeaseID.String(), lease.WorkerID.String(), lease.Kind)
+	if err != nil || result.RowsAffected() != 1 {
+		return ErrLeaseConflict
+	}
+	return nil
+}
 func (s *PostgresStore) IssueGrant(ctx context.Context, id ID, actor Actor, grantID ID, now time.Time, ttl time.Duration) (DownloadGrant, error) {
 	task, _, err := s.Snapshot(ctx, id)
 	if err != nil {

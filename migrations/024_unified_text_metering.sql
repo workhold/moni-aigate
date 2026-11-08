@@ -2129,6 +2129,10 @@ CREATE TABLE media_tasks (
  artifact_state text NOT NULL DEFAULT 'none' CHECK(artifact_state IN ('none','available','expired')),
  cancel_resume_state text CHECK(cancel_resume_state IS NULL OR cancel_resume_state IN ('queued','running','submission_unknown')),
  provider_reference text CHECK(provider_reference IS NULL OR provider_reference !~ '://'),
+ lease_id text CHECK(lease_id IS NULL OR media_uuid(lease_id)),
+ lease_worker_id text CHECK(lease_worker_id IS NULL OR media_uuid(lease_worker_id)),
+ lease_kind text CHECK(lease_kind IS NULL OR lease_kind IN ('submit','observe','cancel','expire')),
+ lease_until timestamptz(6) CHECK(lease_until IS NULL OR isfinite(lease_until)),
  submit_deadline timestamptz(6) NOT NULL CHECK(isfinite(submit_deadline)),
  observe_deadline timestamptz(6) NOT NULL CHECK(isfinite(observe_deadline)),
  result_deadline timestamptz(6) NOT NULL CHECK(isfinite(result_deadline)),
@@ -2148,6 +2152,7 @@ CREATE TABLE media_tasks (
  FOREIGN KEY(profile_version) REFERENCES model_capability_versions(id) DEFERRABLE INITIALLY DEFERRED,
  FOREIGN KEY(schema_id,schema_digest) REFERENCES meter_schemas(id,schema_digest) DEFERRABLE INITIALLY DEFERRED,
  CHECK(submit_deadline<=observe_deadline AND result_deadline>=observe_deadline AND artifact_deadline>=result_deadline),
+ CHECK((lease_id IS NULL AND lease_worker_id IS NULL AND lease_kind IS NULL AND lease_until IS NULL) OR (lease_id IS NOT NULL AND lease_worker_id IS NOT NULL AND lease_kind IS NOT NULL AND lease_until IS NOT NULL)),
  CHECK((status='cancel_requested')=(cancel_state='requested'))
 );
 

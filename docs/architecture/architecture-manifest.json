@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T06:54:59Z",
-  "review_reason": "补齐video_generation结果授权与开发环境结果交付路径",
-  "snapshot_sha256": "31683400be58575affc52009184fd45290c5364492e2095ab6cc5c3068ca894c",
-  "architecture_sha256": "4ad44efa864c74ad5f9e4ccb9b93cf6f8a5528660316a300b7ab0d379716de32",
-  "history_sha256": "6312b9856435e894b0d292eea4ed761c5a82285639b2644ff52d0a3dc0107dfe",
+  "reviewed_at": "2026-11-08T07:02:26Z",
+  "review_reason": "补齐media_tasks持久租约与tasks worker状态机",
+  "snapshot_sha256": "0dda8d34c8567e2e137773ea7ce64e1beb6e02659dc35192ef605e45ab71482d",
+  "architecture_sha256": "61d5b0aee5b3f9e604dbccc21bac2915b5161051902c457e25146ddaf778cab8",
+  "history_sha256": "f739db1377c79c930adf9e01b6b26bdb0e7324d54375c508fe660e5699f6de04",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "38063b06ffe1a952415fa1baf859192c093c224fb1054bc0679bd94cd032f4d4"
+      "sha256": "948b70eab8604402610d9037adbacc0379371a3255f4cd6a18f178963d8060f3"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -6181,7 +6181,7 @@
     },
     {
       "path": "internal/tasks/postgres_store.go",
-      "sha256": "0f0b0091977b9c57c39ce03a683ec0116437d4a8e6bbf8837ceb7332205adbc9"
+      "sha256": "6aef1224ea402da74d91a7de48b5ca5e0b2ad33ad3a05f0c28d127f49d86ef06"
     },
     {
       "path": "internal/tasks/service.go",
@@ -6206,6 +6206,10 @@
     {
       "path": "internal/tasks/types.go",
       "sha256": "ce265f7218dae9146e95bb89c12b55ccdef678da2182594d4f0a453b82e6385d"
+    },
+    {
+      "path": "internal/tasks/worker.go",
+      "sha256": "1800196212408813162f9f584302f789587b903b85e42164764b95f0ce32bb9c"
     },
     {
       "path": "internal/telemetry/telemetry.go",
@@ -6353,7 +6357,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "1212a864e5e378462f869353b5fa89614c06c4837ef7c723de68da8571a6b8a4"
+      "sha256": "df989c80a2e19450e3eb65e22f570c868cb6cbc6449e3ffd30f002f14dd18dbf"
     },
     {
       "path": "migrations/embed.go",
@@ -7669,7 +7673,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "cf3df1c9fa008c06736092f877df034a77ac0e0255bd52835abd091680279a7a"
+      "sha256": "7b293e61c3b00a88c4932c1bc2ae53a600dd187c529ab2e62436bde2c54ccd1b"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
