@@ -21,6 +21,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/config"
 	"github.com/moni-ai/moni-aigate/internal/identity"
+	"github.com/moni-ai/moni-aigate/internal/media"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/procurement"
 	"github.com/moni-ai/moni-aigate/internal/provider"
@@ -46,6 +47,9 @@ type Server struct {
 	PeriodicReader         *periodicbudget.Reader
 	PeriodicCommander      *periodicbudget.Commander
 	Provider               *provider.Client
+	ImageAdapter           provider.SynchronousMediaAdapter
+	ImageProfile           media.Profile
+	ImageService           *media.Orchestrator
 	Routing                *routing.Engine
 	TaskStore              *tasks.PostgresStore
 	TaskAdapter            *provider.MockTaskAdapter
@@ -77,14 +81,19 @@ type Server struct {
 	paymentAdmission       paymentAdmission
 	paymentNotifyAdmission paymentNotificationAdmission
 	assets                 fs.FS
+	imageMu                sync.Mutex
+	imageByIdempotency     map[string]*imageRequestRecord
+	imageByID              map[string]*imageRequestRecord
 }
 
 func New(c config.Config, p *pgxpool.Pool, assets fs.FS, log *telemetry.Logger) *Server {
 	identities := identity.New(p, c.Secrets)
 	identities.EnforcePlatformMFA = c.MFAEnforcePlatform
 	taskStore, _ := tasks.NewPostgresStore(p, "")
+	mediaAdapter := newDefaultMediaAdapter()
+	imageProfile, imageService := newImageRuntime(mediaAdapter)
 	realtimeService, _ := realtime.NewService(realtime.ServiceOptions{Store: realtime.NewMemoryStore(), Adapter: provider.NewMockRealtimeAdapter()})
-	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(provider.ClientOptions{}), Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, TaskAdapter: provider.NewMockTaskAdapter(), MediaAdapter: newDefaultMediaAdapter(), RealtimeService: realtimeService, Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets}
+	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(provider.ClientOptions{}), ImageAdapter: mediaAdapter, ImageProfile: imageProfile, ImageService: imageService, Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, TaskAdapter: provider.NewMockTaskAdapter(), MediaAdapter: mediaAdapter, RealtimeService: realtimeService, Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets, imageByIdempotency: make(map[string]*imageRequestRecord), imageByID: make(map[string]*imageRequestRecord)}
 }
 func (s *Server) Ready(v bool) { s.ready.Store(v) }
 func (s *Server) Engine() *gin.Engine {
@@ -234,7 +243,8 @@ func (s *Server) Engine() *gin.Engine {
 	v.POST("/tasks/:id/cancel", s.cancelTask)
 	v.POST("/tasks/:id/result-grant", s.taskResultGrant)
 	v.GET("/tasks/:id/result", s.taskResult)
-	v.POST("/images/generations", s.generateImage)
+	v.POST("/images/generations", s.imageGeneration)
+	v.GET("/images/generations/:id", s.imageGenerationResult)
 	v.POST("/audio/speech", s.synthesizeSpeech)
 	v.GET("/realtime", s.realtimeWebSocket)
 	v.POST("/chat/completions", s.chat)

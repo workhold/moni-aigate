@@ -4829,3 +4829,18 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - added `internal/tasks/worker_test.go`
 
 </details>
+
+## 2026-11-08T08:01:12Z · 253053e741dd
+
+新增限定同步图片 HTTP MVP，复核 server→media→provider mock 的调用链与内存幂等/结果授权边界，未接入持久化、计量、账务、wallet、settlement、tasks、realtime、migrations 或 compose
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2076 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/design/image-http-mvp.md`
+- added `internal/server/image_handlers.go`
+- added `internal/server/image_handlers_test.go`
+- modified `internal/server/server.go`
+
+</details>

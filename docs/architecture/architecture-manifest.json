@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T07:20:30Z",
-  "review_reason": "补充task worker lease与开发环境worker回归测试",
-  "snapshot_sha256": "25c3b7570e894fcf60f54459f5b78c42879ae2f4a05a67e490230a5ec9adac54",
-  "architecture_sha256": "84005f457c7fa57b85579b3fe15c82db222889f4e385adb75dd22f2ea13e8f96",
-  "history_sha256": "9b9af5fb369600b35e7f04e69ea07121bb55e2f12eec92005c9e9f1b4378fbf2",
+  "reviewed_at": "2026-11-08T08:01:12Z",
+  "review_reason": "新增限定同步图片 HTTP MVP，复核 server→media→provider mock 的调用链与内存幂等/结果授权边界，未接入持久化、计量、账务、wallet、settlement、tasks、realtime、migrations 或 compose",
+  "snapshot_sha256": "253053e741dd1edfb344a5275eef2cfefd325bc41812ddbf06dbfc6d37df399c",
+  "architecture_sha256": "fd54880244df55e68a840b80a4beb0ca064cd80dedd1d0d0a3a3f7b7c1346666",
+  "history_sha256": "e534863ad7af1f8f5434652210c53a976e25c8730df3f9621e27d3d639c7ee49",
   "files": [
     {
       "path": ".dockerignore",
@@ -182,6 +182,10 @@
     {
       "path": "docs/design/extension-platform.md",
       "sha256": "a1272acfea742beb313dc8a283ce1b9ab375b7d43bdab83d8076c2cab517564a"
+    },
+    {
+      "path": "docs/design/image-http-mvp.md",
+      "sha256": "96307fcdc32cbb0c524b98cf6f6fd86e5ae58b47f6e7c072ac5782bab8eaffb3"
     },
     {
       "path": "docs/design/integrated-wallet-media.md",
@@ -5932,6 +5936,14 @@
       "sha256": "c38a514cd26b72d9d45986f317860fb0828d8721940ef4457d65a61f9cd38c1c"
     },
     {
+      "path": "internal/server/image_handlers.go",
+      "sha256": "0a17aa86c346ab3f580152c78fe6c59a7d1dc17604b19bbcca26a276b6788b5f"
+    },
+    {
+      "path": "internal/server/image_handlers_test.go",
+      "sha256": "2e0cb0cea0414b0fbb7c37f92c04d6c7f8a5f88e243d6e766488b17f50e35f7a"
+    },
+    {
       "path": "internal/server/key_access_policy_integration_test.go",
       "sha256": "c86f689f3c0bd59d24e118912cb1acdba17162fc43b82fe75701f54c8ecf81ea"
     },
@@ -6141,7 +6153,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "b929eaecb1172c5d51360edc8edac71f1e6976031bb72394e14f78975588dc08"
+      "sha256": "2fb97e066d7c3d462af0e1db4cf2f514b0ba55fc33a574b1f0904797e78ec186"
     },
     {
       "path": "internal/server/static.go",
