@@ -50,6 +50,9 @@ type Server struct {
 	ImageAdapter           provider.SynchronousMediaAdapter
 	ImageProfile           media.Profile
 	ImageService           *media.Orchestrator
+	Realtime               *realtime.Service
+	RealtimeAdapter        *provider.MockRealtimeAdapter
+	RealtimeTimeout        time.Duration
 	Routing                *routing.Engine
 	TaskStore              *tasks.PostgresStore
 	TaskAdapter            *provider.MockTaskAdapter
@@ -92,8 +95,12 @@ func New(c config.Config, p *pgxpool.Pool, assets fs.FS, log *telemetry.Logger) 
 	taskStore, _ := tasks.NewPostgresStore(p, "")
 	mediaAdapter := newDefaultMediaAdapter()
 	imageProfile, imageService := newImageRuntime(mediaAdapter)
-	realtimeService, _ := realtime.NewService(realtime.ServiceOptions{Store: realtime.NewMemoryStore(), Adapter: provider.NewMockRealtimeAdapter()})
-	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(provider.ClientOptions{}), ImageAdapter: mediaAdapter, ImageProfile: imageProfile, ImageService: imageService, Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, TaskAdapter: provider.NewMockTaskAdapter(), MediaAdapter: mediaAdapter, RealtimeService: realtimeService, Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets, imageByIdempotency: make(map[string]*imageRequestRecord), imageByID: make(map[string]*imageRequestRecord)}
+	realtimeAdapter := provider.NewMockRealtimeAdapter()
+	realtimeService, err := realtime.NewService(realtime.ServiceOptions{Store: realtime.NewMemoryStore(), Adapter: realtimeAdapter})
+	if err != nil {
+		panic("invalid realtime MVP wiring: " + err.Error())
+	}
+	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(provider.ClientOptions{}), ImageAdapter: mediaAdapter, ImageProfile: imageProfile, ImageService: imageService, Realtime: realtimeService, RealtimeAdapter: realtimeAdapter, RealtimeTimeout: realtime.DefaultTurnTTL, Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, TaskAdapter: provider.NewMockTaskAdapter(), MediaAdapter: mediaAdapter, Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets, imageByIdempotency: make(map[string]*imageRequestRecord), imageByID: make(map[string]*imageRequestRecord)}
 }
 func (s *Server) Ready(v bool) { s.ready.Store(v) }
 func (s *Server) Engine() *gin.Engine {
@@ -246,7 +253,7 @@ func (s *Server) Engine() *gin.Engine {
 	v.POST("/images/generations", s.imageGeneration)
 	v.GET("/images/generations/:id", s.imageGenerationResult)
 	v.POST("/audio/speech", s.synthesizeSpeech)
-	v.GET("/realtime", s.realtimeWebSocket)
+	v.GET("/realtime", s.realtime)
 	v.POST("/chat/completions", s.chat)
 	v.POST("/responses", func(c *gin.Context) { s.inference(c, provider.ProtocolResponses) })
 	v.POST("/messages", func(c *gin.Context) { s.inference(c, provider.ProtocolMessages) })
