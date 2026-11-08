@@ -17,6 +17,8 @@ FROM alpine:3.23
 RUN apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
 COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
 USER moni
+WORKDIR /app
 EXPOSE 8080
+STOPSIGNAL SIGTERM
 ENTRYPOINT ["moni-aigate"]
 CMD ["serve"]

@@ -15,10 +15,12 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 5s
     restart: unless-stopped
-  migrate:
+
+  migrate: &one_shot
     build: .
-    image: moni-aigate:local
+    image: ${MONI_IMAGE:-moni-aigate:local}
     command: [migrate]
     environment: &migration-env
       DATABASE_URL: postgres://moni_owner:${POSTGRES_PASSWORD}@postgres:5432/moni?sslmode=disable
@@ -29,15 +31,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+    restart: "no"
+
   provision:
-    image: moni-aigate:local
+    <<: *one_shot
+    image: ${MONI_IMAGE:-moni-aigate:local}
     command: [provision]
     environment: *migration-env
     depends_on:
       migrate:
         condition: service_completed_successfully
+
   app:
-    image: moni-aigate:local
+    build: .
+    image: ${MONI_IMAGE:-moni-aigate:local}
     environment:
       DATABASE_URL: postgres://moni_app:${APP_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
       PROJECTION_DATABASE_URL: postgres://moni_projection:${PROJECTION_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
@@ -72,12 +80,21 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
     stop_grace_period: 320s
+    init: true
     read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
+    healthcheck:
+      test: [CMD-SHELL, wget -q -O /dev/null http://127.0.0.1:8080/health/ready]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+
   worker:
-    image: moni-aigate:local
+    build: .
+    image: ${MONI_IMAGE:-moni-aigate:local}
     command: [worker]
     environment:
       DATABASE_URL: postgres://moni_app:${APP_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
@@ -89,6 +106,8 @@ services:
       provision:
         condition: service_completed_successfully
     restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
     read_only: true
     security_opt:
       - no-new-privileges:true
