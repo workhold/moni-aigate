@@ -4817,3 +4817,15 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-08T07:20:30Z · 25c3b7570e89
+
+补充task worker lease与开发环境worker回归测试
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2073 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `internal/tasks/worker_test.go`
+
+</details>

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T07:12:28Z",
-  "review_reason": "新增moni-aigate worker命令与Compose独立worker服务",
-  "snapshot_sha256": "d5659b01d06151363e8b5f4948c48cb7a3752ddc7d9bfb7512827cdd015b8758",
+  "reviewed_at": "2026-11-08T07:20:30Z",
+  "review_reason": "补充task worker lease与开发环境worker回归测试",
+  "snapshot_sha256": "25c3b7570e894fcf60f54459f5b78c42879ae2f4a05a67e490230a5ec9adac54",
   "architecture_sha256": "84005f457c7fa57b85579b3fe15c82db222889f4e385adb75dd22f2ea13e8f96",
-  "history_sha256": "5214669aaab2426b5bc95995eea7bb0f29be9e2f0544cbcbc611cc8854feb53e",
+  "history_sha256": "9b9af5fb369600b35e7f04e69ea07121bb55e2f12eec92005c9e9f1b4378fbf2",
   "files": [
     {
       "path": ".dockerignore",
@@ -6210,6 +6210,10 @@
     {
       "path": "internal/tasks/worker.go",
       "sha256": "1800196212408813162f9f584302f789587b903b85e42164764b95f0ce32bb9c"
+    },
+    {
+      "path": "internal/tasks/worker_test.go",
+      "sha256": "713d84f0354d1510bace09f333aa8414b6668d25fb62bdfeb353d08928a85279"
     },
     {
       "path": "internal/telemetry/telemetry.go",
