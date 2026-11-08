@@ -4731,3 +4731,19 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - added `internal/provider/mock_media.go`
 
 </details>
+
+## 2026-11-08T06:48:26Z · f479c6905145
+
+接入video_generation任务HTTP入口与当前任务状态机
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2071 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- added `internal/provider/mock_task.go`
+- modified `internal/server/server.go`
+- added `internal/server/task_handlers.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

@@ -63,6 +63,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 028-S/A/R 当前存储片：024 追加 `media_tasks`、任务事件/制品引用、`realtime_sessions`、`realtime_turns`、`realtime_events`，加入同租户原 request/reservation/attempt/source 绑定、状态闭集、事件去重、终态和 session 单 inflight guard。`ProvisionFor` 为这些关系增加 APP SELECT/INSERT/UPDATE、禁止 DELETE，projector/PUBLIC/payment worker 无权限。迁移与角色边界专项通过 55439。HTTP/WS、PostgreSQL service writer、mock provider、媒体金额/预占/结算接线仍未完成。
 
+2026-11-08 异步任务 HTTP 续片：`/v1/tasks`、`/v1/tasks/:id`、`/submit`、`/cancel`、`/result-grant` 已接 API Key 鉴权、当前 Postgres task store、任务状态机和 mock video adapter。请求要求原 request/reservation/attempt/source 绑定并保留幂等摘要，提交沿 `submission_unknown` 禁止重发边界。worker、结果正文持久化、账务预占/结算和端到端任务恢复仍未完成。
+
 ## S / A / R / 交付
 
 - [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。
