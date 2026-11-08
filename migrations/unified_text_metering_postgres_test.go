@@ -559,6 +559,34 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 		t.Fatal("request without bound lines committed", err)
 	}
 	_ = tx.Rollback(ctx)
+	currentPrice := uuid.NewString()
+	meterquote.PublishDefaultPrice(t, ctx, pool, meterquote.DefaultPrice{ID: currentPrice, ModelID: model, Actor: user, InputRate: 1000000, OutputRate: 1000000})
+	validRequest := uuid.NewString()
+	tx, err = pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision)
+ VALUES($1,$2,$3,$4,$5,$6,'openai_chat','synchronous','json','r3','hmac',clock_timestamp()+interval '1 hour','test',false,1)`, validRequest, tenant, key, user, model, profile); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO request_meter_snapshots(tenant_id,request_id,model_id,profile_version,schema_id,schema_digest,price_version_id,tenant_pricing_revision,retail_priced_at,input_bound,output_bound)
+ SELECT $1,$2,$3,$4,c.schema_id,c.schema_digest,$5,1,clock_timestamp(),100,20 FROM model_capability_versions c WHERE c.id=$4`, tenant, validRequest, model, profile, currentPrice); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO request_meter_bound_lines(tenant_id,request_id,side,dimension,unit,quantity)
+ SELECT $1,$2,side,dimension,'token', CASE dimension WHEN 'text_input_token' THEN 100 ELSE 20 END
+ FROM (VALUES ('retail'),('supplier')) AS s(side)
+ CROSS JOIN (VALUES ('text_input_token'),('text_output_token')) AS d(dimension)`, tenant, validRequest); err != nil {
+		t.Fatal(err)
+	}
+	// Do not commit this partial business fixture: 020/023 correctly require
+	// the real reservation and wallet source chain. The immediate request
+	// identity guard must reject before those deferred business guards run.
+	if _, err = tx.Exec(ctx, `UPDATE request_records SET streaming=true WHERE tenant_id=$1 AND id=$2`, tenant, validRequest); err == nil || !strings.Contains(err.Error(), "immutable request identity") {
+		t.Fatal("request quote identity update was accepted", err)
+	}
+	_ = tx.Rollback(ctx)
 }
 
 func TestUnifiedTextMeteringDoesNotRetainRouteRevisionBypass(t *testing.T) {

@@ -908,13 +908,19 @@ ALTER TABLE request_records DROP COLUMN price_version_id, DROP COLUMN input_rate
 CREATE OR REPLACE FUNCTION guard_request_retail_snapshot() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
  IF TG_OP='UPDATE' THEN
-  IF ROW(NEW.tenant_id,NEW.key_id,NEW.owner_id,NEW.model_id,NEW.profile_version,NEW.protocol,NEW.execution_kind,NEW.result_kind)
-   IS DISTINCT FROM ROW(OLD.tenant_id,OLD.key_id,OLD.owner_id,OLD.model_id,OLD.profile_version,OLD.protocol,OLD.execution_kind,OLD.result_kind) THEN
+  IF ROW(NEW.tenant_id,NEW.key_id,NEW.owner_id,NEW.model_id,NEW.profile_version,NEW.protocol,NEW.execution_kind,NEW.result_kind,NEW.request_hmac,NEW.streaming,NEW.route_revision)
+   IS DISTINCT FROM ROW(OLD.tenant_id,OLD.key_id,OLD.owner_id,OLD.model_id,OLD.profile_version,OLD.protocol,OLD.execution_kind,OLD.result_kind,OLD.request_hmac,OLD.streaming,OLD.route_revision) THEN
    RAISE EXCEPTION 'immutable request identity';
   END IF;
  END IF;
  RETURN NEW;
 END $$;
+CREATE TRIGGER meter_request_quote_identity
+ BEFORE UPDATE ON request_records FOR EACH ROW EXECUTE FUNCTION guard_request_retail_snapshot();
+DO $$ BEGIN
+ EXECUTE format('ALTER FUNCTION %I.guard_request_retail_snapshot() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+END $$;
+REVOKE ALL ON FUNCTION guard_request_retail_snapshot() FROM PUBLIC;
 
 CREATE OR REPLACE FUNCTION guard_procurement_reservation_identity() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE actual_credential TEXT; actual_channel TEXT; bound_credential TEXT; bound_channel TEXT;

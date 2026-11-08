@@ -32,3 +32,20 @@ func TestBindReconciliationResolve(t *testing.T) {
 		})
 	}
 }
+
+func TestReconciliationBillingAction(t *testing.T) {
+	for _, tc := range []struct {
+		input string
+		want  string
+	}{
+		{input: "settle", want: "propose"},
+		{input: "release", want: "release"},
+		{input: "approve", want: ""},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			if got := reconciliationBillingAction(tc.input); got != tc.want {
+				t.Fatalf("action=%q want %q", got, tc.want)
+			}
+		})
+	}
+}

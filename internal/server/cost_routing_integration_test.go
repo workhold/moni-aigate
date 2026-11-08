@@ -23,7 +23,7 @@ func publishCostTestRoute(t *testing.T, f *gatewayFixture, policy routing.CostPo
 	channels := probeChannels(t, f)
 	bindings := make([]catalog.BindingInput, 0, len(channels))
 	for _, ch := range channels {
-		bindings = append(bindings, catalog.BindingInput{ChannelID: ch, UpstreamModel: "provider-model", Priority: 0, Weight: 1, MaxInflight: 4, MaxInputCostRate: caps[ch]})
+		bindings = append(bindings, catalog.BindingInput{ChannelID: ch, UpstreamModel: "provider-model", Priority: 0, Weight: 1, MaxInflight: 4, MaxInputCostRate: caps[ch], MaxOutputCostRate: caps[ch]})
 	}
 	if _, err := f.server.Catalog.PublishWithCostPolicy(context.Background(), "cost-test", f.model, 1, bindings, policy); err != nil {
 		t.Fatal(err)
@@ -258,7 +258,7 @@ func TestCostRouteHTTPStrictPublicationAndCustomerPrivacy(t *testing.T) {
 	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t)}, nil)
 	session, csrf := probeAdmin(t, f)
 	channel := probeChannels(t, f)[0]
-	valid := fmt.Sprintf(`{"expected_revision":1,"cost_policy":{"mode":"cost_first","unknown_cost_policy":"deny"},"bindings":[{"channel_id":%q,"upstream_model":"provider-model","priority":0,"weight":1,"max_inflight":4,"max_input_cost_rate":"9223372036854775807","max_output_cost_rate":null}]}`, channel)
+	valid := fmt.Sprintf(`{"expected_revision":1,"cost_policy":{"mode":"cost_first","unknown_cost_policy":"deny"},"bindings":[{"channel_id":%q,"upstream_model":"provider-model","priority":0,"weight":1,"max_inflight":4,"max_input_cost_rate":"9223372036854775807","max_output_cost_rate":"9223372036854775807"}]}`, channel)
 	call := func(raw string) *httptest.ResponseRecorder {
 		return keyPolicyHTTP(t, f.server.Engine(), "PUT", "/api/platform/models/"+f.model+"/bindings", raw, session, csrf, f.server.Config.Origin, "", nil)
 	}
@@ -268,9 +268,9 @@ func TestCostRouteHTTPStrictPublicationAndCustomerPrivacy(t *testing.T) {
 		strings.Replace(valid, `"unknown_cost_policy":"deny"`, `"UNKNOWN_COST_POLICY":"deny"`, 1),
 		strings.Replace(valid, `"weight":1`, `"weight":1,"cost_policy":null`, 1),
 		strings.Replace(valid, `"mode":"cost_first"`, `"mode":"cost_first","max_inflight":4`, 1),
-		strings.Replace(valid, `"max_output_cost_rate":null`, `"max_output_cost_rate":"-1"`, 1),
-		strings.Replace(valid, `"max_output_cost_rate":null`, `"max_output_cost_rate":0`, 1),
-		strings.Replace(valid, `"max_output_cost_rate":null`, `"max_output_cost_rate":"01"`, 1),
+		strings.Replace(valid, `"max_output_cost_rate":"9223372036854775807"`, `"max_output_cost_rate":"-1"`, 1),
+		strings.Replace(valid, `"max_output_cost_rate":"9223372036854775807"`, `"max_output_cost_rate":0`, 1),
+		strings.Replace(valid, `"max_output_cost_rate":"9223372036854775807"`, `"max_output_cost_rate":"01"`, 1),
 		valid + `{}`,
 	} {
 		if got := call(raw); got.Code != 400 {

@@ -55,7 +55,9 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 028-U/008商业与账务续片：超预占的 `billing_profile_blocks` 与 `billing.profile_blocked` audit 已纳入同一 batch，profile/audit 任一失败都会回滚结算、周期预算、wallet lot 和审计，重试保持唯一 settlement/profile block。受限 APP 六协议新增过期 unknown 恢复不重生成、重复恢复和幂等收费一次专项；周期预算超界也验证了原 allocation/window、回滚和 profile 拒绝。上述均为 55439 本地 fixture 证据，真实 supplier late、独立 LOGIN、浏览器、全量 guard 和部署仍未形成闭包，U/008复选框保持未勾。
 
-2026-11-08 028-U/008周期预算续片：现行 024 fixture 的完整 route/catalog 种子、非零 route revision、额外 channel 与成本 operation 已接通，`internal/periodicbudget` 整包 race 在 55439 专库通过；冻结历史/prefix fixture 未升级。该结果补齐当前 fixture 的运行边界，不替代 008 的 SIGKILL/binary/预览验收或 U 的完整存储与商业出口。
+2026-11-08 028-U/008周期预算续片：现行 024 fixture 的完整 route/catalog 种子、非零 route revision、额外 channel 与成本 operation 已接通，`internal/periodicbudget` 整包 race 在 55439 专库通过；冻结历史/prefix fixture 未升级。008 固定 binary 运行器随后用不同 SHA-256 的 before/after binary 串行跑完三对样本，六次均通过请求、结算、账本和资源断言。该结果补齐 008 的 SIGKILL 与固定 binary 局部证据，不替代独立评审、最终预览或 U 的完整存储与商业出口。
+
+2026-11-08 028-U入口守卫续片：024 请求记录 guard 纳入 request HMAC、streaming、route revision 等报价身份字段，防止快照出生后改变请求报价身份；人工核对 HTTP 的 `settle` 动作明确映射为账务 `propose`。迁移与 server 定向 race 在 55439 通过。attempt quote 的发送态完整不可变守卫、supplier quote 绑定和 U 完整九组 guard 仍未完成，复选框保持未勾。
 
 2026-11-08 028-S/A/R 纯域第一片：新增未发布同步图片的严格 profile/输入/PNG 结果与未知消费状态机、异步任务的提交幂等/`submission_unknown` 禁重发/事件 canonical/制品授权状态机，以及实时 session/turn、单用 Origin ticket、事件去重和首收费引用门禁。三个包只依赖标准库和纯边界，不含数据库、HTTP/WS、provider、wallet、billing、报表或正式供应商接线；`go test -race` 与 `go vet` 通过。输入合同另收紧了 UUID、制品引用/媒体类型和 retail usage digest。S/A/R 以及U存储/商业出口复选框保持未勾选。
 

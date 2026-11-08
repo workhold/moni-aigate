@@ -16,6 +16,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-08 008/028-U结构续片：现行周期预算 024 fixture 的额外渠道改由完整 route publication 和 catalog cost operation 建立，`internal/periodicbudget` 整包 race 在 55439 通过；冻结历史/prefix fixture 保持原身份。024 成本来源 guard 还拒绝已有 correction 被 late finalization 覆盖。上述只补当前结构和失败边界，008完整验收、028-U完整guard、真实供应商、浏览器和部署/HA/性能仍未完成。
 
+2026-11-08 008/028-U验证续片：`scripts/financial-write-batch-qa` 已用不同 SHA-256 的 before/after binary 串行跑完三对固定样本，六次均通过 100 请求、100 结算、账本平衡和资源归零。024 新增请求报价身份 guard，冻结 request HMAC、streaming 与 route revision 等字段；人工核对 HTTP 的 `settle` 动作也已明确映射到账务层 `propose`。固定 binary 证据、当前 guard 和 HTTP 修复均已记录，008 独立评审/最终预览与 028-U 完整存储、商业出口、浏览器、正式供应商和部署仍未收口。
+
 2026-11-08 028-S/A/R 纯域候选第一片：`internal/media`、`internal/tasks`、`internal/realtime` 已分别冻结并通过纯 Go race/vet；它们只验证输入、状态、幂等和资源边界，不含数据库、HTTP/WS、provider、账务、wallet 或报表接线。对应复选框继续未勾，生产能力仍以后续纵向验收为准。
 
 <!-- architecture:context -->

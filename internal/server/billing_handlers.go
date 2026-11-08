@@ -208,6 +208,17 @@ type reconciliationResolveRequest struct {
 	EvidenceRef      string          `json:"evidence_ref"`
 }
 
+func reconciliationBillingAction(action string) string {
+	switch action {
+	case "settle":
+		return "propose"
+	case "release":
+		return "release"
+	default:
+		return ""
+	}
+}
+
 func bindReconciliationResolve(c *gin.Context, out *reconciliationResolveRequest) bool {
 	raw, err := io.ReadAll(io.LimitReader(c.Request.Body, 32*1024+1))
 	if err != nil || len(raw) > 32*1024 {
@@ -257,15 +268,13 @@ func (s *Server) resolve(c *gin.Context) {
 	} else if !s.financial(c, false) {
 		return
 	}
-	if in.Action == "settle" {
-		in.Action = "propose"
-	}
+	billingAction := reconciliationBillingAction(in.Action)
 	var tid, rid string
 	if e := s.Pool.QueryRow(c.Request.Context(), "SELECT tenant_id,request_id FROM reconciliation_cases WHERE id=$1", c.Param("id")).Scan(&tid, &rid); e != nil {
 		s.error(c, e)
 		return
 	}
-	v, e := s.Billing.Reconcile(c.Request.Context(), billing.ReconcileInput{TenantID: tid, RequestID: rid, ActorID: sessionOf(c).User.ID, Action: map[string]string{"settle": "propose", "release": "release"}[in.Action], Reason: in.Reason, EvidenceRef: in.EvidenceRef, RetailQuantitiesCanonical: in.RetailQuantities})
+	v, e := s.Billing.Reconcile(c.Request.Context(), billing.ReconcileInput{TenantID: tid, RequestID: rid, ActorID: sessionOf(c).User.ID, Action: billingAction, Reason: in.Reason, EvidenceRef: in.EvidenceRef, RetailQuantitiesCanonical: in.RetailQuantities})
 	if e != nil {
 		s.error(c, e)
 		return
