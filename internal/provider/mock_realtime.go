@@ -49,8 +49,10 @@ func (m *MockRealtimeAdapter) Send(ctx context.Context, in RealtimeSendInput) (R
 	if m == nil {
 		return RealtimeDispatch{}, errors.New("nil_realtime_adapter")
 	}
+	copyInput := in
+	copyInput.Payload = append([]byte(nil), in.Payload...)
 	m.mu.Lock()
-	m.sendCalls = append(m.sendCalls, in)
+	m.sendCalls = append(m.sendCalls, copyInput)
 	fn := m.SendFunc
 	if m.responses == nil {
 		m.responses = make(map[string]string)

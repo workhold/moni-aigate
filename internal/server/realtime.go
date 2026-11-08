@@ -148,6 +148,8 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 	}()
 
 	now := time.Now().UTC()
+	limits := realtime.DefaultSessionLimits()
+	limits.MaxTurns = 1
 	ticket, err := service.IssueTicket(ctx, binding, now, realtime.MaxTicketTTL)
 	if err != nil {
 		s.writeRealtimeError(ws, err)
@@ -155,7 +157,7 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 	}
 	_, err = service.CreateSession(ctx, ticket.Token, binding, realtime.SessionConfig{
 		ID: sessionID, TenantID: p.TenantID, ActorID: p.UserID, APIKeyID: p.KeyID,
-		ModelID: model.ID, ProfileID: model.ProfileVersion, RouteID: routeID, Origin: origin,
+		ModelID: model.ID, ProfileID: model.ProfileVersion, RouteID: routeID, Origin: origin, Limits: limits,
 	}, now)
 	if err != nil {
 		s.writeRealtimeError(ws, err)
