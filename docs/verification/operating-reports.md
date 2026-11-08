@@ -16,6 +16,12 @@
 
 真实业务测试通过现有gateway fixture生成一个客户请求、两个不同渠道attempt和一次收费20微元，初始未知成本使毛利null。经现有成本更正及双人钱包退款流程后，采购成本18、退款5、净收入15、毛利-3；JSON及CSV保持准确。左含右不含时间边界、tenant/model无匹配空结果、admin/finance_operator/finance_approver正控与客户owner/billing_viewer/member的JSON/CSV 403均执行。报表前后模型POST始终两次，报表没有额外生成；响应不含credential、prompt或模型正文。
 
+## 028 媒体只读接缝
+
+`internal/reporting` 现将当前 `media_requests`、`media_settlements` 和 `media_attempts` 纳入同一 RR 只读快照。媒体结算在请求侧只计一次 `charged_amount`，释放和未结算请求不生成收入；每条媒体 attempt 都计入 attempt 总数。当前媒体表没有供应商成本列，因此媒体 attempt 进入按 operation 分组的未知成本桶，`media_settlements.raw_amount` 不被解释为供应商成本，未知成本会继续使毛利为 `null`。
+
+55439 专项 `TestPostgresReadOperatingReportIncludesMediaOnceAndLeavesCostUnknown` 覆盖 settled/released/pending 媒体请求、同一请求多 attempt、video 的 asynchronous 元数据、operation 筛选、请求收入一次和 raw amount 不进成本。该接缝只扩展报表读取，不接入任务/实时写入，不改变账务或迁移，也不代表媒体供应商成本已经认证。
+
 查询PG另用明确的最小六表fixture测试完整100位成本、跨租户/模型队列、5000上限，以及读取请求队列被锁时并发提交结算与成本改变：旧报告读到100/10，新独立报告读到200/20，没有拼快照。它不代表正式商业writer或角色验收，后者由正式001–022 HTTP专项承担。纯CSV测试覆盖文本公式、前导空白/control、引号/逗号/换行、大整数、负毛利、未知空单元格和writer失败。
 
 集成人另启动临时真实001–022页面fixture，在IAB观察到收入20、采购成本7、毛利13；输入不存在的模型UUID后旧结果立即清空，查询为空，再清空筛选查询后恢复，console error/warn均为空。截图及fixture优雅停止PASS日志见机器记录。临时测试、私有状态与QA页已清理；此浏览器轮未操作下载、移动端和请求下钻，不将其写成已验。CSV和权限仍以HTTP/前端专项为证。仓库最终检查、图表、资源清理由集成人统一记录，提交推送随后收口。

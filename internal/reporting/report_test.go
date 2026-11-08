@@ -39,6 +39,7 @@ func TestFilterAndMicrosecondWindow(t *testing.T) {
 			f.TenantID = "10000000-0000-0000-0000-000000000001"
 			f.ModelID = "10000000-0000-0000-0000-000000000002"
 		}, true},
+		{"media model", func(f *Filter) { f.ModelID = "mock-tts" }, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := base
@@ -104,6 +105,25 @@ func TestOperatingReportExactRequestAndAttemptAccounting(t *testing.T) {
 	one, err := aggregate(f, at, facts[:1], attempts[:2])
 	if err != nil || one.Summary.GrossMargin == nil || *one.Summary.GrossMargin != "-30" {
 		t.Fatal("negative margin was clamped or rejected", err)
+	}
+}
+
+func TestOperatingReportSeparatesTextAndMediaIdentities(t *testing.T) {
+	f := testFilter()
+	facts := []requestFact{
+		{row: RequestRow{RequestID: "same", ModelID: "text", CreatedAt: f.From}, charged: text("10"), refunded: text("0")},
+		{row: RequestRow{RequestID: "same", ModelID: "media", CreatedAt: f.From}, charged: text("20"), refunded: text("0"), source: mediaFactSource},
+	}
+	attempts := []attemptFact{
+		{id: "attempt", request: "same", channel: "text-channel", status: "contract", amount: text("3")},
+		{id: "attempt", request: "same", channel: "media:tts", channelName: "media/tts", status: "completed", source: mediaFactSource},
+	}
+	report, err := aggregate(f, f.From, facts, attempts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Summary.RequestCount != 2 || report.Summary.AttemptCount != 2 || report.Summary.Charged != "30" || report.Summary.KnownProviderCost != "3" || report.Summary.UnknownProviderCosts != 1 {
+		t.Fatalf("text and media facts collided or media cost became known: %+v", report.Summary)
 	}
 }
 
@@ -226,10 +246,10 @@ type failingWriter struct{ err error }
 func (w failingWriter) Write([]byte) (int, error) { return 0, w.err }
 
 func TestReadSQLHasBoundedCurrentFactsOnly(t *testing.T) {
-	if !strings.Contains(requestsSQL, "LIMIT 5001") || !strings.Contains(requestsSQL, "r.created_at >= $1 AND r.created_at < $2") || !strings.Contains(attemptsSQL, "ANY($1::pg_catalog.text[])") {
+	if !strings.Contains(requestsSQL, "LIMIT 5001") || !strings.Contains(requestsSQL, "r.created_at >= $1 AND r.created_at < $2") || !strings.Contains(attemptsSQL, "ANY($1::pg_catalog.text[])") || !strings.Contains(mediaRequestsSQL, "q.created_at >= $1 AND q.created_at < $2") || !strings.Contains(mediaAttemptsSQL, "ANY($1::pg_catalog.text[])") {
 		t.Fatal("cohort bound or exact interval removed")
 	}
-	for _, sql := range []string{requestsSQL, attemptsSQL} {
+	for _, sql := range []string{requestsSQL, attemptsSQL, mediaRequestsSQL, mediaAttemptsSQL} {
 		for _, forbidden := range []string{"FOR UPDATE", "FOR SHARE", "INSERT ", "UPDATE ", "DELETE ", "report_totals", "platform_probe", "pp_", "funding_lot"} {
 			if strings.Contains(sql, forbidden) {
 				t.Fatalf("operating report now depends on %q", forbidden)

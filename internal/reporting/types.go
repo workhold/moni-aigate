@@ -4,6 +4,7 @@ package reporting
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +26,14 @@ type Filter struct {
 var publicProtocols = map[string]struct{}{
 	"openai_chat": {}, "openai_responses": {}, "anthropic_messages": {},
 	"openai_embeddings": {}, "jina_rerank": {}, "gemini_generate_content": {},
+	"image_generation": {}, "tts": {}, "video_generation": {}, "realtime_turn": {},
+}
+
+var currentMediaModelKeys = map[string]struct{}{
+	"mock-image-generation": {},
+	"mock-tts":              {},
+	"mock-video-generation": {},
+	"mock-realtime":         {},
 }
 
 func validProtocol(value string) bool {
@@ -32,22 +41,31 @@ func validProtocol(value string) bool {
 	return ok
 }
 
+func validModelSelector(value string) bool {
+	if _, err := uuid.Parse(value); err == nil {
+		return true
+	}
+	_, ok := currentMediaModelKeys[value]
+	return ok && !strings.ContainsAny(value, " \t\r\n")
+}
+
 func (f Filter) Validate() error {
 	if f.From.IsZero() || f.To.IsZero() || f.From.Year() < 1 || f.From.Year() > 9999 || f.To.Year() < 1 || f.To.Year() > 9999 ||
 		!f.From.Before(f.To) || f.To.Sub(f.From) > 31*24*time.Hour {
 		return ErrInvalidFilter
 	}
-	for _, id := range []string{f.TenantID, f.ModelID} {
-		if id != "" {
-			if _, err := uuid.Parse(id); err != nil {
-				return ErrInvalidFilter
-			}
+	if f.TenantID != "" {
+		if _, err := uuid.Parse(f.TenantID); err != nil {
+			return ErrInvalidFilter
 		}
+	}
+	if f.ModelID != "" && !validModelSelector(f.ModelID) {
+		return ErrInvalidFilter
 	}
 	if f.Protocol != "" && !validProtocol(f.Protocol) {
 		return ErrInvalidFilter
 	}
-	if f.ExecutionKind != "" && f.ExecutionKind != "synchronous" {
+	if f.ExecutionKind != "" && f.ExecutionKind != "synchronous" && f.ExecutionKind != "asynchronous" {
 		return ErrInvalidFilter
 	}
 	return nil

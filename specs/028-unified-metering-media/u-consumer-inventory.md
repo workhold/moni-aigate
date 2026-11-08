@@ -84,9 +84,9 @@ B类定位依据：[金融事实维护组合](../../internal/maintenancescan/fun
 
 ## 4. 026经营报表：保留金额读链，补计划元数据
 
-实际接线是 [operating_reports handler](../../internal/server/operating_reports.go) → [reporting.Read](../../internal/reporting/read.go) → [aggregate](../../internal/reporting/report.go)/[CSV](../../internal/reporting/csv.go) → [OperatingReport](../../web/src/components/OperatingReport.vue)。该读链未消费两价、token量或旧normalized_usage；本盘点没有发现需要因向量化重写的现行金额算法，也未确认收入重复或未知成本算零的缺陷。
+实际接线是 [operating_reports handler](../../internal/server/operating_reports.go) → [reporting.Read](../../internal/reporting/read.go) → [aggregate](../../internal/reporting/report.go)/[CSV](../../internal/reporting/csv.go) → [OperatingReport](../../web/src/components/OperatingReport.vue)。该读链未消费两价、token量或旧normalized_usage；当前媒体接缝同时读取 `media_requests`、`media_settlements` 与 `media_attempts`，不把媒体 `raw_amount`当供应商成本，也不把媒体 attempt 遗漏在请求统计之外。文本与媒体共用来源带前缀的内部关联键，避免不同事实表的局部ID碰撞。
 
-现有口径保持：同一RR READ ONLY、5秒预算，31天/5000请求上限；按request创建窗口读唯一settlement一次，所有生成attempt成本逐个累加；未知成本/未结算使毛利为null。异步提交按原request归窗，实时按收费轮次request归窗，poll/下载/heartbeat不加收入或生成attempt。收入与成本不从向量重算，不join来源分配边造成金额倍增。
+现有口径保持：同一RR READ ONLY、5秒预算，31天/5000请求上限；按request创建窗口读唯一settlement一次，所有生成attempt成本逐个累加；未知成本/未结算使毛利为null。媒体结算沿同一请求侧收入规则，当前每个媒体 attempt 因没有供应商成本字段进入未知成本；媒体 operation 可作为报表 protocol 筛选，video_generation标为asynchronous。异步提交按原request归窗，实时按收费轮次request归窗，poll/下载/heartbeat不加收入或生成attempt。收入与成本不从向量重算，不join来源分配边造成金额倍增。
 
 028 已接通请求元数据合同，当前仍需持续回归其不可变快照边界：
 

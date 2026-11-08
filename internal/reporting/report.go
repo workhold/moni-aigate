@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/big"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -12,11 +13,35 @@ var errUnavailable = errors.New("report_unavailable")
 type requestFact struct {
 	row               RequestRow
 	charged, refunded *string
+	key               string
+	source            factSource
 }
 
 type attemptFact struct {
 	id, request, channel, channelName, status string
 	amount                                    *string
+	source                                    factSource
+}
+
+type factSource string
+
+const (
+	textFactSource  factSource = "text"
+	mediaFactSource factSource = "media"
+)
+
+func sourceKey(source factSource, id string) string {
+	if source != mediaFactSource {
+		source = textFactSource
+	}
+	return string(source) + ":" + id
+}
+
+func factKey(source factSource, value string) string {
+	if strings.HasPrefix(value, string(textFactSource)+":") || strings.HasPrefix(value, string(mediaFactSource)+":") {
+		return value
+	}
+	return sourceKey(source, value)
 }
 
 type totals struct {
@@ -72,7 +97,11 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 	}
 	requests := make(map[string]*requestTotal, len(facts))
 	for _, fact := range facts {
-		if _, duplicate := requests[fact.row.RequestID]; duplicate {
+		key := fact.key
+		if key == "" {
+			key = sourceKey(fact.source, fact.row.RequestID)
+		}
+		if _, duplicate := requests[key]; duplicate {
 			return Report{}, errUnavailable
 		}
 		entry := &requestTotal{row: fact.row}
@@ -95,7 +124,7 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 			entry.sum.charged.Set(charged)
 			entry.sum.refunded.Set(refunded)
 		}
-		requests[fact.row.RequestID] = entry
+		requests[key] = entry
 	}
 	type channelTotal struct {
 		name              string
@@ -106,11 +135,13 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 	channels := map[string]*channelTotal{}
 	seenAttempts := map[string]bool{}
 	for _, a := range attempts {
-		request, exists := requests[a.request]
-		if !exists || seenAttempts[a.id] || request.sum.attempts >= 2 {
+		source := a.source
+		request, exists := requests[factKey(source, a.request)]
+		attemptKey := sourceKey(source, a.id)
+		if !exists || seenAttempts[attemptKey] || source != mediaFactSource && request.sum.attempts >= 2 {
 			return Report{}, errUnavailable
 		}
-		seenAttempts[a.id] = true
+		seenAttempts[attemptKey] = true
 		request.sum.attempts++
 		channel := channels[a.channel]
 		if channel == nil {
@@ -119,7 +150,7 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 		}
 		channel.requests[a.request] = struct{}{}
 		channel.attempts++
-		if (a.status != "contract" && a.status != "invoice") || a.amount == nil {
+		if source == mediaFactSource || (a.status != "contract" && a.status != "invoice") || a.amount == nil {
 			request.sum.unknown++
 			channel.unknown++
 			continue

@@ -4903,3 +4903,35 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `internal/operations/wallet_sources_roles_test.go`
 
 </details>
+
+## 2026-11-08T12:05:29Z · c6de349f62d0
+
+新增 reporting 对当前 media_requests、media_settlements、media_attempts 的只读接缝；收入按请求唯一 settlement，媒体 attempt 成本未知且不使用 raw_amount，更新架构与验证说明；未修改 server、task、realtime、billing/media.go 或 migrations
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2090 个源文件；本次 21 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/verification/operating-reports.md`
+- modified `internal/operations/meter_roles.go`
+- modified `internal/operations/meter_roles_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/reporting/read.go`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/reporting/types.go`
+- modified `internal/server/image_handlers.go`
+- modified `internal/server/image_handlers_integration_test.go`
+- added `internal/server/media_artifacts.go`
+- modified `internal/server/media_handlers.go`
+- modified `internal/server/task_handlers.go`
+- added `internal/server/task_media_billing.go`
+- added `internal/server/task_media_billing_integration_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/028-unified-metering-media/u-consumer-inventory.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
