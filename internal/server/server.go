@@ -47,6 +47,7 @@ type Server struct {
 	Provider               *provider.Client
 	Routing                *routing.Engine
 	TaskStore              *tasks.PostgresStore
+	TaskAdapter            *provider.MockTaskAdapter
 	Log                    *telemetry.Logger
 	ready                  atomic.Bool
 	Requests               atomic.Uint64
@@ -77,7 +78,7 @@ func New(c config.Config, p *pgxpool.Pool, assets fs.FS, log *telemetry.Logger) 
 	identities := identity.New(p, c.Secrets)
 	identities.EnforcePlatformMFA = c.MFAEnforcePlatform
 	taskStore, _ := tasks.NewPostgresStore(p, "")
-	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(provider.ClientOptions{}), Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets}
+	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(provider.ClientOptions{}), Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, TaskAdapter: provider.NewMockTaskAdapter(), Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets}
 }
 func (s *Server) Ready(v bool) { s.ready.Store(v) }
 func (s *Server) Engine() *gin.Engine {

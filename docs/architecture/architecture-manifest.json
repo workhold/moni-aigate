@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T06:48:26Z",
-  "review_reason": "接入video_generation任务HTTP入口与当前任务状态机",
-  "snapshot_sha256": "f479c69051455d1e38846b413040044e68b94b906a2e89cd76e356ce2fed741f",
+  "reviewed_at": "2026-11-08T06:49:39Z",
+  "review_reason": "复用单进程mock task adapter保证任务提交与观察状态连续",
+  "snapshot_sha256": "02afd7cfe7ab6abb9dc4fb96f3367c94ea56b2a8ee03d9171d836ddaf2e1d15f",
   "architecture_sha256": "4ad44efa864c74ad5f9e4ccb9b93cf6f8a5528660316a300b7ab0d379716de32",
-  "history_sha256": "55a721eff876e0a9774eb707c52eb6961887ba190ddfff7882fc777feb60c7ea",
+  "history_sha256": "2d3e98ae663c73f0cf048c4e90dbde0980e26561eec6bd8a3e9a87a283583ac9",
   "files": [
     {
       "path": ".dockerignore",
@@ -6141,7 +6141,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "882e1a519eefc1bfd1f5a88f5cc2d98583558c0e17e1bb337648f046bc76f09c"
+      "sha256": "95c957995fe9ae363f14777ed8bf06aa1697d492c8fc2c24ca86f3c3143fbbda"
     },
     {
       "path": "internal/server/static.go",
@@ -6153,7 +6153,7 @@
     },
     {
       "path": "internal/server/task_handlers.go",
-      "sha256": "f8441764fd95a880f442363007ef68183e7979fd81cb265caf004f7d90e478f8"
+      "sha256": "d9ba3f1f077f35390415d6c8096b7e9b996f305f6fc17f407e1c1f1d1e2e3318"
     },
     {
       "path": "internal/server/test_cost_helpers_test.go",

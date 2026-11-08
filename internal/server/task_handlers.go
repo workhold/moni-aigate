@@ -33,7 +33,11 @@ func (s *Server) taskService(p identity.Principal) (*tasks.Service, error) {
 		return nil, tasks.ErrInvalidInput
 	}
 	worker := tasks.Actor{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID), Permission: tasks.PermissionTaskObserve | tasks.PermissionTaskRead | tasks.PermissionTaskCancel}
-	return tasks.NewService(tasks.ServiceOptions{Store: s.TaskStore, Adapter: provider.NewMockTaskAdapter(), NewID: func() tasks.ID { return tasks.ID(uuid.NewString()) }, Worker: worker})
+	adapter := s.TaskAdapter
+	if adapter == nil {
+		adapter = provider.NewMockTaskAdapter()
+	}
+	return tasks.NewService(tasks.ServiceOptions{Store: s.TaskStore, Adapter: adapter, NewID: func() tasks.ID { return tasks.ID(uuid.NewString()) }, Worker: worker})
 }
 
 func readTaskBody(c *gin.Context, out any) ([]byte, error) {
