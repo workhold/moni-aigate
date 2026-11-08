@@ -637,6 +637,7 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 2026-11-05采购报价域隔离续片：发布显式指定schema/digest/default；route冻结唯一profile，候选与请求/attempt的报价读取沿原schema/variant，不以其他schema的最新价补缺或改价。跨channel/upstream/schema快照（包括unknown与无计划）由DB独立拒绝。资金/结算与权限主干未新增，完整向量DTO、发布operation/指纹及商业出口仍待收口。
 
 2026-11-05实际金额续片：结算、attempt成本与采购实际消费直接使用原完整Rates和对应侧finalization Quantities，不经每百万两价反算；financialRequest删除两价。数值原件错绑定/非规范/摘要错失败回滚，计划未就绪沿原版本但不补快照；零价、未知成本及人工核对仅客户侧的边界不变。028-U人工核对提交进一步只接受绑定原请求schema的完整retail QuantitiesWire，保存canonical/digest，批准不确认supplier。未新增资金事实、角色或结算器，采购准入与发布完整向量合同仍待实施。
+2026-11-08账务与路由结构续片：024 route complete 在每个 binding 上验证 supplier cap 必须为零条或完整两维，不能跨 binding 拼成半套。Reserve/finish 的 funding-lot allocation/event/balance 写入先完成本地投影，再沿原顺序批量发送；独立事务边界、027来源分配和退款单行路径保持不变。该片不改变媒体接线或生产验收状态。
 
 2026-11-05客户预占续片：价格组与当前唯一capability/schema/default完整限定选价，同语句取得完整Schema/Rates及新DB时刻，坏原件拒绝而非回落。Selection与Reservation删除两价镜像，预占直接调用ReservationAmount，金额只做一次ceil；原Key/PB/来源锁序、钱包等待前冻价、全部等待后重验期限及失败原子性保持。新增受限APP预占限定专项不替代六文本完整商业链，采购准入DTO与发布operation/向量指纹等后续项仍未收口。
 

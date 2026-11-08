@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T01:25:57Z",
-  "review_reason": "028-U人工核对proposal列明确保存绑定请求的retail QuantitiesWire及纯核摘要，批准时才生成approved_reconciliation Observation；HTTP release/settle字段边界已收紧",
-  "snapshot_sha256": "7c764445cdde2429f42d25fc106743bf05bbc87a82b3b7ea9610ab71331ead55",
-  "architecture_sha256": "dce4796476f002247b377f8757bc60e40181f62579606ad2837661421e60c150",
-  "history_sha256": "ff9e8f2f73fd7bf197d5b7729f9e5a4b28bc158481654c6c6d0b98e571ebcbad",
+  "reviewed_at": "2026-11-08T02:53:17Z",
+  "review_reason": "008 funding-lot写批次与028-U route cap完整性guard及对应专项/设计记录",
+  "snapshot_sha256": "36b727233c3e3dda2abafa169e22332881bb9d34ba900c92eb12b1689b6d1db1",
+  "architecture_sha256": "ec1faca32f23854391f7f170468c18c6d9a55cf2c609792247e3f62d8c58799e",
+  "history_sha256": "6e589248d3086fba42fe404f53ac18d3e8d82744ddf094b0dcb6f8ec2b62a070",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "3e2796dc1a35c06282c97b40d1d6ccffff2ab1854124c7905678f36f33637ecd"
+      "sha256": "011856696e3f3d18371c6220bd85cedf6f2944ef68bcaad039e665a53da58cee"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "f0694a3d5ba97384641056c3c3e898e7a2e45829c984f6aef735aea797b97f96"
+      "sha256": "cf9cba6e3309f73326290207496961abc1faee5c728f44be9c71a8fe068bb95a"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "cc914272986f84f2ee714652d2979e755af30e81cabc85e89d32b775b903384e"
+      "sha256": "f47a52cda453462455959d7be6b34aead0b45ae883d5f5d5d7ef6380ef144960"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "docs/verification/financial-write-batches.md",
-      "sha256": "2a37ea3e766766bad3219743411622e5d216c44186e2f1e957b5c1d77a4a92a5"
+      "sha256": "7a2bc491d1d7f2760170b779790f7a2c16c7e0937057dcf5ed48b54454508e10"
     },
     {
       "path": "docs/verification/funding-financial-graph.md",
@@ -1801,7 +1801,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "e1595d98fa345a52e68c09d2b40549a6e3c717d84d2824e74c38add4e2c917bd"
+      "sha256": "e6b43539ee6c58fe3d5443388bd9494e8ce25c7a336e97071519d4abc0ae7b8f"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -2049,11 +2049,11 @@
     },
     {
       "path": "internal/billing/lot_plan_test.go",
-      "sha256": "2a94e4fee125d88173f2791b09d85cb3f826de8179bed29ae22a61d5992eedc5"
+      "sha256": "929a2bc5d67452b95bd66f2f9ee9d34c3b6c2354a0d64bd3e39536e9fd9b26d6"
     },
     {
       "path": "internal/billing/lot_runtime.go",
-      "sha256": "d2cebeb76f22cdf44f357df2c3dd6a25305d9d28fa3e9e6548182fded04de6fe"
+      "sha256": "a081bc6467d07a871efd599b73c29d301597daf0e8fd5ff7356713e1fa835422"
     },
     {
       "path": "internal/billing/lot_runtime_integration_test.go",
@@ -6289,7 +6289,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "a0147a5d425ac906adaa128b84c233dc727283b7568dc3329c5f484ad668a23d"
+      "sha256": "4ca1931f4ffc859016832cc9e311d0263befd1cd43bae10f88d65275495d4703"
     },
     {
       "path": "migrations/embed.go",
@@ -6317,7 +6317,7 @@
     },
     {
       "path": "migrations/unified_text_metering_postgres_test.go",
-      "sha256": "b75d93fe4869f0c74a392ca4d276fe857518b3af7d8c7150868247888128213f"
+      "sha256": "9db5e5b5c3646a397ce20d75a005d6db5daa5cdae1dd89daf5a2025f0aa1ae02"
     },
     {
       "path": "migrations/unified_text_metering_rejection_postgres_test.go",
@@ -7597,7 +7597,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "380d19276b2a3fbff3ea9e09bb4464982de6324f73574da534bf9ba2effa9212"
+      "sha256": "caf9b3e09d051fd0703479a06e556edc273670b4a30e6b1c66ab8c1c3e453b64"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

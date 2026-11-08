@@ -4,6 +4,8 @@
 
 本片把 `postLocked` 的账本写入拆成纯 `journalPlan` 构建阶段。它在发出任何 PostgreSQL batch 之前完成以下检查：分录至少两项且总和为零、每个分录账户已经锁定、账户余额加法不溢出、客户 `AVAILABLE/HELD` 不会变为负数。写入顺序按账户 ID 固定，构建失败返回空计划，不发送 SQL，也不产生部分 journal、余额或流水。
 
+2026-11-08 续片：funding reservation 与 settlement lot 的写集现在先用同一份纯投影校验余额、held/consumed 和 revision，再按原 allocation 顺序一次发送 `pgx.Batch`；每个 allocation 仍保持“关系行→lot event→余额 CAS”顺序，失败由外层财务事务整体回滚。`changeFundingLotTx` 继续保留给退款等单行路径，并复用同一投影函数。
+
 证据：
 
 - `go test -count=1 -race ./internal/billing -run '^TestBuildJournalPlan'` 通过，覆盖不平衡、未锁账户、溢出、余额不足、确定性和完整写集；
@@ -12,3 +14,5 @@
 - `TEST_DATABASE_URL=postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable go test -count=1 -race ./internal/billing -run 'TestPostgresAccountBatch|TestPostgresLifecycle|TestPostgresEvidenceAndReconciliation|TestPostgresSettlementPolicy|TestWallet'` 通过。
 
 008 已完成 journal 纯构建和一组 finish 尾写点故障矩阵，但整体仍未完成：还需要 Reserve/finish 全链路取消与恢复/SIGKILL、周期预算与超界 profile block 写点、完整并发预算与财务时钟边界、三对固定 binary 对照、最终嵌入预览和全量验收文档。局部通过不能替代这些出口。
+
+本续片新增的 funding-lot 批量写入已由 55439 专库的生命周期、Reserve 回滚、finish 尾部十个写点故障/重试、财务边界和并发预占专项覆盖；它没有改变独立 COMMIT、锁序、来源分配或退款语义。

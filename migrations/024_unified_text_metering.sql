@@ -842,6 +842,19 @@ BEGIN
  IF NOT FOUND THEN RAISE EXCEPTION 'route root is missing'; END IF;
  SELECT count(*) INTO binding_count FROM model_bindings b WHERE b.route_policy_version_id=rid;
  IF binding_count=0 THEN RAISE EXCEPTION 'route requires at least one binding'; END IF;
+IF EXISTS (
+ SELECT 1
+ FROM model_bindings b
+ WHERE b.route_policy_version_id=rid
+   AND (SELECT count(*) FROM binding_cost_rate_limits l WHERE l.binding_id=b.id)>0
+   AND (
+    (SELECT count(*) FROM binding_cost_rate_limits l WHERE l.binding_id=b.id)<>2
+    OR (SELECT count(*) FROM binding_cost_rate_limits l WHERE l.binding_id=b.id AND l.dimension='text_input_token')<>1
+    OR (SELECT count(*) FROM binding_cost_rate_limits l WHERE l.binding_id=b.id AND l.dimension='text_output_token')<>1
+   )
+) THEN
+ RAISE EXCEPTION 'route binding cap must contain exactly two text dimensions';
+END IF;
  IF EXISTS (
   SELECT 1
   FROM model_bindings b

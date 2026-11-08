@@ -4585,3 +4585,24 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/u-storage-contract.md`
 
 </details>
+
+## 2026-11-08T02:53:17Z · 36b727233c3e
+
+008 funding-lot写批次与028-U route cap完整性guard及对应专项/设计记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2053 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/financial-write-batches.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/lot_plan_test.go`
+- modified `internal/billing/lot_runtime.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

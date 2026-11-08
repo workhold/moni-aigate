@@ -51,6 +51,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 028-U人工核对向量片：按存储合同11.2.1，`POST /api/platform/reconciliations/:id/resolve` 的收费提案只接受完整 `retail_quantities` QuantitiesWire；服务端从原请求不可变 schema 校验 canonical、schema/side、维度顺序、单位、int64和请求界，proposal 保存 canonical/digest，批准继续沿 `approved_reconciliation` 观察与原结算链且 supplier 保持 missing。旧 `input_tokens/output_tokens` HTTP/UI入口已删除，未知字段、重复键和旧标量请求有单测负控。024空库迁移、billing evidence/vector actual/人工核对和server输入边界在55439专库或纯单测通过；U存储与六文本完整商业链复选框仍未勾。
 
+2026-11-08 028-U guard/账务续片：024 的 `meter_route_complete` 现在按每个 binding 拒绝半套 supplier cap；cap 要么为零条，要么同时包含 `text_input_token` 与 `text_output_token` 两条完整维度，单条或跨 binding 拼接均在提交时回滚。Reserve/finish 的 funding lot reservation/settlement 写集先完成纯余额投影，再按原顺序一次批量发送；已有单行退款路径仍复用同一投影校验。迁移 route-cap 矩阵、billing lifecycle/rollback/finish-tail/financial-boundary 专项在55439通过；九组完整 guard、全量商业出口和008其余正式验收仍未完成。
+
 2026-11-08 028-S/A/R 纯域第一片：新增未发布同步图片的严格 profile/输入/PNG 结果与未知消费状态机、异步任务的提交幂等/`submission_unknown` 禁重发/事件 canonical/制品授权状态机，以及实时 session/turn、单用 Origin ticket、事件去重和首收费引用门禁。三个包只依赖标准库和纯边界，不含数据库、HTTP/WS、provider、wallet、billing、报表或正式供应商接线；`go test -race` 与 `go vet` 通过。输入合同另收紧了 UUID、制品引用/媒体类型和 retail usage digest。S/A/R 以及U存储/商业出口复选框保持未勾选。
 
 ## S / A / R / 交付

@@ -370,12 +370,107 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 	if err = tx.Commit(ctx); err != nil {
 		t.Fatal(err)
 	}
+	// A binding may omit a supplier cap, but a published cap is one complete
+	// two-dimensional vector.  A half-written cap must roll back the entire
+	// route publication, including the active model pointer.
+	partialRoute, partialBinding := uuid.NewString(), uuid.NewString()
+	tx, err = pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,2,'manual','allow')`, partialRoute, model); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO model_bindings(id,route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,'upstream',0,1,10,'default')`, partialBinding, partialRoute, channel, version); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO binding_cost_rate_limits(binding_id,dimension,unit,numerator,denominator) VALUES($1,'text_input_token','token',2,1)`, partialBinding); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `UPDATE models SET active_revision=2 WHERE id=$1`, model); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(ctx); err == nil || !strings.Contains(err.Error(), "route binding cap must contain exactly two text dimensions") {
+		t.Fatal("partial route cap committed", err)
+	}
+	_ = tx.Rollback(ctx)
+	var activeRevision int64
+	if err = pool.QueryRow(ctx, `SELECT active_revision FROM models WHERE id=$1`, model).Scan(&activeRevision); err != nil || activeRevision != 1 {
+		t.Fatalf("partial route changed active pointer: revision=%d err=%v", activeRevision, err)
+	}
+	var partialBindings int
+	if err = pool.QueryRow(ctx, `SELECT count(*) FROM model_bindings WHERE id=$1`, partialBinding).Scan(&partialBindings); err != nil || partialBindings != 0 {
+		t.Fatalf("partial route left binding=%d err=%v", partialBindings, err)
+	}
+	completeRoute, completeBinding := uuid.NewString(), uuid.NewString()
+	tx, err = pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,2,'manual','allow')`, completeRoute, model); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO model_bindings(id,route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,'upstream',0,1,10,'default')`, completeBinding, completeRoute, channel, version); err != nil {
+		t.Fatal(err)
+	}
+	for _, cap := range []struct {
+		dimension string
+		numerator int64
+	}{
+		{dimension: "text_input_token", numerator: 2},
+		{dimension: "text_output_token", numerator: 3},
+	} {
+		if _, err = tx.Exec(ctx, `INSERT INTO binding_cost_rate_limits(binding_id,dimension,unit,numerator,denominator) VALUES($1,$2,'token',$3,1)`, completeBinding, cap.dimension, cap.numerator); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err = tx.Exec(ctx, `UPDATE models SET active_revision=2 WHERE id=$1`, model); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(ctx); err != nil {
+		t.Fatalf("complete route cap rejected: %v", err)
+	}
+	// Two different bindings cannot combine one cap each into a route-wide
+	// vector.  Completeness is per binding, because caps constrain one upstream
+	// candidate and must not leak across candidates.
+	crossRoute, crossBindingA, crossBindingB := uuid.NewString(), uuid.NewString(), uuid.NewString()
+	tx, err = pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,5,'manual','allow')`, crossRoute, model); err != nil {
+		t.Fatal(err)
+	}
+	for _, binding := range []struct {
+		id, upstream, dimension string
+		numerator               int64
+	}{
+		{id: crossBindingA, upstream: "upstream-a", dimension: "text_input_token", numerator: 2},
+		{id: crossBindingB, upstream: "upstream-b", dimension: "text_output_token", numerator: 3},
+	} {
+		if _, err = tx.Exec(ctx, `INSERT INTO model_bindings(id,route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,$5,0,1,10,'default')`, binding.id, crossRoute, channel, version, binding.upstream); err != nil {
+			t.Fatal(err)
+		}
+		if _, err = tx.Exec(ctx, `INSERT INTO binding_cost_rate_limits(binding_id,dimension,unit,numerator,denominator) VALUES($1,$2,'token',$3,1)`, binding.id, binding.dimension, binding.numerator); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err = tx.Exec(ctx, `UPDATE models SET active_revision=5 WHERE id=$1`, model); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(ctx); err == nil || !strings.Contains(err.Error(), "route binding cap must contain exactly two text dimensions") {
+		t.Fatal("cross-binding partial caps committed", err)
+	}
+	_ = tx.Rollback(ctx)
+	if err = pool.QueryRow(ctx, `SELECT active_revision FROM models WHERE id=$1`, model).Scan(&activeRevision); err != nil || activeRevision != 2 {
+		t.Fatalf("cross-binding partial caps changed active pointer: revision=%d err=%v", activeRevision, err)
+	}
 	emptyRoute := uuid.NewString()
 	tx, err = pool.Begin(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,2,'manual','allow')`, emptyRoute, model); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,4,'manual','allow')`, emptyRoute, model); err != nil {
 		t.Fatal(err)
 	}
 	if err = tx.Commit(ctx); err == nil || !strings.Contains(err.Error(), "route requires at least one binding") {
