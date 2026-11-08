@@ -15,7 +15,7 @@ import (
 )
 
 func pbBillCustomerInput(f *pbTxFixture) billing.ReserveInput {
-	return billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "abababababababababababababababababababababababababababababababab", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)}
+	return billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: uuid.NewString(), ModelID: f.model, RouteRevision: 1, IdempotencyKey: uuid.NewString(), RequestHMAC: "abababababababababababababababababababababababababababababababab", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)}
 }
 
 func pbBillCustomerNow(t *testing.T, f *pbTxFixture) time.Time {
@@ -56,18 +56,23 @@ func pbBillCustomerReserve(t *testing.T, f *pbTxFixture, store *billing.Store) b
 
 func pbBillCustomerFinal(t *testing.T, f *pbTxFixture, store *billing.Store, r billing.Reservation) billing.Settlement {
 	t.Helper()
-	q, err := meterquote.Select(f.ctx, f.app, f.model, f.channel, "upstream")
-	pbTxMust(t, "read original vector cost", err)
-	attempt, err := store.RecordAttempt(f.ctx, billing.AttemptInput{TenantID: f.tenant, RequestID: r.RequestID, Sequence: 1, ChannelID: f.channel, ChannelVersionID: f.version, CredentialID: f.credential, UpstreamModel: "upstream", CostQuote: &q})
-	pbTxMust(t, "record the original supplier attempt before customer usage", err)
-	_, err = store.RecordFinalization(f.ctx, billing.FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: attempt.ID, Source: "adapter", SourceEventID: uuid.NewString(), Usage: billing.Usage{Status: "confirmed_final", InputTokens: 10, OutputTokens: 5, TotalTokens: 15}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true})
-	pbTxMust(t, "record actual trusted customer finalization", err)
+	pbBillCustomerRecordFinalization(t, f, store, r, billing.Usage{Status: "confirmed_final", InputTokens: 10, OutputTokens: 5, TotalTokens: 15})
 	s, err := store.Settle(f.ctx, billing.SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
 	pbTxMust(t, "settle through original financial and periodic chain", err)
 	if s.ChargedAmount != 15 || s.Status != "settled" {
 		t.Fatal("trusted final usage did not settle the exact retail amount")
 	}
 	return s
+}
+
+func pbBillCustomerRecordFinalization(t *testing.T, f *pbTxFixture, store *billing.Store, r billing.Reservation, usage billing.Usage) {
+	t.Helper()
+	q, err := meterquote.Select(f.ctx, f.app, f.model, f.channel, "upstream")
+	pbTxMust(t, "read original vector cost", err)
+	attempt, err := store.RecordAttempt(f.ctx, billing.AttemptInput{TenantID: f.tenant, RequestID: r.RequestID, Sequence: 1, ChannelID: f.channel, ChannelVersionID: f.version, CredentialID: f.credential, UpstreamModel: "upstream", CostQuote: &q})
+	pbTxMust(t, "record the original supplier attempt before customer usage", err)
+	_, err = store.RecordFinalization(f.ctx, billing.FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: attempt.ID, Source: "adapter", SourceEventID: uuid.NewString(), Usage: usage, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true})
+	pbTxMust(t, "record actual trusted customer finalization", err)
 }
 
 func pbBillCustomerWallet(t *testing.T, f *pbTxFixture, store *billing.Store, available, held billing.Money) {
@@ -191,6 +196,105 @@ func TestBillingPeriodicCustomerEachScopeRejectsFullRAtomically(t *testing.T) {
 				t.Fatal("a single scope could not reject the complete R without retaining any money/source facts")
 			}
 			pbBillCustomerWallet(t, f, store, 10000, 0)
+		})
+	}
+}
+
+func TestBillingPeriodicOverBoundProfileBlockRollsBackBudgetAndRetriesOnce(t *testing.T) {
+	for _, tc := range []struct {
+		name, table, function, triggerSQL, dropSQL string
+	}{
+		{
+			name:     "profile_insert",
+			table:    "billing_profile_blocks",
+			function: "pb_fail_profile_insert",
+			triggerSQL: `CREATE FUNCTION pb_fail_profile_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN RAISE EXCEPTION 'periodic profile block injection'; END$$;`,
+			dropSQL: "DROP FUNCTION pb_fail_profile_insert()",
+		},
+		{
+			name:     "profile_audit",
+			table:    "audit_events",
+			function: "pb_fail_profile_audit",
+			triggerSQL: `CREATE FUNCTION pb_fail_profile_audit() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF NEW.action='billing.profile_blocked' THEN RAISE EXCEPTION 'periodic profile audit injection'; END IF;
+ RETURN NEW;
+END$$;`,
+			dropSQL: "DROP FUNCTION pb_fail_profile_audit()",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newPBBillingFixture(t)
+			pbBillCustomerActive(t, f, "120", "120", true)
+			store := billing.New(f.app)
+			r := pbBillCustomerReserve(t, f, store)
+			defer store.EndRequest(r.RequestID)
+			pbBillCustomerRecordFinalization(t, f, store, r, billing.Usage{Status: "confirmed_final", InputTokens: 101, OutputTokens: 21, TotalTokens: 122})
+
+			// Finish uses the original locked allocation/window. A current cap of
+			// zero must not veto a valid close, including the over-bound profile
+			// block that follows the periodic effect in the same transaction.
+			pbBillCustomerConfigure(t, f, "tenant", "1", "0", true)
+			pbBillCustomerConfigure(t, f, "key", "1", "0", true)
+			if _, err := f.owner.Exec(f.ctx, tc.triggerSQL+" CREATE TRIGGER injected BEFORE INSERT ON "+tc.table+" FOR EACH ROW EXECUTE FUNCTION "+tc.function+"()"); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				_, _ = f.owner.Exec(f.ctx, "DROP TRIGGER IF EXISTS injected ON "+tc.table)
+				_, _ = f.owner.Exec(f.ctx, tc.dropSQL)
+			})
+
+			before := pbBillCustomerSnapshot(t, f)
+			if _, err := store.Settle(f.ctx, billing.SettleInput{TenantID: f.tenant, RequestID: r.RequestID}); err == nil {
+				t.Fatal("profile block failure unexpectedly committed")
+			}
+			if after := pbBillCustomerSnapshot(t, f); after != before {
+				t.Fatal("profile block failure partially committed financial or periodic facts")
+			}
+			var blocks, audits int
+			pbTxMust(t, "verify failed profile block left no rows", f.app.QueryRow(f.ctx, `SELECT
+ (SELECT count(*) FROM billing_profile_blocks WHERE request_id=$1),
+ (SELECT count(*) FROM audit_events WHERE action='billing.profile_blocked' AND request_id=$1)`, r.RequestID).Scan(&blocks, &audits))
+			if blocks != 0 || audits != 0 {
+				t.Fatal("failed profile block retained a row", blocks, audits)
+			}
+
+			pbTxMust(t, "remove injected profile block failure", func() error {
+				if _, err := f.owner.Exec(f.ctx, "DROP TRIGGER injected ON "+tc.table); err != nil {
+					return err
+				}
+				return nil
+			}())
+			settled, err := store.Settle(f.ctx, billing.SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
+			if err != nil || settled.Status != "settled" || settled.ChargedAmount != 120 || settled.RawRetailAmount != "122" || settled.WaivedRetailAmount != "2" {
+				t.Fatalf("retry did not preserve the capped over-bound settlement: %+v %v", settled, err)
+			}
+			var exact bool
+			pbTxMust(t, "verify settled original periodic allocation and profile block", f.app.QueryRow(f.ctx, `SELECT
+ (SELECT count(*)=2 AND bool_and(held_amount=0 AND spent_amount=120 AND state='settled' AND revision=2) FROM periodic_budget_allocations WHERE subject_id=$1)
+ AND (SELECT count(*)=2 AND bool_and(held_amount=0 AND spent_amount=120) FROM periodic_budget_controls WHERE tenant_id=$2 AND scope IN ('tenant','key'))
+ AND (SELECT count(*)=1 FROM billing_profile_blocks WHERE model_id=$3 AND profile_version=$4 AND request_id=$1)
+ AND (SELECT count(*)=1 FROM audit_events WHERE action='billing.profile_blocked' AND target=$3 AND request_id=$1)`, r.RequestID, f.tenant, f.model, f.profileVersion).Scan(&exact))
+			if !exact {
+				t.Fatal("over-bound settlement did not close both original budget allocations and profile block exactly once")
+			}
+			before = pbBillCustomerSnapshot(t, f)
+			replay, err := store.Settle(f.ctx, billing.SettleInput{TenantID: f.tenant, RequestID: r.RequestID})
+			if err != nil || replay.ID != settled.ID || before != pbBillCustomerSnapshot(t, f) {
+				t.Fatal("over-bound settlement replay changed committed facts", replay, err)
+			}
+
+			// Raise the caps so the next failure can be attributed to the persisted
+			// profile block rather than the consumed periodic allowance.
+			pbBillCustomerConfigure(t, f, "tenant", "2", "1000", true)
+			pbBillCustomerConfigure(t, f, "key", "2", "1000", true)
+			next, err := store.Reserve(f.ctx, pbBillCustomerInput(f))
+			pbBillCustomerCode(t, err, "profile_blocked")
+			if next != (billing.Reservation{}) {
+				t.Fatal("blocked profile admitted a new reservation")
+			}
+			f.verifyFinance(t)
 		})
 	}
 }

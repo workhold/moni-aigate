@@ -155,57 +155,109 @@ func TestCostVectorApplicationUnknownIsNotFree(t *testing.T) {
 }
 
 func TestCostVectorApplicationRecoveryDoesNotRegenerate(t *testing.T) {
-	missingUsage := strings.Replace(gatewayJSON, `,"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}`, "", 1)
-	f := newGatewayFixtureConfigured(t, []http.HandlerFunc{func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, missingUsage)
-	}}, nil, 8, provider.ProtocolChat)
-	procurementMeterApplication(t, f)
-	forbidScalarQuoteReads(t, f)
-	path, raw := keyPolicyProtocolInput(t, provider.ProtocolChat)
-	response := keyPolicyHTTP(t, f.server.Engine(), "POST", path, raw, "", "", "", "127.0.0.1:1234", http.Header{"Authorization": []string{"Bearer " + f.token}})
-	if response.Code < 400 || f.posts.Load() != 1 {
-		t.Fatal("missing usage was accepted or retried", response.Code, response.Body.String(), f.posts.Load())
+	for _, protocol := range parallelCommercialProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			missingUsage := parallelCommercialWire(protocol, "missing_usage")
+			f := newGatewayFixtureConfigured(t, []http.HandlerFunc{func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = io.WriteString(w, missingUsage)
+			}}, nil, 8, protocol)
+			procurementMeterApplication(t, f)
+			forbidScalarQuoteReads(t, f)
+			path, raw := keyPolicyProtocolInput(t, protocol)
+			response := keyPolicyHTTP(t, f.server.Engine(), "POST", path, raw, "", "", "", "127.0.0.1:1234", http.Header{"Authorization": []string{"Bearer " + f.token}})
+			if response.Code < 400 || f.posts.Load() != 1 {
+				t.Fatal("missing usage was accepted or retried", response.Code, response.Body.String(), f.posts.Load())
+			}
+			requestID := response.Header().Get("X-Request-ID")
+			wantHold := int64(140)
+			if protocol == provider.ProtocolEmbeddings || protocol == provider.ProtocolRerank {
+				wantHold = 100
+			}
+			state := f.state(t, requestID)
+			if state.billing != "pending_reconciliation" || state.reservation != "pending_reconciliation" || state.attempts != 1 || state.settlements != 0 || state.held != wantHold || state.spent != 0 {
+				t.Fatalf("missing usage did not preserve the recovery hold: %+v want_hold=%d", state, wantHold)
+			}
+			tx, err := f.pool.Begin(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback(context.Background())
+			if _, err = tx.Exec(context.Background(), "UPDATE request_records SET request_deadline=clock_timestamp()-interval '1 second' WHERE id=$1", requestID); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = tx.Exec(context.Background(), "ALTER TABLE reservations DISABLE TRIGGER pb_customer_reservation_identity"); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = tx.Exec(context.Background(), "UPDATE reservations SET deadline=clock_timestamp()-interval '1 second' WHERE request_id=$1", requestID); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = tx.Exec(context.Background(), "SET CONSTRAINTS ALL IMMEDIATE"); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = tx.Exec(context.Background(), "ALTER TABLE reservations ENABLE TRIGGER pb_customer_reservation_identity"); err != nil {
+				t.Fatal(err)
+			}
+			if err = tx.Commit(context.Background()); err != nil {
+				t.Fatal(err)
+			}
+			recovered, err := f.server.Billing.Recover(context.Background(), billing.RecoverInput{Limit: 1})
+			if err != nil || recovered.Processed != 1 || recovered.Released != 1 {
+				t.Fatal("recovery did not release the expired unknown request", recovered, err)
+			}
+			state = f.state(t, requestID)
+			if state.billing != "released" || state.reservation != "released" || state.attempts != 1 || state.settlements != 1 || state.held != 0 || state.spent != 0 || state.available != 1000 || f.posts.Load() != 1 {
+				t.Fatal("recovery regenerated or changed the original financial facts", state, f.posts.Load())
+			}
+			again, err := f.server.Billing.Recover(context.Background(), billing.RecoverInput{Limit: 1})
+			if err != nil || again.Processed != 0 || f.posts.Load() != 1 {
+				t.Fatal("recovery replay changed the request", again, err, f.posts.Load())
+			}
+		})
 	}
-	requestID := response.Header().Get("X-Request-ID")
-	state := f.state(t, requestID)
-	if state.billing != "pending_reconciliation" || state.reservation != "pending_reconciliation" || state.attempts != 1 || state.settlements != 0 || state.held != 140 || state.spent != 0 {
-		t.Fatal("missing usage did not preserve the recovery hold", state)
-	}
-	tx, err := f.pool.Begin(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer tx.Rollback(context.Background())
-	if _, err = tx.Exec(context.Background(), `UPDATE request_records SET request_deadline=clock_timestamp()-interval '1 second' WHERE id=$1`, requestID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = tx.Exec(context.Background(), `ALTER TABLE reservations DISABLE TRIGGER pb_customer_reservation_identity`); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = tx.Exec(context.Background(), `UPDATE reservations SET deadline=clock_timestamp()-interval '1 second' WHERE request_id=$1`, requestID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = tx.Exec(context.Background(), `SET CONSTRAINTS ALL IMMEDIATE`); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = tx.Exec(context.Background(), `ALTER TABLE reservations ENABLE TRIGGER pb_customer_reservation_identity`); err != nil {
-		t.Fatal(err)
-	}
-	if err = tx.Commit(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	recovered, err := f.server.Billing.Recover(context.Background(), billing.RecoverInput{Limit: 1})
-	if err != nil || recovered.Processed != 1 || recovered.Released != 1 {
-		t.Fatal("recovery did not release the expired unknown request", recovered, err)
-	}
-	state = f.state(t, requestID)
-	if state.billing != "released" || state.reservation != "released" || state.attempts != 1 || state.settlements != 1 || state.held != 0 || state.spent != 0 || state.available != 1000 || f.posts.Load() != 1 {
-		t.Fatal("recovery regenerated or changed the original financial facts", state, f.posts.Load())
-	}
-	again, err := f.server.Billing.Recover(context.Background(), billing.RecoverInput{Limit: 1})
-	if err != nil || again.Processed != 0 || f.posts.Load() != 1 {
-		t.Fatal("recovery replay changed the request", again, err, f.posts.Load())
+}
+
+func TestCostVectorApplicationIdempotencyChargesOnceAcrossProtocols(t *testing.T) {
+	for _, protocol := range parallelCommercialProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			result := gatewayJSON
+			switch protocol {
+			case provider.ProtocolResponses, provider.ProtocolMessages:
+				result = nativeJSON(protocol)
+			case provider.ProtocolEmbeddings, provider.ProtocolRerank:
+				result = retrievalJSON(protocol)
+			case provider.ProtocolGemini:
+				result = geminiResponseJSON
+			}
+			f := newGatewayFixtureConfigured(t, []http.HandlerFunc{func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = io.WriteString(w, result)
+			}}, nil, 8, protocol)
+			procurementMeterApplication(t, f)
+			forbidScalarQuoteReads(t, f)
+			path, raw := keyPolicyProtocolInput(t, protocol)
+			headers := http.Header{"Authorization": []string{"Bearer " + f.token}, "Idempotency-Key": []string{"six-protocol-single-charge"}}
+			first := keyPolicyHTTP(t, f.server.Engine(), http.MethodPost, path, raw, "", "", "", "127.0.0.1:1234", headers)
+			if first.Code != http.StatusOK || f.posts.Load() != 1 {
+				t.Fatal("first request did not settle once", first.Code, first.Body.String(), f.posts.Load())
+			}
+			second := keyPolicyHTTP(t, f.server.Engine(), http.MethodPost, path, raw, "", "", "", "127.0.0.1:1234", headers)
+			if second.Code != http.StatusConflict || second.Header().Get("X-Original-Request-ID") != first.Header().Get("X-Request-ID") || f.posts.Load() != 1 || protocol != provider.ProtocolMessages && !strings.Contains(second.Body.String(), "request_exists") {
+				t.Fatalf("duplicate request was not rejected without replay: status=%d original=%s body=%s posts=%d", second.Code, second.Header().Get("X-Original-Request-ID"), second.Body.String(), f.posts.Load())
+			}
+			wantCharge := int64(20)
+			if protocol == provider.ProtocolEmbeddings || protocol == provider.ProtocolRerank {
+				wantCharge = 10
+			}
+			state := f.state(t, first.Header().Get("X-Request-ID"))
+			if state.billing != "settled" || state.reservation != "settled" || state.charge != wantCharge || state.spent != wantCharge || state.held != 0 || state.settlements != 1 || state.attempts != 1 {
+				t.Fatalf("duplicate request changed the unique charge: %+v want_charge=%d", state, wantCharge)
+			}
+			var requests, settlements int
+			if err := f.pool.QueryRow(context.Background(), "SELECT (SELECT count(*) FROM request_records),(SELECT count(*) FROM settlements)").Scan(&requests, &settlements); err != nil || requests != 1 || settlements != 1 {
+				t.Fatalf("duplicate request created extra business facts: requests=%d settlements=%d err=%v", requests, settlements, err)
+			}
+		})
 	}
 }
 

@@ -36,7 +36,7 @@ type pbTxFixture struct {
 	tenant, user, operator, approver, key, model, price  string
 	channel, version, credential, account, binding, cost string
 	profileVersion                                       string
-	historical                                           bool
+	historical, currentSchema                            bool
 }
 
 func pbTxMust(t *testing.T, step string, err error) {
@@ -120,7 +120,7 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 	admin, err := pgxpool.NewWithConfig(ctx, base.Copy())
 	pbTxMust(t, "open isolated administrator", err)
 	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")
-	f := &pbTxFixture{ctx: ctx, historical: !latest, schema: "pb_tx_" + suffix, appRole: "pb_tx_app_" + suffix, projectionRole: "pb_tx_projection_" + suffix,
+	f := &pbTxFixture{ctx: ctx, historical: !latest, currentSchema: latest && through == "", schema: "pb_tx_" + suffix, appRole: "pb_tx_app_" + suffix, projectionRole: "pb_tx_projection_" + suffix,
 		tenant: uuid.NewString(), user: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), key: uuid.NewString(), model: uuid.NewString(), price: uuid.NewString(),
 		channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString(), profileVersion: "v1"}
 	if latest {
@@ -269,17 +269,42 @@ func (f *pbTxFixture) seedCatalog(t *testing.T) {
 	f.exec(t, tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused-fixture')`, f.credential, f.channel)
 	f.exec(t, tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, f.version, f.channel, f.credential)
 	f.exec(t, tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'fixture',1,10)`, f.version, f.channel, f.credential)
+	if f.currentSchema {
+		policy := uuid.NewString()
+		f.exec(t, tx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,1,'manual','allow')`, policy, f.model)
+		f.exec(t, tx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, policy, f.channel, f.version)
+		f.exec(t, tx, `UPDATE models SET active_revision=1 WHERE id=$1`, f.model)
+		// Publish the current-schema cost after the catalog roots are committed. Its
+		// pricing operation is deferred-validated at the top-level transaction; a
+		// nested savepoint inside this seed transaction makes that validation run
+		// against the later procurement fixture writes and masks the actual PB test.
+		pbTxMust(t, "commit static catalog roots", tx.Commit(f.ctx))
+		// Managed procurement rechecks quotes at the periodic decision time, which
+		// tests rewind; the original quote must already be effective before that.
+		var effective time.Time
+		pbTxMust(t, "sample backdated cost effective time", f.owner.QueryRow(f.ctx, `SELECT clock_timestamp()-interval '7 days'`).Scan(&effective))
+		rate := int64(2000000)
+		meterquote.PublishCost(t, f.ctx, f.owner, meterquote.CostPrice{
+			ID: f.cost, ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
+			Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: effective,
+		})
+		procurementTx, e := f.owner.Begin(f.ctx)
+		pbTxMust(t, "begin procurement catalog seed", e)
+		defer procurementTx.Rollback(f.ctx)
+		f.exec(t, procurementTx, `INSERT INTO procurement_accounts(id,label,provider,state,limit_amount) VALUES($1,'fixture','fixture','active',1000000)`, f.account)
+		f.exec(t, procurementTx, `INSERT INTO credential_procurement_bindings(id,credential_id,channel_id,account_id,operation_id) VALUES($1,$2,$3,$4,$5)`, f.binding, f.credential, f.channel, f.account, uuid.NewString())
+		pbTxMust(t, "commit procurement catalog seed", procurementTx.Commit(f.ctx))
+		return
+	}
 	if f.historical {
 		f.exec(t, tx, `INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis) VALUES($1,$2,'upstream',2000000,2000000,'contract')`, f.cost, f.channel)
 	} else {
-		// Managed procurement rechecks quotes at the periodic decision time, which
-		// tests rewind; the original quote must already be effective before that.
+		var checks string
 		rate := int64(2000000)
 		meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
 			ID: f.cost, ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
 			Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: f.catalogEffectiveAt(t, tx, "7 days"),
 		})
-		var checks string
 		pbTxMust(t, "inspect seeded cost result", tx.QueryRow(f.ctx, `SELECT jsonb_build_object(
  'target',po.target,
  'operation_id',c.pricing_operation_id=po.operation_id,

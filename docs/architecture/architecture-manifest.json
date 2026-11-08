@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T02:53:17Z",
-  "review_reason": "008 funding-lot写批次与028-U route cap完整性guard及对应专项/设计记录",
-  "snapshot_sha256": "36b727233c3e3dda2abafa169e22332881bb9d34ba900c92eb12b1689b6d1db1",
-  "architecture_sha256": "ec1faca32f23854391f7f170468c18c6d9a55cf2c609792247e3f62d8c58799e",
-  "history_sha256": "6e589248d3086fba42fe404f53ac18d3e8d82744ddf094b0dcb6f8ec2b62a070",
+  "reviewed_at": "2026-11-08T04:10:31Z",
+  "review_reason": "008 profile block与周期预算超界原子批次、028-U六协议unknown恢复/幂等收费矩阵及冻结历史fixture边界",
+  "snapshot_sha256": "ab1c44bf7ff6c4853ebdf5d3498a95cb9bd49af33ad031713cffcf19d6801532",
+  "architecture_sha256": "944acc7e41c0f5e81c1691661a081f56f4f99711e071655a7761345e940c5253",
+  "history_sha256": "7f492d447e954bb693cdfeac2ff311c94b32c9968426064e263ed5760dcc264c",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "011856696e3f3d18371c6220bd85cedf6f2944ef68bcaad039e665a53da58cee"
+      "sha256": "3c0c5b25ddaa448a3091458cc55270ff989658856a31ec5eff82ae3c4ee24f41"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "cf9cba6e3309f73326290207496961abc1faee5c728f44be9c71a8fe068bb95a"
+      "sha256": "11154473507021d897a0f5273b095d08cd01fa213dc777c27f275143949daf87"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "f47a52cda453462455959d7be6b34aead0b45ae883d5f5d5d7ef6380ef144960"
+      "sha256": "cf9f6415a78330d5e66e2ffe7b2ec1d5a45ad22fdf308afe652c1524f8f03102"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "docs/verification/financial-write-batches.md",
-      "sha256": "7a2bc491d1d7f2760170b779790f7a2c16c7e0937057dcf5ed48b54454508e10"
+      "sha256": "eea8c89df381721f076938fa5d85d5cac5e8ff80ee18c7cccb967c8ffefad609"
     },
     {
       "path": "docs/verification/funding-financial-graph.md",
@@ -1801,7 +1801,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "e6b43539ee6c58fe3d5443388bd9494e8ce25c7a336e97071519d4abc0ae7b8f"
+      "sha256": "9a03ca9d88e91a89f7503f6b2b0a85bbe70191f6344374cce33e295c92b502e3"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -2128,6 +2128,10 @@
       "sha256": "e6c18cea67f3939006527a6f458526ab7ebb81778720b87d3c70b10a8d6a4a91"
     },
     {
+      "path": "internal/billing/profile_block_batch_integration_test.go",
+      "sha256": "3359dc1cd4945e60fe93efed40cad1c79769283106083e538e575a3bcd698bfe"
+    },
+    {
       "path": "internal/billing/prospective.go",
       "sha256": "27ae7b0b218e64e1262e74c7cb7028b4c47fb922d671a1e6087b776e42f2e3f5"
     },
@@ -2177,7 +2181,7 @@
     },
     {
       "path": "internal/billing/settle.go",
-      "sha256": "f4593755c7f4e7eab2cc9f7a376c57f4254459831bb2f78a31650caab97c94b3"
+      "sha256": "bf33e5a1b773b7d9e31cc1c79a926d217ffa050a46b2e332a457ee15d18406ef"
     },
     {
       "path": "internal/billing/store.go",
@@ -4513,7 +4517,7 @@
     },
     {
       "path": "internal/periodicbudget/billing_integration_test.go",
-      "sha256": "0e29c0948ff67bcf229fe34916ab135fd90cf6ecf1a49b0fa2ab677870d470f0"
+      "sha256": "e48e471006fb651904e756f5e897b36f63857df589ad07b1958b353578cf9edd"
     },
     {
       "path": "internal/periodicbudget/billing_procurement_integration_test.go",
@@ -4641,7 +4645,7 @@
     },
     {
       "path": "internal/periodicbudget/tx_fixture_test.go",
-      "sha256": "6d72fcf87d4a7b17613daad1d5b885f4e4e10cc25445971e4f602b307bf01342"
+      "sha256": "f678f5f88a523a317404880e919f4787c8e4b3dd04d99d7a59cbc4b653cef3f3"
     },
     {
       "path": "internal/periodicbudget/tx_identity_integration_test.go",
@@ -5849,7 +5853,7 @@
     },
     {
       "path": "internal/server/cost_vector_application_integration_test.go",
-      "sha256": "b17413eb8590a1e59f7e95a1c3dbc6b9bd1334d436d4faff05c3d050bad8f89d"
+      "sha256": "37f9a1eee21744e8d859224d69f2257d9ad626a4ec26f0e0de46a67af925cb16"
     },
     {
       "path": "internal/server/credential_pool.go",
@@ -6669,7 +6673,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/acceptance.md",
-      "sha256": "73f8737a548d199ae948dc455c428317649f7ae67b661d61bf3e98335c682dab"
+      "sha256": "eedf0e3a72bb5fb2765c34e06e6c34a4e3be79e11e42a033ad030630a5a558e3"
     },
     {
       "path": "specs/008-financial-write-batches/plan.md",
@@ -7597,7 +7601,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "caf9b3e09d051fd0703479a06e556edc273670b4a30e6b1c66ab8c1c3e453b64"
+      "sha256": "d850853d8c4229942fc4d08779ba3fed936e9fb76b7a561d6070b27a05ba1b32"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

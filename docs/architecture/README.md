@@ -12,6 +12,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-08 008/028-U续片：024 的 route complete guard 现在要求每个 binding 的 supplier cap 为零条或完整两条文本 token 维度，单 cap 和跨 binding 半套在提交时回滚；Reserve/finish 的 funding-lot 写集先做纯余额投影，再按原 allocation 顺序一次批量发送。迁移 route-cap 矩阵和 billing 回滚/生命周期专项在55439通过；008剩余全链路故障、028-U完整guard/商业出口、浏览器、正式供应商和部署仍未验收。
 
+2026-11-08 008/028-U商业续片：超预占 profile block 与 audit 已与结算尾写组成同一 PostgreSQL batch，周期预算超界失败、回滚和重试唯一性通过55439；受限 APP 六协议补齐过期 unknown 恢复不重生成、重复恢复和幂等一次收费矩阵。它们仍是本地 fixture/受限角色证据，008完整验收、028-U完整guard、真实供应商、浏览器和部署/HA/性能仍未完成。
+
 2026-11-08 028-S/A/R 纯域候选第一片：`internal/media`、`internal/tasks`、`internal/realtime` 已分别冻结并通过纯 Go race/vet；它们只验证输入、状态、幂等和资源边界，不含数据库、HTTP/WS、provider、账务、wallet 或报表接线。对应复选框继续未勾，生产能力仍以后续纵向验收为准。
 
 <!-- architecture:context -->

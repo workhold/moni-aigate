@@ -1,6 +1,6 @@
 # 008 验收执行
 
-2026-11-08 进展：`journalPlan` 已在 PostgreSQL batch 前纯核构建，统一拒绝不平衡、未锁账户、余额不足、int64 溢出及同一 ledger account 多 kind 写集；新增 finish 尾部十个写点的故障回滚、幂等重试和唯一结算专项。相关纯 race/vet 与 55439 专库测试通过。以下 8 项仍保持未勾选，完整取消/恢复边界、周期预算与超界 profile block、全量 race、固定 binary 和最终预览尚未完成。
+2026-11-08 进展：`journalPlan` 已在 PostgreSQL batch 前纯核构建，统一拒绝不平衡、未锁账户、余额不足、int64 溢出及同一 ledger account 多 kind 写集；新增 finish 尾部十个写点的故障回滚、幂等重试和唯一结算专项。Reserve/finish 的 funding-lot 写集与超界 profile block/audit 也已进入同一事务 batch，并通过 55439 的失败回滚、重试和幂等专项。相关纯 race/vet 与 55439 专库测试通过。以下 8 项仍保持未勾选，完整取消/恢复边界、周期预算全矩阵、SIGKILL、固定 binary 和最终预览尚未完成。
 
 2026-10-31，状态：功能优先，性能切片后移；待实施与执行，不能勾选。
 

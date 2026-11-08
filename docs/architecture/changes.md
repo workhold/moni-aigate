@@ -4606,3 +4606,26 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-08T04:10:31Z · ab1c44bf7ff6
+
+008 profile block与周期预算超界原子批次、028-U六协议unknown恢复/幂等收费矩阵及冻结历史fixture边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2054 个源文件；本次 12 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/financial-write-batches.md`
+- modified `docs/verification/unified-metering.md`
+- added `internal/billing/profile_block_batch_integration_test.go`
+- modified `internal/billing/settle.go`
+- modified `internal/periodicbudget/billing_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/server/cost_vector_application_integration_test.go`
+- modified `specs/008-financial-write-batches/acceptance.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

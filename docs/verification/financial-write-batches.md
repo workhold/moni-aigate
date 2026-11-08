@@ -16,3 +16,5 @@
 008 已完成 journal 纯构建和一组 finish 尾写点故障矩阵，但整体仍未完成：还需要 Reserve/finish 全链路取消与恢复/SIGKILL、周期预算与超界 profile block 写点、完整并发预算与财务时钟边界、三对固定 binary 对照、最终嵌入预览和全量验收文档。局部通过不能替代这些出口。
 
 本续片新增的 funding-lot 批量写入已由 55439 专库的生命周期、Reserve 回滚、finish 尾部十个写点故障/重试、财务边界和并发预占专项覆盖；它没有改变独立 COMMIT、锁序、来源分配或退款语义。
+
+本轮又将超预占的 `billing_profile_blocks` 与 `billing.profile_blocked` audit 排入同一 PostgreSQL batch。profile 行或 audit 任一写点失败都会回滚结算、钱包、周期预算、来源 lot 和审计；重试只产生一笔 settlement/profile block，重复结算保持原 receipt。对应 `TestPostgresProfileBlockBatchRollsBackAndRetriesOnce` 与周期预算的超界专项通过 55439 race。

@@ -2,6 +2,7 @@ package billing
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"math/big"
 	"time"
@@ -215,10 +216,14 @@ func finish(ctx context.Context, tx pgx.Tx, r financialRequest, charge int64, ra
 		return result, err
 	}
 	if raw.Cmp(big.NewInt(r.Amount)) > 0 {
-		if _, err = tx.Exec(ctx, "INSERT INTO billing_profile_blocks(model_id,profile_version,reason,request_id) VALUES($1,$2,'usage_exceeded_reservation',$3) ON CONFLICT DO NOTHING", r.ModelID, r.ProfileVersion, r.ID); err != nil {
-			return result, err
+		diff, marshalErr := json.Marshal(map[string]any{"waived": waived.String()})
+		if marshalErr != nil {
+			return result, marshalErr
 		}
-		if err = audit(ctx, tx, r.TenantID, "system", "billing.profile_blocked", r.ModelID, r.ID, map[string]any{"waived": waived.String()}); err != nil {
+		batch := &pgx.Batch{}
+		batch.Queue("INSERT INTO billing_profile_blocks(model_id,profile_version,reason,request_id) VALUES($1,$2,'usage_exceeded_reservation',$3) ON CONFLICT DO NOTHING", r.ModelID, r.ProfileVersion, r.ID)
+		batch.Queue(insertAuditSQL, "system", r.TenantID, "billing.profile_blocked", r.ModelID, diff, r.ID)
+		if err = closeBatch(tx.SendBatch(ctx, batch), nil); err != nil {
 			return result, err
 		}
 	}

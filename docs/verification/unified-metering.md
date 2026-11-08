@@ -4,7 +4,9 @@
 
 024 的 `meter_route_complete` 现在按每个 binding 验证 supplier cap 集合：零条表示未配置；一旦配置必须恰有 `text_input_token` 与 `text_output_token` 两条 token cap，不能由不同 binding 拼接，也不能在已提交 route 上追加。新增迁移专项验证了零 cap、完整两 cap、单 cap 回滚 active pointer/binding 以及既有空 route和错误 channel/version 负控。
 
-008 账务写批次同时把 Reserve/finish 的 funding reservation/settlement lot 写集改为纯 `projectFundingLotChange` 预计算后一次 `pgx.Batch` 发送，保持每个 allocation 的关系→event→CAS balance 顺序；退款的逐行路径共享该纯投影规则。55439 专库通过 `TestMeterCompletenessRejectsGaps`、billing 生命周期/Reserve 回滚/finish 尾部故障重试/财务边界/并发预占专项。008 的全量取消、周期预算/profile block、固定 binary、最终预览和正式性能门禁仍未完成；028-U 完整九组 guard、六文本总矩阵、浏览器、正式供应商和部署验收仍未完成。
+008 账务写批次同时把 Reserve/finish 的 funding reservation/settlement lot 写集改为纯 `projectFundingLotChange` 预计算后一次 `pgx.Batch` 发送，保持每个 allocation 的关系→event→CAS balance 顺序；退款的逐行路径共享该纯投影规则。超预占时 profile block 与 audit 也由同一 batch 写入，失败回滚与重试唯一性已由 billing/periodicbudget race 覆盖。55439 专库通过 `TestMeterCompletenessRejectsGaps`、billing 生命周期/Reserve 回滚/finish 尾部故障重试/财务边界/并发预占专项。008 的全量取消、周期预算全矩阵/SIGKILL、固定 binary、最终预览和正式性能门禁仍未完成；028-U 完整九组 guard、六文本总矩阵、浏览器、正式供应商和部署验收仍未完成。
+
+同一轮新增六协议受限 APP 证据：过期 unknown 恢复不重生成、重复恢复不改变原事实，以及幂等重放只产生一次 POST、attempt、settlement 和收费。测试只使用本地 HTTP/provider fixture，不能替代正式供应商、独立 LOGIN 或浏览器验收。
 
 ## 2026-11-08：人工核对改为完整 retail 向量
 
