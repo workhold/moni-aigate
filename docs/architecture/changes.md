@@ -4629,3 +4629,27 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-08T04:54:33Z · 58691a000795
+
+收口024成本来源互斥guard、现行周期预算完整route/catalog fixture与008/028-U验证记录；冻结历史fixture未升级；已完成语义复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2054 个源文件；本次 13 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/financial-write-batches.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/store_test.go`
+- modified `internal/periodicbudget/billing_dispatch_integration_test.go`
+- modified `internal/periodicbudget/billing_procurement_integration_test.go`
+- modified `internal/periodicbudget/billing_recovery_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/tx_supplier_test.go`
+- modified `internal/periodicbudget/verifier_integration_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `specs/008-financial-write-batches/acceptance.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

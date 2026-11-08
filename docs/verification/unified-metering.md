@@ -1,5 +1,7 @@
 # 028-U统一计量验证
 
+2026-11-08 成本来源边界续片：024 的 `meter_attempt_cost_matches` 在 UPDATE 时拒绝把已有 correction pointer 清成空并改写为 late finalization，INSERT 不引用 `OLD`；已存在的 finalization→correction 更正路径保持可用。迁移 canonical/缺口专项和 billing 证据/更正回归在 55439 专库通过。该 guard 仍属于局部存储证据，不能替代 028-U 九组完整 guard 或正式供应商成本认证。
+
 ## 2026-11-08：route cap 完整性与 funding-lot 批次续片
 
 024 的 `meter_route_complete` 现在按每个 binding 验证 supplier cap 集合：零条表示未配置；一旦配置必须恰有 `text_input_token` 与 `text_output_token` 两条 token cap，不能由不同 binding 拼接，也不能在已提交 route 上追加。新增迁移专项验证了零 cap、完整两 cap、单 cap 回滚 active pointer/binding 以及既有空 route和错误 channel/version 负控。

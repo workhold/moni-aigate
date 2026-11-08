@@ -19,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/moni-ai/moni-aigate/internal/billing"
+	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/operations"
 	"github.com/moni-ai/moni-aigate/internal/testsupport/funding019"
 	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
@@ -69,7 +70,7 @@ func newPBBillingFixture(t *testing.T) *pbTxFixture { return newPBTxFixtureVaria
 func (f *pbTxFixture) reserveCustomer(t *testing.T) string {
 	t.Helper()
 	request := uuid.NewString()
-	_, err := billing.New(f.app).Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: request, ModelID: f.model, IdempotencyKey: uuid.NewString(), RequestHMAC: "abababababababababababababababababababababababababababababababab", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
+	_, err := billing.New(f.app).Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key}, RequestID: request, ModelID: f.model, RouteRevision: 1, IdempotencyKey: uuid.NewString(), RequestHMAC: "abababababababababababababababababababababababababababababababab", ProfileVersion: f.profileVersion, InputUpperBound: 100, OutputLimit: 20, RequestDeadline: time.Now().UTC().Add(300 * time.Second)})
 	pbTxMust(t, "reserve genuine customer source", err)
 	return request
 }
@@ -240,6 +241,20 @@ func pbTxTrackedSQL(t *testing.T, name string) string {
 	return string(raw)
 }
 
+func pbPublishCurrentCost(t *testing.T, f *pbTxFixture, p meterquote.CostPrice) string {
+	t.Helper()
+	var schemaID, schemaDigest string
+	pbTxMust(t, "read current cost schema", f.owner.QueryRow(f.ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id WHERE m.id=$1`, p.ModelID).Scan(&schemaID, &schemaDigest))
+	var revision int64
+	pbTxMust(t, "read current cost channel revision", f.owner.QueryRow(f.ctx, `SELECT management_revision FROM channels WHERE id=$1`, p.ChannelID).Scan(&revision))
+	result, err := catalog.New(f.owner, nil).PublishCostPrice(f.ctx, catalog.PricingActor{UserID: p.Actor}, catalog.CostPriceCommand{
+		OperationID: uuid.NewString(), ChannelID: p.ChannelID, UpstreamModel: p.UpstreamModel, SchemaID: schemaID, SchemaDigest: schemaDigest,
+		VariantKey: "default", InputRate: p.InputRate, OutputRate: p.OutputRate, Basis: p.Basis, EffectiveAt: p.EffectiveAt.UTC(), ExpectedChannelRevision: revision,
+	})
+	pbTxMust(t, "publish current 024 cost through catalog command", err)
+	return result.Result.ID
+}
+
 func (f *pbTxFixture) seedCatalog(t *testing.T) {
 	t.Helper()
 	tx, err := f.owner.Begin(f.ctx)
@@ -284,7 +299,7 @@ func (f *pbTxFixture) seedCatalog(t *testing.T) {
 		var effective time.Time
 		pbTxMust(t, "sample backdated cost effective time", f.owner.QueryRow(f.ctx, `SELECT clock_timestamp()-interval '7 days'`).Scan(&effective))
 		rate := int64(2000000)
-		meterquote.PublishCost(t, f.ctx, f.owner, meterquote.CostPrice{
+		f.cost = pbPublishCurrentCost(t, f, meterquote.CostPrice{
 			ID: f.cost, ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
 			Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: effective,
 		})

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
+	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
@@ -23,11 +24,37 @@ func pbBillProcurementCatalog(t *testing.T, f *pbTxFixture) pbBillProcurementCha
 	f.exec(t, tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused-local-fixture')`, g.credential, g.channel)
 	f.exec(t, tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, g.version, g.channel, g.credential)
 	f.exec(t, tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'periodic-fixture',1,10)`, g.version, g.channel, g.credential)
+	effective := f.catalogEffectiveAt(t, tx, "7 days")
+	pbTxMust(t, "commit actual APP managed channel roots", tx.Commit(f.ctx))
 	rate := int64(2000000)
-	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
+	pbPublishCurrentCost(t, f, meterquote.CostPrice{
 		ChannelID: g.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
-		Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: f.catalogEffectiveAt(t, tx, "7 days"),
+		Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: effective,
 	})
+	rows, err := f.app.Query(f.ctx, `SELECT b.channel_id,b.upstream_model,b.priority,b.weight,b.max_inflight
+ FROM route_policy_versions p JOIN model_bindings b ON b.route_policy_version_id=p.id
+ WHERE p.model_id=$1 AND p.revision=(SELECT active_revision FROM models WHERE id=$1)
+ ORDER BY b.channel_id,b.id`, f.model)
+	pbTxMust(t, "read current route bindings", err)
+	bindings := make([]catalog.BindingInput, 0, 2)
+	for rows.Next() {
+		var b catalog.BindingInput
+		if err = rows.Scan(&b.ChannelID, &b.UpstreamModel, &b.Priority, &b.Weight, &b.MaxInflight); err != nil {
+			rows.Close()
+			pbTxMust(t, "scan current route binding", err)
+		}
+		bindings = append(bindings, b)
+	}
+	err = rows.Err()
+	rows.Close()
+	pbTxMust(t, "finish current route binding scan", err)
+	bindings = append(bindings, catalog.BindingInput{ChannelID: g.channel, UpstreamModel: "upstream", Weight: 1, MaxInflight: 10})
+	var expectedRevision int64
+	pbTxMust(t, "read current route revision", f.app.QueryRow(f.ctx, `SELECT active_revision FROM models WHERE id=$1`, f.model).Scan(&expectedRevision))
+	if _, err = catalog.New(f.app, nil).Publish(f.ctx, f.user, f.model, expectedRevision, bindings); err != nil {
+		pbTxMust(t, "publish complete procurement route", err)
+	}
+	tx = f.begin(t)
 	f.exec(t, tx, `INSERT INTO credential_procurement_bindings(id,credential_id,channel_id,account_id,operation_id) VALUES($1,$2,$3,$4,$5)`, uuid.NewString(), g.credential, g.channel, f.account, uuid.NewString())
 	pbTxMust(t, "commit actual APP managed channel and historical-effective quote", tx.Commit(f.ctx))
 	return g
@@ -54,8 +81,10 @@ func pbBillProcurementReserve(t *testing.T, f *pbTxFixture, s *billing.Store) bi
 	var now time.Time
 	pbTxMust(t, "read actual request deadline clock", f.app.QueryRow(f.ctx, `SELECT clock_timestamp()`).Scan(&now))
 	id := uuid.NewString()
+	var routeRevision int64
+	pbTxMust(t, "read current route revision for reservation", f.app.QueryRow(f.ctx, `SELECT active_revision FROM models WHERE id=$1`, f.model).Scan(&routeRevision))
 	r, err := s.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key},
-		RequestID: id, ModelID: f.model, IdempotencyKey: id, RequestHMAC: id, ProfileVersion: "v1", PolicyVersion: "r3",
+		RequestID: id, ModelID: f.model, RouteRevision: routeRevision, IdempotencyKey: id, RequestHMAC: id, ProfileVersion: f.profileVersion, PolicyVersion: "r3",
 		InputUpperBound: 100, OutputLimit: 20, RequestDeadline: now.Add(2 * time.Minute)})
 	pbTxMust(t, "reserve one actual customer wallet source", err)
 	if r.Amount != 120 {

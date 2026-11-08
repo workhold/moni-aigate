@@ -34,7 +34,7 @@ func newPBVerifierFixture(t *testing.T) *pbTxFixture {
 	admin, e := pgxpool.NewWithConfig(ctx, cfg.Copy())
 	pbTxMust(t, "open verifier test admin", e)
 	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")
-	f := &pbTxFixture{ctx: ctx, schema: "pb_verify_" + suffix, appRole: "pb_verify_app_" + suffix, projectionRole: "pb_verify_projection_" + suffix,
+	f := &pbTxFixture{ctx: ctx, currentSchema: true, schema: "pb_verify_" + suffix, appRole: "pb_verify_app_" + suffix, projectionRole: "pb_verify_projection_" + suffix,
 		tenant: uuid.NewString(), user: uuid.NewString(), operator: uuid.NewString(), approver: uuid.NewString(), key: uuid.NewString(), model: uuid.NewString(), price: uuid.NewString(), channel: uuid.NewString(), version: uuid.NewString(), credential: uuid.NewString(), account: uuid.NewString(), binding: uuid.NewString(), cost: uuid.NewString(), profileVersion: uuid.NewString()}
 	t.Cleanup(func() {
 		if f.app != nil {
@@ -137,8 +137,8 @@ func pbVerifierZeroCustomer(t *testing.T, f *pbTxFixture) string {
 	price := meterquote.PublishDefaultPrice(t, f.ctx, tx, meterquote.DefaultPrice{
 		ModelID: f.model, Actor: f.user, EffectiveAt: f.catalogEffectiveAt(t, tx, "1 day"),
 	})
-	f.exec(t, tx, `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming)
- VALUES($1,$2,$3,$4,$5,$6,'openai_chat','synchronous','json','r3','zero-verifier-fixture',clock_timestamp()+interval '5 minutes','fixture',false)`, request, f.tenant, f.key, f.user, f.model, f.profileVersion)
+	f.exec(t, tx, `INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision)
+ VALUES($1,$2,$3,$4,$5,$6,'openai_chat','synchronous','json','r3','zero-verifier-fixture',clock_timestamp()+interval '5 minutes','fixture',false,1)`, request, f.tenant, f.key, f.user, f.model, f.profileVersion)
 	f.exec(t, tx, `INSERT INTO request_meter_snapshots(tenant_id,request_id,model_id,profile_version,schema_id,schema_digest,variant_key,price_version_id,pricing_group_id,tenant_pricing_revision,retail_priced_at,input_bound,output_bound)
  SELECT t.id,$2,c.model_id,c.id,c.schema_id,c.schema_digest,'default',$4,t.price_group_id,t.pricing_revision,clock_timestamp(),100,20 FROM tenants t JOIN model_capability_versions c ON c.id=$3 WHERE t.id=$1`, f.tenant, request, f.profileVersion, price)
 	f.exec(t, tx, `INSERT INTO request_meter_bound_lines(tenant_id,request_id,side,dimension,unit,quantity)

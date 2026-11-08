@@ -12,6 +12,8 @@ attempt成本投影使用同tenant/attempt的finalization或correction来源指�
 
 随后在指定 PostgreSQL 16.15 专库通过迁移、billing lifecycle/evidence/settlement 与 operations meter role boundary 专项；该验证只覆盖本片，028-U整体仍未完成。
 
+2026-11-08 成本来源续片：`upstream_attempts` 已有 correction 来源时，更新不能清除 correction 并用迟到 finalization 重新成为 authoritative cost；正常 finalization→correction 的更正路径仍允许。该约束只保护原 attempt 成本来源指针，不能替代正式供应商账单或完整 U guard 验收。
+
 第 4 片把事件中的 `observation_canonical` 接到 inference Observation 的固定 canonical 和 `moni-aigate.inference.observation.v1` digest，补来源闭集、事件元数据和数据库重建 guard；迁移、billing、采购和角色边界专项已通过，HTTP/UI 与完整商业链路仍未完成。
 
 当前目录的路由发布、公共发布校验统一读取不可变capability；当前成本路由/公共目录夹具使用meter函数和快照，历史迁移夹具保持其原schema并验证拒迁。周期预算HTTP仅编译，55439专库仍待验收；完整六文本商业链及前端仍待收口。

@@ -35,10 +35,11 @@ func pbTxSupplierAttempt(t *testing.T, f *pbTxFixture, tx pgx.Tx, request string
 	case 240:
 	case 0:
 		var zero int64
-		cost = meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
-			ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
-			Basis: "contract", InputRate: &zero, OutputRate: &zero, EffectiveAt: f.catalogEffectiveAt(t, tx, "30 days"),
-		})
+		if f.currentSchema {
+			cost = pbPublishCurrentCost(t, f, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user, Basis: "contract", InputRate: &zero, OutputRate: &zero, EffectiveAt: f.catalogEffectiveAt(t, tx, "30 days")})
+		} else {
+			cost = meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user, Basis: "contract", InputRate: &zero, OutputRate: &zero, EffectiveAt: f.catalogEffectiveAt(t, tx, "30 days")})
+		}
 	default:
 		t.Fatal("unsupported fixture supplier upper amount", upper)
 	}

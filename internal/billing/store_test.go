@@ -539,6 +539,7 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 		t.Fatal("dispatch replay allowed")
 	}
 	input := FinalizationInput{ID: uuid.NewString(), TenantID: f.tenant, RequestID: r.RequestID, AttemptID: a.ID, Source: "adapter", SourceEventID: a.ID + ":final", Usage: confirmed(), ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}
+	firstFinalizationID := input.ID
 	for i := 0; i < 2; i++ {
 		if _, err = f.store.RecordFinalization(f.ctx, input); err != nil {
 			t.Fatal(err)
@@ -658,6 +659,17 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 	if err = f.pool.QueryRow(f.ctx, `SELECT a.latest_cost_finalization_id,a.latest_cost_correction_id FROM upstream_attempts a WHERE a.id=$1`, a.ID).Scan(&correctedFinalization, &correctedCorrection); err != nil || correctedFinalization != nil || correctedCorrection == nil {
 		t.Fatalf("cost correction pointers finalization=%v correction=%v err=%v", correctedFinalization, correctedCorrection, err)
 	}
+	tx, err = f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `UPDATE upstream_attempts SET cost_status='contract',cost_amount=15,latest_cost_finalization_id=$2,latest_cost_correction_id=NULL WHERE id=$1`, a.ID, firstFinalizationID); err == nil {
+		err = tx.Commit(f.ctx)
+	}
+	if err == nil || !strings.Contains(err.Error(), "supplier cost correction is authoritative") {
+		t.Fatal("late finalization overwrote authoritative cost correction", err)
+	}
+	_ = tx.Rollback(f.ctx)
 	report, err := f.store.Report(f.ctx, Query{TenantID: f.tenant})
 	if err != nil || report.KnownProviderCost != "20" || report.UnknownProviderCosts != 0 {
 		t.Fatal(report, err)

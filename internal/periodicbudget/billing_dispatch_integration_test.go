@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
+	"github.com/moni-ai/moni-aigate/internal/catalog"
 	budget "github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
@@ -40,11 +41,16 @@ func pbBillDispatchNew(t *testing.T) *pbBillDispatchFixture {
 	f.exec(t, tx, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unused-fixture')`, d.credential, d.channel)
 	f.exec(t, tx, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, d.version, d.channel, d.credential)
 	f.exec(t, tx, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'dispatch',1,10)`, d.version, d.channel, d.credential)
+	pbTxMust(t, "commit APP dispatch catalog roots", tx.Commit(f.ctx))
+	if _, err := catalog.New(f.app, nil).Publish(f.ctx, f.user, f.model, 1, []catalog.BindingInput{{ChannelID: d.channel, UpstreamModel: "upstream", Weight: 1, MaxInflight: 10}}); err != nil {
+		pbTxMust(t, "publish complete dispatch route", err)
+	}
 	rate := int64(2000000)
-	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{
+	d.cost = pbPublishCurrentCost(t, f, meterquote.CostPrice{
 		ID: d.cost, ChannelID: d.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.user,
 		Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: d.now.AddDate(0, 0, -3),
 	})
+	tx = f.begin(t)
 	f.exec(t, tx, `INSERT INTO credential_procurement_bindings(id,credential_id,channel_id,account_id,operation_id) VALUES($1,$2,$3,$4,$5)`, uuid.NewString(), d.credential, d.channel, f.account, uuid.NewString())
 	pbTxMust(t, "commit APP dispatch catalog and managed quote", tx.Commit(f.ctx))
 	var err error
@@ -80,7 +86,7 @@ func (d *pbBillDispatchFixture) prepared(t *testing.T) (billing.Reservation, bil
 	var requestDeadline time.Time
 	pbTxMust(t, "sample real request deadline independent of simulated period clock", f.app.QueryRow(f.ctx, `SELECT clock_timestamp()+interval '5 minutes'`).Scan(&requestDeadline))
 	r, err := d.store.Reserve(f.ctx, billing.ReserveInput{Principal: billing.Principal{TenantID: f.tenant, UserID: f.user, KeyID: f.key, ClientIP: "127.0.0.1"},
-		RequestID: uuid.NewString(), ModelID: f.model, RequestHMAC: uuid.NewString(), IdempotencyKey: uuid.NewString(), ProfileVersion: "v1", PolicyVersion: "r3",
+		RequestID: uuid.NewString(), ModelID: f.model, RouteRevision: 2, RequestHMAC: uuid.NewString(), IdempotencyKey: uuid.NewString(), ProfileVersion: f.profileVersion, PolicyVersion: "r3",
 		InputUpperBound: 100, OutputLimit: 20, RequestDeadline: requestDeadline})
 	pbTxMust(t, "actual billing Reserve with both customer scopes", err)
 	t.Cleanup(func() { d.store.EndRequest(r.RequestID) })
@@ -296,14 +302,11 @@ func TestPBBillingDispatchFinalAccountWaitRechecksPeriodExpiryAndQuote(t *testin
 				pbTxMust(t, "set actual Key expiry beyond the initial real-time check", err)
 				finalAt, want = d.now.Add(2*time.Minute), "invalid_key"
 			} else if boundary == "scheduled_cost" {
-				publish := d.f.begin(t)
-				d.f.exec(t, publish, `SELECT id FROM channels WHERE id=$1 FOR UPDATE`, d.channel)
 				rate := int64(3000000)
-				meterquote.PublishCost(t, d.f.ctx, publish, meterquote.CostPrice{
+				pbPublishCurrentCost(t, d.f, meterquote.CostPrice{
 					ChannelID: d.channel, UpstreamModel: "upstream", ModelID: d.f.model, Actor: d.f.user,
 					Basis: "contract", InputRate: &rate, OutputRate: &rate, EffectiveAt: d.now.Add(time.Minute),
 				})
-				pbTxMust(t, "APP publish scheduled quote before dispatch owns its channel", publish.Commit(d.f.ctx))
 				finalAt, want = d.now.Add(2*time.Minute), "cost_quote_stale"
 			}
 			before := d.snapshot(t)

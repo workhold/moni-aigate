@@ -1962,6 +1962,9 @@ CREATE OR REPLACE FUNCTION meter_attempt_cost_matches() RETURNS trigger LANGUAGE
 DECLARE corr_amount bigint; corr_basis text; in_q bigint; out_q bigint; in_n bigint; in_d bigint; out_n bigint; out_d bigint; basis text; version text; expected numeric; end_reason text; supplier_state text;
 BEGIN
  IF NEW.cost_status='unknown' AND NEW.cost_amount IS NULL THEN RETURN NULL; END IF;
+ IF TG_OP='UPDATE' AND OLD.latest_cost_correction_id IS NOT NULL AND NEW.latest_cost_finalization_id IS NOT NULL THEN
+  RAISE EXCEPTION 'supplier cost correction is authoritative';
+ END IF;
  IF NEW.latest_cost_correction_id IS NOT NULL THEN
   SELECT c.amount, c.basis INTO corr_amount, corr_basis FROM provider_cost_corrections c
    WHERE c.id=NEW.latest_cost_correction_id AND c.tenant_id=NEW.tenant_id AND c.attempt_id=NEW.id;
