@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-08T07:02:26Z",
-  "review_reason": "补齐media_tasks持久租约与tasks worker状态机",
-  "snapshot_sha256": "0dda8d34c8567e2e137773ea7ce64e1beb6e02659dc35192ef605e45ab71482d",
-  "architecture_sha256": "61d5b0aee5b3f9e604dbccc21bac2915b5161051902c457e25146ddaf778cab8",
-  "history_sha256": "f739db1377c79c930adf9e01b6b26bdb0e7324d54375c508fe660e5699f6de04",
+  "reviewed_at": "2026-11-08T07:12:28Z",
+  "review_reason": "新增moni-aigate worker命令与Compose独立worker服务",
+  "snapshot_sha256": "d5659b01d06151363e8b5f4948c48cb7a3752ddc7d9bfb7512827cdd015b8758",
+  "architecture_sha256": "84005f457c7fa57b85579b3fe15c82db222889f4e385adb75dd22f2ea13e8f96",
+  "history_sha256": "5214669aaab2426b5bc95995eea7bb0f29be9e2f0544cbcbc611cc8854feb53e",
   "files": [
     {
       "path": ".dockerignore",
@@ -53,7 +53,7 @@
     },
     {
       "path": "cmd/moni-aigate/main.go",
-      "sha256": "f7f29da913ec92c208866b781da9294aa0613f8832d3047b8a9961d90647c72c"
+      "sha256": "ea07346e987715454acd82c13b13bbd41194a321c3553905551463fd6c19bfa9"
     },
     {
       "path": "cmd/moni-aigate/main_test.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "984a5753206ba948e3f56caa160a001eb8d3ddb442a31d07ef45332d7bcf6d86"
+      "sha256": "409470e3e4d24d48d810570988b7a23feec3ec45b54d0ead57a0b1d6ad414c5c"
     },
     {
       "path": "deploy/init-roles.sh",
@@ -225,7 +225,7 @@
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "1b51c449fa4f7d8053b4fcf49f2b8eb92e38d244452e5c1f136f73c2710764b2"
+      "sha256": "e514b267db8d566e25a41a30e73dd12f9da1d7c2bb10b37fe1bb7f74ccad00d5"
     },
     {
       "path": "docs/runbooks/development.md",
@@ -7673,7 +7673,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "7b293e61c3b00a88c4932c1bc2ae53a600dd187c529ab2e62436bde2c54ccd1b"
+      "sha256": "f385c7353a5fef154db3cad6255a8939aa4fd4ca48edf011e81d81584fc5ff5e"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

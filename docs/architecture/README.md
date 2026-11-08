@@ -26,6 +26,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-08 异步 worker 续片：`media_tasks` 的持久 lease 支持 claim、续租和释放，`internal/tasks.Worker` 沿当前任务状态机执行一次 submit/observe/cancel/expire。该实现仍需接入实际 worker 运行入口、统一账务收尾和重启端到端验收。
 
+2026-11-08 worker 部署续片：`cmd/moni-aigate worker` 和 Compose 独立 worker 服务已接入当前 task lease。worker 使用当前 mock task adapter，独立进程权限不扩大到计量、wallet 或 payment worker；Compose 静态配置通过，真实容器运行和重启验收仍未完成。
+
 <!-- architecture:context -->
 ## 系统上下文与边界
 

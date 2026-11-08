@@ -29,8 +29,10 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/mailworker"
 	"github.com/moni-ai/moni-aigate/internal/operations"
 	"github.com/moni-ai/moni-aigate/internal/payments"
+	"github.com/moni-ai/moni-aigate/internal/provider"
 	"github.com/moni-ai/moni-aigate/internal/security"
 	"github.com/moni-ai/moni-aigate/internal/server"
+	"github.com/moni-ai/moni-aigate/internal/tasks"
 	"github.com/moni-ai/moni-aigate/internal/telemetry"
 	"github.com/moni-ai/moni-aigate/migrations"
 	"github.com/moni-ai/moni-aigate/web"
@@ -113,6 +115,9 @@ func run() error {
 	}
 	if e = migrations.Verify(ctx, pool); e != nil {
 		return e
+	}
+	if command == "worker" {
+		return runTaskWorker(ctx, pool)
 	}
 	if command == "bootstrap" {
 		flags := flag.NewFlagSet("bootstrap", flag.ContinueOnError)
@@ -482,6 +487,39 @@ func run() error {
 		return nil
 	}
 	return fmt.Errorf("HTTP service stopped")
+}
+
+func runTaskWorker(ctx context.Context, pool *pgxpool.Pool) error {
+	store, err := tasks.NewPostgresStore(pool, "")
+	if err != nil {
+		return err
+	}
+	worker := tasks.Worker{Store: store, Adapter: provider.NewMockTaskAdapter(), Now: time.Now}
+	workerID := tasks.ID(uuid.NewString())
+	for {
+		progress := false
+		for _, kind := range []tasks.WorkKind{tasks.WorkSubmit, tasks.WorkObserve, tasks.WorkCancel, tasks.WorkExpire} {
+			err = worker.RunOnce(ctx, kind, workerID)
+			if err == nil {
+				progress = true
+				continue
+			}
+			if errors.Is(err, tasks.ErrNoWork) {
+				continue
+			}
+			fmt.Fprintln(os.Stderr, "task worker:", err)
+		}
+		if err := ctx.Err(); err != nil {
+			return nil
+		}
+		if !progress {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-time.After(time.Second):
+			}
+		}
+	}
 }
 
 // Wallet maintenance runs without serving secrets, listeners or workers.

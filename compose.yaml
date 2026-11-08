@@ -76,5 +76,22 @@ services:
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
+  worker:
+    image: moni-aigate:local
+    command: [worker]
+    environment:
+      DATABASE_URL: postgres://moni_app:${APP_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
+      MASTER_KEY: ${MASTER_KEY:?generate .env first}
+      MASTER_KEY_ID: ${MASTER_KEY_ID:-primary}
+      MASTER_KEYS_JSON: ${MASTER_KEYS_JSON:-}
+      AUTH_SECRET: ${AUTH_SECRET:?generate .env first}
+    depends_on:
+      provision:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
 volumes:
   postgres-data:

@@ -103,6 +103,8 @@ provision在同一事务配置并核验六表有效权限；serve在worker/HTTP�
 
 Compose 已透传 `AUTH_REGISTRATION_ENABLED`（默认 false）、`AUTH_PASSWORD_RESET_ENABLED`（默认 true）、`MAIL_TRANSPORT`（默认 disabled），以及 `SMTP_HOST`、`SMTP_PORT`、`SMTP_FROM`、`SMTP_USERNAME`、`SMTP_PASSWORD`、`SMTP_TLS_MODE`（默认 starttls）。启用邮件须同时配置正确 HTTPS `PUBLIC_ORIGIN`、实际 SMTP 地址/端口/发件人、配对用户名密码及供应商要求的 TLS 模式；使用受保护部署环境保存秘密。开关及邮件配置变更须重建 app 容器。默认部署不发送邮件，单独启用注册开关不能绕过有效证明和邮件流程。验证结果见[静态配置记录](../verification/compose-config-025.json)；全局Docker CLI仍缺compose插件；补验使用SHA验证的Homebrew官方隔离Compose 5.6.1，在清空继承环境、显式合成env文件、空DOCKER_CONFIG和不存在的daemon socket下，实际config --quiet/JSON默认及覆盖检查通过，见[渲染证据](../verification/compose-render-025.json)。未读取用户.env或更改全局配置；该结果不代表容器运行、1Panel或正式收件。
 
+Compose 当前包含独立 `worker` 服务，执行 `moni-aigate worker`，使用与 app 相同的当前数据库和 task lease 运行异步任务状态机。该 worker 只写任务事实，未获得计量表、wallet 或 payment worker 权限。当前机器的 `docker` 没有 compose 子命令，`docker-compose config` 已在注入临时必需变量后通过，真实容器启动和重启恢复仍待目标环境验收。
+
 `PAYMENTS_MODE=off` 为常规部署默认。022-B3目前仅为 literal `127.0.0.1:55439/moni_test` 隔离本地模拟，要求成对私密 APP/worker manifest、精确 listener 与环境证明；常规 Compose 不透传这些文件或 worker DSN。不能用容器内 postgres 服务名替换目标后绕过证明。live 在连接前拒绝；带沙箱历史而缺原证明也拒绝启动。支付入口的已验范围见[应用支付证据](../verification/payment-application.md)，不是生产收款能力。来源 lot 维护、原路退款和后续生产方案仍按各自 SDD 门禁推进。
 
 
