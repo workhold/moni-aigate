@@ -217,11 +217,36 @@ func TestImageGenerationResultIsBoundToOriginalCredential(t *testing.T) {
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, imageRequest(http.MethodPost, "/v1/images/generations", imageInputJSON(imageProfileVersion, "private"), "private-key"))
 	id := imageResponseJSON(t, response)["id"].(string)
-	other := imageTestRouter(s, identity.Principal{TenantID: "tenant-a", UserID: "user-a", KeyID: "key-b"})
-	denied := httptest.NewRecorder()
-	other.ServeHTTP(denied, imageRequest(http.MethodGet, "/v1/images/generations/"+id, "", "other-key"))
-	if denied.Code != http.StatusNotFound || imageErrorCode(t, denied) != "not_found" {
-		t.Fatalf("cross-key result access status=%d body=%s", denied.Code, denied.Body.String())
+	for name, principal := range map[string]identity.Principal{
+		"other key":    {TenantID: "tenant-a", UserID: "user-a", KeyID: "key-b"},
+		"other user":   {TenantID: "tenant-a", UserID: "user-b", KeyID: "key-a"},
+		"other tenant": {TenantID: "tenant-b", UserID: "user-a", KeyID: "key-a"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			other := imageTestRouter(s, principal)
+			denied := httptest.NewRecorder()
+			other.ServeHTTP(denied, imageRequest(http.MethodGet, "/v1/images/generations/"+id, "", "other-key"))
+			if denied.Code != http.StatusNotFound || imageErrorCode(t, denied) != "not_found" {
+				t.Fatalf("cross-principal result access status=%d body=%s", denied.Code, denied.Body.String())
+			}
+		})
+	}
+}
+
+func TestImageGenerationNonDispatchFailureIsTerminalAndDoesNotBecomeUnknown(t *testing.T) {
+	s, adapter := newImageHTTPTestServer(t, provider.ImageResponse{})
+	p := identity.Principal{TenantID: "tenant-a", UserID: "user-a", KeyID: "key-a"}
+	router := imageTestRouter(s, p)
+	raw := imageInputJSON(imageProfileVersion, "rejected before dispatch")
+	first := httptest.NewRecorder()
+	router.ServeHTTP(first, imageRequest(http.MethodPost, "/v1/images/generations", raw, "not-sent"))
+	second := httptest.NewRecorder()
+	router.ServeHTTP(second, imageRequest(http.MethodPost, "/v1/images/generations", raw, "not-sent"))
+	if first.Code != http.StatusBadGateway || second.Code != http.StatusBadGateway || imageErrorCode(t, first) != "media_provider_error" || imageErrorCode(t, second) != "media_provider_error" {
+		t.Fatalf("non-dispatch failure status first=%d second=%d first_body=%s second_body=%s", first.Code, second.Code, first.Body.String(), second.Body.String())
+	}
+	if len(adapter.ImageRequests()) != 1 {
+		t.Fatalf("non-dispatch failure regenerated, calls=%d", len(adapter.ImageRequests()))
 	}
 }
 

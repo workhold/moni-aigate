@@ -1,5 +1,19 @@
 # 028-U统一计量验证
 
+## 2026-11-09：图片 POST 重放和 artifact 权威来源修复
+
+图片模块在当前基线复核发现，结果 GET 已能从 `media_result_artifacts` 恢复，但进程缓存清空后重复 POST 会重新进入 `ReserveMedia`，完成 request 会被误判为不可重发。修复后，有数据库的图片 POST 先按原租户、用户、API Key、operation、幂等键和 request digest 读取已完成 artifact，命中时直接返回原 JSON，不创建新的 attempt 或 settlement。图片 GET 在配置数据库时也不再用已完成内存缓存绕过 artifact 的过期和缺失边界。
+
+本片新增跨租户、跨用户、跨 Key 结果拒绝和 provider 未发送失败终态测试。验证命令如下。
+
+```sh
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+go test -count=1 -race -timeout 240s ./internal/media ./internal/server \
+  -run 'Test(Image|Orchestrator|MediaResults)'
+```
+
+该结果仍是本地 55439 专库与 deterministic mock provider 证据，不代表真实图片供应商 usage/cost、对象存储、浏览器或生产部署验收。
+
 ## 2026-11-09：Realtime HTTP/媒体绑定与部署业务 smoke 边界
 
 使用 `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable'` 的 55439 专库通过：

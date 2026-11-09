@@ -124,6 +124,29 @@ func TestMediaResultsSurviveProcessCacheReset(t *testing.T) {
 	if response.StatusCode != http.StatusOK || string(persisted) != string(raw) {
 		t.Fatalf("persisted image status=%d body=%s", response.StatusCode, persisted)
 	}
+	replay, err := http.NewRequest(http.MethodPost, f.http.URL+"/v1/images/generations", bytes.NewBufferString(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	replay.Header.Set("Authorization", "Bearer "+f.token)
+	replay.Header.Set("Content-Type", "application/json")
+	replay.Header.Set("Idempotency-Key", "persistent-image-1")
+	replayResponse, err := f.http.Client().Do(replay)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replayed, _ := io.ReadAll(replayResponse.Body)
+	replayResponse.Body.Close()
+	if replayResponse.StatusCode != http.StatusOK || string(replayed) != string(raw) {
+		t.Fatalf("persisted image POST replay status=%d body=%s", replayResponse.StatusCode, replayed)
+	}
+	var imageSettlements int
+	if err = f.pool.QueryRow(context.Background(), `SELECT count(*) FROM media_settlements`).Scan(&imageSettlements); err != nil {
+		t.Fatal(err)
+	}
+	if imageSettlements != 1 {
+		t.Fatalf("persisted image replay created duplicate settlement: %d", imageSettlements)
+	}
 
 	if _, err := f.pool.Exec(context.Background(), `UPDATE api_keys SET scopes=array_append(scopes,$2) WHERE tenant_id=$1 AND id=$3`, f.tenant, "mock-tts", f.key); err != nil {
 		t.Fatal(err)

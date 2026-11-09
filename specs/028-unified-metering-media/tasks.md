@@ -95,6 +95,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-09 Compose 业务 profile 实跑续片：在同一临时 Compose 项目中实际通过文本、图片、TTS、异步 video task 创建/幂等提交/worker 完成/结果下载和 Realtime WebSocket session/turn，随后 app/worker 与 PostgreSQL 重启恢复通过。该证据使用 deterministic mock provider，只闭合本机开发 Compose 主链；正式供应商、浏览器、1Panel、HA、性能和支付生产验收仍未完成。修复了 APP SELECT-only 媒体档案的锁读、媒体约束函数执行权限和 task store 对 LATERAL 外连接的错误锁目标。
 
+2026-11-09 图片专项复核：图片 POST 在数据库中先重放已完成 `media_result_artifacts`，进程缓存清空或进程重启不会重新 Reserve、提交 provider 或创建第二 settlement；图片 GET 在数据库配置下不再使用过期或缺失 artifact 的内存完成缓存。新增跨租户/用户/Key 访问拒绝和未发送失败终态测试，验证命令与 mock/真实 PostgreSQL 边界见[028-U验证记录](../../docs/verification/unified-metering.md)。
+
 ## S / A / R / 交付
 
 - [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。

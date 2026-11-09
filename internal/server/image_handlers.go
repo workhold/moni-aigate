@@ -229,6 +229,20 @@ func (s *Server) imageGeneration(c *gin.Context) {
 		return
 	}
 	fingerprint := imageFingerprint(input)
+	// The database artifact is the durable idempotency fact. Check it before
+	// creating an in-memory request record so a process restart replays the
+	// original response without entering Reserve again.
+	if s.Pool != nil {
+		stored, found, err := s.loadMediaArtifactByIdempotency(c.Request.Context(), p, "image_generation", idempotencyKey, fingerprint)
+		if err != nil {
+			s.fail(c, http.StatusServiceUnavailable, "result_unavailable", "图片结果暂不可用")
+			return
+		}
+		if found {
+			c.Data(http.StatusOK, stored.MediaType, stored.Body)
+			return
+		}
+	}
 	record, created, conflict := s.beginImageRequest(p, c.GetString("request_id"), idempotencyKey, fingerprint)
 	if conflict {
 		s.fail(c, http.StatusConflict, "idempotency_conflict", "Idempotency-Key 已用于其他图片请求")
@@ -257,7 +271,7 @@ func (s *Server) imageGenerationResult(c *gin.Context) {
 	s.imageMu.Lock()
 	record := s.imageByID[id]
 	s.imageMu.Unlock()
-	if record == nil {
+	if s.Pool != nil {
 		stored, found, err := s.loadMediaArtifactByRequest(c.Request.Context(), p, id)
 		if err != nil {
 			s.fail(c, http.StatusServiceUnavailable, "result_unavailable", "图片结果暂不可用")
@@ -268,7 +282,17 @@ func (s *Server) imageGenerationResult(c *gin.Context) {
 			return
 		}
 	}
-	if record == nil || record.tenantID != p.TenantID || record.userID != p.UserID || record.keyID != p.KeyID {
+	if record == nil {
+		s.fail(c, http.StatusNotFound, "not_found", "图片结果不存在")
+		return
+	}
+	record.mu.Lock()
+	state := record.state
+	ownerMatches := record.tenantID == p.TenantID && record.userID == p.UserID && record.keyID == p.KeyID
+	record.mu.Unlock()
+	// When PostgreSQL is configured, a completed in-memory record is only a
+	// cache. Do not serve it after its durable artifact has expired or vanished.
+	if !ownerMatches || s.Pool != nil && state == imageRequestCompleted {
 		s.fail(c, http.StatusNotFound, "not_found", "图片结果不存在")
 		return
 	}
