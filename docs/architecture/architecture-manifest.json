@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T17:17:17Z",
-  "review_reason": "确认 55439 mock APP 六文本商业矩阵已通过，并把真实 supplier late/conflict、独立浏览器和生产 LOGIN 商业认证明确后置",
-  "snapshot_sha256": "5223d56d95e3b159605ee69728d02431407258c49a94457e23abe0c9df45ed72",
+  "reviewed_at": "2026-11-09T17:17:56Z",
+  "review_reason": "收口当前 MVP 向量 provider/catalog/routing/billing/procurement/HTTP/UI 单一路径状态，独立 SQL guard 和正式环境仍分项验收",
+  "snapshot_sha256": "4c6a00e8980f635aa5a2e427854ff65b931100f51a14f336dc7b9cc6f6b3e952",
   "architecture_sha256": "f9581eaf03950b25ba5d5c6ee0bc63ca72178fd8c5dcb3ce15b9e1276305baf1",
-  "history_sha256": "30251725ed80502d5d4301a78495da78fb039f49c3f6cdbc85f22449d1d3990f",
+  "history_sha256": "43d11669243087828ef5ec7d58f81a191ee2e8438f4a5b7fce11679e7a67719a",
   "files": [
     {
       "path": ".dockerignore",
@@ -7809,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "b066147bf1b6fb90d099d411b76044d3d5c1a99278d5010d61d19af0c403f1be"
+      "sha256": "a89358aafd7d0ebff29de5614237b11820f239567ff33c73eea588f93c2c713a"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
