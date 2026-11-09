@@ -98,28 +98,32 @@ run_compose build
 echo "starting PostgreSQL"
 run_compose up -d postgres
 
-echo "running migrations twice"
+echo "running the current empty-database migration"
 run_compose run --rm migrate
-run_compose run --rm migrate
+echo "rejecting a second migration against the installed database"
+if run_compose run --rm migrate; then
+  echo "migration unexpectedly accepted a non-empty database" >&2
+  exit 1
+fi
 
 echo "provisioning roles twice"
-run_compose run --rm provision
-run_compose run --rm provision
+run_compose run --rm --no-deps provision
+run_compose run --rm --no-deps provision
 
 echo "bootstrapping first administrator"
-run_compose run --rm -T app bootstrap --email admin@example.com --password-stdin <"$password_file"
+run_compose run --rm --no-deps -T app bootstrap --email admin@example.com --password-stdin <"$password_file"
 
 echo "rejecting a repeated bootstrap"
-if run_compose run --rm -T app bootstrap --email second@example.com --password-stdin <"$password_file"; then
+if run_compose run --rm --no-deps -T app bootstrap --email second@example.com --password-stdin <"$password_file"; then
   echo "bootstrap unexpectedly accepted a second administrator" >&2
   exit 1
 fi
 
 echo "starting app and worker"
 if [ "$business" = true ]; then
-  run_compose up -d app worker qa-provider
+  run_compose up -d --no-deps app worker qa-provider
 else
-  run_compose up -d app worker
+  run_compose up -d --no-deps app worker
 fi
 
 wait_for_ready() {

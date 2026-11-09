@@ -91,7 +91,7 @@ func (s *Store) PublishDefaultPrice(ctx context.Context, a PricingActor, c Defau
 		if err != nil {
 			return nil, err
 		}
-		rates, err := metering.LegacyTokenRates(schema, metering.Retail, c.InputRate, c.OutputRate)
+		rates, err := metering.ManagementTokenRates(schema, metering.Retail, c.InputRate, c.OutputRate)
 		if err != nil {
 			return nil, pricingFail("invalid_price")
 		}
@@ -141,7 +141,7 @@ func (s *Store) PublishCostPrice(ctx context.Context, a PricingActor, c CostPric
 		}
 		var rates any
 		if known {
-			v, err := metering.LegacyTokenRates(schema, metering.Supplier, *c.InputRate, *c.OutputRate)
+			v, err := metering.ManagementTokenRates(schema, metering.Supplier, *c.InputRate, *c.OutputRate)
 			if err != nil {
 				return nil, pricingFail("invalid_price")
 			}

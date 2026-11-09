@@ -44,7 +44,7 @@ func TestSchemaDescriptionIsImmutable(t *testing.T) {
 		t.Fatal("mutating a description changed the immutable schema")
 	}
 	// A description cannot raise the global bound used by the real parser.
-	if _, err := LegacyTokenBounds(schema, Supplier, 1, 1); !errors.Is(err, ErrInvalidSchema) {
+	if _, err := ManagementTokenBounds(schema, Supplier, 1, 1); !errors.Is(err, ErrInvalidSchema) {
 		t.Fatal("description granted an incompatible token shape", err)
 	}
 	if _, err := ParseBounds(schema, Supplier, []byte(`{"schema_id":"11111111-1111-1111-1111-111111111111","version":"1","side":"supplier","bounds":[{"dimension":"text_input_token","unit":"token","quantity":"1"},{"dimension":"text_output_token","unit":"token","quantity":"1"}]}`)); !errors.Is(err, ErrInvalidVector) {

@@ -2,10 +2,10 @@
 
 本版要求 Go ≥1.26、Node 22.12+（22 系列）、PostgreSQL 16。使用独立数据库，应用仅一个活动实例；不使用SQLite或Redis代替资金事实。
 
-当前源码迁移范围为 **001–024**。下文带规格编号的升级与测试记录保留各阶段的历史范围；新部署始终使用当前完整迁移及 `provision`，不按历史清单裁剪。
+当前服务迁移入口是 `migrations.ApplyCurrent`。它只接受空的当前数据库并安装 `migrations/current_mvp.sql` 这一份完整 MVP 基线。001–024 SQL 文件保留为基线生成来源和隔离历史 fixture，`ApplyThrough` 只允许测试或离线研究显式使用，当前服务不会把旧库升级到新模型。
 
 
-当前024统一文本计量迁移仅接受空的当前计量/资金历史：遇到既有journal、receipt、预占/结算/退款/核款单、周期预算/支付事实或非零余额会拒绝并回滚。保留原库和备份，建立独立当前数据库后按完整迁移与provision初始化；不要删除历史、篡改checksum或导入伪造来源。旧C0维护证明是隔离研究，不能替代现行027开账命令。
+当前安装器在任何业务 DDL 前检查 `schema_migrations` 和当前 schema 的用户关系。只要数据库已有迁移历史、业务表或其他用户关系就拒绝，不删除、转换或导入旧金融事实。保留原库和备份，建立独立空数据库后执行当前基线与 `provision`。旧 C0 维护证明是隔离研究，不能替代当前开账命令。
 
 停服空钱包的显式非现金开账与核对（先在私有环境中填入目标tenant、唯一业务号、正微元整数与active管理员ID）：
 
@@ -62,7 +62,7 @@ PROJECTION_DATABASE_URL=postgres://moni_projection:PROJECTION_PASSWORD_URL_ENCOD
 MIGRATION_DATABASE_URL=postgres://moni_owner:OWNER_PASSWORD_URL_ENCODED@127.0.0.1:5432/moni?sslmode=disable
 ```
 
-`DATABASE_URL`仅使用受限app角色，`PROJECTION_DATABASE_URL`使用独立projection角色；owner连接仅用于离线迁移及 `provision`。`migrate`建立当前完整schema后，`provision`再授予并核验表/列等所需权限，同时撤销PUBLIC的schema CREATE。不要手工给app或projection广泛授权替代这一步。
+`DATABASE_URL`仅使用受限app角色，`PROJECTION_DATABASE_URL`使用独立projection角色；owner连接仅用于当前空库迁移及 `provision`。`migrate`通过 `ApplyCurrent` 建立当前完整 schema，随后 `provision` 授予并核验表/列等所需权限，同时撤销 PUBLIC 的 schema CREATE。不要手工给 app 或 projection 广泛授权替代这一步。
 
 ## 迁移、初始化管理员与启动
 
@@ -80,7 +80,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 
 `bootstrap`从stdin读一行密码，长度12–72字节；只允许空用户库创建首次管理员。交互运行时输入不会被此程序隐藏，建议通过密码管理器/权限0600临时文件的stdin提供，不在命令参数或shell历史写密码。数据库角色须先按[建立本地数据库与角色](#建立本地数据库与角色)由初始化管理身份创建；应用不具有建表/改迁移权限。Compose/1Panel使用独立安装流程，见[部署](deployment.md#首次安装)。
 
-升级已有数据库时，先停止接单、排空并停止旧实例，再使用新程序执行`migrate`及`provision`，完成后才启动`serve`。011新增007模型发现迁移，012新增008凭据池迁移及版本创建封口，013新增009渠道管理revision/批量回执迁移，015新增010 Key来源策略/配置版本及不可变请求来源，016新增011运行限额/独立版本，017新增012基本配置独立版本，018新增013成本策略/两维上限与报价发布同步，019新增014共享采购账户与预算，020新增015公开目录标记/独立版本，021新增016自助身份/初始化/证明与邮件outbox；022追加017共同入账/双审券，023-A追加018单租户价格组/精确域唯一性/不可变请求快照；023-A阶段迁移范围为001–018。`migrate`从`MIGRATION_DATABASE_URL`选择owner连接，`provision`也须显式使用owner连接为新表/字段配置最小权限：
+当前版本不提供旧数据库升级。旧阶段记录仅用于追溯和隔离 fixture。新环境先创建空数据库，再从当前基线执行 `migrate`、`provision` 和 `bootstrap`。`migrate`从 `MIGRATION_DATABASE_URL` 选择 owner 连接，`provision` 也须显式使用 owner 连接配置最小权限：
 
 ```sh
 ./bin/moni-aigate migrate
@@ -88,7 +88,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 ./bin/moni-aigate serve
 ```
 
-上述命令使用已加载的私有环境配置。024-A追加019经营告警、完整事件链和来源索引；随后020周期预算、021本地支付资金和022运行证明将当前完整范围追加至001–022。`serve`核对版本与checksum，并在worker/HTTP启动前只读核验APP/PROJECTOR的告警有效权限，包括继承、SET/ADMIN可提升路径、列授权和owner/高权。它不会自动迁移或修复授权；缺少迁移应先完成升级，不能给应用角色增加owner权限绕过。
+上述命令使用已加载的私有环境配置。当前基线包含统一计量、媒体、任务和 Realtime 所需对象。`serve` 和 `worker` 只执行 `VerifyCurrent` 只读基线检查，不自动迁移或修复授权；缺少迁移或 schema fingerprint 不匹配时拒绝启动。
 
 本机HTTP预览设置`PUBLIC_ORIGIN=http://localhost:8080`、`COOKIE_SECURE=false`、`LISTEN_ADDR=127.0.0.1:8080`；生产HTTPS设置Secure=true。`MFA_ENFORCE_PLATFORM`缺省false，未绑定的管理员/财务账号可密码登录并测试业务；无需为联调先设置验证器。需要时在“账号安全”点击开始设置，使用验证器扫描本地二维码或手动密钥，保存恢复码并输入6位动态码后启用。设为true并重启可要求未绑定的平台/财务账号先完成绑定；已启用者始终须验证码，不能通过改false跳过。控制台仍需分别创建财务制单员和审批员；近期密码再认证及双人审批规则不变。
 

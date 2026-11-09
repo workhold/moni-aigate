@@ -42,7 +42,7 @@ func mustRates(t testing.TB, s metering.Schema, side metering.Side, numerators, 
 }
 func mustBounds(t testing.TB, s metering.Schema, side metering.Side, input, output int64) metering.Bounds {
 	t.Helper()
-	b, err := metering.LegacyTokenBounds(s, side, input, output)
+	b, err := metering.ManagementTokenBounds(s, side, input, output)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func mustBounds(t testing.TB, s metering.Schema, side metering.Side, input, outp
 }
 func mustQuantities(t testing.TB, s metering.Schema, side metering.Side, input, output int64) metering.Quantities {
 	t.Helper()
-	q, err := metering.LegacyTokenQuantities(s, side, input, output)
+	q, err := metering.ManagementTokenQuantities(s, side, input, output)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +157,7 @@ func TestAllRegistryAndDifferentSideMasks(t *testing.T) {
 		if err != nil || amount.String() != "4" {
 			t.Fatal("different masks failed", amount, err)
 		}
-		_, err = metering.LegacyTokenRates(s, side, 1, 1)
+		_, err = metering.ManagementTokenRates(s, side, 1, 1)
 		wantError(t, err, metering.ErrInvalidSchema)
 	}
 	// The registry contains exactly 8 names; a ninth repeated dimension is invalid.
@@ -427,11 +427,11 @@ func TestBindingZeroValuesAndImmutableCanonical(t *testing.T) {
 		t.Fatal("zero comparison accepted")
 	}
 	for _, tc := range []struct{ i, o int64 }{{-1, 0}, {0, -1}} {
-		_, err := metering.LegacyTokenRates(s, metering.Retail, tc.i, tc.o)
+		_, err := metering.ManagementTokenRates(s, metering.Retail, tc.i, tc.o)
 		wantError(t, err, metering.ErrInvalidValue)
-		_, err = metering.LegacyTokenQuantities(s, metering.Retail, tc.i, tc.o)
+		_, err = metering.ManagementTokenQuantities(s, metering.Retail, tc.i, tc.o)
 		wantError(t, err, metering.ErrInvalidValue)
-		_, err = metering.LegacyTokenBounds(s, metering.Retail, tc.i, tc.o)
+		_, err = metering.ManagementTokenBounds(s, metering.Retail, tc.i, tc.o)
 		wantError(t, err, metering.ErrInvalidValue)
 	}
 	for _, value := range []interface {
@@ -449,7 +449,7 @@ func TestBindingZeroValuesAndImmutableCanonical(t *testing.T) {
 	}
 }
 
-func TestLegacyTokenAmountIndependentOracle(t *testing.T) {
+func TestManagementTokenAmountIndependentOracle(t *testing.T) {
 	s := mustSchema(t, strings.ReplaceAll(strings.Replace(tokenSchemaJSON, `"100"`, `"9223372036854775807"`, 1), `"20"`, `"9223372036854775807"`))
 	random := rand.New(rand.NewPCG(18271, 72419))
 	cases := [][4]int64{{0, 0, 0, 0}, {1, 0, 999999, 0}, {1, 0, 1000000, 0}, {1, 0, 1000001, 0}, {1, 1, 500000, 500000}, {math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}}
@@ -459,7 +459,7 @@ func TestLegacyTokenAmountIndependentOracle(t *testing.T) {
 	for _, c := range cases {
 		for _, side := range []metering.Side{metering.Retail, metering.Supplier} {
 			q := mustQuantities(t, s, side, c[0], c[1])
-			r, err := metering.LegacyTokenRates(s, side, c[2], c[3])
+			r, err := metering.ManagementTokenRates(s, side, c[2], c[3])
 			if err != nil {
 				t.Fatal(err)
 			}

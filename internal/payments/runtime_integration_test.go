@@ -84,7 +84,7 @@ func runtimePGFixture(t *testing.T, seed bool) *paymentRuntimeFixture {
 		t.Fatal(e)
 	}
 	pools = append(pools, f.owner)
-	if e = migrations.Apply(ctx, f.owner); e != nil {
+	if e = migrations.VerifyCurrent(ctx, f.owner); e != nil {
 		t.Fatal("upgrade actual QA APP to current migrations", e)
 	}
 	// Reapply the isolated QA namespace boundary after 020 creates new public

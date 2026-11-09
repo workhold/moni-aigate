@@ -5,7 +5,9 @@
 当前源码要求完整 **001–024** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染和本机临时容器启动/重启验收已通过，1Panel 和正式供应商仍按目标环境分别验收。
 
 
-当前024统一文本计量迁移仅接受空的当前计量/资金历史：遇到既有journal、receipt、预占/结算/退款/核款单、周期预算/支付事实或非零余额会拒绝并回滚。保留原库和备份，建立独立当前数据库后按完整迁移与provision初始化；不要删除历史、篡改checksum或导入伪造来源。旧C0维护证明是隔离研究，不能替代现行027开账命令。
+当前部署使用 `migrations.ApplyCurrent`，只接受空的当前数据库。安装器在业务 DDL 前发现已有 `schema_migrations`、业务关系或其他用户关系即拒绝，不升级、转换或删除旧金融事实。保留原库和备份，建立独立空数据库后按当前基线与 `provision` 初始化。旧 C0 维护证明是隔离研究，不能替代当前开账命令。
+
+当前基线文件是 `migrations/current_mvp.sql`，由当前运行时单独安装并由 `VerifyCurrent` 校验 checksum。文档下方保留的 001–024 升级叙述属于历史记录，不能作为当前升级路径。
 
 停服空钱包的显式非现金开账与核对（先在私有环境中填入目标tenant、唯一业务号、正微元整数与active管理员ID）：
 
@@ -61,7 +63,7 @@ docker compose up -d app worker
 
 ## 非浏览器部署验收
 
-在仓库根目录运行一次性验收。脚本会检查 Compose 渲染，构建镜像，启动 PostgreSQL，重复执行 `migrate` 和 `provision`，创建首个管理员并确认重复 bootstrap 被拒绝，然后启动 app/worker。它会检查 live/ready、容器状态，重启 app/worker，再重启 PostgreSQL 并等待应用恢复。
+在仓库根目录运行一次性验收。脚本会检查 Compose 渲染，构建镜像，启动 PostgreSQL，完成一次 `migrate`，确认针对已安装数据库的第二次 `migrate` 被拒绝，再以 `--no-deps` 重复执行幂等 `provision`，创建首个管理员并确认重复 bootstrap 被拒绝，然后启动 app/worker。它会检查 live/ready、容器状态，重启 app/worker，再重启 PostgreSQL 并等待应用恢复。
 
 ```sh
 scripts/deployment-qa.sh
@@ -143,7 +145,7 @@ Compose 已透传 `AUTH_REGISTRATION_ENABLED`（默认 false）、`AUTH_PASSWORD
 
 Compose 当前包含独立 `worker` 服务，执行 `moni-aigate worker`，使用与 app 相同的当前数据库和 task lease 运行异步任务状态机。该 worker 只写任务事实，未获得计量表、wallet 或 payment worker 权限。验收脚本为每次临时项目生成独立镜像标签和随机环境，避免改写其他项目的本地镜像标签；本机临时项目已完成 app/worker/PostgreSQL 启动与重启恢复，目标环境和 1Panel 仍需单独验收。
 
-2026-11-09 本机部署补验使用 Docker daemon 的 Colima profile，并从镜像代理取得 PostgreSQL 16.15 后标记为 `postgres:16-alpine`。`DEPLOY_QA_PORT=18080 scripts/deployment-qa.sh` 已完成临时项目构建、空库迁移两次、provision 两次、bootstrap/重复 bootstrap、防竞态 live/ready、app/worker 重启和 PostgreSQL 重启恢复。该证据不覆盖目标 1Panel、真实域名反代、浏览器业务调用或真实供应商。
+2026-11-09 本机部署补验使用 Docker daemon 的 Colima profile，并从镜像代理取得 PostgreSQL 16.15 后标记为 `postgres:16-alpine`。`DEPLOY_QA_PORT=18080 scripts/deployment-qa.sh` 已完成临时项目构建、空库迁移、二次迁移拒绝、provision 两次、bootstrap/重复 bootstrap、防竞态 live/ready、app/worker 重启和 PostgreSQL 重启恢复。该证据不覆盖目标 1Panel、真实域名反代、浏览器业务调用或真实供应商。
 
 `PAYMENTS_MODE=off` 为常规部署默认。022-B3目前仅为 literal `127.0.0.1:55439/moni_test` 隔离本地模拟，要求成对私密 APP/worker manifest、精确 listener 与环境证明；常规 Compose 不透传这些文件或 worker DSN。不能用容器内 postgres 服务名替换目标后绕过证明。live 在连接前拒绝；带沙箱历史而缺原证明也拒绝启动。支付入口的已验范围见[应用支付证据](../verification/payment-application.md)，不是生产收款能力。来源 lot 维护、原路退款和后续生产方案仍按各自 SDD 门禁推进。
 

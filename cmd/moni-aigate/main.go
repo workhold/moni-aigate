@@ -107,13 +107,13 @@ func run() error {
 		return fmt.Errorf("database unavailable")
 	}
 	if command == "migrate" {
-		if e = migrations.Apply(ctx, pool); e != nil {
+		if e = migrations.ApplyCurrent(ctx, pool); e != nil {
 			return fmt.Errorf("migration failed: %w", e)
 		}
 		fmt.Println("migrations applied")
 		return nil
 	}
-	if e = migrations.Verify(ctx, pool); e != nil {
+	if e = migrations.VerifyCurrent(ctx, pool); e != nil {
 		return e
 	}
 	if command == "worker" {
@@ -599,7 +599,7 @@ func runWalletSourcesCommand(command string, args []string, output io.Writer) er
 	if err = pool.Ping(ctx); err != nil {
 		return fmt.Errorf("wallet command database unavailable")
 	}
-	if err = migrations.Verify(ctx, pool); err != nil {
+	if err = migrations.VerifyCurrent(ctx, pool); err != nil {
 		return fmt.Errorf("wallet command requires the complete current schema")
 	}
 	store := billing.New(pool)

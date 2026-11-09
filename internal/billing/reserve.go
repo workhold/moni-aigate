@@ -133,7 +133,7 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		if !in.RequestDeadline.After(now) || in.RequestDeadline.After(now.Add(301*time.Second)) {
 			return fail("request_deadline", "request deadline is invalid or expired")
 		}
-		bounds, err := metering.LegacyTokenBounds(selected.Schema, metering.Retail, in.InputUpperBound, in.OutputLimit)
+		bounds, err := metering.ManagementTokenBounds(selected.Schema, metering.Retail, in.InputUpperBound, in.OutputLimit)
 		if err != nil {
 			return fail("invalid_bounds", "request does not satisfy the selected price schema")
 		}

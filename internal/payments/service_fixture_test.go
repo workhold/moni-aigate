@@ -76,7 +76,7 @@ func paymentServiceFixture(t *testing.T) *serviceFixture {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if e = migrations.Apply(ctx, f.owner); e != nil {
+	if e = migrations.ApplyCurrent(ctx, f.owner); e != nil {
 		t.Fatal("apply complete payment fixture migrations", e)
 	}
 	for _, suffix := range []string{"app", "worker", "projector"} {

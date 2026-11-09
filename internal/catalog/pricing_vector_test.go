@@ -25,7 +25,7 @@ func TestGroupPriceVectorResultRejectsScalarAndInvalidRates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := metering.LegacyTokenRates(schema, metering.Retail, 250000, 0)
+	r, err := metering.ManagementTokenRates(schema, metering.Retail, 250000, 0)
 	if err != nil {
 		t.Fatal(err)
 	}

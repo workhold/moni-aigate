@@ -1,5 +1,19 @@
 # 028-U统一计量验证
 
+## 当前空库迁移与拒迁门禁
+
+当前服务入口使用 `migrations.ApplyCurrent` 和 `migrations.VerifyCurrent`。安装器只执行 `migrations/current_mvp.sql`，在任何业务 DDL 前持有迁移 advisory lock，并拒绝已存在 `schema_migrations`、业务关系或其他用户关系的数据库。它不升级旧库、不转换金融历史，也不接受不完整的基线。`serve` 与 `worker` 只执行只读 `VerifyCurrent`，缺失、未知或 checksum 不匹配时拒绝启动。
+
+55439 专用 PostgreSQL 的 `TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline` 覆盖空库安装、历史前缀拒迁、非业务用户关系拒迁和完整基线验证。001–024 文件仍保留给隔离历史 fixture，当前服务不会调用 `ApplyThrough`。
+
+## 当前 TTS 与统一管理输入边界
+
+`POST /v1/audio/speech` 当前只发行 `mock-tts` 的 `wav` profile。HTTP 层严格校验单值 `Content-Type`、闭合 JSON、UTF-8、文本字符数、voice、WAV RIFF/fmt/data 结构和单值 `Idempotency-Key`。provider 必须返回 `confirmed_final` 且字符数与请求一致，服务才调用统一 `FinalizeMedia`。provider error、未知提交或 usage/音频结构不可信时分别记录终态，重复键不会再次调用 provider。管理端的每百万 token 整数输入已重命名为明确的 `ManagementToken*` 转换入口，只在边界一次转换为当前 canonical rational vector，运行时不再保留 `LegacyToken*` scalar API。
+
+## 当前基线 Compose 复验
+
+`DEPLOY_QA_BUSINESS=true DEPLOY_QA_PORT=18090 scripts/deployment-qa.sh` 已在 `current_mvp.sql` 基线上通过。它实际验证首次空库迁移、二次迁移拒绝、两次幂等 provision、bootstrap/重复 bootstrap 拒绝、健康检查、文本、图片、TTS、video task 创建/幂等提交/worker 结果、Realtime WebSocket，以及 app/worker/PostgreSQL 重启恢复。业务上游是 deterministic mock provider，只能证明开发环境工作流和当前账务/权限/恢复接线，不能替代真实供应商或生产部署。
+
 ## 2026-11-09：图片 POST 重放和 artifact 权威来源修复
 
 图片模块在当前基线复核发现，结果 GET 已能从 `media_result_artifacts` 恢复，但进程缓存清空后重复 POST 会重新进入 `ReserveMedia`，完成 request 会被误判为不可重发。修复后，有数据库的图片 POST 先按原租户、用户、API Key、operation、幂等键和 request digest 读取已完成 artifact，命中时直接返回原 JSON，不创建新的 attempt 或 settlement。图片 GET 在配置数据库时也不再用已完成内存缓存绕过 artifact 的过期和缺失边界。

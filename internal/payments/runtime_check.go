@@ -71,7 +71,7 @@ func newPaymentRuntime(ctx context.Context, pool *pgxpool.Pool, o Options, compo
 		return nil, ErrPaymentsEnvironment
 	}
 	defer tx.Rollback(startup)
-	if migrations.VerifyReadOnlyTx(startup, tx) != nil {
+	if migrations.VerifyCurrentReadOnlyTx(startup, tx) != nil {
 		return nil, ErrPaymentsEnvironment
 	}
 	if o.disabled {

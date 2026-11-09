@@ -96,7 +96,7 @@ func TestApplicationAttestedBuilderActualRolesAndCleanup(t *testing.T) {
 		t.Fatal("application pool")
 	}
 	defer app.Close()
-	if migrations.Verify(ctx, app) != nil {
+	if migrations.VerifyCurrent(ctx, app) != nil {
 		t.Fatal("complete current migration")
 	}
 	projectionDSN, err := env.RuntimeDSN("projector")

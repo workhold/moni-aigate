@@ -80,7 +80,7 @@ func drill() error {
 		return err
 	}
 	defer target.Close()
-	if err = migrations.Apply(ctx, source); err != nil {
+	if err = migrations.ApplyCurrent(ctx, source); err != nil {
 		return err
 	}
 	keys := &security.Secrets{Keys: map[string][]byte{"old": bytes.Repeat([]byte{1}, 32), "new": bytes.Repeat([]byte{2}, 32)}, Active: "old", Pepper: bytes.Repeat([]byte{3}, 32)}

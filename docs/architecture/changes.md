@@ -5153,3 +5153,75 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `docs/runbooks/development.md`
 
 </details>
+
+## 2026-11-09T12:23:24Z · 605917e8efe0
+
+切换当前服务到单一 current_mvp.sql 空库基线并补齐 VerifyCurrent 运行入口；TTS provider usage/WAV 校验、管理端 token 一次性向量转换、路由凭据身份收口、媒体重启验收和相关设计验证同步更新
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2104 个源文件；本次 61 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- modified `cmd/moni-aigate/periodic_verify.go`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/image-http-mvp.md`
+- modified `docs/design/integrated-wallet-media.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/cost_policy_integration_test.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/retail_price_integration_test.go`
+- modified `internal/catalog/cost_policy_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_concurrency_integration_test.go`
+- modified `internal/catalog/pricing_publish.go`
+- modified `internal/catalog/pricing_vector.go`
+- modified `internal/catalog/pricing_vector_test.go`
+- modified `internal/inference/plan.go`
+- modified `internal/metering/describe_test.go`
+- modified `internal/metering/fuzz_test.go`
+- deleted `internal/metering/legacy.go`
+- added `internal/metering/management_token.go`
+- modified `internal/metering/metering_test.go`
+- modified `internal/payments/runtime_check.go`
+- modified `internal/payments/runtime_integration_test.go`
+- modified `internal/payments/service_fixture_test.go`
+- modified `internal/paymentsandboxqa/application.go`
+- modified `internal/paymentsandboxqa/application_test.go`
+- modified `internal/paymentsandboxqa/funding.go`
+- modified `internal/paymentsandboxqa/install.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/verifier.go`
+- modified `internal/periodicbudget/verifier_test.go`
+- modified `internal/pricing/vector_integration_test.go`
+- modified `internal/provider/mock_media.go`
+- modified `internal/routecost/quote_test.go`
+- modified `internal/routing/cost_test.go`
+- modified `internal/routing/pool_test.go`
+- modified `internal/routing/procurement.go`
+- modified `internal/routing/routing.go`
+- modified `internal/routing/routing_test.go`
+- modified `internal/server/image_handlers.go`
+- modified `internal/server/image_handlers_integration_test.go`
+- modified `internal/server/image_handlers_test.go`
+- modified `internal/server/media_handlers.go`
+- modified `internal/server/server.go`
+- modified `internal/server/tts_handlers_test.go`
+- added `internal/server/tts_wav.go`
+- modified `internal/testsupport/meterquote/publish.go`
+- added `migrations/current.go`
+- added `migrations/current_mvp.sql`
+- modified `migrations/embed.go`
+- modified `migrations/embed_test.go`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `migrations/verify_readonly.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `scripts/browser-qa/main.go`
+- modified `scripts/deployment-qa.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

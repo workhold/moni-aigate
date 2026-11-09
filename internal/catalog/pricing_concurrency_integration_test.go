@@ -312,7 +312,7 @@ func pricingConcurrencyRates(t *testing.T, s *pricing.Selection, input, output i
 	if s == nil {
 		return false
 	}
-	expected, err := metering.LegacyTokenRates(s.Schema, metering.Retail, input, output)
+	expected, err := metering.ManagementTokenRates(s.Schema, metering.Retail, input, output)
 	if err != nil {
 		t.Fatal(err)
 	}

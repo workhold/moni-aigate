@@ -20,7 +20,7 @@ func (e *Environment) fund(ctx context.Context) error {
 		return err
 	}
 	defer project.Close()
-	if migrations.Verify(ctx, p) != nil || operations.VerifyAlertRole(ctx, p, operations.AlertApplicationRole) != nil || operations.VerifyAlertRole(ctx, project, operations.AlertProjectionRole) != nil {
+	if migrations.VerifyCurrent(ctx, p) != nil || operations.VerifyAlertRole(ctx, p, operations.AlertApplicationRole) != nil || operations.VerifyAlertRole(ctx, project, operations.AlertProjectionRole) != nil {
 		return stage("actual_application_roles")
 	}
 	for _, pair := range []struct {

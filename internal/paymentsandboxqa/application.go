@@ -50,7 +50,7 @@ func CreateApplication(ctx context.Context, adminDSN, privateRoot string) (_ *Ap
 		return nil, err
 	}
 	defer owner.Close()
-	if migrations.Apply(ctx, owner) != nil {
+	if migrations.VerifyCurrent(ctx, owner) != nil {
 		return nil, stage("application_upgrade")
 	}
 	schema := ident(e.Schemas["app"])

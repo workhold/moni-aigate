@@ -2,7 +2,10 @@ package metering
 
 import "strconv"
 
-func legacySchema(schema Schema, side Side) error {
+// managementTokenSchema validates the one currently published text profile
+// at the management boundary. Management still accepts integer units per
+// million, while runtime facts are stored as the unified rational vector.
+func managementTokenSchema(schema Schema, side Side) error {
 	if !schema.valid {
 		return ErrInvalidValue
 	}
@@ -15,8 +18,10 @@ func legacySchema(schema Schema, side Side) error {
 	return nil
 }
 
-func LegacyTokenRates(schema Schema, side Side, inputRate, outputRate int64) (Rates, error) {
-	if err := legacySchema(schema, side); err != nil {
+// ManagementTokenRates converts the management integer inputs once into the
+// canonical rational rate vector used by all current billing paths.
+func ManagementTokenRates(schema Schema, side Side, inputRate, outputRate int64) (Rates, error) {
+	if err := managementTokenSchema(schema, side); err != nil {
 		return Rates{}, err
 	}
 	if inputRate < 0 || outputRate < 0 {
@@ -32,8 +37,8 @@ func LegacyTokenRates(schema Schema, side Side, inputRate, outputRate int64) (Ra
 	return ParseRates(schema, side, canonical(ratesWire{schema.wire.SchemaID, "1", side, "CNY", rates}))
 }
 
-func legacyQuantities(schema Schema, side Side, input, output int64, bounds bool) (vector, error) {
-	if err := legacySchema(schema, side); err != nil {
+func managementTokenQuantities(schema Schema, side Side, input, output int64, bounds bool) (vector, error) {
+	if err := managementTokenSchema(schema, side); err != nil {
 		return vector{}, err
 	}
 	if input < 0 || output < 0 {
@@ -46,15 +51,16 @@ func legacyQuantities(schema Schema, side Side, input, output int64, bounds bool
 	return parseQuantities(schema, side, canonical(quantitiesWire{schema.wire.SchemaID, "1", side, wire}), "quantities")
 }
 
-func LegacyTokenQuantities(schema Schema, side Side, input, output int64) (Quantities, error) {
-	v, err := legacyQuantities(schema, side, input, output, false)
+func ManagementTokenQuantities(schema Schema, side Side, input, output int64) (Quantities, error) {
+	v, err := managementTokenQuantities(schema, side, input, output, false)
 	if err != nil {
 		return Quantities{}, err
 	}
 	return Quantities{vector: v}, nil
 }
-func LegacyTokenBounds(schema Schema, side Side, input, output int64) (Bounds, error) {
-	v, err := legacyQuantities(schema, side, input, output, true)
+
+func ManagementTokenBounds(schema Schema, side Side, input, output int64) (Bounds, error) {
+	v, err := managementTokenQuantities(schema, side, input, output, true)
 	if err != nil {
 		return Bounds{}, err
 	}

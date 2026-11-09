@@ -135,7 +135,7 @@ func selectionRates(t *testing.T, selected *pricing.Selection, input, output int
 	if selected == nil {
 		return false
 	}
-	expected, err := metering.LegacyTokenRates(selected.Schema, metering.Retail, input, output)
+	expected, err := metering.ManagementTokenRates(selected.Schema, metering.Retail, input, output)
 	if err != nil {
 		t.Fatal(err)
 	}

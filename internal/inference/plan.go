@@ -44,11 +44,11 @@ func NewTextPlan(in TextPlanInput) (BoundPlan, error) {
 	}
 	p := BoundPlan{scope: ScopeRequest, profiles: profiles, schema: first.Schema, model: first.Model, protocol: first.Protocol, variant: first.VariantKey, inputHMAC: in.InputHMAC, output: in.OutputLimit, stream: in.Stream}
 	var err error
-	p.retail, err = metering.LegacyTokenBounds(p.schema, metering.Retail, input, p.output)
+	p.retail, err = metering.ManagementTokenBounds(p.schema, metering.Retail, input, p.output)
 	if err != nil {
 		return BoundPlan{}, fmt.Errorf("%w: %w", ErrInvalidPlan, err)
 	}
-	p.supplier, err = metering.LegacyTokenBounds(p.schema, metering.Supplier, input, p.output)
+	p.supplier, err = metering.ManagementTokenBounds(p.schema, metering.Supplier, input, p.output)
 	if err != nil {
 		return BoundPlan{}, fmt.Errorf("%w: %w", ErrInvalidPlan, err)
 	}
@@ -75,11 +75,11 @@ func (p BoundPlan) ForAttempt(profile Profile) (BoundPlan, error) {
 	a.selected = profile
 	a.parent = p.digest
 	var err error
-	a.retail, err = metering.LegacyTokenBounds(p.schema, metering.Retail, profile.info.InputTokenUpperBound, p.output)
+	a.retail, err = metering.ManagementTokenBounds(p.schema, metering.Retail, profile.info.InputTokenUpperBound, p.output)
 	if err != nil {
 		return BoundPlan{}, fmt.Errorf("%w: %w", ErrInvalidPlan, err)
 	}
-	a.supplier, err = metering.LegacyTokenBounds(p.schema, metering.Supplier, profile.info.InputTokenUpperBound, p.output)
+	a.supplier, err = metering.ManagementTokenBounds(p.schema, metering.Supplier, profile.info.InputTokenUpperBound, p.output)
 	if err != nil {
 		return BoundPlan{}, fmt.Errorf("%w: %w", ErrInvalidPlan, err)
 	}

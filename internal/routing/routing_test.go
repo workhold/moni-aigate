@@ -17,7 +17,7 @@ import (
 )
 
 func candidate(id string, priority int, weight uint64) Candidate {
-	return Candidate{CostPolicy: DefaultCostPolicy(), CostQuote: testCostQuote(id, "m", "", "unknown", 0, 0), ChannelID: id, VersionID: "v1", Model: "m", Priority: priority, Weight: weight, MaxInflight: 10, Enabled: true}
+	return Candidate{CostPolicy: DefaultCostPolicy(), CostQuote: testCostQuote(id, "m", "", "unknown", 0, 0), ChannelID: id, VersionID: "v1", CredentialID: id + "-credential", Model: "m", Priority: priority, Weight: weight, MaxInflight: 10, Enabled: true}
 }
 func admit(context.Context, Candidate, int) error { return nil }
 func plan(t *testing.T, c ...Candidate) *Plan {

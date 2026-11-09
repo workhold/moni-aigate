@@ -326,22 +326,12 @@ func TestPoolAdmissionPanicAndCancellationReleaseBothLeases(t *testing.T) {
 	}
 }
 
-func TestPoolLegacyCapacityKeyDoesNotCollideWithRealCredentialID(t *testing.T) {
-	legacy := candidate("same-string", 10, 1)
-	legacy.MaxInflight = 1
-	real := poolMember("other", "same-string")
-	real.CredentialMaxInflight = 1
-	engine := NewEngine(Config{})
-	a, err := plan(t, legacy).Start(context.Background(), engine, admit)
-	if err != nil {
-		t.Fatal(err)
+func TestPoolRequiresCredentialIdentity(t *testing.T) {
+	invalid := candidate("missing-credential", 10, 1)
+	invalid.CredentialID = ""
+	if _, err := NewPlan([]Candidate{invalid}, 1); !errors.Is(err, ErrInvalidPolicy) {
+		t.Fatal("candidate without credential identity accepted", err)
 	}
-	defer a.Finish(Neutral)
-	b, err := plan(t, real).Start(context.Background(), engine, admit)
-	if err != nil {
-		t.Fatal("legacy channel identity collided with real credential", err)
-	}
-	b.Finish(Neutral)
 }
 
 func TestPoolPolicyValidation(t *testing.T) {
@@ -365,11 +355,6 @@ func TestPoolPolicyValidation(t *testing.T) {
 				t.Fatal("invalid pool accepted", err)
 			}
 		})
-	}
-	legacy := first
-	legacy.CredentialID = ""
-	if _, err := NewPlan([]Candidate{legacy, second}, 2); !errors.Is(err, ErrInvalidPolicy) {
-		t.Fatal("legacy first member accepted a duplicate channel", err)
 	}
 	channelOverflow := []Candidate{first, poolMember("b", "other")}
 	channelOverflow[0].Weight = math.MaxUint64

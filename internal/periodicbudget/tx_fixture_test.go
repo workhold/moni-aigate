@@ -176,7 +176,12 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 	} else if latest {
 		names, e := fs.Glob(migrations.Files, "*.sql")
 		pbTxMust(t, "read complete embedded migration manifest", e)
-		expected = len(names)
+		expected = 0
+		for _, name := range names {
+			if name != "current_mvp.sql" {
+				expected++
+			}
+		}
 	}
 	if count != expected || max != expected {
 		t.Fatal("fixture migration baseline does not match its explicit version")

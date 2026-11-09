@@ -31,7 +31,7 @@ func quoteRatesEqual(q routecost.Quote, input, output int64) bool {
 	if err != nil {
 		return false
 	}
-	expected, err := metering.LegacyTokenRates(q.Schema(), metering.Supplier, input, output)
+	expected, err := metering.ManagementTokenRates(q.Schema(), metering.Supplier, input, output)
 	if err != nil {
 		return false
 	}

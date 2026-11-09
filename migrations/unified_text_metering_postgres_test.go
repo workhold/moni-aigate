@@ -89,7 +89,7 @@ func TestUnifiedTextMeteringCanonical(t *testing.T) {
 	if err = pool.QueryRow(ctx, `SELECT meter_side_quantity_canonical($1,'retail',10,4), meter_final_digest($2,'retail',meter_side_quantity_canonical($1,'retail',10,4))`, schemaID, digest).Scan(&quantityCanonical, &finalDigest); err != nil {
 		t.Fatal(err)
 	}
-	quantities, err := metering.LegacyTokenQuantities(parsed, metering.Retail, 10, 4)
+	quantities, err := metering.ManagementTokenQuantities(parsed, metering.Retail, 10, 4)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestUnifiedTextMeteringCanonical(t *testing.T) {
 	if err != nil {
 		t.Fatalf("rate canonical rejected: %v %s", err, rates)
 	}
-	want, err := metering.LegacyTokenRates(parsed, metering.Retail, 2000000, 3000000)
+	want, err := metering.ManagementTokenRates(parsed, metering.Retail, 2000000, 3000000)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +169,7 @@ func TestUnifiedTextMeteringCanonical(t *testing.T) {
 	if string(left) != string(right) {
 		t.Fatalf("stored rates %s want %s", left, right)
 	}
-	bounds, err := metering.LegacyTokenBounds(parsed, metering.Retail, 100, 20)
+	bounds, err := metering.ManagementTokenBounds(parsed, metering.Retail, 100, 20)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -105,7 +105,7 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 		if ValidateCostPolicy(c.CostPolicy) != nil || c.InputUpperBound < 0 || c.OutputLimit < 0 || c.CostPolicy.Mode == "cost_first" && c.InputUpperBound == 0 || !c.CostQuote.Matches(c.ChannelID, c.Model) || !c.CostLimits.ValidFor(c.CostQuote) {
 			return nil, ErrInvalidPolicy
 		}
-		if _, err := metering.LegacyTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit); err != nil {
+		if _, err := metering.ManagementTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit); err != nil {
 			return nil, ErrInvalidPolicy
 		}
 		if len(p.candidates) > 0 {
@@ -118,7 +118,7 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 		if len(p.candidates) > 0 && (c.CostPolicy != p.candidates[0].CostPolicy || c.InputUpperBound != p.candidates[0].InputUpperBound || c.OutputLimit != p.candidates[0].OutputLimit) {
 			return nil, ErrInvalidPolicy
 		}
-		if c.ChannelID == "" || c.VersionID == "" || c.Model == "" || c.Weight == 0 || c.MaxInflight <= 0 || c.CredentialMaxInflight < 0 {
+		if c.ChannelID == "" || c.VersionID == "" || c.CredentialID == "" || c.Model == "" || c.Weight == 0 || c.MaxInflight <= 0 || c.CredentialMaxInflight < 0 {
 			return nil, ErrInvalidPolicy
 		}
 		c.CredentialWeight = credentialWeight(c)
@@ -240,18 +240,12 @@ type Engine struct {
 	credentialInflight map[credentialLeaseKey]int
 }
 
-// A separate namespace keeps a legacy channel fallback from colliding with a
-// real credential ID, even if the two strings happen to be identical.
 type credentialLeaseKey struct {
-	credentialID    string
-	legacyChannelID string
+	credentialID string
 }
 
 func credentialKey(c Candidate) credentialLeaseKey {
-	if c.CredentialID != "" {
-		return credentialLeaseKey{credentialID: c.CredentialID}
-	}
-	return credentialLeaseKey{legacyChannelID: c.ChannelID}
+	return credentialLeaseKey{credentialID: c.CredentialID}
 }
 
 func credentialWeight(c Candidate) uint64 {
@@ -413,7 +407,7 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 		cheapest := make([]int, 0, len(pool))
 		for _, i := range pool {
 			c := channels[i].candidate
-			bounds, err := metering.LegacyTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
+			bounds, err := metering.ManagementTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
 			if err != nil {
 				return Candidate{}, 0, err
 			}
@@ -423,7 +417,7 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 			}
 			comparison := -1
 			if lowest != nil {
-				other, err := metering.LegacyTokenBounds(lowest.CostQuote.Schema(), metering.Supplier, lowest.InputUpperBound, lowest.OutputLimit)
+				other, err := metering.ManagementTokenBounds(lowest.CostQuote.Schema(), metering.Supplier, lowest.InputUpperBound, lowest.OutputLimit)
 				if err != nil {
 					return Candidate{}, 0, err
 				}
@@ -467,7 +461,6 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 		group := channels[i]
 		if roll < group.candidate.Weight {
 			selected := group.members[0]
-			// Preserve the single draw used by legacy single-key channels.
 			if len(group.members) > 1 {
 				memberRoll := e.config.RandN(group.weight)
 				if memberRoll >= group.weight {

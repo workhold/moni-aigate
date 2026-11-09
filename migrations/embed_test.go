@@ -27,6 +27,42 @@ func TestHistoricalTargetRejectedBeforeDatabase(t *testing.T) {
 		})
 	}
 }
+
+func TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline(t *testing.T) {
+	t.Run("empty database", func(t *testing.T) {
+		f := newPrefixFixture(t)
+		prefixMust(t, "install current MVP baseline", ApplyCurrent(f.ctx, f.pool))
+		prefixMust(t, "verify current MVP baseline", VerifyCurrent(f.ctx, f.pool))
+	})
+	t.Run("historical database", func(t *testing.T) {
+		f := newPrefixFixture(t)
+		prefixMust(t, "install historical prefix", ApplyThrough(f.ctx, f.pool, "001_core.sql"))
+		before := f.snapshot(t)
+		if err := ApplyCurrent(f.ctx, f.pool); err == nil {
+			t.Fatal("current installer upgraded a historical database")
+		}
+		if f.snapshot(t) != before {
+			t.Fatal("current installer changed a rejected historical database")
+		}
+		var journals bool
+		prefixMust(t, "confirm no later business DDL", f.pool.QueryRow(f.ctx, "SELECT to_regclass('journals') IS NOT NULL").Scan(&journals))
+		if journals {
+			t.Fatal("current installer ran later business DDL after rejection")
+		}
+	})
+	t.Run("unrelated user relation", func(t *testing.T) {
+		f := newPrefixFixture(t)
+		f.exec(t, "CREATE TABLE unrelated_current_baseline_sentinel(id integer)")
+		before := f.snapshot(t)
+		if err := ApplyCurrent(f.ctx, f.pool); err == nil {
+			t.Fatal("current installer accepted a non-empty database")
+		}
+		if f.snapshot(t) != before {
+			t.Fatal("current installer changed a non-empty database")
+		}
+	})
+}
+
 func TestEmbeddedPrefixIsExactClosedSet(t *testing.T) {
 	p, e := plan("003_operations.sql", true)
 	if e != nil {

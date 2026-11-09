@@ -28,8 +28,8 @@ func speechHandlerContext(body []byte, key string, principal identity.Principal)
 func TestSynthesizeSpeechReturnsWAVAndReplaysWithoutProviderCall(t *testing.T) {
 	adapter := newDefaultMediaAdapter().(*provider.MockMediaAdapter)
 	server := &Server{MediaAdapter: adapter}
-	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{"tts-model"}}
-	body := []byte(`{"model":"tts-model","input":"hello","voice":"alloy","response_format":"wav"}`)
+	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{ttsModelKey}}
+	body := []byte(`{"model":"mock-tts","input":"hello","voice":"alloy","response_format":"wav"}`)
 
 	first, recorder := speechHandlerContext(body, "speech-key", principal)
 	server.synthesizeSpeech(first)
@@ -50,18 +50,18 @@ func TestSynthesizeSpeechReturnsWAVAndReplaysWithoutProviderCall(t *testing.T) {
 
 func TestSynthesizeSpeechRejectsUnsupportedFormatAndIdempotencyConflict(t *testing.T) {
 	server := &Server{MediaAdapter: newDefaultMediaAdapter()}
-	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{"tts-model"}}
-	badBody := []byte(`{"model":"tts-model","input":"hello","voice":"alloy","response_format":"mp3"}`)
+	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{ttsModelKey}}
+	badBody := []byte(`{"model":"mock-tts","input":"hello","voice":"alloy","response_format":"mp3"}`)
 	bad, recorder := speechHandlerContext(badBody, "speech-bad", principal)
 	server.synthesizeSpeech(bad)
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("unsupported format status=%d body=%s", recorder.Code, recorder.Body.String())
 	}
 
-	good := []byte(`{"model":"tts-model","input":"hello","voice":"alloy","response_format":"wav"}`)
+	good := []byte(`{"model":"mock-tts","input":"hello","voice":"alloy","response_format":"wav"}`)
 	first, _ := speechHandlerContext(good, "same-key", principal)
 	server.synthesizeSpeech(first)
-	conflictBody := []byte(`{"model":"tts-model","input":"different","voice":"alloy","response_format":"wav"}`)
+	conflictBody := []byte(`{"model":"mock-tts","input":"different","voice":"alloy","response_format":"wav"}`)
 	conflict, recorder := speechHandlerContext(conflictBody, "same-key", principal)
 	server.synthesizeSpeech(conflict)
 	if recorder.Code != http.StatusConflict {
@@ -76,14 +76,38 @@ func TestSynthesizeSpeechUnknownSubmissionCannotRetry(t *testing.T) {
 		return provider.SpeechResponse{Sent: true}, provider.NewMediaError("timeout", http.StatusGatewayTimeout, true, true)
 	}}
 	server := &Server{MediaAdapter: adapter}
-	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{"tts-model"}}
-	body := []byte(`{"model":"tts-model","input":"hello","voice":"alloy","response_format":"wav"}`)
+	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{ttsModelKey}}
+	body := []byte(`{"model":"mock-tts","input":"hello","voice":"alloy","response_format":"wav"}`)
 	first, recorder := speechHandlerContext(body, "unknown-key", principal)
 	server.synthesizeSpeech(first)
 	second, secondRecorder := speechHandlerContext(body, "unknown-key", principal)
 	server.synthesizeSpeech(second)
 	if recorder.Code != http.StatusConflict || secondRecorder.Code != http.StatusConflict || calls != 1 {
 		t.Fatalf("unknown status=%d/%d calls=%d", recorder.Code, secondRecorder.Code, calls)
+	}
+}
+
+func TestSynthesizeSpeechRejectsUnconfirmedUsageWithoutRetry(t *testing.T) {
+	calls := 0
+	adapter := &provider.MockMediaAdapter{SynthesizeSpeechFunc: func(_ context.Context, in provider.SpeechRequest) (provider.SpeechResponse, error) {
+		calls++
+		return provider.SpeechResponse{
+			Sent:      true,
+			MediaType: "audio/wav",
+			Format:    "wav",
+			Data:      mockWAV(len([]rune(in.Input))),
+			Usage:     provider.SpeechUsage{Status: provider.SpeechUsageConfirmedFinal, CharacterCount: 1},
+		}, nil
+	}}
+	server := &Server{MediaAdapter: adapter}
+	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{ttsModelKey}}
+	body := []byte(`{"model":"mock-tts","input":"hello","voice":"alloy","response_format":"wav"}`)
+	first, firstRecorder := speechHandlerContext(body, "bad-usage", principal)
+	server.synthesizeSpeech(first)
+	second, secondRecorder := speechHandlerContext(body, "bad-usage", principal)
+	server.synthesizeSpeech(second)
+	if firstRecorder.Code != http.StatusBadGateway || secondRecorder.Code != http.StatusConflict || calls != 1 {
+		t.Fatalf("invalid usage status=%d/%d calls=%d", firstRecorder.Code, secondRecorder.Code, calls)
 	}
 }
 

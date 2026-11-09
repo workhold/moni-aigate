@@ -96,7 +96,7 @@ func FuzzAmountMonotonicity(f *testing.F) {
 		i, output := int64(a&math.MaxInt64), int64(b&math.MaxInt64)
 		inputRate, outputRate := int64(p&math.MaxInt64), int64(o&math.MaxInt64)
 		s := mustSchema(t, `{"schema_id":"11111111-1111-1111-1111-111111111111","version":"1","dimensions":[{"dimension":"text_input_token","unit":"token","maximum_quantity":"9223372036854775807"},{"dimension":"text_output_token","unit":"token","maximum_quantity":"9223372036854775807"}],"retail_dimensions":["text_input_token","text_output_token"],"supplier_dimensions":["text_input_token","text_output_token"]}`)
-		r, err := metering.LegacyTokenRates(s, metering.Retail, inputRate, outputRate)
+		r, err := metering.ManagementTokenRates(s, metering.Retail, inputRate, outputRate)
 		if err != nil {
 			t.Fatal(err)
 		}

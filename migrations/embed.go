@@ -16,6 +16,8 @@ import (
 //go:embed *.sql
 var Files embed.FS
 
+const currentBaselineName = "current_mvp.sql"
+
 type migration struct {
 	name     string
 	body     []byte
@@ -35,6 +37,15 @@ func plan(through string, exact bool) (migrationPlan, error) {
 		return result, err
 	}
 	sort.Strings(names)
+	names = func() []string {
+		filtered := make([]string, 0, len(names))
+		for _, name := range names {
+			if name != currentBaselineName {
+				filtered = append(filtered, name)
+			}
+		}
+		return filtered
+	}()
 	last := len(names) - 1
 	if exact {
 		last = sort.SearchStrings(names, through)
@@ -55,6 +66,15 @@ func plan(through string, exact bool) (migrationPlan, error) {
 		}
 	}
 	return result, nil
+}
+
+func currentPlan() (migrationPlan, error) {
+	body, err := Files.ReadFile(currentBaselineName)
+	if err != nil {
+		return migrationPlan{}, err
+	}
+	item := migration{name: currentBaselineName, body: body, checksum: fmt.Sprintf("%x", sha256.Sum256(body))}
+	return migrationPlan{all: map[string]migration{item.name: item}, prefix: []migration{item}}, nil
 }
 
 type historyReader interface {
@@ -120,8 +140,8 @@ func validateHistory(p migrationPlan, applied map[string]string, complete bool) 
 	return nil
 }
 
-// Apply serializes migrations and installs the complete current embedded set.
-// Historical fixtures must opt into ApplyThrough with an exact filename.
+// Apply serializes the historical migration set for isolated fixture tests.
+// The serving installer uses ApplyCurrent and current_mvp.sql instead.
 func Apply(ctx context.Context, pool *pgxpool.Pool) error {
 	p, e := plan("", false)
 	if e != nil {

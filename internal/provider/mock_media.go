@@ -38,6 +38,16 @@ type SpeechRequest struct {
 	ResponseFormat string
 }
 
+// SpeechUsage is the provider usage fact for the fixed-character TTS profile.
+// The server charges it only after validating final status and the request
+// bound.
+type SpeechUsage struct {
+	Status         string
+	CharacterCount int64
+}
+
+const SpeechUsageConfirmedFinal = "confirmed_final"
+
 // SpeechResponse contains an inline audio result. Providers must not return a
 // customer-visible URL through this boundary.
 type SpeechResponse struct {
@@ -45,6 +55,7 @@ type SpeechResponse struct {
 	MediaType string
 	Format    string
 	Data      []byte
+	Usage     SpeechUsage
 }
 
 // SynchronousMediaAdapter is the provider seam for the synchronous media

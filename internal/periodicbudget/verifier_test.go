@@ -16,7 +16,7 @@ func TestVerifierConstructionAndProtocol(t *testing.T) {
 		t.Fatal("nil pool accepted")
 	}
 	for _, timeout := range []time.Duration{-1, time.Second - 1, 10*time.Minute + 1} {
-		if _, e := NewVerifier(new(pgxpool.Pool), VerifyOptions{timeout}); !errors.Is(e, ErrVerifyInput) {
+		if _, e := NewVerifier(new(pgxpool.Pool), VerifyOptions{Timeout: timeout}); !errors.Is(e, ErrVerifyInput) {
 			t.Fatal("invalid timeout accepted")
 		}
 	}

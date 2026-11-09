@@ -60,6 +60,7 @@ type Server struct {
 	RealtimeService        *realtime.Service
 	TaskGrants             sync.Map
 	MediaIdempotency       sync.Map
+	SpeechIdempotencyLocks sync.Map
 	Log                    *telemetry.Logger
 	ready                  atomic.Bool
 	Requests               atomic.Uint64

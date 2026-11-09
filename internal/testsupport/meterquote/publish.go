@@ -67,7 +67,7 @@ func tryDefault(ctx context.Context, db Beginner, p DefaultPrice) (string, error
 	if e != nil {
 		return "", e
 	}
-	rates, e := metering.LegacyTokenRates(schema, metering.Retail, p.InputRate, p.OutputRate)
+	rates, e := metering.ManagementTokenRates(schema, metering.Retail, p.InputRate, p.OutputRate)
 	if e != nil {
 		return "", e
 	}
@@ -130,7 +130,7 @@ func tryCost(ctx context.Context, db Beginner, p CostPrice) (string, error) {
 	}
 	var rates any
 	if p.Basis != "unknown" {
-		r, e := metering.LegacyTokenRates(schema, metering.Supplier, *p.InputRate, *p.OutputRate)
+		r, e := metering.ManagementTokenRates(schema, metering.Supplier, *p.InputRate, *p.OutputRate)
 		if e != nil {
 			return "", e
 		}

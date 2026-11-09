@@ -44,7 +44,7 @@ func retailAssertSnapshot(t *testing.T, f *fixture, reservation Reservation, pri
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected, err := metering.LegacyTokenRates(schema, metering.Retail, int64(input), int64(output))
+	expected, err := metering.ManagementTokenRates(schema, metering.Retail, int64(input), int64(output))
 	if err != nil {
 		t.Fatal(err)
 	}

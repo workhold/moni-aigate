@@ -49,7 +49,7 @@ func validatePriceRates(raw *json.RawMessage, schema metering.Schema, side meter
 	if len(dims) != 2 || len(entries) != 2 || dims[0].Dimension != "text_input_token" || dims[1].Dimension != "text_output_token" || dims[1].MaximumQuantity == 0 && entries[1].Numerator != 0 {
 		return pricingFail("pricing_invariant")
 	}
-	bounds, err := metering.LegacyTokenBounds(schema, side, dims[0].MaximumQuantity, dims[1].MaximumQuantity)
+	bounds, err := metering.ManagementTokenBounds(schema, side, dims[0].MaximumQuantity, dims[1].MaximumQuantity)
 	if err != nil {
 		return pricingFail("pricing_invariant")
 	}

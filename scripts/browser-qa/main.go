@@ -606,7 +606,7 @@ func run(ctx context.Context, in options, stdout io.Writer) (result error) {
 	if err != nil {
 		return stage("schema_connection_failed")
 	}
-	if migrations.Apply(setup, owner) != nil {
+	if migrations.ApplyCurrent(setup, owner) != nil {
 		return stage("schema_migration_failed")
 	}
 	if operations.ProvisionFor(setup, owner, m.Schema, m.AppRole, m.ProjectionRole) != nil {

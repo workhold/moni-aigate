@@ -106,7 +106,7 @@ func TestQuoteKnownZeroUnknownAndInvalidAreDistinct(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			b, _ := metering.LegacyTokenBounds(in.Schema, metering.Supplier, 100, 20)
+			b, _ := metering.ManagementTokenBounds(in.Schema, metering.Supplier, 100, 20)
 			n, err := metering.ReservationAmount(b, r)
 			if err != nil || n != 0 {
 				t.Fatal("known zero lost", n, err)
@@ -447,7 +447,7 @@ func TestExactCostAndSingleCeilRemainInMetering(t *testing.T) {
 	low := quote(t, in)
 	in.Rates = rates(t, in.Schema, metering.Supplier, 1, 500000, 0, 1)
 	high := quote(t, in)
-	bounds, _ := metering.LegacyTokenBounds(in.Schema, metering.Supplier, 1, 0)
+	bounds, _ := metering.ManagementTokenBounds(in.Schema, metering.Supplier, 1, 0)
 	lr, _ := low.Rates()
 	hr, _ := high.Rates()
 	ln, le := metering.ReservationAmount(bounds, lr)
@@ -463,11 +463,11 @@ func TestExactCostAndSingleCeilRemainInMetering(t *testing.T) {
 	in.Rates = rates(t, in.Schema, metering.Supplier, 1, 3, 1, 5)
 	q := quote(t, in)
 	r, _ := q.Rates()
-	b, _ := metering.LegacyTokenBounds(in.Schema, metering.Supplier, 1, 1)
+	b, _ := metering.ManagementTokenBounds(in.Schema, metering.Supplier, 1, 1)
 	if n, err := metering.ReservationAmount(b, r); err != nil || n != 1 {
 		t.Fatal("per-dimension ceil introduced", n, err)
 	}
-	huge, _ := metering.LegacyTokenBounds(in.Schema, metering.Supplier, math.MaxInt64, math.MaxInt64)
+	huge, _ := metering.ManagementTokenBounds(in.Schema, metering.Supplier, math.MaxInt64, math.MaxInt64)
 	in.Rates = rates(t, in.Schema, metering.Supplier, math.MaxInt64, 1, math.MaxInt64, 1)
 	large := quote(t, in)
 	r, _ = large.Rates()
@@ -477,7 +477,7 @@ func TestExactCostAndSingleCeilRemainInMetering(t *testing.T) {
 	if cmp, err := metering.CompareExactCost(huge, r, huge, r); err != nil || cmp != 0 {
 		t.Fatal("exact large comparison overflow", cmp, err)
 	}
-	foreign, _ := metering.LegacyTokenBounds(schema(t, otherID, math.MaxInt64), metering.Supplier, 1, 1)
+	foreign, _ := metering.ManagementTokenBounds(schema(t, otherID, math.MaxInt64), metering.Supplier, 1, 1)
 	if _, err := metering.CompareExactCost(foreign, lr, bounds, hr); !errors.Is(err, metering.ErrBindingMismatch) {
 		t.Fatal("cross-schema comparison", err)
 	}

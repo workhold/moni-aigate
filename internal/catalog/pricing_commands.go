@@ -303,7 +303,7 @@ func (s *Store) PublishGroupPrice(ctx context.Context, a PricingActor, c GroupPr
 			}
 			return nil, err
 		}
-		rates, err := metering.LegacyTokenRates(schema, metering.Retail, c.InputRate, c.OutputRate)
+		rates, err := metering.ManagementTokenRates(schema, metering.Retail, c.InputRate, c.OutputRate)
 		if err != nil {
 			return nil, pricingFail("invalid_price")
 		}

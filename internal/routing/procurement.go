@@ -26,7 +26,7 @@ func ProcurementExclusion(c Candidate) string {
 	if !ok {
 		return "procurement_budget_unavailable"
 	}
-	bounds, err := metering.LegacyTokenBounds(q.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
+	bounds, err := metering.ManagementTokenBounds(q.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
 	if err != nil {
 		return "procurement_bound_invalid"
 	}

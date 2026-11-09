@@ -29,13 +29,17 @@ const (
 	VerificationIndeterminate VerificationStatus = "indeterminate"
 )
 
-type VerifyOptions struct{ Timeout time.Duration }
+type VerifyOptions struct {
+	Timeout time.Duration
+	Current bool
+}
 
 // Verifier scans all persisted periodic budgets in one offline RR snapshot.
 // It neither shares the online Reader nor takes business row/advisory locks.
 type Verifier struct {
 	pool    *pgxpool.Pool
 	timeout time.Duration
+	current bool
 }
 
 type Verification struct {
@@ -100,7 +104,12 @@ func NewVerifier(pool *pgxpool.Pool, options VerifyOptions) (*Verifier, error) {
 	if options.Timeout < time.Second || options.Timeout > 10*time.Minute {
 		return nil, ErrVerifyInput
 	}
-	return &Verifier{pool: pool, timeout: options.Timeout}, nil
+	return &Verifier{pool: pool, timeout: options.Timeout, current: options.Current}, nil
+}
+
+func NewCurrentVerifier(pool *pgxpool.Pool, options VerifyOptions) (*Verifier, error) {
+	options.Current = true
+	return NewVerifier(pool, options)
 }
 
 func verifyFailure(ctx context.Context, err error) error {
@@ -162,7 +171,11 @@ func (v *Verifier) Verify(ctx context.Context) (Verification, error) {
 		}
 		return Verification{}, err
 	}
-	if err = migrations.VerifyReadOnlyTx(ctx, tx); err != nil {
+	verifyMigrations := migrations.VerifyReadOnlyTx
+	if v.current {
+		verifyMigrations = migrations.VerifyCurrentReadOnlyTx
+	}
+	if err = verifyMigrations(ctx, tx); err != nil {
 		if verifyFailure(ctx, err) == ErrVerifyTimeout {
 			return Verification{}, ErrVerifyTimeout
 		}

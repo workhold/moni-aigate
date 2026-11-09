@@ -69,7 +69,7 @@ func TestPostgresManagedAttemptRequiresExactSelectedQuote(t *testing.T) {
 				case "basis":
 					value.Basis = "invoice"
 				case "rate":
-					value.Rates, err = metering.LegacyTokenRates(q.Schema(), metering.Supplier, 2000000, 1)
+					value.Rates, err = metering.ManagementTokenRates(q.Schema(), metering.Supplier, 2000000, 1)
 					if err != nil {
 						t.Fatal(err)
 					}

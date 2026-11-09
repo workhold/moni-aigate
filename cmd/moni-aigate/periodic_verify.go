@@ -80,7 +80,7 @@ func runPeriodicVerification(args []string, output io.Writer) error {
 		return periodicbudget.ErrVerifyExecution
 	}
 	defer pool.Close()
-	verifier, err := periodicbudget.NewVerifier(pool, periodicbudget.VerifyOptions{Timeout: timeout})
+	verifier, err := periodicbudget.NewCurrentVerifier(pool, periodicbudget.VerifyOptions{Timeout: timeout})
 	if err != nil {
 		return err
 	}

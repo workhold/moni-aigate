@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
-	"encoding/json"
 	"image"
 	"image/color"
 	"image/png"
@@ -13,6 +12,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,15 +26,20 @@ const (
 	maxSpeechInputBytes = 16 * 1024
 	maxMediaModelBytes  = 256
 	maxVoiceBytes       = 128
+	maxSpeechCharacters = 16384
+	ttsModelKey         = "mock-tts"
+	ttsVoice            = "alloy"
 	ttsProfileVersion   = "22222222-2222-4222-8222-222222222222"
 )
 
 type mediaReplay struct {
-	digest      [32]byte
-	unknown     bool
-	status      int
-	contentType string
-	body        []byte
+	digest       [32]byte
+	unknown      bool
+	status       int
+	errorCode    string
+	errorMessage string
+	contentType  string
+	body         []byte
 }
 
 type speechRequest struct {
@@ -41,23 +47,6 @@ type speechRequest struct {
 	Input          string `json:"input"`
 	Voice          string `json:"voice"`
 	ResponseFormat string `json:"response_format"`
-}
-
-func readStrictMediaJSON(c *gin.Context, dst any, limit int) ([]byte, error) {
-	raw, err := io.ReadAll(io.LimitReader(c.Request.Body, int64(limit)+1))
-	if err != nil || len(raw) > limit {
-		return nil, media.ErrTooLarge
-	}
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err = decoder.Decode(dst); err != nil {
-		return nil, media.ErrInvalidJSON
-	}
-	var extra any
-	if err = decoder.Decode(&extra); err != io.EOF {
-		return nil, media.ErrInvalidJSON
-	}
-	return raw, nil
 }
 
 func mediaReplayKey(p identity.Principal, operation, idempotency string) string {
@@ -115,17 +104,36 @@ func validMediaModel(p identity.Principal, model string) bool {
 func (s *Server) synthesizeSpeech(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
 	var in speechRequest
-	raw, err := readStrictMediaJSON(c, &in, media.MaxInputJSONBytes)
-	if err != nil || !validMediaModel(p, in.Model) || len(in.Input) == 0 || len(in.Input) > maxSpeechInputBytes || len(in.Voice) == 0 || len(in.Voice) > maxVoiceBytes || in.ResponseFormat != "wav" {
+	if !speechJSONContentType(c) {
+		s.fail(c, http.StatusUnsupportedMediaType, "invalid_request", "语音请求必须使用 application/json")
+		return
+	}
+	raw, err := io.ReadAll(io.LimitReader(c.Request.Body, int64(media.MaxInputJSONBytes)+1))
+	if err != nil || len(raw) > media.MaxInputJSONBytes || !decodeCanonicalJSON(bytes.NewReader(raw), &in, media.MaxInputJSONBytes, "model", "input", "voice", "response_format") || !validSpeechRequest(p, in) {
 		s.fail(c, http.StatusBadRequest, "invalid_request", "语音合成参数无效")
 		return
 	}
 	digest := sha256.Sum256(raw)
+	key := c.GetHeader("Idempotency-Key")
+	if len(c.Request.Header.Values("Idempotency-Key")) != 1 || key == "" || len(key) > 200 || strings.TrimSpace(key) != key {
+		s.fail(c, http.StatusBadRequest, "invalid_request", "需要有效 Idempotency-Key")
+		return
+	}
+	unlock := s.lockSpeechIdempotency(mediaReplayKey(p, "tts", key))
+	defer unlock()
 	replay, key, ok := s.mediaIdempotency(c, "tts", digest)
 	if !ok {
 		return
 	}
 	if replay != nil {
+		if replay.errorCode != "" {
+			s.fail(c, replay.status, replay.errorCode, replay.errorMessage)
+			return
+		}
+		if replay.unknown {
+			s.fail(c, http.StatusConflict, "provider_consumption_unknown", "供应商提交结果未知，禁止自动重试")
+			return
+		}
 		c.Data(replay.status, replay.contentType, replay.body)
 		return
 	}
@@ -140,7 +148,7 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 	if _, err := uuid.Parse(requestID); err != nil {
 		requestID = uuid.NewString()
 	}
-	billingRefs, err := s.reserveMediaForRequest(c.Request.Context(), p.TenantID, p.UserID, p.KeyID, requestID, key, "tts", "mock-tts", ttsProfileVersion, digest, int64(len([]rune(in.Input))))
+	billingRefs, err := s.reserveMediaForRequest(c.Request.Context(), p.TenantID, p.UserID, p.KeyID, requestID, key, "tts", ttsModelKey, ttsProfileVersion, digest, int64(len([]rune(in.Input))))
 	if err != nil {
 		s.error(c, err)
 		return
@@ -154,6 +162,10 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 	}
 	if billingRefs.enabled {
 		if err = s.Billing.MarkMediaAttemptSending(c.Request.Context(), p.TenantID, billingRefs.attemptID); err != nil {
+			if finalizeErr := s.finalizeMediaRequest(c.Request.Context(), billingRefs, "failed", "missing", 0); finalizeErr != nil {
+				s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
+				return
+			}
 			s.error(c, err)
 			return
 		}
@@ -170,24 +182,36 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 			unknown = unknown || providerErr.Sent || providerErr.Unknown
 		}
 		if unknown {
-			_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
+			if finalizeErr := s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0); finalizeErr != nil {
+				s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, errorCode: "settlement_pending", errorMessage: "语音账务收尾暂不可用", status: http.StatusServiceUnavailable})
+				s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
+				return
+			}
 			s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, unknown: true, status: http.StatusConflict})
 			s.fail(c, http.StatusConflict, "provider_consumption_unknown", "供应商提交结果未知，禁止自动重试")
 			return
 		}
 		if finalizeErr := s.finalizeMediaRequest(c.Request.Context(), billingRefs, "failed", "missing", 0); finalizeErr != nil {
+			s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, errorCode: "settlement_pending", errorMessage: "语音账务收尾暂不可用", status: http.StatusServiceUnavailable})
 			s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
 			return
 		}
+		s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, errorCode: "provider_error", errorMessage: "语音供应商调用失败", status: http.StatusBadGateway})
 		s.fail(c, http.StatusBadGateway, "provider_error", "语音供应商调用失败")
 		return
 	}
-	if len(result.Data) == 0 || result.MediaType != "audio/wav" || len(result.Data) > media.MaxDecodedBytes {
-		_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
+	quantity := int64(len([]rune(in.Input)))
+	if result.Format != "wav" || result.MediaType != "audio/wav" || len(result.Data) == 0 || len(result.Data) > media.MaxDecodedBytes || validateSpeechWAV(result.Data) != nil || result.Usage.Status != provider.SpeechUsageConfirmedFinal || result.Usage.CharacterCount != quantity || result.Usage.CharacterCount <= 0 || result.Usage.CharacterCount > maxSpeechCharacters {
+		if finalizeErr := s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0); finalizeErr != nil {
+			s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, errorCode: "settlement_pending", errorMessage: "语音账务收尾暂不可用", status: http.StatusServiceUnavailable})
+			s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
+			return
+		}
+		s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, unknown: true, status: http.StatusConflict})
 		s.fail(c, http.StatusBadGateway, "provider_protocol_error", "语音供应商结果无效")
 		return
 	}
-	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", "confirmed_final", int64(len([]rune(in.Input)))); err != nil {
+	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", provider.SpeechUsageConfirmedFinal, result.Usage.CharacterCount); err != nil {
 		s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
 		return
 	}
@@ -197,6 +221,24 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 	}
 	s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, status: http.StatusOK, contentType: result.MediaType, body: result.Data})
 	c.Data(http.StatusOK, result.MediaType, result.Data)
+}
+
+func speechJSONContentType(c *gin.Context) bool {
+	values := c.Request.Header.Values("Content-Type")
+	return len(values) == 1 && values[0] == "application/json"
+}
+
+func validSpeechRequest(p identity.Principal, in speechRequest) bool {
+	quantity := len([]rune(in.Input))
+	return in.Model == ttsModelKey && validMediaModel(p, in.Model) && utf8.ValidString(in.Input) && len(in.Input) > 0 && len(in.Input) <= maxSpeechInputBytes && quantity > 0 && quantity <= maxSpeechCharacters && in.Voice == ttsVoice && len(in.Voice) <= maxVoiceBytes && in.ResponseFormat == "wav"
+}
+
+func (s *Server) lockSpeechIdempotency(key string) func() {
+	lock := &sync.Mutex{}
+	value, _ := s.SpeechIdempotencyLocks.LoadOrStore(key, lock)
+	lock = value.(*sync.Mutex)
+	lock.Lock()
+	return lock.Unlock
 }
 
 func newDefaultMediaAdapter() provider.SynchronousMediaAdapter {
@@ -229,7 +271,7 @@ func newDefaultMediaAdapter() provider.SynchronousMediaAdapter {
 			if err := ctx.Err(); err != nil {
 				return provider.SpeechResponse{}, err
 			}
-			return provider.SpeechResponse{Sent: true, MediaType: "audio/wav", Format: "wav", Data: mockWAV(len([]rune(in.Input)))}, nil
+			return provider.SpeechResponse{Sent: true, MediaType: "audio/wav", Format: "wav", Data: mockWAV(len([]rune(in.Input))), Usage: provider.SpeechUsage{Status: provider.SpeechUsageConfirmedFinal, CharacterCount: int64(len([]rune(in.Input)))}}, nil
 		},
 	}
 }

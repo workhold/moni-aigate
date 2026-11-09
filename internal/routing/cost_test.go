@@ -22,7 +22,7 @@ func testCostQuote(channel, model, version, basis string, input, output int64) r
 	}
 	in := routecost.Input{ChannelID: channel, UpstreamModel: model, VersionID: version, Basis: basis, VariantKey: "default", Schema: s}
 	if basis != "unknown" {
-		in.Rates, err = metering.LegacyTokenRates(s, metering.Supplier, input, output)
+		in.Rates, err = metering.ManagementTokenRates(s, metering.Supplier, input, output)
 		if err != nil {
 			panic(err)
 		}
@@ -39,7 +39,7 @@ func testCostCaps(q routecost.Quote, input, output *int64) routecost.Limits {
 		if ptr == nil {
 			continue
 		}
-		rates, err := metering.LegacyTokenRates(q.Schema(), metering.Supplier, *ptr, *ptr)
+		rates, err := metering.ManagementTokenRates(q.Schema(), metering.Supplier, *ptr, *ptr)
 		if err != nil {
 			panic(err)
 		}
@@ -201,7 +201,7 @@ func TestCostPlanRejectsWrongDomainSchemaCapsAndBounds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rates, err := metering.LegacyTokenRates(small, metering.Supplier, 1, 1)
+	rates, err := metering.ManagementTokenRates(small, metering.Supplier, 1, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
