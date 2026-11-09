@@ -6,6 +6,30 @@
 
 55439 专用 PostgreSQL 的 `TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline` 覆盖空库安装、历史前缀拒迁、非业务用户关系拒迁和完整基线验证。001–024 文件仍保留给隔离历史 fixture，当前服务不会调用 `ApplyThrough`。
 
+## 2026-11-10：028-U 真实 PostgreSQL guard 与拒迁矩阵补强
+
+本片只新增 PostgreSQL 测试，没有修改 024/current MVP SQL、billing、wallet、settlement 或运行时。新测试在独立 worktree 的 `codex/028-u-postgres-matrix` 分支执行，数据库固定为 `127.0.0.1:55439/moni_test`。
+
+新增 guard 负控和正控覆盖客户预占金额与结算金额的原向量重算、released 零值、schema/capability 完整性、input-only 非零输出、请求终结指针、观察 source identity、同一 operation 的并发唯一性、失败事务回滚、标量列/函数撤除，以及 `meter_%` 函数的 invoker 和固定 search_path 属性。既有矩阵继续覆盖跨租户、跨请求、不可变快照、成本来源指针和角色边界。
+
+拒迁矩阵对 024 前置清单中的 request、attempt、event、结算、reconciliation、recovery、probe、成本更正、采购 reservation/event/evidence/proposal、journal、funding receipt、wallet lot、model/capability/route/binding/price/cost、pricing operation，以及 payment、周期预算、ledger 和 key/procurement 余额分组逐项写入 023 历史事实，共 41 个关系或分组用例。每个用例都实际执行 024，断言拒绝错误、原 schema/数据快照、`schema_migrations=23` 和无 024 关系。另有变更 023 约束后执行 024 的回滚测试。测试通过不代表旧库可以升级，它证明拒迁在 DDL 前回滚。
+
+实际通过命令如下：
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+go test -count=1 -timeout 300s ./migrations \
+  -run 'TestUnifiedTextMeteringAmountAndSettlementGuards|TestUnifiedTextMeteringSchemaAndCapabilityCompletenessGuards|TestUnifiedTextMeteringFinalizationPointerAndEventIdentityGuards|TestUnifiedTextMeteringConcurrentCorrectionIdentityIsUnique|TestUnifiedTextMeteringCurrentShapeHasNoScalarProjection|TestUnifiedTextMeteringCurrentGuardFunctionsAreInvokerAndPinned'
+
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+go test -count=1 -timeout 900s ./migrations \
+  -run '^TestUnifiedTextMeteringRejectsEveryListedLegacyRelation$'
+```
+
+两组结果分别为 PASS 和约 53 秒 PASS。现有 `TestUnifiedTextMetering*`、canonical/缺口和角色测试也在同一专库通过。已实测发现当前 024 对改变 023 表 owner 的 ACL 形状不会主动拒迁，这项 SQL 门禁仍缺，未用测试绕过或伪装通过。仍缺完整九组 checker 的逐项正反事实矩阵、全部坏 ACL 形状负控、六文本全商业链、浏览器、正式供应商和生产环境验收。本片不把 028-U 或 Goal 标记完成。
+
 ## 2026-11-10：028-U 拒迁与权限矩阵补强
 
 024 的拒迁检查现在将 `procurement_evidence_identities` 与采购 reservation、budget event、proposal 一起纳入历史事实拒绝。隔离 PostgreSQL 负控确认仅有 evidence identity 的旧库在执行 024 前回滚，schema、迁移记录和原事实均不改变。
