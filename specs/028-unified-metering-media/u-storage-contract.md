@@ -541,6 +541,10 @@ U后台恢复仅观察/收尾原request/attempt及原证据；无网络生成许
 
 新 worker 或 app 进程只从原 tenant、task、artifact reference、digest 和有效期读取正文。没有正文时才允许一次原 provider download，下载失败不改变任务或结算状态。重启不会因为 grant 丢失而丢失制品，客户端可以重新申请新的短期 grant；这条结果读取路径不创建新的 request、attempt、settlement 或收入。
 
+### 11.6 Realtime provider identity 存储
+
+`realtime_sessions.provider_session_id`、`realtime_turns.provider_handle`、`dispatch_unknown` 和 `cancel_requested` 属于当前执行事实。provider session/turn identity 首次写入后不可替换，unknown 与 cancel 标记只能向终态方向追加。Persistence 读取这些字段后，新的 process 只能继续原 Receive/Cancel/Settle 或保持 pending，不能调用新的 Open/Send 代替原事实。当前 mock provider 以 session/turn ID 派生可恢复 response，真实 provider 必须提供等价的稳定 handle 查询和取消合同后才能发布。
+
 只支持独立新当前数据库。保留001–023原SQL与迁移checksum，新增迁移明确一次替换；迁移运行时不探测旧mode、不双写、不把旧request伪装成新snapshot。
 
 迁移必须在服务/生成writer/worker停止、持现行maintenance gate和真实migration owner时执行；第一阶段在任何DDL前验证PG≥15、恰为正式023基线及所需依赖形状，获得相关表锁并检查下列拒迁条件。拒绝必须单事务回滚、原schema/数据/权限/checksum不变，输出固定可理解错误，不自动删库或生成转换记录：
@@ -605,7 +609,7 @@ SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报�
 
 `realtime_sessions` 保存 session 的租户、actor、API key、model、profile、route、规范 Origin、期限和 session 状态。身份出生后不可变，actor、key、profile、route 必须属于同一租户和 model。状态闭集为 `opening|open|draining|closed`。
 
-`realtime_turns` 保存 session 内正数 ordinal 及唯一收费轮次，必须同时绑定同租户原 request、reservation 和 attempt，且三者的 request/tenant 一致。状态闭集为 `reserved|sending|receiving|finalizing|pending|settled|released`，同一 session 同时最多一个非终态 turn。`realtime_events` 保存 session 内唯一 client event ID、可选 turn、闭集 type、规范摘要和 digest。heartbeat/status 不得绑定 turn，收费输入和 response 控制事件必须绑定当前 turn，跨 session/turn、重复异体、终态覆盖和错误状态转移均由数据库拒绝。
+`realtime_turns` 保存 session 内正数 ordinal 及唯一收费轮次，必须绑定同租户同一套 request、reservation 和 attempt 事实。文本协议使用 `request_records/reservations/upstream_attempts`，Realtime 媒体使用 `media_requests/media_reservations/media_attempts`，两套不能混接，且三者的 request/tenant 一致。状态闭集为 `reserved|sending|receiving|finalizing|pending|settled|released`，同一 session 同时最多一个非终态 turn。`realtime_events` 保存 session 内唯一 client event ID、可选 turn、闭集 type、规范摘要和 digest。heartbeat/status 不得绑定 turn，收费输入和 response 控制事件必须绑定当前 turn，跨 session/turn、重复异体、终态覆盖和错误状态转移均由数据库拒绝。
 
 所有上述关系和 guard 固定为当前 schema 的 SECURITY INVOKER 路径，撤销 PUBLIC 对表、序列和函数的权限。APP 的 writer 权限由现有 provisioning 事务授予，PROJECTOR 与 PAYMENT_WORKER 不获得这些表或函数权限。writer 必须在同一事务中先写原 request/reservation/attempt，再写 task 或 turn，不能通过孤立媒体关系制造计量、钱包或结算事实。本片不声称 S/A/R 的 provider、worker、HTTP、WS、报表、部署和真实收费已经完成。
 
@@ -615,9 +619,11 @@ SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报�
 
 媒体预占先锁 API key、客户 `AVAILABLE/HELD` 账户，再按 FIFO 锁 funding lot，写一个 `media.reserve` journal、lot reservation edges、held key 余额和 audit。结算锁原 media reservation 与账户，依据原 rate 和 confirmed observation 计算 charge，批量写 `media.settle` journal、lot finish edges、settlement、key spent/held 和 audit。unknown、missing、失败、取消和超界 usage 释放预占且 charged/raw 为零，供应商提交未知时 attempt 进入终态，恢复不得再次发送。媒体 lot event 已接入 023 wallet event validator 的同一 journal/lots 图，未创建第二钱包或第二账本。
 
-图片和 TTS 当前 HTTP 主线在有数据库的 Server 上使用上述 Reserve/Attempt/Observe/Settle 入口。无数据库的纯 handler fixture 只验证协议和 provider 边界，不能视为商业验收。Realtime 当前在有数据库时为单 turn 使用 `realtime_turn` profile 并收尾同一 media settlement，未接入数据库 session/turn writer。异步 video task 仍要求外部 task 引用并尚未接入上述 media reservation，不能勾选 A 的纵向商业项。
+图片和 TTS 当前 HTTP 主线在有数据库的 Server 上使用上述 Reserve/Attempt/Observe/Settle 入口。无数据库的纯 handler fixture 只验证协议和 provider 边界，不能视为商业验收。Realtime 当前在有数据库时为单 turn 使用 `realtime_turn` profile，并由 tenant-bound PostgreSQL persistence 写入 session/turn/event 与 provider identity 后收尾同一 media settlement。异步 video task 已通过当前 media reservation、attempt、observation 和 settlement 接入上述入口，制品正文也已持久化；真实供应商、对象存储、浏览器和目标部署仍不属于本地 mock 验收。
 
 ## 12. U 必须与后续片 DDL 分界
+
+下表冻结的是 U 作为统一计量存储片时的 DDL 边界。当前分支已在不改变 U 计量合同的前提下追加并接通 028-S/A/R 的媒体、任务和实时最小存储。表中“后续”表示这些对象不属于 U 的计量生产项，不表示当前代码不存在。
 
 | U 同次必须交付 | 留在后续 S/A/R 片，U 不安装 |
 | --- | --- |

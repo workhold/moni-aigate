@@ -10,6 +10,12 @@ env_file="$work_dir/.env"
 password_file="$work_dir/admin-password"
 project_name="moni-aigate-qa-${RANDOM}-${PPID}"
 port="${DEPLOY_QA_PORT:-18080}"
+business="${DEPLOY_QA_BUSINESS:-false}"
+
+case "$business" in
+  true|false) ;;
+  *) echo "DEPLOY_QA_BUSINESS must be true or false" >&2; exit 1 ;;
+esac
 
 if docker compose version >/dev/null 2>&1; then
 
@@ -30,10 +36,15 @@ rand_b64() {
 }
 
 run_compose() {
+  local -a profile_args=()
+  if [ "$business" = true ]; then
+    profile_args+=(--profile business-qa)
+  fi
   "${compose[@]}" \
     --project-directory "$repo_dir" \
     --project-name "$project_name" \
     --env-file "$env_file" \
+    "${profile_args[@]}" \
     "$@"
 }
 
@@ -105,7 +116,11 @@ if run_compose run --rm -T app bootstrap --email second@example.com --password-s
 fi
 
 echo "starting app and worker"
-run_compose up -d app worker
+if [ "$business" = true ]; then
+  run_compose up -d app worker qa-provider
+else
+  run_compose up -d app worker
+fi
 
 wait_for_ready() {
   local body
@@ -120,9 +135,24 @@ wait_for_ready() {
   return 1
 }
 
+wait_for_live() {
+  for _ in $(seq 1 60); do
+    if curl --silent --show-error --fail --max-time 3 "http://127.0.0.1:${port}/health/live" >/dev/null; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo "liveness did not become healthy" >&2
+  return 1
+}
+
 check_processes() {
   local service id state
-  for service in app worker; do
+  local services=(app worker)
+  if [ "$business" = true ]; then
+    services+=(qa-provider)
+  fi
+  for service in "${services[@]}"; do
     id=$(run_compose ps -q "$service")
     [ -n "$id" ]
     state=$(docker inspect --format '{{.State.Status}}' "$id")
@@ -131,9 +161,40 @@ check_processes() {
 }
 
 echo "checking live and ready endpoints"
-curl --silent --show-error --fail --max-time 3 "http://127.0.0.1:${port}/health/live" >/dev/null
+wait_for_live
 wait_for_ready
 check_processes
+
+if [ "$business" = true ]; then
+  echo "provisioning disposable business fixture through HTTP"
+  BUSINESS_QA_BASE_URL="http://127.0.0.1:${port}" \
+  BUSINESS_QA_ADMIN_PASSWORD="$(cat "$password_file")" \
+  BUSINESS_QA_OUTPUT_DIR="$work_dir" \
+    "$repo_dir/scripts/deployment-business-provision.sh" >"$work_dir/business.env"
+  # The provisioning output contains only the disposable model, tenant and
+  # customer API key. It is consumed in-process and removed by cleanup.
+  set -a
+  . "$work_dir/business.env"
+  set +a
+  BUSINESS_QA_BASE_URL="http://127.0.0.1:${port}" \
+  BUSINESS_QA_ADMIN_PASSWORD="$(cat "$password_file")" \
+  BUSINESS_QA_MODEL="$BUSINESS_QA_MODEL" \
+  BUSINESS_QA_API_KEY="$BUSINESS_QA_API_KEY" \
+  BUSINESS_QA_IMAGE_REQUEST_FILE="$BUSINESS_QA_IMAGE_REQUEST_FILE" \
+  BUSINESS_QA_TTS_REQUEST_FILE="$BUSINESS_QA_TTS_REQUEST_FILE" \
+  BUSINESS_QA_TASK_REQUEST_ID="$BUSINESS_QA_TASK_REQUEST_ID" \
+  BUSINESS_QA_TASK_RESERVATION_ID="$BUSINESS_QA_TASK_RESERVATION_ID" \
+  BUSINESS_QA_TASK_ATTEMPT_ID="$BUSINESS_QA_TASK_ATTEMPT_ID" \
+  BUSINESS_QA_TASK_SOURCE_ID="$BUSINESS_QA_TASK_SOURCE_ID" \
+  BUSINESS_QA_TASK_MODEL_ID="$BUSINESS_QA_TASK_MODEL_ID" \
+  BUSINESS_QA_TASK_PROFILE_VERSION="$BUSINESS_QA_TASK_PROFILE_VERSION" \
+  BUSINESS_QA_TASK_SCHEMA_ID="$BUSINESS_QA_TASK_SCHEMA_ID" \
+  BUSINESS_QA_TASK_SCHEMA_DIGEST="$BUSINESS_QA_TASK_SCHEMA_DIGEST" \
+  BUSINESS_QA_REALTIME_URL="$BUSINESS_QA_REALTIME_URL" \
+  BUSINESS_QA_REALTIME_ORIGIN="$BUSINESS_QA_REALTIME_ORIGIN" \
+  BUSINESS_QA_FAIL_ON_SKIP=true \
+    "$repo_dir/scripts/deployment-business-qa.sh"
+fi
 
 echo "restarting app and worker"
 run_compose restart app worker

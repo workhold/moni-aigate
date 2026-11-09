@@ -1,15 +1,23 @@
 # 统一计量与共同值域（028-U）
 
 2026-11-08。共同纯领域已接入当前文本模型的报价、预占、结算和终态投影。候选024只安装空库、不转换已有历史。请求和尝试保存原四条界行；UUID档案与64位小写hex HMAC就绪时写入计划、外层inference报价及纯核bounds/rates/QuoteDigest，未就绪时这些canonical/digest同空。6a–6d 已接入完整发布operation、读端、客户R/结算/capability/route complete guard、非零route_revision边界和受限APP六协议局部链；本日又补齐每个 route binding 的 supplier cap 0/2 条完整性提交边界，并把 Reserve/finish 的 funding-lot 写集改为纯投影后单批次发送。超预占 profile block/audit 同样采用单 batch，过期 unknown 恢复和幂等一次收费已扩至六协议专项。默认/组价组合、一次退款来源专项也已通过55439验证。用量事件绑定真实attempt，采用inference Observation；人工核对收费提交现只接受绑定原请求 schema 的完整 `retail_quantities`，proposal 保存 canonical/digest，HTTP/UI不再接受两列 token 输入。028-U完整存储/HTTP/UI/商业出口、浏览器和生产验收尚未收口。
+
+2026-11-09 当前媒体状态校正：Realtime 的 tenant-bound PostgreSQL persistence 已写入 session、turn、event 及 provider session/turn identity，新的 adapter 可在进程重启后继续原 Receive/Cancel/Settle。异步 task 已接统一媒体 Reserve/Attempt/Observe/Settle，worker 重启和制品正文重读专项已通过；上一段以及后续历史记录中“未接 writer/账务/正文”的文字属于当日中间状态，不是当前实现状态。
+
+2026-11-09 Realtime binding guard 续片：数据库 turn guard 按来源类型闭合 request/reservation/attempt 三元组。相同 request ID 下混用文本 reservation 与 media attempt，或 media reservation 与文本 attempt，均在 INSERT 时拒绝并回滚。该 guard 保护当前两种已接入事实集合，不把它们合并成第三套账务路径。
+
+2026-11-09 task 引用续片：请求详情沿原 request snapshot 返回 profile、reservation、首个 attempt，资金详情返回 funding lot/source identity，供当前 task 合同使用。读取仍经过租户和 owner/member 规则，不把 task 创建改成客户端自造钱包或 attempt。
+
+当前 U guard 专项已增加 55439 PostgreSQL 负控矩阵，覆盖跨租户/跨 request-attempt、不可变快照与最终证据、Observation 来源闭集、成本指针互斥、资金边界回滚和计量角色 ACL。该专项补强当前迁移的实证边界，完整九组 guard、历史金融拒迁和目标环境权限验收仍未完成。
 2026-11-08 续片：024 的请求记录触发器现在把 `request_hmac`、`streaming` 和 `route_revision` 纳入不可变报价身份，固定函数搜索路径并撤销 PUBLIC 执行。人工核对服务层把 `settle` 明确映射为账务 `propose`，避免空动作进入账务入口。上述是当前入口守卫和错误映射的局部修复，attempt/supplier quote 完整守卫、028-U九组完整guard与完整商业出口仍按任务清单验收。
 
-2026-11-08 媒体扩展开发续片：当前 024 追加任务/实时关系只保存绑定、状态、事件和制品元数据，不保存媒体正文、不创建第二钱包或结算表；APP 的状态写权限由 `ProvisionFor` 独立收紧。S/A/R service 接口把原 request/reservation/attempt/settlement 引用作为外部事实传入，provider unknown 进入不可重发边界。该片仍属于开发接缝，HTTP/WS、mock provider、真实账务金额和结果交付尚未接线。
+2026-11-08 媒体扩展开发续片：当前 024 追加任务/实时关系只保存绑定、状态、事件和制品元数据，不创建第二钱包或结算表；APP 的状态写权限由 `ProvisionFor` 独立收紧。S/A/R service 接口把原 request/reservation/attempt/settlement 引用作为外部事实传入，provider unknown 进入不可重发边界。后续纵向接线已将这些接口接入当前 HTTP/WS、mock provider、账务和制品正文路径，下面的 2026-11-09 记录为当前状态。
 
-2026-11-08 媒体商业入口续片：024 追加 `media_model_profiles` 与当前媒体 request/attempt/observation/reservation/settlement 及 funding-lot edge。`internal/billing/media.go` 复用既有账本账户锁、FIFO lot 投影、journal 和 wallet event validator，图片/TTS HTTP 在有数据库的 Server 上走同一 Reserve→Attempt→Observe→Settle 入口，unknown 提交终止且不重发；Realtime 单 turn 同样接入 `realtime_turn` media profile，未接数据库 session/turn writer。media task 仍是引用既有外部商业事实的开发入口，尚未接统一账务和重启闭环。
+2026-11-08 媒体商业入口续片：024 追加 `media_model_profiles` 与当前媒体 request/attempt/observation/reservation/settlement 及 funding-lot edge。`internal/billing/media.go` 复用既有账本账户锁、FIFO lot 投影、journal 和 wallet event validator，图片/TTS HTTP 在有数据库的 Server 上走同一 Reserve→Attempt→Observe→Settle 入口，unknown 提交终止且不重发；Realtime 单 turn 同样接入 `realtime_turn` media profile。异步 task 也已接入同一账务链并由独立 worker 驱动，结果正文写入受保护 artifact 表。
 
-异步任务入口续片：`/v1/tasks` 当前要求客户端携带已经存在的 request、reservation、attempt、funding source 和不可变 profile/schema 身份，再写入 `media_tasks`。状态查询和提交使用相同 task identity，未知提交通过任务状态机阻止再次生成。该入口是当前开发接缝，尚未完成 Reserve/Attempt/Observe/Settle 的统一账务调用和独立 worker。
+异步任务入口续片：`/v1/tasks` 当前要求客户端携带已经存在的 request、reservation、attempt、funding source 和不可变 profile/schema 身份，再写入 `media_tasks`。创建时通过 `ReserveMedia` 建立 video media reservation/attempt，状态查询和提交使用相同 task identity，未知提交通过任务状态机阻止再次生成，终态通过 `FinalizeMedia` 收口。独立 worker 只使用当前 lease 和 adapter，不直接取得 payment worker 或计量函数权限。
 
-异步 worker 续片：任务 lease 与 task 状态保存在同一当前表，claim 时使用 PostgreSQL 行锁和过期 lease 条件，状态操作完成后释放 lease。`tasks.Worker` 只操作任务和 provider adapter，不自行写 wallet 或 settlement，账务接缝仍由集成层补齐。
+异步 worker 续片：任务 lease 与 task 状态保存在同一当前表，claim 时使用 PostgreSQL 行锁和过期 lease 条件，状态操作完成后释放 lease。`tasks.Worker` 通过 server 的 tenant-scoped adapter 操作任务和 provider，账务收尾仍由集成层完成，worker 不自行绕过状态机写 wallet 或 settlement。
 
 规格入口：[总体](../../specs/028-unified-metering-media/spec.md)、[共同域精确合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md)。当前经营/资金链分别见[026报表](operating-reports.md)与[027来源](wallet-sources.md)。
 
@@ -97,4 +105,6 @@ Observation必须绑定原tenant/request/attempt/profile/schema/variant/plan。�
 
 当前媒体写链继续只有一套 `Profile → Plan/Bound → Reserve → Attempt → Observe → Settle`。异步 `video_generation` 在 HTTP 创建时复用 `media_model_profiles` 和 `billing.ReserveMedia`，worker 通过租户 scoped adapter 在 submit 前进入 sending，并把终态 observation 收口到 `FinalizeMedia`。submission unknown、失败、取消和过期不重发模型请求。同步图片与 TTS 结算后追加不可变 `media_result_artifacts`，重置进程内缓存后仍按原租户、用户、Key、request/idempotency 读取结果。
 
-Realtime 在有数据库的 Server 路径按 tenant 绑定的 PostgreSQL persistence 写入 session、turn、event 三张现有表，复用原 request/reservation/attempt/source 引用，事件重复和状态转移不旁路账务。报表只读接入媒体 request、唯一 settlement 与全部 attempt，`raw_amount` 不当作供应商成本。异步制品正文在 `media_task_artifacts.body` 中一次性落库，后续新 Store/新 grant 直接读取正文；deterministic mock provider 可从 task ID 恢复观察，避免 worker 重启重新 submit。当前证明来自 55439 迁移、角色、billing、server、reporting、task artifact restart 和 realtime 定向 race，仍不覆盖真实供应商 task handle、provider session 恢复、对象存储、独立 worker 容器重启、浏览器和生产供应商。
+任务的当前纵向专项采用 HTTP-first。公开 request detail/funding 读端提供原引用，`/v1/tasks` 再创建持久 task，后续 worker、重启、失败和 unknown 断言继续复用现有 media billing。
+
+Realtime 在有数据库的 Server 路径按 tenant 绑定的 PostgreSQL persistence 写入 session、turn、event 三张现有表，复用原 request/reservation/attempt/source 引用，并持久化 provider session ID、turn handle、dispatch unknown 和 cancel 状态。新的 persistence/adapter 已验证 Receive→Settle 不重新 Dispatch。报表只读接入媒体 request、唯一 settlement 与全部 attempt，`raw_amount` 不当作供应商成本。异步制品正文在 `media_task_artifacts.body` 中一次性落库，后续新 Store/新 grant 直接读取正文；deterministic mock provider 可从 task ID 恢复观察，避免 worker 重启重新 submit。当前证明来自 55439 迁移、角色、billing、server、reporting、task artifact restart、realtime restart race 和 Docker Compose QA，仍不覆盖真实供应商 task handle、1Panel、对象存储、浏览器和生产供应商。

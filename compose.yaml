@@ -112,5 +112,20 @@ services:
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
+
+  qa-provider:
+    profiles: [business-qa]
+    image: python:3.12-alpine
+    command: [python3, /opt/moni/deployment-qa-provider.py]
+    volumes:
+      - ./scripts/deployment-qa-provider.py:/opt/moni/deployment-qa-provider.py:ro
+    healthcheck:
+      test: [CMD, python3, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 2s
+    restart: unless-stopped
+
 volumes:
   postgres-data:

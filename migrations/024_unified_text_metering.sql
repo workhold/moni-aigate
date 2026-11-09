@@ -2285,7 +2285,7 @@ CREATE TRIGGER media_task_event_immutable BEFORE UPDATE OR DELETE ON media_task_
 
 CREATE TABLE realtime_sessions (
  tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), actor_id text NOT NULL, api_key_id text NOT NULL, model_id text NOT NULL, profile_version text NOT NULL, route_id text NOT NULL, origin text NOT NULL CHECK(origin ~ '^https?://[^/?#:@]+(:[0-9]+)?$'),
- state text NOT NULL DEFAULT 'opening' CHECK(state IN ('opening','open','draining','closed')), expires_at timestamptz(6) NOT NULL CHECK(isfinite(expires_at)), max_turns integer NOT NULL DEFAULT 100 CHECK(max_turns BETWEEN 1 AND 100), created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
+ state text NOT NULL DEFAULT 'opening' CHECK(state IN ('opening','open','draining','closed')), provider_session_id text CHECK(provider_session_id IS NULL OR length(provider_session_id) BETWEEN 1 AND 512), expires_at timestamptz(6) NOT NULL CHECK(isfinite(expires_at)), max_turns integer NOT NULL DEFAULT 100 CHECK(max_turns BETWEEN 1 AND 100), created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
  PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,id,model_id,profile_version,route_id),
  FOREIGN KEY(tenant_id,actor_id) REFERENCES memberships(tenant_id,user_id) DEFERRABLE INITIALLY DEFERRED,
  FOREIGN KEY(tenant_id,api_key_id) REFERENCES api_keys(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
@@ -2298,6 +2298,7 @@ DECLARE profile_model text; route_model text;
 BEGIN
  IF TG_OP='UPDATE' THEN
   IF ROW(NEW.tenant_id,NEW.id,NEW.actor_id,NEW.api_key_id,NEW.model_id,NEW.profile_version,NEW.route_id,NEW.origin,NEW.expires_at,NEW.max_turns,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.actor_id,OLD.api_key_id,OLD.model_id,OLD.profile_version,OLD.route_id,OLD.origin,OLD.expires_at,OLD.max_turns,OLD.created_at) THEN RAISE EXCEPTION 'realtime session identity is immutable'; END IF;
+  IF OLD.provider_session_id IS NOT NULL AND NEW.provider_session_id IS DISTINCT FROM OLD.provider_session_id THEN RAISE EXCEPTION 'realtime provider session identity is immutable'; END IF;
   IF NOT ((OLD.state='opening' AND NEW.state='open') OR (OLD.state='open' AND NEW.state='draining') OR (OLD.state='draining' AND NEW.state='closed') OR NEW.state=OLD.state) THEN RAISE EXCEPTION 'invalid realtime session state transition'; END IF;
   RETURN NEW;
  END IF;
@@ -2311,27 +2312,34 @@ CREATE TRIGGER realtime_session_immutable BEFORE DELETE ON realtime_sessions FOR
 
 CREATE TABLE realtime_turns (
  tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), session_id text NOT NULL, ordinal bigint NOT NULL CHECK(ordinal>0),
- request_id text NOT NULL, reservation_id text NOT NULL, attempt_id text NOT NULL, state text NOT NULL DEFAULT 'reserved' CHECK(state IN ('reserved','sending','receiving','finalizing','pending','settled','released')),
+ request_id text NOT NULL, reservation_id text NOT NULL, attempt_id text NOT NULL, state text NOT NULL DEFAULT 'reserved' CHECK(state IN ('reserved','sending','receiving','finalizing','pending','settled','released')), provider_handle text CHECK(provider_handle IS NULL OR length(provider_handle) BETWEEN 1 AND 512), dispatch_unknown boolean NOT NULL DEFAULT false, cancel_requested boolean NOT NULL DEFAULT false,
  response_reference text, created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
  PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,session_id,ordinal), UNIQUE(tenant_id,id,session_id),
- FOREIGN KEY(tenant_id,session_id) REFERENCES realtime_sessions(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
- FOREIGN KEY(tenant_id,request_id) REFERENCES request_records(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
- FOREIGN KEY(tenant_id,reservation_id) REFERENCES reservations(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
- FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES upstream_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED
+ CONSTRAINT realtime_turn_session_fk FOREIGN KEY(tenant_id,session_id) REFERENCES realtime_sessions(tenant_id,id) DEFERRABLE INITIALLY DEFERRED
 );
 CREATE FUNCTION realtime_turn_guard() RETURNS trigger LANGUAGE plpgsql AS $$
-DECLARE session_state text; session_tenant text; reserved_request text; attempt_request text;
+DECLARE session_state text; session_tenant text; reserved_request text; attempt_request text; reserved_media boolean := false; attempt_media boolean := false;
 BEGIN
  IF TG_OP='UPDATE' THEN
   IF ROW(NEW.tenant_id,NEW.id,NEW.session_id,NEW.ordinal,NEW.request_id,NEW.reservation_id,NEW.attempt_id,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.session_id,OLD.ordinal,OLD.request_id,OLD.reservation_id,OLD.attempt_id,OLD.created_at) THEN RAISE EXCEPTION 'realtime turn identity is immutable'; END IF;
+  IF OLD.provider_handle IS NOT NULL AND NEW.provider_handle IS DISTINCT FROM OLD.provider_handle THEN RAISE EXCEPTION 'realtime provider handle is immutable'; END IF;
   IF NEW.state IS DISTINCT FROM OLD.state AND NOT ((OLD.state='reserved' AND NEW.state IN ('sending','released')) OR (OLD.state='sending' AND NEW.state IN ('receiving','pending')) OR (OLD.state='receiving' AND NEW.state IN ('finalizing','pending')) OR (OLD.state='finalizing' AND NEW.state IN ('settled','pending')) OR (OLD.state='pending' AND NEW.state IN ('settled','released'))) THEN RAISE EXCEPTION 'invalid realtime turn state transition'; END IF;
   IF OLD.response_reference IS NOT NULL AND NEW.response_reference IS DISTINCT FROM OLD.response_reference THEN RAISE EXCEPTION 'realtime response identity is immutable'; END IF;
   RETURN NEW;
  END IF;
  SELECT state,tenant_id INTO session_state,session_tenant FROM realtime_sessions WHERE tenant_id=NEW.tenant_id AND id=NEW.session_id;
  SELECT request_id INTO reserved_request FROM reservations WHERE tenant_id=NEW.tenant_id AND id=NEW.reservation_id;
+ IF NOT FOUND THEN
+  SELECT q.id INTO reserved_request FROM media_reservations r JOIN media_requests q ON q.tenant_id=r.tenant_id AND q.id=r.request_id
+   WHERE r.tenant_id=NEW.tenant_id AND r.id=NEW.reservation_id AND q.id=NEW.request_id AND q.operation='realtime_turn';
+  reserved_media := FOUND;
+ END IF;
  SELECT request_id INTO attempt_request FROM upstream_attempts WHERE tenant_id=NEW.tenant_id AND id=NEW.attempt_id;
- IF session_state IS DISTINCT FROM 'open' OR session_tenant IS NULL OR reserved_request IS DISTINCT FROM NEW.request_id OR attempt_request IS DISTINCT FROM NEW.request_id THEN RAISE EXCEPTION 'realtime turn binding mismatch'; END IF;
+ IF NOT FOUND THEN
+  SELECT request_id INTO attempt_request FROM media_attempts WHERE tenant_id=NEW.tenant_id AND id=NEW.attempt_id;
+  attempt_media := FOUND;
+ END IF;
+ IF session_state IS DISTINCT FROM 'open' OR session_tenant IS NULL OR reserved_request IS DISTINCT FROM NEW.request_id OR attempt_request IS DISTINCT FROM NEW.request_id OR reserved_media IS DISTINCT FROM attempt_media THEN RAISE EXCEPTION 'realtime turn binding mismatch'; END IF;
  RETURN NEW;
 END $$;
 CREATE FUNCTION realtime_turn_inflight_guard() RETURNS trigger LANGUAGE plpgsql AS $$

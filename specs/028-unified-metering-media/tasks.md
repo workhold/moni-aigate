@@ -12,7 +12,7 @@
 - [ ] 并行改造provider、catalog/pricing/routing、billing/procurement与HTTP/UI，最终原子切换；移除在线scalar公式及旧内部DTO，不启用双运行。6a 已将默认/组价/采购发布接入完整向量 operation、指纹和不可变回执，6b 已切报表与采购读端，6c 已切当前准入/路由/账务复验，6d 已覆盖受限APP的局部商业链；本轮又将人工核对提交切为绑定原请求 schema 的完整 `retail_quantities`，删除 HTTP/UI 的 `input_tokens/output_tokens` 输入并为 proposal 增加 canonical/digest guard；仍有完整guard、其余公开/私有出口、浏览器和生产部署验收待完成。
 - [ ] 受限APP下六文本完整商业链：当前已通过六协议 paid/known-zero、unknown政策、组价HTTP回放、默认/组价六协议组合、等待期间原价/不重发、标量读取禁用、一次退款审批/重复审批和027来源一致性、过期未知用量恢复不重生成，以及本轮六协议超界/客户人工核对/供应商 unknown 反例专项；真实 supplier late、完整出口矩阵、浏览器和生产 LOGIN 仍未形成验收闭包。
 - [x] 026经营报表按原请求快照增加协议/执行种类/schema/variant元数据及对应筛选/CSV/UI；金额沿原结算/attempt事实，不从向量重算。2026-11-04 请求明细从不可变请求行读取 protocol/execution_kind，从 `request_meter_snapshots` 读取 profile/schema/variant；缺失留空，不回填当前模型，也不默认成 Chat。筛选、JSON、CSV 末尾六列和报表页同步。金额仍是原结算一次、全部尝试成本。
-- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；本轮向量核对片的专项已通过，完整U语义复核、全仓回归和提交仍待完成；未验外部供应商/目标部署单列。
+- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；2026-11-09 已完成当前代码的架构语义复核、架构快照刷新、迁移/operations/billing/server/task/realtime 顺序 race 专项、整仓编译、vet、前端336项测试和构建，并完成本机 Compose 五条业务链实跑。完整U guard/商业出口、全仓同专库 race、外部供应商/目标部署仍未闭合，提交推送待用户授权。
 
 U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先去重；共同算法支持候选最大界和收紧不表示已发布异构profile路由。多profile路由的绑定身份与参数兼容须另行设计。人工核对绑定原attempt、只确认客户用量，不能据此确认供应商采购。
 
@@ -78,6 +78,22 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 2026-11-08 当前 MVP 报表续片：经营报表把 `media_requests`、唯一 `media_settlements` 和全部 `media_attempts` 纳入同一只读快照。媒体收入只按 request 计一次，当前没有供应商成本字段时保留 unknown，不把 `raw_amount`解释为成本；支持 media operation、同步/异步 execution_kind 和安全模型筛选。报表接缝已通过 55439 race，但任务/实时完整写入、供应商成本和浏览器验收仍未完成。
 
 2026-11-09 异步任务重启续片：`media_task_artifacts` 现在在成功 metadata 后支持一次性写入并校验正文 SHA-256，Postgres Store 读取已保存正文时不再调用 provider。新的 Store、新 grant 和拒绝下载 provider 已验证正文跨进程读取；新的 worker/provider adapter 可从持久 task 状态观察并结算一次，不重新提交生成。该片仍使用 deterministic mock provider，真实供应商 task handle、对象存储和容器重启验收仍未完成。
+
+2026-11-09 Realtime 重启与 Compose 续片：`realtime_sessions` 持久化 provider session identity，`realtime_turns` 持久化 provider handle、dispatch unknown 和 cancel 状态；新的 persistence/adapter 已验证 Receive→Settle 不重复 Dispatch。`scripts/deployment-qa.sh` 在 Docker daemon、PostgreSQL 16.15、本地构建镜像和临时 Compose 项目中通过空库迁移两次、provision 两次、bootstrap、防重复 bootstrap、app/worker 启动、live/ready、app/worker/PostgreSQL 重启。目标 1Panel、真实供应商、浏览器和真实业务调用仍未验收。
+
+2026-11-09 Realtime HTTP/媒体绑定续片：新增 55439 真实 HTTP/WebSocket 专项，覆盖 API Key、单 session/单 turn、输入/响应事件、UUID event、重复 charge event 幂等、provider 调用次数、Realtime 持久化和 media settlement。修正 024 的 turn binding guard，使文本 turn 严格绑定 `request_records/reservations/upstream_attempts`，Realtime 媒体 turn 严格绑定 `media_requests/media_reservations/media_attempts`，禁止两套事实跨接；复用 `ReserveMedia` 返回的真实 reservation/attempt identity。该专项通过，真实供应商、浏览器和完整六文本/媒体商业出口仍未验收。新增 `scripts/deployment-business-qa.sh` 只做已部署环境的 health/auth/model/text smoke，并明确不伪造 wallet、任务商业引用或 WebSocket 结果。
+
+2026-11-09 Realtime guard 反例续片：在 55439 真实 PostgreSQL 上验证同一 request ID 下，media reservation + text attempt、text reservation + media attempt 两种混接均在 turn INSERT 时回滚，session/turn 无残留。该证据补强双来源绑定边界，不替代完整 028-U guard matrix、六协议商业出口或部署业务验收。
+
+2026-11-09 异步任务引用可发现性续片：客户请求详情现在返回原不可变 `profile_version`、`reservation_id` 和首个 `attempt_id`，资金详情继续返回可用于 task `source_id` 的 funding lot identity。新增 55439 HTTP 专项验证文本请求后这些事实按租户 owner 规则可读取，未暴露凭据或供应商正文。task API 仍要求沿该原事实提交，未知引用不会被服务端伪造。
+
+2026-11-09 异步任务公开链续片：`TestVideoTask*` 集成夹具已改为通过 owner-scoped `/api/requests/:id` 和 `/api/requests/:id/funding` 获取 task 引用，再调用 `/v1/tasks`、submit、observe、cancel 和重启恢复路径。55439 race 通过，任务仍沿原 media wallet settlement，不新增第二钱包或内部 SQL 旁路。
+
+2026-11-09 U guard 矩阵续片：新增 55439 PostgreSQL race 专项，覆盖跨租户和跨 request/attempt 绑定、snapshot/bounds/quantity/observation/finalization 不可变、观察来源与错误 attempt、成本来源指针互斥、资金边界、失败根事务回滚，以及计量表和 `meter_%` 函数的 app/projector/payment-worker/PUBLIC 权限。该矩阵补的是当前 024 的负控证据，完整九组 guard 和旧金融事实拒迁仍保持未勾。
+
+2026-11-09 Compose 业务 profile 续片：新增显式 `business-qa` mock provider、HTTP provisioning 脚本和部署 smoke 自测入口。profile 默认关闭，不改变生产 Compose；provision 通过管理 HTTP API 创建当前模型、mock 渠道、路由、默认价、租户、双人充值和客户 Key。`DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 现在可以在同一临时 Compose 项目中执行 provisioning 和文本 smoke；图片/TTS/任务/Realtime 的 Compose 实跑仍未勾选。
+
+2026-11-09 Compose 业务 profile 实跑续片：在同一临时 Compose 项目中实际通过文本、图片、TTS、异步 video task 创建/幂等提交/worker 完成/结果下载和 Realtime WebSocket session/turn，随后 app/worker 与 PostgreSQL 重启恢复通过。该证据使用 deterministic mock provider，只闭合本机开发 Compose 主链；正式供应商、浏览器、1Panel、HA、性能和支付生产验收仍未完成。修复了 APP SELECT-only 媒体档案的锁读、媒体约束函数执行权限和 task store 对 LATERAL 外连接的错误锁目标。
 
 ## S / A / R / 交付
 

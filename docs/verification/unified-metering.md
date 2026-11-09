@@ -1,5 +1,44 @@
 # 028-U统一计量验证
 
+## 2026-11-09：Realtime HTTP/媒体绑定与部署业务 smoke 边界
+
+使用 `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable'` 的 55439 专库通过：
+
+- `go test -count=1 -race -timeout 180s ./migrations -run 'TestUnifiedTextMeteringCanonical|TestMeterCompletenessRejectsGaps'`
+- `go test -count=1 -race -timeout 240s ./internal/server -run '^TestRealtimeHTTPPostgresOneSessionOneTurn$'`
+- `go test -count=1 -race -timeout 240s ./internal/server -run '^TestPostgresRealtimePersistenceLifecycleAndTenantIsolation$'`
+- `go test -count=1 -race -timeout 300s ./internal/server -run '^TestPostgresRealtimeTurnRejectsMixedCommercialFactSets$'`
+- `go test -count=1 -race -timeout 300s ./internal/server -run '^TestCustomerRequestDetailExposesTaskReferenceFacts$'`
+
+HTTP/WebSocket 专项实际验证 API Key 鉴权、一个数据库 session、一个 media-backed turn、输入/响应事件、重复 charge event 不重复 Dispatch、provider identity 落库和唯一 media settlement。024 的 realtime turn guard 现在严格接受文本三表或 realtime media 三表其中一套，禁止跨套拼接。`scripts/deployment-business-qa.sh --help` 和 `bash -n scripts/deployment-business-qa.sh` 通过。该脚本需要外部传入已创建的当前 API Key、模型和余额，不能在部署 smoke 中伪造客户钱包或商业引用；未声称已完成文本、图片、TTS、video 和 WebSocket 的部署业务调用。
+
+补充的 `TestPostgresRealtimeTurnRejectsMixedCommercialFactSets` 在同一 request ID 下分别尝试 media reservation/text attempt 与 text reservation/media attempt，两个 INSERT 都回滚且不留下 realtime turn。它只证明 Realtime 当前双事实集合的来源类型闭合。
+
+`TestCustomerRequestDetailExposesTaskReferenceFacts` 通过 owner-scoped HTTP 读取原 request 的 profile、reservation、attempt 身份，并从 request funding 读取 funding lot/source 身份。它只改善异步任务引用的可发现性，不改变 owner/member 隔离，也不替客户端补造 request、attempt 或资金事实。
+
+`TestVideoTask*` 任务集成夹具现在不再直接查询数据库拼装 task 请求，改为经公开 request detail/funding HTTP 读取引用，再验证 `/v1/tasks` 创建、幂等、submit、terminal settlement、artifact 重读、worker/provider restart、failure/cancel 和 unknown 不重发。
+
+新增 guard 矩阵通过：
+
+- `go test -count=1 -race -timeout 300s ./migrations -run '^TestUnifiedTextMeteringGuardMatrix$|^TestUnifiedTextMeteringGuardRoleMatrix$'`
+- `bash scripts/deployment-business-qa.test.sh`
+
+前者在 55439 专库覆盖当前 request/attempt/event/finalization/settlement 的跨租户、跨引用、不可变、观察来源、成本指针和资金边界负控，并核对 app/projector/payment worker/PUBLIC 的计量权限。后者验证部署业务 smoke 的严格 SKIP/FAIL 退出码、任务/Realtime 参数合同和无依赖 WebSocket 自测。它们仍不替代完整旧金融事实拒迁、真实供应商、浏览器或目标部署验收。
+
+新增 `scripts/deployment-qa-provider.py` 和 Compose `business-qa` profile，配套 `scripts/deployment-business-provision.sh` 通过管理 HTTP API 建立一次性模型、mock 渠道、路由、价格、租户、双人充值和客户 Key。后续在同一临时 Compose 项目中完成了五种业务调用实跑，见下一节。
+
+## 2026-11-09：Compose 业务 profile 五条链实跑
+
+使用本机 Docker daemon、PostgreSQL 16.15、本地构建镜像和一次性临时 Compose 项目执行：
+
+```sh
+DEPLOY_QA_BUSINESS=true DEPLOY_QA_PORT=18088 scripts/deployment-qa.sh
+```
+
+本次实跑完成空库迁移两次、角色 provisioning 两次、管理员 bootstrap 与重复 bootstrap 拒绝，随后由 HTTP provisioning 创建 mock 模型/渠道/路由/默认价、租户、双人充值和客户 Key。业务 smoke 在同一 App/Worker/PostgreSQL/`qa-provider` 项目中实际通过文本、图片、TTS、异步 video task 创建/幂等提交/worker 完成/结果下载和 Realtime WebSocket session/turn。之后 app/worker 重启和 PostgreSQL 重启恢复也通过。
+
+这是开发环境的 deterministic mock provider 验收，证明当前 Compose 主链可以闭合。它不替代正式供应商、浏览器、1Panel、HA、性能或支付生产验收。期间修正了 APP 对不可变 `media_model_profiles` 的锁读误用、媒体约束函数执行权限和 task store 对外连接 LATERAL 的锁目标。
+
 ## 2026-11-08：当前 MVP 任务、结果、实时与报表续片
 
 使用 `TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable'` 的 55439 专库通过：
@@ -10,8 +49,11 @@
 - `go test -count=1 -race ./internal/reporting ./internal/server -run 'TestPostgresReadOperatingReportIncludesMediaOnceAndLeavesCostUnknown|TestOperatingReport'`
 - `go test -count=1 -race ./internal/operations -run '^TestMeterRoleBoundary$'`
 - `go test -count=1 -race ./internal/server -run '^TestVideoTask(ArtifactSurvivesStoreAndProviderRestart|ObservationSurvivesWorkerProviderRestart)$'`
+- `go test -count=1 -race ./internal/server -run '^TestPostgresRealtimePersistenceLifecycleAndTenantIsolation$'`
 
 本片修正任务 PostgreSQL 事件 raw canonical 摘要、nullable provider/artifact 读取和 mock 制品结果窗口，新增 video task 的 media reservation/attempt/settlement、同步媒体结果持久化、异步 task 制品正文持久化、Realtime PostgreSQL session/turn/event writer 和媒体报表只读接缝。已验证新 Store、新 grant 和拒绝下载 provider 可读取已保存正文，新的 worker/provider adapter 观察不重复提交或结算。provider session、对象存储、独立 worker 容器重启、真实供应商、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未验收。
+
+Docker 临时部署验收在当前 Docker daemon 上通过 `DEPLOY_QA_PORT=18080 scripts/deployment-qa.sh`。本次使用镜像代理提供的 PostgreSQL 16.15 镜像并本地标记为 `postgres:16-alpine`，脚本实际完成构建、空库迁移两次、provision 两次、bootstrap 和重复 bootstrap 拒绝、app/worker 启动、live/ready、app/worker/PostgreSQL 重启。该证据属于本机临时 Compose，不能替代 1Panel、目标主机、浏览器业务调用或真实供应商验收。
 
 ## 2026-11-08：媒体当前 wallet 入口与 HTTP/WS 局部验收
 

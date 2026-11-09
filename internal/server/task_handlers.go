@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/identity"
-	"github.com/moni-ai/moni-aigate/internal/provider"
 	"github.com/moni-ai/moni-aigate/internal/tasks"
 )
 
@@ -32,11 +31,11 @@ func (s *Server) taskService(p identity.Principal) (*tasks.Service, error) {
 	if s.TaskStore == nil {
 		return nil, tasks.ErrInvalidInput
 	}
+	if s.TaskAdapter == nil {
+		return nil, errTaskMediaBillingUnavailable
+	}
 	worker := tasks.Actor{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID), Permission: tasks.PermissionTaskObserve | tasks.PermissionTaskRead | tasks.PermissionTaskCancel}
 	adapter := s.TaskAdapter
-	if adapter == nil {
-		adapter = provider.NewMockTaskAdapter()
-	}
 	billingAdapter, err := s.newTaskMediaAdapter(p, adapter)
 	if err != nil {
 		return nil, err

@@ -1051,6 +1051,8 @@ raw专项6顶层/92子项覆盖等价21列INSERT与原reservation companion、�
 
 MVP前的新功能按[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)只接现行正式schema及业务入口；不增加旧协议DTO、历史字段联合或新旧双运行适配。遇到未发布的数据模型调整，明确升级为开发库重建或一次性迁移，避免长期兼容分支。已隔离的proof候选不进入默认main/HTTP/worker，也不作为新功能依赖；后续采用新模型时须显式替换并清理旧实现。租户/资金/预算/用量正确性继续由领域事务和有意义的实际PG测试保证。
 
+2026-11-09 Realtime persistence 细节。`CreateSession` 写入 provider session identity，`SaveTurn` 写入 provider handle 及 dispatch/cancel 标志，数据库 guard 只允许从空值出生并拒绝后续改写。`LoadSession`、`LoadTurn` 以数据库值为准，`advanceRealtime*Tx` 在状态已相同的幂等写入中仍补齐尚未落库的 provider identity。新的 adapter 以稳定 handle 完成 Receive/Cancel/Settle，未知提交只保留未知状态。
+
 ## 当前请求窗口经营报表（026）
 
 [reporting.Read](../../internal/reporting/read.go)校验带时区起止时间和可选UUID，`[from,to)`最长31天；按数据库微秒精度向上取整边界以保持纳秒输入语义。一次Acquire和最多5秒工作context内开启RR READ ONLY，读取`clock_timestamp()`作为as_of与固定3s/5s设置，再按时间/ID倒序读取至多5001个request。超过5000返回零报告与`ErrRangeTooLarge`；其余只读这些ID的全部attempt，最多每请求两次。rows关闭排流，Rollback与必要Close共享独立5秒清理预算，健康idle才Release；清理错误同样清空结果。
@@ -1101,4 +1103,4 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 候选024及当前文本资金链已部分实施：纯核快照与inference计划/报价共享就绪门禁，观察绑定原attempt，成本投影绑定互斥finalization/correction原件；原四条界行、原价和唯一结算仍保持。当前目录读取不可变capability，历史夹具独立核原SQL并拒迁024。U当前仍每模型唯一capability；6d 的受限APP六协议链、默认/组价组合、退款来源和过期恢复不重生成已有局部验收，新增 route complete 结构守卫，但完整HTTP/UI、九组guard和商业出口总矩阵仍未收口。026元数据已从原请求快照扩展，收入一次/全部attempt成本不变。精确合同、能力状态及出口见[存储合同](../../specs/028-unified-metering-media/u-storage-contract.md)、[细图](../architecture/unified-metering.md)与[任务](../../specs/028-unified-metering-media/tasks.md)。
 ### 2026-11-08 当前媒体 MVP 接线状态
 
-`video_generation` HTTP 创建复用 `ReserveMedia`，任务 worker 在调用 provider 前执行 `MarkMediaAttemptSending`，终态由 `FinalizeMedia` 幂等收尾。图片/TTS 将已结算 inline bytes 写入 `media_result_artifacts`，异步制品正文在 `media_task_artifacts.body` 完整摘要校验后一次性写入，Realtime 的 tenant-bound persistence 写入 `realtime_sessions`、`realtime_turns`、`realtime_events`。这些入口的当前证据是 55439 专库定向 race，不能替代真实供应商 task handle、provider session恢复和生产供应商验收。
+`video_generation` HTTP 创建复用 `ReserveMedia`，任务 worker 在调用 provider 前执行 `MarkMediaAttemptSending`，终态由 `FinalizeMedia` 幂等收尾。task 提交前由请求详情和资金详情提供原 profile、reservation、attempt、source identity，Postgres writer 仍以 task identity guard 再核同租户原 request。图片/TTS 将已结算 inline bytes 写入 `media_result_artifacts`，异步制品正文在 `media_task_artifacts.body` 完整摘要校验后一次性写入，Realtime 的 tenant-bound persistence 写入 `realtime_sessions`、`realtime_turns`、`realtime_events`。Realtime turn guard 按来源类型闭合文本三表或 media 三表，不能以相同 request ID 拼接两套 reservation/attempt。上述入口的当前证据是 55439 专库定向 race，不能替代真实供应商 task handle、provider session恢复和生产供应商验收。

@@ -8,6 +8,16 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 **当前研发原则**：[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)采用单一现行模型，MVP 前优先架构完整与业务能力，不新增旧版本兼容、双写或自动回退。下面的隔离历史证明候选保留其事实与验证边界，暂不扩展，也不作为经营功能的前置依赖；它们没有接入默认服务。现行资金与租户正确性继续保持。
 
+**2026-11-09 当前状态校正**：下方 2026-11-08 的媒体开发记录按当时提交顺序保留，但其中“尚未接入”的描述已被后续纵向接线覆盖。当前 `POST /v1/images/generations`、TTS、`/v1/tasks`、独立 worker 和 `/v1/realtime` 已进入当前 server/worker 入口；图片/TTS、video task 和 Realtime 使用当前媒体 Reserve/Attempt/Observe/Settle，异步制品正文与 Realtime provider identity 已持久化。已通过的范围是 55439 专库与 mock provider 的定向 race，以及本机临时 Compose 的迁移/provision/bootstrap/live/ready/重启验收。真实供应商、对象存储、浏览器业务调用、1Panel 和完整 028-U guard/商业出口仍未完成。
+
+Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本 turn 必须使用文本 request/reservation/attempt 三表，media-backed turn 必须使用 media 三表，不能因为 request ID 相同而交叉组合。该边界已有 55439 反例测试，仍不等同完整 U guard matrix。
+
+当前 U guard 专项已补齐一组 55439 PostgreSQL 负控矩阵，覆盖跨租户/跨 request-attempt、不可变快照与最终证据、Observation 来源闭集、成本指针互斥、资金边界回滚和计量角色 ACL。它是当前迁移的实证扩展，完整九组 guard、历史金融拒迁和目标环境权限验收仍按任务清单开放。
+
+异步 task 的公开准备链现在可以从 owner-scoped request detail 读取原 profile、reservation、attempt 身份，资金页读取原 funding lot/source 身份，再按 task 合同提交。服务端仍校验这些引用属于同一租户和原 request，不把缺失引用转换成新的商业事实。
+
+当前 task 集成证据也经公开 HTTP 入口取得这些引用，再进入 `/v1/tasks` 和 worker 状态机。测试 fixture 不再用 owner SQL 直接拼接 task 请求，避免把内部数据库读取误当成用户可用能力。
+
 2026-11-08 028-U续片：人工核对收费提交已切为绑定原请求 schema 的完整 `retail_quantities` 向量，proposal 保存 canonical/digest，批准继续沿 approved_reconciliation 观察和原结算链且 supplier 保持 missing；HTTP/UI删除 `input_tokens/output_tokens` 输入，并新增旧标量、未知字段、重复键负控。此前受限APP六协议默认价/组价组合、退款来源一致性和过期未知用量恢复不重生成已在55439专库通过，验证包含唯一结算、原组价快照、退款边、钱包来源核对和单次上游POST。该证据仍是本地fixture的局部验收；完整guard、超界、浏览器、正式供应商和部署/HA/性能仍未完成。
 
 2026-11-08 008/028-U续片：024 的 route complete guard 现在要求每个 binding 的 supplier cap 为零条或完整两条文本 token 维度，单 cap 和跨 binding 半套在提交时回滚；Reserve/finish 的 funding-lot 写集先做纯余额投影，再按原 allocation 顺序一次批量发送。迁移 route-cap 矩阵和 billing 回滚/生命周期专项在55439通过；008剩余全链路故障、028-U完整guard/商业出口、浏览器、正式供应商和部署仍未验收。
@@ -393,7 +403,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 公开目录 | 默认私有、六协议安全DTO、单SQL时钟/公共默认域售价、公开CAS与匿名有界准入 | [public_catalog.go](../../internal/catalog/public_catalog.go)、[HTTP](../../internal/server/public_catalog.go)、[准入](../../internal/server/public_catalog_admission.go)、[020合同](../../specs/020-public-catalog/contracts.md)、[价格页](../../web/src/views/PricingView.vue) |
 | 路由 | 优先级/权重、健康隔离、采购比价与单价上限、渠道与成员双容量、候选解释 | [routing](../../internal/routing)、[成本策略](../../internal/routing/cost.go)、[018 合同](../../specs/018-cost-aware-routing/spec.md)、[路由决策集成验证](../../internal/server/route_decisions_integration_test.go) |
 | 协议与出口 | 请求约束、响应/usage 校验、SSE、SSRF/DNS/重定向限制 | [provider](../../internal/provider)、[协议合同](../../specs/001-commercial-mvp/contracts/provider.md) |
-| 同步图片 HTTP MVP（028-S） | 受限 inline PNG 生成、严格 JSON、API Key 结果所有权、内存幂等和未知消费终态；使用当前 mock adapter | [server handler](../../internal/server/image_handlers.go)、[media service](../../internal/media/service.go)、[HTTP 说明](../design/image-http-mvp.md)、[图片专项测试](../../internal/server/image_handlers_test.go) |
+| 媒体/任务/Realtime MVP（028-S/A/R） | 图片与 TTS 受限 inline 结果、统一 media Reserve/Attempt/Observe/Settle、持久任务与 worker lease、PostgreSQL session/turn/event、结果正文保护和 mock provider；真实供应商/浏览器/目标部署仍另验 | [媒体 handler](../../internal/server/image_handlers.go)、[TTS](../../internal/server/media_handlers.go)、[任务](../../internal/server/task_handlers.go)、[Realtime](../../internal/server/realtime.go)、[统一细图](unified-metering.md) |
 | 财务与恢复 | 客户硬预占、不可变证据、唯一结算/释放、成本、补偿、恢复/投影 | [billing](../../internal/billing)、[计费合同](../../specs/001-commercial-mvp/contracts/billing.md) |
 | 经营报表与对账（026/028接缝） | 当前请求创建窗口、模型消费收入/退款/毛利、全部文本与媒体attempt成本口径、请求级CSV；平台只读，同一有界快照，媒体attempt当前没有供应商成本时保留未知 | [reporting](../../internal/reporting)、[HTTP](../../internal/server/operating_reports.go)、[控制台](../../web/src/components/OperatingReport.vue)、[细图与口径](operating-reports.md)、[验证](../verification/operating-reports.md) |
 | 共同入账与双审券（022-A） | 人工核款/运营赠额唯一入账、六命令回执、独立HMAC、一次codes、来源查询与未知提交保护 | [funding](../../internal/billing/funding.go)、[核验](../../internal/billing/funding_verify.go)、[券命令](../../internal/billing/voucher_commands.go)、[安全查询](../../internal/billing/voucher_query.go)、[keyring](../../internal/security/voucher.go)、[HTTP](../../internal/server/commerce_handlers.go)、[017迁移](../../migrations/017_funding_vouchers.sql)、[证据](../verification/funding-vouchers.md) |
@@ -520,7 +530,7 @@ mock的16张自有表分为环境/版本/key、命令/processing/results、订�
 | OpenAI Embeddings | `POST /v1/embeddings` | 非流，受界限的批量输入；仅输入 token |
 | Jina Rerank | `POST /v1/rerank` | token 计费的非流检索重排；仅输入 token |
 | Gemini native | `POST /v1beta/models/{model}:generateContent` / `:streamGenerateContent` | 无状态纯文本 JSON/SSE；thinking 计入输出，cache 是输入子集 |
-| 图片生成 MVP | `POST /v1/images/generations`、`GET /v1/images/generations/{id}` | 受限 inline PNG；当前只接内存记录和 mock adapter，未接商业计量与结算 |
+| 图片生成 MVP | `POST /v1/images/generations`、`GET /v1/images/generations/{id}` | 受限 inline PNG；当前走 media profile、wallet reservation/settlement、artifact persistence 和 mock adapter |
 
 模型列表为 `GET /v1/models`。协议由显式发布的 profile 决定，模型上架不代表它的任何任意参数或端点都可以透传。当前不是全部 SDK/供应商认证：托管工具、多模态、Realtime、Gemini 工具和其他计费方式仍在后续范围。协议约束见[009 检索](../../specs/009-retrieval-protocols/spec.md)、[010 Gemini](../../specs/010-gemini-native/spec.md)及[provider 类型](../../internal/provider/types.go)。
 

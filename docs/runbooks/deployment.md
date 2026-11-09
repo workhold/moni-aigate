@@ -2,7 +2,7 @@
 
 交付的是可运行开发版，Compose 部署必须在目标主机完成构建、启动和重启验收。仓库提供了不依赖浏览器的临时环境验收脚本，脚本会创建独立项目名、随机秘密和 PostgreSQL 卷，并在退出时清理。正式发布前须完成[剩余验收](../verification/acceptance-execution.md)，特别是目标容量与选定真实渠道的usage契约。
 
-当前源码要求完整 **001–024** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染已验证，容器、1Panel 和正式供应商仍按目标环境分别验收。
+当前源码要求完整 **001–024** 迁移，并默认 `PAYMENTS_MODE=off`。下文标注旧规格编号的升级记录是历史说明；不能把旧迁移上限用于当前版本。Compose 配置渲染和本机临时容器启动/重启验收已通过，1Panel 和正式供应商仍按目标环境分别验收。
 
 
 当前024统一文本计量迁移仅接受空的当前计量/资金历史：遇到既有journal、receipt、预占/结算/退款/核款单、周期预算/支付事实或非零余额会拒绝并回滚。保留原库和备份，建立独立当前数据库后按完整迁移与provision初始化；不要删除历史、篡改checksum或导入伪造来源。旧C0维护证明是隔离研究，不能替代现行027开账命令。
@@ -67,7 +67,33 @@ docker compose up -d app worker
 scripts/deployment-qa.sh
 ```
 
-脚本默认使用宿主机 `127.0.0.1:18080`，可通过 `DEPLOY_QA_PORT=18081` 改变端口。它不使用浏览器、正式 `.env` 或已有 Compose 项目。构建、镜像拉取、PostgreSQL 启动、端口占用或 Compose/daemon 缺失会使验收失败，并保留失败前的服务状态和最近日志供诊断；成功时会清理临时卷。
+脚本默认使用宿主机 `127.0.0.1:18080`，可通过 `DEPLOY_QA_PORT=18081` 改变端口。它不使用浏览器、正式 `.env` 或已有 Compose 项目。构建、镜像拉取、PostgreSQL 启动、端口占用或 Compose/daemon 缺失会使验收失败，并保留失败前的服务状态和最近日志供诊断；成功时会清理临时卷。设置 `DEPLOY_QA_BUSINESS=true` 会额外启用 `business-qa` mock provider、HTTP provisioning 和五条业务 smoke，成功后仍会清理整个临时项目。当前脚本实际检查文本、图片、TTS、异步 task 结果下载和 Realtime WebSocket。
+
+对已经完成一次性配置的开发环境，可使用业务 smoke。它只读取现有客户 Key、模型和商业引用，不创建钱包、路由、价格、任务引用或供应商事实。缺少某条能力的输入时返回 `SKIP`，设置 `BUSINESS_QA_FAIL_ON_SKIP=true` 可把它提升为失败；不会把跳过写成通过。
+
+需要一次性建立可丢弃的内测数据时，启用 Compose 的 `business-qa` profile。该 profile 只加入一个显式的 Python mock 上游，不改变默认 Compose 服务或生产运行路径。provision 脚本通过管理 HTTP API 创建模型、渠道、路由、价格、租户、双人充值和客户 Key。
+
+```sh
+docker compose --profile business-qa up -d postgres migrate provision app worker qa-provider
+BUSINESS_QA_BASE_URL=http://127.0.0.1:18080 \
+BUSINESS_QA_ADMIN_PASSWORD='...' \
+scripts/deployment-business-provision.sh > /tmp/moni-aigate-business.env
+set -a; . /tmp/moni-aigate-business.env; set +a
+scripts/deployment-business-qa.sh
+```
+
+mock 上游只返回固定文本 usage，不能作为真实供应商或真实成本证据。内置 provisioning 会为临时租户建立任务所需的原 request/reservation/attempt/source 引用；独立运行业务 smoke 时，任务和 Realtime 检查仍要求显式提供这些引用或 WebSocket URL，缺少时会 SKIP。
+
+```sh
+scripts/deployment-business-qa.sh --help
+bash scripts/deployment-business-qa.test.sh
+BUSINESS_QA_BASE_URL=http://127.0.0.1:18080 \
+BUSINESS_QA_API_KEY='...' \
+BUSINESS_QA_MODEL='...' \
+scripts/deployment-business-qa.sh
+```
+
+图片/TTS、异步任务和 Realtime 只有在分别提供当前完整请求体、原 request/reservation/attempt/source/profile/schema 引用或 WebSocket URL 时才会执行。该脚本仍属于开发环境 smoke，不替代真实供应商、浏览器、1Panel 或生产部署验收。
 
 ## 升级与回滚
 
@@ -113,9 +139,11 @@ provision在同一事务配置并核验六表有效权限；serve在worker/HTTP�
 
 ## 自助身份配置与支付部署边界
 
-Compose 已透传 `AUTH_REGISTRATION_ENABLED`（默认 false）、`AUTH_PASSWORD_RESET_ENABLED`（默认 true）、`MAIL_TRANSPORT`（默认 disabled），以及 `SMTP_HOST`、`SMTP_PORT`、`SMTP_FROM`、`SMTP_USERNAME`、`SMTP_PASSWORD`、`SMTP_TLS_MODE`（默认 starttls）。启用邮件须同时配置正确 HTTPS `PUBLIC_ORIGIN`、实际 SMTP 地址/端口/发件人、配对用户名密码及供应商要求的 TLS 模式；使用受保护部署环境保存秘密。开关及邮件配置变更须重建 app 容器。默认部署不发送邮件，单独启用注册开关不能绕过有效证明和邮件流程。`docker-compose config --quiet` 与 `docker-compose build` 已在本次验收主机通过，Docker CLI 的 `compose` 子命令仍不可用，因此验收脚本会自动选择可用的 Compose 命令。PostgreSQL 镜像拉取因 Docker Hub TLS handshake timeout 阻断，容器启动、1Panel 和正式收件仍需在可拉取依赖的目标环境完成。
+Compose 已透传 `AUTH_REGISTRATION_ENABLED`（默认 false）、`AUTH_PASSWORD_RESET_ENABLED`（默认 true）、`MAIL_TRANSPORT`（默认 disabled），以及 `SMTP_HOST`、`SMTP_PORT`、`SMTP_FROM`、`SMTP_USERNAME`、`SMTP_PASSWORD`、`SMTP_TLS_MODE`（默认 starttls）。启用邮件须同时配置正确 HTTPS `PUBLIC_ORIGIN`、实际 SMTP 地址/端口/发件人、配对用户名密码及供应商要求的 TLS 模式；使用受保护部署环境保存秘密。开关及邮件配置变更须重建 app 容器。默认部署不发送邮件，单独启用注册开关不能绕过有效证明和邮件流程。`docker-compose config --quiet` 与 `docker-compose build` 已在本次验收主机通过，Docker CLI 的 `compose` 子命令仍不可用，因此验收脚本会自动选择可用的 Compose 命令。本机已通过镜像代理完成 PostgreSQL 16.15 容器验收，1Panel 和正式收件仍需目标环境完成。
 
-Compose 当前包含独立 `worker` 服务，执行 `moni-aigate worker`，使用与 app 相同的当前数据库和 task lease 运行异步任务状态机。该 worker 只写任务事实，未获得计量表、wallet 或 payment worker 权限。验收脚本为每次临时项目生成独立镜像标签和随机环境，避免改写其他项目的本地镜像标签；当前目标环境仍需完成真实容器启动和重启恢复。
+Compose 当前包含独立 `worker` 服务，执行 `moni-aigate worker`，使用与 app 相同的当前数据库和 task lease 运行异步任务状态机。该 worker 只写任务事实，未获得计量表、wallet 或 payment worker 权限。验收脚本为每次临时项目生成独立镜像标签和随机环境，避免改写其他项目的本地镜像标签；本机临时项目已完成 app/worker/PostgreSQL 启动与重启恢复，目标环境和 1Panel 仍需单独验收。
+
+2026-11-09 本机部署补验使用 Docker daemon 的 Colima profile，并从镜像代理取得 PostgreSQL 16.15 后标记为 `postgres:16-alpine`。`DEPLOY_QA_PORT=18080 scripts/deployment-qa.sh` 已完成临时项目构建、空库迁移两次、provision 两次、bootstrap/重复 bootstrap、防竞态 live/ready、app/worker 重启和 PostgreSQL 重启恢复。该证据不覆盖目标 1Panel、真实域名反代、浏览器业务调用或真实供应商。
 
 `PAYMENTS_MODE=off` 为常规部署默认。022-B3目前仅为 literal `127.0.0.1:55439/moni_test` 隔离本地模拟，要求成对私密 APP/worker manifest、精确 listener 与环境证明；常规 Compose 不透传这些文件或 worker DSN。不能用容器内 postgres 服务名替换目标后绕过证明。live 在连接前拒绝；带沙箱历史而缺原证明也拒绝启动。支付入口的已验范围见[应用支付证据](../verification/payment-application.md)，不是生产收款能力。来源 lot 维护、原路退款和后续生产方案仍按各自 SDD 门禁推进。
 

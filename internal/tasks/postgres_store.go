@@ -277,7 +277,7 @@ func (s *PostgresStore) Claim(ctx context.Context, kind WorkKind, worker ID, now
 	if _, err = tx.Exec(ctx, fmt.Sprintf(`UPDATE %s SET lease_id=$2,lease_worker_id=$3,lease_kind=$4,lease_until=$5 WHERE id=$1`, s.table("media_tasks")), taskID, leaseID.String(), worker.String(), kind, until); err != nil {
 		return WorkerLease{}, Task{}, References{}, err
 	}
-	task, refs, err := s.load(ctx, tx, `WHERE t.id=$1 FOR UPDATE`, taskID)
+	task, refs, err := s.load(ctx, tx, `WHERE t.id=$1 FOR UPDATE OF t`, taskID)
 	if err != nil {
 		return WorkerLease{}, Task{}, References{}, err
 	}

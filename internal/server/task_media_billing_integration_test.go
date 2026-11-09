@@ -40,22 +40,39 @@ func createVideoTask(t *testing.T, f *gatewayFixture, idempotency string) videoT
 	if requestID == "" {
 		t.Fatal("gateway request did not return a request id")
 	}
+	_ = response.Body.Close()
 	var input struct {
-		RequestID, ReservationID, AttemptID, SourceID   string
-		ModelID, ProfileVersion, SchemaID, SchemaDigest string
+		RequestID      string `json:"id"`
+		ReservationID  string `json:"reservation_id"`
+		AttemptID      string `json:"attempt_id"`
+		SourceID       string
+		ModelID        string `json:"model_id"`
+		ProfileVersion string `json:"profile_version"`
+		SchemaID       string `json:"schema_id"`
+		SchemaDigest   string `json:"schema_digest"`
 	}
-	if err := f.pool.QueryRow(context.Background(), `
-SELECT r.id,v.id,a.id,r.model_id,r.profile_version,s.schema_id,encode(s.schema_digest,'hex'),
-       (SELECT id FROM funding_receipts WHERE tenant_id=r.tenant_id ORDER BY created_at,id LIMIT 1)
-FROM request_records r
-JOIN reservations v ON v.tenant_id=r.tenant_id AND v.request_id=r.id
-JOIN upstream_attempts a ON a.tenant_id=r.tenant_id AND a.request_id=r.id
-JOIN request_meter_snapshots s ON s.tenant_id=r.tenant_id AND s.request_id=r.id
-WHERE r.tenant_id=$1 AND r.id=$2`, f.tenant, requestID).Scan(
-		&input.RequestID, &input.ReservationID, &input.AttemptID, &input.ModelID,
-		&input.ProfileVersion, &input.SchemaID, &input.SchemaDigest, &input.SourceID); err != nil {
+	owner := taskOwner(t, f)
+	session, csrf := authSession(t, f.server, f.pool, owner, f.tenant, false, true)
+	detail := authHTTP(t, f.server, http.MethodGet, "/api/requests/"+requestID, session, csrf, f.server.Config.Origin, nil)
+	if detail.Code != http.StatusOK {
+		t.Fatalf("request detail status=%d body=%s", detail.Code, detail.Body.String())
+	}
+	if err := json.Unmarshal(authData(t, detail), &input); err != nil {
 		t.Fatal(err)
 	}
+	funding := authHTTP(t, f.server, http.MethodGet, "/api/requests/"+requestID+"/funding", session, csrf, f.server.Config.Origin, nil)
+	if funding.Code != http.StatusOK {
+		t.Fatalf("request funding status=%d body=%s", funding.Code, funding.Body.String())
+	}
+	var fundingEnvelope struct {
+		Data []struct {
+			LotID string `json:"lot_id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(funding.Body.Bytes(), &fundingEnvelope); err != nil || len(fundingEnvelope.Data) == 0 || fundingEnvelope.Data[0].LotID == "" {
+		t.Fatalf("request funding did not expose a source lot: %s", funding.Body.String())
+	}
+	input.SourceID = fundingEnvelope.Data[0].LotID
 	body, err := json.Marshal(map[string]any{
 		"request_id": input.RequestID, "reservation_id": input.ReservationID, "attempt_id": input.AttemptID,
 		"source_id": input.SourceID, "model_id": input.ModelID, "profile_version": input.ProfileVersion,

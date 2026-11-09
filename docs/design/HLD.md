@@ -624,13 +624,15 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 026按原request创建窗口统计唯一收入/退款和全部attempt成本；opening不算销售收入。媒体/任务/实时将复用同一事实，不另开收入总账。供应商与部署验收独立记录；性能在完整能力后进行。
 
+2026-11-09 当前媒体 MVP 的运行事实继续落在统一链路。异步制品正文写入 `media_task_artifacts.body` 后由新 Store 和短期 grant 读取；Realtime 的 provider session ID、turn handle、dispatch unknown 和 cancel 状态写入当前 024 的 session/turn 表。进程内状态只保留队列和响应缓存，重启恢复依赖稳定 provider identity，不重新派发模型请求。当前证据是 55439 专库 race 和本机 Compose QA，真实供应商、对象存储、1Panel、浏览器业务调用仍单独验收。
+
 027的入账摘要与回执过滤统一为四来源，wallet_opening_amount是必填精确金额；开账只计钱包入账，不计模型销售收入。通用查询时间统一UTC并保留精度和分页instant；来源/分配UI保持严格校验。实际受限APP/worker/projector、HTTP、浏览器与经营CSV验证见[027记录](../verification/wallet-sources.md)。
 
 ## 028-U共同纯域与生产替换边界
 
-2026-11-08 028-S/A/R 纯域候选第一片：新增未发布同步图片结果边界、异步任务提交/观察/制品状态机以及实时 session/turn/ticket/event 纯模块，并通过各自 race/vet。它们是生产接线前的合同实现，不改变共享账务或计量事实；没有数据库 writer、HTTP/WS、provider adapter 或正式外部验收，不能据此把媒体能力标为完成。
+2026-11-08 028-S/A/R 纯域候选第一片：新增同步图片结果边界、异步任务提交/观察/制品状态机以及实时 session/turn/ticket/event 纯模块，并通过各自 race/vet。随后已接入当前数据库 writer、HTTP/WS、mock provider 和共享 media billing。正式供应商、浏览器和目标部署仍单独验收。
 
-2026-11-08 媒体商业入口续片：024 追加 media profile、request/attempt/observation、reservation/settlement 和 funding-lot edge，`billing/media.go` 复用当前 wallet journal 与 FIFO 来源图。图片/TTS HTTP 和有数据库的单 turn Realtime 接入该入口，未知提交终止且不重发；异步 video task、媒体正文持久化、数据库 session/turn writer、正式供应商和容器运行仍未验收。
+2026-11-08 媒体商业入口续片：024 追加 media profile、request/attempt/observation、reservation/settlement 和 funding-lot edge，`billing/media.go` 复用当前 wallet journal 与 FIFO 来源图。图片/TTS HTTP、异步 video task 和有数据库的单 turn Realtime 均接入该入口，未知提交终止且不重发；媒体正文和 session/turn/event 已持久化。正式供应商、浏览器、1Panel 和目标环境仍未验收。
 
 2026-11-05完整候选报价在线续片已将[routecost](../../internal/routecost/quote.go)按[存储4.2.2](../../specs/028-unified-metering-media/u-storage-contract.md)接入catalog/routing/普通billing：不可变原schema/default/channel/upstream/version/basis与supplier Rates、同schema精确有理cap、规范原件/摘要与完整相等性。删除routing.CostQuote/CostScore及内部两价cap；最高priority层内共用CompareExactCost，采购初筛共用ReservationAmount。原attempt/采购account与PB等待/派发复验一起切换，派发复用原最后锁后DB时刻，坏原件不降级成unknown，不变更原客户价/U或未就绪门禁。普通Store不再有prospective运行分支，显式ProspectiveStore独立保留原冻结13参输入，既不接受向量也不提升当前资金方法；历史研究SQL/pins不升级，依赖旧current运行时的历史组合只编译、未恢复业务oracle。6a–6d 已继续切换发布operation、读端、独立金额/结构guard、route complete 和非零route边界，并在55439完成catalog/billing/server/operations/migrations回归；受限SET ROLE APP六协议链、默认/组价组合、退款来源和过期恢复不重生成仍是局部验收，不等同于完整六文本商业出口、浏览器或生产部署验收。不新增资金事实、报价身份、金额算法或fallback，U生产项仍未勾。
 
@@ -652,4 +654,4 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 候选024已部分接入当前文本报价/预占/结算：请求与尝试保存共同计划、原报价和纯核快照，观察采用inference canonical，计划未就绪时相关canonical/digest同空。6c 已增加客户R、结算金额、capability完整性、route complete、route/binding出生及非零route_revision检查；6d 已有受限APP六协议局部链和HTTP读端证据。[存储合同](../../specs/028-unified-metering-media/u-storage-contract.md)与[消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)仍约束未完成的九组完整guard与商业出口矩阵。U仍每模型唯一capability；026元数据已从原请求快照接线，金额口径保持唯一收入/全部attempt成本。完整商业链及后续媒体未验收，出口见[阶段任务](../../specs/028-unified-metering-media/tasks.md)。
 ### 2026-11-08 当前媒体 MVP 接线状态
 
-当前图片、TTS 和 video task 复用同一媒体预占、attempt、观察和结算入口。Realtime 的数据库路径保存 session、turn、event，结果交付的 inline MVP 保存不可变媒体 artifact 并按原租户/用户/Key授权读取。异步制品正文写入现有任务 artifact 表，新的 Store 可在重启后读取而不重复下载 provider。报告只读媒体请求和唯一结算，媒体供应商成本缺失时保持 unknown。真实供应商和目标部署仍需独立验收。
+当前图片、TTS 和 video task 复用同一媒体预占、attempt、观察和结算入口。Realtime 的数据库路径保存 session、turn、event，结果交付的 inline MVP 保存不可变媒体 artifact 并按原租户/用户/Key授权读取。异步任务的原 profile、reservation、attempt 和 funding source 从 owner-scoped 请求/资金读端取得后提交，服务端再次核对原 request 绑定。异步制品正文写入现有任务 artifact 表，新的 Store 可在重启后读取而不重复下载 provider。Realtime turn 的 request/reservation/attempt 必须来自同一事实集合，文本集合与 media 集合不能跨接。报告只读媒体请求和唯一结算，媒体供应商成本缺失时保持 unknown。真实供应商和目标部署仍需独立验收。

@@ -135,8 +135,16 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 		s.writeRealtimeError(ws, err)
 		return
 	}
-	if billingRefs.attemptID == "" {
-		billingRefs.attemptID = refs.AttemptID
+	if billingRefs.enabled {
+		refs.RequestID = billingRefs.requestID
+		refs.ReservationID = billingRefs.reservationID
+		refs.AttemptID = billingRefs.attemptID
+	}
+	if refs.ReservationID == "" {
+		refs.ReservationID = uuid.NewString()
+	}
+	if refs.AttemptID == "" {
+		refs.AttemptID = uuid.NewString()
 	}
 	if billingRefs.enabled && billingRefs.existing && billingRefs.state != "prepared" {
 		_ = s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.pending", Data: map[string]any{"reason": "provider_consumption_unknown"}})

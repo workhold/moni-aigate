@@ -69,7 +69,11 @@ func (s *Store) ReserveMedia(ctx context.Context, in MediaReserveInput) (MediaRe
 	err := s.transaction(ctx, func(tx pgx.Tx) error {
 		var profileVersion string
 		var rate, maximum int64
-		if err := tx.QueryRow(ctx, `SELECT profile_version,rate_per_million,max_quantity FROM media_model_profiles WHERE model_key=$1 AND operation=$2 AND enabled FOR SHARE`, in.ModelKey, in.Operation).Scan(&profileVersion, &rate, &maximum); err != nil {
+		// The profile is immutable and the application role is intentionally
+		// SELECT-only on this table. PostgreSQL requires UPDATE for a FOR SHARE
+		// lock, so a locking read would violate the role boundary without adding
+		// protection to an immutable row.
+		if err := tx.QueryRow(ctx, `SELECT profile_version,rate_per_million,max_quantity FROM media_model_profiles WHERE model_key=$1 AND operation=$2 AND enabled`, in.ModelKey, in.Operation).Scan(&profileVersion, &rate, &maximum); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return fail("media_profile_unavailable", "media profile is not published")
 			}

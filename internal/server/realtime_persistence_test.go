@@ -119,14 +119,21 @@ func TestPostgresRealtimePersistenceLifecycleAndTenantIsolation(t *testing.T) {
 	if _, err = service.Dispatch(ctx, sessionID, turn.ID, realtime.ProviderPayload{EventID: event.ID, EventType: event.Type}, at.Add(4*time.Second)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = service.Receive(ctx, sessionID, turn.ID, at.Add(5*time.Second)); err != nil {
+	// A fresh persistence and provider adapter must recover the durable
+	// provider session/turn identities without dispatching a second turn.
+	restartedStore := newPostgresRealtimePersistence(f.pool, f.tenant)
+	restartedService, err := realtime.NewService(realtime.ServiceOptions{Store: restartedStore, Adapter: provider.NewMockRealtimeAdapter()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = restartedService.Receive(ctx, sessionID, turn.ID, at.Add(5*time.Second)); err != nil {
 		t.Fatal(err)
 	}
 	proof := realtime.SettlementProof{FinalizationID: uuid.NewString(), SettlementID: uuid.NewString(), RetailUsageDigest: strings.Repeat("a", 64), RetailUsageState: realtime.UsageConfirmedFinal, SupplierUsageState: realtime.UsageUnknown}
-	if err = service.Settle(ctx, sessionID, turn.ID, proof, at.Add(6*time.Second)); err != nil {
+	if err = restartedService.Settle(ctx, sessionID, turn.ID, proof, at.Add(6*time.Second)); err != nil {
 		t.Fatal(err)
 	}
-	if err = service.Settle(ctx, sessionID, turn.ID, proof, at.Add(7*time.Second)); err != nil {
+	if err = restartedService.Settle(ctx, sessionID, turn.ID, proof, at.Add(7*time.Second)); err != nil {
 		t.Fatalf("idempotent settle: %v", err)
 	}
 

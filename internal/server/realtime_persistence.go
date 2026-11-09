@@ -26,9 +26,10 @@ import (
 // that exists in another tenant.
 //
 // The database is authoritative for session, turn and event identity/state.
-// Provider handles and the short-lived provider session ID are intentionally
-// retained in memory because the existing 024 tables do not have columns for
-// them. A process restart therefore cannot resume a provider stream.
+// Provider session and turn identities are persisted as execution facts. The
+// in-memory maps retain optional queues and response details, so a stable
+// provider adapter can resume receive, cancel, and settle after a restart
+// without dispatching the model again.
 type postgresRealtimePersistence struct {
 	pool     *pgxpool.Pool
 	tenantID string
@@ -131,12 +132,12 @@ func (p *postgresRealtimePersistence) CreateSession(ctx context.Context, record 
 	defer rollbackRealtimeTx(ctx, tx)
 	var inserted string
 	err = tx.QueryRow(ctx, `
-INSERT INTO realtime_sessions(tenant_id,id,actor_id,api_key_id,model_id,profile_version,route_id,origin,state,expires_at,max_turns,created_at)
-VALUES($1,$2,$3,$4,$5,$6,$7,$8,'open',$9,$10,$11)
+INSERT INTO realtime_sessions(tenant_id,id,actor_id,api_key_id,model_id,profile_version,route_id,origin,state,provider_session_id,expires_at,max_turns,created_at)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8,'open',$9,$10,$11,$12)
 ON CONFLICT DO NOTHING
 RETURNING id`, p.tenantID, record.Config.ID, record.Config.ActorID, record.Config.APIKeyID,
 		record.Config.ModelID, record.Config.ProfileID, record.Config.RouteID, record.Config.Origin,
-		expiresAt, limits.MaxTurns, createdAt).Scan(&inserted)
+		record.ProviderSessionID, expiresAt, limits.MaxTurns, createdAt).Scan(&inserted)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return realtime.ErrIdempotencyConflict
 	}
@@ -160,14 +161,14 @@ func (p *postgresRealtimePersistence) LoadSession(ctx context.Context, sessionID
 		return realtime.SessionRecord{}, realtime.ErrNotFound
 	}
 	var (
-		id, actorID, apiKeyID, modelID, profileID, routeID, origin, sessionState string
-		expiresAt, createdAt                                                     time.Time
-		maxTurns                                                                 int
+		id, actorID, apiKeyID, modelID, profileID, routeID, origin, sessionState, providerSessionID string
+		expiresAt, createdAt                                                                        time.Time
+		maxTurns                                                                                    int
 	)
 	err := p.pool.QueryRow(ctx, `
-SELECT id,actor_id,api_key_id,model_id,profile_version,route_id,origin,state,expires_at,max_turns,created_at
+SELECT id,actor_id,api_key_id,model_id,profile_version,route_id,origin,state,COALESCE(provider_session_id,''),expires_at,max_turns,created_at
 FROM realtime_sessions WHERE tenant_id=$1 AND id=$2`, p.tenantID, sessionID).
-		Scan(&id, &actorID, &apiKeyID, &modelID, &profileID, &routeID, &origin, &sessionState, &expiresAt, &maxTurns, &createdAt)
+		Scan(&id, &actorID, &apiKeyID, &modelID, &profileID, &routeID, &origin, &sessionState, &providerSessionID, &expiresAt, &maxTurns, &createdAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return realtime.SessionRecord{}, realtime.ErrNotFound
 	}
@@ -240,10 +241,6 @@ FROM realtime_turns WHERE tenant_id=$1 AND session_id=$2 ORDER BY ordinal`, p.te
 		snapshot.QueuedEvents = prior.Snapshot.QueuedEvents
 		snapshot.QueuedBytes = prior.Snapshot.QueuedBytes
 	}
-	providerSessionID := ""
-	if exists {
-		providerSessionID = prior.ProviderSessionID
-	}
 	record := realtime.SessionRecord{Config: realtime.SessionConfig{
 		ID: id, TenantID: p.tenantID, ActorID: actorID, APIKeyID: apiKeyID,
 		ModelID: modelID, ProfileID: profileID, RouteID: routeID, Origin: origin, Limits: limits,
@@ -265,7 +262,7 @@ func (p *postgresRealtimePersistence) SaveSession(ctx context.Context, record re
 		return err
 	}
 	defer rollbackRealtimeTx(ctx, tx)
-	if err = advanceRealtimeSessionTx(ctx, tx, p.tenantID, record.Config.ID, record.Snapshot.State); err != nil {
+	if err = advanceRealtimeSessionTx(ctx, tx, p.tenantID, record.Config.ID, record.Snapshot.State, record.ProviderSessionID); err != nil {
 		return err
 	}
 	for _, turn := range record.Snapshot.Turns {
@@ -310,11 +307,12 @@ func (p *postgresRealtimePersistence) SaveTurn(ctx context.Context, record realt
 	}
 	var (
 		currentState, requestID, reservationID, attemptID string
-		currentResponseReference                          *string
+		currentResponseReference, currentProviderHandle   *string
+		currentDispatchUnknown, currentCancelRequested    bool
 	)
-	err = tx.QueryRow(ctx, `SELECT request_id,reservation_id,attempt_id,state,response_reference
+	err = tx.QueryRow(ctx, `SELECT request_id,reservation_id,attempt_id,state,response_reference,provider_handle,dispatch_unknown,cancel_requested
 FROM realtime_turns WHERE tenant_id=$1 AND session_id=$2 AND id=$3 FOR UPDATE`, p.tenantID, record.SessionID, record.Snapshot.ID).
-		Scan(&requestID, &reservationID, &attemptID, &currentState, &currentResponseReference)
+		Scan(&requestID, &reservationID, &attemptID, &currentState, &currentResponseReference, &currentProviderHandle, &currentDispatchUnknown, &currentCancelRequested)
 	if errors.Is(err, pgx.ErrNoRows) {
 		if sessionState != string(realtime.SessionOpen) {
 			return fmt.Errorf("%w: turn requires open session", realtime.ErrInvalidTransition)
@@ -323,8 +321,8 @@ FROM realtime_turns WHERE tenant_id=$1 AND session_id=$2 AND id=$3 FOR UPDATE`, 
 		if err = tx.QueryRow(ctx, "SELECT COALESCE(max(ordinal),0)+1 FROM realtime_turns WHERE tenant_id=$1 AND session_id=$2", p.tenantID, record.SessionID).Scan(&ordinal); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO realtime_turns(tenant_id,id,session_id,ordinal,request_id,reservation_id,attempt_id,state,response_reference,created_at)
-VALUES($1,$2,$3,$4,$5,$6,$7,'reserved',$8,$9)`, p.tenantID, record.Snapshot.ID, record.SessionID, ordinal, record.Refs.RequestID, record.Refs.ReservationID, record.Refs.AttemptID, nullableRealtimeString(record.Snapshot.ProviderResponseID), record.Snapshot.CreatedAt.UTC()); err != nil {
+		if _, err = tx.Exec(ctx, `INSERT INTO realtime_turns(tenant_id,id,session_id,ordinal,request_id,reservation_id,attempt_id,state,response_reference,provider_handle,dispatch_unknown,cancel_requested,created_at)
+VALUES($1,$2,$3,$4,$5,$6,$7,'reserved',$8,NULL,false,false,$9)`, p.tenantID, record.Snapshot.ID, record.SessionID, ordinal, record.Refs.RequestID, record.Refs.ReservationID, record.Refs.AttemptID, nullableRealtimeString(record.Snapshot.ProviderResponseID), record.Snapshot.CreatedAt.UTC()); err != nil {
 			return err
 		}
 		currentState = string(realtime.TurnReserved)
@@ -333,7 +331,7 @@ VALUES($1,$2,$3,$4,$5,$6,$7,'reserved',$8,$9)`, p.tenantID, record.Snapshot.ID, 
 	} else if requestID != record.Refs.RequestID || reservationID != record.Refs.ReservationID || attemptID != record.Refs.AttemptID {
 		return realtime.ErrIdempotencyConflict
 	}
-	if err = advanceRealtimeTurnTx(ctx, tx, p.tenantID, record.SessionID, record.Snapshot.ID, currentState, string(record.Snapshot.State), record.Snapshot.ProviderResponseID); err != nil {
+	if err = advanceRealtimeTurnTx(ctx, tx, p.tenantID, record.SessionID, record.Snapshot.ID, currentState, string(record.Snapshot.State), record.Snapshot.ProviderResponseID, record.ProviderHandle, record.DispatchUnknown, record.CancelRequested); err != nil {
 		return err
 	}
 	if err = tx.Commit(ctx); err != nil {
@@ -351,12 +349,13 @@ func (p *postgresRealtimePersistence) LoadTurn(ctx context.Context, sessionID, t
 	}
 	var (
 		requestID, reservationID, attemptID, state string
-		responseReference                          *string
+		responseReference, providerHandle          *string
+		dispatchUnknown, cancelRequested           bool
 		createdAt                                  time.Time
 	)
-	err := p.pool.QueryRow(ctx, `SELECT request_id,reservation_id,attempt_id,state,response_reference,created_at
+	err := p.pool.QueryRow(ctx, `SELECT request_id,reservation_id,attempt_id,state,response_reference,provider_handle,dispatch_unknown,cancel_requested,created_at
 FROM realtime_turns WHERE tenant_id=$1 AND session_id=$2 AND id=$3`, p.tenantID, sessionID, turnID).
-		Scan(&requestID, &reservationID, &attemptID, &state, &responseReference, &createdAt)
+		Scan(&requestID, &reservationID, &attemptID, &state, &responseReference, &providerHandle, &dispatchUnknown, &cancelRequested, &createdAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return realtime.TurnRecord{}, realtime.ErrNotFound
 	}
@@ -381,8 +380,11 @@ FROM realtime_turns WHERE tenant_id=$1 AND session_id=$2 AND id=$3`, p.tenantID,
 		merged.UpdatedAt = snapshot.UpdatedAt
 		merged.ProviderResponseID = snapshot.ProviderResponseID
 		record.Snapshot = merged
+		record.ProviderHandle = realtimeStringValue(providerHandle)
+		record.DispatchUnknown = dispatchUnknown
+		record.CancelRequested = cancelRequested
 	} else {
-		record = realtime.TurnRecord{SessionID: sessionID, Snapshot: snapshot, Refs: realtime.CommercialRefs{RequestID: requestID, ReservationID: reservationID, AttemptID: attemptID}}
+		record = realtime.TurnRecord{SessionID: sessionID, Snapshot: snapshot, Refs: realtime.CommercialRefs{RequestID: requestID, ReservationID: reservationID, AttemptID: attemptID}, ProviderHandle: realtimeStringValue(providerHandle), DispatchUnknown: dispatchUnknown, CancelRequested: cancelRequested}
 	}
 	return record, nil
 }
@@ -508,11 +510,18 @@ func nullableRealtimeString(value string) any {
 	return value
 }
 
+func realtimeStringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
 func rollbackRealtimeTx(ctx context.Context, tx pgx.Tx) {
 	_ = tx.Rollback(ctx)
 }
 
-func advanceRealtimeSessionTx(ctx context.Context, tx pgx.Tx, tenantID, sessionID string, target realtime.SessionState) error {
+func advanceRealtimeSessionTx(ctx context.Context, tx pgx.Tx, tenantID, sessionID string, target realtime.SessionState, providerSessionID string) error {
 	var current string
 	if err := tx.QueryRow(ctx, "SELECT state FROM realtime_sessions WHERE tenant_id=$1 AND id=$2 FOR UPDATE", tenantID, sessionID).Scan(&current); errors.Is(err, pgx.ErrNoRows) {
 		return realtime.ErrNotFound
@@ -542,7 +551,7 @@ func advanceRealtimeSessionTx(ctx context.Context, tx pgx.Tx, tenantID, sessionI
 		return fmt.Errorf("%w: session %s to %s", realtime.ErrInvalidTransition, current, target)
 	}
 	for _, next := range path {
-		if _, err := tx.Exec(ctx, "UPDATE realtime_sessions SET state=$3 WHERE tenant_id=$1 AND id=$2", tenantID, sessionID, next); err != nil {
+		if _, err := tx.Exec(ctx, "UPDATE realtime_sessions SET state=$3,provider_session_id=COALESCE(provider_session_id,NULLIF($4,'')) WHERE tenant_id=$1 AND id=$2", tenantID, sessionID, next, providerSessionID); err != nil {
 			return err
 		}
 	}
@@ -558,20 +567,22 @@ func advanceRealtimeTurnIfPresentTx(ctx context.Context, tx pgx.Tx, tenantID, se
 	if err != nil {
 		return err
 	}
-	return advanceRealtimeTurnTx(ctx, tx, tenantID, sessionID, turnID, current, string(target), responseID)
+	return advanceRealtimeTurnTx(ctx, tx, tenantID, sessionID, turnID, current, string(target), responseID, "", false, false)
 }
 
-func advanceRealtimeTurnTx(ctx context.Context, tx pgx.Tx, tenantID, sessionID, turnID, current, target, responseID string) error {
+func advanceRealtimeTurnTx(ctx context.Context, tx pgx.Tx, tenantID, sessionID, turnID, current, target, responseID, providerHandle string, dispatchUnknown, cancelRequested bool) error {
 	if current == target {
-		return nil
+		_, err := tx.Exec(ctx, `UPDATE realtime_turns SET response_reference=COALESCE(response_reference,$4),provider_handle=COALESCE(provider_handle,NULLIF($5,'')),dispatch_unknown=dispatch_unknown OR $6,cancel_requested=cancel_requested OR $7
+WHERE tenant_id=$1 AND session_id=$2 AND id=$3`, tenantID, sessionID, turnID, nullableRealtimeString(responseID), providerHandle, dispatchUnknown, cancelRequested)
+		return err
 	}
 	path := realtimeTurnTransitionPath(current, target)
 	if len(path) == 0 {
 		return fmt.Errorf("%w: turn %s to %s", realtime.ErrInvalidTransition, current, target)
 	}
 	for _, next := range path {
-		if _, err := tx.Exec(ctx, `UPDATE realtime_turns SET state=$4,response_reference=COALESCE(response_reference,$5)
-WHERE tenant_id=$1 AND session_id=$2 AND id=$3`, tenantID, sessionID, turnID, next, nullableRealtimeString(responseID)); err != nil {
+		if _, err := tx.Exec(ctx, `UPDATE realtime_turns SET state=$4,response_reference=COALESCE(response_reference,$5),provider_handle=COALESCE(provider_handle,NULLIF($6,'')),dispatch_unknown=dispatch_unknown OR $7,cancel_requested=cancel_requested OR $8
+WHERE tenant_id=$1 AND session_id=$2 AND id=$3`, tenantID, sessionID, turnID, next, nullableRealtimeString(responseID), providerHandle, dispatchUnknown, cancelRequested); err != nil {
 			return err
 		}
 	}

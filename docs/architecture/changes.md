@@ -4989,3 +4989,154 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/u-storage-contract.md`
 
 </details>
+
+## 2026-11-08T17:34:03Z · 38253cd78a56
+
+补齐 Realtime provider identity 持久化、异步制品正文重启读取和本机 Compose QA 的当前状态，校正历史中间状态；未扩大旧研究覆盖
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2093 个源文件；本次 14 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/provider/mock_realtime.go`
+- added `internal/server/realtime_http_postgres_integration_test.go`
+- modified `internal/server/realtime_persistence.go`
+- modified `internal/server/realtime_persistence_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `scripts/deployment-qa.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
+
+## 2026-11-08T17:44:22Z · e79518950509
+
+补齐 Realtime HTTP/WS media-backed turn 真实商业绑定、UUID event 合同与部署业务 smoke 边界；校正 028-S/A/R 中间状态文档，不扩大 U/历史研究覆盖
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2094 个源文件；本次 8 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `internal/server/media_billing.go`
+- modified `internal/server/realtime.go`
+- modified `internal/server/realtime_http_postgres_integration_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- added `scripts/deployment-business-qa.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>
+
+## 2026-11-08T17:46:01Z · 7474d19691fb
+
+收紧 Realtime turn 文本/media 来源类型不可混接，并完成 55439 migration/HTTP-WebSocket 重启回归与部署 smoke 脚本安全清理复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2094 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `migrations/024_unified_text_metering.sql`
+
+</details>
+
+## 2026-11-08T18:03:21Z · ea1608374ee3
+
+补充 55439 Realtime 文本/media commercial fact source-type 混接回滚反例，并同步 U、架构、HLD/LLD 验证边界；未扩大 U guard matrix 或部署外部能力
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2095 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/unified-metering.md`
+- added `internal/server/realtime_binding_guard_integration_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-08T18:09:36Z · eee0d43e32d8
+
+补齐 owner-scoped 请求详情的 task 原 profile/reservation/attempt 与资金 source 可发现性，并通过 55439 HTTP/Go/前端构建回归；未伪造任务商业事实
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2096 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/server/billing_handlers.go`
+- added `internal/server/task_request_reference_integration_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `web/src/views/RequestsView.vue`
+
+</details>
+
+## 2026-11-09T01:44:45Z · 95bf5b60c02c
+
+028-U与028媒体当前MVP收口：补55439 guard矩阵、任务引用HTTP-first验收、严格部署业务smoke与任务适配器无mock回退；同步当前架构/验证/部署文档。保留完整U guard、真实供应商、浏览器、1Panel、S/A/R外部出口未完成边界。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2099 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/server/task_handlers.go`
+- modified `internal/server/task_media_billing_integration_test.go`
+- added `migrations/unified_text_metering_guard_matrix_postgres_test.go`
+- added `scripts/deployment-business-qa-ws.py`
+- modified `scripts/deployment-business-qa.sh`
+- added `scripts/deployment-business-qa.test.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-09T05:47:12Z · e4dd618078dd
+
+028-U媒体权限、任务锁目标、Compose五条业务链和部署验收记录已完成语义复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2101 个源文件；本次 12 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `compose.yaml`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/media.go`
+- modified `internal/operations/meter_roles.go`
+- modified `internal/tasks/postgres_store.go`
+- added `scripts/deployment-business-provision.sh`
+- modified `scripts/deployment-business-qa.sh`
+- modified `scripts/deployment-business-qa.test.sh`
+- added `scripts/deployment-qa-provider.py`
+- modified `scripts/deployment-qa.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
+
+## 2026-11-09T05:55:04Z · 0c2f719baa2a
+
+028-U当前媒体、任务、Realtime、Compose业务验收及架构文档已再次语义复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2101 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

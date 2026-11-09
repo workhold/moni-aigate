@@ -10,13 +10,14 @@ import (
 )
 
 type mediaExecutionRefs struct {
-	enabled   bool
-	existing  bool
-	state     string
-	tenantID  string
-	requestID string
-	attemptID string
-	operation string
+	enabled       bool
+	existing      bool
+	state         string
+	tenantID      string
+	requestID     string
+	reservationID string
+	attemptID     string
+	operation     string
 }
 
 // reserveMediaForRequest is enabled for the real Server created with a
@@ -41,6 +42,7 @@ func (s *Server) reserveMediaForRequest(ctx context.Context, tenant, user, key, 
 	if err == nil {
 		refs.existing = reservation.Existing
 		refs.state = reservation.AttemptState
+		refs.reservationID = reservation.ID
 		if reservation.AttemptID != "" {
 			refs.attemptID = reservation.AttemptID
 		}

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
@@ -80,6 +81,9 @@ func (m *MockRealtimeAdapter) Receive(ctx context.Context, in RealtimeReceiveInp
 	m.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, in)
+	}
+	if responseID == "" && strings.HasPrefix(in.ProviderHandle, "mock-realtime-handle-") {
+		responseID = "mock-realtime-response-" + strings.TrimPrefix(in.ProviderHandle, "mock-realtime-handle-")
 	}
 	if responseID == "" {
 		return RealtimeReceiveResult{}, errors.New("mock_realtime_response_not_found")
