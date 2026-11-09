@@ -451,3 +451,5 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 - `PATH="/opt/homebrew/bin:$PATH" TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' GOCACHE=/tmp/moni-aigate-gocache go test -race -count=1 -timeout 240s ./migrations -run 'TestUnifiedTextMeteringCanonical|TestUnifiedTextMeteringRejectsZeroBalanceBusinessHistory|TestUnifiedTextMeteringGuard'` 通过。
 
 这片只收紧函数执行边界和定义核验。完整九组 guard、11.2 旧金融事实的全部逐表正反例、正式目标环境权限验收和 028-U 任务总项仍未完成。
+
+同日整仓 `make verify-mvp` 使用相同的 55439 专库启动。前端342项测试和构建通过，Go race 已通过大部分包；`internal/periodicbudget` 有一次迁移 statement timeout，`internal/server` 有一次密码变更用例返回401，整仓命令未记为无条件全绿。命令退出前 55439 未留下活动连接或等待锁，分别重跑 `TestBillingPeriodicCustomerEachScopeRejectsFullRAtomically` 与 `TestPasswordChangeRevokesFamiliesAndRequiresFreshProof` 均通过，判断为本轮专库并发/测试抖动证据，不把失败记录抹除。

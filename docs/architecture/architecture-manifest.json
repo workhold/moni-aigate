@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T17:54:30Z",
-  "review_reason": "补齐全部 meter_% 函数的 SECURITY INVOKER、固定 search_path、PUBLIC 执行撤销和实际 LOGIN 角色定义核验，并同步028-U验证边界",
-  "snapshot_sha256": "c1120fefe3ba360c2482e19932076b8298964ea50a4dc89844e6066b531a3618",
+  "reviewed_at": "2026-11-09T22:57:41Z",
+  "review_reason": "记录权限收口后的整仓回归抖动与两个专项重跑结果，并校正001–028整体状态",
+  "snapshot_sha256": "e597626fadebccb9c8f90d422053675670d3cab0450c714828fa9f6d81f7c11c",
   "architecture_sha256": "a247af7e071342b27d5dd2853abc4fcd42f7d349cf011a023723310f11b954eb",
-  "history_sha256": "f182a7f4ce35caf653b26cf2743c300cfc08173080dfd041dfc2023a076f403b",
+  "history_sha256": "bf69b7aa710ecdf78624ec3bd67d9ec94b576633c455fdcfe7c6b499bd8175e6",
   "files": [
     {
       "path": ".dockerignore",
@@ -1389,7 +1389,7 @@
     },
     {
       "path": "docs/verification/mvp-status.md",
-      "sha256": "313c45b67dff8881cf337fa23b9246f6f001ef88aaf8beb3507d1e7cb3317ced"
+      "sha256": "37dfccc2c59573c031ed9a7eef137116cf754ee68481e7c5f3dc8b4427759cf3"
     },
     {
       "path": "docs/verification/native-protocols.md",
@@ -1437,7 +1437,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "21ae124c062809548976835a14cb72dd5c7186eedf582c263836b1860c14af05"
+      "sha256": "2979e65d8f8d84224f31cd258ba024a9bddbb36c59769d60c37c023af9d27a5d"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "b81c11dc48ce40a239232d6ffd6b87d4925dbdffb7071f84e7ca120833776a6d"
+      "sha256": "b0a5df01f85e5832dd5fcc1f2f68edfb79e6c3df60753617afd1a6190942e209"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -7809,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "55d0a422cf1ef00b880a81d6b8d96ea0cf296ba3616b19f6415eced15c1922b8"
+      "sha256": "d10ad7b5275a981371933edf6d0da0e8dd8667cb29f2b907269f383bc21b01cf"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

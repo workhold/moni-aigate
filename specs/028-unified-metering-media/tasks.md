@@ -14,7 +14,7 @@
 - [x] 当前 MVP 已完成 provider、catalog/pricing/routing、billing/procurement 与 HTTP/UI 的单一路径切换；默认/组价/采购发布使用完整向量 operation/指纹/回执，报表/采购读端、准入/路由/账务复验和人工 `retail_quantities` 已切换，旧 HTTP/UI scalar 用量和报价出口被拒绝，图片/TTS/video/realtime 报表协议及同步/异步解析已补齐。当前 Compose HTTP/WS smoke 与前端契约测试通过。真实供应商、独立浏览器和正式部署认证后置，完整 SQL guard 仍由上一项单独验收。
 - [x] 当前 mock APP 六文本商业链：六协议 paid/known-zero、unknown政策、默认/组价组合、等待期间原价/不重发、标量读取禁用、一次退款审批/重复审批、027来源一致性、过期未知用量恢复不重生成、六协议超界、客户人工核对和 supplier unknown 反例已在 55439 通过。真实 supplier late/conflict、独立浏览器和生产 LOGIN 商业全矩阵属于后置认证，不把 mock 证据描述为真实供应商验收。
 - [x] 026经营报表按原请求快照增加协议/执行种类/schema/variant元数据及对应筛选/CSV/UI；金额沿原结算/attempt事实，不从向量重算。2026-11-04 请求明细从不可变请求行读取 protocol/execution_kind，从 `request_meter_snapshots` 读取 profile/schema/variant；缺失留空，不回填当前模型，也不默认成 Chat。筛选、JSON、CSV 末尾六列和报表页同步。金额仍是原结算一次、全部尝试成本。
-- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；2026-11-10 已完成架构快照刷新、55439 专库专项与整仓 race、go vet、Go build、前端342项测试和构建，并完成更新后 Compose 五条业务链及 app/worker/PostgreSQL 重启 smoke。完整U guard/商业出口、真实供应商和正式目标环境仍未闭合，代码已在 `codex/initial-mvp` 本地提交但未推送。
+- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；2026-11-10 已完成架构快照刷新、55439 专库专项、go vet、Go build、前端342项测试和构建，并完成更新后 Compose 五条业务链及 app/worker/PostgreSQL 重启 smoke。权限收口后的整仓 race 重跑中，periodicbudget 一次迁移 statement timeout、server 一次认证用例返回401，随后两个失败用例单独重跑通过；因此本轮整仓命令不记为无条件全绿。完整U guard/商业出口、真实供应商和正式目标环境仍未闭合，代码已在 `codex/initial-mvp` 本地提交但未推送。
 
 U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先去重；共同算法支持候选最大界和收紧不表示已发布异构profile路由。多profile路由的绑定身份与参数兼容须另行设计。人工核对绑定原attempt、只确认客户用量，不能据此确认供应商采购。
 

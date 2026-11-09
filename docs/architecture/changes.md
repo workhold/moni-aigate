@@ -5371,3 +5371,29 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-09T17:59:34Z · 4f40bdcbdd18
+
+校正001–028整体盘点与MVP状态中的当前媒体接线、Compose证据和028-U未完成边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2108 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/mvp-status.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+
+</details>
+
+## 2026-11-09T22:57:41Z · e597626fadeb
+
+记录权限收口后的整仓回归抖动与两个专项重跑结果，并校正001–028整体状态
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2108 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

@@ -1,6 +1,6 @@
 # 001–028 整体交付盘点与并行计划
 
-更新时间：2026-11-09。当前工作基线是 `codex/initial-mvp`；以下状态以当前源码、SDD、验证记录和当前专库证据交叉判断，不能把历史记录直接当作生产验收。
+更新时间：2026-11-10。当前工作基线是 `codex/initial-mvp`；以下状态以当前源码、SDD、验证记录和当前专库证据交叉判断，不能把历史记录直接当作生产验收。
 
 工作目录核对：本轮唯一开发目录是 `/Users/vchive/Documents/ChatGPT/aigate/moni-aigate`。它与 `/Users/vchive/Documents/aigate` 处于同一分支、同一基线提交；对两棵工作树做文件集合、内容和三方合并复核后，旧目录没有独有源码路径，当前目录包含全部旧目录已存在的非冲突内容。两者差异主要是当前目录已经推进的向量计量、单一路径和验证改动；旧目录仍保留若干较早的标量/兼容实现。旧目录中的旧标量 bypass、fallback 和历史 fixture 变更没有回拷，避免把 ADR-005 已淘汰的兼容路径带回当前实现。
 
@@ -21,7 +21,7 @@
 | 021 自助身份 | 注册、邮箱证明、密码恢复、MFA、outbox、worker 和本地 SMTP 已实现 | 指定 claim/SMTP 接受前窗口的真实进程故障、正式收件域名和反滥用 | 不阻 028 内部开发，阻生产发布 |
 | 022 自助支付 | 兑换券、支付沙箱、订单/通知 worker、HTTP/UI 和本地 main 闭环已有限定证据 | 正式 PSP、真实收款、COMMIT 回包丢失、来源 lot、原路退款、拒付、交叉恢复 | 不阻 028-U 内部开发；不能替代 027 来源和退款事实 |
 | 023 周期与商品 | A 分组售价已验；B 周期预算核心、HTTP/UI、Reader/Commander/Verifier 有本地实现 | B 完整产品/故障矩阵；C 商品购买、订阅、权益和来源闭环未实现 | 023-A 是 028 组价依赖；C 不阻 U |
-| 024 扩展平台 | A 告警/来源观察已验；当前 028-U 计量基础接入候选 024 单文件；028-S/A/R 已增加未接线的纯域合同与状态机候选 | B0/B1 同步媒体、C 异步任务、D 实时长连接的数据库/HTTP/provider/账务接线，以及E身份扩展、F通知未完成或未冻结 | B0 与 U 同属计量基础，S/A/R 依次后置；纯域候选不构成生产能力 |
+| 024 扩展平台 | A 告警/来源观察已验；当前 MVP 基线已接入 028-U 文本计量、028-S 图片/TTS、028-A video task 和 028-R 单 turn Realtime 的数据库、HTTP/WS、mock provider、wallet/settlement 与重启恢复路径 | E 身份扩展、F通知、真实供应商认证、浏览器和正式目标环境仍未完成；完整 028-U guard/商业全矩阵单独保留 | 当前媒体链只支持本地 mock 内测，继续复用唯一 `Profile → Plan → Reserve → Attempt → Observe → Settle` 路径 |
 | 025 生产/HA | Compose 配置渲染和邮件窄片通过限定验证 | 容器/1Panel 实跑、模型/支付故障点、共享限流/许可、数据库故障、备份恢复、RPO/RTO、正式外部服务 | 不阻 U 开发，阻商用发布 |
 | 026 经营报表 | 请求元数据、唯一收入、退款、全部 attempt 成本、unknown 毛利、CSV/UI 已接线 | 大规模/正式部署/正式账单验收 | 028 必须继续只读唯一 settlement 和全部 attempt 成本 |
 | 027 钱包来源 | 四来源、FIFO 预占/结算/释放、退款来源图、HTTP/UI、只读核对已接线 | 真实原路现金退款、拒付/债务、外部事实灾备；旧历史明确拒迁 | 028 只复用来源写入口和不变量，不改第二套账务 |
@@ -30,7 +30,7 @@
 
 ## 028-U 当前状态
 
-028-U 的主链已经形成：`provider → inference → metering → routecost → catalog/routing → billing/procurement → reporting`。费率是约分有理数，金额由统一向量计算最后一次 `ceil`；请求和 attempt 保存不可变计划、报价、界行和来源指针；恢复不重新生成模型请求。S/A/R 另有第一片纯域候选，但尚未接入这条生产主链，详见[纯域验证记录](028-media-pure-candidates.md)。
+028-U 的主链已经形成：`provider → inference → metering → routecost → catalog/routing → billing/procurement → reporting`。费率是约分有理数，金额由统一向量计算最后一次 `ceil`；请求和 attempt 保存不可变计划、报价、界行和来源指针；恢复不重新生成模型请求。S/A/R 当前 MVP 也已复用同一媒体 Reserve/Attempt/Observe/Settle、wallet、settlement、audit 和 recovery 路径，详见[纯域验证记录](028-media-pure-candidates.md)及媒体验证记录。
 
 已落地并有 55439 专库局部证据的内容包括：
 
@@ -42,11 +42,11 @@
 
 仍未达到完整出口的内容：
 
-1. 九组/十类完整 guard 的正反例、跨租户/跨 route/并发/失败回滚闭包；其中 route_revision=0 的 SQL 旁路已移除，剩余 guard 仍未形成全矩阵。
+1. 九组/十类完整 guard 的正反例、跨租户/跨 route/并发/失败回滚闭包；其中 route_revision=0 的 SQL 旁路已移除，当前已有 55439 负控矩阵，剩余完整正反例闭包仍未形成全矩阵。
 2. 空库拒迁、旧金融历史拒迁、ACL、owner、APP/projector/PUBLIC/payment worker 的生产级全矩阵。
 3. 六协议超界、supplier late、conflict、人工核对、unknown 和退款/来源/恢复的统一受限 APP 总矩阵。
 4. 全部 HTTP/TS/UI 读端的向量合同和真实浏览器验收；管理端每百万 token 输入与人工核对标量必须保留，历史 fixture/冻结研究代码不能误删。
-5. 正式供应商计量/账单认证、Docker/1Panel、HA、备份恢复和性能基线。
+5. 正式供应商计量/账单认证、浏览器完整验收、1Panel、HA、备份恢复和性能基线。Docker Compose 单机的空库安装、provision/bootstrap、文本/图片/TTS/video task/Realtime smoke 与 app/worker/PostgreSQL 重启已通过，但不等同正式部署验收。
 
 本轮盘点后的新增证据：支付 worker 的计量表/函数负权限已有独立 55439 负控；六协议超界、客户人工核对保持供应商 unknown、以及 supplier unknown 禁止派发已有受限 APP 反例专项；前端审查确认当前在线报价/界/用量出口使用完整向量 DTO。上述证据仍属于本地专项，不能把对应任务项改为完成。
 
