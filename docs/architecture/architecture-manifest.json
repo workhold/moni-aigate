@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T17:14:07Z",
-  "review_reason": "澄清经营报表媒体模型筛选输入说明；无数据流或权限结构变化，当前向量报表链路复核通过",
-  "snapshot_sha256": "b91c9e632a7aca36eb2a291b1af1fafa8a3a2818a57ee3361897ff83c5e502bf",
+  "reviewed_at": "2026-11-09T17:16:32Z",
+  "review_reason": "更新 028-S/A/R 与当前 Compose MVP 完成矩阵，区分 mock 内测已验能力和真实供应商/图片编辑/STT/1Panel/HA/性能后置项",
+  "snapshot_sha256": "c0c884facf38070c57d1c715fee47ef7660b24d343fbea28074192cbb68e4441",
   "architecture_sha256": "f9581eaf03950b25ba5d5c6ee0bc63ca72178fd8c5dcb3ce15b9e1276305baf1",
-  "history_sha256": "f95429dbee9a21358629f6ad6319cd0df56c52bcc9a4d520907dec7d4c6ca95f",
+  "history_sha256": "44d09ff381b65e41385fb9829521f7b4eb67398dd83f55fa245c66f832a78709",
   "files": [
     {
       "path": ".dockerignore",
@@ -7809,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "e58e9c592c5558c310777eb78032d744233fa905e3df36b058a025a4c7c5262d"
+      "sha256": "84d71af3cd7c4b2d85a51ac69a957d5e1c8b942635a9b08a03d441bacbb63043"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

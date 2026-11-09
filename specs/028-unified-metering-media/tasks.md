@@ -14,7 +14,7 @@
 - [ ] 并行改造provider、catalog/pricing/routing、billing/procurement与HTTP/UI，最终原子切换；移除在线scalar公式及旧内部DTO，不启用双运行。6a 已将默认/组价/采购发布接入完整向量 operation、指纹和不可变回执，6b 已切报表与采购读端，6c 已切当前准入/路由/账务复验，6d 已覆盖受限APP的局部商业链；本轮又将人工核对提交切为绑定原请求 schema 的完整 `retail_quantities`，删除 HTTP/UI 的 `input_tokens/output_tokens` 输入并为 proposal 增加 canonical/digest guard，补齐前端对图片/TTS/video/realtime 报表的协议和同步/异步解析；仍有完整guard、其余公开/私有出口、浏览器和生产部署验收待完成。
 - [ ] 受限APP下六文本完整商业链：当前已通过六协议 paid/known-zero、unknown政策、组价HTTP回放、默认/组价六协议组合、等待期间原价/不重发、标量读取禁用、一次退款审批/重复审批和027来源一致性、过期未知用量恢复不重生成，以及本轮六协议超界/客户人工核对/供应商 unknown 反例专项；真实 supplier late、完整出口矩阵、浏览器和生产 LOGIN 仍未形成验收闭包。
 - [x] 026经营报表按原请求快照增加协议/执行种类/schema/variant元数据及对应筛选/CSV/UI；金额沿原结算/attempt事实，不从向量重算。2026-11-04 请求明细从不可变请求行读取 protocol/execution_kind，从 `request_meter_snapshots` 读取 profile/schema/variant；缺失留空，不回填当前模型，也不默认成 Chat。筛选、JSON、CSV 末尾六列和报表页同步。金额仍是原结算一次、全部尝试成本。
-- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；2026-11-09 已完成当前代码的架构语义复核、架构快照刷新、迁移/operations/billing/server/task/realtime 顺序 race 专项、整仓编译、vet、前端336项测试和构建，并完成本机 Compose 五条业务链实跑。完整U guard/商业出口、全仓同专库 race、外部供应商/目标部署仍未闭合，提交推送待用户授权。
+- [ ] 汇合架构语义复核、专项/当前PG回归、前端与构建，提交推送；2026-11-10 已完成架构快照刷新、55439 专库专项与整仓 race、go vet、Go build、前端342项测试和构建，并完成更新后 Compose 五条业务链及 app/worker/PostgreSQL 重启 smoke。完整U guard/商业出口、真实供应商和正式目标环境仍未闭合，代码已在 `codex/initial-mvp` 本地提交但未推送。
 
 U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先去重；共同算法支持候选最大界和收紧不表示已发布异构profile路由。多profile路由的绑定身份与参数兼容须另行设计。人工核对绑定原attempt、只确认客户用量，不能据此确认供应商采购。
 
@@ -103,10 +103,10 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 ## S / A / R / 交付
 
-- [ ] S：冻结一个当前可认证、完整inline图片或TTS profile，端点→有界结果→同一结算→账单/报表纵向验收；再补图片编辑/STT专有合同及实现。
-- [ ] A：明确供应商任务合同、持久任务/观察、未知submit不重发、结果所有权/过期/有界下载与唯一结算；poll/下载不计第二笔收入。
-- [ ] R：会话与收费轮次分离，首收费帧前预占，禁止自动生成旁路；断线/取消/未知量与轮次账单/采购/来源闭合。
-- [ ] 正式模型渠道、选定支付商、Docker/1Panel、备份恢复与部署验收；本地fixture不代替这些结果。
+- [x] S 当前 MVP：mock image/TTS profile、输入/结果边界、inline artifact 持久化、统一 media Reserve/Attempt/Observe/Settle、账单/报表和访问控制已通过 55439 与 Compose smoke；图片编辑、STT 和真实供应商认证后置。
+- [x] A 当前 MVP：`video_generation` task 持久化、状态映射、worker lease、未知提交不重发、取消/过期/失败释放、artifact 正文一次性持久化和唯一结算已通过 task/worker restart 专项；真实供应商 task handle 与对象存储后置。
+- [x] R 当前 MVP：单 session/单 turn 的 PostgreSQL session/turn/event、provider identity、重复事件、断线/取消/unknown、统一 media settlement 和进程重启收尾已通过 Realtime 专项与 Compose WebSocket smoke；多轮/长连接/多活后置。
+- [x] Docker Compose 单机、空库安装、provision/bootstrap、健康/就绪和 app/worker/PostgreSQL 重启已通过当前 smoke；正式模型渠道、正式支付商、1Panel、HA、备份恢复和生产部署后置。
 - [ ] 在完整商业检查保留的条件下建立新性能基线，分别度量首字节与首有效内容，再做同环境竞品对比。
 
 客户/渠道经营、商品/套餐、原路退款等其余MVP事项仍按[总交付计划](../../docs/design/delivery-plan.md)逐片推进，不因U或某个媒体端点通过自动视为完成。
