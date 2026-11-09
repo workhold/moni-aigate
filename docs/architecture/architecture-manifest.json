@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T17:11:58Z",
-  "review_reason": "记录 2026-11-10 更新后 Compose 单机五条业务链与 app/worker/PostgreSQL 重启 smoke；mock provider 边界保持，完整 guard/供应商/生产环境仍未验收",
-  "snapshot_sha256": "d608154f72dd1a6b080c4d931f50839f84ec6caeee5b2a7b4f1764a90bdd1ec3",
+  "reviewed_at": "2026-11-09T17:14:07Z",
+  "review_reason": "澄清经营报表媒体模型筛选输入说明；无数据流或权限结构变化，当前向量报表链路复核通过",
+  "snapshot_sha256": "b91c9e632a7aca36eb2a291b1af1fafa8a3a2818a57ee3361897ff83c5e502bf",
   "architecture_sha256": "f9581eaf03950b25ba5d5c6ee0bc63ca72178fd8c5dcb3ce15b9e1276305baf1",
-  "history_sha256": "5c9a1c926a6fb1836c705f8532aab4c964667bef1e4ce9efad3e0020d25cfe31",
+  "history_sha256": "f95429dbee9a21358629f6ad6319cd0df56c52bcc9a4d520907dec7d4c6ca95f",
   "files": [
     {
       "path": ".dockerignore",
@@ -7945,7 +7945,7 @@
     },
     {
       "path": "web/src/components/OperatingReport.vue",
-      "sha256": "bac639724020904287637a95ede52f907296278e12f750df39b2e6c33fdf4f68"
+      "sha256": "db63afe3330bd5e85b15c567eb62c3d72cfb532f69d28f171a3f682dd379ac12"
     },
     {
       "path": "web/src/components/PageHeader.vue",

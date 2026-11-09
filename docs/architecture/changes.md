@@ -5289,3 +5289,15 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-09T17:14:07Z · b91c9e632a7a
+
+澄清经营报表媒体模型筛选输入说明；无数据流或权限结构变化，当前向量报表链路复核通过
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2108 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `web/src/components/OperatingReport.vue`
+
+</details>
