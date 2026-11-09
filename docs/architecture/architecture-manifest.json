@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T16:24:51Z",
-  "review_reason": "补齐采购 evidence identity 拒迁、028-U guard/实际 LOGIN 权限负控和前端媒体报表向量解析，复核当前 Profile-Plan-Reserve-Attempt-Observe-Settle 链路；完整九组 guard、正式供应商和目标环境仍未验收",
-  "snapshot_sha256": "682d10557dfc50a2d167f5850a8e480ab2a93e6b9596dbb6f77461f866b058dd",
+  "reviewed_at": "2026-11-09T17:11:58Z",
+  "review_reason": "记录 2026-11-10 更新后 Compose 单机五条业务链与 app/worker/PostgreSQL 重启 smoke；mock provider 边界保持，完整 guard/供应商/生产环境仍未验收",
+  "snapshot_sha256": "d608154f72dd1a6b080c4d931f50839f84ec6caeee5b2a7b4f1764a90bdd1ec3",
   "architecture_sha256": "f9581eaf03950b25ba5d5c6ee0bc63ca72178fd8c5dcb3ce15b9e1276305baf1",
-  "history_sha256": "251e5516ae7c23e77aa3c33369b440fc666793df6f6e519c31e44af31f2edcef",
+  "history_sha256": "5c9a1c926a6fb1836c705f8532aab4c964667bef1e4ce9efad3e0020d25cfe31",
   "files": [
     {
       "path": ".dockerignore",
@@ -1437,7 +1437,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "8e2505f88f77d974608a9be2b59ad3ab67a10946a981bb5b8d6627896ac8af7b"
+      "sha256": "21ae124c062809548976835a14cb72dd5c7186eedf582c263836b1860c14af05"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "4939184df07a12c8851abeb592393e4d936c4ecca8f74d73f87b60538836777e"
+      "sha256": "5d74afdb1a4d19bef593155ac693ca799c3f8117da41fde0039e1ff00fcbceb9"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -7809,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "64decb80816ea1612cecd17fa3eecd005b0de9e21769057c815a3b32a50c8f7c"
+      "sha256": "e58e9c592c5558c310777eb78032d744233fa905e3df36b058a025a4c7c5262d"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

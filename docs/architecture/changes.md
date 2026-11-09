@@ -5275,3 +5275,17 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - added `web/tests/request-wire.test.mjs`
 
 </details>
+
+## 2026-11-09T17:11:58Z · d608154f72dd
+
+记录 2026-11-10 更新后 Compose 单机五条业务链与 app/worker/PostgreSQL 重启 smoke；mock provider 边界保持，完整 guard/供应商/生产环境仍未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2108 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
