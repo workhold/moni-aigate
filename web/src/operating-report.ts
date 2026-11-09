@@ -7,15 +7,16 @@ export interface OperatingTotals {
 }
 export interface OperatingModel extends OperatingTotals { model_id: string; model_name: string }
 export interface OperatingChannel { channel_id: string; channel_name: string; request_count: number; attempt_count: number; unknown_provider_costs: number; known_provider_cost: string }
-export type OperatingProtocol = 'openai_chat' | 'openai_responses' | 'anthropic_messages' | 'openai_embeddings' | 'jina_rerank' | 'gemini_generate_content'
-export type OperatingExecutionKind = 'synchronous'
+export type OperatingProtocol = 'openai_chat' | 'openai_responses' | 'anthropic_messages' | 'openai_embeddings' | 'jina_rerank' | 'gemini_generate_content' | 'image_generation' | 'tts' | 'video_generation' | 'realtime_turn'
+export type OperatingExecutionKind = 'synchronous' | 'asynchronous'
 export interface OperatingRequest extends OperatingTotals { request_id: string; tenant_id: string; tenant_name: string; model_id: string; model_name: string; status: string; billing_status: string; created_at: string; protocol: OperatingProtocol; execution_kind: OperatingExecutionKind; profile_version: string; schema_id: string; schema_digest: string; variant_key: 'default' }
 export interface OperatingReport {
   from: string; to: string; as_of: string; currency: 'CNY'; amount_unit: 'micro_cny'; scope: 'request_created_window'
   summary: OperatingTotals; models: OperatingModel[]; channels: OperatingChannel[]; requests: OperatingRequest[]
 }
 
-const reportProtocols: OperatingProtocol[] = ['openai_chat', 'openai_responses', 'anthropic_messages', 'openai_embeddings', 'jina_rerank', 'gemini_generate_content']
+const reportProtocols: OperatingProtocol[] = ['openai_chat', 'openai_responses', 'anthropic_messages', 'openai_embeddings', 'jina_rerank', 'gemini_generate_content', 'image_generation', 'tts', 'video_generation', 'realtime_turn']
+const reportModelKeys = ['mock-image-generation', 'mock-tts', 'mock-video-generation', 'mock-realtime']
 const totalFields = ['request_count', 'unsettled_requests', 'attempt_count', 'unknown_provider_costs', 'charged', 'refunded', 'net_revenue', 'known_provider_cost', 'gross_margin'] as const
 function reportInvalid(): never { throw new Error('经营报表响应含未定义或旧标量字段。') }
 function reportObject(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -37,7 +38,7 @@ export function parseOperatingReport(value: unknown): OperatingReport {
   if (raw.currency !== 'CNY' || raw.amount_unit !== 'micro_cny' || raw.scope !== 'request_created_window' || !Array.isArray(raw.models) || !Array.isArray(raw.channels) || !Array.isArray(raw.requests) || raw.requests.length > 5000) return reportInvalid()
   const models = raw.models.map(value => { const row = reportObject(value, ['model_id', 'model_name', ...totalFields]); return { ...parseTotals(Object.fromEntries(totalFields.map(key => [key, row[key]]))), model_id: reportText(row.model_id), model_name: reportText(row.model_name) } })
   const channels = raw.channels.map(value => { const row = reportObject(value, ['channel_id', 'channel_name', 'request_count', 'attempt_count', 'unknown_provider_costs', 'known_provider_cost']); return { channel_id: reportText(row.channel_id), channel_name: reportText(row.channel_name), request_count: reportCount(row.request_count), attempt_count: reportCount(row.attempt_count), unknown_provider_costs: reportCount(row.unknown_provider_costs), known_provider_cost: reportAmount(row.known_provider_cost)! } })
-  const requests = raw.requests.map(value => { const row = reportObject(value, ['request_id', 'tenant_id', 'tenant_name', 'model_id', 'model_name', 'status', 'billing_status', 'created_at', 'protocol', 'execution_kind', 'profile_version', 'schema_id', 'schema_digest', 'variant_key', ...totalFields]); if (!reportProtocols.includes(row.protocol as OperatingProtocol) || row.execution_kind !== 'synchronous' || row.variant_key !== 'default') return reportInvalid(); return { request_id: reportText(row.request_id), tenant_id: reportText(row.tenant_id), tenant_name: reportText(row.tenant_name), model_id: reportText(row.model_id), model_name: reportText(row.model_name), status: reportText(row.status), billing_status: reportText(row.billing_status), created_at: reportTimeValue(row.created_at), protocol: row.protocol as OperatingProtocol, execution_kind: 'synchronous' as const, profile_version: reportText(row.profile_version), schema_id: reportText(row.schema_id), schema_digest: reportText(row.schema_digest), variant_key: 'default' as const, ...parseTotals(Object.fromEntries(totalFields.map(key => [key, row[key]]))) } })
+  const requests = raw.requests.map(value => { const row = reportObject(value, ['request_id', 'tenant_id', 'tenant_name', 'model_id', 'model_name', 'status', 'billing_status', 'created_at', 'protocol', 'execution_kind', 'profile_version', 'schema_id', 'schema_digest', 'variant_key', ...totalFields]); if (!reportProtocols.includes(row.protocol as OperatingProtocol) || !['synchronous', 'asynchronous'].includes(String(row.execution_kind)) || row.variant_key !== 'default') return reportInvalid(); if (typeof row.model_id !== 'string' || (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.model_id) && !reportModelKeys.includes(row.model_id))) return reportInvalid(); return { request_id: reportText(row.request_id), tenant_id: reportText(row.tenant_id), tenant_name: reportText(row.tenant_name), model_id: reportText(row.model_id), model_name: reportText(row.model_name), status: reportText(row.status), billing_status: reportText(row.billing_status), created_at: reportTimeValue(row.created_at), protocol: row.protocol as OperatingProtocol, execution_kind: row.execution_kind as OperatingExecutionKind, profile_version: reportText(row.profile_version), schema_id: reportText(row.schema_id), schema_digest: reportText(row.schema_digest), variant_key: 'default' as const, ...parseTotals(Object.fromEntries(totalFields.map(key => [key, row[key]]))) } })
   return { from: reportTimeValue(raw.from), to: reportTimeValue(raw.to), as_of: reportTimeValue(raw.as_of), currency: 'CNY', amount_unit: 'micro_cny', scope: 'request_created_window', summary: parseTotals(raw.summary), models, channels, requests }
 }
 export interface OperatingFilterDraft { from: string | null; to: string | null; tenant_id: string; model_id: string; protocol: OperatingProtocol | ''; execution_kind: OperatingExecutionKind | '' }
@@ -65,11 +66,11 @@ export function operatingFilter(draft: OperatingFilterDraft): OperatingFilter {
   for (const field of ['tenant_id', 'model_id'] as const) {
     const value = draft[field].trim()
     if (!value) continue
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) throw new Error(`${field === 'tenant_id' ? '客户' : '模型'} ID 须为 UUID。`)
+    if (field === 'model_id' ? !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) && !reportModelKeys.includes(value) : !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) throw new Error(`${field === 'tenant_id' ? '客户' : '模型'} ID 须为 UUID 或当前媒体模型标识。`)
     filter[field] = value
   }
-  if (draft.protocol && !['openai_chat', 'openai_responses', 'anthropic_messages', 'openai_embeddings', 'jina_rerank', 'gemini_generate_content'].includes(draft.protocol)) throw new Error('协议筛选无效。')
-  if (draft.execution_kind && draft.execution_kind !== 'synchronous') throw new Error('执行类型筛选无效。')
+  if (draft.protocol && !reportProtocols.includes(draft.protocol)) throw new Error('协议筛选无效。')
+  if (draft.execution_kind && !['synchronous', 'asynchronous'].includes(draft.execution_kind)) throw new Error('执行类型筛选无效。')
   if (draft.protocol) filter.protocol = draft.protocol
   if (draft.execution_kind) filter.execution_kind = draft.execution_kind
   return filter

@@ -4,7 +4,7 @@ import { ApiError } from '../src/api.ts'
 import { money } from '../src/format.ts'
 import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../src/operating-report.ts'
 
-const tenant = '11111111-1111-4111-8111-111111111111', model = '22222222-2222-4222-8222-222222222222'
+const tenant = '11111111-1111-4111-8111-111111111111', model = '22222222-2222-4222-8222-222222222222', schema = '33333333-3333-4333-8333-333333333333'
 const draft = { from: '2026-11-01T08:00:00+08:00', to: '2026-11-02T08:00:00+08:00', tenant_id: '', model_id: '', protocol: '', execution_kind: '' }
 const totals = { request_count: 1, unsettled_requests: 0, attempt_count: 2, unknown_provider_costs: 0, charged: '9007199254740993', refunded: '1', net_revenue: '9007199254740992', known_provider_cost: '2', gross_margin: '9007199254740990' }
 const report = (amount = totals.charged) => ({ from: '2026-11-01T00:00:00Z', to: '2026-11-02T00:00:00Z', as_of: '2026-11-02T01:00:00Z', currency: 'CNY', amount_unit: 'micro_cny', scope: 'request_created_window', summary: { ...totals, charged: amount }, models: [], channels: [], requests: [] })
@@ -14,6 +14,12 @@ test('operating report parser rejects old token/rate projections and preserves e
   assert.equal(value.summary.charged, totals.charged)
   for (const field of ['input_tokens', 'output_tokens', 'input_rate', 'output_rate', 'retail_rates']) assert.throws(() => parseOperatingReport({ ...report(), [field]: '1' }), /旧标量|未定义/)
   assert.throws(() => parseOperatingReport({ ...report(), summary: { ...totals, output_tokens: 1 } }), /旧标量|未定义/)
+})
+
+test('operating report parser keeps current media protocols and asynchronous tasks', () => {
+  const value = parseOperatingReport({ ...report(), requests: [{ request_id: 'task', tenant_id: tenant, tenant_name: 'tenant', model_id: 'mock-video-generation', model_name: 'video', status: 'succeeded', billing_status: 'settled', created_at: '2026-11-02T00:00:00Z', protocol: 'video_generation', execution_kind: 'asynchronous', profile_version: '10000000-0000-4000-8000-000000000001', schema_id: schema, schema_digest: 'ab'.repeat(32), variant_key: 'default', ...totals }] })
+  assert.equal(value.requests[0].protocol, 'video_generation')
+  assert.equal(value.requests[0].execution_kind, 'asynchronous')
 })
 
 test('default seven day window and explicit timezone/UUID filters produce one exact GET query', () => {
@@ -28,8 +34,8 @@ test('default seven day window and explicit timezone/UUID filters produce one ex
     assert.deepEqual([...url.searchParams], [['from', filter.from], ['to', filter.to], ['tenant_id', tenant], ['model_id', model]])
   }
   assert.equal(operatingFilter({ ...draft, from: '2026-10-02T00:00:00Z', to: '2026-11-02T00:00:00Z' }).to, '2026-11-02T00:00:00.000Z')
-  const selected = operatingFilter({ ...draft, protocol: 'openai_embeddings', execution_kind: 'synchronous' })
-  assert.deepEqual([...new URLSearchParams(operatingReportPath(selected)).entries()].slice(2), [['protocol', 'openai_embeddings'], ['execution_kind', 'synchronous']])
+  const selected = operatingFilter({ ...draft, model_id: 'mock-video-generation', protocol: 'video_generation', execution_kind: 'asynchronous' })
+  assert.deepEqual([...new URLSearchParams(operatingReportPath(selected)).entries()].slice(2), [['model_id', 'mock-video-generation'], ['protocol', 'video_generation'], ['execution_kind', 'asynchronous']])
 })
 
 
