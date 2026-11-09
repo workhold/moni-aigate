@@ -31,7 +31,7 @@ flowchart LR
 | upstream_attempts | 按request读取全部尝试；仅contract/invoice且非NULL金额为已知成本，其余计未知 |
 | tenants、models、channels | 当前可见名称；稳定ID保留准确关联身份 |
 | media_requests、media_settlements | 媒体请求创建窗口及唯一媒体结算；`charged_amount`只在媒体request侧计一次，released或未结算请求不伪造收入 |
-| media_attempts | 按媒体request读取全部attempt；当前媒体attempt没有供应商成本字段，因此每条进入未知成本，不能把`raw_amount`当供应商成本 |
+| media_attempts | 按媒体request读取全部attempt；supplier cost 从唯一结算的不可变 known/unknown 快照读取，不能把`raw_amount`当供应商成本 |
 
 [聚合器](../../internal/reporting/report.go)在请求侧只计算一次收入，再累加每次尝试成本，避免重试造成收入翻倍。`net_revenue=charged-refunded`；只有未结算请求和未知attempt成本均为零，才提供`gross_margin=net_revenue-known_provider_cost`，否则为null。金额用CNY微元十进制字符串和Go big.Int，不经浮点；毛利允许负数。渠道只汇总成本，不分摊客户收入。探测、钱包充值/赠额、手续费及税费不纳入，报表不宣称现金流或平台净利润。
 
@@ -51,4 +51,4 @@ flowchart LR
 
 027四来源入账及非现金opening都不进入settlement消费收入；来源分配不join到收入聚合，避免一个request分配多lot后重复计收入。实际023后报表/CSV及四来源305入账但经营收入0的证据见[来源验证](../verification/wallet-sources.md)。
 
-028已经从原request不可变快照读取protocol/execution_kind/profile/schema/variant，筛选、JSON、CSV及前端沿同一合同工作；不能从当前model profile推断历史。当前媒体接缝继续使用同一只读RR快照，把media_requests与media_settlements映射为请求事实，把media_attempts映射为全部attempt事实；媒体操作可通过protocol筛选，video_generation使用asynchronous执行类型。金额继续读原settlement和全部attempt投影，不从向量或`media.raw_amount`重算，也不因人工客户量确认而把上游未知成本改成0。任务生成归原提交request，实时按收费轮次request；poll/下载/heartbeat不增加收入或生成attempt。媒体attempt目前没有供应商成本字段，报表保留未知成本并使毛利为null。跨维度数量若另行汇总须按schema/dimension/unit/side分组，不把Token、图片、字符和时长相加。实施范围见[028消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)与[阶段出口](../../specs/028-unified-metering-media/tasks.md)。
+028已经从原request不可变快照读取protocol/execution_kind/profile/schema/variant，筛选、JSON、CSV及前端沿同一合同工作；不能从当前model profile推断历史。当前媒体接缝继续使用同一只读RR快照，把media_requests与media_settlements映射为请求事实，把media_attempts映射为全部attempt事实；媒体操作可通过protocol筛选，video_generation使用asynchronous执行类型。金额继续读原settlement和全部attempt投影，不从向量或`media.raw_amount`重算，也不因人工客户量确认而把上游未知成本改成0。任务生成归原提交request，实时按收费轮次request；poll/下载/heartbeat不增加收入或生成attempt。媒体 supplier cost 只从结算时冻结的 known/unknown 快照读取，失败、取消、缺失或未知消费仍进入未知成本并使毛利为null。跨维度数量若另行汇总须按schema/dimension/unit/side分组，不把Token、图片、字符和时长相加。实施范围见[028消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)与[阶段出口](../../specs/028-unified-metering-media/tasks.md)。

@@ -18,6 +18,8 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 
 2026-11-10 权限定义收口：024 与 `current_mvp.sql` 在所有 `meter_%` 函数创建完成后统一设置 `SECURITY INVOKER`、固定到当前 schema 加 `pg_catalog, pg_temp` 的搜索路径并撤销 PUBLIC 执行权。`internal/operations` 的角色核验逐函数确认 APP 可执行、projector/PUBLIC 不可执行，且不接受 SECURITY DEFINER 或未固定搜索路径。55439 实际 LOGIN、迁移 guard 与回归专项通过。该片只收紧函数定义与检查，不扩大计量表写权限，也不关闭完整九组 guard 和旧金融拒迁矩阵。
 
+2026-11-10 拒绝矩阵扩展：新增 55439 PostgreSQL race 专项覆盖金额与结算、schema/capability、跨请求终态、重复观察、并发唯一性、失败回滚、标量投影撤除和函数权限，并扩展 024 拒迁负控到 41 类旧金融或采购事实。拒绝后 schema 与原事实保持不变。变更023表 owner/ACL 形状的主动拒迁和完整九组 checker 正反闭包仍未完成。
+
 异步 task 的公开准备链现在可以从 owner-scoped request detail 读取原 profile、reservation、attempt 身份，资金页读取原 funding lot/source 身份，再按 task 合同提交。服务端仍校验这些引用属于同一租户和原 request，不把缺失引用转换成新的商业事实。
 
 当前 task 集成证据也经公开 HTTP 入口取得这些引用，再进入 `/v1/tasks` 和 worker 状态机。测试 fixture 不再用 owner SQL 直接拼接 task 请求，避免把内部数据库读取误当成用户可用能力。

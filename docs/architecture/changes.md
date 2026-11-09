@@ -5419,3 +5419,21 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/u-storage-contract.md`
 
 </details>
+
+## 2026-11-09T23:33:48Z · 7d7256e75f0e
+
+补充028-U拒绝矩阵后，复核媒体supplier cost从不可变结算快照读取，并校正README、报表设计、验证记录和消费者清单；无运行时模块边界变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 7 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/verification/operating-reports.md`
+- modified `docs/verification/unified-metering.md`
+- added `migrations/unified_text_metering_guard_extension_postgres_test.go`
+- added `migrations/unified_text_metering_rejection_matrix_postgres_test.go`
+- modified `specs/028-unified-metering-media/u-consumer-inventory.md`
+
+</details>

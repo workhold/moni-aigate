@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T23:20:04Z",
-  "review_reason": "补齐当前媒体 retail/supplier cost snapshot、唯一 settlement guard、reporting 成本读取，并汇总运行时 legacy 路径审计",
-  "snapshot_sha256": "511aa11df4ef2fc1bebf7cee83fb2a014e823b152740700c89852bc818f79a83",
+  "reviewed_at": "2026-11-09T23:33:48Z",
+  "review_reason": "补充028-U拒绝矩阵后，复核媒体supplier cost从不可变结算快照读取，并校正README、报表设计、验证记录和消费者清单；无运行时模块边界变化",
+  "snapshot_sha256": "7d7256e75f0e8ea266245bb9343c495d75bc3a90bfb2fd518dcd0b9a25022ce3",
   "architecture_sha256": "4ac8901d50196343bd3f67968defb21524c1955c9743b04f7383273f59dcb0b9",
-  "history_sha256": "934a45badac1f48098b2af6eec0e48aa6887503378459705ee41c3009c0940f9",
+  "history_sha256": "3ccbbb2103f31f1107c19f730df818538eeb11173c4105e0a8ac66d4b19c7436",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "4714f296f7df72283719fe52f3f1c969b9dad814f95673b59cc1071c92de29c3"
+      "sha256": "46bf19c0ae77a5cb3baf7f17c829b959bce612d0d5579ebce8735932c60b622f"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -109,7 +109,7 @@
     },
     {
       "path": "docs/architecture/operating-reports.md",
-      "sha256": "7e1afb7daf97ca39b70675908281921bb44956843843cee74495953d8555691f"
+      "sha256": "006eb07b62dde835de37ae3135e01ea6dc945714a777a87a789a651d1899dfe6"
     },
     {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
@@ -1405,7 +1405,7 @@
     },
     {
       "path": "docs/verification/operating-reports.md",
-      "sha256": "ffec73149741bb442ec13e4dd34280a26515c5f20981f8ae011c178840d8ab1d"
+      "sha256": "ac7ad0ca3af72545e14f3eb8e2ad28d214eb0331f8fbe4ae093361aa09ac22cf"
     },
     {
       "path": "docs/verification/operations-alerts-024-browser.json",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "de7b2d52c8f7282348fe123649c9d088e9bb5af4f24d2bb7d1553321c7af5e45"
+      "sha256": "0a1bc30990a84a87f94d3543af29937dd85026e8fe845043ed513243b3fa53a8"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -6488,6 +6488,10 @@
       "sha256": "9e93315f981652136e88db8b64692b3eb0488e7cd78eaab51e0064ba98d9d1d1"
     },
     {
+      "path": "migrations/unified_text_metering_guard_extension_postgres_test.go",
+      "sha256": "ebc1e6cbab0e8c424cd7aac8af6ae44d9922ef55d03e3dcad7bc9dc2846785f6"
+    },
+    {
       "path": "migrations/unified_text_metering_guard_gaps_postgres_test.go",
       "sha256": "74983a85bcaf49bceead49ff84592ea769e368dcac3fea2470e2314a53b522f9"
     },
@@ -6498,6 +6502,10 @@
     {
       "path": "migrations/unified_text_metering_postgres_test.go",
       "sha256": "525718e408825d5837c29ea78d4de7f31b18547424f48d9c502ecd15366187ca"
+    },
+    {
+      "path": "migrations/unified_text_metering_rejection_matrix_postgres_test.go",
+      "sha256": "f3d264566d2ddccda9105b708ef83738d0b8e1075f14aeb81e90ef17a3da9a1a"
     },
     {
       "path": "migrations/unified_text_metering_rejection_postgres_test.go",
@@ -7813,7 +7821,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
-      "sha256": "4f0a1676cd7ada733f9d1911868607479554c43faa33a2c88f8fbc5563fec447"
+      "sha256": "3c8ec9c5a615e27c8ed6801c1b277fd8b843710ec4beda9c42adce83b8b53fc6"
     },
     {
       "path": "specs/028-unified-metering-media/u-domain-contract.md",

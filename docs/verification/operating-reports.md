@@ -18,7 +18,7 @@
 
 ## 028 媒体只读接缝
 
-`internal/reporting` 现将当前 `media_requests`、`media_settlements` 和 `media_attempts` 纳入同一 RR 只读快照。媒体结算在请求侧只计一次 `charged_amount`，释放和未结算请求不生成收入；每条媒体 attempt 都计入 attempt 总数。当前媒体表没有供应商成本列，因此媒体 attempt 进入按 operation 分组的未知成本桶，`media_settlements.raw_amount` 不被解释为供应商成本，未知成本会继续使毛利为 `null`。
+`internal/reporting` 现将当前 `media_requests`、`media_settlements` 和 `media_attempts` 纳入同一 RR 只读快照。媒体结算在请求侧只计一次 `charged_amount`，释放和未结算请求不生成收入；每条媒体 attempt 都计入 attempt 总数。supplier cost 从 `media_settlements` 的不可变 known/unknown 快照读取，`media_settlements.raw_amount` 不被解释为供应商成本。失败、取消、缺失或未知消费继续进入未知成本桶，使毛利为 `null`。
 
 55439 专项 `TestPostgresReadOperatingReportIncludesMediaOnceAndLeavesCostUnknown` 覆盖 settled/released/pending 媒体请求、同一请求多 attempt、video 的 asynchronous 元数据、operation 筛选、请求收入一次和 raw amount 不进成本。该接缝只扩展报表读取，不接入任务/实时写入，不改变账务或迁移，也不代表媒体供应商成本已经认证。
 
