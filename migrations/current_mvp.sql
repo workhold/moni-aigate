@@ -4561,7 +4561,7 @@ BEGIN
   'request_records','request_idempotency','reservations','upstream_attempts','metering_events',
   'metering_event_conflicts','finalization_records','settlements','reconciliation_cases',
   'recovery_jobs','delivery_observations','platform_probe_attempts','provider_cost_corrections',
-  'procurement_reservations','procurement_budget_events','procurement_cost_proposals',
+  'procurement_reservations','procurement_budget_events','procurement_evidence_identities','procurement_cost_proposals',
   'journals','journal_lines','funding_receipts','wallet_openings','funding_lots','funding_lot_events',
   'funding_lot_balances','funding_reservation_lots','funding_settlement_lots','funding_consumption_refund_lots',
   'models','model_capability_versions','route_policy_versions','model_bindings','price_versions','cost_versions',

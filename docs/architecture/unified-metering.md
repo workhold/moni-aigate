@@ -12,7 +12,7 @@
 
 2026-11-09 task 引用续片：请求详情沿原 request snapshot 返回 profile、reservation、首个 attempt，资金详情返回 funding lot/source identity，供当前 task 合同使用。读取仍经过租户和 owner/member 规则，不把 task 创建改成客户端自造钱包或 attempt。
 
-当前 U guard 专项已增加 55439 PostgreSQL 负控矩阵，覆盖跨租户/跨 request-attempt、不可变快照与最终证据、Observation 来源闭集、成本指针互斥、资金边界回滚和计量角色 ACL。该专项补强当前迁移的实证边界，完整九组 guard、历史金融拒迁和目标环境权限验收仍未完成。
+当前 U guard 专项已增加 55439 PostgreSQL 负控矩阵，覆盖跨租户/跨 request-attempt、不可变快照与最终证据、attempt quote/parent plan、Observation 来源闭集、成本指针互斥、资金边界回滚和计量角色 ACL。历史拒迁清单补齐采购 evidence identity，另有真实 LOGIN 的 APP/PROJECTOR/PAYMENT_WORKER 表与函数权限负控。该专项补强当前迁移的实证边界，完整九组 guard、全部历史金融事实正反例和目标环境权限验收仍未完成。
 2026-11-08 续片：024 的请求记录触发器现在把 `request_hmac`、`streaming` 和 `route_revision` 纳入不可变报价身份，固定函数搜索路径并撤销 PUBLIC 执行。人工核对服务层把 `settle` 明确映射为账务 `propose`，避免空动作进入账务入口。上述是当前入口守卫和错误映射的局部修复，attempt/supplier quote 完整守卫、028-U九组完整guard与完整商业出口仍按任务清单验收。
 
 2026-11-08 媒体扩展开发续片：当前 024 追加任务/实时关系只保存绑定、状态、事件和制品元数据，不创建第二钱包或结算表；APP 的状态写权限由 `ProvisionFor` 独立收紧。S/A/R service 接口把原 request/reservation/attempt/settlement 引用作为外部事实传入，provider unknown 进入不可重发边界。后续纵向接线已将这些接口接入当前 HTTP/WS、mock provider、账务和制品正文路径，下面的 2026-11-09 记录为当前状态。

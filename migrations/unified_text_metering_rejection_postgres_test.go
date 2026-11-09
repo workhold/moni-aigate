@@ -47,6 +47,12 @@ func TestUnifiedTextMeteringRejectsZeroBalanceBusinessHistory(t *testing.T) {
 			},
 		},
 		{
+			name: "procurement_evidence_identity",
+			setup: func(t *testing.T, f *prefixFixture) {
+				insertLegacyReplicaFact(t, f, `INSERT INTO procurement_evidence_identities(attempt_id,evidence_digest,event_id) VALUES($1,$2,$3)`, uuid.NewString(), strings.Repeat("a", 64), uuid.NewString())
+			},
+		},
+		{
 			name: "periodic_allocation",
 			setup: func(t *testing.T, f *prefixFixture) {
 				insertLegacyReplicaFact(t, f, `INSERT INTO periodic_budget_allocations(id,control_id,subject_type,subject_id,origin,origin_source_id,upper_amount,baseline,source_held,source_spent,held_amount,spent_amount,state,revision) VALUES($1,$2,'supplier_attempt',$3,'legacy_import',$4,0,0,0,0,0,0,'held',0)`, uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString())

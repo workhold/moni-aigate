@@ -6,6 +6,12 @@
 
 55439 专用 PostgreSQL 的 `TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline` 覆盖空库安装、历史前缀拒迁、非业务用户关系拒迁和完整基线验证。001–024 文件仍保留给隔离历史 fixture，当前服务不会调用 `ApplyThrough`。
 
+## 2026-11-10：028-U 拒迁与权限矩阵补强
+
+024 的拒迁检查现在将 `procurement_evidence_identities` 与采购 reservation、budget event、proposal 一起纳入历史事实拒绝。隔离 PostgreSQL 负控确认仅有 evidence identity 的旧库在执行 024 前回滚，schema、迁移记录和原事实均不改变。
+
+新增 guard 专项覆盖 attempt supplier quote 与 parent plan 绑定、request/attempt snapshot 跨租户出生、cost correction 指针金额和互斥关系，以及 APP 对不可变计量快照的更新拒绝、PROJECTOR/PAYMENT_WORKER 对计量表读取和函数执行的拒绝。新增 LOGIN 连接测试使用实际独立角色验证 APP 的 SELECT/INSERT 边界、UPDATE/DELETE 拒绝和两个受限角色的读拒绝。该片仍是 guard/ACL 反例补强，不能替代完整九组 guard、完整六协议商业矩阵、浏览器或正式环境验收。
+
 ## 当前 TTS 与统一管理输入边界
 
 `POST /v1/audio/speech` 当前只发行 `mock-tts` 的 `wav` profile。HTTP 层严格校验单值 `Content-Type`、闭合 JSON、UTF-8、文本字符数、voice、WAV RIFF/fmt/data 结构和单值 `Idempotency-Key`。provider 必须返回 `confirmed_final` 且字符数与请求一致，服务才调用统一 `FinalizeMedia`。provider error、未知提交或 usage/音频结构不可信时分别记录终态，重复键不会再次调用 provider。管理端的每百万 token 整数输入已重命名为明确的 `ManagementToken*` 转换入口，只在边界一次转换为当前 canonical rational vector，运行时不再保留 `LegacyToken*` scalar API。
