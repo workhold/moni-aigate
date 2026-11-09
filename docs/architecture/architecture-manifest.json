@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T17:16:32Z",
-  "review_reason": "更新 028-S/A/R 与当前 Compose MVP 完成矩阵，区分 mock 内测已验能力和真实供应商/图片编辑/STT/1Panel/HA/性能后置项",
-  "snapshot_sha256": "c0c884facf38070c57d1c715fee47ef7660b24d343fbea28074192cbb68e4441",
+  "reviewed_at": "2026-11-09T17:17:17Z",
+  "review_reason": "确认 55439 mock APP 六文本商业矩阵已通过，并把真实 supplier late/conflict、独立浏览器和生产 LOGIN 商业认证明确后置",
+  "snapshot_sha256": "5223d56d95e3b159605ee69728d02431407258c49a94457e23abe0c9df45ed72",
   "architecture_sha256": "f9581eaf03950b25ba5d5c6ee0bc63ca72178fd8c5dcb3ce15b9e1276305baf1",
-  "history_sha256": "44d09ff381b65e41385fb9829521f7b4eb67398dd83f55fa245c66f832a78709",
+  "history_sha256": "30251725ed80502d5d4301a78495da78fb039f49c3f6cdbc85f22449d1d3990f",
   "files": [
     {
       "path": ".dockerignore",
@@ -7809,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "84d71af3cd7c4b2d85a51ac69a957d5e1c8b942635a9b08a03d441bacbb63043"
+      "sha256": "b066147bf1b6fb90d099d411b76044d3d5c1a99278d5010d61d19af0c403f1be"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
