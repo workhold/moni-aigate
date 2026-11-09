@@ -5241,3 +5241,37 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/022-self-service-payments/c0-wallet-readset.json`
 
 </details>
+
+## 2026-11-09T16:24:51Z · 682d10557dfc
+
+补齐采购 evidence identity 拒迁、028-U guard/实际 LOGIN 权限负控和前端媒体报表向量解析，复核当前 Profile-Plan-Reserve-Attempt-Observe-Settle 链路；完整九组 guard、正式供应商和目标环境仍未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2108 个源文件；本次 23 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- added `internal/operations/meter_roles_login_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/current_mvp.sql`
+- added `migrations/unified_text_metering_guard_gaps_postgres_test.go`
+- modified `migrations/unified_text_metering_rejection_postgres_test.go`
+- modified `specs/008-financial-write-batches/acceptance.md`
+- modified `specs/008-financial-write-batches/spec.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `web/src/components/OperatingReport.vue`
+- modified `web/src/metering-wire.ts`
+- modified `web/src/operating-report.ts`
+- modified `web/src/reporting.ts`
+- added `web/src/request-wire.ts`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/ReportsView.vue`
+- modified `web/src/views/RequestsView.vue`
+- modified `web/tests/metering-wire.test.mjs`
+- modified `web/tests/operating-report.test.mjs`
+- modified `web/tests/reporting.test.mjs`
+- added `web/tests/request-wire.test.mjs`
+
+</details>

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T13:08:04Z",
-  "review_reason": "补齐实际 main/CLI 当前基线夹具与历史 scanner source pin 审查，保持历史 fixture 和当前运行入口分离",
-  "snapshot_sha256": "55a40989daafaf5d5f8112ec33d1908e618c02652f25c203a51aa6129fe75f21",
-  "architecture_sha256": "353099d22955a96729ac812887bc3e383292361dc56d99c86308bd0c308638c9",
-  "history_sha256": "9faa6e2d1c96078a9ebe5d477bfcbfdbc89d14b72fabdc4bd6d38289365eca0c",
+  "reviewed_at": "2026-11-09T16:24:51Z",
+  "review_reason": "补齐采购 evidence identity 拒迁、028-U guard/实际 LOGIN 权限负控和前端媒体报表向量解析，复核当前 Profile-Plan-Reserve-Attempt-Observe-Settle 链路；完整九组 guard、正式供应商和目标环境仍未验收",
+  "snapshot_sha256": "682d10557dfc50a2d167f5850a8e480ab2a93e6b9596dbb6f77461f866b058dd",
+  "architecture_sha256": "f9581eaf03950b25ba5d5c6ee0bc63ca72178fd8c5dcb3ce15b9e1276305baf1",
+  "history_sha256": "251e5516ae7c23e77aa3c33369b440fc666793df6f6e519c31e44af31f2edcef",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "7cecd2c738e6716944f6f6f00e08afdcb89f03f5ce2b138f2f85c998aadb5ed7"
+      "sha256": "3606d6dfcc2cf6ae7c35ef82fb92f0435c13c8dfbab6e9ddb5b56d68ea9673a9"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -1437,7 +1437,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "e117d511d42ca9fcd923d0333e6070f27e382c760a9964003e86de9d6abc911b"
+      "sha256": "8e2505f88f77d974608a9be2b59ad3ab67a10946a981bb5b8d6627896ac8af7b"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "8834d9265c6c4f2c0784bf19892e306b0b7f5fdef8d939dc2bff5bb63bdd8ccd"
+      "sha256": "4939184df07a12c8851abeb592393e4d936c4ecca8f74d73f87b60538836777e"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -4082,6 +4082,10 @@
     {
       "path": "internal/operations/meter_roles.go",
       "sha256": "46b0b1ff9311359f7eaaa368f29dcbb4f5327fc3bbd2d9213550a8b3593a261d"
+    },
+    {
+      "path": "internal/operations/meter_roles_login_test.go",
+      "sha256": "fcf9f769cd349cf67a3b61cc7dd89642623c271ddfed613c859b6834879331f8"
     },
     {
       "path": "internal/operations/meter_roles_test.go",
@@ -6449,7 +6453,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "fcbaf987e17146940a2d80554573f5a40c5ef268de24ae6177441bf08e74f03f"
+      "sha256": "aa20befeb87609330b0f8d82760b9431f013ad5846bd8ffc9dc5804204f8d4b8"
     },
     {
       "path": "migrations/current.go",
@@ -6457,7 +6461,7 @@
     },
     {
       "path": "migrations/current_mvp.sql",
-      "sha256": "520721e5efc2c82c4431e2c2c4988f0e9eb4f32535e3f2ad7b1da5c2484f3e8c"
+      "sha256": "9aa4d14a429d7c5a6f77782df4d5e2ee4024c30e73ada5582ddee26f1bdc7a82"
     },
     {
       "path": "migrations/embed.go",
@@ -6484,6 +6488,10 @@
       "sha256": "9e93315f981652136e88db8b64692b3eb0488e7cd78eaab51e0064ba98d9d1d1"
     },
     {
+      "path": "migrations/unified_text_metering_guard_gaps_postgres_test.go",
+      "sha256": "74983a85bcaf49bceead49ff84592ea769e368dcac3fea2470e2314a53b522f9"
+    },
+    {
       "path": "migrations/unified_text_metering_guard_matrix_postgres_test.go",
       "sha256": "c94e5fdb7bfbba027001363401b1ba7fec27bba022a9cfd75db7f069b623c831"
     },
@@ -6493,7 +6501,7 @@
     },
     {
       "path": "migrations/unified_text_metering_rejection_postgres_test.go",
-      "sha256": "199591dc8e0df944cff8edb2fc262f1be0e85cac304bedcbcc7bf9c9243b5849"
+      "sha256": "aa75ca1d575242369fc872095453f304de95fe30e1a370aa4240aa408843743b"
     },
     {
       "path": "migrations/verify_readonly.go",
@@ -6873,7 +6881,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/acceptance.md",
-      "sha256": "22cb5ac46bec19f4dd974a8d03e0898a1218a8f9d07b6d613a83850940d2f227"
+      "sha256": "3422767fc26f40914f34e3711e25e43df314a6bcd1dd1ebc25baa959f26b3b24"
     },
     {
       "path": "specs/008-financial-write-batches/plan.md",
@@ -6881,7 +6889,7 @@
     },
     {
       "path": "specs/008-financial-write-batches/spec.md",
-      "sha256": "5874220b7cc513f9bff6b10a7bf2863f57b19d0bba16f95bbaf5aa8d185df318"
+      "sha256": "02a366fef79067426863eea7ee3443634f0189072a0c7b977d4101d35081f25a"
     },
     {
       "path": "specs/009-retrieval-protocols/acceptance.md",
@@ -7801,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "8deff4d91bceb084b1a49c2b95b121acead344edba4c14a196c2fe007e53fc99"
+      "sha256": "64decb80816ea1612cecd17fa3eecd005b0de9e21769057c815a3b32a50c8f7c"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
@@ -7937,7 +7945,7 @@
     },
     {
       "path": "web/src/components/OperatingReport.vue",
-      "sha256": "48d484b97945852807b24df123af580da78518e5ee06e31e528a1d997877556b"
+      "sha256": "bac639724020904287637a95ede52f907296278e12f750df39b2e6c33fdf4f68"
     },
     {
       "path": "web/src/components/PageHeader.vue",
@@ -8053,7 +8061,7 @@
     },
     {
       "path": "web/src/metering-wire.ts",
-      "sha256": "79369c181f59373e36b819026fcc241adaecf02dc84874c63feb2aba0e3e0253"
+      "sha256": "7f095d7d5c0d0224303b3dba8d2b092ad5c78de18e9e1e677127c48c7d84131b"
     },
     {
       "path": "web/src/model-contract.ts",
@@ -8061,7 +8069,7 @@
     },
     {
       "path": "web/src/operating-report.ts",
-      "sha256": "6b70477be120458c2ebeed2cb64d77aee548d42dd929be1c0db46354684f643a"
+      "sha256": "cfe17812e0c8e5289dbafaf4f1e53122fd387e2757a6cd24a451627ca4c2a3ec"
     },
     {
       "path": "web/src/payments-journal.ts",
@@ -8137,7 +8145,11 @@
     },
     {
       "path": "web/src/reporting.ts",
-      "sha256": "31f300eee9a7b895ab9716246082f436c6e9b4ac673eff9a2c5cfd68dfd33e8f"
+      "sha256": "ce887456a811f3f8df7460d86f7e259efc3aaf093ec55ed878403c84783e315a"
+    },
+    {
+      "path": "web/src/request-wire.ts",
+      "sha256": "4fb6a8c8b12da93bebea173682436e844376a6e4fa62283d040e7250a65aa744"
     },
     {
       "path": "web/src/router.ts",
@@ -8189,7 +8201,7 @@
     },
     {
       "path": "web/src/views/PlatformView.vue",
-      "sha256": "14d74d6d28a423b65193a182156e17bafbf829ec9ea30097158d24be316357f8"
+      "sha256": "9e29d23a8f7ad904e8315d7952fc1782108ab8a00e2fd7c09938350dd7f2b279"
     },
     {
       "path": "web/src/views/PlaygroundView.vue",
@@ -8213,11 +8225,11 @@
     },
     {
       "path": "web/src/views/ReportsView.vue",
-      "sha256": "bb9f02ab932738ce2b1fb0fcfb767da7c0d12422997bca19ed470e568045114a"
+      "sha256": "6740aecaa7eea4230cf24dc3880bfbb464d682bbdb4ede6a0d1d8bfb1e008e35"
     },
     {
       "path": "web/src/views/RequestsView.vue",
-      "sha256": "da618035bca3fd915b13e2ba4b572d201d533896a096e9aedeb672e8345a0ffa"
+      "sha256": "388eb9cc9fec16b38f2798756e28cf02a39d13986f7047879ee4ac6233dde6ed"
     },
     {
       "path": "web/src/views/SecurityView.vue",
@@ -8321,7 +8333,7 @@
     },
     {
       "path": "web/tests/metering-wire.test.mjs",
-      "sha256": "24841ae183ba94d8a53796175cd212258b70777c150a67344a500bd9bfde604f"
+      "sha256": "b582161028876bcaeedf5588e28dc3b487870cc0dc6b01243007aa417410b9cd"
     },
     {
       "path": "web/tests/money.test.mjs",
@@ -8329,7 +8341,7 @@
     },
     {
       "path": "web/tests/operating-report.test.mjs",
-      "sha256": "fd1856d7a4573fee7c869e9042de18774b7c62d1e0fc466c134fe4a1735225ad"
+      "sha256": "1a50c8e3b12b28abad47670ba8f967d979ab79b5b2f811abe45fae4eab89dfd5"
     },
     {
       "path": "web/tests/payments-indexeddb.browser.mjs",
@@ -8397,7 +8409,11 @@
     },
     {
       "path": "web/tests/reporting.test.mjs",
-      "sha256": "47f176dd07127d8e3c5dd045658aba619ace041482e94f77c286f42831120eae"
+      "sha256": "7245dd939b137842a0ba1850da2c40474bb7adffa612cc96a31b2427fc3ea596"
+    },
+    {
+      "path": "web/tests/request-wire.test.mjs",
+      "sha256": "d7a085b7ee8cd114b0e6cc7fb1c931dc33c5ef031a00e58c48aaff208a731965"
     },
     {
       "path": "web/tests/retrieval.test.mjs",
