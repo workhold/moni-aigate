@@ -11,28 +11,17 @@ import { commerceContext, createCommerceScope } from '../commerce-state'
 import { hasPlatform, session } from '../session'
 import { errorText, request } from '../api'
 import { label, money, shortId, tagType, time } from '../format'
-import { parseMeterSnapshotProjection, quantityFor } from '../metering-wire'
-import type { TextRetailQuantityLines, MeterQuantityStatus, TextRetailBounds } from '../metering-wire'
-import type { TextRetailRates } from '../pricing'
+import { quantityFor } from '../metering-wire'
+import { parseRequestRows } from '../request-wire'
+import type { RequestRow } from '../request-wire'
 
-export interface RequestRow { id: string; model_name?: string; model_id: string; profile_version?: string; reservation_id?: string; attempt_id?: string; status: string; billing_status: string; charged_amount?: string; reserved_amount?: string; reservation_amount?: string; amount?: string; created_at?: string; accepted_at?: string; settlement_id?: string; protocol_outcome?: string; transport_end_reason?: string; delivery_stage?: string; finish_reason?: string; usage_status: MeterQuantityStatus; schema_id: string; schema_digest: string; variant_key: 'default'; retail_rates: TextRetailRates; retail_bounds: TextRetailBounds; retail_quantities: TextRetailQuantityLines; price_version_id?: string; ended_at?: string }
+export type { RequestRow } from '../request-wire'
 const route = useRoute()
 const rows = ref<RequestRow[]>([]); const loading = ref(false); const error = ref(''); const cursor = ref(''); const cursorStack = ref<string[]>([])
 const search = ref(''); const status = ref(''); const detail = ref<RequestRow | null>(null); const detailOpen = ref(false); const detailBusy = ref(false); const detailError = ref('')
 const scope = createCommerceScope(), detailID = ref('')
 const context = computed(() => commerceContext(session.me?.user.id, session.me?.tenant?.id, JSON.stringify([route.fullPath, session.me?.user.platform_role, session.me?.tenant?.role, session.me?.csrf_token, session.mfaPending, session.enrollmentRequired])))
 const filtered = computed(() => rows.value.filter(row => (!status.value || row.billing_status === status.value) && `${row.id} ${row.model_name || row.model_id}`.toLowerCase().includes(search.value.toLowerCase())))
-function parseRequestRows(value: unknown): RequestRow[] {
-  if (!Array.isArray(value) || value.length > 50) throw new Error('请求记录响应无效。')
-  return value.map(raw => {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('请求记录响应无效。')
-    const row = raw as Record<string, unknown>
-    if (Object.hasOwn(row, 'input_tokens') || Object.hasOwn(row, 'output_tokens') || Object.hasOwn(row, 'retail_snapshot_status') || Object.hasOwn(row, 'legacy')) throw new Error('请求记录仍返回旧标量用量投影。')
-    if (typeof row.id !== 'string' || !row.id || typeof row.model_id !== 'string' || !row.model_id || typeof row.status !== 'string' || typeof row.billing_status !== 'string') throw new Error('请求记录响应无效。')
-    const snapshot = parseMeterSnapshotProjection({ schema_id: row.schema_id, schema_digest: row.schema_digest, variant_key: row.variant_key, retail_rates: row.retail_rates, retail_bounds: row.retail_bounds, usage_status: row.usage_status, retail_quantities: row.retail_quantities })
-    return { ...row, ...snapshot } as RequestRow
-  })
-}
 function amount(row: RequestRow, dimension: 'text_input_token' | 'text_output_token'): string {
   const line = quantityFor(row.retail_quantities, dimension)
   return line?.quantity ?? (line ? label(line.status) : '—')

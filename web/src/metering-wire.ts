@@ -21,6 +21,11 @@ export interface TextQuantityLine {
   status: MeterQuantityStatus
   quantity: string | null
 }
+export interface TextQuantityWireLine {
+  dimension: 'text_input_token' | 'text_output_token'
+  unit: 'token'
+  quantity: string
+}
 export interface TextQuantities<S extends MeterSide> {
   schema_id: string
   version: '1'
@@ -31,6 +36,13 @@ export type TextRetailBounds = TextBounds<'retail'>
 export type TextSupplierBounds = TextBounds<'supplier'>
 export type TextRetailQuantities = TextQuantities<'retail'>
 export type TextSupplierQuantities = TextQuantities<'supplier'>
+export interface TextQuantitiesWire<S extends MeterSide> {
+  schema_id: string
+  version: '1'
+  side: S
+  quantities: TextQuantityWireLine[]
+}
+export type TextRetailQuantitiesWire = TextQuantitiesWire<'retail'>
 
 function bad(): never { throw new Error('计量向量响应无效，请刷新核查；不会降级为标量或免费。') }
 function side<S extends MeterSide>(value: unknown, expected: S): S { if (value !== expected) return bad(); return expected }
@@ -67,6 +79,23 @@ export function parseTextQuantities<S extends MeterSide>(value: unknown, schema:
     return { dimension, unit: 'token', status, quantity }
   })
   return { schema_id: schema, version: '1', side: side(r.side, expectedSide), quantities }
+}
+
+export function parseTextQuantitiesWire<S extends MeterSide>(value: unknown, schema: string, expectedSide: S): TextQuantitiesWire<S> {
+  const r = pricingObject(value, ['schema_id', 'version', 'side', 'quantities'])
+  if (pricingID(r.schema_id) !== pricingID(schema) || r.version !== '1') return bad()
+  const rows = vectorRows(r.quantities)
+  const quantities = rows.map((raw, index): TextQuantityWireLine => {
+    const line = pricingObject(raw, ['dimension', 'unit', 'quantity'])
+    const dimension = index === 0 ? 'text_input_token' as const : 'text_output_token' as const
+    if (line.dimension !== dimension || line.unit !== 'token') return bad()
+    return { dimension, unit: 'token', quantity: pricingDecimal(line.quantity) }
+  })
+  return { schema_id: schema, version: '1', side: side(r.side, expectedSide), quantities }
+}
+
+export function parseTextRetailQuantitiesWire(value: unknown, schema: string): TextRetailQuantitiesWire {
+  return parseTextQuantitiesWire(value, schema, 'retail')
 }
 
 export function parseTextQuantityLines(value: unknown, schema: string): TextRetailQuantityLines {

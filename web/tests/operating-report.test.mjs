@@ -2,12 +2,19 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { ApiError } from '../src/api.ts'
 import { money } from '../src/format.ts'
-import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, saveOperatingCSV } from '../src/operating-report.ts'
+import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../src/operating-report.ts'
 
 const tenant = '11111111-1111-4111-8111-111111111111', model = '22222222-2222-4222-8222-222222222222'
 const draft = { from: '2026-11-01T08:00:00+08:00', to: '2026-11-02T08:00:00+08:00', tenant_id: '', model_id: '', protocol: '', execution_kind: '' }
 const totals = { request_count: 1, unsettled_requests: 0, attempt_count: 2, unknown_provider_costs: 0, charged: '9007199254740993', refunded: '1', net_revenue: '9007199254740992', known_provider_cost: '2', gross_margin: '9007199254740990' }
 const report = (amount = totals.charged) => ({ from: '2026-11-01T00:00:00Z', to: '2026-11-02T00:00:00Z', as_of: '2026-11-02T01:00:00Z', currency: 'CNY', amount_unit: 'micro_cny', scope: 'request_created_window', summary: { ...totals, charged: amount }, models: [], channels: [], requests: [] })
+
+test('operating report parser rejects old token/rate projections and preserves exact report totals', () => {
+  const value = parseOperatingReport(report())
+  assert.equal(value.summary.charged, totals.charged)
+  for (const field of ['input_tokens', 'output_tokens', 'input_rate', 'output_rate', 'retail_rates']) assert.throws(() => parseOperatingReport({ ...report(), [field]: '1' }), /旧标量|未定义/)
+  assert.throws(() => parseOperatingReport({ ...report(), summary: { ...totals, output_tokens: 1 } }), /旧标量|未定义/)
+})
 
 test('default seven day window and explicit timezone/UUID filters produce one exact GET query', () => {
   const initial = defaultOperatingFilter(new Date('2026-11-04T12:34:56.123Z'))

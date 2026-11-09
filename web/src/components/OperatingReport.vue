@@ -7,7 +7,7 @@ import RouteAttempts from './RouteAttempts.vue'
 import { request } from '../api'
 import { integer, label, money, shortId, time } from '../format'
 import { session } from '../session'
-import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, saveOperatingCSV } from '../operating-report'
+import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../operating-report'
 import type { OperatingReport } from '../operating-report'
 
 const route = useRoute(), flow = createOperatingReportState()
@@ -30,7 +30,7 @@ async function load() {
   page.value = 1; attemptsOpen.value = false; attemptsRequest.value = ''; sync()
   try {
     const result = await request<OperatingReport>(operatingReportPath(filter), 'GET', undefined, undefined, () => flow.current(ticket))
-    flow.accept(ticket, result.data)
+    flow.accept(ticket, parseOperatingReport(result.data))
   } catch (cause) { flow.fail(ticket, cause) }
   finally { sync() }
 }

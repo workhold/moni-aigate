@@ -10,19 +10,18 @@ import MetricMoney from '../components/MetricMoney.vue'
 import OperatingReport from '../components/OperatingReport.vue'
 import { errorText, request, stableOperationKey } from '../api'
 import { cnyToMicro, integer, label, shortId, time } from '../format'
-import { providerCostText } from '../reporting'
+import { parseProviderCostRows, parseReportSummary, providerCostText } from '../reporting'
+import type { ProviderCost, ReportSummary } from '../reporting'
 import { canViewWallet, session } from '../session'
 
-interface Summary { tenant_id?: string; credited: string; charged: string; refunded: string; released: string; requests: number; known_provider_cost?: string; unknown_provider_costs?: number; unknown_probe_costs?: number; projection_pending?: number; as_of?: string }
 interface Tenant { id: string; name: string; status: string }
-interface Cost { id: string; tenant_id: string; tenant_name?: string; request_id: string; channel_id: string; channel_name?: string; upstream_model: string; cost_amount: string | null; cost_status: string; created_at: string }
 const route = useRoute(); const platform = computed(() => !!route.meta.platform)
 const allowed = computed(() => platform.value || canViewWallet.value)
 const canCorrect = computed(() => session.me?.user.platform_role === 'finance_operator')
-const summary = ref<Summary | null>(null); const costs = ref<Cost[]>([]); const tenants = ref<Tenant[]>([])
+const summary = ref<ReportSummary | null>(null); const costs = ref<ProviderCost[]>([]); const tenants = ref<Tenant[]>([])
 const tenantId = ref(''); const loading = ref(false); const error = ref(''); const nextCursor = ref(''); const cursors = ref<string[]>([])
 let loadGeneration = 0
-const correction = ref<Cost | null>(null); const correctionOpen = ref(false); const saving = ref(false); const formError = ref('')
+const correction = ref<ProviderCost | null>(null); const correctionOpen = ref(false); const saving = ref(false); const formError = ref('')
 const form = ref({ amount: '', basis: 'invoice', evidence_ref: '' })
 const attemptsOpen = ref(false); const attemptsRequest = ref('')
 function showAttempts(id: string) { attemptsRequest.value = id; attemptsOpen.value = true }
@@ -36,20 +35,20 @@ async function load(cursor = cursors.value.at(-1) || '') {
   if (!allowed.value) return
   const generation = ++loadGeneration
   loading.value = true; error.value = ''
-  const summaryTask = request<Summary>(`${platform.value ? '/platform' : ''}/reports/summary${query()}`)
-  const costTask = platform.value ? request<Cost[]>(`/platform/costs${query(cursor)}`) : Promise.resolve(null)
+  const summaryTask = request<unknown>(`${platform.value ? '/platform' : ''}/reports/summary${query()}`)
+  const costTask = platform.value ? request<unknown>(`/platform/costs${query(cursor)}`) : Promise.resolve(null)
   const [summaryResult, costResult] = await Promise.allSettled([summaryTask, costTask])
   if (generation !== loadGeneration) return
-  if (summaryResult.status === 'fulfilled') summary.value = summaryResult.value.data
+  if (summaryResult.status === 'fulfilled') summary.value = parseReportSummary(summaryResult.value.data, platform.value)
   else { summary.value = null; error.value = errorText(summaryResult.reason) }
-  if (costResult.status === 'fulfilled' && costResult.value) { costs.value = costResult.value.data || []; nextCursor.value = costResult.value.next_cursor || '' }
+  if (costResult.status === 'fulfilled' && costResult.value) { costs.value = parseProviderCostRows(costResult.value.data); nextCursor.value = costResult.value.next_cursor || '' }
   else if (costResult.status === 'rejected') { costs.value = []; nextCursor.value = ''; error.value ||= errorText(costResult.reason) }
   loading.value = false
 }
 async function filterTenant() { cursors.value = []; nextCursor.value = ''; await load('') }
 async function next() { const cursor = nextCursor.value; cursors.value.push(cursor); await load(cursor) }
 async function previous() { cursors.value.pop(); await load() }
-function correct(row: Cost) { correction.value = row; form.value = { amount: '', basis: 'invoice', evidence_ref: '' }; formError.value = ''; correctionOpen.value = true }
+function correct(row: ProviderCost) { correction.value = row; form.value = { amount: '', basis: 'invoice', evidence_ref: '' }; formError.value = ''; correctionOpen.value = true }
 async function saveCorrection() {
   if (!correction.value || saving.value) return
   saving.value = true; formError.value = ''

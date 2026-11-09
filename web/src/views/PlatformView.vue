@@ -21,6 +21,7 @@ import { protocolInfo, protocols } from '../inference'
 import { modelGenerationSettings } from '../model-contract'
 import { parsePriceVersion } from '../pricing'
 import { parseCostVersion } from '../cost-aware-routing'
+import { parseTextRetailQuantitiesWire } from '../metering-wire'
 import type { DiscoveryChannel } from '../discovery'
 import { createChannelOperationsScope, selectedChannelOperationTargets } from '../channel-operations'
 import type { ChannelOperationAction, ChannelOperationTarget } from '../channel-operations'
@@ -75,6 +76,7 @@ function channelOperationApplied() { if (resource.value === 'channels') void loa
 watch(search, clearChannelSelection, { flush: 'sync' })
 watch(isAdmin, () => { clearChannelSelection(); operationsOpen.value = false; listScope.reset() })
 const dialog = ref(false); const dialogTitle = ref(''); const fields = ref<Field[]>([]); const values = ref<InputValues>({}); const savePath = ref(''); const saveMethod = ref('POST'); const saving = ref(false); const formError = ref('')
+const reconciliationSchemaID = ref('')
 const modelForm = computed(() => savePath.value === '/platform/models')
 const inputOnlyModel = computed(() => modelForm.value && !!protocolInfo(values.value.protocol)?.inputOnly)
 const geminiModel = computed(() => modelForm.value && values.value.protocol === 'gemini_generate_content')
@@ -161,7 +163,7 @@ async function save() {
       if (field.kind === 'money') body[field.key] = cnyToMicro(String(raw))
       else if (field.kind === 'integer') { if (!field.required && (raw === '' || raw === undefined || raw === null)) continue; const v = Number(raw); if (!Number.isSafeInteger(v) || (field.min !== undefined && v < field.min)) throw new Error(`${field.title}须为有效整数。`); body[field.key] = v }
       else if (field.kind === 'date') { const date = new Date(String(raw)); if (Number.isNaN(date.getTime())) throw new Error('请选择有效的生效时间。'); body[field.key] = date.toISOString() }
-      else if (field.key === 'retail_quantities') { let parsed: unknown; try { parsed = JSON.parse(String(raw)) } catch { throw new Error('retail_quantities 必须是有效 JSON。') } if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('retail_quantities 必须是完整对象。'); body[field.key] = parsed }
+      else if (field.key === 'retail_quantities') { let parsed: unknown; try { parsed = JSON.parse(String(raw)) } catch { throw new Error('retail_quantities 必须是有效 JSON。') } body[field.key] = parseTextRetailQuantitiesWire(parsed, reconciliationSchemaID.value) }
       else if (field.key === 'allowed_cidrs') body[field.key] = String(raw || '').split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
       else if (field.kind === 'password' && !field.required && !raw) continue
       else if (field.kind === 'password') body[field.key] = raw
@@ -224,9 +226,11 @@ function resolve(row: Row, action: 'release' | 'settle') {
   const fs: Field[] = [{ key: 'reason', title: '处理理由', kind: 'textarea', required: true }]
   if (action === 'settle') {
     const schemaID = String(row.schema_id || '')
+    reconciliationSchemaID.value = schemaID
     const initial = JSON.stringify({ schema_id: schemaID, version: '1', side: 'retail', quantities: [{ dimension: 'text_input_token', unit: 'token', quantity: '0' }, { dimension: 'text_output_token', unit: 'token', quantity: '0' }] }, null, 2)
     fs.push({ key: 'retail_quantities', title: '可信最终 retail 用量向量', kind: 'textarea', required: true, initial, hint: '必须完整填写当前请求 schema 的 QuantitiesWire；数量使用十进制字符串。不得填写 input_tokens/output_tokens 或估算值。' }, { key: 'evidence_ref', title: '可信用量证据引用', required: true, hint: '不得以估算、临时累计量或最大预占代替最终量。' })
   }
+  if (action === 'release') reconciliationSchemaID.value = ''
   fs.push({ key: 'action', title: '处理方式', kind: 'select', required: true, initial: action, options: [{ label: action === 'release' ? '释放客户冻结' : '提交收费复核', value: action }] })
   openForm(action === 'release' ? '释放冻结' : '提交有证据收费', fs, `/platform/reconciliations/${encodeURIComponent(String(row.id))}/resolve`)
 }
@@ -234,7 +238,7 @@ function showDetail(row: Row) { detailRow.value = row; detailOpen.value = true }
 function formatDetail(value: unknown): string { return typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value ?? '—') }
 async function next() { const page = nextCursor.value; cursors.value.push(page); await load(page) }
 async function previous() { cursors.value.pop(); await load() }
-watch([resource, platformContext], () => { listScope.reset(); clearChannelSelection(); operationsOpen.value = false; discoveryOpen.value = false; discoveryChannel.value = null; credentialOpen.value = false; credentialChannel.value = null; routeOpen.value = false; routeModel.value = null; publicationOpen.value = false; publicationModel.value = null; costOpen.value = false; dialog.value = false; values.value = {}; rows.value = []; search.value = ''; cursors.value = []; lookups.value = { tenants: [], models: [], channels: [] }; void load(); void lookup() }, { flush: 'sync' })
+watch([resource, platformContext], () => { listScope.reset(); clearChannelSelection(); operationsOpen.value = false; discoveryOpen.value = false; discoveryChannel.value = null; credentialOpen.value = false; credentialChannel.value = null; routeOpen.value = false; routeModel.value = null; publicationOpen.value = false; publicationModel.value = null; costOpen.value = false; dialog.value = false; values.value = {}; reconciliationSchemaID.value = ''; rows.value = []; search.value = ''; cursors.value = []; lookups.value = { tenants: [], models: [], channels: [] }; void load(); void lookup() }, { flush: 'sync' })
 onMounted(() => { void load(); void lookup() })
 onBeforeUnmount(() => listScope.reset())
 </script>
