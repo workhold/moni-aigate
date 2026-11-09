@@ -527,7 +527,7 @@ curl --get http://localhost:8080/api/public/models \
 
 019须排空升级、owner迁移及provision后启动受限serve。provision原子配置并核验权限，外部group越权导致拒绝并整体回滚；需离线运维修正角色关系。详见[验收记录](../verification/operations-alerts.md)。
 
-`make verify-mvp`的完整Go race套件每包预算为600秒。真实进程、密码哈希与商业用例增加后，240秒旧预算不足；仅延长测试期限，生产密码哈希成本、请求超时和测试断言保持原值。必须显式传专用TEST_DATABASE_URL，跳过数据库测试不算验收。
+`make verify-mvp`的完整Go race套件每包预算为1200秒。真实进程、密码哈希与商业用例增加后，600秒预算不足，当前 server 包实测约601秒；仅延长测试期限，生产密码哈希成本、请求超时和测试断言保持原值。必须显式传专用TEST_DATABASE_URL，跳过数据库测试不算验收。
 
 原[84表来源与钱包读取](../verification/source-wallet-reader.md)的独立opt-in记录仅验证reader：非空C0使用owner RR核真实SQL与算法，当期维护Plan/Init保持16表空并如实报告缺epoch。后续[受保护phase](../verification/protected-init-phase.md)、[独立停服观察](../verification/epoch-observer.md)和[APP runtime](../verification/runtime-composer.md)已按各自合同实现库级候选，预算新证据组合见下文B-P3。不能用旧空安装发行入口或Init lease任意SQL代替protected phase；ReadLease没有SQL只读解析器，固定scanner只发送受审SELECT。正式迁移/CLI及在线writer仍待后续交付。
 

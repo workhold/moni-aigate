@@ -5140,3 +5140,16 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-09T07:20:13Z · c6cfbe22bdd9
+
+调整 make verify-mvp 包级超时预算至1200秒并同步开发运行手册；无运行架构变化，仅修正完整回归验收时间边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2101 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `Makefile`
+- modified `docs/runbooks/development.md`
+
+</details>

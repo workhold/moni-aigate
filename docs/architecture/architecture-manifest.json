@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T05:55:04Z",
-  "review_reason": "028-U当前媒体、任务、Realtime、Compose业务验收及架构文档已再次语义复核",
-  "snapshot_sha256": "0c2f719baa2a7ba4718818c4875abb4eb4ac58e08c40001e3e50f244de1a92a5",
+  "reviewed_at": "2026-11-09T07:20:13Z",
+  "review_reason": "调整 make verify-mvp 包级超时预算至1200秒并同步开发运行手册；无运行架构变化，仅修正完整回归验收时间边界",
+  "snapshot_sha256": "c6cfbe22bdd9d834e5aafddec153a7e503c6f7af2903a666746e7154eac12902",
   "architecture_sha256": "8f5461edcc529621548bf3c526a8e84b81bc7dbc1003dd0b4afcb3f8b14c9e5c",
-  "history_sha256": "4dec5bc68652113541b4df24cafa2d280e909c9129179cea1fe7307fbabb75cb",
+  "history_sha256": "81f830ea0d37005d06a46c65d5f143f2d70f3eb9477794a24139c76cc8694ba2",
   "files": [
     {
       "path": ".dockerignore",
@@ -45,7 +45,7 @@
     },
     {
       "path": "Makefile",
-      "sha256": "e9947c0513bca5c39348dded3bd3c6c6f61247ba09adc5d71493d1cb2102d17a"
+      "sha256": "5fbf9d4b3624f1a99c13182ea4bb626c7790c1152ec0fce754749d02709bfe4f"
     },
     {
       "path": "README.md",
@@ -233,7 +233,7 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "0273198490946efddfc81d25e47a43f40074009c5326a952a2091588f9adcbca"
+      "sha256": "13549450e0cb2b62b0cddbecd88655dcf7a76e08e3bc0b193f38e5b5e6c66dff"
     },
     {
       "path": "docs/verification/028-media-pure-candidates.md",
