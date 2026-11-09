@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T17:36:54Z",
-  "review_reason": "补齐 028-U 四个 trigger-only 完整性函数的 SECURITY INVOKER、固定 search_path 和最小权限，并通过实际 LOGIN 断言",
-  "snapshot_sha256": "c5c77a2c96e6ae18ff8ed2f586ce6b646340a0abf0f299bb7d79697b31a0b800",
-  "architecture_sha256": "f9581eaf03950b25ba5d5c6ee0bc63ca72178fd8c5dcb3ce15b9e1276305baf1",
-  "history_sha256": "75999dc36a2f10666e872935f2d4dce2404a5c6a4ad5c2675660e2f474467639",
+  "reviewed_at": "2026-11-09T17:54:30Z",
+  "review_reason": "补齐全部 meter_% 函数的 SECURITY INVOKER、固定 search_path、PUBLIC 执行撤销和实际 LOGIN 角色定义核验，并同步028-U验证边界",
+  "snapshot_sha256": "c1120fefe3ba360c2482e19932076b8298964ea50a4dc89844e6066b531a3618",
+  "architecture_sha256": "a247af7e071342b27d5dd2853abc4fcd42f7d349cf011a023723310f11b954eb",
+  "history_sha256": "f182a7f4ce35caf653b26cf2743c300cfc08173080dfd041dfc2023a076f403b",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "3606d6dfcc2cf6ae7c35ef82fb92f0435c13c8dfbab6e9ddb5b56d68ea9673a9"
+      "sha256": "cf545713bde95432b06b4891d27d8d10853bf2fd9d6083cf6021f19fedb6351f"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "3e016f58e7e8b22f81cf2ac6061d07ba9c1d569acb858bf457ed9531d879cf28"
+      "sha256": "04cc2ae048ef81fe0ea3433d2ca9531b7ab4991f93bcbc61ea03fc31546e0dc3"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "152eddd89581008d3f48023ef41129615f1c9be73c5fab39862b6da8ffa1629b"
+      "sha256": "b81c11dc48ce40a239232d6ffd6b87d4925dbdffb7071f84e7ca120833776a6d"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -4081,7 +4081,7 @@
     },
     {
       "path": "internal/operations/meter_roles.go",
-      "sha256": "46b0b1ff9311359f7eaaa368f29dcbb4f5327fc3bbd2d9213550a8b3593a261d"
+      "sha256": "37ff29d8bb84f8b8b32ab8ac6c4e0164a830d727e1bbe05dc17f9a6989ce36e8"
     },
     {
       "path": "internal/operations/meter_roles_login_test.go",
@@ -6453,7 +6453,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "37c3946ff7bac2e318300cf98e012575c9e791ffe1ca272e460cbdf664277ac2"
+      "sha256": "53b8808631a9792813527d40aba3838daef3e999708215c21d1b9fea74ffe477"
     },
     {
       "path": "migrations/current.go",
@@ -6461,7 +6461,7 @@
     },
     {
       "path": "migrations/current_mvp.sql",
-      "sha256": "6fd9a302f5edee05633e3885421d1b810994825604de160bbb241c7cfe3dc8c3"
+      "sha256": "39517c72f12a0487b33929c47aa8a09d2816c5d8c870ce632913c6f428eaa008"
     },
     {
       "path": "migrations/embed.go",
@@ -7809,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "105cc84d8101a8cfdf6b300b5584cf8d4453d9dc234a43842b644f6e74b3b461"
+      "sha256": "55d0a422cf1ef00b880a81d6b8d96ea0cf296ba3616b19f6415eced15c1922b8"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

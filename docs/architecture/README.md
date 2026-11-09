@@ -16,6 +16,8 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 
 当前 U guard 专项已补齐一组 55439 PostgreSQL 负控矩阵，覆盖跨租户/跨 request-attempt、不可变快照与最终证据、Observation 来源闭集、成本指针互斥、资金边界回滚和计量角色 ACL。它是当前迁移的实证扩展，完整九组 guard、历史金融拒迁和目标环境权限验收仍按任务清单开放。
 
+2026-11-10 权限定义收口：024 与 `current_mvp.sql` 在所有 `meter_%` 函数创建完成后统一设置 `SECURITY INVOKER`、固定到当前 schema 加 `pg_catalog, pg_temp` 的搜索路径并撤销 PUBLIC 执行权。`internal/operations` 的角色核验逐函数确认 APP 可执行、projector/PUBLIC 不可执行，且不接受 SECURITY DEFINER 或未固定搜索路径。55439 实际 LOGIN、迁移 guard 与回归专项通过。该片只收紧函数定义与检查，不扩大计量表写权限，也不关闭完整九组 guard 和旧金融拒迁矩阵。
+
 异步 task 的公开准备链现在可以从 owner-scoped request detail 读取原 profile、reservation、attempt 身份，资金页读取原 funding lot/source 身份，再按 task 合同提交。服务端仍校验这些引用属于同一租户和原 request，不把缺失引用转换成新的商业事实。
 
 当前 task 集成证据也经公开 HTTP 入口取得这些引用，再进入 `/v1/tasks` 和 worker 状态机。测试 fixture 不再用 owner SQL 直接拼接 task 请求，避免把内部数据库读取误当成用户可用能力。

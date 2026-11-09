@@ -440,3 +440,14 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 2026-11-04 追加 `024_unified_text_metering.sql`。PostgreSQL 16.15 空库可安装；`TestUnifiedTextMeteringCanonical` 确认 schema/零售费率 canonical 能被 `metering` 解析，且摘要一致。每百万 token 费率 2000000/3000000 存成约分后的 2/1 与 3/1，对输入 100、输出 20 的预占为 260 微元，与旧一次 ceil 公式相同。同一测试核对输入 10、输出 4 的零售终态 canonical 与 `metering` 一致，摘要使用 `moni-aigate.inference.final.v1`，不接受纯核用量摘要。该测试不覆盖六协议商业链。同一公式对输入 100、输出 20、费率 2/1 与 3/1 的 SQL 结果也是 260。预占、证据和结算专项另确认终态投影写入，错投影在提交时回滚，人工核对的供应商侧保持空；把已记下的供应商金额改掉会被拒绝，授权更正仍可替换该金额。受管采购专项确认单次预占与该尝试的预算事件、已批准提案一致；把另一份已批准提案接到同一预占会在提交时回滚。过期的证据条数或修订号也不能被批准确认。证据专项确认人工核对落在原尝试上，没有尝试的观察会在提交时回滚。没有尝试的恢复不造观察，仍按原政策释放。同一 canonical 测试确认 UUID 档案、64 位十六进制 HMAC 的请求计划，以及由它派生的尝试计划，字节和摘要都与 inference 一致。自由版本号仍无计划。同一缺口测试确认没有用量界行的请求不能提交。同一 canonical 测试确认零售 known 报价和供应商 version_missing 报价的字节、摘要都与 inference 一致。计划未就绪时报价列为空。纯核报价摘要已落库，计划未就绪时也为空。完整九组 guard 和 HTTP/UI 切换仍未完成，按[任务清单](../../specs/028-unified-metering-media/tasks.md)继续。当前只有每模型唯一profile发行，多候选纯测试不证明生产异构路由。媒体/任务/Realtime、真实供应商/支付/1Panel及性能均未因此验收。
 
 026经营报表和027资金来源的既有本地证据保留各自范围，本片不声称重新执行其PG验收。GitHub上一提交的Actions因账户支付/额度未启动，见[027记录](wallet-sources.md)；本地通过不等于远端CI通过。
+
+## 2026-11-10：计量函数定义与实际 LOGIN 权限收口
+
+024 与 `migrations/current_mvp.sql` 在全部 `meter_%` 函数创建完成后逐函数执行三项固定化。函数为 `SECURITY INVOKER`，搜索路径固定为当前 schema、`pg_catalog`、`pg_temp`，PUBLIC 执行权撤销。当前安装和重复 provision 的角色核验同时要求 APP 对每个计量函数有执行权，projector 与 PUBLIC 没有执行权，函数不得是 SECURITY DEFINER，且搜索路径必须固定。
+
+本片使用 PostgreSQL 16.15 的专用库 `moni_test`，没有使用5432：
+
+- `PATH="/opt/homebrew/bin:$PATH" TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' GOCACHE=/tmp/moni-aigate-gocache go test -race -count=1 -timeout 240s ./internal/operations -run 'TestMeterRoleBoundaryWithActualLoginConnections|TestMeterRoleBoundary'` 通过。
+- `PATH="/opt/homebrew/bin:$PATH" TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' GOCACHE=/tmp/moni-aigate-gocache go test -race -count=1 -timeout 240s ./migrations -run 'TestUnifiedTextMeteringCanonical|TestUnifiedTextMeteringRejectsZeroBalanceBusinessHistory|TestUnifiedTextMeteringGuard'` 通过。
+
+这片只收紧函数执行边界和定义核验。完整九组 guard、11.2 旧金融事实的全部逐表正反例、正式目标环境权限验收和 028-U 任务总项仍未完成。

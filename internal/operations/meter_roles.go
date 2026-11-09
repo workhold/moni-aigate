@@ -280,11 +280,11 @@ func verifyMeterRoles(ctx context.Context, tx pgx.Tx, schema, appRole, projectio
 			return fmt.Errorf("%w: %s", ErrMeterRolePrivileges, table)
 		}
 	}
-	var appExecute, projectionExecute bool
-	err := tx.QueryRow(ctx, `SELECT bool_and(has_function_privilege($2::name,p.oid,'EXECUTE')), bool_or(has_function_privilege($3::name,p.oid,'EXECUTE'))
- FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname=$1 AND p.proname LIKE 'meter\_%' ESCAPE '\'`, schema, appRole, projectionRole).Scan(&appExecute, &projectionExecute)
-	if err != nil || !appExecute || projectionExecute {
-		return fmt.Errorf("%w: meter function execute", ErrMeterRolePrivileges)
+	var appExecute, projectionExecute, publicExecute, invoker, pinned bool
+	err := tx.QueryRow(ctx, `SELECT bool_and(has_function_privilege($2::name,p.oid,'EXECUTE')), bool_or(has_function_privilege($3::name,p.oid,'EXECUTE')), bool_or(has_function_privilege('public',p.oid,'EXECUTE')), bool_and(NOT p.prosecdef), bool_and(p.proconfig=ARRAY[format('search_path=%I, pg_catalog, pg_temp',$1::text)])
+ FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname=$1 AND p.proname LIKE 'meter\_%' ESCAPE '\'`, schema, appRole, projectionRole).Scan(&appExecute, &projectionExecute, &publicExecute, &invoker, &pinned)
+	if err != nil || !appExecute || projectionExecute || publicExecute || !invoker || !pinned {
+		return fmt.Errorf("%w: meter function execute or definition", ErrMeterRolePrivileges)
 	}
 	return nil
 }

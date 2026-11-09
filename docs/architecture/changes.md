@@ -5353,3 +5353,21 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-09T17:54:30Z · c1120fefe3ba
+
+补齐全部 meter_% 函数的 SECURITY INVOKER、固定 search_path、PUBLIC 执行撤销和实际 LOGIN 角色定义核验，并同步028-U验证边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2108 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/operations/meter_roles.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/current_mvp.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

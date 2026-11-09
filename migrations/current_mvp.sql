@@ -6654,6 +6654,17 @@ END $$;
 CREATE CONSTRAINT TRIGGER meter_procurement_proposal_current AFTER INSERT OR UPDATE ON procurement_cost_proposals DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION meter_procurement_proposal_current();
 
 REVOKE ALL ON FUNCTION meter_frames(bytea[]), meter_gcd(bigint,bigint), meter_schema_stamp(), meter_schema_complete(), meter_text_schema(bigint,bigint), meter_insert_text_model(text,text,jsonb,text), meter_model_profile(text), meter_rate_canonical(text,text,bigint,bigint,bigint,bigint), meter_price_complete(), meter_reduce_million(bigint), meter_insert_token_price(text,text,bigint,bigint,timestamptz,text,text,text,timestamptz), meter_insert_token_cost(text,text,text,text,bigint,bigint,text,timestamptz,text,text,timestamptz), meter_insert_token_cap(text,text,bigint), meter_route_complete(), meter_request_snapshot_present(), meter_plan_ready(text,text), meter_profile_canonical(text,text,text,text,bytea,bytea,bigint,bigint), meter_profile_digest(bytea,bytea), meter_bounds_canonical(text,text,bigint,bigint), meter_bounds_digest(bytea,text,bytea), meter_rates_digest(bytea,text,bytea), meter_pure_quote_digest(bytea,text,bytea,bytea), meter_request_vectors(), meter_request_vectors_match(), meter_request_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_attempt_plan_canonical(text,text,text,bytea,bigint,boolean,text), meter_plan_digest(bytea,bytea), meter_request_plan_matches(), meter_attempt_plan_matches(), meter_request_price_matches(), meter_insert_attempt_snapshot(text,text,text,text,text), meter_attempt_snapshot_present(), meter_attempt_matches_request(), meter_usage_state(text), meter_record_event_quantities(text,text,text,bigint,bigint), meter_event_quantity(text,text), meter_side_quantity_canonical(text,text,bigint,bigint), meter_quantities_digest(bytea,text,bytea), meter_final_digest(bytea,text,bytea), meter_quantity_canonical(text,bigint,bigint), meter_reconciliation_proposal_complete(), meter_event_rows_complete(), meter_event_attempt_bound(), meter_cost_lines_complete(), meter_finish_probe(text,text,text,bigint,bigint), meter_finalization_complete(), meter_request_finalization_pointer(), meter_settlement_finalization(), meter_token_amount(bigint,bigint,bigint,bigint,bigint,bigint), meter_attempt_cost_matches(), meter_procurement_attempt_closed(), meter_procurement_proposal_current(), meter_request_bounds_complete(), meter_attempt_bounds_complete(), meter_quote_digest(bytea,bytea), meter_retail_quote_canonical(text,bytea,bytea,text,bigint,bigint), meter_supplier_quote_canonical(text,bytea,bytea,text,text,text,bytea,bigint,bigint), meter_request_quote_matches(), meter_attempt_quote_matches(), meter_attempt_vectors_match() FROM PUBLIC;
+DO $$
+DECLARE f record;
+BEGIN
+ FOR f IN SELECT p.oid::regprocedure::text AS identity
+ FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+ WHERE n.nspname=current_schema() AND p.proname LIKE 'meter\_%' ESCAPE '\' LOOP
+  EXECUTE format('ALTER FUNCTION %s SECURITY INVOKER',f.identity);
+  EXECUTE format('ALTER FUNCTION %s SET search_path TO %I,pg_catalog,pg_temp',f.identity,current_schema());
+  EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC',f.identity);
+ END LOOP;
+END $$;
 
 -- 028-S/A/R current storage minimum. These tables are intentionally appended
 -- to 024. They contain only current identities and observations. They do not
