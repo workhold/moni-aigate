@@ -266,3 +266,7 @@ worker 没有导入 `procurementprefix`、`fundinglotruntime`、`maintenancescan
 审计 worktree 建立后，主目录 `/Users/vchive/Documents/ChatGPT/aigate/moni-aigate` 出现了尚未提交的四个文件改动，分别是 `internal/billing/media.go`、`migrations/024_unified_text_metering.sql`、`migrations/current_mvp.sql` 和 `specs/028-unified-metering-media/u-storage-contract.md`。这些改动没有进入本审计分支，也没有被本次 `go build` 和 `go vet` 验证。
 
 只读检查显示，这片并行改动正在给 media profile、media attempt 和 media settlement 增加 supplier rate 与 supplier cost 状态。它不改变本报告对文本 scalar、历史 prefix 包、payment legacy journal validator 或 periodic-budget legacy origin 的结论，但会改变 media 章节的当前字段形状。主目录改动合并或提交后，需要重新执行媒体相关 `rg`、PostgreSQL migration、billing、server 和 report 测试，再把 media 审计结果作为独立片更新。
+
+## 2026-11-10 集成复核
+
+supplier cost 片已在主目录完成并通过专项。四个 deterministic mock profile 现在保存 supplier 每百万 unit 费率，media attempt 冻结该费率，唯一 media settlement 保存 known/unknown supplier cost。billing、reporting、server image/TTS/task/Realtime 和 migrations 专项通过。该片只补 mock supplier cost snapshot，不改变本报告列出的 payment legacy validator、periodic-budget legacy origin 或维护 reader 清理项。

@@ -35,8 +35,10 @@ const mediaRequestsSQL = `SELECT q.id,q.tenant_id,t.name,q.model_key,q.model_key
  AND ($6='' OR CASE WHEN q.operation='video_generation' THEN 'asynchronous' ELSE 'synchronous' END=$6)
  ORDER BY q.created_at DESC,q.id COLLATE "C" DESC LIMIT 5001`
 
-const mediaAttemptsSQL = `SELECT a.tenant_id,a.id,a.request_id,q.operation,a.delivery_state
+const mediaAttemptsSQL = `SELECT a.tenant_id,a.id,a.request_id,q.operation,
+ CASE WHEN s.supplier_cost_status='known' THEN 'contract' ELSE 'unknown' END,s.supplier_cost_amount::pg_catalog.text
  FROM media_attempts a JOIN media_requests q ON q.tenant_id=a.tenant_id AND q.id=a.request_id
+ LEFT JOIN media_settlements s ON s.tenant_id=a.tenant_id AND s.request_id=a.request_id
  WHERE a.request_id=ANY($1::pg_catalog.text[]) AND q.created_at >= $2 AND q.created_at < $3
  AND ($4='' OR q.tenant_id=$4) AND ($5='' OR q.model_key=$5) AND ($6='' OR q.operation=$6)
  AND ($7='' OR CASE WHEN q.operation='video_generation' THEN 'asynchronous' ELSE 'synchronous' END=$7)
@@ -178,7 +180,8 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 		}
 		for rows.Next() {
 			var tenant, id, request, operation, status string
-			if err = rows.Scan(&tenant, &id, &request, &operation, &status); err != nil {
+			var amount *string
+			if err = rows.Scan(&tenant, &id, &request, &operation, &status, &amount); err != nil {
 				rows.Close()
 				return Report{}, err
 			}
@@ -188,6 +191,7 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 				channel:     "media:" + operation,
 				channelName: "media/" + operation,
 				status:      status,
+				amount:      amount,
 				source:      mediaFactSource,
 			})
 			if len(attempts) > 2*len(facts)+MaxRequests*2 {

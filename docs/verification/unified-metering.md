@@ -452,4 +452,17 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 
 这片只收紧函数执行边界和定义核验。完整九组 guard、11.2 旧金融事实的全部逐表正反例、正式目标环境权限验收和 028-U 任务总项仍未完成。
 
+## 2026-11-10：媒体 supplier cost snapshot
+
+当前 MVP 媒体 profile 为图片、TTS、video_generation 和 realtime_turn 增加不可变 supplier 每百万 unit 费率。media attempt 出生时冻结 supplier 费率，唯一 settlement 保存 supplier cost status 与 amount。confirmed final 且结果有效时按原 supplier 费率执行一次 `media_amount`，失败、取消、missing、unknown 和超界结果保持 unknown/NULL。媒体 settlement guard 核对 observation、attempt、request 和 tenant 绑定，经营报表读取 settlement supplier cost，不从 raw_amount 或当前 profile 重算。
+
+55439 专库专项通过：
+
+- `go test -race -count=1 -timeout 300s ./internal/billing -run 'TestPostgresMedia|Test.*Media'`
+- `go test -race -count=1 -timeout 180s ./internal/reporting -run 'TestPostgresReadOperatingReportIncludesMediaSupplierCostOnce|TestPostgresReadOperatingReport'`
+- `go test -race -count=1 -timeout 360s ./internal/server -run 'TestImageGenerationHTTPUsesCurrentMediaWalletFacts|TestSpeechHTTPUsesCurrentMediaWalletFacts|TestMediaResultsSurviveProcessCacheReset|TestVideoTask|TestRealtimeHTTP'`
+- `go test -race -count=1 -timeout 300s ./migrations -run 'TestUnifiedTextMeteringCanonical|TestUnifiedTextMeteringGuardMatrix|TestUnifiedTextMeteringGuardRoleMatrix|TestUnifiedTextMeteringGuardRoleWriteRejections'`
+
+费率和成本来自 deterministic mock fixture，不构成真实供应商 usage 或真实供应商账单认证。
+
 同日整仓 `make verify-mvp` 使用相同的 55439 专库启动。前端342项测试和构建通过，Go race 已通过大部分包；`internal/periodicbudget` 有一次迁移 statement timeout，`internal/server` 有一次密码变更用例返回401，整仓命令未记为无条件全绿。命令退出前 55439 未留下活动连接或等待锁，分别重跑 `TestBillingPeriodicCustomerEachScopeRejectsFullRAtomically` 与 `TestPasswordChangeRevokesFamiliesAndRequiresFreshProof` 均通过，判断为本轮专库并发/测试抖动证据，不把失败记录抹除。

@@ -78,7 +78,7 @@ CREATE TABLE settlements(request_id text PRIMARY KEY,tenant_id text NOT NULL,cha
 CREATE TABLE upstream_attempts(id text PRIMARY KEY,request_id text NOT NULL,channel_id text NOT NULL,sequence integer NOT NULL,cost_status text NOT NULL,cost_amount numeric(100,0));
 CREATE TABLE media_requests(tenant_id text NOT NULL,id text NOT NULL,model_key text NOT NULL,operation text NOT NULL,profile_version text NOT NULL,state text NOT NULL,created_at timestamptz NOT NULL,PRIMARY KEY(tenant_id,id));
 CREATE TABLE media_attempts(tenant_id text NOT NULL,id text NOT NULL,request_id text NOT NULL,delivery_state text NOT NULL,created_at timestamptz NOT NULL,PRIMARY KEY(tenant_id,id));
-CREATE TABLE media_settlements(tenant_id text NOT NULL,id text NOT NULL,request_id text NOT NULL,charged_amount bigint NOT NULL,raw_amount numeric(100,0) NOT NULL,status text NOT NULL,PRIMARY KEY(tenant_id,id),UNIQUE(tenant_id,request_id));`)
+CREATE TABLE media_settlements(tenant_id text NOT NULL,id text NOT NULL,request_id text NOT NULL,charged_amount bigint NOT NULL,raw_amount numeric(100,0) NOT NULL,supplier_cost_status text NOT NULL,supplier_cost_amount bigint,status text NOT NULL,PRIMARY KEY(tenant_id,id),UNIQUE(tenant_id,request_id));`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,15 +196,15 @@ func TestPostgresReadOperatingReportUsesOneReadOnlySnapshot(t *testing.T) {
 	}
 }
 
-func TestPostgresReadOperatingReportIncludesMediaOnceAndLeavesCostUnknown(t *testing.T) {
+func TestPostgresReadOperatingReportIncludesMediaSupplierCostOnce(t *testing.T) {
 	f := newReadFixture(t)
 	first, second, third := uuid.NewString(), uuid.NewString(), uuid.NewString()
 	profile := "11111111-1111-4111-8111-111111111111"
 	at := f.filter.From.Add(time.Hour)
 	f.exec(t, `INSERT INTO media_requests(tenant_id,id,model_key,operation,profile_version,state,created_at)
 VALUES($1,$2,'mock-tts','tts',$5,'settled',$4),($1,$3,'mock-image-generation','image_generation',$5,'released',$4 + interval '1 second'),($1,$6,'mock-video-generation','video_generation',$5,'pending',$4 + interval '2 seconds')`, f.tenant, first, second, at, profile, third)
-	f.exec(t, `INSERT INTO media_settlements(tenant_id,id,request_id,charged_amount,raw_amount,status)
-VALUES($1,$2,$3,125,999,'settled'),($1,$4,$5,0,0,'released')`, f.tenant, uuid.NewString(), first, uuid.NewString(), second)
+	f.exec(t, `INSERT INTO media_settlements(tenant_id,id,request_id,charged_amount,raw_amount,supplier_cost_status,supplier_cost_amount,status)
+VALUES($1,$2,$3,125,999,'known',60,'settled'),($1,$4,$5,0,0,'unknown',NULL,'released')`, f.tenant, uuid.NewString(), first, uuid.NewString(), second)
 	f.exec(t, `INSERT INTO media_attempts(tenant_id,id,request_id,delivery_state,created_at)
 VALUES($1,$2,$3,'completed',$4),($1,$5,$3,'failed',$4 + interval '1 microsecond'),($1,$6,$7,'unknown',$4),($1,$8,$9,'sending',$4)`, f.tenant, uuid.NewString(), first, at, uuid.NewString(), uuid.NewString(), second, uuid.NewString(), third)
 
@@ -212,7 +212,7 @@ VALUES($1,$2,$3,'completed',$4),($1,$5,$3,'failed',$4 + interval '1 microsecond'
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Summary.RequestCount != 3 || report.Summary.AttemptCount != 4 || report.Summary.Charged != "125" || report.Summary.Refunded != "0" || report.Summary.KnownProviderCost != "0" || report.Summary.UnknownProviderCosts != 4 || report.Summary.GrossMargin != nil {
+	if report.Summary.RequestCount != 3 || report.Summary.AttemptCount != 4 || report.Summary.Charged != "125" || report.Summary.Refunded != "0" || report.Summary.KnownProviderCost != "120" || report.Summary.UnknownProviderCosts != 2 || report.Summary.GrossMargin != nil {
 		t.Fatalf("media income/count/cost union changed 026 semantics: %+v", report.Summary)
 	}
 	if len(report.Requests) != 3 || report.Requests[0].RequestID != third || report.Requests[0].Protocol != "video_generation" || report.Requests[0].ExecutionKind != "asynchronous" {
@@ -222,7 +222,10 @@ VALUES($1,$2,$3,'completed',$4),($1,$5,$3,'failed',$4 + interval '1 microsecond'
 		t.Fatalf("media attempts did not stay in operation buckets: %+v", report.Channels)
 	}
 	for _, channel := range report.Channels {
-		if channel.KnownProviderCost != "0" || channel.UnknownProviderCosts == 0 {
+		if channel.ChannelID == "media:tts" && (channel.KnownProviderCost != "120" || channel.UnknownProviderCosts != 0) {
+			t.Fatalf("known media supplier cost was not retained: %+v", channel)
+		}
+		if channel.ChannelID != "media:tts" && channel.UnknownProviderCosts == 0 {
 			t.Fatalf("media raw amount was treated as provider cost: %+v", channel)
 		}
 	}

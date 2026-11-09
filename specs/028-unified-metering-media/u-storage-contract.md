@@ -619,6 +619,10 @@ SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报�
 
 媒体预占先锁 API key、客户 `AVAILABLE/HELD` 账户，再按 FIFO 锁 funding lot，写一个 `media.reserve` journal、lot reservation edges、held key 余额和 audit。结算锁原 media reservation 与账户，依据原 rate 和 confirmed observation 计算 charge，批量写 `media.settle` journal、lot finish edges、settlement、key spent/held 和 audit。unknown、missing、失败、取消和超界 usage 释放预占且 charged/raw 为零，供应商提交未知时 attempt 进入终态，恢复不得再次发送。媒体 lot event 已接入 023 wallet event validator 的同一 journal/lots 图，未创建第二钱包或第二账本。
 
+当前 MVP 的媒体 profile 同时保存 retail 与 supplier 两个不可变每百万 unit 费率。supplier 费率是 deterministic mock provider 的受控成本快照，不表示真实供应商账单认证，也不从当前 profile 或向量反算历史成本。`media_attempts` 在出生时保存 supplier 费率和成本状态，`media_settlements` 在唯一收尾时保存 supplier cost status 与 amount。只有 confirmed final usage 且 provider 结果有效时，supplier cost 才为 `known` 并按原 supplier 费率对原数量执行一次 `media_amount`。失败、取消、missing、unknown 或超界结果的 supplier cost 保持 `unknown` 与 NULL amount，不能写入零值。重复收尾必须返回同一 supplier cost，历史 snapshot、费率和成本状态不可更新。
+
+媒体成本 guard 必须同时核对 attempt、observation、settlement 的同租户、同 request、同 attempt 绑定，known 状态的金额必须等于原 supplier 费率和 confirmed quantity，unknown 状态金额必须为 NULL。reporting 只能读取 settlement 的 supplier cost，unknown 继续计入待核对成本，不从 `raw_amount` 或当前 profile 重算。后续真实供应商接入需要替换 supplier cost 来源并复用这组字段和收尾边界，不新增第二钱包或第二结算路径。
+
 图片和 TTS 当前 HTTP 主线在有数据库的 Server 上使用上述 Reserve/Attempt/Observe/Settle 入口。无数据库的纯 handler fixture 只验证协议和 provider 边界，不能视为商业验收。Realtime 当前在有数据库时为单 turn 使用 `realtime_turn` profile，并由 tenant-bound PostgreSQL persistence 写入 session/turn/event 与 provider identity 后收尾同一 media settlement。异步 video task 已通过当前 media reservation、attempt、observation 和 settlement 接入上述入口，制品正文也已持久化；真实供应商、对象存储、浏览器和目标部署仍不属于本地 mock 验收。
 
 ## 12. U 必须与后续片 DDL 分界

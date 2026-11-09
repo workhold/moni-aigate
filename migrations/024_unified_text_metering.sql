@@ -2415,6 +2415,7 @@ CREATE TABLE media_model_profiles (
  profile_version text NOT NULL CHECK(media_uuid(profile_version)),
  unit text NOT NULL CHECK(unit IN ('image','character','task','realtime_byte')),
  rate_per_million bigint NOT NULL CHECK(rate_per_million>=0),
+ supplier_rate_per_million bigint NOT NULL CHECK(supplier_rate_per_million>=0),
  max_quantity bigint NOT NULL CHECK(max_quantity>0),
  max_result_bytes bigint NOT NULL CHECK(max_result_bytes>0),
  enabled boolean NOT NULL DEFAULT true,
@@ -2423,8 +2424,8 @@ CREATE TABLE media_model_profiles (
 );
 CREATE FUNCTION media_profile_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
- IF TG_OP='UPDATE' AND ROW(NEW.model_key,NEW.operation,NEW.profile_version,NEW.unit,NEW.rate_per_million,NEW.max_quantity,NEW.max_result_bytes,NEW.created_at)
-    IS DISTINCT FROM ROW(OLD.model_key,OLD.operation,OLD.profile_version,OLD.unit,OLD.rate_per_million,OLD.max_quantity,OLD.max_result_bytes,OLD.created_at) THEN
+ IF TG_OP='UPDATE' AND ROW(NEW.model_key,NEW.operation,NEW.profile_version,NEW.unit,NEW.rate_per_million,NEW.supplier_rate_per_million,NEW.max_quantity,NEW.max_result_bytes,NEW.created_at)
+    IS DISTINCT FROM ROW(OLD.model_key,OLD.operation,OLD.profile_version,OLD.unit,OLD.rate_per_million,OLD.supplier_rate_per_million,OLD.max_quantity,OLD.max_result_bytes,OLD.created_at) THEN
   RAISE EXCEPTION 'media model profile identity is immutable';
  END IF;
  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'media model profile is immutable'; END IF;
@@ -2432,12 +2433,12 @@ BEGIN
 END $$;
 CREATE TRIGGER media_profile_immutable BEFORE UPDATE OR DELETE ON media_model_profiles FOR EACH ROW EXECUTE FUNCTION media_profile_immutable();
 
-INSERT INTO media_model_profiles(model_key,operation,profile_version,unit,rate_per_million,max_quantity,max_result_bytes)
+INSERT INTO media_model_profiles(model_key,operation,profile_version,unit,rate_per_million,supplier_rate_per_million,max_quantity,max_result_bytes)
 VALUES
- ('mock-image-generation','image_generation','11111111-1111-4111-8111-111111111111','image',1000000,1,16777216),
- ('mock-tts','tts','22222222-2222-4222-8222-222222222222','character',1000000,16384,16777216),
- ('mock-video-generation','video_generation','33333333-3333-4333-8333-333333333333','task',1000000,1,67108864),
- ('mock-realtime','realtime_turn','44444444-4444-4444-8444-444444444444','realtime_byte',1000000,67108864,16777216);
+ ('mock-image-generation','image_generation','11111111-1111-4111-8111-111111111111','image',1000000,500000,1,16777216),
+ ('mock-tts','tts','22222222-2222-4222-8222-222222222222','character',1000000,500000,16384,16777216),
+ ('mock-video-generation','video_generation','33333333-3333-4333-8333-333333333333','task',1000000,500000,1,67108864),
+ ('mock-realtime','realtime_turn','44444444-4444-4444-8444-444444444444','realtime_byte',1000000,500000,67108864,16777216);
 
 CREATE FUNCTION media_amount(quantity bigint, rate_per_million bigint) RETURNS numeric
 LANGUAGE sql IMMUTABLE AS $$
@@ -2501,6 +2502,7 @@ CREATE TRIGGER media_reservation_immutable BEFORE DELETE ON media_reservations F
 
 CREATE TABLE media_attempts (
  tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), request_id text NOT NULL, provider_reference text,
+ supplier_rate_per_million bigint NOT NULL CHECK(supplier_rate_per_million>=0),
  delivery_state text NOT NULL DEFAULT 'prepared' CHECK(delivery_state IN ('prepared','sending','completed','failed','unknown')),
  created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
  PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,id,request_id),
@@ -2508,7 +2510,7 @@ CREATE TABLE media_attempts (
 );
 CREATE FUNCTION media_attempt_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
- IF TG_OP='UPDATE' AND ROW(NEW.tenant_id,NEW.id,NEW.request_id,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.request_id,OLD.created_at) THEN RAISE EXCEPTION 'media attempt identity is immutable'; END IF;
+ IF TG_OP='UPDATE' AND ROW(NEW.tenant_id,NEW.id,NEW.request_id,NEW.supplier_rate_per_million,NEW.created_at) IS DISTINCT FROM ROW(OLD.tenant_id,OLD.id,OLD.request_id,OLD.supplier_rate_per_million,OLD.created_at) THEN RAISE EXCEPTION 'media attempt identity is immutable'; END IF;
  IF TG_OP='UPDATE' AND NOT ((OLD.delivery_state='prepared' AND NEW.delivery_state IN ('sending','failed','unknown')) OR (OLD.delivery_state='sending' AND NEW.delivery_state IN ('completed','failed','unknown')) OR NEW.delivery_state=OLD.delivery_state) THEN RAISE EXCEPTION 'invalid media attempt state transition'; END IF;
  IF NEW.delivery_state='unknown' AND NEW.provider_reference IS NOT NULL THEN RAISE EXCEPTION 'unknown media attempt cannot expose provider reference'; END IF;
  IF TG_OP='UPDATE' AND OLD.delivery_state='unknown' AND NEW.delivery_state IS DISTINCT FROM OLD.delivery_state THEN RAISE EXCEPTION 'unknown media attempt is terminal'; END IF;
@@ -2547,17 +2549,30 @@ CREATE TRIGGER media_reservation_lot_immutable BEFORE UPDATE OR DELETE ON media_
 CREATE TABLE media_settlements (
  tenant_id text NOT NULL, id text NOT NULL CHECK(media_uuid(id)), request_id text NOT NULL, reservation_id text NOT NULL, attempt_id text NOT NULL,
  charged_amount bigint NOT NULL CHECK(charged_amount>=0), raw_amount numeric(100,0) NOT NULL CHECK(raw_amount>=0), released_amount numeric(100,0) NOT NULL CHECK(released_amount>=0),
+ supplier_cost_status text NOT NULL CHECK(supplier_cost_status IN ('known','unknown')), supplier_cost_amount bigint CHECK(supplier_cost_amount>=0),
  status text NOT NULL CHECK(status IN ('settled','released')), reason text NOT NULL, journal_id text NOT NULL REFERENCES journals(id),
  created_at timestamptz(6) NOT NULL DEFAULT clock_timestamp() CHECK(isfinite(created_at)),
  PRIMARY KEY(tenant_id,id), UNIQUE(tenant_id,request_id),
  FOREIGN KEY(tenant_id,request_id) REFERENCES media_requests(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
  FOREIGN KEY(tenant_id,reservation_id) REFERENCES media_reservations(tenant_id,id) DEFERRABLE INITIALLY DEFERRED,
- FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES media_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED
+ FOREIGN KEY(tenant_id,attempt_id,request_id) REFERENCES media_attempts(tenant_id,id,request_id) DEFERRABLE INITIALLY DEFERRED,
+ CHECK((supplier_cost_status='known' AND supplier_cost_amount IS NOT NULL) OR (supplier_cost_status='unknown' AND supplier_cost_amount IS NULL))
 );
 CREATE FUNCTION media_settlement_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE expected numeric; quantity bigint; supplier_rate bigint; usage_state text;
 BEGIN
  IF NEW.status='released' AND (NEW.charged_amount<>0 OR NEW.raw_amount<>0) THEN RAISE EXCEPTION 'released media settlement must have zero charge'; END IF;
  IF NEW.status='settled' AND NEW.charged_amount<0 THEN RAISE EXCEPTION 'invalid media settlement'; END IF;
+ SELECT o.quantity,o.usage_state,a.supplier_rate_per_million INTO quantity,usage_state,supplier_rate
+ FROM media_observations o JOIN media_attempts a ON a.tenant_id=o.tenant_id AND a.id=o.attempt_id AND a.request_id=o.request_id
+ WHERE o.tenant_id=NEW.tenant_id AND o.request_id=NEW.request_id AND o.attempt_id=NEW.attempt_id;
+ IF NEW.supplier_cost_status='known' THEN
+  IF usage_state IS DISTINCT FROM 'confirmed_final' OR quantity IS NULL THEN RAISE EXCEPTION 'known media supplier cost requires confirmed usage'; END IF;
+  expected:=media_amount(quantity,supplier_rate);
+  IF expected IS NULL OR expected>9223372036854775807::numeric OR NEW.supplier_cost_amount::numeric IS DISTINCT FROM expected THEN RAISE EXCEPTION 'media supplier cost mismatch'; END IF;
+ ELSIF NEW.supplier_cost_amount IS NOT NULL THEN
+  RAISE EXCEPTION 'unknown media supplier cost cannot carry amount';
+ END IF;
  RETURN NULL;
 END $$;
 CREATE CONSTRAINT TRIGGER media_settlement_guard AFTER INSERT ON media_settlements DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION media_settlement_guard();

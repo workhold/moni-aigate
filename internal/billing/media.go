@@ -30,7 +30,7 @@ type MediaReservation struct {
 	ID, RequestID, TenantID, Operation, ModelKey, ProfileVersion string
 	AttemptID, AttemptState                                      string
 	Amount                                                       Money
-	RatePerMillion, QuantityBound                                int64
+	RatePerMillion, SupplierRatePerMillion, QuantityBound        int64
 	Deadline                                                     time.Time
 	Existing                                                     bool
 }
@@ -44,7 +44,8 @@ type MediaFinalizationInput struct {
 type MediaSettlement struct {
 	ID, RequestID, TenantID, Status, Reason, JournalID string
 	ChargedAmount                                      Money
-	RawAmount, ReleasedAmount                          string
+	RawAmount, ReleasedAmount, SupplierCostStatus      string
+	SupplierCostAmount                                 *Money
 }
 
 func validMediaOperation(value string) bool {
@@ -68,12 +69,12 @@ func (s *Store) ReserveMedia(ctx context.Context, in MediaReserveInput) (MediaRe
 	}
 	err := s.transaction(ctx, func(tx pgx.Tx) error {
 		var profileVersion string
-		var rate, maximum int64
+		var rate, supplierRate, maximum int64
 		// The profile is immutable and the application role is intentionally
 		// SELECT-only on this table. PostgreSQL requires UPDATE for a FOR SHARE
 		// lock, so a locking read would violate the role boundary without adding
 		// protection to an immutable row.
-		if err := tx.QueryRow(ctx, `SELECT profile_version,rate_per_million,max_quantity FROM media_model_profiles WHERE model_key=$1 AND operation=$2 AND enabled`, in.ModelKey, in.Operation).Scan(&profileVersion, &rate, &maximum); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT profile_version,rate_per_million,supplier_rate_per_million,max_quantity FROM media_model_profiles WHERE model_key=$1 AND operation=$2 AND enabled`, in.ModelKey, in.Operation).Scan(&profileVersion, &rate, &supplierRate, &maximum); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return fail("media_profile_unavailable", "media profile is not published")
 			}
@@ -101,13 +102,13 @@ func (s *Store) ReserveMedia(ctx context.Context, in MediaReserveInput) (MediaRe
 				return fail("idempotency_conflict", "media idempotency key already used")
 			}
 			result.Existing = true
-			return tx.QueryRow(ctx, `SELECT r.id,r.request_id,r.tenant_id,q.operation,q.model_key,q.profile_version,r.amount,r.rate_per_million,r.quantity_bound,r.deadline,a.id,a.delivery_state FROM media_reservations r JOIN media_requests q ON q.tenant_id=r.tenant_id AND q.id=r.request_id JOIN media_attempts a ON a.tenant_id=q.tenant_id AND a.request_id=q.id WHERE r.tenant_id=$1 AND r.request_id=$2`, in.TenantID, existingID).Scan(&result.ID, &result.RequestID, &result.TenantID, &result.Operation, &result.ModelKey, &result.ProfileVersion, &result.Amount, &result.RatePerMillion, &result.QuantityBound, &result.Deadline, &result.AttemptID, &result.AttemptState)
+			return tx.QueryRow(ctx, `SELECT r.id,r.request_id,r.tenant_id,q.operation,q.model_key,q.profile_version,r.amount,r.rate_per_million,a.supplier_rate_per_million,r.quantity_bound,r.deadline,a.id,a.delivery_state FROM media_reservations r JOIN media_requests q ON q.tenant_id=r.tenant_id AND q.id=r.request_id JOIN media_attempts a ON a.tenant_id=q.tenant_id AND a.request_id=q.id WHERE r.tenant_id=$1 AND r.request_id=$2`, in.TenantID, existingID).Scan(&result.ID, &result.RequestID, &result.TenantID, &result.Operation, &result.ModelKey, &result.ProfileVersion, &result.Amount, &result.RatePerMillion, &result.SupplierRatePerMillion, &result.QuantityBound, &result.Deadline, &result.AttemptID, &result.AttemptState)
 		}
 		if err != nil {
 			return err
 		}
 		reservationID := uuid.NewString()
-		result = MediaReservation{ID: reservationID, RequestID: in.RequestID, TenantID: in.TenantID, Operation: in.Operation, ModelKey: in.ModelKey, ProfileVersion: profileVersion, AttemptID: in.AttemptID, AttemptState: "prepared", Amount: Money(amount.Int64()), RatePerMillion: rate, QuantityBound: in.QuantityBound, Deadline: in.Deadline}
+		result = MediaReservation{ID: reservationID, RequestID: in.RequestID, TenantID: in.TenantID, Operation: in.Operation, ModelKey: in.ModelKey, ProfileVersion: profileVersion, AttemptID: in.AttemptID, AttemptState: "prepared", Amount: Money(amount.Int64()), RatePerMillion: rate, SupplierRatePerMillion: supplierRate, QuantityBound: in.QuantityBound, Deadline: in.Deadline}
 		accounts, err := lockAccounts(ctx, tx, in.TenantID, "AVAILABLE", "HELD")
 		if err != nil {
 			return err
@@ -119,7 +120,7 @@ func (s *Store) ReserveMedia(ctx context.Context, in MediaReserveInput) (MediaRe
 		if _, err = tx.Exec(ctx, `INSERT INTO media_reservations(tenant_id,id,request_id,amount,rate_per_million,quantity_bound,deadline,journal_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, in.TenantID, reservationID, in.RequestID, int64(result.Amount), rate, in.QuantityBound, in.Deadline, journal); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO media_attempts(tenant_id,id,request_id) VALUES($1,$2,$3)`, in.TenantID, in.AttemptID, in.RequestID); err != nil {
+		if _, err = tx.Exec(ctx, `INSERT INTO media_attempts(tenant_id,id,request_id,supplier_rate_per_million) VALUES($1,$2,$3,$4)`, in.TenantID, in.AttemptID, in.RequestID, supplierRate); err != nil {
 			return err
 		}
 		if err = applyMediaReserveLots(ctx, tx, in.TenantID, reservationID, result.Amount, journal); err != nil {
@@ -216,8 +217,13 @@ func (s *Store) FinalizeMedia(ctx context.Context, in MediaFinalizationInput) (M
 	}
 	err := s.transaction(ctx, func(tx pgx.Tx) error {
 		var existing MediaSettlement
-		err := tx.QueryRow(ctx, `SELECT id,request_id,tenant_id,status,reason,journal_id,charged_amount,raw_amount::text,released_amount::text FROM media_settlements WHERE tenant_id=$1 AND request_id=$2`, in.TenantID, in.RequestID).Scan(&existing.ID, &existing.RequestID, &existing.TenantID, &existing.Status, &existing.Reason, &existing.JournalID, &existing.ChargedAmount, &existing.RawAmount, &existing.ReleasedAmount)
+		var existingSupplierCost *int64
+		err := tx.QueryRow(ctx, `SELECT id,request_id,tenant_id,status,reason,journal_id,charged_amount,raw_amount::text,released_amount::text,supplier_cost_status,supplier_cost_amount FROM media_settlements WHERE tenant_id=$1 AND request_id=$2`, in.TenantID, in.RequestID).Scan(&existing.ID, &existing.RequestID, &existing.TenantID, &existing.Status, &existing.Reason, &existing.JournalID, &existing.ChargedAmount, &existing.RawAmount, &existing.ReleasedAmount, &existing.SupplierCostStatus, &existingSupplierCost)
 		if err == nil {
+			if existingSupplierCost != nil {
+				value := Money(*existingSupplierCost)
+				existing.SupplierCostAmount = &value
+			}
 			result = existing
 			return nil
 		}
@@ -225,9 +231,9 @@ func (s *Store) FinalizeMedia(ctx context.Context, in MediaFinalizationInput) (M
 			return err
 		}
 		var reservationID, keyID, operation, modelKey, profile string
-		var reserved, rate, bound int64
+		var reserved, rate, supplierRate, bound int64
 		var reservationStatus string
-		if err = tx.QueryRow(ctx, `SELECT r.id,q.key_id,q.operation,q.model_key,q.profile_version,r.amount,r.rate_per_million,r.quantity_bound,r.status FROM media_reservations r JOIN media_requests q ON q.tenant_id=r.tenant_id AND q.id=r.request_id WHERE r.tenant_id=$1 AND r.request_id=$2 FOR UPDATE`, in.TenantID, in.RequestID).Scan(&reservationID, &keyID, &operation, &modelKey, &profile, &reserved, &rate, &bound, &reservationStatus); err != nil {
+		if err = tx.QueryRow(ctx, `SELECT r.id,q.key_id,q.operation,q.model_key,q.profile_version,r.amount,r.rate_per_million,a.supplier_rate_per_million,r.quantity_bound,r.status FROM media_reservations r JOIN media_requests q ON q.tenant_id=r.tenant_id AND q.id=r.request_id JOIN media_attempts a ON a.tenant_id=r.tenant_id AND a.id=$3 AND a.request_id=r.request_id WHERE r.tenant_id=$1 AND r.request_id=$2 FOR UPDATE`, in.TenantID, in.RequestID, in.AttemptID).Scan(&reservationID, &keyID, &operation, &modelKey, &profile, &reserved, &rate, &supplierRate, &bound, &reservationStatus); err != nil {
 			return err
 		}
 		if operation != in.Operation || reservationStatus != "reserved" {
@@ -258,6 +264,16 @@ func (s *Store) FinalizeMedia(ctx context.Context, in MediaFinalizationInput) (M
 		if charge > reserved {
 			charge = reserved
 		}
+		supplierCostStatus := "unknown"
+		var supplierCostAmount *int64
+		if in.UsageState == "confirmed_final" && in.Outcome == "completed" && in.Quantity <= bound {
+			supplierRaw, supplierErr := mediaAmountValue(in.Quantity, supplierRate)
+			if supplierErr == nil && supplierRaw.IsInt64() {
+				supplierCostStatus = "known"
+				value := supplierRaw.Int64()
+				supplierCostAmount = &value
+			}
+		}
 		kinds := []string{"HELD", "AVAILABLE"}
 		if charge > 0 {
 			kinds = append(kinds, "REVENUE")
@@ -287,7 +303,7 @@ func (s *Store) FinalizeMedia(ctx context.Context, in MediaFinalizationInput) (M
 		if charge == 0 {
 			storedRaw = "0"
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO media_settlements(tenant_id,id,request_id,reservation_id,attempt_id,charged_amount,raw_amount,released_amount,status,reason,journal_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, in.TenantID, settlementID, in.RequestID, reservationID, in.AttemptID, charge, storedRaw, released.String(), status, reason, journal); err != nil {
+		if _, err = tx.Exec(ctx, `INSERT INTO media_settlements(tenant_id,id,request_id,reservation_id,attempt_id,charged_amount,raw_amount,released_amount,supplier_cost_status,supplier_cost_amount,status,reason,journal_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, in.TenantID, settlementID, in.RequestID, reservationID, in.AttemptID, charge, storedRaw, released.String(), supplierCostStatus, supplierCostAmount, status, reason, journal); err != nil {
 			return err
 		}
 		if _, err = tx.Exec(ctx, `UPDATE media_reservations SET status=$3 WHERE tenant_id=$1 AND id=$2`, in.TenantID, reservationID, status); err != nil {
@@ -308,8 +324,13 @@ func (s *Store) FinalizeMedia(ctx context.Context, in MediaFinalizationInput) (M
 		if _, err = tx.Exec(ctx, `UPDATE media_attempts SET delivery_state=$3 WHERE tenant_id=$1 AND id=$2`, in.TenantID, in.AttemptID, attemptState); err != nil {
 			return err
 		}
-		result = MediaSettlement{ID: settlementID, RequestID: in.RequestID, TenantID: in.TenantID, Status: status, Reason: reason, JournalID: journal, ChargedAmount: Money(charge), RawAmount: raw.String(), ReleasedAmount: released.String()}
-		return audit(ctx, tx, in.TenantID, "system", "billing.media.settle", in.RequestID, in.RequestID, map[string]any{"status": status, "charged_amount": charge, "raw_amount": raw.String()})
+		var supplierAmount *Money
+		if supplierCostAmount != nil {
+			value := Money(*supplierCostAmount)
+			supplierAmount = &value
+		}
+		result = MediaSettlement{ID: settlementID, RequestID: in.RequestID, TenantID: in.TenantID, Status: status, Reason: reason, JournalID: journal, ChargedAmount: Money(charge), RawAmount: raw.String(), ReleasedAmount: released.String(), SupplierCostStatus: supplierCostStatus, SupplierCostAmount: supplierAmount}
+		return audit(ctx, tx, in.TenantID, "system", "billing.media.settle", in.RequestID, in.RequestID, map[string]any{"status": status, "charged_amount": charge, "raw_amount": raw.String(), "supplier_cost_status": supplierCostStatus, "supplier_cost_amount": supplierCostAmount})
 	})
 	return result, err
 }

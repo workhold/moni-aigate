@@ -77,7 +77,7 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-08 当前 MVP 结果与实时持久化续片：新增不可变 `media_result_artifacts`，图片与 TTS 在结算后保存受保护 inline bytes、media type 和 SHA-256，重置进程内缓存后按 tenant/user/key/request 或原 idempotency key读取，重复读取不创建第二 settlement。Realtime 有 DB 时使用租户绑定的 PostgreSQL persistence 写入 `realtime_sessions`、`realtime_turns`、`realtime_events`，保留事件幂等、状态迁移、单 inflight 和原商业引用；纯 WS fixture 仍保留内存路径。该片的 55439 migration/role/media HTTP/realtime/reporting 定向 race 已通过，provider session 重启恢复、真实 socket 故障和完整 commercial matrix 仍未验收。
 
-2026-11-08 当前 MVP 报表续片：经营报表把 `media_requests`、唯一 `media_settlements` 和全部 `media_attempts` 纳入同一只读快照。媒体收入只按 request 计一次，当前没有供应商成本字段时保留 unknown，不把 `raw_amount`解释为成本；支持 media operation、同步/异步 execution_kind 和安全模型筛选。报表接缝已通过 55439 race，但任务/实时完整写入、供应商成本和浏览器验收仍未完成。
+2026-11-08 当前 MVP 报表续片：经营报表把 `media_requests`、唯一 `media_settlements` 和全部 `media_attempts` 纳入同一只读快照。媒体收入只按 request 计一次，supplier cost 现在从 settlement 的不可变 known/unknown 成本快照读取，`raw_amount` 不再承担成本语义；支持 media operation、同步/异步 execution_kind 和安全模型筛选。报表接缝已通过 55439 race，真实供应商成本认证和浏览器验收仍未完成。
 
 2026-11-09 异步任务重启续片：`media_task_artifacts` 现在在成功 metadata 后支持一次性写入并校验正文 SHA-256，Postgres Store 读取已保存正文时不再调用 provider。新的 Store、新 grant 和拒绝下载 provider 已验证正文跨进程读取；新的 worker/provider adapter 可从持久 task 状态观察并结算一次，不重新提交生成。该片仍使用 deterministic mock provider，真实供应商 task handle、对象存储和容器重启验收仍未完成。
 
@@ -103,9 +103,9 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 ## S / A / R / 交付
 
-- [x] S 当前 MVP：mock image/TTS profile、输入/结果边界、inline artifact 持久化、统一 media Reserve/Attempt/Observe/Settle、账单/报表和访问控制已通过 55439 与 Compose smoke；图片编辑、STT 和真实供应商认证后置。
-- [x] A 当前 MVP：`video_generation` task 持久化、状态映射、worker lease、未知提交不重发、取消/过期/失败释放、artifact 正文一次性持久化和唯一结算已通过 task/worker restart 专项；真实供应商 task handle 与对象存储后置。
-- [x] R 当前 MVP：单 session/单 turn 的 PostgreSQL session/turn/event、provider identity、重复事件、断线/取消/unknown、统一 media settlement 和进程重启收尾已通过 Realtime 专项与 Compose WebSocket smoke；多轮/长连接/多活后置。
+- [x] S 当前 MVP：mock image/TTS profile、retail/supplier cost snapshot、输入/结果边界、inline artifact 持久化、统一 media Reserve/Attempt/Observe/Settle、账单/报表和访问控制已通过 55439 与 Compose smoke；图片编辑、STT 和真实供应商认证后置。
+- [x] A 当前 MVP：`video_generation` task 持久化、状态映射、worker lease、未知提交不重发、取消/过期/失败释放、retail/supplier cost snapshot、artifact 正文一次性持久化和唯一结算已通过 task/worker restart 专项；真实供应商 task handle 与对象存储后置。
+- [x] R 当前 MVP：单 session/单 turn 的 PostgreSQL session/turn/event、provider identity、重复事件、断线/取消/unknown、retail/supplier cost snapshot、统一 media settlement 和进程重启收尾已通过 Realtime 专项与 Compose WebSocket smoke；多轮/长连接/多活后置。
 - [x] Docker Compose 单机、空库安装、provision/bootstrap、健康/就绪和 app/worker/PostgreSQL 重启已通过当前 smoke；正式模型渠道、正式支付商、1Panel、HA、备份恢复和生产部署后置。
 - [ ] 在完整商业检查保留的条件下建立新性能基线，分别度量首字节与首有效内容，再做同环境竞品对比。
 

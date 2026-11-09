@@ -150,7 +150,7 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 		}
 		channel.requests[a.request] = struct{}{}
 		channel.attempts++
-		if source == mediaFactSource || (a.status != "contract" && a.status != "invoice") || a.amount == nil {
+		if (a.status != "contract" && a.status != "invoice") || a.amount == nil {
 			request.sum.unknown++
 			channel.unknown++
 			continue

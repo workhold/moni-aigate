@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T22:57:41Z",
-  "review_reason": "记录权限收口后的整仓回归抖动与两个专项重跑结果，并校正001–028整体状态",
-  "snapshot_sha256": "e597626fadebccb9c8f90d422053675670d3cab0450c714828fa9f6d81f7c11c",
-  "architecture_sha256": "a247af7e071342b27d5dd2853abc4fcd42f7d349cf011a023723310f11b954eb",
-  "history_sha256": "bf69b7aa710ecdf78624ec3bd67d9ec94b576633c455fdcfe7c6b499bd8175e6",
+  "reviewed_at": "2026-11-09T23:20:04Z",
+  "review_reason": "补齐当前媒体 retail/supplier cost snapshot、唯一 settlement guard、reporting 成本读取，并汇总运行时 legacy 路径审计",
+  "snapshot_sha256": "511aa11df4ef2fc1bebf7cee83fb2a014e823b152740700c89852bc818f79a83",
+  "architecture_sha256": "4ac8901d50196343bd3f67968defb21524c1955c9743b04f7383273f59dcb0b9",
+  "history_sha256": "934a45badac1f48098b2af6eec0e48aa6887503378459705ee41c3009c0940f9",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "cf545713bde95432b06b4891d27d8d10853bf2fd9d6083cf6021f19fedb6351f"
+      "sha256": "ad5e1d329a17a42eaa05f69065abad97336b7b1592b6d9f1475e046b2a2b8fcd"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "b0a5df01f85e5832dd5fcc1f2f68edfb79e6c3df60753617afd1a6190942e209"
+      "sha256": "de7b2d52c8f7282348fe123649c9d088e9bb5af4f24d2bb7d1553321c7af5e45"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -2065,11 +2065,11 @@
     },
     {
       "path": "internal/billing/media.go",
-      "sha256": "fd1fc398f49328058cd5bc26c5ac3336b10fa9ca8e33877f30fa2140cc6a0eb5"
+      "sha256": "3f2301d83bdb30cb8d4a296064e14c318b8ff829615a4a0ead22a386c4435d32"
     },
     {
       "path": "internal/billing/media_integration_test.go",
-      "sha256": "4b234259293570274dda04943bc6f17b23156cdd54cc6509355bfd3933f8508b"
+      "sha256": "66b7e012ffed5165e9b75d82d8d2beef47bb4e14a9129aff0f79914a7e0ab678"
     },
     {
       "path": "internal/billing/meter_snapshot_integration_test.go",
@@ -5709,15 +5709,15 @@
     },
     {
       "path": "internal/reporting/read.go",
-      "sha256": "b7b42b30c341cbcd46e46d096cabe409fee81b02d8bd711649b3c363c15f51e1"
+      "sha256": "0037fca30a68355b3a5e52ce8f6cdac413b31db634dcd624d3f3f2c1c0d7a854"
     },
     {
       "path": "internal/reporting/read_postgres_test.go",
-      "sha256": "103159e0bbbf52bc50a41e723dac51b9cb19e3e7133cde00274b879bde5067ff"
+      "sha256": "7ab77119a946e6222f31c70eba8eeec0edbcf11c8d7b4a8f050c8b9419eb0313"
     },
     {
       "path": "internal/reporting/report.go",
-      "sha256": "55da8b4c855e278e2588fa37f56705f3972e789cc2bb8867c1fb35bcf67ffcb6"
+      "sha256": "56e52d6792542068612ed1c227ea724f32dd0261aae1d5558e58968275d96435"
     },
     {
       "path": "internal/reporting/report_test.go",
@@ -6453,7 +6453,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "53b8808631a9792813527d40aba3838daef3e999708215c21d1b9fea74ffe477"
+      "sha256": "4531b23a8e727dc7ac66b2ec37a103b6ade03c46bf6de18d7ea803110b0b3172"
     },
     {
       "path": "migrations/current.go",
@@ -6461,7 +6461,7 @@
     },
     {
       "path": "migrations/current_mvp.sql",
-      "sha256": "39517c72f12a0487b33929c47aa8a09d2816c5d8c870ce632913c6f428eaa008"
+      "sha256": "aab6fc1ef0b58025479d53d0a5ddd40c928b6f003cc552770c69ade9d52e7a2e"
     },
     {
       "path": "migrations/embed.go",
@@ -7809,7 +7809,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "d10ad7b5275a981371933edf6d0da0e8dd8667cb29f2b907269f383bc21b01cf"
+      "sha256": "ae9634a82bd538dd7a2d15ce7992b26d01be56dde9d858a147bf5b96f5d53e12"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
@@ -7821,7 +7821,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/u-storage-contract.md",
-      "sha256": "6e32a0bbfdf4cfc18ba63eb7b67477cd05cb274db21c61a0b3f819c9d9c54bcc"
+      "sha256": "9e209c820b4909b8a17614846efa0d22e2a3ffd957929863cd6aea22c3601454"
     },
     {
       "path": "web/.gitignore",

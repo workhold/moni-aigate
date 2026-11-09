@@ -19,7 +19,7 @@ func TestPostgresMediaReserveFinalizeUsesWalletLotsAndIsIdempotent(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reserved.Amount != 1 || reserved.RatePerMillion != 1000000 {
+	if reserved.Amount != 1 || reserved.RatePerMillion != 1000000 || reserved.SupplierRatePerMillion != 500000 {
 		t.Fatalf("unexpected media reservation %+v", reserved)
 	}
 	f.wallet(t, 999, 1)
@@ -33,7 +33,7 @@ func TestPostgresMediaReserveFinalizeUsesWalletLotsAndIsIdempotent(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if settlement.Status != "settled" || settlement.ChargedAmount != 1 {
+	if settlement.Status != "settled" || settlement.ChargedAmount != 1 || settlement.SupplierCostStatus != "known" || settlement.SupplierCostAmount == nil || *settlement.SupplierCostAmount != 1 {
 		t.Fatalf("unexpected media settlement %+v", settlement)
 	}
 	f.wallet(t, 999, 0)
@@ -70,7 +70,7 @@ func TestPostgresMediaUnknownFinalizationReleasesWithoutCharge(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if settlement.Status != "released" || settlement.ChargedAmount != 0 || settlement.RawAmount != "0" {
+	if settlement.Status != "released" || settlement.ChargedAmount != 0 || settlement.RawAmount != "0" || settlement.SupplierCostStatus != "unknown" || settlement.SupplierCostAmount != nil {
 		t.Fatalf("unexpected release %+v", settlement)
 	}
 	f.wallet(t, 1000, 0)
