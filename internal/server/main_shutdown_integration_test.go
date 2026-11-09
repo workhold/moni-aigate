@@ -229,7 +229,7 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 		}
 		createdRoles = append(createdRoles, role)
 	}
-	if err = migrations.Apply(ctx, owner); err != nil {
+	if err = migrations.ApplyCurrent(ctx, owner); err != nil {
 		t.Fatal(err)
 	}
 	if err = operations.ProvisionFor(ctx, owner, "public", appRole, projectionRole); err != nil {

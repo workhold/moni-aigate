@@ -5225,3 +5225,19 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-09T13:08:04Z · 55a40989daaf
+
+补齐实际 main/CLI 当前基线夹具与历史 scanner source pin 审查，保持历史 fixture 和当前运行入口分离
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2104 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/periodic_verify_integration_test.go`
+- modified `internal/fundinglotcatalog/variants_fixture_test.go`
+- modified `internal/server/alert_main_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- modified `specs/022-self-service-payments/c0-wallet-readset.json`
+
+</details>

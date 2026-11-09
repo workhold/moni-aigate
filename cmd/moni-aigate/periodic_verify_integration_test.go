@@ -79,7 +79,7 @@ func TestPeriodicVerificationCLIPostgres(t *testing.T) {
 	cfg.ConnConfig.RuntimeParams["search_path"] = schema
 	owner, err = pgxpool.NewWithConfig(ctx, cfg.Copy())
 	must("open isolated CLI owner", err)
-	must("apply complete latest CLI migrations", migrations.Apply(ctx, owner))
+	must("apply current CLI baseline", migrations.ApplyCurrent(ctx, owner))
 	for _, role := range []string{appRole, projectorRole} {
 		_, err = admin.Exec(ctx, "CREATE ROLE "+pgx.Identifier{role}.Sanitize()+" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS")
 		must("create actual CLI runtime LOGIN", err)
@@ -156,7 +156,7 @@ func TestPeriodicVerificationCLIPostgres(t *testing.T) {
 	_, err = owner.Exec(ctx, `INSERT INTO audit_events(actor,action,target,sanitized_diff) VALUES($1,'periodic_budget.configured',$2,'{}')`, actor, uuid.NewString())
 	must("seed exact isolated orphan audit", err)
 	runCLI(ownerDSN, "mismatch", 2, "")
-	_, err = owner.Exec(ctx, `UPDATE schema_migrations SET checksum='isolated-bad-checksum' WHERE name='020_periodic_budgets.sql'`)
+	_, err = owner.Exec(ctx, `UPDATE schema_migrations SET checksum='isolated-bad-checksum' WHERE name='current_mvp.sql'`)
 	must("damage isolated migration checksum", err)
 	runCLI(ownerDSN, "", 1, "schema")
 }

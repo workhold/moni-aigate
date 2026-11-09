@@ -595,7 +595,7 @@ func ordinaryVariantCheckInputs(t *testing.T, root string) {
 		{"internal/operations/periodic_roles.go", "79ab556316fc2c366a97d897ab58c736c0e815de396f9904828b7abd65a4640d"},
 		{"internal/operations/payment_roles.go", "966ad915a7ea277ed1ce13a76ca093342ad389166679cdfb8ac48b522907b8d2"},
 		{"internal/operations/payment_roles_functions.go", "4307a70cc13890c4a2fe92d2306fd2efd68c75129808daac9309f6f368de9cb6"},
-		{"migrations/embed.go", "915164219bb6490fc4570986a39a93696018f4d61e6465e0c1f6ec7532975b74"},
+		{"migrations/embed.go", "82ada31418b35e273026b3a5647e01ae6d61934886cf7c1d2385a3b0d1adba7c"},
 	} {
 		ordinaryVariantSource(t, root, p.Name, p.SHA256)
 	}

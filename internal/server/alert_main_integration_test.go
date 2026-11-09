@@ -108,7 +108,7 @@ func newAlertMainFixture(t *testing.T, ctx context.Context) *alertMainFixture {
 		}
 		created = append(created, role)
 	}
-	if err = migrations.Apply(ctx, f.owner); err != nil {
+	if err = migrations.ApplyCurrent(ctx, f.owner); err != nil {
 		t.Fatal(err)
 	}
 	if err = operations.ProvisionFor(ctx, f.owner, "public", f.appRole, f.projectorRole); err != nil {
