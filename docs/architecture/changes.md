@@ -5337,3 +5337,19 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-09T17:36:54Z · c5c77a2c96e6
+
+补齐 028-U 四个 trigger-only 完整性函数的 SECURITY INVOKER、固定 search_path 和最小权限，并通过实际 LOGIN 断言
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2108 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `internal/operations/meter_roles_login_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/current_mvp.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

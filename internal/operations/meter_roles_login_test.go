@@ -140,4 +140,14 @@ WHERE d.datname=current_database() AND n.nspname=$6`, uuid.NewString(), strings.
 	if !appFunction || projectionFunction || workerFunction {
 		t.Fatalf("meter function privilege mismatch app=%t projection=%t worker=%t", appFunction, projectionFunction, workerFunction)
 	}
+	for _, signature := range []string{"guard_group_price_insert()", "guard_pricing_operation_insert()", "guard_request_retail_snapshot()", "guard_procurement_reservation_identity()"} {
+		qualifiedFunction := pgx.Identifier{schema}.Sanitize() + "." + signature
+		var publicExecute, appExecute, projectionExecute, workerExecute bool
+		if err = owner.QueryRow(ctx, `SELECT has_function_privilege('public',$1,'EXECUTE'),has_function_privilege($2,$1,'EXECUTE'),has_function_privilege($3,$1,'EXECUTE'),has_function_privilege($4,$1,'EXECUTE')`, qualifiedFunction, roles[0].name, roles[1].name, roles[2].name).Scan(&publicExecute, &appExecute, &projectionExecute, &workerExecute); err != nil {
+			t.Fatal(err)
+		}
+		if publicExecute || appExecute || projectionExecute || workerExecute {
+			t.Fatalf("guard function escaped the trigger-only boundary function=%s public=%t app=%t projection=%t worker=%t", signature, publicExecute, appExecute, projectionExecute, workerExecute)
+		}
+	}
 }

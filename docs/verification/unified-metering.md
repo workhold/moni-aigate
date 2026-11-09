@@ -12,6 +12,8 @@
 
 新增 guard 专项覆盖 attempt supplier quote 与 parent plan 绑定、request/attempt snapshot 跨租户出生、cost correction 指针金额和互斥关系，以及 APP 对不可变计量快照的更新拒绝、PROJECTOR/PAYMENT_WORKER 对计量表读取和函数执行的拒绝。新增 LOGIN 连接测试使用实际独立角色验证 APP 的 SELECT/INSERT 边界、UPDATE/DELETE 拒绝和两个受限角色的读拒绝。该片仍是 guard/ACL 反例补强，不能替代完整九组 guard、完整六协议商业矩阵、浏览器或正式环境验收。
 
+同一轮又补齐四个触发器完整性函数的 `SECURITY INVOKER`、固定 search_path 和 PUBLIC/运行角色执行拒绝。`guard_group_price_insert`、`guard_pricing_operation_insert`、`guard_request_retail_snapshot` 与 `guard_procurement_reservation_identity` 现在都保持 trigger-only 权限边界，并通过实际 LOGIN 角色的 55439 断言。
+
 前端向量出口复核还发现经营报表解析器曾只接受六种文本协议和同步执行类型，已补齐图片、TTS、异步 video_generation 与 Realtime 单轮协议，并允许当前同步/异步执行类型。对应请求、报表、人工核对和 RatesWire 旧标量拒绝测试保持通过。
 
 ## 2026-11-10：当前 Compose 单机内测 smoke

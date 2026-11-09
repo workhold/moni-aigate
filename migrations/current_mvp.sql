@@ -5497,6 +5497,15 @@ BEGIN
  END IF;
  RETURN NEW;
 END $$;
+DO $$
+DECLARE name text;
+BEGIN
+ FOREACH name IN ARRAY ARRAY['guard_group_price_insert','guard_pricing_operation_insert','guard_request_retail_snapshot','guard_procurement_reservation_identity'] LOOP
+  EXECUTE format('ALTER FUNCTION %I.%I() SECURITY INVOKER',current_schema(),name);
+  EXECUTE format('ALTER FUNCTION %I.%I() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),name,current_schema());
+ END LOOP;
+END $$;
+REVOKE ALL ON FUNCTION guard_group_price_insert(),guard_pricing_operation_insert(),guard_request_retail_snapshot(),guard_procurement_reservation_identity() FROM PUBLIC;
 ALTER TABLE procurement_reservations DROP COLUMN input_bound, DROP COLUMN output_bound;
 
 CREATE TABLE request_meter_snapshots (
