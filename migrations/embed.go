@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -17,6 +18,7 @@ import (
 var Files embed.FS
 
 const currentBaselineName = "current_mvp.sql"
+const currentAppendPrefix = "current_"
 
 type migration struct {
 	name     string
@@ -49,12 +51,15 @@ func plan(through string, exact bool) (migrationPlan, error) {
 	last := len(names) - 1
 	if exact {
 		last = sort.SearchStrings(names, through)
-		if through == "" || last == len(names) || names[last] != through {
+		if through == "" || isCurrentMigration(through) || last == len(names) || names[last] != through {
 			return result, fmt.Errorf("migration target must be an exact non-empty embedded filename")
 		}
 	}
 	result.all = make(map[string]migration, len(names))
 	for i, name := range names {
+		if isCurrentMigration(name) {
+			continue
+		}
 		body, e := Files.ReadFile(name)
 		if e != nil {
 			return migrationPlan{}, e
@@ -69,12 +74,33 @@ func plan(through string, exact bool) (migrationPlan, error) {
 }
 
 func currentPlan() (migrationPlan, error) {
-	body, err := Files.ReadFile(currentBaselineName)
+	names, err := fs.Glob(Files, currentAppendPrefix+"*.sql")
 	if err != nil {
 		return migrationPlan{}, err
 	}
-	item := migration{name: currentBaselineName, body: body, checksum: fmt.Sprintf("%x", sha256.Sum256(body))}
-	return migrationPlan{all: map[string]migration{item.name: item}, prefix: []migration{item}}, nil
+	sort.Strings(names)
+	ordered := make([]string, 0, len(names)+1)
+	ordered = append(ordered, currentBaselineName)
+	for _, name := range names {
+		if name != currentBaselineName {
+			ordered = append(ordered, name)
+		}
+	}
+	result := migrationPlan{all: make(map[string]migration, len(ordered))}
+	for _, name := range ordered {
+		body, e := Files.ReadFile(name)
+		if e != nil {
+			return migrationPlan{}, e
+		}
+		item := migration{name: name, body: body, checksum: fmt.Sprintf("%x", sha256.Sum256(body))}
+		result.all[name] = item
+		result.prefix = append(result.prefix, item)
+	}
+	return result, nil
+}
+
+func isCurrentMigration(name string) bool {
+	return name == currentBaselineName || strings.HasPrefix(name, currentAppendPrefix)
 }
 
 type historyReader interface {

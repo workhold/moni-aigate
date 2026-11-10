@@ -2,7 +2,7 @@
 
 本版要求 Go ≥1.26、Node 22.12+（22 系列）、PostgreSQL 16。使用独立数据库，应用仅一个活动实例；不使用SQLite或Redis代替资金事实。
 
-当前服务迁移入口是 `migrations.ApplyCurrent`。它只接受空的当前数据库并安装 `migrations/current_mvp.sql` 这一份完整 MVP 基线。001–024 SQL 文件保留为基线生成来源和隔离历史 fixture，`ApplyThrough` 只允许测试或离线研究显式使用，当前服务不会把旧库升级到新模型。
+当前服务迁移入口是 `migrations.ApplyCurrent`。首次安装只接受空的当前数据库并安装 `migrations/current_mvp.sql` 与全部 `current_*.sql` 当前计划，后续发布可在已验证 current baseline 上追加缺失 current-only 文件。001–024 SQL 文件保留为历史 fixture，`ApplyThrough` 只允许测试或离线研究显式使用，当前服务不会把旧库升级到新模型或转换旧金融事实。
 
 
 当前安装器在任何业务 DDL 前检查 `schema_migrations` 和当前 schema 的用户关系。只要数据库已有迁移历史、业务表或其他用户关系就拒绝，不删除、转换或导入旧金融事实。保留原库和备份，建立独立空数据库后执行当前基线与 `provision`。旧 C0 维护证明是隔离研究，不能替代当前开账命令。

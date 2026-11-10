@@ -1,5 +1,24 @@
 # 028-U统一计量验证
 
+## 2026-11-10：备份恢复演练与 current-only 追加迁移
+
+本片在独立 `codex/p0-backup-restore-p1-migration` worktree 完成。备份恢复演练先对源库执行 `migrations.VerifyCurrent`，恢复到新的空目标后再次执行 `VerifyCurrent`，不再调用包含历史 001–023 的 `migrations.Verify`。演练同时使用当前目录模型和真实 billing `Reserve → Attempt → Observe → Settle` 顺序，避免用旧夹具伪造观察。
+
+实际命令如下，数据库固定为专用 PostgreSQL 16.15 `127.0.0.1:55439/moni_test`：
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+PG_BINDIR=/opt/homebrew/opt/postgresql@16/bin \
+go run ./scripts/backup-restore-drill.go
+```
+
+结果为 PASS。演练实际执行 `pg_dump`/`pg_restore`、bundle SHA-256 校验、活动服务 advisory lock 拒绝、持久 `recovery_gate` 锁存、恢复模式下收费/财务写入 503、钱包/账本核对、旧主密钥解密、非空目标拒绝、篡改 bundle 拒绝，以及真实构建的 main 进程恢复模式启动和优雅退出。当前结果见 [backup-restore-local.json](backup-restore-local.json)。这仍是本机专用 PostgreSQL 的等价目标环境演练，不是 Docker/1Panel 或生产 RPO/RTO 认证。
+
+P1-6 追加路径已实际落地。`migrations/currentPlan` 只包含 `current_mvp.sql` 与 `current_*.sql`，历史 `Apply/ApplyThrough` 排除 current-only 文件。`ApplyCurrent` 在空库安装完整当前计划，在已有合法 current baseline 上只应用缺失追加迁移。`VerifyCurrent` 和 `VerifyCurrentReadOnlyTx` 校验完整当前计划，因此服务不会永久锁定在首次 baseline。首个追加文件 `migrations/current_001_append_path.sql` 仅建立当前迁移扩展标记，不改变 `current_mvp.sql`，不转换旧库，不兼容旧金融历史，也不修改 wallet/billing/settlement。
+
+新增迁移测试覆盖 baseline-only 数据库追加升级、追加完成后的完整校验、历史目标拒绝和历史计划排除 current-only 文件。完整 `./migrations` 包在 55439 专用库通过，耗时约 166 秒。
+
 ## 2026-11-10：current-only 空库迁移基线
 
 `migrations/current_mvp.sql` 已从 PostgreSQL 16.15 的全新当前 schema 导出并规范化为单文件安装基线。当前安装器只执行该文件，不执行 001–023 的历史 SQL。快照保留当前服务所需的关系、函数、触发器、默认单例行、约束、索引和 ACL，函数统一固定为 `SECURITY INVOKER` 并使用当前 schema、`pg_catalog`、`pg_temp` 的搜索路径。旧迁移文件仍只供隔离历史 fixture 使用。
@@ -28,7 +47,7 @@ go test -race -count=1 -timeout 420s ./migrations \
 
 ## 当前空库迁移与拒迁门禁
 
-当前服务入口使用 `migrations.ApplyCurrent` 和 `migrations.VerifyCurrent`。安装器只执行 `migrations/current_mvp.sql`，在任何业务 DDL 前持有迁移 advisory lock，并拒绝已存在 `schema_migrations`、业务关系或其他用户关系的数据库。它不升级旧库、不转换金融历史，也不接受不完整的基线。`serve` 与 `worker` 只执行只读 `VerifyCurrent`，缺失、未知或 checksum 不匹配时拒绝启动。
+当前服务入口使用 `migrations.ApplyCurrent` 和 `migrations.VerifyCurrent`。首次安装执行 `migrations/current_mvp.sql` 及全部 `migrations/current_*.sql`，后续只在已记录且 checksum 正确的 current baseline 上追加缺失 current-only 文件。安装器在任何业务 DDL 前持有迁移 advisory lock，并拒绝历史/未知 `schema_migrations`、错误 checksum、缺少 current baseline、业务关系或其他用户关系的数据库。它不升级旧库、不转换金融历史。`serve` 与 `worker` 只执行只读 `VerifyCurrent`，缺失、未知或 checksum 不匹配时拒绝启动。
 
 55439 专用 PostgreSQL 的 `TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline` 覆盖空库安装、历史前缀拒迁、非业务用户关系拒迁和完整基线验证。001–024 文件仍保留给隔离历史 fixture，当前服务不会调用 `ApplyThrough`。
 

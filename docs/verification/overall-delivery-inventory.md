@@ -4,7 +4,7 @@
 
 工作目录核对：本轮唯一开发目录是 `/Users/vchive/Documents/ChatGPT/aigate/moni-aigate`。它与 `/Users/vchive/Documents/aigate` 处于同一分支、同一基线提交；对两棵工作树做文件集合、内容和三方合并复核后，旧目录没有独有源码路径，当前目录包含全部旧目录已存在的非冲突内容。两者差异主要是当前目录已经推进的向量计量、单一路径和验证改动；旧目录仍保留若干较早的标量/兼容实现。旧目录中的旧标量 bypass、fallback 和历史 fixture 变更没有回拷，避免把 ADR-005 已淘汰的兼容路径带回当前实现。
 
-当前状态补充：运行时迁移已经收口到单一 `migrations/current_mvp.sql`，serve/worker/payment/periodic-budget 当前入口使用 `VerifyCurrent` 族只读校验；历史迁移和研究 fixture 不进入当前服务。只服务历史维护扫描的 billing raw reader、`internal/maintenancescan` 和 maintenance QA 已由 `historical` build tag 从默认当前构建图隔离。024 拒迁还在迁移身份、schema owner 和既有关系 ACL 形状上增加了第一条业务 DDL 前的拒绝边界，坏 ACL 不再被当作空库通过。图片、TTS、video task 和单 turn Realtime 已接当前 media wallet/settlement，结果 artifact、task 正文和 session/turn/event 已持久化。2026-11-10 更新后的 Compose 业务 smoke 在新基线通过。完整 028-U guard/六文本商业出口、正式供应商、浏览器和目标环境仍保持未完成状态。
+当前状态补充：运行时迁移已经收口到 `migrations/current_mvp.sql` 加 `current_*.sql` 的单一 current-only 计划，serve/worker/payment/periodic-budget 当前入口使用 `VerifyCurrent` 族只读校验；历史迁移和研究 fixture 不进入当前服务。当前 installer 支持在已验证 current baseline 上追加缺失 current-only DDL，不升级或转换旧库。只服务历史维护扫描的 billing raw reader、`internal/maintenancescan` 和 maintenance QA 已由 `historical` build tag 从默认当前构建图隔离。024 拒迁还在迁移身份、schema owner 和既有关系 ACL 形状上增加了第一条业务 DDL 前的拒绝边界，坏 ACL 不再被当作空库通过。图片、TTS、video task 和单 turn Realtime 已接当前 media wallet/settlement，结果 artifact、task 正文和 session/turn/event 已持久化。2026-11-10 更新后的 Compose 业务 smoke 在新基线通过。完整 028-U guard/六文本商业出口、正式供应商、浏览器和目标环境仍保持未完成状态。
 
 ## 判断标准
 

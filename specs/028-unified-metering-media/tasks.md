@@ -1,6 +1,6 @@
 # 028 实施任务与阶段出口
 
-当前运行时迁移入口已切到 `ApplyCurrent`/`VerifyCurrent`，只执行单一 `migrations/current_mvp.sql` 基线。它在业务 DDL 前拒绝已有历史或非空 schema，并只允许完整当前基线。历史 `ApplyThrough` 仅留给隔离 fixture，不能作为服务启动路径。
+当前运行时迁移入口已切到 `ApplyCurrent`/`VerifyCurrent`，执行 `migrations/current_mvp.sql` 加 `current_*.sql` 的单一 current-only 计划。首次安装在业务 DDL 前拒绝已有历史或非空 schema，后续只允许在 checksum 正确的 current baseline 上追加 current-only 文件。历史 `ApplyThrough` 仅留给隔离 fixture，不能作为服务启动路径，旧金融事实不转换。
 
 2026-11-10。`current_mvp.sql` 已重建为 current-only 空库快照，不再执行 001–023 历史迁移片段。该片已在 55439 专库完成安装、拒迁、实际登录权限、真实主进程生命周期和全仓非 race Go 回归。完整 028-U guard、六文本商业闭环、正式供应商和目标环境验收仍按下方未勾项管理。
 

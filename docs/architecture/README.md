@@ -8,9 +8,11 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 **当前研发原则**：[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)采用单一现行模型，MVP 前优先架构完整与业务能力，不新增旧版本兼容、双写或自动回退。下面的隔离历史证明候选保留其事实与验证边界，暂不扩展，也不作为经营功能的前置依赖；它们没有接入默认服务。现行资金与租户正确性继续保持。
 
-当前服务迁移和启动入口使用 `migrations.ApplyCurrent`/`VerifyCurrent`。安装器只执行 `migrations/current_mvp.sql` 这一份当前基线，只接受空的当前数据库，并在业务 DDL 前拒绝历史 `schema_migrations`、已有业务关系或其他用户关系。旧库不升级、不转换，`ApplyThrough` 只供隔离历史 fixture 使用。
+当前服务迁移和启动入口使用 `migrations.ApplyCurrent`/`VerifyCurrent`。安装器在空库执行 `migrations/current_mvp.sql` 和 `migrations/current_*.sql` 当前追加迁移，在已有合法当前 baseline 上只追加缺失的 current-only 文件，并在业务 DDL 前拒绝历史 `schema_migrations`、未知记录、错误 checksum 或其他用户关系。旧库不升级、不转换，`ApplyThrough` 只供隔离历史 fixture 使用。`serve`/`worker` 的只读 `VerifyCurrent` 接受完整当前计划，不把首次 baseline 当作永久版本上限。
 
 2026-11-10 当前空库基线已重建为从已验证当前 schema 导出的单文件快照。`current_mvp.sql` 不再执行 001–023 的历史迁移片段，保留当前服务需要的关系、函数、触发器、默认控制行、约束、索引和当前 ACL，并在安装前继续执行 PostgreSQL 版本、schema owner 与空库门禁。001–023 原文件和历史 fixture 仍只属于隔离研究路径，当前服务不会调用它们。
+
+2026-11-10 P1-6 追加路径收口：`current_001_append_path.sql` 是首个 current-only 追加迁移，只建立迁移扩展标记，不写入钱包、billing、settlement 或供应商业务事实。历史计划会排除全部 `current_*.sql`，而当前 installer 会在已记录且 checksum 正确的 `current_mvp.sql` 之后执行缺失追加文件；恢复、serve 和 worker 通过完整当前计划校验。旧金融事实和旧库转换仍被拒绝。
 
 只服务历史维护扫描的 billing raw reader、显式 `ProspectiveStore`、`internal/maintenancescan` 与 maintenance QA 使用 `historical` build tag。默认 `cmd/moni-aigate` 构建图、当前 billing 包和默认全包编译不包含这些 reader，历史专项通过显式 tag 保留。它们不进入当前 migrate、provision、serve、worker、wallet、billing、provider 或媒体运行路径。
 

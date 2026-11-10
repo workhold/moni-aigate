@@ -5651,3 +5651,9 @@ P0-2：将上游明确 binding 级模型错误与请求级 context_length_exceed
 - modified `internal/server/gateway.go`
 
 </details>
+
+## 2026-11-10 · current-only recovery and append path
+
+备份恢复演练改用 `VerifyCurrent` 并完成专用 PostgreSQL 备份、恢复、checksum 和恢复锁验证；增加 current-only 追加迁移计划、幂等安装和完整当前校验，不修改钱包、billing 或 settlement 业务路径。
+
+已显式复核统一架构正文、能力状态和源码链接；当前追加迁移只在已验证的 current baseline 上执行，历史迁移和旧库转换仍被拒绝。

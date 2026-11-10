@@ -100,11 +100,8 @@ run_compose up -d postgres
 
 echo "running the current empty-database migration"
 run_compose run --rm migrate
-echo "rejecting a second migration against the installed database"
-if run_compose run --rm migrate; then
-  echo "migration unexpectedly accepted a non-empty database" >&2
-  exit 1
-fi
+echo "rerunning the current migration plan as an idempotent no-op"
+run_compose run --rm migrate
 
 echo "provisioning roles twice"
 run_compose run --rm --no-deps provision

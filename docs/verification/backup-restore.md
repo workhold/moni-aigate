@@ -1,5 +1,20 @@
 # 备份恢复演练记录
 
+## 2026-11-10 current-only 重跑
+
+命令：
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+PG_BINDIR=/opt/homebrew/opt/postgresql@16/bin \
+go run ./scripts/backup-restore-drill.go
+```
+
+结果为 PASS。脚本在源库安装并执行 `migrations.VerifyCurrent`，恢复到全新目标后再次执行 `VerifyCurrent`，实际通过 `pg_dump`、`pg_restore`、bundle SHA-256、活动服务锁拒绝、持久恢复锁、恢复模式 HTTP 闭环、非空目标拒绝和篡改 bundle 拒绝。源/恢复钱包分别为可用 875 微元、冻结 120，账本 balanced，真实构建 main 进程在环境恢复标志为 false 时仍按数据库恢复锁进入恢复模式并优雅退出。完整机器结果见 [backup-restore-local.json](backup-restore-local.json)。
+
+本轮同时修正了演练夹具的当前权限与账务顺序。目录发布使用独立 admin 身份，客户用量按当前 `Reserve → Attempt → Observe → Settle` 写入。演练只验证当前 current-only 计划，不能作为真实供应商、Docker/1Panel 或生产 RPO/RTO 认证。
+
 2026-10-30，本机 PostgreSQL 16.15。命令：
 
 ```bash

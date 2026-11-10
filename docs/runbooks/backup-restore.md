@@ -65,10 +65,13 @@ scripts/restore.sh /encrypted-backups/moni-20261030T052600Z /secure/recovered-ke
 
 ## 可重复演练
 
+从仓库根目录执行以下命令。演练使用当前唯一 current-only 计划，先对源库执行 `migrations.VerifyCurrent`，恢复后再次执行同一校验；它不会调用历史 `migrations.Verify`，也不会使用 5432 或生产数据库：
+
 ```bash
-TEST_DATABASE_URL='postgres://test_admin@127.0.0.1:55439/testdb?sslmode=disable' \
-PG_BINDIR=/path/to/postgresql16/bin \
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+PG_BINDIR=/opt/homebrew/opt/postgresql@16/bin \
 go run ./scripts/backup-restore-drill.go
 ```
 
-仅使用专门测试实例和有建库权限的测试账号。程序只创建/删除本次生成的 `moni_drill_<random>_source/_restore` 数据库，使用伪造资金和密钥，验证 snapshot、持久恢复锁、HTTP 关闭收费、旧主密钥、非空目标拒绝及 checksum 损坏拒绝，并写 `docs/verification/backup-restore-local.json`。不要用生产 DATABASE_URL 替代测试连接。
+仅使用专门测试实例和有建库权限的测试账号。程序只创建/删除本次生成的 `moni_drill_<random>_source/_restore` 数据库，使用伪造资金和密钥，验证 current baseline、snapshot、持久恢复锁、HTTP 关闭收费、旧主密钥、非空目标拒绝及 checksum 损坏拒绝，并写 `docs/verification/backup-restore-local.json`。Docker Compose 没有暴露 PostgreSQL 端口时，应从专用 backup service 或等价的 Compose 内网环境运行同一脚本，并把 `PGHOST`、`PGPORT`、`PGUSER`、`PGDATABASE` 传给目标数据库。不要用生产 DATABASE_URL 替代测试连接。

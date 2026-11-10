@@ -8,19 +8,21 @@ import (
 )
 
 // ApplyCurrent installs the current MVP baseline into a genuinely empty
-// database. The historical SQL files remain available to isolated fixtures
-// through ApplyThrough, but the serving installer never upgrades or converts
-// an existing database.
+// database, or applies missing current-only append migrations to an already
+// installed current baseline. The historical SQL files remain available to
+// isolated fixtures through ApplyThrough, but this installer never upgrades
+// or converts an existing historical database.
 func ApplyCurrent(ctx context.Context, pool *pgxpool.Pool) error {
 	p, err := currentPlan()
 	if err != nil {
 		return err
 	}
-	return applyPlan(ctx, pool, p, true)
+	return applyPlan(ctx, pool, p)
 }
 
 // VerifyCurrent is the serving-process read-only gate for the current MVP
-// baseline. It accepts the exact complete embedded installation only.
+// baseline and all current-only append migrations. It never accepts a
+// historical prefix or an incomplete current plan.
 func VerifyCurrent(ctx context.Context, pool *pgxpool.Pool) error {
 	p, err := currentPlan()
 	if err != nil {
@@ -29,7 +31,7 @@ func VerifyCurrent(ctx context.Context, pool *pgxpool.Pool) error {
 	return verify(ctx, pool, p)
 }
 
-func applyPlan(ctx context.Context, pool *pgxpool.Pool, p migrationPlan, requireEmpty bool) error {
+func applyPlan(ctx context.Context, pool *pgxpool.Pool, p migrationPlan) error {
 	if pool == nil {
 		return fmt.Errorf("migration pool is required")
 	}
@@ -53,10 +55,14 @@ func applyPlan(ctx context.Context, pool *pgxpool.Pool, p migrationPlan, require
 	if err != nil {
 		return err
 	}
-	if requireEmpty {
-		if exists {
-			return fmt.Errorf("current MVP migration refuses an existing schema_migrations history")
+	if exists {
+		if err = validateHistory(p, applied, false); err != nil {
+			return err
 		}
+		if _, ok := applied[currentBaselineName]; !ok {
+			return fmt.Errorf("current MVP migration requires the current baseline before append migrations")
+		}
+	} else {
 		var userRelations int
 		err = conn.QueryRow(ctx, `SELECT count(*)
 FROM pg_catalog.pg_class AS c
@@ -69,11 +75,6 @@ WHERE n.nspname=current_schema()
 		if userRelations != 0 {
 			return fmt.Errorf("current MVP migration refuses a non-empty database")
 		}
-	}
-	if err = validateHistory(p, applied, false); err != nil {
-		return err
-	}
-	if !exists {
 		if _, err = conn.Exec(ctx, `CREATE TABLE schema_migrations(name TEXT PRIMARY KEY,checksum TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp())`); err != nil {
 			return err
 		}

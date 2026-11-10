@@ -4,15 +4,15 @@
     "create_credit": 503,
     "paid_api": 503
   },
-  "backup_seconds": 0.225259625,
-  "checkpoint_at": "2026-10-30T05:45:30.285624Z",
+  "backup_seconds": 0.296817667,
+  "checkpoint_at": "2026-11-10T07:17:16.200812Z",
   "checkpoint_wallet": {
-    "tenant_id": "ef6d4bd9-1b3b-4aff-bfee-467440e57098",
+    "tenant_id": "ab04fe45-79a6-44f6-b9de-16972b1b6332",
     "available": "875",
     "held": "120"
   },
   "container_deployment_executed": false,
-  "date": "2026-10-30T05:45:32Z",
+  "date": "2026-11-10T07:17:18Z",
   "effective_recovery_mode": true,
   "env_recovery_mode": false,
   "ledger": {
@@ -35,12 +35,14 @@
     "paid_api": 503,
     "wallet_read": 200
   },
-  "restore_to_verified_recovery_http_seconds": 1.3713521659999999,
+  "restore_to_verified_recovery_http_seconds": 1.313015375,
+  "restored_current_verified": true,
   "restored_wallet": {
-    "tenant_id": "ef6d4bd9-1b3b-4aff-bfee-467440e57098",
+    "tenant_id": "ab04fe45-79a6-44f6-b9de-16972b1b6332",
     "available": "875",
     "held": "120"
   },
+  "source_current_verified": true,
   "tampered_bundle_rejected": true,
   "writes_during_recovery_blocked": true
 }

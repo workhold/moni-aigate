@@ -61,6 +61,27 @@ func TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline(t *tes
 			t.Fatal("current installer changed a non-empty database")
 		}
 	})
+	t.Run("append migration upgrades an installed current baseline", func(t *testing.T) {
+		f := newPrefixFixture(t)
+		p, err := currentPlan()
+		prefixMust(t, "resolve current plan", err)
+		if len(p.prefix) < 2 || p.prefix[0].name != currentBaselineName {
+			t.Fatal("current plan does not contain a separate append migration")
+		}
+		f.exec(t, `CREATE TABLE schema_migrations(name TEXT PRIMARY KEY,checksum TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp())`)
+		f.exec(t, string(p.prefix[0].body))
+		f.exec(t, "INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)", p.prefix[0].name, p.prefix[0].checksum)
+		if err = VerifyCurrent(f.ctx, f.pool); err == nil {
+			t.Fatal("current verification accepted a baseline without its append migrations")
+		}
+		prefixMust(t, "apply current append migration", ApplyCurrent(f.ctx, f.pool))
+		prefixMust(t, "verify current append migration", VerifyCurrent(f.ctx, f.pool))
+		var marker bool
+		prefixMust(t, "confirm current append marker", f.pool.QueryRow(f.ctx, "SELECT to_regclass('current_schema_extensions') IS NOT NULL").Scan(&marker))
+		if !marker {
+			t.Fatal("current append marker was not installed")
+		}
+	})
 }
 
 func TestEmbeddedPrefixIsExactClosedSet(t *testing.T) {
@@ -82,6 +103,13 @@ func TestEmbeddedPrefixIsExactClosedSet(t *testing.T) {
 	}
 	if len(all.prefix) != len(all.all) || len(all.prefix) < 19 {
 		t.Fatal("default plan is not the complete current embed")
+	}
+	if _, ok := all.all["current_001_append_path.sql"]; ok {
+		t.Fatal("historical plan included a current-only append migration")
+	}
+	current, e := currentPlan()
+	if e != nil || len(current.prefix) < 2 || current.prefix[0].name != currentBaselineName {
+		t.Fatalf("current plan is not baseline followed by current append migrations: %+v %v", current.prefix, e)
 	}
 }
 

@@ -83,13 +83,16 @@ func drill() error {
 	if err = migrations.ApplyCurrent(ctx, source); err != nil {
 		return err
 	}
+	if err = migrations.VerifyCurrent(ctx, source); err != nil {
+		return fmt.Errorf("source current baseline verification failed: %w", err)
+	}
 	keys := &security.Secrets{Keys: map[string][]byte{"old": bytes.Repeat([]byte{1}, 32), "new": bytes.Repeat([]byte{2}, 32)}, Active: "old", Pepper: bytes.Repeat([]byte{3}, 32)}
-	tenant, user, key, operator, approver := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString()
+	tenant, user, key, operator, approver, catalogAdmin := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString()
 	execSQL := func(sql string, args ...any) error { _, err := source.Exec(ctx, sql, args...); return err }
 	if err = execSQL("INSERT INTO tenants(id,name) VALUES($1,'recovery-drill')", tenant); err != nil {
 		return err
 	}
-	for _, v := range []struct{ id, role string }{{user, "none"}, {operator, "finance_operator"}, {approver, "finance_approver"}} {
+	for _, v := range []struct{ id, role string }{{user, "none"}, {operator, "finance_operator"}, {approver, "finance_approver"}, {catalogAdmin, "admin"}} {
 		mfa, err := keys.SealFor("JBSWY3DPEHPK3PXP", "mfa:user", v.id)
 		if err != nil {
 			return err
@@ -102,22 +105,22 @@ func drill() error {
 		return err
 	}
 	c := catalog.New(source, keys)
-	model, err := c.CreateModel(ctx, operator, catalog.ModelInput{PublicName: "drill-model", ContextLimit: 120, InputUpperBound: 100, OutputLimit: 20, DefaultOutputLimit: 20})
+	model, err := c.CreateModel(ctx, catalogAdmin, catalog.ModelInput{PublicName: "drill-model", ContextLimit: 120, InputUpperBound: 100, OutputLimit: 20, DefaultOutputLimit: 20})
 	if err != nil {
 		return err
 	}
-	channel, err := c.SaveChannel(ctx, operator, "", catalog.ChannelInput{Name: "drill-channel", BaseURL: "https://example.com", Region: "global", Secret: "fake-drill-provider-secret"})
+	channel, err := c.SaveChannel(ctx, catalogAdmin, "", catalog.ChannelInput{Name: "drill-channel", BaseURL: "https://example.com", Region: "global", Secret: "fake-drill-provider-secret"})
 	if err != nil {
 		return err
 	}
-	if _, err = c.Publish(ctx, operator, model, 0, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "upstream", Weight: 1, MaxInflight: 10}}); err != nil {
+	if _, err = c.Publish(ctx, catalogAdmin, model, 0, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "upstream", Weight: 1, MaxInflight: 10}}); err != nil {
 		return err
 	}
 	var schemaID, schemaDigest string
 	if err = source.QueryRow(ctx, `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id WHERE m.id=$1`, model).Scan(&schemaID, &schemaDigest); err != nil {
 		return err
 	}
-	if _, err = c.PublishDefaultPrice(ctx, catalog.PricingActor{UserID: operator}, catalog.DefaultPriceCommand{OperationID: uuid.NewString(), ModelID: model, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", InputRate: 1000000, OutputRate: 1000000, EffectiveAt: time.Now().UTC().Truncate(time.Microsecond)}); err != nil {
+	if _, err = c.PublishDefaultPrice(ctx, catalog.PricingActor{UserID: catalogAdmin}, catalog.DefaultPriceCommand{OperationID: uuid.NewString(), ModelID: model, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", InputRate: 1000000, OutputRate: 1000000, EffectiveAt: time.Now().UTC().Truncate(time.Microsecond)}); err != nil {
 		return err
 	}
 	if err = execSQL("INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", tenant, model); err != nil {
@@ -150,7 +153,22 @@ func drill() error {
 	if err != nil {
 		return err
 	}
-	if _, err = s.RecordFinalization(ctx, billing.FinalizationInput{TenantID: tenant, RequestID: r.RequestID, Source: "drill", SourceEventID: "first-final", Usage: billing.Usage{Status: "confirmed_final", InputTokens: 10, OutputTokens: 5, TotalTokens: 15}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}); err != nil {
+	routeCandidates, err := c.Candidates(ctx, model, 1)
+	if err != nil || len(routeCandidates) != 1 {
+		return fmt.Errorf("current route candidate unavailable: %v", err)
+	}
+	attempt, err := s.RecordAttempt(ctx, billing.AttemptInput{
+		TenantID: tenant, RequestID: r.RequestID, ChannelID: routeCandidates[0].ChannelID,
+		ChannelVersionID: routeCandidates[0].VersionID, CredentialID: routeCandidates[0].CredentialID,
+		UpstreamModel: routeCandidates[0].UpstreamModel, Sequence: 1,
+	})
+	if err != nil {
+		return err
+	}
+	if err = s.PrepareDispatch(ctx, billing.DispatchInput{TenantID: tenant, AttemptID: attempt.ID}); err != nil {
+		return err
+	}
+	if _, err = s.RecordFinalization(ctx, billing.FinalizationInput{TenantID: tenant, RequestID: r.RequestID, AttemptID: attempt.ID, Source: "adapter", SourceEventID: "first-final", Usage: billing.Usage{Status: "confirmed_final", InputTokens: 10, OutputTokens: 5, TotalTokens: 15}, ProtocolOutcome: "completed", TransportEndReason: "done", DeliveryStage: "content", ContentWritten: true}); err != nil {
 		return err
 	}
 	settled, err := s.Settle(ctx, billing.SettleInput{TenantID: tenant, RequestID: r.RequestID})
@@ -249,7 +267,7 @@ func drill() error {
 	if err != nil {
 		return err
 	}
-	if err = migrations.Verify(ctx, target); err != nil {
+	if err = migrations.VerifyCurrent(ctx, target); err != nil {
 		return err
 	}
 	restored := billing.New(target)
@@ -380,7 +398,7 @@ func drill() error {
 	if err = run(targetDB, "scripts/restore.sh", tampered, filepath.Join(work, "tamper-must-not-create.env")); err == nil {
 		return fmt.Errorf("restore accepted altered backup")
 	}
-	report := map[string]any{"date": time.Now().UTC().Format(time.RFC3339), "postgresql": "16.15", "backup_seconds": backupDuration.Seconds(), "restore_to_verified_recovery_http_seconds": restoreDuration.Seconds(), "checkpoint_at": checkpointAt.UTC(), "checkpoint_wallet": checkpoint, "restored_wallet": wallet, "ledger": ledger, "recovery_http_status": statuses, "post_snapshot_credit_excluded_micro": "100", "recovered_point": "quiesced snapshot before deliberately omitted post-backup credit", "old_master_key_required_and_verified": true, "nonempty_target_rejected": true, "active_service_backup_rejected": true, "tampered_bundle_rejected": true, "writes_during_recovery_blocked": true, "persistent_recovery_required": required, "env_recovery_mode": environmentRecoveryMode, "effective_recovery_mode": effectiveRecoveryMode, "container_deployment_executed": false}
+	report := map[string]any{"date": time.Now().UTC().Format(time.RFC3339), "postgresql": "16.15", "backup_seconds": backupDuration.Seconds(), "restore_to_verified_recovery_http_seconds": restoreDuration.Seconds(), "checkpoint_at": checkpointAt.UTC(), "checkpoint_wallet": checkpoint, "restored_wallet": wallet, "ledger": ledger, "recovery_http_status": statuses, "post_snapshot_credit_excluded_micro": "100", "recovered_point": "quiesced snapshot before deliberately omitted post-backup credit", "source_current_verified": true, "restored_current_verified": true, "old_master_key_required_and_verified": true, "nonempty_target_rejected": true, "active_service_backup_rejected": true, "tampered_bundle_rejected": true, "writes_during_recovery_blocked": true, "persistent_recovery_required": required, "env_recovery_mode": environmentRecoveryMode, "effective_recovery_mode": effectiveRecoveryMode, "container_deployment_executed": false}
 	report["actual_main_process_recovery_http"] = mainStatuses
 	report["main_process_graceful_shutdown"] = graceful
 	b, _ := json.MarshalIndent(report, "", "  ")
