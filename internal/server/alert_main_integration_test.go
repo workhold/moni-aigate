@@ -98,6 +98,12 @@ func newAlertMainFixture(t *testing.T, ctx context.Context) *alertMainFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// PostgreSQL 16 creates public under the implicit pg_database_owner role.
+	// The deployment initializer makes the migration identity explicit before
+	// ApplyCurrent, so this actual-main fixture must model the same boundary.
+	if _, err = f.owner.Exec(ctx, "ALTER SCHEMA public OWNER TO CURRENT_USER"); err != nil {
+		t.Fatal(err)
+	}
 	for _, role := range []string{f.appRole, f.projectorRole} {
 		var ddl string
 		if err = admin.QueryRow(ctx, `SELECT format('CREATE ROLE %I LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L',$1::text,$2::text)`, role, f.password).Scan(&ddl); err != nil {

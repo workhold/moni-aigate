@@ -195,6 +195,13 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 		_, _ = admin.Exec(context.Background(), "DROP DATABASE "+pgx.Identifier{prefix}.Sanitize()+" WITH (FORCE)")
 		t.Fatal(err)
 	}
+	// Match deploy/init-roles.sh for a fresh PostgreSQL 16 database. The
+	// current installer intentionally rejects an implicit public owner.
+	if _, err = owner.Exec(ctx, "ALTER SCHEMA public OWNER TO CURRENT_USER"); err != nil {
+		owner.Close()
+		_, _ = admin.Exec(context.Background(), "DROP DATABASE "+pgx.Identifier{prefix}.Sanitize()+" WITH (FORCE)")
+		t.Fatal(err)
+	}
 	appRole, projectionRole := prefix+"_app", prefix+"_projection"
 	createdRoles := []string{}
 	t.Cleanup(func() {

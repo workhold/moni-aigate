@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T03:46:42Z",
-  "review_reason": "集成028-U wallet funding 校验器当前身份收口、保留 wallet_opening 分支、补计量角色写权限负控，并修复 Compose 新卷 public schema owner 与当前迁移身份门禁的一致性；同步部署手册和验证记录",
-  "snapshot_sha256": "4234a5f102a8badaf645e4c147c13e7a3599b54082953c27cad3623babddc0cb",
-  "architecture_sha256": "05fe30457f7e32906511ebe735522528550d5f54cf0352a473b67571791b95d2",
-  "history_sha256": "f95d223c4431d0e4e4ede855d1c2ed2ddfad1aa53a99df1295b61e66d33dcf7a",
+  "reviewed_at": "2026-11-10T04:52:32Z",
+  "review_reason": "修复实际主进程 PostgreSQL 临时库 fixture 与 Compose 新卷 public schema owner 初始化边界的一致性；alert-main 和 shutdown/restart 专项通过，模块图、迁移拒绝和权限语义不变",
+  "snapshot_sha256": "8ca1e60c899611a0d3e0e3d16d071e672003062a5959788a1d09632599813313",
+  "architecture_sha256": "d184d9b2cdf36ac1a72d50d32f61e2fbfe8b296b47af6e06d6be2aa33e78d51e",
+  "history_sha256": "19ff1a9756d4cf777aa1d5ab3283a4296ce5b63e702f7901c0d843dd7302bd69",
   "files": [
     {
       "path": ".dockerignore",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "122c7d6960d78b117ac1f901c3c2aed473cce7f485b5ac031232aa93e647bd03"
+      "sha256": "b15a9bc72cb4269125719bd50c59ce0e7f4c3d4b125b5192ec9ef8a26a98104e"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -5829,7 +5829,7 @@
     },
     {
       "path": "internal/server/alert_main_integration_test.go",
-      "sha256": "885250994faaa842eda7f2be39192556f1d773aee369ad819a5dcd8e7380d977"
+      "sha256": "bd65d1274212ccd4a280b49365a25a49f8711d3f41298aac453c3f1f05190db3"
     },
     {
       "path": "internal/server/alert_test.go",
@@ -5989,7 +5989,7 @@
     },
     {
       "path": "internal/server/main_shutdown_integration_test.go",
-      "sha256": "9fe8e5b4c0251065a0c3c3322ee2e03a5a2f0465a5126837297b49530b8019f8"
+      "sha256": "3901180ba1d073ca37093005bf15cacbc923de1468a216d81defdd9a6120f067"
     },
     {
       "path": "internal/server/media_artifacts.go",

@@ -66,6 +66,8 @@ go test -count=1 -timeout 900s ./migrations \
 
 同一轮发现 PostgreSQL 16 新卷的 `public` schema 默认 owner 可能是隐式 `pg_database_owner`，会被当前迁移身份拒迁门禁正确拒绝。`deploy/init-roles.sh` 已在创建应用角色前将该 schema owner 明确设置为 `moni_owner`，并重新通过脚本语法、Compose 配置和业务 smoke。这个修复只覆盖全新 Compose 卷，未放宽当前迁移的 owner/ACL 拒绝。
 
+实际主进程专项也同步该边界。`TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery` 与 `TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay` 在临时数据库创建后执行同等 owner 初始化，随后验证默认关闭、锁内取消、提交前 SIGKILL 回滚、提交回包未知、SSE drain、重启恢复和不重放。55439 race 两项均通过，测试修正不改变当前迁移 SQL。
+
 ## 当前 TTS 与统一管理输入边界
 
 `POST /v1/audio/speech` 当前只发行 `mock-tts` 的 `wav` profile。HTTP 层严格校验单值 `Content-Type`、闭合 JSON、UTF-8、文本字符数、voice、WAV RIFF/fmt/data 结构和单值 `Idempotency-Key`。provider 必须返回 `confirmed_final` 且字符数与请求一致，服务才调用统一 `FinalizeMedia`。provider error、未知提交或 usage/音频结构不可信时分别记录终态，重复键不会再次调用 provider。管理端的每百万 token 整数输入已重命名为明确的 `ManagementToken*` 转换入口，只在边界一次转换为当前 canonical rational vector，运行时不再保留 `LegacyToken*` scalar API。

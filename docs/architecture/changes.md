@@ -5593,3 +5593,17 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `migrations/current_mvp.sql`
 
 </details>
+
+## 2026-11-10T04:52:32Z · 8ca1e60c8996
+
+修复实际主进程 PostgreSQL 临时库 fixture 与 Compose 新卷 public schema owner 初始化边界的一致性；alert-main 和 shutdown/restart 专项通过，模块图、迁移拒绝和权限语义不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `internal/server/alert_main_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+
+</details>

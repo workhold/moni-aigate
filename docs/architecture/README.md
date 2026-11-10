@@ -24,6 +24,8 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 
 2026-11-10 Compose owner 修复：`deploy/init-roles.sh` 在空库初始化时先将 `public` schema owner 设置为 `moni_owner`，与 024/current MVP 的迁移身份门禁一致。它只影响新 PostgreSQL 卷的初始化，不放宽迁移 owner/ACL 检查；已有卷仍按迁移拒绝和角色配置合同处理。
 
+2026-11-10 实际主进程 fixture 对齐：真实 alert-main 与 shutdown/restart PostgreSQL 测试在创建临时数据库后显式复现同一 `public` owner 初始化边界，继续验证 SIGTERM、SIGKILL 回滚、SSE drain、恢复和不重放。该测试修正不改变服务模块图或迁移拒绝语义。
+
 2026-11-10 拒绝矩阵扩展：新增 55439 PostgreSQL race 专项覆盖金额与结算、schema/capability、跨请求终态、重复观察、并发唯一性、失败回滚、标量投影撤除和函数权限，并扩展 024 拒迁负控到 41 类旧金融或采购事实。拒绝后 schema 与原事实保持不变。变更023表 owner/ACL 形状的主动拒迁和完整九组 checker 正反闭包仍未完成。
 
 异步 task 的公开准备链现在可以从 owner-scoped request detail 读取原 profile、reservation、attempt 身份，资金页读取原 funding lot/source 身份，再按 task 合同提交。服务端仍校验这些引用属于同一租户和原 request，不把缺失引用转换成新的商业事实。
