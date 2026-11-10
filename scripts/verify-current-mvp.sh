@@ -138,7 +138,7 @@ check_provider_timeout_wiring() {
     echo 'provider timeout fields are absent from internal/config'
     failed_wiring=1
   fi
-  if ! rg -q "$timeout_fields" internal/server cmd/moni-aigate; then
+  if ! rg -q 'ProviderTimeouts|ClientOptions\(\)' internal/server cmd/moni-aigate; then
     echo 'provider timeout fields are not consumed by server startup'
     failed_wiring=1
   fi
