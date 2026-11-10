@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T12:31:43Z",
-  "review_reason": "更新028-U任务清单的当前MVP收口状态与正式Release Qualification剩余边界",
-  "snapshot_sha256": "ddc082437b2b256a6626422cac0a51e664823e0d34c47842e9a37b94fcb68bee",
-  "architecture_sha256": "e93456e65c4eba294e27005ad04491bb829738e14e8c1104cf856952d0f4db0d",
-  "history_sha256": "18de04a097e8bf96c16f83885fedeed5cc32a4381a5191e074fc8e2dd83ab458",
+  "reviewed_at": "2026-11-10T14:08:17Z",
+  "review_reason": "新增四阶段路线单一事实源并同步HLD/LLD/路线图/交付计划/README：真实供应商认证移至第四阶段，前三阶段渠道与动态路由只覆盖文本，媒体保持单profile单adapter不参与路由，修正文本与媒体共享钱包但分属两族业务表的描述，补第三阶段路由决策合同缺口与第一阶段别名/分组倍率约束；纯设计变更，无源码、迁移或权限结构变化",
+  "snapshot_sha256": "8af175b7decc8b77604557d3cac861cd4ac2863d454d69f033026925c2cf4b0f",
+  "architecture_sha256": "e49d3267ea7568fd3782de60c53ba555156461c14c3901293de6aa2b21c096cb",
+  "history_sha256": "97af0b4d6b942ca9689c9450f7307b9feb64c29ffb66a352486825dba1bf9ab8",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "46bf19c0ae77a5cb3baf7f17c829b959bce612d0d5579ebce8735932c60b622f"
+      "sha256": "725c33eb6e11fd838161e0608e3eaa9d26c73d33be6fd182bb864124a15042c7"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "13e9cf47d3fb40f7de5eea0ac7719c7d0be79dc773fd7f9eed45bf07c704daae"
+      "sha256": "e85322a6f62783b4b3969e43e0b9d0f00f21e3d214635aaa6aa12ef3fff258a4"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -169,15 +169,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "e80277efae8a9811f1eb80dd2672ad2499c10e6959e58b267b7320ad170b0770"
+      "sha256": "049659c68eab4caf48e92de6f7a704a999927957960c14e61e79772611f40226"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "e58dbacbf1e404de97933e39e1dba7f29bad9a6c1332aae8fca6aeabe75a8e84"
+      "sha256": "4b104216b4f1fb65215869ff8fb48925bcf87de9a48401a7737150b770b185d0"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "d011874beb7f1e72ad2f6dd8d8da13027ab7241bf17c5beecd17901eb75ec130"
+      "sha256": "1e82c537775eae8e83e4a4f85bb7a6103066469df9569d1fd588d1122ccc1d02"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -193,11 +193,11 @@
     },
     {
       "path": "docs/design/media-provider-safety.md",
-      "sha256": "82359b83b494e479ec59cc5f3f362c89efdfb432dff782dbf6eca1ab78801c16"
+      "sha256": "55bb8bce7a6a8cde72b0dbc3cbb6d87843f1e31cdf01ee4fc2fd5da1c10e96da"
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "b8c2928b8a06c05b71dfa51c336c41bf7360be2392bcccafced55e10f4e3b9e4"
+      "sha256": "029868c42e3260e173cda64136afdb4564e049bb2b526be06e5b70d3adaf35bc"
     },
     {
       "path": "docs/design/overview.md",
@@ -208,12 +208,16 @@
       "sha256": "c7109524ccaf84cc5ff1c93e38fee67d21b182aa933783adac7ddd95d3352cfe"
     },
     {
+      "path": "docs/design/phase-roadmap.md",
+      "sha256": "8296a815d85317db336a850e5f2e0760aae1bc471e03d1ec4deb8a563a52fe12"
+    },
+    {
       "path": "docs/design/procurement-accounts.md",
       "sha256": "d95badf660c0042c7c0bca95891cbcb82b4a857b5a3c887378a069332fc78926"
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "e0839acb38ca420adb4847544d1e0fe7c757148db1c8609891d8a2e0d9e18f47"
+      "sha256": "8843ce4272ae9ffc46194dfb896cfe1f05f24397419255eb7f4cc417491f0abf"
     },
     {
       "path": "docs/design/public-catalog.md",

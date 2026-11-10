@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-04（026经营报表、027现行来源与028一体化设计）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-10（四阶段路线、文本路由范围、路由决策合同缺口与文本/媒体结构边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 工程布局与模块依赖
 
@@ -71,7 +71,7 @@ Key 验证返回内部结构化判定：`invalid/expired/revoked/forbidden/rate_
 - 支持文本 `messages`，基础 `tools/tool_calls`；拒绝媒体 content、远程文件抓取、`n != 1` 和未知计费扩展。
 - 验证角色、消息长度、工具 schema 深度和 JSON 大小。请求体默认上限 1MiB；超限返回 413。
 - `max_tokens` 或 `max_completion_tokens` 必须落在模型能力上限；两者同时出现时拒绝歧义；省略时按目录公布的默认值填入并约束上游。
-- 路由候选须有同一逻辑模型、所需上下文与工具能力、usage 能力及允许地域。不得自动把高级模型换为不同质量档。
+- 路由候选须有同一逻辑模型、所需上下文与工具能力、usage 能力及允许地域。第一、二阶段不得自动把高级模型换为不同质量档；跨档位只能通过第三阶段的显式 `auto` 商品，见§9.2。
 - 未知参数或当前 profile 无法兑现的参数在转发前明确拒绝；不得静默删除 tools、输出上限或改变计费的字段。逻辑模型别名只解析为已发布目录项，不解析客户端任意供应商/部署后缀。
 - 有些供应商没有可靠 usage 或无法约束输出；这类模型 v0.1 不向付费客户开放。
 - 首版按已确认 input/output Token 收费。cached input 是 input 子集，只记一次；不把 reasoning 字段与已包含它的 output 再叠加。各渠道 capability profile 明确字段映射，通过 fixture 确认后才能启用。
@@ -287,6 +287,8 @@ stateDiagram-v2
 
 ## 8. 路由、健康与重试
 
+本节描述文本协议的现行路由，属于第一阶段。媒体、异步任务和 Realtime 不经过 `routing.Plan`，见本文末“文本与媒体的结构边界”。
+
 候选过滤顺序：模型授权 → 能力/地域/usage profile 匹配 → binding/channel 启用 → 熔断/健康 → 可用并发。每次从尚未尝试的有效候选选择最高优先级池，在池内按正权重随机；主池无剩余候选才降至下一优先级。请求保存route_revision，attempt关联不可变binding的priority/weight与channel/credential版本，平台可查询实际尝试及每个已准入attempt的候选选择/排除理由。未准入attempt的完整失败池解释仍未持久化，旧attempt不补造历史理由；该解释面为部分完成。全部无可用候选快速返回503，不无限排队；不能为了满足重试次数重用已尝试channel。
 
 首版每请求最多两次尝试，第二次只能选择同逻辑模型兼容候选。以下可重试：传输能证明 HTTP 请求未写出；或渠道契约明确该错误为未处理、无消费（如已验证的限流拒绝）。普通 5xx、发送后读超时、连接重置、未知消费默认不可透明重试；“没收到首个字节”不足以证明安全。
@@ -361,11 +363,36 @@ sequenceDiagram
 
 公共错误响应是第三个独立出口，不能以“关闭日志/正文trace”代替：只输出本地错误码、通用消息、受控param和request_id；不透传供应商error body、URL、stack、headers或原始exception/status描述。上游headers不批量复制，响应仅允许本地Content-Type/Cache-Control/X-Request-ID及验证过的Retry-After等契约字段；Set-Cookie/Location/认证头/任意供应商调试头均不透传。客户端headers同样按名单构造，客户Key、Cookie、tenant header与内部运营凭据不能送往供应商。
 
-### 9.2 后续路由实验门槛（不在首版）
+### 9.2 第三阶段文本动态路由的合同缺口
 
-同模型自适应策略先在不影响真实选择的影子模式评估，再对照确定性基线小流量验证；注明测量点、冷启动、样本老化和探索上限。跨模型语义路由须另建显式 `auto` SKU和公布计价规则，selector只提候选，商业准入仍有最终否决权。使用经授权的数据集，按任务、多轮、工具场景分层，校准/验证样本分离；记录数据集、模型对、路由器、阈值与策略版本，并比较质量、全程延迟、客户费用及平台全部成本。
+本节列出第三阶段（见[四阶段路线 §5](phase-roadmap.md#5-第三阶段openrouter-风格文本动态路由)）实施前必须冻结的合同。这些合同尚未存在；在冻结前不改动现有路由、计量或资金代码。
 
-会话绑定按 `(tenant_id,session_id)` 隔离；完整上下文重送、缓存损失、工具/推理状态兼容和额外路由/embedding成本纳入评估。达不到质量门槛或路由器不可用时执行事先公布的固定策略，不能默默降低客户购买的模型档位。无独立评估数据时不发布“省钱不降质”的承诺。
+**现状**
+
+| 项 | 现状 | 来源 |
+|---|---|---|
+| 逻辑模型 | `models` 与 `model_capability_versions` | `migrations/current_mvp.sql` |
+| 物理模型 | 只有 `model_bindings.upstream_model` 字符串，没有自己的能力、上下文或质量字段 | 同上 |
+| profile 约束 | 028 将 `route_policy_versions` 绑定到单一 `profile_version`，发布池内 channel 唯一 | [028 存储合同](../../specs/028-unified-metering-media/u-storage-contract.md) |
+| 选择模式 | `manual` 与 `cost_first` | `internal/routing/cost.go` |
+| 决策记录 | `upstream_attempts.route_decisions`：`channel_id`、`version_id`、`priority`、`weight`、`reason`；原因为封闭白名单；一次决策中每个 channel 只能出现一次，且恰有一个 `selected` | `internal/routing/routing.go`、`internal/billing/route_decisions.go`、`migrations/006_route_decisions.sql` |
+| 未持久化 | 随机抽签、健康状态、评分输入、未准入 attempt 的完整失败池 | 本文§8 |
+| 不重放 | `provider.SafeToRetry` 只接受可信无消费拒绝或未写出的网络失败；`Plan.CanRetry` 另要求未下游提交、无活动 attempt、少于两次 | `internal/provider/types.go`、`internal/routing/routing.go` |
+
+**必须冻结的合同**
+
+1. **物理模型与质量档位**：物理模型实体（上游模型、能力、上下文长度、工具能力、usage 语义），质量档位实体，以及与 028 单 profile 约束的关系：是放宽为多 profile，还是每个物理模型保持独立 profile 并由 auto 商品引用。
+2. **路由策略版本**：在不可变版本中增加评分权重、质量门槛、最低毛利和粘性策略，沿用完整版本 CAS 发布。
+3. **路由决策记录**：policy version、候选全集、每个候选的过滤原因、评分输入、随机抽签、最终选择、供应商成本快照、会话粘性原因、降级或切换标志，以及最终 attempt 和结算的引用。现有五字段数组与“每 channel 一次”的校验无法表达同一 channel 下的多个物理模型，必须改合同；改动按 ADR-005 一次性替换，不保留双格式。
+4. **路由回放**：同一决策记录与抽签输入，重放结果一致；回放只读，不派发、不写资金。
+5. **会话粘性**：路由会话按 `(tenant_id,session_id)` 隔离，与登录会话 `session_families` 分开；记录建立、延续和被打破（质量、成本、故障）的原因。
+6. **跨模型切换与资金**：auto 商品按候选中的最大上界预占；最终按实际选中模型的冻结价格结算；切换不新建预占或结算，仍为一个请求一个 settlement，每个 attempt 各自记录采购成本。
+7. **评分**：只在硬约束过滤之后进行。输入包括模型能力、质量门槛、上下文长度、工具能力、延迟、成功率、当前供应商成本、缓存与上下文重传成本、会话粘性、最低毛利以及租户和 Key 权限。不得只按最低价格选择。
+8. **最低毛利**：成本未知时不当作 0，按策略排除该候选或拒绝请求。
+9. **质量评估**：同模型自适应策略先在影子模式评估，再对照确定性基线小流量验证；注明测量点、冷启动、样本老化和探索上限。跨模型评估使用经授权的数据集，按任务、多轮、工具场景分层，校准与验证样本分离，记录数据集、模型对、路由器、阈值与策略版本，比较质量、全程延迟、客户费用及平台全部成本。无独立评估数据时不发布“省钱不降质”的承诺。达不到质量门槛或路由器不可用时执行事先公布的固定策略，不默默降低客户购买的档位。
+10. **不重放**：动态路由不放宽 `SafeToRetry` 与 `CanRetry`；任何可能已发送到上游的请求不因路由重放。
+
+**验收测试（第三阶段）**：同一快照回放一致；硬约束失败者不因评分高而复活；可能已发送的请求不被重放；跨模型切换后售价快照、采购成本快照与唯一结算一致；成本未知时毛利保护不按 0 处理；deterministic mock fixture 覆盖三类切换（同逻辑模型多供应商、同档位多物理模型、跨档位 auto）。
 
 ## 10. 密钥、权限与出口安全
 
@@ -1105,3 +1132,43 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 ### 2026-11-08 当前媒体 MVP 接线状态
 
 `video_generation` HTTP 创建复用 `ReserveMedia`，任务 worker 在调用 provider 前执行 `MarkMediaAttemptSending`，终态由 `FinalizeMedia` 幂等收尾。task 提交前由请求详情和资金详情提供原 profile、reservation、attempt、source identity，Postgres writer 仍以 task identity guard 再核同租户原 request。图片/TTS 将已结算 inline bytes 写入 `media_result_artifacts`，异步制品正文在 `media_task_artifacts.body` 完整摘要校验后一次性写入，Realtime 的 tenant-bound persistence 写入 `realtime_sessions`、`realtime_turns`、`realtime_events`。Realtime turn guard 按来源类型闭合文本三表或 media 三表，不能以相同 request ID 拼接两套 reservation/attempt。上述入口的当前证据是 55439 专库定向 race，不能替代真实供应商 task handle、provider session恢复和生产供应商验收。
+
+## 文本与媒体的结构边界（2026-11-10）
+
+钱包、journal 与 funding lot 共享：`internal/billing/media.go` 的 `ReserveMedia`/`FinalizeMedia` 调用与文本相同的 `postLocked` 记账，并写 `funding_lot_balances`、`funding_lot_events`。业务事实按能力分为两族：
+
+| 事实 | 文本表 | 媒体表 | 文本入口 | 媒体入口 |
+|---|---|---|---|---|
+| 请求 | `request_records` | `media_requests` | `Store.Reserve` | `Store.ReserveMedia` |
+| 预占 | `reservations` | `media_reservations` | 同上 | 同上 |
+| 尝试 | `upstream_attempts` | `media_attempts` | `RecordAttempt`、`PrepareDispatch` | `MarkMediaAttemptSending` |
+| 观察与终结 | `finalization_records`、`metering_events` | `media_observations` | `RecordFinalization` | `FinalizeMedia` |
+| 结算 | `settlements` | `media_settlements` | `Settle`/`Release` | `FinalizeMedia` |
+
+媒体四张核心表没有 channel 或 binding 列，`media_attempts` 只冻结 profile 的供应商单价。媒体经 `media.Registry` 按 `ProfileSelector{Version,VariantKey}` 解析到一个已发布 adapter，不调用 `routing.NewPlan`，不写 `route_decisions`。Realtime turn 的 request/reservation/attempt 必须来自同一族，文本集合与媒体集合不能跨接。
+
+约束：
+
+- 第一至第三阶段的渠道路由和动态路由只覆盖文本。媒体、异步任务和 Realtime 保持单 profile、单 adapter。
+- 不为媒体另建路由表或路由逻辑。将来需要时另立 SDD，统一执行核心与迁移，至少补齐 channel/binding、多候选、provider identity、route decision、供应商成本快照、失败切换和 guard，并重做 028-U 相关 guard 矩阵。
+- 执行接口保持协议专属：文本 `provider.Client`，同步媒体 `SynchronousMediaAdapter`，异步任务 `TaskAdapter`，Realtime `ProviderRealtimeAdapter`。第三阶段的 `RouteSelector` 与统一候选、决策模型只服务文本，不要求合并这些接口。
+
+## 第一阶段新增能力的合同前置（2026-11-10）
+
+以下两项属于第一阶段（[四阶段路线 §3](phase-roadmap.md#3-第一阶段固定版本-new-api-核心业务能力对齐)），实施前须按 SDD 冻结 spec、DDL 与接口。本节只给出必须满足的约束，不是完整合同。
+
+**模型别名**
+
+- 别名是“客户可见名 → 逻辑模型”的映射，与“逻辑模型 → 物理模型”的路由绑定分开。
+- 别名只解析为已发布、未停用的逻辑模型；不解析客户端提交的供应商或部署后缀。
+- 别名不改变授权：有效权限仍是平台模型状态、租户授权、成员权限和 Key scope 对目标逻辑模型的交集。
+- 请求快照记录客户提交的名字和解析后的逻辑模型 ID；售价、预占和路由都按逻辑模型计算。
+- 别名表版本化或可审计，冲突（别名与另一模型公开名相同）在发布时拒绝。
+- `GET /v1/models` 是否列出别名须在 spec 中明确。
+
+**用户分组倍率**
+
+- 倍率只是录入便利。管理员按基准价与倍率录入，系统在发布时计算出绝对输入/输出单价，写入现有价格组（023-A）的不可变价格版本。
+- 计算使用整数微元与明确的舍入规则（向上取整到微元），结果和原始倍率一起记入审计。
+- 运行时只读冻结的绝对价格快照，不在请求路径上乘倍率；基准价或倍率变化需要重新发布新版本。
+- 不新建第二套价格体系，不改变缺价拒绝语义。

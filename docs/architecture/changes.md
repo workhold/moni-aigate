@@ -5888,3 +5888,23 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T14:08:17Z · 8af175b7decc
+
+新增四阶段路线单一事实源并同步HLD/LLD/路线图/交付计划/README：真实供应商认证移至第四阶段，前三阶段渠道与动态路由只覆盖文本，媒体保持单profile单adapter不参与路由，修正文本与媒体共享钱包但分属两族业务表的描述，补第三阶段路由决策合同缺口与第一阶段别名/分组倍率约束；纯设计变更，无源码、迁移或权限结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2131 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/media-provider-safety.md`
+- modified `docs/design/new-api-roadmap.md`
+- added `docs/design/phase-roadmap.md`
+- modified `docs/design/provider-qualification-plan.md`
+
+</details>

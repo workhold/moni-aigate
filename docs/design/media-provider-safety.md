@@ -2,7 +2,7 @@
 
 ## 范围
 
-本合同约束当前 MVP 的图片生成、TTS、`video_generation` 和单 turn Realtime。媒体请求继续复用统一的 Profile → Plan → Reserve → Attempt → Observe → Settle 链路；本合同只决定供应商适配器是否可以被调用，以及 mock 结果如何进入当前账务边界。
+本合同约束当前 MVP 的图片生成、TTS、`video_generation` 和单 turn Realtime。媒体请求遵守 Profile → Plan → Reserve → Attempt → Observe → Settle 的阶段顺序，与文本共享钱包、journal 和 funding lot，但请求、预占、attempt、观察与结算使用独立的 `media_*` 表；媒体按 profile 解析到单个 adapter，不参与渠道或动态路由（见[四阶段路线 §2.1](phase-roadmap.md#21-文本与媒体的当前结构)）。本合同只决定供应商适配器是否可以被调用，以及 mock 结果如何进入当前账务边界。
 
 ## 配置状态
 
