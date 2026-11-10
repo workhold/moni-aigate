@@ -16,6 +16,22 @@ go test -count=1 ./internal/catalog -run '^TestPublicCatalogRejectsUnsupportedRe
 
 以上是 provider/profile/catalog 的协议与配置专项，不构成真实供应商 reasoning 认证，也不改变 028-U guard、billing/wallet 或媒体验收状态。
 
+## 2026-11-10：current-only 十类 guard 矩阵索引
+
+当前 guard 测试直接使用 `migrations.ApplyCurrent`，证据来自 `current_mvp.sql` 加 `current_*.sql`，没有把历史 `Apply` fixture 当作当前服务验收。新增测试直接检查十类 guard 的 deferred trigger，并通过真实 `Reserve → Attempt → Observe → Settle` 和受管采购事实验证 schema、capability、route、retail、supplier、request、attempt、observation、finalization、procurement 的正例、非法绑定、不可变、并发唯一、失败回滚和计量权限边界。
+
+专门的测试索引、十类映射和实际命令见 [028-U current-only guard 矩阵索引](028-u-guard-matrix.md)。以下命令在 PostgreSQL 16.15 的 `127.0.0.1:55439/moni_test` 专库通过：
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+GOCACHE=/tmp/moni-aigate-guard-gocache \
+go test -count=1 -race -timeout 900s ./migrations \
+  -run '^TestUnifiedTextMeteringCurrentGuardDDLIndex$|^TestUnifiedTextMeteringCurrentPositiveGuardFacts$|^TestUnifiedTextMeteringCurrentImmutablePriceCapabilityAndAttemptFacts$|^TestUnifiedTextMeteringCurrentConcurrentAttemptAndFinalizationIdentity$|^TestUnifiedTextMeteringCurrentManagedProcurementGuardFacts$|^TestUnifiedTextMeteringCurrentActualLoginMeterPermissions$'
+```
+
+这项关闭的是 current-only guard 测试矩阵缺口，不改变下方 028-U 存储/完整六文本商业出口的未勾状态，也不替代真实供应商、浏览器或生产部署验收。
+
 ## 2026-11-10：备份恢复演练与 current-only 追加迁移
 
 本片在独立 `codex/p0-backup-restore-p1-migration` worktree 完成。备份恢复演练先对源库执行 `migrations.VerifyCurrent`，恢复到新的空目标后再次执行 `VerifyCurrent`，不再调用包含历史 001–023 的 `migrations.Verify`。演练同时使用当前目录模型和真实 billing `Reserve → Attempt → Observe → Settle` 顺序，避免用旧夹具伪造观察。

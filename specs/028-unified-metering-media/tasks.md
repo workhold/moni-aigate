@@ -4,6 +4,8 @@
 
 2026-11-10。`current_mvp.sql` 已重建为 current-only 空库快照，不再执行 001–023 历史迁移片段。该片已在 55439 专库完成安装、拒迁、实际登录权限、真实主进程生命周期和全仓非 race Go 回归。完整 028-U guard、六文本商业闭环、正式供应商和目标环境验收仍按下方未勾项管理。
 
+2026-11-10。028-U guard 矩阵补齐：当前迁移夹具统一使用 `ApplyCurrent`，新增 current-only 十类 guard 的 DDL 索引、真实正例、不可变事实、受管采购、并发 attempt/finalization identity 和实际 LOGIN 计量权限测试；跨租户、跨 request-attempt、失败回滚、来源/成本指针和旧标量投影负控继续由既有矩阵覆盖。测试索引见[028-U current-only guard 矩阵](../../docs/verification/028-u-guard-matrix.md)。这只收口 guard 测试证据，不勾选包含完整存储商业出口、六文本全矩阵、真实供应商和目标环境权限的总项。
+
 2026-11-04。本页是当前执行清单，不用设计完成替代运行验收。总体范围见[规格](spec.md)，当前可用能力见[统一架构](../../docs/architecture/README.md)。经营报表026和来源027已经接线，后续阶段需持续回归。
 
 ## U：六文本单一向量路径
@@ -12,7 +14,7 @@
 - [x] 冻结共同纯域工厂、完整绑定、known/unknown联合、两侧用量确认及错误/资源合同：[共同域](u-domain-contract.md)。
 - [x] 明确存储列/键/双向完整性、原来源与采购接缝、拒迁和角色边界：[存储草案](u-storage-contract.md)。这是实施输入，正式SQL全文与PG原型仍在下一项。
 - [x] 完成共同域实现、独立审查及纯专项；[验证记录](../../docs/verification/unified-metering.md)与[机器记录](../../docs/verification/unified-metering.json)记录准确源码/命令/结果。纯专项不能勾选下方生产项。
-- [ ] 集成人追加正式迁移全文、canonical/整数有理金额/guard/发布指纹/最小权限，实际PG原型验证后冻结生产DDL；不修改001–023原件。候选024已覆盖两维文本schema、有理率、请求/尝试快照及四条界行、请求/尝试计划与inference报价、纯核bounds/rates/QuoteDigest、独立parent_plan_digest、双侧终态与成本来源指针、受管采购证据及角色边界。6c 已补客户R、结算金额、capability完整性、route/binding出生、route complete 与非零route_revision guard，并在55439专库通过相关迁移/catalog/billing/server回归；本轮又补了 payment worker 对计量表和 `meter_%` 函数的独立拒绝负控、attempt quote/parent plan 与跨租户 snapshot 反例、四个 trigger-only 完整性函数的固定 search_path/PUBLIC 拒绝、实际 LOGIN 权限负控，以及 api key/procurement held-spent、周期预算、funding lot child、payment capture/identity/effect 和 procurement evidence identity 的候选拒迁负控。当前所有 `meter_%` 函数在024与current MVP基线安装时统一固定为 `SECURITY INVOKER`、专属 `search_path` 并撤销PUBLIC执行，`VerifyMeterRoles` 也会逐函数核验APP执行权、projector/PUBLIC拒绝和定义属性。九组完整guard、11.2全部旧金融事实正反例及生产级权限全矩阵仍未全部验收，本项保持未勾。
+- [ ] 集成人追加正式迁移全文、canonical/整数有理金额/guard/发布指纹/最小权限，实际PG原型验证后冻结生产DDL；不修改001–023原件。候选024已覆盖两维文本schema、有理率、请求/尝试快照及四条界行、请求/尝试计划与inference报价、纯核bounds/rates/QuoteDigest、独立parent_plan_digest、双侧终态与成本来源指针、受管采购证据及角色边界。6c 已补客户R、结算金额、capability完整性、route/binding出生、route complete 与非零route_revision guard，并在55439专库通过相关迁移/catalog/billing/server回归；本轮又补了 current-only 十类 guard 的真实 DDL 索引、正例、不可变事实、受管采购、并发 identity、失败回滚、跨租户/跨 request-attempt 反例和实际 LOGIN 权限测试，索引见[028-U current-only guard 矩阵](../../docs/verification/028-u-guard-matrix.md)。当前所有 `meter_%` 函数在024与current MVP基线安装时统一固定为 `SECURITY INVOKER`、专属 `search_path` 并撤销PUBLIC执行，`VerifyMeterRoles` 也会逐函数核验APP执行权、projector/PUBLIC拒绝和定义属性。完整存储商业出口、六文本全矩阵、旧金融事实正反例的总验收、生产级权限全矩阵仍未全部验收，本项保持未勾。
 - 2026-11-10 当前 wallet 函数身份也已在 024/current MVP 基线同步收口：`payment_funding_journal_valid` 替换历史 `payment_legacy_funding_journal_valid`，旧身份只留在 021–023 隔离历史材料；实际 LOGIN provisioning、payment worker/projector/app 权限和历史 wallet source 矩阵通过。该记录不改变本项未勾状态，完整九组 guard、旧金融全量正反事实和目标环境权限仍需继续验收。
 - [x] 当前 MVP 已完成 provider、catalog/pricing/routing、billing/procurement 与 HTTP/UI 的单一路径切换；默认/组价/采购发布使用完整向量 operation/指纹/回执，报表/采购读端、准入/路由/账务复验和人工 `retail_quantities` 已切换，旧 HTTP/UI scalar 用量和报价出口被拒绝，图片/TTS/video/realtime 报表协议及同步/异步解析已补齐。当前 Compose HTTP/WS smoke 与前端契约测试通过。真实供应商、独立浏览器和正式部署认证后置，完整 SQL guard 仍由上一项单独验收。
 - [x] 当前 mock APP 六文本商业链：六协议 paid/known-zero、unknown政策、默认/组价组合、等待期间原价/不重发、标量读取禁用、一次退款审批/重复审批、027来源一致性、过期未知用量恢复不重生成、六协议超界、客户人工核对和 supplier unknown 反例已在 55439 通过。真实 supplier late/conflict、独立浏览器和生产 LOGIN 商业全矩阵属于后置认证，不把 mock 证据描述为真实供应商验收。

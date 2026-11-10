@@ -47,7 +47,7 @@ func TestUnifiedTextMeteringCanonical(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	if err = Apply(ctx, pool); err != nil {
+	if err = ApplyCurrent(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
 	user := uuid.NewString()
@@ -295,7 +295,7 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	if err = Apply(ctx, pool); err != nil {
+	if err = ApplyCurrent(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
 	user, tenant, model, profile := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString()

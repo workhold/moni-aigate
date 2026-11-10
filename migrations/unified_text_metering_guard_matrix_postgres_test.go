@@ -112,7 +112,7 @@ func newGuardFixture(t testing.TB) *guardFixture {
 		admin.Close()
 		cancel()
 	})
-	if err = migrations.Apply(ctx, owner); err != nil {
+	if err = migrations.ApplyCurrent(ctx, owner); err != nil {
 		t.Fatal(err)
 	}
 	f.seed()
