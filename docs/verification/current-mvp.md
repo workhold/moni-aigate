@@ -1,5 +1,32 @@
 # 当前 MVP 快速验收入口
 
+## 默认运行时路径审计（2026-11-10）
+
+本记录只判断默认构建、启动、迁移和部署链路，不把历史 fixture、维护组合器或离线 descriptor 工具当成当前服务入口。
+
+| 阶段 | 现行入口 | 证据 |
+| --- | --- | --- |
+| 构建 | `go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate`；Dockerfile 使用相同 Go 包 | `Makefile`、`Dockerfile` |
+| 迁移 | `moni-aigate migrate` → `migrations.ApplyCurrent` | `cmd/moni-aigate/main.go`、`migrations/embed.go` |
+| 角色/权限 | `moni-aigate provision` → `operations.Provision` | `cmd/moni-aigate/main.go`、`compose.yaml` |
+| 服务 | 默认 `serve`；启动后执行 `migrations.VerifyCurrent`、实例单活、服务初始化与 HTTP 监听 | `cmd/moni-aigate/main.go` |
+| 异步任务 | Compose 独立 `worker`，仍使用当前二进制和 task lease | `compose.yaml`、`cmd/moni-aigate/main.go` |
+
+Compose 的默认依赖顺序是 `postgres` 健康 → `migrate` 完成 → `provision` 完成 → `app`/`worker` 启动。默认入口没有第二个应用二进制或旧启动脚本。
+
+`go list -deps ./cmd/moni-aigate` 的默认命令不包含历史 maintenance reader、`internal/maintenancescan`、`internal/fundinglot*` 或 descriptor CLI。`migrations` 包仍保留 original22 材料，因为维护/组合包和隔离测试直接使用它；这属于包级编译材料，不等于历史安装路径进入默认运行时。
+
+本轮没有安全删除项：历史验证 API 和 descriptor CLI 仍有明确的测试、维护或离线消费者。删除前必须先关闭这些消费者并补 SDD 替代合同；当前只把它们从默认运行时和部署入口隔离，不把审计结果写成已清理。
+
+可重复审计命令：
+
+```sh
+./scripts/current-runtime-path-audit.sh
+go list -deps ./cmd/moni-aigate
+go test -run '^$' ./cmd/moni-aigate
+go vet ./...
+```
+
 `make verify-current-mvp` 是当前统一架构的显式验收入口。它固定使用：
 
 ```sh

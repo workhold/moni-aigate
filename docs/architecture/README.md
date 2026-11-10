@@ -8,6 +8,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 **当前研发原则**：[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)采用单一现行模型，MVP 前优先架构完整与业务能力，不新增旧版本兼容、双写或自动回退。下面的隔离历史证明候选保留其事实与验证边界，暂不扩展，也不作为经营功能的前置依赖；它们没有接入默认服务。现行资金与租户正确性继续保持。
 
+**默认运行时路径审计（2026-11-10）**：构建入口统一为 `./cmd/moni-aigate`；Compose 按 `migrate → provision → app/worker` 启动，默认应用命令为 `serve`。当前默认迁移与服务校验分别使用 current-only 的 `migrations.ApplyCurrent` 和 `migrations.VerifyCurrent`；`ApplyThrough`、`VerifyThrough`、original22 快照和 descriptor CLI 只在测试、维护/Runtime 组合或离线专用数据库路径中显式出现，没有默认服务调用方。详见[当前 MVP 验收与路径审计](../verification/current-mvp.md)和[整体盘点](../verification/overall-delivery-inventory.md)。
+
 当前服务迁移和启动入口使用 `migrations.ApplyCurrent`/`VerifyCurrent`。安装器在空库执行 `migrations/current_mvp.sql` 和 `migrations/current_*.sql` 当前追加迁移，在已有合法当前 baseline 上只追加缺失的 current-only 文件，并在业务 DDL 前拒绝历史 `schema_migrations`、未知记录、错误 checksum 或其他用户关系。旧库不升级、不转换，`ApplyThrough` 只供隔离历史 fixture 使用。`serve`/`worker` 的只读 `VerifyCurrent` 接受完整当前计划，不把首次 baseline 当作永久版本上限。
 
 2026-11-10 当前空库基线已重建为从已验证当前 schema 导出的单文件快照。`current_mvp.sql` 不再执行 001–023 的历史迁移片段，保留当前服务需要的关系、函数、触发器、默认控制行、约束、索引和当前 ACL，并在安装前继续执行 PostgreSQL 版本、schema owner 与空库门禁。001–023 原文件和历史 fixture 仍只属于隔离研究路径，当前服务不会调用它们。

@@ -10,6 +10,20 @@
 
 “已实现”表示源码入口存在；“本地已验”表示隔离 PostgreSQL/HTTP/race 或本地 fixture 有证据；“浏览器已验”表示隔离真实 main 和浏览器实际操作；“正式已验”表示真实供应商、支付商、部署或生产环境有证据。四者不相互替代。
 
+## 默认运行时路径审计（2026-11-10）
+
+本轮在独立 worktree 的 `codex/mvp-realtime-tts` 分支复核了默认构建、启动、迁移和 Compose 部署路径。`Dockerfile` 与 `Makefile` 都从 `./cmd/moni-aigate` 构建；容器默认命令是 `serve`，Compose 的一次性顺序是 `migrate → provision`，再启动 `app` 与独立 `worker`。`cmd/moni-aigate` 的 `migrate` 只调用 current-only 的 `migrations.ApplyCurrent`，服务启动只调用 `migrations.VerifyCurrent`；没有默认入口调用 `ApplyThrough`、`VerifyThrough` 或 `VerifyOriginal22SnapshotTx`。
+
+`go list -deps ./cmd/moni-aigate` 的默认依赖图没有 `internal/fundinglotruntime`、`internal/fundinglotprefixcompat`、`internal/fundinglotinit` 或 `scripts/funding-lot-descriptor`。`migrations` 包仍包含固定 original22 材料，因为维护/组合包和隔离测试直接使用它；这属于包级编译依赖，不能据此把历史安装路径认定为默认运行时路径。`ApplyThrough`、`VerifyThrough`、original22 快照和 descriptor 调用点均在迁移测试、领域集成测试、维护/组合隔离包或离线工具中。
+
+本轮没有安全删除项：descriptor CLI 和历史前缀 API 仍有明确测试/隔离消费者，删除需要改动 Go 核心或测试包，超出本次范围。可执行的后续清理清单是：
+
+1. 在不改变生产 `migrations` 合同的前提下，将历史验证 API 的消费者清单固定为维护/测试隔离包，并在包级依赖审计中继续拒绝其进入 `cmd/moni-aigate`。
+2. 待历史/维护验收正式关闭后，再单独评审 `scripts/funding-lot-descriptor` 的保留期限；在此之前它仍是已验证的离线候选生成器，不能按“无默认调用方”直接删除。
+3. 若未来要移除 `ApplyThrough` 或 original22 材料，先补一份 SDD 变更和迁移/维护替代合同，再修改 Go 源码；本轮不把文档审计结果写成已清理。
+
+可重复证据和断言见 [`scripts/current-runtime-path-audit.sh`](../../scripts/current-runtime-path-audit.sh) 与 [`current-mvp.md`](current-mvp.md)。
+
 ## 001–027 当前状态
 
 | 范围 | 当前已完成 | 仍缺的能力或验收 | 对 028 的关系 |
