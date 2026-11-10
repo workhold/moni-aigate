@@ -4,7 +4,7 @@
 
 | 目标渠道 | 首批协议接缝 | 逐渠道确认事项 | 当前状态 |
 | --- | --- | --- | --- |
-| OpenAI / Codex相关模型 | OpenAI Responses；适用模型另行验证Chat | API可用模型ID与账号权限、reasoning/cache计量、输出硬界、终态与取消；Codex完整agent会话另属有状态能力 | 已有协议实现；官方code generation指南已读，具体可售profile及真实计费待验 |
+| OpenAI / Codex相关模型 | OpenAI Responses；适用模型另行验证Chat | API可用模型ID与账号权限、reasoning/cache计量、输出硬界、终态与取消；Codex完整agent会话另属有状态能力 | 已有协议实现；当前可售profile显式拒绝未冻结的reasoning输出，usage子集不等于reasoning事件支持；官方code generation指南已读，具体可售profile及真实计费待验 |
 | Anthropic Claude | Anthropic Messages | 模型版本、max_tokens及thinking语义、缓存读写与额外收费维度、SSE最终usage和停止原因 | 已有受限Messages实现；正式模型profile待验 |
 | DeepSeek | 先评估OpenAI-compatible Chat | 当前官方请求/流/工具、reasoning与缓存包含关系、输入输出强制边界、实际usage与扣费 | 有兼容协议接缝；不预设全部字段兼容 |
 | Google Gemini | Gemini原生generateContent / streamGenerateContent | 模型版本、候选与thinking用量、聚合硬界、原生终态；工具/媒体另片 | 已有无状态纯文本实现；真实profile待验 |

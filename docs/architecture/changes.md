@@ -5657,3 +5657,45 @@ P0-2：将上游明确 binding 级模型错误与请求级 context_length_exceed
 备份恢复演练改用 `VerifyCurrent` 并完成专用 PostgreSQL 备份、恢复、checksum 和恢复锁验证；增加 current-only 追加迁移计划、幂等安装和完整当前校验，不修改钱包、billing 或 settlement 业务路径。
 
 已显式复核统一架构正文、能力状态和源码链接；当前追加迁移只在已验证的 current baseline 上执行，历史迁移和旧库转换仍被拒绝。
+
+## 2026-11-10T08:53:32Z · 8c771589e1a6
+
+P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与可配置阶段 timeout、上下限、Compose/config/server 接线；未改 migration/billing/wallet/media
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2113 个源文件；本次 31 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `compose.yaml`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/provider-qualification-plan.md`
+- modified `docs/runbooks/backup-restore.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- modified `docs/verification/backup-restore-local.json`
+- modified `docs/verification/backup-restore.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/catalog/public_catalog_test.go`
+- modified `internal/config/config.go`
+- modified `internal/config/config_test.go`
+- modified `internal/provider/native_test.go`
+- modified `internal/provider/network.go`
+- added `internal/provider/profile_contract_test.go`
+- modified `internal/provider/request_test.go`
+- modified `internal/provider/response_test.go`
+- added `internal/provider/timeout_contract_test.go`
+- modified `internal/provider/types.go`
+- modified `internal/provider/usage.go`
+- modified `internal/server/server.go`
+- modified `migrations/current.go`
+- added `migrations/current_001_append_path.sql`
+- modified `migrations/embed.go`
+- modified `migrations/embed_test.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `scripts/deployment-qa.sh`
+- modified `specs/001-commercial-mvp/contracts/provider.md`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

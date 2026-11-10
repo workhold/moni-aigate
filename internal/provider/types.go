@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"net"
 	"time"
 )
@@ -36,6 +37,10 @@ type Profile struct {
 	AllowedParameters         []string `json:"allowed_parameters,omitempty"`
 	NoConsumptionStatuses     []int    `json:"no_consumption_statuses,omitempty"`
 	UsageSemantics            string   `json:"usage_semantics,omitempty"`
+	// ReasoningOutput is intentionally limited to none until the Responses
+	// reasoning event set has its own normalized protocol and billing contract.
+	// An absent value has the same meaning as "none".
+	ReasoningOutput string `json:"reasoning_output,omitempty"`
 }
 
 func (p Profile) ProtocolName() string {
@@ -85,6 +90,9 @@ func (p Profile) Validate() error {
 	}
 	if p.UsageSemantics != "" && p.UsageSemantics != "final" && p.UsageSemantics != "cumulative" {
 		return failure("invalid_profile", 503, ClassConfiguration, ConsumptionUnknown)
+	}
+	if p.ReasoningOutput != "" && p.ReasoningOutput != "none" {
+		return failure("invalid_profile_reasoning_output", 503, ClassConfiguration, ConsumptionUnknown)
 	}
 	known := map[string]bool{"temperature": true, "top_p": true, "seed": true, "stop": true, "presence_penalty": true, "frequency_penalty": true, "tools": true, "tool_choice": true, "parallel_tool_calls": true}
 	if protocol == ProtocolResponses {
@@ -204,6 +212,72 @@ type ClientOptions struct {
 	FirstEventTimeout time.Duration
 	IdleTimeout       time.Duration
 	ProgressTimeout   time.Duration
+}
+
+// TimeoutConfig is the deployment-facing timeout contract for one provider
+// client. Each value is validated before it reaches ClientOptions. The
+// minimums prevent accidental busy-loop timeouts; the maximums keep a single
+// upstream from holding a request indefinitely when the caller's deadline is
+// misconfigured.
+type TimeoutConfig struct {
+	ConnectTimeout    time.Duration
+	HeaderTimeout     time.Duration
+	FirstEventTimeout time.Duration
+	IdleTimeout       time.Duration
+	ProgressTimeout   time.Duration
+}
+
+const (
+	DefaultConnectTimeout    = 5 * time.Second
+	DefaultHeaderTimeout     = 60 * time.Second
+	DefaultFirstEventTimeout = 60 * time.Second
+	DefaultIdleTimeout       = 60 * time.Second
+	DefaultProgressTimeout   = 60 * time.Second
+	MinProviderTimeout       = 10 * time.Millisecond
+	MaxConnectTimeout        = 30 * time.Second
+	MaxHeaderTimeout         = 5 * time.Minute
+	MaxFirstEventTimeout     = 10 * time.Minute
+	MaxIdleTimeout           = 5 * time.Minute
+	MaxProgressTimeout       = 10 * time.Minute
+)
+
+func DefaultTimeoutConfig() TimeoutConfig {
+	return TimeoutConfig{
+		ConnectTimeout:    DefaultConnectTimeout,
+		HeaderTimeout:     DefaultHeaderTimeout,
+		FirstEventTimeout: DefaultFirstEventTimeout,
+		IdleTimeout:       DefaultIdleTimeout,
+		ProgressTimeout:   DefaultProgressTimeout,
+	}
+}
+
+func (t TimeoutConfig) Validate() error {
+	for _, v := range []struct {
+		name string
+		got  time.Duration
+		max  time.Duration
+	}{
+		{"connect", t.ConnectTimeout, MaxConnectTimeout},
+		{"header", t.HeaderTimeout, MaxHeaderTimeout},
+		{"first-event", t.FirstEventTimeout, MaxFirstEventTimeout},
+		{"idle", t.IdleTimeout, MaxIdleTimeout},
+		{"progress", t.ProgressTimeout, MaxProgressTimeout},
+	} {
+		if v.got < MinProviderTimeout || v.got > v.max {
+			return fmt.Errorf("provider %s timeout must be between %s and %s", v.name, MinProviderTimeout, v.max)
+		}
+	}
+	return nil
+}
+
+func (t TimeoutConfig) ClientOptions() ClientOptions {
+	return ClientOptions{
+		ConnectTimeout:    t.ConnectTimeout,
+		HeaderTimeout:     t.HeaderTimeout,
+		FirstEventTimeout: t.FirstEventTimeout,
+		IdleTimeout:       t.IdleTimeout,
+		ProgressTimeout:   t.ProgressTimeout,
+	}
 }
 
 type Event struct {

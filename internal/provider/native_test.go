@@ -293,6 +293,27 @@ func TestNativeOfficialResponsesStreamingFields(t *testing.T) {
 	}
 }
 
+func TestResponsesReasoningEventIsRejectedAsUnsupported(t *testing.T) {
+	wire := nativeSSE("response.created", responseCreated) + nativeSSE("response.reasoning_summary_text.delta", `{"type":"response.reasoning_summary_text.delta","sequence_number":1,"item_id":"rs_1","output_index":0,"summary_index":0,"delta":"private reasoning"}`)
+	srv := serveStream(t, wire, false)
+	defer srv.Close()
+	ctx, cancel := testContext(t)
+	defer cancel()
+	r, err := NewClient(ClientOptions{}).Do(ctx, fixtureEndpoint(t, srv.URL), nativeRequest(t, ProtocolResponses, true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	if _, err = r.ReadEvent(); err != nil {
+		t.Fatal(err)
+	}
+	_, err = r.ReadEvent()
+	var providerErr *Error
+	if !errors.As(err, &providerErr) || providerErr.Code != "upstream_unsupported_event" || r.ProtocolOutcome != "failed" || r.Usage.Status == UsageConfirmed {
+		t.Fatalf("reasoning event was not fenced: err=%v response=%+v", err, r)
+	}
+}
+
 func TestNativeMessagesOfficialOptionalMetadata(t *testing.T) {
 	start := strings.Replace(messageStart, `"cache_creation_input_tokens":3`, `"cache_creation_input_tokens":0,"cache_creation":null,"output_tokens_details":null,"service_tier":null,"speed":null,"server_tool_use":null`, 1)
 	finalDelta := `{"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null,"container":null,"stop_details":null},"usage":{"input_tokens":null,"cache_creation_input_tokens":null,"cache_read_input_tokens":null,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":2,"output_tokens_details":{"thinking_tokens":0},"speed":"standard","service_tier":"standard","server_tool_use":{"web_search_requests":0,"web_fetch_requests":0}}}`

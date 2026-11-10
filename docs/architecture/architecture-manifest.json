@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T07:06:31Z",
-  "review_reason": "P0-2：将上游明确 binding 级模型错误与请求级 context_length_exceeded 分离，只有显式 binding 级错误可持久化 route_binding_isolations；补充跨租户 PostgreSQL 回归，未改变迁移、账务接口或媒体模块",
-  "snapshot_sha256": "a1794a4f0150ee87120208243c8dd732290cc6543c09815335faf19dd2085886",
-  "architecture_sha256": "b01a91cc70d049a25df27933b2bdd6622aa680cb456be390f0e9d969906a81ad",
-  "history_sha256": "18c701317b217b0287cdbc4b30c746cac4e6009e9360a45230dd984696c53001",
+  "reviewed_at": "2026-11-10T08:53:32Z",
+  "review_reason": "P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与可配置阶段 timeout、上下限、Compose/config/server 接线；未改 migration/billing/wallet/media",
+  "snapshot_sha256": "8c771589e1a6fb29e0f3c6256c1e331525136d3a8d3abae882c2f80f25c3e952",
+  "architecture_sha256": "d85427e7f3829715691e5ce8638b7598e13b9aa8bdd80907c77a295c161527cc",
+  "history_sha256": "5d9db003fb395c7d0b81009af5d9bb9e6bcb53bf85d52a239fdb112a5a4bceca",
   "files": [
     {
       "path": ".dockerignore",
@@ -13,7 +13,7 @@
     },
     {
       "path": ".env.example",
-      "sha256": "ea6ab3a70b38dc237836604bf808cde9243f44609ef1870f8ae038c6feab1153"
+      "sha256": "5f24813d6541af4b6ecf4f18266ff4c8be134fa16391289672f8db8303487caa"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -89,7 +89,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "5b627565c7b2e098613141f1815826224c1ae6cd6e3c080e688e8ad7fdbd41f0"
+      "sha256": "c981f0b35b073d0fd6a4563e3f6804352e9c84ba0ffeaeb4ad88cd55fb5bbb99"
     },
     {
       "path": "deploy/init-roles.sh",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "273705ef2a94109a5697a672123195f994a5f752d0f9163a924b1065df22b590"
+      "sha256": "ff820b76b43431ae278d25c2b08456ab05af1829c9c4206b436ad0d29cba8cc6"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "c52c89bb8497fed8511c3b3cb44474174d5a038d4d73d7646dedd53f60bff3ef"
+      "sha256": "e0839acb38ca420adb4847544d1e0fe7c757148db1c8609891d8a2e0d9e18f47"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -225,15 +225,15 @@
     },
     {
       "path": "docs/runbooks/backup-restore.md",
-      "sha256": "bf2dd3d453cbe4b4db4dc0e2cff15c7cc80589656baf3ec5ce982c309a101f43"
+      "sha256": "ae37c65c99488407b9ee19e4c516567c02d700e16d57331c0fc2794b777d037e"
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "363b0496250eb03eddafef0375ef67c3e623752758bae418c3057445481ce2b0"
+      "sha256": "460c85030423450d26b372687a7333b34cc99ac876d7d6819361ae90c3f1b922"
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "45e9ee4765d0aeb93842dd0cf07656c100a58caf885674d64b5cc13d2470fc39"
+      "sha256": "7eb8aa92faf52160133cd687f1c327ebd1ea73742efcb4225c8f7a5610249f9e"
     },
     {
       "path": "docs/verification/028-media-pure-candidates.md",
@@ -713,11 +713,11 @@
     },
     {
       "path": "docs/verification/backup-restore-local.json",
-      "sha256": "977db4bba1ceaa9f3ad937cb66dfa97531641f1d832e82dd41e9be5f128ead5d"
+      "sha256": "1e62bc6a35251bbb75a8b77b98aa711b86e370ea74f0cbf4029d4a3c986fe1c7"
     },
     {
       "path": "docs/verification/backup-restore.md",
-      "sha256": "b4141eb896a14ccfba4fb76bc55f9e4fb2a5a264c16638d6d3ed70b369b4e40a"
+      "sha256": "684d5e40af777c5d39d792e28fa745927419943fec48141c3922279438c2ab02"
     },
     {
       "path": "docs/verification/basis-proof-v2.json",
@@ -1437,7 +1437,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "23cb3962ab8c3c77b9d34cd56f727dead15d793167ba9f8185dd417a5cda2eb6"
+      "sha256": "a8b623bb04507df9736ca870f75a342326b974f38ed66f58eec6d2cd705d393a"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "4b45985301dda134e3f31fece12fa718c1a3fc620092526ee86e2ed94017ca66"
+      "sha256": "18f0586c7450aded99a6509df40952a307fbbb01ba5514987d9b15df6d2541a5"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -2397,7 +2397,7 @@
     },
     {
       "path": "internal/catalog/public_catalog_test.go",
-      "sha256": "4fe08c9adb1843293325a75a6b1bc954f5a17a8e129f562fc3195ae54bf05903"
+      "sha256": "3e927052fdd09a6ab94f3a17c861c09ce015487d3b5b877d855c3b730301738f"
     },
     {
       "path": "internal/catalog/store.go",
@@ -2409,11 +2409,11 @@
     },
     {
       "path": "internal/config/config.go",
-      "sha256": "9588c30549d44a9bfdf30177334670f292521bff92414f3e64429c92878580bb"
+      "sha256": "640c6dc69d2bec6344817e49f448fe564f9c410b480f7d4870c73b3cafa54089"
     },
     {
       "path": "internal/config/config_test.go",
-      "sha256": "770fce7dc892587e358b9cce7e137d7e12a637d66e742ccad197b2d0aead8a39"
+      "sha256": "204349fd811c5dbc461564836de909b2e37f438c2429bc28b992e2a312511750"
     },
     {
       "path": "internal/config/mail.go",
@@ -5605,7 +5605,7 @@
     },
     {
       "path": "internal/provider/native_test.go",
-      "sha256": "3b0c12e3150f1da6ef22d89aedec3ab99888538f5cd87b5b83c2ebd575806a1d"
+      "sha256": "990bd25a8ccc8a099873635a2c1e38c0af249fab961698e4989398fdc1dc6515"
     },
     {
       "path": "internal/provider/native_usage.go",
@@ -5613,11 +5613,15 @@
     },
     {
       "path": "internal/provider/network.go",
-      "sha256": "b69a9559884d5c146401b8a618a8cb4da55c5f9323e6110cab4ee6f39b2c4a71"
+      "sha256": "6ac15dac94be7b0631092d40128b6acde3529c47b6cfd31ab1391db94667ccd0"
     },
     {
       "path": "internal/provider/network_test.go",
       "sha256": "83996cf5ba5ae93725faabaa371f5433d74c29d5111a7883db3b00cc2eadaa29"
+    },
+    {
+      "path": "internal/provider/profile_contract_test.go",
+      "sha256": "5278da67e3e29a32fb454e98983095625f2dfc1cce01d8ce8e402cee4cc3a44a"
     },
     {
       "path": "internal/provider/realtime_adapter.go",
@@ -5633,7 +5637,7 @@
     },
     {
       "path": "internal/provider/request_test.go",
-      "sha256": "245ea1a50ddbce170462cfb0bf3afb005bab162d4997be7bdeff2b96aa16854b"
+      "sha256": "329b74ac1cad71adace64e895ccb33da45c76a55af501c3de793754e118439c6"
     },
     {
       "path": "internal/provider/response.go",
@@ -5641,7 +5645,7 @@
     },
     {
       "path": "internal/provider/response_test.go",
-      "sha256": "5d01d33b38aeae83c6fae688dbca6322579c426b9f228da57238be8a36f4a4ce"
+      "sha256": "336006a9219e339183f6e0e179d12b1d2a7a35a8588d95b64980768048fb7fd7"
     },
     {
       "path": "internal/provider/retrieval_request.go",
@@ -5660,12 +5664,16 @@
       "sha256": "52e9fe3fc6adcaf134a8e25ae880982209b3563630f47a948766bf77f1ac25b0"
     },
     {
+      "path": "internal/provider/timeout_contract_test.go",
+      "sha256": "3fa706c1119128ea9bd7f97aaa69acf4efce3a6cd7443436e9df2a587b611101"
+    },
+    {
       "path": "internal/provider/types.go",
-      "sha256": "90251d9794157425077ea2f3f43dc0e69b1653f0eeb5ea78c1bda8835af26ea0"
+      "sha256": "ed428253869860a4e3e1db5e9a4bf26bc1fc7dacf8d644c2b07ef9124a3ccaf1"
     },
     {
       "path": "internal/provider/usage.go",
-      "sha256": "fbc44254de81fd3f23135d15bd1a63f2df6e43bb7aebf6725d34cefa447df76d"
+      "sha256": "72d95aede9c97ce70daadbec924700b7f5489f891fc4e12bb8193a77b3d54ae8"
     },
     {
       "path": "internal/qa/c0candidate/candidate_test.go",
@@ -6213,7 +6221,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "81526c85a6204db545cd81c035eae2a33262b091633642c6dc90bc7878a831d0"
+      "sha256": "e727ed44a1934dfdbb8487f0e89673a06a84af7d27207e2734351bf0d37882dd"
     },
     {
       "path": "internal/server/static.go",
@@ -6457,7 +6465,11 @@
     },
     {
       "path": "migrations/current.go",
-      "sha256": "db640b210e3f0f17e67c169c4f8d7dc46037b6cc1489b80f6d7588f7b1fa2370"
+      "sha256": "7bc82a420536c622c5c0f642c45fad2614d98ecfe45d3dfe28c1a1a6681cdd6a"
+    },
+    {
+      "path": "migrations/current_001_append_path.sql",
+      "sha256": "f42c03066cfa5cb8169e94c2be4e3d254ba79a27ada39cc63dfbf152c48b6817"
     },
     {
       "path": "migrations/current_mvp.sql",
@@ -6465,11 +6477,11 @@
     },
     {
       "path": "migrations/embed.go",
-      "sha256": "82ada31418b35e273026b3a5647e01ae6d61934886cf7c1d2385a3b0d1adba7c"
+      "sha256": "e36903190193a5d21a0943b6a8c686cc9b0e050a6526ae16571274eb0cc6ceae"
     },
     {
       "path": "migrations/embed_test.go",
-      "sha256": "b6838a985d5042d846eec135eb5550f2458e7b4bfd083b6b0f95378736d6edbb"
+      "sha256": "bcf7cd8271aa170282feddea2491e5b2812ef514c495e6a00bf42abea891245a"
     },
     {
       "path": "migrations/original22.go",
@@ -6533,7 +6545,7 @@
     },
     {
       "path": "scripts/backup-restore-drill.go",
-      "sha256": "ebc3ba00d56261ddb0e9c4fe9d54240aefde82260295ae0fdbac829fa70bb7be"
+      "sha256": "5c72b9531ba3ef493883985f61ebf6907167a4b8f4993dc008bbfd96cf38ab4c"
     },
     {
       "path": "scripts/backup.sh",
@@ -6641,7 +6653,7 @@
     },
     {
       "path": "scripts/deployment-qa.sh",
-      "sha256": "f78d0ff8cb6e25db087030ffda3b5af0128029de0b5a149824943f656ad64c52"
+      "sha256": "c94ffe54447bd9f9628a6b5bd3447774f964a290f230fbf15fed009331188b35"
     },
     {
       "path": "scripts/export-native-sdk-fixtures/main.go",
@@ -6805,7 +6817,7 @@
     },
     {
       "path": "specs/001-commercial-mvp/contracts/provider.md",
-      "sha256": "6d189718c8a80db9a8eb7b3a46c234e843cebcaa3459f847809fbb344a3d234f"
+      "sha256": "710e7c07ad28285d58f76a9545f0b987d1b1b55dc0cad9ac293e45902bc3e1cf"
     },
     {
       "path": "specs/001-commercial-mvp/plan.md",
@@ -7817,7 +7829,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "287aa752f194952e3da2ec30476d9be56746a7ad896e33adaf8217a511a1976d"
+      "sha256": "d55c009092aa76e6e7a9a38eb57188138ec5b83e6f5582eed8db172f90459e78"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

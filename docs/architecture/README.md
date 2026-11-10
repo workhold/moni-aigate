@@ -14,6 +14,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-10 P1-6 追加路径收口：`current_001_append_path.sql` 是首个 current-only 追加迁移，只建立迁移扩展标记，不写入钱包、billing、settlement 或供应商业务事实。历史计划会排除全部 `current_*.sql`，而当前 installer 会在已记录且 checksum 正确的 `current_mvp.sql` 之后执行缺失追加文件；恢复、serve 和 worker 通过完整当前计划校验。旧金融事实和旧库转换仍被拒绝。
 
+2026-11-10 provider 契约收口：Responses 可售 profile 的 `reasoning_output` 只允许空值或 `none`，未冻结 reasoning 输出模型在 profile/catalog 入口拒绝；未知 reasoning 事件不会被降级为普通文本或零 usage。provider 的 connect/header/first-event/idle/progress 阶段限制由 `PROVIDER_*_TIMEOUT` 部署配置注入，并在启动和 client 边界执行安全上下限校验；该配置不改变统一计量或未知消费不重放边界。
+
 只服务历史维护扫描的 billing raw reader、显式 `ProspectiveStore`、`internal/maintenancescan` 与 maintenance QA 使用 `historical` build tag。默认 `cmd/moni-aigate` 构建图、当前 billing 包和默认全包编译不包含这些 reader，历史专项通过显式 tag 保留。它们不进入当前 migrate、provision、serve、worker、wallet、billing、provider 或媒体运行路径。
 
 **2026-11-09 当前状态校正**：下方 2026-11-08 的媒体开发记录按当时提交顺序保留，但其中“尚未接入”的描述已被后续纵向接线覆盖。当前 `POST /v1/images/generations`、TTS、`/v1/tasks`、独立 worker 和 `/v1/realtime` 已进入当前 server/worker 入口；图片/TTS、video task 和 Realtime 使用当前媒体 Reserve/Attempt/Observe/Settle，异步制品正文与 Realtime provider identity 已持久化。已通过的范围是 55439 专库与 mock provider 的定向 race，以及本机临时 Compose 的迁移/provision/bootstrap/live/ready/重启验收。真实供应商、对象存储、浏览器业务调用、1Panel 和完整 028-U guard/商业出口仍未完成。

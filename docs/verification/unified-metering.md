@@ -1,5 +1,21 @@
 # 028-U统一计量验证
 
+## 2026-11-10：provider reasoning 与阶段 timeout 契约
+
+Responses 当前不发布 reasoning 输出 profile。`provider.Profile.ReasoningOutput` 只接受空值或 `none`，catalog 的 profile 解析复用同一校验；声明未实现的 reasoning 模式在派发前拒绝。Responses reasoning SSE 事件仍有专门协议负控，确认不会被吞成空 chunk、普通文本或已确认 usage；失败保持未知消费，不能成功结算。`reasoning_tokens` 的 usage 解析覆盖与 reasoning 输出事件是两个独立门禁。
+
+provider 的 connect/header/first-event/idle/progress timeout 通过 `PROVIDER_CONNECT_TIMEOUT`、`PROVIDER_HEADER_TIMEOUT`、`PROVIDER_FIRST_EVENT_TIMEOUT`、`PROVIDER_IDLE_TIMEOUT`、`PROVIDER_PROGRESS_TIMEOUT` 配置。默认值分别为 5s、60s、60s、60s、60s；配置入口拒绝低于 10ms 或超过各阶段上限（connect 30s、header/idle 5m、first-event/progress 10m），直接构造 `Client` 时也会归一化不安全值。阶段语义保持：header 等响应头，first-event 等首个完整流事件，idle 等上游字节间隔，progress 只被有效内容/工具增量/合法终态重置。
+
+实际验证命令：
+
+```sh
+go test -count=1 ./internal/provider -run 'TestProfileRejectsUnsupportedReasoningOutput|TestResponsesReasoningEventIsRejectedAsUnsupported|TestProviderTimeoutConfigBounds|TestNewClientNeverRetainsUnsafeTimeouts'
+go test -count=1 ./internal/config -run '^TestProviderTimeoutConfigurationIsValidatedAndApplied$'
+go test -count=1 ./internal/catalog -run '^TestPublicCatalogRejectsUnsupportedResponsesReasoningProfile$'
+```
+
+以上是 provider/profile/catalog 的协议与配置专项，不构成真实供应商 reasoning 认证，也不改变 028-U guard、billing/wallet 或媒体验收状态。
+
 ## 2026-11-10：备份恢复演练与 current-only 追加迁移
 
 本片在独立 `codex/p0-backup-restore-p1-migration` worktree 完成。备份恢复演练先对源库执行 `migrations.VerifyCurrent`，恢复到新的空目标后再次执行 `VerifyCurrent`，不再调用包含历史 001–023 的 `migrations.Verify`。演练同时使用当前目录模型和真实 billing `Reserve → Attempt → Observe → Settle` 顺序，避免用旧夹具伪造观察。

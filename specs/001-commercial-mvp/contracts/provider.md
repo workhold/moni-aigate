@@ -4,7 +4,7 @@
 
 ## Provider
 
-`Profile` 固定 `version/model/input_token_upper_bound/context_limit/output_limit/default_output_limit/output_limit_field/supports_tools/supports_parallel_tool_calls/allowed_parameters/no_consumption_statuses/usage_semantics`。输入上界必须是供应商强制边界或经验证硬上界，不能传 tokenizer 估值。`usage_semantics` 为 `final`（重复最终量必须一致）或 `cumulative`（非递减累计快照，最终替换不相加）。
+`Profile` 固定 `version/model/input_token_upper_bound/context_limit/output_limit/default_output_limit/output_limit_field/supports_tools/supports_parallel_tool_calls/allowed_parameters/no_consumption_statuses/usage_semantics/reasoning_output`。输入上界必须是供应商强制边界或经验证硬上界，不能传 tokenizer 估值。`usage_semantics` 为 `final`（重复最终量必须一致）或 `cumulative`（非递减累计快照，最终替换不相加）。当前可发布的 Responses profile 将 `reasoning_output` 视为 `none`（空值与显式 `none` 等价）；任何声明的 reasoning 输出模式都在 profile/catalog 校验阶段拒绝，直到对应事件集合、归一化和计量合同单独冻结。usage 中的 `reasoning_tokens` 不改变该协议门禁。
 
 `ParseChat(raw []byte, Profile) (*Request,error)`：请求≤1MiB、严格字段白名单、文本消息、单候选、函数工具、受控输出上限；拒绝重复 JSON key、媒体、未知/收费扩展、歧义上限与非法工具。导出 `Model/Stream/IncludeUsage/MaxOutputTokens/InputUpperBound/ProfileVersion` 供准入和财务使用；`UpstreamJSON(model string) ([]byte,error)` 从私有规范值构造请求，固定模型与上限，流强制申请 usage。调用者不得修改导出元数据后期待改变实际请求。
 
@@ -12,15 +12,19 @@
 
 `NewClient(ClientOptions) *Client`；`Client.Do(context.Context, Endpoint, *Request) (*Response,error)` 只发一次 HTTP 请求。调用者必须提供总 deadline；客户端阶段限制不能延长它。Endpoint.URL 是完整 Chat endpoint；NetworkPolicy 默认 HTTPS:443，HTTP/其他端口和私网 CIDR 必须显式允许。metadata/link-local/unspecified/multicast 永不允许；loopback 仅显式 CIDR（测试与受控本地部署）。每次 dial 解析并校验全部地址，再直接连接一个已验证 IP；HTTPS 校验证书和原 hostname；禁 redirect、环境代理、自动 POST 重放与 keep-alive。
 
+上游阶段的 `connect/header/first-event/idle/progress` timeout 来自部署配置（`PROVIDER_*_TIMEOUT`），每项都经过 provider 的非零安全下限和上限校验；缺省值只用于未设置配置，越界配置拒绝启动，客户端内部也不会使用越界值。`header` 限制响应头，`first-event` 只限制流的首个完整事件，`idle` 限制任意上游字节间隔，`progress` 只由有效内容、工具增量或合法终态重置。心跳、注释、空块和 role-only 事件不能延长 progress。阶段限制仍受调用者总 deadline 约束。
+
 `Response.DecodeJSON() ([]byte,error)` 校验非流完整响应及≤8MiB解压后大小；`ReadEvent() (*Event,error)` 读取完整 SSE event（≤1MiB），支持 LF/CRLF/CR、多data行与任意字节分片。`Close()` 幂等关闭真实上游 body。`Usage` 显式区分 `confirmed_final/provisional/missing/conflicting`，整数0有效；input/output/total完整、非负、无溢出且total=input+output，cached≤input/reasoning≤output。协议终态 `ProtocolOutcome`、`TransportEndReason`、`FinishReason` 与 Usage.status 独立；usage 不代表协议成功。
 
-流必须有合法 finish_reason 和 `[DONE]`；裸EOF/残缺JSON/流内error失败。usage在DONE后才晋升confirmed_final，先到usage仍可遇到后续error；最终量冲突不自动收费。`ReadEvent` 永不将供应商error正文暴露在错误中。Event.Data 是验证后的正常chunk；usage-only单独分类，调用者按IncludeUsage控制发送并且最终只发送一次。DONE后不读取新生成。首事件60s、字节idle60s、有效进展60s；role-only/空chunk/注释/心跳不延长有效进展，有效内容/工具delta或合法finish能更新进展。
+流必须有合法 finish_reason 和 `[DONE]`；裸EOF/残缺JSON/流内error失败。usage在DONE后才晋升confirmed_final，先到usage仍可遇到后续error；最终量冲突不自动收费。`ReadEvent` 永不将供应商error正文暴露在错误中。Event.Data 是验证后的正常chunk；usage-only单独分类，调用者按IncludeUsage控制发送并且最终只发送一次。DONE后不读取新生成。首事件、字节idle和有效进展使用部署配置的阶段timeout（默认60s，且有 provider 上下限）；role-only/空chunk/注释/心跳不延长有效进展，有效内容/工具delta或合法finish能更新进展。
 
 `Error` 仅公开通用Code/HTTPStatus/Class/Consumption/RetryAfter。`SafeToRetry(error)` 只接受传输证明未写HTTP字节，或已固定profile可信无消费拒绝；取消、普通5xx、写后断线/超时不能重试。Retry-After支持整数秒与HTTP-date；实际等待、cap、剩余额度由caller控制。provider从不把客户身份header或幂等Key转给上游。
 
 ## 003 原生协议扩展
 
 `Profile.protocol`为空兼容Chat，其他为`openai_responses`/`anthropic_messages`。`Parse(protocol,raw,p)`严格匹配已发布模型协议；`Request.Protocol()`与`EndpointSuffix()`供共享网关管线使用，suffix不含渠道base URL已有的版本前缀。两种原生协议保持各自JSON envelope与SSE事件名，`Event.Type`为事件名，`Kind=done`只表示交由调用者持久最终量并结算，不允许提前转发原生成功终态。原生协议不使用Chat DONE。Messages最终用量累积/缓存拆分、认证与失败合同详见[003](../../003-native-protocols/spec.md)。
+
+Responses 当前只接受已冻结的 message/function-call 事件集合。reasoning 事件不会被当作普通文本、空事件或零 usage 吞掉；未冻结的 reasoning profile 在入口拒绝，供应商仍发送 reasoning 事件时返回通用协议错误并保持未知消费，不能进入成功结算。
 
 ## Routing
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/moni-ai/moni-aigate/internal/provider"
 )
 
 func TestPublicCatalogInputBoundsAndCanonicalIDs(t *testing.T) {
@@ -52,5 +53,16 @@ func TestPublicCatalogUnavailablePriceHasExplicitNulls(t *testing.T) {
 		if string(fields[key]) != "null" {
 			t.Fatal("missing pricing field is not explicit null", key, string(body))
 		}
+	}
+}
+
+func TestPublicCatalogRejectsUnsupportedResponsesReasoningProfile(t *testing.T) {
+	p := provider.Profile{Version: uuid.NewString(), Model: "reasoning-model", Protocol: provider.ProtocolResponses, ContextLimit: 100, InputTokenUpperBound: 80, OutputLimit: 20, DefaultOutputLimit: 10, ReasoningOutput: "summary_v1"}
+	body, err := json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = publicProfile(p.Model, body); !errors.Is(err, ErrPublicCatalogInvalid) {
+		t.Fatalf("unsupported reasoning profile reached catalog: %v", err)
 	}
 }

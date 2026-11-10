@@ -19,22 +19,20 @@ func NewClient(o ClientOptions) *Client {
 	if o.Resolver == nil {
 		o.Resolver = net.DefaultResolver
 	}
-	if o.ConnectTimeout <= 0 {
-		o.ConnectTimeout = 5 * time.Second
-	}
-	if o.HeaderTimeout <= 0 {
-		o.HeaderTimeout = 60 * time.Second
-	}
-	if o.FirstEventTimeout <= 0 {
-		o.FirstEventTimeout = 60 * time.Second
-	}
-	if o.IdleTimeout <= 0 {
-		o.IdleTimeout = 60 * time.Second
-	}
-	if o.ProgressTimeout <= 0 {
-		o.ProgressTimeout = 60 * time.Second
-	}
+	defaults := DefaultTimeoutConfig()
+	o.ConnectTimeout = safeTimeout(o.ConnectTimeout, defaults.ConnectTimeout, MaxConnectTimeout)
+	o.HeaderTimeout = safeTimeout(o.HeaderTimeout, defaults.HeaderTimeout, MaxHeaderTimeout)
+	o.FirstEventTimeout = safeTimeout(o.FirstEventTimeout, defaults.FirstEventTimeout, MaxFirstEventTimeout)
+	o.IdleTimeout = safeTimeout(o.IdleTimeout, defaults.IdleTimeout, MaxIdleTimeout)
+	o.ProgressTimeout = safeTimeout(o.ProgressTimeout, defaults.ProgressTimeout, MaxProgressTimeout)
 	return &Client{options: o}
+}
+
+func safeTimeout(value, fallback, maximum time.Duration) time.Duration {
+	if value < MinProviderTimeout || value > maximum {
+		return fallback
+	}
+	return value
 }
 
 type wireConn struct {

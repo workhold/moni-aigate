@@ -2,6 +2,8 @@
 
 当前服务通过 `migrations.ApplyCurrent` 只安装 `migrations/current_mvp.sql` 空库基线，`VerifyCurrent` 在 serve/worker 启动前只读校验该文件的 checksum。旧历史不会被升级、转换或导入。
 
+2026-11-10 provider 契约补片：Responses profile 的 `reasoning_output` 当前只允许空值或显式 `none`；未冻结归一化合同的 reasoning profile 在 provider/profile 与 public catalog 入口拒绝，usage 中的 `reasoning_tokens` 不会被误当成已支持的 reasoning 输出协议。Responses 未冻结 reasoning 事件继续以通用协议错误结束并保留未知消费，不能进入成功结算。上游 connect/header/first-event/idle/progress timeout 由 `PROVIDER_*_TIMEOUT` 部署变量注入，经 provider 非零上下限校验；Compose 和 server 使用同一份配置，阶段限制仍受调用方总 deadline 约束。
+
 管理端仍接收每百万 token 的整数费率，但只通过 `metering.ManagementTokenRates`、`ManagementTokenBounds` 和 `ManagementTokenQuantities` 在管理边界转换为 canonical rational vector。当前运行时、路由和账务不再暴露 `LegacyToken*` scalar API。TTS provider usage 也必须通过 `confirmed_final` 字符数和 WAV 结构校验后才进入媒体结算。
 
 2026-11-08。共同纯领域已接入当前文本模型的报价、预占、结算和终态投影。候选024只安装空库、不转换已有历史。请求和尝试保存原四条界行；UUID档案与64位小写hex HMAC就绪时写入计划、外层inference报价及纯核bounds/rates/QuoteDigest，未就绪时这些canonical/digest同空。6a–6d 已接入完整发布operation、读端、客户R/结算/capability/route complete guard、非零route_revision边界和受限APP六协议局部链；本日又补齐每个 route binding 的 supplier cap 0/2 条完整性提交边界，并把 Reserve/finish 的 funding-lot 写集改为纯投影后单批次发送。超预占 profile block/audit 同样采用单 batch，过期 unknown 恢复和幂等一次收费已扩至六协议专项。默认/组价组合、一次退款来源专项也已通过55439验证。用量事件绑定真实attempt，采用inference Observation；人工核对收费提交现只接受绑定原请求 schema 的完整 `retail_quantities`，proposal 保存 canonical/digest，HTTP/UI不再接受两列 token 输入。028-U完整存储/HTTP/UI/商业出口、浏览器和生产验收尚未收口。

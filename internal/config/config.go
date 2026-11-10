@@ -4,11 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/netip"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/moni-ai/moni-aigate/internal/provider"
 	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
@@ -28,6 +31,7 @@ type Config struct {
 	PaymentsMode              string
 	PaymentsAppManifest       string
 	PaymentsWorkerManifest    string
+	ProviderTimeouts          provider.TimeoutConfig
 }
 
 func Load() (Config, error) {
@@ -36,6 +40,10 @@ func Load() (Config, error) {
 		return c, errors.New("DATABASE_URL required")
 	}
 	var err error
+	c.ProviderTimeouts, err = loadProviderTimeouts()
+	if err != nil {
+		return c, err
+	}
 	if err = loadPayments(&c); err != nil {
 		return c, err
 	}
@@ -100,6 +108,35 @@ func Load() (Config, error) {
 	}
 	c.Secrets = s
 	return c, nil
+}
+
+func loadProviderTimeouts() (provider.TimeoutConfig, error) {
+	t := provider.DefaultTimeoutConfig()
+	values := []struct {
+		name string
+		to   *time.Duration
+	}{
+		{"PROVIDER_CONNECT_TIMEOUT", &t.ConnectTimeout},
+		{"PROVIDER_HEADER_TIMEOUT", &t.HeaderTimeout},
+		{"PROVIDER_FIRST_EVENT_TIMEOUT", &t.FirstEventTimeout},
+		{"PROVIDER_IDLE_TIMEOUT", &t.IdleTimeout},
+		{"PROVIDER_PROGRESS_TIMEOUT", &t.ProgressTimeout},
+	}
+	for _, value := range values {
+		raw := strings.TrimSpace(os.Getenv(value.name))
+		if raw == "" {
+			continue
+		}
+		parsed, err := time.ParseDuration(raw)
+		if err != nil {
+			return t, fmt.Errorf("%s must be a duration", value.name)
+		}
+		*value.to = parsed
+	}
+	if err := t.Validate(); err != nil {
+		return t, err
+	}
+	return t, nil
 }
 
 func trustedProxyCIDRs(raw string) ([]string, error) {
