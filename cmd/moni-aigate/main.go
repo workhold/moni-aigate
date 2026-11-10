@@ -140,6 +140,9 @@ func run() error {
 		fmt.Println("administrator created; MFA is optional unless enforced by deployment policy")
 		return nil
 	}
+	if command == "user" {
+		return runUserCommand(ctx, identity.New(pool, c.Secrets), os.Args[2:], os.Stdin, os.Stdout)
+	}
 	if command == "provision" {
 		if e = operations.Provision(ctx, pool); e != nil {
 			return fmt.Errorf("database role provisioning failed")
