@@ -92,10 +92,16 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/health/ready":
             self.json(200, {"status": "ready", "recovery_mode": False})
             return
-        if self.path == "/v1/models" and self.authorized():
+        if self.path == "/v1/models":
+            if not self.authorized():
+                self.json(401, {"error": {"code": "invalid_credentials"}})
+                return
             self.json(200, {"data": [{"id": "smoke-model"}]})
             return
-        if self.path.startswith("/v1/realtime") and self.authorized():
+        if self.path.startswith("/v1/realtime"):
+            if not self.authorized():
+                self.json(401, {"error": {"code": "invalid_credentials"}})
+                return
             key = self.headers.get("Sec-WebSocket-Key", "")
             accept = base64.b64encode(hashlib.sha1((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()).decode()
             self.send_response(101, "Switching Protocols")
@@ -114,8 +120,11 @@ class Handler(BaseHTTPRequestHandler):
         self.json(404, {"error": {"code": "not_found"}})
 
     def do_POST(self):
-        if self.path != "/v1/chat/completions" or not self.authorized():
+        if self.path != "/v1/chat/completions":
             self.json(404, {"error": {"code": "not_found"}})
+            return
+        if not self.authorized():
+            self.json(401, {"error": {"code": "invalid_credentials"}})
             return
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length))
