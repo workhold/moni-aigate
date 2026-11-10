@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T14:36:08Z",
-  "review_reason": "修正 CI 对冻结 023-B-P1 历史候选的错误数据库注入，并更新已审阅的 wallet readset migrations/embed.go 源 pin；当前运行时架构和业务路径不变",
-  "snapshot_sha256": "c08fe0171fdffc0e8529a798ddd93c5123d3e21e141375a9dbc496a3bf3e55b4",
-  "architecture_sha256": "a30b104a9a3e7760e3cb76a5a02785199e048130765e21ff54855c6220a79679",
-  "history_sha256": "094c0f9ead7d4f0f514caf16dc289cce99435f05d02c671e4982dddcd3709610",
+  "reviewed_at": "2026-11-10T15:20:12Z",
+  "review_reason": "合入 main 的四阶段路线与规格 029–033，并保留当前 baiyang 供应商资格探测、CI race/历史候选门禁修复；复核统一架构、源码链接和能力状态",
+  "snapshot_sha256": "e1329d112b878fbbd00c5b0ff1205855bd7c77c1ac707e8a9237f09065910e32",
+  "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
+  "history_sha256": "bc6eef5365e3ae8636b39974b90be8c466415fc891f506032cab0b67d9b157c2",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "46bf19c0ae77a5cb3baf7f17c829b959bce612d0d5579ebce8735932c60b622f"
+      "sha256": "725c33eb6e11fd838161e0608e3eaa9d26c73d33be6fd182bb864124a15042c7"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "3e1d3f5511c755135adabdfcbabb15c073a7f7a71df1f1818cb9fb6f06ef477b"
+      "sha256": "bf1402dfcf7349c2aa7510ba0dfdac621523b30d61a01acc7c81ae5391794fcf"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -169,15 +169,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "e80277efae8a9811f1eb80dd2672ad2499c10e6959e58b267b7320ad170b0770"
+      "sha256": "4601cace233c5a496f32f97455061c77036c8c3b4d93eaaf8c29cdd9e32c458d"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "e58dbacbf1e404de97933e39e1dba7f29bad9a6c1332aae8fca6aeabe75a8e84"
+      "sha256": "5d4461ce6bb8afe39701170121ae09b30736a60ae369ae94012d2e1e18de1f20"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "d011874beb7f1e72ad2f6dd8d8da13027ab7241bf17c5beecd17901eb75ec130"
+      "sha256": "1e82c537775eae8e83e4a4f85bb7a6103066469df9569d1fd588d1122ccc1d02"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -193,11 +193,11 @@
     },
     {
       "path": "docs/design/media-provider-safety.md",
-      "sha256": "82359b83b494e479ec59cc5f3f362c89efdfb432dff782dbf6eca1ab78801c16"
+      "sha256": "55bb8bce7a6a8cde72b0dbc3cbb6d87843f1e31cdf01ee4fc2fd5da1c10e96da"
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "b8c2928b8a06c05b71dfa51c336c41bf7360be2392bcccafced55e10f4e3b9e4"
+      "sha256": "029868c42e3260e173cda64136afdb4564e049bb2b526be06e5b70d3adaf35bc"
     },
     {
       "path": "docs/design/overview.md",
@@ -208,12 +208,16 @@
       "sha256": "c7109524ccaf84cc5ff1c93e38fee67d21b182aa933783adac7ddd95d3352cfe"
     },
     {
+      "path": "docs/design/phase-roadmap.md",
+      "sha256": "f2d5e196510d39b8fce48fc38da0875307d50828a6a742a482e922a1c4dedee9"
+    },
+    {
       "path": "docs/design/procurement-accounts.md",
       "sha256": "d95badf660c0042c7c0bca95891cbcb82b4a857b5a3c887378a069332fc78926"
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "02956dac4872a44ccd76b54aa9b8b52448934188a636ef626018fee7a8ce22d7"
+      "sha256": "05bcc23dfb3d48e7a71b1ab32df9af056f0933521faa5c2c41a4e6162f84f9d6"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -7926,6 +7930,26 @@
     {
       "path": "specs/028-unified-metering-media/u-storage-contract.md",
       "sha256": "af95985daa083a4c9dfa38f364862cd0ac7d815c5ee13df8b9c175de647d6c8c"
+    },
+    {
+      "path": "specs/029-phase1-acceptance/spec.md",
+      "sha256": "cc8a576d7420eb1bb5721f63024d1096982aa40333f7907fa4460444aee63d18"
+    },
+    {
+      "path": "specs/030-model-aliases-group-multipliers/spec.md",
+      "sha256": "73c6d889e70955f0a847a386aeb2d3cc9899e089d018d85f7f4225576d382a3a"
+    },
+    {
+      "path": "specs/031-deterministic-mock-upstream/spec.md",
+      "sha256": "2b45a5af9631db5d4397603fd1c2078291b5188164fc796aa9d963966d657d16"
+    },
+    {
+      "path": "specs/032-phase2-text-data-plane/spec.md",
+      "sha256": "1fcdfcacc1be36a115011c4c69adbd46d0adcf3a30dd6e6b62f1436e121d8915"
+    },
+    {
+      "path": "specs/033-text-dynamic-routing/spec.md",
+      "sha256": "b02b642fb08aa847f3301bd0ec0e8a75c9896846c0f4955ad110994ba947ac56"
     },
     {
       "path": "web/.gitignore",

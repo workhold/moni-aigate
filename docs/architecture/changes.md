@@ -5889,45 +5889,62 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 
 </details>
 
-## 2026-11-10T13:09:27Z · a7af9509a686
+## 2026-11-10T14:08:17Z · 8af175b7decc
 
-新增 baiyang OpenAI-compatible Chat qualification 入口、脱敏验证记录和供应商资格边界
+新增四阶段路线单一事实源并同步HLD/LLD/路线图/交付计划/README：真实供应商认证移至第四阶段，前三阶段渠道与动态路由只覆盖文本，媒体保持单profile单adapter不参与路由，修正文本与媒体共享钱包但分属两族业务表的描述，补第三阶段路由决策合同缺口与第一阶段别名/分组倍率约束；纯设计变更，无源码、迁移或权限结构变化
 
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2134 个源文件；本次 6 个源文件变化，架构正文变化：true。
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2131 个源文件；本次 9 个源文件变化，架构正文变化：true。
 
 <details><summary>源文件变化</summary>
 
+- modified `README.md`
 - modified `docs/architecture/unified-metering.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/media-provider-safety.md`
+- modified `docs/design/new-api-roadmap.md`
+- added `docs/design/phase-roadmap.md`
 - modified `docs/design/provider-qualification-plan.md`
-- added `docs/verification/provider-qualification-baiyang.md`
-- added `scripts/provider-qualification/README.md`
-- added `scripts/provider-qualification/main.go`
-- added `scripts/provider-qualification/main_test.go`
 
 </details>
 
-## 2026-11-10T13:50:33Z · bea07523506f
+## 2026-11-10T14:48:18Z · fae99f479782
 
-修复定价 HTTP 测试共享 admission 的 race，并修正周期预算测试对 current_ 追加迁移的基线统计；不改变运行时架构、权限或业务链路
+补充四阶段后续能力的设计规格029–033（第一阶段验收清单、模型别名与分组倍率、多协议多候选mock上游、第二阶段文本数据面、第三阶段文本动态路由），并在HLD/LLD/路线文档链接；记录对既有约束（同池channel唯一、028单profile、route_decisions JSONB、price variant_key）的修订需求与决策点；纯设计草案，无源码、迁移或权限变化，能力表标注为设计草案未实现
 
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2134 个源文件；本次 2 个源文件变化，架构正文变化：false。
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2136 个源文件；本次 8 个源文件变化，架构正文变化：true。
 
 <details><summary>源文件变化</summary>
 
-- modified `internal/periodicbudget/tx_fixture_test.go`
-- modified `internal/server/pricing_publish_http_integration_test.go`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `specs/029-phase1-acceptance/spec.md`
+- added `specs/030-model-aliases-group-multipliers/spec.md`
+- added `specs/031-deterministic-mock-upstream/spec.md`
+- added `specs/032-phase2-text-data-plane/spec.md`
+- added `specs/033-text-dynamic-routing/spec.md`
 
 </details>
 
-## 2026-11-10T14:36:08Z · c08fe0171fdf
+## 2026-11-10T15:20:12Z · e1329d112b87
 
-修正 CI 对冻结 023-B-P1 历史候选的错误数据库注入，并更新已审阅的 wallet readset migrations/embed.go 源 pin；当前运行时架构和业务路径不变
+合入 main 的四阶段路线与规格 029–033，并保留当前 baiyang 供应商资格探测、CI race/历史候选门禁修复；复核统一架构、源码链接和能力状态
 
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2134 个源文件；本次 2 个源文件变化，架构正文变化：false。
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2140 个源文件；本次 10 个源文件变化，架构正文变化：true。
 
 <details><summary>源文件变化</summary>
 
 - modified `.github/workflows/ci.yml`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/provider-qualification-plan.md`
+- added `docs/verification/provider-qualification-baiyang.md`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/server/pricing_publish_http_integration_test.go`
+- added `scripts/provider-qualification/README.md`
+- added `scripts/provider-qualification/main.go`
+- added `scripts/provider-qualification/main_test.go`
 - modified `specs/022-self-service-payments/c0-wallet-readset.json`
 
 </details>

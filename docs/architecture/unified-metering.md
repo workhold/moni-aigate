@@ -116,7 +116,7 @@ Observation必须绑定原tenant/request/attempt/profile/schema/variant/plan。�
 当前生产消费者与冻结研究逐个列在[清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)。旧proof/scan/prospective候选只保持其原身份、编译及拒绝current边界，不升级兼容矩阵，不成为U前置。当前已有受限APP六协议局部链、周期预算HTTP和完整 server/billing race 证据；后续验收仍必须覆盖六文本全矩阵、采购/027来源/退款/恢复、026 JSON/CSV与控制台，纯包测试不能替代这些出口。
 ### 2026-11-08 当前 MVP 媒体/任务/实时续片
 
-当前媒体写链继续只有一套 `Profile → Plan/Bound → Reserve → Attempt → Observe → Settle`。异步 `video_generation` 在 HTTP 创建时复用 `media_model_profiles` 和 `billing.ReserveMedia`，worker 通过租户 scoped adapter 在 submit 前进入 sending，并把终态 observation 收口到 `FinalizeMedia`。submission unknown、失败、取消和过期不重发模型请求。同步图片与 TTS 结算后追加不可变 `media_result_artifacts`，重置进程内缓存后仍按原租户、用户、Key、request/idempotency 读取结果。
+当前媒体写链遵守与文本相同的 `Profile → Plan/Bound → Reserve → Attempt → Observe → Settle` 阶段顺序，与文本共享钱包、journal 与 funding lot；但请求、预占、attempt、观察和结算写入独立的 `media_requests`、`media_reservations`、`media_attempts`、`media_observations`、`media_settlements`，不是文本的 `request_records`/`reservations`/`upstream_attempts`/`settlements`。媒体经 `media.Registry` 解析到单个 adapter，不参与渠道路由（见[HLD 文本与媒体的结构边界](../design/HLD.md#文本与媒体的结构边界和路由范围2026-11-10)）。异步 `video_generation` 在 HTTP 创建时复用 `media_model_profiles` 和 `billing.ReserveMedia`，worker 通过租户 scoped adapter 在 submit 前进入 sending，并把终态 observation 收口到 `FinalizeMedia`。submission unknown、失败、取消和过期不重发模型请求。同步图片与 TTS 结算后追加不可变 `media_result_artifacts`，重置进程内缓存后仍按原租户、用户、Key、request/idempotency 读取结果。
 
 任务的当前纵向专项采用 HTTP-first。公开 request detail/funding 读端提供原引用，`/v1/tasks` 再创建持久 task，后续 worker、重启、失败和 unknown 断言继续复用现有 media billing。
 

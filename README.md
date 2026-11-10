@@ -264,7 +264,7 @@ make verify-mvp
 ## SDD 与架构同步
 
 每项行为先补齐规格、状态机、接口/数据合同、故障与验收边界，再修改实现。
-主要入口：[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
+主要入口：[四阶段路线](docs/design/phase-roadmap.md)、[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
 
 MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优先完成架构与业务能力：新功能以当前模型为准，开发库必要时重建，不承诺未发布版本的数据兼容，不增加新旧双写或自动回退。隔离历史核验候选暂不扩展，不作为经营功能交付的前置条件。
 
@@ -278,13 +278,14 @@ MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优
 
 ## Roadmap
 
-按[交付计划](docs/design/delivery-plan.md)逐片设计、实施和验收，可并行的纯模块与只读工作独立推进，资金写入和迁移由集成人串行收口。
+阶段顺序、范围和完成定义见[四阶段路线](docs/design/phase-roadmap.md)，[交付计划](docs/design/delivery-plan.md)页首给出当前工作顺序。
 
-1. 经营报表/成本/CSV与资金来源/非现金开账已完成限定本地验收；当前按[028阶段清单](specs/028-unified-metering-media/tasks.md)完整替换六文本内部计量，再接同步媒体、任务和实时轮次，持续回归同一经营报表。
-2. 继续客户与渠道运营、商品/套餐、选定支付及原路退款，按[交付计划](docs/design/delivery-plan.md)纵向交付；历史兼容与完整证明候选保留原边界，不作为业务前置。
-3. 对选定真实供应商逐一完成协议、硬计量上界和采购合同认证。
-4. 完成容器/1Panel 目标环境、灾备与生产发布门禁；HA/多活按独立共享执行合同推进。
-5. 在完整商业检查下优化首字节与完成延迟，并执行固定环境的竞品对照。
+1. **第一阶段：固定版本 New API 核心业务能力对齐。** 对齐 New API 固定提交 `e449cc7` 的公开产品能力，不追赶其后续版本，也不复制其代码、数据库或内部 quota。包含文本基础渠道路由、共享钱包与结算、模型别名、分组倍率录入；协议、媒体、任务与 Realtime 使用 deterministic mock 验收。不包含真实供应商认证、订阅/套餐、签到与分佣。
+2. **第二阶段：参考 Bifrost 的文本数据面。** 低延迟、失败分类与故障切换、预算治理、缓存设计和同条件压测；路由、计量、结算、钱包不进入插件。
+3. **第三阶段：参考 OpenRouter 公开产品语义的文本动态路由。** 同模型供应商切换、同档位物理模型切换、跨档位 auto；结合能力、质量门槛、延迟、成功率、成本、会话粘性和最低毛利评分，路由决策可记录与回放。OpenRouter 是商业产品，仅参考其公开文档。
+4. **第四阶段：真实供应商与生产。** 逐供应商认证、真实 usage 与成本、正式支付、1Panel、生产部署与性能优化。
+
+前三阶段的渠道与动态路由只覆盖文本；图片、TTS、视频任务和 Realtime 保持单 profile、单 adapter，与文本共享钱包和账务，但使用独立的请求/预占/attempt/结算表。
 
 ## 仓库导览
 
