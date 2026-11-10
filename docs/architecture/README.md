@@ -1118,7 +1118,9 @@ flowchart LR
 <!-- architecture:status -->
 ## 后续实施的依赖与并行边界
 
-当前实施顺序由[027现行来源](../../specs/027-wallet-sources/spec.md)、[一体化设计](../design/integrated-wallet-media.md)和[028统一计量/媒体规格](../../specs/028-unified-metering-media/spec.md)决定：来源闭环 → 六文本统一向量计量 → 同步媒体 → 异步任务与实时轮次 → 部署/供应商验收 → 性能。下面旧候选依赖图保留研究背景，不再把catalog/profile/proof或其历史组合列为现行媒体前置。
+**现行阶段路线（2026-11-10）**：以[四阶段路线](../design/phase-roadmap.md)为准。第一阶段为固定版本 New API 核心业务能力对齐，加文本基础渠道路由与共享钱包结算，协议、媒体、任务和 Realtime 以 deterministic mock 验收；第二阶段为 Bifrost 风格文本数据面；第三阶段为 OpenRouter 风格文本动态路由；第四阶段才是真实供应商认证与生产。前三阶段的渠道与动态路由只覆盖文本：媒体经 `media.Registry` 解析到单个 adapter，`media_*` 表没有 channel/binding，不经过 `routing.Plan`；文本与媒体共享钱包、journal 与 funding lot，但请求、预占、attempt、观察和结算分属两族表，本页不把它们描述为同一组物理表。下段 2026-11-04 顺序与旧候选依赖图保留为历史。
+
+2026-11-04 实施顺序（历史）由[027现行来源](../../specs/027-wallet-sources/spec.md)、[一体化设计](../design/integrated-wallet-media.md)和[028统一计量/媒体规格](../../specs/028-unified-metering-media/spec.md)决定：来源闭环 → 六文本统一向量计量 → 同步媒体 → 异步任务与实时轮次 → 部署/供应商验收 → 性能。下面旧候选依赖图保留研究背景，不再把catalog/profile/proof或其历史组合列为现行媒体前置。
 
 下图是实施依赖，虚线表示可独立推进的设计或纯算法切片；它不表示当前运行时已调用这些模块。当前资金和请求链仍以上文实线系统图为准。阶段完成后先收口证据、更新本页和HLD/LLD，再推进依赖方。
 
@@ -1179,6 +1181,8 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 经营报表与CSV | 026已接平台HTTP/控制台，限定专项验收见记录 | 最长31天/5000请求；消费收入一次、全部尝试成本、退款净额，未知成本或未结算时毛利待核对；独立于累计钱包异步投影，[架构](operating-reports.md)、[验证](../verification/operating-reports.md) |
 | 资金来源与钱包开账 | 027已实现现行四写入口、正式023、CLI、HTTP与控制台，专项验收见记录 | 六表来源与开账原件，非现金opening、FIFO和逆序消费退款；新库策略，无历史无损升级或真实原路现金退款；[架构](wallet-sources.md)、[验证](../verification/wallet-sources.md) |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
+| 文本动态路由 | 第三阶段，设计草案，未实现 | 物理模型、质量档位、评分、最低毛利、会话粘性与路由回放的合同草案见[033](../../specs/033-text-dynamic-routing/spec.md)，要点见[LLD §9.2](../design/LLD.md#92-第三阶段文本动态路由的合同缺口)；现有路由只覆盖同一逻辑模型下的文本渠道选择 |
+| 媒体/任务/Realtime 路由 | 不参与路由（前三阶段） | 单 profile、单 adapter；`media_*` 表无 channel/binding；与文本共享钱包与账务；媒体动态路由需另立 SDD，见[HLD 结构边界](../design/HLD.md#文本与媒体的结构边界和路由范围2026-11-10) |
 | 共享采购账户/预算 | 019已实现，限定本地验收通过 | [冻结合同](../../specs/019-procurement-accounts/contract.md)；跨渠道/Key/租户共享累计预算、逐attempt预占、未知占用和双人更正；周期硬预算已由023-B扩展；余额仅人工证据，供应商余额/账单自动同步待后续 |
 | 公开模型目录 | 020已实现，限定本地验收通过 | 默认私有、安全DTO、当前价、筛选/分页、独立准入与admin公开CAS；[020验证](../verification/public-catalog.md) |
 | 自助商业化 | 021与022-A完成限定本地验收；B0独立沙箱已编码并通过专项PG，真实进程短程通过、旧版本20代长程完成、最新补丁/精确故障另验；023-A完成限定本地验收 | [A证据](../verification/funding-vouchers.md)、[A1冻结接口](../../specs/022-self-service-payments/a-domain-contract.md)、[B0运行合同](../../specs/022-self-service-payments/b-runtime-contract.md)及[运行证据](../verification/payment-sandbox.md)区分纯协议、实际沙箱、未验故障；B1资金/身份/代次核心已冻结并通过SQL原型，B2已追加021并实现Go第三来源/十方向资金核验/三角色权限，真实PG专项通过；B3领域/worker/HTTP/UI/main已接线，专项与真实进程/浏览器整链通过限定本地验收，真实在途SIGTERM与Guard失权补验已通过；[023草案](../../specs/023-periodic-products/spec.md)、[A0精确合同](../../specs/023-periodic-products/a-contract.md)及[根复核](../../specs/023-periodic-products/review.md)已完成，A已通过[真实PG/浏览器/预览验收](../verification/tenant-pricing.md) |

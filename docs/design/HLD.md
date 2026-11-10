@@ -1,10 +1,12 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-04（026经营报表、027现行来源与028一体化设计）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-10（四阶段路线、文本路由范围与文本/媒体结构边界）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。
 
 ## 1. 目标、前提与边界
 
 已确认用途：对外提供 API 的商业运营平台。推荐从可控试运营版本开始，保障客户调用、余额与账单闭环，而非一次覆盖 New API 的全部功能。
+
+阶段顺序以[四阶段路线](phase-roadmap.md)为准：第一阶段完成固定版本 New API 核心业务能力对齐，第二阶段参考 Bifrost 补文本数据面，第三阶段参考 OpenRouter 公开产品语义实现文本动态路由，第四阶段才做真实供应商认证与生产验证。真实供应商兼容不是第一阶段完成条件；第一阶段可用 deterministic mock 验证流程，但 mock 结果不是供应商认证。
 
 前提：首版单地域、单活动应用实例；租户可为个人或企业；一个租户一个 CNY 预付费钱包；平台运营上游渠道，不允许客户上传供应商 Key；邀请开户和人工核款入账。对外正式扩大经营前，需要另行确定服务条款、支付与退款规则以及真实容量。
 
@@ -79,7 +81,7 @@ LiteLLM、Bifrost、Portkey 用于补充预算/调度/回退配置和可观测�
 
 首版把策略执行分成准入、路由、上游尝试、响应计量、结算五个阶段，各自保存版本与结果。Token/RPM 限流属于资源治理，**不能替代金额预占与持久资金账本**。上游实际尝试的成本和客户一次收费继续分开。
 
-首版只做优先级、权重、健康和容量路由；延迟/成本自适应评分需有真实遥测与回放评估，放后续规格。响应缓存也后置，避免跨租户内容复用和缓存命中计费语义未经定义。Higress/APISIX 的 Envoy/Istio/etcd/Wasm 等运行环境不引入首版单体。
+第一阶段只做文本的优先级、权重、健康、容量和成本优先路由；延迟/成功率评分、质量门槛和利润优化属于第三阶段，需有遥测与回放评估。响应缓存属于第二阶段，先定义缓存命中计费语义和租户作用域，避免跨租户内容复用。LiteLLM、Bifrost 等源码机制在第二阶段的落点见[四阶段路线 §4](phase-roadmap.md#4-第二阶段bifrost-风格文本数据面)。Higress/APISIX 的 Envoy/Istio/etcd/Wasm 等运行环境不引入首版单体。
 
 Open WebUI 不纳入 moni 控制台源码；后续以公开 API 连接时须独立校验兼容性和租户 Key 归属，避免全站共享一把收费 Key 导致混账。它不替代本项目的渠道、客户或财务后台。具体研究来源与边界见竞品研究汇总。
 
@@ -92,7 +94,9 @@ Open WebUI 不纳入 moni 控制台源码；后续以公开 API 连接时须独�
 3. **资金事件可追溯**：计量 event、上游 attempt、资金 operation 分别标识；账本和待投影项同事务提交。统计重放和通知重发不产生新扣款，退款/成本更正关联原始事实。
 4. **观测不支配资金**：元数据白名单与统一脱敏覆盖 URL/错误；财务事实、结算证据和成功敏感变更审计完整持久化，不服从 trace 采样。拒绝类安全信号有界记录并暴露丢弃计数；遥测故障不阻塞推理，账本失败仍拒绝新收费调用。
 
-后续自适应调度分两类：同模型渠道优化需真实延迟/成功率/成本的离线对照与影子评分；跨模型语义选择需显式 `auto` 商品、公布售价和质量门槛。Plano/RouteLLM 启发的上下文重送、缓存损失和额外路由器成本必须一起核算，不能只比单价。首版不加入这两类自适应策略。证据与取舍见[扩展研究入口](../research/landscape.md#5-证据入口)。
+动态路由在第三阶段实现，只覆盖文本，分三类：同一逻辑模型下的供应商切换（现有018已覆盖优先级/权重/成本优先，缺评分输入与回放）；同一质量档位下的物理模型切换；跨质量档位的显式 `auto` 商品，需公布售价和质量门槛。跨模型切换不能只按最低价格选择，须同时考虑模型能力、质量门槛、上下文长度、工具能力、延迟、成功率、当前供应商成本、缓存与上下文重传成本、会话粘性、最低毛利以及租户和 Key 权限。Plano/RouteLLM 启发的上下文重送、缓存损失和额外路由器成本必须一起核算。每次路由决策须能记录和回放。具体待冻结合同见[四阶段路线 §5](phase-roadmap.md#5-第三阶段openrouter-风格文本动态路由)，证据与取舍见[扩展研究入口](../research/landscape.md#5-证据入口)。第一、二阶段不加入这些自适应策略。
+
+OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产品语义，不把它写成开源代码来源。
 
 ## 5. 技术选型与理由
 
@@ -182,18 +186,27 @@ v0.1 人工核款：运营记录真实收款凭证和外部业务号 → 不同�
 
 ## 10. 版本路线与不做项
 
+2026-11-10 起，阶段路线以[四阶段路线](phase-roadmap.md)为唯一事实源：
+
 | 阶段 | 交付能力 | 出口条件 |
 |---|---|---|
-| 设计审阅（本轮） | 上游分析、HLD、LLD、规格、验收矩阵、ADR | 开发者确认路线及首发边界 |
+| 第一阶段 | 固定版本 New API 核心业务能力对齐；文本基础渠道路由；共享钱包与结算；协议、媒体、任务、Realtime 用 deterministic mock 验收 | 验收清单逐项有专用 PostgreSQL 与 mock 证据；不要求真实供应商认证 |
+| 第二阶段 | Bifrost 风格文本数据面：低延迟、失败分类与故障切换、预算治理、缓存设计、压测 | 合同、实现与同条件压测记录 |
+| 第三阶段 | OpenRouter 风格文本动态路由：物理模型、质量档位、评分、最低毛利、会话粘性、路由回放 | 三类切换逐类验收，决策可回放 |
+| 第四阶段 | 真实供应商逐一认证、真实 usage 与成本、正式支付、1Panel、生产部署与性能 | 每个可售 profile 有真实账号证据；生产门禁通过 |
+| 扩容 | 多活动实例、共享限流、日志分库等 | 容量实测证明有需要且故障语义补全；不在四阶段内承诺 |
+
+下表为 2026-10-30 首版的原始里程碑，保留历史语境。其中 M2 的“真实渠道合同与 usage 能力核实”已移到第四阶段，不再是第一阶段出口：
+
+| 历史阶段 | 交付能力 | 原出口条件 |
+|---|---|---|
 | M0 基础与契约 | 租户鉴权、Key、模型/渠道、迁移、Mock 上游 | 租户隔离和契约检查通过 |
 | M1 商业调用闭环 | 人工核款、钱包账本、价格、Chat/Responses/Messages、流、异常恢复 | 资金并发/崩溃/重复结算测试通过 |
-| M2 可控试运营 v0.1 | 控制台、运营指标、退款/审计、部署恢复 | 验收矩阵通过，真实渠道合同与 usage 能力核实 |
-| 后续功能切片 | 009 Embeddings/Rerank、010 Gemini文本、011模型发现、012凭据池与013批量启停；继续其余渠道运营、Key扩展、注册/支付/订阅与扩展能力 | 各切片协议/业务/计量/权限/控制台的本地验收与正式供应商门禁分别记录 |
-| 扩容阶段 | 多活动实例、共享限流、日志分库等 | 容量实测证明有需要且故障语义补全 |
+| M2 可控试运营 v0.1 | 控制台、运营指标、退款/审计、部署恢复 | 验收矩阵通过；真实渠道核实现属第四阶段 |
 
 不设无依据工期或成本节省比例。开发者已确认参考设计后独立实现；新增竞品不改变该方向，也不把竞品的全部能力纳入首版任务。
 
-2026-10-31优先级校准：先完善[能力路线图](new-api-roadmap.md)中的A/B/C功能，再推进002性能与008写批次专项。保留005–007已验证改动与资金不变量，本轮不继续压测。009复用已有授权→硬预占→不可变路由→最终证据→结算链路，新增输入独立计费类型；检索响应只在可信最终量并成功结算后交付，缺量保留预占待核对。输入硬界必须覆盖整个batch/query+documents的聚合供应商计费量，不能沿用单文档context当总量保证。供应商认证仍单列。
+2026-10-31优先级校准（历史记录，阶段顺序现以[四阶段路线](phase-roadmap.md)为准）：先完善[能力路线图](new-api-roadmap.md)中的A/B/C功能，再推进002性能与008写批次专项。保留005–007已验证改动与资金不变量，本轮不继续压测。009复用已有授权→硬预占→不可变路由→最终证据→结算链路，新增输入独立计费类型；检索响应只在可信最终量并成功结算后交付，缺量保留预占待核对。输入硬界必须覆盖整个batch/query+documents的聚合供应商计费量，不能沿用单文档context当总量保证。供应商认证仍单列。
 
 010沿相同商业链路实现Gemini原生文本。公开模型来自安全路径，上游模型使用不可变映射，供应商秘密只发x-goog-api-key；`/v1beta/`共用原300s/Guard/恢复门禁。Gemini可见与thinking计入同一输出价格，cache为输入子集。SSE先给文本、保留finish，等合法EOF和尾部最终usage后持久化并结算再发成功终态；未知量保留预占。maxOutputTokens对全部收费输出的聚合硬保证仍是正式供应商门禁，不由schema或mock替代，详见[合同研究](../research/gemini-contract-notes.md)和[验收](../verification/gemini-native.md)。
 
@@ -624,7 +637,7 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 026按原request创建窗口统计唯一收入/退款和全部attempt成本；opening不算销售收入。媒体/任务/实时将复用同一事实，不另开收入总账。供应商与部署验收独立记录；性能在完整能力后进行。
 
-2026-11-09 当前媒体 MVP 的运行事实继续落在统一链路。异步制品正文写入 `media_task_artifacts.body` 后由新 Store 和短期 grant 读取；Realtime 的 provider session ID、turn handle、dispatch unknown 和 cancel 状态写入当前 024 的 session/turn 表。进程内状态只保留队列和响应缓存，重启恢复依赖稳定 provider identity，不重新派发模型请求。当前证据是 55439 专库 race 和本机 Compose QA，真实供应商、对象存储、1Panel、浏览器业务调用仍单独验收。
+2026-11-09 当前媒体 MVP 的运行事实落在媒体链路，与文本共享钱包、journal 与 funding lot，但请求、预占、attempt、观察和结算使用独立的 `media_*` 表族（见下文“文本与媒体的结构边界”）。异步制品正文写入 `media_task_artifacts.body` 后由新 Store 和短期 grant 读取；Realtime 的 provider session ID、turn handle、dispatch unknown 和 cancel 状态写入当前 024 的 session/turn 表。进程内状态只保留队列和响应缓存，重启恢复依赖稳定 provider identity，不重新派发模型请求。当前证据是 55439 专库 race 和本机 Compose QA，真实供应商、对象存储、1Panel、浏览器业务调用仍单独验收。
 
 027的入账摘要与回执过滤统一为四来源，wallet_opening_amount是必填精确金额；开账只计钱包入账，不计模型销售收入。通用查询时间统一UTC并保留精度和分页instant；来源/分配UI保持严格校验。实际受限APP/worker/projector、HTTP、浏览器与经营CSV验证见[027记录](../verification/wallet-sources.md)。
 
@@ -655,3 +668,57 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 ### 2026-11-08 当前媒体 MVP 接线状态
 
 当前图片、TTS 和 video task 复用同一媒体预占、attempt、观察和结算入口。Realtime 的数据库路径保存 session、turn、event，结果交付的 inline MVP 保存不可变媒体 artifact 并按原租户/用户/Key授权读取。异步任务的原 profile、reservation、attempt 和 funding source 从 owner-scoped 请求/资金读端取得后提交，服务端再次核对原 request 绑定。异步制品正文写入现有任务 artifact 表，新的 Store 可在重启后读取而不重复下载 provider。Realtime turn 的 request/reservation/attempt 必须来自同一事实集合，文本集合与 media 集合不能跨接。报告只读媒体请求和唯一结算，媒体供应商成本缺失时保持 unknown。真实供应商和目标部署仍需独立验收。
+
+## 文本与媒体的结构边界和路由范围（2026-11-10）
+
+文本与媒体共享钱包、journal 和 funding lot：`internal/billing/media.go` 经与文本相同的记账函数写 journal，并写同一套 `funding_lot_balances`/`funding_lot_events`。请求、预占、attempt、观察和结算则按能力分为两族表：
+
+| 事实 | 文本 | 媒体、任务、Realtime |
+|---|---|---|
+| 请求 | `request_records` | `media_requests` |
+| 预占 | `reservations` | `media_reservations` |
+| 尝试 | `upstream_attempts` | `media_attempts` |
+| 观察与终结 | `finalization_records`、`metering_events` | `media_observations` |
+| 结算 | `settlements` | `media_settlements` |
+
+两族都遵守 `Profile → Plan → Reserve → Attempt → Observe → Settle` 的阶段顺序与资金不变量，但不是同一组物理业务表。文档不得宣称所有能力共用同一组 request/attempt/settlement 表。
+
+媒体当前没有渠道路由：`media_requests`、`media_reservations`、`media_attempts` 与 `media_model_profiles` 都没有 channel 或 binding 列；`media.Registry` 按 `ProfileSelector` 解析到单个 adapter，不经过 `routing.Plan`，不写 `route_decisions`。文本则经过路由计划、binding、channel/credential 再到 attempt。
+
+```mermaid
+flowchart LR
+  subgraph 文本
+    TP[Profile] --> TR[routing.Plan] --> TB[binding / channel / credential] --> TA[upstream_attempts]
+  end
+  subgraph 媒体任务Realtime
+    MP[ProfileSelector] --> MR[media.Registry] --> MA[单个 adapter] --> MM[media_attempts]
+  end
+  TA --> W[(共享 wallet / journal / funding lot)]
+  MM --> W
+```
+
+决策：第一至第三阶段的渠道路由与动态路由只覆盖文本。媒体、异步任务和 Realtime 保持单 profile、单 adapter，共享钱包与账务，不参与动态模型或供应商路由。将来需要媒体动态路由时另立 SDD，统一执行核心与迁移，补齐 channel/binding、多候选、provider identity、route decision、供应商成本快照、失败切换和对应 guard。在此之前不合并两族表，也不为媒体另建路由路径。
+
+执行接口不合并成一个。第三阶段新增的 `RouteSelector` 和统一候选、路由决策模型只服务文本；文本继续用 `provider.Client`，同步媒体、异步任务与 Realtime 继续用各自的 adapter。`RouteSelector` 只提出候选与排序，授权、预占、采购预算和报价同步保留最终否决权。详见[四阶段路线 §2](phase-roadmap.md#2-不变量)。
+
+## 四阶段后续能力的设计方向（2026-11-10）
+
+下列规格是草案，待开发者评审冻结。冻结前不改动现有路由、计量或资金代码；冻结后按 SDD 分片实施，每片完成后更新本节和统一架构。
+
+| 阶段 | 规格 | 设计要点 |
+|---|---|---|
+| 一 | [029 验收清单](../../specs/029-phase1-acceptance/spec.md) | 把“固定版本 New API 核心业务能力对齐”拆成逐项可判定清单；每项有验收方式、证据路径、状态；清单全部通过才算第一阶段完成 |
+| 一 | [030 模型别名与分组倍率](../../specs/030-model-aliases-group-multipliers/spec.md) | 别名只解析到已发布逻辑模型，不带权限；倍率只是录入便利，发布时编译为不可变绝对价格版本，运行时仍读冻结快照 |
+| 一 | [031 确定性多协议多候选 mock 上游](../../specs/031-deterministic-mock-upstream/spec.md) | 一个进程承载多个候选、六种文本协议、故障注入与接收记录，用于验证选路、故障切换和“未知消费不重放”；替换只处理 Chat 的旧 mock |
+| 二 | [032 文本数据面](../../specs/032-phase2-text-data-plane/spec.md) | 先建测量基线；失败分类按作用域落健康动作，重试资格仍只由 `Consumption` 决定；预算只做准入过滤；缓存先决定计费语义再实现；路由、计量、结算、钱包不可插件化 |
+| 三 | [033 文本动态路由](../../specs/033-text-dynamic-routing/spec.md) | 物理模型与质量档位；每个候选一行不可变决策记录；先硬约束过滤，后排序；统计量来自真实数据；会话粘性；跨档位 auto 单一售价加最低毛利保护；回放只读 |
+
+### 设计取舍与未决问题
+
+- **统一执行核心不在前三阶段。** 文本动态路由要放宽“同一路由池内 channel 唯一”和 028“路由版本绑定单一 profile”两条现有约束，这是对既有 guard 的受控修订，不是追加字段。033 §2.3.1 列出每一项冲突与处理选项，并把 028 attempt 快照 guard 修订作为 3.1 的前置。
+- **auto 只用一个售价。** 按选中档位分别定价需要放宽 `price_versions` 只允许 `variant_key='default'` 的约束，属于计价扩展；第三阶段用单一 auto 售价加最低毛利硬过滤保护经营者（033 D-033-1）。
+- **缓存先定语义。** 命中没有 attempt，如何收费会影响账务路径；032 D-032-1 建议与未命中同价，并为此增加一个受控的“cache-hit finalization”合同，仍是一个 request、一份 reservation、一份 settlement。
+- **路由决策记录取代现有 `upstream_attempts.route_decisions`。** 按 ADR-005 一次性替换，不保留双格式；每个候选一行，包括被硬约束排除的，从而补上“完整失败池解释”。
+- **回放只读。** 重放使用持久化的输入，不重新读取当前配置或统计，不写决策、不派发、不触碰资金。
+
+这些规格列出的决策点（D-031-1、D-031-2、D-032-1、D-032-2、D-033-0…3）需要开发者逐一裁决后冻结。

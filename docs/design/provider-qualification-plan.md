@@ -1,5 +1,7 @@
 # 官方与第三方模型渠道接入计划
 
+**阶段归属：第四阶段。** 按[四阶段路线](phase-roadmap.md)，真实供应商逐一认证、真实 usage 与成本验证属于第四阶段，不是第一至第三阶段的完成条件。第一阶段用 deterministic mock 验证协议、计量、钱包、结算和错误恢复合同，mock 结果不是本页所说的认证。第四阶段之前对真实端点发出的请求只算内测资格探测，不计入任何阶段完成条件。
+
 2026-11-01。用户确认的目标是 OpenAI/Codex、Claude、DeepSeek、Gemini、GLM 等官方模型，并可接入硅基流动等第三方平台。本页固定接入与验收范围，不宣布任何正式渠道已经认证；当前实现的六种协议及本地验收见[统一架构](../architecture/README.md)，底层合同见[Provider](../../specs/001-commercial-mvp/contracts/provider.md)。
 
 | 目标渠道 | 首批协议接缝 | 逐渠道确认事项 | 当前状态 |
