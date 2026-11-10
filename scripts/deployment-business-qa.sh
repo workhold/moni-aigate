@@ -207,22 +207,42 @@ validate_chat() {
   python3 - "$1" <<'PY'
 import json, sys
 v = json.load(open(sys.argv[1], encoding="utf-8"))
-if not isinstance(v.get("choices"), list) or not v["choices"] or not isinstance(v.get("model"), str) or not v["model"]: raise SystemExit(1)
+choices = v.get("choices")
+if not isinstance(choices, list) or not choices or not isinstance(v.get("model"), str) or not v["model"]: raise SystemExit(1)
+message = choices[0].get("message") if isinstance(choices[0], dict) else None
+if not isinstance(message, dict) or not isinstance(message.get("content"), str) or not message["content"]: raise SystemExit(1)
 PY
 }
 validate_image() {
   python3 - "$1" <<'PY'
-import base64, json, sys
+import base64, json, struct, sys
 v = json.load(open(sys.argv[1], encoding="utf-8"))
 d = v.get("data")
-if v.get("status") != "completed" or not isinstance(d, list) or not d or not isinstance(d[0], dict) or not isinstance(d[0].get("b64_json"), str) or not base64.b64decode(d[0]["b64_json"], validate=True): raise SystemExit(1)
+if v.get("status") != "completed" or not isinstance(v.get("id"), str) or not v["id"] or not isinstance(d, list) or not d or not isinstance(d[0], dict): raise SystemExit(1)
+item = d[0]
+if item.get("mime_type") != "image/png" or item.get("width") != 256 or item.get("height") != 256: raise SystemExit(1)
+try: raw = base64.b64decode(item["b64_json"], validate=True)
+except (KeyError, ValueError): raise SystemExit(1)
+if len(raw) < 24 or raw[:8] != b"\x89PNG\r\n\x1a\n" or raw[12:16] != b"IHDR": raise SystemExit(1)
+width, height = struct.unpack(">II", raw[16:24])
+if (width, height) != (256, 256): raise SystemExit(1)
 PY
 }
 validate_wav() {
   python3 - "$1" <<'PY'
-import pathlib, sys
-if pathlib.Path(sys.argv[1]).read_bytes()[:4] != b"RIFF": raise SystemExit(1)
+import pathlib, struct, sys
+raw = pathlib.Path(sys.argv[1]).read_bytes()
+if len(raw) < 44 or raw[:4] != b"RIFF" or raw[8:12] != b"WAVE" or raw[12:16] != b"fmt " or raw[36:40] != b"data": raise SystemExit(1)
+if struct.unpack_from("<I", raw, 40)[0] != len(raw) - 44: raise SystemExit(1)
 PY
+}
+expect_error_code() {
+  local code
+  code=$(json_error_code "$last_body")
+  [ "$last_status" = "$1" ] && [ "$code" = "$2" ] || fail "$3 returned HTTP $last_status code '$code', expected HTTP $1 code '$2'"
+}
+expect_header() {
+  grep -Eiq "^${1}: *${2}[[:space:]]*$" "$last_headers" || fail "$3 response did not include ${1}: ${2}"
 }
 
 echo "checking live and ready at $base_url"
@@ -257,6 +277,15 @@ PY
   csrf=$(json_value_or_empty "$last_body" data.csrf_token)
   [ -n "$csrf" ] && [ "$csrf" != null ] || fail "session did not return CSRF token"
   request platform-models GET /api/platform/models "" "Origin: $origin"; expect_status 200 "platform model directory"
+  reauth_body="$work_dir/reauth.json"
+  python3 - "$reauth_body" "$admin_password" <<'PY'
+import json, pathlib, sys
+pathlib.Path(sys.argv[1]).write_text(json.dumps({"password": sys.argv[2]}, separators=(",", ":")))
+PY
+  request csrf-missing POST /api/auth/reauth "$reauth_body" "Origin: $origin"
+  expect_error_code 403 csrf_invalid "missing CSRF token"
+  request wrong-origin POST /api/auth/reauth "$reauth_body" "Origin: http://wrong-origin.invalid" "X-CSRF-Token: $csrf"
+  expect_error_code 403 csrf_invalid "wrong Origin with CSRF token"
   echo "PASS administrator authentication"
 else
   skip_check "administrator authentication" "no administrator password supplied"
@@ -268,7 +297,10 @@ if [ -z "$api_key" ]; then
   skip_check text "no BUSINESS_QA_API_KEY, so no customer or provider call was attempted"
 else
   request api-models GET /v1/models "" "Authorization: Bearer $api_key"; expect_status 200 "API-key model directory"
-  if ! model=$(json_model_from_list "$last_body" "$model"); then fail "unable to choose an authorized model"; fi
+  api_models_body=$last_body
+  request invalid-api-key GET /v1/models "" "Authorization: Bearer ${api_key}invalid"
+  expect_error_code 401 invalid_credentials "invalid customer API key"
+  if ! model=$(json_model_from_list "$api_models_body" "$model"); then fail "unable to choose an authorized model"; fi
   chat_body="$work_dir/chat.json"
   python3 - "$chat_body" "$model" <<'PY'
 import json, pathlib, sys
@@ -327,6 +359,7 @@ PY
   request task-grant POST "/v1/tasks/$task_id/result-grant" "" "Authorization: Bearer $api_key"; expect_status 200 "task result grant"
   local grant; grant=$(json_value "$last_body" grant_id) || fail "task result grant omitted grant_id"
   request task-result GET "/v1/tasks/$task_id/result?grant_id=$grant" "" "Authorization: Bearer $api_key"; expect_status 200 "task result download"
+  expect_header "Content-Type" "application/octet-stream" "task result download"
   [ "$(wc -c <"$last_body" | tr -d ' ')" -gt 0 ] || fail "task result download was empty"
   echo "PASS async task id=$task_id"
 }
