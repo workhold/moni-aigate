@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T11:18:20Z",
-  "review_reason": "将 028-U guard closure 测试加入 verify-current-mvp，并把 18 组 current MVP 验收与 HTTP/WS sidecar 证据同步到架构/验证记录；模块图与当前唯一计量、wallet、settlement、媒体链路不变",
-  "snapshot_sha256": "930d0d67fc7be03915cb1e2c86516fb20a430c8029b99aa890381b0085121608",
+  "reviewed_at": "2026-11-10T11:31:03Z",
+  "review_reason": "校正最终 current MVP 验收分组统计；028-U guard closure 已纳入既有 guard 组，不新增运行模块",
+  "snapshot_sha256": "8adc6baa477fe6cb1250e98038201296f00dae1d3ff60f837bd7f80391d04a84",
   "architecture_sha256": "4ef71030d8dbdf67130464f1146e8c9f0a4e3156ec56b0efae5e5d91c7926744",
-  "history_sha256": "af3ee23de7e692a1a21125a06638d8dcead77fe0f18dd2494849ad47cb482efc",
+  "history_sha256": "862d4ec56ad8528668e7185c9c19d911a5b1a5ae6dd7a9a9184edad2ca000715",
   "files": [
     {
       "path": ".dockerignore",
@@ -1045,7 +1045,7 @@
     },
     {
       "path": "docs/verification/current-mvp.md",
-      "sha256": "d3f61ea68d833d35243cd8fa4fbc6cd2cd52ad7b32b584a81ee54084a39d4408"
+      "sha256": "a0b3d8af572efbf5862393df9cc8c83477832937510bc5d9a50a8aa8b1d18e6f"
     },
     {
       "path": "docs/verification/dispatch-read-batches.md",
@@ -1825,7 +1825,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "70dd52535274221aeb4339c01330f670723214089da472bb39151f8c5cea39b1"
+      "sha256": "f6228bbfe826f01039fe6cc5158f3c36aa8107e080a7068d3115fdc3e6f70b3b"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",

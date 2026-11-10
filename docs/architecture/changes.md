@@ -5827,3 +5827,16 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `scripts/verify-current-mvp.sh`
 
 </details>
+
+## 2026-11-10T11:31:03Z · 8adc6baa477f
+
+校正最终 current MVP 验收分组统计；028-U guard closure 已纳入既有 guard 组，不新增运行模块
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2128 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/current-mvp.md`
+- modified `docs/verification/unified-metering.md`
+
+</details>
