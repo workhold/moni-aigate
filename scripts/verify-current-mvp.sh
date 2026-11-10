@@ -223,14 +223,18 @@ run_group 'wallet funding billing and settlement' \
     ./internal/server:TestWalletSourcesHTTPCommercialFlowAndAuthorization \
     -- ./internal/billing ./internal/server
 
+run_group 'backup restore and recovery lock drill' \
+  go run ./scripts/backup-restore-drill.go
+
 run_group 'provider usage and current error/timeout handling' \
   checked_go_race_test 600s \
-    '^Test(OpenAICompatibleDeepSeekUsageAcrossHTTPModes|DeepSeekCacheUsageNormalizesOnlyCompleteCacheEvidence|NativeSSEFragmentationFinalEventsAndCacheAccounting|NativeUsageFailuresRemainUnbillable|HeaderAndFirstEventTimeout|RoleHeartbeatCannotExtendProgressOrTotalDeadline)$' \
+    '^Test(OpenAICompatibleDeepSeekUsageAcrossHTTPModes|DeepSeekCacheUsageNormalizesOnlyCompleteCacheEvidence|NativeSSEFragmentationFinalEventsAndCacheAccounting|NativeUsageFailuresRemainUnbillable|HeaderAndFirstEventTimeout|IdleTimeoutIsSeparateFromFirstEventAndProgress|RoleHeartbeatCannotExtendProgressOrTotalDeadline)$' \
     ./internal/provider:TestOpenAICompatibleDeepSeekUsageAcrossHTTPModes \
     ./internal/provider:TestDeepSeekCacheUsageNormalizesOnlyCompleteCacheEvidence \
     ./internal/provider:TestNativeSSEFragmentationFinalEventsAndCacheAccounting \
     ./internal/provider:TestNativeUsageFailuresRemainUnbillable \
     ./internal/provider:TestHeaderAndFirstEventTimeout \
+    ./internal/provider:TestIdleTimeoutIsSeparateFromFirstEventAndProgress \
     ./internal/provider:TestRoleHeartbeatCannotExtendProgressOrTotalDeadline \
     -- ./internal/provider
 

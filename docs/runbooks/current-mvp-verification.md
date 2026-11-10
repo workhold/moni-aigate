@@ -10,7 +10,7 @@ TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disabl
 
 运行前确认 `moni_test` 是专用开发/验收数据库，账号具有测试所需的建库或隔离 schema 权限。入口严格拒绝其他数据库 URL，不要使用生产连接或 5432。
 
-入口会先做只读架构检查，然后串行执行 current-only migration/`VerifyCurrent`、拒迁与角色权限、028-U guard、钱包/充值/账务/结算、六文本商业链路、provider usage、图片/TTS/video task/Realtime、核心 `go vet`、前端测试和前端构建。数据库测试使用 `-race -p 1 -count=1`，避免共享专库中的安装与角色 fixture 并发互相污染。每组会显示实际命令和秒数，不能用历史专项的旧记录替代本次结果。
+入口会先做只读架构检查，然后串行执行 current-only migration/`VerifyCurrent`、拒迁与角色权限、028-U guard、钱包/充值/账务/结算、备份恢复与 recovery lock、六文本商业链路、provider usage、图片/TTS/video task/Realtime、核心 `go vet`、前端测试和前端构建。数据库测试使用 `-race -p 1 -count=1`，避免共享专库中的安装与角色 fixture 并发互相污染。每组会显示实际命令和秒数，不能用历史专项的旧记录替代本次结果。
 
 入口还会显式执行 provider/config/catalog/server 的 race/compile 专项，并审计 Config 到 Server 的 provider connect/header/first-event/idle/progress timeout 接线。当前只在 provider 内部提供默认 timeout、而配置没有这些字段或 `server.New` 仍传空 `provider.ClientOptions{}` 时，该组必须失败；这表示真实能力未完成，不能把默认值当作“可配置”。
 
