@@ -21,6 +21,18 @@
 
 schema、capability、route、retail、supplier 是平台级发布或模型域事实，没有租户列；对它们人为构造“跨租户”不是有效验收场景，索引明确记录为 N/A。request、attempt、observation、finalization、procurement 的租户和 request/attempt 绑定均通过真实行与 deferred guard 检查。
 
+租户适用性逐项记录如下，避免把全局发布事实伪装成跨租户隔离证据：
+
+| 全局事实 | 跨租户 guard | 依据 |
+| --- | --- | --- |
+| schema | **N/A** | `meter_schemas`、`meter_schema_dimensions` 没有 `tenant_id`；只验证 canonical、完整性和不可变性 |
+| capability | **N/A** | `model_capability_versions`、`model_capability_variants`、`model_capability_bound_lines` 没有 `tenant_id`；只验证发布闭包和不可变性 |
+| route | **N/A** | `route_policy_versions`、`model_bindings`、`binding_cost_rate_limits` 没有 `tenant_id`；只验证 profile/binding/cap 完整性 |
+| retail price | **N/A** | `price_versions`、`price_rate_lines` 没有 `tenant_id`；只验证不可变费率和 request snapshot 引用 |
+| supplier cost | **N/A** | `cost_versions`、`cost_rate_lines` 没有 `tenant_id`；只验证 attempt 原件的 channel/upstream/schema/variant 域绑定 |
+
+本审计新增的 tenant 证据只落在有 `tenant_id` 的 request、attempt、observation、finalization 事实：不同租户可以各自使用相同 `source_event_id`，同一租户同一来源事件的并发冲突只留下一个事件及一个冲突记录。
+
 `TestUnifiedTextMeteringCurrentGuardDDLIndex` 还直接查询 `pg_trigger`，确认十类 guard 在 current-only 安装中存在且为 `DEFERRABLE INITIALLY DEFERRED`，同时确认 `schema_migrations` 只有 `current_mvp.sql` 与当前追加迁移。它是迁移测试索引，不替代每个业务事实的正反测试。
 
 ## 实际命令
@@ -55,3 +67,25 @@ go test -count=1 -race -timeout 300s ./internal/operations \
 ```
 
 这些命令只证明当前 PostgreSQL guard、权限和失败边界；不把完整六文本商业矩阵、真实供应商 usage/cost、浏览器或生产部署认证标记为完成。
+
+## 2026-11-10：028-U guard closure audit
+
+最终基于最新 `codex/initial-mvp@44c3521` 的独立 worktree 追加四项只测试审计，未修改 SQL、Go 运行时代码、wallet/billing、Makefile 或部署文件：
+
+| 审计边界 | 新增证据 | 结果 |
+| --- | --- | --- |
+| 失败/回滚 | `TestUnifiedTextMeteringGuardClosureDeferredAggregateRollback`：完整 request、snapshot、bound、reservation 聚合在 deferred reservation amount 失败后全部回滚 | PASS |
+| request→attempt | `TestUnifiedTextMeteringGuardClosureRuntimeCrossRequestAttemptRollsBack`：同租户和跨租户错绑均在 billing 入口拒绝，事件/终态无残留 | PASS |
+| source identity / 并发 | `TestUnifiedTextMeteringGuardClosureSourceIdentityTenantScopeAndConflictRace`：同 source event 在两个租户各一条；同租户冲突并发只保留一条 event、一条 finalization、一条 conflict | PASS |
+| 权限 | `TestUnifiedTextMeteringGuardClosureActualLoginFunctionSurface`：实际 LOGIN 对全部 `meter_%` 函数面核验 APP 全量可执行，projection/worker 全量不可执行 | PASS |
+
+定向命令与结果：
+
+```sh
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+go test ./migrations -run '^TestUnifiedTextMeteringGuardClosure' -count=1 -timeout=8m -v
+```
+
+结果为 `PASS`，4 项、3.000s；rebase 到最新主线后同四项 `-race` 运行也通过，`9.878s`。加入既有 current-only guard 组并启用 `-race` 的最终联合定向运行通过，结果为 `PASS`、19.203s。更宽的拒迁矩阵在同一专库一次运行中出现 `55P03 lock timeout`，发生于各隔离 schema 的 023 基线安装，未进入 028-U guard 断言；该环境噪声不计为通过或失败的 U 业务证据，后续需要清洁专库会话后重跑。
+
+仍未覆盖的边界：schema/capability/route/retail/supplier 的跨租户测试均为 N/A；没有新增真实供应商 usage/cost、六协议完整商业出口、恢复 worker 重发阻断、HTTP/UI、部署、HA 或性能验收。当前测试验证的是 PostgreSQL current-only guard、事务回滚、request/attempt/tenant 绑定、source identity 并发唯一性及角色权限，不把它们扩写为完整 028-U 生产接线。
