@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-09T23:33:48Z",
-  "review_reason": "补充028-U拒绝矩阵后，复核媒体supplier cost从不可变结算快照读取，并校正README、报表设计、验证记录和消费者清单；无运行时模块边界变化",
-  "snapshot_sha256": "7d7256e75f0e8ea266245bb9343c495d75bc3a90bfb2fd518dcd0b9a25022ce3",
-  "architecture_sha256": "4ac8901d50196343bd3f67968defb21524c1955c9743b04f7383273f59dcb0b9",
-  "history_sha256": "3ccbbb2103f31f1107c19f730df818538eeb11173c4105e0a8ac66d4b19c7436",
+  "reviewed_at": "2026-11-10T00:04:41Z",
+  "review_reason": "补充028-U拒绝矩阵和媒体supplier cost报表口径后的最终架构语义复核；仅同步当前状态、验证记录与任务边界，无新增运行时路径",
+  "snapshot_sha256": "6710649da736ec8af77b4f9fa552caed5232c6d494d046e94ddcc27e7131d389",
+  "architecture_sha256": "fea57e500428fcec66270f07b98921cdb074eb9dad3820574c97c8107ca7f906",
+  "history_sha256": "5e4eb91ead3bf2196e3225ac1d09e7b1373e520ad69ac4bd315cb0893d8a7ccb",
   "files": [
     {
       "path": ".dockerignore",
@@ -7817,7 +7817,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "ae9634a82bd538dd7a2d15ce7992b26d01be56dde9d858a147bf5b96f5d53e12"
+      "sha256": "100e9265b5ab80a6e06a9131288bcea33ff5590bdfd2424373c243385d7b8437"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
