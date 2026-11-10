@@ -5876,3 +5876,15 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `docs/verification/backup-restore-local.json`
 
 </details>
+
+## 2026-11-10T12:31:43Z · ddc082437b2b
+
+更新028-U任务清单的当前MVP收口状态与正式Release Qualification剩余边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2130 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

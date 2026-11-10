@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T12:26:00Z",
-  "review_reason": "最终18组 current MVP 门禁更新备份恢复随机证据；复核架构正文、验证记录、权限边界和当前运行路径后同步快照",
-  "snapshot_sha256": "33991d66d873664218968f26ef266b9af2d62ef84fef2376bac3227ffb76595b",
+  "reviewed_at": "2026-11-10T12:31:43Z",
+  "review_reason": "更新028-U任务清单的当前MVP收口状态与正式Release Qualification剩余边界",
+  "snapshot_sha256": "ddc082437b2b256a6626422cac0a51e664823e0d34c47842e9a37b94fcb68bee",
   "architecture_sha256": "e93456e65c4eba294e27005ad04491bb829738e14e8c1104cf856952d0f4db0d",
-  "history_sha256": "9562e1977894ee034dd23f3e083745627c7a7319ee705b585dc0ec151997a12a",
+  "history_sha256": "18de04a097e8bf96c16f83885fedeed5cc32a4381a5191e074fc8e2dd83ab458",
   "files": [
     {
       "path": ".dockerignore",
@@ -7897,7 +7897,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "da32f8d9f9187b19ce01a3950f025c886eb542b709e0b8149391eedd2b370b4a"
+      "sha256": "60d65c78fef3bb41bfe8043eaea0f8666e5b5942617c201398ac8ab3514241e4"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
