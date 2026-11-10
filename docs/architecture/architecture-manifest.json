@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T13:50:33Z",
-  "review_reason": "修复定价 HTTP 测试共享 admission 的 race，并修正周期预算测试对 current_ 追加迁移的基线统计；不改变运行时架构、权限或业务链路",
-  "snapshot_sha256": "bea07523506f3541def2e2728857facf5e36a5c5580873b989e27fb268b0f028",
+  "reviewed_at": "2026-11-10T14:36:08Z",
+  "review_reason": "修正 CI 对冻结 023-B-P1 历史候选的错误数据库注入，并更新已审阅的 wallet readset migrations/embed.go 源 pin；当前运行时架构和业务路径不变",
+  "snapshot_sha256": "c08fe0171fdffc0e8529a798ddd93c5123d3e21e141375a9dbc496a3bf3e55b4",
   "architecture_sha256": "a30b104a9a3e7760e3cb76a5a02785199e048130765e21ff54855c6220a79679",
-  "history_sha256": "767b02b2f728d2039cd7c95acab548c294b4f3021c8de9e50942be403317aae3",
+  "history_sha256": "094c0f9ead7d4f0f514caf16dc289cce99435f05d02c671e4982dddcd3709610",
   "files": [
     {
       "path": ".dockerignore",
@@ -29,7 +29,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "2118ee0d02fd75138c8c9eb054c81583d62b3493b6e0f57736aa647a35ae8e72"
+      "sha256": "d4f00745891286cbe6937ab0084202a0860e205a325a1c713630e2ea001341f2"
     },
     {
       "path": ".gitignore",
@@ -7449,7 +7449,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-wallet-readset.json",
-      "sha256": "c0f20ccf75fbfafb09e077885b26aa1b708450563f459d9d3f40b624adc61883"
+      "sha256": "ea723b504214a3531f84bbf47147ec3a68c226a5a18d218662264c6f58823466"
     },
     {
       "path": "specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md",

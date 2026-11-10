@@ -5918,3 +5918,16 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `internal/server/pricing_publish_http_integration_test.go`
 
 </details>
+
+## 2026-11-10T14:36:08Z · c08fe0171fdf
+
+修正 CI 对冻结 023-B-P1 历史候选的错误数据库注入，并更新已审阅的 wallet readset migrations/embed.go 源 pin；当前运行时架构和业务路径不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2134 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `specs/022-self-service-payments/c0-wallet-readset.json`
+
+</details>

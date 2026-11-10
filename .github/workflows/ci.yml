@@ -184,7 +184,8 @@ jobs:
           # job's disposable database. Neither changes ordinary startup.
           test_env=()
           if [[ "$GO_TEST_SHARD" == other ]]; then
-            test_env+=("PB_PREFIX_DATABASE_URL=$TEST_DATABASE_URL")
+            # The 023-B-P1 prefix candidate is frozen historical research. Its
+            # PostgreSQL harness is compile-only in the current MVP gate.
             test_env+=("PROCUREMENT_IDENTITY_DATABASE_URL=$TEST_DATABASE_URL")
           fi
           if [[ "$package_class" == billing ]]; then

@@ -1239,7 +1239,7 @@
     "internal/fundinglotverify/sandbox_source_graph.go": "67ed4b5a4abd0958e018791b5b4b4f9f12762cef8d4a58cdd14ceb495b52153d",
     "internal/fundinglotverify/wallet_lots.go": "47ef6d3c303fa69f28518d5e4a83c7b6cf7eeed655c033b11b6f0c4dc7a8b4f4",
     "internal/fundinglotverify/wallet_sequence.go": "8d4a87546117c2651084403dded42aca6a12b66fc807df648ef25581e9ba4a54",
-    "migrations/embed.go": "82ada31418b35e273026b3a5647e01ae6d61934886cf7c1d2385a3b0d1adba7c",
+    "migrations/embed.go": "e36903190193a5d21a0943b6a8c686cc9b0e050a6526ae16571274eb0cc6ceae",
     "migrations/verify_readonly.go": "6d36aea027b1111ac0b255c0ebfb1457dc03b1429e2ad2560c1832971193ffe0"
   }
 }
