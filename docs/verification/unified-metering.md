@@ -555,3 +555,16 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 - ACL 负控首次运行发现 021/022 payment owner ACL 是合法基线例外，已按实际 023 安装结果收紧白名单后重跑通过，未放宽普通关系 ACL。
 
 拒迁测试确认坏 ACL、坏依赖和旧事实拒绝后不留下 024 关系，原 ACL、行和 migration history 保持不变。
+
+## 2026-11-10：028-U 计量表角色权限闭包补充
+
+复核现有角色矩阵时发现，表级检查覆盖了 APP 的 SELECT/INSERT/UPDATE/DELETE，却没有覆盖 `TRUNCATE`、`REFERENCES` 和 `TRIGGER`。新增 `TestUnifiedTextMeteringGuardRoleWriteRejections` 的逐表断言，覆盖 12 张当前计量历史表。APP 保留 SELECT/INSERT，三类额外权限均拒绝；worker、projector 与 PUBLIC 对这些表的七类表权限均拒绝。
+
+专项使用 PostgreSQL 16.15 专库：
+
+```text
+PATH="/opt/homebrew/bin:$PATH" TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' GOCACHE=/tmp/moni-aigate-gocache go test -race -count=1 -timeout 300s ./migrations -run 'TestUnifiedTextMeteringGuardRoleWriteRejections|TestUnifiedTextMeteringGuardRoleMatrix|TestUnifiedTextMeteringCurrentGuardFunctionsAreInvokerAndPinned'
+ok github.com/moni-ai/moni-aigate/migrations 7.137s
+```
+
+`gofmt` 和 `git diff --check` 通过。本片只增加 PostgreSQL 角色负控，统一架构的数据关系、请求链路和权限策略没有新增变化。028-U 存储任务仍保持未勾选，完整九组 guard、旧金融事实全量正反例和目标环境权限验收仍需继续。

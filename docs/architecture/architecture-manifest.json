@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T02:29:05Z",
-  "review_reason": "收口当前 wallet funding 校验器身份：024/current_mvp 创建 payment_funding_journal_valid、替换当前 funding dispatcher、删除旧函数并同步角色 ACL、架构正文和验证记录；不改变 021–023 历史材料与资金事实",
-  "snapshot_sha256": "f3ee729d393915886923c936f7ec3797a47acde0f4a17012758cf9d2681c8f30",
+  "reviewed_at": "2026-11-10T02:59:20Z",
+  "review_reason": "028-U 角色权限闭包新增表级 TRUNCATE、REFERENCES、TRIGGER PostgreSQL 负控；无运行时数据关系、请求链路或权限策略变化",
+  "snapshot_sha256": "b1ddde0461fc86d8310d0623711be0b5a9e86003d0902f68e08a94f4676100af",
   "architecture_sha256": "c70d718c7584d9bd433af572b58b866f5508da84cfe80a1608a14c97e69fba7d",
-  "history_sha256": "de8936c751379e2dd289af33c0fa3b7bcc249eeba3bd970f0d74228e74b2d50d",
+  "history_sha256": "700a619df6527845e7c6a62f9b5677551cf7d8915092d29bb306d01ec4e80867",
   "files": [
     {
       "path": ".dockerignore",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "da86d100b26714044d837f56dfb14f6759196b11ee9fa6f6a3afe78f4a17996f"
+      "sha256": "06ff82e94def62e2d9db8d279e95487b84a562abf5ec47c6855670b43ac01997"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -6493,7 +6493,7 @@
     },
     {
       "path": "migrations/unified_text_metering_guard_gaps_postgres_test.go",
-      "sha256": "74983a85bcaf49bceead49ff84592ea769e368dcac3fea2470e2314a53b522f9"
+      "sha256": "2d567862921b9abf2119a454c523353cec24f49ac01d28f33257b871f595e889"
     },
     {
       "path": "migrations/unified_text_metering_guard_matrix_postgres_test.go",

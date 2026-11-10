@@ -230,6 +230,59 @@ func TestUnifiedTextMeteringGuardRoleWriteRejections(t *testing.T) {
 		return pool
 	}
 	app, worker, projection := asRole(appRole), asRole(workerRole), asRole(projectionRole)
+	for _, table := range []string{
+		"meter_schemas", "meter_schema_dimensions", "model_capability_variants", "model_capability_bound_lines",
+		"price_rate_lines", "cost_rate_lines", "binding_cost_rate_limits", "request_meter_snapshots",
+		"attempt_meter_snapshots", "request_meter_bound_lines", "attempt_meter_bound_lines", "meter_event_quantities",
+	} {
+		qualified := pgx.Identifier{f.schema, table}.Sanitize()
+		var appSelect, appInsert, appUpdate, appDelete, appTruncate, appReferences, appTrigger bool
+		if err := f.owner.QueryRow(f.ctx, `
+SELECT has_table_privilege($1::name,$2::text,'SELECT'),
+       has_table_privilege($1::name,$2::text,'INSERT'),
+       has_table_privilege($1::name,$2::text,'UPDATE'),
+       has_table_privilege($1::name,$2::text,'DELETE'),
+       has_table_privilege($1::name,$2::text,'TRUNCATE'),
+       has_table_privilege($1::name,$2::text,'REFERENCES'),
+       has_table_privilege($1::name,$2::text,'TRIGGER')`, appRole, qualified).
+			Scan(&appSelect, &appInsert, &appUpdate, &appDelete, &appTruncate, &appReferences, &appTrigger); err != nil {
+			t.Fatal(err)
+		}
+		if !appSelect || !appInsert || appUpdate || appDelete || appTruncate || appReferences || appTrigger {
+			t.Fatalf("application meter privilege closure mismatch for %s select=%t insert=%t update=%t delete=%t truncate=%t references=%t trigger=%t", table, appSelect, appInsert, appUpdate, appDelete, appTruncate, appReferences, appTrigger)
+		}
+
+		for roleName, role := range map[string]string{"worker": workerRole, "projection": projectionRole} {
+			var any bool
+			if err := f.owner.QueryRow(f.ctx, `
+SELECT has_table_privilege($1::name,$2::text,'SELECT')
+    OR has_table_privilege($1::name,$2::text,'INSERT')
+    OR has_table_privilege($1::name,$2::text,'UPDATE')
+    OR has_table_privilege($1::name,$2::text,'DELETE')
+    OR has_table_privilege($1::name,$2::text,'TRUNCATE')
+    OR has_table_privilege($1::name,$2::text,'REFERENCES')
+    OR has_table_privilege($1::name,$2::text,'TRIGGER')`, role, qualified).Scan(&any); err != nil {
+				t.Fatal(err)
+			}
+			if any {
+				t.Fatalf("%s unexpectedly has a privilege on %s", roleName, table)
+			}
+		}
+		var publicAny bool
+		if err := f.owner.QueryRow(f.ctx, `
+SELECT has_table_privilege('public',$1::text,'SELECT')
+    OR has_table_privilege('public',$1::text,'INSERT')
+    OR has_table_privilege('public',$1::text,'UPDATE')
+    OR has_table_privilege('public',$1::text,'DELETE')
+    OR has_table_privilege('public',$1::text,'TRUNCATE')
+    OR has_table_privilege('public',$1::text,'REFERENCES')
+    OR has_table_privilege('public',$1::text,'TRIGGER')`, qualified).Scan(&publicAny); err != nil {
+			t.Fatal(err)
+		}
+		if publicAny {
+			t.Fatalf("PUBLIC unexpectedly has a privilege on %s", table)
+		}
+	}
 	if _, err := app.Exec(f.ctx, `UPDATE request_meter_snapshots SET input_bound=input_bound WHERE request_id=$1`, base.requestID); err == nil {
 		t.Fatal("application role updated immutable meter snapshot")
 	}

@@ -5563,3 +5563,16 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T02:59:20Z · b1ddde0461fc
+
+028-U 角色权限闭包新增表级 TRUNCATE、REFERENCES、TRIGGER PostgreSQL 负控；无运行时数据关系、请求链路或权限策略变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `migrations/unified_text_metering_guard_gaps_postgres_test.go`
+
+</details>
