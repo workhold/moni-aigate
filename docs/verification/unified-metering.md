@@ -490,3 +490,18 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 费率和成本来自 deterministic mock fixture，不构成真实供应商 usage 或真实供应商账单认证。
 
 同日整仓 `make verify-mvp` 使用相同的 55439 专库启动。前端342项测试和构建通过，Go race 已通过大部分包；`internal/periodicbudget` 有一次迁移 statement timeout，`internal/server` 有一次密码变更用例返回401，整仓命令未记为无条件全绿。命令退出前 55439 未留下活动连接或等待锁，分别重跑 `TestBillingPeriodicCustomerEachScopeRejectsFullRAtomically` 与 `TestPasswordChangeRevokesFamiliesAndRequiresFreshProof` 均通过，判断为本轮专库并发/测试抖动证据，不把失败记录抹除。
+
+## 2026-11-10：028-U 拒绝矩阵扩展与定向回归
+
+新增 55439 PostgreSQL race 专项覆盖金额与结算 guard、schema/capability 完整性、跨请求终态、重复观察身份、并发唯一性、失败回滚、标量投影撤除和计量函数权限。新增拒迁矩阵覆盖 41 类旧金融或采购事实，并确认拒绝后 `schema_migrations`、目标关系和原事实保持不变。专项命令如下。
+
+- `PATH="/opt/homebrew/bin:$PATH" TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' GOCACHE=/tmp/moni-aigate-gocache go test -race -count=1 -timeout 420s ./migrations -run 'TestUnifiedTextMetering|TestMeterCompletenessRejectsGaps|TestCurrentInstaller'`：通过，87.986 秒。
+- 相同专库下 billing 定向组合覆盖生命周期、证据核对、结算策略、钱包来源/开账、人工充值、向量采购和媒体成本：通过，25.938 秒。
+- 相同专库下 server 定向组合覆盖图片、TTS、结果恢复、video task、Realtime、充值和来源退款：通过，3.563 秒。
+- 相同专库下 `TestMeterRoleBoundary|TestMeterRoleBoundaryWithActualLoginConnections`：通过，4.538 秒。
+- `go test -c ./internal/periodicbudget` 与 `go test -c ./internal/pricing`：仅编译通过，未在非专用数据库执行周期预算测试。
+- `npm --prefix web test`：342 项通过。`make check` 的架构只读检查、采购布局、Go vet 和前端构建通过。
+
+同一轮曾并行执行完整 `internal/billing` 与 `internal/server` race 包，两个包共用迁移 advisory lock，分别在 fixture 安装阶段超时，不能计为通过。之后清理连接并改为串行尝试，完整 billing 在历史 fixture 安装阶段超过 11 分钟后主动终止，未出现业务断言失败输出。因此本轮只把上述定向结果记为通过，不把整包 race 或 `make verify-mvp` 标为无条件全绿。
+
+完整九组 checker 的逐项正反闭包、变更023表 owner/ACL 形状主动拒迁、完整六文本商业矩阵、真实供应商、浏览器和生产环境验收仍未完成。
