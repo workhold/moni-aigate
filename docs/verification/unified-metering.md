@@ -649,3 +649,9 @@ ok github.com/moni-ai/moni-aigate/migrations 7.137s
 ```
 
 `gofmt` 和 `git diff --check` 通过。本片只增加 PostgreSQL 角色负控，统一架构的数据关系、请求链路和权限策略没有新增变化。028-U 存储任务仍保持未勾选，完整九组 guard、旧金融事实全量正反例和目标环境权限验收仍需继续。
+
+## 2026-11-10：current MVP 汇合验收
+
+主分支 `codex/initial-mvp` 使用 `postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable` 执行 `make verify-current-mvp`，17 个分组全部通过。结果包括 current-only 空库安装/追加与拒迁、实际 LOGIN 权限、当前 028-U guard、wallet/funding/billing/settlement、provider usage 与 timeout wiring、六文本商业链、图片/TTS/异步 video/Realtime PostgreSQL 路径、媒体安全状态机、Go vet、前端342项测试/构建，以及 `DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 的 Compose business-qa 空库、provision/bootstrap、五类业务调用和 app/worker/PostgreSQL 重启。
+
+这次汇合只记录当前主线可复现的开发环境证据；Compose 的 provider 是显式 deterministic mock，`inner-test` 默认关闭媒体，不能推导真实供应商、正式支付、浏览器、1Panel、HA、性能或生产验收。历史维护 fixture 不属于该入口，028-U 存储总项和完整商业出口继续保持未勾。

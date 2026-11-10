@@ -34,3 +34,17 @@ Compose business-qa 使用确定性的 mock provider，结果只能证明开发�
 失败组的日志保留在临时目录；设置 `VERIFY_CURRENT_MVP_LOG_DIR=/path/to/logs` 可指定持久目录。成功后默认清理临时日志。退出码为 0 表示执行的组全部通过（允许明确的 Compose 环境 SKIP），非 0 表示至少一个实际执行的组失败。
 
 该脚本只增加验收编排，不增加运行时路径、数据库对象、provider 或媒体能力；完整 Goal 状态仍以各能力的专项证据和真实供应商边界为准。
+
+## 2026-11-10：主分支 current MVP 验收
+
+在 `codex/initial-mvp` 使用 PostgreSQL 16.15 专用库执行：
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+GOCACHE=/tmp/moni-aigate-final-gocache make verify-current-mvp
+```
+
+17 个分组全部通过：架构与采购布局、current-only 安装/追加、旧事实拒迁与实际 LOGIN 权限、028-U 当前 guard、wallet/funding/billing/settlement、provider usage/timeout、provider/config/catalog/server 编译 race、配置与价格 operation race、Config→Server timeout wiring、六文本商业链、图片/TTS/异步 video/Realtime PostgreSQL 路径、媒体状态机安全、Go vet、前端342项测试、前端生产构建和 Compose business-qa smoke。Compose 实际覆盖空库迁移与幂等重跑、provision/bootstrap、防重复 bootstrap、文本/图片/TTS/task/Realtime，以及 app/worker/PostgreSQL 重启恢复。
+
+Compose 和媒体使用 deterministic mock，只证明开发环境内测的接口、权限、计量、钱包边界和恢复行为，不证明真实供应商 usage/cost、浏览器验收或生产部署。该入口有意排除历史 maintenance fixture；历史 full-race 超时不被改写为当前 MVP 通过。完整 028-U 商业出口与目标环境权限闭包、真实供应商、正式支付、1Panel、HA 和性能门禁仍未完成。

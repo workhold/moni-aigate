@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T09:47:40Z",
-  "review_reason": "当前 MVP 集成复核：current-only migration、provider 契约、028-U guard、wallet/billing/settlement、六文本、媒体 mock 安全、Compose 单机和验收文档已同步；完整 U guard 正反闭包、真实供应商、浏览器、正式支付、HA 与性能仍未完成",
-  "snapshot_sha256": "8b8f2d03407c55cc0089e5a9bc3a1beba107ec5f5adccb7e7e005a9f1cb30b08",
+  "reviewed_at": "2026-11-10T09:59:43Z",
+  "review_reason": "补记主分支 current MVP 17 组验收全部通过；验证入口、媒体 mock/inner-test、当前 guard 与未完成的真实供应商/完整商业边界保持一致",
+  "snapshot_sha256": "cc68243748de1f342ec7aa004242aa73299f88cf4db72fb65e45b7bc3f4e0730",
   "architecture_sha256": "113153957f6477e9654f46bfe2d207ba3ed14ae00d90649f79cf0e5b30bd68d6",
-  "history_sha256": "8cf4381185ce5a0ead3964c09301dac144ce4a4bd1327122082ca4d734bdc388",
+  "history_sha256": "a4408cef4fab2d6a156f8bc57be0853a5b03ea42bb8b7d4167950cc47e2d3ec1",
   "files": [
     {
       "path": ".dockerignore",
@@ -1041,7 +1041,7 @@
     },
     {
       "path": "docs/verification/current-mvp.md",
-      "sha256": "c01c79a928632f25c7d379a8cd27226bbb3bc4e34260810eac16106397b87c1a"
+      "sha256": "dddf3ab6d6648a40660617f47aed371a7818c316c8fb69f78ea81086fa7009b9"
     },
     {
       "path": "docs/verification/dispatch-read-batches.md",
@@ -1821,7 +1821,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "3986ed22d8b67dfac4a9e579612266ba7c886ca714558d61a7c8002592812178"
+      "sha256": "eb78fab532f528b897d2d04b7cb321abfb52946df02b1aa8f06b2e032d649bc2"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",

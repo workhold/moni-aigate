@@ -5762,3 +5762,16 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T09:59:43Z · cc68243748de
+
+补记主分支 current MVP 17 组验收全部通过；验证入口、媒体 mock/inner-test、当前 guard 与未完成的真实供应商/完整商业边界保持一致
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2121 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/current-mvp.md`
+- modified `docs/verification/unified-metering.md`
+
+</details>
