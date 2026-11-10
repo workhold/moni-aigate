@@ -161,12 +161,16 @@ const (
 
 // Error deliberately contains no URL, upstream body, credential or raw cause.
 type Error struct {
-	Code           string        `json:"code"`
-	HTTPStatus     int           `json:"status"`
-	Class          FailureClass  `json:"class"`
-	Consumption    Consumption   `json:"consumption"`
-	RetryAfter     time.Duration `json:"-"`
-	UpstreamStatus int           `json:"-"`
+	Code        string       `json:"code"`
+	HTTPStatus  int          `json:"status"`
+	Class       FailureClass `json:"class"`
+	Consumption Consumption  `json:"consumption"`
+	// BindingIsolation is set only when the provider returned an explicit
+	// binding-level model error. Request-specific model failures, such as
+	// context_length_exceeded, must never quarantine a route binding.
+	BindingIsolation bool          `json:"-"`
+	RetryAfter       time.Duration `json:"-"`
+	UpstreamStatus   int           `json:"-"`
 }
 
 func (e *Error) Error() string { return e.Code }

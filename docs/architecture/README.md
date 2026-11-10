@@ -596,6 +596,8 @@ sequenceDiagram
 
 默认 `manual/allow` 且没有采购单价上限的路由，按渠道优先级/权重与健康/容量选择渠道。018 增加可选采购比价与硬单价门禁，详细规则见下文。然后在渠道的不可变凭据池中按成员权重/容量选择凭据；增加池成员不会额外扩大渠道的业务权重。已选择的渠道版本、池 revision、凭据、精确上游模型与采购报价写入 attempt。最多两个生成 attempt；仅在已证明无消费且满足策略时换渠道，未知消费、已经输出或同渠道换 Key 都不能触发重放。
 
+上游错误按显式机器码区分请求级与 binding 级影响。`model_not_found`、`model_not_available` 和 `unsupported_model` 才能写入 `route_binding_isolations`，而 `context_length_exceeded` 保留为当前请求错误，不持久化隔离共享 binding。裸状态码或人类可读消息不能触发 binding 隔离；相关分类与跨租户回归见 [`internal/provider/classification.go`](../../internal/provider/classification.go)、[`internal/server/gateway.go`](../../internal/server/gateway.go) 和 [`binding_isolation_integration_test.go`](../../internal/server/binding_isolation_integration_test.go)。
+
 请求幂等和财务幂等各自持久化。提交结果未知时不得以“没收到响应”为由重试网络请求。客户取消、连接中断和 SSE 尾包丢失必须保留消费可能性，不能直接当成免费成功或零成本。
 
 ### 客户资金与上游成本

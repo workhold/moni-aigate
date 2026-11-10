@@ -13,17 +13,30 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
+	"github.com/moni-ai/moni-aigate/internal/security"
 )
 
 func isolationRequest(t *testing.T, f *gatewayFixture, model string) (int, string) {
+	return isolationRequestBody(t, f, f.token, map[string]any{
+		"model":      model,
+		"messages":   []map[string]string{{"role": "user", "content": "hello"}},
+		"max_tokens": 20,
+	})
+}
+
+func isolationRequestBody(t *testing.T, f *gatewayFixture, token string, body any) (int, string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	raw, _ := json.Marshal(map[string]any{"model": model, "messages": []map[string]string{{"role": "user", "content": "hello"}}, "max_tokens": 20})
+	raw, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, f.http.URL+"/v1/chat/completions", bytes.NewReader(raw))
-	req.Header.Set("Authorization", "Bearer "+f.token)
+	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 	r, err := f.http.Client().Do(req)
 	if err != nil {
@@ -144,5 +157,75 @@ func TestPostgresBare404DoesNotPersistModelIsolation(t *testing.T) {
 	var count int
 	if err := f.pool.QueryRow(context.Background(), "SELECT count(*) FROM route_binding_isolations").Scan(&count); err != nil || count != 0 || f.posts.Load() != 2 {
 		t.Fatalf("bare status or human text triggered isolation: count=%d posts=%d err=%v", count, f.posts.Load(), err)
+	}
+}
+
+func TestPostgresContextLengthExceededDoesNotIsolateBindingAcrossTenants(t *testing.T) {
+	f := newGatewayFixture(t, []http.HandlerFunc{func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		if bytes.Contains(body, []byte("too-long")) {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = io.WriteString(w, `{"error":{"code":"context_length_exceeded"}}`)
+			return
+		}
+		_, _ = io.WriteString(w, gatewayJSON)
+	}}, nil)
+
+	tooLong := map[string]any{
+		"model":      "retail-model",
+		"messages":   []map[string]string{{"role": "user", "content": "too-long"}},
+		"max_tokens": 20,
+	}
+	if status, _ := isolationRequestBody(t, f, f.token, tooLong); status != http.StatusBadGateway || f.posts.Load() != 1 {
+		t.Fatalf("context length failure status=%d posts=%d", status, f.posts.Load())
+	}
+	var isolated int
+	if err := f.pool.QueryRow(context.Background(), "SELECT count(*) FROM route_binding_isolations").Scan(&isolated); err != nil || isolated != 0 {
+		t.Fatalf("context length failure persisted binding isolation: count=%d err=%v", isolated, err)
+	}
+
+	ctx := context.Background()
+	otherTenant, otherUser, otherKey := uuid.NewString(), uuid.NewString(), uuid.NewString()
+	otherToken := "mg_" + security.Random(24)
+	var operator, approver string
+	if err := f.pool.QueryRow(ctx, "SELECT id FROM users WHERE platform_role='finance_operator' LIMIT 1").Scan(&operator); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.pool.QueryRow(ctx, "SELECT id FROM users WHERE platform_role='finance_approver' LIMIT 1").Scan(&approver); err != nil {
+		t.Fatal(err)
+	}
+	for _, statement := range []struct {
+		query string
+		args  []any
+	}{
+		{"INSERT INTO tenants(id,name) VALUES($1,'context-length-other-tenant')", []any{otherTenant}},
+		{"INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'fixture','none')", []any{otherUser, otherUser + "@example.invalid"}},
+		{"INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)", []any{otherTenant, otherUser}},
+		{"INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)", []any{otherTenant, f.model}},
+		{"INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'other tenant','mg_other',$4,$5,1000)", []any{otherKey, otherTenant, otherUser, f.server.Config.Secrets.Digest(otherToken), []string{f.model}}},
+	} {
+		if _, err := f.pool.Exec(ctx, statement.query, statement.args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	credit, err := f.server.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: otherTenant, ActorID: operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:context-length", Amount: 1000, IdempotencyKey: uuid.NewString(), RequestHMAC: "context-length-credit"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.server.Billing.ApproveCredit(ctx, billing.ApprovalInput{TenantID: otherTenant, OrderID: credit.ID, ActorID: approver}); err != nil {
+		t.Fatal(err)
+	}
+
+	valid := map[string]any{
+		"model":      "retail-model",
+		"messages":   []map[string]string{{"role": "user", "content": "normal"}},
+		"max_tokens": 20,
+	}
+	if status, _ := isolationRequestBody(t, f, otherToken, valid); status != http.StatusOK || f.posts.Load() != 2 {
+		t.Fatalf("other tenant lost shared binding after context length error: status=%d posts=%d", status, f.posts.Load())
+	}
+	if err := f.pool.QueryRow(ctx, "SELECT count(*) FROM route_binding_isolations").Scan(&isolated); err != nil || isolated != 0 {
+		t.Fatalf("other tenant request changed binding isolation state: count=%d err=%v", isolated, err)
 	}
 }

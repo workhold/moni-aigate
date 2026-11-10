@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T06:49:47Z",
-  "review_reason": "重建 current-only 空库迁移基线；同步迁移入口、当前对象集合、ACL、安装拒迁边界和验证记录",
-  "snapshot_sha256": "cc40d0f9b6c1a62f7e59b2e1d8ea2b6a2b004741de66a321ee08f32ca2bc4fa4",
-  "architecture_sha256": "a2ecbaa9728ed38add196e274d9c63ac88395eddcb6b703a91cfd515d88aa417",
-  "history_sha256": "7d8df3dbeb95f6f09418740b10ff1000851fdd1c51c88ce1adc2c75b0d430ee5",
+  "reviewed_at": "2026-11-10T07:06:31Z",
+  "review_reason": "P0-2：将上游明确 binding 级模型错误与请求级 context_length_exceeded 分离，只有显式 binding 级错误可持久化 route_binding_isolations；补充跨租户 PostgreSQL 回归，未改变迁移、账务接口或媒体模块",
+  "snapshot_sha256": "a1794a4f0150ee87120208243c8dd732290cc6543c09815335faf19dd2085886",
+  "architecture_sha256": "b01a91cc70d049a25df27933b2bdd6622aa680cb456be390f0e9d969906a81ad",
+  "history_sha256": "18c701317b217b0287cdbc4b30c746cac4e6009e9360a45230dd984696c53001",
   "files": [
     {
       "path": ".dockerignore",
@@ -1373,7 +1373,7 @@
     },
     {
       "path": "docs/verification/mvp-failure-recovery.md",
-      "sha256": "bf2133248b276dd7eacac16240a017b9962cb935b2edbb514151af2684036982"
+      "sha256": "7388e680e811f48858fd99bb24da229c03b97b110ebb23470410882c287c969f"
     },
     {
       "path": "docs/verification/mvp-harness-014.json",
@@ -5545,15 +5545,15 @@
     },
     {
       "path": "internal/provider/classification.go",
-      "sha256": "99a917bb09071df3553c5afdead41a6974448a7359e0aac6f4471b2263e721b2"
+      "sha256": "387bce72668a3e7041868d695775d1349678dd4df1ed8b2cf417dead73640b76"
     },
     {
       "path": "internal/provider/classification_test.go",
-      "sha256": "568f9ce5c12673ec1a50dc318ab322430a06bdd5fd254ba071e2387dd5303d1b"
+      "sha256": "f0d14edef29ce4142bd888f5b6b40f02f44a15689638171bbcf435a2a9f8335d"
     },
     {
       "path": "internal/provider/client.go",
-      "sha256": "e42f85e812d786abb4388e30381a9160a9816f9af630ce948880a69ee736f1ff"
+      "sha256": "31167b908d637a27d7b32280262f176bef0be9087ffc51cfabec936b346e3b76"
     },
     {
       "path": "internal/provider/discovery.go",
@@ -5661,7 +5661,7 @@
     },
     {
       "path": "internal/provider/types.go",
-      "sha256": "acc792807ef0a0f3326532347233e9f8b2e8f5578b81abe1dc27aba582ecd97c"
+      "sha256": "90251d9794157425077ea2f3f43dc0e69b1653f0eeb5ea78c1bda8835af26ea0"
     },
     {
       "path": "internal/provider/usage.go",
@@ -5853,7 +5853,7 @@
     },
     {
       "path": "internal/server/binding_isolation_integration_test.go",
-      "sha256": "c2b60533de1132a80a914736b8d19320f21967f271cb033c795be22cb568dbd9"
+      "sha256": "957bc36891b6d23328b08c201d5ba87bce4809986f4d952e0e9fccc948cf4f54"
     },
     {
       "path": "internal/server/capacity_profile_test.go",
@@ -5941,7 +5941,7 @@
     },
     {
       "path": "internal/server/gateway.go",
-      "sha256": "4b045a64e5d4082e4fcbb8edbaaa11fe18e702630be86dea074ed3395a56e4ec"
+      "sha256": "b365d9934cd5c72dbed1aa307519015662ed3e9155f25c801b22e9c139b3aa73"
     },
     {
       "path": "internal/server/gateway_integration_test.go",

@@ -604,7 +604,7 @@ func (s *Server) applyProviderHealth(candidate routing.Candidate, err error) {
 	if !errors.As(err, &e) {
 		return
 	}
-	if e.Class == provider.ClassModel {
+	if e.BindingIsolation {
 		s.isolateBinding(candidate)
 		return
 	}

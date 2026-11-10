@@ -23,3 +23,15 @@
 这组测试发现并修复Gin的void Flush包装层吞掉底层FlushError的问题。当前在Gin完成Write后解包到可报告错误的transport，正确记录本地flush失败；不把网络交付与资金事务描述为原子操作。
 
 定向命令 `go test -race -count=1 -v ./internal/server ./internal/billing -run '^TestMVPPostgres'` 通过：server2.450s、billing11.143s。之后完整race回归通过；这些时长是测试执行耗时，不是请求性能。
+
+## P0-2 请求级上下文错误与 binding 隔离
+
+`provider` 只把带有明确 `model_not_found`、`model_not_available` 或 `unsupported_model` 机器码的上游失败标记为 binding 级隔离资格。`context_length_exceeded` 虽保留模型类错误语义用于当前请求收尾，但不会触发 `route_binding_isolations` 写入。裸状态码和人类消息也不会获得该资格。
+
+真实 PostgreSQL 网关回归使用两个租户共享同一已发布 binding。第一个租户收到 `context_length_exceeded` 后，隔离表保持为空，第二个租户随后沿同一 binding 成功完成请求。相关测试使用本地 HTTP fixture，不代表真实供应商认证。
+
+```sh
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+go test -race -count=1 -timeout 180s ./internal/server \
+  -run '^TestPostgresContextLengthExceededDoesNotIsolateBindingAcrossTenants$'
+```

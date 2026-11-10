@@ -108,7 +108,7 @@ func (c *Client) Do(ctx context.Context, endpoint Endpoint, request *Request) (*
 		_ = upstream.Body.Close()
 		cancel()
 		transport.CloseIdleConnections()
-		class := classifyUpstream(upstream.StatusCode, errorBody)
+		class, bindingIsolation := classifyUpstream(upstream.StatusCode, errorBody)
 		consumption := ConsumptionUnknown
 		for _, s := range request.profile.NoConsumptionStatuses {
 			if s == upstream.StatusCode {
@@ -116,6 +116,7 @@ func (c *Client) Do(ctx context.Context, endpoint Endpoint, request *Request) (*
 			}
 		}
 		e := failure("upstream_rejected", 502, class, consumption)
+		e.BindingIsolation = bindingIsolation
 		e.UpstreamStatus = upstream.StatusCode
 		if upstream.StatusCode == 429 {
 			e.HTTPStatus = 429

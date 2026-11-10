@@ -5633,3 +5633,21 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T07:06:31Z · a1794a4f0150
+
+P0-2：将上游明确 binding 级模型错误与请求级 context_length_exceeded 分离，只有显式 binding 级错误可持久化 route_binding_isolations；补充跨租户 PostgreSQL 回归，未改变迁移、账务接口或媒体模块
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/mvp-failure-recovery.md`
+- modified `internal/provider/classification.go`
+- modified `internal/provider/classification_test.go`
+- modified `internal/provider/client.go`
+- modified `internal/provider/types.go`
+- modified `internal/server/binding_isolation_integration_test.go`
+- modified `internal/server/gateway.go`
+
+</details>
