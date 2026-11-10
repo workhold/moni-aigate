@@ -13,7 +13,7 @@ internal/identity/   用户、租户、成员、会话/MFA、Key生命周期
 internal/catalog/    模型profile、不可变渠道/路由/售价版本
 internal/billing/    同tx账本、核款/退款、预占/证据/结算/恢复/投影
 internal/periodicbudget/ 周期预算领域、原public核验与无权威固定事实算法
-internal/maintenancescan/ 独立维护集成，单向复用领域算法与真实ReadLease
+internal/maintenancescan/ 独立维护集成，`historical` tag 下单向复用领域算法与真实ReadLease
 internal/maintenancetrust/ Gate、私有Snapshot、Attest、Permit与ReadLease
 internal/fundinglotcatalog/ 固定expected与同RR静态对象/权限证明
 internal/provider/   Chat/Responses/Messages、SSE、无重放客户端、出口安全
@@ -29,7 +29,7 @@ scripts/ deploy/     备份恢复、Compose、反向代理示例
 
 测试与对应包相邻，真实PG使用独立schema，真实HTTP/TCP上游均为本地Mock。本版用显式参数化pgx SQL而未引入sqlc，见[ADR-002](../decisions/ADR-002-implementation-refinements.md)。
 
-Gateway编排依赖各领域接口；Provider不依赖Billing、数据库或HTTP handler。maintenancescan单向依赖billing/PB与maintenancetrust→catalog，普通领域/main及领域测试不反向依赖维护；领域raw-facts接口不授authority。跨领域写操作由明确的应用服务事务协调，避免多次“保存成功”拼成一个资金操作。
+Gateway编排依赖各领域接口；Provider不依赖Billing、数据库或HTTP handler。`maintenancescan` 及其 raw reader 只在 `historical` tag 下编译，单向依赖billing/PB与maintenancetrust→catalog，默认当前服务和当前 billing 构建图不包含它们。普通领域/main及领域测试不反向依赖维护；领域raw-facts接口不授authority。跨领域写操作由明确的应用服务事务协调，避免多次“保存成功”拼成一个资金操作。
 
 ## 2. 公共接口与认证
 

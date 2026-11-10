@@ -270,3 +270,9 @@ worker 没有导入 `procurementprefix`、`fundinglotruntime`、`maintenancescan
 ## 2026-11-10 集成复核
 
 supplier cost 片已在主目录完成并通过专项。四个 deterministic mock profile 现在保存 supplier 每百万 unit 费率，media attempt 冻结该费率，唯一 media settlement 保存 known/unknown supplier cost。billing、reporting、server image/TTS/task/Realtime 和 migrations 专项通过。该片只补 mock supplier cost snapshot，不改变本报告列出的 payment legacy validator、periodic-budget legacy origin 或维护 reader 清理项。
+
+## 2026-11-10 当前构建图隔离
+
+旧维护 raw reader 已从默认当前构建图隔离。`internal/billing` 中的 funding financial、ledger、source、procurement budget、attempt、approval 和 command reader，以及显式 `ProspectiveStore`，统一使用 `historical` build tag。`internal/maintenancescan` 与 `scripts/maintenance-scan-qa` 也只在该 tag 下编译。
+
+默认 `go list -json ./internal/billing` 的 GoFiles 已不再包含这些 reader，`go list -deps ./cmd/moni-aigate` 不包含 `internal/maintenancescan` 或这些历史 reader。默认 `go build ./...`、`go test -run '^$' ./...` 和 `go vet ./...` 通过。使用 `-tags historical` 的 billing、maintenancescan 和 maintenance-scan-qa 编译通过，历史专项仍可显式运行。该片只改变构建可见性，不转换历史数据，也没有把维护路径接回当前服务。

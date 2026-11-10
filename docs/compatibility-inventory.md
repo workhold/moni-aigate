@@ -2,7 +2,7 @@
 
 盘点基线：2026-11-04，提交 `e0c398d`。
 
-本文件是代码整理阶段的只读盘点，不代表删除建议，也不改变任何运行逻辑。目录名带有 `legacy`、`compat`、`prefix` 或 `candidate` 不等于可以删除；最终是否保留必须以正式启动、迁移、恢复和专项验证的引用关系为准。
+本文件是代码整理阶段的盘点。目录名带有 `legacy`、`compat`、`prefix` 或 `candidate` 不等于可以删除；最终是否保留必须以正式启动、迁移、恢复和专项验证的引用关系为准。只服务历史维护扫描的 raw reader 已通过 `historical` build tag 从默认当前构建图隔离，仍保留给显式历史专项。
 
 ## 规模统计
 
@@ -12,7 +12,7 @@
 | `internal/fundinglotruntime` | 20 | 4,134 | 资金 runtime/历史组合验证，需确认正式接线 |
 | `internal/fundinglotscan` | 36 | 8,709 | 资金来源读取和验证，部分进入正式账单读取 |
 | `internal/fundinglotverify` | 66 | 25,543 | 钱包、采购、周期预算和历史边界核验 |
-| `internal/maintenancescan` | 18 | 1,797 | 维护扫描，当前主要由专项/恢复路径使用 |
+| `internal/maintenancescan` | 18 | 1,797 | `historical` tag 下的维护扫描，默认当前构建不编译 |
 | `internal/maintenancetrust` | 81 | 22,031 | 维护权限、快照、lease 和恢复证明 |
 | `internal/metering` | 10 | 1,476 | 当前推理和结算依赖；含旧 token 边界适配 |
 | `internal/periodicbudgetprefix` | 5 | 1,730 | 周期预算候选前缀核验 |
@@ -36,7 +36,7 @@
 | `fundinglotruntime` | 0 | 当前未发现直接正式导入，需继续追踪间接路径 |
 | `fundinglotscan` | 18 | 正式资金读取与维护验证混合 |
 | `fundinglotverify` | 49 | 正式账单/资金读取依赖，不能直接删除 |
-| `maintenancescan` | 0 | 主要是专项/维护内部路径 |
+| `maintenancescan` | 0 | 仅 `historical` tag 下的专项/维护内部路径 |
 | `maintenancetrust` | 9 | 启动/维护相关依赖，需保留边界审计 |
 | `metering` | 5 | 当前推理、结算和报表依赖 |
 | `periodicbudgetprefix` | 4 | 候选周期预算路径，尚未确认正式在线接线 |
@@ -54,7 +54,7 @@
 - `internal/fundinglotcatalog` 的 `LegacyV1` 与 `WalletReadV2` 是资金 profile 判定的一部分，不能只按命名删除。
 - `migrations/original22.go` 验证 001–022 的历史迁移快照，当前被候选安装/历史验证使用。
 - `internal/periodicbudget/reader_pages.go` 将旧来源映射为 `legacy_customer` / `legacy_supplier`，这仍影响预算读取 DTO。
-- `internal/billing` 中存在 `legacy` 价格快照、资金读取和采购兼容语义。
+- `internal/billing` 中仍存在 `legacy` 价格快照、资金和采购兼容语义。只服务历史维护的 reader 已由 `historical` tag 隔离，当前 wallet/billing 主链文件保持默认编译。
 - 支付沙箱和 runtime 代码中仍保留旧资金摘要，用于验证测试环境事实未被篡改。
 
 ## 当前确认的候选/验证代码

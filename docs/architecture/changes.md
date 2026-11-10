@@ -5461,3 +5461,68 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `docs/verification/unified-metering.md`
 
 </details>
+
+## 2026-11-10T00:20:44Z · ec6a0eae6e57
+
+按ADR-005将历史维护raw reader、ProspectiveStore和维护扫描从默认当前构建图隔离；复核默认cmd依赖、当前billing、历史tag编译、默认build/vet/空测试编译及55439定向回归
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 54 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/decisions/ADR-005-pre-mvp-single-path.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/funding_financial_read.go`
+- modified `internal/billing/funding_financial_read_test.go`
+- modified `internal/billing/funding_ledger_facts.go`
+- modified `internal/billing/funding_ledger_maintenance_test.go`
+- modified `internal/billing/funding_ledger_query.go`
+- modified `internal/billing/funding_ledger_read.go`
+- modified `internal/billing/funding_ledger_read_integration_test.go`
+- modified `internal/billing/funding_ledger_read_test.go`
+- modified `internal/billing/funding_source_capture_facts.go`
+- modified `internal/billing/funding_source_capture_read.go`
+- modified `internal/billing/funding_source_facts.go`
+- modified `internal/billing/funding_source_read.go`
+- modified `internal/billing/funding_source_read_test.go`
+- modified `internal/billing/procurement_approval_read.go`
+- modified `internal/billing/procurement_approval_read_test.go`
+- modified `internal/billing/procurement_attempt_facts.go`
+- modified `internal/billing/procurement_attempt_read.go`
+- modified `internal/billing/procurement_attempt_read_test.go`
+- modified `internal/billing/procurement_budget_facts.go`
+- modified `internal/billing/procurement_budget_read.go`
+- modified `internal/billing/procurement_budget_read_test.go`
+- modified `internal/billing/procurement_command_read.go`
+- modified `internal/billing/prospective.go`
+- modified `internal/billing/prospective_test.go`
+- modified `internal/billing/retrieval_legacy_integration_test.go`
+- modified `internal/maintenancescan/complete_sources.go`
+- modified `internal/maintenancescan/complete_sources_test.go`
+- modified `internal/maintenancescan/funding_financial.go`
+- modified `internal/maintenancescan/funding_financial_test.go`
+- modified `internal/maintenancescan/funding_sources.go`
+- modified `internal/maintenancescan/funding_sources_test.go`
+- modified `internal/maintenancescan/ledger.go`
+- modified `internal/maintenancescan/ledger_test.go`
+- modified `internal/maintenancescan/periodic_budget.go`
+- modified `internal/maintenancescan/periodic_budget_test.go`
+- modified `internal/maintenancescan/periodic_prefix.go`
+- modified `internal/maintenancescan/periodic_prefix_test.go`
+- modified `internal/maintenancescan/procurement.go`
+- modified `internal/maintenancescan/procurement_test.go`
+- modified `internal/maintenancescan/sandbox_capture_links.go`
+- modified `internal/maintenancescan/sandbox_capture_links_test.go`
+- modified `internal/maintenancescan/source_wallet.go`
+- modified `internal/maintenancescan/source_wallet_test.go`
+- modified `internal/procurementattemptbirth/executor_adapter_postgres_test.go`
+- modified `scripts/maintenance-scan-qa/complete_source_edges_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- modified `scripts/maintenance-scan-qa/periodic_prefix_integration_test.go`
+- modified `scripts/maintenance-scan-qa/periodic_resources_test.go`
+- modified `scripts/maintenance-scan-qa/source_wallet_integration_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

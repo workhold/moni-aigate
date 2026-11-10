@@ -1,3 +1,5 @@
+//go:build historical
+
 package procurementattemptbirth_test
 
 import (

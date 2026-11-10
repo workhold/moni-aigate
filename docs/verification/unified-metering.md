@@ -505,3 +505,19 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 同一轮曾并行执行完整 `internal/billing` 与 `internal/server` race 包，两个包共用迁移 advisory lock，分别在 fixture 安装阶段超时，不能计为通过。之后清理连接并改为串行尝试，完整 billing 在历史 fixture 安装阶段超过 11 分钟后主动终止，未出现业务断言失败输出。因此本轮只把上述定向结果记为通过，不把整包 race 或 `make verify-mvp` 标为无条件全绿。
 
 完整九组 checker 的逐项正反闭包、变更023表 owner/ACL 形状主动拒迁、完整六文本商业矩阵、真实供应商、浏览器和生产环境验收仍未完成。
+
+## 2026-11-10：历史维护 reader 构建隔离
+
+只服务历史维护扫描的 billing raw reader、显式 `ProspectiveStore`、`internal/maintenancescan` 和 `scripts/maintenance-scan-qa` 统一使用 `historical` build tag。默认 `internal/billing` GoFiles 已移除 funding financial、ledger、source、procurement attempt/budget/approval/command reader，`go list -deps ./cmd/moni-aigate` 不含这些 reader 或 `internal/maintenancescan`。
+
+验证命令和结果如下。
+
+- `go build ./...`：通过。
+- `go test -run '^$' ./...`：通过。
+- `go vet ./...`：通过。
+- `go test -tags historical -run '^$' ./internal/billing ./internal/maintenancescan ./scripts/maintenance-scan-qa`：通过。
+- 55439 迁移拒绝矩阵：通过，108.445 秒。
+- 55439 billing 钱包、结算、采购、媒体定向 race：通过，40.622 秒。
+- 55439 server 图片、TTS、任务、Realtime、钱包定向 race：通过，3.619 秒。
+
+该片只改变默认构建可见性。历史 reader 没有被删除，历史专项必须显式使用 `-tags historical`，也没有把历史数据转换成当前数据。

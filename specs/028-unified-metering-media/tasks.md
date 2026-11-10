@@ -101,6 +101,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-10 028-U 拒绝矩阵扩展：新增 55439 PostgreSQL race 专项，覆盖金额与结算 guard、schema/capability 完整性、跨请求终态、重复观察身份、并发唯一性、失败回滚、标量投影撤除和函数权限；拒迁矩阵扩展到 41 类旧金融或采购事实，并确认拒绝后 schema 与原事实保持不变。该片扩大了负控证据，完整九组 checker 的逐项正反闭包、变更023表 owner/ACL 形状拒迁和完整六文本商业矩阵仍未闭合。
 
+2026-11-10 当前构建图清理：只服务历史维护扫描的 billing raw reader、显式 ProspectiveStore、`internal/maintenancescan` 和 maintenance QA 统一加 `historical` build tag。默认 `cmd/moni-aigate` 依赖闭包、`go build ./...`、`go test -run '^$' ./...` 和 `go vet ./...` 不再编译这些旧 reader；`-tags historical` 的 billing、maintenance scan 和 QA 包仍可编译。该片不改变当前 wallet/billing 主链或历史数据，完成的是构建路径隔离。
+
 2026-11-09 图片专项复核：图片 POST 在数据库中先重放已完成 `media_result_artifacts`，进程缓存清空或进程重启不会重新 Reserve、提交 provider 或创建第二 settlement；图片 GET 在数据库配置下不再使用过期或缺失 artifact 的内存完成缓存。新增跨租户/用户/Key 访问拒绝和未发送失败终态测试，验证命令与 mock/真实 PostgreSQL 边界见[028-U验证记录](../../docs/verification/unified-metering.md)。
 
 ## S / A / R / 交付

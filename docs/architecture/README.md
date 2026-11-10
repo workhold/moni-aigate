@@ -10,6 +10,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 当前服务迁移和启动入口使用 `migrations.ApplyCurrent`/`VerifyCurrent`。安装器只执行 `migrations/current_mvp.sql` 这一份当前基线，只接受空的当前数据库，并在业务 DDL 前拒绝历史 `schema_migrations`、已有业务关系或其他用户关系。旧库不升级、不转换，`ApplyThrough` 只供隔离历史 fixture 使用。
 
+只服务历史维护扫描的 billing raw reader、显式 `ProspectiveStore`、`internal/maintenancescan` 与 maintenance QA 使用 `historical` build tag。默认 `cmd/moni-aigate` 构建图、当前 billing 包和默认全包编译不包含这些 reader，历史专项通过显式 tag 保留。它们不进入当前 migrate、provision、serve、worker、wallet、billing、provider 或媒体运行路径。
+
 **2026-11-09 当前状态校正**：下方 2026-11-08 的媒体开发记录按当时提交顺序保留，但其中“尚未接入”的描述已被后续纵向接线覆盖。当前 `POST /v1/images/generations`、TTS、`/v1/tasks`、独立 worker 和 `/v1/realtime` 已进入当前 server/worker 入口；图片/TTS、video task 和 Realtime 使用当前媒体 Reserve/Attempt/Observe/Settle，异步制品正文与 Realtime provider identity 已持久化。已通过的范围是 55439 专库与 mock provider 的定向 race，以及本机临时 Compose 的迁移/provision/bootstrap/live/ready/重启验收。真实供应商、对象存储、浏览器业务调用、1Panel 和完整 028-U guard/商业出口仍未完成。
 
 Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本 turn 必须使用文本 request/reservation/attempt 三表，media-backed turn 必须使用 media 三表，不能因为 request ID 相同而交叉组合。该边界已有 55439 反例测试，仍不等同完整 U guard matrix。

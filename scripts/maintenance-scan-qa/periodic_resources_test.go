@@ -1,3 +1,5 @@
+//go:build historical
+
 package maintenancescanqa_test
 
 import (
