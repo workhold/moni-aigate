@@ -1,4 +1,4 @@
-.PHONY: test console build check verify-mvp architecture-check architecture-refresh procurement-layout-check
+.PHONY: test console build check verify-mvp verify-current-mvp architecture-check architecture-refresh procurement-layout-check
 architecture-check:
 	go run ./scripts/check-architecture
 procurement-layout-check:
@@ -26,3 +26,5 @@ verify-mvp:
 	go test -race -p 1 ./... -count=1 -timeout 1200s
 	go vet ./...
 	go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate
+verify-current-mvp:
+	@PATH="/opt/homebrew/bin:$$PATH" ./scripts/verify-current-mvp.sh

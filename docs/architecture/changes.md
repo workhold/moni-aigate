@@ -4393,6 +4393,10 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 
 </details>
 
+## 2026-11-10 · current MVP verification entry
+
+新增 `make verify-current-mvp` 和显式当前专项脚本，固定使用 55439 `moni_test`，逐组输出 current-only 数据库、028-U、账务、六文本、媒体/Realtime、provider、前端、vet 与 Compose smoke 的实际结果和耗时。入口不调用整仓历史 maintenance fixture；初始演练中 timeout wiring 在 provider 合入前失败、Compose task smoke 有一次瞬时 503，均保留为失败证据，主线合入 provider 后会重新执行。
+
 ## 2026-11-07T14:32:45Z · 0c5250705416
 
 028-U受限APP默认/组价、退款来源和恢复不重生成续片，保持完整guard与商业出口未验收

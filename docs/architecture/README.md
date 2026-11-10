@@ -1634,3 +1634,7 @@ README增加Python SDK使用示例，源码/Compose/1Panel步骤已按实际入�
 异步制品 metadata 与正文现在共用 `media_task_artifacts`。首次下载正文通过原 provider 后一次性写入，新的 Store 和新的短期 grant 可以在进程重启后读取正文，不会再次调用 provider。mock task adapter 按 task ID 恢复观察，worker/provider 重启只产生一个 attempt 和 settlement。
 
 上述是 mock provider 与 55439 隔离专库的限定本地验收。provider session 重启恢复、独立 worker 容器重启、真实供应商成本、对象存储、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未完成。
+
+### 当前 MVP 快速验收入口
+
+`make verify-current-mvp` 与统一运行架构没有新增模块或业务路径；它是一个显式验收编排入口，固定使用 `moni_test@127.0.0.1:55439/moni_test`，按当前 migration、权限/拒迁、028-U guard、钱包/账务、六文本、媒体/Realtime、provider、Go vet、前端和可用时的 Compose business-qa 分组执行。入口不调用整仓历史 maintenance fixture，实际命令与耗时记录见[当前 MVP 验收记录](../verification/current-mvp.md)和[运行手册](../runbooks/current-mvp-verification.md)。Compose 仍只提供 deterministic mock 工作流证据，不改变真实供应商、浏览器或生产验收边界。
