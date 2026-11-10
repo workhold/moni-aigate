@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T04:52:32Z",
-  "review_reason": "修复实际主进程 PostgreSQL 临时库 fixture 与 Compose 新卷 public schema owner 初始化边界的一致性；alert-main 和 shutdown/restart 专项通过，模块图、迁移拒绝和权限语义不变",
-  "snapshot_sha256": "8ca1e60c899611a0d3e0e3d16d071e672003062a5959788a1d09632599813313",
+  "reviewed_at": "2026-11-10T04:55:50Z",
+  "review_reason": "记录最终主线 Compose 五条业务链与重启恢复 smoke 复跑结果；仍明确 deterministic mock provider、本机内测和后置真实供应商/生产部署边界",
+  "snapshot_sha256": "f2b6c962c5e07ae158f064db53a8692936f50b9de7ad08d03229bb30b0c2ba20",
   "architecture_sha256": "d184d9b2cdf36ac1a72d50d32f61e2fbfe8b296b47af6e06d6be2aa33e78d51e",
-  "history_sha256": "19ff1a9756d4cf777aa1d5ab3283a4296ce5b63e702f7901c0d843dd7302bd69",
+  "history_sha256": "a3114c9b284d145cf7efcabaed2c81316a5f175816e55e6f48d849a764835cfa",
   "files": [
     {
       "path": ".dockerignore",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "b15a9bc72cb4269125719bd50c59ce0e7f4c3d4b125b5192ec9ef8a26a98104e"
+      "sha256": "39ea529305f2ced73853a773b5ba40ca7b81867a56c5d90444b799e6c53e3186"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",

@@ -64,6 +64,8 @@ go test -count=1 -timeout 900s ./migrations \
 
 `DEPLOY_QA_BUSINESS=true DEPLOY_QA_PORT=18090 scripts/deployment-qa.sh` 在更新后的主线通过。结果包括当前空库基线安装、二次迁移拒绝、重复 provision/bootstrap 拒绝、live/ready、文本调用、图片生成、TTS、异步 `video_generation` 创建/幂等提交/worker 结果、单 turn Realtime WebSocket，以及 app/worker/PostgreSQL 重启后的恢复检查。该 smoke 使用 deterministic mock provider，验证的是开发环境接口、权限、统一 wallet/settlement、任务制品和恢复接线，不是供应商 usage/cost 或生产部署认证。
 
+在 `codex/initial-mvp` 推送后的最终主线复跑中，上述 smoke 再次通过。Compose 使用 `docker-compose 5.7.0` 回退路径，仍属于 deterministic mock provider 的本机内测证据。
+
 同一轮发现 PostgreSQL 16 新卷的 `public` schema 默认 owner 可能是隐式 `pg_database_owner`，会被当前迁移身份拒迁门禁正确拒绝。`deploy/init-roles.sh` 已在创建应用角色前将该 schema owner 明确设置为 `moni_owner`，并重新通过脚本语法、Compose 配置和业务 smoke。这个修复只覆盖全新 Compose 卷，未放宽当前迁移的 owner/ACL 拒绝。
 
 实际主进程专项也同步该边界。`TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery` 与 `TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay` 在临时数据库创建后执行同等 owner 初始化，随后验证默认关闭、锁内取消、提交前 SIGKILL 回滚、提交回包未知、SSE drain、重启恢复和不重放。55439 race 两项均通过，测试修正不改变当前迁移 SQL。

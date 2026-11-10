@@ -5607,3 +5607,15 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `internal/server/main_shutdown_integration_test.go`
 
 </details>
+
+## 2026-11-10T04:55:50Z · f2b6c962c5e0
+
+记录最终主线 Compose 五条业务链与重启恢复 smoke 复跑结果；仍明确 deterministic mock provider、本机内测和后置真实供应商/生产部署边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+
+</details>
