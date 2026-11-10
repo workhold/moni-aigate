@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"mime"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -94,6 +95,14 @@ func (c *Client) Do(ctx context.Context, endpoint Endpoint, request *Request) (*
 				status = 504
 			}
 			return nil, failure(code, status, class, consumption)
+		}
+		var timeoutErr net.Error
+		if errors.As(err, &timeoutErr) && timeoutErr.Timeout() {
+			code := "upstream_connect_timeout"
+			if written.Load() {
+				code = "upstream_header_timeout"
+			}
+			return nil, failure(code, 504, ClassTimeout, consumption)
 		}
 		var known *Error
 		if errors.As(err, &known) {

@@ -372,15 +372,55 @@ func TestHeaderAndFirstEventTimeout(t *testing.T) {
 			defer srv.Close()
 			ctx, cancel := testContext(t)
 			defer cancel()
-			r, e := NewClient(ClientOptions{HeaderTimeout: 60 * time.Millisecond, FirstEventTimeout: 60 * time.Millisecond}).Do(ctx, fixtureEndpoint(t, srv.URL), fixtureRequest(t, true))
+			r, e := NewClient(ClientOptions{HeaderTimeout: 60 * time.Millisecond, FirstEventTimeout: 60 * time.Millisecond, IdleTimeout: time.Second, ProgressTimeout: time.Second}).Do(ctx, fixtureEndpoint(t, srv.URL), fixtureRequest(t, true))
 			if e == nil {
 				defer r.Close()
 				_, e = r.ReadEvent()
 			}
-			if e == nil || SafeToRetry(e) {
+			var pe *Error
+			if e == nil || !errors.As(e, &pe) || pe.Class != ClassTimeout || SafeToRetry(e) {
 				t.Fatal("timeout after HTTP write was retryable", e)
 			}
+			if headers {
+				if pe.Code != "upstream_first_event_timeout" {
+					t.Fatalf("first event timeout was misclassified: %v", pe)
+				}
+			} else if pe.Code != "upstream_header_timeout" || pe.Consumption != ConsumptionUnknown {
+				t.Fatalf("header timeout was misclassified: %+v", pe)
+			}
 		})
+	}
+}
+
+func TestIdleTimeoutIsSeparateFromFirstEventAndProgress(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		_, _ = io.WriteString(w, sse(`{"choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}`, "\n"))
+		w.(http.Flusher).Flush()
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+	ctx, cancel := testContext(t)
+	defer cancel()
+	r, err := NewClient(ClientOptions{
+		HeaderTimeout:     time.Second,
+		FirstEventTimeout: time.Second,
+		IdleTimeout:       60 * time.Millisecond,
+		ProgressTimeout:   time.Second,
+	}).Do(ctx, fixtureEndpoint(t, srv.URL), fixtureRequest(t, true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	if event, err := r.ReadEvent(); err != nil || event == nil {
+		t.Fatalf("first event: %+v %v", event, err)
+	}
+	_, err = r.ReadEvent()
+	var pe *Error
+	if !errors.As(err, &pe) || pe.Code != "upstream_idle_timeout" || pe.Class != ClassTimeout || SafeToRetry(err) {
+		t.Fatalf("idle timeout was misclassified: %v", err)
 	}
 }
 
