@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T12:31:43Z",
-  "review_reason": "更新028-U任务清单的当前MVP收口状态与正式Release Qualification剩余边界",
-  "snapshot_sha256": "ddc082437b2b256a6626422cac0a51e664823e0d34c47842e9a37b94fcb68bee",
-  "architecture_sha256": "e93456e65c4eba294e27005ad04491bb829738e14e8c1104cf856952d0f4db0d",
-  "history_sha256": "18de04a097e8bf96c16f83885fedeed5cc32a4381a5191e074fc8e2dd83ab458",
+  "reviewed_at": "2026-11-10T13:09:27Z",
+  "review_reason": "新增 baiyang OpenAI-compatible Chat qualification 入口、脱敏验证记录和供应商资格边界",
+  "snapshot_sha256": "a7af9509a686fb0312b3ad47a89fe40199cb43529d45931fa79e0577412d086b",
+  "architecture_sha256": "a30b104a9a3e7760e3cb76a5a02785199e048130765e21ff54855c6220a79679",
+  "history_sha256": "3611c26a24c13317909251778e3329a5ee3d98720c3fe88e9f508f8687b69f9a",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "13e9cf47d3fb40f7de5eea0ac7719c7d0be79dc773fd7f9eed45bf07c704daae"
+      "sha256": "3e1d3f5511c755135adabdfcbabb15c073a7f7a71df1f1818cb9fb6f06ef477b"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -213,7 +213,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "e0839acb38ca420adb4847544d1e0fe7c757148db1c8609891d8a2e0d9e18f47"
+      "sha256": "02956dac4872a44ccd76b54aa9b8b52448934188a636ef626018fee7a8ce22d7"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -1718,6 +1718,10 @@
     {
       "path": "docs/verification/protected-init-phase.md",
       "sha256": "6544e9b3ede4b8778ca7edcfc9dc6e53b33ce92c8b02c2ef8213a346243dc889"
+    },
+    {
+      "path": "docs/verification/provider-qualification-baiyang.md",
+      "sha256": "12f11063adee30338b10d7060869881e4b40a5b1f9ecbf9220ece0cf3191af1e"
     },
     {
       "path": "docs/verification/provider-usage.md",
@@ -6842,6 +6846,18 @@
     {
       "path": "scripts/payment-sandbox-qa/short.go",
       "sha256": "5af6379fd7bb77af22beb3211c6f3960ab9d62e42daefc9c3c2e6fdcf0eab5d0"
+    },
+    {
+      "path": "scripts/provider-qualification/README.md",
+      "sha256": "68c1bbb5f2f8082f1a820eae93b1260700ecec5bf9a3da1b0174626053ee727a"
+    },
+    {
+      "path": "scripts/provider-qualification/main.go",
+      "sha256": "be92f324e43df7b2d001776cf68b6a642b0a0b186ca50fc51de1d34ea9223574"
+    },
+    {
+      "path": "scripts/provider-qualification/main_test.go",
+      "sha256": "f6a4c05a45eb4601ca5c9ba4be239cb58f2c264a9bf7b8a152a6acbcb3830e00"
     },
     {
       "path": "scripts/requirements-native-sdk.txt",

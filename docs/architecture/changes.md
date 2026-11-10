@@ -5888,3 +5888,20 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T13:09:27Z · a7af9509a686
+
+新增 baiyang OpenAI-compatible Chat qualification 入口、脱敏验证记录和供应商资格边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2134 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/provider-qualification-plan.md`
+- added `docs/verification/provider-qualification-baiyang.md`
+- added `scripts/provider-qualification/README.md`
+- added `scripts/provider-qualification/main.go`
+- added `scripts/provider-qualification/main_test.go`
+
+</details>
