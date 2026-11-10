@@ -5619,3 +5619,17 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `docs/verification/unified-metering.md`
 
 </details>
+
+## 2026-11-10T06:49:47Z · cc40d0f9b6c1
+
+重建 current-only 空库迁移基线；同步迁移入口、当前对象集合、ACL、安装拒迁边界和验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/unified-metering.md`
+- modified `migrations/current_mvp.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

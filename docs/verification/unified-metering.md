@@ -1,5 +1,11 @@
 # 028-U统一计量验证
 
+## 2026-11-10：current-only 空库迁移基线
+
+`migrations/current_mvp.sql` 已从 PostgreSQL 16.15 的全新当前 schema 导出并规范化为单文件安装基线。当前安装器只执行该文件，不执行 001–023 的历史 SQL。快照保留当前服务所需的关系、函数、触发器、默认单例行、约束、索引和 ACL，函数统一固定为 `SECURITY INVOKER` 并使用当前 schema、`pg_catalog`、`pg_temp` 的搜索路径。旧迁移文件仍只供隔离历史 fixture 使用。
+
+候选基线在独立 worktree 完成了空库安装、非空/历史 schema 拒绝、实际 APP/PROJECTOR/PAYMENT_WORKER 权限矩阵、真实 PostgreSQL 主进程告警与 shutdown/restart 专项，以及全仓非 race Go 回归。全仓回归包含 billing、catalog、identity、operations、periodicbudget、server 和 migrations，均通过。该快照不改变 028-U 尚未完成的九组 guard、完整六文本商业矩阵、正式供应商和生产环境验收边界。
+
 ## 2026-11-10：当前 wallet funding 校验器身份
 
 024 与 `migrations/current_mvp.sql` 的当前片段创建 `payment_funding_journal_valid`，替换 `funding_journal_valid` 的当前调用并删除旧函数。021–023 原文件没有修改，历史 `Apply` fixture 仍保留原函数身份。角色静态基线同步核验新的函数名、语言、稳定性、摘要、固定搜索路径和执行角色边界。

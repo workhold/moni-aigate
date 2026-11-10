@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T04:55:50Z",
-  "review_reason": "记录最终主线 Compose 五条业务链与重启恢复 smoke 复跑结果；仍明确 deterministic mock provider、本机内测和后置真实供应商/生产部署边界",
-  "snapshot_sha256": "f2b6c962c5e07ae158f064db53a8692936f50b9de7ad08d03229bb30b0c2ba20",
-  "architecture_sha256": "d184d9b2cdf36ac1a72d50d32f61e2fbfe8b296b47af6e06d6be2aa33e78d51e",
-  "history_sha256": "a3114c9b284d145cf7efcabaed2c81316a5f175816e55e6f48d849a764835cfa",
+  "reviewed_at": "2026-11-10T06:49:47Z",
+  "review_reason": "重建 current-only 空库迁移基线；同步迁移入口、当前对象集合、ACL、安装拒迁边界和验证记录",
+  "snapshot_sha256": "cc40d0f9b6c1a62f7e59b2e1d8ea2b6a2b004741de66a321ee08f32ca2bc4fa4",
+  "architecture_sha256": "a2ecbaa9728ed38add196e274d9c63ac88395eddcb6b703a91cfd515d88aa417",
+  "history_sha256": "7d8df3dbeb95f6f09418740b10ff1000851fdd1c51c88ce1adc2c75b0d430ee5",
   "files": [
     {
       "path": ".dockerignore",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "39ea529305f2ced73853a773b5ba40ca7b81867a56c5d90444b799e6c53e3186"
+      "sha256": "4b45985301dda134e3f31fece12fa718c1a3fc620092526ee86e2ed94017ca66"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -6461,7 +6461,7 @@
     },
     {
       "path": "migrations/current_mvp.sql",
-      "sha256": "4ff557c547b2e0194d82035562c2b3c602bb6d9aca1fe556d232bcf52778bd0d"
+      "sha256": "c3aba37f5fa194bf6f66018e25d1124fe3fd2ab886969d4349d440e85d35381e"
     },
     {
       "path": "migrations/embed.go",
@@ -7817,7 +7817,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "1175dde36ee2a42257382e9b342c168e8e9de840e2b3c24582ae5a5b67d65d6e"
+      "sha256": "287aa752f194952e3da2ec30476d9be56746a7ad896e33adaf8217a511a1976d"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
