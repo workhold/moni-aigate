@@ -92,6 +92,12 @@ func drill() error {
 		return err
 	}
 	defer target.Close()
+	// PostgreSQL 15+ gives a fresh database a public schema owned by
+	// pg_database_owner; the current baseline requires the installing role to
+	// own it, exactly as deploy/init-roles.sh arranges for the Compose database.
+	if _, err = source.Exec(ctx, "ALTER SCHEMA public OWNER TO CURRENT_USER"); err != nil {
+		return err
+	}
 	if err = migrations.ApplyCurrent(ctx, source); err != nil {
 		return err
 	}
