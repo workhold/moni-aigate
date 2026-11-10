@@ -5905,3 +5905,16 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - added `scripts/provider-qualification/main_test.go`
 
 </details>
+
+## 2026-11-10T13:50:33Z · bea07523506f
+
+修复定价 HTTP 测试共享 admission 的 race，并修正周期预算测试对 current_ 追加迁移的基线统计；不改变运行时架构、权限或业务链路
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2134 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/server/pricing_publish_http_integration_test.go`
+
+</details>
