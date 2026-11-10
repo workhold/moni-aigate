@@ -554,6 +554,8 @@ U后台恢复仅观察/收尾原request/attempt及原证据；无网络生成许
 - 任意需要改变含义的旧model/capability/route/binding/price/cost配置行；不能猜schema、supplier合同、variant或对旧费率悄悄补新身份。原pricing group/tenant assignment等不含scalar的配置可以保留，但price publish operation必须无行；默认/组旧价格必须无行。
 - 原迁移/约束/函数依赖形状不符、有效owner/角色分离不符，或新关系名已被不明对象占用。不能通过忽略对象或CASCADE删除绕过。
 
+基线 ACL 形状也属于拒迁事实。024 执行时，当前 schema 和所有已有关系的 owner 必须是本次迁移身份；历史关系的 `relacl` 必须保持初始 NULL。由 019 明确撤销 PUBLIC 的六张告警表，以及 021/022 明确撤销 PUBLIC 的 `payment_%` 关系，可以只有迁移身份的完整 owner ACL。任意其他 PUBLIC、应用角色、投影角色、支付 worker、列级授权、显式 owner ACL 或 schema owner 改动都在第一条业务 DDL 前拒绝，且拒绝后 schema、行、ACL 和 migration history 不变。
+
 不受变更影响的用户/租户/成员/空Key、独立安全设置、零采购账户配置和payment/voucher未入账配置不要求删除；其原约束保持。若保留的配置通过FK依赖被拒绝的旧model/price，则整体仍拒绝。明确推荐在独立空库按current安装→provision→bootstrap→发布受审文本profile/route/双侧价→显式opening或人工核款的顺序验收。
 
 SQL安装资格至少覆盖以下实际PG原型，不能以纯核或fixture报告代替商业链路：

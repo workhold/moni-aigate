@@ -267,3 +267,29 @@ func TestUnifiedTextMeteringRejectsChanged023DependencyBeforeDDL(t *testing.T) {
 		t.Fatal("changed dependency rejection left a 024 relation")
 	}
 }
+
+func TestUnifiedTextMeteringRejectsChanged023ACLBeforeDDL(t *testing.T) {
+	f := newPrefixFixture(t)
+	prefixMust(t, "install exact023 baseline", ApplyThrough(f.ctx, f.pool, "023_wallet_sources.sql"))
+	var beforeACL string
+	prefixMust(t, "read original ACL", f.pool.QueryRow(f.ctx, `SELECT coalesce(relacl::text,'<NULL>') FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=current_schema() AND c.relname='users'`).Scan(&beforeACL))
+	f.exec(t, `GRANT SELECT ON users TO PUBLIC`)
+	var changedACL string
+	prefixMust(t, "read changed ACL", f.pool.QueryRow(f.ctx, `SELECT coalesce(relacl::text,'<NULL>') FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=current_schema() AND c.relname='users'`).Scan(&changedACL))
+	if changedACL == beforeACL {
+		t.Fatal("ACL fixture did not change the relation ACL")
+	}
+	if err := Apply(f.ctx, f.pool); err == nil {
+		t.Fatal("current migration accepted a changed 023 relation ACL")
+	}
+	var afterACL string
+	prefixMust(t, "confirm ACL unchanged after rejection", f.pool.QueryRow(f.ctx, `SELECT coalesce(relacl::text,'<NULL>') FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=current_schema() AND c.relname='users'`).Scan(&afterACL))
+	if afterACL != changedACL {
+		t.Fatalf("rejected migration changed relation ACL from %s to %s", changedACL, afterACL)
+	}
+	var meterSchemas bool
+	prefixMust(t, "confirm no 024 relation after ACL rejection", f.pool.QueryRow(f.ctx, "SELECT to_regclass('meter_schemas') IS NOT NULL").Scan(&meterSchemas))
+	if meterSchemas {
+		t.Fatal("ACL rejection left a 024 relation")
+	}
+}

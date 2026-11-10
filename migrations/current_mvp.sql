@@ -4552,10 +4552,38 @@ END $$;
 -- rationals over 1_000_000 so one final ceil matches the previous formula.
 
 DO $$
-DECLARE name text; n bigint;
+DECLARE name text; n bigint; owner_oid oid;
 BEGIN
  IF current_setting('server_version_num')::integer < 150000 THEN
   RAISE EXCEPTION 'unified text metering requires PostgreSQL 15 or later';
+ END IF;
+ SELECT oid INTO owner_oid FROM pg_catalog.pg_roles WHERE rolname=current_user;
+ IF owner_oid IS NULL OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=current_schema() AND nspowner=owner_oid) THEN
+  RAISE EXCEPTION 'unified text metering refuses changed schema owner';
+ END IF;
+ IF EXISTS(
+  SELECT 1 FROM pg_catalog.pg_class c
+  JOIN pg_catalog.pg_namespace ns ON ns.oid=c.relnamespace
+  WHERE ns.nspname=current_schema()
+    AND c.relkind IN ('r','p','v','m','f','S')
+    AND c.relowner<>owner_oid
+ ) THEN
+  RAISE EXCEPTION 'unified text metering refuses changed relation owner';
+ END IF;
+ IF EXISTS(
+  SELECT 1 FROM pg_catalog.pg_class c
+  JOIN pg_catalog.pg_namespace ns ON ns.oid=c.relnamespace
+  WHERE ns.nspname=current_schema()
+    AND c.relkind IN ('r','p','v','m','f','S')
+    AND (
+      c.relacl IS NOT NULL
+      AND NOT (
+        (c.relname LIKE 'payment\_%' ESCAPE '\' OR c.relname IN ('alert_control','alert_commands','alert_rules','alert_rule_runtime','alert_episodes','alert_episode_events'))
+        AND c.relacl=ARRAY[format('%s=arwdDxt/%s',current_user,current_user)::pg_catalog.aclitem]
+      )
+    )
+ ) THEN
+  RAISE EXCEPTION 'unified text metering refuses changed relation ACL shape';
  END IF;
  FOREACH name IN ARRAY ARRAY[
   'request_records','request_idempotency','reservations','upstream_attempts','metering_events',

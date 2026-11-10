@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T00:20:44Z",
-  "review_reason": "按ADR-005将历史维护raw reader、ProspectiveStore和维护扫描从默认当前构建图隔离；复核默认cmd依赖、当前billing、历史tag编译、默认build/vet/空测试编译及55439定向回归",
-  "snapshot_sha256": "ec6a0eae6e571273049fd643fe30493052db9f85135fa74fe499d6dd336cd8f4",
+  "reviewed_at": "2026-11-10T00:31:47Z",
+  "review_reason": "补齐024/current MVP在第一条业务DDL前的schema/relation owner与ACL形状拒迁，并记录021/022 payment ACL合法例外；复核迁移、权限、验证和当前构建图",
+  "snapshot_sha256": "706305ce6ec68261c58ac15ee9db1831a64641ae8184ff8c99e7a0c998aa3b90",
   "architecture_sha256": "8e2ff4dcd01989e6d97985bb6435a181ca0f76645571ce1c1d87e52886425df3",
-  "history_sha256": "ad33da7bfa4c7825b7f445a2f48ec894083119af147c972392015829fa2e9812",
+  "history_sha256": "843227a6a6a53e77cd48220b390677e631217c9ec5b3cefb63830f1141845039",
   "files": [
     {
       "path": ".dockerignore",
@@ -1437,7 +1437,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "200b35da11731298906f15cb47cac28f5493ff29a869d42281dda054f3b4bec4"
+      "sha256": "23cb3962ab8c3c77b9d34cd56f727dead15d793167ba9f8185dd417a5cda2eb6"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "12749876c06a4d425b9be7a8eab4e477668e30715862c10cc9511943c887ec54"
+      "sha256": "f65c6c21430881dbd975661e2bf911996a2d63eaddce014cc96357d15a30d7e9"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -6453,7 +6453,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "4531b23a8e727dc7ac66b2ec37a103b6ade03c46bf6de18d7ea803110b0b3172"
+      "sha256": "1af14c9da422588fb93b7ee2285d78b134ee16e56be6c2e0ded7107fc200151e"
     },
     {
       "path": "migrations/current.go",
@@ -6461,7 +6461,7 @@
     },
     {
       "path": "migrations/current_mvp.sql",
-      "sha256": "aab6fc1ef0b58025479d53d0a5ddd40c928b6f003cc552770c69ade9d52e7a2e"
+      "sha256": "a13fe0a1b693d013b3ac5c3972fc9a1ecd7780895ab854583ab859175f4877e2"
     },
     {
       "path": "migrations/embed.go",
@@ -6505,7 +6505,7 @@
     },
     {
       "path": "migrations/unified_text_metering_rejection_matrix_postgres_test.go",
-      "sha256": "f3d264566d2ddccda9105b708ef83738d0b8e1075f14aeb81e90ef17a3da9a1a"
+      "sha256": "d9160c33186ec861af7b3ff80f448327b1db2fa4e56fc516d706c5374d1ca8b5"
     },
     {
       "path": "migrations/unified_text_metering_rejection_postgres_test.go",
@@ -7817,7 +7817,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "d5180c55ab72e1ded3f5721e360aea9ea88b132a8fef2a9232a39df49e661ad3"
+      "sha256": "12d41a2cb16876ae427720bf257858cb82848f8a2503d8e53522524cd9901b30"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",
@@ -7829,7 +7829,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/u-storage-contract.md",
-      "sha256": "9e209c820b4909b8a17614846efa0d22e2a3ffd957929863cd6aea22c3601454"
+      "sha256": "af95985daa083a4c9dfa38f364862cd0ac7d815c5ee13df8b9c175de647d6c8c"
     },
     {
       "path": "web/.gitignore",

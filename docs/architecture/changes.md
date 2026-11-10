@@ -5526,3 +5526,21 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T00:31:47Z · 706305ce6ec6
+
+补齐024/current MVP在第一条业务DDL前的schema/relation owner与ACL形状拒迁，并记录021/022 payment ACL合法例外；复核迁移、权限、验证和当前构建图
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 7 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/current_mvp.sql`
+- modified `migrations/unified_text_metering_rejection_matrix_postgres_test.go`
+- modified `specs/028-unified-metering-media/tasks.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+
+</details>

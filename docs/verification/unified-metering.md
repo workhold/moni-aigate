@@ -521,3 +521,17 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 - 55439 server 图片、TTS、任务、Realtime、钱包定向 race：通过，3.619 秒。
 
 该片只改变默认构建可见性。历史 reader 没有被删除，历史专项必须显式使用 `-tags historical`，也没有把历史数据转换成当前数据。
+
+## 2026-11-10：023 owner/ACL 形状拒迁
+
+024 和 `current_mvp.sql` 的第一段拒迁检查现在核验迁移身份、schema owner、所有既有关系 owner 和 ACL 形状。普通 001–023 关系必须保持初始 NULL ACL。019 的六张告警表和 021/022 的 `payment_%` 关系允许仅有迁移身份的完整 owner ACL。任意额外 PUBLIC、应用、投影、支付 worker、列级或显式 owner ACL 在业务 DDL 前拒绝。
+
+55439 专库验证通过。
+
+- `TestUnifiedTextMeteringRejectsChanged023ACLBeforeDDL`
+- `TestUnifiedTextMeteringRejectsChanged023DependencyBeforeDDL`
+- `TestUnifiedTextMeteringRejectsEveryListedLegacyRelation`
+- 完整 `TestUnifiedTextMetering|TestMeterCompletenessRejectsGaps|TestCurrentInstaller` 矩阵通过，95.275 秒。
+- ACL 负控首次运行发现 021/022 payment owner ACL 是合法基线例外，已按实际 023 安装结果收紧白名单后重跑通过，未放宽普通关系 ACL。
+
+拒迁测试确认坏 ACL、坏依赖和旧事实拒绝后不留下 024 关系，原 ACL、行和 migration history 保持不变。

@@ -103,6 +103,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-10 当前构建图清理：只服务历史维护扫描的 billing raw reader、显式 ProspectiveStore、`internal/maintenancescan` 和 maintenance QA 统一加 `historical` build tag。默认 `cmd/moni-aigate` 依赖闭包、`go build ./...`、`go test -run '^$' ./...` 和 `go vet ./...` 不再编译这些旧 reader；`-tags historical` 的 billing、maintenance scan 和 QA 包仍可编译。该片不改变当前 wallet/billing 主链或历史数据，完成的是构建路径隔离。
 
+2026-11-10 023 基线 ACL 拒迁：024 与 current MVP 基线在第一条业务 DDL 前核验迁移身份、schema/relation owner 和既有 ACL 形状；普通关系保留 NULL ACL，019 告警表与 021/022 payment 关系只允许迁移身份 owner ACL。新增 55439 ACL 负控并通过完整迁移矩阵，坏 ACL/owner/依赖拒绝后不留下 024 关系或改变原 ACL/history。本项仍不等于完整九组 guard 和完整生产权限矩阵验收。
+
 2026-11-09 图片专项复核：图片 POST 在数据库中先重放已完成 `media_result_artifacts`，进程缓存清空或进程重启不会重新 Reserve、提交 provider 或创建第二 settlement；图片 GET 在数据库配置下不再使用过期或缺失 artifact 的内存完成缓存。新增跨租户/用户/Key 访问拒绝和未发送失败终态测试，验证命令与 mock/真实 PostgreSQL 边界见[028-U验证记录](../../docs/verification/unified-metering.md)。
 
 ## S / A / R / 交付
