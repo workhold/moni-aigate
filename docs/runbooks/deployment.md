@@ -47,7 +47,7 @@ docker compose up -d app worker
 
 `MFA_ENFORCE_PLATFORM=false`（未设置也为false）允许未绑定账号密码登录；`compose.yaml`将该变量传给app。设为true并重建app容器后，未绑定的平台管理员/财务账号必须先设置验证器；已经启用MFA的账号始终须第二因子，关闭强制策略不会取消个人绑定。敏感操作近期密码验证、权限、双人审批仍生效；本地二维码和手动绑定入口均保留。
 
-不带数据库URL的Compose配置会在容器内部建立owner/app/projection连接。`deploy/init-roles.sh`仅在全新PG卷初始化运行；已有卷改密码须通过数据库角色维护同步，不能只改.env。数据库不映射公网端口，app仅映射宿主机127.0.0.1。若机器不安装Go，可在有Go的开发机构建/生成私有env后安全传入；本项目不把示例MASTER_KEY当作可用秘密。
+不带数据库URL的Compose配置会在容器内部建立owner/app/projection连接。`deploy/init-roles.sh`仅在全新PG卷初始化运行，并先将`public` schema owner设为`moni_owner`，满足当前024/current MVP的迁移身份门禁；已有卷改密码须通过数据库角色维护同步，不能只改.env。数据库不映射公网端口，app仅映射宿主机127.0.0.1。若机器不安装Go，可在有Go的开发机构建/生成私有env后安全传入；本项目不把示例MASTER_KEY当作可用秘密。
 
 1Panel可使用“容器→编排”导入根 `compose.yaml`，编排项目目录与 `build: .` 的构建上下文均须指向完整仓库根目录；若导入界面把YAML保存到其他目录，须先将完整检出放入实际项目目录或按目标1Panel版本正确指定源目录，不能只复制YAML和初始化脚本。确认相对挂载路径 `deploy/init-roles.sh`、根Dockerfile/源码及私有 `.env` 均可被解析，先在测试目录验证变量注入、构建和依赖条件，再使用正式卷。当前容器运行与1Panel实装仍待目标环境验收，没有声称已上架1Panel应用商店或修改1Panel本体。
 

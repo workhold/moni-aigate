@@ -64,6 +64,8 @@ go test -count=1 -timeout 900s ./migrations \
 
 `DEPLOY_QA_BUSINESS=true DEPLOY_QA_PORT=18090 scripts/deployment-qa.sh` 在更新后的主线通过。结果包括当前空库基线安装、二次迁移拒绝、重复 provision/bootstrap 拒绝、live/ready、文本调用、图片生成、TTS、异步 `video_generation` 创建/幂等提交/worker 结果、单 turn Realtime WebSocket，以及 app/worker/PostgreSQL 重启后的恢复检查。该 smoke 使用 deterministic mock provider，验证的是开发环境接口、权限、统一 wallet/settlement、任务制品和恢复接线，不是供应商 usage/cost 或生产部署认证。
 
+同一轮发现 PostgreSQL 16 新卷的 `public` schema 默认 owner 可能是隐式 `pg_database_owner`，会被当前迁移身份拒迁门禁正确拒绝。`deploy/init-roles.sh` 已在创建应用角色前将该 schema owner 明确设置为 `moni_owner`，并重新通过脚本语法、Compose 配置和业务 smoke。这个修复只覆盖全新 Compose 卷，未放宽当前迁移的 owner/ACL 拒绝。
+
 ## 当前 TTS 与统一管理输入边界
 
 `POST /v1/audio/speech` 当前只发行 `mock-tts` 的 `wav` profile。HTTP 层严格校验单值 `Content-Type`、闭合 JSON、UTF-8、文本字符数、voice、WAV RIFF/fmt/data 结构和单值 `Idempotency-Key`。provider 必须返回 `confirmed_final` 且字符数与请求一致，服务才调用统一 `FinalizeMedia`。provider error、未知提交或 usage/音频结构不可信时分别记录终态，重复键不会再次调用 provider。管理端的每百万 token 整数输入已重命名为明确的 `ManagementToken*` 转换入口，只在边界一次转换为当前 canonical rational vector，运行时不再保留 `LegacyToken*` scalar API。

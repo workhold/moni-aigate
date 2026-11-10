@@ -22,6 +22,8 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 
 2026-11-10 wallet 身份收口：当前 `ApplyCurrent` 基线在 024 片段创建 `payment_funding_journal_valid`，替换 `funding_journal_valid` 的当前调用并删除旧函数；021–023 原文件仍保留 `payment_legacy_funding_journal_valid` 供隔离历史 fixture 使用。角色静态基线、实际 LOGIN 的 APP/PROJECTOR/PAYMENT_WORKER 权限检查和 current MVP 安装均已同步通过。该片只收口当前函数身份，不改变 manual credit、voucher、sandbox capture 或 wallet opening 的资金事实。
 
+2026-11-10 Compose owner 修复：`deploy/init-roles.sh` 在空库初始化时先将 `public` schema owner 设置为 `moni_owner`，与 024/current MVP 的迁移身份门禁一致。它只影响新 PostgreSQL 卷的初始化，不放宽迁移 owner/ACL 检查；已有卷仍按迁移拒绝和角色配置合同处理。
+
 2026-11-10 拒绝矩阵扩展：新增 55439 PostgreSQL race 专项覆盖金额与结算、schema/capability、跨请求终态、重复观察、并发唯一性、失败回滚、标量投影撤除和函数权限，并扩展 024 拒迁负控到 41 类旧金融或采购事实。拒绝后 schema 与原事实保持不变。变更023表 owner/ACL 形状的主动拒迁和完整九组 checker 正反闭包仍未完成。
 
 异步 task 的公开准备链现在可以从 owner-scoped request detail 读取原 profile、reservation、attempt 身份，资金页读取原 funding lot/source 身份，再按 task 合同提交。服务端仍校验这些引用属于同一租户和原 request，不把缺失引用转换成新的商业事实。

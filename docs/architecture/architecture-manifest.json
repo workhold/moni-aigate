@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T02:59:20Z",
-  "review_reason": "028-U 角色权限闭包新增表级 TRUNCATE、REFERENCES、TRIGGER PostgreSQL 负控；无运行时数据关系、请求链路或权限策略变化",
-  "snapshot_sha256": "b1ddde0461fc86d8310d0623711be0b5a9e86003d0902f68e08a94f4676100af",
-  "architecture_sha256": "c70d718c7584d9bd433af572b58b866f5508da84cfe80a1608a14c97e69fba7d",
-  "history_sha256": "700a619df6527845e7c6a62f9b5677551cf7d8915092d29bb306d01ec4e80867",
+  "reviewed_at": "2026-11-10T03:46:42Z",
+  "review_reason": "集成028-U wallet funding 校验器当前身份收口、保留 wallet_opening 分支、补计量角色写权限负控，并修复 Compose 新卷 public schema owner 与当前迁移身份门禁的一致性；同步部署手册和验证记录",
+  "snapshot_sha256": "4234a5f102a8badaf645e4c147c13e7a3599b54082953c27cad3623babddc0cb",
+  "architecture_sha256": "05fe30457f7e32906511ebe735522528550d5f54cf0352a473b67571791b95d2",
+  "history_sha256": "f95d223c4431d0e4e4ede855d1c2ed2ddfad1aa53a99df1295b61e66d33dcf7a",
   "files": [
     {
       "path": ".dockerignore",
@@ -93,7 +93,7 @@
     },
     {
       "path": "deploy/init-roles.sh",
-      "sha256": "baa28caf015d6222224378e1b047bc645491e6469027fd5b9f2ffb12fe2b3d42"
+      "sha256": "2bdb93f80ad68016c596b6891e33ee889f3bcdc8a5f7dac638778413f40630dc"
     },
     {
       "path": "deploy/nginx.conf",
@@ -229,7 +229,7 @@
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "a8d749f6bf20bc5ddd6a1e71eb48606f05b8c66d98618d6d695a12af87fc70f4"
+      "sha256": "363b0496250eb03eddafef0375ef67c3e623752758bae418c3057445481ce2b0"
     },
     {
       "path": "docs/runbooks/development.md",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "06ff82e94def62e2d9db8d279e95487b84a562abf5ec47c6855670b43ac01997"
+      "sha256": "122c7d6960d78b117ac1f901c3c2aed473cce7f485b5ac031232aa93e647bd03"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -4109,7 +4109,7 @@
     },
     {
       "path": "internal/operations/payment_roles_functions.go",
-      "sha256": "de30905773ee5871f6fc7d054caa632e0a7cbd03ba55a1322a2fb4d8a82572b3"
+      "sha256": "bee03002b68042818db69e5c123f4371ca7f1cf2cf2deb0c201f82e56cf59fa9"
     },
     {
       "path": "internal/operations/payment_roles_test.go",
@@ -6453,7 +6453,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "7b67059a256a03950e2752f467f366a9ef44e59332e477852bda5789880fe4d8"
+      "sha256": "6b28b3786d853782f137a89f769bca35d32fd981d848f3fe685961c99cdf0a87"
     },
     {
       "path": "migrations/current.go",
@@ -6461,7 +6461,7 @@
     },
     {
       "path": "migrations/current_mvp.sql",
-      "sha256": "2952aa2c3ac5a23e68270841f06afafe4447ffd5726f257aa80fc3ea902bffe6"
+      "sha256": "4ff557c547b2e0194d82035562c2b3c602bb6d9aca1fe556d232bcf52778bd0d"
     },
     {
       "path": "migrations/embed.go",

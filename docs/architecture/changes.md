@@ -5576,3 +5576,20 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `migrations/unified_text_metering_guard_gaps_postgres_test.go`
 
 </details>
+
+## 2026-11-10T03:46:42Z · 4234a5f102a8
+
+集成028-U wallet funding 校验器当前身份收口、保留 wallet_opening 分支、补计量角色写权限负控，并修复 Compose 新卷 public schema owner 与当前迁移身份门禁的一致性；同步部署手册和验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `deploy/init-roles.sh`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/current_mvp.sql`
+
+</details>
