@@ -5775,3 +5775,20 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `docs/verification/unified-metering.md`
 
 </details>
+
+## 2026-11-10T10:56:45Z · 608294bf1df9
+
+新增 current-only 默认运行时路径审计脚本，并补充真实二租户 HTTP/WS 等价内测 smoke 证据；只更新架构入口、验收记录与清单，不改变业务运行模块
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2124 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/browser-qa.md`
+- modified `docs/verification/current-mvp.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- added `scripts/browser-qa/http_security_smoke_test.go`
+- added `scripts/current-runtime-path-audit.sh`
+- modified `scripts/deployment-business-qa.sh`
+
+</details>

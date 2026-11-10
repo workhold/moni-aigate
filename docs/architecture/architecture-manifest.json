@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T09:59:43Z",
-  "review_reason": "补记主分支 current MVP 17 组验收全部通过；验证入口、媒体 mock/inner-test、当前 guard 与未完成的真实供应商/完整商业边界保持一致",
-  "snapshot_sha256": "cc68243748de1f342ec7aa004242aa73299f88cf4db72fb65e45b7bc3f4e0730",
-  "architecture_sha256": "113153957f6477e9654f46bfe2d207ba3ed14ae00d90649f79cf0e5b30bd68d6",
-  "history_sha256": "a4408cef4fab2d6a156f8bc57be0853a5b03ea42bb8b7d4167950cc47e2d3ec1",
+  "reviewed_at": "2026-11-10T10:56:45Z",
+  "review_reason": "新增 current-only 默认运行时路径审计脚本，并补充真实二租户 HTTP/WS 等价内测 smoke 证据；只更新架构入口、验收记录与清单，不改变业务运行模块",
+  "snapshot_sha256": "608294bf1df90bd0ddc1a391087311d7cdeaef291b4efd6b5964c7ed80f03864",
+  "architecture_sha256": "30fa5dbf8c13b993faca96a17b771a5871093f42ebc3de9e7e5cb97dd296889f",
+  "history_sha256": "510658ddd344aa0be1351adf0671b0af03a5da32781a81bba7f9c6d0ab53705c",
   "files": [
     {
       "path": ".dockerignore",
@@ -744,6 +744,10 @@
       "sha256": "11e0ed3487a49e6d331df6324ea25070d0f0feb08c92d097f0cf86a58d02d850"
     },
     {
+      "path": "docs/verification/browser-qa.md",
+      "sha256": "d51d76334dafb4fed0899c89902001d591a56b554f979dc617e4baa9c7f505b2"
+    },
+    {
       "path": "docs/verification/c0-integration.json",
       "sha256": "3f885173c9c45c21969e7bd8816363e0ac45c55dc4ab745dcd3d9ebaa964b622"
     },
@@ -1041,7 +1045,7 @@
     },
     {
       "path": "docs/verification/current-mvp.md",
-      "sha256": "dddf3ab6d6648a40660617f47aed371a7818c316c8fb69f78ea81086fa7009b9"
+      "sha256": "0e383e17eb8453352eff5703cf5f65e66b1b5e4ea5f66c2abeeb0cfedc0b0758"
     },
     {
       "path": "docs/verification/dispatch-read-batches.md",
@@ -1453,7 +1457,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "a8b623bb04507df9736ca870f75a342326b974f38ed66f58eec6d2cd705d393a"
+      "sha256": "569ddf0df58803a58853ccdbb58d423684f3992a38567de878bd41002387b930"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -6580,6 +6584,10 @@
       "sha256": "cf57894cd3ef48b24d42d03d3c35039cc333d11c0082dfa26c92fc6fe411ee2d"
     },
     {
+      "path": "scripts/browser-qa/http_security_smoke_test.go",
+      "sha256": "b779491ab32d00b0f3d17c7ccfd61d848753e1facb795ee5fc70e1bbafc92360"
+    },
+    {
       "path": "scripts/browser-qa/lifecycle_seams.go",
       "sha256": "2660d3ecfa3861176eb85dcb4cb89eb24fbc18d9c608762769e13792f60141fa"
     },
@@ -6660,6 +6668,10 @@
       "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
     },
     {
+      "path": "scripts/current-runtime-path-audit.sh",
+      "sha256": "bf33041a528e81aad35ba92ff15c75cef59d6ed66ec607952421289a066b571c"
+    },
+    {
       "path": "scripts/deployment-business-provision.sh",
       "sha256": "88c7156015a7287ccfbb3a8ebced84a20697e6951eced53a8efaee06c5253248"
     },
@@ -6669,7 +6681,7 @@
     },
     {
       "path": "scripts/deployment-business-qa.sh",
-      "sha256": "0d3aa2ba29c9e63e44f57ecc708d166b688f5da58f3e563ce7456866a7e31a16"
+      "sha256": "525a42246872f91db97492eab906c921e30cf27f2917adc007bc4febce5b8ea3"
     },
     {
       "path": "scripts/deployment-business-qa.test.sh",
