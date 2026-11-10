@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T11:31:03Z",
-  "review_reason": "校正最终 current MVP 验收分组统计；028-U guard closure 已纳入既有 guard 组，不新增运行模块",
-  "snapshot_sha256": "8adc6baa477fe6cb1250e98038201296f00dae1d3ff60f837bd7f80391d04a84",
-  "architecture_sha256": "4ef71030d8dbdf67130464f1146e8c9f0a4e3156ec56b0efae5e5d91c7926744",
-  "history_sha256": "862d4ec56ad8528668e7185c9c19d911a5b1a5ae6dd7a9a9184edad2ca000715",
+  "reviewed_at": "2026-11-10T12:26:00Z",
+  "review_reason": "最终18组 current MVP 门禁更新备份恢复随机证据；复核架构正文、验证记录、权限边界和当前运行路径后同步快照",
+  "snapshot_sha256": "33991d66d873664218968f26ef266b9af2d62ef84fef2376bac3227ffb76595b",
+  "architecture_sha256": "e93456e65c4eba294e27005ad04491bb829738e14e8c1104cf856952d0f4db0d",
+  "history_sha256": "9562e1977894ee034dd23f3e083745627c7a7319ee705b585dc0ec151997a12a",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "ff820b76b43431ae278d25c2b08456ab05af1829c9c4206b436ad0d29cba8cc6"
+      "sha256": "13e9cf47d3fb40f7de5eea0ac7719c7d0be79dc773fd7f9eed45bf07c704daae"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -233,7 +233,7 @@
     },
     {
       "path": "docs/runbooks/current-mvp-verification.md",
-      "sha256": "2d92a0b79049179857a77ecec102e3bc364d8c630b551aaa7102e70caa4077c8"
+      "sha256": "de105e81915ace23e5d2aa013021db1e22278c5dcf9db2c850f24e385ebe70ef"
     },
     {
       "path": "docs/runbooks/deployment.md",
@@ -249,7 +249,7 @@
     },
     {
       "path": "docs/verification/028-u-guard-matrix.md",
-      "sha256": "6e4e2bc7b6267ad426cea046392f89cd6c15bc80d15c3c48075855838a389e1d"
+      "sha256": "cda131a07e3d2aa7f976c3e0b178d70b2a49a8042a1aaef99b6d2303db0a0049"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -725,7 +725,7 @@
     },
     {
       "path": "docs/verification/backup-restore-local.json",
-      "sha256": "1e62bc6a35251bbb75a8b77b98aa711b86e370ea74f0cbf4029d4a3c986fe1c7"
+      "sha256": "fbe85de143a912815a3eaf9fd0ef0d54a694389c70dee9323ad89cf3c77f5113"
     },
     {
       "path": "docs/verification/backup-restore.md",
@@ -1045,7 +1045,7 @@
     },
     {
       "path": "docs/verification/current-mvp.md",
-      "sha256": "a0b3d8af572efbf5862393df9cc8c83477832937510bc5d9a50a8aa8b1d18e6f"
+      "sha256": "4fc75f73dc7337204896eb07e7c107c2c344c198548e46c5324b7c5ac67c56cc"
     },
     {
       "path": "docs/verification/dispatch-read-batches.md",
@@ -1720,6 +1720,10 @@
       "sha256": "6544e9b3ede4b8778ca7edcfc9dc6e53b33ce92c8b02c2ef8213a346243dc889"
     },
     {
+      "path": "docs/verification/provider-usage.md",
+      "sha256": "d67d706e12bd3c14e32462254dc2816846574c261a2fd402b2c7ca10640a05ed"
+    },
+    {
       "path": "docs/verification/public-catalog-020-browser.json",
       "sha256": "4dfa2160a3902b9a9f7713010f66e38b4977a2084c9060837c713cc97a7e8f6c"
     },
@@ -1825,7 +1829,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "f6228bbfe826f01039fe6cc5158f3c36aa8107e080a7068d3115fdc3e6f70b3b"
+      "sha256": "548cf88a18b75b77cab40056bf563dfb2d6b94ea21de77836a4fa7dd3660b6bc"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -5573,7 +5577,7 @@
     },
     {
       "path": "internal/provider/client.go",
-      "sha256": "31167b908d637a27d7b32280262f176bef0be9087ffc51cfabec936b346e3b76"
+      "sha256": "a423f643f19b5cfe112bc5bfaf866db75e4d5300493a386cd6d48d4dae2fb37a"
     },
     {
       "path": "internal/provider/discovery.go",
@@ -5665,7 +5669,7 @@
     },
     {
       "path": "internal/provider/response_test.go",
-      "sha256": "336006a9219e339183f6e0e179d12b1d2a7a35a8588d95b64980768048fb7fd7"
+      "sha256": "d1e1376354d2e89745f5917a7b18bd6ce30a0b7f2f29fddfc28de9dd88985a50"
     },
     {
       "path": "internal/provider/retrieval_request.go",
@@ -5945,7 +5949,7 @@
     },
     {
       "path": "internal/server/cost_vector_application_integration_test.go",
-      "sha256": "37f9a1eee21744e8d859224d69f2257d9ad626a4ec26f0e0de46a67af925cb16"
+      "sha256": "ad2b57fe8596b251ed97db96075880b6f58fcd36310bbbf8336d4094c6ee9a1f"
     },
     {
       "path": "internal/server/credential_pool.go",
@@ -6528,6 +6532,10 @@
       "sha256": "9e93315f981652136e88db8b64692b3eb0488e7cd78eaab51e0064ba98d9d1d1"
     },
     {
+      "path": "migrations/unified_text_metering_guard_audit_postgres_test.go",
+      "sha256": "63caf1c2cd9cd669e69bf7f3af4d01c3891a3719775c1e8dc9e5228c2d3426ca"
+    },
+    {
       "path": "migrations/unified_text_metering_guard_closure_postgres_test.go",
       "sha256": "28405a529e273f4da901b63c9a9c296cf2b4475159bce5d81f2b3eca48574f99"
     },
@@ -6581,7 +6589,7 @@
     },
     {
       "path": "scripts/backup-restore-drill.go",
-      "sha256": "5c72b9531ba3ef493883985f61ebf6907167a4b8f4993dc008bbfd96cf38ab4c"
+      "sha256": "6ef1473fc3933e85a8f91f6748863665b45084b9d3adc13c2c3713639835f401"
     },
     {
       "path": "scripts/backup.sh",
@@ -6849,7 +6857,7 @@
     },
     {
       "path": "scripts/verify-current-mvp.sh",
-      "sha256": "e020a717402aa102865e39d9417674e4bfa7ce24fada908e34b980ce3ed96b53"
+      "sha256": "05b534b1503b8697336a0dc33fdf7103ef218727380f0c5798133175af331ee7"
     },
     {
       "path": "scripts/verify-native-sdk.py",

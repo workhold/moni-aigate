@@ -43,7 +43,7 @@ TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disabl
 | 结构检查 | 当前架构和采购布局的只读检查 |
 | current-only 安装 | 空库安装、`VerifyCurrent`、追加迁移、历史库/非空库拒迁 |
 | 权限与拒迁 | 实际 LOGIN 角色、APP/worker/payment 边界、历史业务事实拒绝 |
-| 028-U guard | canonical、schema/capability、quote、attempt、observation、finalization、supplier projection、closure、并发、回滚和权限专项 |
+| 028-U guard | schema/capability/route/retail/supplier 五类全局事实与 request/attempt/observation/finalization/procurement 五类租户事实的十类 guard；canonical、quote、并发、回滚、实际 LOGIN 表面和权限专项 |
 | wallet/billing/settlement | 手动充值双审、钱包来源、预占、结算、退款、媒体钱包和回滚 |
 | 备份恢复 | current-only source/target `VerifyCurrent`、checksum、恢复到新空库、恢复锁、收费写入封锁、钱包/账本/审计事实和备份点后事实边界 |
 | 六种文本 | Chat、Responses、Messages、Embeddings、Rerank、Gemini 的统一报价、采购、计量、结算和幂等链路 |
@@ -73,7 +73,7 @@ TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disabl
 GOCACHE=/tmp/moni-aigate-final-gocache make verify-current-mvp
 ```
 
-18 个分组全部通过：架构与采购布局、current-only 安装/追加、旧事实拒迁与实际 LOGIN 权限、028-U 当前 guard（含 closure）、wallet/funding/billing/settlement、备份恢复与 recovery lock、provider usage/timeout、provider/config/catalog/server 编译 race、配置与价格 operation race、Config→Server timeout wiring、六文本商业链、图片/TTS/异步 video/Realtime PostgreSQL 路径、媒体状态机安全、Go vet、前端342项测试、前端生产构建和 Compose business-qa smoke。Compose 实际覆盖空库迁移与幂等重跑、provision/bootstrap、防重复 bootstrap、文本/图片/TTS/task/Realtime，以及 app/worker/PostgreSQL 重启恢复。
+18 个分组全部通过：架构与采购布局、current-only 安装/追加、旧事实拒迁与实际 LOGIN 权限、028-U 十类 guard（含 closure 和全局事实审计）、wallet/funding/billing/settlement、备份恢复与 recovery lock、provider usage/timeout、provider/config/catalog/server 编译 race、配置与价格 operation race、Config→Server timeout wiring、六文本商业链、图片/TTS/异步 video/Realtime PostgreSQL 路径、媒体状态机安全、Go vet、前端342项测试、前端生产构建和 Compose business-qa smoke。Compose 实际覆盖空库迁移与幂等重跑、provision/bootstrap、防重复 bootstrap、文本/图片/TTS/task/Realtime，以及 app/worker/PostgreSQL 重启恢复。
 
 Compose 和媒体使用 deterministic mock，只证明开发环境内测的接口、权限、计量、钱包边界和恢复行为，不证明真实供应商 usage/cost、浏览器验收或生产部署。该入口有意排除历史 maintenance fixture；历史 full-race 超时不被改写为当前 MVP 通过。完整 028-U 商业出口与目标环境权限闭包、真实供应商、正式支付、1Panel、HA 和性能门禁仍未完成。
 

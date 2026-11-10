@@ -22,7 +22,7 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-10 媒体 provider 安全边界收口：`MEDIA_PROVIDER_PROFILE` 默认是 `inner-test`，`MEDIA_DETERMINISTIC_MOCK=true` 只在 `development` 或显式 `business-qa` 配置下启用 deterministic mock；app 和 worker 使用同一组配置，生产默认不会自动启动 mock。inner-test 没有真实 adapter 时，图片、TTS、`video_generation` 和单 turn Realtime 在预占前返回 `provider_unavailable`，不产生 reservation、attempt、observation、settlement、钱包或供应商成本事实。mock 成功只写标记为 mock 的工作流事实，usage/supplier cost 保持 missing/unknown，客户收费为零；failed、timeout、sent/unknown 均不重试。该边界已由 55439 专库的受限 HTTP/WS 与配置测试覆盖，不代表真实供应商认证。
 
-2026-11-10 当前 MVP 集成复核：统一 current-only migration、provider 契约、028-U guard 矩阵、wallet/billing/settlement、六种文本、图片、TTS、异步 `video_generation`、单 turn Realtime、Compose 单机部署和 mock provider 安全边界已在 `codex/initial-mvp` 汇合。55439 专库定向 race、前端342项、Go build/vet、空库安装/拒迁/权限和 `DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 均通过；后者实际覆盖迁移、provision/bootstrap、文本/图片/TTS/task/Realtime 以及 app/worker/PostgreSQL 重启。完整九组 U guard 正反闭包、真实供应商、浏览器、1Panel、正式支付、HA 和性能仍是后置或未完成验收。
+2026-11-10 当前 MVP 集成复核：统一 current-only migration、provider 契约、028-U 十类 guard、wallet/billing/settlement、六种文本、图片、TTS、异步 `video_generation`、单 turn Realtime、备份恢复、Compose 单机部署和 mock provider 安全边界已在 `codex/initial-mvp` 汇合。55439 专库定向 race、前端342项、Go build/vet、空库安装/拒迁/权限、恢复锁/钱包/账本/关键业务事实和 `DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 均通过；Compose 实际覆盖迁移、provision/bootstrap、文本/图片/TTS/task/Realtime 以及 app/worker/PostgreSQL 重启。真实供应商、浏览器、1Panel、正式支付、HA 和性能属于后续 Release Qualification。
 
 当前 HTTP/WS 等价内测只读 sidecar 为 `scripts/browser-qa/current-mvp-smoke.sh`：它消费已有部署的当前 API Key、模型和 Realtime URL，强制本机 `TEST_DATABASE_URL` 为 55439 的 `moni_test`，并复用现行 `deployment-business-qa.sh` 的文本 HTTP 与 Realtime WebSocket 断言。它不属于默认运行时、不执行 provisioning、不连接数据库，也不复用 Go `browser-qa` 的 identity/model lifecycle fixture；该入口仍只证明当前 disposable/mock 内测边界。
 
@@ -32,7 +32,7 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本 turn 必须使用文本 request/reservation/attempt 三表，media-backed turn 必须使用 media 三表，不能因为 request ID 相同而交叉组合。该边界已有 55439 反例测试，仍不等同完整 U guard matrix。
 
-当前 U guard 专项已补齐一组 55439 PostgreSQL 负控矩阵，覆盖跨租户/跨 request-attempt、不可变快照与最终证据、Observation 来源闭集、成本指针互斥、资金边界回滚和计量角色 ACL。它是当前迁移的实证扩展，完整九组 guard、历史金融拒迁和目标环境权限验收仍按任务清单开放。
+当前 U guard 专项已补齐十类 55439 PostgreSQL 证据：全局 schema/capability/route/retail/supplier 事实按合同标记跨租户 N/A，并验证共享原件、完整性、绑定、canonical/digest、不可变性、并发和回滚；request/attempt/observation/finalization/procurement 事实验证跨租户、跨 request/attempt、错误绑定和权限边界。closure 还覆盖 deferred 聚合回滚、source identity 并发冲突和实际 LOGIN 计量表/函数 ACL。历史金融拒迁与当前迁移权限仍由独立矩阵验证。
 
 2026-11-10 权限定义收口：024 与 `current_mvp.sql` 在所有 `meter_%` 函数创建完成后统一设置 `SECURITY INVOKER`、固定到当前 schema 加 `pg_catalog, pg_temp` 的搜索路径并撤销 PUBLIC 执行权。`internal/operations` 的角色核验逐函数确认 APP 可执行、projector/PUBLIC 不可执行，且不接受 SECURITY DEFINER 或未固定搜索路径。55439 实际 LOGIN、迁移 guard 与回归专项通过。该片只收紧函数定义与检查，不扩大计量表写权限，也不关闭完整九组 guard 和旧金融拒迁矩阵。
 
@@ -467,7 +467,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 退款v2纯协议（022-C1-P） | v1已验capture只读桥、严格六种DTO、四摘要域与三用途HMAC、不可变opaque；独立Python向量及race/vet/fuzz通过，无运行接线 | [纯包](../../internal/paymentrefundproto)、[精确合同](../../specs/022-self-service-payments/c1-protocol-v2-contract.md)、[独立向量](../verification/payment-refund-v2-golden.json)、[验证](../verification/payment-refund-protocol-v2.md) |
 | 退款v2本地模拟（022-C1-M） | 隔离mock overlay已通过命令/查询canonical、终局fact、累计上限/并发、冲突、not_seen/in_progress和immutable query专项；仍未接入普通runtime、签名HTTP/UI、C1-S生产SQL或钱包Q/F资金效果 | [协议输入](../../internal/mockpsp/refund_input.go)、[仓储](../../internal/mockpsp/repo_refunds.go)、[集成专项](../verification/payment-refund-c1-m.md)、[schema资源](../../internal/paymentrefundschema)、[模拟合同](../../specs/022-self-service-payments/c1-m-mock-contract.md)、[SQL候选](../../specs/022-self-service-payments/c1-m-mock-schema.sql) |
 | 通用向量计量纯层（024-B0-P） | 闭合八维、两侧完整schema绑定、有理率总和一次ceil、上界/actual区分、规范摘要和旧token等价adapter；专项race/vet/fuzz通过，尚未被网关运行模块调用 | [纯模块](../../internal/metering)、[冻结合同](../../specs/024-extension-platform/b0-pure-contract.md)、[证据](../verification/metering-vectors.md) |
-| 统一计量共同值域（028-U阶段1） | 024候选迁移已在空库落地两维文本schema、profile/计划/报价/观察/终态向量；6a–6d 已接完整发布operation、catalog/routing/billing复验、报表/采购读端、客户R/结算/capability/route complete guard，以及受限APP六协议局部链。11.2 procurement evidence identity 拒迁、attempt quote/parent plan、跨租户 snapshot 和实际 LOGIN ACL 负控已有 55439 证据。完整九组guard、六文本全矩阵、浏览器、正式供应商/部署与媒体仍未验收，028-U不标完成 | [当前细图与边界](unified-metering.md)、[共同合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md) |
+| 统一计量共同值域（028-U阶段1） | current-only 空库基线已落地两维文本 schema、profile/计划/报价/观察/终态向量；发布 operation、catalog/routing/billing 复验、报表/采购读端、客户R/结算/capability/route complete guard、受限 APP 六协议链和十类 guard 逐项 PostgreSQL 证据已汇合。全局发布事实按合同不含 tenant_id，租户事实具备跨租户/跨 request-attempt/权限/回滚负控；完整当前 MVP gate 已通过 | [当前细图与边界](unified-metering.md)、[共同合同](../../specs/028-unified-metering-media/u-domain-contract.md)、[存储草案](../../specs/028-unified-metering-media/u-storage-contract.md)、[阶段任务](../../specs/028-unified-metering-media/tasks.md) |
 | 采购资金 | 平台共享账户、永久凭据绑定、累计预算、逐attempt预占、未知占用、双人更正与人工观察 | [procurement](../../internal/procurement)、[采购账务](../../internal/billing/procurement.go)、[019合同](../../specs/019-procurement-accounts/contract.md)、[014迁移](../../migrations/014_procurement_accounts.sql) |
 | 运维与安全 | 最小数据库角色、实例 advisory lock、恢复闸门、密钥轮换 | [operations](../../internal/operations)、[security](../../internal/security)、[telemetry](../../internal/telemetry)、[config](../../internal/config) |
 | 自助身份 | 邮箱证明后最小权限开户、当前MFA下恢复密码、全部会话撤销、加密邮件队列/有界投递与清理；默认关闭注册与邮件 | [身份事务](../../internal/identity/self_service.go)、[匿名HTTP](../../internal/server/self_service_handlers.go)、[outbox](../../internal/identity/mail_outbox.go)、[worker](../../internal/mailworker/worker.go)、[SMTP](../../internal/maildeliver/smtp.go)、[021合同](../../specs/021-self-service-identity/contract.md) |
@@ -1643,8 +1643,8 @@ README增加Python SDK使用示例，源码/Compose/1Panel步骤已按实际入�
 
 异步制品 metadata 与正文现在共用 `media_task_artifacts`。首次下载正文通过原 provider 后一次性写入，新的 Store 和新的短期 grant 可以在进程重启后读取正文，不会再次调用 provider。mock task adapter 按 task ID 恢复观察，worker/provider 重启只产生一个 attempt 和 settlement。
 
-上述是 mock provider 与 55439 隔离专库的限定本地验收。provider session 重启恢复、独立 worker 容器重启、真实供应商成本、对象存储、浏览器、Compose 实跑和完整 028/S/A/R 出口仍未完成。
+上述是 mock provider 与 55439 隔离专库的限定本地验收；独立 worker 与 app/PostgreSQL 重启、任务/Realtime 收尾和 Compose 业务 smoke 已通过。provider session 的真实供应商恢复、对象存储、浏览器、目标服务器和正式 Release Qualification 仍后置。
 
 ### 当前 MVP 快速验收入口
 
-`make verify-current-mvp` 与统一运行架构没有新增模块或业务路径；它是一个显式验收编排入口，固定使用 `moni_test@127.0.0.1:55439/moni_test`，按当前 migration、权限/拒迁、028-U guard、钱包/账务、六文本、媒体/Realtime、provider、Go vet、前端和可用时的 Compose business-qa 分组执行。入口不调用整仓历史 maintenance fixture，实际命令与耗时记录见[当前 MVP 验收记录](../verification/current-mvp.md)和[运行手册](../runbooks/current-mvp-verification.md)。Compose 仍只提供 deterministic mock 工作流证据，不改变真实供应商、浏览器或生产验收边界。
+`make verify-current-mvp` 与统一运行架构没有新增模块或业务路径；它是一个显式验收编排入口，固定使用 `moni_test@127.0.0.1:55439/moni_test`，按当前 migration、权限/拒迁、028-U 十类 guard、钱包/账务、备份恢复、六文本、媒体/Realtime、provider、Go vet、前端和可用时的 Compose business-qa 分组执行，当前输出为 18 个分组。入口不调用整仓历史 maintenance fixture，实际命令与耗时记录见[当前 MVP 验收记录](../verification/current-mvp.md)和[运行手册](../runbooks/current-mvp-verification.md)。Compose 仍只提供 deterministic mock 工作流证据，不改变真实供应商或生产 Release Qualification 边界。

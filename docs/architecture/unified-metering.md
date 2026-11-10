@@ -2,6 +2,8 @@
 
 当前服务通过 `migrations.ApplyCurrent` 只安装 `migrations/current_mvp.sql` 空库基线，`VerifyCurrent` 在 serve/worker 启动前只读校验该文件的 checksum。旧历史不会被升级、转换或导入。
 
+2026-11-10 当前 MVP guard 与恢复收口：十类 028-U guard 均有当前 SQL/Go/55439 PostgreSQL 证据；全局发布事实没有 `tenant_id`，按合同验证跨租户共享原件而不是伪造非法例，租户范围事实验证跨租户、跨 request/attempt、不可变、并发、回滚和权限。新增全局原件并发不可变、实际 LOGIN 表面和关键业务事实恢复校验；`make verify-current-mvp` 现包含备份恢复与 recovery lock 组，Compose business-qa、媒体、六文本和 provider 安全边界仍使用显式 deterministic mock。
+
 2026-11-10 provider 契约补片：Responses profile 的 `reasoning_output` 当前只允许空值或显式 `none`；未冻结归一化合同的 reasoning profile 在 provider/profile 与 public catalog 入口拒绝，usage 中的 `reasoning_tokens` 不会被误当成已支持的 reasoning 输出协议。Responses 未冻结 reasoning 事件继续以通用协议错误结束并保留未知消费，不能进入成功结算。上游 connect/header/first-event/idle/progress timeout 由 `PROVIDER_*_TIMEOUT` 部署变量注入，经 provider 非零上下限校验；Compose 和 server 使用同一份配置，阶段限制仍受调用方总 deadline 约束。
 
 管理端仍接收每百万 token 的整数费率，但只通过 `metering.ManagementTokenRates`、`ManagementTokenBounds` 和 `ManagementTokenQuantities` 在管理边界转换为 canonical rational vector。当前运行时、路由和账务不再暴露 `LegacyToken*` scalar API。TTS provider usage 也必须通过 `confirmed_final` 字符数和 WAV 结构校验后才进入媒体结算。

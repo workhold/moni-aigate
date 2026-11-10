@@ -5840,3 +5840,39 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `docs/verification/unified-metering.md`
 
 </details>
+
+## 2026-11-10T12:15:40Z · 82f8d0184d26
+
+current MVP guard audit、provider timeout、备份恢复业务事实和18组验收门禁已汇合；当前架构与验证记录同步
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2130 个源文件；本次 13 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/runbooks/current-mvp-verification.md`
+- modified `docs/verification/028-u-guard-matrix.md`
+- modified `docs/verification/backup-restore-local.json`
+- modified `docs/verification/current-mvp.md`
+- added `docs/verification/provider-usage.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/provider/client.go`
+- modified `internal/provider/response_test.go`
+- modified `internal/server/cost_vector_application_integration_test.go`
+- added `migrations/unified_text_metering_guard_audit_postgres_test.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `scripts/verify-current-mvp.sh`
+
+</details>
+
+## 2026-11-10T12:26:00Z · 33991d66d873
+
+最终18组 current MVP 门禁更新备份恢复随机证据；复核架构正文、验证记录、权限边界和当前运行路径后同步快照
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2130 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/backup-restore-local.json`
+
+</details>
