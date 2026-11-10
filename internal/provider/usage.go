@@ -24,7 +24,7 @@ func parseUsage(raw []byte) (Usage, bool) {
 		return u, false
 	}
 	for k := range m {
-		if k != "prompt_tokens" && k != "completion_tokens" && k != "total_tokens" && k != "prompt_tokens_details" && k != "completion_tokens_details" {
+		if k != "prompt_tokens" && k != "completion_tokens" && k != "total_tokens" && k != "prompt_tokens_details" && k != "completion_tokens_details" && k != "prompt_cache_hit_tokens" && k != "prompt_cache_miss_tokens" {
 			u.Status = UsageConflicting
 			return u, false
 		}
@@ -52,6 +52,16 @@ func parseUsage(raw []byte) (Usage, bool) {
 		u.Status = UsageConflicting
 		return u, false
 	}
+	hit, hitPresent, hitValid := read("prompt_cache_hit_tokens")
+	miss, missPresent, missValid := read("prompt_cache_miss_tokens")
+	if !hitValid || !missValid {
+		u.Status = UsageConflicting
+		return u, false
+	}
+	_, hitKeyPresent := m["prompt_cache_hit_tokens"]
+	_, missKeyPresent := m["prompt_cache_miss_tokens"]
+	var cachedDetailPresent bool
+	var cachedDetail int64
 	for key, dest := range map[string]*int64{"prompt_tokens_details": &u.CachedTokens, "completion_tokens_details": &u.ReasoningTokens} {
 		v, exists := m[key]
 		if !exists || bytes.Equal(bytes.TrimSpace(v), []byte("null")) {
@@ -74,6 +84,10 @@ func parseUsage(raw []byte) (Usage, bool) {
 					return u, false
 				}
 				*dest = n
+				if key == "prompt_tokens_details" {
+					cachedDetailPresent = true
+					cachedDetail = n
+				}
 			} else { // A nonzero unfamiliar dimension may carry a separate charge.
 				n, ok := integer(raw)
 				if !ok || n != 0 {
@@ -83,11 +97,34 @@ func parseUsage(raw []byte) (Usage, bool) {
 			}
 		}
 	}
-	if (ip && u.CachedTokens > i) || (op && u.ReasoningTokens > o) {
+	if hitPresent && cachedDetailPresent && hit != cachedDetail {
 		u.Status = UsageConflicting
 		return u, false
 	}
-	return u, ip && op && tp
+	if hitPresent {
+		u.CachedTokens = hit
+	}
+	if ip && (u.CachedTokens > i || (missPresent && miss > i)) {
+		u.Status = UsageConflicting
+		return u, false
+	}
+	if op && u.ReasoningTokens > o {
+		u.Status = UsageConflicting
+		return u, false
+	}
+	// DeepSeek exposes a charge-relevant cache split alongside the aggregate
+	// prompt count. Keep it only when the split is complete and self-consistent.
+	cacheComplete := true
+	if hitKeyPresent || missKeyPresent {
+		cacheComplete = (hitPresent || cachedDetailPresent) && missPresent
+		if cacheComplete {
+			if u.CachedTokens > math.MaxInt64-miss || (ip && u.CachedTokens+miss != i) {
+				u.Status = UsageConflicting
+				return u, false
+			}
+		}
+	}
+	return u, ip && op && tp && cacheComplete
 }
 
 func (t *usageTracker) observe(raw []byte) Usage {

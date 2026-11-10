@@ -32,6 +32,7 @@ func testContext(t *testing.T) (context.Context, context.CancelFunc) {
 const contentJSON = `{"id":"c","object":"chat.completion.chunk","model":"upstream","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"finish_reason":null}]}`
 const finishJSON = `{"id":"c","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}`
 const usageJSON = `{"id":"c","choices":[],"usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6}}`
+const deepSeekUsage = `{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6,"prompt_tokens_details":{"cached_tokens":3},"prompt_cache_hit_tokens":3,"prompt_cache_miss_tokens":1}`
 
 func sse(data, ending string) string { return "data: " + data + ending + ending }
 func serveStream(t *testing.T, wire string, fragment bool) *httptest.Server {
@@ -88,6 +89,89 @@ func TestSSEEventFramingAndFinalUsage(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOpenAICompatibleDeepSeekUsageAcrossHTTPModes(t *testing.T) {
+	t.Run("non_stream", func(t *testing.T) {
+		body := `{"id":"c","object":"chat.completion","model":"upstream","choices":[{"index":0,"message":{"role":"assistant","content":"你好"},"finish_reason":"stop"}],"usage":` + deepSeekUsage + `}`
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = io.WriteString(w, body)
+		}))
+		defer srv.Close()
+		ctx, cancel := testContext(t)
+		defer cancel()
+		r, err := NewClient(ClientOptions{}).Do(ctx, fixtureEndpoint(t, srv.URL), fixtureRequest(t, false))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer r.Close()
+		clean, err := r.DecodeJSON()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if r.Usage.Status != UsageConfirmed || r.Usage.InputTokens != 4 || r.Usage.OutputTokens != 2 || r.Usage.TotalTokens != 6 || r.Usage.CachedTokens != 3 {
+			t.Fatalf("non-stream usage %+v", r.Usage)
+		}
+		if strings.Contains(string(clean), "prompt_cache_") || !strings.Contains(string(clean), `"cached_tokens":3`) {
+			t.Fatalf("non-stream usage was not normalized: %s", clean)
+		}
+	})
+
+	t.Run("stream", func(t *testing.T) {
+		wire := sse(contentJSON, "\n") + sse(finishJSON, "\n") + sse(`{"id":"c","choices":[],"usage":`+deepSeekUsage+`}`, "\n") + sse("[DONE]", "\n")
+		srv := serveStream(t, wire, true)
+		defer srv.Close()
+		ctx, cancel := testContext(t)
+		defer cancel()
+		r, err := NewClient(ClientOptions{}).Do(ctx, fixtureEndpoint(t, srv.URL), fixtureRequest(t, true))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer r.Close()
+		usageEvents := 0
+		for {
+			event, readErr := r.ReadEvent()
+			if errors.Is(readErr, io.EOF) {
+				break
+			}
+			if readErr != nil {
+				t.Fatal(readErr)
+			}
+			if event.Kind == "usage" {
+				usageEvents++
+			}
+		}
+		if usageEvents != 1 || r.ProtocolOutcome != "completed" || r.Usage.Status != UsageConfirmed || r.Usage.InputTokens != 4 || r.Usage.OutputTokens != 2 || r.Usage.CachedTokens != 3 {
+			t.Fatalf("stream usage events=%d response=%+v", usageEvents, r)
+		}
+	})
+
+	t.Run("unknown_nonzero_dimension_stays_unconfirmed", func(t *testing.T) {
+		body := strings.Replace(deepSeekUsage, `"prompt_cache_miss_tokens":1`, `"prompt_cache_miss_tokens":1,"prompt_cache_write_tokens":1`, 1)
+		body = `{"id":"c","object":"chat.completion","model":"upstream","choices":[{"index":0,"message":{"role":"assistant","content":"你好"},"finish_reason":"stop"}],"usage":` + body + `}`
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = io.WriteString(w, body)
+		}))
+		defer srv.Close()
+		ctx, cancel := testContext(t)
+		defer cancel()
+		r, err := NewClient(ClientOptions{}).Do(ctx, fixtureEndpoint(t, srv.URL), fixtureRequest(t, false))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer r.Close()
+		if _, err := r.DecodeJSON(); err != nil {
+			t.Fatal(err)
+		}
+		if r.Usage.Status != UsageConflicting {
+			t.Fatalf("unknown charge dimension was accepted: %+v", r.Usage)
+		}
+		if _, err := UsageJSON(r.Usage); err == nil {
+			t.Fatal("conflicting usage crossed the settlement boundary")
+		}
+	})
 }
 
 func TestStreamOutcomesDoNotInventUsageOrReplayAfterError(t *testing.T) {

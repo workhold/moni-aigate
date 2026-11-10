@@ -139,3 +139,55 @@ func TestRequestSizeAndUnknownUsageDimension(t *testing.T) {
 		t.Fatal("unmodeled usage dimension accepted", u)
 	}
 }
+
+func TestDeepSeekCacheUsageNormalizesOnlyCompleteCacheEvidence(t *testing.T) {
+	raw := []byte(`{"prompt_tokens":10,"completion_tokens":3,"total_tokens":13,"prompt_tokens_details":{"cached_tokens":4},"prompt_cache_hit_tokens":4,"prompt_cache_miss_tokens":6}`)
+	var tracker usageTracker
+	tracker.observe(raw)
+	u := tracker.finalize()
+	if u.Status != UsageConfirmed || u.InputTokens != 10 || u.OutputTokens != 3 || u.TotalTokens != 13 || u.CachedTokens != 4 {
+		t.Fatalf("DeepSeek usage was not normalized: %+v", u)
+	}
+	normalized, err := UsageJSON(u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var output map[string]json.RawMessage
+	if err := json.Unmarshal(normalized, &output); err != nil {
+		t.Fatal(err)
+	}
+	if output["prompt_cache_hit_tokens"] != nil || output["prompt_cache_miss_tokens"] != nil || string(output["prompt_tokens_details"]) != `{"cached_tokens":4}` {
+		t.Fatalf("usage was not normalized to the common contract: %s", normalized)
+	}
+
+	for name, raw := range map[string]string{
+		"missing_miss":    `{"prompt_tokens":10,"completion_tokens":3,"total_tokens":13,"prompt_cache_hit_tokens":4}`,
+		"missing_hit":     `{"prompt_tokens":10,"completion_tokens":3,"total_tokens":13,"prompt_cache_miss_tokens":6}`,
+		"cache_mismatch":  `{"prompt_tokens":10,"completion_tokens":3,"total_tokens":13,"prompt_cache_hit_tokens":4,"prompt_cache_miss_tokens":5}`,
+		"detail_mismatch": `{"prompt_tokens":10,"completion_tokens":3,"total_tokens":13,"prompt_tokens_details":{"cached_tokens":3},"prompt_cache_hit_tokens":4,"prompt_cache_miss_tokens":6}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			var tracker usageTracker
+			tracker.observe([]byte(raw))
+			u := tracker.finalize()
+			if name == "cache_mismatch" || name == "detail_mismatch" {
+				if u.Status != UsageConflicting {
+					t.Fatalf("inconsistent cache evidence was accepted: %+v", u)
+				}
+				return
+			}
+			if u.Status == UsageConfirmed {
+				t.Fatalf("partial cache evidence was charged: %+v", u)
+			}
+			if _, err := UsageJSON(u); err == nil {
+				t.Fatal("partial cache evidence crossed the settlement boundary")
+			}
+		})
+	}
+
+	var detailOnly usageTracker
+	detailOnly.observe([]byte(`{"prompt_tokens":10,"completion_tokens":3,"total_tokens":13,"prompt_tokens_details":{"cached_tokens":4}}`))
+	if u := detailOnly.finalize(); u.Status != UsageConfirmed || u.CachedTokens != 4 {
+		t.Fatalf("standard cached_tokens contract changed: %+v", u)
+	}
+}
