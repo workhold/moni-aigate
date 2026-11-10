@@ -4646,6 +4646,7 @@ $$;
 CREATE OR REPLACE FUNCTION funding_journal_valid(journal_ref text) RETURNS boolean LANGUAGE plpgsql STABLE AS $$
 BEGIN
  IF EXISTS(SELECT 1 FROM journals WHERE id=journal_ref AND kind='sandbox_capture') THEN RETURN payment_sandbox_journal_valid(journal_ref); END IF;
+ IF EXISTS(SELECT 1 FROM journals WHERE id=journal_ref AND kind='wallet_opening') THEN RETURN wallet_opening_journal_valid(journal_ref); END IF;
  RETURN payment_funding_journal_valid(journal_ref);
 END
 $$;

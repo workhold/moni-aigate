@@ -8,7 +8,7 @@ const legacyWalletEventValidSHA256 = "07545d756fa2c25d26fe4bf6d93777330e3839e179
 
 var paymentFunctionSpecs = map[string]paymentFunctionSpec{
 	"funding_fact_guard":              {"funding_fact_guard", "", "", "2279", "plpgsql", "v", "b82f809ec5663cfa681702e7044541207a08b3d167c051f4933cf2d152412885", nil, true},
-	"funding_journal_valid":           {"funding_journal_valid", "text", "25", "16", "plpgsql", "s", "3f1e1ed693bc96b515057a1268f44c16fd3213164c03f3090f13f3c455e0692e", []string{"journal_ref"}, true},
+	"funding_journal_valid":           {"funding_journal_valid", "text", "25", "16", "plpgsql", "s", "be1dfa836c1a0823e56d4f138b6bd6212a6b86f4babe7934481053c2ee87b30b", []string{"journal_ref"}, true},
 	"payment_audit_complete":          {"payment_audit_complete", "", "", "2279", "plpgsql", "v", "7715e434d176fff2058d3fe01429998fe3acada5ebc1a6cbb1dbf1d8b9c4d198", nil, false},
 	"payment_audit_guard":             {"payment_audit_guard", "", "", "2279", "plpgsql", "v", "9e9f4d17a8ce9e4b2122a178bfdfde561b4cbadc439295337c40d27acd9ee79e", nil, false},
 	"payment_backoff":                 {"payment_backoff", "integer", "23", "1186", "sql", "i", "92b18995264e82a5b2fa925287e34f28afecbeef06a3d3064ca1525bcdab6bf1", []string{"n"}, true},
