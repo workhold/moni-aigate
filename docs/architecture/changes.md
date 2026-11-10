@@ -5813,3 +5813,17 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T11:18:20Z · 930d0d67fc7b
+
+将 028-U guard closure 测试加入 verify-current-mvp，并把 18 组 current MVP 验收与 HTTP/WS sidecar 证据同步到架构/验证记录；模块图与当前唯一计量、wallet、settlement、媒体链路不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2128 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/current-mvp.md`
+- modified `docs/verification/unified-metering.md`
+- modified `scripts/verify-current-mvp.sh`
+
+</details>
