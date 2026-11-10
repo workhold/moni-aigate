@@ -1181,7 +1181,7 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 经营报表与CSV | 026已接平台HTTP/控制台，限定专项验收见记录 | 最长31天/5000请求；消费收入一次、全部尝试成本、退款净额，未知成本或未结算时毛利待核对；独立于累计钱包异步投影，[架构](operating-reports.md)、[验证](../verification/operating-reports.md) |
 | 资金来源与钱包开账 | 027已实现现行四写入口、正式023、CLI、HTTP与控制台，专项验收见记录 | 六表来源与开账原件，非现金opening、FIFO和逆序消费退款；新库策略，无历史无损升级或真实原路现金退款；[架构](wallet-sources.md)、[验证](../verification/wallet-sources.md) |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
-| 文本动态路由 | 第三阶段，未设计未实现 | 物理模型、质量档位、评分、最低毛利、会话粘性与路由回放的待冻结合同见[LLD §9.2](../design/LLD.md#92-第三阶段文本动态路由的合同缺口)；现有路由只覆盖同一逻辑模型下的文本渠道选择 |
+| 文本动态路由 | 第三阶段，设计草案，未实现 | 物理模型、质量档位、评分、最低毛利、会话粘性与路由回放的合同草案见[033](../../specs/033-text-dynamic-routing/spec.md)，要点见[LLD §9.2](../design/LLD.md#92-第三阶段文本动态路由的合同缺口)；现有路由只覆盖同一逻辑模型下的文本渠道选择 |
 | 媒体/任务/Realtime 路由 | 不参与路由（前三阶段） | 单 profile、单 adapter；`media_*` 表无 channel/binding；与文本共享钱包与账务；媒体动态路由需另立 SDD，见[HLD 结构边界](../design/HLD.md#文本与媒体的结构边界和路由范围2026-11-10) |
 | 共享采购账户/预算 | 019已实现，限定本地验收通过 | [冻结合同](../../specs/019-procurement-accounts/contract.md)；跨渠道/Key/租户共享累计预算、逐attempt预占、未知占用和双人更正；周期硬预算已由023-B扩展；余额仅人工证据，供应商余额/账单自动同步待后续 |
 | 公开模型目录 | 020已实现，限定本地验收通过 | 默认私有、安全DTO、当前价、筛选/分页、独立准入与admin公开CAS；[020验证](../verification/public-catalog.md) |

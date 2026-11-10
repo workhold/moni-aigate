@@ -5908,3 +5908,22 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `docs/design/provider-qualification-plan.md`
 
 </details>
+
+## 2026-11-10T14:48:18Z · fae99f479782
+
+补充四阶段后续能力的设计规格029–033（第一阶段验收清单、模型别名与分组倍率、多协议多候选mock上游、第二阶段文本数据面、第三阶段文本动态路由），并在HLD/LLD/路线文档链接；记录对既有约束（同池channel唯一、028单profile、route_decisions JSONB、price variant_key）的修订需求与决策点；纯设计草案，无源码、迁移或权限变化，能力表标注为设计草案未实现
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2136 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `specs/029-phase1-acceptance/spec.md`
+- added `specs/030-model-aliases-group-multipliers/spec.md`
+- added `specs/031-deterministic-mock-upstream/spec.md`
+- added `specs/032-phase2-text-data-plane/spec.md`
+- added `specs/033-text-dynamic-routing/spec.md`
+
+</details>

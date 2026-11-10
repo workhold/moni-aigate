@@ -365,7 +365,7 @@ sequenceDiagram
 
 ### 9.2 第三阶段文本动态路由的合同缺口
 
-本节列出第三阶段（见[四阶段路线 §5](phase-roadmap.md#5-第三阶段openrouter-风格文本动态路由)）实施前必须冻结的合同。这些合同尚未存在；在冻结前不改动现有路由、计量或资金代码。
+本节列出第三阶段（见[四阶段路线 §5](phase-roadmap.md#5-第三阶段openrouter-风格文本动态路由)）实施前必须冻结的合同。合同草案见 [033](../../specs/033-text-dynamic-routing/spec.md)，待开发者评审冻结；在冻结前不改动现有路由、计量或资金代码。下列条目是合同要点，字段、DDL 与接口以 033 为准。
 
 **现状**
 
@@ -1172,3 +1172,38 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 - 计算使用整数微元与明确的舍入规则（向上取整到微元），结果和原始倍率一起记入审计。
 - 运行时只读冻结的绝对价格快照，不在请求路径上乘倍率；基准价或倍率变化需要重新发布新版本。
 - 不新建第二套价格体系，不改变缺价拒绝语义。
+
+## 四阶段后续能力的详细设计入口（2026-11-10）
+
+以下规格草案给出数据合同、接口、状态机与验收，待开发者评审冻结。本节只列与现有代码的衔接点和必须先修订的既有约束。
+
+**第一阶段**
+
+- [029](../../specs/029-phase1-acceptance/spec.md)：验收清单。证据按 `docs/verification/phase1/<ID>.md` 记录；历史证据只算参考，因为 028-U 已整体替换文本计量，必须在同一提交上复验。
+- [030](../../specs/030-model-aliases-group-multipliers/spec.md)：
+  - 别名：新表 `model_aliases`，名字空间与 `models.public_name` 共享，靠 advisory lock 加触发器保证唯一；解析发生在 `catalog.AuthorizedModel`，授权条件不变；`request_records` 追加 `requested_model_name`。
+  - 倍率：新增编译接口，调用现有 `PublishGroupPrice` 所用的 `meter_insert_token_price`；整数微元、`ceil`、`big.Int`；不新增表、不改 Reserve 选价。
+- [031](../../specs/031-deterministic-mock-upstream/spec.md)：`internal/testsupport/mockupstream` 加 `scripts/mock-upstream`；候选以路径前缀区分；故障分类表对应 `provider.FailureClass` 与 `provider.Consumption`；接收记录用于证明“未知消费不重放”。
+
+**第二阶段**（[032](../../specs/032-phase2-text-data-plane/spec.md)）
+
+- 健康动作按失败类落到 credential、binding、channel+model 作用域；熔断阈值与时长进入路由策略版本；重试资格仍只看 `Consumption`。
+- 网关在写出第一个下游字节前校验上游首个完整事件。
+- 客户侧周期用量上限只作 Reserve 内的准入过滤，不保存余额。
+- 缓存先决定 D-032-1，再在 028 增加 cache-hit finalization 合同。
+
+**第三阶段**（[033](../../specs/033-text-dynamic-routing/spec.md)）
+
+必须先修订的既有约束：
+
+| 既有约束 | 出处 | 变化 |
+|---|---|---|
+| 同一路由池内 channel 唯一 | LLD §8、001 catalog 合同 | 改为 `(channel, physical_model)` 唯一 |
+| 路由版本绑定单一 profile | 028 u-storage §1、`meter_route_profile`、`route complete` guard | D-033-0：profile 继续表示客户侧零售合同，物理模型能力放入 `physical_models.capability`，attempt 的供应商界来自所选物理模型 |
+| 决策记录每 channel 一次、恰一个 selected | `billing.validateRouteDecisions` | 被独立 `route_decisions` 表取代 |
+| `upstream_attempts.route_decisions` JSONB | `migrations/006_route_decisions.sql` | 一次性迁移后删除，不保留双格式 |
+| `price_versions.variant_key` 只能为 `default` | 023-A | auto 用单一售价（D-033-1 选项 A），不放宽 |
+
+新增对象：`physical_models`、`route_sessions`、`route_decisions`；`route_policy_versions` 追加 `scoring`、`quality_floor`、`min_margin_rate`、`stickiness`；`upstream_attempts` 追加 `completed_at`、`first_content_at`。
+
+纯函数 `routing.Select(inputs) -> []Decision` 不做 I/O，同一输入同一输出；抽签值、统计快照和候选事实全部在输入里，回放因此可重复。

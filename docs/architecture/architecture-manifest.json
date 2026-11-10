@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T14:08:17Z",
-  "review_reason": "新增四阶段路线单一事实源并同步HLD/LLD/路线图/交付计划/README：真实供应商认证移至第四阶段，前三阶段渠道与动态路由只覆盖文本，媒体保持单profile单adapter不参与路由，修正文本与媒体共享钱包但分属两族业务表的描述，补第三阶段路由决策合同缺口与第一阶段别名/分组倍率约束；纯设计变更，无源码、迁移或权限结构变化",
-  "snapshot_sha256": "8af175b7decc8b77604557d3cac861cd4ac2863d454d69f033026925c2cf4b0f",
-  "architecture_sha256": "e49d3267ea7568fd3782de60c53ba555156461c14c3901293de6aa2b21c096cb",
-  "history_sha256": "97af0b4d6b942ca9689c9450f7307b9feb64c29ffb66a352486825dba1bf9ab8",
+  "reviewed_at": "2026-11-10T14:48:18Z",
+  "review_reason": "补充四阶段后续能力的设计规格029–033（第一阶段验收清单、模型别名与分组倍率、多协议多候选mock上游、第二阶段文本数据面、第三阶段文本动态路由），并在HLD/LLD/路线文档链接；记录对既有约束（同池channel唯一、028单profile、route_decisions JSONB、price variant_key）的修订需求与决策点；纯设计草案，无源码、迁移或权限变化，能力表标注为设计草案未实现",
+  "snapshot_sha256": "fae99f479782587990222097beef5e18fe45a25d9604b9495967854c2cd140d4",
+  "architecture_sha256": "8dc0465998f8e39acad2998fc3171796f2a2c35725d14488ad330539e1fd01f2",
+  "history_sha256": "f61999fc3291394d9097ed4d0282a397060e49a7d55b3ae1699069b3da7aef1c",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "049659c68eab4caf48e92de6f7a704a999927957960c14e61e79772611f40226"
+      "sha256": "4601cace233c5a496f32f97455061c77036c8c3b4d93eaaf8c29cdd9e32c458d"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "4b104216b4f1fb65215869ff8fb48925bcf87de9a48401a7737150b770b185d0"
+      "sha256": "5d4461ce6bb8afe39701170121ae09b30736a60ae369ae94012d2e1e18de1f20"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "8296a815d85317db336a850e5f2e0760aae1bc471e03d1ec4deb8a563a52fe12"
+      "sha256": "f2d5e196510d39b8fce48fc38da0875307d50828a6a742a482e922a1c4dedee9"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7914,6 +7914,26 @@
     {
       "path": "specs/028-unified-metering-media/u-storage-contract.md",
       "sha256": "af95985daa083a4c9dfa38f364862cd0ac7d815c5ee13df8b9c175de647d6c8c"
+    },
+    {
+      "path": "specs/029-phase1-acceptance/spec.md",
+      "sha256": "cc8a576d7420eb1bb5721f63024d1096982aa40333f7907fa4460444aee63d18"
+    },
+    {
+      "path": "specs/030-model-aliases-group-multipliers/spec.md",
+      "sha256": "73c6d889e70955f0a847a386aeb2d3cc9899e089d018d85f7f4225576d382a3a"
+    },
+    {
+      "path": "specs/031-deterministic-mock-upstream/spec.md",
+      "sha256": "2b45a5af9631db5d4397603fd1c2078291b5188164fc796aa9d963966d657d16"
+    },
+    {
+      "path": "specs/032-phase2-text-data-plane/spec.md",
+      "sha256": "1fcdfcacc1be36a115011c4c69adbd46d0adcf3a30dd6e6b62f1436e121d8915"
+    },
+    {
+      "path": "specs/033-text-dynamic-routing/spec.md",
+      "sha256": "b02b642fb08aa847f3301bd0ec0e8a75c9896846c0f4955ad110994ba947ac56"
     },
     {
       "path": "web/.gitignore",
