@@ -64,6 +64,8 @@
 
 本轮盘点后的新增证据：支付 worker 的计量表/函数负权限已有独立 55439 负控；六协议超界、客户人工核对保持供应商 unknown、以及 supplier unknown 禁止派发已有受限 APP 反例专项；前端审查确认当前在线报价/界/用量出口使用完整向量 DTO。上述证据仍属于本地专项，不能把对应任务项改为完成。
 
+2026-11-10 又补充了 guard closure 的 deferred 回滚、request→attempt 错绑、租户 source identity 并发和实际 LOGIN 函数面测试；同时新增只消费已有引用的 HTTP/WS 等价内测 sidecar。它们加强当前开发环境证据，但不改变“真实浏览器、正式供应商、完整商业全矩阵、1Panel/HA/性能仍后置”的判断。
+
 随后补充的候选 024 拒迁负控覆盖 api key/procurement held-spent、周期预算 allocation/event、funding lot child 以及 payment transaction identity/capture/effect；每个案例都确认迁移失败且 schema snapshot 未变化。该矩阵扩大了旧金融事实的拒迁证据，但没有把候选迁移变成已发行生产 DDL。
 
 ## 依赖图与执行顺序

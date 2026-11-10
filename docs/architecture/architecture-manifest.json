@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T10:56:45Z",
-  "review_reason": "新增 current-only 默认运行时路径审计脚本，并补充真实二租户 HTTP/WS 等价内测 smoke 证据；只更新架构入口、验收记录与清单，不改变业务运行模块",
-  "snapshot_sha256": "608294bf1df90bd0ddc1a391087311d7cdeaef291b4efd6b5964c7ed80f03864",
-  "architecture_sha256": "30fa5dbf8c13b993faca96a17b771a5871093f42ebc3de9e7e5cb97dd296889f",
-  "history_sha256": "510658ddd344aa0be1351adf0671b0af03a5da32781a81bba7f9c6d0ab53705c",
+  "reviewed_at": "2026-11-10T11:16:39Z",
+  "review_reason": "汇合 028-U guard closure、默认运行时兼容路径审计和只消费已有引用的 HTTP/WS 等价内测 sidecar；新增仅测试与验证入口，复核 current-only 模块图、请求/计量/资金链路、权限边界和明确后置验收范围",
+  "snapshot_sha256": "d9dba4b3971700f20c133ee28497f264460bb5a1583cee06d6ab10a986c9a062",
+  "architecture_sha256": "4ef71030d8dbdf67130464f1146e8c9f0a4e3156ec56b0efae5e5d91c7926744",
+  "history_sha256": "b375cd8adb96320accb284a7846045d752d924a113f6f78d5b35405c0dd7706b",
   "files": [
     {
       "path": ".dockerignore",
@@ -237,7 +237,7 @@
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "460c85030423450d26b372687a7333b34cc99ac876d7d6819361ae90c3f1b922"
+      "sha256": "bef367ddaa4df3dd21184a875c76ad44157c68493d0e4215400a54f2c6a9d91c"
     },
     {
       "path": "docs/runbooks/development.md",
@@ -249,7 +249,7 @@
     },
     {
       "path": "docs/verification/028-u-guard-matrix.md",
-      "sha256": "ba6403624eb169a7468f9d3f72afc78a7362a28f8e618332f6d9d3b158befc6e"
+      "sha256": "6e4e2bc7b6267ad426cea046392f89cd6c15bc80d15c3c48075855838a389e1d"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -1045,7 +1045,7 @@
     },
     {
       "path": "docs/verification/current-mvp.md",
-      "sha256": "0e383e17eb8453352eff5703cf5f65e66b1b5e4ea5f66c2abeeb0cfedc0b0758"
+      "sha256": "8642d6632130dae759f484b16fb5f1e84ec7fb783bb4cf2e3ec29e12ecbc5f4e"
     },
     {
       "path": "docs/verification/dispatch-read-batches.md",
@@ -1457,7 +1457,7 @@
     },
     {
       "path": "docs/verification/overall-delivery-inventory.md",
-      "sha256": "569ddf0df58803a58853ccdbb58d423684f3992a38567de878bd41002387b930"
+      "sha256": "940b18ff783145d463bfff9c1f737544d4307fa81b30b7fc23ac94b83a7699e2"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -1825,7 +1825,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "eb78fab532f528b897d2d04b7cb321abfb52946df02b1aa8f06b2e032d649bc2"
+      "sha256": "1e05e0e943aa4a1fce5e9e4061093f377734a9b67e0843b676d966401a8548c5"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -6528,6 +6528,10 @@
       "sha256": "9e93315f981652136e88db8b64692b3eb0488e7cd78eaab51e0064ba98d9d1d1"
     },
     {
+      "path": "migrations/unified_text_metering_guard_closure_postgres_test.go",
+      "sha256": "28405a529e273f4da901b63c9a9c296cf2b4475159bce5d81f2b3eca48574f99"
+    },
+    {
       "path": "migrations/unified_text_metering_guard_current_postgres_test.go",
       "sha256": "37268ff569cbad375576f5eef35f80f428717c697caf4350f79c6f350bc187b0"
     },
@@ -6582,6 +6586,18 @@
     {
       "path": "scripts/backup.sh",
       "sha256": "cf57894cd3ef48b24d42d03d3c35039cc333d11c0082dfa26c92fc6fe411ee2d"
+    },
+    {
+      "path": "scripts/browser-qa/README.md",
+      "sha256": "fba07652a4ad01efa5f74af71292bc1b04e8d31a03107a0e6fa779e01bc6d299"
+    },
+    {
+      "path": "scripts/browser-qa/current-mvp-smoke.sh",
+      "sha256": "8a8e160162c5195504568627d13e3f7be021c7e4a9f90e764ee69b225299a8ec"
+    },
+    {
+      "path": "scripts/browser-qa/current-mvp-smoke.test.sh",
+      "sha256": "6fd6418609dcfce569767d95804d93d49447dfe2deb286c48a9e65313743f27d"
     },
     {
       "path": "scripts/browser-qa/http_security_smoke_test.go",
@@ -7873,7 +7889,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "ca9c738c60936492fed5f3d5d3c9d39a67984c3a8380bcb768148c24fc09a581"
+      "sha256": "da32f8d9f9187b19ce01a3950f025c886eb542b709e0b8149391eedd2b370b4a"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

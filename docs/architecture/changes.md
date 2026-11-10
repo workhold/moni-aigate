@@ -5792,3 +5792,24 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `scripts/deployment-business-qa.sh`
 
 </details>
+
+## 2026-11-10T11:16:39Z · d9dba4b39717
+
+汇合 028-U guard closure、默认运行时兼容路径审计和只消费已有引用的 HTTP/WS 等价内测 sidecar；新增仅测试与验证入口，复核 current-only 模块图、请求/计量/资金链路、权限边界和明确后置验收范围
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2128 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/runbooks/deployment.md`
+- modified `docs/verification/028-u-guard-matrix.md`
+- modified `docs/verification/current-mvp.md`
+- modified `docs/verification/overall-delivery-inventory.md`
+- modified `docs/verification/unified-metering.md`
+- added `migrations/unified_text_metering_guard_closure_postgres_test.go`
+- added `scripts/browser-qa/README.md`
+- added `scripts/browser-qa/current-mvp-smoke.sh`
+- added `scripts/browser-qa/current-mvp-smoke.test.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

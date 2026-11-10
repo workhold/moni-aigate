@@ -655,3 +655,9 @@ ok github.com/moni-ai/moni-aigate/migrations 7.137s
 主分支 `codex/initial-mvp` 使用 `postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable` 执行 `make verify-current-mvp`，17 个分组全部通过。结果包括 current-only 空库安装/追加与拒迁、实际 LOGIN 权限、当前 028-U guard、wallet/funding/billing/settlement、provider usage 与 timeout wiring、六文本商业链、图片/TTS/异步 video/Realtime PostgreSQL 路径、媒体安全状态机、Go vet、前端342项测试/构建，以及 `DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 的 Compose business-qa 空库、provision/bootstrap、五类业务调用和 app/worker/PostgreSQL 重启。
 
 这次汇合只记录当前主线可复现的开发环境证据；Compose 的 provider 是显式 deterministic mock，`inner-test` 默认关闭媒体，不能推导真实供应商、正式支付、浏览器、1Panel、HA、性能或生产验收。历史维护 fixture 不属于该入口，028-U 存储总项和完整商业出口继续保持未勾。
+
+## 2026-11-10：028-U guard closure 与 HTTP/WS 等价内测
+
+新增 `TestUnifiedTextMeteringGuardClosure*` 四项 PostgreSQL race 证据：deferred reservation 聚合失败整笔回滚、同租户与跨租户 request→attempt 错绑无残留、同 source event 按租户隔离且同租户冲突并发只保留一个事实、实际 LOGIN 对全部 `meter_%` 函数执行权符合 APP/projector/worker 边界。55439 定向 closure 和既有 guard 联合 race 均通过。
+
+新增 [`scripts/browser-qa/current-mvp-smoke.sh`](../../scripts/browser-qa/current-mvp-smoke.sh) 作为已部署 disposable 环境的只读 HTTP/WS sidecar：强制本机 55439 `moni_test` 声明，但不连接数据库、不创建身份/租户/钱包/任务事实，只使用已有 API Key、模型和 Realtime URL，要求文本 HTTP 与 Realtime WebSocket 实际通过；可选媒体/task 缺失时显式 SKIP。该入口与真实二租户 HTTP smoke 共同构成等价内测证据，仍不替代浏览器 UI、真实供应商或生产验收。

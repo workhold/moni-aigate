@@ -106,6 +106,8 @@ U当前发行只用每模型唯一capability，同一profile跨渠道/凭据先�
 
 2026-11-10 当前主线收口复验：`DEPLOY_QA_BUSINESS=true DEPLOY_QA_PORT=18090 scripts/deployment-qa.sh` 在更新后的 `codex/initial-mvp` 通过，覆盖空库 migrate、重复 migrate/provision/bootstrap 拒绝、文本、图片、TTS、异步 video task、Realtime WebSocket 和 app/worker/PostgreSQL 重启恢复。该证据仍是 deterministic mock provider 的开发环境内测，完整 U guard/六协议商业全矩阵、真实供应商、浏览器和生产部署不因此勾选。
 
+2026-11-10 当前主线补充：新增 028-U guard closure 专项，覆盖 deferred 聚合回滚、同租户/跨租户 request→attempt 错绑、按租户隔离的 source identity 并发冲突和实际 LOGIN 的 `meter_%` 函数权限面；新增独立 HTTP/WS 等价内测 sidecar，只消费已有部署引用，不 provisioning、不写数据库。guard closure、真实构建二租户 HTTP smoke、sidecar 自测和 `make verify-current-mvp` 通过；仍不把真实浏览器、真实供应商、完整商业矩阵或生产权限验收写成完成。
+
 2026-11-10 028-U 拒绝矩阵扩展：新增 55439 PostgreSQL race 专项，覆盖金额与结算 guard、schema/capability 完整性、跨请求终态、重复观察身份、并发唯一性、失败回滚、标量投影撤除和函数权限；拒迁矩阵扩展到 41 类旧金融或采购事实，并确认拒绝后 schema 与原事实保持不变。该片扩大了负控证据，完整九组 checker 的逐项正反闭包、变更023表 owner/ACL 形状拒迁和完整六文本商业矩阵仍未闭合。
 
 2026-11-10 当前构建图清理：只服务历史维护扫描的 billing raw reader、显式 ProspectiveStore、`internal/maintenancescan` 和 maintenance QA 统一加 `historical` build tag。默认 `cmd/moni-aigate` 依赖闭包、`go build ./...`、`go test -run '^$' ./...` 和 `go vet ./...` 不再编译这些旧 reader；`-tags historical` 的 billing、maintenance scan 和 QA 包仍可编译。该片不改变当前 wallet/billing 主链或历史数据，完成的是构建路径隔离。
