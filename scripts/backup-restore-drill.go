@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing/fstest"
@@ -33,6 +34,17 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/server"
 	"github.com/moni-ai/moni-aigate/migrations"
 )
+
+type businessFacts struct {
+	CreditApproved    bool  `json:"credit_approved"`
+	FundingReceipt    bool  `json:"funding_receipt"`
+	Request           bool  `json:"request"`
+	Attempt           bool  `json:"attempt"`
+	Finalization      bool  `json:"finalization"`
+	Settlement        bool  `json:"settlement"`
+	RefundApproved    bool  `json:"refund_approved"`
+	TenantAuditEvents int64 `json:"tenant_audit_events"`
+}
 
 func main() {
 	if err := drill(); err != nil {
@@ -131,15 +143,16 @@ func drill() error {
 		return err
 	}
 	s := billing.New(source)
-	fund := func(ref string, amount billing.Money) error {
+	fund := func(ref string, amount billing.Money) (billing.CreditOrder, error) {
 		o, err := s.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: amount, BusinessRef: ref, ProofRef: "drill-proof", IdempotencyKey: ref, RequestHMAC: ref})
 		if err != nil {
-			return err
+			return billing.CreditOrder{}, err
 		}
 		_, err = s.ApproveCredit(ctx, billing.ApprovalInput{TenantID: tenant, OrderID: o.ID, ActorID: approver})
-		return err
+		return o, err
 	}
-	if err = fund("before-backup", 1000); err != nil {
+	credit, err := fund("before-backup", 1000)
+	if err != nil {
 		return err
 	}
 	var profile string
@@ -190,6 +203,10 @@ func drill() error {
 	checkpoint, err := s.Wallet(ctx, billing.Query{TenantID: tenant})
 	if err != nil {
 		return err
+	}
+	checkpointFacts, err := readBusinessFacts(ctx, source, tenant, credit.ID, r.RequestID, attempt.ID, settled.ID, refund.ID)
+	if err != nil {
+		return fmt.Errorf("source business facts: %w", err)
 	}
 	var checkpointAt time.Time
 	if err = source.QueryRow(ctx, "SELECT clock_timestamp()").Scan(&checkpointAt); err != nil {
@@ -248,7 +265,7 @@ func drill() error {
 	backupDuration := time.Since(backupStart)
 	// Deliberately commit one independently referenced credit after the snapshot.
 	// Restoring it must NOT pretend this later fact was included in the backup.
-	if err = fund("after-backup-external-receipt", 100); err != nil {
+	if _, err = fund("after-backup-external-receipt", 100); err != nil {
 		return err
 	}
 	restoreStart := time.Now()
@@ -269,6 +286,20 @@ func drill() error {
 	}
 	if err = migrations.VerifyCurrent(ctx, target); err != nil {
 		return err
+	}
+	restoredFacts, err := readBusinessFacts(ctx, target, tenant, credit.ID, r.RequestID, attempt.ID, settled.ID, refund.ID)
+	if err != nil {
+		return fmt.Errorf("restored business facts: %w", err)
+	}
+	if !reflect.DeepEqual(checkpointFacts, restoredFacts) {
+		return fmt.Errorf("restored audit or business facts differ: source=%+v restored=%+v", checkpointFacts, restoredFacts)
+	}
+	var recoveryAuditCount int64
+	if err = target.QueryRow(ctx, `SELECT count(*) FROM audit_events WHERE actor='offline-restore' AND action='recovery.latched'`).Scan(&recoveryAuditCount); err != nil {
+		return err
+	}
+	if recoveryAuditCount != 1 {
+		return fmt.Errorf("restored recovery audit count=%d want=1", recoveryAuditCount)
 	}
 	restored := billing.New(target)
 	wallet, err := restored.Wallet(ctx, billing.Query{TenantID: tenant})
@@ -398,7 +429,7 @@ func drill() error {
 	if err = run(targetDB, "scripts/restore.sh", tampered, filepath.Join(work, "tamper-must-not-create.env")); err == nil {
 		return fmt.Errorf("restore accepted altered backup")
 	}
-	report := map[string]any{"date": time.Now().UTC().Format(time.RFC3339), "postgresql": "16.15", "backup_seconds": backupDuration.Seconds(), "restore_to_verified_recovery_http_seconds": restoreDuration.Seconds(), "checkpoint_at": checkpointAt.UTC(), "checkpoint_wallet": checkpoint, "restored_wallet": wallet, "ledger": ledger, "recovery_http_status": statuses, "post_snapshot_credit_excluded_micro": "100", "recovered_point": "quiesced snapshot before deliberately omitted post-backup credit", "source_current_verified": true, "restored_current_verified": true, "old_master_key_required_and_verified": true, "nonempty_target_rejected": true, "active_service_backup_rejected": true, "tampered_bundle_rejected": true, "writes_during_recovery_blocked": true, "persistent_recovery_required": required, "env_recovery_mode": environmentRecoveryMode, "effective_recovery_mode": effectiveRecoveryMode, "container_deployment_executed": false}
+	report := map[string]any{"date": time.Now().UTC().Format(time.RFC3339), "postgresql": "16.15", "backup_seconds": backupDuration.Seconds(), "restore_to_verified_recovery_http_seconds": restoreDuration.Seconds(), "checkpoint_at": checkpointAt.UTC(), "checkpoint_wallet": checkpoint, "restored_wallet": wallet, "ledger": ledger, "business_facts": checkpointFacts, "recovery_audit_count": recoveryAuditCount, "recovery_http_status": statuses, "post_snapshot_credit_excluded_micro": "100", "recovered_point": "quiesced snapshot before deliberately omitted post-backup credit", "source_current_verified": true, "restored_current_verified": true, "old_master_key_required_and_verified": true, "nonempty_target_rejected": true, "active_service_backup_rejected": true, "tampered_bundle_rejected": true, "writes_during_recovery_blocked": true, "persistent_recovery_required": required, "env_recovery_mode": environmentRecoveryMode, "effective_recovery_mode": effectiveRecoveryMode, "container_deployment_executed": false}
 	report["actual_main_process_recovery_http"] = mainStatuses
 	report["main_process_graceful_shutdown"] = graceful
 	b, _ := json.MarshalIndent(report, "", "  ")
@@ -408,6 +439,23 @@ func drill() error {
 	fmt.Println(string(b))
 	return nil
 }
+
+func readBusinessFacts(ctx context.Context, pool *pgxpool.Pool, tenant, creditID, requestID, attemptID, settlementID, refundID string) (businessFacts, error) {
+	var facts businessFacts
+	err := pool.QueryRow(ctx, `
+SELECT
+ EXISTS(SELECT 1 FROM credit_orders WHERE tenant_id=$1 AND id=$2 AND state='approved'),
+ EXISTS(SELECT 1 FROM funding_receipts WHERE tenant_id=$1 AND source_kind='manual_credit' AND source_id=$2),
+ EXISTS(SELECT 1 FROM request_records WHERE tenant_id=$1 AND id=$3),
+ EXISTS(SELECT 1 FROM upstream_attempts WHERE tenant_id=$1 AND id=$4 AND request_id=$3),
+ EXISTS(SELECT 1 FROM finalization_records WHERE tenant_id=$1 AND request_id=$3 AND attempt_id=$4 AND retail_usage_state='confirmed_final'),
+ EXISTS(SELECT 1 FROM settlements WHERE tenant_id=$1 AND id=$5 AND request_id=$3 AND status='settled'),
+ EXISTS(SELECT 1 FROM refund_orders WHERE tenant_id=$1 AND id=$6 AND state='approved'),
+ (SELECT count(*) FROM audit_events WHERE tenant_scope=$1)`, tenant, creditID, requestID, attemptID, settlementID, refundID).
+		Scan(&facts.CreditApproved, &facts.FundingReceipt, &facts.Request, &facts.Attempt, &facts.Finalization, &facts.Settlement, &facts.RefundApproved, &facts.TenantAuditEvents)
+	return facts, err
+}
+
 func loadMaterial(raw []byte) (*security.Secrets, error) {
 	env := map[string]string{}
 	for _, line := range strings.Split(string(raw), "\n") {
