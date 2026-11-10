@@ -89,3 +89,34 @@ go test ./migrations -run '^TestUnifiedTextMeteringGuardClosure' -count=1 -timeo
 结果为 `PASS`，4 项、3.000s；rebase 到最新主线后同四项 `-race` 运行也通过，`9.878s`。加入既有 current-only guard 组并启用 `-race` 的最终联合定向运行通过，结果为 `PASS`、19.203s。更宽的拒迁矩阵在同一专库一次运行中出现 `55P03 lock timeout`，发生于各隔离 schema 的 023 基线安装，未进入 028-U guard 断言；该环境噪声不计为通过或失败的 U 业务证据，后续需要清洁专库会话后重跑。
 
 仍未覆盖的边界：schema/capability/route/retail/supplier 的跨租户测试均为 N/A；没有新增真实供应商 usage/cost、六协议完整商业出口、恢复 worker 重发阻断、HTTP/UI、部署、HA 或性能验收。当前测试验证的是 PostgreSQL current-only guard、事务回滚、request/attempt/tenant 绑定、source identity 并发唯一性及角色权限，不把它们扩写为完整 028-U 生产接线。
+
+## 2026-11-10：十类 guard 逐项审计
+
+本专项在独立 worktree、PostgreSQL 16.15 专用库 `127.0.0.1:55439/moni_test` 上完成。新增测试只涉及 `migrations/*_postgres_test.go`，没有修改迁移 SQL、公共 billing/wallet/settlement 或部署入口。
+
+| 类别 | 合法正例与 SQL/Go 入口 | 非法、绑定、不可变、并发、回滚 | 租户边界 | 权限与实际 PostgreSQL | 结论 |
+| --- | --- | --- | --- | --- | --- |
+| schema | `TestUnifiedTextMeteringCurrentPositiveGuardFacts`；`meter_insert_text_model` 与 `meter_schema_complete`/`meter_schema_dimension_complete` | `TestUnifiedTextMeteringSchemaAndCapabilityCompletenessGuards`；`TestUnifiedTextMeteringGuardAuditConcurrentImmutableGlobalFacts`；失败事务无 schema 残留 | N/A；schema 是平台事实，合同没有 `tenant_id` | `TestUnifiedTextMeteringGuardAuditActualLoginTableSurface`；实际 LOGIN APP 可读，projector/worker 不可读 | 通过；租户与 request/attempt 绑定不适用于 root |
+| capability | current positive；`catalog.CreateModel`/`meter_insert_text_model` 与 `meter_capability_*` | capability/variant/bound 缺失、input-only 非法、不可变及并发拒绝均有 PG 证据 | N/A；无 `tenant_id` | 同上，计量子表实际 LOGIN ACL；发布 root 的管理角色另由 operations pricing ACL 测试覆盖 | 通过；不造跨租户假事实 |
+| route | current positive；`catalog.PublishWithCostPolicy` 与 `meter_route_*` | `TestMeterCompletenessRejectsGaps`、route 空集合/半套 cap/错误 channel-version/跨 binding 拼接；并发不可变 mutation；失败回滚 | N/A；route/binding 是平台发布事实 | 实际计量表 ACL；route 发布 ACL 由 operations/catalog PG 测试覆盖 | 通过；request 必须持有正数 route revision |
+| retail | current positive request snapshot；`catalog.PublishDefaultPrice`/`PublishGroupPrice` 与 `meter_price_*` | `TestUnifiedTextMeteringAmountAndSettlementGuards`、price/rate 不可变、并发不可变 mutation、金额错误整笔回滚；pricing concurrency PG 测试覆盖发布竞争 | N/A；price root 无 `tenant_id`，租户域通过 snapshot 绑定 | 计量表实际 LOGIN ACL；price root 的 pricing role 测试覆盖管理入口 | 通过；金额只由原向量重算 |
+| supplier | known quote positive；`catalog.PublishCostPrice`、`billing.RecordAttempt` 与 `meter_cost_*` | `TestUnifiedTextMeteringAttemptQuoteBindingAndSendingGuards`、foreign domain、unknown 初态、pointer 互斥、不可变并发 mutation、supplier correction/procurement rollback | N/A；cost root 无 `tenant_id`，attempt 冻结 tenant/request 域 | 计量表实际 LOGIN ACL；supplier 发布/派发 ACL 有 catalog/billing PG 证据 | 通过；未知供应商成本不估算为零 |
+| request | `billing.Store.Reserve` 真实出生 request/snapshot/bounds | `TestUnifiedTextMeteringSnapshotTenantBindingRollsBack`、`GuardMatrix`、deferred aggregate rollback；跨租户、跨 request、identity 改写、缺 snapshot 均回滚 | 已覆盖；不同 tenant 只能引用各自 request，global roots 可共享 | APP/projector/worker/PUBLIC 的计量表边界和实际 LOGIN 均覆盖 | 通过 |
+| attempt | `billing.Store.RecordAttempt` 真实 attempt/snapshot/bounds | quote/parent plan/request/tenant 错绑、sending 无成本来源、snapshot 不可变；同 `(request,sequence)` 并发唯一；失败无 root 残留 | 已覆盖；attempt 必须同 tenant/request | 实际 LOGIN 与 APP 不可更新历史覆盖 | 通过 |
+| observation/event | `RecordFinalization` 写 event 与两行 quantity | source 闭集、错误 attempt、重复 source identity、quantity/event 不可变；同 tenant 冲突并发唯一、跨 tenant 同 source 合法隔离、错误事务回滚 | 已覆盖；source identity 是 `(tenant,source,source_event_id)` 域 | 实际 LOGIN 计量表权限覆盖 | 通过 |
+| finalization/settlement | `RecordFinalization` + `Settle` 正例 | pointer/event/request 错绑、金额不一致、charged 无 finalization、released 非零、重复结算与 rollback；并发收尾唯一 | 已覆盖；settlement/finalization 同 tenant/request | 实际 LOGIN 计量表权限覆盖 | 通过 |
+| supplier procurement projection | `RecordAttempt` 受管采购正例；`meter_procurement_*` | reservation identity/upper amount/history、proposal/evidence/current、source pointer、预算与 account 并发、unknown/over-bound 与 rollback 均有 billing PG 证据 | 已覆盖；account/attempt/request 绑定和预算 tenant 锁均核验 | payment worker/projector 无计量权限；APP 入口由 billing PG 测试覆盖 | 通过 |
+
+这里的“通过”表示当前合同下的 SQL guard、Go 入口和真实 PostgreSQL 负控均有证据，不表示六协议商业出口、真实供应商或生产部署已经验收。对前五个全局平台事实不能补造“跨租户非法例”：它们没有 `tenant_id`，两个租户共享同一个不可变发布原件是合法正例；若强制要求它们各自拒绝另一租户写入，必须先改变数据合同和迁移模型，这是本专项明确提交给根 Agent 的 SQL/公共接口缺口，而不是测试可以解决的缺口。
+
+新增专项命令：
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+GOCACHE=/tmp/moni-aigate-028-audit-gocache \
+go test -count=1 -race -timeout 900s ./migrations \
+  -run '^TestUnifiedTextMeteringGuardAudit'
+```
+
+结果：3 项通过，4.178s。新增测试分别证明双租户共享全局原件且 request tenant 不泄漏、五类平台 root 的并发不可变写入全部拒绝、以及实际 LOGIN 对完整计量表集合的 APP/projector/worker 权限边界。架构快照没有在本专项 worktree 刷新；合并到根分支后由集成 Agent 按仓库规则统一刷新和复核。

@@ -660,4 +660,12 @@ ok github.com/moni-ai/moni-aigate/migrations 7.137s
 
 新增 `TestUnifiedTextMeteringGuardClosure*` 四项 PostgreSQL race 证据：deferred reservation 聚合失败整笔回滚、同租户与跨租户 request→attempt 错绑无残留、同 source event 按租户隔离且同租户冲突并发只保留一个事实、实际 LOGIN 对全部 `meter_%` 函数执行权符合 APP/projector/worker 边界。55439 定向 closure 和既有 guard 联合 race 均通过。
 
+## 2026-11-10：028-U 十类 guard 逐项审计
+
+在独立 `codex/028-u-guard-audit-agent2` worktree 中对照 `u-storage-contract.md` 第 8.1 节、第 11.2 节和目标第五节逐项复核十类 guard。新增 `migrations/unified_text_metering_guard_audit_postgres_test.go`，仅补测试，不改迁移 SQL、公共 billing/wallet/settlement 或运行入口。
+
+审计结果为：schema、capability、route、retail、supplier、request、attempt、observation/event、finalization/settlement、supplier procurement projection 的 SQL trigger/constraint、Go 入口和 PostgreSQL 正反边界均能在当前合同内找到对应证据。新增的三项真实 PostgreSQL race/权限测试通过：双租户共享全局不可变原件且 request tenant 不串行、五类平台 root 的并发 UPDATE 全部拒绝、APP/projector/worker 实际 LOGIN 对完整计量表集合的权限符合合同。
+
+schema/capability/route/retail/supplier 没有 `tenant_id`，因此“跨租户非法写入”对这五类是结构性 N/A；两个租户复用同一平台发布原件是合法行为。若要求它们拒绝另一租户修改，必须先改变合同、复合键和迁移，不能通过测试伪造第二套模型。本次仍不把 guard 审计扩写为完整六协议商业出口、真实供应商、浏览器、部署、HA 或性能验收。
+
 新增 [`scripts/browser-qa/current-mvp-smoke.sh`](../../scripts/browser-qa/current-mvp-smoke.sh) 作为已部署 disposable 环境的只读 HTTP/WS sidecar：强制本机 55439 `moni_test` 声明，但不连接数据库、不创建身份/租户/钱包/任务事实，只使用已有 API Key、模型和 Realtime URL，要求文本 HTTP 与 Realtime WebSocket 实际通过；可选媒体/task 缺失时显式 SKIP。该入口与真实二租户 HTTP smoke 共同构成等价内测证据，仍不替代浏览器 UI、真实供应商或生产验收。
