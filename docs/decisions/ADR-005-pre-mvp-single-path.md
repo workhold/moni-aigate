@@ -10,6 +10,7 @@
 - 不再为未发布的内部方案维护多套旧数据库结构、证明文件格式和执行路径，也不逐一验证它们与新方案的组合。替换时采用明确迁移或删除旧实现；这里不涉及取消已经声明支持的 OpenAI、Claude、Gemini 等外部 API 协议。
 - 替换一个模块时，先明确现行模型、唯一写入口、事务所有权、故障状态和验收，再删除被替代的实现及调用；不同时保留两套“以防兼容”。本决策不要求为清理而立即删除所有离线研究与测试，也不将它们引入在线依赖。
 - 当前服务的默认 Go 构建图不得包含只服务历史维护扫描的 raw reader、旧 scalar SQL 或维护装配。`internal/billing` 中这类 reader 与 `internal/maintenancescan` 采用 `historical` build tag，仅在显式历史专项命令中编译。它们不进入 `cmd/moni-aigate` 的 migrate、provision、serve、worker、wallet、billing、provider 或媒体依赖闭包。历史专项继续保留原测试和原数据库合同，不转换为当前服务能力。
+- 当前 wallet 对 manual credit/voucher 的 journal 校验使用 `payment_funding_journal_valid` 这一现行函数身份。021–023 的 `payment_legacy_funding_journal_valid` 只作为历史 SQL 材料保留，024 在安装新基线时创建现行身份、替换 `funding_journal_valid` 的调用并删除旧函数，同时更新角色静态基线。校验逻辑和资金事实不降维、不双写、不增加 fallback。
 - 继续保留租户隔离、数据库原子性、硬预占、唯一结算、不可变价格快照、未知消费不重发模型请求和秘密保护。简化历史兼容不等于省略现行业务正确性。
 
 ## 交付顺序

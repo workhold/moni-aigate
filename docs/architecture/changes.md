@@ -5544,3 +5544,22 @@ A5 S2固定三根事务Runner与S3显式业务/HTTP适配，确认COMMIT后发�
 - modified `specs/028-unified-metering-media/u-storage-contract.md`
 
 </details>
+
+## 2026-11-10T02:29:05Z · f3ee729d3939
+
+收口当前 wallet funding 校验器身份：024/current_mvp 创建 payment_funding_journal_valid、替换当前 funding dispatcher、删除旧函数并同步角色 ACL、架构正文和验证记录；不改变 021–023 历史材料与资金事实
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2110 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/decisions/ADR-005-pre-mvp-single-path.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `migrations/024_unified_text_metering.sql`
+- modified `migrations/current_mvp.sql`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>

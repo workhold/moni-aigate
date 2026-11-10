@@ -14,6 +14,8 @@
 
 当前 U guard 专项已增加 55439 PostgreSQL 负控矩阵，覆盖跨租户/跨 request-attempt、不可变快照与最终证据、attempt quote/parent plan、Observation 来源闭集、成本指针互斥、资金边界回滚和计量角色 ACL。历史拒迁清单补齐采购 evidence identity，另有真实 LOGIN 的 APP/PROJECTOR/PAYMENT_WORKER 表与函数权限负控。该专项补强当前迁移的实证边界，完整九组 guard、全部历史金融事实正反例和目标环境权限验收仍未完成。
 2026-11-10 计量函数权限定义收口：024 与当前 MVP 基线在创建完全部 `meter_%` 函数后逐函数设置 `SECURITY INVOKER`、固定 `search_path` 为当前 schema、`pg_catalog`、`pg_temp`，并撤销 PUBLIC 执行权。`VerifyMeterRoles` 同时核验 APP 的逐函数执行权、projector/PUBLIC 的拒绝，以及 invoker 和 search_path 属性。实际 LOGIN 连接的角色边界与迁移 guard 专项在 PostgreSQL 16.15、55439 专库通过。完整九组 guard、11.2 旧金融事实全量拒迁矩阵和目标环境权限验收仍未完成。
+
+2026-11-10 wallet 校验器身份收口：当前 `current_mvp.sql` 与 024 在当前片段创建 `payment_funding_journal_valid`，以完整 manual credit/voucher predicate 替换 `funding_journal_valid` 的历史调用，并删除 `payment_legacy_funding_journal_valid`。021–023 原文件及历史 fixture 不改。角色静态函数摘要、current MVP 实际 LOGIN provisioning、APP/PROJECTOR/PAYMENT_WORKER 权限和 wallet source 回归通过，资金事实、wallet opening 分支和历史拒迁边界保持原合同。
 2026-11-08 续片：024 的请求记录触发器现在把 `request_hmac`、`streaming` 和 `route_revision` 纳入不可变报价身份，固定函数搜索路径并撤销 PUBLIC 执行。人工核对服务层把 `settle` 明确映射为账务 `propose`，避免空动作进入账务入口。上述是当前入口守卫和错误映射的局部修复，attempt/supplier quote 完整守卫、028-U九组完整guard与完整商业出口仍按任务清单验收。
 
 2026-11-08 媒体扩展开发续片：当前 024 追加任务/实时关系只保存绑定、状态、事件和制品元数据，不创建第二钱包或结算表；APP 的状态写权限由 `ProvisionFor` 独立收紧。S/A/R service 接口把原 request/reservation/attempt/settlement 引用作为外部事实传入，provider unknown 进入不可重发边界。后续纵向接线已将这些接口接入当前 HTTP/WS、mock provider、账务和制品正文路径，下面的 2026-11-09 记录为当前状态。

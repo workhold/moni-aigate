@@ -72,6 +72,45 @@ BEGIN
  END IF;
 END $$;
 
+-- Replace the historical 021/023 funding predicate with the current wallet
+-- identity before any new current-domain object is installed.
+CREATE FUNCTION payment_funding_journal_valid(journal_ref TEXT) RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY INVOKER AS $$
+ SELECT EXISTS(SELECT 1 FROM journals j JOIN funding_receipts f ON f.journal_id=j.id
+ LEFT JOIN credit_orders c ON f.source_kind='manual_credit' AND c.id=f.source_id
+ LEFT JOIN vouchers v ON f.source_kind='voucher_grant' AND v.id=f.source_id
+ LEFT JOIN voucher_batches b ON b.id=v.batch_id
+ LEFT JOIN voucher_redemptions r ON r.voucher_id=v.id AND r.funding_receipt_id=f.id
+ LEFT JOIN commerce_commands cmd ON cmd.operation_id=r.operation_id
+ LEFT JOIN commerce_operation_receipts terminal ON terminal.operation_id=r.operation_id
+ WHERE j.id=journal_ref AND j.tenant_id=f.tenant_id AND j.currency='CNY' AND f.currency='CNY' AND f.amount>0
+ AND ((f.source_kind='manual_credit' AND c.state='approved' AND c.journal_id=j.id AND c.tenant_id=f.tenant_id AND c.amount=f.amount AND c.approver<>c.requester AND j.kind='credit' AND j.operation_id=c.id AND j.reference=c.id AND j.actor=c.approver)
+ OR (f.source_kind='voucher_grant' AND b.state IN ('active','revoked') AND r.id=j.operation_id AND j.kind='voucher_grant' AND j.reference=v.id AND j.actor=r.actor
+  AND r.tenant_id=f.tenant_id AND r.journal_id=j.id AND r.amount=f.amount AND b.face_amount=f.amount AND r.batch_id=b.id
+  AND r.created_at>=b.activated_at AND r.created_at<b.expires_at AND (b.terminal_at IS NULL OR r.created_at<=b.terminal_at)
+  AND cmd.kind='voucher.redeem' AND cmd.actor=r.actor AND cmd.scope='tenant:'||r.tenant_id
+  AND terminal.status='accepted' AND terminal.reason='accepted' AND terminal.resource_id=r.id AND terminal.amount=f.amount AND terminal.funding_receipt_id=f.id AND terminal.journal_id=j.id))
+ AND (SELECT count(*) FROM journal_lines l WHERE l.journal_id=j.id)=2
+ AND EXISTS(SELECT 1 FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id WHERE l.journal_id=j.id AND a.kind='AVAILABLE' AND a.tenant_id=f.tenant_id AND l.signed_delta=f.amount)
+ AND EXISTS(SELECT 1 FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id WHERE l.journal_id=j.id AND a.tenant_id IS NULL AND a.kind=CASE WHEN f.source_kind='manual_credit' THEN 'FUNDING_CLEARING' ELSE 'OPERATING_GRANT_CLEARING' END AND l.signed_delta=-f.amount)
+ AND (SELECT count(*) FROM projection_outbox o WHERE o.operation_id=j.operation_id AND o.kind='credited')=1
+ AND EXISTS(SELECT 1 FROM projection_outbox o WHERE o.operation_id=j.operation_id AND o.kind='credited' AND o.tenant_id=j.tenant_id AND o.schema_version=1 AND jsonb_typeof(o.sanitized_payload->'amount')='string' AND o.sanitized_payload->>'amount'=f.amount::text))
+$$;
+CREATE OR REPLACE FUNCTION funding_journal_valid(journal_ref text) RETURNS boolean LANGUAGE plpgsql STABLE AS $$
+BEGIN
+ IF EXISTS(SELECT 1 FROM journals WHERE id=journal_ref AND kind='sandbox_capture') THEN RETURN payment_sandbox_journal_valid(journal_ref); END IF;
+ RETURN payment_funding_journal_valid(journal_ref);
+END
+$$;
+DROP FUNCTION payment_legacy_funding_journal_valid(text);
+DO $$ BEGIN
+ EXECUTE format('ALTER FUNCTION %I.payment_funding_journal_valid(text) SECURITY INVOKER',current_schema());
+ EXECUTE format('ALTER FUNCTION %I.payment_funding_journal_valid(text) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('REVOKE ALL ON FUNCTION %I.payment_funding_journal_valid(text) FROM PUBLIC',current_schema());
+ EXECUTE format('ALTER FUNCTION %I.funding_journal_valid(text) SECURITY INVOKER',current_schema());
+ EXECUTE format('ALTER FUNCTION %I.funding_journal_valid(text) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('REVOKE ALL ON FUNCTION %I.funding_journal_valid(text) FROM PUBLIC',current_schema());
+END $$;
+
 -- 024 owns the empty current schema. Manual reconciliation keeps the exact
 -- vector bytes so JSONB key reordering cannot change an idempotency identity.
 ALTER TABLE reconciliation_cases DROP COLUMN proposed_usage;

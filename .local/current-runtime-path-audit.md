@@ -9,13 +9,13 @@ Go、SQL、迁移、前端或测试。
 
 当前 `moni-aigate` 主服务已经把文本请求的在线计量、报价、预占、尝试、观察和结算接到当前向量模型。当前安装器也只走 `current_mvp.sql`。主服务依赖闭包中没有历史 prefix/proof/replay 维护包，也没有独立支付 sandbox 的 `paymentruntime`。
 
-当前运行路径仍包含三类需要后续处理的旧痕迹。
+原审计记录了三类需要处理的旧痕迹。2026-11-10 的集成收口已完成其中的 wallet 谓词替换，下面保留 periodic-budget 和维护 reader 的未完成边界。
 
-1. 在线资金校验仍通过 `payment_legacy_funding_journal_valid` 验证传统 funding journal。它不是死代码，不能直接删除。
+1. 在线资金校验已改为当前的 `payment_funding_journal_valid`。021–023 原文件中的 `payment_legacy_funding_journal_valid` 只保留为历史安装材料，024 和 `current_mvp.sql` 在同一事务中创建当前函数、替换调度器、删除旧函数并恢复 invoker/search_path/PUBLIC 策略。
 2. 在线周期预算 Reader、Commander 和 Verifier 仍显式处理 `legacy_import` 与 `legacy_catchup`。它们属于当前 periodic-budget API 和离线验证入口的行为合同。
 3. `internal/billing` 中的维护型 raw reader 仍查询 024 已删除的 `input_rate`、`output_rate` 以及 `cost_input_rate`、`cost_output_rate`。这些 reader 没有被当前 `moni-aigate` 主入口调用，但因为它们属于 `internal/billing` 包而进入 Go 编译。它们是最高优先级的清理候选，不能在没有同步维护入口和测试边界的情况下单独删除。
 
-因此，当前状态符合“主服务大部分走单一当前链路”的描述，但不符合“所有当前编译和运行入口都没有旧 billing/wallet 分支”的更强目标。
+因此，当前状态符合“wallet funding 校验只走当前函数身份”的描述，但仍不符合“所有当前编译和运行入口都没有旧 billing/periodic-budget 分支”的更强目标。
 
 ## 审计方法与证据
 
@@ -86,18 +86,18 @@ Provision 当前只对已经安装的当前 schema 配置 APP、projection、pay
 
 这不是可以凭名称删除的无用代码。当前系统仍允许未纳入采购托管的手工渠道。删除前必须先冻结未绑定渠道的拒绝合同、管理端发布流程和已有 route fixture，否则会把合法的 unmanaged route 误变成未知成本或请求失败。
 
-#### 在线仍存在的旧 wallet/funding 分支
+#### 已收口的 wallet/funding 谓词
 
-`current_mvp.sql:3696-3739` 创建 `payment_legacy_funding_journal_valid`，当前 `funding_journal_valid` 会调用它。`current_mvp.sql:4372-4375` 对非 sandbox、非 wallet-opening journal 继续调用该函数。当前 Go 入口也直接使用它。
+`024_unified_text_metering.sql` 和 `current_mvp.sql` 的当前片段创建 `payment_funding_journal_valid`，并在当前 `funding_journal_valid` 中调用它。024 同时删除历史函数。021–023 原文件及历史 `Apply` 仍保留原函数名，只供历史 fixture 使用。
 
 | 当前调用方 | 证据 | 结论 |
 |---|---|---|
 | funding source 应用写入 | `internal/billing/funding.go:84,153` | 当前 wallet/billing 事务实际调用 |
 | funding verify | `internal/billing/funding_verify.go:64-75` | 当前 ledger/source 检查实际调用 |
 | sandbox funding 读取 | `internal/billing/funding_sandbox.go:66` | 当前 payment sandbox funding 校验调用 |
-| SQL role baseline | `internal/operations/payment_roles_functions.go:7,26,533-537` | 当前 provision/verify 会核验该历史函数形状 |
+| SQL role baseline | `internal/operations/payment_roles_functions.go` | 当前 provision/verify 核验 `payment_funding_journal_valid` 的完整函数形状和权限 |
 
-该函数虽然名字带 legacy，但它已经成为当前 funding journal 的实际底层谓词。它不能直接删除。需要先把 manual credit、voucher、sandbox capture、wallet opening 四种来源统一到一个新的当前 `funding_journal_valid` 实现，再同步 migration、role baseline、wallet source check 和回归矩阵。
+当前函数保留 manual credit、voucher 和 sandbox capture 的完整来源约束。wallet opening 仍由 `funding_journal_valid` 的历史 dispatcher 分支独立校验，当前 024 的收口不改变其资金事实。当前空库 `ApplyCurrent` 和实际 LOGIN 角色边界已经按新的函数身份通过。
 
 ### worker
 
@@ -115,7 +115,7 @@ worker 没有导入 `procurementprefix`、`fundinglotruntime`、`maintenancescan
 
 `cmd/moni-payment-sandbox/main.go` 是独立的可选 QA 组件。它依赖 `internal/paymentruntime`、`internal/mockpsp` 和 `internal/paymentreceiver`，不在 `go list -deps ./cmd/moni-aigate` 的主服务闭包内。它可以保留为明确的 sandbox 工具，但不应被当成 `serve` 的当前 wallet/billing 路径。
 
-主服务的 payment ACL 仍然包含 `payment_legacy_funding_journal_valid`。这属于当前 wallet source guard 的实际依赖，不能与独立 sandbox 组件混为一谈。
+主服务的 payment ACL 现在包含 `payment_funding_journal_valid`。021–023 历史 ACL 仍可在隔离历史 fixture 中出现，但不属于 `ApplyCurrent` 的在线函数身份。
 
 ### periodic-budget
 
@@ -247,7 +247,7 @@ worker 没有导入 `procurementprefix`、`fundinglotruntime`、`maintenancescan
 3. 管理端每百万 token 的两个整数输入，以及它们到完整 Rates 的一次性转换。
 4. `provider.Usage` 的供应商原生 token 字段和 `SafeToRetry` 的未知消费保护。
 5. `billing` 的唯一 Reserve/Attempt/Observe/Settle、采购预算、wallet journal、funding lot、refund 和 recovery 链路。
-6. `payment_legacy_funding_journal_valid` 及其当前调用，除非先完成当前 funding source validator 替换并更新 SQL、ACL 和验收。
+6. 021–023 中的 `payment_legacy_funding_journal_valid` 历史定义可以保留供隔离 fixture 追溯。当前服务只能使用 024 创建的 `payment_funding_journal_valid`，其 SQL、ACL 和角色验收必须保持同步。
 7. periodic-budget 的 legacy origin 分支，除非先冻结并实施 current-only 状态机和迁移策略。
 8. media 的数据库路径、artifact 访问控制、任务 lease、Realtime tenant-bound persistence 和 provider mock adapter。
 
@@ -255,7 +255,7 @@ worker 没有导入 `procurementprefix`、`fundinglotruntime`、`maintenancescan
 
 1. 先处理 `funding_financial_read.go` 和 `procurement_attempt_read.go`。这两处已经能够由当前 SQL 删除列直接证伪，优先级高于按目录名删除历史代码。
 2. 单独冻结 periodic-budget current-only 合同，再移除 `legacy_import`、`legacy_catchup` 的在线写入和读取分支。
-3. 用当前 funding source graph 重写 `payment_legacy_funding_journal_valid`，完成 role baseline 和 wallet source 负控后再删旧谓词。
+3. 继续审计当前 funding source graph 与 wallet opening 分支。payment 谓词身份替换已经完成，后续只在有明确当前调用方和合同的前提下清理剩余历史材料。
 4. 将 prefix/proof/replay 研究包从当前 Go 构建图拆出。保留历史测试材料时，入口应明确标为 offline historical tooling。
 5. 最后处理无数据库 media/realtime fixture 分支和进程内 cache。它们不是旧兼容代码，必须先补齐测试服务替代物和进行中请求的失败边界。
 

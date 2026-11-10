@@ -59,6 +59,17 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 		t.Fatal("current media wallet dispatcher unavailable")
 	}
 	functions["wallet_event_valid"] = fmt.Sprintf("%x", sha256.Sum256(currentWallet[1]))
+	currentFunding := regexp.MustCompile(`(?s)CREATE FUNCTION payment_funding_journal_valid\([^$]*?\$\$(.*?)\$\$;`).FindSubmatch(current)
+	if len(currentFunding) != 2 {
+		t.Fatal("current funding validator unavailable")
+	}
+	functions["payment_funding_journal_valid"] = fmt.Sprintf("%x", sha256.Sum256(currentFunding[1]))
+	currentDispatcher := regexp.MustCompile(`(?s)CREATE OR REPLACE FUNCTION funding_journal_valid\([^$]*?\$\$(.*?)\$\$;`).FindSubmatch(current)
+	if len(currentDispatcher) != 2 {
+		t.Fatal("current funding dispatcher unavailable")
+	}
+	functions["funding_journal_valid"] = fmt.Sprintf("%x", sha256.Sum256(currentDispatcher[1]))
+	delete(functions, "payment_legacy_funding_journal_valid")
 	if len(paymentFunctionSpecs) != 55 || len(functions) != len(paymentFunctionSpecs) {
 		t.Fatal("current payment/wallet function allowlist incomplete")
 	}
@@ -71,7 +82,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 			t.Fatal("function body digest differs from reviewed source")
 		}
 	}
-	if worker != 38 || paymentFunctionSpecs["payment_legacy_funding_journal_valid"].worker || paymentFunctionSpecs["payment_check_human"].worker || paymentFunctionSpecs["payment_audit_guard"].worker || paymentFunctionSpecs["payment_audit_complete"].worker {
+	if worker != 38 || paymentFunctionSpecs["payment_funding_journal_valid"].worker || paymentFunctionSpecs["payment_check_human"].worker || paymentFunctionSpecs["payment_audit_guard"].worker || paymentFunctionSpecs["payment_audit_complete"].worker {
 		t.Fatal("worker function allowlist differs from frozen matrix")
 	}
 	for _, name := range []string{"wallet_opening_journal_valid", "wallet_reservation_fifo_guard", "wallet_reservation_valid", "wallet_settlement_valid", "wallet_refund_valid"} {
@@ -298,7 +309,7 @@ func TestPaymentRolesEmptyOffActualLoginsAndRepeatedProvision(t *testing.T) {
 	if !ok {
 		t.Fatal("legacy public invoker was unexpectedly revoked")
 	}
-	for _, q := range []string{"SELECT * FROM users LIMIT 0", "SELECT name FROM tenants LIMIT 0", "SELECT * FROM vouchers LIMIT 0", "SELECT * FROM periodic_budget_controls LIMIT 0", "SELECT * FROM payment_policy LIMIT 0", "SELECT payment_legacy_funding_journal_valid('missing')", "SELECT payment_check_human('missing')"} {
+	for _, q := range []string{"SELECT * FROM users LIMIT 0", "SELECT name FROM tenants LIMIT 0", "SELECT * FROM vouchers LIMIT 0", "SELECT * FROM periodic_budget_controls LIMIT 0", "SELECT * FROM payment_policy LIMIT 0", "SELECT payment_funding_journal_valid('missing')", "SELECT payment_check_human('missing')"} {
 		if _, e := f.worker.Exec(f.ctx, q); e == nil {
 			t.Fatal("worker exceeded frozen boundary")
 		}
@@ -374,7 +385,7 @@ func TestPaymentRolesFunctionDefinitionAndExecutionBoundary(t *testing.T) {
 		name, grant, revoke string
 		role                PaymentDatabaseRole
 	}{
-		{"worker legacy A predicate", "GRANT EXECUTE ON FUNCTION " + f.table("payment_legacy_funding_journal_valid") + "(text) TO " + qw, "REVOKE EXECUTE ON FUNCTION " + f.table("payment_legacy_funding_journal_valid") + "(text) FROM " + qw, PaymentWorkerRole},
+		{"worker current funding predicate", "GRANT EXECUTE ON FUNCTION " + f.table("payment_funding_journal_valid") + "(text) TO " + qw, "REVOKE EXECUTE ON FUNCTION " + f.table("payment_funding_journal_valid") + "(text) FROM " + qw, PaymentWorkerRole},
 		{"projector execute", "GRANT EXECUTE ON FUNCTION " + fn + " TO " + qp, "REVOKE EXECUTE ON FUNCTION " + fn + " FROM " + qp, PaymentProjectionRole},
 		{"PUBLIC execute", "GRANT EXECUTE ON FUNCTION " + fn + " TO PUBLIC", "REVOKE EXECUTE ON FUNCTION " + fn + " FROM PUBLIC", PaymentApplicationRole},
 		{"function grant option", "GRANT EXECUTE ON FUNCTION " + legacy + " TO " + qw + " WITH GRANT OPTION", "REVOKE ALL ON FUNCTION " + legacy + " FROM " + qw, PaymentWorkerRole},

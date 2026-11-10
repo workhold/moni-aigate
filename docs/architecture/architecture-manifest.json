@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T00:31:47Z",
-  "review_reason": "补齐024/current MVP在第一条业务DDL前的schema/relation owner与ACL形状拒迁，并记录021/022 payment ACL合法例外；复核迁移、权限、验证和当前构建图",
-  "snapshot_sha256": "706305ce6ec68261c58ac15ee9db1831a64641ae8184ff8c99e7a0c998aa3b90",
-  "architecture_sha256": "8e2ff4dcd01989e6d97985bb6435a181ca0f76645571ce1c1d87e52886425df3",
-  "history_sha256": "843227a6a6a53e77cd48220b390677e631217c9ec5b3cefb63830f1141845039",
+  "reviewed_at": "2026-11-10T02:29:05Z",
+  "review_reason": "收口当前 wallet funding 校验器身份：024/current_mvp 创建 payment_funding_journal_valid、替换当前 funding dispatcher、删除旧函数并同步角色 ACL、架构正文和验证记录；不改变 021–023 历史材料与资金事实",
+  "snapshot_sha256": "f3ee729d393915886923c936f7ec3797a47acde0f4a17012758cf9d2681c8f30",
+  "architecture_sha256": "c70d718c7584d9bd433af572b58b866f5508da84cfe80a1608a14c97e69fba7d",
+  "history_sha256": "de8936c751379e2dd289af33c0fa3b7bcc249eeba3bd970f0d74228e74b2d50d",
   "files": [
     {
       "path": ".dockerignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "ad5e1d329a17a42eaa05f69065abad97336b7b1592b6d9f1475e046b2a2b8fcd"
+      "sha256": "273705ef2a94109a5697a672123195f994a5f752d0f9163a924b1065df22b590"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -165,7 +165,7 @@
     },
     {
       "path": "docs/decisions/ADR-005-pre-mvp-single-path.md",
-      "sha256": "0e6bffe1fa739d9bd5a65eea8f3ad13a4b6a369f01505f3c013f4d7c3e419e56"
+      "sha256": "c16ada25d06419c3cdd4104a14f2f62df7084c89b2ce44f902585ed75d8bfb6f"
     },
     {
       "path": "docs/design/HLD.md",
@@ -1805,7 +1805,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "f65c6c21430881dbd975661e2bf911996a2d63eaddce014cc96357d15a30d7e9"
+      "sha256": "da86d100b26714044d837f56dfb14f6759196b11ee9fa6f6a3afe78f4a17996f"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -4109,11 +4109,11 @@
     },
     {
       "path": "internal/operations/payment_roles_functions.go",
-      "sha256": "f5b3fa5db084f4cfadbb6789a451611e1fc03ea127763959c55909ca3a0d5d80"
+      "sha256": "de30905773ee5871f6fc7d054caa632e0a7cbd03ba55a1322a2fb4d8a82572b3"
     },
     {
       "path": "internal/operations/payment_roles_test.go",
-      "sha256": "54f59bf0cd8799a494969bbbffffbbc3c48924009deefbfae596e8b60278ca87"
+      "sha256": "7331409c98537f9454f562c7cf97edac609ded6b8278b6d55b9ae8dfcc2351d8"
     },
     {
       "path": "internal/operations/periodic_roles.go",
@@ -6453,7 +6453,7 @@
     },
     {
       "path": "migrations/024_unified_text_metering.sql",
-      "sha256": "1af14c9da422588fb93b7ee2285d78b134ee16e56be6c2e0ded7107fc200151e"
+      "sha256": "7b67059a256a03950e2752f467f366a9ef44e59332e477852bda5789880fe4d8"
     },
     {
       "path": "migrations/current.go",
@@ -6461,7 +6461,7 @@
     },
     {
       "path": "migrations/current_mvp.sql",
-      "sha256": "a13fe0a1b693d013b3ac5c3972fc9a1ecd7780895ab854583ab859175f4877e2"
+      "sha256": "2952aa2c3ac5a23e68270841f06afafe4447ffd5726f257aa80fc3ea902bffe6"
     },
     {
       "path": "migrations/embed.go",
@@ -7817,7 +7817,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "12d41a2cb16876ae427720bf257858cb82848f8a2503d8e53522524cd9901b30"
+      "sha256": "1175dde36ee2a42257382e9b342c168e8e9de840e2b3c24582ae5a5b67d65d6e"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

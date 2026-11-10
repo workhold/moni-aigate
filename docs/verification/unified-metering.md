@@ -1,5 +1,25 @@
 # 028-U统一计量验证
 
+## 2026-11-10：当前 wallet funding 校验器身份
+
+024 与 `migrations/current_mvp.sql` 的当前片段创建 `payment_funding_journal_valid`，替换 `funding_journal_valid` 的当前调用并删除旧函数。021–023 原文件没有修改，历史 `Apply` fixture 仍保留原函数身份。角色静态基线同步核验新的函数名、语言、稳定性、摘要、固定搜索路径和执行角色边界。
+
+实际通过的 55439 专库命令如下：
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+go test -count=1 -timeout 300s ./internal/operations \
+  -run 'TestPaymentRoles|TestWalletSourcesRoles|TestMeterRoleBoundary'
+
+PATH="/opt/homebrew/bin:$PATH" \
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+go test -race -count=1 -timeout 420s ./migrations \
+  -run 'TestUnifiedTextMetering|TestMeterCompletenessRejectsGaps|TestCurrentInstaller'
+```
+
+两组命令均通过。该片只验证当前 wallet 函数身份和权限收口，不把完整 028-U guard、六协议商业全矩阵、正式供应商或生产部署标记为完成。
+
 ## 当前空库迁移与拒迁门禁
 
 当前服务入口使用 `migrations.ApplyCurrent` 和 `migrations.VerifyCurrent`。安装器只执行 `migrations/current_mvp.sql`，在任何业务 DDL 前持有迁移 advisory lock，并拒绝已存在 `schema_migrations`、业务关系或其他用户关系的数据库。它不升级旧库、不转换金融历史，也不接受不完整的基线。`serve` 与 `worker` 只执行只读 `VerifyCurrent`，缺失、未知或 checksum 不匹配时拒绝启动。
