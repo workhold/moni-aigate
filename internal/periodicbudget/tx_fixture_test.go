@@ -178,7 +178,7 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 		pbTxMust(t, "read complete embedded migration manifest", e)
 		expected = 0
 		for _, name := range names {
-			if name != "current_mvp.sql" {
+			if name != "current_mvp.sql" && !strings.HasPrefix(name, "current_") {
 				expected++
 			}
 		}

@@ -22,6 +22,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-10 媒体 provider 安全边界收口：`MEDIA_PROVIDER_PROFILE` 默认是 `inner-test`，`MEDIA_DETERMINISTIC_MOCK=true` 只在 `development` 或显式 `business-qa` 配置下启用 deterministic mock；app 和 worker 使用同一组配置，生产默认不会自动启动 mock。inner-test 没有真实 adapter 时，图片、TTS、`video_generation` 和单 turn Realtime 在预占前返回 `provider_unavailable`，不产生 reservation、attempt、observation、settlement、钱包或供应商成本事实。mock 成功只写标记为 mock 的工作流事实，usage/supplier cost 保持 missing/unknown，客户收费为零；failed、timeout、sent/unknown 均不重试。该边界已由 55439 专库的受限 HTTP/WS 与配置测试覆盖，不代表真实供应商认证。
 
+2026-11-10 baiyang 供应商资格探测：通过 CC Switch 保存的 baiyang 配置发现 137 个模型，使用低成本 `gpt-4o-mini` 经 `scripts/provider-qualification` 完成一次 HTTPS OpenAI-compatible Chat 请求，确认 `stop` 终态和 final usage。qualification 只输出脱敏协议摘要和响应摘要，不写平台模型、路由、价格、钱包、预占或结算事实，完整供应商和生产资格仍按逐 profile 合同验收。
+
 2026-11-10 当前 MVP 集成复核：统一 current-only migration、provider 契约、028-U 十类 guard、wallet/billing/settlement、六种文本、图片、TTS、异步 `video_generation`、单 turn Realtime、备份恢复、Compose 单机部署和 mock provider 安全边界已在 `codex/initial-mvp` 汇合。55439 专库定向 race、前端342项、Go build/vet、空库安装/拒迁/权限、恢复锁/钱包/账本/关键业务事实和 `DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 均通过；Compose 实际覆盖迁移、provision/bootstrap、文本/图片/TTS/task/Realtime 以及 app/worker/PostgreSQL 重启。真实供应商、浏览器、1Panel、正式支付、HA 和性能属于后续 Release Qualification。
 
 当前 HTTP/WS 等价内测只读 sidecar 为 `scripts/browser-qa/current-mvp-smoke.sh`：它消费已有部署的当前 API Key、模型和 Realtime URL，强制本机 `TEST_DATABASE_URL` 为 55439 的 `moni_test`，并复用现行 `deployment-business-qa.sh` 的文本 HTTP 与 Realtime WebSocket 断言。它不属于默认运行时、不执行 provisioning、不连接数据库，也不复用 Go `browser-qa` 的 identity/model lifecycle fixture；该入口仍只证明当前 disposable/mock 内测边界。

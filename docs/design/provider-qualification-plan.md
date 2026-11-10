@@ -19,4 +19,4 @@
 
 本次通过Chrome实际读取[OpenAI官方Code generation指南](https://developers.openai.com/api/docs/guides/code-generation)，该页将Codex编码agent与在应用中通过Responses API使用编码模型分别说明。因此接入目标以账号实际可用的官方API模型为准；完整Codex agent会话、执行环境与工具生命周期需要单独合同，不能从现有文本Responses转发推导已支持。本文不固化易变的“最新模型”或默认价格，不用文档读取代替真实账号/费用认证。
 
-当前没有正式模型凭据的使用授权配置或扣费证据，不发付费请求。支付商与1Panel目标主机尚未确定，相关外部验收继续保留；本地资金、安全和交付实现不依赖这些信息。后续每个profile的spec、证据、能力状态和源码改动一起进入统一架构内容清单。
+2026-11-10 用户授权使用本机 CC Switch 中名为 `baiyang` 的供应商进行内测资格探测。该端点通过模型列表发现 137 个模型，并用低成本 `gpt-4o-mini` 完成一次非流式 OpenAI-compatible Chat 请求，确认终态和 final usage。该证据只冻结 Chat 单模型 qualification probe，不扩大为完整供应商、媒体、生产容量或正式成本认证。后续每个 profile 的 spec、证据、能力状态和源码改动一起进入统一架构内容清单。

@@ -5927,3 +5927,24 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - added `specs/033-text-dynamic-routing/spec.md`
 
 </details>
+
+## 2026-11-10T15:20:12Z · e1329d112b87
+
+合入 main 的四阶段路线与规格 029–033，并保留当前 baiyang 供应商资格探测、CI race/历史候选门禁修复；复核统一架构、源码链接和能力状态
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2140 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/architecture/unified-metering.md`
+- modified `docs/design/provider-qualification-plan.md`
+- added `docs/verification/provider-qualification-baiyang.md`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/server/pricing_publish_http_integration_test.go`
+- added `scripts/provider-qualification/README.md`
+- added `scripts/provider-qualification/main.go`
+- added `scripts/provider-qualification/main_test.go`
+- modified `specs/022-self-service-payments/c0-wallet-readset.json`
+
+</details>

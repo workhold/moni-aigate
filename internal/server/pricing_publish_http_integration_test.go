@@ -68,14 +68,21 @@ func pricingModel(t *testing.T, f *gatewayFixture, actor, name string, profile p
 
 func pricingHTTP(t *testing.T, s *Server, method, path, raw, csrf string, body any) *httptest.ResponseRecorder {
 	t.Helper()
-	s.pricing = pricingAdmission{}
+	resetPricingAdmissionForTest(s)
 	return authHTTP(t, s, method, path, raw, csrf, s.Config.Origin, body)
 }
 
 func pricingHTTPRaw(t *testing.T, s *Server, method, path, raw, csrf, body string) *httptest.ResponseRecorder {
 	t.Helper()
-	s.pricing = pricingAdmission{}
+	resetPricingAdmissionForTest(s)
 	return keyPolicyHTTP(t, s.Engine(), method, path, body, raw, csrf, s.Config.Origin, "", nil)
+}
+
+func resetPricingAdmissionForTest(s *Server) {
+	s.pricing.mu.Lock()
+	s.pricing.buckets = nil
+	s.pricing.gates = nil
+	s.pricing.mu.Unlock()
 }
 
 func pricingCode(t *testing.T, response *httptest.ResponseRecorder) string {

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T14:48:18Z",
-  "review_reason": "补充四阶段后续能力的设计规格029–033（第一阶段验收清单、模型别名与分组倍率、多协议多候选mock上游、第二阶段文本数据面、第三阶段文本动态路由），并在HLD/LLD/路线文档链接；记录对既有约束（同池channel唯一、028单profile、route_decisions JSONB、price variant_key）的修订需求与决策点；纯设计草案，无源码、迁移或权限变化，能力表标注为设计草案未实现",
-  "snapshot_sha256": "fae99f479782587990222097beef5e18fe45a25d9604b9495967854c2cd140d4",
-  "architecture_sha256": "8dc0465998f8e39acad2998fc3171796f2a2c35725d14488ad330539e1fd01f2",
-  "history_sha256": "f61999fc3291394d9097ed4d0282a397060e49a7d55b3ae1699069b3da7aef1c",
+  "reviewed_at": "2026-11-10T15:20:12Z",
+  "review_reason": "合入 main 的四阶段路线与规格 029–033，并保留当前 baiyang 供应商资格探测、CI race/历史候选门禁修复；复核统一架构、源码链接和能力状态",
+  "snapshot_sha256": "e1329d112b878fbbd00c5b0ff1205855bd7c77c1ac707e8a9237f09065910e32",
+  "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
+  "history_sha256": "bc6eef5365e3ae8636b39974b90be8c466415fc891f506032cab0b67d9b157c2",
   "files": [
     {
       "path": ".dockerignore",
@@ -29,7 +29,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "2118ee0d02fd75138c8c9eb054c81583d62b3493b6e0f57736aa647a35ae8e72"
+      "sha256": "d4f00745891286cbe6937ab0084202a0860e205a325a1c713630e2ea001341f2"
     },
     {
       "path": ".gitignore",
@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/architecture/unified-metering.md",
-      "sha256": "e85322a6f62783b4b3969e43e0b9d0f00f21e3d214635aaa6aa12ef3fff258a4"
+      "sha256": "bf1402dfcf7349c2aa7510ba0dfdac621523b30d61a01acc7c81ae5391794fcf"
     },
     {
       "path": "docs/architecture/wallet-sources.md",
@@ -217,7 +217,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "8843ce4272ae9ffc46194dfb896cfe1f05f24397419255eb7f4cc417491f0abf"
+      "sha256": "05bcc23dfb3d48e7a71b1ab32df9af056f0933521faa5c2c41a4e6162f84f9d6"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -1722,6 +1722,10 @@
     {
       "path": "docs/verification/protected-init-phase.md",
       "sha256": "6544e9b3ede4b8778ca7edcfc9dc6e53b33ce92c8b02c2ef8213a346243dc889"
+    },
+    {
+      "path": "docs/verification/provider-qualification-baiyang.md",
+      "sha256": "12f11063adee30338b10d7060869881e4b40a5b1f9ecbf9220ece0cf3191af1e"
     },
     {
       "path": "docs/verification/provider-usage.md",
@@ -4697,7 +4701,7 @@
     },
     {
       "path": "internal/periodicbudget/tx_fixture_test.go",
-      "sha256": "4faca71766eb9ac7093147200b84fff5fede736475363b2a4ea9d1ce865788f7"
+      "sha256": "889752ddc0d24dad3fd63cb860c9ef64bde4d675577afc99a9f404a48899dbf7"
     },
     {
       "path": "internal/periodicbudget/tx_identity_integration_test.go",
@@ -6125,7 +6129,7 @@
     },
     {
       "path": "internal/server/pricing_publish_http_integration_test.go",
-      "sha256": "96b2a01913f93585d8a04f0339607016690802c2cbf509cb7a16073d86f416c4"
+      "sha256": "fbcd24a32de0e7bbb72abf1eac533e903d9c3dd7e20542f8c4a555b52abd3bdf"
     },
     {
       "path": "internal/server/pricing_test.go",
@@ -6848,6 +6852,18 @@
       "sha256": "5af6379fd7bb77af22beb3211c6f3960ab9d62e42daefc9c3c2e6fdcf0eab5d0"
     },
     {
+      "path": "scripts/provider-qualification/README.md",
+      "sha256": "68c1bbb5f2f8082f1a820eae93b1260700ecec5bf9a3da1b0174626053ee727a"
+    },
+    {
+      "path": "scripts/provider-qualification/main.go",
+      "sha256": "be92f324e43df7b2d001776cf68b6a642b0a0b186ca50fc51de1d34ea9223574"
+    },
+    {
+      "path": "scripts/provider-qualification/main_test.go",
+      "sha256": "f6a4c05a45eb4601ca5c9ba4be239cb58f2c264a9bf7b8a152a6acbcb3830e00"
+    },
+    {
       "path": "scripts/requirements-native-sdk.txt",
       "sha256": "8fb6f4dc2b55abe90dc696c11b598ef4c8b7d8118b1dd5e2b6804f04b2178ee2"
     },
@@ -7437,7 +7453,7 @@
     },
     {
       "path": "specs/022-self-service-payments/c0-wallet-readset.json",
-      "sha256": "c0f20ccf75fbfafb09e077885b26aa1b708450563f459d9d3f40b624adc61883"
+      "sha256": "ea723b504214a3531f84bbf47147ec3a68c226a5a18d218662264c6f58823466"
     },
     {
       "path": "specs/022-self-service-payments/c0-wallet-sequence-rows-contract.md",
