@@ -76,6 +76,17 @@ func TestCostVectorApplicationQuoteChain(t *testing.T) {
 					if state.charge != retail || state.spent != retail || state.held != 0 || state.keyHeld != 0 || state.settlements != 1 || state.attempts != 1 {
 						t.Fatal("unique original retail settlement changed", state)
 					}
+					var reserveAudits, settlementAudits, observations, recoveryJobs int
+					if err := f.pool.QueryRow(context.Background(), `SELECT
+ (SELECT count(*) FROM audit_events WHERE request_id=$1 AND action='billing.reserve'),
+ (SELECT count(*) FROM audit_events WHERE request_id=$1 AND action='billing.settled'),
+ (SELECT count(*) FROM metering_events WHERE request_id=$1 AND source='adapter'),
+ (SELECT count(*) FROM recovery_jobs WHERE request_id=$1)`, request).Scan(&reserveAudits, &settlementAudits, &observations, &recoveryJobs); err != nil {
+						t.Fatal(err)
+					}
+					if reserveAudits != 1 || settlementAudits != 1 || observations != 1 || recoveryJobs != 0 {
+						t.Fatalf("commercial facts were not closed exactly once: reserve_audits=%d settlement_audits=%d observations=%d recovery_jobs=%d", reserveAudits, settlementAudits, observations, recoveryJobs)
+					}
 					var storedCost, held, spent, reserved int64
 					var original bool
 					if err := f.pool.QueryRow(context.Background(), `SELECT a.cost_amount::bigint,p.held_amount::bigint,p.spent_amount::bigint,p.upper_amount::bigint,
@@ -201,6 +212,11 @@ func TestCostVectorApplicationRecoveryDoesNotRegenerate(t *testing.T) {
 			if err = tx.Commit(context.Background()); err != nil {
 				t.Fatal(err)
 			}
+			// Rebuild the service and billing store before recovery. The durable
+			// reservation/recovery job, rather than process memory, must remain
+			// authoritative after a process restart.
+			f.server = New(f.server.Config, f.pool, f.server.assets, nil)
+			f.server.Ready(true)
 			recovered, err := f.server.Billing.Recover(context.Background(), billing.RecoverInput{Limit: 1})
 			if err != nil || recovered.Processed != 1 || recovered.Released != 1 {
 				t.Fatal("recovery did not release the expired unknown request", recovered, err)
