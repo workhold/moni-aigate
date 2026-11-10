@@ -73,6 +73,8 @@ scripts/deployment-qa.sh
 
 对已经完成一次性配置的开发环境，可使用业务 smoke。它只读取现有客户 Key、模型和商业引用，不创建钱包、路由、价格、任务引用或供应商事实。缺少某条能力的输入时返回 `SKIP`，设置 `BUSINESS_QA_FAIL_ON_SKIP=true` 可把它提升为失败；不会把跳过写成通过。
 
+若需要只验证当前 MVP 的 HTTP/WS 等价内测路径，使用 [`scripts/browser-qa/current-mvp-smoke.sh`](../../scripts/browser-qa/current-mvp-smoke.sh)。该 sidecar 只允许 `postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable` 作为 `TEST_DATABASE_URL`，并要求已有 API Key、模型和 Realtime URL；它不执行 provisioning，不接受旧 identity/scalar fixture 输入，也不会使用 5432。文本 HTTP 和 Realtime WebSocket 是必选断言，媒体/task 只有在明确提供当前引用时才启用。
+
 需要一次性建立可丢弃的内测数据时，启用 Compose 的 `business-qa` profile。该 profile 只加入一个显式的 Python mock 上游，不改变默认 Compose 服务或生产运行路径。provision 脚本通过管理 HTTP API 创建模型、渠道、路由、价格、租户、双人充值和客户 Key。
 
 ```sh

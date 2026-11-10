@@ -10,6 +10,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 **默认运行时路径审计（2026-11-10）**：构建入口统一为 `./cmd/moni-aigate`；Compose 按 `migrate → provision → app/worker` 启动，默认应用命令为 `serve`。当前默认迁移与服务校验分别使用 current-only 的 `migrations.ApplyCurrent` 和 `migrations.VerifyCurrent`；`ApplyThrough`、`VerifyThrough`、original22 快照和 descriptor CLI 只在测试、维护/Runtime 组合或离线专用数据库路径中显式出现，没有默认服务调用方。详见[当前 MVP 验收与路径审计](../verification/current-mvp.md)和[整体盘点](../verification/overall-delivery-inventory.md)。
 
+当前 HTTP/WS 等价内测还提供只读 sidecar [`scripts/browser-qa/current-mvp-smoke.sh`](../../scripts/browser-qa/current-mvp-smoke.sh)，只消费已有部署的 API Key、模型和 Realtime URL，不调用 provisioning、不连接数据库；它与 55439 专库的 HTTP/WS smoke 一起证明 disposable/mock 内测边界，仍不等同真实浏览器或供应商验收。
+
 当前服务迁移和启动入口使用 `migrations.ApplyCurrent`/`VerifyCurrent`。安装器在空库执行 `migrations/current_mvp.sql` 和 `migrations/current_*.sql` 当前追加迁移，在已有合法当前 baseline 上只追加缺失的 current-only 文件，并在业务 DDL 前拒绝历史 `schema_migrations`、未知记录、错误 checksum 或其他用户关系。旧库不升级、不转换，`ApplyThrough` 只供隔离历史 fixture 使用。`serve`/`worker` 的只读 `VerifyCurrent` 接受完整当前计划，不把首次 baseline 当作永久版本上限。
 
 2026-11-10 当前空库基线已重建为从已验证当前 schema 导出的单文件快照。`current_mvp.sql` 不再执行 001–023 的历史迁移片段，保留当前服务需要的关系、函数、触发器、默认控制行、约束、索引和当前 ACL，并在安装前继续执行 PostgreSQL 版本、schema owner 与空库门禁。001–023 原文件和历史 fixture 仍只属于隔离研究路径，当前服务不会调用它们。
@@ -21,6 +23,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 2026-11-10 媒体 provider 安全边界收口：`MEDIA_PROVIDER_PROFILE` 默认是 `inner-test`，`MEDIA_DETERMINISTIC_MOCK=true` 只在 `development` 或显式 `business-qa` 配置下启用 deterministic mock；app 和 worker 使用同一组配置，生产默认不会自动启动 mock。inner-test 没有真实 adapter 时，图片、TTS、`video_generation` 和单 turn Realtime 在预占前返回 `provider_unavailable`，不产生 reservation、attempt、observation、settlement、钱包或供应商成本事实。mock 成功只写标记为 mock 的工作流事实，usage/supplier cost 保持 missing/unknown，客户收费为零；failed、timeout、sent/unknown 均不重试。该边界已由 55439 专库的受限 HTTP/WS 与配置测试覆盖，不代表真实供应商认证。
 
 2026-11-10 当前 MVP 集成复核：统一 current-only migration、provider 契约、028-U guard 矩阵、wallet/billing/settlement、六种文本、图片、TTS、异步 `video_generation`、单 turn Realtime、Compose 单机部署和 mock provider 安全边界已在 `codex/initial-mvp` 汇合。55439 专库定向 race、前端342项、Go build/vet、空库安装/拒迁/权限和 `DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 均通过；后者实际覆盖迁移、provision/bootstrap、文本/图片/TTS/task/Realtime 以及 app/worker/PostgreSQL 重启。完整九组 U guard 正反闭包、真实供应商、浏览器、1Panel、正式支付、HA 和性能仍是后置或未完成验收。
+
+当前 HTTP/WS 等价内测只读 sidecar 为 `scripts/browser-qa/current-mvp-smoke.sh`：它消费已有部署的当前 API Key、模型和 Realtime URL，强制本机 `TEST_DATABASE_URL` 为 55439 的 `moni_test`，并复用现行 `deployment-business-qa.sh` 的文本 HTTP 与 Realtime WebSocket 断言。它不属于默认运行时、不执行 provisioning、不连接数据库，也不复用 Go `browser-qa` 的 identity/model lifecycle fixture；该入口仍只证明当前 disposable/mock 内测边界。
 
 只服务历史维护扫描的 billing raw reader、显式 `ProspectiveStore`、`internal/maintenancescan` 与 maintenance QA 使用 `historical` build tag。默认 `cmd/moni-aigate` 构建图、当前 billing 包和默认全包编译不包含这些 reader，历史专项通过显式 tag 保留。它们不进入当前 migrate、provision、serve、worker、wallet、billing、provider 或媒体运行路径。
 

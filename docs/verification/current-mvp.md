@@ -77,3 +77,5 @@ GOCACHE=/tmp/moni-aigate-final-gocache make verify-current-mvp
 Compose 和媒体使用 deterministic mock，只证明开发环境内测的接口、权限、计量、钱包边界和恢复行为，不证明真实供应商 usage/cost、浏览器验收或生产部署。该入口有意排除历史 maintenance fixture；历史 full-race 超时不被改写为当前 MVP 通过。完整 028-U 商业出口与目标环境权限闭包、真实供应商、正式支付、1Panel、HA 和性能门禁仍未完成。
 
 独立的[浏览器等价内测 smoke](browser-qa.md)已在 55439 专库通过：真实构建二进制的二租户 HTTP 测试覆盖跨租户请求不可见、缺 CSRF、错误 Origin 和客户 API Key 边界；脚本还覆盖图片 PNG、TTS WAV、异步 task 制品和 Realtime WS 的响应结构。它仍不等同真实浏览器 UI、真实供应商或生产环境验收。
+
+对于已部署且已有业务引用的环境，另提供 [`scripts/browser-qa/current-mvp-smoke.sh`](../../scripts/browser-qa/current-mvp-smoke.sh) 只读 sidecar。它强制 `TEST_DATABASE_URL` 为本机 55439 `moni_test`，但不连接数据库、不创建身份/租户/钱包/任务事实，只要求文本 HTTP 和 Realtime WebSocket 实际通过；可选媒体/task 输入缺失时显式 SKIP。
