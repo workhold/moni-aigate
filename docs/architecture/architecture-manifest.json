@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T09:39:21Z",
-  "review_reason": "增加媒体 provider mock 安全边界：显式 profile、app/worker 同步配置、inner-test provider_unavailable、mock 零收费与未知不重试，并更新部署与验证记录",
-  "snapshot_sha256": "26314048cf7cdd7edcfac74d4a3d5722102bec477feb49fa468ea26274ceaccf",
-  "architecture_sha256": "f75534abf0a85f6fdad73f1eda7dda195b7402e51b1c054b7d9bf5de152fc043",
-  "history_sha256": "f39574de5c255d3e6a3fff4d60706db2f137573a61445a0153863210a068bec5",
+  "reviewed_at": "2026-11-10T09:47:40Z",
+  "review_reason": "当前 MVP 集成复核：current-only migration、provider 契约、028-U guard、wallet/billing/settlement、六文本、媒体 mock 安全、Compose 单机和验收文档已同步；完整 U guard 正反闭包、真实供应商、浏览器、正式支付、HA 与性能仍未完成",
+  "snapshot_sha256": "8b8f2d03407c55cc0089e5a9bc3a1beba107ec5f5adccb7e7e005a9f1cb30b08",
+  "architecture_sha256": "113153957f6477e9654f46bfe2d207ba3ed14ae00d90649f79cf0e5b30bd68d6",
+  "history_sha256": "8cf4381185ce5a0ead3964c09301dac144ce4a4bd1327122082ca4d734bdc388",
   "files": [
     {
       "path": ".dockerignore",
@@ -45,7 +45,7 @@
     },
     {
       "path": "Makefile",
-      "sha256": "5fbf9d4b3624f1a99c13182ea4bb626c7790c1152ec0fce754749d02709bfe4f"
+      "sha256": "c6d2af63fac09fb49adc9e8244a51ef926a31f93aecf5d02d7814bd8f14d1665"
     },
     {
       "path": "README.md",
@@ -232,6 +232,10 @@
       "sha256": "ae37c65c99488407b9ee19e4c516567c02d700e16d57331c0fc2794b777d037e"
     },
     {
+      "path": "docs/runbooks/current-mvp-verification.md",
+      "sha256": "2d92a0b79049179857a77ecec102e3bc364d8c630b551aaa7102e70caa4077c8"
+    },
+    {
       "path": "docs/runbooks/deployment.md",
       "sha256": "460c85030423450d26b372687a7333b34cc99ac876d7d6819361ae90c3f1b922"
     },
@@ -242,6 +246,10 @@
     {
       "path": "docs/verification/028-media-pure-candidates.md",
       "sha256": "508ecb8ae8baa9bc1d732ca5c93bde948e2e6d3db61f07aca2fff5f1556880aa"
+    },
+    {
+      "path": "docs/verification/028-u-guard-matrix.md",
+      "sha256": "ba6403624eb169a7468f9d3f72afc78a7362a28f8e618332f6d9d3b158befc6e"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -1032,6 +1040,10 @@
       "sha256": "51d1940d180ac6d7e19005d43a628b8cae99e039c4fb0fa878d8007f2bf27ef5"
     },
     {
+      "path": "docs/verification/current-mvp.md",
+      "sha256": "c01c79a928632f25c7d379a8cd27226bbb3bc4e34260810eac16106397b87c1a"
+    },
+    {
       "path": "docs/verification/dispatch-read-batches.md",
       "sha256": "bf53b3135e2f78ab97e72585003865383d79733cd00491c05fffd312137511a1"
     },
@@ -1809,7 +1821,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "29eb1b0fff805ae39562ecfd4427b6b12d70315bd7b553c00a98c488b8cf38b3"
+      "sha256": "3986ed22d8b67dfac4a9e579612266ba7c886ca714558d61a7c8002592812178"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -6512,6 +6524,10 @@
       "sha256": "9e93315f981652136e88db8b64692b3eb0488e7cd78eaab51e0064ba98d9d1d1"
     },
     {
+      "path": "migrations/unified_text_metering_guard_current_postgres_test.go",
+      "sha256": "37268ff569cbad375576f5eef35f80f428717c697caf4350f79c6f350bc187b0"
+    },
+    {
       "path": "migrations/unified_text_metering_guard_extension_postgres_test.go",
       "sha256": "ebc1e6cbab0e8c424cd7aac8af6ae44d9922ef55d03e3dcad7bc9dc2846785f6"
     },
@@ -6521,11 +6537,11 @@
     },
     {
       "path": "migrations/unified_text_metering_guard_matrix_postgres_test.go",
-      "sha256": "c94e5fdb7bfbba027001363401b1ba7fec27bba022a9cfd75db7f069b623c831"
+      "sha256": "19f1bd58feabfb77da78adcb79fa6afd1bd55b00011a4721fc313a482e8f0b69"
     },
     {
       "path": "migrations/unified_text_metering_postgres_test.go",
-      "sha256": "525718e408825d5837c29ea78d4de7f31b18547424f48d9c502ecd15366187ca"
+      "sha256": "ce99cd5b6b41697fd1b183637a85e2a3d268f2a637d5317adbfc4b2f6f52553f"
     },
     {
       "path": "migrations/unified_text_metering_rejection_matrix_postgres_test.go",
@@ -6802,6 +6818,10 @@
     {
       "path": "scripts/verification/payment-refund-v2-golden.py",
       "sha256": "249c406a910d761b4a1afc2a0a1fa82143f4b7fedb698972c0395c81cf24545a"
+    },
+    {
+      "path": "scripts/verify-current-mvp.sh",
+      "sha256": "71e68e6b0ebad5c8df704239b06549ee4d69ad888310804f403de017565cd4aa"
     },
     {
       "path": "scripts/verify-native-sdk.py",
@@ -7841,7 +7861,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
-      "sha256": "d55c009092aa76e6e7a9a38eb57188138ec5b83e6f5582eed8db172f90459e78"
+      "sha256": "ca9c738c60936492fed5f3d5d3c9d39a67984c3a8380bcb768148c24fc09a581"
     },
     {
       "path": "specs/028-unified-metering-media/u-consumer-inventory.md",

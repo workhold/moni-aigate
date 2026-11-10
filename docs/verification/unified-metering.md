@@ -588,6 +588,8 @@ metering新增schema/费率只读描述，防止consumer反解析canonical或获
 
 费率和成本来自 deterministic mock fixture，不构成真实供应商 usage 或真实供应商账单认证。
 
+媒体安全边界随后收口：`inner-test` 默认关闭图片、TTS、`video_generation` 和 Realtime；没有真实媒体 adapter 时在 Reserve 前返回 `provider_unavailable`，不产生媒体 request、attempt、observation、settlement 或钱包事实。`development`/`business-qa` 只有显式 `MEDIA_DETERMINISTIC_MOCK=true` 才启用 mock，结果标记 `provider_mode=mock`，usage/supplier cost 保持 missing/unknown 且客户收费为零。该边界由 55439 专库 race 和 Compose business-qa smoke 覆盖，不能替代真实供应商验收。
+
 同日整仓 `make verify-mvp` 使用相同的 55439 专库启动。前端342项测试和构建通过，Go race 已通过大部分包；`internal/periodicbudget` 有一次迁移 statement timeout，`internal/server` 有一次密码变更用例返回401，整仓命令未记为无条件全绿。命令退出前 55439 未留下活动连接或等待锁，分别重跑 `TestBillingPeriodicCustomerEachScopeRejectsFullRAtomically` 与 `TestPasswordChangeRevokesFamiliesAndRequiresFreshProof` 均通过，判断为本轮专库并发/测试抖动证据，不把失败记录抹除。
 
 ## 2026-11-10：028-U 拒绝矩阵扩展与定向回归

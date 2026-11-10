@@ -18,6 +18,8 @@ moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New A
 
 2026-11-10 媒体 provider 安全边界收口：`MEDIA_PROVIDER_PROFILE` 默认是 `inner-test`，`MEDIA_DETERMINISTIC_MOCK=true` 只在 `development` 或显式 `business-qa` 配置下启用 deterministic mock；app 和 worker 使用同一组配置，生产默认不会自动启动 mock。inner-test 没有真实 adapter 时，图片、TTS、`video_generation` 和单 turn Realtime 在预占前返回 `provider_unavailable`，不产生 reservation、attempt、observation、settlement、钱包或供应商成本事实。mock 成功只写标记为 mock 的工作流事实，usage/supplier cost 保持 missing/unknown，客户收费为零；failed、timeout、sent/unknown 均不重试。该边界已由 55439 专库的受限 HTTP/WS 与配置测试覆盖，不代表真实供应商认证。
 
+2026-11-10 当前 MVP 集成复核：统一 current-only migration、provider 契约、028-U guard 矩阵、wallet/billing/settlement、六种文本、图片、TTS、异步 `video_generation`、单 turn Realtime、Compose 单机部署和 mock provider 安全边界已在 `codex/initial-mvp` 汇合。55439 专库定向 race、前端342项、Go build/vet、空库安装/拒迁/权限和 `DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh` 均通过；后者实际覆盖迁移、provision/bootstrap、文本/图片/TTS/task/Realtime 以及 app/worker/PostgreSQL 重启。完整九组 U guard 正反闭包、真实供应商、浏览器、1Panel、正式支付、HA 和性能仍是后置或未完成验收。
+
 只服务历史维护扫描的 billing raw reader、显式 `ProspectiveStore`、`internal/maintenancescan` 与 maintenance QA 使用 `historical` build tag。默认 `cmd/moni-aigate` 构建图、当前 billing 包和默认全包编译不包含这些 reader，历史专项通过显式 tag 保留。它们不进入当前 migrate、provision、serve、worker、wallet、billing、provider 或媒体运行路径。
 
 **2026-11-09 当前状态校正**：下方 2026-11-08 的媒体开发记录按当时提交顺序保留，但其中“尚未接入”的描述已被后续纵向接线覆盖。当前 `POST /v1/images/generations`、TTS、`/v1/tasks`、独立 worker 和 `/v1/realtime` 已进入当前 server/worker 入口；图片/TTS、video task 和 Realtime 使用当前媒体 Reserve/Attempt/Observe/Settle，异步制品正文与 Realtime provider identity 已持久化。已通过的范围是 55439 专库与 mock provider 的定向 race，以及本机临时 Compose 的迁移/provision/bootstrap/live/ready/重启验收。真实供应商、对象存储、浏览器业务调用、1Panel 和完整 028-U guard/商业出口仍未完成。

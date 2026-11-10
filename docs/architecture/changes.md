@@ -5741,3 +5741,24 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `scripts/deployment-qa.sh`
 
 </details>
+
+## 2026-11-10T09:47:40Z · 8b8f2d03407c
+
+当前 MVP 集成复核：current-only migration、provider 契约、028-U guard、wallet/billing/settlement、六文本、媒体 mock 安全、Compose 单机和验收文档已同步；完整 U guard 正反闭包、真实供应商、浏览器、正式支付、HA 与性能仍未完成
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2121 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Makefile`
+- added `docs/runbooks/current-mvp-verification.md`
+- added `docs/verification/028-u-guard-matrix.md`
+- added `docs/verification/current-mvp.md`
+- modified `docs/verification/unified-metering.md`
+- added `migrations/unified_text_metering_guard_current_postgres_test.go`
+- modified `migrations/unified_text_metering_guard_matrix_postgres_test.go`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- added `scripts/verify-current-mvp.sh`
+- modified `specs/028-unified-metering-media/tasks.md`
+
+</details>
