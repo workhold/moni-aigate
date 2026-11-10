@@ -24,7 +24,7 @@ func parseUsage(raw []byte) (Usage, bool) {
 		return u, false
 	}
 	for k := range m {
-		if k != "prompt_tokens" && k != "completion_tokens" && k != "total_tokens" && k != "prompt_tokens_details" && k != "completion_tokens_details" && k != "prompt_cache_hit_tokens" && k != "prompt_cache_miss_tokens" {
+		if !knownChatUsageKey(k) {
 			u.Status = UsageConflicting
 			return u, false
 		}
@@ -125,6 +125,21 @@ func parseUsage(raw []byte) (Usage, bool) {
 		}
 	}
 	return u, ip && op && tp && cacheComplete
+}
+
+// knownChatUsageKey is an explicit allowlist, not a prefix or "ignore unknown"
+// rule: a key that may carry a separate charge must keep producing a conflict.
+// The two DeepSeek keys partition prompt_tokens and add no charge of their own;
+// the metadata keys describe money or routing, never a token dimension, and the
+// gateway prices only token counts it has validated.
+func knownChatUsageKey(k string) bool {
+	switch k {
+	case "prompt_tokens", "completion_tokens", "total_tokens", "prompt_tokens_details", "completion_tokens_details",
+		"prompt_cache_hit_tokens", "prompt_cache_miss_tokens",
+		"cost", "cost_details", "is_byok":
+		return true
+	}
+	return false
 }
 
 func (t *usageTracker) observe(raw []byte) Usage {
