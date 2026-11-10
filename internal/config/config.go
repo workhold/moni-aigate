@@ -32,6 +32,23 @@ type Config struct {
 	PaymentsAppManifest       string
 	PaymentsWorkerManifest    string
 	ProviderTimeouts          provider.TimeoutConfig
+	MediaProviderProfile      string
+	MediaDeterministicMock    bool
+}
+
+const (
+	MediaProviderProfileDevelopment = "development"
+	MediaProviderProfileBusinessQA  = "business-qa"
+	MediaProviderProfileInnerTest   = "inner-test"
+)
+
+// MockMediaProvidersEnabled is deliberately false for the default inner-test
+// profile. The main binary only receives a validated Config from Load, so a
+// mock adapter can be installed only by an explicit development/business-qa
+// configuration.
+func (c Config) MockMediaProvidersEnabled() bool {
+	return c.MediaDeterministicMock &&
+		(c.MediaProviderProfile == MediaProviderProfileDevelopment || c.MediaProviderProfile == MediaProviderProfileBusinessQA)
 }
 
 func Load() (Config, error) {
@@ -40,6 +57,17 @@ func Load() (Config, error) {
 		return c, errors.New("DATABASE_URL required")
 	}
 	var err error
+	c.MediaProviderProfile = env("MEDIA_PROVIDER_PROFILE", MediaProviderProfileInnerTest)
+	if c.MediaProviderProfile != MediaProviderProfileDevelopment && c.MediaProviderProfile != MediaProviderProfileBusinessQA && c.MediaProviderProfile != MediaProviderProfileInnerTest {
+		return c, errors.New("MEDIA_PROVIDER_PROFILE must be development, business-qa, or inner-test")
+	}
+	c.MediaDeterministicMock, err = strconv.ParseBool(env("MEDIA_DETERMINISTIC_MOCK", "false"))
+	if err != nil {
+		return c, errors.New("MEDIA_DETERMINISTIC_MOCK must be a boolean")
+	}
+	if c.MediaProviderProfile == MediaProviderProfileInnerTest && c.MediaDeterministicMock {
+		return c, errors.New("MEDIA_DETERMINISTIC_MOCK is not allowed for inner-test")
+	}
 	c.ProviderTimeouts, err = loadProviderTimeouts()
 	if err != nil {
 		return c, err

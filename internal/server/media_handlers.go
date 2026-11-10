@@ -103,6 +103,10 @@ func validMediaModel(p identity.Principal, model string) bool {
 
 func (s *Server) synthesizeSpeech(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if !s.mediaProviderReady(s.MediaAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "语音供应商不可用")
+		return
+	}
 	var in speechRequest
 	if !speechJSONContentType(c) {
 		s.fail(c, http.StatusUnsupportedMediaType, "invalid_request", "语音请求必须使用 application/json")
@@ -134,6 +138,7 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 			s.fail(c, http.StatusConflict, "provider_consumption_unknown", "供应商提交结果未知，禁止自动重试")
 			return
 		}
+		c.Header("X-Moni-Provider-Mode", s.mediaProviderMode())
 		c.Data(replay.status, replay.contentType, replay.body)
 		return
 	}
@@ -141,6 +146,7 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 		s.fail(c, http.StatusServiceUnavailable, "result_unavailable", "语音结果暂不可用")
 		return
 	} else if found {
+		c.Header("X-Moni-Provider-Mode", s.mediaProviderMode())
 		c.Data(http.StatusOK, stored.MediaType, stored.Body)
 		return
 	}
@@ -171,10 +177,6 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 		}
 	}
 	adapter := s.MediaAdapter
-	if adapter == nil {
-		s.fail(c, http.StatusServiceUnavailable, "unavailable", "语音服务未就绪")
-		return
-	}
 	result, err := adapter.SynthesizeSpeech(c.Request.Context(), provider.SpeechRequest{RequestID: requestID, IdempotencyKey: key, Model: in.Model, Input: in.Input, Voice: in.Voice, ResponseFormat: in.ResponseFormat})
 	if err != nil || !result.Sent {
 		unknown := result.Sent
@@ -201,7 +203,7 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 		return
 	}
 	quantity := int64(len([]rune(in.Input)))
-	if result.Format != "wav" || result.MediaType != "audio/wav" || len(result.Data) == 0 || len(result.Data) > media.MaxDecodedBytes || validateSpeechWAV(result.Data) != nil || result.Usage.Status != provider.SpeechUsageConfirmedFinal || result.Usage.CharacterCount != quantity || result.Usage.CharacterCount <= 0 || result.Usage.CharacterCount > maxSpeechCharacters {
+	if result.Mode != s.expectedMediaProviderMode() || result.Format != "wav" || result.MediaType != "audio/wav" || len(result.Data) == 0 || len(result.Data) > media.MaxDecodedBytes || validateSpeechWAV(result.Data) != nil || result.Usage.Status != provider.SpeechUsageConfirmedFinal || result.Usage.CharacterCount != quantity || result.Usage.CharacterCount <= 0 || result.Usage.CharacterCount > maxSpeechCharacters {
 		if finalizeErr := s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0); finalizeErr != nil {
 			s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, errorCode: "settlement_pending", errorMessage: "语音账务收尾暂不可用", status: http.StatusServiceUnavailable})
 			s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
@@ -211,7 +213,8 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 		s.fail(c, http.StatusBadGateway, "provider_protocol_error", "语音供应商结果无效")
 		return
 	}
-	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", provider.SpeechUsageConfirmedFinal, result.Usage.CharacterCount); err != nil {
+	outcome, usage, finalQuantity := s.mediaFinalizationValues("completed", provider.SpeechUsageConfirmedFinal, result.Usage.CharacterCount)
+	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, outcome, usage, finalQuantity); err != nil {
 		s.fail(c, http.StatusServiceUnavailable, "settlement_pending", "语音账务收尾暂不可用")
 		return
 	}
@@ -220,6 +223,7 @@ func (s *Server) synthesizeSpeech(c *gin.Context) {
 		return
 	}
 	s.storeMediaReplay(p, "tts", key, mediaReplay{digest: digest, status: http.StatusOK, contentType: result.MediaType, body: result.Data})
+	c.Header("X-Moni-Provider-Mode", s.mediaProviderMode())
 	c.Data(http.StatusOK, result.MediaType, result.Data)
 }
 
@@ -265,13 +269,13 @@ func newDefaultMediaAdapter() provider.SynchronousMediaAdapter {
 			if err := png.Encode(&encoded, picture); err != nil {
 				return provider.ImageResponse{}, err
 			}
-			return provider.ImageResponse{Sent: true, MediaType: "image/png", Width: width, Height: height, Data: encoded.Bytes()}, nil
+			return provider.ImageResponse{Sent: true, Mode: provider.ProviderModeMock, MediaType: "image/png", Width: width, Height: height, Data: encoded.Bytes()}, nil
 		},
 		SynthesizeSpeechFunc: func(ctx context.Context, in provider.SpeechRequest) (provider.SpeechResponse, error) {
 			if err := ctx.Err(); err != nil {
 				return provider.SpeechResponse{}, err
 			}
-			return provider.SpeechResponse{Sent: true, MediaType: "audio/wav", Format: "wav", Data: mockWAV(len([]rune(in.Input))), Usage: provider.SpeechUsage{Status: provider.SpeechUsageConfirmedFinal, CharacterCount: int64(len([]rune(in.Input)))}}, nil
+			return provider.SpeechResponse{Sent: true, Mode: provider.ProviderModeMock, MediaType: "audio/wav", Format: "wav", Data: mockWAV(len([]rune(in.Input))), Usage: provider.SpeechUsage{Status: provider.SpeechUsageConfirmedFinal, CharacterCount: int64(len([]rune(in.Input)))}}, nil
 		},
 	}
 }

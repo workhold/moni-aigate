@@ -40,6 +40,10 @@ func (s *Server) realtime(c *gin.Context) {
 		s.fail(c, http.StatusUnauthorized, "invalid_credentials", "需要有效 API Key")
 		return
 	}
+	if !s.realtimeProviderReady() {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "实时供应商不可用")
+		return
+	}
 	origin, err := s.realtimeOrigin(c.Request)
 	if err != nil {
 		s.fail(c, http.StatusForbidden, "origin_forbidden", "WebSocket来源未获授权")
@@ -213,7 +217,7 @@ func (s *Server) handleRealtimeConnection(c *gin.Context, ws *websocket.Conn, p 
 		return
 	}
 	if err = s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "session.created", Data: map[string]any{
-		"session_id": sessionID, "turn_id": turnID, "model": model.Name,
+		"session_id": sessionID, "turn_id": turnID, "model": model.Name, "provider_mode": s.mediaProviderMode(),
 	}}); err != nil {
 		return
 	}
@@ -286,7 +290,7 @@ func (s *Server) completeRealtimeTurn(ctx context.Context, ws *websocket.Conn, s
 		return err
 	}
 	if err = s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.created", Data: map[string]any{
-		"turn_id": turnID, "response_id": snapshot.ProviderResponseID,
+		"turn_id": turnID, "response_id": snapshot.ProviderResponseID, "provider_mode": s.mediaProviderMode(),
 	}}); err != nil {
 		return err
 	}
@@ -295,21 +299,22 @@ func (s *Server) completeRealtimeTurn(ctx context.Context, ws *websocket.Conn, s
 		return err
 	}
 	if err = s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.delta", Data: map[string]any{
-		"turn_id": turnID, "response_id": snapshot.ProviderResponseID, "bytes": snapshot.ForwardedBytes,
+		"turn_id": turnID, "response_id": snapshot.ProviderResponseID, "bytes": snapshot.ForwardedBytes, "provider_mode": s.mediaProviderMode(),
 	}}); err != nil {
 		return err
 	}
 	if billingRefs.enabled {
-		if err = s.finalizeMediaRequest(ctx, billingRefs, "completed", "confirmed_final", 1); err != nil {
+		outcome, usage, quantity := s.mediaFinalizationValues("completed", "confirmed_final", 1)
+		if err = s.finalizeMediaRequest(ctx, billingRefs, outcome, usage, quantity); err != nil {
 			return err
 		}
 		return s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.done", Data: map[string]any{
-			"turn_id": turnID, "response_id": snapshot.ProviderResponseID,
+			"turn_id": turnID, "response_id": snapshot.ProviderResponseID, "provider_mode": s.mediaProviderMode(),
 		}})
 	}
 	return s.writeRealtime(ws, realtimeWireEvent{EventID: uuid.NewString(), Type: "response.pending", Data: map[string]any{
 		"turn_id": turnID, "response_id": snapshot.ProviderResponseID,
-		"reason": "settlement_unwired",
+		"reason": "settlement_unwired", "provider_mode": s.mediaProviderMode(),
 	}})
 }
 

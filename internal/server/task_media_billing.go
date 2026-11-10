@@ -108,8 +108,8 @@ func (s *Server) newTaskMediaAdapter(principal identity.Principal, delegate prov
 	if err := s.requireTaskMediaBilling(); err != nil {
 		return nil, err
 	}
-	if delegate == nil {
-		return nil, errors.New("task provider is unavailable")
+	if !s.mediaProviderReady(delegate) {
+		return nil, errMediaProviderUnavailable
 	}
 	return &taskMediaAdapter{server: s, principal: principal, delegate: delegate}, nil
 }
@@ -152,6 +152,9 @@ func (a *taskMediaAdapter) Submit(ctx context.Context, input provider.TaskSubmis
 	if err != nil {
 		return result, a.finalizeSubmissionFailure(ctx, input, err)
 	}
+	if result.Mode != a.server.expectedMediaProviderMode() {
+		return result, a.finalizeSubmissionFailure(ctx, input, errMediaProviderUnavailable)
+	}
 	result.ObservedAt = result.ObservedAt.UTC().Round(0)
 	if result.TaskID != input.TaskID || result.EventID == "" || result.ProviderReference == "" || result.Sequence == 0 || result.ObservedAt.IsZero() {
 		return result, a.finalizeSubmissionFailure(ctx, input, errors.New("invalid task submission result"))
@@ -163,6 +166,9 @@ func (a *taskMediaAdapter) Query(ctx context.Context, input provider.TaskQuery) 
 	observation, err := a.delegate.Query(ctx, input)
 	if err != nil {
 		return observation, err
+	}
+	if observation.Mode != a.server.expectedMediaProviderMode() {
+		return observation, errMediaProviderUnavailable
 	}
 	observation.ObservedAt = observation.ObservedAt.UTC().Round(0)
 	if observation.Artifact != nil {
@@ -179,6 +185,9 @@ func (a *taskMediaAdapter) Query(ctx context.Context, input provider.TaskQuery) 
 	refs, err := a.taskReferences(ctx, input.TaskID)
 	if err != nil {
 		return observation, err
+	}
+	if observation.Mode != a.server.expectedMediaProviderMode() {
+		return observation, errMediaProviderUnavailable
 	}
 	if err = a.finalize(ctx, refs, input.TaskID, observation.Kind, observation.EventID, taskObservationQuantity(observation.Kind)); err != nil {
 		return observation, err
@@ -206,7 +215,11 @@ func (a *taskMediaAdapter) Cancel(ctx context.Context, input provider.TaskCancel
 }
 
 func (a *taskMediaAdapter) Download(ctx context.Context, input provider.TaskDownload) (provider.TaskDownloadResult, error) {
-	return a.delegate.Download(ctx, input)
+	result, err := a.delegate.Download(ctx, input)
+	if err == nil && result.Mode != a.server.expectedMediaProviderMode() {
+		return result, errMediaProviderUnavailable
+	}
+	return result, err
 }
 
 func (a *taskMediaAdapter) taskReferences(ctx context.Context, taskID string) (tasks.References, error) {
@@ -236,12 +249,17 @@ func (a *taskMediaAdapter) finalize(ctx context.Context, refs tasks.References, 
 	} else if kind == "submission_unknown" {
 		outcome, usage = "unknown", "unknown"
 	}
+	outcome, usage, quantity = a.server.mediaFinalizationValues(outcome, usage, quantity)
+	sourceEventID := taskMediaEventID(taskID, eventID, kind)
+	if a.server.mockMediaProfile() {
+		sourceEventID = "mock:" + sourceEventID
+	}
 	settlement, err := a.server.Billing.FinalizeMedia(ctx, billing.MediaFinalizationInput{
 		TenantID:      a.principal.TenantID,
 		RequestID:     refs.RequestID.String(),
 		AttemptID:     refs.AttemptID.String(),
 		Source:        taskMediaSource,
-		SourceEventID: taskMediaEventID(taskID, eventID, kind),
+		SourceEventID: sourceEventID,
 		Operation:     taskMediaOperation,
 		Outcome:       outcome,
 		UsageState:    usage,
@@ -266,9 +284,14 @@ func (s *Server) finalizeTaskMedia(ctx context.Context, tenant, requestID, attem
 	if err := s.requireTaskMediaBilling(); err != nil {
 		return err
 	}
+	outcome, usage, quantity = s.mediaFinalizationValues(outcome, usage, quantity)
+	sourceEventID := taskMediaEventID(taskID, eventID, outcome)
+	if s.mockMediaProfile() {
+		sourceEventID = "mock:" + sourceEventID
+	}
 	settlement, err := s.Billing.FinalizeMedia(ctx, billing.MediaFinalizationInput{
 		TenantID: tenant, RequestID: requestID, AttemptID: attemptID,
-		Source: taskMediaSource, SourceEventID: taskMediaEventID(taskID, eventID, outcome),
+		Source: taskMediaSource, SourceEventID: sourceEventID,
 		Operation: taskMediaOperation, Outcome: outcome, UsageState: usage, Quantity: quantity,
 	})
 	if err != nil || taskID == "" {

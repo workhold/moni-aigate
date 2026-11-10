@@ -495,7 +495,14 @@ func runTaskWorker(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) e
 		return err
 	}
 	app := server.New(cfg, pool, web.FS, nil)
-	delegate := provider.NewMockTaskAdapter()
+	// The worker must use the same validated media runtime as the app. In the
+	// default inner-test profile no media adapter is installed; keep the
+	// process idle until shutdown instead of implicitly starting a mock worker.
+	if app.TaskAdapter == nil {
+		<-ctx.Done()
+		return nil
+	}
+	delegate := app.TaskAdapter
 	worker := tasks.Worker{
 		Store: store, Adapter: delegate, Now: time.Now,
 		AdapterFor: func(actor tasks.Actor) (provider.TaskAdapter, error) {

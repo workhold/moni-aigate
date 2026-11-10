@@ -102,9 +102,10 @@ func createVideoTask(t *testing.T, f *gatewayFixture, idempotency string) videoT
 		t.Fatalf("task creation status=%d body=%s", response.StatusCode, raw)
 	}
 	var created struct {
-		ID string `json:"id"`
+		ID           string `json:"id"`
+		ProviderMode string `json:"provider_mode"`
 	}
-	if err = json.Unmarshal(raw, &created); err != nil || created.ID == "" {
+	if err = json.Unmarshal(raw, &created); err != nil || created.ID == "" || created.ProviderMode != "mock" {
 		t.Fatalf("invalid task creation response=%s err=%v", raw, err)
 	}
 	response = post()
@@ -170,7 +171,7 @@ SELECT (SELECT delivery_state FROM media_attempts WHERE tenant_id=$1 AND request
        (SELECT charged_amount FROM media_settlements WHERE tenant_id=$1 AND request_id=$2)`, f.tenant, fixture.requestID).Scan(&delivery, &status, &charged); err != nil {
 		t.Fatal(err)
 	}
-	if delivery != "completed" || status != "settled" || charged != 1 {
+	if delivery != "failed" || status != "released" || charged != 0 {
 		t.Fatalf("video terminal billing delivery=%s status=%s charged=%d", delivery, status, charged)
 	}
 	if _, err = service.Observe(ctx, taskID, time.Now().UTC()); err != nil {
@@ -285,6 +286,8 @@ func TestVideoTaskObservationSurvivesWorkerProviderRestart(t *testing.T) {
 
 type rejectedVideoAdapter struct{}
 
+func (rejectedVideoAdapter) ProviderMode() provider.ProviderMode { return provider.ProviderModeMock }
+
 func (rejectedVideoAdapter) Submit(context.Context, provider.TaskSubmission) (provider.TaskSubmissionResult, error) {
 	return provider.TaskSubmissionResult{}, errors.New("provider connection failed")
 }
@@ -302,16 +305,18 @@ type terminalVideoAdapter struct {
 	kind string
 }
 
+func (terminalVideoAdapter) ProviderMode() provider.ProviderMode { return provider.ProviderModeMock }
+
 func (a terminalVideoAdapter) Submit(_ context.Context, input provider.TaskSubmission) (provider.TaskSubmissionResult, error) {
-	return provider.TaskSubmissionResult{EventID: uuid.NewString(), TaskID: input.TaskID, ProviderReference: "mock-video/" + input.TaskID, Sequence: 1, ObservedAt: input.SubmittedAt.UTC()}, nil
+	return provider.TaskSubmissionResult{Mode: provider.ProviderModeMock, EventID: uuid.NewString(), TaskID: input.TaskID, ProviderReference: "mock-video/" + input.TaskID, Sequence: 1, ObservedAt: input.SubmittedAt.UTC()}, nil
 }
 
 func (a terminalVideoAdapter) Query(_ context.Context, input provider.TaskQuery) (provider.TaskObservation, error) {
-	return provider.TaskObservation{EventID: uuid.NewString(), TaskID: input.TaskID, Kind: a.kind, Sequence: 2, ObservedAt: time.Now().Add(-time.Second).UTC(), ProviderReference: input.ProviderReference, FailureCode: "provider_error"}, nil
+	return provider.TaskObservation{Mode: provider.ProviderModeMock, EventID: uuid.NewString(), TaskID: input.TaskID, Kind: a.kind, Sequence: 2, ObservedAt: time.Now().Add(-time.Second).UTC(), ProviderReference: input.ProviderReference, FailureCode: "provider_error"}, nil
 }
 
 func (a terminalVideoAdapter) Cancel(_ context.Context, input provider.TaskCancel) (provider.TaskObservation, error) {
-	return provider.TaskObservation{EventID: uuid.NewString(), TaskID: input.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().Add(-time.Second).UTC(), ProviderReference: input.ProviderReference}, nil
+	return provider.TaskObservation{Mode: provider.ProviderModeMock, EventID: uuid.NewString(), TaskID: input.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().Add(-time.Second).UTC(), ProviderReference: input.ProviderReference}, nil
 }
 
 func (terminalVideoAdapter) Download(context.Context, provider.TaskDownload) (provider.TaskDownloadResult, error) {

@@ -31,8 +31,8 @@ func (s *Server) taskService(p identity.Principal) (*tasks.Service, error) {
 	if s.TaskStore == nil {
 		return nil, tasks.ErrInvalidInput
 	}
-	if s.TaskAdapter == nil {
-		return nil, errTaskMediaBillingUnavailable
+	if !s.mediaProviderReady(s.TaskAdapter) {
+		return nil, errMediaProviderUnavailable
 	}
 	worker := tasks.Actor{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID), Permission: tasks.PermissionTaskObserve | tasks.PermissionTaskRead | tasks.PermissionTaskCancel}
 	adapter := s.TaskAdapter
@@ -58,6 +58,10 @@ func readTaskBody(c *gin.Context, out any) ([]byte, error) {
 
 func (s *Server) createTask(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if !s.mediaProviderReady(s.TaskAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "视频供应商不可用")
+		return
+	}
 	if err := s.requireTaskMediaBilling(); err != nil {
 		s.error(c, err)
 		return
@@ -145,7 +149,7 @@ func (s *Server) createTask(c *gin.Context) {
 			return
 		}
 		if found {
-			c.JSON(http.StatusAccepted, gin.H{"id": existingID, "object": "task", "type": "video_generation", "status": "created", "request_id": refs.RequestID})
+			c.JSON(http.StatusAccepted, gin.H{"id": existingID, "object": "task", "type": "video_generation", "status": "created", "provider_mode": s.mediaProviderMode(), "request_id": refs.RequestID})
 			return
 		}
 	}
@@ -160,11 +164,15 @@ func (s *Server) createTask(c *gin.Context) {
 		s.error(c, err)
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"id": task.ID(), "object": "task", "type": "video_generation", "status": "created", "request_id": requestID})
+	c.JSON(http.StatusAccepted, gin.H{"id": task.ID(), "object": "task", "type": "video_generation", "status": "created", "provider_mode": s.mediaProviderMode(), "request_id": requestID})
 }
 
 func (s *Server) taskStatus(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if !s.mediaProviderReady(s.TaskAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "视频供应商不可用")
+		return
+	}
 	id, err := tasks.ParseID(c.Param("id"))
 	if err != nil || s.TaskStore == nil {
 		s.fail(c, 404, "task_not_found", "任务不存在")
@@ -181,11 +189,15 @@ func (s *Server) taskStatus(c *gin.Context) {
 		s.error(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "type": "video_generation", "status": taskProtocolStatus(view), "observation": view.Observation, "artifact": view.Artifact})
+	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "type": "video_generation", "status": taskProtocolStatus(view), "provider_mode": s.mediaProviderMode(), "observation": view.Observation, "artifact": view.Artifact})
 }
 
 func (s *Server) submitTask(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if !s.mediaProviderReady(s.TaskAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "视频供应商不可用")
+		return
+	}
 	id, err := tasks.ParseID(c.Param("id"))
 	if err != nil {
 		s.fail(c, 400, "invalid_request", "任务ID无效")
@@ -202,11 +214,15 @@ func (s *Server) submitTask(c *gin.Context) {
 		return
 	}
 	view, _ := task.Snapshot()
-	c.JSON(202, gin.H{"id": view.TaskID, "object": "task", "status": taskProtocolStatus(view)})
+	c.JSON(202, gin.H{"id": view.TaskID, "object": "task", "status": taskProtocolStatus(view), "provider_mode": s.mediaProviderMode()})
 }
 
 func (s *Server) cancelTask(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if !s.mediaProviderReady(s.TaskAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "视频供应商不可用")
+		return
+	}
 	id, err := tasks.ParseID(c.Param("id"))
 	if err != nil {
 		s.fail(c, 400, "invalid_request", "任务ID无效")
@@ -224,7 +240,7 @@ func (s *Server) cancelTask(c *gin.Context) {
 		return
 	}
 	view, _ := task.Snapshot()
-	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "status": taskProtocolStatus(view), "cancel": view.Cancel})
+	c.JSON(200, gin.H{"id": view.TaskID, "object": "task", "status": taskProtocolStatus(view), "provider_mode": s.mediaProviderMode(), "cancel": view.Cancel})
 }
 
 func taskProtocolStatus(view tasks.Snapshot) string {
@@ -245,6 +261,10 @@ func taskProtocolStatus(view tasks.Snapshot) string {
 
 func (s *Server) taskResultGrant(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if !s.mediaProviderReady(s.TaskAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "视频供应商不可用")
+		return
+	}
 	id, err := tasks.ParseID(c.Param("id"))
 	if err != nil {
 		s.fail(c, 400, "invalid_request", "任务ID无效")
@@ -262,11 +282,15 @@ func (s *Server) taskResultGrant(c *gin.Context) {
 		return
 	}
 	s.TaskGrants.Store(grant.GrantID.String(), grant)
-	c.JSON(200, gin.H{"grant_id": grant.GrantID, "task_id": grant.TaskID, "artifact": grant.ArtifactRef, "expires_at": grant.ExpiresAt})
+	c.JSON(200, gin.H{"grant_id": grant.GrantID, "task_id": grant.TaskID, "artifact": grant.ArtifactRef, "expires_at": grant.ExpiresAt, "provider_mode": s.mediaProviderMode()})
 }
 
 func (s *Server) taskResult(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
+	if !s.mediaProviderReady(s.TaskAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "视频供应商不可用")
+		return
+	}
 	id, err := tasks.ParseID(c.Param("id"))
 	if err != nil {
 		s.fail(c, 400, "invalid_request", "任务ID无效")
@@ -293,5 +317,6 @@ func (s *Server) taskResult(c *gin.Context) {
 		s.error(c, err)
 		return
 	}
+	c.Header("X-Moni-Provider-Mode", s.mediaProviderMode())
 	c.Data(200, "application/octet-stream", body)
 }

@@ -94,14 +94,8 @@ func New(c config.Config, p *pgxpool.Pool, assets fs.FS, log *telemetry.Logger) 
 	identities := identity.New(p, c.Secrets)
 	identities.EnforcePlatformMFA = c.MFAEnforcePlatform
 	taskStore, _ := tasks.NewPostgresStore(p, "")
-	mediaAdapter := newDefaultMediaAdapter()
-	imageProfile, imageService := newImageRuntime(mediaAdapter)
-	realtimeAdapter := provider.NewMockRealtimeAdapter()
-	realtimeService, err := realtime.NewService(realtime.ServiceOptions{Store: realtime.NewMemoryStore(), Adapter: realtimeAdapter})
-	if err != nil {
-		panic("invalid realtime MVP wiring: " + err.Error())
-	}
-	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(c.ProviderTimeouts.ClientOptions()), ImageAdapter: mediaAdapter, ImageProfile: imageProfile, ImageService: imageService, Realtime: realtimeService, RealtimeAdapter: realtimeAdapter, RealtimeTimeout: realtime.DefaultTurnTTL, Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, TaskAdapter: provider.NewMockTaskAdapter(), MediaAdapter: mediaAdapter, Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets, imageByIdempotency: make(map[string]*imageRequestRecord), imageByID: make(map[string]*imageRequestRecord)}
+	runtime := newMediaProviderRuntime(c)
+	return &Server{Config: c, Pool: p, Identity: identities, Catalog: catalog.New(p, c.Secrets), Billing: billing.New(p), Procurement: procurement.New(p), Provider: provider.NewClient(c.ProviderTimeouts.ClientOptions()), ImageAdapter: runtime.mediaAdapter, ImageProfile: runtime.imageProfile, ImageService: runtime.imageService, Realtime: runtime.realtimeService, RealtimeAdapter: runtime.realtimeAdapter, RealtimeTimeout: realtime.DefaultTurnTTL, Routing: routing.NewEngine(routing.Config{}), TaskStore: taskStore, TaskAdapter: runtime.taskAdapter, MediaAdapter: runtime.mediaAdapter, Log: log, limits: map[string]*rate.Limiter{}, limitSeen: map[string]time.Time{}, keyRuntime: map[string]*keyRuntimeState{}, global: make(chan struct{}, 100), probes: make(chan struct{}, 4), tenantPermits: map[string]int{}, keyPermits: map[string]int{}, assets: assets, imageByIdempotency: make(map[string]*imageRequestRecord), imageByID: make(map[string]*imageRequestRecord)}
 }
 func (s *Server) Ready(v bool) { s.ready.Store(v) }
 func (s *Server) Engine() *gin.Engine {
@@ -343,6 +337,10 @@ func (s *Server) fail(c *gin.Context, status int, code, message string) {
 }
 func (s *Server) error(c *gin.Context, e error) {
 	if e == nil {
+		return
+	}
+	if errors.Is(e, errMediaProviderUnavailable) {
+		s.fail(c, http.StatusServiceUnavailable, errMediaProviderUnavailable.Error(), "媒体供应商不可用")
 		return
 	}
 	if procurementExecutionError(c, s, e) {

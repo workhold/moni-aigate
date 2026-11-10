@@ -28,6 +28,7 @@ type TaskSubmission struct {
 }
 
 type TaskSubmissionResult struct {
+	Mode              ProviderMode
 	EventID           string
 	TaskID            string
 	ProviderReference string
@@ -49,6 +50,7 @@ type TaskCancel struct {
 // TaskObservation is deliberately transport-neutral. The tasks service
 // validates every field before it becomes a domain Event.
 type TaskObservation struct {
+	Mode              ProviderMode
 	EventID           string
 	TaskID            string
 	Kind              string
@@ -76,6 +78,7 @@ type TaskDownload struct {
 }
 
 type TaskDownloadResult struct {
+	Mode      ProviderMode
 	MediaType string
 	Body      []byte
 }

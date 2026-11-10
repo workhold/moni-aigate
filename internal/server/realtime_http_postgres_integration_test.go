@@ -118,7 +118,7 @@ func TestRealtimeHTTPPostgresOneSessionOneTurn(t *testing.T) {
  GROUP BY q.state,r.status,a.delivery_state,s.status,o.usage_state`, f.tenant).Scan(&mediaState, &reservationState, &attemptState, &settlementStatus, &usageState, &mediaRequests, &mediaAttempts, &mediaSettlements, &mediaObservations); err != nil {
 		t.Fatal(err)
 	}
-	if mediaState != "settled" || reservationState != "settled" || attemptState != "completed" || settlementStatus != "settled" || usageState != "confirmed_final" || mediaRequests != 1 || mediaAttempts != 1 || mediaSettlements != 1 || mediaObservations != 1 {
+	if mediaState != "released" || reservationState != "released" || attemptState != "failed" || settlementStatus != "released" || usageState != "missing" || mediaRequests != 1 || mediaAttempts != 1 || mediaSettlements != 1 || mediaObservations != 1 {
 		t.Fatalf("media settlement state request=%q reservation=%q attempt=%q settlement=%q usage=%q counts=%d/%d/%d/%d", mediaState, reservationState, attemptState, settlementStatus, usageState, mediaRequests, mediaAttempts, mediaSettlements, mediaObservations)
 	}
 

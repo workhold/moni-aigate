@@ -22,6 +22,7 @@ type ImageRequest struct {
 // must be true before a caller may treat a successful response as dispatched.
 type ImageResponse struct {
 	Sent      bool
+	Mode      ProviderMode
 	MediaType string
 	Width     int
 	Height    int
@@ -52,6 +53,7 @@ const SpeechUsageConfirmedFinal = "confirmed_final"
 // customer-visible URL through this boundary.
 type SpeechResponse struct {
 	Sent      bool
+	Mode      ProviderMode
 	MediaType string
 	Format    string
 	Data      []byte
@@ -101,6 +103,8 @@ type MockMediaAdapter struct {
 	speechRequests       []SpeechRequest
 }
 
+func (*MockMediaAdapter) ProviderMode() ProviderMode { return ProviderModeMock }
+
 func (m *MockMediaAdapter) GenerateImage(ctx context.Context, in ImageRequest) (ImageResponse, error) {
 	if m == nil {
 		return ImageResponse{}, errors.New("nil_media_adapter")
@@ -112,6 +116,7 @@ func (m *MockMediaAdapter) GenerateImage(ctx context.Context, in ImageRequest) (
 	if fn != nil {
 		response, err = fn(ctx, in)
 	}
+	response.Mode = ProviderModeMock
 	response.Data = append([]byte(nil), response.Data...)
 	return response, err
 }
@@ -127,6 +132,7 @@ func (m *MockMediaAdapter) SynthesizeSpeech(ctx context.Context, in SpeechReques
 	if fn != nil {
 		response, err = fn(ctx, in)
 	}
+	response.Mode = ProviderModeMock
 	response.Data = append([]byte(nil), response.Data...)
 	return response, err
 }

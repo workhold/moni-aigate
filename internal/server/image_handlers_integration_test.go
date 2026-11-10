@@ -30,7 +30,7 @@ func TestImageGenerationHTTPUsesCurrentMediaWalletFacts(t *testing.T) {
 		t.Fatalf("status=%d body=%s", response.StatusCode, raw)
 	}
 	var value map[string]any
-	if err = json.Unmarshal(raw, &value); err != nil || value["status"] != "completed" {
+	if err = json.Unmarshal(raw, &value); err != nil || value["status"] != "completed" || value["provider_mode"] != "mock" {
 		t.Fatalf("unexpected image response=%s err=%v", raw, err)
 	}
 	var reservations, settlements, charged int
@@ -40,7 +40,7 @@ func TestImageGenerationHTTPUsesCurrentMediaWalletFacts(t *testing.T) {
  (SELECT coalesce(sum(charged_amount),0) FROM media_settlements)`).Scan(&reservations, &settlements, &charged); err != nil {
 		t.Fatal(err)
 	}
-	if reservations != 1 || settlements != 1 || charged != 1 {
+	if reservations != 1 || settlements != 1 || charged != 0 {
 		t.Fatalf("media financial facts reservations=%d settlements=%d charged=%d", reservations, settlements, charged)
 	}
 }
@@ -64,7 +64,7 @@ func TestSpeechHTTPUsesCurrentMediaWalletFacts(t *testing.T) {
 	}
 	defer response.Body.Close()
 	raw, _ := io.ReadAll(response.Body)
-	if response.StatusCode != http.StatusOK || len(raw) < 4 || !bytes.Equal(raw[:4], []byte("RIFF")) {
+	if response.StatusCode != http.StatusOK || response.Header.Get("X-Moni-Provider-Mode") != "mock" || len(raw) < 4 || !bytes.Equal(raw[:4], []byte("RIFF")) {
 		t.Fatalf("status=%d content-type=%q body-prefix=%q", response.StatusCode, response.Header.Get("Content-Type"), raw)
 	}
 	var reservations, settlements, charged int
@@ -74,7 +74,7 @@ func TestSpeechHTTPUsesCurrentMediaWalletFacts(t *testing.T) {
  (SELECT coalesce(sum(charged_amount),0) FROM media_settlements)`).Scan(&reservations, &settlements, &charged); err != nil {
 		t.Fatal(err)
 	}
-	if reservations != 1 || settlements != 1 || charged != len([]rune("hello media")) {
+	if reservations != 1 || settlements != 1 || charged != 0 {
 		t.Fatalf("media speech financial facts reservations=%d settlements=%d charged=%d", reservations, settlements, charged)
 	}
 }

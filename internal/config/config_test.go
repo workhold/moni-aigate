@@ -78,3 +78,44 @@ func TestProviderTimeoutConfigurationIsValidatedAndApplied(t *testing.T) {
 		})
 	}
 }
+
+func TestMediaProviderSafetyConfiguration(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://fixture/unused")
+	t.Setenv("MASTER_KEYS_JSON", "")
+	t.Setenv("MASTER_KEY_ID", "fixture")
+	t.Setenv("MASTER_KEY", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32))))
+	t.Setenv("AUTH_SECRET", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("p", 32))))
+	t.Setenv("MEDIA_PROVIDER_PROFILE", "")
+	t.Setenv("MEDIA_DETERMINISTIC_MOCK", "")
+	c, err := Load()
+	if err != nil || c.MediaProviderProfile != MediaProviderProfileInnerTest || c.MediaDeterministicMock || c.MockMediaProvidersEnabled() {
+		t.Fatalf("default media profile is not closed: %+v err=%v", c, err)
+	}
+
+	for _, profile := range []string{MediaProviderProfileDevelopment, MediaProviderProfileBusinessQA} {
+		t.Run(profile, func(t *testing.T) {
+			t.Setenv("MEDIA_PROVIDER_PROFILE", profile)
+			t.Setenv("MEDIA_DETERMINISTIC_MOCK", "false")
+			c, err := Load()
+			if err != nil || c.MockMediaProvidersEnabled() {
+				t.Fatalf("%s enabled mock without explicit switch: %+v err=%v", profile, c, err)
+			}
+			t.Setenv("MEDIA_DETERMINISTIC_MOCK", "true")
+			c, err = Load()
+			if err != nil || !c.MockMediaProvidersEnabled() {
+				t.Fatalf("%s did not enable explicit mock: %+v err=%v", profile, c, err)
+			}
+		})
+	}
+
+	t.Setenv("MEDIA_PROVIDER_PROFILE", MediaProviderProfileInnerTest)
+	t.Setenv("MEDIA_DETERMINISTIC_MOCK", "true")
+	if _, err = Load(); err == nil || !strings.Contains(err.Error(), "MEDIA_DETERMINISTIC_MOCK") {
+		t.Fatalf("inner-test accepted deterministic mock: %v", err)
+	}
+	t.Setenv("MEDIA_PROVIDER_PROFILE", "unsupported")
+	t.Setenv("MEDIA_DETERMINISTIC_MOCK", "false")
+	if _, err = Load(); err == nil || !strings.Contains(err.Error(), "MEDIA_PROVIDER_PROFILE") {
+		t.Fatalf("unsupported media profile accepted: %v", err)
+	}
+}

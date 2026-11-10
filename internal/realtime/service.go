@@ -20,6 +20,13 @@ var (
 	ErrProviderProtocol    = errors.New("realtime: provider protocol violation")
 )
 
+type ProviderMode string
+
+const (
+	ProviderModeReal ProviderMode = "real"
+	ProviderModeMock ProviderMode = "mock"
+)
+
 // CommercialRefs are created by the existing billing path before a turn is
 // started. Realtime only stores and forwards them. It never creates or
 // modifies the referenced records.
@@ -115,6 +122,7 @@ type ProviderOpenInput struct {
 }
 
 type ProviderSession struct {
+	Mode   ProviderMode
 	ID     string
 	Handle string
 }
@@ -133,6 +141,7 @@ type ProviderSendInput struct {
 }
 
 type ProviderDispatch struct {
+	Mode       ProviderMode
 	Sent       bool
 	Handle     string
 	ResponseID string
@@ -146,6 +155,7 @@ type ProviderReceiveInput struct {
 }
 
 type ProviderReceiveResult struct {
+	Mode       ProviderMode
 	ResponseID string
 	Bytes      int
 	Final      bool
@@ -166,21 +176,30 @@ type ProviderPayload struct {
 }
 
 type ServiceOptions struct {
-	Store   Persistence
-	Adapter ProviderRealtimeAdapter
+	Store        Persistence
+	Adapter      ProviderRealtimeAdapter
+	RequiredMode ProviderMode
 }
 
 type Service struct {
-	store   Persistence
-	adapter ProviderRealtimeAdapter
-	mu      sync.Mutex
+	store        Persistence
+	adapter      ProviderRealtimeAdapter
+	requiredMode ProviderMode
+	mu           sync.Mutex
 }
 
 func NewService(options ServiceOptions) (*Service, error) {
 	if options.Store == nil || options.Adapter == nil {
 		return nil, fmt.Errorf("%w: realtime service dependencies", ErrInvalidInput)
 	}
-	return &Service{store: options.Store, adapter: options.Adapter}, nil
+	if options.RequiredMode != "" && options.RequiredMode != ProviderModeReal && options.RequiredMode != ProviderModeMock {
+		return nil, fmt.Errorf("%w: invalid provider mode", ErrInvalidInput)
+	}
+	return &Service{store: options.Store, adapter: options.Adapter, requiredMode: options.RequiredMode}, nil
+}
+
+func (s *Service) providerModeAllowed(mode ProviderMode) bool {
+	return s.requiredMode == "" || mode == s.requiredMode
 }
 
 func contextOK(ctx context.Context) error {
@@ -224,7 +243,7 @@ func (s *Service) CreateSession(ctx context.Context, token string, binding Ticke
 		return SessionSnapshot{}, err
 	}
 	providerSession, err := s.adapter.Open(ctx, ProviderOpenInput{SessionID: cfg.ID, TenantID: cfg.TenantID, ModelID: cfg.ModelID, ProfileID: cfg.ProfileID, RouteID: cfg.RouteID})
-	if err != nil || !validID(providerSession.ID) {
+	if err != nil || !validID(providerSession.ID) || !s.providerModeAllowed(providerSession.Mode) {
 		if err != nil {
 			return SessionSnapshot{}, err
 		}
@@ -393,6 +412,14 @@ func (s *Service) Dispatch(ctx context.Context, sessionID, turnID string, input 
 		}
 		return turn.Snapshot, ErrProviderProtocol
 	}
+	if !s.providerModeAllowed(dispatch.Mode) {
+		turn.DispatchUnknown = true
+		_ = session.MarkPending(turnID, "provider_mode_mismatch", at)
+		turn.Snapshot = findTurnSnapshot(session.Snapshot(), turnID)
+		_ = s.save(ctx, session, record)
+		_ = s.store.SaveTurn(ctx, turn)
+		return turn.Snapshot, ErrProviderProtocol
+	}
 	if err = session.BindProviderResponse(turnID, dispatch.ResponseID, at); err != nil {
 		return TurnSnapshot{}, err
 	}
@@ -445,7 +472,7 @@ func (s *Service) Receive(ctx context.Context, sessionID, turnID string, at time
 		_ = s.store.SaveTurn(ctx, turn)
 		return turn.Snapshot, callErr
 	}
-	if received.ResponseID != turn.Snapshot.ProviderResponseID || received.Bytes <= 0 {
+	if !s.providerModeAllowed(received.Mode) || received.ResponseID != turn.Snapshot.ProviderResponseID || received.Bytes <= 0 {
 		return turn.Snapshot, ErrProviderProtocol
 	}
 	if err = session.MarkForwarded(turnID, received.Bytes, at); err != nil {

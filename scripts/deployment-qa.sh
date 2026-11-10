@@ -12,6 +12,13 @@ project_name="moni-aigate-qa-${RANDOM}-${PPID}"
 port="${DEPLOY_QA_PORT:-18080}"
 business="${DEPLOY_QA_BUSINESS:-false}"
 
+media_profile=inner-test
+media_mock=false
+if [ "$business" = true ]; then
+  media_profile=business-qa
+  media_mock=true
+fi
+
 case "$business" in
   true|false) ;;
   *) echo "DEPLOY_QA_BUSINESS must be true or false" >&2; exit 1 ;;
@@ -87,6 +94,8 @@ MAIL_TRANSPORT=disabled
 VOUCHERS_ENABLED=false
 OPERATIONS_ALERTS_ENABLED=false
 PAYMENTS_MODE=off
+MEDIA_PROVIDER_PROFILE=${media_profile}
+MEDIA_DETERMINISTIC_MOCK=${media_mock}
 EOF
 printf 'deployment-qa-admin-password-%s\n' "$(rand_hex 12)" >"$password_file"
 

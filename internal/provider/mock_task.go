@@ -16,6 +16,8 @@ type MockTaskAdapter struct {
 	tasks map[string]mockTask
 }
 
+func (*MockTaskAdapter) ProviderMode() ProviderMode { return ProviderModeMock }
+
 type mockTask struct {
 	providerReference string
 	artifact          []byte
@@ -31,13 +33,13 @@ func (m *MockTaskAdapter) Submit(_ context.Context, in TaskSubmission) (TaskSubm
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if prior, ok := m.tasks[in.TaskID]; ok {
-		return TaskSubmissionResult{EventID: uuid.NewString(), TaskID: in.TaskID, ProviderReference: prior.providerReference, Sequence: 1, ObservedAt: in.SubmittedAt.UTC()}, nil
+		return TaskSubmissionResult{Mode: ProviderModeMock, EventID: uuid.NewString(), TaskID: in.TaskID, ProviderReference: prior.providerReference, Sequence: 1, ObservedAt: in.SubmittedAt.UTC()}, nil
 	}
 	ref := "mock-video/" + in.TaskID
 	t := mockVideoTask(in.TaskID)
 	t.state = "queued"
 	m.tasks[in.TaskID] = t
-	return TaskSubmissionResult{EventID: uuid.NewString(), TaskID: in.TaskID, ProviderReference: ref, Sequence: 1, ObservedAt: in.SubmittedAt.UTC()}, nil
+	return TaskSubmissionResult{Mode: ProviderModeMock, EventID: uuid.NewString(), TaskID: in.TaskID, ProviderReference: ref, Sequence: 1, ObservedAt: in.SubmittedAt.UTC()}, nil
 }
 
 func (m *MockTaskAdapter) Query(_ context.Context, in TaskQuery) (TaskObservation, error) {
@@ -50,7 +52,7 @@ func (m *MockTaskAdapter) Query(_ context.Context, in TaskQuery) (TaskObservatio
 		t = mockVideoTask(in.TaskID)
 	}
 	if t.state == "cancelled" {
-		return TaskObservation{EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}, nil
+		return TaskObservation{Mode: ProviderModeMock, EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}, nil
 	}
 	if t.state == "queued" {
 		t.state = "succeeded"
@@ -60,7 +62,7 @@ func (m *MockTaskAdapter) Query(_ context.Context, in TaskQuery) (TaskObservatio
 		t = mockVideoTask(in.TaskID)
 		t.state = "succeeded"
 	}
-	obs := TaskObservation{EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_succeeded", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}
+	obs := TaskObservation{Mode: ProviderModeMock, EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_succeeded", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}
 	sha := sha256.Sum256(t.artifact)
 	// Keep the development artifact inside the task's result window. A real
 	// provider adapter must derive this from its durable artifact lease.
@@ -77,7 +79,7 @@ func (m *MockTaskAdapter) Cancel(_ context.Context, in TaskCancel) (TaskObservat
 	}
 	t.state = "cancelled"
 	m.tasks[in.TaskID] = t
-	return TaskObservation{EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}, nil
+	return TaskObservation{Mode: ProviderModeMock, EventID: uuid.NewString(), TaskID: in.TaskID, Kind: "status_cancelled", Sequence: 2, ObservedAt: time.Now().UTC(), ProviderReference: t.providerReference}, nil
 }
 
 func (m *MockTaskAdapter) Download(_ context.Context, in TaskDownload) (TaskDownloadResult, error) {
@@ -87,7 +89,7 @@ func (m *MockTaskAdapter) Download(_ context.Context, in TaskDownload) (TaskDown
 	if !ok {
 		t = mockVideoTask(in.TaskID)
 	}
-	return TaskDownloadResult{MediaType: t.mediaType, Body: append([]byte(nil), t.artifact...)}, nil
+	return TaskDownloadResult{Mode: ProviderModeMock, MediaType: t.mediaType, Body: append([]byte(nil), t.artifact...)}, nil
 }
 
 func mockVideoTask(taskID string) mockTask {

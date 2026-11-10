@@ -5703,3 +5703,41 @@ P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与�
 - modified `specs/028-unified-metering-media/tasks.md`
 
 </details>
+
+## 2026-11-10T09:39:21Z · 26314048cf7c
+
+增加媒体 provider mock 安全边界：显式 profile、app/worker 同步配置、inner-test provider_unavailable、mock 零收费与未知不重试，并更新部署与验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2116 个源文件；本次 27 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.env.example`
+- modified `cmd/moni-aigate/main.go`
+- modified `compose.yaml`
+- added `docs/design/media-provider-safety.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/config/config.go`
+- modified `internal/config/config_test.go`
+- modified `internal/provider/mock_media.go`
+- modified `internal/provider/mock_realtime.go`
+- modified `internal/provider/mock_task.go`
+- modified `internal/provider/task_adapter.go`
+- modified `internal/provider/types.go`
+- modified `internal/realtime/service.go`
+- modified `internal/server/gateway_integration_test.go`
+- modified `internal/server/image_handlers.go`
+- modified `internal/server/image_handlers_integration_test.go`
+- modified `internal/server/media_handlers.go`
+- added `internal/server/media_provider_runtime.go`
+- added `internal/server/media_provider_safety_integration_test.go`
+- modified `internal/server/realtime.go`
+- modified `internal/server/realtime_http_postgres_integration_test.go`
+- modified `internal/server/realtime_persistence.go`
+- modified `internal/server/server.go`
+- modified `internal/server/task_handlers.go`
+- modified `internal/server/task_media_billing.go`
+- modified `internal/server/task_media_billing_integration_test.go`
+- modified `scripts/deployment-qa.sh`
+
+</details>

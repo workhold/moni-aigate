@@ -53,9 +53,10 @@ type imageRequestRecord struct {
 }
 
 type imageMediaAdapter struct {
-	source  provider.SynchronousMediaAdapter
-	mu      sync.Mutex
-	pending map[string]imageSubmission
+	source   provider.SynchronousMediaAdapter
+	mockOnly bool
+	mu       sync.Mutex
+	pending  map[string]imageSubmission
 }
 
 type imageSubmission struct {
@@ -64,7 +65,7 @@ type imageSubmission struct {
 	response provider.ImageResponse
 }
 
-func newImageRuntime(source provider.SynchronousMediaAdapter) (media.Profile, *media.Orchestrator) {
+func newImageRuntime(source provider.SynchronousMediaAdapter, mockOnly ...bool) (media.Profile, *media.Orchestrator) {
 	profile, err := media.NewProfile(media.ProfileInput{
 		Version:     imageProfileVersion,
 		VariantKey:  "default",
@@ -74,7 +75,8 @@ func newImageRuntime(source provider.SynchronousMediaAdapter) (media.Profile, *m
 		panic("invalid built-in image profile")
 	}
 	registry := media.NewRegistry()
-	if err := registry.RegisterPublished(profile, "mock-image-adapter-v1", &imageMediaAdapter{source: source, pending: make(map[string]imageSubmission)}); err != nil {
+	requireMock := len(mockOnly) > 0 && mockOnly[0]
+	if err := registry.RegisterPublished(profile, "mock-image-adapter-v1", &imageMediaAdapter{source: source, mockOnly: requireMock, pending: make(map[string]imageSubmission)}); err != nil {
 		panic("invalid built-in image publication")
 	}
 	return profile, media.NewOrchestrator(registry)
@@ -109,6 +111,9 @@ func (a *imageMediaAdapter) Submit(ctx context.Context, in media.SubmitInput) (m
 			return media.Submission{Handle: handle, Sent: true}, err
 		}
 		return media.Submission{}, err
+	}
+	if a.mockOnly && response.Mode != provider.ProviderModeMock {
+		return media.Submission{Handle: handle, Sent: response.Sent}, provider.NewMediaError("provider_protocol_error", http.StatusBadGateway, response.Sent, response.Sent)
 	}
 	if !response.Sent {
 		return media.Submission{}, nil
@@ -205,8 +210,8 @@ func (s *Server) imageGeneration(c *gin.Context) {
 		return
 	}
 	p := principal.(identity.Principal)
-	if s.ImageService == nil || !s.imageProfileValid() {
-		s.fail(c, http.StatusServiceUnavailable, "unavailable", "图片服务未就绪")
+	if s.ImageService == nil || !s.imageProfileValid() || !s.mediaProviderReady(s.ImageAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "图片供应商不可用")
 		return
 	}
 	idempotencyKey, ok := imageIdempotencyKey(c)
@@ -263,6 +268,10 @@ func (s *Server) imageGenerationResult(c *gin.Context) {
 		return
 	}
 	p := principalValue.(identity.Principal)
+	if s.ImageService == nil || !s.mediaProviderReady(s.ImageAdapter) {
+		s.fail(c, http.StatusServiceUnavailable, s.providerErrorCode(), "图片供应商不可用")
+		return
+	}
 	id := c.Param("id")
 	if !canonicalUUID(id) {
 		s.fail(c, http.StatusNotFound, "not_found", "图片结果不存在")
@@ -408,13 +417,14 @@ func (s *Server) executeImageRequest(c *gin.Context, p identity.Principal, input
 		s.finishImageRecord(record, imageRequestUnknown, http.StatusBadGateway, "media_consumption_unknown", "图片已提交但消费状态未知", nil)
 		return
 	}
-	response, err := buildImageResponseJSON(record.requestID, input, result)
+	response, err := buildImageResponseJSON(record.requestID, input, result, s.mediaProviderMode())
 	if err != nil {
 		_ = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "unknown", "unknown", 0)
 		s.finishImageRecord(record, imageRequestUnknown, http.StatusBadGateway, "media_consumption_unknown", "图片已提交但结果状态未知", nil)
 		return
 	}
-	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, "completed", "confirmed_final", 1); err != nil {
+	outcome, usage, quantity := s.mediaFinalizationValues("completed", "confirmed_final", 1)
+	if err = s.finalizeMediaRequest(c.Request.Context(), billingRefs, outcome, usage, quantity); err != nil {
 		s.finishImageRecord(record, imageRequestFailed, http.StatusServiceUnavailable, "settlement_pending", "图片账务收尾暂不可用", nil)
 		return
 	}
@@ -493,7 +503,7 @@ func imageProviderCode(errorValue error) string {
 	return "media_provider_error"
 }
 
-func buildImageResponseJSON(requestID string, input media.Input, result media.InlineResult) ([]byte, error) {
+func buildImageResponseJSON(requestID string, input media.Input, result media.InlineResult, providerMode ...string) ([]byte, error) {
 	profile, err := result.ProfileVersion()
 	if err != nil {
 		return nil, err
@@ -510,10 +520,15 @@ func buildImageResponseJSON(requestID string, input media.Input, result media.In
 	if err != nil || size != inputSize {
 		return nil, media.ErrBindingMismatch
 	}
+	mode := string(provider.ProviderModeReal)
+	if len(providerMode) > 0 && providerMode[0] != "" {
+		mode = providerMode[0]
+	}
 	return json.Marshal(struct {
 		ID             string `json:"id"`
 		Object         string `json:"object"`
 		Status         string `json:"status"`
+		ProviderMode   string `json:"provider_mode"`
 		ProfileVersion string `json:"profile_version"`
 		VariantKey     string `json:"variant_key"`
 		Data           []struct {
@@ -523,7 +538,7 @@ func buildImageResponseJSON(requestID string, input media.Input, result media.In
 			Height   int    `json:"height"`
 		} `json:"data"`
 	}{
-		ID: requestID, Object: imageResultType, Status: "completed", ProfileVersion: profile, VariantKey: "default",
+		ID: requestID, Object: imageResultType, Status: "completed", ProviderMode: mode, ProfileVersion: profile, VariantKey: "default",
 		Data: []struct {
 			B64JSON  string `json:"b64_json"`
 			MimeType string `json:"mime_type"`

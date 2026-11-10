@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T08:53:32Z",
-  "review_reason": "P1-7/P1-8 provider 契约：Responses reasoning profile/catalog 拒绝边界与可配置阶段 timeout、上下限、Compose/config/server 接线；未改 migration/billing/wallet/media",
-  "snapshot_sha256": "8c771589e1a6fb29e0f3c6256c1e331525136d3a8d3abae882c2f80f25c3e952",
-  "architecture_sha256": "d85427e7f3829715691e5ce8638b7598e13b9aa8bdd80907c77a295c161527cc",
-  "history_sha256": "5d9db003fb395c7d0b81009af5d9bb9e6bcb53bf85d52a239fdb112a5a4bceca",
+  "reviewed_at": "2026-11-10T09:39:21Z",
+  "review_reason": "增加媒体 provider mock 安全边界：显式 profile、app/worker 同步配置、inner-test provider_unavailable、mock 零收费与未知不重试，并更新部署与验证记录",
+  "snapshot_sha256": "26314048cf7cdd7edcfac74d4a3d5722102bec477feb49fa468ea26274ceaccf",
+  "architecture_sha256": "f75534abf0a85f6fdad73f1eda7dda195b7402e51b1c054b7d9bf5de152fc043",
+  "history_sha256": "f39574de5c255d3e6a3fff4d60706db2f137573a61445a0153863210a068bec5",
   "files": [
     {
       "path": ".dockerignore",
@@ -13,7 +13,7 @@
     },
     {
       "path": ".env.example",
-      "sha256": "5f24813d6541af4b6ecf4f18266ff4c8be134fa16391289672f8db8303487caa"
+      "sha256": "84a932daffcc9d3e7c402fd23fb6fc9fe30ddaa33f2ac3e3259da9ddd3d1be90"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -53,7 +53,7 @@
     },
     {
       "path": "cmd/moni-aigate/main.go",
-      "sha256": "7eb247b22e63910dc63ca0db5c37d758b60f22e40d3b1e87d91ba821c025fd4a"
+      "sha256": "fd45e6059c434de4fd8edc4ed2aafbd7d64291f3298ac69035c6c9913cf7cb0e"
     },
     {
       "path": "cmd/moni-aigate/main_test.go",
@@ -89,7 +89,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "c981f0b35b073d0fd6a4563e3f6804352e9c84ba0ffeaeb4ad88cd55fb5bbb99"
+      "sha256": "dc59c38b1ba8438e9c4b54cba693ce1dcaa20b96f1554def66aa598becb6e231"
     },
     {
       "path": "deploy/init-roles.sh",
@@ -190,6 +190,10 @@
     {
       "path": "docs/design/integrated-wallet-media.md",
       "sha256": "007f12cfc2401fd3bc1caeec1c9947c8b74e2932a6ed2b5c9956ce4286a5273d"
+    },
+    {
+      "path": "docs/design/media-provider-safety.md",
+      "sha256": "82359b83b494e479ec59cc5f3f362c89efdfb432dff782dbf6eca1ab78801c16"
     },
     {
       "path": "docs/design/new-api-roadmap.md",
@@ -1805,7 +1809,7 @@
     },
     {
       "path": "docs/verification/unified-metering.md",
-      "sha256": "18f0586c7450aded99a6509df40952a307fbbb01ba5514987d9b15df6d2541a5"
+      "sha256": "29eb1b0fff805ae39562ecfd4427b6b12d70315bd7b553c00a98c488b8cf38b3"
     },
     {
       "path": "docs/verification/wallet-lots-rows.json",
@@ -2409,11 +2413,11 @@
     },
     {
       "path": "internal/config/config.go",
-      "sha256": "640c6dc69d2bec6344817e49f448fe564f9c410b480f7d4870c73b3cafa54089"
+      "sha256": "7df2b6a16bc6e13af2c9ff47fe35af2510675fe373c696c65faf3cd704a002f5"
     },
     {
       "path": "internal/config/config_test.go",
-      "sha256": "204349fd811c5dbc461564836de909b2e37f438c2429bc28b992e2a312511750"
+      "sha256": "6597b9cf2a1b581927ce1582e51147c71795cbf5f10e3fbfc20be366619b479e"
     },
     {
       "path": "internal/config/mail.go",
@@ -5585,15 +5589,15 @@
     },
     {
       "path": "internal/provider/mock_media.go",
-      "sha256": "2d2e875f4d4a013f895b37c59c5d4ff4471d2589584a3b343c569d3a876bf3ed"
+      "sha256": "3803dcc4d3094b913d415a6de2a40d844e0ea3408a3d8d1957734e2a8a4ff56d"
     },
     {
       "path": "internal/provider/mock_realtime.go",
-      "sha256": "c7e8718e1beddeeb7d3fe471533765ae73fb497fd268a47f862dbdf838f64849"
+      "sha256": "ee5b2e9ec659395767ea098fb850ded7e1b80d3fcfd8cf46dcea613535a50055"
     },
     {
       "path": "internal/provider/mock_task.go",
-      "sha256": "9eace72a0548623a75a72263132a1d8e8e7433da550fc5fdf65cf3065246ccf5"
+      "sha256": "bf51a6a60e1405560c132bb8ef18cdf6cf01d464c5076e48e2f3f66924d46dfa"
     },
     {
       "path": "internal/provider/native_request.go",
@@ -5661,7 +5665,7 @@
     },
     {
       "path": "internal/provider/task_adapter.go",
-      "sha256": "52e9fe3fc6adcaf134a8e25ae880982209b3563630f47a948766bf77f1ac25b0"
+      "sha256": "1bb0135030e04786647e9a8a248906e48fca859a17dd635c4e8de3ba9550b053"
     },
     {
       "path": "internal/provider/timeout_contract_test.go",
@@ -5669,7 +5673,7 @@
     },
     {
       "path": "internal/provider/types.go",
-      "sha256": "ed428253869860a4e3e1db5e9a4bf26bc1fc7dacf8d644c2b07ef9124a3ccaf1"
+      "sha256": "9d1b94cbea3b5a8e8ddb0fcd024b094152a19b83c0830116e6e5da027b3cfaa1"
     },
     {
       "path": "internal/provider/usage.go",
@@ -5701,7 +5705,7 @@
     },
     {
       "path": "internal/realtime/service.go",
-      "sha256": "c9e7665eb3ecb0836f2f973f6d58d1d19c2c2c8e92838ce599bba0bd3ee8d0b0"
+      "sha256": "68cdf73c4bb3578af69306fa367131bb7868d7f1e7d2b5db118b27cd7bf743a1"
     },
     {
       "path": "internal/realtime/service_test.go",
@@ -5953,7 +5957,7 @@
     },
     {
       "path": "internal/server/gateway_integration_test.go",
-      "sha256": "a235be233a86ea505fdb3c656ee1b8d96c010c1f8cf0aef7652b962afc8c8864"
+      "sha256": "edffd0157b597dc3e20b471b74e2b2cfa8542ae8de521bd02eaf47240d679dd5"
     },
     {
       "path": "internal/server/gemini_integration_test.go",
@@ -5965,11 +5969,11 @@
     },
     {
       "path": "internal/server/image_handlers.go",
-      "sha256": "061afda61458a14b171113c2ea47e189206207e6a153d01847062b40234cff46"
+      "sha256": "40d8af6ab353d0a3afe7cac437dbacd3f6358b11edd59afa7aa506f8d581084e"
     },
     {
       "path": "internal/server/image_handlers_integration_test.go",
-      "sha256": "89ee0ebb2de3a30e966b3dea84f067abf58e690db9aeb7ce87efb6bca52db83e"
+      "sha256": "6ef0a12f177b81ac64f591efb87abbbdfc80f348bf56a299add3776e6290bfa4"
     },
     {
       "path": "internal/server/image_handlers_test.go",
@@ -6009,7 +6013,15 @@
     },
     {
       "path": "internal/server/media_handlers.go",
-      "sha256": "bcf9a9cc2c62f6894bb2402e8e352b7fadcbd00ec69249742ae4799a2a3031cf"
+      "sha256": "7c3f8c7f33c297e7ba5ad7e88be00b058e671aaf084412b52d64718f0bfeca68"
+    },
+    {
+      "path": "internal/server/media_provider_runtime.go",
+      "sha256": "a7d3a8104d07f977558442436d1b3d6c5c570bd870d122efc30e74dfd1dd5f9f"
+    },
+    {
+      "path": "internal/server/media_provider_safety_integration_test.go",
+      "sha256": "ab54ea494edd67e64e78576d5a5c87667c2f4a604a2180af4cc61b18bbc5fc78"
     },
     {
       "path": "internal/server/mvp_failure_integration_test.go",
@@ -6161,7 +6173,7 @@
     },
     {
       "path": "internal/server/realtime.go",
-      "sha256": "bd531bd18fc998cb10ac654f438b93456a85e0b0b30be13cd4121bb68be53958"
+      "sha256": "4346a1851c57309de6bda0402f606c8d3009fca9542fdcadfabfc791b0494efc"
     },
     {
       "path": "internal/server/realtime_binding_guard_integration_test.go",
@@ -6169,11 +6181,11 @@
     },
     {
       "path": "internal/server/realtime_http_postgres_integration_test.go",
-      "sha256": "07119585ffde50566839d90d39382694494a3c5dd7796e25c216da3ae765dc24"
+      "sha256": "388a9052d60b776994c3ca36c41683d03359102463822634b7f1226f15c9ea76"
     },
     {
       "path": "internal/server/realtime_persistence.go",
-      "sha256": "06aaf8f6789f56fd9723734a6031128fd6a89d5364c59c989447ae765002a04a"
+      "sha256": "4f8086bf55e658eca9d68816e57aa7092bc91c49579cba1132a5063f96446bf3"
     },
     {
       "path": "internal/server/realtime_persistence_test.go",
@@ -6221,7 +6233,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "e727ed44a1934dfdbb8487f0e89673a06a84af7d27207e2734351bf0d37882dd"
+      "sha256": "4a2b26cae0304f35268bd629a45b035426944027426689b46a96f167bf2d1291"
     },
     {
       "path": "internal/server/static.go",
@@ -6233,15 +6245,15 @@
     },
     {
       "path": "internal/server/task_handlers.go",
-      "sha256": "6d3c7fef84a21fbf3c190f911f7bb8760e5e93ca3f1388b969537c672df54182"
+      "sha256": "287b7ddae991ed7e98e14ac44ba41d4a28a5428ebdda4d3f0aa502763721a2b1"
     },
     {
       "path": "internal/server/task_media_billing.go",
-      "sha256": "79d116eb5ee6063530f75e4acc702e2b29387dbffb82499a4e0e47a88d43199d"
+      "sha256": "533786e64d32cdb7cd48f3025b47fa817dccdca8ab42709be6f29bbac9f5851c"
     },
     {
       "path": "internal/server/task_media_billing_integration_test.go",
-      "sha256": "6e6883c3ade1a6633be661addee0eaf91aa3f46b02ecfa8e525ad0bdd8ded9de"
+      "sha256": "875081f4932a4aa4aeb4bf65ad80000bf805f677b806d6c13f88d8fda5adc434"
     },
     {
       "path": "internal/server/task_request_reference_integration_test.go",
@@ -6653,7 +6665,7 @@
     },
     {
       "path": "scripts/deployment-qa.sh",
-      "sha256": "c94ffe54447bd9f9628a6b5bd3447774f964a290f230fbf15fed009331188b35"
+      "sha256": "1762071d852df2073404538bef2ffa61611780d5c9529e7b2af1bd3feaada41a"
     },
     {
       "path": "scripts/export-native-sdk-fixtures/main.go",

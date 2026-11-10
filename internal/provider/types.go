@@ -23,6 +23,27 @@ const (
 	ProtocolGemini     = "gemini_generate_content"
 )
 
+// ProviderMode is carried on every media result so a deterministic fixture
+// cannot be mistaken for supplier evidence or real supplier cost.
+type ProviderMode string
+
+const (
+	ProviderModeReal ProviderMode = "real"
+	ProviderModeMock ProviderMode = "mock"
+)
+
+type ProviderModeAware interface {
+	ProviderMode() ProviderMode
+}
+
+func AdapterMode(value any) (ProviderMode, bool) {
+	adapter, ok := value.(ProviderModeAware)
+	if !ok || adapter.ProviderMode() == "" {
+		return "", false
+	}
+	return adapter.ProviderMode(), true
+}
+
 type Profile struct {
 	Protocol                  string   `json:"protocol,omitempty"`
 	Version                   string   `json:"version"`

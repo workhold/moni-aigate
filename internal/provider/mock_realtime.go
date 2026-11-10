@@ -28,6 +28,8 @@ type MockRealtimeAdapter struct {
 	responses    map[string]string
 }
 
+func (*MockRealtimeAdapter) ProviderMode() realtime.ProviderMode { return realtime.ProviderModeMock }
+
 func NewMockRealtimeAdapter() *MockRealtimeAdapter {
 	return &MockRealtimeAdapter{responses: make(map[string]string)}
 }
@@ -43,7 +45,7 @@ func (m *MockRealtimeAdapter) Open(ctx context.Context, in RealtimeOpenInput) (R
 	if fn != nil {
 		return fn(ctx, in)
 	}
-	return RealtimeSession{ID: "mock-realtime-session-" + in.SessionID, Handle: uuid.NewString()}, nil
+	return RealtimeSession{Mode: realtime.ProviderModeMock, ID: "mock-realtime-session-" + in.SessionID, Handle: uuid.NewString()}, nil
 }
 
 func (m *MockRealtimeAdapter) Send(ctx context.Context, in RealtimeSendInput) (RealtimeDispatch, error) {
@@ -67,7 +69,7 @@ func (m *MockRealtimeAdapter) Send(ctx context.Context, in RealtimeSendInput) (R
 	m.mu.Lock()
 	m.responses[handle] = responseID
 	m.mu.Unlock()
-	return RealtimeDispatch{Sent: true, Handle: handle, ResponseID: responseID}, nil
+	return RealtimeDispatch{Mode: realtime.ProviderModeMock, Sent: true, Handle: handle, ResponseID: responseID}, nil
 }
 
 func (m *MockRealtimeAdapter) Receive(ctx context.Context, in RealtimeReceiveInput) (RealtimeReceiveResult, error) {
@@ -88,7 +90,7 @@ func (m *MockRealtimeAdapter) Receive(ctx context.Context, in RealtimeReceiveInp
 	if responseID == "" {
 		return RealtimeReceiveResult{}, errors.New("mock_realtime_response_not_found")
 	}
-	return RealtimeReceiveResult{ResponseID: responseID, Bytes: 1, Final: true}, nil
+	return RealtimeReceiveResult{Mode: realtime.ProviderModeMock, ResponseID: responseID, Bytes: 1, Final: true}, nil
 }
 
 func (m *MockRealtimeAdapter) Cancel(ctx context.Context, in RealtimeCancelInput) error {

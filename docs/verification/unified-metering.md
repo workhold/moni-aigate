@@ -1,5 +1,21 @@
 # 028-U统一计量验证
 
+## 2026-11-10：媒体 deterministic mock 安全边界
+
+媒体运行时现在由 `MEDIA_PROVIDER_PROFILE` 与 `MEDIA_DETERMINISTIC_MOCK` 共同控制，app 和 worker 使用同一配置。默认 `inner-test` 关闭 mock；没有真实 adapter 时，图片、TTS、`video_generation` 和单 turn Realtime 在任何预占或账务事实之前返回 `provider_unavailable`。`business-qa` 只有显式打开 deterministic mock 才可运行，`development` 也必须显式打开。mock 成功会在响应、事件和结果中标记 `provider_mode=mock`，并将 usage/supplier cost 保持为 missing/unknown、客户收费保持为零；失败和未知提交不重试。
+
+实际验证（数据库固定为 PostgreSQL 16.15 专库 `127.0.0.1:55439/moni_test`）：
+
+```sh
+go test -race -count=1 -timeout 420s ./internal/server \
+  -run '^Test(InnerTestMediaIsUnavailableBeforeAnyBillingFact|ExplicitMockMediaMarksResultsAndDoesNotSpendWallet)$'
+go test -race -count=1 -timeout 600s ./internal/server \
+  -run '^(Test(ImageGeneration|SpeechHTTP|VideoTask|RealtimeHTTPPostgres|InnerTestMedia|ExplicitMockMedia))'
+go test -race -count=1 ./internal/config ./internal/provider ./internal/realtime
+```
+
+以上测试通过。该片验证的是本地接口、权限、统一账务边界和 deterministic mock 工作流，不是正式供应商 usage/cost 或生产环境认证。
+
 ## 2026-11-10：provider reasoning 与阶段 timeout 契约
 
 Responses 当前不发布 reasoning 输出 profile。`provider.Profile.ReasoningOutput` 只接受空值或 `none`，catalog 的 profile 解析复用同一校验；声明未实现的 reasoning 模式在派发前拒绝。Responses reasoning SSE 事件仍有专门协议负控，确认不会被吞成空 chunk、普通文本或已确认 usage；失败保持未知消费，不能成功结算。`reasoning_tokens` 的 usage 解析覆盖与 reasoning 输出事件是两个独立门禁。

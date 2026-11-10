@@ -88,7 +88,7 @@ func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noCo
 		t.Fatal(err)
 	}
 	secrets := &security.Secrets{Active: "test", Keys: map[string][]byte{"test": bytes.Repeat([]byte{0x51}, 32)}, Pepper: bytes.Repeat([]byte{0x67}, 32)}
-	s := New(config.Config{Origin: "http://console.test", Secrets: secrets}, pool, fstest.MapFS{}, nil)
+	s := New(config.Config{Origin: "http://console.test", Secrets: secrets, MediaProviderProfile: config.MediaProviderProfileDevelopment, MediaDeterministicMock: true}, pool, fstest.MapFS{}, nil)
 	s.Ready(true)
 	f := &gatewayFixture{server: s, pool: pool, tenant: uuid.NewString(), key: uuid.NewString(), token: "mg_" + security.Random(24), profile: profiler}
 	user, operator, approver := uuid.NewString(), uuid.NewString(), uuid.NewString()

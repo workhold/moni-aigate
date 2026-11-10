@@ -654,7 +654,11 @@ func (s *Server) realtimeServiceForTenant(tenantID string) (*realtime.Service, e
 		return nil, fmt.Errorf("%w: realtime provider adapter", realtime.ErrInvalidInput)
 	}
 	store := newPostgresRealtimePersistence(s.Pool, tenantID)
-	return realtime.NewService(realtime.ServiceOptions{Store: store, Adapter: s.RealtimeAdapter})
+	options := realtime.ServiceOptions{Store: store, Adapter: s.RealtimeAdapter}
+	if s.mockMediaProfile() {
+		options.RequiredMode = realtime.ProviderModeMock
+	}
+	return realtime.NewService(options)
 }
 
 func (s *Server) realtimeRouteID(ctx context.Context, model catalog.Model) (string, error) {
