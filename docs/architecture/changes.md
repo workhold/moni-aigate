@@ -6018,3 +6018,16 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-11T07:57:31Z · 7796ca76e1fe
+
+按评审修订034与路线图：路线图5.2的auto预占界统一为逻辑模型profile、能力不足候选在硬过滤排除、路由切换不改变预占上界；034的三元组约束改为receipt与lot各自单表CHECK加wallet_lot_valid（PostgreSQL普通CHECK不能跨表）；统一basis_ref/parent_ref/proof_ref/transfer_ref/fx_note字段职责；D-034-4改为实施阻断并给出A改FIFO合同/B保持严格FIFO/C控制赠送来源时间戳三个方案及已核对的四处排序位置；更正journals.kind白名单实为funding_fact_guard触发器；保留设计可冻结但不代表生产财务验收的边界；纯设计变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
