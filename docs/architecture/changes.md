@@ -5962,3 +5962,17 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - added `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-11T06:24:17Z · acc41a40d77c
+
+修订034：确认对外只暴露虚拟币且手动充值/手动现金退款优先；明确钱包侧与付款侧字段单位而不改名；补充付费与赠送两个来源的数据关系、第四桶retired及需同步修改的guard、现金退款整数规则与审批流程、journal适用范围、付款基准改称；路线图与HLD措辞同步；纯设计草案，现行合同仍为人民币单币种，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

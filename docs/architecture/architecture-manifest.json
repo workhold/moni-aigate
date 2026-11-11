@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T04:56:29Z",
-  "review_reason": "新增034虚拟币记账单位设计草案（参考New API quota与充值源码，采纳统一整数单位与展示分离，不采纳可变全局换算/回调时重算/浮点金额/运行时倍率相乘），并在四阶段路线与HLD价格成本节登记；纯设计草案，现行合同仍为人民币单币种，无源码、迁移或权限变化",
-  "snapshot_sha256": "f3c7ed54ee35225351c14514a7dafda1a573ceea7f4dfb4a57e8591bb923b2b2",
+  "reviewed_at": "2026-11-11T06:24:17Z",
+  "review_reason": "修订034：确认对外只暴露虚拟币且手动充值/手动现金退款优先；明确钱包侧与付款侧字段单位而不改名；补充付费与赠送两个来源的数据关系、第四桶retired及需同步修改的guard、现金退款整数规则与审批流程、journal适用范围、付款基准改称；路线图与HLD措辞同步；纯设计草案，现行合同仍为人民币单币种，无源码、迁移或权限变化",
+  "snapshot_sha256": "acc41a40d77cb11f55109dd6e336490a952e10673cc4fef58211370017cc4f7c",
   "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "72dc0b8e32e83eb070450e4e6884ac7b6b1618312f696b0d0a5cc1a56936c3b3",
+  "history_sha256": "cc3d4b855deb8b09f4dd5e37efa69e1ba86d33ce7efffe946a25b2ebbc4c870a",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,7 +169,7 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "23d567bd5f2cd9711ff8a4f45fb8598de8e4a87ffb83cefbf428b1e78bf5f613"
+      "sha256": "dbf5dc95b4f656ed5e5234313bab95c281dcd6399cff693516ba72d39d347fd7"
     },
     {
       "path": "docs/design/LLD.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "4a88bd42a06b6fe6a98fce1486051644dc98a0efc11d8b9b44651e145ba0d895"
+      "sha256": "7bb2d0b4e951499fd4c396fd43fe2198eb642122b01fd530219c596fd4672033"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7953,7 +7953,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "60087e07deb4ded436618f3038690a7e8d21628a169a02c3e103426fdd9b44b0"
+      "sha256": "6b30cc1378587f9315ab35169618b32a0a67cf6d398ed0275c9a23bc1ed235e5"
     },
     {
       "path": "web/.gitignore",
