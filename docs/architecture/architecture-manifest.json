@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T06:24:17Z",
-  "review_reason": "修订034：确认对外只暴露虚拟币且手动充值/手动现金退款优先；明确钱包侧与付款侧字段单位而不改名；补充付费与赠送两个来源的数据关系、第四桶retired及需同步修改的guard、现金退款整数规则与审批流程、journal适用范围、付款基准改称；路线图与HLD措辞同步；纯设计草案，现行合同仍为人民币单币种，无源码、迁移或权限变化",
-  "snapshot_sha256": "acc41a40d77cb11f55109dd6e336490a952e10673cc4fef58211370017cc4f7c",
+  "reviewed_at": "2026-11-11T07:12:38Z",
+  "review_reason": "034补充已核对的wallet_event_valid封闭事件类型与wallet_lot_balance_guard不要求held对应预占的事实，并细化需同步修改的guard清单；纯设计变更，无源码、迁移或权限变化",
+  "snapshot_sha256": "414805b4f63e02cd91bc75bd8523672ca5798378743ae725ef47d4d22b514e10",
   "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "cc3d4b855deb8b09f4dd5e37efa69e1ba86d33ce7efffe946a25b2ebbc4c870a",
+  "history_sha256": "d794147176a0383190bcd1248d29277523408fc3230eb8611847d9e67a48c8c1",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,7 +169,7 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "dbf5dc95b4f656ed5e5234313bab95c281dcd6399cff693516ba72d39d347fd7"
+      "sha256": "b0cfe73980e284a1d42a5c35b718ccdf1d5cf32890d26bbcf9429068e1ce0c36"
     },
     {
       "path": "docs/design/LLD.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "7bb2d0b4e951499fd4c396fd43fe2198eb642122b01fd530219c596fd4672033"
+      "sha256": "4538952451b326b938d87763319a88be373cd517966811f433c563b3a59272c8"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7953,7 +7953,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "6b30cc1378587f9315ab35169618b32a0a67cf6d398ed0275c9a23bc1ed235e5"
+      "sha256": "3aa9ec0ccdba4e280139c35d9f14f2f4e93f98ea0484c9c2608e38a5f707f38b"
     },
     {
       "path": "web/.gitignore",

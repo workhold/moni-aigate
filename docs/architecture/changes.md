@@ -5976,3 +5976,29 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-11T07:11:33Z · c5061f59a5e0
+
+按评审修订034：现金退款改为先冻结后退出的状态机（避免转账失败丢币）；拆分recipient/requested_by/maker/approver/transfer_executor并给出权限矩阵；钱包按租户；单人运营仅作内测例外并加审计标记；source_kind与basis_kind允许组合由CHECK枚举并新增manual_unknown；两来源的parent_ref、成对性约束及journal operation_id全局唯一的处理；第四桶retired与账户余额检查的关系及需同步的journal kind校验；新增冻结前阻断项与评审逐条状态；路线图状态改为设计草案；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T07:12:38Z · 414805b4f63e
+
+034补充已核对的wallet_event_valid封闭事件类型与wallet_lot_balance_guard不要求held对应预占的事实，并细化需同步修改的guard清单；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
