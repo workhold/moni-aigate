@@ -62,32 +62,40 @@ CREATE TRIGGER immutable_physical_model BEFORE UPDATE OR DELETE ON physical_mode
 
 ### 2.3 绑定
 
-现有 `model_bindings` 增加一列，并放宽“同一 pool 内 channel 唯一”的约束，改为“同一 pool 内 (channel, physical_model) 唯一”：
+**现状核对**（`migrations/current_mvp.sql`、`internal/catalog/store.go`）：`model_bindings` 的唯一键是 `(route_policy_version_id, channel_id, upstream_model, variant_key)`，SQL 层**已经允许**同一 channel 下不同 `upstream_model`。“同一路由池内每个 channel 只能出现一次”是 `catalog.PublishWithCostPolicy` 里的 Go 校验（`key := b.ChannelID; if seen[key] ... ErrInvalid`，`store.go:317`），并写在 LLD §8。
+
+因此需要改的是**这条 Go 校验的去重键与 LLD §8 的规则**，不是 SQL 约束：
+
+```text
+去重键：ChannelID  →  (ChannelID, PhysicalModelID)
+```
+
+`model_bindings` 追加一列：
 
 ```sql
 ALTER TABLE model_bindings ADD COLUMN physical_model_id text REFERENCES physical_models(id);
--- 迁移时按当前 upstream_model 为每个既有 binding 生成物理模型行
+-- 迁移时按当前 upstream_model 为每个既有 binding 生成物理模型行并回填
 ```
 
-`upstream_model` 列保留并作为物理模型的上游名冗余，确保历史读取不变；新代码以 `physical_model_id` 为准，两者在写入时由触发器保持一致。
+`upstream_model` 列保留，由触发器保证与 `physical_models.upstream_model` 一致；新代码以 `physical_model_id` 为准。
 
-### 2.3.1 与现有约束的冲突（必须先裁决，属于 3.0 的前置）
+### 2.3.1 与现有约束的关系（必须先裁决，属于 3.0 的前置）
 
-放宽 binding 唯一性**反转了现有规则**，不是追加字段。下列既有约束都要同时修订，并重做对应 guard 矩阵：
-
-| 既有约束 | 出处 | 本规格需要的变化 |
+| 既有约束 | 出处 | 变化 |
 |---|---|---|
-| 同一路由池内每个 channel 只能出现一次，即使 `upstream_model` 不同也拒绝 | LLD §8；[001 catalog 合同](../001-commercial-mvp/contracts/catalog.md) | 改为同池内 `(channel, physical_model)` 唯一 |
-| 每个路由策略版本通过 FK 绑定**单一** `profile_version` | [028 存储合同 §1](../028-unified-metering-media/u-storage-contract.md)；`meter_route_profile` 触发器；`route complete` guard | 见下 |
-| 请求快照与 attempt 快照的输入界取该 profile 的硬界 | 028-U；`request_meter_snapshots`、`attempt_meter_snapshots` | 见下 |
-| 决策记录每 channel 一次、恰一个 selected | `billing.validateRouteDecisions` | 被 §2.6 的独立表取代 |
+| 同池 channel 只出现一次 | Go 校验 `store.go:317`、LLD §8 | 去重键改为 `(channel, physical_model)`；SQL 无需改动 |
+| 路由版本的 `profile_version` 等于模型的 `profile_version` | `meter_route_profile` 触发器（`current_mvp.sql`）强制 `NEW.profile_version := models.profile_version` | **不改**：D-033-0 选项 A 与它吻合 |
+| 客户侧预占界等于逻辑模型 profile 的界 | `billing.Reserve`：`in.InputUpperBound == profile.Input` 且 `in.OutputLimit <= profile.Output` | **不改**：见下 |
+| 决策记录每 channel 一次、恰一个 selected | `billing.validateRouteDecisions` | 被 §2.6 的新记录取代 |
 
 **profile 的处理（决策点 D-033-0）**：
 
-- 选项 A（建议）：逻辑模型的 `profile_version` 继续表示**客户侧零售合同**（计量 schema、售价维度、输出上限默认值）。同一路由版本下的所有物理模型必须使用同一计量 schema，否则发布时拒绝。每个物理模型的能力差异（上下文、工具、输出上限、usage 语义）保存在 `physical_models.capability`，供应商侧输入/输出硬界由被选中的物理模型决定，并写入该 attempt 的 `attempt_meter_snapshots`。
-- 选项 B：每个物理模型一个独立 profile，路由版本引用多个 profile。这要重写 028 的 route 完整性 guard，范围远大于 A。
+- 选项 A（建议）：逻辑模型的 `profile_version` 继续表示**客户侧零售合同**（计量 schema、售价维度、输出上限、预占界）。同一路由版本下所有物理模型必须使用同一计量 schema，否则发布时拒绝。每个物理模型的能力（上下文、工具、输出上限、usage 语义）放在 `physical_models.capability`。
+- 选项 B：每个物理模型一个独立 profile。要重写 028 的 route 完整性 guard 与 `meter_route_profile`，范围远大于 A。
 
-选 A 需要对 028 的 attempt 快照 guard 做一处修订：attempt 的供应商侧界来自所选物理模型，而不是路由版本的唯一 profile。这是一次受控的 028-U 修订，不是新增路径。**在该修订的合同冻结前，3.1 不开始。**
+**预占界**：客户侧预占由逻辑模型 profile 决定，与选中哪个渠道或物理模型无关，所以第三阶段**不需要**“按候选最大界预占”。物理模型只需满足：`capability.context_limit ≥ profile.context_limit`、`capability.output_limit ≥ 本次请求的输出上限`、工具能力满足请求；不满足的候选在硬过滤阶段以 `context_too_small`、`output_limit_too_small`、`tools_unsupported` 排除。
+
+供应商侧的输入/输出界（写入 `attempt_meter_snapshots`）由**被选中的物理模型**决定，这是对 028 attempt 快照 guard 的一处修订：attempt 的供应商界来自所选物理模型的能力，而不是路由版本唯一 profile 的界。**该修订的合同冻结前，3.1 不开始。**
 
 ### 2.4 路由策略版本
 
@@ -123,42 +131,41 @@ CREATE TABLE route_sessions (
 
 ### 2.6 路由决策记录
 
-现有 `upstream_attempts.route_decisions` 无法表达新语义，按 ADR-005 一次性替换为独立表：
+现有 `upstream_attempts.route_decisions` 是不可变 JSONB 数组（≤1000 项、≤256KiB，`migrations/006`），在 `RecordAttempt` 的同一事务里写入，无法表达新语义。运行时消费者只有三处：网关写入（`gateway.go`）、平台 attempts 接口（`reports.go`）和前端 `RouteAttempts.vue`；冻结的采购候选包不属于运行路径。
+
+**每个候选一行**会让热路径每请求多次 INSERT，与第二阶段的延迟基线冲突。改为**每次选择决策一行**，候选集合放在有界 JSONB 里，沿用现有数组的上限与不可变做法：
 
 ```sql
 CREATE TABLE route_decisions (
   id                 text PRIMARY KEY,
   tenant_id          text NOT NULL,
   request_id         text NOT NULL,
-  attempt_id         text,                       -- 未准入 attempt 时为 null
+  attempt_id         text,                     -- 未准入 attempt 时为 null
   sequence           integer NOT NULL,
   policy_version_id  text NOT NULL REFERENCES route_policy_versions(id),
-  physical_model_id  text REFERENCES physical_models(id),
-  channel_id         text,
-  channel_version_id text,
-  credential_id      text,
-  reason             text NOT NULL,              -- 封闭枚举，见 2.7
-  priority           integer,
-  weight             numeric(30,0),
-  score_canonical    bytea,                      -- 评分输入与结果的规范编码
-  score_digest       bytea,
-  cost_snapshot      jsonb,                      -- 冻结的供应商成本与费率
-  selection          boolean NOT NULL,           -- 本次是否被选中
-  draw               numeric(30,0),              -- 抽签值，用于回放
-  sticky             text,                       -- inherit | establish | break_quality | break_cost | break_health | null
-  degradation        text,                       -- none | model_changed | tier_changed | supplier_changed
-  created_at         timestamptz NOT NULL DEFAULT clock_timestamp()
+  selected_binding_id text,                    -- 无可用候选时为 null
+  selected_physical_model_id text,
+  draw               numeric(30,0),            -- 抽签值，用于回放
+  sticky             text,                     -- inherit | establish | break_quality | break_cost | break_health | null
+  degradation        text NOT NULL DEFAULT 'none',
+  candidates         jsonb NOT NULL,           -- 见下
+  candidates_digest  bytea NOT NULL,
+  created_at         timestamptz NOT NULL DEFAULT clock_timestamp(),
+  CHECK (jsonb_typeof(candidates)='array' AND jsonb_array_length(candidates)<=1000 AND octet_length(candidates::text)<=262144),
+  FOREIGN KEY (tenant_id, request_id) REFERENCES request_records(tenant_id, id)
 );
 CREATE TRIGGER immutable_route_decision BEFORE UPDATE OR DELETE ON route_decisions
   FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
-CREATE INDEX route_decisions_request ON route_decisions(request_id, sequence);
+CREATE UNIQUE INDEX route_decisions_request_sequence ON route_decisions(request_id, sequence);
 ```
 
-写入时机：**每个候选**一行，包括被硬约束排除的候选（`attempt_id` 为 null）。这正是现在缺失的“完整失败池解释”。
+`candidates` 每项：`binding_id`、`channel_id`、`channel_version_id`、`physical_model_id`、`priority`、`weight`、`reason`、`score`（评分输入与结果的规范对象，含统计快照）、`cost_snapshot`。被硬约束排除的候选也在数组里（这补上了“完整失败池解释”）。写入量是一次 INSERT，不随候选数增长。
+
+写入时机：与 attempt 同事务（已准入 attempt 的决策）；无候选可用时在释放前写一行 `attempt_id=null`。
 
 ### 2.7 原因枚举
 
-硬约束排除：`not_authorized`、`region_forbidden`、`capability_missing`、`quality_below_floor`、`context_too_small`、`tools_unsupported`、`bound_exceeds_reservation`、`disabled`、`channel_quarantined`、`binding_isolated`、`credential_revoked`、`capacity_full`、`circuit_open`、`half_open_busy`、`cost_unknown`、`cost_limit_exceeded`、`margin_below_floor`、`procurement_paused`、`procurement_budget_exceeded`、`procurement_bound_invalid`、`procurement_budget_unavailable`。
+硬约束排除：`not_authorized`、`region_forbidden`、`capability_missing`、`quality_below_floor`、`context_too_small`、`tools_unsupported`、`output_limit_too_small`、`disabled`、`channel_quarantined`、`binding_isolated`、`credential_revoked`、`capacity_full`、`circuit_open`、`half_open_busy`、`cost_unknown`、`cost_limit_exceeded`、`margin_below_floor`、`procurement_paused`、`procurement_budget_exceeded`、`procurement_bound_invalid`、`procurement_budget_unavailable`。
 
 排序阶段：`selected`、`lower_priority`、`higher_cost`、`lower_score`、`weighted_not_selected`、`sticky_override`、`already_tried`。
 
@@ -189,7 +196,7 @@ CREATE INDEX route_decisions_request ON route_decisions(request_id, sequence);
 
 ### 4.1 硬约束过滤（先于任何排序）
 
-按顺序过滤：授权（平台模型、租户、成员、Key、`only`/`ignore`）→ 地域 → 能力（上下文、工具、参数满足、`require_parameters`）→ 质量档位下限 → 渠道与 binding 状态 → 凭据状态 → 容量与熔断 → 采购预算与暂停 → 采购成本未知策略 → `max_price` → 成本上限 → **最低毛利**。每个被排除的候选写一行 `route_decisions`。
+按顺序过滤：授权（平台模型、租户、成员、Key、`only`/`ignore`）→ 地域 → 能力（上下文、工具、参数满足、`require_parameters`）→ 质量档位下限 → 渠道与 binding 状态 → 凭据状态 → 容量与熔断 → 采购预算与暂停 → 采购成本未知策略 → `max_price` → 成本上限 → **最低毛利**。每个被排除的候选都记入当次决策的 `candidates` 数组。
 
 最低毛利：`1 - 保守供应商成本 / 客户冻结售价` 低于 `min_margin_rate` 时排除。成本未知时按 `unknown_cost_policy`：`deny` 排除，`allow` 保留但标注。
 
@@ -221,7 +228,7 @@ CREATE INDEX route_decisions_request ON route_decisions(request_id, sequence);
 - **定价（决策点 D-033-1）**：
   - 选项 A（建议）：auto 只有**一个**售价版本，客户无论落到哪个档位都按该价结算。这样请求冻结的价格快照形状不变，不新增价格维度；经营者风险由 §4.1 的最低毛利硬过滤保护。auto 的公布价应按“最贵候选仍满足最低毛利”设定。
   - 选项 B：按选中档位分别定价。`price_versions` 现在只允许 `variant_key='default'`，需要放宽并重做价格快照与 Reserve 选价，属于计价扩展，不在第三阶段范围。
-- 预占按候选中的**最大**输入上界与请求解析出的输出上限计算，仍是一个请求、一份 reservation、一份 settlement。预占之后，上界超过已预占量的候选被硬排除，原因 `bound_exceeds_reservation`；因此二次 attempt 不会突破客户预占。
+- 客户预占界由 auto 逻辑模型的 profile 决定（`Reserve` 要求预占界等于该 profile 的界），与最终选中哪个档位无关，仍是一个请求、一份 reservation、一份 settlement。上游能力小于该 profile 的候选在硬过滤阶段被排除（`context_too_small`、`output_limit_too_small`），所以任何 attempt 都不会突破客户预占。
 - 质量门槛：auto 商品声明 `quality_floor`；低于门槛的候选在硬过滤阶段排除。
 - 降档必须显式：`degradation` 记录为 `tier_changed`，请求详情可见。默认不允许静默降档；若经营者开启“允许降档”，必须在公布的 auto 说明中写明。
 - `allow_fallbacks=false` 时不跨档位。
@@ -242,7 +249,7 @@ ReplayRoute(policyVersionID, requestShape, draw, statsSnapshot, candidates) -> D
 
 - 一个请求一个 settlement；每次 attempt 各自记录采购成本。
 - 跨模型切换不新建预占；切换后仍使用请求时冻结的客户售价。fixed 与 tier 模型只有一个逻辑模型售价；auto 按 D-033-1 选项 A 只有一个 auto 售价。
-- 请求级预占的输入/输出界在 Reserve 时按候选集合取最大值，之后超过该界的候选被排除（`bound_exceeds_reservation`），保证任何 attempt 的最坏客户费用不超过已预占。
+- 客户预占界等于逻辑模型 profile 的界（见 §2.3.1），与路由结果无关；能力不足的候选在硬过滤阶段排除。
 - 路由决策与 attempt、结算的关联通过 `attempt_id` 与 `request_id` 双向可查。
 - 结算、退款、恢复不读取路由策略，避免运营调价锁住资金（沿用 018 的规则）。
 - 统计快照：`score_canonical` 内嵌决策当时的统计量，回放与审计不依赖当前窗口。
@@ -269,7 +276,7 @@ ReplayRoute(policyVersionID, requestShape, draw, statsSnapshot, candidates) -> D
 | 回放 | 同一请求重放结果一致；重放不产生写入或派发 |
 | 不重放 | unknown 消费不切换，mock 接收记录恰好一条 |
 | 账务 | 跨模型切换后售价快照、成本快照、唯一结算一致；报表毛利正确 |
-| 性能 | 路由决策写入不使完整链路超出第二阶段基线 |
+| 性能 | 每次决策一次 INSERT，不随候选数增长；不使完整链路超出第二阶段基线 |
 
 ## 11. 分片
 

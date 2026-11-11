@@ -6002,3 +6002,19 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-11T07:27:30Z · 8d19337ca772
+
+对照现状校验033与034并修订：034的FIFO排序由SQL guard与Go两处强制、CNY字面量还在函数体、退款冻结改用独立refund_held桶与REFUND_HELD账户而不复用held/HELD、迁移DDL语法与回填、报表补媒体结算分配、移除财务法务冻结条件；033的同池channel唯一实为Go校验而非SQL约束、预占界由逻辑模型profile决定、决策记录改为每次决策一行加有界JSONB；HLD/LLD/路线图同步并新增设计完整度清单；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

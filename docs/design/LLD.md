@@ -386,7 +386,7 @@ sequenceDiagram
 3. **路由决策记录**：policy version、候选全集、每个候选的过滤原因、评分输入、随机抽签、最终选择、供应商成本快照、会话粘性原因、降级或切换标志，以及最终 attempt 和结算的引用。现有五字段数组与“每 channel 一次”的校验无法表达同一 channel 下的多个物理模型，必须改合同；改动按 ADR-005 一次性替换，不保留双格式。
 4. **路由回放**：同一决策记录与抽签输入，重放结果一致；回放只读，不派发、不写资金。
 5. **会话粘性**：路由会话按 `(tenant_id,session_id)` 隔离，与登录会话 `session_families` 分开；记录建立、延续和被打破（质量、成本、故障）的原因。
-6. **跨模型切换与资金**：auto 商品按候选中的最大上界预占；最终按实际选中模型的冻结价格结算；切换不新建预占或结算，仍为一个请求一个 settlement，每个 attempt 各自记录采购成本。
+6. **跨模型切换与资金**：客户预占界由 auto 逻辑模型的 profile 决定（`Reserve` 要求预占界等于该 profile 的界），与最终选中哪个物理模型无关；能力不足的候选在硬过滤阶段排除。auto 只有一个售价，按请求时冻结的价格结算；切换不新建预占或结算，仍为一个请求一个 settlement，每个 attempt 各自记录采购成本。
 7. **评分**：只在硬约束过滤之后进行。输入包括模型能力、质量门槛、上下文长度、工具能力、延迟、成功率、当前供应商成本、缓存与上下文重传成本、会话粘性、最低毛利以及租户和 Key 权限。不得只按最低价格选择。
 8. **最低毛利**：成本未知时不当作 0，按策略排除该候选或拒绝请求。
 9. **质量评估**：同模型自适应策略先在影子模式评估，再对照确定性基线小流量验证；注明测量点、冷启动、样本老化和探索上限。跨模型评估使用经授权的数据集，按任务、多轮、工具场景分层，校准与验证样本分离，记录数据集、模型对、路由器、阈值与策略版本，比较质量、全程延迟、客户费用及平台全部成本。无独立评估数据时不发布“省钱不降质”的承诺。达不到质量门槛或路由器不可用时执行事先公布的固定策略，不默默降低客户购买的档位。
@@ -1198,9 +1198,9 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 | 既有约束 | 出处 | 变化 |
 |---|---|---|
-| 同一路由池内 channel 唯一 | LLD §8、001 catalog 合同 | 改为 `(channel, physical_model)` 唯一 |
+| 同一路由池内 channel 只出现一次 | Go 校验 `catalog/store.go:317`、LLD §8；SQL 唯一键 `(route_policy_version_id, channel_id, upstream_model, variant_key)` 已允许同 channel 不同上游模型 | 去重键改为 `(channel, physical_model)`，SQL 无需改动 |
 | 路由版本绑定单一 profile | 028 u-storage §1、`meter_route_profile`、`route complete` guard | D-033-0：profile 继续表示客户侧零售合同，物理模型能力放入 `physical_models.capability`，attempt 的供应商界来自所选物理模型 |
-| 决策记录每 channel 一次、恰一个 selected | `billing.validateRouteDecisions` | 被独立 `route_decisions` 表取代 |
+| 决策记录每 channel 一次、恰一个 selected | `billing.validateRouteDecisions` | 被独立 `route_decisions` 表取代：每次决策一行，候选放在有界 JSONB |
 | `upstream_attempts.route_decisions` JSONB | `migrations/006_route_decisions.sql` | 一次性迁移后删除，不保留双格式 |
 | `price_versions.variant_key` 只能为 `default` | 023-A | auto 用单一售价（D-033-1 选项 A），不放宽 |
 

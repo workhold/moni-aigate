@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T07:12:38Z",
-  "review_reason": "034补充已核对的wallet_event_valid封闭事件类型与wallet_lot_balance_guard不要求held对应预占的事实，并细化需同步修改的guard清单；纯设计变更，无源码、迁移或权限变化",
-  "snapshot_sha256": "414805b4f63e02cd91bc75bd8523672ca5798378743ae725ef47d4d22b514e10",
+  "reviewed_at": "2026-11-11T07:27:30Z",
+  "review_reason": "对照现状校验033与034并修订：034的FIFO排序由SQL guard与Go两处强制、CNY字面量还在函数体、退款冻结改用独立refund_held桶与REFUND_HELD账户而不复用held/HELD、迁移DDL语法与回填、报表补媒体结算分配、移除财务法务冻结条件；033的同池channel唯一实为Go校验而非SQL约束、预占界由逻辑模型profile决定、决策记录改为每次决策一行加有界JSONB；HLD/LLD/路线图同步并新增设计完整度清单；纯设计变更，无源码、迁移或权限变化",
+  "snapshot_sha256": "8d19337ca772ea7157a22784ad4902f3807d4512e875b8068f7cc980edee95b0",
   "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "d794147176a0383190bcd1248d29277523408fc3230eb8611847d9e67a48c8c1",
+  "history_sha256": "6782658a778b7acdcca3bdce7852d72db7f4fe8b207c10dfdec90fd370f193df",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "b0cfe73980e284a1d42a5c35b718ccdf1d5cf32890d26bbcf9429068e1ce0c36"
+      "sha256": "8724757f4a22cc938ad8f281989e6983a82424dc943b33d550bc25c98b4c3ca7"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "5d4461ce6bb8afe39701170121ae09b30736a60ae369ae94012d2e1e18de1f20"
+      "sha256": "99cbbf2a59f52513d9bc90a4a5c51682b3278cab015cdc45ffbee0678de50b60"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "4538952451b326b938d87763319a88be373cd517966811f433c563b3a59272c8"
+      "sha256": "1ec564b12299e07f84168e14ff5c87b7c00c5612217fb8ccc26a7d71ac894718"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7949,11 +7949,11 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/spec.md",
-      "sha256": "b02b642fb08aa847f3301bd0ec0e8a75c9896846c0f4955ad110994ba947ac56"
+      "sha256": "0bffed10432cac3f0f3952a5936736f477fccfd0558b86a446e017f7315d93ad"
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "3aa9ec0ccdba4e280139c35d9f14f2f4e93f98ea0484c9c2608e38a5f707f38b"
+      "sha256": "59663af6efd51a555333fbddd6d01f0723871b1956ffe9dc651fac2d0e0e7d08"
     },
     {
       "path": "web/.gitignore",
