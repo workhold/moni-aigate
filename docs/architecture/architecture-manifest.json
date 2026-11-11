@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T08:15:27Z",
-  "review_reason": "034裁决D-034-4：同一充值单付费来源先消耗、赠送来源后消耗，沿用严格FIFO不改任何guard，删除原方案A与C；用本机PostgreSQL 16.15实测clock_timestamp在同语句内连续调用有约90%相等、隔一次往返3000对无相等，因此以赠送来源created_at取max(时钟,付费created_at+1微秒)提供确定性保证并在注释、延迟校验触发器和并发测试三处固定；新增客户余额构成展示（付费/赠送/其他之和等于可用余额）及前端来源类型校验放开；D-034-10待确认；路线图同步；纯设计变更，无源码、迁移或权限变化",
-  "snapshot_sha256": "1f0da1702362eac9b45ca13256715c18b1af39109682291e0015689ad6487786",
+  "reviewed_at": "2026-11-11T08:52:07Z",
+  "review_reason": "034按产品裁决修订：现金退款额取min(按当前币价,按原付款比例)并用20万用例对拍精确分数验证、方案A存在退款再充值套利而B净收益为0；新增追加式币价版本表(按币种、审批、不得回溯、调价预览)并让paid来源记录买入币价版本；全额退款由系统填币数且同一来源一张未完成单(部分唯一索引)；弃用累计取整公式与productvalue；单人运营开关默认开启并逐处核对需修改的role()精确匹配、自审拒绝、funding.go授权SQL、funding_journal_valid及两个CHECK；赠送币到期后置且不预留字段；新增客户自助申请表；路线图与HLD同步；纯设计变更，无源码、迁移或权限变化",
+  "snapshot_sha256": "e5cd342d721c8370a751338521e6fa078f07ba0e02c0a43ad1899954a5c77a96",
   "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "39c9b37f9a2a390c9274b883d5f79655407819e87d1dfed62893afb3792d3b49",
+  "history_sha256": "7a6cbe4e60bd36284c150e604d5de29536dfca3c86989282c613c43a9db85615",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,7 +169,7 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "8724757f4a22cc938ad8f281989e6983a82424dc943b33d550bc25c98b4c3ca7"
+      "sha256": "ffa966f64d5c6bdf5df51cdb0be01a64cb0dbfd46c14204876519f42de037afd"
     },
     {
       "path": "docs/design/LLD.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "1ff33085011e83fe0f7ca52d9b981ce890324af6912b5427717506ccc592c9b1"
+      "sha256": "b455e13517a46b6e3eaa1a59f22d80fac1cd83e89724bf8ec750128a0d9ff8bb"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7953,7 +7953,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "04e95019eb9ec6d4011bd3ef53c379fedad5c5476aa11e66c6d5aadacaac0187"
+      "sha256": "bbc9643945d76ae6acb9d269a5ff4d88d319314e0063f434470e97a5fe5a9184"
     },
     {
       "path": "web/.gitignore",

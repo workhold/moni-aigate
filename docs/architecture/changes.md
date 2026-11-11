@@ -6044,3 +6044,17 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-11T08:52:07Z · e5cd342d721c
+
+034按产品裁决修订：现金退款额取min(按当前币价,按原付款比例)并用20万用例对拍精确分数验证、方案A存在退款再充值套利而B净收益为0；新增追加式币价版本表(按币种、审批、不得回溯、调价预览)并让paid来源记录买入币价版本；全额退款由系统填币数且同一来源一张未完成单(部分唯一索引)；弃用累计取整公式与productvalue；单人运营开关默认开启并逐处核对需修改的role()精确匹配、自审拒绝、funding.go授权SQL、funding_journal_valid及两个CHECK；赠送币到期后置且不预留字段；新增客户自助申请表；路线图与HLD同步；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

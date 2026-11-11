@@ -12,7 +12,7 @@
 |---|---|---|
 | M（手动） | 币单位、手动充值含赠送、手动现金退款扣减、客户展示、报表基准 | 本规格实施范围 |
 | P（支付） | 支付订单与捕获产生付费和赠送来源、支付宝回调金额语义、手续费 | 后置，属 022，本规格只留接口 |
-| V（扩展） | 汇率版本表与按汇率建议币数、币到期、限定模型范围、已有余额重估 | 后置，附触发条件 |
+| V（扩展） | 币到期、限定模型范围、已有余额重估、供应商币种与汇率（采购侧） | 后置，附触发条件 |
 
 要解决的问题：
 
@@ -25,7 +25,7 @@
 
 不解决：
 
-- **平台的汇率风险。** 币对某个法币锚定后，另一币种的供应商成本仍随汇率浮动。这由重新定价和第三阶段最低毛利过滤处理，见 §10。
+- **平台的汇率风险。** 币价按法币币种分别记录后，另一币种的供应商成本仍随汇率浮动。这由重新定价和第三阶段最低毛利过滤处理，见 §10。
 - **供应商侧币种。** 采购账户、成本版本和跨渠道比价的币种与汇率表由单独规格处理（供应商币种规格，待写）。
 
 ## 2. 与 New API 的对照
@@ -35,7 +35,7 @@
 | 机制 | New API | aigate 取舍 |
 |---|---|---|
 | 统一整数额度 | `common/constants.go:22` `QuotaPerUnit = 500000`；余额、Key 额度、日志同一单位 | **采纳**：一种整数单位贯穿钱包 |
-| 全局换算可改 | `model/option.go:692` 管理员可直接改 `QuotaPerUnit` | **不采纳**：锚定首次发行后不可变；重估是受控操作（§9） |
+| 全局换算可改 | `model/option.go:692` 管理员可直接改 `QuotaPerUnit`，立即作用于一切，没有版本与审批 | **不照搬**：币价是**追加式版本**，调整要审批、不得回溯、不改任何币数；已持币客户的退款按 §7.3 取 `min`，不因币价上调而变多。见 §5.8 |
 | 到账时重新换算 | `model/topup.go:207` 回调中用当时的 `QuotaPerUnit`；`TopUp` 不存所用汇率 | **不采纳**：到账币数在录入或下单时冻结在单据上 |
 | 付款金额 float | `TopUp.Money float64`；`controller/topup.go:176` `InexactFloat64()` | **不采纳**：全程整数微单位 |
 | 付款价 = 数量 × 单价 × 分组倍率 × 档位折扣 | `controller/topup.go:151–178` | **不采纳**：用不可变单据明确写出付款额与到账币数 |
@@ -51,12 +51,23 @@
 |---|---|
 | 名称 | 平台可配置显示名（如“点数”），只是标签 |
 | 存储单位 | 整数，1 存储单位 = 10⁻⁶ 币（微币），沿用 `billing.Money int64` |
-| 锚定 | 1 币 = `anchor` 单位的某个法币，在**首次发行币之前**设定，之后不可修改 |
-| 默认锚定 | 1 币 = 1 CNY（D-034-1） |
+| 币价 | 1 币的法币价值，按法币币种分别记录（`CNY`、`USD`），是**追加式版本**，平台可调（§5.8） |
+| 创世币价 | CNY：1 币 = 1 CNY（D-034-1）。美元在没有美元币价版本之前不可录入美元付款 |
 
-默认锚定使所有已存数值保持不变：现有 `funding_lots.issued_amount`、`price_versions`、`api_keys.lifetime_limit`、周期预算原本就是人民币微元，只改单位标签和 `currency` 约束，不缩放任何数据或测试夹具。
+创世币价使所有已存数值保持不变：现有 `funding_lots.issued_amount`、`price_versions`、`api_keys.lifetime_limit`、周期预算原本就是人民币微元，只改单位标签和 `currency` 约束，不缩放任何数据或测试夹具。
 
-锚定只用于财务报表把币折成法币的名义值与对冲方向。它不保证客户可按锚定比值兑回法币：现金退款按每个来源的实际付款基准计算（§7）。
+币价在各处的作用，**只有退款读它**：
+
+| 场景 | 是否读币价 |
+|---|---|
+| 请求路径（预占、结算、消费退款） | **否**。全部以币计，没有汇率 |
+| 手动充值 | 否。付款额与到账币数由运营录入，不由币价计算；入账时只**记录**批准时点的币价版本作为该来源的买入币价 |
+| 现金退款 | **是**。退款额取 `min(按当前币价, 按原付款)`，§7.3 |
+| 报表名义值 | 仅作参考，标注所用版本 |
+
+币价调整**不改变任何币数**，也不改变模型价格（模型价格以币计）。它只影响两件事：之后新入账来源记录的买入币价，以及已持币客户的现金退款（只可能变少，不可能变多）。
+
+**解释权**：现金退款额由系统按 §7.3 核算，规则以平台公布的版本为准，客户只能提单、不能指定金额。该规则必须在客户界面公示（§8），包括“币价下调时退款可能少于原付款”。
 
 ## 4. 字段单位：不改名，只明确
 
@@ -126,12 +137,32 @@
 
 “管理员给员工充值”：员工属于某租户，入账给该租户，不存在员工个人钱包。若将来需要成员级额度，是 Key 额度与成员授权，不是钱包。
 
-**单人运营（D-034-9）**：两个账号由同一自然人持有，数据库层面满足 `approver ≠ maker`，但**不是真正的双人控制**。规格规定：
+**单人运营（D-034-9，已裁决）**：做成**开关，默认开启**。开启时，一个**管理员（`admin`）账号**可以对同一张单据既制单又审批（以及执行转账），适合一个人运营。关闭时恢复双人控制。所有财务运营操作最高权限归 `admin`。
 
-- 生产环境不允许同一自然人承担制单与审批两个身份；
-- 单人运营只能作为内测或应急例外，需要平台配置显式开启（默认关闭）；
-- 开启后，每张由两个同源账号完成的单据在审计中带固定标记 `single_operator_exception`，并在财务报表的核对页单列；
-- 不能把这种做法描述为双人审批。
+| | 开关关闭 | 开关开启（默认） |
+|---|---|---|
+| 制单 | `finance_operator` | `finance_operator` 或 `admin` |
+| 审批 | `finance_approver` | `finance_approver` 或 `admin` |
+| 制单人与审批人 | 必须不同账号 | **可以是同一账号**（仅限 `admin`） |
+| 执行转账与审批人 | 必须不同账号 | 可以相同（仅限 `admin`） |
+| 非 `admin` 的财务角色 | 按现状 | 按现状，仍不可自批 |
+
+- 开关本身是追加式的平台设置版本（`wallet_operator_settings`：版本、`single_operator`、修改人、时间、原因），修改要留审计；当前值取最新版本。初始版本 `single_operator = true`。
+- **每张单据在批准时快照开关**到单据的 `single_operator` 列。放宽只对快照为真且双方均为 `admin` 的单据生效；事后关闭开关不会让已批准单据失效，也不会放宽其他单据。
+- 凡是制单与审批是同一账号的单据，审计固定带标记 `single_operator_exception`，并在财务核对页单列。**这不是双人审批**，文档与界面不得如此描述。
+- **默认开启意味着双人控制在默认状态下不强制**。建议在生产环境上线前改为关闭，这是运维建议，不是规格强制。
+- 适用范围：手动充值、消费退款、现金退款、币价调整。**不**自动扩展到对账、恢复、采购提案、兑换券批次：它们各自有 maker/checker 约束（`reconciliation_cases`、`recovery_gate`、`procurement_cost_proposals`、`voucher_batches`），本规格不改，若要一并放宽须另行裁决。
+
+**必须同步修改的现有位置**（已逐处核对，见本节末表）：`role()` 现在是精确匹配（`actual != required`），`admin` 当前完全不能充当财务角色；因此不是只放宽约束，而是五类位置一起改：
+
+| 位置 | 现状 | 变化 |
+|---|---|---|
+| `internal/billing/store.go` `role()` | 要求 `platform_role` 恰等于所需角色 | 对上表中开关开启的场景，新增“`admin` 且快照允许”的分支；不改变开关关闭时的行为 |
+| `internal/billing/orders.go:28,77,80,124,180,183` | 各自要求 `finance_operator` / `finance_approver` | 按上表放宽 |
+| `internal/billing/orders.go:84,187` | `self_approval` 拒绝 | 仅当快照为真且双方为 `admin` 时放行 |
+| `internal/billing/funding.go:72` | SQL 授权 `$1<>$2 AND approver 角色 AND requester 角色` | 同上 |
+| `funding_journal_valid`（`current_mvp.sql` 约 3798 行） | 每次入账校验都含 `c.approver<>c.requester` | 改为 `(c.approver<>c.requester OR c.single_operator)`。**不改它，开关开启后同一账号批准的充值会在提交时被 guard 拒绝** |
+| `credit_orders_check`、`refund_orders_check` | `approver IS NULL OR approver <> requester` | 同上，并新增 `single_operator` 列 |
 
 ### 5.2 付款基准
 
@@ -146,7 +177,7 @@ ALTER TABLE credit_orders
   ADD COLUMN fx_note       text,                 -- 美元付款时人工确认的汇率说明，可空
   ADD COLUMN bonus_amount  bigint NOT NULL DEFAULT 0,
   ADD COLUMN transfer_ref  text;                 -- 线下收款流水号
--- 回填既有行：basis_kind='paid'，fiat_currency='CNY'，fiat_amount=amount（锚定 1:1）
+-- 回填既有行：basis_kind='paid'，fiat_currency='CNY'，fiat_amount=amount（创世币价 1:1）
 UPDATE credit_orders SET fiat_currency='CNY', fiat_amount=amount WHERE fiat_currency IS NULL;
 ALTER TABLE credit_orders
   ADD CONSTRAINT credit_orders_basis_check CHECK (basis_kind IN ('paid','grant','unknown')),
@@ -170,7 +201,8 @@ ALTER TABLE funding_receipts
   ADD COLUMN basis_kind    text,
   ADD COLUMN fiat_currency text,
   ADD COLUMN fiat_amount   bigint,
-  ADD COLUMN parent_ref    text;                 -- 父单据 ID，见 §5.4
+  ADD COLUMN parent_ref    text,                 -- 父单据 ID，见 §5.4
+  ADD COLUMN buy_rate_version_id text;           -- 买入币价版本，仅 paid 来源，见 §5.8
 -- 回填后再加 NOT NULL 与三元组 CHECK（见下）
 ```
 
@@ -199,7 +231,9 @@ ALTER TABLE funding_receipts
   - 备选方案（不采纳）：把 `basis_kind` 复制到 `funding_lots` 做单表 CHECK；建来源类型目录表加复合外键。前者造成两处冗余需要保持一致，后者增加一张几乎不变的表，现有的两表 CHECK 加 `wallet_lot_valid` 已足够。
 - 现有 `funding_lots.refund_class` 约束（`IN ('nonrefundable','sandbox_original')`，且 `(source_kind='sandbox_capture') = (refund_class='sandbox_original')`）同步放开，追加 `'cash_original'`。
 
-现有行回填：`manual_credit` 为 `paid`、`fiat_currency='CNY'`、`fiat_amount=amount`（锚定 1:1）；`sandbox_capture` 同为 `paid`；`voucher_grant` 为 `grant`；`wallet_opening` 为 `opening`；所有现有行 `parent_ref = source_id`。
+`buy_rate_version_id`：`paid` 来源**必填**，且所引用版本的 `fiat_currency` 必须等于该来源的 `fiat_currency`；其余基准类别必须为空。入账事务在同一事务内以数据库时刻选取该币种当前生效的币价版本；**该币种没有版本时拒绝入账**（失败关闭，不使用默认值）。
+
+现有行回填：`manual_credit` 为 `paid`、`fiat_currency='CNY'`、`fiat_amount=amount`（创世币价 1:1）、`buy_rate_version_id` 指向 CNY 创世版本；`sandbox_capture` 同为 `paid`；`voucher_grant` 为 `grant`；`wallet_opening` 为 `opening`；所有现有行 `parent_ref = source_id`。
 
 **迁移机制**：`migrations/current.go` 的 `ApplyCurrent` 对空库安装 `current_mvp.sql`，对已安装的当前基线追加 `current_*.sql`（`current_001_append_path.sql` 是追加路径标记）。本规格的所有 DDL 以新的 `current_NNN_*.sql` 追加，并加入 `VerifyCurrent` 的校验计划与 checksum；MVP 前也可直接重建开发库（ADR-005）。
 
@@ -338,7 +372,7 @@ CREATE TABLE cash_refund_orders (
   tenant_id          text NOT NULL REFERENCES tenants(id),
   lot_id             text NOT NULL,                  -- 原付费来源
   business_ref       text NOT NULL UNIQUE,           -- 唯一业务号
-  coin_amount        bigint NOT NULL CHECK (coin_amount > 0),
+  coin_amount        bigint,                         -- 全额：批准时由系统读取该来源全部可用币，操作人不可填写（D-034-12）
   reason             text NOT NULL,
   state              text NOT NULL DEFAULT 'requested'
     CHECK (state IN ('requested','approved','transfer_executed','completed','cancelled','failed')),
@@ -347,7 +381,10 @@ CREATE TABLE cash_refund_orders (
   approver           text REFERENCES users(id),
   transfer_executor  text REFERENCES users(id),
   fiat_currency      text,                           -- 批准时冻结
-  fiat_amount        bigint,                         -- 批准时冻结，系统计算值
+  fiat_amount        bigint,                         -- 批准时冻结，系统按 §7.3 计算
+  buy_rate_version_id    text,                       -- 来源买入币价版本（取自 receipt），批准时冻结
+  refund_rate_version_id text,                       -- 批准时点生效的币价版本，批准时冻结
+  single_operator    boolean NOT NULL DEFAULT false, -- 批准时快照 §5.1 开关
   transfer_order_ref text,                           -- 转账指令编号，可在批准后补充
   transfer_proof_ref text,                           -- 已完成转账的凭证，转账完成后必填
   paid_fiat_amount   bigint,                         -- 线下实际转出金额
@@ -355,13 +392,71 @@ CREATE TABLE cash_refund_orders (
   retire_journal_id  text,
   release_journal_id text,
   created_at         timestamptz NOT NULL DEFAULT clock_timestamp(),
-  CHECK (approver IS NULL OR (approver <> maker AND approver IS DISTINCT FROM requested_by)),
-  CHECK (transfer_executor IS NULL OR transfer_executor <> approver),
+  CHECK (approver IS NULL OR single_operator OR (approver <> maker AND approver IS DISTINCT FROM requested_by)),
+  CHECK (transfer_executor IS NULL OR single_operator OR transfer_executor <> approver),
   FOREIGN KEY (tenant_id, lot_id) REFERENCES funding_lots(tenant_id, id)
 );
 ```
 
 不提供删除；应用角色无 DELETE；终态（`completed`、`cancelled`、`failed`）不可再改。
+
+**同一来源同时只能有一张未完成的退款单**，由数据库部分唯一索引强制，不靠应用判断：
+
+```sql
+CREATE UNIQUE INDEX cash_refund_one_open_per_lot ON cash_refund_orders (lot_id)
+  WHERE state IN ('requested','approved','transfer_executed');
+```
+
+否则两张全额单会对同一笔币各冻结一次。
+
+### 5.8 币价版本
+
+币价是进入资金核心的第一个**可调参数**，所以按追加式版本管理，并且调整要审批。
+
+```sql
+CREATE TABLE coin_rate_versions (
+  id              text PRIMARY KEY,
+  fiat_currency   text NOT NULL CHECK (fiat_currency IN ('CNY','USD')),
+  rate_num        bigint NOT NULL CHECK (rate_num > 0),               -- 1 币 = rate_num/rate_den 个法币单位
+  rate_den        bigint NOT NULL CHECK (rate_den BETWEEN 1 AND 1000000),
+  effective_at    timestamptz NOT NULL,
+  reason          text NOT NULL,
+  maker           text NOT NULL REFERENCES users(id),
+  approver        text NOT NULL REFERENCES users(id),
+  single_operator boolean NOT NULL DEFAULT false,
+  created_at      timestamptz NOT NULL DEFAULT clock_timestamp(),
+  UNIQUE (fiat_currency, effective_at),
+  CHECK (single_operator OR approver <> maker)
+);
+CREATE TRIGGER immutable_coin_rate BEFORE UPDATE OR DELETE ON coin_rate_versions
+  FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
+```
+
+- **币价单位**：`rate_num/rate_den` 是“1 币值多少法币单位”，币与法币都以微单位存储，所以比值无量纲。创世版本 CNY 为 `1/1`，`effective_at = 1970-01-01T00:00:00Z`。
+- **选取规则**：对币种 `X` 在数据库时刻 `t`，取 `effective_at <= t` 中 `effective_at` 最大的一行。**没有版本时失败关闭**（拒绝入账与退款），不使用默认值。
+- **不得回溯**：新版本的 `effective_at` 必须不早于批准时的数据库时刻，所以调价不会改写已经发生的事实。
+- **调价审批**：用与手动充值相同的 maker / approver 流程（含 §5.1 开关），通过后才写入版本表；提案本身放在命令表里，沿用现有命令幂等回执模式。
+- **调价预览**：审批前必须展示影响：对每个受影响币种，列出所有 `paid` 来源按新价重算后**退款额会减少的来源数与合计减少额**（币价下调才会减少），让审批人知道这次调价会让已持币客户的退款缩水多少。
+- **币价上调**不会让任何已有来源的退款变多（§7.3 取 `min`）。
+
+### 5.9 客户自助申请
+
+客户（租户 owner）提交的充值或退款申请**没有任何钱包效果**，所以不放进 `credit_orders` / `cash_refund_orders`（它们的 `maker` 必须是财务角色）。单独的申请表：
+
+```sql
+CREATE TABLE wallet_requests (
+  id            text PRIMARY KEY,
+  tenant_id     text NOT NULL REFERENCES tenants(id),
+  kind          text NOT NULL CHECK (kind IN ('topup','cash_refund')),
+  requested_by  text NOT NULL REFERENCES users(id),     -- 租户 owner
+  note          text NOT NULL,                          -- 客户自述（如付款流水号），仅供财务核对，不被任何计算引用
+  state         text NOT NULL DEFAULT 'open' CHECK (state IN ('open','linked','closed')),
+  linked_order_id text,                                  -- 财务据此创建的单据
+  created_at    timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+```
+
+财务操作员核对后创建对应的充值单或退款单，并把 `requested_by` 填为该申请人、`linked_order_id` 回填。申请表的细节（状态迁移、客户页面、每租户未关闭申请数上限）仍待设计，见路线图“设计完整度”。
 
 ## 6. 手动充值流程（范围 M）
 
@@ -401,6 +496,8 @@ CREATE TABLE cash_refund_orders (
 - 只能退该来源的**可用**币：退款币数 `≤ available_amount`。已冻结（预占）与已消费的币不可退。
 - 单次与累计退款的法币额不超过该来源的原付款。
 - 一张退款单只针对一个来源；跨来源需分别建单。
+- **全额**（D-034-12）：退款币数就是批准时该来源的**全部可用币**，由系统读取，操作人不能填写；退款额同样由系统按 §7.3 计算。部分退款几乎没有需求，不提供。
+- 同一来源同时只能有一张未完成的退款单（§5.7 的部分唯一索引）。
 
 ### 7.2 状态机
 
@@ -414,7 +511,7 @@ requested ──approve──▶ approved ──execute──▶ transfer_execut
 | 迁移 | 操作者 | 钱包效果 | 约束 |
 |---|---|---|---|
 | `requested` | maker 创建 | **无**；只做资格预检与预览（可退上限、预计法币金额） | `requested_by` 可为租户 owner（客户申请）或财务 |
-| `requested → approved` | approver | **冻结**：来源 `available −k`、`refund_held +k`；租户 `AVAILABLE −k`、`REFUND_HELD +k`；写 `refund_hold` 事件与 `cash_refund_hold` journal | 重新读取可用币校验；审批人 ≠ maker、≠ requested_by；计算并冻结 `fiat_amount`、`fiat_currency` |
+| `requested → approved` | approver | **冻结**：来源 `available −k`、`refund_held +k`；租户 `AVAILABLE −k`、`REFUND_HELD +k`；写 `refund_hold` 事件与 `cash_refund_hold` journal | 重新读取可用币校验；审批人 ≠ maker、≠ requested_by（单人运营开关开启且双方均为 `admin` 时除外，§5.1）；读取全部可用币作为退款币数，按 §7.3 计算并冻结 `fiat_amount`、`fiat_currency`、`buy_rate_version_id`、`refund_rate_version_id`；批准时快照 §5.1 开关 |
 | `approved → transfer_executed` | transfer_executor | 无 | 执行人 ≠ approver；填入 `transfer_order_ref`（转账指令编号，批准时尚无最终凭证） |
 | `transfer_executed → completed` | transfer_executor 或另一名财务 | **退出**：来源 `refund_held −k`、`retired +k`；租户 `REFUND_HELD −k`、`FUNDING_CLEARING +k`；写 `refund_retire` 事件与 `cash_refund_retire` journal | 必须填 `transfer_proof_ref`（已完成转账的凭证）与 `paid_fiat_amount` |
 | `approved → cancelled` | approver 或 maker | **释放**：来源 `refund_held −k`、`available +k`；租户 `REFUND_HELD −k`、`AVAILABLE +k`；写 `refund_release` 事件与 `cash_refund_release` journal | 尚未转账 |
@@ -426,24 +523,37 @@ requested ──approve──▶ approved ──execute──▶ transfer_execut
 - **冻结期间币不可消费**：冻结的币在 `refund_held` 桶，Reserve 不会选它们，所以批准后到转账完成之间不会被花掉，也不会出现“币被花了才发现要退”。
 - **`transfer_order_ref` 与 `transfer_proof_ref` 分开**：前者是批准或执行时的转账指令编号，后者是转账完成后的已完成凭证。批准时没有最终凭证，不能当作付款证明。
 - **金额不一致**：`paid_fiat_amount` 与冻结的 `fiat_amount` 必须相等才允许 `complete`；不一致时只能 `cancelled/failed` 释放后重新建单，**不允许在 `complete` 时改金额**，也不允许退款成功后更正已退出的币数。需要更正（例如多转或少转）作为单独的财务调整，在系统外处理并留审计，不通过修改该单。
-- **部分执行**：一张单的币数一次性全额处理，不支持“先退一半”。部分退款用多张单，累计规则见 §7.3。
+- **全额，不支持部分执行**（D-034-12）：一张单处理该来源批准时的全部可用币，不支持“先退一半”。
 - **取消**：只能在 `approved` 且转账未发生时取消；`transfer_executed` 之后只能 `failed`（转账确认失败）或 `completed`。
 - **完成后更正**：`completed` 是终态；退出的币不可返还。若发现退错，通过新的赠送或充值单处理，不回滚。
 
-### 7.3 退款法币金额的整数规则
+### 7.3 退款法币金额（D-034-13，已裁决：取 `min`）
 
-记来源的原付款为 `F`（receipt `fiat_amount`），发行币为 `C`（`issued_amount`），该来源在**批准时点**已累计退出与冻结的币数为 `w_old`（`retired_amount + refund_held_amount`），本次为 `k`，`w_new = w_old + k`。
+**规则**：现金退款按**当前币价**核算，但**不超过按原付款比例的金额**：
 
 ```text
-fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
+退款额 = min( 按当前币价核算的金额 , 按原付款比例核算的金额 )
 ```
 
-- 乘法用 `big.Int`（Go）或 `numeric`（SQL）；`F`、`C` 均 ≤ 2⁶³−1，乘积 < 2¹²⁶。
-- 向下取整发生在**累计位置**，所以多次部分退款的法币总额恰为 `floor(F × w_total / C)`，不会因逐次取整累计多退，也不会漏退；全部退完总额不超过 `F`。
-- 计入“冻结中”的退款币数，防止两张并发的单各自按同一个 `w_old` 计算后合计多退；两张单对同一来源并发审批时，来源余额行锁保证串行，后者读到前者已冻结的数。
-- 这是 `internal/productvalue` 的“先映射绝对端点再相减”算法的直接应用：`productvalue.New(F, C)`，区间 `[w_old, w_new)` 的价值即 `fiat_refund`。实施时复用并由独立手算向量交叉验证。
-- 币种按原付款，不按当前汇率换算；汇率变动不改变退款金额。
-- `cancelled/failed` 释放的币不计入后续 `w_old`。
+其中按原付款比例核算 = 退款币数 × 实付单价（`F/C`），按当前币价核算 = 退款币数 × 实付单价 × `当前币价 / 买入币价`。折扣体现在实付单价里，不受币价影响，所以**折扣充值的折扣不会在退款时被“退回”**。
+
+记：`k` 为全额退款币数（该来源批准时的全部可用币），`F` 为来源的 `fiat_amount`，`C` 为来源发行币数，`buy = bn/bd` 为买入币价，`cur = cn/cd` 为批准时点币价（同一法币币种）。化简后：
+
+```text
+若 cn × bd ≥ cd × bn（币价不低于买入价）：   fiat_refund = floor( k × F / C )
+否则（币价低于买入价）：                    fiat_refund = floor( k × F × cn × bd / ( C × cd × bn ) )
+```
+
+- 全部乘除用 `big.Int`（Go）或 `numeric`（SQL）；`k`、`F`、`C` 均 ≤ 2⁶³−1，分子最多 5 个 64 位数相乘，不能用 `int64`。
+- 向下取整，**永不多退**：结果恒 ≤ `k × F / C`。
+- 币价上调或持平时，退款等于原付款比例：**上调不让退款变多**。币价下调时，退款按币价下降的比例同步缩小。
+- **为什么要取 `min`（堵“退款再充值”）**：若退款按原付款比例而不看币价，币价下调后客户可以用高比例退掉旧币，再以新的低价重新充值，净赚差价。取 `min` 后，币价下调时退款随之缩小，币价上调时退款不增加，重新充值没有套利空间。
+- 币价与买入价必须属于**同一法币币种**；任一版本缺失则失败关闭，拒绝批准。
+- 退款额在**批准时**冻结（含两个币价版本 ID），之后币价再调整不影响这张单。
+
+**不再使用累计取整公式。** 早先草案用 `floor(F×w_new/C) − floor(F×w_old/C)` 保证多次部分退款不多退，它依赖“比例恒定”。币价可调后同一来源前后两次退款的比例可能不同，该公式不成立；而全额退款每张单独立向下取整，只会少退不足 1 个最小单位，不会多退。同一来源可以有多张**先后完成**的全额单（消费退款会把币退回原来源的可用桶，之后可再次现金退款），总额不超过 `F` 由 `Σ k_i ≤ C`（`retired` 不超过发行额）保证，不需要累计项。`w_old` 不再使用。
+
+`internal/productvalue` 的“端点映射再相减”算法**不再用于现金退款**：它解决的是固定比例下的区间归因，这里每张单独立核算。
 
 ### 7.4 并发与竞态
 
@@ -508,11 +618,11 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 
 | 范围 | 入口 | 规则 |
 |---|---|---|
-| 展示汇率 | 平台配置页 | 追加式版本；只影响“约合”展示 |
-| 汇率版本表（范围 V） | 平台配置页 | 追加式版本、整数有理数；只用于建议币数，已发行来源不变 |
+| **币价** | 平台配置页（§5.8） | 追加式版本、审批、不得回溯、调价前预览对退款的影响；只影响之后新入账来源的买入币价记录，以及现金退款的 `min` 核算 |
+| 展示“约合” | 平台配置页 | 追加式版本；只影响展示，标注“仅供参考” |
 | 已有余额重估 | 单独的受控命令，**默认不提供** | 见下 |
 
-已有余额重估相当于面值变更，必须同时缩放来源本金、余额、在途冻结、价格版本、Key 额度和周期预算。若将来实现：双人审批；维护模式、停服、取得服务 advisory 锁（与 027 停服开账一致）；先出预览（影响租户数、来源数、取整损益）；一个 operation 原子完成；不提供撤销；向下重估需要明确的合同依据。“让所有客户多得一些币”用批量赠送来源，不需要重估。
+**币价调整不是余额重估**：调价不改变任何来源的币数、可用额或模型价格，客户的币数量不变，只是退款换算会变。余额重估是另一件事：同时缩放来源本金、余额、在途冻结、价格版本、Key 额度和周期预算。若将来实现，须双人审批、维护模式停服并取得服务 advisory 锁（与 027 停服开账一致）、先预览、一个 operation 原子完成、不可撤销；向下重估需要明确合同依据。“让所有客户多得一些币”用批量赠送来源，不需要重估。
 
 ## 10. 财务报表
 
@@ -521,7 +631,7 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 | 口径 | 计算 |
 |---|---|
 | 消费币数 | 已结算消费币数，来自 `settlements` |
-| 名义法币值 | 消费币数 × 锚定比值 |
+| 名义法币值（参考） | 消费币数 × 报告时点生效的币价版本，标注版本，仅供参考；不用于退款 |
 | **按来源分配的客户付款基准** | 对每条结算分配边，取 `charged_amount × fiat_amount / issued_amount`（文本取 `funding_settlement_lots`，媒体取 `media_settlement_lots`，两者共享来源 lot；所属 receipt，不受 `retired` 影响：已退出的币从未被消费，不参与此计算），按 `fiat_currency` 分列；`grant`、`opening` 计 0；`unknown` 为未知 |
 | 采购成本 | 供应商币种原值；折算依赖供应商币种规格 |
 | 毛利参考 | 付款基准 − 已知采购成本，同币种比较；任一项未知或缺汇率时为 null |
@@ -536,13 +646,14 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 |---|---|
 | [030](../030-model-aliases-group-multipliers/spec.md) | 分组倍率编译的目标单位改为币 |
 | [032](../032-phase2-text-data-plane/spec.md) | 客户侧周期用量上限和缓存命中计费以币计 |
-| [033](../033-text-dynamic-routing/spec.md) | 最低毛利需要“币售价折法币”与“供应商成本折法币”同一时点比较，依赖锚定和供应商币种规格 |
+| [033](../033-text-dynamic-routing/spec.md) | 最低毛利需要“币售价折法币”与“供应商成本折法币”同一时点比较，依赖币价版本（§5.8）和供应商币种规格 |
 | 022 | 范围 P：支付订单放开付款与到账分离、捕获产生付费与赠送两个来源（同 §5.4 结构：付费来源与赠送来源两个 receipt、两笔 journal、同一捕获为父单据，`source_kind` 用真实捕获类型与 `capture_bonus`；`journals.operation_id` 全局唯一，两笔 journal 不能共用同一个 operation）；支付宝回调有多个金额字段（订单金额、实收、优惠后实付等），`payment_captures.amount` 存哪一个必须在支付规格中写死，并以支付宝官方文档为准 |
-| 023-C 订阅 | 套餐额度作为新的来源类型，以币计；到期使用本规格的第四桶机制 |
+| 023-C 订阅 | 套餐额度作为新的来源类型，以币计；到期需要另设桶，须与本规格的 `refund_held`、`retired` 两个桶一起重新设计守恒式 |
 
 ## 12. 后置
 
-- 币的到期、限定模型范围的币、充值分组优惠；
+- **币的到期**（D-034-10）：后置，且本规格**不**在 `funding_lots` 预留 `expires_at`。理由：到期要新增桶、事件类型、journal、扫描 worker 与 Reserve 过滤，应与两个退款桶一起设计守恒式；是否需要“同一来源内部分到期”尚未决定，现在预留字段可能预留错。到期若按来源整体（例如赠送来源整体到期而付费来源不到期）设计，由于付费与赠送本来就是两个来源，现有的来源划分已经够用。
+- 限定模型范围的币、充值分组优惠；
 - 真实支付与美元收款：依赖正式支付商，第四阶段；
 - 手续费：支付渠道扣费不影响钱包入账，只在财务对账层分开记录。
 
@@ -552,18 +663,19 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 
 | 编号 | 问题 | 建议 | 状态 |
 |---|---|---|---|
-| D-034-1 | 锚定币种与比值 | 1 币 = 1 CNY：数值零变化 | 建议中 |
+| D-034-1 | 创世币价 | CNY 1 币 = 1 CNY；之后币价作为追加式版本可调（§5.8） | 建议中 |
 | D-034-2 | 赠送是独立来源还是合入付费来源 | 独立来源（§5.4） | 建议中；规格已按此设计 |
-| D-034-3 | 取整 | 退款法币额按累计位置向下取整（§7.3） | 建议中 |
+| D-034-3 | 取整 | 退款法币额每张单独立向下取整，永不多退（§7.3） | 建议中 |
 | D-034-4 | 同一充值单两来源的消费先后 | **付费先、赠送后**；沿用严格 FIFO，不改任何 guard，用确定性时间戳保证（§5.5） | **已裁决**（产品意图：赠送是为了让用户多用） |
 | D-034-5 | 手动美元付款 | 管理员录入美元金额与到账币数，人工汇率说明仅作备注（§5.2） | 建议中 |
 | D-034-6 | 是否提供“约合”展示 | 提供，带版本，标注仅供参考 | 建议中 |
 | D-034-7 | 显示名 | 平台可配置 | 建议中 |
 | D-034-8 | 已有余额重估 | 不实现；向上调整用批量赠送 | 建议中 |
-| D-034-9 | 单人运营 | 生产不允许；内测或应急例外，默认关闭，审计标记（§5.1） | **影响模型**，决定是否需要例外开关与标记字段 |
-| D-034-10 | 赠送币是否永不过期 | 范围 M 永不过期；到期属范围 V | **待确认**：赠送的目的是让用户多用，倾向不过期，请确认；影响模型（到期需要事件类型与扫描） |
+| D-034-9 | 单人运营 | 开关，**默认开启**；开启时 `admin` 账号可同一账号制单与审批（§5.1）；上线生产前建议关闭 | **已裁决** |
+| D-034-10 | 赠送币是否到期 | 后置；不预留字段（§12） | **已裁决：后置** |
 | D-034-11 | 单次最大充值与最大赠送 | 在 `int64` 溢出检查之外由运营另设上限 | 建议中 |
-| D-034-12 | 现金退款是否允许部分扣减 | 一张单一次性全额；部分退款用多张单，累计规则（§7.3） | **影响模型**，决定状态机与 `w_old` 计算 |
+| D-034-12 | 现金退款是否允许部分扣减 | **全额**，币数由系统填，同一来源同时只能有一张未完成退款单（§5.7、§7.1） | **已裁决** |
+| D-034-13 | 现金退款额的核算 | 取 `min(按当前币价, 按原付款比例)`，批准时冻结（§7.3） | **已裁决**（产品负责人；用于堵“退款再充值”套利） |
 
 ## 14. 业务范围说明
 
@@ -586,7 +698,7 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 | 7 | 付费来源与赠送来源的父单据关联 | 已写入 §5.4（`parent_ref`、成对性约束、journal `operation_id` 不可共用） |
 | 8 | `retired` 桶涉及的全部 guard 与验证器 | 清单见 §5.6；**需逐项修改并真实 PostgreSQL 验证** |
 | 9 | 手动美元付款是否记录人工汇率 | 仅 `fx_note` 备注，不是汇率版本，不被计算引用（§5.2） |
-| 10 | D-034-1…12 最终裁决状态 | 见 §13；D-034-4 已裁决，D-034-9、10、12 仍影响模型，待裁决 |
+| 10 | D-034-1…13 最终裁决状态 | 见 §13；D-034-4、9、10、12、13 已裁决，其余为建议态，不影响钱包模型 |
 | 11 | 034 实现完成前不修改现有运行时 | 见下 |
 
 **实现前不修改现行运行时**：本规格合入后，现有的钱包、人工核款、兑换券、消费退款、027 来源核对和 028-U guard 保持不变，仍以人民币单币种为现行合同；任何对应的迁移、guard 或入口变更必须在 34.0 冻结后按 §17 分片进行，并各自带专用 PostgreSQL 验证。
@@ -617,10 +729,10 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 
 | 组 | 断言 | PG |
 |---|---|---|
-| 单位 | 迁移后钱包 journal、`funding_receipts.currency`、售价版本为 `COIN`；数值与迁移前一致（锚定 1:1） | PG |
+| 单位 | 迁移后钱包 journal、`funding_receipts.currency`、售价版本为 `COIN`；数值与迁移前一致（创世币价 1:1） | PG |
 | 类型区分 | 法币金额与币金额在 Go 中是不同类型，编译期禁止互相赋值；API 字段与文档分别标明单位 | — |
 | 角色约束 | `approver ≠ maker`、`approver ≠ requested_by`、`transfer_executor ≠ approver` 由数据库拒绝；客户自助申请不产生任何钱包效果；审批前无入账 | PG |
-| 单人例外 | 默认关闭；开启后同源账号完成的单据带 `single_operator_exception` 审计标记并在核对页单列 | PG |
+| 单人运营开关 | 开关开启：同一 `admin` 账号可制单并审批，单据快照 `single_operator=true`、带 `single_operator_exception` 标记，且 `funding_journal_valid` 通过；开关关闭：同一账号被拒；非 `admin` 的财务角色任何情况下不可自批；事后关闭开关不使已批准单据失效；开关与币价调整同样受控 | PG |
 | 手动充值基准 | 付 90 得 100：receipt 记法币 90、币 100；`paid` 缺法币字段被拒；`grant`/`unknown` 带法币字段被拒；receipt 不可修改 | PG |
 | 来源组合 | receipt 的 `(source_kind, basis_kind)` 与 lot 的 `(source_kind, refund_class)` 表外组合各自被 CHECK 拒绝；receipt 与 lot 的 `source_kind` 不一致被 `wallet_lot_valid` 拒绝；`manual_unknown` 不可现金退款 | PG |
 | 付费与赠送 | 一单两来源两笔 journal，`operation_id` 不冲突；重复审批只入账一次；`bonus_amount=0` 不产生赠送来源；任一失败整体回滚；**直接 SQL 造出只有一个来源的已批准单被 COMMIT 前约束拒绝**；`check-wallet-sources` 报告不成对 | PG |
@@ -631,7 +743,10 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 | 守恒 | 四桶 `available + held + consumed + retired = issued` 在所有操作后成立；`AVAILABLE`/`HELD` 账户余额继续等于 Σ 来源桶；`check-wallet-sources` 无不一致 | PG |
 | 现金退款资格 | 赠送、兑换券、开账、未知基准来源被拒；冻结与已消费部分不可退 | PG |
 | 现金退款状态机 | 逐条迁移；冻结后 Reserve 看不到被冻结的币；`cancelled/failed` 释放回可用；`completed` 为终态；完成时 `paid_fiat_amount` 与冻结 `fiat_amount` 不等被拒；`transfer_proof_ref` 缺失被拒 | PG |
-| 现金退款金额 | 手算向量：多次部分退款法币总额等于 `floor(F × w_total / C)` 且不超过 `F`；冻结中的币计入 `w_old`；`int64` 边界不溢出；USD 与 CNY 各一组 | 纯函数 + PG |
+| 现金退款金额 | 手算向量：币价持平、上调（退款=原付款比例）、下调（按比例缩小）、折扣充值（付 90 得 100，持平时退 `k×0.9`，折扣不退回）；全额由系统填，操作人传币数被拒；`int64` 边界与 5 个 64 位数相乘不溢出（`big.Int`）；向下取整永不多退；USD 与 CNY 各一组；币价或买入版本缺失则失败关闭；批准后再调价不改变已批准单 | 纯函数 + PG |
+| 退款再充值 | 构造“币价下调后退款再以新价充值”：净所得不大于不退款情形，无套利；币价上调同理 | 纯函数 |
+| 币价版本 | 追加式不可改；`(币种, effective_at)` 唯一；不得回溯；无版本时入账与退款失败关闭；调价需审批；调价预览列出退款会减少的来源数与合计减少额；receipt 的 `buy_rate_version_id` 币种与来源币种一致 | PG |
+| 一来源一张未完成单 | 并发创建两张退款单对同一来源只有一张成功；失败不留半成品 | PG |
 | 幂等与未知提交 | 重复审批、重复完成不二次冻结或退出；业务号唯一；`(refund_order_id, kind)` 事件唯一；提交前断连后只读回，不重复写事件 | PG |
 | 竞态 | §7.4 全部场景：Reserve、结算、消费退款与退款审批并发；两张单并发审批同一来源；无死锁、无负可用余额 | PG |
 | 请求路径 | Reserve、结算、消费退款不读取任何汇率（静态检查与真实 PG 用例） | PG |
@@ -644,9 +759,10 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 |---|---|---|
 | 34.0 | 本规格评审，裁决 D-034-1…12，满足 §15 全部阻断项 | — |
 | 34.1 | `currency` 约束改为 `COIN`，类型区分；数值不变 | 34.0 |
-| 34.2 | 角色字段、付款基准、来源组合 CHECK（receipt 与 lot 各自单表）、两来源与父关联、先付费后赠送的确定性时间戳 | 34.1 |
-| 34.3 | 第四桶 `retired`：守恒式、事件类型、journal kind 校验、`check-wallet-sources`、guard 更新 | 34.2 |
-| 34.4 | 现金退款单：状态机、整数规则（复用 productvalue）、审批事务、HTTP 与控制台、告警 | 34.3 |
+| 34.2 | 角色字段、**单人运营开关与 §5.1 的五类位置**、付款基准、来源组合 CHECK（receipt 与 lot 各自单表）、两来源与父关联、先付费后赠送的确定性时间戳 | 34.1 |
+| 34.3 | 两个新桶 `refund_held`、`retired`：守恒式、事件类型、journal kind 校验、`check-wallet-sources`、guard 更新 | 34.2 |
+| 34.3b | **币价版本表**与调价审批、调价预览、receipt 记录买入币价版本、创世版本 | 34.2 |
+| 34.4 | 现金退款单：状态机、§7.3 退款额核算（`big.Int`）、审批事务、一来源一张未完成单的唯一索引、HTTP 与控制台、告警 | 34.3、34.3b |
 | 34.5 | 报表付款基准、客户充值记录与**余额构成展示**（§8.1），前端来源类型校验放开 | 34.2 |
 | 34.6 | “约合”展示与显示名配置 | 34.1 |
 | 后置 P | 支付订单与捕获的两来源、支付宝金额语义、手续费 | 022 |
