@@ -6058,3 +6058,18 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-11T11:54:01Z · 5b69cecc91af
+
+update 034 virtual coin decisions: paid-first FIFO, admin-controlled single-operator switch, B refund rule with MVP rate-adjustment deferral
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T08:52:07Z",
-  "review_reason": "034按产品裁决修订：现金退款额取min(按当前币价,按原付款比例)并用20万用例对拍精确分数验证、方案A存在退款再充值套利而B净收益为0；新增追加式币价版本表(按币种、审批、不得回溯、调价预览)并让paid来源记录买入币价版本；全额退款由系统填币数且同一来源一张未完成单(部分唯一索引)；弃用累计取整公式与productvalue；单人运营开关默认开启并逐处核对需修改的role()精确匹配、自审拒绝、funding.go授权SQL、funding_journal_valid及两个CHECK；赠送币到期后置且不预留字段；新增客户自助申请表；路线图与HLD同步；纯设计变更，无源码、迁移或权限变化",
-  "snapshot_sha256": "e5cd342d721c8370a751338521e6fa078f07ba0e02c0a43ad1899954a5c77a96",
+  "reviewed_at": "2026-11-11T11:54:01Z",
+  "review_reason": "update 034 virtual coin decisions: paid-first FIFO, admin-controlled single-operator switch, B refund rule with MVP rate-adjustment deferral",
+  "snapshot_sha256": "5b69cecc91afd3ebc1bdb2429df9da2b9d603d63d5ca39081202e11615efecb2",
   "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "7a6cbe4e60bd36284c150e604d5de29536dfca3c86989282c613c43a9db85615",
+  "history_sha256": "197233bd9f71cea0d2c5328d3c1729c2dacd7015684f4c8a6ca4378735d60143",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "ffa966f64d5c6bdf5df51cdb0be01a64cb0dbfd46c14204876519f42de037afd"
+      "sha256": "d015829d4a42775aef1c19e8a3dc68e6a8029deb5ea66f8cbd2456e43b219b07"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "99cbbf2a59f52513d9bc90a4a5c51682b3278cab015cdc45ffbee0678de50b60"
+      "sha256": "14609b186685593acd28ed54ee5b20691a588588df4e09113c41943de7f803cd"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "b455e13517a46b6e3eaa1a59f22d80fac1cd83e89724bf8ec750128a0d9ff8bb"
+      "sha256": "95f61c3135c36f22b6c8c27f89a16356f5abe9ba6cb32fdb7b0e8ecd136f2277"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7953,7 +7953,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "bbc9643945d76ae6acb9d269a5ff4d88d319314e0063f434470e97a5fe5a9184"
+      "sha256": "4bff8371f44938e7e8c8a84c3c1a0a358701e1206c5eb54cfdb2bd12e6a91644"
     },
     {
       "path": "web/.gitignore",
