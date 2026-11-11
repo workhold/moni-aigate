@@ -5948,3 +5948,17 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/022-self-service-payments/c0-wallet-readset.json`
 
 </details>
+
+## 2026-11-11T04:56:29Z · f3c7ed54ee35
+
+新增034虚拟币记账单位设计草案（参考New API quota与充值源码，采纳统一整数单位与展示分离，不采纳可变全局换算/回调时重算/浮点金额/运行时倍率相乘），并在四阶段路线与HLD价格成本节登记；纯设计草案，现行合同仍为人民币单币种，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `specs/034-virtual-coin/spec.md`
+
+</details>
