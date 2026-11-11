@@ -6031,3 +6031,16 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-11T08:15:27Z · 1f0da1702362
+
+034裁决D-034-4：同一充值单付费来源先消耗、赠送来源后消耗，沿用严格FIFO不改任何guard，删除原方案A与C；用本机PostgreSQL 16.15实测clock_timestamp在同语句内连续调用有约90%相等、隔一次往返3000对无相等，因此以赠送来源created_at取max(时钟,付费created_at+1微秒)提供确定性保证并在注释、延迟校验触发器和并发测试三处固定；新增客户余额构成展示（付费/赠送/其他之和等于可用余额）及前端来源类型校验放开；D-034-10待确认；路线图同步；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

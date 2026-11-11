@@ -234,38 +234,51 @@ ALTER TABLE funding_receipts
    | `fx_note` | `credit_orders` | 人工汇率说明，仅备注，不被任何计算引用 |
 2. 付费 receipt 金额必须等于 `credit_orders.amount`，赠送 receipt 金额必须等于 `credit_orders.bonus_amount`。由两个 DEFERRABLE 约束触发器在 COMMIT 前核对，沿用 `funding_journal_valid` 的风格。
 3. **成对性约束**：充值单 `state='approved'` 时，必须恰好存在一个 `manual_credit` receipt；`bonus_amount > 0` 时还必须恰好存在一个 `manual_bonus` receipt，`bonus_amount = 0` 时不得存在。该约束同样在 COMMIT 前核对。
-4. 两个来源与两笔 journal 在**同一事务**创建，任一失败整体回滚；不存在“只有一个来源”的可提交状态。每个来源是对 `ApplyFundingTx` 的一次独立调用，各自取一次 `clock_timestamp()` 作为 `created_at` 与 `fifo_at`，所以**创建顺序就决定同单两来源的默认消费先后**：先创建的先被消耗。D-034-4 选定后，此处的顺序必须与 §5.5 一致（方案 B：先付费后赠送；方案 A、C：见 §5.5）。
+4. 两个来源与两笔 journal 在**同一事务**创建，任一失败整体回滚；不存在“只有一个来源”的可提交状态。每个来源是对 `ApplyFundingTx` 的一次独立调用。**消费顺序由 §5.5 的“先付费、后赠送”规定，并有确定性保证，不依赖两次时钟读数的巧合。**
 5. **重复审批**：充值单行 `FOR UPDATE`，已 `approved` 时读回两个 receipt 并校验第 2、3 条，通过则直接返回，不创建新来源。
 6. **一个存在、另一个缺失**（直接 SQL、恢复异常或 guard 缺陷导致）：`check-wallet-sources` 增加“父单据来源不成对”检查类，报告该充值单 ID 并进入人工审查；系统**不自动补建**缺失的来源，因为补建等于再次入账。
 
-### 5.5 消费顺序（D-034-4，实施阻断项）
+### 5.5 消费顺序（D-034-4，已裁决）
 
-现有分配是 FIFO，且排序键 `(fifo_at, id)` 出现在**四处**（已逐处核对）：
+**裁决**：同一充值单内，**付费来源先消耗，赠送来源后消耗**。理由是产品意图：赠送是为了让用户多用，不是为了保住付费币的现金退款余额。**不改任何 FIFO 规则**：沿用严格 FIFO，不同充值单之间仍按时间先后。
+
+这条规则与此前草案里的“赠送先消耗”（原方案 A）**方向相反**，原方案 A 与产品意图不符，已删除。原方案 C（赠送来源时间戳早一微秒）同样被删除：它让赠送先消耗。
+
+**现有排序（本规格不修改）**：排序键 `(fifo_at, id)` 在以下位置，全部保持不变：
 
 | 位置 | 内容 |
 |---|---|
-| Go：`lot_plan.go` `planReserveFundingLots` | 按 `fifoAt` 再按 `lotID` 排序；要求 `fifoAt` 微秒精度 |
-| Go：`lot_runtime.go:150`（文本 Reserve）与 `media.go:141`（媒体 Reserve） | 取候选来源的 SQL，**两处各自一份** |
-| SQL：`wallet_reservation_fifo_guard` | 每条分配边写入前，重新取 `ORDER BY l.fifo_at, l.id` 的第一个可用来源，要求 `NEW.lot_id` 恰为它 |
-| 索引 `wallet_lots_fifo ON funding_lots (tenant_id, fifo_at, id COLLATE "C")` | 服务上面的排序 |
+| `lot_plan.go` `planReserveFundingLots` | Go 排序，要求 `fifoAt` 微秒精度 |
+| `lot_runtime.go:150`（文本 Reserve） | SQL 按 `lot_id` 取候选后由 Go 排序 |
+| `media.go:141`（媒体 Reserve） | SQL `ORDER BY l.fifo_at, l.id` |
+| `wallet_reservation_fifo_guard` | 每条分配边写入前取 `ORDER BY l.fifo_at, l.id` 的第一个可用来源并要求一致 |
+| 索引 `wallet_lots_fifo` | `(tenant_id, fifo_at, id COLLATE "C")` |
 
-另外 `wallet_lot_valid` 强制 `lot.fifo_at = receipt.created_at`。
+另有 `wallet_lot_valid` 要求 `lot.fifo_at = receipt.created_at`。
 
-同一充值单的付费与赠送两个来源在同一事务里取到的 `created_at` 不同（各自的 `clock_timestamp()`），但相差仅微秒级、且**先后不固定**。需要裁决三种做法：
+**确定性保证**。两个来源是对 `ApplyFundingTx` 的两次独立调用，各自读一次 `clock_timestamp()`，所以“先创建的先消耗”**不能**只靠调用顺序：微秒精度下两次读数可能相同，相同时排序退化为随机 UUID。已在本机 PostgreSQL 16.15（`127.0.0.1:55439`，只读事务）实测：
 
-| 方案 | 做法 | 改动 | 代价 |
-|---|---|---|---|
-| **A** 改 FIFO 合同 | 排序键改为 `(fifo_at, refund_class 为 cash_original 者在后, id)` | 上表四处全部同步，并重建索引；文本与媒体 Reserve 各一份 | 修改钱包核心不变量，守恒与并发测试要全部重做 |
-| **B** 保持严格 FIFO | 不改 guard；两来源的先后由创建顺序决定，**删除“赠送币优先”的产品承诺** | 无；只需在同一事务里**先创建付费来源、后创建赠送来源**，使付费来源先被消耗 | 赠送币可能长期留存；付费币先被花掉，现金退款余额变小 |
-| **C** 控制赠送来源的时间戳 | 赠送 receipt 的 `created_at` 取付费 receipt 之前的一个微秒 | 无需改任何排序或 guard；`wallet_lot_valid` 要求 `fifo_at = created_at`，所以赠送 lot 的 `fifo_at` 也同步更早 | 见下 |
+| 场景 | 结果 |
+|---|---|
+| 同一语句内 200000 次连续 `clock_timestamp()` | 179212 次与前一次**完全相等**，0 次倒退 |
+| 两次读数间隔一次网络往返，3000 对 | 0 对相等，0 对倒退 |
 
-方案 C 的可行性已核对：`planReserveFundingLots` 只要求 `fifoAt` 为微秒精度（`Nanosecond()%1000 == 0`），`created_at` 取自 `clock_timestamp()` 本就是微秒；赠送来源比付费来源早 1 微秒，现有排序与 guard 自然把它排在前面。它的风险：
+即：真实流程里几乎不会相等，但这是概率而不是保证，资金顺序规则不能建立在概率上。因此规定：
 
-- `created_at` 被人为设置，不再是“真实的 `clock_timestamp()`”，审计上需要标注；
-- 与同租户**更早**的其他充值单的相对顺序不变，但赠送来源会“插”到本单付费来源之前一微秒，与同租户**同一微秒**内另一单的来源可能出现并列，并列时仍按 `id` 排序，行为与现在一致；
-- 这是一个隐含的约定，必须在 `ApplyFundingTx` 的注释、`wallet_lot_valid` 的校验和测试里显式固定，否则后来的改动可能无意破坏它。
+```text
+付费来源 created_at = clock_timestamp()                          （现有行为）
+赠送来源 created_at = max(clock_timestamp(), 付费来源 created_at + 1 微秒)
+赠送来源 fifo_at    = 其 created_at                              （wallet_lot_valid 已要求两者相等）
+```
 
-**倾向**：产品若坚持“赠送币优先”，方案 C 最便宜，但依赖一个隐含时间戳约定；方案 A 最干净，但改动面最大。若产品可以接受赠送币不优先，方案 B 零改动。**需要产品明确选择；在选定前 34.2 不得开始。**
+- 赠送来源**严格晚于**付费来源，不会出现并列，因此不依赖 UUID 排序。
+- 与同租户**其他**充值单的相对顺序不变：赠送来源最多比“自然时钟值”晚 1 微秒。
+- `created_at` 因此不再总是“纯粹的 `clock_timestamp()`”，审计上以 `parent_ref` 关联到付费来源可解释；`wallet_lot_valid` 对该字段没有“必须等于真实时钟”的约束（已核对：它只要求 `fifo_at = created_at`）。
+- **必须在三处固定**，否则后来的改动可能无意破坏：`ApplyFundingTx` 的注释、赠送 receipt 的 DEFERRABLE 校验（要求其 `created_at` 严格大于同 `parent_ref` 的付费 receipt）、§16 的并发测试。
+
+**后果**（需要产品知情）：付费来源先被消耗，所以客户用得越多，付费来源剩得越少，可现金退款的余额越小。例如付 100 得 100 并送 20，用掉 90 后，付费来源剩 10，赠送剩 20：可退现金最多对应这 10，赠送的 20 不可退现金。这是上述产品意图的直接结果。
+
+**不选 A、C 的原因**：A（排序键加入类别）要改五处并重做守恒与并发测试，且方向与产品意图相反；C 同样让赠送先消耗。
 
 ### 5.6 两个新桶：退款冻结与已退出
 
@@ -468,6 +481,29 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 - 可选的“约合”展示（D-034-6）：按追加式展示汇率版本换算，标注“仅供参考”，不进入记账、预占或退款。
 - 推理协议响应体不增加币字段，保持各协议原生信封；币只出现在控制台和请求详情、资金来源接口。
 
+### 8.1 余额构成
+
+客户看到的余额**包含赠送币的数量**。现状（已核对）：`GET /api/wallet/sources` 已逐来源返回 `source_kind`、`refund_class`、`issued_amount`、`available_amount`、`held_amount`、`consumed_amount`，前端 `WalletSources.vue` 已有来源表；但钱包页顶部只有“可用”“冻结”两个总数（`billing.Wallet` 只有 `Available`、`Held`），没有构成汇总。
+
+客户钱包页顶部增加余额构成，由来源表聚合，不新增存储字段：
+
+| 项 | 口径 |
+|---|---|
+| 可用余额 | 现有，`AVAILABLE` 账户余额 |
+| 其中付费 | `basis_kind='paid'` 来源的 `available_amount` 之和 |
+| 其中赠送 | `basis_kind='grant'` 来源的 `available_amount` 之和 |
+| 其中其他 | `basis_kind IN ('opening','unknown')` 来源的 `available_amount` 之和 |
+| 冻结 | 现有，`HELD` |
+| 退款处理中 | `refund_held_amount` 之和，仅大于 0 时显示 |
+
+- **恒等式**：付费 + 赠送 + 其他 = 可用余额。该恒等式由现有 `wallet_account_valid`（`AVAILABLE` 账户余额等于 `Σ available_amount`）保证，不是新增风险；“其他”必须单列，否则存在 `manual_unknown` 或开账来源时前三项之和会小于总额。
+- **展示不等于区分消耗顺序**：客户只看到余额构成，没有“先用哪个”的选项，消耗顺序由 §5.5 固定。
+- **客户提示**：在“其中赠送”旁标注“赠送币不可退现金”，与 §7.1 的资格一致，避免退款争议。
+- 来源表中 `source_kind` 对客户的文案由前端映射（例如 `manual_bonus` 显示为“充值赠送”，`voucher_grant` 显示为“兑换券”）；文案清单随 34.5 一起给出。
+- 平台侧来源明细（含请求分配）保持现状，不对客户折叠或隐藏现有字段。
+
+**前端校验必须放开**：`web/src/wallet-sources.ts` 现在只接受现有的四种 `source_kind` 与两种 `refund_class`，并硬编码 `(source_kind === 'sandbox_capture') === (refund_class === 'sandbox_original')`。新增 `manual_bonus`、`manual_unknown`、`cash_original` 后这些校验会直接抛错，必须同步修改并有前端测试。
+
 ## 9. 换算配置入口
 
 | 范围 | 入口 | 规则 |
@@ -519,13 +555,13 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 | D-034-1 | 锚定币种与比值 | 1 币 = 1 CNY：数值零变化 | 建议中 |
 | D-034-2 | 赠送是独立来源还是合入付费来源 | 独立来源（§5.4） | 建议中；规格已按此设计 |
 | D-034-3 | 取整 | 退款法币额按累计位置向下取整（§7.3） | 建议中 |
-| D-034-4 | 同一充值单两来源的消费先后 | 见 §5.5 三个方案；**需要产品裁决，不能停在建议** | **影响模型，实施阻断**，34.2 不得开始 |
+| D-034-4 | 同一充值单两来源的消费先后 | **付费先、赠送后**；沿用严格 FIFO，不改任何 guard，用确定性时间戳保证（§5.5） | **已裁决**（产品意图：赠送是为了让用户多用） |
 | D-034-5 | 手动美元付款 | 管理员录入美元金额与到账币数，人工汇率说明仅作备注（§5.2） | 建议中 |
 | D-034-6 | 是否提供“约合”展示 | 提供，带版本，标注仅供参考 | 建议中 |
 | D-034-7 | 显示名 | 平台可配置 | 建议中 |
 | D-034-8 | 已有余额重估 | 不实现；向上调整用批量赠送 | 建议中 |
 | D-034-9 | 单人运营 | 生产不允许；内测或应急例外，默认关闭，审计标记（§5.1） | **影响模型**，决定是否需要例外开关与标记字段 |
-| D-034-10 | 赠送币是否永不过期 | 范围 M 永不过期；到期属范围 V | **影响模型**，到期需要事件类型与扫描 |
+| D-034-10 | 赠送币是否永不过期 | 范围 M 永不过期；到期属范围 V | **待确认**：赠送的目的是让用户多用，倾向不过期，请确认；影响模型（到期需要事件类型与扫描） |
 | D-034-11 | 单次最大充值与最大赠送 | 在 `int64` 溢出检查之外由运营另设上限 | 建议中 |
 | D-034-12 | 现金退款是否允许部分扣减 | 一张单一次性全额；部分退款用多张单，累计规则（§7.3） | **影响模型**，决定状态机与 `w_old` 计算 |
 
@@ -550,7 +586,7 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 | 7 | 付费来源与赠送来源的父单据关联 | 已写入 §5.4（`parent_ref`、成对性约束、journal `operation_id` 不可共用） |
 | 8 | `retired` 桶涉及的全部 guard 与验证器 | 清单见 §5.6；**需逐项修改并真实 PostgreSQL 验证** |
 | 9 | 手动美元付款是否记录人工汇率 | 仅 `fx_note` 备注，不是汇率版本，不被计算引用（§5.2） |
-| 10 | D-034-1…12 最终裁决状态 | 见 §13，**4 项影响模型，尚无裁决** |
+| 10 | D-034-1…12 最终裁决状态 | 见 §13；D-034-4 已裁决，D-034-9、10、12 仍影响模型，待裁决 |
 | 11 | 034 实现完成前不修改现有运行时 | 见下 |
 
 **实现前不修改现行运行时**：本规格合入后，现有的钱包、人工核款、兑换券、消费退款、027 来源核对和 028-U guard 保持不变，仍以人民币单币种为现行合同；任何对应的迁移、guard 或入口变更必须在 34.0 冻结后按 §17 分片进行，并各自带专用 PostgreSQL 验证。
@@ -589,7 +625,9 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 | 来源组合 | receipt 的 `(source_kind, basis_kind)` 与 lot 的 `(source_kind, refund_class)` 表外组合各自被 CHECK 拒绝；receipt 与 lot 的 `source_kind` 不一致被 `wallet_lot_valid` 拒绝；`manual_unknown` 不可现金退款 | PG |
 | 付费与赠送 | 一单两来源两笔 journal，`operation_id` 不冲突；重复审批只入账一次；`bonus_amount=0` 不产生赠送来源；任一失败整体回滚；**直接 SQL 造出只有一个来源的已批准单被 COMMIT 前约束拒绝**；`check-wallet-sources` 报告不成对 | PG |
 | 金额一致 | 付费 receipt = `amount`，赠送 receipt = `bonus_amount`；`amount + bonus_amount` 溢出被拒 | PG |
-| 消费顺序 | 按 D-034-4 选定的方案验证：同一充值单两来源的消费先后与选定方案一致；不同充值单严格 FIFO；文本与媒体 Reserve 两条路径行为一致；SQL guard 与 Go 计划无分歧 | PG |
+| 消费顺序 | 同一充值单：**始终先消耗付费来源、后消耗赠送来源**；并发请求下不变；赠送来源 `created_at` 严格大于付费来源（含两次时钟读数相等的构造场景，例如注入固定时钟）；不同充值单严格 FIFO；文本与媒体 Reserve 两条路径一致；SQL guard 与 Go 计划无分歧；既有 FIFO 测试全部不改而通过 | PG |
+| 余额构成 | 付费 + 赠送 + 其他 = 可用余额；存在 `manual_unknown`、开账来源时仍成立；无退款处理时不显示该项；赠送币旁有不可退现金提示 | PG + 前端 |
+| 前端校验 | `wallet-sources.ts` 接受 `manual_bonus`、`manual_unknown`、`cash_original`；非法组合仍被拒 | 前端测试 |
 | 守恒 | 四桶 `available + held + consumed + retired = issued` 在所有操作后成立；`AVAILABLE`/`HELD` 账户余额继续等于 Σ 来源桶；`check-wallet-sources` 无不一致 | PG |
 | 现金退款资格 | 赠送、兑换券、开账、未知基准来源被拒；冻结与已消费部分不可退 | PG |
 | 现金退款状态机 | 逐条迁移；冻结后 Reserve 看不到被冻结的币；`cancelled/failed` 释放回可用；`completed` 为终态；完成时 `paid_fiat_amount` 与冻结 `fiat_amount` 不等被拒；`transfer_proof_ref` 缺失被拒 | PG |
@@ -606,10 +644,10 @@ fiat_refund = floor(F × w_new / C) − floor(F × w_old / C)
 |---|---|---|
 | 34.0 | 本规格评审，裁决 D-034-1…12，满足 §15 全部阻断项 | — |
 | 34.1 | `currency` 约束改为 `COIN`，类型区分；数值不变 | 34.0 |
-| 34.2 | 角色字段、付款基准、来源组合 CHECK（receipt 与 lot 各自单表）、两来源与父关联、消费顺序 | 34.1，且 **D-034-4 已裁决** |
+| 34.2 | 角色字段、付款基准、来源组合 CHECK（receipt 与 lot 各自单表）、两来源与父关联、先付费后赠送的确定性时间戳 | 34.1 |
 | 34.3 | 第四桶 `retired`：守恒式、事件类型、journal kind 校验、`check-wallet-sources`、guard 更新 | 34.2 |
 | 34.4 | 现金退款单：状态机、整数规则（复用 productvalue）、审批事务、HTTP 与控制台、告警 | 34.3 |
-| 34.5 | 报表付款基准与客户充值记录展示 | 34.2 |
+| 34.5 | 报表付款基准、客户充值记录与**余额构成展示**（§8.1），前端来源类型校验放开 | 34.2 |
 | 34.6 | “约合”展示与显示名配置 | 34.1 |
 | 后置 P | 支付订单与捕获的两来源、支付宝金额语义、手续费 | 022 |
 | 后置 V | 汇率版本表、币到期、限定模型范围、重估 | 订阅规格 |

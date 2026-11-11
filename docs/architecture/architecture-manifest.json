@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T07:57:31Z",
-  "review_reason": "按评审修订034与路线图：路线图5.2的auto预占界统一为逻辑模型profile、能力不足候选在硬过滤排除、路由切换不改变预占上界；034的三元组约束改为receipt与lot各自单表CHECK加wallet_lot_valid（PostgreSQL普通CHECK不能跨表）；统一basis_ref/parent_ref/proof_ref/transfer_ref/fx_note字段职责；D-034-4改为实施阻断并给出A改FIFO合同/B保持严格FIFO/C控制赠送来源时间戳三个方案及已核对的四处排序位置；更正journals.kind白名单实为funding_fact_guard触发器；保留设计可冻结但不代表生产财务验收的边界；纯设计变更",
-  "snapshot_sha256": "7796ca76e1feb2e6d6c95ad452e48bef99e62c1c00d84a505dee2b71407a8e9e",
+  "reviewed_at": "2026-11-11T08:15:27Z",
+  "review_reason": "034裁决D-034-4：同一充值单付费来源先消耗、赠送来源后消耗，沿用严格FIFO不改任何guard，删除原方案A与C；用本机PostgreSQL 16.15实测clock_timestamp在同语句内连续调用有约90%相等、隔一次往返3000对无相等，因此以赠送来源created_at取max(时钟,付费created_at+1微秒)提供确定性保证并在注释、延迟校验触发器和并发测试三处固定；新增客户余额构成展示（付费/赠送/其他之和等于可用余额）及前端来源类型校验放开；D-034-10待确认；路线图同步；纯设计变更，无源码、迁移或权限变化",
+  "snapshot_sha256": "1f0da1702362eac9b45ca13256715c18b1af39109682291e0015689ad6487786",
   "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "08d884a3e39f3195ec5c8b429d0b7c9e4a7d313e1c806e824944914171ec7431",
+  "history_sha256": "39c9b37f9a2a390c9274b883d5f79655407819e87d1dfed62893afb3792d3b49",
   "files": [
     {
       "path": ".dockerignore",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "2ec04335719e54632a5d3710bdf619d9216decb228302bd49c5242f371198ba9"
+      "sha256": "1ff33085011e83fe0f7ca52d9b981ce890324af6912b5427717506ccc592c9b1"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7953,7 +7953,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "f878ebb71ec88eeb2ea4d3c395210cdab75d88783692a4ac85b2d62e7ec53fcf"
+      "sha256": "04e95019eb9ec6d4011bd3ef53c379fedad5c5476aa11e66c6d5aadacaac0187"
     },
     {
       "path": "web/.gitignore",
