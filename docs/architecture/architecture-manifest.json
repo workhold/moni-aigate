@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-12T08:26:47Z",
-  "review_reason": "Align the New API capability roadmap with the 0-stage external-channel and licensed source-integration strategy.",
-  "snapshot_sha256": "2b831c9596faf45d8807993cb7df9f9b7d5f5bd561eaca9c173d99069b574dae",
-  "architecture_sha256": "b76bd236944b3a1f5fc44f74a211f064519bf1385a52ad0487c83a085c0549da",
-  "history_sha256": "79f00c9e64aaf4c75ba172f35b2f24452674b9b3747fdbfc43164ea9a9709cee",
+  "reviewed_at": "2026-11-12T12:03:19Z",
+  "review_reason": "align the HLD link label with the renumbered external upstream contract",
+  "snapshot_sha256": "dae22220d29ae6b5ee9edc3af93cf742eab334e20f177dc71ca7b5e28a5a4069",
+  "architecture_sha256": "fe82a65de18b263e537c32990a9ba27582a40d6cf438cc5200d2900da1a427f5",
+  "history_sha256": "d4ce5654816f0da8742e712731a4a703668cc7c2866d4b059e96b25d92572788",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "7afe9d544ba5e9c46b51bd97d401a43fc18944553bfbdfeb45e285232ece7170"
+      "sha256": "ff7579094cfc117ec342b6c91c26c446b3dbd28bf15a54424d83b5c8ffd31c54"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -169,15 +169,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "8c98597e7e1f042c46b7e04a4d500b0f60ce5138406da68aa2bce4364f7f48eb"
+      "sha256": "765fcb7b1efe73162008804b18e752085331c4454a2329b266071dce324da60b"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "1ecbae889dd06a6fa20c9c73a2e6db1bb067b5b0d85f78be1925ca1ce70c8a9d"
+      "sha256": "9d612ea62803a91371d184ca6c12776e52c94c49ac0fcb470f82587d7094735c"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "5abc7c516df87f3d49154f8a16f2481df86b36eda2bba788753dec610c369634"
+      "sha256": "79e8d8ad34398c76bf57835db269ccf7998047528737ca6a275056a94b5530a1"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "0fd7fc6a6a695b130e985dea94befb288b152830177798ff302922d783dd8750"
+      "sha256": "d1422d264009c458005066a7a6e96d73edc245136700c0c3e253164aca323d9d"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -217,7 +217,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "30ac6183e46c97b0f24a4bf802f0b6faaa751fedbfd24d08eb71b55634bd3918"
+      "sha256": "8149d346653266b0be59ea9d7af733be2892587134d1a1f100718cf93fa9703b"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -7953,11 +7953,15 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/spec.md",
-      "sha256": "b02b642fb08aa847f3301bd0ec0e8a75c9896846c0f4955ad110994ba947ac56"
+      "sha256": "0bffed10432cac3f0f3952a5936736f477fccfd0558b86a446e017f7315d93ad"
     },
     {
-      "path": "specs/034-external-upstream-integration/spec.md",
-      "sha256": "d3ee479b0120725d3e463476e57451175f79fe762ac032c36a834f2e12c7b793"
+      "path": "specs/034-virtual-coin/spec.md",
+      "sha256": "4bff8371f44938e7e8c8a84c3c1a0a358701e1206c5eb54cfdb2bd12e6a91644"
+    },
+    {
+      "path": "specs/035-external-upstream-integration/spec.md",
+      "sha256": "b9a44f7a7577ebefc877a0a85f904d8560edf49c723c59b44be44134eb11d10c"
     },
     {
       "path": "web/.gitignore",

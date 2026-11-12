@@ -264,7 +264,7 @@ make verify-mvp
 ## SDD 与架构同步
 
 每项行为先补齐规格、状态机、接口/数据合同、故障与验收边界，再修改实现。
-主要入口：[四阶段路线](docs/design/phase-roadmap.md)、[New API 与 Sub2API 上游接入路线](docs/design/upstream-integration-plan.md)、[034 接入合同](specs/034-external-upstream-integration/spec.md)、[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
+主要入口：[四阶段路线](docs/design/phase-roadmap.md)、[New API 与 Sub2API 上游接入路线](docs/design/upstream-integration-plan.md)、[035 接入合同](specs/035-external-upstream-integration/spec.md)、[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
 
 MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优先完成架构与业务能力：新功能以当前模型为准，开发库必要时重建，不承诺未发布版本的数据兼容，不增加新旧双写或自动回退。隔离历史核验候选暂不扩展，不作为经营功能交付的前置条件。
 

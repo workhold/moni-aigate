@@ -1,4 +1,4 @@
-# 034：New API / Sub2API 外部上游接入
+# 035：New API / Sub2API 外部上游接入
 
 状态：草案，作为 0 阶段和 MVP 的验收合同。它只规定 aigate 与下游网关之间的边界，不声称 New API 或 Sub2API 的全部功能已经在 aigate 中实现。
 

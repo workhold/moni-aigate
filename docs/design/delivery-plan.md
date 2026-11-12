@@ -1,6 +1,6 @@
 # 业务能力与并行交付计划
 
-**现行路线（2026-11-12）**：阶段顺序、范围和完成定义以[四阶段路线](phase-roadmap.md)为唯一事实源；New API/Sub2API 的部署、channel、路由和源码内收以[上游接入路线](upstream-integration-plan.md)与 [034 接入合同](../../specs/034-external-upstream-integration/spec.md)为准。本节优先于下文全部历史排期，包括 2026-11-04 的“当前执行顺序”表。
+**现行路线（2026-11-12）**：阶段顺序、范围和完成定义以[四阶段路线](phase-roadmap.md)为唯一事实源；New API/Sub2API 的部署、channel、路由和源码内收以[上游接入路线](upstream-integration-plan.md)与 [035 接入合同](../../specs/035-external-upstream-integration/spec.md)为准。本节优先于下文全部历史排期，包括 2026-11-04 的“当前执行顺序”表。
 
 | 顺序 | 工作 | 完成出口 |
 | --- | --- | --- |

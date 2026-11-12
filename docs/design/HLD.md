@@ -199,7 +199,7 @@ v0.1 人工核款：运营记录真实收款凭证和外部业务号 → 不同�
 
 | 阶段 | 交付能力 | 出口条件 |
 |---|---|---|
-| 0 阶段 | Compose/1Panel 统一编排 aigate、New API、Sub2API；外部 channel、probe、usage/成本/错误合同；唯一客户结算 | 独立数据库、内部网络、下游重试不越权、外部 channel 可回退；见 [034](../../specs/034-external-upstream-integration/spec.md) |
+| 0 阶段 | Compose/1Panel 统一编排 aigate、New API、Sub2API；外部 channel、probe、usage/成本/错误合同；唯一客户结算 | 独立数据库、内部网络、下游重试不越权、外部 channel 可回退；见 [035](../../specs/035-external-upstream-integration/spec.md) |
 | 第一阶段 | 固定版本 New API 核心业务闭环；文本基础渠道路由；共享钱包与结算；协议、媒体、任务、Realtime 用 deterministic mock 验收 | 验收清单逐项有专用 PostgreSQL、mock 和至少一个外部 channel 证据；不要求所有真实供应商认证 |
 | 第二阶段 | Bifrost 风格文本数据面：低延迟、失败分类与故障切换、预算治理、缓存设计、压测；逐项内收下游实现 | 合同、实现与同条件压测记录 |
 | 第三阶段 | 在 aigate 内实现 OpenRouter 风格文本动态路由，候选包含 direct/new_api/sub2api；物理模型、质量档位、评分、最低毛利、会话粘性、路由回放 | 三类切换逐类验收，决策可回放；下游账号路由保持局部 |
@@ -227,7 +227,7 @@ v0.1 人工核款：运营记录真实收款凭证和外部业务号 → 不同�
 - [LLD](LLD.md)：具体契约与不变量。
 - [需求规格](../../specs/001-commercial-mvp/spec.md)、[计划](../../specs/001-commercial-mvp/plan.md)、[验收](../../specs/001-commercial-mvp/acceptance.md)。
 - [ADR-001](../decisions/ADR-001-source-strategy.md)：代码复用边界与发布方式。
-- [上游接入路线](upstream-integration-plan.md)与[034 接入合同](../../specs/034-external-upstream-integration/spec.md)：New API/Sub2API 的部署、路由和逐步内收。
+- [上游接入路线](upstream-integration-plan.md)与[035 接入合同](../../specs/035-external-upstream-integration/spec.md)：New API/Sub2API 的部署、路由和逐步内收。
 
 ## 19. 012 不可变渠道凭据池
 

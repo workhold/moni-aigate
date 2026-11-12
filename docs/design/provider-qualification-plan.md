@@ -15,7 +15,7 @@
 | New API（内部上游） | 先接入其 OpenAI-compatible Chat/Responses/SSE 接缝 | 下游 endpoint、模型映射、usage 终态、账号池局部重试、错误/未知消费、采购成本；不能把下游客户余额或模型列表当 aigate 事实 | 作为 `channel_kind=new_api` 的 external relay；连通性和单 profile probe 可做 0 阶段证据，正式可售 profile 仍逐项验收 |
 | Sub2API（内部上游） | 先接入其 OpenAI-compatible Chat/Responses/SSE 接缝 | 同上；另核下游聚合模型的真实计费、模型别名和余额耗尽语义；不同上游账号不得混成一个成本身份 | 作为 `channel_kind=sub2api` 的 external relay；可与 New API 并行部署，不能共享数据库或客户结算 |
 
-一个对外模型可以绑定不同渠道的明确上游模型名。每个绑定单独关联不可变能力profile、采购报价、生效版本和采购账户；相同对外名称不合并供应商身份或收费语义。运行时先做权限、协议能力、地域、状态、采购预算和报价上限过滤，再在最高优先级内按既有成本策略调度；New API/Sub2API 的内部账号池是下游局部选择，不能改变 aigate 的 route revision、客户售价或结算身份。不跨协议静默转换，也不因渠道返回错误就重放可能已消费的请求。[018成本选路](../../specs/018-cost-aware-routing/spec.md)、[019共享采购预算](../../specs/019-procurement-accounts/contract.md)和[034接入合同](../../specs/034-external-upstream-integration/spec.md)已提供这些接缝。
+一个对外模型可以绑定不同渠道的明确上游模型名。每个绑定单独关联不可变能力profile、采购报价、生效版本和采购账户；相同对外名称不合并供应商身份或收费语义。运行时先做权限、协议能力、地域、状态、采购预算和报价上限过滤，再在最高优先级内按既有成本策略调度；New API/Sub2API 的内部账号池是下游局部选择，不能改变 aigate 的 route revision、客户售价或结算身份。不跨协议静默转换，也不因渠道返回错误就重放可能已消费的请求。[018成本选路](../../specs/018-cost-aware-routing/spec.md)、[019共享采购预算](../../specs/019-procurement-accounts/contract.md)和[035接入合同](../../specs/035-external-upstream-integration/spec.md)已提供这些接缝。
 
 每个具体profile按同一顺序交付：来源/许可证与服务边界登记 → 官方或下游合同取证 → 精确请求/响应/计量与失败合同 → 本地协议和商业fixture → 隔离凭据下的真实请求/取消/断流及供应商用量对账 → 冻结可售配置。New API/Sub2API 的 external relay 还要单独记录下游账号池重试和未知消费映射；进入 `embedded_adapter` 或 `migrated_capability` 时保留相同证据。缓存、reasoning、工具、媒体等只要存在额外非零收费维度，就须进入完整客户/采购计量合同；不能以“兼容OpenAI”把未知费用算成0。所有报价使用平台已登记的CNY采购合同，网页外币标价不自动汇率换算。
 
