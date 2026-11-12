@@ -92,7 +92,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 下表为领域关系，实际字段、约束与trigger以[migrations](../../migrations/001_core.sql)以及后续002–006迁移为准。r4新增`session_families`、`delivery_observations`、`platform_probe_attempts`、`recovery_gate`、`route_binding_isolations`，006补充不可变attempt选路解释。恢复gate按epoch冻结提案并双人批准；明确模型配置错误只隔离精确渠道版本/上游模型，历史隔离不可修改，恢复需创建新版本并发布。实例接管先等待旧执行窗口，恢复只读进程可立即启动，退出恢复须重启后再按付费准入执行窗口检查。
 
-所有金额为 `BIGINT` 微元（1 CNY = 1,000,000 微元），时间为 UTC `timestamptz`，前端按用户时区展示；数据库时钟决定价格生效和期限。JSON 中金额用十进制字符串，前端不能用 JS Number 运算资金。
+当前运行时代码的金额仍为 `BIGINT` CNY 微元（1 CNY = 1,000,000 微元）。034 的目标合同把客户钱包与客户售价单位切换为整数微币，并将付款法币只保留在充值/退款事实与报表中；该目标尚未实现前不得把设计状态描述成运行时状态。时间为 UTC `timestamptz`，前端按用户时区展示；数据库时钟决定价格生效和期限。JSON 中金额用十进制字符串，前端不能用 JS Number 运算资金。
 
 | 表 | 核心字段 / 约束 |
 |---|---|
@@ -108,7 +108,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 | route_policy_versions / active_route_policies | model_id, revision, max_attempts, total_timeout_ms, retry_after_cap_ms, allowed_regions；不可变版本；活动指针以expected revision原子切换 |
 | price_versions | id, model_id, currency, input_rate, output_rate, effective_at, created_by；单价为微元/百万 Token；同模型+生效时间唯一；记录不可修改 |
 | cost_versions | id, channel_id, upstream_model, input_rate, output_rate, basis, effective_at；首版仅 CNY 成本，未知不记零 |
-| ledger_accounts | id, tenant_id（客户账户）, kind, balance；客户 AVAILABLE/HELD 非负；平台账户显式属于平台域 |
+| ledger_accounts | id, tenant_id（客户账户）, kind, balance；客户 AVAILABLE/HELD/REFUND_HELD 非负；平台账户显式属于平台域 |
 | journals / journal_lines | kind, reference, idempotency_key, actor；每笔 line 有 account_id 与 signed_delta；同币种总和为 0；已提交后不可修改/删除 |
 | reservations | id, tenant_id, request_id, amount, status, deadline, price_version_id；每请求最多一个预占；amount 非负 |
 | request_records | id, tenant_id, key_id, model_id, snapshot_ids, status, protocol_outcome, transport_end_reason, delivery_stage, finish_reason, billing_status, request_hmac, policy_version, timestamps（accepted/first_byte/first_content/end）；tenant+key 复合外键 |
@@ -116,7 +116,8 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 | metering_events / finalization_records | event身份/来源/schema/request/attempt/发生与接收时间、usage状态/规范量及evidence_ref；终结记录固定协议/传输/本地写入事实和billing_policy版本，关联恢复任务；只保存最终/异常/修正事实，不逐Token写库 |
 | projection_outbox / projection_receipts | event_id, tenant_id, operation_id, kind, schema_version, sanitized_payload, created_at；与资金事务同写；消费回执以(consumer,event_id)唯一，投影更新与回执同事务 |
 | settlements | id, request_id, tenant_id, usage_snapshot, raw_retail_amount, charged_amount, waived_retail_amount, refunded_amount, basis；每请求唯一，退款累计封顶 |
-| credit_orders / refund_orders | tenant_id, business_ref, amount, state, requester, approver, proof_ref, journal_id；业务号唯一、申请人不可审批 |
+| credit_orders / refund_orders / cash_refund_orders | tenant_id, business_ref, amount, state, requester, maker, approver, proof_ref, journal_id；业务号唯一、申请人不可审批；034 的现金退款另有 `refund_held`/`retired` 状态流转 |
+| wallet_operator_settings / coin_rate_versions | 034 目标：追加式单人运营开关与币价版本；开关写入需二次确认并在单据/审计中快照；MVP 只记录创世/买入币价，不提供调价入口 |
 | reconciliation_cases | request_id, reason, evidence_ref, deadline, `proposed_observation_canonical`/`proposed_observation_digest`, requester, approver, resolution；每请求最多一个活动核对项。当前028-U提案原件是绑定请求schema的完整retail QuantitiesWire |
 | audit_events | actor, tenant_scope, action, target, sanitized_diff, request_id, created_at；应用角色只追加 |
 
@@ -159,7 +160,16 @@ amount_micro = metering.Amount(complete_quantities, complete_rates)；费率为�
 
 对整次请求合并后向上取整一次，避免每 SSE 分片取整。乘加用带溢出检查的整数或大整数，最终验证 BIGINT 范围；金额/Token 必须非负。例：input_rate=2,000,000、output_rate=8,000,000，input=1,000、output=500，结果为 6,000 微元，即 ¥0.006。
 
-请求在预占事务按 DB 当前时间选中最新生效售价，保存价格 ID 与完整数值快照。上下文上限、默认输出限制、计费政策同样版本化。跨日、改价、渠道切换都不得改变历史快照。
+请求在预占事务按 DB 当前时间选中最新生效售价，保存价格 ID 与完整数值快照。上下文上限、默认输出限制、计费政策同样版本化。跨日、改价、渠道切换都不得改变历史快照。034 尚未实现前，现行售价仍按 CNY 微元处理；034 目标售价改用微币。
+
+#### 5.2.1 034 虚拟币钱包合同（设计目标，未实现）
+
+034 不创建第二个钱包。实现后客户钱包、客户售价、Key 额度和周期预算统一使用整数微币；充值与现金退款额外记录法币金额和币种，供应商成本继续属于平台侧采购域。当前分支的 CNY 运行时合同在 034 实现完成前保持不变。
+
+- 同一手动充值单拆成付费来源与赠送来源时，付费来源必须先消耗，赠送来源后消耗；不同充值单仍按现有 `(fifo_at, id)` 严格 FIFO。实现必须保持 `funding_lot.fifo_at = funding_receipt.created_at`、文本与媒体 Reserve、Go 计划、SQL guard 的合同一致，并在固定时钟、并发和两条 Reserve 路径上验证。
+- 来源守恒扩展为 `available + held + refund_held + consumed + retired = issued`。`refund_held` 只服务现金退款待转账状态，`retired` 表示已完成现金退出；二者不能进入 Reserve。租户新增 `REFUND_HELD` 账户，账户余额分别与对应来源桶之和一致。
+- 现金退款保留 B 规则：批准时冻结 `min(按当前币价核算、按原付款比例核算)`，全额退款由系统读取可用币，操作人不能填币数；赠送、未知基准和其他不可退来源不能现金退款。MVP 只记录创世币价与付费来源买入币价，当前不提供调价 HTTP、控制台入口或写命令；未来调价必须追加版本、审批、影响预览、不得回溯，并在批准时冻结版本。
+- `wallet_operator_settings` 是追加式平台设置，初始 `single_operator=true`。管理员界面启用、关闭或修改必须二次确认/近期重新认证并写审计；每张单据在批准时保存开关快照。仅当快照允许且制单人与审批人均为 `admin` 时允许同账号操作，并固定写入 `single_operator_exception`；其他业务域的 maker/checker 约束不随之放宽。
 
 ### 5.3 预占上界
 
@@ -173,7 +183,7 @@ amount_micro = metering.Amount(complete_quantities, complete_rates)；费率为�
 
 ### T0：人工入账
 
-锁定 credit_order → 确认待审批、真实业务号唯一、审批人不同且有角色 → 锁定相关 ledger_accounts（account_id 排序）→ 写平衡 journal 与余额 → 单据标记 approved 并引用 journal → 写审计 → commit。重放返回原结果；同业务号不同金额报冲突。凭证仅存受控引用，不在普通日志里存财务附件。
+锁定 credit_order → 确认待审批、真实业务号唯一、审批人有角色；若单据快照 `single_operator=true` 且制单人与审批人均为 `admin`，允许同账号，否则审批人必须不同 → 锁定相关 ledger_accounts（account_id 排序）→ 写平衡 journal 与余额 → 单据标记 approved 并引用 journal → 写审计 → commit。重放返回原结果；同业务号不同金额报冲突。凭证仅存受控引用，不在普通日志里存财务附件。
 
 ### T1：接受并预占
 
@@ -233,6 +243,8 @@ Worker 至少一次处理 outbox，按 `(consumer,event_id)` 在投影更新事�
 ### T3：消费退款
 
 先锁退款单，再按统一顺序锁原 settlement 与账户；验证累计 refund+F≤charge，审批人不同；追加退款 journal、更新 refunded_amount/退款单并写审计。退款释放为可用钱包金额；已消费历史不删除，净消费由消费减退款得到。
+
+034 的现金退款是另一条状态机，不复用 T3 的 `HELD` 或消费退款分录：批准时从来源 `available` 转入 `refund_held`，同时从客户 `AVAILABLE` 转入 `REFUND_HELD`；线下转账确认后再从 `refund_held` 转入 `retired`，失败或取消则无损释放回 `available`。现金退款使用 `cash_refund_orders`、`refund_hold`/`refund_retire`/`refund_release` 事件和对应 journal，不能通过消费退款接口绕过。
 
 ### 崩溃与数据库故障
 
@@ -386,7 +398,7 @@ sequenceDiagram
 3. **路由决策记录**：policy version、候选全集、每个候选的过滤原因、评分输入、随机抽签、最终选择、供应商成本快照、会话粘性原因、降级或切换标志，以及最终 attempt 和结算的引用。现有五字段数组与“每 channel 一次”的校验无法表达同一 channel 下的多个物理模型，必须改合同；改动按 ADR-005 一次性替换，不保留双格式。
 4. **路由回放**：同一决策记录与抽签输入，重放结果一致；回放只读，不派发、不写资金。
 5. **会话粘性**：路由会话按 `(tenant_id,session_id)` 隔离，与登录会话 `session_families` 分开；记录建立、延续和被打破（质量、成本、故障）的原因。
-6. **跨模型切换与资金**：auto 商品按候选中的最大上界预占；最终按实际选中模型的冻结价格结算；切换不新建预占或结算，仍为一个请求一个 settlement，每个 attempt 各自记录采购成本。
+6. **跨模型切换与资金**：客户预占界由 auto 逻辑模型的 profile 决定（`Reserve` 要求预占界等于该 profile 的界），与最终选中哪个物理模型无关；能力不足的候选在硬过滤阶段排除。auto 只有一个售价，按请求时冻结的价格结算；切换不新建预占或结算，仍为一个请求一个 settlement，每个 attempt 各自记录采购成本。
 7. **评分**：只在硬约束过滤之后进行。输入包括模型能力、质量门槛、上下文长度、工具能力、延迟、成功率、当前供应商成本、缓存与上下文重传成本、会话粘性、最低毛利以及租户和 Key 权限。不得只按最低价格选择。
 8. **最低毛利**：成本未知时不当作 0，按策略排除该候选或拒绝请求。
 9. **质量评估**：同模型自适应策略先在影子模式评估，再对照确定性基线小流量验证；注明测量点、冷启动、样本老化和探索上限。跨模型评估使用经授权的数据集，按任务、多轮、工具场景分层，校准与验证样本分离，记录数据集、模型对、路由器、阈值与策略版本，比较质量、全程延迟、客户费用及平台全部成本。无独立评估数据时不发布“省钱不降质”的承诺。达不到质量门槛或路由器不可用时执行事先公布的固定策略，不默默降低客户购买的档位。
@@ -1198,9 +1210,9 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 | 既有约束 | 出处 | 变化 |
 |---|---|---|
-| 同一路由池内 channel 唯一 | LLD §8、001 catalog 合同 | 改为 `(channel, physical_model)` 唯一 |
+| 同一路由池内 channel 只出现一次 | Go 校验 `catalog/store.go:317`、LLD §8；SQL 唯一键 `(route_policy_version_id, channel_id, upstream_model, variant_key)` 已允许同 channel 不同上游模型 | 去重键改为 `(channel, physical_model)`，SQL 无需改动 |
 | 路由版本绑定单一 profile | 028 u-storage §1、`meter_route_profile`、`route complete` guard | D-033-0：profile 继续表示客户侧零售合同，物理模型能力放入 `physical_models.capability`，attempt 的供应商界来自所选物理模型 |
-| 决策记录每 channel 一次、恰一个 selected | `billing.validateRouteDecisions` | 被独立 `route_decisions` 表取代 |
+| 决策记录每 channel 一次、恰一个 selected | `billing.validateRouteDecisions` | 被独立 `route_decisions` 表取代：每次决策一行，候选放在有界 JSONB |
 | `upstream_attempts.route_decisions` JSONB | `migrations/006_route_decisions.sql` | 一次性迁移后删除，不保留双格式 |
 | `price_versions.variant_key` 只能为 `default` | 023-A | auto 用单一售价（D-033-1 选项 A），不放宽 |
 

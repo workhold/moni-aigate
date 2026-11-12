@@ -5948,3 +5948,128 @@ current MVP guard audit、provider timeout、备份恢复业务事实和18组验
 - modified `specs/022-self-service-payments/c0-wallet-readset.json`
 
 </details>
+
+## 2026-11-11T04:56:29Z · f3c7ed54ee35
+
+新增034虚拟币记账单位设计草案（参考New API quota与充值源码，采纳统一整数单位与展示分离，不采纳可变全局换算/回调时重算/浮点金额/运行时倍率相乘），并在四阶段路线与HLD价格成本节登记；纯设计草案，现行合同仍为人民币单币种，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T06:24:17Z · acc41a40d77c
+
+修订034：确认对外只暴露虚拟币且手动充值/手动现金退款优先；明确钱包侧与付款侧字段单位而不改名；补充付费与赠送两个来源的数据关系、第四桶retired及需同步修改的guard、现金退款整数规则与审批流程、journal适用范围、付款基准改称；路线图与HLD措辞同步；纯设计草案，现行合同仍为人民币单币种，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T07:11:33Z · c5061f59a5e0
+
+按评审修订034：现金退款改为先冻结后退出的状态机（避免转账失败丢币）；拆分recipient/requested_by/maker/approver/transfer_executor并给出权限矩阵；钱包按租户；单人运营仅作内测例外并加审计标记；source_kind与basis_kind允许组合由CHECK枚举并新增manual_unknown；两来源的parent_ref、成对性约束及journal operation_id全局唯一的处理；第四桶retired与账户余额检查的关系及需同步的journal kind校验；新增冻结前阻断项与评审逐条状态；路线图状态改为设计草案；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T07:12:38Z · 414805b4f63e
+
+034补充已核对的wallet_event_valid封闭事件类型与wallet_lot_balance_guard不要求held对应预占的事实，并细化需同步修改的guard清单；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T07:27:30Z · 8d19337ca772
+
+对照现状校验033与034并修订：034的FIFO排序由SQL guard与Go两处强制、CNY字面量还在函数体、退款冻结改用独立refund_held桶与REFUND_HELD账户而不复用held/HELD、迁移DDL语法与回填、报表补媒体结算分配、移除财务法务冻结条件；033的同池channel唯一实为Go校验而非SQL约束、预占界由逻辑模型profile决定、决策记录改为每次决策一行加有界JSONB；HLD/LLD/路线图同步并新增设计完整度清单；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T07:57:31Z · 7796ca76e1fe
+
+按评审修订034与路线图：路线图5.2的auto预占界统一为逻辑模型profile、能力不足候选在硬过滤排除、路由切换不改变预占上界；034的三元组约束改为receipt与lot各自单表CHECK加wallet_lot_valid（PostgreSQL普通CHECK不能跨表）；统一basis_ref/parent_ref/proof_ref/transfer_ref/fx_note字段职责；D-034-4改为实施阻断并给出A改FIFO合同/B保持严格FIFO/C控制赠送来源时间戳三个方案及已核对的四处排序位置；更正journals.kind白名单实为funding_fact_guard触发器；保留设计可冻结但不代表生产财务验收的边界；纯设计变更
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T08:15:27Z · 1f0da1702362
+
+034裁决D-034-4：同一充值单付费来源先消耗、赠送来源后消耗，沿用严格FIFO不改任何guard，删除原方案A与C；用本机PostgreSQL 16.15实测clock_timestamp在同语句内连续调用有约90%相等、隔一次往返3000对无相等，因此以赠送来源created_at取max(时钟,付费created_at+1微秒)提供确定性保证并在注释、延迟校验触发器和并发测试三处固定；新增客户余额构成展示（付费/赠送/其他之和等于可用余额）及前端来源类型校验放开；D-034-10待确认；路线图同步；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T08:52:07Z · e5cd342d721c
+
+034按产品裁决修订：现金退款额取min(按当前币价,按原付款比例)并用20万用例对拍精确分数验证、方案A存在退款再充值套利而B净收益为0；新增追加式币价版本表(按币种、审批、不得回溯、调价预览)并让paid来源记录买入币价版本；全额退款由系统填币数且同一来源一张未完成单(部分唯一索引)；弃用累计取整公式与productvalue；单人运营开关默认开启并逐处核对需修改的role()精确匹配、自审拒绝、funding.go授权SQL、funding_journal_valid及两个CHECK；赠送币到期后置且不预留字段；新增客户自助申请表；路线图与HLD同步；纯设计变更，无源码、迁移或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-11T11:54:01Z · 5b69cecc91af
+
+update 034 virtual coin decisions: paid-first FIFO, admin-controlled single-operator switch, B refund rule with MVP rate-adjustment deferral
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2141 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

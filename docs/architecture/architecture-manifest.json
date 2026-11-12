@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-10T15:20:12Z",
-  "review_reason": "合入 main 的四阶段路线与规格 029–033，并保留当前 baiyang 供应商资格探测、CI race/历史候选门禁修复；复核统一架构、源码链接和能力状态",
-  "snapshot_sha256": "e1329d112b878fbbd00c5b0ff1205855bd7c77c1ac707e8a9237f09065910e32",
+  "reviewed_at": "2026-11-11T11:54:01Z",
+  "review_reason": "update 034 virtual coin decisions: paid-first FIFO, admin-controlled single-operator switch, B refund rule with MVP rate-adjustment deferral",
+  "snapshot_sha256": "5b69cecc91afd3ebc1bdb2429df9da2b9d603d63d5ca39081202e11615efecb2",
   "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "bc6eef5365e3ae8636b39974b90be8c466415fc891f506032cab0b67d9b157c2",
+  "history_sha256": "197233bd9f71cea0d2c5328d3c1729c2dacd7015684f4c8a6ca4378735d60143",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "4601cace233c5a496f32f97455061c77036c8c3b4d93eaaf8c29cdd9e32c458d"
+      "sha256": "d015829d4a42775aef1c19e8a3dc68e6a8029deb5ea66f8cbd2456e43b219b07"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "5d4461ce6bb8afe39701170121ae09b30736a60ae369ae94012d2e1e18de1f20"
+      "sha256": "14609b186685593acd28ed54ee5b20691a588588df4e09113c41943de7f803cd"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "f2d5e196510d39b8fce48fc38da0875307d50828a6a742a482e922a1c4dedee9"
+      "sha256": "95f61c3135c36f22b6c8c27f89a16356f5abe9ba6cb32fdb7b0e8ecd136f2277"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7949,7 +7949,11 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/spec.md",
-      "sha256": "b02b642fb08aa847f3301bd0ec0e8a75c9896846c0f4955ad110994ba947ac56"
+      "sha256": "0bffed10432cac3f0f3952a5936736f477fccfd0558b86a446e017f7315d93ad"
+    },
+    {
+      "path": "specs/034-virtual-coin/spec.md",
+      "sha256": "4bff8371f44938e7e8c8a84c3c1a0a358701e1206c5eb54cfdb2bd12e6a91644"
     },
     {
       "path": "web/.gitignore",
