@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T11:54:01Z",
-  "review_reason": "update 034 virtual coin decisions: paid-first FIFO, admin-controlled single-operator switch, B refund rule with MVP rate-adjustment deferral",
-  "snapshot_sha256": "5b69cecc91afd3ebc1bdb2429df9da2b9d603d63d5ca39081202e11615efecb2",
-  "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "197233bd9f71cea0d2c5328d3c1729c2dacd7015684f4c8a6ca4378735d60143",
+  "reviewed_at": "2026-11-12T08:26:47Z",
+  "review_reason": "Align the New API capability roadmap with the 0-stage external-channel and licensed source-integration strategy.",
+  "snapshot_sha256": "2b831c9596faf45d8807993cb7df9f9b7d5f5bd561eaca9c173d99069b574dae",
+  "architecture_sha256": "b76bd236944b3a1f5fc44f74a211f064519bf1385a52ad0487c83a085c0549da",
+  "history_sha256": "79f00c9e64aaf4c75ba172f35b2f24452674b9b3747fdbfc43164ea9a9709cee",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "725c33eb6e11fd838161e0608e3eaa9d26c73d33be6fd182bb864124a15042c7"
+      "sha256": "7afe9d544ba5e9c46b51bd97d401a43fc18944553bfbdfeb45e285232ece7170"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -149,7 +149,7 @@
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
-      "sha256": "fe3dfcb8221be9c29aea8fd4d2209002bff129e78219cfe46f60b6d35e590b6b"
+      "sha256": "9cbdf508693c8c75d895b02ff79c365bf15487c980800b91f65f970274d1be9f"
     },
     {
       "path": "docs/decisions/ADR-002-implementation-refinements.md",
@@ -169,15 +169,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "d015829d4a42775aef1c19e8a3dc68e6a8029deb5ea66f8cbd2456e43b219b07"
+      "sha256": "8c98597e7e1f042c46b7e04a4d500b0f60ce5138406da68aa2bce4364f7f48eb"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "14609b186685593acd28ed54ee5b20691a588588df4e09113c41943de7f803cd"
+      "sha256": "1ecbae889dd06a6fa20c9c73a2e6db1bb067b5b0d85f78be1925ca1ce70c8a9d"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "1e82c537775eae8e83e4a4f85bb7a6103066469df9569d1fd588d1122ccc1d02"
+      "sha256": "5abc7c516df87f3d49154f8a16f2481df86b36eda2bba788753dec610c369634"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -197,7 +197,7 @@
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "029868c42e3260e173cda64136afdb4564e049bb2b526be06e5b70d3adaf35bc"
+      "sha256": "585cde9ae1af3b941bf3558ea1246c4a415524ef519fcb1a44f945022c35c2da"
     },
     {
       "path": "docs/design/overview.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "95f61c3135c36f22b6c8c27f89a16356f5abe9ba6cb32fdb7b0e8ecd136f2277"
+      "sha256": "0fd7fc6a6a695b130e985dea94befb288b152830177798ff302922d783dd8750"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -217,7 +217,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "05bcc23dfb3d48e7a71b1ab32df9af056f0933521faa5c2c41a4e6162f84f9d6"
+      "sha256": "30ac6183e46c97b0f24a4bf802f0b6faaa751fedbfd24d08eb71b55634bd3918"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -230,6 +230,10 @@
     {
       "path": "docs/design/self-service-payments.md",
       "sha256": "f7ee1bccdeb6a7600d8592e7b8a3a86f30af4d07c0ff366bf9b3983ebc31bd45"
+    },
+    {
+      "path": "docs/design/upstream-integration-plan.md",
+      "sha256": "2d014aac465bce3dab8ac54f611fc47b83fb80cfecbeea3eb01d5bc5cb8fac42"
     },
     {
       "path": "docs/runbooks/backup-restore.md",
@@ -7949,11 +7953,11 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/spec.md",
-      "sha256": "0bffed10432cac3f0f3952a5936736f477fccfd0558b86a446e017f7315d93ad"
+      "sha256": "b02b642fb08aa847f3301bd0ec0e8a75c9896846c0f4955ad110994ba947ac56"
     },
     {
-      "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "4bff8371f44938e7e8c8a84c3c1a0a358701e1206c5eb54cfdb2bd12e6a91644"
+      "path": "specs/034-external-upstream-integration/spec.md",
+      "sha256": "d3ee479b0120725d3e463476e57451175f79fe762ac032c36a834f2e12c7b793"
     },
     {
       "path": "web/.gitignore",

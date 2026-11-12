@@ -102,7 +102,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 | idempotency_records / recovery_jobs | tenant_id, operation, key, request_hmac, resource_id；唯一作用域；恢复任务独立认领并先提交，不能倒置资金锁顺序 |
 | models / model_capability_versions | id, public_name 唯一, context_limit, output_limit, supported_features, enabled；请求保存能力版本 |
 | tenant_model_grants / member_model_grants / key_model_grants | 显式授权；空集合拒绝，allow_all 须明确标志；Key 有效权限再受所属成员授权约束 |
-| channels / channel_versions / channel_credentials | 平台域channel id及可变停用状态；不可变版本固定provider、base_url、network_profile、capability_profile、data_region、region_evidence_ref与credential_version引用；凭据存ciphertext/nonce/key_version及撤销状态，秘密不进快照/客户API |
+| channels / channel_versions / channel_credentials | 平台域channel id及可变停用状态；不可变版本固定`channel_kind`（`direct`/`new_api`/`sub2api`）、`integration_mode`（`external_relay`/`embedded_adapter`/`migrated_capability`）、provider/upstream_service、base_url、network_profile、capability_profile、data_region、region_evidence_ref与credential_version引用；凭据存ciphertext/nonce/key_version及撤销状态，秘密不进快照/客户API |
 | tenant_region_policies / key_region_policies | tenant_id、key_id、allowed_regions、revision；平台最大地域集合内再收紧，下层未配置表示继承，显式空集合表示拒绝；成员限制首版仅模型授权 |
 | model_bindings | route_policy_version_id, model_id, channel_id, channel_version_id, upstream_model, priority, weight, max_inflight；随策略版本不可变，版本内候选唯一 |
 | route_policy_versions / active_route_policies | model_id, revision, max_attempts, total_timeout_ms, retry_after_cap_ms, allowed_regions；不可变版本；活动指针以expected revision原子切换 |
@@ -124,6 +124,16 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 跨租户关系通过 `(tenant_id,id)` 唯一键与复合外键保证，例如 `request_records(tenant_id,key_id)` 指向 `api_keys(tenant_id,id)`。平台共享渠道通过单独的模型绑定引用，不借用“tenant_id 为空”等于全局可见的隐式规则。所有客户查询仍必须带有效 tenant_id；外键不能替代查询授权。
 
 建议索引：请求 `(tenant_id, created_at DESC, id)`；尝试 `(request_id, sequence)`；未完结预占 `(status, deadline)`；流水 `(tenant_id, created_at DESC, id)`；审计 `(target_type,target_id,created_at)`。模型、渠道、价格和流水历史使用停用/版本化，不级联删除财务引用。
+
+### 4.1 外部上游 channel 合同
+
+`new_api` 和 `sub2api` 是 aigate 的 channel 类型，不是第二套客户商业域。`channel_version` 还要固定 `qualification_status`、`source_ref`、`license_ref`、`modified_ref`、`downstream_retry_contract` 和 `cost_evidence_ref`；这些字段用于发布门禁和审计，不能由运行时从下游模型列表临时推断。
+
+`external_relay` 只表示请求经内部网络转发到下游网关；`embedded_adapter` 表示协议/计量适配器已经在 aigate 进程内；`migrated_capability` 表示某个能力已完成切流，但未迁移能力仍可留在原 channel。三种模式可以同时存在于不同 profile，均引用同一 `model_bindings`、`upstream_attempts`、cost snapshot 和统一 settlement。
+
+下游返回值至少要能映射为 `confirmed_final`、`provisional`、`missing` 或 `conflicting` usage，并区分 `not_sent`、`rejected_before_processing`、`processed_or_unknown`。只拿到 HTTP 200 或 `/models` 列表不能发布可售 profile。下游账号池的局部重试只形成一个 aigate channel attempt；若下游无法证明未消费，aigate 不跨 channel 重放。
+
+源码复用不是实现阻塞项。若 `embedded_adapter` 或 `migrated_capability` 直接使用上游源码，组件目录必须保留 LICENSE/NOTICE、来源提交、修改记录和适用的源码提供路径；这类元数据随 `channel_version` 发布，不进入客户 API。
 
 ## 5. 资金模型与计价
 
@@ -299,17 +309,17 @@ stateDiagram-v2
 
 ## 8. 路由、健康与重试
 
-本节描述文本协议的现行路由，属于第一阶段。媒体、异步任务和 Realtime 不经过 `routing.Plan`，见本文末“文本与媒体的结构边界”。
+本节描述文本协议的现行路由，属于 0/第一阶段。媒体、异步任务和 Realtime 不经过 `routing.Plan`，见本文末“文本与媒体的结构边界”。
 
-候选过滤顺序：模型授权 → 能力/地域/usage profile 匹配 → binding/channel 启用 → 熔断/健康 → 可用并发。每次从尚未尝试的有效候选选择最高优先级池，在池内按正权重随机；主池无剩余候选才降至下一优先级。请求保存route_revision，attempt关联不可变binding的priority/weight与channel/credential版本，平台可查询实际尝试及每个已准入attempt的候选选择/排除理由。未准入attempt的完整失败池解释仍未持久化，旧attempt不补造历史理由；该解释面为部分完成。全部无可用候选快速返回503，不无限排队；不能为了满足重试次数重用已尝试channel。
+候选过滤顺序：模型授权 → 能力/地域/usage profile 匹配 → binding/channel 启用 → 熔断/健康 → 可用并发。每次从尚未尝试的有效候选选择最高优先级池，在池内按正权重随机；候选可以是直接供应商、New API 或 Sub2API channel。主池无剩余候选才降至下一优先级。请求保存route_revision，attempt关联不可变binding的priority/weight与channel/credential版本，平台可查询实际尝试及每个已准入attempt的候选选择/排除理由。未准入attempt的完整失败池解释仍未持久化，旧attempt不补造历史理由；该解释面为部分完成。全部无可用候选快速返回503，不无限排队；不能为了满足重试次数重用已尝试channel。
 
-首版每请求最多两次尝试，第二次只能选择同逻辑模型兼容候选。以下可重试：传输能证明 HTTP 请求未写出；或渠道契约明确该错误为未处理、无消费（如已验证的限流拒绝）。普通 5xx、发送后读超时、连接重置、未知消费默认不可透明重试；“没收到首个字节”不足以证明安全。
+首版每请求最多两次尝试，第二次只能选择同逻辑模型兼容候选。以下可重试：传输能证明 HTTP 请求未写出；或渠道契约明确该错误为未处理、无消费（如已验证的限流拒绝）。普通 5xx、发送后读超时、连接重置、未知消费默认不可透明重试；“没收到首个字节”不足以证明安全。New API/Sub2API 可以在 channel 内轮换账号，但必须把最终 usage、错误和可能已消费标志汇总给 aigate；下游局部重试不增加客户 attempt 预算。
 
 attempt预算覆盖Gateway、适配器、SDK、HTTP客户端和外层反向代理，不能每层各重试两次。首版生成POST使用无自动重放的客户端配置，禁用SDK/Transport可配置的隐式重试、重定向与代理重试；不透传客户 `Idempotency-Key` 使底层擅自将生成POST视为可重试。每次重新派发生成请求都先取得统一attempt额度并持久化；拨号失败数另计，不把一次拨号等同一次供应商消费。必须用真实HTTP Mock与失效连接池回归核实库实际行为，不能仅检查配置名。
 
 策略配置独立版本化，首版持久契约为 `route_policy={model_id, revision, bindings[]}`。运行限制固定为 `max_attempts=2,total_timeout_ms=300000,retry_after_cap_ms=2000`，尚无逐策略修改这些限制的入口；binding保存priority、weight、channel_id与并发上限。允许重试的状态码集合必须与已验证渠道profile的“无消费拒绝”集合取交集，不能让管理员任填5xx就绕过资金安全。请求保留 `attempted_channel_ids` 防止同一逻辑调用循环fallback；重试等待遵守总deadline和ctx取消。不实现递归策略DSL或任意脚本插件。
 
-配置发布遵循“完整构建→校验→持久不可变版本→CAS切换活动指针”。校验拒绝空候选、重复channel（即使upstream_model不同也不允许）、悬空引用、非正权重/并发、非法超时和能力/地域不匹配；旧 revision 并发提交返回409。停服通过显式模型/channel状态完成，不发布空池代替停服。读取者只获取一个完整 revision；该版本引用不可变channel_version，固定endpoint、provider、地域、profile及credential版本引用，不能在下次attempt临时读取新的base_url；凭据值不入快照。更新渠道需要新建版本并发布引用它的新策略，旧引用在在途请求结束前保留，但撤销凭据可立即阻止后续准入。历史配置回滚也需重新校验并发布新 revision，不能绕过当前安全限制。
+配置发布遵循“完整构建→校验→持久不可变版本→CAS切换活动指针”。校验拒绝空候选、悬空引用、非正权重/并发、非法超时和能力/地域不匹配；允许同一 channel 的不同物理模型由第三阶段合同明确建模，不再用临时字符串规避。旧 revision 并发提交返回409。停服通过显式模型/channel状态完成，不发布空池代替停服。读取者只获取一个完整 revision；该版本引用不可变channel_version，固定endpoint、provider、地域、profile及credential版本引用，不能在下次attempt临时读取新的base_url；凭据值不入快照。更新渠道需要新建版本并发布引用它的新策略，旧引用在在途请求结束前保留，但撤销凭据可立即阻止后续准入。历史配置回滚也需重新校验并发布新 revision，不能绕过当前安全限制。
 
 硬约束为平台限制∩租户限制∩成员/Key授权∩模型能力/地域，先过滤再按优先级/权重选择；性能排序是偏好，不能让不可授权的候选因更快而复活。每次 attempt 再检查紧急停用/撤销与约束收紧，不能沿用旧快照绕过安全收回；中途新增授权或新候选不扩展当前请求快照。新请求Key撤销即拒绝；已接受请求的Key撤销默认不终止已有流，但后续attempt不再派发，按既有计费规则结束。运行时健康与容量是可变准入状态，不修改已发布策略历史。
 
@@ -377,7 +387,7 @@ sequenceDiagram
 
 ### 9.2 第三阶段文本动态路由的合同缺口
 
-本节列出第三阶段（见[四阶段路线 §5](phase-roadmap.md#5-第三阶段openrouter-风格文本动态路由)）实施前必须冻结的合同。合同草案见 [033](../../specs/033-text-dynamic-routing/spec.md)，待开发者评审冻结；在冻结前不改动现有路由、计量或资金代码。下列条目是合同要点，字段、DDL 与接口以 033 为准。
+本节列出第三阶段（见[四阶段路线 §6](phase-roadmap.md#6-第三阶段openrouter-风格文本动态路由)）实施前必须冻结的合同。合同草案见 [033](../../specs/033-text-dynamic-routing/spec.md)，待开发者评审冻结；在冻结前不改动现有路由、计量或资金代码。下列条目是合同要点，字段、DDL 与接口以 033 为准。
 
 **现状**
 
@@ -446,7 +456,7 @@ SSRF 防护覆盖主调用、探测、模型发现：限制 scheme/port、拒绝
 
 - 当前单实例限流重启会重置；单实例本身不满足高可用要求。
 - 持久预占可保住资金边界，不能恢复没有任何外部证据的精确 usage；到期释放策略让平台承担不确定性。
-- 独立实现方向已确认，具体发布许可证未定；不混入上游实现后再宣称独立闭源。
+- 核心账务与客户边界由 aigate 统一，具体发布许可证未定；New API/Sub2API 源码可以在保留 LICENSE/NOTICE、来源提交、修改记录和适用源码提供义务的前提下纳入，不把下游客户钱包或数据库当作 aigate 事实源。
 - 编码切片需要生成并审阅管理 OpenAPI、精确 SQL migrations、Provider fixture、MFA/邀请/会话恢复契约；它们是本 LLD 的后续细化产物，不是假定已经存在。
 - 验收点见 [acceptance](../../specs/001-commercial-mvp/acceptance.md)。
 
@@ -1167,7 +1177,7 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 ## 第一阶段新增能力的合同前置（2026-11-10）
 
-以下两项属于第一阶段（[四阶段路线 §3](phase-roadmap.md#3-第一阶段固定版本-new-api-核心业务能力对齐)），实施前须按 SDD 冻结 spec、DDL 与接口。本节只给出必须满足的约束，不是完整合同。
+以下两项属于第一阶段（[四阶段路线 §4](phase-roadmap.md#4-第一阶段固定版本-new-api-核心业务能力闭环)），实施前须按 SDD 冻结 spec、DDL 与接口。本节只给出必须满足的约束，不是完整合同。
 
 **模型别名**
 
