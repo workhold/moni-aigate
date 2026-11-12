@@ -1,6 +1,6 @@
 # 官方与第三方模型渠道接入计划
 
-**阶段归属：第四阶段。** 按[四阶段路线](phase-roadmap.md)，真实供应商逐一认证、真实 usage 与成本验证属于第四阶段，不是第一至第三阶段的完成条件。第一阶段用 deterministic mock 验证协议、计量、钱包、结算和错误恢复合同，mock 结果不是本页所说的认证。第四阶段之前对真实端点发出的请求只算内测资格探测，不计入任何阶段完成条件。
+**阶段归属：0 阶段接入，第四阶段正式认证。** 按[四阶段路线](phase-roadmap.md)和[上游接入路线](upstream-integration-plan.md)，New API/Sub2API 先作为内部 external relay channel 接入；真实供应商逐一认证、真实 usage 与成本对账仍属于第四阶段。0/第一阶段的 deterministic mock、外部 channel probe 和真实账号探测必须分开记录，任何单次 200 响应都不是可售认证。
 
 2026-11-01。用户确认的目标是 OpenAI/Codex、Claude、DeepSeek、Gemini、GLM 等官方模型，并可接入硅基流动等第三方平台。本页固定接入与验收范围，不宣布任何正式渠道已经认证；当前实现的六种协议及本地验收见[统一架构](../architecture/README.md)，底层合同见[Provider](../../specs/001-commercial-mvp/contracts/provider.md)。
 
@@ -12,10 +12,12 @@
 | Google Gemini | Gemini原生generateContent / streamGenerateContent | 模型版本、候选与thinking用量、聚合硬界、原生终态；工具/媒体另片 | 已有无状态纯文本实现；真实profile待验 |
 | 智谱 GLM | 先评估OpenAI-compatible Chat | 当前官方endpoint/鉴权、工具/推理扩展、流式用量、缓存与硬界 | 有兼容协议接缝；具体兼容范围待验 |
 | 硅基流动及其他第三方平台 | 按该平台实际端点选择兼容profile | 平台自己的模型ID/版本、用量及采购报价、限流、无消费证据；同名模型不能继承官方渠道认证 | 可建独立渠道/采购账户；具体模型逐项认证 |
+| New API（内部上游） | 先接入其 OpenAI-compatible Chat/Responses/SSE 接缝 | 下游 endpoint、模型映射、usage 终态、账号池局部重试、错误/未知消费、采购成本；不能把下游客户余额或模型列表当 aigate 事实 | 作为 `channel_kind=new_api` 的 external relay；连通性和单 profile probe 可做 0 阶段证据，正式可售 profile 仍逐项验收 |
+| Sub2API（内部上游） | 先接入其 OpenAI-compatible Chat/Responses/SSE 接缝 | 同上；另核下游聚合模型的真实计费、模型别名和余额耗尽语义；不同上游账号不得混成一个成本身份 | 作为 `channel_kind=sub2api` 的 external relay；可与 New API 并行部署，不能共享数据库或客户结算 |
 
-一个对外模型可以绑定不同渠道的明确上游模型名。每个绑定单独关联不可变能力profile、采购报价、生效版本和采购账户；相同对外名称不合并供应商身份或收费语义。运行时先做权限、协议能力、地域、状态、采购预算和报价上限过滤，再在最高优先级内按既有成本策略调度；不跨协议静默转换，也不因渠道返回错误就重放可能已消费的请求。[018成本选路](../../specs/018-cost-aware-routing/spec.md)、[019共享采购预算](../../specs/019-procurement-accounts/contract.md)已提供这些接缝。
+一个对外模型可以绑定不同渠道的明确上游模型名。每个绑定单独关联不可变能力profile、采购报价、生效版本和采购账户；相同对外名称不合并供应商身份或收费语义。运行时先做权限、协议能力、地域、状态、采购预算和报价上限过滤，再在最高优先级内按既有成本策略调度；New API/Sub2API 的内部账号池是下游局部选择，不能改变 aigate 的 route revision、客户售价或结算身份。不跨协议静默转换，也不因渠道返回错误就重放可能已消费的请求。[018成本选路](../../specs/018-cost-aware-routing/spec.md)、[019共享采购预算](../../specs/019-procurement-accounts/contract.md)和[035接入合同](../../specs/035-external-upstream-integration/spec.md)已提供这些接缝。
 
-每个具体profile按同一顺序交付：官方合同取证 → 精确请求/响应/计量与失败合同 → 本地协议和商业fixture → 隔离凭据下的真实请求/取消/断流及供应商用量对账 → 冻结可售配置。缓存、reasoning、工具、媒体等只要存在额外非零收费维度，就须进入完整客户/采购计量合同；不能以“兼容OpenAI”把未知费用算成0。所有报价使用平台已登记的CNY采购合同，网页外币标价不自动汇率换算。
+每个具体profile按同一顺序交付：来源/许可证与服务边界登记 → 官方或下游合同取证 → 精确请求/响应/计量与失败合同 → 本地协议和商业fixture → 隔离凭据下的真实请求/取消/断流及供应商用量对账 → 冻结可售配置。New API/Sub2API 的 external relay 还要单独记录下游账号池重试和未知消费映射；进入 `embedded_adapter` 或 `migrated_capability` 时保留相同证据。缓存、reasoning、工具、媒体等只要存在额外非零收费维度，就须进入完整客户/采购计量合同；不能以“兼容OpenAI”把未知费用算成0。所有报价使用平台已登记的CNY采购合同，网页外币标价不自动汇率换算。
 
 本次通过Chrome实际读取[OpenAI官方Code generation指南](https://developers.openai.com/api/docs/guides/code-generation)，该页将Codex编码agent与在应用中通过Responses API使用编码模型分别说明。因此接入目标以账号实际可用的官方API模型为准；完整Codex agent会话、执行环境与工具生命周期需要单独合同，不能从现有文本Responses转发推导已支持。本文不固化易变的“最新模型”或默认价格，不用文档读取代替真实账号/费用认证。
 

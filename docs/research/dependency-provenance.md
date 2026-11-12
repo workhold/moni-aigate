@@ -1,8 +1,17 @@
 # Dependency provenance and licenses
 
-Checked: 2026-10-30. Sources: go.mod/go.sum, `go list -m -json all`, LICENSE files from downloaded Go modules, web/package-lock.json, and installed npm package.json metadata. This inventory is not a vulnerability scan or a complete legal review.
+Checked: 2026-11-12. Sources: go.mod/go.sum, `go list -m -json all`, LICENSE files from downloaded Go modules, web/package-lock.json, installed npm package.json metadata, and the planned New API/Sub2API integration records. This inventory is not a vulnerability scan or a complete legal review.
 
-The application, migrations, console and tests were written independently against the moni-aigate SDD contracts. No competitor implementation, UI, logo or assets from New API, One API, 1Panel Gateway, LiteLLM or Bifrost were imported, forked or vendored. Competitor source was read for documented design research; research references retain pinned source links. General-purpose third-party libraries below remain subject to their own licenses. The owner has not selected the license for moni-aigate itself.
+The application, migrations, console and tests currently present in this checkout were written against the moni-aigate SDD contracts. New API/Sub2API are now allowed as external channels and may be imported, forked or vendored in later migration slices when their source and license records are added. Any imported component must retain its original LICENSE/NOTICE, source commit and local modification record; this inventory is the gate for that addition. General-purpose third-party libraries below remain subject to their own licenses. The owner has not selected the license for moni-aigate itself.
+
+## Planned upstream components
+
+| Component | Current mode | Source/commit record | License/NOTICE handling |
+|---|---|---|---|
+| New API | External relay channel (`channel_kind=new_api`) | [official repository](https://github.com/QuantumNous/new-api); exact commit is frozen per qualification slice | Preserve upstream LICENSE, NOTICE, UI attribution and applicable AGPL source-offer obligations before vendoring or distributing a modified service |
+| Sub2API | External relay channel (`channel_kind=sub2api`) | [official repository](https://github.com/Wei-Shaw/sub2api); exact commit is frozen per qualification slice | Preserve upstream license/NOTICE and any network-service/source-disclosure obligations before vendoring or distributing a modified service |
+
+The rows above are planned provenance entries, not proof that either repository is currently part of the aigate binary. A future `third_party/` or component directory must add the exact checkout, checksum, license files and modification log before source integration is merged.
 
 ## Direct dependencies
 

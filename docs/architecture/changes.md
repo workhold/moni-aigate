@@ -6073,3 +6073,48 @@ update 034 virtual coin decisions: paid-first FIFO, admin-controlled single-oper
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-12T11:45:15Z · e02d8d0df092
+
+merge external upstream integration roadmap while preserving the merged virtual-coin architecture history
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2143 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/decisions/ADR-001-source-strategy.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/provider-qualification-plan.md`
+- added `docs/design/upstream-integration-plan.md`
+- added `specs/035-external-upstream-integration/spec.md`
+
+</details>
+
+## 2026-11-12T11:56:39Z · 3018c5a08242
+
+rename external upstream contract to 035 to preserve the existing 034 virtual-coin specification
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2143 个源文件；本次 1 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/provider-qualification-plan.md`
+
+</details>
+
+## 2026-11-12T12:03:19Z · dae22220d29a
+
+align the HLD link label with the renumbered external upstream contract
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2143 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+
+</details>

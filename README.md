@@ -3,7 +3,7 @@
 [![CI](https://github.com/workhold/moni-aigate/actions/workflows/ci.yml/badge.svg)](https://github.com/workhold/moni-aigate/actions/workflows/ci.yml)
 
 面向对外 API 经营的自托管 AI 网关，将模型接入、客户授权、渠道采购、计费结算和运营控制台放在同一个平台中。
-参考 New API / One API 的业务设计与 1Panel 的部署体验，采用 Go + PostgreSQL + Vue 3 独立实现，按 SDD 持续交付。
+参考 New API / One API 的业务设计与 1Panel 的部署体验，核心账务与客户边界采用 Go + PostgreSQL + Vue 3 实现，并允许按许可证把上游组件纳入同一仓库，按 SDD 持续交付。
 
 **当前版本：`v0.1.0-dev`，持续开发中。核心商业链路已完成限定本地验收；正式收款、生产部署与真实供应商认证尚未完成。**
 
@@ -264,7 +264,7 @@ make verify-mvp
 ## SDD 与架构同步
 
 每项行为先补齐规格、状态机、接口/数据合同、故障与验收边界，再修改实现。
-主要入口：[四阶段路线](docs/design/phase-roadmap.md)、[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
+主要入口：[四阶段路线](docs/design/phase-roadmap.md)、[New API 与 Sub2API 上游接入路线](docs/design/upstream-integration-plan.md)、[035 接入合同](specs/035-external-upstream-integration/spec.md)、[商业 MVP 规格](specs/001-commercial-mvp/spec.md)、[HLD](docs/design/HLD.md)、[LLD](docs/design/LLD.md)、[能力路线图](docs/design/new-api-roadmap.md)、[交付计划](docs/design/delivery-plan.md)。
 
 MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优先完成架构与业务能力：新功能以当前模型为准，开发库必要时重建，不承诺未发布版本的数据兼容，不增加新旧双写或自动回退。隔离历史核验候选暂不扩展，不作为经营功能交付的前置条件。
 
@@ -280,10 +280,11 @@ MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优
 
 阶段顺序、范围和完成定义见[四阶段路线](docs/design/phase-roadmap.md)，[交付计划](docs/design/delivery-plan.md)页首给出当前工作顺序。
 
-1. **第一阶段：固定版本 New API 核心业务能力对齐。** 对齐 New API 固定提交 `e449cc7` 的公开产品能力，不追赶其后续版本，也不复制其代码、数据库或内部 quota。包含文本基础渠道路由、共享钱包与结算、模型别名、分组倍率录入；协议、媒体、任务与 Realtime 使用 deterministic mock 验收。不包含真实供应商认证、订阅/套餐、签到与分佣。
-2. **第二阶段：参考 Bifrost 的文本数据面。** 低延迟、失败分类与故障切换、预算治理、缓存设计和同条件压测；路由、计量、结算、钱包不进入插件。
-3. **第三阶段：参考 OpenRouter 公开产品语义的文本动态路由。** 同模型供应商切换、同档位物理模型切换、跨档位 auto；结合能力、质量门槛、延迟、成功率、成本、会话粘性和最低毛利评分，路由决策可记录与回放。OpenRouter 是商业产品，仅参考其公开文档。
-4. **第四阶段：真实供应商与生产。** 逐供应商认证、真实 usage 与成本、正式支付、1Panel、生产部署与性能优化。
+0. **0 阶段：统一部署与外部上游接入。** Compose/1Panel 编排 aigate、New API、Sub2API 和独立数据库；公网只暴露 aigate。三者通过 channel 合同连接，aigate 统一客户鉴权、售价、钱包、最终路由和结算。
+1. **第一阶段：固定版本 New API 核心业务闭环。** 对齐 New API 固定提交 `e449cc7` 的公开产品能力，能力可先经 New API/Sub2API 外部 channel 提供，再按 profile 逐项迁入 aigate；不共享下游客户/钱包数据库。包含文本基础渠道路由、共享钱包与结算、模型别名、分组倍率录入；协议、媒体、任务与 Realtime 使用 deterministic mock 验收。
+2. **第二阶段：参考 Bifrost 的文本数据面。** 低延迟、失败分类与故障切换、预算治理、缓存设计和同条件压测；先统一 aigate 合同，再逐项内收下游实现。
+3. **第三阶段：参考 OpenRouter 公开产品语义的文本动态路由。** 在 direct、New API、Sub2API channel 之间按能力、质量门槛、延迟、成功率、成本、会话粘性和最低毛利评分，路由决策可记录与回放。OpenRouter 是商业产品，仅参考其公开文档。
+4. **第四阶段：真实供应商与生产。** 逐供应商认证、真实 usage 与成本、正式支付、1Panel、生产部署、性能优化和已迁移能力的下游退役。
 
 前三阶段的渠道与动态路由只覆盖文本；图片、TTS、视频任务和 Realtime 保持单 profile、单 adapter，与文本共享钱包和账务，但使用独立的请求/预占/attempt/结算表。
 
@@ -309,7 +310,8 @@ MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优
 
 | 项目 | 主要参考方向 |
 | --- | --- |
-| [One API](https://github.com/songquanpeng/one-api) / [New API](https://github.com/QuantumNous/new-api) | 统一接口、渠道、客户/令牌、计价与预扣流程 |
+| [One API](https://github.com/songquanpeng/one-api) / [New API](https://github.com/QuantumNous/new-api) | 统一接口、渠道、客户/令牌、计价与预扣流程；可作为外部 channel 或按许可证逐项内收 |
+| [Sub2API](https://github.com/Wei-Shaw/sub2api) | 聚合上游账号池、模型映射、OpenAI-compatible relay；先作为内部 external channel，再逐项迁移能力 |
 | [ChatAPI](https://github.com/ai365vip/chat-api) | 自托管令牌、渠道治理与简化运营流程 |
 | [Moni-AI（Gitee）](https://gitee.com/moni-ai/moni-ai) | 动态调度研究候选；给定地址未取得可核查源码，能力与许可待验证 |
 | [1Panel-Gateway](https://github.com/1Panel-dev/1Panel-Gateway) | 公开产品治理与自托管部署；给定固定公开树没有网关业务实现 |
@@ -329,7 +331,6 @@ MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优
 
 ## License 与来源
 
-**项目源码发布许可证尚未决定，当前没有选定的开源许可证。** 第三方依赖各自遵循其许可证。
-本项目采用独立编写的代码、UI 与测试，不是 New API / One API 或 1Panel 的 fork，也不代表官方合作。
-团队已阅读上游源码，不宣称经过法律意义上的 clean-room 认证；独立重写本身不能替代来源与许可核查。
-路线差异、复用边界和来源记录见 [ADR-001](docs/decisions/ADR-001-source-strategy.md)与[依赖来源清单](docs/research/dependency-provenance.md)。
+**项目源码发布许可证尚未决定，当前没有选定的开源许可证。** 第三方依赖和纳入的上游组件各自遵循其许可证。
+本项目可以在遵守适用许可证、NOTICE、来源和源码提供义务的前提下，把 New API、Sub2API 或其他开源组件拉入同一仓库开发；核心账务、客户钱包、最终路由和客户 UI 仍由 moni-aigate 统一定义，不共享下游数据库。
+源码复用必须保留原始 LICENSE/NOTICE、来源提交、版权声明和本地修改记录；发布检查按组件逐项确认 copyleft、通知和源码提供方式。路线、复用边界和来源记录见 [ADR-001](docs/decisions/ADR-001-source-strategy.md)、[上游接入路线](docs/design/upstream-integration-plan.md)与[依赖来源清单](docs/research/dependency-provenance.md)。

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-11T11:54:01Z",
-  "review_reason": "update 034 virtual coin decisions: paid-first FIFO, admin-controlled single-operator switch, B refund rule with MVP rate-adjustment deferral",
-  "snapshot_sha256": "5b69cecc91afd3ebc1bdb2429df9da2b9d603d63d5ca39081202e11615efecb2",
-  "architecture_sha256": "ca75cb571673ad026db496d512ea8831036b30e962416a04ecd857994ca32082",
-  "history_sha256": "197233bd9f71cea0d2c5328d3c1729c2dacd7015684f4c8a6ca4378735d60143",
+  "reviewed_at": "2026-11-12T12:03:19Z",
+  "review_reason": "align the HLD link label with the renumbered external upstream contract",
+  "snapshot_sha256": "dae22220d29ae6b5ee9edc3af93cf742eab334e20f177dc71ca7b5e28a5a4069",
+  "architecture_sha256": "fe82a65de18b263e537c32990a9ba27582a40d6cf438cc5200d2900da1a427f5",
+  "history_sha256": "d4ce5654816f0da8742e712731a4a703668cc7c2866d4b059e96b25d92572788",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "725c33eb6e11fd838161e0608e3eaa9d26c73d33be6fd182bb864124a15042c7"
+      "sha256": "ff7579094cfc117ec342b6c91c26c446b3dbd28bf15a54424d83b5c8ffd31c54"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -149,7 +149,7 @@
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
-      "sha256": "fe3dfcb8221be9c29aea8fd4d2209002bff129e78219cfe46f60b6d35e590b6b"
+      "sha256": "9cbdf508693c8c75d895b02ff79c365bf15487c980800b91f65f970274d1be9f"
     },
     {
       "path": "docs/decisions/ADR-002-implementation-refinements.md",
@@ -169,15 +169,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "d015829d4a42775aef1c19e8a3dc68e6a8029deb5ea66f8cbd2456e43b219b07"
+      "sha256": "765fcb7b1efe73162008804b18e752085331c4454a2329b266071dce324da60b"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "14609b186685593acd28ed54ee5b20691a588588df4e09113c41943de7f803cd"
+      "sha256": "9d612ea62803a91371d184ca6c12776e52c94c49ac0fcb470f82587d7094735c"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "1e82c537775eae8e83e4a4f85bb7a6103066469df9569d1fd588d1122ccc1d02"
+      "sha256": "79e8d8ad34398c76bf57835db269ccf7998047528737ca6a275056a94b5530a1"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -197,7 +197,7 @@
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "029868c42e3260e173cda64136afdb4564e049bb2b526be06e5b70d3adaf35bc"
+      "sha256": "585cde9ae1af3b941bf3558ea1246c4a415524ef519fcb1a44f945022c35c2da"
     },
     {
       "path": "docs/design/overview.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "95f61c3135c36f22b6c8c27f89a16356f5abe9ba6cb32fdb7b0e8ecd136f2277"
+      "sha256": "d1422d264009c458005066a7a6e96d73edc245136700c0c3e253164aca323d9d"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -217,7 +217,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "05bcc23dfb3d48e7a71b1ab32df9af056f0933521faa5c2c41a4e6162f84f9d6"
+      "sha256": "8149d346653266b0be59ea9d7af733be2892587134d1a1f100718cf93fa9703b"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -230,6 +230,10 @@
     {
       "path": "docs/design/self-service-payments.md",
       "sha256": "f7ee1bccdeb6a7600d8592e7b8a3a86f30af4d07c0ff366bf9b3983ebc31bd45"
+    },
+    {
+      "path": "docs/design/upstream-integration-plan.md",
+      "sha256": "2d014aac465bce3dab8ac54f611fc47b83fb80cfecbeea3eb01d5bc5cb8fac42"
     },
     {
       "path": "docs/runbooks/backup-restore.md",
@@ -7954,6 +7958,10 @@
     {
       "path": "specs/034-virtual-coin/spec.md",
       "sha256": "4bff8371f44938e7e8c8a84c3c1a0a358701e1206c5eb54cfdb2bd12e6a91644"
+    },
+    {
+      "path": "specs/035-external-upstream-integration/spec.md",
+      "sha256": "b9a44f7a7577ebefc877a0a85f904d8560edf49c723c59b44be44134eb11d10c"
     },
     {
       "path": "web/.gitignore",
