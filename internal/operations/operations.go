@@ -80,15 +80,18 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
  REVOKE UPDATE,DELETE ON %s FROM %s;
  GRANT UPDATE(label,state,revision,last_operation_id) ON %s TO %s;
  REVOKE UPDATE,DELETE ON %s FROM %s;
+ GRANT UPDATE(state,revision,operation_id,retired_at) ON %s TO %s;
+ REVOKE UPDATE,DELETE ON %s FROM %s;
  GRANT UPDATE(name,status,allowed_regions,price_group_id,pricing_revision,pricing_operation_id) ON %s TO %s;
  REVOKE UPDATE ON %s FROM %s;
  GRANT UPDATE(status,billing_status,latest_finalization_id) ON %s TO %s;
- REVOKE ALL ON %s,%s,%s FROM %s;`,
+ REVOKE ALL ON %s,%s,%s,%s FROM %s;`,
 		table("pricing_operations"), table("tenant_pricing_assignments"), qa,
 		table("price_groups"), qa, table("price_groups"), qa,
+		table("model_aliases"), qa, table("model_aliases"), qa,
 		table("tenants"), qa, table("tenants"), qa,
 		table("request_records"), qa, table("request_records"), qa,
-		table("price_groups"), table("pricing_operations"), table("tenant_pricing_assignments"), qp))
+		table("price_groups"), table("model_aliases"), table("pricing_operations"), table("tenant_pricing_assignments"), qp))
 	if e != nil {
 		return e
 	}
