@@ -255,7 +255,7 @@ turn: idle -> reserved -> sending -> receiving -> finalizing -> settled | releas
 
 上游保持SSRF实际IP验证、禁止环境proxy/redirect、受控TLS/headers及无隐式重放。媒体 Content-Type不是信任证明；协议encoder固定生成JSON/multipart/WS，不接受任意下游header/路径拼接。上游错误仅净化成code/class/consumption/Retry-After，正文、URL和凭据不进入响应或日志。
 
-prompt、图像、音频、视频、base64、WS内容、长期Key/ticket不进DB/audit/outbox/trace/localStorage。可以持久task/response安全reference、规范量/率、内容HMAC或受控制品摘要、字节/时长诊断及expiry；不得用自由evidence_ref偷存URL/body。初始实现无媒体持久磁盘缓存；容器内存/反代body/WS超时需与上述限制配套配置，1Panel部署另验。
+prompt、图像、音频、视频、base64、WS内容、长期Key/ticket不进DB/audit/outbox/trace/localStorage。可以持久task/response安全reference、规范量/率、内容HMAC或受控制品摘要、字节/时长诊断及expiry；不得用自由evidence_ref偷存URL/body。初始实现无媒体持久磁盘缓存；容器内存/反代body/WS超时需与上述限制配套配置；1Panel 等面板部署为可选方式，另验。
 
 主进程启动/恢复只能收尾原已提交财务事实与只读查询原task/制品，不能自动创建新的生成attempt。SIGKILL后留prepared可确定not_sent按原规则释放；已提交sending保守unknown，除非有原终态证据。in-memory WS/session消失不证明0费用；数据库turn身份仍可核查。生产部署仍单活，读worker lease不是HA生成许可。
 
@@ -295,7 +295,7 @@ prompt、图像、音频、视频、base64、WS内容、长期Key/ticket不进DB
 | 实时纵向 | 首收费帧前原hold、同session多轮/重复event、混合usage、下一轮失权、边界/背压/断连、终态待结算、进程消失unknown；上游生成计数精确 | SSE测试不证明WS或真实SDK兼容 |
 | 只读/前端 | 当前目录与请求统一单位、角色与采购隔离、task新鲜度/未知状态、WS轮次、026收入一次/全部成本、null毛利、CSV与大整数、桌面/窄屏真实浏览器 | UI成功不证明资金/供应商正确 |
 | 真实供应商 | 隔离最低额度凭据，实际成功/拒绝/取消/断线/usage账单与合同上界交叉认证，安全reference留存；逐profile记录 | 本地fixture不能代替 |
-| 交付/运行 | 单实例真实main故障、完整当前DB/权限/027验收、构建/check、部署资源配置、README/HLD/LLD/统一架构同期更新，集成后只读架构检查 | 单机通过不代表HA或1Panel生产已验收 |
+| 交付/运行 | 单实例真实main故障、完整当前DB/权限/027验收、构建/check、部署资源配置、README/HLD/LLD/统一架构同期更新，集成后只读架构检查 | 单机通过不代表HA或面板/生产环境已验收 |
 
 测试至少覆盖：任一账务副作用失败整体回滚；同source同量去重/异量冲突；两侧mask不同与supplier缺量；客户24h后供应商终态仅更成本；未知提交后原Key重查无新生成；文本两attempt收入一次/成本两次；媒体一个attempt；taskpoll/WS heartbeat不生attempt；价格/来源等待跨期不重定原时间；所有后台恢复路径上游生成调用计数=0。
 

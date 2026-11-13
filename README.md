@@ -2,14 +2,14 @@
 
 [![CI](https://github.com/workhold/moni-aigate/actions/workflows/ci.yml/badge.svg)](https://github.com/workhold/moni-aigate/actions/workflows/ci.yml)
 
-面向对外 API 经营的自托管 AI 网关，将模型接入、客户授权、渠道采购、计费结算和运营控制台放在同一个平台中。
-参考 New API / One API 的业务设计与 1Panel 的部署体验，核心账务与客户边界采用 Go + PostgreSQL + Vue 3 实现，并允许按许可证把上游组件纳入同一仓库，按 SDD 持续交付。
+面向对外 API 经营的 AI 网关，将模型接入、客户授权、渠道采购、计费结算和运营控制台放在同一个平台中。
+参考 New API / One API 的业务设计，核心账务与客户边界采用 Go + PostgreSQL + Vue 3 实现，并允许按许可证把上游组件纳入同一仓库，按 SDD 持续交付。部署由仓库自带的 Compose/脚本完成，1Panel 等面板只是可选的部署环境之一，不构成产品定位或验收前提。
 
 **当前版本：`v0.1.0-dev`，持续开发中。核心商业链路已完成限定本地验收；正式收款、生产部署与真实供应商认证尚未完成。**
 
 [系统架构](docs/architecture/README.md) · [本地开发](docs/runbooks/development.md) · [部署手册](docs/runbooks/deployment.md) · [MVP 状态](docs/verification/mvp-status.md) · [交付计划](docs/design/delivery-plan.md)
 
-快速导航：[特点](#定位与特点) · [能力与协议](#能力状态) · [架构](#架构概览) · [本地启动](#本地启动) · [Docker / 1Panel](#docker-compose--1panel) · [首次配置](#从部署到第一次-api-调用) · [API 示例](#api-示例) · [配置](#常用配置) · [贡献](#反馈与贡献) · [许可](#license-与来源)
+快速导航：[特点](#定位与特点) · [能力与协议](#能力状态) · [架构](#架构概览) · [本地启动](#本地启动) · [Docker Compose](#docker-compose-部署) · [首次配置](#从部署到第一次-api-调用) · [API 示例](#api-示例) · [配置](#常用配置) · [贡献](#反馈与贡献) · [许可](#license-与来源)
 
 ## 定位与特点
 
@@ -43,7 +43,7 @@ moni-aigate 的上游既可以是模型原厂，也可以是其他收费聚合�
 | 应用支付订单 | 仅隔离本地模拟闭环 | 订单、签名通知、独立 worker 和唯一入账已接通；没有正式在线收款能力 |
 | 资金来源与钱包开账 | 已实现，限定本地验收 | 四来源入账、FIFO预占、结算/释放、逆序消费退款、钱包与请求来源明细、平台只读核对；停服owner显式非现金开账。023使用新钱包历史，原路现金退款/拒付尚未交付 |
 | 媒体与实时协议 | 图片/TTS/Video/Realtime 开发链路已接，限定本地验收 | 图片、TTS 与异步 video task 已接 mock provider、当前 media wallet journal、幂等和未知提交保护；图片/TTS inline 结果与异步 task 制品正文已持久化，Realtime 已接单 turn WS 与 PostgreSQL session/turn/event writer。本机 Compose 已实跑五条业务链；真实供应商、浏览器和生产验收仍未完成；[阶段清单](specs/028-unified-metering-media/tasks.md) |
-| 容器、1Panel 与 HA | 单机 Compose 已完成限定本地验收 | 临时 Compose 项目已完成空库迁移/provision/bootstrap、live/ready、app/worker/PostgreSQL 重启验收；1Panel 实装、正式环境和 HA/多活尚未完成 |
+| 容器部署与 HA | 单机 Compose 已完成限定本地验收 | 临时 Compose 项目已完成空库迁移/provision/bootstrap、live/ready、app/worker/PostgreSQL 重启验收；正式环境和 HA/多活尚未完成；1Panel 等面板仅作可选部署环境，不是验收门禁 |
 
 采购报价支持按“渠道 + 精确上游模型”设置独立输入/输出单价与生效版本，不会把客户售价直接当作成本。
 多渠道可绑定同一采购账户共同消耗预算；当前没有供应商真实余额或外部账单自动同步。
@@ -94,10 +94,10 @@ flowchart LR
 | 场景 | 方式 | 准备条件 |
 | --- | --- | --- |
 | 开发与联调 | [源码 / 本地启动](#本地启动) | Go、Node、独立 PostgreSQL 数据库与三个角色 |
-| 自托管试用 | [Docker Compose](#docker-compose--1panel) | Docker Engine、Compose v2、完整源码；镜像构建包含前端 |
-| 1Panel 管理 | [导入编排并配置反向代理](docs/runbooks/deployment.md#首次安装) | 完整源码构建上下文、私有环境配置与可达的代理网络 |
+| 单机部署 | [Docker Compose](#docker-compose-部署) | Docker Engine、Compose v2、完整源码；镜像构建包含前端 |
+| 面板部署（可选） | [在 1Panel 中导入同一 Compose 编排](docs/runbooks/deployment.md#首次安装) | 非必需；1Panel 仅是一种可选部署环境，基本适配即可 |
 
-三种方式运行同一应用。首次安装都须创建管理员、配置渠道与价格、授予客户模型权限并完成核款，之后才可使用 API；未预置可调用的演示模型或固定测试账号。
+以上方式运行同一应用。首次安装都须创建管理员、配置渠道与价格、授予客户模型权限并完成核款，之后才可使用 API；未预置可调用的演示模型或固定测试账号。
 
 ## 本地启动
 
@@ -135,9 +135,9 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 
 首次登录后按下方[首次配置](#从部署到第一次-api-调用)接入模型。详细配置与故障排查见[开发手册](docs/runbooks/development.md)。
 
-## Docker Compose / 1Panel
+## Docker Compose 部署
 
-仓库提供 [Dockerfile](Dockerfile)、[compose.yaml](compose.yaml) 和 [Nginx 示例](deploy/nginx.conf)。当前从源码构建镜像；以下路径已核对配置，容器实际构建/运行与 1Panel 实装尚待目标环境验收。
+仓库提供 [Dockerfile](Dockerfile)、[compose.yaml](compose.yaml) 和 [Nginx 示例](deploy/nginx.conf)，一套 Compose 配置即可完成单机部署。当前从源码构建镜像；以下路径已核对配置，容器实际构建/运行尚待目标环境验收。
 部署主机需要 Docker Engine 与 Compose v2。将完整仓库检出到部署目录，在根目录执行以下命令。`go run` 需要 Go ≥1.26，也可在可信开发机生成私有配置后安全传入部署主机；已有 `.env` 时跳过生成步骤。
 
 先在仓库外准备权限 `0600` 的管理员密码文件，内容为 12–72 字节的一行密码；将示例私有路径替换为实际文件。
@@ -157,7 +157,7 @@ docker compose up -d app
 使用 `docker compose ps` 查看服务状态，启动失败时按 `docker compose logs --tail=100 migrate provision app` 检查迁移、授权与应用日志。`migrate` / `provision` 是一次性任务，正常完成后显示退出状态；`/health/live` 仅说明进程存活。
 
 Compose 为全新数据库卷建立独立角色，按 migrate → provision → app 启动；数据库不映射公网，应用仅绑定宿主机环回端口。已有 PostgreSQL 卷不会因修改 `.env` 自动更换角色密码，密码轮换须同时更新数据库角色与私有配置。
-1Panel 可从“容器 → 编排”导入根 `compose.yaml`，编排目录与 `build: .` 构建上下文须指向完整仓库根目录，包含 Dockerfile、Go/Web 源码和初始化脚本。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理；示例上游 `127.0.0.1:8080` 要求代理能够访问宿主机环回。如果 OpenResty 使用独立容器网络，该地址指向代理容器自身，须先按目标网络确认到应用的可达路径，并保持数据库和应用上游端口不向公网开放；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
+可选：如果部署环境使用 1Panel 面板，可从“容器 → 编排”导入根 `compose.yaml`。这只是可选的部署方式之一，不是部署前提；编排目录与 `build: .` 构建上下文须指向完整仓库根目录，包含 Dockerfile、Go/Web 源码和初始化脚本。确认私有 `.env` 注入和相对路径后，再配置 HTTPS 反向代理；示例上游 `127.0.0.1:8080` 要求代理能够访问宿主机环回。如果 OpenResty 使用独立容器网络，该地址指向代理容器自身，须先按目标网络确认到应用的可达路径，并保持数据库和应用上游端口不向公网开放；详情见[首次安装](docs/runbooks/deployment.md#首次安装)。
 SSE 须关闭代理缓冲和生成 POST 自动重试，显式设置可信代理 CIDR；不要直接信任客户端转发头。
 
 升级须先排空并停止旧实例，再执行迁移/授权后启动新实例。生产配置、密钥轮换、单活与反代约束见[部署手册](docs/runbooks/deployment.md)，恢复演练见[备份恢复](docs/runbooks/backup-restore.md)。
@@ -280,11 +280,11 @@ MVP 前按[单一路径决策](docs/decisions/ADR-005-pre-mvp-single-path.md)优
 
 阶段顺序、范围和完成定义见[四阶段路线](docs/design/phase-roadmap.md)，[交付计划](docs/design/delivery-plan.md)页首给出当前工作顺序。
 
-0. **0 阶段：统一部署与外部上游接入。** Compose/1Panel 编排 aigate、New API、Sub2API 和独立数据库；公网只暴露 aigate。三者通过 channel 合同连接，aigate 统一客户鉴权、售价、钱包、最终路由和结算。
+0. **0 阶段：统一部署与外部上游接入。** Compose/部署脚本编排 aigate、New API、Sub2API 和独立数据库（1Panel 等面板可选导入同一编排）；公网只暴露 aigate。三者通过 channel 合同连接，aigate 统一客户鉴权、售价、钱包、最终路由和结算。
 1. **第一阶段：固定版本 New API 核心业务闭环。** 对齐 New API 固定提交 `e449cc7` 的公开产品能力，能力可先经 New API/Sub2API 外部 channel 提供，再按 profile 逐项迁入 aigate；不共享下游客户/钱包数据库。包含文本基础渠道路由、共享钱包与结算、模型别名、分组倍率录入；协议、媒体、任务与 Realtime 使用 deterministic mock 验收。
 2. **第二阶段：参考 Bifrost 的文本数据面。** 低延迟、失败分类与故障切换、预算治理、缓存设计和同条件压测；先统一 aigate 合同，再逐项内收下游实现。
 3. **第三阶段：参考 OpenRouter 公开产品语义的文本动态路由。** 在 direct、New API、Sub2API channel 之间按能力、质量门槛、延迟、成功率、成本、会话粘性和最低毛利评分，路由决策可记录与回放。OpenRouter 是商业产品，仅参考其公开文档。
-4. **第四阶段：真实供应商与生产。** 逐供应商认证、真实 usage 与成本、正式支付、1Panel、生产部署、性能优化和已迁移能力的下游退役。
+4. **第四阶段：真实供应商与生产。** 逐供应商认证、真实 usage 与成本、正式支付、生产部署、性能优化和已迁移能力的下游退役；1Panel 等面板适配为可选工作，不阻塞阶段收口。
 
 前三阶段的渠道与动态路由只覆盖文本；图片、TTS、视频任务和 Realtime 保持单 profile、单 adapter，与文本共享钱包和账务，但使用独立的请求/预占/attempt/结算表。
 

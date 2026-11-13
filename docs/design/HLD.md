@@ -37,7 +37,7 @@ flowchart TB
     App -->|内部 OpenAI-compatible channel| Sub2API[Sub2API]
     App --> PG[(PostgreSQL)]
     App --> Secret[外部挂载的主密钥]
-    Panel[1Panel] -.->|编排 / TLS / 备份| Edge
+    Panel[1Panel 等面板（可选）] -.->|可选编排 / TLS / 备份| Edge
     Panel -.-> App
     Panel -.-> NewAPI
     Panel -.-> Sub2API
@@ -45,7 +45,7 @@ flowchart TB
     App --> Obs[指标与结构化日志]
 ```
 
-1Panel 是部署和运维入口，moni-aigate 独立运行。不依赖 1Panel 插件源码、SSO 或席位系统，也不把 Compose 兼容等同于已经进入官方应用商店。
+部署和运维入口是仓库自带的 Compose/部署脚本，moni-aigate 独立运行。1Panel 等面板只是可选的部署环境：不依赖其插件源码、SSO 或席位系统，也不把 Compose 兼容等同于已经进入任何官方应用商店。
 
 ## 4. 应用结构与职责
 
@@ -114,7 +114,7 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 | 前端 | Vue 3 + TypeScript + Element Plus | 适合治理/运营表单、表格；是 moni 的选型，并非声称 Gateway 使用相同技术 |
 | 数据库 | PostgreSQL 16+，实施时锁定具体受支持版本 | 唯一资金事实源，事务/行锁/复合外键；首版不支持 SQLite/MySQL |
 | 限流/并发 | 单实例内存令牌桶、分层信号量 | 降低首版运维成本；重启会重置速率窗口，不宣称跨重启严格 RPM |
-| 分发 | 单应用镜像内嵌前端 + PostgreSQL，Compose | 经 1Panel 容器编排管理；固定版本 tag/digest |
+| 分发 | 单应用镜像内嵌前端 + PostgreSQL，Compose/部署脚本 | 固定版本 tag/digest；1Panel 等面板可选导入同一编排 |
 | 可观测 | 结构化日志、Prometheus 格式指标、request_id | 不以用户 ID/Key 为指标标签，避免高基数与泄漏 |
 
 **首版不需要 Redis**：钱与持久化 Key 花费上限全部由 PostgreSQL 原子约束；运行时控制只支持一个实例。多活动实例之前再设计共享限流、健康状态与配置失效机制，不允许先开 replicas=2 再补正确性。
@@ -199,11 +199,11 @@ v0.1 人工核款：运营记录真实收款凭证和外部业务号 → 不同�
 
 | 阶段 | 交付能力 | 出口条件 |
 |---|---|---|
-| 0 阶段 | Compose/1Panel 统一编排 aigate、New API、Sub2API；外部 channel、probe、usage/成本/错误合同；唯一客户结算 | 独立数据库、内部网络、下游重试不越权、外部 channel 可回退；见 [035](../../specs/035-external-upstream-integration/spec.md) |
+| 0 阶段 | Compose/部署脚本统一编排 aigate、New API、Sub2API（1Panel 等面板可选导入）；外部 channel、probe、usage/成本/错误合同；唯一客户结算 | 独立数据库、内部网络、下游重试不越权、外部 channel 可回退；见 [035](../../specs/035-external-upstream-integration/spec.md) |
 | 第一阶段 | 固定版本 New API 核心业务闭环；文本基础渠道路由；共享钱包与结算；协议、媒体、任务、Realtime 用 deterministic mock 验收 | 验收清单逐项有专用 PostgreSQL、mock 和至少一个外部 channel 证据；不要求所有真实供应商认证 |
 | 第二阶段 | Bifrost 风格文本数据面：低延迟、失败分类与故障切换、预算治理、缓存设计、压测；逐项内收下游实现 | 合同、实现与同条件压测记录 |
 | 第三阶段 | 在 aigate 内实现 OpenRouter 风格文本动态路由，候选包含 direct/new_api/sub2api；物理模型、质量档位、评分、最低毛利、会话粘性、路由回放 | 三类切换逐类验收，决策可回放；下游账号路由保持局部 |
-| 第四阶段 | 真实供应商逐一认证、真实 usage 与成本、正式支付、1Panel、生产部署、性能和已迁移能力的下游退役 | 每个可售 profile 有真实账号证据；生产门禁通过；可退役能力完成切流 |
+| 第四阶段 | 真实供应商逐一认证、真实 usage 与成本、正式支付、生产部署、性能和已迁移能力的下游退役；1Panel 等面板适配为可选项 | 每个可售 profile 有真实账号证据；生产门禁通过；可退役能力完成切流 |
 | 扩容 | 多活动实例、共享限流、日志分库等 | 容量实测证明有需要且故障语义补全；不在四阶段内承诺 |
 
 下表为 2026-10-30 首版的原始里程碑，保留历史语境。其中 M2 的“真实渠道合同与 usage 能力核实”已移到第四阶段，不再是第一阶段出口：

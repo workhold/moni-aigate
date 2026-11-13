@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-12T12:03:19Z",
-  "review_reason": "align the HLD link label with the renumbered external upstream contract",
-  "snapshot_sha256": "dae22220d29ae6b5ee9edc3af93cf742eab334e20f177dc71ca7b5e28a5a4069",
-  "architecture_sha256": "fe82a65de18b263e537c32990a9ba27582a40d6cf438cc5200d2900da1a427f5",
-  "history_sha256": "d4ce5654816f0da8742e712731a4a703668cc7c2866d4b059e96b25d92572788",
+  "reviewed_at": "2026-11-13T19:18:07Z",
+  "review_reason": "部署定位修订：产品定位从“自托管/1Panel 体验”改为仓库自带 Compose/脚本部署，1Panel 等面板降为可选部署环境、非验收门禁；同步 README、统一架构、HLD、overview、四阶段路线、交付计划、new-api 路线图、上游接入路线、ADR-001 及 001/014/025/028/029/035 规格；附带修复四阶段路线 0 阶段插入后小节未重编号导致的断链（小节归位 4.x/5.x/6.x，更新 029–034 与 new-api-roadmap 的锚点）",
+  "snapshot_sha256": "67815182e87b03db954c113116b99a6b1482e3692d545abc0507afea5444dcde",
+  "architecture_sha256": "91663911bd5d4c964e300291f6ad8e44cbdc54a42fa0bab6e0c4b35974025b7e",
+  "history_sha256": "ea1fd91bbe6ce7c00ed504a49c4d3d4e1c0e31d633736e85b007acd9c41b67be",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "ff7579094cfc117ec342b6c91c26c446b3dbd28bf15a54424d83b5c8ffd31c54"
+      "sha256": "fc7730d08cf806c8149f1d3034c65ecd54b9aaea497e3691e06df91dfbe35cef"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -149,7 +149,7 @@
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
-      "sha256": "9cbdf508693c8c75d895b02ff79c365bf15487c980800b91f65f970274d1be9f"
+      "sha256": "be91c937ec453cf7d3353b0026558cc053de0d4d1b6dd93d7f7f6f835552d643"
     },
     {
       "path": "docs/decisions/ADR-002-implementation-refinements.md",
@@ -169,7 +169,7 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "765fcb7b1efe73162008804b18e752085331c4454a2329b266071dce324da60b"
+      "sha256": "d93d7fc0e65df0cbf16bb2c66ab611da0031145aba9fb66bb61708badf945d9c"
     },
     {
       "path": "docs/design/LLD.md",
@@ -177,7 +177,7 @@
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "79e8d8ad34398c76bf57835db269ccf7998047528737ca6a275056a94b5530a1"
+      "sha256": "7457119b004d06caaf8292c29d944f418c4cd0066e12bda296f590064f90328c"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -197,11 +197,11 @@
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "585cde9ae1af3b941bf3558ea1246c4a415524ef519fcb1a44f945022c35c2da"
+      "sha256": "8265d1723dc7b8f1cdbe8d227591ae80d4ee91ef539adf5aff1b1e62331850b5"
     },
     {
       "path": "docs/design/overview.md",
-      "sha256": "fb713666e433cd9d7c57366857be1948df3e197c523a13519dc0eaa9713d0bf0"
+      "sha256": "978c3381e30fb2b5380da335462592e4830bd06fd64835e0bf22d44b75411efa"
     },
     {
       "path": "docs/design/periodic-products.md",
@@ -209,7 +209,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "d1422d264009c458005066a7a6e96d73edc245136700c0c3e253164aca323d9d"
+      "sha256": "034d91fc9f99439b4db9a795ce2c39adc6c48ecaee39b431ddd986520caaf7c6"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -233,7 +233,7 @@
     },
     {
       "path": "docs/design/upstream-integration-plan.md",
-      "sha256": "2d014aac465bce3dab8ac54f611fc47b83fb80cfecbeea3eb01d5bc5cb8fac42"
+      "sha256": "8e821acce69fc67343cb934bf2f1dfe50c91525d8a324d88469598c4d54facd9"
     },
     {
       "path": "docs/runbooks/backup-restore.md",
@@ -245,7 +245,7 @@
     },
     {
       "path": "docs/runbooks/deployment.md",
-      "sha256": "bef367ddaa4df3dd21184a875c76ad44157c68493d0e4215400a54f2c6a9d91c"
+      "sha256": "979d85572fcbdb12f95fb3c767a099c2ff0324a8f318f5b09533c9a764f9eff0"
     },
     {
       "path": "docs/runbooks/development.md",
@@ -6917,7 +6917,7 @@
     },
     {
       "path": "specs/001-commercial-mvp/spec.md",
-      "sha256": "bc42ff8e69a54bb32a722d74e72a76fcbcc35d38a8bce2b3caf4bc8b61a403ad"
+      "sha256": "5ffacde26f970f7025a1d22190f85f8c849b76feb322324ac6258c6caa887975"
     },
     {
       "path": "specs/002-performance-parity/acceptance.md",
@@ -7073,7 +7073,7 @@
     },
     {
       "path": "specs/014-mvp-release-qualification/spec.md",
-      "sha256": "c48f6d91ba8bdb3f52f42aa743ea060aff81e157495c00a87f8a850fdae0b9cd"
+      "sha256": "5c48fabd3a530c962cdabe8b8a745f88bc401c9de7c9b28f7534795b354c27ac"
     },
     {
       "path": "specs/015-key-access-policy/acceptance.md",
@@ -7861,7 +7861,7 @@
     },
     {
       "path": "specs/025-production-ha/a0-compose-config-contract.md",
-      "sha256": "c949da46a81f3cd11d58b4ba7c8119fdbd2677aafd88c677e7e14277ed0897ae"
+      "sha256": "9bee892dd2ea3428323910e7e0ec07c9454a2cf3ba8eefc1464c669337c6ef9a"
     },
     {
       "path": "specs/025-production-ha/a1-mail-process-contract.md",
@@ -7873,7 +7873,7 @@
     },
     {
       "path": "specs/025-production-ha/acceptance.md",
-      "sha256": "fcdbeee0c146085a0713cd872b8f1e525df456447f1f1ad9ea3f61e81c887d0b"
+      "sha256": "5081de49f4e6f994faa04607a9b1ae14b7539b41837cda96e7ecf8162508c7f0"
     },
     {
       "path": "specs/025-production-ha/b0-shared-execution-contract.md",
@@ -7881,7 +7881,7 @@
     },
     {
       "path": "specs/025-production-ha/contract.md",
-      "sha256": "27bb6d6fadb35a44b4a61b4b8ea01552e8b642e96676b37c68bc53bac97c9360"
+      "sha256": "9986b824c4a8173bd4f8921e50bcba370763666b9f6192ba9b36c606978d5a77"
     },
     {
       "path": "specs/025-production-ha/migration-prefix-contract.md",
@@ -7893,7 +7893,7 @@
     },
     {
       "path": "specs/025-production-ha/spec.md",
-      "sha256": "35867933e103ceee22966008232f7c309d8876e97afad523b080ccd42f18eefa"
+      "sha256": "c4191a4618cf306a85f62e5382142461671fccac7972e5c9774f24dd0ccb530b"
     },
     {
       "path": "specs/026-operating-reports/spec.md",
@@ -7917,7 +7917,7 @@
     },
     {
       "path": "specs/028-unified-metering-media/spec.md",
-      "sha256": "a0d6f4f06a70076a995477316dfe32a53267f150f1ebde444a6a7d85de1ee608"
+      "sha256": "98dd050a853f26780c7193932ba5895ef806065771638641b7c357f74c6074f4"
     },
     {
       "path": "specs/028-unified-metering-media/tasks.md",
@@ -7937,31 +7937,31 @@
     },
     {
       "path": "specs/029-phase1-acceptance/spec.md",
-      "sha256": "cc8a576d7420eb1bb5721f63024d1096982aa40333f7907fa4460444aee63d18"
+      "sha256": "b0c6633f7b3855c48ab6703f161b7988a4326aea2c5341e538b0b82836c3c6a6"
     },
     {
       "path": "specs/030-model-aliases-group-multipliers/spec.md",
-      "sha256": "73c6d889e70955f0a847a386aeb2d3cc9899e089d018d85f7f4225576d382a3a"
+      "sha256": "0b8b4d544d50a14a64ea6d0de7476faf619743b8cc530ffeae2e0e806486cc07"
     },
     {
       "path": "specs/031-deterministic-mock-upstream/spec.md",
-      "sha256": "2b45a5af9631db5d4397603fd1c2078291b5188164fc796aa9d963966d657d16"
+      "sha256": "a1b43dc9409042b4f5b6169ddd851b8e3793edb5d4325fb3000e676b9ba0a119"
     },
     {
       "path": "specs/032-phase2-text-data-plane/spec.md",
-      "sha256": "1fcdfcacc1be36a115011c4c69adbd46d0adcf3a30dd6e6b62f1436e121d8915"
+      "sha256": "931277c6fc030b9e19dd0bb846bae9857e79b9ca0085c88197c9e5104d8cc783"
     },
     {
       "path": "specs/033-text-dynamic-routing/spec.md",
-      "sha256": "0bffed10432cac3f0f3952a5936736f477fccfd0558b86a446e017f7315d93ad"
+      "sha256": "743e2441a3fc74fb132f088e4df502823ea0adccac3aa0f6cec745d79f2075e7"
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "4bff8371f44938e7e8c8a84c3c1a0a358701e1206c5eb54cfdb2bd12e6a91644"
+      "sha256": "26bf6be184f580966e17dcf5f5bb14953d866b1ac19b3bc053931e2f3b4ee8b6"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
-      "sha256": "b9a44f7a7577ebefc877a0a85f904d8560edf49c723c59b44be44134eb11d10c"
+      "sha256": "c9fde74606c61a074eaf0a71ce608d44907a9b665e738ab8febf9d3b1e5e0bf6"
     },
     {
       "path": "web/.gitignore",

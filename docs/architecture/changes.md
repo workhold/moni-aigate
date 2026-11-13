@@ -6118,3 +6118,37 @@ align the HLD link label with the renumbered external upstream contract
 - modified `docs/design/HLD.md`
 
 </details>
+
+## 2026-11-13T19:18:07Z · 67815182e87b
+
+部署定位修订：产品定位从“自托管/1Panel 体验”改为仓库自带 Compose/脚本部署，1Panel 等面板降为可选部署环境、非验收门禁；同步 README、统一架构、HLD、overview、四阶段路线、交付计划、new-api 路线图、上游接入路线、ADR-001 及 001/014/025/028/029/035 规格；附带修复四阶段路线 0 阶段插入后小节未重编号导致的断链（小节归位 4.x/5.x/6.x，更新 029–034 与 new-api-roadmap 的锚点）
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2143 个源文件；本次 23 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/decisions/ADR-001-source-strategy.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/overview.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `specs/001-commercial-mvp/spec.md`
+- modified `specs/014-mvp-release-qualification/spec.md`
+- modified `specs/025-production-ha/a0-compose-config-contract.md`
+- modified `specs/025-production-ha/acceptance.md`
+- modified `specs/025-production-ha/contract.md`
+- modified `specs/025-production-ha/spec.md`
+- modified `specs/028-unified-metering-media/spec.md`
+- modified `specs/029-phase1-acceptance/spec.md`
+- modified `specs/030-model-aliases-group-multipliers/spec.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>
