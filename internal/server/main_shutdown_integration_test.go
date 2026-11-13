@@ -206,7 +206,10 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 	createdRoles := []string{}
 	t.Cleanup(func() {
 		owner.Close()
-		cleanup, done := context.WithTimeout(context.Background(), 10*time.Second)
+		// Dropping the complete current baseline can take more than ten seconds
+		// with race instrumentation. Keep cleanup bounded without treating slow
+		// DDL cleanup as an SSE drain/replay failure.
+		cleanup, done := context.WithTimeout(context.Background(), 30*time.Second)
 		defer done()
 		// Use a new administrative connection: the test's deferred pool.Close
 		// runs before Cleanup, and never terminate unrelated test sessions.

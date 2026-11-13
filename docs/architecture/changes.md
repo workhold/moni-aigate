@@ -6247,3 +6247,16 @@ align the HLD link label with the renumbered external upstream contract
 - modified `internal/server/external_relay_integration_test.go`
 
 </details>
+
+## 2026-11-13T17:08:21Z · 474a9be974b0
+
+修正实际主进程 fixture 清理边界：当前基线删库与角色清理由共享 10 秒改为有界 30 秒；业务状态机不变，支付失败确认为专用库时区环境恢复，不修改冻结清单
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2176 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/alert_main_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+
+</details>

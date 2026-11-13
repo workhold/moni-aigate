@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T16:27:44Z",
-  "review_reason": "补强 035 route revision 回退：目标 channel/credential 固定锁序，拒绝整池撤销及并发撤销竞态；补专用 PostgreSQL 负向测试并同步验证记录",
-  "snapshot_sha256": "34dae2a5c4612deeec33f4059724113b699a351ae1ffe12dd5884772da8e9161",
+  "reviewed_at": "2026-11-13T17:08:21Z",
+  "review_reason": "修正实际主进程 fixture 清理边界：当前基线删库与角色清理由共享 10 秒改为有界 30 秒；业务状态机不变，支付失败确认为专用库时区环境恢复，不修改冻结清单",
+  "snapshot_sha256": "474a9be974b05626a335c39dfcb382b2f2e7652a891b63de1cc9f54b36f8e6be",
   "architecture_sha256": "cb92e502ba7d2a8be05403fbb460951c3f8eafd05c5c12584464b46acaf034ac",
-  "history_sha256": "5a17eeb18e2aeda6cfa5d3fa8e21ecf7a54d4acc343db34ce1740f9298e2c445",
+  "history_sha256": "fd9c2bcd3c0cbbe71c0ee80137ed86403d3d66ba8c969e8695ebfaa2afd55f80",
   "files": [
     {
       "path": ".dockerignore",
@@ -5917,7 +5917,7 @@
     },
     {
       "path": "internal/server/alert_main_integration_test.go",
-      "sha256": "bd65d1274212ccd4a280b49365a25a49f8711d3f41298aac453c3f1f05190db3"
+      "sha256": "ab30f2c30bd2c7e860e6b0e4bb4f30abd49949d5f06a4e6659efd5b67ff8584f"
     },
     {
       "path": "internal/server/alert_test.go",
@@ -6085,7 +6085,7 @@
     },
     {
       "path": "internal/server/main_shutdown_integration_test.go",
-      "sha256": "3901180ba1d073ca37093005bf15cacbc923de1468a216d81defdd9a6120f067"
+      "sha256": "4a5c4cb02f9774d1fb6ba6a079452a089c613aefd096488baed5a4b110e69370"
     },
     {
       "path": "internal/server/media_artifacts.go",
