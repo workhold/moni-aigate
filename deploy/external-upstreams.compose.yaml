@@ -1,0 +1,133 @@
+# Local-only real New API/Sub2API topology. No downstream admin, database or
+# Redis port is published to the host. Only the aigate app in compose.yaml is
+# public. Upstream supplier traffic terminates at the deterministic qa-provider.
+services:
+  new-api-db:
+    profiles: [external-upstreams]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: newapi
+      POSTGRES_PASSWORD: ${NEW_API_POSTGRES_PASSWORD:?generate local secrets first}
+      POSTGRES_DB: new_api
+    volumes:
+      - new-api-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U newapi -d new_api]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  new-api-redis:
+    profiles: [external-upstreams]
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${NEW_API_REDIS_PASSWORD}"]
+    healthcheck:
+      test: [CMD-SHELL, redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    environment:
+      REDIS_PASSWORD: ${NEW_API_REDIS_PASSWORD:?generate local secrets first}
+
+  new-api:
+    profiles: [external-upstreams]
+    image: local/new-api:e449cc7
+    command: [--log-dir, /app/logs]
+    environment:
+      SQL_DSN: postgresql://newapi:${NEW_API_POSTGRES_PASSWORD}@new-api-db:5432/new_api
+      REDIS_CONN_STRING: redis://:${NEW_API_REDIS_PASSWORD}@new-api-redis:6379
+      SESSION_SECRET: ${NEW_API_SESSION_SECRET:?generate local secrets first}
+      SESSION_COOKIE_SECURE: "false"
+      TZ: Asia/Shanghai
+      ERROR_LOG_ENABLED: "false"
+      BATCH_UPDATE_ENABLED: "false"
+      NODE_NAME: local-new-api
+    volumes:
+      - new-api-data:/data
+      - new-api-logs:/app/logs
+    depends_on:
+      new-api-db:
+        condition: service_healthy
+      new-api-redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, wget -q -O - http://localhost:3000/api/status | grep -o '"success":\s*true' || exit 1]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 10s
+
+  sub2api-db:
+    profiles: [external-upstreams]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sub2api
+      POSTGRES_PASSWORD: ${SUB2API_POSTGRES_PASSWORD:?generate local secrets first}
+      POSTGRES_DB: sub2api
+    volumes:
+      - sub2api-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U sub2api -d sub2api]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  sub2api-redis:
+    profiles: [external-upstreams]
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${SUB2API_REDIS_PASSWORD}"]
+    healthcheck:
+      test: [CMD-SHELL, redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    environment:
+      REDIS_PASSWORD: ${SUB2API_REDIS_PASSWORD:?generate local secrets first}
+
+  sub2api:
+    profiles: [external-upstreams]
+    image: weishaw/sub2api@sha256:868c15f3c729af05896c94b3456d91a68bc81dce50c4d7b4557682df7ca92c13
+    environment:
+      AUTO_SETUP: "true"
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      SERVER_MODE: release
+      DATABASE_HOST: sub2api-db
+      DATABASE_PORT: 5432
+      DATABASE_USER: sub2api
+      DATABASE_PASSWORD: ${SUB2API_POSTGRES_PASSWORD}
+      DATABASE_DBNAME: sub2api
+      DATABASE_SSLMODE: disable
+      REDIS_HOST: sub2api-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${SUB2API_REDIS_PASSWORD}
+      ADMIN_EMAIL: ${SUB2API_ADMIN_EMAIL:?set local admin email}
+      ADMIN_PASSWORD: ${SUB2API_ADMIN_PASSWORD:?generate local secrets first}
+      JWT_SECRET: ${SUB2API_JWT_SECRET:?generate local secrets first}
+      TOTP_ENCRYPTION_KEY: ${SUB2API_TOTP_KEY:?generate local secrets first}
+      SECURITY_URL_ALLOWLIST_ENABLED: "false"
+      SECURITY_URL_ALLOWLIST_ALLOW_INSECURE_HTTP: "true"
+      SECURITY_URL_ALLOWLIST_ALLOW_PRIVATE_HOSTS: "true"
+      TZ: Asia/Shanghai
+    volumes:
+      - sub2api-data:/app/data
+    depends_on:
+      sub2api-db:
+        condition: service_healthy
+      sub2api-redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -T, "5", -O, /dev/null, http://localhost:8080/health]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 10s
+
+volumes:
+  new-api-db-data:
+  new-api-redis-data:
+  new-api-data:
+  new-api-logs:
+  sub2api-db-data:
+  sub2api-redis-data:
+  sub2api-data:
