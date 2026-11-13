@@ -47,14 +47,39 @@ func (s *Store) ActivateRouteRevision(ctx context.Context, actor, model string, 
 	if !published {
 		return 0, ErrInvalid
 	}
-	// A route revision is only re-activatable while its bindings still point
-	// at live, non-isolated channel versions; the same admission gates as a
-	// fresh publish apply, so a rollback cannot resurrect a dead route.
-	var dead int
-	if e = tx.QueryRow(ctx, `SELECT count(*) FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id LEFT JOIN route_binding_isolations i ON i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model WHERE p.model_id=$1 AND p.revision=$2 AND (NOT c.enabled OR c.quarantined OR i.channel_version_id IS NOT NULL)`, model, target).Scan(&dead); e != nil {
+	// Match publication's lock order before evaluating live credentials. A
+	// concurrent revocation either finishes before this read or waits for the
+	// activation transaction; it cannot slip between the check and commit.
+	rows, e := tx.Query(ctx, `SELECT c.id,k.id FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id JOIN channels c ON c.id=b.channel_id JOIN channel_version_credentials cp ON cp.channel_version_id=b.channel_version_id AND cp.channel_id=b.channel_id JOIN channel_credentials k ON k.id=cp.credential_id AND k.channel_id=cp.channel_id WHERE p.model_id=$1 AND p.revision=$2 ORDER BY c.id,k.id FOR SHARE OF c,k`, model, target)
+	if e != nil {
 		return 0, e
 	}
-	if dead != 0 {
+	var locked int
+	for rows.Next() {
+		var channelID, credentialID string
+		if e = rows.Scan(&channelID, &credentialID); e != nil {
+			rows.Close()
+			return 0, e
+		}
+		locked++
+	}
+	if e = rows.Err(); e != nil {
+		rows.Close()
+		return 0, e
+	}
+	rows.Close()
+	if locked == 0 {
+		return 0, ErrInvalid
+	}
+	// A route revision is only re-activatable while its bindings still point
+	// at live, non-isolated channel versions with at least one unrevoked pool
+	// credential; the same admission gates as a fresh publish apply, so a
+	// rollback cannot resurrect a dead route.
+	var dead, bindings int
+	if e = tx.QueryRow(ctx, `SELECT count(*) FILTER (WHERE NOT c.enabled OR c.quarantined OR i.channel_version_id IS NOT NULL OR NOT EXISTS(SELECT 1 FROM channel_version_credentials cp JOIN channel_credentials k ON k.id=cp.credential_id AND k.channel_id=cp.channel_id WHERE cp.channel_version_id=b.channel_version_id AND cp.channel_id=b.channel_id AND k.revoked_at IS NULL)),count(*) FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id LEFT JOIN route_binding_isolations i ON i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model WHERE p.model_id=$1 AND p.revision=$2`, model, target).Scan(&dead, &bindings); e != nil {
+		return 0, e
+	}
+	if bindings == 0 || dead != 0 {
 		return 0, ErrInvalid
 	}
 	if _, e = tx.Exec(ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", model, target); e != nil {

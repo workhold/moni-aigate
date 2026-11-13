@@ -462,12 +462,67 @@ func TestExternalRelayRouteRevisionActivationContract(t *testing.T) {
 	if _, err := f.server.Catalog.ActivateRouteRevision(ctx, f.operator, uuid.NewString(), embeddedRevision, relayRevision); !errors.Is(err, catalog.ErrInvalid) {
 		t.Fatalf("unknown model activation accepted: %v", err)
 	}
+	// A route whose entire frozen credential pool was revoked cannot be
+	// reactivated, even though its channel and version remain enabled.
+	if _, err := f.pool.Exec(ctx, "UPDATE channel_credentials SET revoked_at=clock_timestamp() WHERE channel_id=$1", f.newAPIChannel); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.server.Catalog.ActivateRouteRevision(ctx, f.operator, f.model, embeddedRevision, relayRevision); !errors.Is(err, catalog.ErrInvalid) {
+		t.Fatalf("revoked-credential route activation accepted: %v", err)
+	}
+	if _, err := f.pool.Exec(ctx, "UPDATE channel_credentials SET revoked_at=NULL WHERE channel_id=$1", f.newAPIChannel); err != nil {
+		t.Fatal(err)
+	}
 	// A route whose channel was disabled cannot be reactivated.
 	if _, err := f.pool.Exec(ctx, "UPDATE channels SET enabled=false WHERE id=$1", f.newAPIChannel); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := f.server.Catalog.ActivateRouteRevision(ctx, f.operator, f.model, embeddedRevision, relayRevision); !errors.Is(err, catalog.ErrInvalid) {
 		t.Fatalf("dead route activation accepted: %v", err)
+	}
+}
+
+func TestExternalRelayRouteActivationRechecksCredentialRevocation(t *testing.T) {
+	f := newRelayFixture(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	relayRevision := f.publish(t, catalog.BindingInput{ChannelID: f.newAPIChannel, UpstreamModel: "relay-newapi-model", Priority: 1, Weight: 1, MaxInflight: 4})
+	embeddedRevision := f.publish(t, catalog.BindingInput{ChannelID: f.directChannel, UpstreamModel: "provider-model", Priority: 1, Weight: 1, MaxInflight: 4})
+	var credential string
+	if err := f.pool.QueryRow(ctx, `SELECT v.credential_id FROM channel_versions v JOIN channels c ON c.current_version=v.id WHERE c.id=$1`, f.newAPIChannel).Scan(&credential); err != nil {
+		t.Fatal(err)
+	}
+	holder, err := f.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer holder.Rollback(context.Background())
+	if _, err = holder.Exec(ctx, "SELECT id FROM channel_credentials WHERE id=$1 FOR UPDATE", credential); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() {
+		_, activateErr := f.server.Catalog.ActivateRouteRevision(ctx, f.operator, f.model, embeddedRevision, relayRevision)
+		done <- activateErr
+	}()
+	select {
+	case err = <-done:
+		t.Fatalf("activation did not wait for the credential writer: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	if _, err = holder.Exec(ctx, "UPDATE channel_credentials SET revoked_at=clock_timestamp() WHERE id=$1", credential); err != nil {
+		t.Fatal(err)
+	}
+	if err = holder.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err = <-done:
+		if !errors.Is(err, catalog.ErrInvalid) {
+			t.Fatalf("activation committed across credential revocation: %v", err)
+		}
+	case <-ctx.Done():
+		t.Fatal("activation remained blocked after credential writer committed")
 	}
 }
 

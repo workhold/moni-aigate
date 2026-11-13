@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T16:15:11Z",
-  "review_reason": "收口 0 阶段外部上游：current-only channel kind/mode、relay/probe、route revision 回退、current fixture 修复及 030/031/Compose 验证记录；真实上游与三库拓扑仍标为未验收",
-  "snapshot_sha256": "6286f7ec4ffd55aca477ea73fbc3553f30f4fe28a51a835c4d1974e9e708b757",
+  "reviewed_at": "2026-11-13T16:27:44Z",
+  "review_reason": "补强 035 route revision 回退：目标 channel/credential 固定锁序，拒绝整池撤销及并发撤销竞态；补专用 PostgreSQL 负向测试并同步验证记录",
+  "snapshot_sha256": "34dae2a5c4612deeec33f4059724113b699a351ae1ffe12dd5884772da8e9161",
   "architecture_sha256": "cb92e502ba7d2a8be05403fbb460951c3f8eafd05c5c12584464b46acaf034ac",
-  "history_sha256": "6f42951e3a54f2f9866908eace3e15eb9ce48715667fefb43681e4dcdc3c9078",
+  "history_sha256": "5a17eeb18e2aeda6cfa5d3fa8e21ecf7a54d4acc343db34ce1740f9298e2c445",
   "files": [
     {
       "path": ".dockerignore",
@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "f1c283e9b96be711360aec86f4f58676d3e728d34828ae8d12024824693e5600"
+      "sha256": "3480c31819c527d8348334a3c71b5fb5ff30ed06e46564352365b9e7222903ee"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1565,7 +1565,7 @@
     },
     {
       "path": "docs/verification/phase0-external-upstream.md",
-      "sha256": "4547c3b5b9551e2122445d148e069a79c8931aaa510230c65aeea0a8b439a357"
+      "sha256": "78a1bbc9458f9112dea4db9de98ca5ca5026f28c3d3536200191634b1d7d8d90"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -2477,7 +2477,7 @@
     },
     {
       "path": "internal/catalog/route_activate.go",
-      "sha256": "904a8bbe4054909cfc30f6c4688349c152ea362df0e3256c34adf884127d8f5d"
+      "sha256": "e4a219f2f6690a503af5cc4efd4035e50809f4470551c619efef1d05335c5b9e"
     },
     {
       "path": "internal/catalog/store.go",
@@ -6029,7 +6029,7 @@
     },
     {
       "path": "internal/server/external_relay_integration_test.go",
-      "sha256": "c08a0ef91bd718c9f3e51cd3d53a8008234f159e122fcd2644505eda784c5b3a"
+      "sha256": "85eba586b2361f9f481868f33e984154944a4a159aca2b0dcd9ded460ed9744a"
     },
     {
       "path": "internal/server/funding_integration_test.go",

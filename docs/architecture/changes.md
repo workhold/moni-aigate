@@ -6232,3 +6232,18 @@ align the HLD link label with the renumbered external upstream contract
 - modified `specs/035-external-upstream-integration/spec.md`
 
 </details>
+
+## 2026-11-13T16:27:44Z · 34dae2a5c461
+
+补强 035 route revision 回退：目标 channel/credential 固定锁序，拒绝整池撤销及并发撤销竞态；补专用 PostgreSQL 负向测试并同步验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2176 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/LLD.md`
+- modified `docs/verification/phase0-external-upstream.md`
+- modified `internal/catalog/route_activate.go`
+- modified `internal/server/external_relay_integration_test.go`
+
+</details>

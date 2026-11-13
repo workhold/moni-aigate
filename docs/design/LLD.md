@@ -135,7 +135,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 源码复用不是实现阻塞项。若 `embedded_adapter` 或 `migrated_capability` 直接使用上游源码，组件目录必须保留 LICENSE/NOTICE、来源提交、修改记录和适用的源码提供路径；这类元数据随 `channel_version` 发布，不进入客户 API。
 
-当前实现（2026-11-14）：`current_003_external_channels.sql` 已落地 `channel_kind` 与 `integration_mode` 两个不可变字段及 kind/mode 组合约束；本节约定的 `qualification_status`、`source_ref`、`license_ref`、`modified_ref`、`downstream_retry_contract` 和 `cost_evidence_ref` 尚未进入当前物理 schema，不能据此宣称完整发布门禁已经实现。`catalog.SaveChannel` 固定渠道拓扑，`CandidateSnapshot` 将 kind/mode 注入候选但不改变 RouteSelector 的 channel-only 选择；外部 relay 复用 `provider.Client` 的 OpenAI-compatible 执行、usage、错误分类和 safe-to-retry 合同。`ActivateRouteRevision` 在同一模型/profile 的已发布版本间执行 expected-revision CAS，拒绝未发布版本及包含停用、隔离或 quarantined binding 的版本，并写入 `route.activate` 审计；回退不重写在途请求冻结的 route revision。真实上游资格与源码复用元数据仍是后续验收缺口。
+当前实现（2026-11-14）：`current_003_external_channels.sql` 已落地 `channel_kind` 与 `integration_mode` 两个不可变字段及 kind/mode 组合约束；本节约定的 `qualification_status`、`source_ref`、`license_ref`、`modified_ref`、`downstream_retry_contract` 和 `cost_evidence_ref` 尚未进入当前物理 schema，不能据此宣称完整发布门禁已经实现。`catalog.SaveChannel` 固定渠道拓扑，`CandidateSnapshot` 将 kind/mode 注入候选但不改变 RouteSelector 的 channel-only 选择；外部 relay 复用 `provider.Client` 的 OpenAI-compatible 执行、usage、错误分类和 safe-to-retry 合同。`ActivateRouteRevision` 在同一模型/profile 的已发布版本间执行 expected-revision CAS，按固定顺序对目标 channel/credential 加 `FOR SHARE` 锁，拒绝未发布版本以及包含停用、隔离、quarantined binding 或整池已撤销凭据的版本，并写入 `route.activate` 审计；回退不重写在途请求冻结的 route revision。真实上游资格与源码复用元数据仍是后续验收缺口。
 
 ## 5. 资金模型与计价
 

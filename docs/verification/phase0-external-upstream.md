@@ -27,7 +27,7 @@ TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disabl
 3. new_api 429 无消费后切换 direct，共两个 attempt、一次收费。
 4. `http_500` 与 `drop_after_headers` 均只有一个上游接收、一个 attempt，不向 direct 重放。
 5. external relay → embedded direct adapter 切片，再按 route revision 回退；历史请求 revision 不漂移。
-6. channel kind 生命周期、非法 kind、拓扑原地改写拒绝、activation CAS/未知版本/死路由拒绝。
+6. channel kind 生命周期、非法 kind、拓扑原地改写拒绝、activation CAS/未知版本/死路由/整池凭据撤销拒绝，以及并发撤销与 activation 的锁序负向测试。
 7. probe 成功和失败的证据维度与 consumption 分类。
 
 ## Compose business-qa
