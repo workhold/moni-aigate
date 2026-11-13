@@ -200,6 +200,10 @@ func pricingFingerprint(kind, actor, scope, target string, safe map[string]any) 
 		fields = []string{"label"}
 	case "price_group.update":
 		fields = []string{"expected_revision", "label", "state"}
+	case "model_alias.create":
+		fields = []string{"model_id", "alias"}
+	case "model_alias.retire":
+		fields = []string{"alias", "expected_revision"}
 	case "group_price.publish":
 		fields = []string{"model_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at"}
 	case "default_price.publish":

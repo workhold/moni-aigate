@@ -12,6 +12,7 @@ import RouteEditor from '../components/RouteEditor.vue'
 import CostEditor from '../components/CostEditor.vue'
 import PricingWriter from '../components/PricingWriter.vue'
 import ModelPublicationEditor from '../components/ModelPublicationEditor.vue'
+import ModelAliases from '../components/ModelAliases.vue'
 import { parsePublication, publicationPath, publicationLabel } from '../public-catalog'
 import { keyAccessContext } from '../key-access-policy'
 import { errorText, request, stableOperationKey } from '../api'
@@ -89,6 +90,7 @@ const detailFields = computed(() => {
 const memberTenant = ref<Row | null>(null); const members = ref<Row[]>([]); const membersOpen = ref(false); const membersBusy = ref(false); const membersError = ref('')
 const routeModel = ref<Row | null>(null); const routeOpen = ref(false); const costOpen = ref(false); const priceOpen = ref(false)
 const publicationModel = ref<{ id: string; public_name: string } | null>(null), publicationOpen = ref(false)
+const aliasModel = ref<{ id: string; public_name: string } | null>(null), aliasOpen = ref(false)
 const platformContext = computed(() => keyAccessContext(session.me?.user.id, session.me?.tenant?.id, session.me?.user.platform_role))
 const discoveryChannel = ref<DiscoveryChannel | null>(null); const discoveryOpen = ref(false)
 const credentialChannel = ref<DiscoveryChannel | null>(null); const credentialOpen = ref(false)
@@ -221,6 +223,7 @@ function editMember(row: Row) {
 }
 function editRoute(row: Row) { if (isAdmin.value) { routeModel.value = row; routeOpen.value = true } }
 function editPublication(row: Row) { if (isAdmin.value) { publicationModel.value = { id: String(row.id), public_name: String(row.public_name) }; publicationOpen.value = true } }
+function editAliases(row: Row) { if (isAdmin.value) { aliasModel.value = { id: String(row.id), public_name: String(row.public_name) }; aliasOpen.value = true } }
 function rowPublicationLabel(row: Row) { return typeof row.public_visible === 'boolean' ? publicationLabel({ enabled: row.enabled === true, public_visible: row.public_visible }) : '查看公开设置' }
 function resolve(row: Row, action: 'release' | 'settle') {
   const fs: Field[] = [{ key: 'reason', title: '处理理由', kind: 'textarea', required: true }]
@@ -238,7 +241,7 @@ function showDetail(row: Row) { detailRow.value = row; detailOpen.value = true }
 function formatDetail(value: unknown): string { return typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value ?? '—') }
 async function next() { const page = nextCursor.value; cursors.value.push(page); await load(page) }
 async function previous() { cursors.value.pop(); await load() }
-watch([resource, platformContext], () => { listScope.reset(); clearChannelSelection(); operationsOpen.value = false; discoveryOpen.value = false; discoveryChannel.value = null; credentialOpen.value = false; credentialChannel.value = null; routeOpen.value = false; routeModel.value = null; publicationOpen.value = false; publicationModel.value = null; costOpen.value = false; dialog.value = false; values.value = {}; reconciliationSchemaID.value = ''; rows.value = []; search.value = ''; cursors.value = []; lookups.value = { tenants: [], models: [], channels: [] }; void load(); void lookup() }, { flush: 'sync' })
+watch([resource, platformContext], () => { listScope.reset(); clearChannelSelection(); operationsOpen.value = false; discoveryOpen.value = false; discoveryChannel.value = null; credentialOpen.value = false; credentialChannel.value = null; routeOpen.value = false; routeModel.value = null; publicationOpen.value = false; publicationModel.value = null; aliasOpen.value = false; aliasModel.value = null; costOpen.value = false; dialog.value = false; values.value = {}; reconciliationSchemaID.value = ''; rows.value = []; search.value = ''; cursors.value = []; lookups.value = { tenants: [], models: [], channels: [] }; void load(); void lookup() }, { flush: 'sync' })
 onMounted(() => { void load(); void lookup() })
 onBeforeUnmount(() => listScope.reset())
 </script>
@@ -255,7 +258,7 @@ onBeforeUnmount(() => listScope.reset())
         <el-table-column label="操作" :width="resource === 'channels' ? 350 : resource === 'tenants' ? 350 : resource === 'catalog' ? 260 : resource === 'reconciliations' ? 225 : 100" fixed="right"><template #default="{ row }"><div class="list-action">
           <template v-if="resource === 'tenants'"><el-button link type="primary" @click="loadMembers(row)">成员</el-button><el-button link type="primary" @click="editGrant(row)">授权</el-button><router-link :to="{ path: '/platform/price-groups', query: { tenant: String(row.id) } }" class="tenant-pricing-link">定价</router-link><router-link :to="{ path: '/platform/periodic-budget', query: { tenant: String(row.id) } }" class="tenant-pricing-link">周期预算</router-link><el-button link :type="row.status === 'active' ? 'danger' : 'primary'" @click="toggle(row)">{{ row.status === 'active' ? '暂停' : '启用' }}</el-button></template>
           <template v-else-if="resource === 'channels'"><el-button link type="primary" @click="editChannel(row)">更新</el-button><el-button v-if="isAdmin" link type="primary" @click="manageCredentials(row)">凭据池</el-button><el-button link type="primary" @click="probe(row)">探测</el-button><el-button v-if="isAdmin" link type="primary" @click="discoverModels(row)">发现模型</el-button><el-button link :type="row.enabled ? 'danger' : 'primary'" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template>
-          <template v-else-if="resource === 'catalog'"><el-button link type="primary" @click="editRoute(row)">路由</el-button><el-button v-if="isAdmin" link type="primary" @click="editPublication(row)">公开设置</el-button><el-button link :type="row.enabled ? 'danger' : 'primary'" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template>
+          <template v-else-if="resource === 'catalog'"><el-button link type="primary" @click="editRoute(row)">路由</el-button><el-button v-if="isAdmin" link type="primary" @click="editAliases(row)">别名</el-button><el-button v-if="isAdmin" link type="primary" @click="editPublication(row)">公开设置</el-button><el-button link :type="row.enabled ? 'danger' : 'primary'" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template>
           <template v-else-if="['credits','refunds'].includes(resource)"><el-button v-if="canApprove(row)" link type="primary" @click="approve(row)">{{ resource === 'refunds' ? '批准退款' : '审批入账' }}</el-button><span v-else-if="['pending','pending_approval'].includes(String(row.state || row.status))" class="muted small-text">待其他账号审批</span><el-button v-else link type="primary" @click="showDetail(row)">明细</el-button></template>
           <template v-else-if="resource === 'reconciliations'"><el-button v-if="canCreateFinance" link type="primary" @click="resolve(row, 'settle')">提交证据</el-button><el-button v-if="isApprover" link type="warning" @click="resolve(row, 'release')">释放</el-button><el-button v-if="canApprove(row)" link type="primary" @click="approve(row)">批准</el-button></template>
           <el-button v-else link type="primary" @click="showDetail(row)">明细</el-button>
@@ -265,6 +268,7 @@ onBeforeUnmount(() => listScope.reset())
   </template>
   <el-empty v-else description="没有这个管理页面" />
   <RouteEditor v-model="routeOpen" :model="routeModel" @saved="load()" />
+  <ModelAliases v-model="aliasOpen" :model="aliasModel" />
   <ModelPublicationEditor v-model="publicationOpen" :model="publicationModel" @saved="load()" />
   <CostEditor v-model="costOpen" @saved="load()" />
   <PricingWriter v-model="priceOpen" kind="default_price.publish" @changed="load()" />

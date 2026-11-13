@@ -149,6 +149,10 @@ func (s *Server) models(c *gin.Context) {
 		s.error(c, e)
 		return
 	}
+	if e = s.attachActiveModelAliases(c, v); e != nil {
+		s.error(c, e)
+		return
+	}
 	s.ok(c, v)
 }
 func (s *Server) platformModels(c *gin.Context) {
@@ -157,6 +161,10 @@ func (s *Server) platformModels(c *gin.Context) {
 	}
 	v, e := s.query(c.Request.Context(), modelSelectFor(true)+` ORDER BY m.public_name LIMIT 1000`)
 	if e != nil {
+		s.error(c, e)
+		return
+	}
+	if e = s.attachActiveModelAliases(c, v); e != nil {
 		s.error(c, e)
 		return
 	}
@@ -179,6 +187,41 @@ func (s *Server) platformModels(c *gin.Context) {
 		m["cost_policy"] = gin.H{"mode": mode, "unknown_cost_policy": unknown}
 	}
 	s.ok(c, v)
+}
+
+const activeModelAliasesSQL = `SELECT model_id,alias
+FROM model_aliases
+WHERE state='active' AND model_id=ANY($1::text[])
+ORDER BY model_id COLLATE "C",alias COLLATE "C"`
+
+func (s *Server) attachActiveModelAliases(c *gin.Context, rows []map[string]any) error {
+	ids := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if id, ok := row["id"].(string); ok {
+			ids = append(ids, id)
+		}
+	}
+	aliasRows, err := s.query(c.Request.Context(), activeModelAliasesSQL, ids)
+	if err != nil {
+		return err
+	}
+	aliases := make(map[string][]string, len(ids))
+	for _, id := range ids {
+		aliases[id] = []string{}
+	}
+	for _, aliasRow := range aliasRows {
+		modelID, modelOK := aliasRow["model_id"].(string)
+		alias, aliasOK := aliasRow["alias"].(string)
+		if modelOK && aliasOK {
+			aliases[modelID] = append(aliases[modelID], alias)
+		}
+	}
+	for _, row := range rows {
+		if id, ok := row["id"].(string); ok {
+			row["aliases"] = aliases[id]
+		}
+	}
+	return nil
 }
 func (s *Server) prices(c *gin.Context) {
 	if sessionOf(c).User.PlatformRole == "admin" {

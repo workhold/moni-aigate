@@ -182,6 +182,9 @@ BEGIN
  NEW.input_fingerprint:=pricing_fingerprint(NEW.kind,NEW.actor,NEW.scope,NEW.target,NEW.safe_input);
  IF NEW.kind IN ('price_group.create','group_price.publish','default_price.publish','cost_price.publish','model_alias.create','model_alias.retire') THEN
   NEW.result_snapshot:=jsonb_set(NEW.result_snapshot,'{created_at}',to_jsonb(pricing_time(NEW.created_at)),true);
+  IF NEW.kind='model_alias.retire' THEN
+   NEW.result_snapshot:=jsonb_set(NEW.result_snapshot,'{retired_at}',to_jsonb(pricing_time(NEW.created_at)),true);
+  END IF;
  END IF;
  RETURN NEW;
 END $$;

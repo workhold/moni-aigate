@@ -44,6 +44,8 @@ type ModelInput struct {
 	Profile            *provider.Profile `json:"profile"`
 }
 
+const modelNameLockSQL = `SELECT pg_advisory_xact_lock(hashtextextended('model-name:'||$1,0))`
+
 func (s *Store) CreateModel(ctx context.Context, actor string, in ModelInput) (string, error) {
 	if len(in.PublicName) < 1 || len(in.PublicName) > 100 || strings.ContainsAny(in.PublicName, " \r\n\t") {
 		return "", ErrInvalid
@@ -95,6 +97,19 @@ func (s *Store) CreateModel(ctx context.Context, actor string, in ModelInput) (s
 	}
 	defer tx.Rollback(ctx)
 	id := uuid.NewString()
+	// Model names and aliases share a namespace. current_002 owns the
+	// trigger-backed database contract; keep application-side lock identity
+	// byte-for-byte identical to phase1_model_name_lock(text).
+	if _, e = tx.Exec(ctx, modelNameLockSQL, in.PublicName); e != nil {
+		return "", e
+	}
+	var conflict bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM model_aliases WHERE alias=$1)`, in.PublicName).Scan(&conflict); e != nil {
+		return "", e
+	}
+	if conflict {
+		return "", ErrModelAliasConflict
+	}
 	if _, e = tx.Exec(ctx, "SELECT meter_insert_text_model($1,$2,$3,$4)", id, in.PublicName, body, p.Version); e != nil {
 		return "", e
 	}
@@ -383,15 +398,30 @@ func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, 
 
 type Model struct {
 	ID, Name, ProfileVersion string
+	RequestedName            string
 	Revision                 int64
 	Profile                  provider.Profile
 }
 
+const authorizedModelSQL = `SELECT m.id,m.public_name,m.profile_version,m.active_revision,meter_model_profile(m.id)
+FROM models m
+LEFT JOIN model_aliases a ON a.model_id=m.id AND a.alias=$4 AND a.state='active'
+JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1
+JOIN memberships mb ON mb.tenant_id=$1 AND mb.user_id=$2
+JOIN api_keys k ON k.id=$3 AND k.tenant_id=$1
+WHERE (m.public_name=$4 OR a.alias IS NOT NULL)
+  AND m.enabled
+  AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=$1 AND mg.user_id=$2 AND mg.model_id=m.id))
+  AND (m.id=ANY(k.scopes) OR '*'=ANY(k.scopes))
+ORDER BY CASE WHEN m.public_name=$4 THEN 0 ELSE 1 END
+LIMIT 1`
+
 func (s *Store) AuthorizedModel(ctx context.Context, tenant, user, key, name string) (Model, error) {
 	m := Model{}
 	var raw []byte
-	e := s.Pool.QueryRow(ctx, `SELECT m.id,m.public_name,m.profile_version,m.active_revision,meter_model_profile(m.id) FROM models m JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1 JOIN memberships mb ON mb.tenant_id=$1 AND mb.user_id=$2 JOIN api_keys k ON k.id=$3 AND k.tenant_id=$1 WHERE m.public_name=$4 AND m.enabled AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=$1 AND mg.user_id=$2 AND mg.model_id=m.id)) AND (m.id=ANY(k.scopes) OR '*'=ANY(k.scopes))`, tenant, user, key, name).Scan(&m.ID, &m.Name, &m.ProfileVersion, &m.Revision, &raw)
+	e := s.Pool.QueryRow(ctx, authorizedModelSQL, tenant, user, key, name).Scan(&m.ID, &m.Name, &m.ProfileVersion, &m.Revision, &raw)
 	if e == nil {
+		m.RequestedName = name
 		e = json.Unmarshal(raw, &m.Profile)
 	}
 	return m, e

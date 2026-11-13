@@ -22,7 +22,7 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 	if in.RequestID == "" {
 		in.RequestID = uuid.NewString()
 	}
-	if !validID(in.RequestID) || !validID(in.Principal.TenantID) || !validID(in.Principal.UserID) || !validID(in.Principal.KeyID) || !validID(in.ModelID) || !boundedString(in.RequestHMAC, 256) || len(in.IdempotencyKey) > 200 {
+	if !validID(in.RequestID) || !validID(in.Principal.TenantID) || !validID(in.Principal.UserID) || !validID(in.Principal.KeyID) || !validID(in.ModelID) || (in.RequestedModelName != "" && !boundedString(in.RequestedModelName, 100)) || !boundedString(in.RequestHMAC, 256) || len(in.IdempotencyKey) > 200 {
 		return result, fail("invalid_request", "invalid reservation input")
 	}
 	clientIP := security.NormalizeClientIP(in.Principal.ClientIP)
@@ -178,7 +178,7 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		}
 		result = Reservation{ID: uuid.NewString(), RequestID: in.RequestID, TenantID: in.Principal.TenantID, Amount: amount, Status: "reserved", Deadline: now.Add(24 * time.Hour), PriceVersionID: price, PricingGroupID: auth.PriceGroupID, TenantPricingRevision: auth.PricingRevision, RetailPricedAt: pricedAt}
 		create := &pgx.Batch{}
-		create.Queue("INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision,client_ip) VALUES($1,$2,$3,$4,$5,$6,$7,'synchronous',$8,$9,$10,$11,$12,$13,$14,NULLIF($15,'')::inet)", in.RequestID, in.Principal.TenantID, in.Principal.KeyID, in.Principal.UserID, in.ModelID, auth.ProfileVersion, protocol, resultKind, in.PolicyVersion, in.RequestHMAC, in.RequestDeadline, s.instanceID, in.Streaming, in.RouteRevision, clientIP)
+		create.Queue("INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,requested_model_name,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision,client_ip) VALUES($1,$2,$3,$4,$5,NULLIF($6,''),$7,$8,'synchronous',$9,$10,$11,$12,$13,$14,$15,$16,NULLIF($17,'')::inet)", in.RequestID, in.Principal.TenantID, in.Principal.KeyID, in.Principal.UserID, in.ModelID, in.RequestedModelName, auth.ProfileVersion, protocol, resultKind, in.PolicyVersion, in.RequestHMAC, in.RequestDeadline, s.instanceID, in.Streaming, in.RouteRevision, clientIP)
 		create.Queue(`INSERT INTO request_meter_snapshots(tenant_id,request_id,model_id,profile_version,schema_id,schema_digest,variant_key,price_version_id,pricing_group_id,tenant_pricing_revision,retail_priced_at,input_bound,output_bound,plan_canonical,plan_digest,retail_quote_canonical,retail_quote_digest)
  VALUES($1,$2,$3,$4,$5,$6,'default',$7,$8,$9,$10,$11,$12,
   CASE WHEN meter_plan_ready($4,$13) THEN meter_request_plan_canonical($4,$3,$5,$6,$12,$14,$13) END,

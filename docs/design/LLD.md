@@ -1229,3 +1229,11 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 新增对象：`physical_models`、`route_sessions`、`route_decisions`；`route_policy_versions` 追加 `scoring`、`quality_floor`、`min_margin_rate`、`stickiness`；`upstream_attempts` 追加 `completed_at`、`first_content_at`。
 
 纯函数 `routing.Select(inputs) -> []Decision` 不做 I/O，同一输入同一输出；抽签值、统计快照和候选事实全部在输入里，回放因此可重复。
+
+## 030-A 外围接缝（2026-11-10）
+
+`internal/catalog/model_alias.go` 保留别名值域、状态终态和 `ResolveModelName` 纯函数；`AuthorizedModel` 的 SQL 在授权 join 内增加 active alias 分支，并将客户原始名放入 `Model.RequestedName`。`internal/server/gateway.go` 只在 provider parser 前临时把 profile 的请求名切换为 `RequestedName`，所以 `Model.ID`、profile version、route revision、Reserve 和 attempt identity 不变，响应回显客户提交名。
+
+目录读面通过 `ActiveModelAliases` 批量附加活跃别名；它先探测 `model_aliases` 是否已安装，未安装时返回空集合并保持旧行为。公开目录保留逻辑模型 ID，在安全的公开模型 DTO 中追加 `aliases`；不把供应商模型、渠道、凭据或路由细节放入别名 DTO。管理写面只允许平台 admin，创建按 alias 名称 advisory lock、启用且已发布模型检查、共享名字空间冲突检查和事务审计；退役按 alias lock 与 revision CAS 执行，retired 是终态。
+
+HTTP 合同为 `GET/POST /api/platform/models/:id/aliases` 和 `POST /api/platform/model-aliases/:alias/retire`。请求体使用 canonical JSON，operation ID 参与幂等；冲突返回 `model_name_conflict`，迁移未安装返回 `model_alias_unavailable`。正式迁移、`requested_model_name` 的 billing 出生写入、共享名字空间触发器和角色列权限见 [030-A 外围合同](../../specs/030-model-aliases-group-multipliers/a-alias-periphery-contract.md)，不在此片修改 `internal/billing` 或正式 migrations。

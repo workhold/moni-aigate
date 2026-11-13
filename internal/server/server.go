@@ -198,6 +198,9 @@ func (s *Server) Engine() *gin.Engine {
 	p.GET("/models", s.platformModels)
 	p.POST("/models", s.createModel)
 	p.PATCH("/models/:id", s.updateModel)
+	p.GET("/models/:id/aliases", s.modelAliases)
+	p.POST("/models/:id/aliases", s.createModelAlias)
+	p.POST("/model-aliases/:alias/retire", s.retireModelAlias)
 	p.GET("/models/:id/publication", s.modelPublication)
 	p.PUT("/models/:id/publication", s.setModelPublication)
 	p.PUT("/models/:id/bindings", s.publishBindings)
@@ -380,6 +383,26 @@ func (s *Server) error(c *gin.Context, e error) {
 	}
 	if errors.Is(e, catalog.ErrInvalid) {
 		s.fail(c, 400, "invalid_configuration", "配置无效，请检查参数与引用")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasInvalid) {
+		s.fail(c, 400, "invalid_model_alias", "模型别名参数无效")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasConflict) {
+		s.fail(c, 409, "model_name_conflict", "模型公开名或别名已存在")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasRetired) {
+		s.fail(c, 409, "model_alias_retired", "模型别名已经退役")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasTargetUnavailable) {
+		s.fail(c, 409, "model_alias_target_unavailable", "目标模型未启用")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasTableUnavailable) {
+		s.fail(c, 503, "model_alias_unavailable", "模型别名能力尚未安装")
 		return
 	}
 	if errors.Is(e, procurement.ErrInvalid) {

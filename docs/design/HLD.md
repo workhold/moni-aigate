@@ -733,3 +733,9 @@ flowchart LR
 - **回放只读。** 重放使用持久化的输入，不重新读取当前配置或统计，不写决策、不派发、不触碰资金。
 
 这些规格列出的决策点（D-031-1、D-031-2、D-032-1、D-032-2、D-033-0…3）需要开发者逐一裁决后冻结。
+
+## 030-A 模型别名外围实现（2026-11-10）
+
+030-A 的外围实现已在独立 `catalog`、`server` 和 Vue 控制台接入，但正式 SQL 迁移仍由集成人追加。`catalog.AuthorizedModel` 在同一授权条件内按公开名或活跃别名解析，解析结果始终是逻辑模型 ID；server 另保留 `RequestedName`，让 provider 响应回显客户提交的别名。`/v1/models`、客户模型页和公开目录只投影活跃别名，平台 admin API 可查看含 retired 的完整别名行并执行 active→retired。
+
+别名表不存在时，旧目录和旧请求路径保持可用，管理写入明确返回未安装能力；这使外围代码可以先合入而不把未安装的本地数据库或 fixture 当作验收。请求出生时的 `request_records.requested_model_name` 以及正式迁移、触发器、角色列权限仍按 [030-A 外围合同](../../specs/030-model-aliases-group-multipliers/a-alias-periphery-contract.md)交给集成人；本片没有修改 billing、统一计量、分组倍率或公共钱包。

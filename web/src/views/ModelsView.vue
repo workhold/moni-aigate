@@ -60,7 +60,7 @@ onBeforeUnmount(() => { listGate.dispose(); quoteGate.dispose() })
   <div v-else-if="rows.length" class="model-card-grid">
     <article v-for="model in rows" :key="model.id" class="model-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="model-icon"><el-icon><Cpu /></el-icon></div><el-tag type="success">{{ protocolInfo(property(model, 'protocol'))?.title || '未知协议' }}</el-tag></div>
-      <h3>{{ model.public_name }}<el-button link :icon="CopyDocument" aria-label="复制模型名称" @click="copy(model.public_name)" /></h3><div class="model-id mono">{{ model.id }}</div>
+      <h3>{{ model.public_name }}<el-button link :icon="CopyDocument" aria-label="复制模型名称" @click="copy(model.public_name)" /></h3><div v-if="model.aliases?.length" class="model-aliases"><span class="field-hint">别名：</span><el-tag v-for="alias in model.aliases" :key="alias" size="small" effect="plain" @click="copy(alias)">{{ alias }}</el-tag></div><div class="model-id mono">{{ model.id }}</div>
       <div class="model-properties">
         <div class="model-property"><span>{{ inputOnly(model) ? '整个请求输入容量' : '上下文上限' }}</span><strong>{{ integer(property(model, 'context_limit')) }} Tokens</strong></div>
         <div class="model-property"><span>{{ inputOnly(model) ? '计费方式' : '最大输出' }}</span><strong>{{ inputOnly(model) ? '仅输入计费' : `${integer(property(model, 'output_limit'))} Tokens` }}</strong></div>
@@ -86,4 +86,5 @@ onBeforeUnmount(() => { listGate.dispose(); quoteGate.dispose() })
 
 <style scoped>
 .model-playground-link{display:inline-block;font-size:11px;color:#087e83;margin-top:18px;line-height:1.8}
+.model-aliases{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0 4px}.model-aliases .el-tag{cursor:pointer}
 </style>

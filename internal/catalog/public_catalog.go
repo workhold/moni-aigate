@@ -34,6 +34,7 @@ type PublicCatalogPage struct {
 type PublicModel struct {
 	ID           string             `json:"id"`
 	PublicName   string             `json:"public_name"`
+	Aliases      []string           `json:"aliases"`
 	Protocol     string             `json:"protocol"`
 	Capabilities PublicCapabilities `json:"capabilities"`
 	Limits       PublicLimits       `json:"limits"`
@@ -160,6 +161,11 @@ const publicCatalogSQL = `WITH instant AS MATERIALIZED (SELECT clock_timestamp()
  ) p ON true
  ORDER BY m.public_name COLLATE "C",m.id COLLATE "C"`
 
+const activePublicModelAliasesSQL = `SELECT model_id,alias
+FROM model_aliases
+WHERE state='active' AND model_id=ANY($1::text[])
+ORDER BY model_id COLLATE "C",alias COLLATE "C"`
+
 func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id string) (PublicCatalogPage, error) {
 	page := PublicCatalogPage{Data: []PublicModel{}}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
@@ -214,11 +220,42 @@ func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id
 	if rows.Err() != nil || page.AsOf.IsZero() {
 		return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 	}
+	ids := make([]string, 0, len(page.Data))
+	for _, model := range page.Data {
+		ids = append(ids, model.ID)
+	}
+	aliases, err := s.activePublicModelAliases(ctx, ids)
+	if err != nil {
+		return PublicCatalogPage{}, ErrPublicCatalogUnavailable
+	}
+	for i := range page.Data {
+		page.Data[i].Aliases = aliases[page.Data[i].ID]
+	}
 	page.HasMore = len(page.Data) > 50
 	if page.HasMore {
 		page.Data = page.Data[:50]
 	}
 	return page, nil
+}
+
+func (s *Store) activePublicModelAliases(ctx context.Context, modelIDs []string) (map[string][]string, error) {
+	aliases := make(map[string][]string, len(modelIDs))
+	for _, modelID := range modelIDs {
+		aliases[modelID] = []string{}
+	}
+	rows, err := s.Pool.Query(ctx, activePublicModelAliasesSQL, modelIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var modelID, alias string
+		if err := rows.Scan(&modelID, &alias); err != nil {
+			return nil, err
+		}
+		aliases[modelID] = append(aliases[modelID], alias)
+	}
+	return aliases, rows.Err()
 }
 
 func (s *Store) PublicModels(ctx context.Context, filter PublicCatalogFilter) (PublicCatalogPage, error) {

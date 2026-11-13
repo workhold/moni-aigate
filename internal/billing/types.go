@@ -54,12 +54,12 @@ type Principal struct {
 	ClientIP string `json:"-"`
 }
 type ReserveInput struct {
-	RouteRevision                                                                  int64
-	Principal                                                                      Principal
-	RequestID, ModelID, IdempotencyKey, RequestHMAC, ProfileVersion, PolicyVersion string
-	InputUpperBound, OutputLimit                                                   int64
-	RequestDeadline                                                                time.Time
-	Streaming                                                                      bool
+	RouteRevision                                                                                      int64
+	Principal                                                                                          Principal
+	RequestID, ModelID, RequestedModelName, IdempotencyKey, RequestHMAC, ProfileVersion, PolicyVersion string
+	InputUpperBound, OutputLimit                                                                       int64
+	RequestDeadline                                                                                    time.Time
+	Streaming                                                                                          bool
 }
 type Reservation struct {
 	ID                    string    `json:"id"`
