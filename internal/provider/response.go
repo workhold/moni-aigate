@@ -293,6 +293,20 @@ func (r *Response) normalize(m map[string]json.RawMessage, stream bool) (map[str
 				out[k] = v
 			}
 		}
+		if stream {
+			// DeepSeek-R1 / GLM style reasoning deltas are not forwarded and carry
+			// no deliverable content, but a model that is visibly thinking is not
+			// stalled: count them as progress so the progress timer is not tripped
+			// during a long reasoning phase.
+			for _, k := range []string{"reasoning_content", "reasoning"} {
+				if v, ok := message[k]; ok && !bytes.Equal(bytes.TrimSpace(v), []byte("null")) {
+					var s string
+					if json.Unmarshal(v, &s) == nil && s != "" {
+						event.Progress = true
+					}
+				}
+			}
+		}
 		if calls, ok := message["tool_calls"]; ok {
 			if !r.profile.SupportsTools {
 				return nil, nil, protocolError("upstream_unsupported_tool")
