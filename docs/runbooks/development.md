@@ -78,7 +78,7 @@ DATABASE_URL="$MIGRATION_DATABASE_URL" ./bin/moni-aigate provision
 ./bin/moni-aigate serve
 ```
 
-`bootstrap`从stdin读一行密码，长度12–72字节；只允许空用户库创建首次管理员。交互运行时输入不会被此程序隐藏，建议通过密码管理器/权限0600临时文件的stdin提供，不在命令参数或shell历史写密码。数据库角色须先按[建立本地数据库与角色](#建立本地数据库与角色)由初始化管理身份创建；应用不具有建表/改迁移权限。Compose/1Panel使用独立安装流程，见[部署](deployment.md#首次安装)。
+`bootstrap`从stdin读一行密码，长度12–72字节；只允许空用户库创建首次管理员。交互运行时输入不会被此程序隐藏，建议通过密码管理器/权限0600临时文件的stdin提供，不在命令参数或shell历史写密码。数据库角色须先按[建立本地数据库与角色](#建立本地数据库与角色)由初始化管理身份创建；应用不具有建表/改迁移权限。Compose/1Panel使用独立安装流程，见[部署](deployment.md#首次安装)。控制台无法恢复账号时，使用[运营账号恢复 CLI](operator-account-recovery.md)，并先在预览环境复核实际 app/projection 角色边界。
 
 当前版本不提供旧数据库升级。旧阶段记录仅用于追溯和隔离 fixture。新环境先创建空数据库，再从当前基线执行 `migrate`、`provision` 和 `bootstrap`。`migrate`从 `MIGRATION_DATABASE_URL` 选择 owner 连接，`provision` 也须显式使用 owner 连接配置最小权限：
 

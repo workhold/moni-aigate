@@ -451,3 +451,45 @@ func TestRefusedConnectionIsSafeAndWrittenDisconnectIsNot(t *testing.T) {
 		t.Fatalf("written disconnect err=%v requests=%d", e, accepted.Load())
 	}
 }
+
+func TestReasoningContentKeepsStreamAliveUntilTotalDeadline(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-r.Context().Done():
+				return
+			case <-ticker.C:
+				_, _ = io.WriteString(w, sse(`{"choices":[{"index":0,"delta":{"reasoning_content":"thinking"},"finish_reason":null}]}`, "\n"))
+				w.(http.Flusher).Flush()
+			}
+		}
+	}))
+	defer srv.Close()
+	// The progress timer (80ms) would fire long before the 500ms total budget if
+	// reasoning deltas were not progress; they are bounded only by the deadline.
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	r, e := NewClient(ClientOptions{ProgressTimeout: 80 * time.Millisecond, FirstEventTimeout: time.Second}).Do(ctx, fixtureEndpoint(t, srv.URL), fixtureRequest(t, true))
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer r.Close()
+	started := time.Now()
+	for {
+		event, err := r.ReadEvent()
+		if err != nil {
+			var p *Error
+			if !errors.As(err, &p) || p.Class != ClassTimeout || p.Code == "upstream_progress_timeout" || time.Since(started) < 300*time.Millisecond {
+				t.Fatalf("reasoning stream ended early or with wrong cause after %s: %v", time.Since(started), err)
+			}
+			return
+		}
+		if event != nil && strings.Contains(string(event.Data), "thinking") {
+			t.Fatalf("reasoning_content forwarded to client: %s", event.Data)
+		}
+	}
+}

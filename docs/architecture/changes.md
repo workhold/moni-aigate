@@ -6277,3 +6277,130 @@ align the HLD link label with the renumbered external upstream contract
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+## 2026-11-13T19:18:07Z · 67815182e87b
+
+部署定位修订：产品定位从“自托管/1Panel 体验”改为仓库自带 Compose/脚本部署，1Panel 等面板降为可选部署环境、非验收门禁；同步 README、统一架构、HLD、overview、四阶段路线、交付计划、new-api 路线图、上游接入路线、ADR-001 及 001/014/025/028/029/035 规格；附带修复四阶段路线 0 阶段插入后小节未重编号导致的断链（小节归位 4.x/5.x/6.x，更新 029–034 与 new-api-roadmap 的锚点）
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2143 个源文件；本次 23 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/decisions/ADR-001-source-strategy.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/overview.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `specs/001-commercial-mvp/spec.md`
+- modified `specs/014-mvp-release-qualification/spec.md`
+- modified `specs/025-production-ha/a0-compose-config-contract.md`
+- modified `specs/025-production-ha/acceptance.md`
+- modified `specs/025-production-ha/contract.md`
+- modified `specs/025-production-ha/spec.md`
+- modified `specs/028-unified-metering-media/spec.md`
+- modified `specs/029-phase1-acceptance/spec.md`
+- modified `specs/030-model-aliases-group-multipliers/spec.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>
+## 2026-11-13T19:23:11Z · cdbc6ffd9ed6
+
+4 个 beta 加固提交回流 main：Chat usage 白名单（DeepSeek 分区与 cost/cost_details/is_byok 元数据键，未知键仍冲突）与 reasoning 增量计入 stream progress（不转发不计费）；备份演练 PG15+ schema 属主修复；运营账号恢复 CLI（user set-password/reset-mfa/suspend/activate，经既有 app 身份链，无新角色/模块/表）。迁移幂等机制（46c42d1）因与上游 current_*.sql 追加方案语义重复而跳过。模块图、请求链路、数据关系与权限边界无结构变化；specs/001 provider 合同已同步 usage 白名单与 progress 语义。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2147 个源文件；本次 11 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/user_command.go`
+- added `cmd/moni-aigate/user_command_test.go`
+- added `internal/identity/operator.go`
+- added `internal/identity/operator_integration_test.go`
+- modified `internal/provider/request_test.go`
+- modified `internal/provider/response.go`
+- modified `internal/provider/response_test.go`
+- modified `internal/provider/usage.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `specs/001-commercial-mvp/contracts/provider.md`
+
+</details>
+
+## 2026-11-13T20:12:16Z · d85d3f896ac8
+
+合入 PR #6/#7：部署定位修订与四阶段路线断链修复；beta usage/reasoning、备份 schema owner 与运营恢复 CLI 回流；保留双方架构历史并补恢复 runbook，已复核实际 app/projection 角色边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2148 个源文件；本次 13 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/user_command.go`
+- added `cmd/moni-aigate/user_command_test.go`
+- modified `docs/runbooks/development.md`
+- added `docs/runbooks/operator-account-recovery.md`
+- added `internal/identity/operator.go`
+- added `internal/identity/operator_integration_test.go`
+- modified `internal/provider/request_test.go`
+- modified `internal/provider/response.go`
+- modified `internal/provider/response_test.go`
+- modified `internal/provider/usage.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `specs/001-commercial-mvp/contracts/provider.md`
+
+</details>
+
+## 2026-11-13T20:15:21Z · 1e5660faedaf
+
+将合入 PR #6/#7 的 main 同步到 local-mvp：保留 032/033/034 实施冻结与真实上游 checkpoint，合并部署定位、运营恢复与 beta 加固，保留双方架构历史并复核冲突
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2186 个源文件；本次 38 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/user_command.go`
+- added `cmd/moni-aigate/user_command_test.go`
+- added `deploy/external-upstreams.compose.yaml`
+- modified `docs/decisions/ADR-001-source-strategy.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/overview.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/runbooks/operator-account-recovery.md`
+- added `internal/identity/operator.go`
+- added `internal/identity/operator_integration_test.go`
+- modified `internal/provider/request_test.go`
+- modified `internal/provider/response.go`
+- modified `internal/provider/response_test.go`
+- modified `internal/provider/usage.go`
+- modified `scripts/backup-restore-drill.go`
+- added `scripts/external-upstream-qa.py`
+- modified `specs/001-commercial-mvp/contracts/provider.md`
+- modified `specs/001-commercial-mvp/spec.md`
+- modified `specs/014-mvp-release-qualification/spec.md`
+- modified `specs/025-production-ha/a0-compose-config-contract.md`
+- modified `specs/025-production-ha/acceptance.md`
+- modified `specs/025-production-ha/contract.md`
+- modified `specs/025-production-ha/spec.md`
+- modified `specs/028-unified-metering-media/spec.md`
+- modified `specs/029-phase1-acceptance/spec.md`
+- modified `specs/030-model-aliases-group-multipliers/spec.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>

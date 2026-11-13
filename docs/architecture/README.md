@@ -2,7 +2,7 @@
 
 本文件是当前系统的架构入口，面向开发、平台运营、财务和部署人员。正文描述已经实现的行为；规划在能力表中明确标记。详细约束以关联 SDD 合同和代码为准，实际验收范围以验证记录为准。历史设计中的“未来支持”条目不能覆盖此处的当前状态。
 
-moni-aigate 是对外提供 API 的自托管商业运营平台。它借鉴 New API/One API 的模型接入、渠道经营和客户控制台，以及 1Panel 的自托管部署体验；核心账务和客户边界由 aigate 统一定义，同时允许在许可证和来源记录完整的前提下纳入上游组件。当前以业务与资金正确性优先，先完善能力，再推进性能专项；竞品全功能、生产发布或性能对标均需独立验收。
+moni-aigate 是对外提供 API 的商业运营平台。它借鉴 New API/One API 的模型接入、渠道经营和客户控制台；核心账务和客户边界由 aigate 统一定义，同时允许在许可证和来源记录完整的前提下纳入上游组件。部署由仓库自带的 Compose/脚本完成，1Panel 等面板只是可选的运行环境，不构成产品定位或验收前提。当前以业务与资金正确性优先，先完善能力，再推进性能专项；竞品全功能、生产发布或性能对标均需独立验收。
 
 建议先看系统上下文、请求时序和部署图，再按模块表进入源码。设计入口：[HLD](../design/HLD.md)、[LLD](../design/LLD.md)、[四阶段路线](../design/phase-roadmap.md)、[上游接入路线](../design/upstream-integration-plan.md)、[能力路线图](../design/new-api-roadmap.md)、[商业 MVP 合同](../../specs/001-commercial-mvp/spec.md)、[035 接入合同](../../specs/035-external-upstream-integration/spec.md)。当前验收入口：[MVP 状态](../verification/mvp-status.md)、[逐项验收边界](../verification/acceptance-execution.md)与[001–028整体盘点](../verification/overall-delivery-inventory.md)。
 
@@ -85,7 +85,7 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 <!-- architecture:context -->
 ## 当前上游接入边界（2026-11-12）
 
-New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration-plan.md)登记为可统一部署的外部 channel。aigate 是唯一公网入口，负责客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算和审计；下游网关保留自己的供应商账号池、协议适配和局部重试。三个服务可以放在同一 Compose/1Panel 编排中，但数据库、管理端口和客户账单事实保持独立。动态路由在 `internal/routing` 选择 channel，下游账号选择不改变 aigate 的 route revision 或结算身份。外部模型列表、单次 HTTP 200 和连通性 probe 不能替代逐 profile 资格认证。
+New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration-plan.md)登记为可统一部署的外部 channel。aigate 是唯一公网入口，负责客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算和审计；下游网关保留自己的供应商账号池、协议适配和局部重试。三个服务可以放在同一 Compose 编排（或等效部署脚本）中，1Panel 等面板可选导入同一编排，但数据库、管理端口和客户账单事实保持独立。动态路由在 `internal/routing` 选择 channel，下游账号选择不改变 aigate 的 route revision 或结算身份。外部模型列表、单次 HTTP 200 和连通性 probe 不能替代逐 profile 资格认证。
 
 0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)。若以后把上游源码纳入本仓库，必须保留 LICENSE/NOTICE、来源提交、修改记录和适用的源码提供方式；许可证合规是发布门禁，不是能力路线阻塞项。
 
@@ -1138,7 +1138,7 @@ flowchart LR
     App -->|独立有界邮件 worker| MailSMTP
 ```
 
-默认形态为单应用实例 + PostgreSQL + TLS 反代，适合 1Panel/Compose 自托管。数据库不公开端口，应用对反代暴露本机监听；app、projector 与 owner/migrator 必须分角色。身份表app仅状态需要的列级UPDATE，projector无身份表读取/写入；密文离线重包仅owner且不恢复已清秘密。CLI 仅 `migrate` 使用迁移连接，其他命令只验证迁移；启动要求单独 `PROJECTION_DATABASE_URL`，拒绝与 app 同一角色。[Dockerfile](../../Dockerfile)、[Compose](../../compose.yaml)、[部署手册](../runbooks/deployment.md)。
+默认形态为单应用实例 + PostgreSQL + TLS 反代，由仓库自带的 Compose/部署脚本完成部署；1Panel 等面板仅作为可选运行环境，不构成部署前提或验收门禁。数据库不公开端口，应用对反代暴露本机监听；app、projector 与 owner/migrator 必须分角色。身份表app仅状态需要的列级UPDATE，projector无身份表读取/写入；密文离线重包仅owner且不恢复已清秘密。CLI 仅 `migrate` 使用迁移连接，其他命令只验证迁移；启动要求单独 `PROJECTION_DATABASE_URL`，拒绝与 app 同一角色。[Dockerfile](../../Dockerfile)、[Compose](../../compose.yaml)、[部署手册](../runbooks/deployment.md)。
 
 025-A0窄切片补齐Compose的021注册/恢复、MAIL_TRANSPORT和六项SMTP配置透传，仅app获得这些环境；默认注册关闭/邮件disabled，迁移与provision不获得SMTP秘密。常规Compose仅保留PAYMENTS_MODE=off，不注入隔离沙箱manifest/worker DSN。YAML/九项声明默认与合成覆盖、环境隔离/原角色端口排空边界的静态检查通过；全局Docker CLI仍无compose插件；另从Homebrew官方SHA验证的隔离Compose 5.6.1完成默认/合成覆盖的真实config --quiet和JSON渲染、九字段/环境隔离检查，见[实际渲染](../verification/compose-render-025.json)。独立临时Colima profile因官方VM镜像下载超时未启动，已删除本轮profile并确认既有profile未变，见[运行环境记录](../verification/compose-runtime-025.json)。容器、1Panel和正式邮件仍须各自验收；此前[静态记录](../verification/compose-config-025.json)保持原未执行结论，[合同](../../specs/025-production-ha/a0-compose-config-contract.md)限定配置范围。此片没有改变模块、数据或单活模型。
 

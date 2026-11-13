@@ -191,3 +191,32 @@ func TestDeepSeekCacheUsageNormalizesOnlyCompleteCacheEvidence(t *testing.T) {
 		t.Fatalf("standard cached_tokens contract changed: %+v", u)
 	}
 }
+
+func TestChatUsageVendorExtensions(t *testing.T) {
+	for name, tc := range map[string]struct {
+		raw    string
+		status UsageStatus
+		cached int64
+	}{
+		"deepseek_partition":      {`{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_cache_hit_tokens":6,"prompt_cache_miss_tokens":4}`, UsageConfirmed, 6},
+		"deepseek_all_miss":       {`{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":10}`, UsageConfirmed, 0},
+		"deepseek_bad_sum":        {`{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_cache_hit_tokens":6,"prompt_cache_miss_tokens":5}`, UsageConflicting, 0},
+		"deepseek_negative":       {`{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_cache_hit_tokens":-1,"prompt_cache_miss_tokens":11}`, UsageConflicting, 0},
+		"deepseek_hit_over":       {`{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6,"prompt_cache_hit_tokens":6}`, UsageConflicting, 0},
+		"details_agree":           {`{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_cache_hit_tokens":6,"prompt_cache_miss_tokens":4,"prompt_tokens_details":{"cached_tokens":6}}`, UsageConfirmed, 6},
+		"details_disagree":        {`{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_cache_hit_tokens":6,"prompt_cache_miss_tokens":4,"prompt_tokens_details":{"cached_tokens":5}}`, UsageConflicting, 0},
+		"metadata_cost":           {`{"prompt_tokens":3,"completion_tokens":1,"total_tokens":4,"cost":0.001,"is_byok":false}`, UsageConfirmed, 0},
+		"unknown_dimension":       {`{"prompt_tokens":3,"completion_tokens":1,"total_tokens":4,"search_units":1}`, UsageConflicting, 0},
+		"duplicate_hit_key":       {`{"prompt_tokens":3,"completion_tokens":1,"total_tokens":4,"prompt_cache_hit_tokens":1,"prompt_cache_hit_tokens":1}`, UsageConflicting, 0},
+		"unknown_details_charged": {`{"prompt_tokens":3,"completion_tokens":1,"total_tokens":4,"prompt_tokens_details":{"audio_tokens":1}}`, UsageConflicting, 0},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var tr usageTracker
+			tr.observe([]byte(tc.raw))
+			u := tr.finalize()
+			if u.Status != tc.status || (tc.status == UsageConfirmed && u.CachedTokens != tc.cached) {
+				t.Fatalf("status=%s cached=%d want %s/%d", u.Status, u.CachedTokens, tc.status, tc.cached)
+			}
+		})
+	}
+}

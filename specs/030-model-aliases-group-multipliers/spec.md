@@ -1,6 +1,6 @@
 # 030：模型别名与分组倍率
 
-2026-11-10；状态：草案，待开发者评审后冻结。所属阶段：[第一阶段](../../docs/design/phase-roadmap.md#3-第一阶段固定版本-new-api-核心业务能力对齐)。验收项：[029](../029-phase1-acceptance/spec.md) P1-CAT-02、P1-PR-02。
+2026-11-10；状态：草案，待开发者评审后冻结。所属阶段：[第一阶段](../../docs/design/phase-roadmap.md#4-第一阶段固定版本-new-api-核心业务能力闭环)。验收项：[029](../029-phase1-acceptance/spec.md) P1-CAT-02、P1-PR-02。
 
 两项都是 New API 对齐能力，彼此独立，可以分开实施。它们都不新建计价、钱包或路由路径。
 
