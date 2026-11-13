@@ -6173,3 +6173,27 @@ align the HLD link label with the renumbered external upstream contract
 - modified `specs/001-commercial-mvp/contracts/provider.md`
 
 </details>
+
+## 2026-11-13T20:12:16Z · d85d3f896ac8
+
+合入 PR #6/#7：部署定位修订与四阶段路线断链修复；beta usage/reasoning、备份 schema owner 与运营恢复 CLI 回流；保留双方架构历史并补恢复 runbook，已复核实际 app/projection 角色边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2148 个源文件；本次 13 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/user_command.go`
+- added `cmd/moni-aigate/user_command_test.go`
+- modified `docs/runbooks/development.md`
+- added `docs/runbooks/operator-account-recovery.md`
+- added `internal/identity/operator.go`
+- added `internal/identity/operator_integration_test.go`
+- modified `internal/provider/request_test.go`
+- modified `internal/provider/response.go`
+- modified `internal/provider/response_test.go`
+- modified `internal/provider/usage.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `specs/001-commercial-mvp/contracts/provider.md`
+
+</details>

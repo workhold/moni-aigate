@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T19:18:07Z",
-  "review_reason": "部署定位修订：产品定位从“自托管/1Panel 体验”改为仓库自带 Compose/脚本部署，1Panel 等面板降为可选部署环境、非验收门禁；同步 README、统一架构、HLD、overview、四阶段路线、交付计划、new-api 路线图、上游接入路线、ADR-001 及 001/014/025/028/029/035 规格；附带修复四阶段路线 0 阶段插入后小节未重编号导致的断链（小节归位 4.x/5.x/6.x，更新 029–034 与 new-api-roadmap 的锚点）",
-  "snapshot_sha256": "67815182e87b03db954c113116b99a6b1482e3692d545abc0507afea5444dcde",
+  "reviewed_at": "2026-11-13T20:12:16Z",
+  "review_reason": "合入 PR #6/#7：部署定位修订与四阶段路线断链修复；beta usage/reasoning、备份 schema owner 与运营恢复 CLI 回流；保留双方架构历史并补恢复 runbook，已复核实际 app/projection 角色边界",
+  "snapshot_sha256": "d85d3f896ac83bd521d0f03b978a2d8d4d5a10449bc359e7e6b4f183b57e3719",
   "architecture_sha256": "91663911bd5d4c964e300291f6ad8e44cbdc54a42fa0bab6e0c4b35974025b7e",
-  "history_sha256": "ea1fd91bbe6ce7c00ed504a49c4d3d4e1c0e31d633736e85b007acd9c41b67be",
+  "history_sha256": "5ab6022291cfd61238f38e76680e45060b4112697db103a354ed026dfc16d178",
   "files": [
     {
       "path": ".dockerignore",
@@ -53,7 +53,7 @@
     },
     {
       "path": "cmd/moni-aigate/main.go",
-      "sha256": "fd45e6059c434de4fd8edc4ed2aafbd7d64291f3298ac69035c6c9913cf7cb0e"
+      "sha256": "9e4f696b843440162b4ebbe49ec9ac8f0a8fd05fa59458fca9a08457b2cc5366"
     },
     {
       "path": "cmd/moni-aigate/main_test.go",
@@ -78,6 +78,14 @@
     {
       "path": "cmd/moni-aigate/periodic_verify_test.go",
       "sha256": "ccfb86b48d19441ce9119081d46f797659a5f31cfc48cbf45d1bdb932754e924"
+    },
+    {
+      "path": "cmd/moni-aigate/user_command.go",
+      "sha256": "8bf1b0c5f359bbea78b17032a2d838cfc28b4f9e3bebe9157a0abc9d9d1ec6f1"
+    },
+    {
+      "path": "cmd/moni-aigate/user_command_test.go",
+      "sha256": "266f4a42efff7afa549e6ef748a660ea126f9fcc5310e1b47530482d7f2cc079"
     },
     {
       "path": "cmd/moni-aigate/wallet_commands_test.go",
@@ -249,7 +257,11 @@
     },
     {
       "path": "docs/runbooks/development.md",
-      "sha256": "7eb8aa92faf52160133cd687f1c327ebd1ea73742efcb4225c8f7a5610249f9e"
+      "sha256": "2c0dfea6ae4c4d514943489c03f17eb70f9772ba090848cb7af46c8066c21d81"
+    },
+    {
+      "path": "docs/runbooks/operator-account-recovery.md",
+      "sha256": "10e6cb8a547cf32268e1b0b39d59fe1b6d0ac4aacf56bf9fe05e129f9d8c14fd"
     },
     {
       "path": "docs/verification/028-media-pure-candidates.md",
@@ -3392,6 +3404,14 @@
       "sha256": "5ccf697ee9f94477e7cbea0bbf250130c433119b8172bf0ea2c1b6e4df5d5e7c"
     },
     {
+      "path": "internal/identity/operator.go",
+      "sha256": "a3aa864050b77b7464511ab04ab36f5befb23b8b15913881ea5d4e19ff49df50"
+    },
+    {
+      "path": "internal/identity/operator_integration_test.go",
+      "sha256": "5fff56b7281466b88a6ec174ed02ac0d67bf83914384897b8f8253b7202fa6fd"
+    },
+    {
       "path": "internal/identity/self_service.go",
       "sha256": "dad9c23ee8c87c147098dedf192b012de08461f0fd5bc91f2539da3beb9b2f8d"
     },
@@ -5673,15 +5693,15 @@
     },
     {
       "path": "internal/provider/request_test.go",
-      "sha256": "329b74ac1cad71adace64e895ccb33da45c76a55af501c3de793754e118439c6"
+      "sha256": "001e889c1a1676fa70dac0444ab04c62e0cfa5d673c7af9067cad5162e20a4e0"
     },
     {
       "path": "internal/provider/response.go",
-      "sha256": "53f2d9b099561d349e514f221c5c10acb36b63b9feaf0df6013ddf9edd36165d"
+      "sha256": "9f86712b02c0b18d94a5bdd2b2db067369c63781ebb2dcf765f639538ddcbe44"
     },
     {
       "path": "internal/provider/response_test.go",
-      "sha256": "d1e1376354d2e89745f5917a7b18bd6ce30a0b7f2f29fddfc28de9dd88985a50"
+      "sha256": "20cfae7016c5c5b163670b56fd96a0342a61acc288045877eec3c3e99afea019"
     },
     {
       "path": "internal/provider/retrieval_request.go",
@@ -5709,7 +5729,7 @@
     },
     {
       "path": "internal/provider/usage.go",
-      "sha256": "72d95aede9c97ce70daadbec924700b7f5489f891fc4e12bb8193a77b3d54ae8"
+      "sha256": "be1c3c35d26d548ddc55e8c0b7da98e991491de77ff49a0b4e6c93fea45dc10e"
     },
     {
       "path": "internal/qa/c0candidate/candidate_test.go",
@@ -6601,7 +6621,7 @@
     },
     {
       "path": "scripts/backup-restore-drill.go",
-      "sha256": "6ef1473fc3933e85a8f91f6748863665b45084b9d3adc13c2c3713639835f401"
+      "sha256": "3514923478f8570629f7eae811b34eeab76c53a1cf7a78a7b2ed74ea47bf94c1"
     },
     {
       "path": "scripts/backup.sh",
@@ -6909,7 +6929,7 @@
     },
     {
       "path": "specs/001-commercial-mvp/contracts/provider.md",
-      "sha256": "710e7c07ad28285d58f76a9545f0b987d1b1b55dc0cad9ac293e45902bc3e1cf"
+      "sha256": "e6dd1173e4f64ada13cf3f87a163968fab19b1770e6730b942f2c89b888176ac"
     },
     {
       "path": "specs/001-commercial-mvp/plan.md",
