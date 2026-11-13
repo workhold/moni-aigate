@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T20:15:21Z",
-  "review_reason": "将合入 PR #6/#7 的 main 同步到 local-mvp：保留 032/033/034 实施冻结与真实上游 checkpoint，合并部署定位、运营恢复与 beta 加固，保留双方架构历史并复核冲突",
-  "snapshot_sha256": "1e5660faedaf738f54e77686532e3fa767816455f5ccfb119a9e344de8d745a1",
-  "architecture_sha256": "fdab20a497fdf0d42a560d24c2d50eb4778aa2e232f5db0e82b02193d817d5ce",
-  "history_sha256": "33e8bcfb26a44dd0c63552a19eef1353c9ba2446c2adc0c733cb339e2c5021a2",
+  "reviewed_at": "2026-11-13T20:29:54Z",
+  "review_reason": "真实本地 New API/Sub2API 三服务三库拓扑验收：固定 New API e449cc7 与 Sub2API 10ba8f9/digest，三库与内部网络、JSON/SSE、唯一结算、receipt 和 route revision 回退通过；供应商资格仍标未验收",
+  "snapshot_sha256": "8c6fc3f6d94848268bd3474191982c6fbe30cfefb5839c6faaaff17ee1a4ae71",
+  "architecture_sha256": "69f6949246fa9d0efc49ecdbe286fee57a9e013ae80b3bd02d89414d550fe763",
+  "history_sha256": "4d2249ee82d1d57944db5acae6411f0cf529869f532e31bed83c3bc980b7759b",
   "files": [
     {
       "path": ".dockerignore",
@@ -181,7 +181,7 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "64b7ebd2f7ded6b0a9a149a12ba61cbb311be33fa7caaa3336b256012b15b4e0"
+      "sha256": "80a1e0d11cae351609611116969ed40bebfd544959cd529c6b55b2c58231eaba"
     },
     {
       "path": "docs/design/LLD.md",
@@ -1581,7 +1581,7 @@
     },
     {
       "path": "docs/verification/phase0-external-upstream.md",
-      "sha256": "78a1bbc9458f9112dea4db9de98ca5ca5026f28c3d3536200191634b1d7d8d90"
+      "sha256": "1a588449102c3a023897edfac91174af4b49de6c364836d9a4aca1a9c6325fb1"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -6849,7 +6849,7 @@
     },
     {
       "path": "scripts/external-upstream-qa.py",
-      "sha256": "124390b6647165adff149e7975be5e3d8398c58b71b31dcc3dd71bbc4814045b"
+      "sha256": "c7928c7cf5b6a95797bc4693b0d2c1bb7cc7b2b0d68a0399536af178c366dbc7"
     },
     {
       "path": "scripts/financial-write-batch-qa/main.go",

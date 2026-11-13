@@ -6404,3 +6404,17 @@ align the HLD link label with the renumbered external upstream contract
 - modified `specs/035-external-upstream-integration/spec.md`
 
 </details>
+
+## 2026-11-13T20:29:54Z · 8c6fc3f6d948
+
+真实本地 New API/Sub2API 三服务三库拓扑验收：固定 New API e449cc7 与 Sub2API 10ba8f9/digest，三库与内部网络、JSON/SSE、唯一结算、receipt 和 route revision 回退通过；供应商资格仍标未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2186 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/verification/phase0-external-upstream.md`
+- modified `scripts/external-upstream-qa.py`
+
+</details>

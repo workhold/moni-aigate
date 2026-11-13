@@ -206,7 +206,7 @@ v0.1 人工核款：运营记录真实收款凭证和外部业务号 → 不同�
 | 第四阶段 | 真实供应商逐一认证、真实 usage 与成本、正式支付、生产部署、性能和已迁移能力的下游退役；1Panel 等面板适配为可选项 | 每个可售 profile 有真实账号证据；生产门禁通过；可退役能力完成切流 |
 | 扩容 | 多活动实例、共享限流、日志分库等 | 容量实测证明有需要且故障语义补全；不在四阶段内承诺 |
 
-2026-11-14 实现边界：0 阶段已落地 current-only 的 channel kind/integration mode、OpenAI-compatible external relay、统一 usage/错误/成本/safe-to-retry、channel probe 证据和 route revision 回退，并以 direct/new_api/sub2api deterministic fixture 验证唯一结算与不重放。上表中的真实 New API/Sub2API 三服务三库编排、1Panel、真实凭据与逐 profile 认证尚未完成；当前 Compose 证据使用仓库内 mock upstream，不能记作真实外部服务验收。详见[验证记录](../verification/phase0-external-upstream.md)。
+2026-11-14 实现边界：0 阶段已落地 current-only 的 channel kind/integration mode、OpenAI-compatible external relay、统一 usage/错误/成本/safe-to-retry、channel probe 证据和 route revision 回退，并以 direct/new_api/sub2api deterministic fixture 验证唯一结算与不重放。真实本地 New API（`e449cc7`）与 Sub2API（`10ba8f9`）三服务三库 Compose 拓扑也已通过 JSON/SSE、唯一结算、receipt 和 revision 回退验收；供应商出口仍为 deterministic mock。1Panel、真实凭据、真实 usage/成本与逐 profile 认证尚未完成，不能记作生产或供应商验收。详见[验证记录](../verification/phase0-external-upstream.md)。
 
 下表为 2026-10-30 首版的原始里程碑，保留历史语境。其中 M2 的“真实渠道合同与 usage 能力核实”已移到第四阶段，不再是第一阶段出口：
 

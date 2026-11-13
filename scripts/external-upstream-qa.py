@@ -93,7 +93,7 @@ def main():
     api = API()
     api.login()
     channels = api.expect("GET", "/api/platform/channels")
-    direct = next(row["id"] for row in channels if row["name"] == "qa-compose-provider")
+    direct = next(row["id"] for row in channels if row["name"] == os.environ.get("DIRECT_CHANNEL_NAME", "mock-qa-a"))
     created = {}
     for kind, url, secret in (("new_api", "http://new-api:3000/v1", NEW_API_TOKEN), ("sub2api", "http://sub2api:8080/v1", SUB2API_TOKEN)):
         created[kind] = api.expect("POST", "/api/platform/channels", {"name": f"real-{kind}-{RUN_ID}", "base_url": url, "secret": secret, "data_region": "global", "provider": "openai", "channel_kind": kind, "allowed_cidrs": ["172.16.0.0/12"]}, csrf=True)["id"]
@@ -142,5 +142,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as error:
+        import traceback
+        traceback.print_exc()
         print(f"FAIL: {error}", file=sys.stderr)
         raise SystemExit(1)

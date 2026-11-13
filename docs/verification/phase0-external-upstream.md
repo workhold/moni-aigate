@@ -1,6 +1,6 @@
 # 0 阶段外部上游接入验证（035）
 
-状态：current-only deterministic relay 与 Compose mock 验收通过（2026-11-14）。真实 New API/Sub2API 服务、真实凭据、三服务三库拓扑和逐 profile 供应商认证未完成，不得以本记录替代。
+状态：current-only deterministic relay、真实本地 New API/Sub2API 三服务三库拓扑与 Compose mock 验收通过（2026-11-14）。真实供应商账号、真实 usage/成本对账、逐 profile 供应商认证和生产部署未完成，不得以本记录替代。
 
 ## 已实现合同
 
@@ -42,9 +42,25 @@ DEPLOY_QA_PORT=18082 DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh
 
 另一次连接专用 55439 数据库的六协议部署验收见[031 记录](phase1/031-mock-harness.md)，最终结果为 12 个请求 PASS，未知消费和缺 usage 均不重放。
 
+## 真实本地三服务三库验收（2026-11-14）
+
+新增 `deploy/external-upstreams.compose.yaml` 的 `external-upstreams` profile，在原有 aigate PostgreSQL 之外分别启动 New API/Sub2API 独立 PostgreSQL 与 Redis；下游管理、数据库和 Redis 均不发布宿主机端口，只有 aigate app 暴露 `127.0.0.1:18083`。
+
+- New API：`QuantumNous/new-api@e449cc700eb569cdfc2199cb73e97de46944f43c`，本地显式 `linux/arm64` 构建；登录、渠道和 token 均经真实管理 API 创建。
+- Sub2API：v0.2.21，源码提交 `10ba8f9b4dc2e6023d4a9879ab77b21841babd10`，官方镜像 digest `sha256:868c15f3c729af05896c94b3456d91a68bc81dce50c4d7b4557682df7ca92c13`；管理员合规确认由用户明确选择后提交。真实 account、分组、Key 和 QA balance 均经管理 API 创建。
+- 两个下游供应商出口均指向仓库内 deterministic `qa-provider`，不表示真实供应商资格。New API 的 OpenAI base URL 不带 `/v1`，避免其自动路径拼接形成 `/v1/v1`；aigate channel 地址仍为 `http://new-api:3000/v1` 和 `http://sub2api:8080/v1`。
+
+执行 `scripts/external-upstream-qa.py`，结果：
+
+```json
+{"status":"passed","run_id":"real1794601643","direct":true,"new_api":true,"sub2api":true,"json_sse":true,"rollback_revision":2,"real_upstream_services":true,"supplier_authenticated":false}
+```
+
+每种 channel 均验证 JSON 与 SSE、一个 attempt、一个 settlement、明确成本、一条 mock receipt。随后激活 New API 所在的历史 route revision 2，再次验证单 attempt、单 settlement 和单 receipt。该结果证明真实本地服务拓扑及统一商业链，不是供应商、支付或生产认证。
+
 ## 明确缺口
 
-- 未启动真实 New API 或 Sub2API，未验证三服务、三独立数据库的内部网络拓扑；本分支 Compose 只使用仓库内 deterministic mock upstream。
+- 真实公网/生产环境的 New API/Sub2API 部署和 1Panel 拓扑未验收；本次 PASS 仅限隔离本地 Compose 三服务三库及 deterministic supplier 出口。
 - 没有真实外部 channel 凭据、真实 usage/成本对账或逐 profile 供应商资格结论。
 - `qualification_status`、source/license/modification ref 和下游 retry/cost evidence 的持久化发布门禁尚未实现；源码复用组件的 LICENSE/NOTICE 验收仍需单独执行。
 - 1Panel、生产部署、HA、真实供应商和完整 029 浏览器清单不在本次 PASS 范围。
