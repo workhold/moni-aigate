@@ -6260,3 +6260,20 @@ align the HLD link label with the renumbered external upstream contract
 - modified `internal/server/main_shutdown_integration_test.go`
 
 </details>
+
+## 2026-11-13T18:37:27Z · 87d8e6809697
+
+创建 local-mvp 基线并冻结 032 缓存/熔断/预算、033 动态路由/物理计量/回放、034 虚拟币五桶/现金退款实施合同；仅设计冻结，未把规划能力写成已实现
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2179 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `specs/032-phase2-text-data-plane/implementation-freeze.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- added `specs/033-text-dynamic-routing/implementation-freeze.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- added `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

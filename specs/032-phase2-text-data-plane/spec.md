@@ -1,6 +1,6 @@
 # 032：第二阶段文本数据面
 
-2026-11-10；状态：草案，待开发者评审后冻结。所属阶段：[第二阶段](../../docs/design/phase-roadmap.md#4-第二阶段bifrost-风格文本数据面)。前置：第一阶段 [029](../029-phase1-acceptance/spec.md) 全部通过。
+2026-11-10；状态：实施合同已冻结（2026-11-14），见[实施冻结记录](implementation-freeze.md)；实现与验收按分片进行，尚未据此宣称完成。所属阶段：[第二阶段](../../docs/design/phase-roadmap.md#4-第二阶段bifrost-风格文本数据面)。前置：第一阶段 [029](../029-phase1-acceptance/spec.md) 全部通过。
 
 Bifrost 是 Apache-2.0 的 Go 开源网关，固定参考提交见[海外研究](../../docs/research/ecosystem-overseas.md)。本规格只借鉴它已被源码证实的机制：失败分类先于回退、流首事件检查边界、以物理上游尝试为用量事实边界。它的 Enterprise 熔断文档、宣传性能数字和空占位文档都不作为实现依据。
 

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T17:08:21Z",
-  "review_reason": "修正实际主进程 fixture 清理边界：当前基线删库与角色清理由共享 10 秒改为有界 30 秒；业务状态机不变，支付失败确认为专用库时区环境恢复，不修改冻结清单",
-  "snapshot_sha256": "474a9be974b05626a335c39dfcb382b2f2e7652a891b63de1cc9f54b36f8e6be",
+  "reviewed_at": "2026-11-13T18:37:27Z",
+  "review_reason": "创建 local-mvp 基线并冻结 032 缓存/熔断/预算、033 动态路由/物理计量/回放、034 虚拟币五桶/现金退款实施合同；仅设计冻结，未把规划能力写成已实现",
+  "snapshot_sha256": "87d8e6809697fb0d770c492d37f57c6d6e2187c1e0de1ff71b56dca1fb301fc7",
   "architecture_sha256": "cb92e502ba7d2a8be05403fbb460951c3f8eafd05c5c12584464b46acaf034ac",
-  "history_sha256": "fd9c2bcd3c0cbbe71c0ee80137ed86403d3d66ba8c969e8695ebfaa2afd55f80",
+  "history_sha256": "5a74b7e71df876cd98c0c12086e9f7902421f262ee3d13aa781b25ec12a19951",
   "files": [
     {
       "path": ".dockerignore",
@@ -8064,16 +8064,28 @@
       "sha256": "bcf3101641a6257885e626b20e1ada01fa8799980b00bad09daf820b5e376a7f"
     },
     {
+      "path": "specs/032-phase2-text-data-plane/implementation-freeze.md",
+      "sha256": "baa06329ab68ae34724bb96e67aa33ff99764bb947729ad65567972a76cb8c52"
+    },
+    {
       "path": "specs/032-phase2-text-data-plane/spec.md",
-      "sha256": "1fcdfcacc1be36a115011c4c69adbd46d0adcf3a30dd6e6b62f1436e121d8915"
+      "sha256": "e599db8a8b7d4d780b2e015d1d5eff95a9fd552dee7148f278563cf59e789785"
+    },
+    {
+      "path": "specs/033-text-dynamic-routing/implementation-freeze.md",
+      "sha256": "9b936f3b212194ca5ce0b04601568a3a7b118200c950f892acd45f17ad59a535"
     },
     {
       "path": "specs/033-text-dynamic-routing/spec.md",
-      "sha256": "0bffed10432cac3f0f3952a5936736f477fccfd0558b86a446e017f7315d93ad"
+      "sha256": "e55a8999f98c6a4e17ae4b4d83298fec903a84d0431eb58dc0d8b8d44af1f0cc"
+    },
+    {
+      "path": "specs/034-virtual-coin/implementation-freeze.md",
+      "sha256": "6ecbe316fa45421bff7897d9daedeccb4025339c486fdb56b4778f93acf4f599"
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "4bff8371f44938e7e8c8a84c3c1a0a358701e1206c5eb54cfdb2bd12e6a91644"
+      "sha256": "4b2f46fc8fbf05e67e56a01997fdc1887badb49434098022297544f9a6b21e55"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",

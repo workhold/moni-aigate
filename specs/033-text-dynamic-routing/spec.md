@@ -1,6 +1,6 @@
 # 033：第三阶段文本动态路由
 
-2026-11-10；状态：草案，待开发者评审后冻结。所属阶段：[第三阶段](../../docs/design/phase-roadmap.md#5-第三阶段openrouter-风格文本动态路由)。前置：[032](../032-phase2-text-data-plane/spec.md) 的数据面与测量，以及本规格 §2 的合同冻结。
+2026-11-10；状态：实施合同已冻结（2026-11-14），见[实施冻结记录](implementation-freeze.md)；实现与验收按分片进行，尚未据此宣称完成。所属阶段：[第三阶段](../../docs/design/phase-roadmap.md#5-第三阶段openrouter-风格文本动态路由)。前置：[032](../032-phase2-text-data-plane/spec.md) 的数据面与测量，以及本规格 §2 的合同冻结。
 
 OpenRouter 是商业托管产品，不是开源仓库。本规格只参考其公开文档描述的产品语义：模型与供应商分层、硬限制与软偏好、`order`/`only`/`ignore`/`allow_fallbacks`/`require_parameters`/`sort`/`max_price` 等请求语义（见 [browser-research](../../docs/research/browser-research.md)）。不声称取得其服务端实现。
 
