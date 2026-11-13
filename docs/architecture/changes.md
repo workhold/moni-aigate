@@ -6196,3 +6196,39 @@ align the HLD link label with the renumbered external upstream contract
 - modified `web/tests/pricing.test.mjs`
 
 </details>
+
+## 2026-11-13T16:15:11Z · 6286f7ec4ffd
+
+收口 0 阶段外部上游：current-only channel kind/mode、relay/probe、route revision 回退、current fixture 修复及 030/031/Compose 验证记录；真实上游与三库拓扑仍标为未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2176 个源文件；本次 25 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/phase0-external-upstream.md`
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `docs/verification/phase1/P1-CAT-02.md`
+- modified `docs/verification/phase1/P1-PR-02.md`
+- modified `internal/catalog/cost_policy_integration_test.go`
+- added `internal/catalog/route_activate.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/verifier_integration_test.go`
+- modified `internal/server/catalog_handlers.go`
+- added `internal/server/external_relay_integration_test.go`
+- added `internal/server/model_alias_gateway_integration_test.go`
+- modified `internal/server/probe.go`
+- modified `internal/server/public_catalog_integration_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- modified `internal/testsupport/mockupstream/server.go`
+- modified `internal/testsupport/mockupstream/server_test.go`
+- modified `migrations/current.go`
+- added `migrations/current_003_external_channels.sql`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>

@@ -15,6 +15,7 @@ import http.cookiejar
 import json
 import os
 import pathlib
+import re
 import secrets
 import subprocess
 import sys
@@ -64,8 +65,8 @@ def shutil_which(name: str) -> str | None:
     return None
 
 
-def run(command: list[str], *, check: bool = True, timeout: int = 20) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(command, text=True, capture_output=True, timeout=timeout)
+def run(command: list[str], *, check: bool = True, timeout: int = 20, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(command, text=True, capture_output=True, timeout=timeout, input=input_text)
     if check and result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
         raise HarnessFailure(f"command failed ({' '.join(command)}): {detail[:500]}")
@@ -118,8 +119,8 @@ class API:
             parsed = {"raw": parsed}
         return status, parsed, raw, response_headers
 
-    def expect(self, method: str, path: str, value: object | None = None, *, csrf: bool = False) -> object:
-        status, parsed, raw, _ = self.call(method, path, value, csrf=csrf)
+    def expect(self, method: str, path: str, value: object | None = None, *, csrf: bool = False, headers: dict[str, str] | None = None) -> object:
+        status, parsed, raw, _ = self.call(method, path, value, csrf=csrf, headers=headers)
         if status < 200 or status >= 300:
             raise HarnessFailure(f"HTTP {status} {method} {path}: {raw[:500].decode(errors='replace')}")
         return parsed.get("data", parsed)
@@ -203,7 +204,11 @@ class Harness:
     def assert_container_database(self, container: str) -> None:
         value = self.container_env(container).get("DATABASE_URL", "")
         parsed = urllib.parse.urlsplit(value)
-        if parsed.scheme != "postgres" or parsed.hostname != "127.0.0.1" or parsed.port != 55439 or parsed.path != "/moni_test":
+        # host.docker.internal is the Docker-standard alias for the same
+        # dedicated host database; the identity (moni_test on 55439) is what
+        # the acceptance pins, not the literal loopback spelling.
+        allowed_hosts = ("127.0.0.1", "host.docker.internal")
+        if parsed.scheme != "postgres" or parsed.hostname not in allowed_hosts or parsed.port != 55439 or parsed.path != "/moni_test":
             # Do not print a password-bearing URL.
             raise HarnessSkip(f"container {container} DATABASE_URL is not the dedicated 55439/moni_test database")
 
@@ -221,7 +226,14 @@ class Harness:
                 "b": {"secret": "phase1-b-secret", "models": models, "ttfb_ms": 1, "event_interval_ms": 1, "output_tokens": 8, "default_fault": ""},
             }
         }
-        temp_dir = pathlib.Path(tempfile.mkdtemp(prefix="phase1-mock-"))
+        # Docker Desktop on macOS only bind-mounts shared host paths. The
+        # system tempfile directory (/var/folders or /tmp) is not reliably
+        # shared, and Docker then creates a directory at the container target
+        # instead of mounting the JSON file. Keep the disposable config under
+        # the repository by default; callers can provide another shared root.
+        repo_dir = pathlib.Path(__file__).resolve().parent.parent
+        config_root = pathlib.Path(os.environ.get("PHASE1_MOCK_CONFIG_DIR", str(repo_dir)))
+        temp_dir = pathlib.Path(tempfile.mkdtemp(prefix=".phase1-mock-", dir=config_root))
         config_path = temp_dir / "config.json"
         config_path.write_text(json.dumps(config, separators=(",", ":")), encoding="utf-8")
         container = unique("mock").replace("phase1-", "phase1mock-")
@@ -238,6 +250,10 @@ class Harness:
     def stop_mock(self) -> None:
         if self.mock:
             run(["docker", "rm", "-f", self.mock.container], check=False, timeout=15)
+            try:
+                self.mock.config_path.unlink()
+            except FileNotFoundError:
+                pass
             try:
                 self.mock.config_path.parent.rmdir()
             except OSError:
@@ -278,12 +294,17 @@ class Harness:
         revisions = {str(row["id"]): int(row.get("management_revision", 0)) for row in channel_list}
         for short, protocol, _, input_only in PROTOCOLS:
             model_id = model_ids[short]
-            bindings = [{"channel_id": channels[(short, "a")], "upstream_model": short, "priority": 0, "weight": 1, "max_inflight": 10}, {"channel_id": channels[(short, "b")], "upstream_model": short, "priority": 1, "weight": 1, "max_inflight": 10}]
+            bindings = [{"channel_id": channels[(short, "a")], "upstream_model": short, "priority": 1, "weight": 1, "max_inflight": 10}, {"channel_id": channels[(short, "b")], "upstream_model": short, "priority": 0, "weight": 1, "max_inflight": 10}]
             self.api.expect("PUT", f"/api/platform/models/{model_id}/bindings", {"expected_revision": 0, "bindings": bindings, "cost_policy": {"mode": "manual", "unknown_cost_policy": "allow"}}, csrf=True)
             schema_id, schema_digest = schemas[model_id]
             self.api.expect("POST", "/api/platform/price-versions", {"operation_id": str(uuid.uuid4()), "model_id": model_id, "schema_id": schema_id, "schema_digest": schema_digest, "variant_key": "default", "input_rate": "1000000", "output_rate": "0" if input_only else "1000000", "effective_at": now_wire()}, csrf=True)
+            # Pricing writes have an intentional per-actor/global rate limit.
+            # Keep the harness within that contract instead of retrying a
+            # rejected operation or weakening the server's admission gate.
+            time.sleep(0.6)
             for candidate in ("a", "b"):
-                self.api.expect("POST", "/api/platform/cost-versions", {"operation_id": str(uuid.uuid4()), "channel_id": channels[(short, candidate)], "upstream_model": short, "schema_id": schema_id, "schema_digest": schema_digest, "variant_key": "default", "basis": "contract", "input_rate": "1000000", "output_rate": "0" if input_only else "1000000", "effective_at": now_wire(), "expected_channel_revision": revisions[channels[(short, candidate)]]}, csrf=True)
+                self.api.expect("POST", "/api/platform/cost-versions", {"operation_id": str(uuid.uuid4()), "channel_id": channels[(short, candidate)], "upstream_model": short, "schema_id": schema_id, "schema_digest": schema_digest, "variant_key": "default", "basis": "contract", "input_rate": "1000000", "output_rate": "0" if input_only else "1000000", "effective_at": now_wire(), "expected_channel_revision": str(revisions[channels[(short, candidate)]])}, csrf=True)
+                time.sleep(0.6)
         owner_email = f"{self.run_id}-owner@example.invalid"
         owner_password = secrets.token_urlsafe(18)
         tenant = self.api.expect("POST", "/api/platform/tenants", {"name": self.run_id, "owner_email": owner_email, "owner_password": owner_password, "model_ids": list(model_ids.values())}, csrf=True)
@@ -293,16 +314,16 @@ class Harness:
         self.api.expect("POST", "/api/platform/users", {"email": operator_email, "password": operator_password, "platform_role": "finance_operator"}, csrf=True)
         self.api.expect("POST", "/api/platform/users", {"email": approver_email, "password": approver_password, "platform_role": "finance_approver"}, csrf=True)
         self.api.login(operator_email, operator_password)
-        credit = self.api.expect("POST", "/api/platform/credits", {"tenant_id": tenant_id, "amount": "100000000", "business_ref": self.run_id, "proof_ref": "phase1-mock-acceptance"}, csrf=True)
+        credit = self.api.expect("POST", "/api/platform/credits", {"tenant_id": tenant_id, "amount": "100000000", "business_ref": self.run_id, "proof_ref": "phase1-mock-acceptance"}, csrf=True, headers={"Idempotency-Key": self.run_id})
         credit_id = str(credit["id"])
         self.api.login(approver_email, approver_password)
-        self.api.expect("POST", f"/api/platform/credits/{credit_id}/approve", {}, csrf=True)
+        self.api.expect("POST", f"/api/platform/credits/{credit_id}/approve", {}, csrf=True, headers={"Idempotency-Key": str(uuid.uuid4())})
         self.api.login(owner_email, owner_password)
         key = self.api.expect("POST", "/api/keys", {"name": self.run_id, "scopes": list(model_ids.values())}, csrf=True)
         return {short: {"model_id": model_ids[short], "model": f"{self.run_id}-{short}", "key": str(key["key"]), "tenant_id": tenant_id} for short, _, _, _ in PROTOCOLS}
 
-    def request(self, short: str, model: str, token: str, stream: bool, unknown: bool = False) -> tuple[str, int, bytes]:
-        marker = f"[[mock:nonce={self.run_id}-{short}-{'stream' if stream else 'json'}{'-unknown' if unknown else ''}]]"
+    def request(self, short: str, model: str, token: str, stream: bool, unknown: bool = False, fault: str = "") -> tuple[str, int, bytes]:
+        marker = f"[[mock:nonce={self.run_id}-{short}-{'stream' if stream else 'json'}{'-unknown' if unknown else ''}{'-missing-usage' if fault == 'missing_usage' else ''}]]"
         text = f"phase1 acceptance {marker}"
         if short == "chat":
             path, body = "/v1/chat/completions", {"model": model, "messages": [{"role": "user", "content": text}], "max_tokens": 2, "stream": stream}
@@ -318,8 +339,8 @@ class Harness:
             path, body = f"/v1beta/models/{model}:{'streamGenerateContent' if stream else 'generateContent'}", {"contents": [{"parts": [{"text": text}]}], "generationConfig": {"maxOutputTokens": 2}}
             if stream:
                 path += "?alt=sse"
-        if unknown:
-            body_text = text + " [[mock:fault=drop_after_headers]]"
+        if unknown or fault:
+            body_text = text + f" [[mock:fault={fault or 'drop_after_headers'}]]"
             if short in ("chat", "messages"):
                 body["messages"][0]["content"] = body_text
             elif short == "responses":
@@ -351,25 +372,42 @@ class Harness:
         return request_id, status, raw
 
     def query(self, sql: str, *args: str) -> list[list[str]]:
-        command = ["psql", self.test_db, "-At", "-F", "\t", "-v", "ON_ERROR_STOP=1", "-c", sql]
+        # psql only expands :'name' variables when reading commands from stdin;
+        # passing the same SQL through -c leaves the placeholder literal and
+        # fails before reaching the dedicated database. An optional schema is
+        # used only by isolated QA deployments; the default remains the public
+        # current-MVP schema.
+        schema = os.environ.get("PHASE1_DATABASE_SCHEMA", "")
+        if schema:
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", schema) is None:
+                raise HarnessFailure("PHASE1_DATABASE_SCHEMA is not a safe SQL identifier")
+            sql = f'SET search_path TO "{schema}";\n' + sql
+        command = ["psql", self.test_db, "-q", "-At", "-F", "\t", "-v", "ON_ERROR_STOP=1"]
         for index, value in enumerate(args, 1):
             command.extend(["-v", f"p{index}={value}"])
-        result = run(command, timeout=20)
+        result = run(command, timeout=20, input_text=sql + "\n")
         return [line.split("\t") for line in result.stdout.splitlines() if line]
 
-    def assert_request(self, request_id: str, *, unknown: bool, expected_attempts: int) -> None:
+    def assert_request(self, request_id: str, *, unknown: bool, expected_attempts: int, expected_status: str = "", expected_billing: str = "") -> None:
         rows = self.query("SELECT r.status,r.billing_status,(SELECT count(*) FROM upstream_attempts a WHERE a.request_id=r.id),(SELECT count(*) FROM settlements s WHERE s.request_id=r.id) FROM request_records r WHERE r.id=:'p1'", request_id)
         if len(rows) != 1:
             raise HarnessFailure(f"request {request_id} is absent from 55439 database")
         status, billing, attempts, settlements = rows[0]
         if int(attempts) != expected_attempts:
             raise HarnessFailure(f"request {request_id} attempt count={attempts}, expected {expected_attempts}")
+        if expected_status and status != expected_status:
+            raise HarnessFailure(f"request {request_id} protocol status={status}, expected {expected_status}")
+        if expected_billing and billing != expected_billing:
+            raise HarnessFailure(f"request {request_id} billing status={billing}, expected {expected_billing}")
         if unknown:
-            if int(settlements) > 1 or status == "succeeded" or billing == "settled":
+            # Protocol success and charge success are separate. Missing usage
+            # may complete the protocol while its reservation awaits manual
+            # reconciliation; neither that nor a dropped response may settle.
+            if int(settlements) > 1 or billing == "settled":
                 raise HarnessFailure(f"unknown-consumption request was incorrectly settled: status={status} billing={billing} settlements={settlements}")
         elif int(settlements) != 1 or billing != "settled":
             raise HarnessFailure(f"request {request_id} settlement invariant failed: status={status} billing={billing} settlements={settlements}")
-        costs = self.query("SELECT sequence,cost_status,(cost_amount IS NOT NULL)::text,delivery_state FROM upstream_attempts WHERE request_id=:'p1' ORDER BY sequence", request_id)
+        costs = self.query("SELECT sequence,cost_status,(cost_amount IS NOT NULL),delivery_state FROM upstream_attempts WHERE request_id=:'p1' ORDER BY sequence", request_id)
         if len(costs) != expected_attempts:
             raise HarnessFailure(f"request {request_id} missing attempt cost rows: {costs}")
         for sequence, cost_status, has_amount, delivery in costs:
@@ -387,14 +425,19 @@ class Harness:
                 self.assert_request(request_id, unknown=False, expected_attempts=2)
                 nonce = f"{self.run_id}-{short}-{'stream' if stream else 'json'}"
                 matches = [item for item in self.receipts() if item.get("nonce") == nonce]
-                if len(matches) != 2 or {item.get("candidate") for item in matches} != {"a", "b"}:
+                if len(matches) != 2 or [item.get("candidate") for item in matches] != ["a", "b"]:
                     raise HarnessFailure(f"{short} failover receipts do not show exactly a then b: {matches}")
         request_id, status, _ = self.request("chat", models["chat"]["model"], models["chat"]["key"], False, unknown=True)
-        self.assert_request(request_id, unknown=True, expected_attempts=1)
+        self.assert_request(request_id, unknown=True, expected_attempts=1, expected_status="failed")
         matches = [item for item in self.receipts() if item.get("nonce") == f"{self.run_id}-chat-json-unknown"]
         if len(matches) != 1 or matches[0].get("candidate") != "a":
             raise HarnessFailure(f"unknown-consumption receipt count/candidate failed: {matches}")
-        print(json.dumps({"status": "passed", "run_id": self.run_id, "requests": len(self.requests), "unknown_http_status": status, "database": "127.0.0.1:55439/moni_test", "mock": True}, separators=(",", ":")))
+        request_id, missing_status, _ = self.request("chat", models["chat"]["model"], models["chat"]["key"], False, unknown=True, fault="missing_usage")
+        self.assert_request(request_id, unknown=True, expected_attempts=1, expected_status="succeeded", expected_billing="pending_reconciliation")
+        matches = [item for item in self.receipts() if item.get("nonce") == f"{self.run_id}-chat-json-unknown-missing-usage"]
+        if len(matches) != 1 or matches[0].get("candidate") not in ("a", "b"):
+            raise HarnessFailure(f"missing-usage request was replayed or has no receipt: {matches}")
+        print(json.dumps({"status": "passed", "run_id": self.run_id, "requests": len(self.requests), "unknown_http_status": status, "missing_usage_http_status": missing_status, "database": "127.0.0.1:55439/moni_test", "mock": True}, separators=(",", ":")))
 
 
 def main() -> int:

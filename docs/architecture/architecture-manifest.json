@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T09:11:05Z",
-  "review_reason": "迁移模型别名、分组倍率编译与确定性多协议 mock，并同步当前迁移、目录、billing、Compose 与验收文档",
-  "snapshot_sha256": "3278d1a7e3522fb4b4a67a5434b895e3a888d5cee73ecf74ae27415c3c3106ac",
-  "architecture_sha256": "90d6fdff063e48386f90d0a2a3e7e71c2e55f987288f303e11792e872fb82a6d",
-  "history_sha256": "81c09a9e52cd98f90e3174250646ce72ec635fa9754039a9e0bba24e84ec2f39",
+  "reviewed_at": "2026-11-13T16:15:11Z",
+  "review_reason": "收口 0 阶段外部上游：current-only channel kind/mode、relay/probe、route revision 回退、current fixture 修复及 030/031/Compose 验证记录；真实上游与三库拓扑仍标为未验收",
+  "snapshot_sha256": "6286f7ec4ffd55aca477ea73fbc3553f30f4fe28a51a835c4d1974e9e708b757",
+  "architecture_sha256": "cb92e502ba7d2a8be05403fbb460951c3f8eafd05c5c12584464b46acaf034ac",
+  "history_sha256": "6f42951e3a54f2f9866908eace3e15eb9ce48715667fefb43681e4dcdc3c9078",
   "files": [
     {
       "path": ".dockerignore",
@@ -169,11 +169,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "044a9e2e5774dfd567977bbaa680991b8ac06008433fd306f133444ddbb9ecfa"
+      "sha256": "44377d90f5ffec78239a62c7af8cea625ac729c764874f817189b6a689c1c61d"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "18ddf2369b191c73f61a5dee574e77778637a3dbd6b19409450b1eaa29d95be8"
+      "sha256": "f1c283e9b96be711360aec86f4f58676d3e728d34828ae8d12024824693e5600"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1564,16 +1564,20 @@
       "sha256": "b7a7cf424790b89ff4f3bff6f490292e1473cd72f5b4da2f89c0eb1080272bc9"
     },
     {
+      "path": "docs/verification/phase0-external-upstream.md",
+      "sha256": "4547c3b5b9551e2122445d148e069a79c8931aaa510230c65aeea0a8b439a357"
+    },
+    {
       "path": "docs/verification/phase1/031-mock-harness.md",
-      "sha256": "0f7d8666145352c53d6cf98478f7ad3a6fa9e756bcf35526731835e573655fe4"
+      "sha256": "6dbb78fb3ca5bbfaeea940af8500353f20e6caab8da1b1ad3ca3c91964308033"
     },
     {
       "path": "docs/verification/phase1/P1-CAT-02.md",
-      "sha256": "6a78420ca249498882fcb83e1c0e34335e3dbb66d0b07658aa693069b57177ec"
+      "sha256": "df9184b039204129cf7d52173c5c035a5042eb9da22698633516b0ac64ff0875"
     },
     {
       "path": "docs/verification/phase1/P1-PR-02.md",
-      "sha256": "4fcb4d72fbfabf2ec08d3df9ccdb4d3d9308c16b6b629bff2f3aa17a5ab9330b"
+      "sha256": "0e14d3f51dcdada5cbde1fa39fc8dc6167bcfdc37f47cfe4cdc56f6a1c67320f"
     },
     {
       "path": "docs/verification/post-binding-isolation-guard-pool32-concurrency100.json",
@@ -2381,7 +2385,7 @@
     },
     {
       "path": "internal/catalog/cost_policy_integration_test.go",
-      "sha256": "5627e4752bc5a69957b52ae6df97e98f22ed861323c6aab600c50f49e2816828"
+      "sha256": "e34a777cb99b46d520f258531126414a6eeff7b035b9dbe1ef25177d1d0b8823"
     },
     {
       "path": "internal/catalog/cost_policy_test.go",
@@ -2472,8 +2476,12 @@
       "sha256": "3e927052fdd09a6ab94f3a17c861c09ce015487d3b5b877d855c3b730301738f"
     },
     {
+      "path": "internal/catalog/route_activate.go",
+      "sha256": "904a8bbe4054909cfc30f6c4688349c152ea362df0e3256c34adf884127d8f5d"
+    },
+    {
       "path": "internal/catalog/store.go",
-      "sha256": "28906508ecd36b8a50eaaead5742ccd80557455c063ea162f04e4beebff75563"
+      "sha256": "2e3c2632a2e13c37bb615f66bb48cad8a9e1681a8c472527d536541f281ff4e9"
     },
     {
       "path": "internal/config/alerts_test.go",
@@ -4169,7 +4177,7 @@
     },
     {
       "path": "internal/operations/operations_integration_test.go",
-      "sha256": "d2bb83ef7c5ac12cb7bc7430a74c72bebc76f42f61919d55c4127964591176f5"
+      "sha256": "60d406b65f098d91eafb3c9f7e3a7666c02f06e7c1a432792ebfc899fa702b29"
     },
     {
       "path": "internal/operations/payment_attestation_test.go",
@@ -4741,7 +4749,7 @@
     },
     {
       "path": "internal/periodicbudget/tx_fixture_test.go",
-      "sha256": "889752ddc0d24dad3fd63cb860c9ef64bde4d675577afc99a9f404a48899dbf7"
+      "sha256": "bea814db11093d33632831a7e2581c4d60ad9a1f5ddb65151caf40f10c8603d8"
     },
     {
       "path": "internal/periodicbudget/tx_identity_integration_test.go",
@@ -4801,7 +4809,7 @@
     },
     {
       "path": "internal/periodicbudget/verifier_integration_test.go",
-      "sha256": "9af954f07bbc8c0fe6d74fca0687447362ea1580c77339407a175a9c5a0f151b"
+      "sha256": "057b856e201a11385dc2607020ba79e5a136a2f1011589758c1da5c7326d30a3"
     },
     {
       "path": "internal/periodicbudget/verifier_maintenance.go",
@@ -5953,7 +5961,7 @@
     },
     {
       "path": "internal/server/catalog_handlers.go",
-      "sha256": "48a31916ff72246adab0684b97df3e1af75acb2a1d0238dcbcc25cafe739fc52"
+      "sha256": "c0359adb025f86692fb2c9566465e197aaae57feaa91228cfe7ee0b7d07e043e"
     },
     {
       "path": "internal/server/channel_defaults_integration_test.go",
@@ -6018,6 +6026,10 @@
     {
       "path": "internal/server/discovery_integration_test.go",
       "sha256": "173157e25101b1b6780eac36fd9c6d8c1cecbf4c39342228767fc0e27efde65a"
+    },
+    {
+      "path": "internal/server/external_relay_integration_test.go",
+      "sha256": "c08a0ef91bd718c9f3e51cd3d53a8008234f159e122fcd2644505eda784c5b3a"
     },
     {
       "path": "internal/server/funding_integration_test.go",
@@ -6094,6 +6106,10 @@
     {
       "path": "internal/server/media_provider_safety_integration_test.go",
       "sha256": "ab54ea494edd67e64e78576d5a5c87667c2f4a604a2180af4cc61b18bbc5fc78"
+    },
+    {
+      "path": "internal/server/model_alias_gateway_integration_test.go",
+      "sha256": "b9177d37903dbe16e8a844f01f6d6ccc0ad57298439f2a681475ec378309fdd9"
     },
     {
       "path": "internal/server/model_alias_handlers.go",
@@ -6189,7 +6205,7 @@
     },
     {
       "path": "internal/server/probe.go",
-      "sha256": "94e94cf044e383151e5733a4379f428b2ae157a7e2095ccb8075995d492892db"
+      "sha256": "d32b24df1dd8029b9caa5f5a349fbc91695d76bebcdb19ce492420464d457566"
     },
     {
       "path": "internal/server/probe_integration_test.go",
@@ -6237,7 +6253,7 @@
     },
     {
       "path": "internal/server/public_catalog_integration_test.go",
-      "sha256": "00829260a20493ce08f39de0138ee88db32449744efb440215ce3b46e7637a4c"
+      "sha256": "528fe97b8c9599d64ca371f777a4bda3b117f08c4f197c4fca7ee7956459a1f1"
     },
     {
       "path": "internal/server/public_catalog_test.go",
@@ -6245,7 +6261,7 @@
     },
     {
       "path": "internal/server/queries.go",
-      "sha256": "d9cfdabbaf7f6934c2f964ac5f83bc7d564c37f362d1d10c526c651bc27923f5"
+      "sha256": "02f253465d4ae68ab62c0a54a46b27f41a3545d2a6035babeaadbe91396a058a"
     },
     {
       "path": "internal/server/queries_test.go",
@@ -6313,7 +6329,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "23c646a4eab8de947e394d3328b181c9cf4c24f55fef7f0593ba4afea5bfe36f"
+      "sha256": "c22bb48158c4c9d895f459db1a71c09b1a97810a6b642ce02c00b716ba80d1e5"
     },
     {
       "path": "internal/server/static.go",
@@ -6461,11 +6477,11 @@
     },
     {
       "path": "internal/testsupport/mockupstream/server.go",
-      "sha256": "9943a25173e8ca1da7e322242e81eb132877e5714acd8a816cd95b9846104d1b"
+      "sha256": "fd7c16501099bf7ca4f86f777a5dfd62b348f32d42fc3f52f79b652eb4bb2bae"
     },
     {
       "path": "internal/testsupport/mockupstream/server_test.go",
-      "sha256": "47002b906c8f4c9e7b76405e7d92d285f799b03c516f2d91490cac4540d800d1"
+      "sha256": "8360e0592a3d6e268c7c2b6a607cd3c517ae3a10bf45a3d25c5dcb6734874745"
     },
     {
       "path": "internal/testsupport/periodicprefix/install.go",
@@ -6577,7 +6593,7 @@
     },
     {
       "path": "migrations/current.go",
-      "sha256": "a799695f01ca7f3bf01b9189a831d2d378beda88886d9bf630830c0e27a9edad"
+      "sha256": "effd16266e84bfc8f656ce8df96f27ca84bdb9053003bd9a78ef0b65832eaa22"
     },
     {
       "path": "migrations/current_001_append_path.sql",
@@ -6586,6 +6602,10 @@
     {
       "path": "migrations/current_002_phase1_aliases.sql",
       "sha256": "045a2ef8d6ac598aa8759ff22af94b6434135e7371c445422e866146cbcd7fcc"
+    },
+    {
+      "path": "migrations/current_003_external_channels.sql",
+      "sha256": "9bb35a27341bd204e6810974a67b296490f24d49aa76ff04e0fc266a610b33e1"
     },
     {
       "path": "migrations/current_mvp.sql",
@@ -6933,7 +6953,7 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
-      "sha256": "9b1133e79fb0874e5202e15a64fe3fc19e385d520072a0ec44ef098d4a33c8d8"
+      "sha256": "8f9d3696d9eb8179fb3c1d08d3196b02a7ca59540fdfa8b75836d451d012b61f"
     },
     {
       "path": "scripts/phase1-mock-acceptance.sh",
@@ -8057,7 +8077,7 @@
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
-      "sha256": "b9a44f7a7577ebefc877a0a85f904d8560edf49c723c59b44be44134eb11d10c"
+      "sha256": "bb980696024e20e4f9d0abd06e361ad1beedf1458be1ca33e4c6ca3e29551890"
     },
     {
       "path": "web/.gitignore",

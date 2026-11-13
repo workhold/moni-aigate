@@ -118,6 +118,9 @@ func TestDirectivesReceiptsAndFaults(t *testing.T) {
 	if resp.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("fault status = %d", resp.StatusCode)
 	}
+	if resp.Header.Get("Retry-After") != "1" {
+		t.Fatalf("429 retry-after = %q", resp.Header.Get("Retry-After"))
+	}
 	receipts, err := srv.Client().Get(srv.URL + "/__mock/receipts?since=0")
 	if err != nil {
 		t.Fatal(err)

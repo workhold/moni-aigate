@@ -155,6 +155,11 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if fault.kind == "reject_429" || fault.kind == "reject_429_unlisted" {
+		// Make the deterministic rate-limit evidence explicit. The gateway
+		// honors this bounded cooldown before selecting this credential again;
+		// without it the deployment harness would mistake its default 30s
+		// cooldown for a missing failover attempt on the next protocol shape.
+		w.Header().Set("Retry-After", "1")
 		writeError(w, http.StatusTooManyRequests, fault.kind)
 		s.complete(seq)
 		return

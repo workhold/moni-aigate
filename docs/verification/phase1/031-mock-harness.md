@@ -1,6 +1,6 @@
 # 031 deterministic mock 部署验收 harness
 
-状态：`SKIP`（本次环境前置不满足，未产生商业验收 PASS）。
+状态：`PASS`（2026-11-14，disposable isolated QA deployment；全部为 mock 证据，不是供应商认证）。
 
 这个 harness 从已运行的 app/worker 消费 HTTP 入口，使用专用 PostgreSQL `127.0.0.1:55439/moni_test` 做只读事实断言。它不会调用 `deployment-qa.sh`，不会启动、停止或重启现有 app、worker、Compose 服务，也不会执行 `go test ./...`。需要临时上游时，它只在 app 容器已经存在的 Docker network 上启动一个临时 mock 容器，退出时删除该容器；mock 配置启用 `a=reject_429`、`b=normal` 两个候选。
 
@@ -8,56 +8,35 @@
 
 ```sh
 TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
-PHASE1_BASE_URL='http://127.0.0.1:18080' \
-PHASE1_APP_CONTAINER='moni-aigate-app-1' \
-PHASE1_WORKER_CONTAINER='moni-aigate-worker-1' \
+PHASE1_BASE_URL='http://127.0.0.1:18081' \
+PHASE1_APP_CONTAINER='phase0qa-app' \
+PHASE1_WORKER_CONTAINER='phase0qa-worker' \
 PHASE1_ADMIN_EMAIL='admin@example.com' \
 PHASE1_ADMIN_PASSWORD='…' \
+PHASE1_MOCK_IMAGE='moni-aigate:phase0-qa' \
+PHASE1_DATABASE_SCHEMA='隔离 schema 名（仅非 public QA 需要）' \
 scripts/phase1-mock-acceptance.sh
 ```
 
-先做只读前置检查：
-
-```sh
-TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
-PHASE1_APP_CONTAINER='moni-aigate-app-1' \
-PHASE1_WORKER_CONTAINER='moni-aigate-worker-1' \
-PHASE1_ADMIN_EMAIL='admin@example.com' \
-PHASE1_ADMIN_PASSWORD='…' \
-scripts/phase1-mock-acceptance.sh --preflight
-```
-
-`PHASE1_MOCK_IMAGE` 可指定包含 `/usr/local/bin/mock-upstream` 的已构建镜像，默认是 `moni-aigate:local`。脚本不把密码写入输出或证据文件。
+`PHASE1_MOCK_CONFIG_DIR` 可指定 Docker 可共享的临时配置目录，默认仓库根目录；这是 macOS Docker Desktop bind-mount 的边界，不能把 `/var/folders` 中不可共享的路径挂载成文件。`PHASE1_DATABASE_SCHEMA` 只用于隔离 QA schema 的只读断言，默认仍是 public current-MVP schema。脚本不把密码写入输出或证据文件。
 
 ## 执行内容与断言
 
-通过前置检查后，脚本通过现有管理 HTTP API 创建一次性模型、双候选渠道、路由、客户价格、供应商成本、租户、双审入账和 API Key。每个模型和渠道名带唯一 run ID，避免把旧事实误认成本次结果。
+通过前置检查后，脚本通过现有管理 HTTP API 创建一次性模型、双候选渠道、路由、客户价格、供应商成本、租户、双审入账和 API Key。每个模型和渠道名带唯一 run ID，避免把旧事实误认成本次结果。定价写入按服务端 actor/global 限值主动 pacing，不重试被拒绝的资金操作。
 
-它执行六种文本协议：Chat、Responses、Messages、Embeddings、Rerank、Gemini；生成协议覆盖 JSON 与 SSE。候选 `a` 在发送前返回 429，候选 `b` 正常，断言明确无消费拒绝发生一次 failover。另以 `drop_after_headers` 触发可能已消费请求，断言只有一个 attempt、一个 nonce receipt 且不发生第二次派发。
+它执行六种文本协议：Chat、Responses、Messages、Embeddings、Rerank、Gemini；生成协议覆盖 JSON 与 SSE。候选 `a` 在发送前返回带 `Retry-After: 1` 的 429，候选 `b` 正常；每个成功请求断言恰好 a→b 两个 receipt、两个 attempt 和一个 settlement。`Retry-After` 只缩短 deterministic fixture 的显式冷却，不改变网关的 cooldown、最多两次 attempt 或 safe-to-retry 规则。
 
-每个请求都通过 `X-Request-ID` 与 mock `nonce` 关联，然后用 psql 只读检查：
+两个负向场景：
 
-- 成功 failover 请求有两个 attempt、恰有一个 settlement，且每个 attempt 都有显式成本投影；
-- 可能已消费请求最多一个 settlement、只有一个 attempt，不得进入成功结算；
-- `unknown` 成本不能带金额，`contract`/`invoice` 成本必须带金额；
-- receipts 的候选、nonce 和次数与数据库 attempt 数一致。
+- `drop_after_headers`：HTTP 502，协议失败、预占释放，只有一个 attempt 和一个 receipt，不跨候选重放。
+- `missing_usage`：HTTP 503，协议完成但 `billing_status=pending_reconciliation`，settlement=0，只有一个 attempt 和一个 receipt；协议成功与收费成功不混为一谈。
 
-脚本返回码为 `0=PASS`、`1=FAIL`、`3=SKIP`。`SKIP` 不计为第一阶段通过。
+每个请求通过 `X-Request-ID` 与 mock `nonce` 关联，再用 psql 只读检查：成功请求恰有一个 settlement；未知消费不进入 `settled`；`unknown` 成本无金额，`contract`/`invoice` 成本必须带金额。熔断后缺 usage 可以落在另一健康候选，但同样不得产生第二次上游接收。
 
-## 本次实况
+## 本次结果
 
-基线为集成分支提交 `7b995d2`；本 harness 在独立分支 `codex/phase1-mock-acceptance` 的独立 worktree 中开发。本次只执行了静态 self-test 和 `--preflight`，没有创建模型、渠道、租户、Key、入账或请求，也没有执行任何数据库写入。
-
-静态检查通过：
-
-```text
-phase1 mock acceptance harness static self-test passed
+```json
+{"status":"passed","run_id":"phase1-acceptance-a6dd2af575c7","requests":12,"unknown_http_status":502,"missing_usage_http_status":503,"database":"127.0.0.1:55439/moni_test","mock":true}
 ```
 
-部署前置实际返回：
-
-```text
-SKIP: container moni-aigate-app-1 DATABASE_URL is not the dedicated 55439/moni_test database
-```
-
-当前运行中的 app/worker 使用 Compose 内部 `postgres:5432/moni`，不是本验收要求的 `127.0.0.1:55439/moni_test`；当前也没有把 `qa-provider` 作为运行中的现有服务使用。依据 029 的规则，本次没有把 HTTP、六协议、failover、receipt 或账务断言写成 PASS。重新执行前，必须由外部部署流程提供连接专用 55439 数据库的已运行 app/worker，并通过同一前置检查。
+前置检查同时返回 `preflight_passed`。库与 CLI 静态检查 `go test -race ./internal/testsupport/mockupstream ./scripts/mock-upstream` 和 `scripts/phase1-mock-acceptance.test.sh` 均通过。完整 Compose business-qa 另见[0 阶段外部上游验证记录](../phase0-external-upstream.md)。真实 New API/Sub2API 服务、凭据与供应商资格仍未验收。

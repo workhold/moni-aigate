@@ -119,11 +119,26 @@ func TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist(t *testing.T) {
 	if err := pool.QueryRow(context.Background(), `SELECT count(*) FROM audit_events WHERE target=$1 AND action='model.publication.update'`, id).Scan(&audits); err != nil || audits != 1 {
 		t.Fatal("publication audit/no-op mismatch", audits, err)
 	}
+	alias := "public-catalog-alias"
+	channel, err := s.Catalog.SaveChannel(context.Background(), actor, "", catalog.ChannelInput{Name: "public-alias-upstream", BaseURL: "https://provider.invalid/v1", Secret: "public-alias-secret", Region: "global"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.Catalog.Publish(context.Background(), actor, id, 0, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "provider-model", Priority: 1, Weight: 1, MaxInflight: 1}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Catalog.CreateModelAlias(context.Background(), actor, id, catalog.ModelAliasCreateInput{OperationID: uuid.NewString(), Alias: alias}); err != nil {
+		t.Fatal(err)
+	}
 	detail := call("GET", "/api/public/models/"+id, "", "invalid-session")
 	if detail.Code != 200 || detail.Header().Get("Cache-Control") != "no-store" || detail.Header().Get("Set-Cookie") != "" || strings.Contains(detail.Body.String(), "canary") || strings.Contains(detail.Body.String(), "csrf") {
 		t.Fatal("public detail leaked private state", detail.Code, detail.Body.String())
 	}
-	model := publicJSONKeys(t, authData(t, detail), "id", "public_name", "protocol", "capabilities", "limits", "pricing")
+	model := publicJSONKeys(t, authData(t, detail), "id", "public_name", "aliases", "protocol", "capabilities", "limits", "pricing")
+	var aliases []string
+	if json.Unmarshal(model["aliases"], &aliases) != nil || len(aliases) != 1 || aliases[0] != alias {
+		t.Fatalf("public model aliases were not projected: %s", model["aliases"])
+	}
 	publicJSONKeys(t, model["capabilities"], "streaming", "tools", "input_only", "text_only")
 	publicJSONKeys(t, model["limits"], "context_tokens", "input_token_upper_bound", "max_output_tokens", "default_output_tokens")
 	pricing := publicJSONKeys(t, model["pricing"], "status", "price_version_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at")
