@@ -6118,3 +6118,81 @@ align the HLD link label with the renumbered external upstream contract
 - modified `docs/design/HLD.md`
 
 </details>
+
+## 2026-11-13T09:11:05Z · 3278d1a7e352
+
+迁移模型别名、分组倍率编译与确定性多协议 mock，并同步当前迁移、目录、billing、Compose 与验收文档
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2171 个源文件；本次 67 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/phase1/031-mock-harness.md`
+- added `docs/verification/phase1/P1-CAT-02.md`
+- added `docs/verification/phase1/P1-PR-02.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/voucher_roles_integration_test.go`
+- added `internal/catalog/alias_reader_contract_test.go`
+- modified `internal/catalog/credential_pool_integration_test.go`
+- added `internal/catalog/group_price_compile.go`
+- added `internal/catalog/group_price_compile_test.go`
+- added `internal/catalog/model_alias.go`
+- added `internal/catalog/model_alias_test.go`
+- added `internal/catalog/phase1_alignment_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_types.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_integration_test.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- added `internal/server/alias_reader_contract_test.go`
+- modified `internal/server/auth_integration_test.go`
+- modified `internal/server/gateway.go`
+- modified `internal/server/gateway_integration_test.go`
+- added `internal/server/model_alias_handlers.go`
+- added `internal/server/model_alias_handlers_test.go`
+- modified `internal/server/pricing_handlers.go`
+- modified `internal/server/pricing_input.go`
+- modified `internal/server/pricing_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- added `internal/testsupport/mockupstream/config.go`
+- added `internal/testsupport/mockupstream/config_test.go`
+- added `internal/testsupport/mockupstream/provider_contract_test.go`
+- added `internal/testsupport/mockupstream/server.go`
+- added `internal/testsupport/mockupstream/server_test.go`
+- modified `migrations/current.go`
+- added `migrations/current_002_phase1_aliases.sql`
+- modified `scripts/deployment-business-provision.sh`
+- modified `scripts/deployment-business-qa.test.sh`
+- deleted `scripts/deployment-qa-provider.py`
+- added `scripts/mock-upstream/business-qa.json`
+- added `scripts/mock-upstream/main.go`
+- added `scripts/phase1-mock-acceptance.py`
+- added `scripts/phase1-mock-acceptance.sh`
+- added `scripts/phase1-mock-acceptance.test.sh`
+- modified `specs/029-phase1-acceptance/spec.md`
+- added `specs/030-model-aliases-group-multipliers/a-alias-periphery-contract.md`
+- added `specs/030-model-aliases-group-multipliers/integration-contract.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- added `web/src/components/GroupMultiplierCompiler.vue`
+- added `web/src/components/ModelAliases.vue`
+- modified `web/src/components/PricingWriter.vue`
+- modified `web/src/customer-pricing.ts`
+- added `web/src/model-aliases.ts`
+- modified `web/src/pricing.ts`
+- modified `web/src/public-catalog.ts`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PriceGroupsView.vue`
+- added `web/tests/model-aliases.test.mjs`
+- modified `web/tests/pricing.test.mjs`
+
+</details>

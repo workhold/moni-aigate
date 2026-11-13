@@ -1,10 +1,10 @@
 # 031：确定性多协议、多候选 mock 上游
 
-2026-11-10；状态：草案，待开发者评审后冻结。所属阶段：[第一阶段](../../docs/design/phase-roadmap.md#3-第一阶段固定版本-new-api-核心业务能力对齐)验收前置；第二、三阶段继续复用。解除 [029](../029-phase1-acceptance/spec.md) 的 P1-RT-01..04 与 P1-PT-02..06。
+2026-11-13；状态：实现已迁移，合同仍待开发者评审后冻结。所属阶段：[第一阶段](../../docs/design/phase-roadmap.md#3-第一阶段固定版本-new-api-核心业务能力对齐)验收前置；第二、三阶段继续复用。解除 [029](../029-phase1-acceptance/spec.md) 的 P1-RT-01..04 与 P1-PT-02..06 的实现依赖，完整部署验收仍按证据记录执行。
 
 ## 1. 问题
 
-第一阶段允许用 deterministic mock 验证路由、计量、钱包、结算和错误恢复，但现在的部署 mock 做不到：
+第一阶段允许用 deterministic mock 验证路由、计量、钱包、结算和错误恢复。迁移前的部署 mock 存在以下缺口：
 
 - `scripts/deployment-qa-provider.py` 只处理 `POST /v1/chat/completions`，固定 usage 4/2/6，没有故障注入。
 - Compose business-qa 只创建一个渠道 `qa-compose-provider`、一个绑定 `qa-chat`，无法验证多候选选路、成本优先或故障切换。
@@ -124,7 +124,14 @@ GET /__mock/receipts?since=<seq>
 - **D-031-1**：是否给 `channel_versions` 增加 `provider_mode`（`real`/`mock`），让网关在 `inner-test` 配置下拒绝 mock 渠道、并在请求事实中标记。建议：增加，与媒体的 `provider_mode` 对齐；默认 `real`，business-qa 创建 `mock`。
 - **D-031-2**：输入 usage 公式是否需要贴近某个分词器。建议：不需要；mock 只验证链路，不验证计量精度。
 
-## 11. 验收
+## 11. 当前实现与验收
+
+- `internal/testsupport/mockupstream` 是 Go 测试库，`scripts/mock-upstream` 是 Compose 入口。
+- `compose.yaml` 的 `business-qa` profile 使用 Go mock，旧的 `scripts/deployment-qa-provider.py` 已删除。
+- `go test ./internal/testsupport/mockupstream ./scripts/mock-upstream` 已通过。
+- `scripts/phase1-mock-acceptance.sh` 提供专用数据库和已部署 app/worker 的多协议验收入口，执行结果需要补入 [mock harness 记录](../../docs/verification/phase1/031-mock-harness.md)。
+
+## 12. 验收
 
 - 库的单元测试覆盖每个协议的 JSON 与 SSE 正常路径和 §6 每种故障。
 - 现有 provider 解析器能无误解析 mock 的每个正常响应（用 provider 包实际解析，不是只比对字符串）。

@@ -1,5 +1,19 @@
 # 028-U统一计量验证
 
+## 2026-11-13：phase0 分支迁移的 030/031 能力
+
+从 `main` 创建的 `phase0-newapi-alignment` 迁移了模型别名、分组倍率编译和确定性多协议 mock。别名与原始请求模型名使用 current-only `current_002_phase1_aliases.sql`，Reserve 继续按解析后的逻辑模型冻结价格、计划和计量身份。分组倍率将管理端十进制倍率按有理数编译为现有价格组中的不可变绝对价格版本。多协议 mock 由 `internal/testsupport/mockupstream` 和 `scripts/mock-upstream` 提供，Compose 的 `business-qa` profile 已删除旧 Python 单协议 sidecar。
+
+已执行的专项命令：
+
+```sh
+go test -count=1 ./internal/testsupport/mockupstream ./scripts/mock-upstream ./internal/catalog ./internal/server ./migrations
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+  go test -count=1 -timeout 240s ./internal/catalog -run 'TestPhase1|TestGroupPriceVector|TestPublicCatalog'
+```
+
+上述专项通过。前端完整测试在当前 worktree 缺少 `web/node_modules` 时有 4 个测试因无法加载 `vue` 失败，不能把该结果记为前端全量通过。模型别名、分组倍率和 mock 的完整 029/浏览器/真实供应商验收仍按各自记录执行。
+
 ## 2026-11-10：媒体 deterministic mock 安全边界
 
 媒体运行时现在由 `MEDIA_PROVIDER_PROFILE` 与 `MEDIA_DETERMINISTIC_MOCK` 共同控制，app 和 worker 使用同一配置。默认 `inner-test` 关闭 mock；没有真实 adapter 时，图片、TTS、`video_generation` 和单 turn Realtime 在任何预占或账务事实之前返回 `provider_unavailable`。`business-qa` 只有显式打开 deterministic mock 才可运行，`development` 也必须显式打开。mock 成功会在响应、事件和结果中标记 `provider_mode=mock`，并将 usage/supplier cost 保持为 missing/unknown、客户收费保持为零；失败和未知提交不重试。
