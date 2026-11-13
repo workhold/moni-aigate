@@ -37,7 +37,7 @@ func scanPricingOperation(ctx context.Context, tx pgx.Tx, row pgx.Row) (PricingO
 	if e != nil {
 		return r, e
 	}
-	publish := r.Operation.Kind == "group_price.publish" || r.Operation.Kind == "default_price.publish" || r.Operation.Kind == "cost_price.publish"
+	publish := r.Operation.Kind == "group_price.publish" || r.Operation.Kind == "group_price.compile" || r.Operation.Kind == "default_price.publish" || r.Operation.Kind == "cost_price.publish"
 	if schema != 1 || !pricingID(r.Operation.OperationID) || !pricingID(r.Operation.Actor) || !pricingID(r.Operation.ResourceID) || !pricingWireTime(r.Operation.CreatedAt) || !pricingDigest(r.Operation.InputFingerprint) || publish != (r.Operation.Revision == nil) || !publish && !pricingDecimal(*r.Operation.Revision, true) {
 		return r, pricingFail("pricing_invariant")
 	}
@@ -128,12 +128,12 @@ func (s *Store) pricingCommandOnce(ctx context.Context, c pricingCommand) (Prici
 		if e = pricingAdmin(ctx, tx, c.actor); e != nil {
 			return out, false, e
 		}
-		if c.resolveSafe != nil {
-			if c.replayCheck != nil {
-				if e = c.replayCheck(old); e != nil {
-					return out, false, e
-				}
+		if c.replayCheck != nil {
+			if e = c.replayCheck(old); e != nil {
+				return out, false, e
 			}
+		}
+		if c.resolveSafe != nil {
 			if c.safe, e = c.resolveSafe(ctx, tx); e != nil {
 				return out, false, e
 			}
@@ -199,8 +199,12 @@ func (s *Store) pricingCommandOnce(ctx context.Context, c pricingCommand) (Prici
 	if e != nil {
 		return out, false, e
 	}
-	diff, _ := json.Marshal(map[string]any{"operation_id": c.id, "target": c.target, "after": out.Result})
-	action := map[string]string{"price_group.create": "pricing.group.create", "price_group.update": "pricing.group.update", "group_price.publish": "pricing.price.publish", "default_price.publish": "pricing.price.publish", "cost_price.publish": "pricing.cost.publish", "tenant_pricing.assign": "pricing.tenant.assign"}[c.kind]
+	var snapshot json.RawMessage
+	if e = tx.QueryRow(ctx, `SELECT result_snapshot FROM pricing_operations WHERE operation_id=$1`, c.id).Scan(&snapshot); e != nil {
+		return out, false, e
+	}
+	diff, _ := json.Marshal(map[string]any{"operation_id": c.id, "target": c.target, "after": snapshot})
+	action := map[string]string{"price_group.create": "pricing.group.create", "price_group.update": "pricing.group.update", "group_price.publish": "pricing.price.publish", "group_price.compile": "pricing.price.compile", "default_price.publish": "pricing.price.publish", "cost_price.publish": "pricing.cost.publish", "tenant_pricing.assign": "pricing.tenant.assign", "model_alias.create": "model_alias.create", "model_alias.retire": "model_alias.retire"}[c.kind]
 	if _, e = tx.Exec(ctx, `INSERT INTO audit_events(actor,tenant_scope,action,target,sanitized_diff) VALUES($1,NULLIF($2,''),$3,$4,$5)`, c.actor, c.tenant, action, c.target, diff); e != nil {
 		return out, false, e
 	}

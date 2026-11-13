@@ -94,7 +94,7 @@ func integration(t *testing.T) *fixture {
 		_, _ = admin.Exec(ctx, "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE")
 		admin.Close()
 	})
-	if err = migrations.Apply(ctx, pool); err != nil {
+	if err = migrations.ApplyCurrent(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
 

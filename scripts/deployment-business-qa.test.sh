@@ -5,12 +5,15 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 runner="$root/scripts/deployment-business-qa.sh"
 ws_client="$root/scripts/deployment-business-qa-ws.py"
 provision="$root/scripts/deployment-business-provision.sh"
-provider="$root/scripts/deployment-qa-provider.py"
 
 bash -n "$runner"
 bash -n "$provision"
 python3 -m py_compile "$ws_client"
-python3 -m py_compile "$provider"
+if [ -e "$root/scripts/deployment-qa-provider.py" ]; then
+  echo "legacy deployment-qa-provider.py must be removed" >&2
+  exit 1
+fi
+go test ./internal/testsupport/mockupstream ./scripts/mock-upstream
 help=$("$runner" --help)
 printf '%s\n' "$help" | grep -q 'BUSINESS_QA_TASK_REQUEST_ID'
 printf '%s\n' "$help" | grep -q 'BUSINESS_QA_REALTIME_URL'

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createHash } from 'node:crypto'
 import { applyRetailQuote, parsePricedModels } from '../src/customer-pricing.ts'
-import { parseCostPrice, parseDefaultPrice, parseGroupPrice, parsePriceGroup, parsePricingAssignment, parsePricingEnvelope, parsePricingPage, parsePricingPreview, parsePricingReceipt, parseRetailPrice, parseTextRetailRates, parsePricingModelChoice, pricingInputRates, pricingCommand, pricingCursor, pricingDecimal, pricingFingerprint, pricingFrame, pricingID, pricingLabel, pricingPreviewPath, pricingQuery, pricingTime } from '../src/pricing.ts'
+import { parseCostPrice, parseDefaultPrice, parseGroupPrice, parseGroupPriceCompile, parsePriceGroup, parsePricingAssignment, parsePricingEnvelope, parsePricingPage, parsePricingPreview, parsePricingReceipt, parseRetailPrice, parseTextRetailRates, parsePricingModelChoice, pricingInputRates, pricingCommand, pricingCursor, pricingDecimal, pricingFingerprint, pricingFrame, pricingID, pricingLabel, pricingMultiplier, pricingPreviewPath, pricingQuery, pricingTime } from '../src/pricing.ts'
 
 const actor = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', group = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', tenant = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', model = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', version = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', operation = '11111111-1111-4111-8111-111111111111'
 const domain = { schema_id: '10000000-0000-4000-8000-000000000001', schema_digest: 'ab'.repeat(32), variant_key: 'default' }
@@ -21,6 +21,25 @@ test('group vector fingerprint has the frozen Go/SQL golden value and binds the 
   assert.equal(command.input_fingerprint, '14aac71c989772d94efbda8faf1a39a758a618b645a71539a55de7664de26564')
   for (const patch of [{ schema_id: tenant }, { schema_digest: '00'.repeat(32) }, { input_rate: '9007199254740994' }, { output_rate: '1' }, { effective_at: at }]) assert.notEqual((await pricingCommand('group_price.publish', operation, actor, { ...body, ...patch }, group)).input_fingerprint, command.input_fingerprint)
   for (const patch of [{ schema_id: undefined }, { schema_digest: 'AB'.repeat(32) }, { variant_key: '' }, { rates: rates() }]) await assert.rejects(pricingCommand('group_price.publish', operation, actor, { ...body, ...patch }, group))
+})
+
+test('group multiplier commands canonicalize model order, preserve the original multiplier and bind the optional base CAS', async () => {
+  assert.equal(pricingMultiplier('0.850000'), '0.850000')
+  for (const value of ['0', '0.000000', '100.000001', '01', '.85', '1.0000001', '1e-1']) assert.throws(() => pricingMultiplier(value))
+  const second = 'ffffffff-ffff-4fff-8fff-ffffffffffff'
+  const command = await pricingCommand('group_price.compile', operation, actor, { multiplier: '0.85', model_ids: [second, model, second], effective_at: '2026-12-01T00:00:00Z', expected_base_version_ids: { [model]: version } }, group)
+  assert.equal(command.path, `/platform/price-groups/${group}/price-versions/compile`)
+  assert.deepEqual(command.body, { operation_id: operation, multiplier: '0.85', model_ids: [model, second], effective_at: '2026-12-01T00:00:00.000000Z', expected_base_version_ids: { [model]: version } })
+  const preview = { group_id: group, multiplier: '0.85', effective_at: '2026-12-01T00:00:00.000000Z', items: [{ model_id: model, base_price_version_id: version, base_input_rate: '100', base_output_rate: '3', input_rate: '85', output_rate: '3', price_version_id: null }] }
+  assert.equal(parseGroupPriceCompile(preview, group).items[0].price_version_id, null)
+})
+
+test('published multiplier receipt requires every immutable compiled version identity', async () => {
+  const command = await pricingCommand('group_price.compile', operation, actor, { multiplier: '0.85', model_ids: [model], effective_at: '2026-12-01T00:00:00Z', expected_base_version_ids: {} }, group)
+  const result = { group_id: group, multiplier: '0.85', effective_at: '2026-12-01T00:00:00.000000Z', items: [{ model_id: model, base_price_version_id: version, base_input_rate: '100', base_output_rate: '3', input_rate: '85', output_rate: '3', price_version_id: 'ffffffff-ffff-4fff-8fff-ffffffffffff' }] }
+  const raw = { operation: { operation_id: operation, kind: 'group_price.compile', scope: 'platform', actor, resource_id: group, revision: null, created_at: at, target: command.target, input_fingerprint: command.input_fingerprint }, result }
+  assert.equal(parsePricingReceipt(raw, command).result.items[0].price_version_id, 'ffffffff-ffff-4fff-8fff-ffffffffffff')
+  assert.throws(() => parsePricingReceipt({ ...raw, result: { ...result, items: [{ ...result.items[0], price_version_id: null }] } }, command))
 })
 test('group rates preserve exact reduced int64 values and reject legacy or malformed arrays without sorting', () => {
   assert.deepEqual(pricingInputRates(domain.schema_id, huge, '0'), rates())

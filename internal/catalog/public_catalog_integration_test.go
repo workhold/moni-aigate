@@ -78,7 +78,7 @@ func (f *publicFixture) modelWith(t *testing.T, name, protocol string, visible b
 func (f *publicFixture) modelWithProfile(t *testing.T, name string, body []byte, visible bool) string {
 	t.Helper()
 	id := uuid.NewString()
-	if _, err := f.app.Exec(f.ctx, `SELECT meter_insert_text_model($1,$2,$3::jsonb,($3::jsonb->>'version'))`, id, name, body); err != nil {
+	if _, err := f.owner.Exec(f.ctx, `SELECT meter_insert_text_model($1,$2,$3::jsonb,($3::jsonb->>'version'))`, id, name, body); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := f.owner.Exec(f.ctx, `UPDATE models SET public_visible=$2 WHERE id=$1`, id, visible); err != nil {
@@ -208,7 +208,7 @@ func TestPublicCatalogProjectionProtocolsPricesAndSecrets(t *testing.T) {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
-		if !reflect.DeepEqual(keys, []string{"capabilities", "id", "limits", "pricing", "protocol", "public_name"}) {
+		if !reflect.DeepEqual(keys, []string{"aliases", "capabilities", "id", "limits", "pricing", "protocol", "public_name"}) {
 			t.Fatal("unexpected anonymous DTO fields", keys)
 		}
 	}

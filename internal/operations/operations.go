@@ -44,6 +44,20 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e != nil {
 		return e
 	}
+	// Current alias/compile helpers are invoker-only and scoped to APP. The
+	// historical provisioning fixtures deliberately do not have this append
+	// schema, so the current-only grants are conditional on its table marker.
+	var phase1Aliases bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='model_aliases')`, schema).Scan(&phase1Aliases); e != nil {
+		return e
+	}
+	if phase1Aliases {
+		for _, signature := range []string{"phase1_model_name_lock(text)", "pricing_model_alias_result(" + table("model_aliases") + ")", "phase1_compile_models(jsonb)", "phase1_compile_expected(jsonb)"} {
+			if _, e = tx.Exec(ctx, "GRANT EXECUTE ON FUNCTION "+qs+"."+signature+" TO "+qa); e != nil {
+				return e
+			}
+		}
+	}
 	// Customer money changes only the balance, never account ownership or kind.
 	// The current payment/wallet ACL pass below also clears any old column grants.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;
@@ -80,20 +94,24 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
  REVOKE UPDATE,DELETE ON %s FROM %s;
  GRANT UPDATE(label,state,revision,last_operation_id) ON %s TO %s;
  REVOKE UPDATE,DELETE ON %s FROM %s;
- GRANT UPDATE(state,revision,operation_id,retired_at) ON %s TO %s;
- REVOKE UPDATE,DELETE ON %s FROM %s;
  GRANT UPDATE(name,status,allowed_regions,price_group_id,pricing_revision,pricing_operation_id) ON %s TO %s;
  REVOKE UPDATE ON %s FROM %s;
  GRANT UPDATE(status,billing_status,latest_finalization_id) ON %s TO %s;
- REVOKE ALL ON %s,%s,%s,%s FROM %s;`,
+ REVOKE ALL ON %s,%s,%s FROM %s;`,
 		table("pricing_operations"), table("tenant_pricing_assignments"), qa,
 		table("price_groups"), qa, table("price_groups"), qa,
-		table("model_aliases"), qa, table("model_aliases"), qa,
 		table("tenants"), qa, table("tenants"), qa,
 		table("request_records"), qa, table("request_records"), qa,
-		table("price_groups"), table("model_aliases"), table("pricing_operations"), table("tenant_pricing_assignments"), qp))
+		table("price_groups"), table("pricing_operations"), table("tenant_pricing_assignments"), qp))
 	if e != nil {
 		return e
+	}
+	if phase1Aliases {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;
+ GRANT UPDATE(state,revision,operation_id,retired_at) ON %s TO %s;
+ REVOKE ALL ON %s FROM %s;`, table("model_aliases"), qa, table("model_aliases"), qa, table("model_aliases"), qp)); e != nil {
+			return e
+		}
 	}
 	// Alerts observe business rows with existing SELECT privileges. Their
 	// protected history is writable only through the closed alert state machine.

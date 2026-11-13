@@ -64,10 +64,11 @@ BEGIN
       USING ERRCODE = '23505';
   END IF;
   IF TG_OP = 'UPDATE' THEN
-    IF ROW(NEW.alias,NEW.model_id,NEW.operation_id,NEW.created_by,NEW.created_at)
-       IS DISTINCT FROM ROW(OLD.alias,OLD.model_id,OLD.operation_id,OLD.created_by,OLD.created_at)
+    IF ROW(NEW.alias,NEW.model_id,NEW.created_by,NEW.created_at)
+       IS DISTINCT FROM ROW(OLD.alias,OLD.model_id,OLD.created_by,OLD.created_at)
        OR OLD.state <> 'active' OR NEW.state <> 'retired'
        OR NEW.revision <> OLD.revision + 1
+       OR NEW.operation_id=OLD.operation_id
        OR NEW.retired_at IS NULL THEN
       RAISE EXCEPTION 'model alias identity or state is immutable';
     END IF;
@@ -132,6 +133,10 @@ BEGIN
  WHEN 'model_alias.retire' THEN
   shape:=jsonb_build_object('alias',j->'alias','expected_revision',j->'expected_revision');
   IF jsonb_typeof(j->'alias') IS DISTINCT FROM 'string' OR NOT pricing_json_uint(j->'expected_revision',true) THEN RAISE EXCEPTION 'invalid model alias retire input'; END IF;
+ WHEN 'group_price.compile' THEN
+  shape:=jsonb_build_object('multiplier',j->'multiplier','model_ids',j->'model_ids','effective_at',j->'effective_at','expected_base_version_ids',j->'expected_base_version_ids');
+  IF jsonb_typeof(j->'multiplier') IS DISTINCT FROM 'string' OR (j->>'multiplier') !~ '^(0|[1-9][0-9]*)([.][0-9]{1,6})?$' OR (j->>'multiplier')::numeric<=0 OR (j->>'multiplier')::numeric>100 OR jsonb_typeof(j->'model_ids') IS DISTINCT FROM 'array' OR jsonb_array_length(j->'model_ids') NOT BETWEEN 1 AND 100 OR NOT pricing_json_time(j->'effective_at') OR (jsonb_typeof(j->'expected_base_version_ids') IS DISTINCT FROM 'object' AND j->'expected_base_version_ids' IS DISTINCT FROM 'null'::jsonb) THEN RAISE EXCEPTION 'invalid group price compile input'; END IF;
+  IF EXISTS (SELECT 1 FROM jsonb_array_elements(j->'model_ids') x WHERE jsonb_typeof(x) IS DISTINCT FROM 'string' OR NOT pricing_json_uuid(x)) THEN RAISE EXCEPTION 'invalid group price compile model ids'; END IF;
  WHEN 'group_price.publish' THEN
   shape:=jsonb_build_object('model_id',j->'model_id','schema_id',j->'schema_id','schema_digest',j->'schema_digest','variant_key',j->'variant_key','currency',j->'currency','rates',j->'rates','effective_at',j->'effective_at');
   IF NOT pricing_json_uuid(j->'model_id') OR NOT pricing_json_uuid(j->'schema_id') OR jsonb_typeof(j->'schema_digest') IS DISTINCT FROM 'string' OR (j->>'schema_digest') !~ '^[0-9a-f]{64}$' OR j->'variant_key' IS DISTINCT FROM '"default"'::jsonb OR j->'currency' IS DISTINCT FROM '"CNY"'::jsonb OR NOT pricing_json_time(j->'effective_at') OR j->'rates'->'schema_id' IS DISTINCT FROM j->'schema_id' THEN RAISE EXCEPTION 'invalid group price input'; END IF;
@@ -160,6 +165,18 @@ BEGIN
  IF k='model_alias.retire' AND octet_length(j->>'alias') NOT BETWEEN 1 AND 100 THEN RAISE EXCEPTION 'invalid model alias'; END IF;
 END $_$;
 
+CREATE FUNCTION phase1_compile_models(j jsonb) RETURNS text
+LANGUAGE sql IMMUTABLE STRICT AS $$
+ SELECT '['||string_agg(to_jsonb(v #>> '{}')::text,',' ORDER BY ord)||']'
+ FROM jsonb_array_elements(j) WITH ORDINALITY AS x(v,ord)
+$$;
+
+CREATE FUNCTION phase1_compile_expected(j jsonb) RETURNS text
+LANGUAGE sql IMMUTABLE STRICT AS $$
+ SELECT CASE WHEN j='null'::jsonb THEN NULL ELSE
+  '{'||coalesce((SELECT string_agg(to_jsonb(key)::text||':'||value::text,',' ORDER BY key COLLATE "C") FROM jsonb_each(j)),'')||'}' END
+$$;
+
 CREATE OR REPLACE FUNCTION pricing_fingerprint(k text, a text, s text, t text, j jsonb) RETURNS text
 LANGUAGE sql IMMUTABLE STRICT AS $$
  SELECT encode(sha256(pricing_frame(ARRAY[k,a,s,t] || CASE k
@@ -167,6 +184,7 @@ LANGUAGE sql IMMUTABLE STRICT AS $$
   WHEN 'price_group.update' THEN ARRAY[j->>'expected_revision',j->>'label',j->>'state']
   WHEN 'model_alias.create' THEN ARRAY[j->>'model_id',j->>'alias']
   WHEN 'model_alias.retire' THEN ARRAY[j->>'alias',j->>'expected_revision']
+  WHEN 'group_price.compile' THEN ARRAY[j->>'multiplier',phase1_compile_models(j->'model_ids'),j->>'effective_at',phase1_compile_expected(j->'expected_base_version_ids')]
   WHEN 'group_price.publish' THEN ARRAY[j->>'model_id',j->>'schema_id',j->>'schema_digest',j->>'variant_key',j->>'currency',convert_from(meter_text_rates_canonical(j->'rates','retail'),'UTF8'),j->>'effective_at']
   WHEN 'default_price.publish' THEN ARRAY[j->>'model_id',j->>'schema_id',j->>'schema_digest',j->>'variant_key',j->>'currency',convert_from(meter_text_rates_canonical(j->'rates','retail'),'UTF8'),j->>'effective_at']
   WHEN 'cost_price.publish' THEN ARRAY[j->>'channel_id',j->>'upstream_model',j->>'schema_id',j->>'schema_digest',j->>'variant_key',j->>'currency',j->>'basis',CASE WHEN j->'rates'='null'::jsonb THEN NULL ELSE convert_from(meter_text_rates_canonical(j->'rates','supplier'),'UTF8') END,j->>'effective_at',j->>'expected_channel_revision']
@@ -180,13 +198,79 @@ BEGIN
  NEW.created_txid:=txid_current();
  NEW.created_at:=clock_timestamp();
  NEW.input_fingerprint:=pricing_fingerprint(NEW.kind,NEW.actor,NEW.scope,NEW.target,NEW.safe_input);
- IF NEW.kind IN ('price_group.create','group_price.publish','default_price.publish','cost_price.publish','model_alias.create','model_alias.retire') THEN
+ IF NEW.kind IN ('price_group.create','group_price.publish','default_price.publish','cost_price.publish','model_alias.create') THEN
   NEW.result_snapshot:=jsonb_set(NEW.result_snapshot,'{created_at}',to_jsonb(pricing_time(NEW.created_at)),true);
-  IF NEW.kind='model_alias.retire' THEN
-   NEW.result_snapshot:=jsonb_set(NEW.result_snapshot,'{retired_at}',to_jsonb(pricing_time(NEW.created_at)),true);
-  END IF;
+ END IF;
+ IF NEW.kind='model_alias.retire' THEN
+  NEW.result_snapshot:=jsonb_set(NEW.result_snapshot,'{retired_at}',to_jsonb(pricing_time(NEW.created_at)),true);
  END IF;
  RETURN NEW;
+END $$;
+
+ALTER TABLE pricing_operations
+  DROP CONSTRAINT pricing_operations_kind_check,
+  ADD CONSTRAINT pricing_operations_kind_check CHECK (kind IN (
+    'price_group.create','price_group.update','group_price.publish','group_price.compile',
+    'tenant_pricing.assign','default_price.publish','cost_price.publish',
+    'model_alias.create','model_alias.retire'));
+
+ALTER TABLE pricing_operations
+  DROP CONSTRAINT pricing_operations_revision_check,
+  ADD CONSTRAINT pricing_operations_revision_check CHECK (
+    (kind IN ('group_price.publish','group_price.compile','default_price.publish','cost_price.publish') AND revision IS NULL)
+    OR (kind NOT IN ('group_price.publish','group_price.compile','default_price.publish','cost_price.publish') AND revision IS NOT NULL));
+
+ALTER TABLE pricing_operations DROP CONSTRAINT pricing_operations_result_snapshot_check,
+ ADD CONSTRAINT pricing_operations_result_snapshot_check CHECK (
+ jsonb_typeof(result_snapshot)='object' AND octet_length(result_snapshot::text)<=CASE WHEN kind='group_price.compile' THEN 65536 ELSE 8192 END);
+
+DROP INDEX price_versions_pricing_operation;
+CREATE INDEX price_versions_pricing_operation
+ON price_versions(pricing_operation_id)
+WHERE pricing_operation_id IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION guard_group_price_insert() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE gstate TEXT; op pricing_operations%ROWTYPE; expected_kind text;
+BEGIN
+ PERFORM id FROM models WHERE id=NEW.model_id FOR SHARE;
+ IF NOT EXISTS (SELECT 1 FROM models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id JOIN model_capability_variants v ON v.profile_version=c.id AND v.variant_key=NEW.variant_key WHERE m.id=NEW.model_id AND c.schema_id=NEW.schema_id AND c.schema_digest=NEW.schema_digest) THEN RAISE EXCEPTION 'price schema mismatch'; END IF;
+ IF NEW.price_group_id IS NOT NULL THEN
+  SELECT state INTO STRICT gstate FROM price_groups WHERE id=NEW.price_group_id FOR SHARE;
+  IF gstate<>'active' THEN RAISE EXCEPTION 'price group retired'; END IF;
+ END IF;
+ SELECT * INTO STRICT op FROM pricing_operations WHERE operation_id=NEW.pricing_operation_id;
+ expected_kind:=CASE WHEN NEW.price_group_id IS NULL THEN 'default_price.publish' ELSE op.kind END;
+ IF op.created_txid<>txid_current() OR op.actor<>NEW.created_by OR (NEW.price_group_id IS NULL AND op.kind<>expected_kind) OR (NEW.price_group_id IS NOT NULL AND op.kind NOT IN ('group_price.publish','group_price.compile')) OR (op.kind='group_price.publish' AND op.resource_id<>NEW.id) OR (op.kind='group_price.compile' AND op.resource_id<>NEW.price_group_id) THEN RAISE EXCEPTION 'price operation mismatch'; END IF;
+ RETURN NEW;
+END $$;
+
+CREATE OR REPLACE FUNCTION meter_group_price_audit(oid text) RETURNS void
+LANGUAGE plpgsql STABLE AS $$
+DECLARE op pricing_operations%ROWTYPE; n bigint; want_action text;
+BEGIN
+ SELECT * INTO STRICT op FROM pricing_operations WHERE operation_id=oid AND kind IN ('group_price.publish','group_price.compile','default_price.publish','cost_price.publish');
+ want_action:=CASE WHEN op.kind='cost_price.publish' THEN 'pricing.cost.publish' WHEN op.kind='group_price.compile' THEN 'pricing.price.compile' ELSE 'pricing.price.publish' END;
+ SELECT count(*) INTO n FROM audit_events a WHERE a.sanitized_diff->>'operation_id'=oid;
+ IF n<>1 OR NOT EXISTS (SELECT 1 FROM audit_events a WHERE a.sanitized_diff->>'operation_id'=oid AND op.created_txid=txid_current() AND a.actor=op.actor AND a.tenant_scope IS NULL AND a.action=want_action AND a.target=op.target AND a.sanitized_diff=jsonb_build_object('operation_id',oid,'target',op.target,'after',op.result_snapshot)) THEN RAISE EXCEPTION 'group price audit mismatch'; END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION meter_group_price_audit_birth() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE op pricing_operations%ROWTYPE;
+BEGIN
+ IF NEW.action IN ('pricing.price.publish','pricing.price.compile','pricing.cost.publish') THEN
+  SELECT * INTO STRICT op FROM pricing_operations WHERE operation_id=NEW.sanitized_diff->>'operation_id' AND kind IN ('group_price.publish','group_price.compile','default_price.publish','cost_price.publish');
+  IF op.created_txid<>txid_current() OR NEW.action<>(CASE WHEN op.kind='cost_price.publish' THEN 'pricing.cost.publish' WHEN op.kind='group_price.compile' THEN 'pricing.price.compile' ELSE 'pricing.price.publish' END) THEN RAISE EXCEPTION 'publish audit mismatch'; END IF;
+ END IF;
+ RETURN NEW;
+END $$;
+
+CREATE OR REPLACE FUNCTION meter_group_price_audit_insert() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+ IF NEW.action IN ('pricing.price.publish','pricing.price.compile','pricing.cost.publish') THEN PERFORM meter_group_price_audit(NEW.sanitized_diff->>'operation_id'); END IF;
+ RETURN NULL;
 END $$;
 
 CREATE OR REPLACE FUNCTION require_pricing_operation_result() RETURNS trigger
@@ -214,16 +298,20 @@ BEGIN
   SELECT * INTO STRICT a FROM model_aliases WHERE operation_id=NEW.operation_id;
   prior:=(NEW.safe_input->>'expected_revision')::bigint;
   expected:=jsonb_build_object('alias',a.alias,'expected_revision',prior::text);
-  IF NEW.target<>('/api/platform/model-aliases/'||a.alias||'/retire') OR a.operation_id<>NEW.operation_id OR a.created_by<>NEW.actor OR a.created_at<>NEW.created_at OR a.state<>'retired' OR a.revision<>prior+1 OR a.retired_at<>NEW.created_at OR NEW.revision<>a.revision OR NEW.result_snapshot<>pricing_model_alias_result(a) THEN RAISE EXCEPTION 'model alias retire result mismatch'; END IF;
+  IF NEW.resource_id<>a.model_id OR NEW.target<>('/api/platform/model-aliases/'||a.alias||'/retire') OR a.operation_id<>NEW.operation_id OR a.state<>'retired' OR a.revision<>prior+1 OR a.retired_at<>NEW.created_at OR NEW.revision<>a.revision OR NEW.result_snapshot<>pricing_model_alias_result(a) THEN RAISE EXCEPTION 'model alias retire result mismatch'; END IF;
+ ELSIF NEW.kind='group_price.compile' THEN
+  expected:=NEW.safe_input;
+  IF NEW.target<>('/api/platform/price-groups/'||(NEW.resource_id)||'/price-versions/compile') OR NEW.revision IS NOT NULL OR (NEW.result_snapshot->>'group_id') IS DISTINCT FROM NEW.resource_id OR (NEW.result_snapshot->>'multiplier') IS DISTINCT FROM NEW.safe_input->>'multiplier' OR (NEW.result_snapshot->>'effective_at') IS DISTINCT FROM NEW.safe_input->>'effective_at' OR jsonb_typeof(NEW.result_snapshot->'items') IS DISTINCT FROM 'array' OR jsonb_array_length(NEW.result_snapshot->'items') NOT BETWEEN 1 AND 100 OR (SELECT count(*) FROM price_versions pv WHERE pv.pricing_operation_id=NEW.operation_id)<>jsonb_array_length(NEW.result_snapshot->'items') OR (SELECT count(DISTINCT item->>'price_version_id') FROM jsonb_array_elements(NEW.result_snapshot->'items') item)<>jsonb_array_length(NEW.result_snapshot->'items') OR EXISTS (SELECT 1 FROM jsonb_array_elements(NEW.result_snapshot->'items') item WHERE item->>'price_version_id' IS NULL OR NOT EXISTS (SELECT 1 FROM price_versions pv WHERE pv.id=item->>'price_version_id' AND pv.price_group_id=NEW.resource_id AND pv.pricing_operation_id=NEW.operation_id AND pv.created_by=NEW.actor AND pv.created_at=NEW.created_at AND pv.effective_at=(NEW.safe_input->>'effective_at')::timestamptz)) THEN RAISE EXCEPTION 'group price compile result mismatch'; END IF;
+  PERFORM meter_group_price_audit(NEW.operation_id);
  ELSIF NEW.kind='group_price.publish' THEN
   SELECT * INTO STRICT p FROM price_versions WHERE id=NEW.resource_id;
   expected:=pricing_price_result(p)-ARRAY['id','price_group_id','created_at'];
-  IF p.price_group_id IS NULL OR p.pricing_operation_id<>NEW.operation_id OR p.created_by<>NEW.actor OR p.created_at<>NEW.created_at OR NEW.target<>('/api/platform/price-groups/'||p.price_group_id||'/price-versions') OR NEW.result_snapshot<>pricing_price_result(p) THEN RAISE EXCEPTION 'group price result mismatch'; END IF;
+  IF p.price_group_id IS NULL OR (SELECT count(*) FROM price_versions WHERE pricing_operation_id=NEW.operation_id)<>1 OR p.pricing_operation_id<>NEW.operation_id OR p.created_by<>NEW.actor OR p.created_at<>NEW.created_at OR NEW.target<>('/api/platform/price-groups/'||p.price_group_id||'/price-versions') OR NEW.result_snapshot<>pricing_price_result(p) THEN RAISE EXCEPTION 'group price result mismatch'; END IF;
   PERFORM meter_group_price_complete(p.id); PERFORM meter_group_price_audit(NEW.operation_id);
  ELSIF NEW.kind='default_price.publish' THEN
   SELECT * INTO STRICT p FROM price_versions WHERE id=NEW.resource_id;
   expected:=pricing_price_result(p)-ARRAY['id','price_group_id','created_at'];
-  IF p.price_group_id IS NOT NULL OR p.pricing_operation_id<>NEW.operation_id OR p.created_by<>NEW.actor OR p.created_at<>NEW.created_at OR NEW.target<>'/api/platform/price-versions' OR NEW.result_snapshot<>pricing_price_result(p) THEN RAISE EXCEPTION 'default price result mismatch'; END IF;
+  IF p.price_group_id IS NOT NULL OR (SELECT count(*) FROM price_versions WHERE pricing_operation_id=NEW.operation_id)<>1 OR p.pricing_operation_id<>NEW.operation_id OR p.created_by<>NEW.actor OR p.created_at<>NEW.created_at OR NEW.target<>'/api/platform/price-versions' OR NEW.result_snapshot<>pricing_price_result(p) THEN RAISE EXCEPTION 'default price result mismatch'; END IF;
   PERFORM meter_group_price_complete(p.id); PERFORM meter_group_price_audit(NEW.operation_id);
  ELSIF NEW.kind='cost_price.publish' THEN
   SELECT * INTO STRICT c FROM cost_versions WHERE id=NEW.resource_id;
@@ -250,8 +338,11 @@ BEGIN
 END $$;
 
 REVOKE ALL ON TABLE model_aliases FROM PUBLIC;
+REVOKE ALL ON FUNCTION phase1_compile_models(jsonb),phase1_compile_expected(jsonb) FROM PUBLIC;
 REVOKE ALL ON FUNCTION phase1_requested_model_name_immutable(),phase1_model_name_lock(text),phase1_alias_name_guard(),phase1_model_name_guard(),pricing_model_alias_result(model_aliases) FROM PUBLIC;
 DO $$ BEGIN
+ EXECUTE format('ALTER FUNCTION %I.phase1_compile_models(jsonb) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.phase1_compile_expected(jsonb) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
  EXECUTE format('ALTER FUNCTION %I.phase1_requested_model_name_immutable() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
  EXECUTE format('ALTER FUNCTION %I.phase1_model_name_lock(text) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
  EXECUTE format('ALTER FUNCTION %I.phase1_alias_name_guard() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
@@ -261,4 +352,8 @@ DO $$ BEGIN
  EXECUTE format('ALTER FUNCTION %I.pricing_fingerprint(text,text,text,text,jsonb) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
  EXECUTE format('ALTER FUNCTION %I.guard_pricing_operation_insert() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
  EXECUTE format('ALTER FUNCTION %I.require_pricing_operation_result() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.guard_group_price_insert() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.meter_group_price_audit(text) SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.meter_group_price_audit_birth() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
+ EXECUTE format('ALTER FUNCTION %I.meter_group_price_audit_insert() SET search_path TO %I,pg_catalog,pg_temp',current_schema(),current_schema());
 END $$;

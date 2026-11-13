@@ -1,0 +1,20 @@
+{
+  "candidates": {
+    "a": {
+      "secret": "mock-a-secret-2026",
+      "models": ["qa-compose-chat"],
+      "ttfb_ms": 5,
+      "event_interval_ms": 2,
+      "output_tokens": 8,
+      "default_fault": ""
+    },
+    "b": {
+      "secret": "mock-b-secret-2026",
+      "models": ["qa-compose-chat"],
+      "ttfb_ms": 5,
+      "event_interval_ms": 2,
+      "output_tokens": 8,
+      "default_fault": ""
+    }
+  }
+}

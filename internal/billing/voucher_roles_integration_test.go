@@ -58,7 +58,7 @@ func TestPostgresVoucherRestrictedApplicationRoleLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if e = migrations.Apply(ctx, owner); e != nil {
+	if e = migrations.ApplyCurrent(ctx, owner); e != nil {
 		t.Fatal(e)
 	}
 	if e = operations.ProvisionFor(ctx, owner, schema, appRole, projectionRole); e != nil {

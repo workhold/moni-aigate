@@ -84,7 +84,7 @@ func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noCo
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	if err = migrations.Apply(ctx, pool); err != nil {
+	if err = migrations.ApplyCurrent(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
 	secrets := &security.Secrets{Active: "test", Keys: map[string][]byte{"test": bytes.Repeat([]byte{0x51}, 32)}, Pepper: bytes.Repeat([]byte{0x67}, 32)}

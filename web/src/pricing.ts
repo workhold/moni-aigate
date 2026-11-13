@@ -1,7 +1,7 @@
 import { request } from './api.ts'
 
-export const pricingKinds = ['price_group.create', 'price_group.update', 'group_price.publish', 'tenant_pricing.assign', 'default_price.publish', 'cost_price.publish'] as const
-const publishKinds: readonly PricingKind[] = ['group_price.publish', 'default_price.publish', 'cost_price.publish']
+export const pricingKinds = ['price_group.create', 'price_group.update', 'group_price.publish', 'group_price.compile', 'tenant_pricing.assign', 'default_price.publish', 'cost_price.publish'] as const
+const publishKinds: readonly PricingKind[] = ['group_price.publish', 'group_price.compile', 'default_price.publish', 'cost_price.publish']
 export type PricingKind = typeof pricingKinds[number]
 export interface PriceGroup { id: string; label: string; state: 'active' | 'retired'; revision: string; created_at: string }
 export interface PricingAssignment { tenant_id: string; price_group_id: string | null; pricing_revision: string }
@@ -9,13 +9,15 @@ export interface TextRates<S extends 'retail' | 'supplier'> { schema_id: string;
 export type TextRetailRates = TextRates<'retail'>
 export type TextSupplierRates = TextRates<'supplier'>
 export interface GroupPrice { id: string; model_id: string; price_group_id: string; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates; effective_at: string; created_at: string }
+export interface GroupPriceCompileItem { model_id: string; base_price_version_id: string; base_input_rate: string; base_output_rate: string; input_rate: string; output_rate: string; price_version_id: string | null }
+export interface GroupPriceCompile { group_id: string; multiplier: string; effective_at: string; items: GroupPriceCompileItem[] }
 export interface DefaultPrice extends Omit<GroupPrice, 'price_group_id'> { price_group_id: null }
 export type CostBasis = 'unknown' | 'contract' | 'invoice'
 export interface CostPrice { id: string; channel_id: string; upstream_model: string; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; basis: CostBasis; rates: TextSupplierRates | null; effective_at: string; created_at: string; expected_channel_revision: string; channel_revision: string }
 export interface PriceVersion { id: string; model_id: string; model_name: string; price_group_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates; effective_at: string; created_at: string }
 export interface RetailPrice { model_id: string; source: 'default' | 'group'; status: 'available' | 'unavailable'; price_group_id: string | null; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates | null; effective_at: string | null; as_of: string }
 export interface PricingOperation { operation_id: string; kind: PricingKind; scope: string; actor: string; resource_id: string; revision: string | null; created_at: string; target: string; input_fingerprint: string }
-export interface PricingReceipt { operation: PricingOperation; result: PriceGroup | PricingAssignment | GroupPrice | DefaultPrice | CostPrice }
+export interface PricingReceipt { operation: PricingOperation; result: PriceGroup | PricingAssignment | GroupPrice | GroupPriceCompile | DefaultPrice | CostPrice }
 export interface PricingPreviewRow { model_id: string; public_name: string; protocol: string; retail_price: RetailPrice }
 export interface PricingPreviewContext { tenant_id: string; tenant_status: 'active' | 'suspended'; current_price_group_id: string | null; current_pricing_revision: string; target_price_group_id: string | null; target_group_state: 'active' | 'retired' | null; assignable: boolean; as_of: string }
 export interface PricingPage<T> { rows: T[]; next: string; context?: PricingPreviewContext }
@@ -36,6 +38,12 @@ export function pricingID(value: unknown): string {
 }
 export function pricingDecimal(value: unknown, positive = false): string {
   if (typeof value !== 'string' || !(positive ? /^[1-9][0-9]{0,18}$/ : /^(0|[1-9][0-9]{0,18})$/).test(value) || BigInt(value) > max) return invalid()
+  return value
+}
+export function pricingMultiplier(value: unknown): string {
+  if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$/.test(value)) return invalid()
+  const [whole, fraction = ''] = value.split('.'), scaled = BigInt(whole!) * 1000000n + BigInt((fraction + '000000').slice(0, 6))
+  if (scaled <= 0n || scaled > 100000000n) return invalid()
   return value
 }
 export function pricingLabel(value: unknown, trim = false): string {
@@ -79,6 +87,17 @@ export function parseGroupPrice(value: unknown, group?: string): GroupPrice {
   const parsed = parseRetailVersion(value), row: GroupPrice = { ...parsed.row, price_group_id: pricingID(parsed.group) }
   if (group !== undefined && row.price_group_id !== pricingID(group)) return invalid()
   return row
+}
+export function parseGroupPriceCompile(value: unknown, group?: string): GroupPriceCompile {
+  const r = pricingObject(value, ['group_id', 'multiplier', 'effective_at', 'items']), groupID = pricingID(r.group_id)
+  if (group !== undefined && groupID !== pricingID(group)) return invalid()
+  if (!Array.isArray(r.items) || r.items.length < 1 || r.items.length > 100) return invalid()
+  const items = r.items.map(value => {
+    const item = pricingObject(value, ['model_id', 'base_price_version_id', 'base_input_rate', 'base_output_rate', 'input_rate', 'output_rate', 'price_version_id'])
+    return { model_id: pricingID(item.model_id), base_price_version_id: pricingID(item.base_price_version_id), base_input_rate: pricingDecimal(item.base_input_rate), base_output_rate: pricingDecimal(item.base_output_rate), input_rate: pricingDecimal(item.input_rate), output_rate: pricingDecimal(item.output_rate), price_version_id: item.price_version_id === null ? null : pricingID(item.price_version_id) }
+  })
+  if (new Set(items.map(item => item.model_id)).size !== items.length) return invalid()
+  return { group_id: groupID, multiplier: pricingMultiplier(r.multiplier), effective_at: pricingTime(r.effective_at), items }
 }
 export function parseDefaultPrice(value: unknown): DefaultPrice {
   const parsed = parseRetailVersion(value)
@@ -197,8 +216,8 @@ export function parsePricingIdentity(value: unknown): PricingCommandIdentity {
   const kind = choice(r.kind, pricingKinds), scope = kind === 'tenant_pricing.assign' ? pricingID(r.scope) : choice(r.scope, ['platform'])
   if (typeof r.input_fingerprint !== 'string' || !/^[0-9a-f]{64}$/.test(r.input_fingerprint)) return invalid()
   const target = text(r.target, 200)
-  const groupID = kind === 'price_group.update' ? target.slice('/api/platform/price-groups/'.length) : kind === 'group_price.publish' ? target.slice('/api/platform/price-groups/'.length, -'/price-versions'.length) : null
-  if (kind === 'price_group.create' && target !== '/api/platform/price-groups' || kind === 'tenant_pricing.assign' && target !== `/api/platform/tenants/${scope}/pricing` || kind === 'price_group.update' && target !== `/api/platform/price-groups/${pricingID(groupID)}` || kind === 'group_price.publish' && target !== `/api/platform/price-groups/${pricingID(groupID)}/price-versions` || kind === 'default_price.publish' && target !== '/api/platform/price-versions' || kind === 'cost_price.publish' && target !== '/api/platform/cost-versions') return invalid()
+  const groupID = kind === 'price_group.update' ? target.slice('/api/platform/price-groups/'.length) : kind === 'group_price.publish' ? target.slice('/api/platform/price-groups/'.length, -'/price-versions'.length) : kind === 'group_price.compile' ? target.slice('/api/platform/price-groups/'.length, -'/price-versions/compile'.length) : null
+  if (kind === 'price_group.create' && target !== '/api/platform/price-groups' || kind === 'tenant_pricing.assign' && target !== `/api/platform/tenants/${scope}/pricing` || kind === 'price_group.update' && target !== `/api/platform/price-groups/${pricingID(groupID)}` || kind === 'group_price.publish' && target !== `/api/platform/price-groups/${pricingID(groupID)}/price-versions` || kind === 'group_price.compile' && target !== `/api/platform/price-groups/${pricingID(groupID)}/price-versions/compile` || kind === 'default_price.publish' && target !== '/api/platform/price-versions' || kind === 'cost_price.publish' && target !== '/api/platform/cost-versions') return invalid()
   return { operation_id: pricingID(r.operation_id), kind, scope, actor: pricingID(r.actor), target, input_fingerprint: r.input_fingerprint }
 }
 export function pricingIdentity(command: PricingCommandIdentity): PricingCommandIdentity { return parsePricingIdentity(Object.fromEntries(['operation_id','kind','scope','actor','target','input_fingerprint'].map(key => [key, command[key as keyof PricingCommandIdentity]]))) }
@@ -215,6 +234,20 @@ export async function pricingCommand(kind: PricingKind, operation: string, actor
     safe = { model_id: pricingID(r.model_id), schema_id: pricingID(r.schema_id), schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), input_rate: pricingDecimal(r.input_rate), output_rate: pricingDecimal(r.output_rate), effective_at: pricingTime(r.effective_at, true) }
     parts = [safe.model_id as string, safe.schema_id as string, safe.schema_digest as string, 'default', 'CNY', JSON.stringify(pricingInputRates(safe.schema_id as string, safe.input_rate, safe.output_rate)), safe.effective_at as string]
     target += `/${pricingID(targetID)}/price-versions`
+  } else if (kind === 'group_price.compile') {
+    const r = pricingObject(value), allowed = ['multiplier', 'model_ids', 'effective_at', 'expected_base_version_ids']
+    if (Object.keys(r).some(key => !allowed.includes(key)) || allowed.slice(0, 3).some(key => !Object.hasOwn(r, key))) return invalid()
+    if (!Array.isArray(r.model_ids) || r.model_ids.length < 1 || r.model_ids.length > 100 || r.model_ids.some(id => typeof id !== 'string')) return invalid()
+    const model_ids = [...new Set(r.model_ids.map(id => pricingID(id as string)))].sort()
+    let expected: Record<string, string> | undefined
+    if (Object.hasOwn(r, 'expected_base_version_ids')) {
+      const raw = pricingObject(r.expected_base_version_ids), entries = Object.entries(raw)
+      expected = Object.fromEntries(entries.map(([model, version]) => [pricingID(model), pricingID(version)]))
+      if (entries.some(([model]) => !model_ids.includes(pricingID(model)))) return invalid()
+    }
+    safe = { multiplier: pricingMultiplier(r.multiplier), model_ids, effective_at: pricingTime(r.effective_at, true), ...(expected === undefined ? {} : { expected_base_version_ids: expected }) }
+    parts = [safe.multiplier as string, JSON.stringify(model_ids), safe.effective_at as string, expected === undefined ? null : JSON.stringify(Object.fromEntries(Object.entries(expected).sort(([a], [b]) => a.localeCompare(b))))]
+    target += `/${pricingID(targetID)}/price-versions/compile`
   } else if (kind === 'default_price.publish') {
     const r = pricingObject(value, ['model_id','schema_id','schema_digest','variant_key','input_rate','output_rate','effective_at'])
     safe = { model_id: pricingID(r.model_id), schema_id: pricingID(r.schema_id), schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), input_rate: pricingDecimal(r.input_rate), output_rate: pricingDecimal(r.output_rate), effective_at: pricingTime(r.effective_at, true) }
@@ -247,6 +280,9 @@ export function parsePricingReceipt(value: unknown, expected?: PricingCommandIde
   } else if (operation.kind === 'group_price.publish') {
     result = parseGroupPrice(r.result, operation.target.split('/')[4])
     if (result.id !== operation.resource_id || result.created_at !== operation.created_at) return invalid()
+  } else if (operation.kind === 'group_price.compile') {
+    result = parseGroupPriceCompile(r.result, operation.target.slice('/api/platform/price-groups/'.length, -'/price-versions/compile'.length))
+    if (result.group_id !== operation.resource_id || result.items.some(item => item.price_version_id === null)) return invalid()
   } else if (operation.kind === 'default_price.publish') {
     result = parseDefaultPrice(r.result)
     if (result.id !== operation.resource_id || result.created_at !== operation.created_at) return invalid()
@@ -259,9 +295,13 @@ export function parsePricingReceipt(value: unknown, expected?: PricingCommandIde
   }
   if (expected && 'body' in expected) {
     const b = expected.body, data = result as unknown as Record<string, unknown>
-    const fields = operation.kind === 'price_group.create' ? ['label'] : operation.kind === 'price_group.update' ? ['label','state'] : operation.kind === 'group_price.publish' || operation.kind === 'default_price.publish' ? ['model_id','schema_id','schema_digest','variant_key','effective_at'] : operation.kind === 'cost_price.publish' ? ['channel_id','upstream_model','schema_id','schema_digest','variant_key','basis','effective_at','expected_channel_revision'] : ['price_group_id']
+    const fields = operation.kind === 'price_group.create' ? ['label'] : operation.kind === 'price_group.update' ? ['label','state'] : operation.kind === 'group_price.publish' || operation.kind === 'default_price.publish' ? ['model_id','schema_id','schema_digest','variant_key','effective_at'] : operation.kind === 'group_price.compile' ? ['multiplier','effective_at'] : operation.kind === 'cost_price.publish' ? ['channel_id','upstream_model','schema_id','schema_digest','variant_key','basis','effective_at','expected_channel_revision'] : ['price_group_id']
     if (fields.some(key => b[key] !== data[key])) return invalid()
     if ((operation.kind === 'group_price.publish' || operation.kind === 'default_price.publish') && JSON.stringify(pricingInputRates(b.schema_id as string, b.input_rate, b.output_rate)) !== JSON.stringify((result as GroupPrice | DefaultPrice).rates)) return invalid()
+    if (operation.kind === 'group_price.compile') {
+      const compiled = result as GroupPriceCompile, expectedModels = [...new Set(b.model_ids as string[])].sort()
+      if (compiled.multiplier !== b.multiplier || compiled.effective_at !== b.effective_at || JSON.stringify(compiled.items.map(item => item.model_id)) !== JSON.stringify(expectedModels)) return invalid()
+    }
     if (operation.kind === 'cost_price.publish' && JSON.stringify(b.basis === 'unknown' ? null : pricingInputRates(b.schema_id as string, b.input_rate, b.output_rate, 'supplier')) !== JSON.stringify((result as CostPrice).rates)) return invalid()
     if (operation.kind === 'price_group.update' || operation.kind === 'tenant_pricing.assign') {
       const before = pricingDecimal(b.expected_revision, true), actual = operation.revision!, prior = expected.previous as unknown as Record<string, unknown> | undefined

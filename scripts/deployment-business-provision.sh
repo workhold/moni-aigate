@@ -11,7 +11,7 @@ base_url=${base_url%/}
 admin_email=${BUSINESS_QA_ADMIN_EMAIL:-admin@example.com}
 admin_password=${BUSINESS_QA_ADMIN_PASSWORD:?set BUSINESS_QA_ADMIN_PASSWORD}
 model_name=${BUSINESS_QA_MODEL_NAME:-qa-compose-chat}
-provider_url=${BUSINESS_QA_PROVIDER_URL:-http://qa-provider:80/v1}
+provider_url=${BUSINESS_QA_PROVIDER_URL:-http://qa-provider:8090/c/a/v1}
 provider_cidr=${BUSINESS_QA_PROVIDER_CIDR:-172.16.0.0/12}
 owner_email=${BUSINESS_QA_OWNER_EMAIL:-qa-owner@example.com}
 owner_password=${BUSINESS_QA_OWNER_PASSWORD:-qa-owner-password-2026}
@@ -89,7 +89,7 @@ model_id=$(json_value "$model_response" data.id)
 
 channel_body=$(python3 - "$provider_url" "$provider_cidr" <<'PY'
 import json, sys
-print(json.dumps({"name": "qa-compose-provider", "base_url": sys.argv[1], "provider": "openai", "data_region": "global", "secret": "qa-provider-secret-2026", "allowed_cidrs": [sys.argv[2]]}, separators=(",", ":")))
+print(json.dumps({"name": "mock-qa-a", "base_url": sys.argv[1], "provider": "openai", "data_region": "global", "secret": "mock-a-secret-2026", "allowed_cidrs": [sys.argv[2]]}, separators=(",", ":")))
 PY
 )
 channel_response=$(request channel POST /api/platform/channels "$channel_body" "Origin: ${BUSINESS_QA_ORIGIN:-http://127.0.0.1:${DEPLOY_QA_PORT:-18080}}" "X-CSRF-Token: $csrf")

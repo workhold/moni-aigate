@@ -1,8 +1,10 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +20,8 @@ func (s *Server) registerPricing(a, p *gin.RouterGroup) {
 	p.PUT("/price-groups/:id", s.updatePriceGroup)
 	p.GET("/price-groups/:id/price-versions", s.groupPrices)
 	p.POST("/price-groups/:id/price-versions", s.publishGroupPrice)
+	p.POST("/price-groups/:id/price-versions/compile", s.compileGroupPrices)
+	p.POST("/price-groups/:id/price-versions/compile-preview", s.previewGroupPriceCompile)
 	p.GET("/tenants/:id/pricing", s.tenantPricing)
 	p.PUT("/tenants/:id/pricing", s.assignTenantPricing)
 	p.GET("/tenants/:id/pricing-preview", s.pricingPreview)
@@ -36,8 +40,14 @@ func (s *Server) pricingError(c *gin.Context, e error) {
 			code, status = pe.Code, 404
 		case "pricing_revision_conflict", "price_group_retired", "price_effective_conflict", "policy_operation_conflict", "pricing_revision_exhausted":
 			code, status = pe.Code, 409
+		case "base_price_changed", "base_price_missing":
+			code, status = pe.Code, 409
 		case "pricing_busy", "pricing_invariant":
 			code = pe.Code
+		}
+		if pe.Code == "base_price_missing" {
+			c.AbortWithStatusJSON(status, gin.H{"error": gin.H{"code": code, "message": "部分模型没有当前公共默认价", "missing_model_ids": pe.MissingModelIDs}, "request_id": c.GetString("request_id")})
+			return
 		}
 	}
 	s.fail(c, status, code, "定价操作未完成；结果不明时请按原操作编号查询")
@@ -369,6 +379,111 @@ func (s *Server) publishGroupPrice(c *gin.Context) {
 		status = 200
 	}
 	s.pricingResult(c, status, v.Operation, v.Result)
+}
+
+func (s *Server) compileGroupPriceBody(c *gin.Context) (catalog.GroupPriceCompileCommand, bool) {
+	var out catalog.GroupPriceCompileCommand
+	obj, ok := pricingBodyOptional(c, []string{"operation_id", "multiplier", "model_ids", "effective_at"}, "expected_base_version_ids")
+	if !ok {
+		return out, false
+	}
+	op, a := commerceID(obj["operation_id"])
+	multiplier, b := commerceString(obj["multiplier"])
+	at, cOK := commerceExpiry(obj["effective_at"])
+	var rawIDs []json.RawMessage
+	if json.Unmarshal(obj["model_ids"], &rawIDs) != nil || len(rawIDs) < 1 || len(rawIDs) > 100 {
+		return out, false
+	}
+	ids := make([]string, 0, len(rawIDs))
+	for _, raw := range rawIDs {
+		id, valid := commerceID(raw)
+		if !valid {
+			return out, false
+		}
+		ids = append(ids, id)
+	}
+	var expected map[string]json.RawMessage
+	var versions map[string]string
+	if raw, present := obj["expected_base_version_ids"]; present {
+		var valid bool
+		if string(raw) != "null" {
+			expected, valid = strictPricingRawObject(raw)
+		}
+		if !valid || expected == nil {
+			return out, false
+		}
+		versions = make(map[string]string, len(expected))
+	}
+	if expected != nil {
+		for model, raw := range expected {
+			version, valid := commerceID(raw)
+			if !valid {
+				return out, false
+			}
+			versions[model] = version
+		}
+	}
+	sort.Strings(ids)
+	return catalog.GroupPriceCompileCommand{OperationID: op, GroupID: c.Param("id"), Multiplier: multiplier, ModelIDs: ids, EffectiveAt: at.UTC(), ExpectedBaseVersionIDs: versions}, a && b && cOK
+}
+
+func (s *Server) compileGroupPrices(c *gin.Context) {
+	if !s.pricingWriter(c) {
+		return
+	}
+	id, ok := s.commercePathID(c)
+	if !ok {
+		return
+	}
+	command, ok := s.compileGroupPriceBody(c)
+	if !ok {
+		s.commerceInvalid(c)
+		return
+	}
+	command.GroupID = id
+	done, ok := s.admitPricing(c, "write", "")
+	if !ok {
+		return
+	}
+	defer done()
+	v, err := s.Catalog.CompileGroupPrices(c.Request.Context(), catalog.PricingActor{UserID: sessionOf(c).User.ID}, command)
+	if err != nil {
+		s.pricingError(c, err)
+		return
+	}
+	status := http.StatusCreated
+	if v.Replayed {
+		status = http.StatusOK
+	}
+	s.pricingResult(c, status, v.Operation, v.Result)
+}
+
+func (s *Server) previewGroupPriceCompile(c *gin.Context) {
+	if !s.pricingReader(c) {
+		return
+	}
+	id, ok := s.commercePathID(c)
+	if !ok {
+		return
+	}
+	command, ok := s.compileGroupPriceBody(c)
+	if !ok {
+		s.commerceInvalid(c)
+		return
+	}
+	command.GroupID = id
+	done, ok := s.admitPricing(c, "preview", "")
+	if !ok {
+		return
+	}
+	defer done()
+	v, err := s.Catalog.PreviewGroupPriceCompile(c.Request.Context(), sessionOf(c).User.ID, command)
+	if err != nil {
+		s.pricingError(c, err)
+		return
+	}
+	c.Header("Cache-Control", "no-store")
+	s.ok(c, v)
 }
 func (s *Server) publishDefaultPrice(c *gin.Context) {
 	if !s.pricingWriter(c) {

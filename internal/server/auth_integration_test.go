@@ -55,7 +55,7 @@ func newAuthFixture(t *testing.T) (*Server, *pgxpool.Pool) {
 		_, _ = admin.Exec(ctx, "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE")
 		admin.Close()
 	})
-	if e = migrations.Apply(ctx, pool); e != nil {
+	if e = migrations.ApplyCurrent(ctx, pool); e != nil {
 		t.Fatal(e)
 	}
 	secrets := &security.Secrets{Keys: map[string][]byte{"test": []byte(strings.Repeat("k", 32))}, Active: "test", Pepper: []byte(strings.Repeat("p", 32))}

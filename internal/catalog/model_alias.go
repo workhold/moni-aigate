@@ -150,6 +150,10 @@ func insertModelAliasOperation(ctx context.Context, tx pgx.Tx, kind, actor, mode
 	if err != nil {
 		return time.Time{}, err
 	}
+	snapshotCreatedAt := "0001-01-01T00:00:00.000000Z"
+	if !result.CreatedAt.IsZero() {
+		snapshotCreatedAt = result.CreatedAt.UTC().Format(pricingTimeLayout)
+	}
 	snapshot, err := json.Marshal(map[string]any{
 		"alias":        result.Alias,
 		"model_id":     result.ModelID,
@@ -157,7 +161,7 @@ func insertModelAliasOperation(ctx context.Context, tx pgx.Tx, kind, actor, mode
 		"revision":     result.Revision,
 		"operation_id": result.OperationID,
 		"created_by":   result.CreatedBy,
-		"created_at":   "0001-01-01T00:00:00.000000Z",
+		"created_at":   snapshotCreatedAt,
 		"retired_at":   nil,
 	})
 	if err != nil {
@@ -168,6 +172,17 @@ func insertModelAliasOperation(ctx context.Context, tx pgx.Tx, kind, actor, mode
 	err = tx.QueryRow(ctx, `INSERT INTO pricing_operations(operation_id,kind,actor,scope,target,resource_id,revision,safe_input,input_fingerprint,result_snapshot)
 VALUES($1,$2,$3,'platform',$4,$5,$6,$7,$8,$9) RETURNING created_at`, operationID, kind, actor, target, modelID, revision, safeJSON, fingerprint, snapshot).Scan(&createdAt)
 	return createdAt, err
+}
+
+func verifyModelAliasOperation(ctx context.Context, tx pgx.Tx, kind, actor, target, modelID, operationID string, safe map[string]any) error {
+	var storedKind, storedActor, storedTarget, storedResource, storedFingerprint string
+	if err := tx.QueryRow(ctx, `SELECT kind,actor,target,resource_id,input_fingerprint FROM pricing_operations WHERE operation_id=$1`, operationID).Scan(&storedKind, &storedActor, &storedTarget, &storedResource, &storedFingerprint); err != nil {
+		return err
+	}
+	if storedKind != kind || storedActor != actor || storedTarget != target || storedResource != modelID || storedFingerprint != pricingFingerprint(kind, actor, "platform", target, safe) {
+		return ErrModelAliasConflict
+	}
+	return nil
 }
 
 func (s *Store) CreateModelAlias(ctx context.Context, actor, modelID string, in ModelAliasCreateInput) (ModelAlias, error) {
@@ -187,6 +202,9 @@ func (s *Store) CreateModelAlias(ctx context.Context, actor, modelID string, in 
 		return result, err
 	}
 	defer tx.Rollback(ctx)
+	if err = pricingAdmin(ctx, tx, actor); err != nil {
+		return result, err
+	}
 	if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended('model-name:'||$1,0))`, in.Alias); err != nil {
 		return result, err
 	}
@@ -197,6 +215,9 @@ func (s *Store) CreateModelAlias(ctx context.Context, actor, modelID string, in 
 	if err == nil {
 		if existing.Alias != in.Alias || existing.ModelID != modelID || existing.State != "active" {
 			return result, ErrModelAliasConflict
+		}
+		if err = verifyModelAliasOperation(ctx, tx, "model_alias.create", actor, "/api/platform/models/"+modelID+"/aliases", modelID, in.OperationID, map[string]any{"model_id": modelID, "alias": in.Alias}); err != nil {
+			return result, err
 		}
 		return existing, tx.Commit(ctx)
 	}
@@ -261,6 +282,9 @@ func (s *Store) RetireModelAlias(ctx context.Context, actor string, in ModelAlia
 		return result, err
 	}
 	defer tx.Rollback(ctx)
+	if err = pricingAdmin(ctx, tx, actor); err != nil {
+		return result, err
+	}
 	if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended('model-name:'||$1,0))`, in.Alias); err != nil {
 		return result, err
 	}
@@ -268,6 +292,9 @@ func (s *Store) RetireModelAlias(ctx context.Context, actor string, in ModelAlia
 		return result, err
 	}
 	if result.OperationID == in.OperationID {
+		if err = verifyModelAliasOperation(ctx, tx, "model_alias.retire", actor, "/api/platform/model-aliases/"+in.Alias+"/retire", result.ModelID, in.OperationID, map[string]any{"alias": in.Alias, "expected_revision": formatInt64(in.ExpectedRevision)}); err != nil {
+			return ModelAlias{}, err
+		}
 		return result, tx.Commit(ctx)
 	}
 	if result.State == "retired" {

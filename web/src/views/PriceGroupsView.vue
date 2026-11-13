@@ -7,6 +7,7 @@ import PageHeader from '../components/PageHeader.vue'
 import PricingCommands from '../components/PricingCommands.vue'
 import PricingWriter from '../components/PricingWriter.vue'
 import TenantPricing from '../components/TenantPricing.vue'
+import GroupMultiplierCompiler from '../components/GroupMultiplierCompiler.vue'
 import { parseGroupPrice, parsePriceGroup, parsePricingEnvelope, parsePricingPage, pricingID, pricingQuery, pricingRequest } from '../pricing'
 import type { GroupPrice, PriceGroup, PricingKind } from '../pricing'
 import { createPricingEpoch, createPricingPager, pricingContext } from '../pricing-state'
@@ -57,6 +58,7 @@ onBeforeUnmount(() => { groups.dispose(); history.dispose(); detailGate.dispose(
     <section class="panel price-history"><div class="panel-header"><div><div class="panel-title">组详情与不可变价格版本</div><div class="panel-subtitle">可按组 ID 读取，不受当前列表页限制；历史含未来计划价。</div></div></div><div class="filters"><el-input v-model="lookup" placeholder="价格组 UUID" aria-label="查询价格组 ID" /><el-button :loading="detailBusy" @click="select(lookup)">读取组</el-button><el-button v-if="selected && admin" @click="write('price_group.update')">修改名称 / 状态</el-button><el-button v-if="selected && admin" type="primary" :disabled="selected.state !== 'active'" @click="write('group_price.publish')">追加组价</el-button></div><el-alert v-if="error" :title="error" type="error" :closable="false" />
       <template v-if="selected"><p class="price-selection">{{ selected.label }} · {{ selected.state === 'active' ? '启用' : '退休：禁止新发布或新分配' }} · 配置版本 {{ selected.revision }} · {{ selected.id }}</p><el-alert v-if="priceState.message" :title="priceState.message" type="error" :closable="false" /><el-table v-loading="priceState.loading" :data="priceState.rows" empty-text="此组尚无售价版本；已分配租户的缺价模型会拒绝调用"><el-table-column prop="id" label="价格版本 ID" min-width="290" /><el-table-column prop="model_id" label="模型 ID" min-width="290" /><el-table-column prop="schema_id" label="原计量域" min-width="290" /><el-table-column label="完整费率（微元 / token）" min-width="260"><template #default="{ row }"><div v-for="line in row.rates.rates" :key="line.dimension">{{ line.dimension }}：{{ line.numerator }} / {{ line.denominator }} · {{ line.unit }}</div></template></el-table-column><el-table-column prop="effective_at" label="生效时刻（UTC 微秒）" min-width="240" /><el-table-column prop="created_at" label="发布时刻（UTC 微秒）" min-width="240" /></el-table><div class="price-pagination"><span>第 {{ priceState.page || 1 }} 页</span><el-button :disabled="priceState.loading" @click="loadPrices()">刷新第一页</el-button><el-button v-if="priceState.next" :loading="priceState.loading" @click="loadPrices(false)">下一页</el-button><span v-else-if="priceState.loaded">当前分页已到末页</span></div></template>
     </section>
+    <GroupMultiplierCompiler v-if="selected && admin && selected.state === 'active'" :group="selected" @changed="journalRevision++" />
     <TenantPricing @changed="journalRevision++" />
     <PricingCommands :refresh="journalRevision" @changed="journalRevision++" />
     <PricingWriter :model-value="open" :kind="kind" :group="selected" @update:model-value="closeWriter" @changed="journalRevision++" />

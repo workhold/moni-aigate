@@ -95,7 +95,7 @@ WHERE n.nspname=current_schema()
 			return fmt.Errorf("migration %s: %w", item.name, txErr)
 		}
 		if txErr = tx.Commit(ctx); txErr != nil {
-			return txErr
+			return fmt.Errorf("migration %s commit: %w", item.name, txErr)
 		}
 	}
 	return nil
