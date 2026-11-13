@@ -1,8 +1,8 @@
-# Compose / 1Panel 部署与升级
+# Compose 部署与升级（1Panel 等面板可选）
 
 交付的是可运行开发版，Compose 部署必须在目标主机完成构建、启动和重启验收。仓库提供了不依赖浏览器的临时环境验收脚本，脚本会创建独立项目名、随机秘密和 PostgreSQL 卷，并在退出时清理。正式发布前须完成[剩余验收](../verification/acceptance-execution.md)，特别是目标容量与选定真实渠道的usage契约。
 
-当前源码使用 `current_mvp.sql` 加全部 `current_*.sql` 的 current-only 迁移计划，并默认 `PAYMENTS_MODE=off`。001–024 文件只保留给隔离历史 fixture，不能作为当前服务的迁移入口。Compose 配置渲染和本机临时容器启动/重启验收已通过，1Panel 和正式供应商仍按目标环境分别验收。
+当前源码使用 `current_mvp.sql` 加全部 `current_*.sql` 的 current-only 迁移计划，并默认 `PAYMENTS_MODE=off`。001–024 文件只保留给隔离历史 fixture，不能作为当前服务的迁移入口。Compose 配置渲染和本机临时容器启动/重启验收已通过；正式供应商仍按目标环境验收，1Panel 等面板导入同一编排为可选方式，非部署前提。
 
 
 当前部署使用 `migrations.ApplyCurrent`。首次安装只接受空的当前数据库，后续部署可在已验证的 current baseline 上追加缺失 `current_*.sql`。安装器在业务 DDL 前发现历史/未知 `schema_migrations`、错误 checksum、缺少 current baseline、业务关系或其他用户关系即拒绝，不升级、转换或删除旧金融事实。保留原库和备份，建立独立空数据库后按当前计划与 `provision` 初始化。旧 C0 维护证明是隔离研究，不能替代当前开账命令。

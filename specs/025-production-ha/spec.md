@@ -9,7 +9,7 @@
 | A | 部署配置完备、隔离真实main故障与恢复演练 | 每次实施以当时最终schema/二进制为准；保留单活锁，运行器只触及专用本地资源 |
 | B0 | 共享准入、执行许可与数据库fencing精确设计 | 审计全部进程内限制/缓存/worker与未来022–024路径，冻结DDL/helper/锁图及故障矩阵 |
 | B1 | 多实例共享限制、许可与worker唯一事实 | B0通过真实PG双进程反例，不得通过删除advisory lock直接开放多写 |
-| C | 容器/1Panel固定制品、离库备份恢复、正式适配与发行门禁 | 需要实际Docker/1Panel、独立恢复目标及正式供应商/邮件/支付条件；没有环境保留未验收 |
+| C | 容器固定制品、离库备份恢复、正式适配与发行门禁 | 需要实际Docker/部署脚本环境、独立恢复目标及正式供应商/邮件/支付条件；没有环境保留未验收；1Panel 等面板适配可选，不构成验收条件 |
 | D | 生产候选综合验收与运维交付 | 022–024各片实际状态汇总、受限角色、恢复、安全及正确性证据；依赖通过后进入002/008最终性能 |
 
 当前`operations.Instance`持独立PostgreSQL session advisory lock并按请求fresh Guard；失锁永久fence，本进程取消准入，接班人等待原持久request deadline+5秒。`server`的global/tenant/Key许可、速率桶、routing健康/并发和部分worker排程仍在进程内，不能宣传多活。邮件已用DB lease/generation；其“SMTP已接受而ACK未提交”仍可能重复发送相同证明邮件，proof仅能消费一次。

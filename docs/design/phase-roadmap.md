@@ -6,7 +6,7 @@
 
 | 阶段 | 目标 | 参考来源 | 完成定义 |
 | --- | --- | --- | --- |
-| 0 阶段（当前） | 统一部署与外部上游接入：aigate 作为唯一公网入口，把 New API、Sub2API 和直接供应商登记为 channel | [New API 与 Sub2API 上游接入路线](upstream-integration-plan.md)；New API 固定提交 `e449cc7` 仅作为能力基线 | Compose/1Panel 拓扑、独立数据库、channel probe、Chat/SSE/usage/错误/成本合同和唯一结算链路通过；外部 relay 可回退 |
+| 0 阶段（当前） | 统一部署与外部上游接入：aigate 作为唯一公网入口，把 New API、Sub2API 和直接供应商登记为 channel | [New API 与 Sub2API 上游接入路线](upstream-integration-plan.md)；New API 固定提交 `e449cc7` 仅作为能力基线 | Compose/部署脚本拓扑（1Panel 等面板可选）、独立数据库、channel probe、Chat/SSE/usage/错误/成本合同和唯一结算链路通过；外部 relay 可回退 |
 | 第一阶段 | 固定版本 New API 核心业务能力闭环，加模型别名、分组倍率、基础文本路由与共享钱包结算；允许通过外部 channel 或已许可源码模块交付 | New API 固定提交 `e449cc700eb569cdfc2199cb73e97de46944f43c` 的公开产品能力 | [029 验收清单](../../specs/029-phase1-acceptance/spec.md)逐项有专用 PostgreSQL、deterministic mock 和至少一个外部 channel 证据 |
 | 第二阶段 | 文本 Go 数据面：低延迟、失败分类与故障切换、预算治理、缓存设计、真实压测；先在 aigate 统一合同，再逐项内收下游实现 | Bifrost 开源仓库的机制（固定提交见[海外研究](../research/ecosystem-overseas.md)）与已许可上游源码 | [032](../../specs/032-phase2-text-data-plane/spec.md) 能力有合同、实现和同条件压测记录 |
 | 第三阶段 | aigate 文本动态路由：在 direct/new_api/sub2api channel 之间按模型、供应商、价格与性能偏好选择；下游账号池只做局部选择 | OpenRouter 公开文档与产品行为；New API/Sub2API 的公开路由行为 | [033](../../specs/033-text-dynamic-routing/spec.md) 路由决策可记录、可回放，三类切换逐类验收 |
@@ -71,7 +71,7 @@ RouteSelector（第三阶段，文本）
 
 0 阶段完成条件：
 
-- Compose/1Panel 能编排 aigate、New API、Sub2API 和各自数据库；公网只暴露 aigate；
+- Compose/部署脚本能编排 aigate、New API、Sub2API 和各自数据库（1Panel 等面板可选导入同一编排）；公网只暴露 aigate；
 - `channels` 能区分 `direct`、`new_api`、`sub2api`，每个 `channel_version` 固定 endpoint、凭据、能力、地域、usage 和成本证据；
 - route selector 选择 channel，且下游账号池路由不会新建客户 reservation/settlement；
 - downstream 的局部重试结果能表达可靠 usage、未知消费和成本未知，aigate 不因下游 5xx 自动重放；
@@ -83,7 +83,7 @@ RouteSelector（第三阶段，文本）
 
 名称是“固定版本 New API 核心业务能力闭环”，不是“New API 全部能力”。对齐对象固定为 New API `e449cc7` 的公开产品能力，不追赶 New API 后续 main。能力可以先经外部 New API/Sub2API channel 提供，再按[上游接入路线](upstream-integration-plan.md)逐项由 aigate 内置 adapter 或已许可源码模块替代；不复制客户钱包、下游数据库或内部 quota 事实。上游存在路由但实现为 `RelayNotImplemented` 的入口不计入对齐范围（见[路线图 §1](new-api-roadmap.md#1-固定对照与能力差距)）。
 
-### 3.1 能力分类
+### 4.1 能力分类
 
 | 能力 | 分类 | 说明 |
 | --- | --- | --- |
@@ -104,8 +104,8 @@ RouteSelector（第三阶段，文本）
 | Chat、Responses、Messages、Gemini 文本、Embeddings、Rerank | Mock 验收 | 协议、计量和错误合同由 deterministic fixture 验证；供应商 usage 语义第四阶段认证 |
 | 图片生成、TTS、异步视频任务、单 turn Realtime | Mock 验收 | 按[媒体供应商安全](media-provider-safety.md)显式开启 mock，`provider_mode=mock`，不参与路由 |
 | 站内告警、审计、结构化日志 | 必须完成 | 024-A |
-| Compose 单机部署、备份、恢复演练 | 必须完成 | 1Panel 实装与生产属第四阶段 |
-| 订阅、套餐 | 明确后置 | 见 §3.5 |
+| Compose 单机部署、备份、恢复演练 | 必须完成 | 生产部署属第四阶段；1Panel 等面板仅为可选部署环境，不作验收门禁 |
+| 订阅、套餐 | 明确后置 | 见 §4.5 |
 | 正式支付商 | 明确后置 | 第四阶段按选定支付商接入 |
 | STT、图片编辑 | 明确后置 | 有规格，无代码 |
 | OAuth、OIDC、Passkey | 明确后置 | — |
@@ -117,22 +117,22 @@ RouteSelector（第三阶段，文本）
 | 供应商专有协议全覆盖 | 不属于目标 | 客户侧保留最小稳定的 OpenAI-compatible 入口；已实现的其他协议保留，不再新增 |
 | 签到、邀请奖励、分佣 | 不属于目标 | 增长功能，不是网关核心能力 |
 
-### 3.2 验收口径
+### 4.2 验收口径
 
 - 每个“必须完成”项在专用 PostgreSQL 测试库上有通过记录，并给出证据路径。跳过数据库测试不算完成。
 - 每个“Mock 验收”项使用仓库内 deterministic mock，结果必须标注 mock，不得写成真实供应商认证。
 - 部署 mock 上游需要覆盖六种文本协议和同一逻辑模型下的多个候选，才能验证路由、计量、钱包、结算和错误恢复。当前 `scripts/deployment-qa-provider.py` 只处理 `POST /v1/chat/completions`，这是第一阶段尚缺的验收前置；设计见 [031](../../specs/031-deterministic-mock-upstream/spec.md)。
 - 验收清单按 New API 能力逐项给出“对齐内容、验收方式、证据路径、状态”，见 [029](../../specs/029-phase1-acceptance/spec.md)。清单草案已写出，逐项证据尚未产生。
 
-### 3.3 模型别名
+### 4.3 模型别名
 
-客户可见名解析到逻辑模型。别名只能解析为已发布目录项，不解析客户端提交的供应商或部署后缀，也不能放宽租户、成员或 Key 的授权（HLD §4.2、LLD §3）。别名与逻辑/物理模型分离是两件事：别名是“客户名 → 逻辑模型”，物理模型是“逻辑模型 → 上游模型绑定”。后者属于第三阶段（§5.2）。数据合同与接口见 [030](../../specs/030-model-aliases-group-multipliers/spec.md)，待开发者评审冻结。
+客户可见名解析到逻辑模型。别名只能解析为已发布目录项，不解析客户端提交的供应商或部署后缀，也不能放宽租户、成员或 Key 的授权（HLD §4.2、LLD §3）。别名与逻辑/物理模型分离是两件事：别名是“客户名 → 逻辑模型”，物理模型是“逻辑模型 → 上游模型绑定”。后者属于第三阶段（§6.2）。数据合同与接口见 [030](../../specs/030-model-aliases-group-multipliers/spec.md)，待开发者评审冻结。
 
-### 3.4 用户分组倍率
+### 4.4 用户分组倍率
 
 New API 的分组倍率在 moni 中只作为录入便利。管理员可以按基准价和倍率录入，系统在发布时把结果编译成不可变的绝对价格版本，写入现有价格组（023-A）。运行时仍使用请求冻结的绝对价格快照，不在请求路径上乘以可变倍率。这样保留 HLD §6.3 的“固定客户售价与严格预占”合同，也不另建计价体系。
 
-### 3.5 订阅与套餐
+### 4.5 订阅与套餐
 
 后置。若将来纳入，必须作为 027 来源与 funding lot 体系里的一种来源，按现有 FIFO、预占分配和逆序退款处理；不得新建权益余额或第二套钱包。现有 `internal/productvalue` 只有纯算法，没有接线，不构成纳入条件。
 
@@ -140,7 +140,7 @@ New API 的分组倍率在 moni 中只作为录入便利。管理员可以按基
 
 Bifrost 是 Apache-2.0 开源仓库，可以参考其源码机制。它的 Enterprise 文档（例如熔断）不能当作开源实现。
 
-### 4.1 能力范围
+### 5.1 能力范围
 
 | 能力 | 边界 |
 | --- | --- |
@@ -151,13 +151,13 @@ Bifrost 是 Apache-2.0 开源仓库，可以参考其源码机制。它的 Enter
 | 熔断 | 自行设计，参考公开机制，不依赖 Enterprise 说明 |
 | 压测基线 | 网关额外首字节与首有效内容分开记录；未同条件实跑前不宣称接近 Bifrost |
 
-### 4.2 不可插件化与不在范围
+### 5.2 不可插件化与不在范围
 
 以下能力只能由核心模块实现，不能进入普通插件：路由选择、计量、预占、结算、钱包与 journal 写入、采购成本记录、恢复。插件、动态脚本、MCP 执行和 Agent 工作流不属于前三阶段，需要时另立 SDD。
 
 ## 6. 第三阶段：OpenRouter 风格文本动态路由
 
-### 5.1 三类切换
+### 6.1 三类切换
 
 | 切换 | 当前状态 | 本阶段要求 |
 | --- | --- | --- |
@@ -165,7 +165,7 @@ Bifrost 是 Apache-2.0 开源仓库，可以参考其源码机制。它的 Enter
 | 同一质量档位下的物理模型切换 | 不支持：物理模型只是 `model_bindings.upstream_model` 字符串；028 将路由版本绑定到单一 profile；路由决策校验要求一次决策中每个 channel 只出现一次 | 新增物理模型实体与能力字段，放宽决策模型 |
 | 跨质量档位的 auto 路由 | 只有文字约束（LLD §9.2） | 显式 auto 商品、公布计价、质量门槛 |
 
-### 5.2 设计合同
+### 6.2 设计合同
 
 合同草案见 [033](../../specs/033-text-dynamic-routing/spec.md)，待开发者评审冻结。要点包括：
 
@@ -178,7 +178,7 @@ Bifrost 是 Apache-2.0 开源仓库，可以参考其源码机制。它的 Enter
 - **评分输入**：模型能力、质量门槛、上下文长度、工具能力、延迟、成功率、当前供应商成本、缓存与上下文重传成本、会话粘性、最低毛利、租户与 Key 权限。不能只按最低价格选择。
 - **最低毛利保护**：成本未知时不当作 0，按策略排除或拒绝。
 
-### 5.3 验收
+### 6.3 验收
 
 - 同一快照回放结果一致。
 - 硬约束失败的候选不因评分高而复活。
@@ -190,7 +190,7 @@ Bifrost 是 Apache-2.0 开源仓库，可以参考其源码机制。它的 Enter
 
 - 真实供应商逐一认证：OpenAI、Claude、Gemini、DeepSeek、GLM、Azure、Bedrock、Vertex 及第三方聚合平台，按[渠道认证计划](provider-qualification-plan.md)逐 profile 冻结。
 - 真实 usage 与成本对账。
-- 正式支付商、1Panel 实装、灾备与生产部署。
+- 正式支付商、灾备与生产部署；1Panel 等面板适配为可选工作，不阻塞阶段收口。
 - 生产环境性能优化与竞品对照。
 
 在此之前进行的真实请求只算内测资格探测，不计入任何阶段完成条件。例如 2026-11-10 对第三方聚合端点的单次 Chat 探测，它不代表官方供应商认证。

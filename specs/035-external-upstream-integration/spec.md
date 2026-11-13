@@ -8,7 +8,7 @@
 
 ## 拓扑与数据所有权
 
-- Compose/1Panel 可启动 `aigate`、`new-api`、`sub2api`、三个独立数据库和必要 worker。
+- Compose/部署脚本可启动 `aigate`、`new-api`、`sub2api`、三个独立数据库和必要 worker；1Panel 等面板可选导入同一编排，非验收前提。
 - 公网只暴露 aigate；下游管理端口、数据库和凭据不暴露给客户。
 - aigate 是客户身份、模型目录、公开售价、RouteSelector、钱包预占、settlement、采购成本和审计的唯一权威。
 - 下游只负责自己的供应商凭据、账号池、协议适配和局部重试；不写 aigate 的钱包/settlement，不共享数据库。
@@ -35,7 +35,7 @@
 
 ## MVP 验收
 
-- [ ] 三服务和三个数据库可在同一 Compose/1Panel 编排中启动，服务之间使用内部网络。
+- [ ] 三服务和三个数据库可在同一 Compose 编排（或等效部署脚本）中启动，服务之间使用内部网络；1Panel 等面板导入为可选等价方式。
 - [ ] aigate 可以把一个已发布逻辑模型路由到 direct、new_api、sub2api 三类 channel 中至少两类。
 - [ ] Chat、SSE、usage、错误分类和成本未知状态都有真实或 deterministic fixture 证据。
 - [ ] 下游局部重试、aigate 跨 channel 重试和未知消费均有不重放负向测试。

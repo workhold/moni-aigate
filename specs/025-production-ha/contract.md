@@ -15,7 +15,7 @@
 | 支付外部命令已接受、本地ACK前 | 仅查原命令；回调/query争用同effect，收款/退现不重复（依赖022最终合同） |
 | worker lease后旧worker迟回 | 代际CAS只接受当前lease，外部接受与ACK非原子范围明确，不能因此声称exactly once邮件投递 |
 
-021注册/恢复/SMTP配置透传已按[独立A0合同](a0-compose-config-contract.md)补齐九项声明；静态YAML/默认与合成覆盖/迁移环境隔离通过。当前本机Docker CLI没有compose子命令，配置渲染和容器/1Panel/正式SMTP未运行。A其余真实故障与运行配置仍须逐片验收，新增能力默认关闭，应用与projector/owner的环境和权限分离，秘密不进入镜像/公开manifest。022 keyring及后续能力随最终合同接入，不靠生产默认值隐式打开。配置渲染检查不等于Docker运行验证。
+021注册/恢复/SMTP配置透传已按[独立A0合同](a0-compose-config-contract.md)补齐九项声明；静态YAML/默认与合成覆盖/迁移环境隔离通过。当前本机Docker CLI没有compose子命令，配置渲染和容器/正式SMTP未运行；1Panel 等面板为可选部署环境，不在本合同验收范围。A其余真实故障与运行配置仍须逐片验收，新增能力默认关闭，应用与projector/owner的环境和权限分离，秘密不进入镜像/公开manifest。022 keyring及后续能力随最终合同接入，不靠生产默认值隐式打开。配置渲染检查不等于Docker运行验证。
 
 ## B0：实施前必须公布的共享状态合同
 

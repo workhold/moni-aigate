@@ -1,6 +1,6 @@
 # 025-A0：Compose 自助身份配置透传
 
-2026-11-01，根冻结的静态配置窄切片。只修复已实现 021 在 Compose 中缺失的配置透传，不开放 HA，不改变身份、邮件或支付合同，不代表容器/1Panel 运行已验收。
+2026-11-01，根冻结的静态配置窄切片。只修复已实现 021 在 Compose 中缺失的配置透传，不开放 HA，不改变身份、邮件或支付合同，不代表容器运行已验收；1Panel 等面板部署为可选项，不属于本合同。
 
 ## 范围与默认值
 
@@ -14,7 +14,7 @@
 
 先审 `internal/config/config.go` 和 `mail.go` 的真实变量及默认值，再修改 compose。静态检查 app 的默认值/显式覆盖、迁移与 provision 的环境隔离，以及原 app/projector 分离、loopback 端口、320 秒排空与只读 rootfs 保持。使用合成环境，禁止读取/输出用户 `.env` 或真实 SMTP 凭据。
 
-优先 `docker compose --env-file <仅合成值的临时文件> config --quiet`；插件/daemon 缺失须如实保留，YAML 与插值静态检查不能冒称容器运行。Docker build、真实 Compose 启动、1Panel、正式 SMTP 收件、备份恢复和发行仍按 025 独立验收。同步部署手册、统一架构和验证记录，待并行汇合后由根统一 refresh。
+优先 `docker compose --env-file <仅合成值的临时文件> config --quiet`；插件/daemon 缺失须如实保留，YAML 与插值静态检查不能冒称容器运行。Docker build、真实 Compose 启动、正式 SMTP 收件、备份恢复和发行仍按 025 独立验收；1Panel 等面板部署可选，不作验收条件。同步部署手册、统一架构和验证记录，待并行汇合后由根统一 refresh。
 
 ## 后续实际CLI补验
 
