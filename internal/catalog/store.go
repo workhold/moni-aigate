@@ -144,9 +144,28 @@ type ChannelInput struct {
 	Region       string   `json:"data_region"`
 	RegionAlias  string   `json:"region"`
 	Provider     string   `json:"provider"`
+	ChannelKind  string   `json:"channel_kind"`
 	AllowedCIDRs []string `json:"allowed_cidrs"`
 	Status       string   `json:"status"`
 	Enabled      *bool    `json:"enabled"`
+}
+
+// validChannelKind is the closed 035 channel topology set. An external
+// gateway channel is executed through the shared OpenAI-compatible relay
+// contract; a direct channel is aigate's own provider adapter.
+func validChannelKind(kind string) bool {
+	return kind == "" || kind == "direct" || kind == "new_api" || kind == "sub2api"
+}
+
+// integrationModeForKind derives the initial integration mode. Downstream
+// gateway channels start as external relays; the later embedded-adapter
+// migration is a separate audited route-revision switch, never a silent
+// reinterpretation of an existing version.
+func integrationModeForKind(kind string) string {
+	if kind == "new_api" || kind == "sub2api" {
+		return "external_relay"
+	}
+	return "embedded_adapter"
 }
 
 func validURL(raw string) bool {
@@ -162,13 +181,13 @@ func (s *Store) SaveChannel(ctx context.Context, actor, id string, in ChannelInp
 		return "", e
 	}
 	defer tx.Rollback(ctx)
-	oldURL, oldRegion, oldProvider := "", "global", "openai"
+	oldURL, oldRegion, oldProvider, oldKind := "", "global", "openai", ""
 	oldVersion, oldName := "", ""
 	oldCIDRs := []string{}
 	enabled := true
 	quarantine := false
 	if id != "" {
-		if e = tx.QueryRow(ctx, `SELECT c.name,c.enabled,c.quarantined,v.base_url,v.region,v.provider,v.allowed_cidrs,v.id FROM channels c JOIN channel_versions v ON v.id=c.current_version WHERE c.id=$1 FOR UPDATE OF c`, id).Scan(&oldName, &enabled, &quarantine, &oldURL, &oldRegion, &oldProvider, &oldCIDRs, &oldVersion); e != nil {
+		if e = tx.QueryRow(ctx, `SELECT c.name,c.enabled,c.quarantined,v.base_url,v.region,v.provider,v.allowed_cidrs,v.id,v.channel_kind FROM channels c JOIN channel_versions v ON v.id=c.current_version WHERE c.id=$1 FOR UPDATE OF c`, id).Scan(&oldName, &enabled, &quarantine, &oldURL, &oldRegion, &oldProvider, &oldCIDRs, &oldVersion, &oldKind); e != nil {
 			return "", e
 		}
 	}
@@ -189,6 +208,21 @@ func (s *Store) SaveChannel(ctx context.Context, actor, id string, in ChannelInp
 	}
 	if in.Provider == "" {
 		in.Provider = oldProvider
+	}
+	if in.ChannelKind == "" {
+		in.ChannelKind = oldKind
+	}
+	if in.ChannelKind == "" {
+		in.ChannelKind = "direct"
+	}
+	if !validChannelKind(in.ChannelKind) {
+		return "", ErrInvalid
+	}
+	// A channel's topology is fixed for its lifetime. Moving a capability
+	// between topologies is a route-revision switch to a different channel,
+	// never a silent reinterpretation of an existing relay identity.
+	if id != "" && in.ChannelKind != oldKind {
+		return "", ErrInvalid
 	}
 	if len(in.Name) < 1 || len(in.Name) > 200 || len(in.Region) > 80 || !validURL(in.BaseURL) {
 		return "", ErrInvalid
@@ -261,7 +295,7 @@ func (s *Store) SaveChannel(ctx context.Context, actor, id string, in ChannelInp
 			return "", e
 		}
 	}
-	if _, e = tx.Exec(ctx, "INSERT INTO channel_versions(id,channel_id,base_url,provider,region,allowed_cidrs,credential_id) VALUES($1,$2,$3,$4,$5,$6,$7)", version, id, strings.TrimRight(in.BaseURL, "/"), in.Provider, in.Region, in.AllowedCIDRs, members[0].CredentialID); e != nil {
+	if _, e = tx.Exec(ctx, "INSERT INTO channel_versions(id,channel_id,base_url,provider,region,allowed_cidrs,credential_id,channel_kind,integration_mode) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)", version, id, strings.TrimRight(in.BaseURL, "/"), in.Provider, in.Region, in.AllowedCIDRs, members[0].CredentialID, in.ChannelKind, integrationModeForKind(in.ChannelKind)); e != nil {
 		return "", e
 	}
 	for _, member := range members {
@@ -429,6 +463,7 @@ func (s *Store) AuthorizedModel(ctx context.Context, tenant, user, key, name str
 
 type Candidate struct {
 	BindingID, ChannelID, VersionID, CredentialID, UpstreamModel, URL, Region, Secret string
+	ChannelKind, IntegrationMode                                                      string
 	ExclusionReason                                                                   string
 	AllowedCIDRs                                                                      []string
 	Priority, Weight, MaxInflight                                                     int
@@ -457,7 +492,7 @@ func (s *Store) Candidates(ctx context.Context, model string, revision int64) ([
 // CandidateSnapshot preserves exclusion metadata for explaining an admitted
 // choice. Unavailable credentials are never decrypted or made dispatchable.
 func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision int64) ([]Candidate, error) {
-	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,v.base_url,v.region,v.allowed_cidrs,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,COALESCE((SELECT jsonb_agg(jsonb_build_object('dimension',l.dimension,'unit',l.unit,'numerator',l.numerator::text,'denominator',l.denominator::text) ORDER BY l.dimension COLLATE "C") FROM binding_cost_rate_limits l WHERE l.binding_id=b.id),'[]'::jsonb),ms.canonical,ms.schema_digest,b.variant_key,coalesce(q.id,''),coalesce(q.basis,'unknown'),q.rates_canonical,q.rates_digest,(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_capability_versions profile ON profile.id=p.profile_version AND profile.model_id=p.model_id JOIN meter_schemas ms ON ms.id=profile.schema_id AND ms.schema_digest=profile.schema_digest JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.schema_id=profile.schema_id AND cv.schema_digest=profile.schema_digest AND cv.variant_key=b.variant_key AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
+	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,v.base_url,v.region,v.allowed_cidrs,v.channel_kind,v.integration_mode,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,COALESCE((SELECT jsonb_agg(jsonb_build_object('dimension',l.dimension,'unit',l.unit,'numerator',l.numerator::text,'denominator',l.denominator::text) ORDER BY l.dimension COLLATE "C") FROM binding_cost_rate_limits l WHERE l.binding_id=b.id),'[]'::jsonb),ms.canonical,ms.schema_digest,b.variant_key,coalesce(q.id,''),coalesce(q.basis,'unknown'),q.rates_canonical,q.rates_digest,(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_capability_versions profile ON profile.id=p.profile_version AND profile.model_id=p.model_id JOIN meter_schemas ms ON ms.id=profile.schema_id AND ms.schema_digest=profile.schema_digest JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.schema_id=profile.schema_id AND cv.schema_digest=profile.schema_digest AND cv.variant_key=b.variant_key AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
 	if e != nil {
 		return nil, e
 	}
@@ -468,7 +503,7 @@ func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision in
 		var ciphertext string
 		var caps []byte
 		quote := routecost.StoredInput{}
-		if e = rows.Scan(&v.BindingID, &v.ChannelID, &v.VersionID, &v.CredentialID, &v.UpstreamModel, &v.URL, &v.Region, &v.AllowedCIDRs, &v.Priority, &v.Weight, &v.MaxInflight, &v.CredentialWeight, &v.CredentialMaxInflight, &ciphertext, &v.ExclusionReason, &v.CostPolicy.Mode, &v.CostPolicy.UnknownCostPolicy, &caps, &quote.SchemaCanonical, &quote.SchemaDigest, &quote.VariantKey, &quote.VersionID, &quote.Basis, &quote.RatesCanonical, &quote.RatesDigest, &v.ProcurementManaged, &v.ProcurementState, &v.ProcurementAvailable); e != nil {
+		if e = rows.Scan(&v.BindingID, &v.ChannelID, &v.VersionID, &v.CredentialID, &v.UpstreamModel, &v.URL, &v.Region, &v.AllowedCIDRs, &v.ChannelKind, &v.IntegrationMode, &v.Priority, &v.Weight, &v.MaxInflight, &v.CredentialWeight, &v.CredentialMaxInflight, &ciphertext, &v.ExclusionReason, &v.CostPolicy.Mode, &v.CostPolicy.UnknownCostPolicy, &caps, &quote.SchemaCanonical, &quote.SchemaDigest, &quote.VariantKey, &quote.VersionID, &quote.Basis, &quote.RatesCanonical, &quote.RatesDigest, &v.ProcurementManaged, &v.ProcurementState, &v.ProcurementAvailable); e != nil {
 			return nil, e
 		}
 		quote.ChannelID, quote.UpstreamModel = v.ChannelID, v.UpstreamModel

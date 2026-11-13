@@ -75,14 +75,14 @@ func (s *Server) probe(c *gin.Context) {
 		s.error(c, err)
 		return
 	}
-	var channel, baseURL, region string
+	var channel, baseURL, region, channelKind, integrationMode string
 	var cidrs []string
 	err = tx.QueryRow(ctx, `SELECT id FROM channels WHERE id=$1 AND enabled AND NOT quarantined FOR SHARE`, c.Param("id")).Scan(&channel)
 	if err != nil {
 		s.error(c, err)
 		return
 	}
-	err = tx.QueryRow(ctx, `SELECT base_url,allowed_cidrs,region FROM channel_versions WHERE id=$1 AND channel_id=$2`, version, channel).Scan(&baseURL, &cidrs, &region)
+	err = tx.QueryRow(ctx, `SELECT base_url,allowed_cidrs,region,channel_kind,integration_mode FROM channel_versions WHERE id=$1 AND channel_id=$2`, version, channel).Scan(&baseURL, &cidrs, &region, &channelKind, &integrationMode)
 	if err != nil {
 		s.error(c, err)
 		return
@@ -258,5 +258,22 @@ func (s *Server) probe(c *gin.Context) {
 		s.fail(c, 503, "probe_pending", "探测记录待核对")
 		return
 	}
-	s.ok(c, gin.H{"id": id, "credential_id": candidate.CredentialID, "ok": verified, "message": "仅代表该凭据本次协议与用量校验；供应商成本单独核对", "latency_ms": time.Since(start).Milliseconds(), "cost_status": "unknown"})
+	// The probe response separates the 035 evidence dimensions instead of
+	// collapsing them into one boolean: protocol/discovery success against the
+	// bound upstream model, reliable usage, the current procurement cost
+	// basis, and - on failure - the consumption classification that governs
+	// cross-channel retry. A downstream model list or HTTP 200 alone is never
+	// seller qualification.
+	consumption := "none"
+	errorClass := ""
+	if callErr != nil {
+		var pe *provider.Error
+		if errors.As(callErr, &pe) {
+			consumption = string(pe.Consumption)
+			errorClass = string(pe.Class)
+		} else {
+			consumption = "unknown"
+		}
+	}
+	s.ok(c, gin.H{"id": id, "credential_id": candidate.CredentialID, "ok": verified, "message": "仅代表该凭据本次协议与用量校验；供应商成本单独核对", "latency_ms": time.Since(start).Milliseconds(), "cost_status": "unknown", "evidence": gin.H{"channel_kind": channelKind, "integration_mode": integrationMode, "upstream_model": upstream, "protocol_success": callErr == nil, "usage_status": usage.Status, "cost_basis": quote.Basis(), "error_class": errorClass, "consumption": consumption}})
 }

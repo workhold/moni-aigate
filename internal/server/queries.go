@@ -124,7 +124,7 @@ func (s *Server) channels(c *gin.Context) {
 	if !s.admin(c) {
 		return
 	}
-	s.page(c, `SELECT c.id,c.name,c.enabled,c.quarantined,c.current_version,c.management_revision::text AS management_revision,c.created_at,v.base_url,v.provider,v.region AS data_region,v.region,v.allowed_cidrs,CASE WHEN c.quarantined THEN 'quarantined' WHEN c.enabled THEN 'active' ELSE 'disabled' END AS status FROM channels c JOIN channel_versions v ON v.id=c.current_version`)
+	s.page(c, `SELECT c.id,c.name,c.enabled,c.quarantined,c.current_version,c.management_revision::text AS management_revision,c.created_at,v.base_url,v.provider,v.channel_kind,v.integration_mode,v.region AS data_region,v.region,v.allowed_cidrs,CASE WHEN c.quarantined THEN 'quarantined' WHEN c.enabled THEN 'active' ELSE 'disabled' END AS status FROM channels c JOIN channel_versions v ON v.id=c.current_version`)
 }
 func modelSelect() string {
 	return modelSelectFor(false)
