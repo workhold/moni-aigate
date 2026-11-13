@@ -6118,3 +6118,25 @@ align the HLD link label with the renumbered external upstream contract
 - modified `docs/design/HLD.md`
 
 </details>
+
+## 2026-11-13T19:23:11Z · cdbc6ffd9ed6
+
+4 个 beta 加固提交回流 main：Chat usage 白名单（DeepSeek 分区与 cost/cost_details/is_byok 元数据键，未知键仍冲突）与 reasoning 增量计入 stream progress（不转发不计费）；备份演练 PG15+ schema 属主修复；运营账号恢复 CLI（user set-password/reset-mfa/suspend/activate，经既有 app 身份链，无新角色/模块/表）。迁移幂等机制（46c42d1）因与上游 current_*.sql 追加方案语义重复而跳过。模块图、请求链路、数据关系与权限边界无结构变化；specs/001 provider 合同已同步 usage 白名单与 progress 语义。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2147 个源文件；本次 11 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/user_command.go`
+- added `cmd/moni-aigate/user_command_test.go`
+- added `internal/identity/operator.go`
+- added `internal/identity/operator_integration_test.go`
+- modified `internal/provider/request_test.go`
+- modified `internal/provider/response.go`
+- modified `internal/provider/response_test.go`
+- modified `internal/provider/usage.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `specs/001-commercial-mvp/contracts/provider.md`
+
+</details>
