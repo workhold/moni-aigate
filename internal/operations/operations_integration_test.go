@@ -72,7 +72,7 @@ func operationDB(t *testing.T) *operationFixture {
 		}
 		admin.Close()
 	})
-	if err = migrations.Apply(ctx, owner); err != nil {
+	if err = migrations.ApplyCurrent(ctx, owner); err != nil {
 		t.Fatal(err)
 	}
 	if err = ProvisionFor(ctx, owner, schema, appRole, projectionRole); err != nil {
@@ -96,7 +96,7 @@ func operationDB(t *testing.T) *operationFixture {
 	}
 	f.app = asRole(appRole)
 	f.projection = asRole(projectionRole)
-	if err = migrations.Verify(ctx, f.app); err != nil {
+	if err = migrations.VerifyCurrent(ctx, f.app); err != nil {
 		t.Fatalf("serving role cannot verify migrations: %v", err)
 	}
 	f.exec(t, "INSERT INTO tenants(id,name) VALUES($1,'operations-tenant')", f.tenant)

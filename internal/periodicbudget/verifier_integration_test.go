@@ -66,7 +66,7 @@ func newPBVerifierFixture(t *testing.T) *pbTxFixture {
 	cfg.ConnConfig.RuntimeParams["search_path"] = f.schema
 	f.owner, e = pgxpool.NewWithConfig(ctx, cfg.Copy())
 	pbTxMust(t, "open verifier owner", e)
-	pbTxMust(t, "apply full verifier migration set", migrations.Apply(ctx, f.owner))
+	pbTxMust(t, "apply current-only verifier migration plan", migrations.ApplyCurrent(ctx, f.owner))
 	f.seedCatalog(t)
 	for _, role := range []string{f.appRole, f.projectionRole} {
 		_, e = admin.Exec(ctx, "CREATE ROLE "+pgx.Identifier{role}.Sanitize()+" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS")
@@ -93,7 +93,7 @@ func newPBVerifierFixture(t *testing.T) *pbTxFixture {
 
 func pbVerify(t *testing.T, f *pbTxFixture) Verification {
 	t.Helper()
-	v, e := NewVerifier(f.owner, VerifyOptions{})
+	v, e := NewCurrentVerifier(f.owner, VerifyOptions{})
 	pbTxMust(t, "construct owner verifier", e)
 	r, e := v.Verify(f.ctx)
 	pbTxMust(t, "complete owner readonly verification", e)
@@ -106,7 +106,7 @@ func TestVerifierPostgresEmptyNoopAndAuthority(t *testing.T) {
 		t.Fatalf("empty schema report: %+v", r)
 	}
 	for _, pool := range []*pgxpool.Pool{f.app, f.projection} {
-		v, e := NewVerifier(pool, VerifyOptions{})
+		v, e := NewCurrentVerifier(pool, VerifyOptions{})
 		pbTxMust(t, "construct restricted verifier", e)
 		r, e := v.Verify(f.ctx)
 		if !errors.Is(e, ErrVerifyAuthority) || r != (Verification{}) {
@@ -218,9 +218,9 @@ func TestVerifierPostgresMalformedSnapshotAndMigration(t *testing.T) {
 	if r.Status != VerificationMismatch || r.Mismatches.SnapshotMismatches != 1 || r.Unproven.OperationSnapshotPrefixUnproven != 0 {
 		t.Fatalf("damaged JSON crashed or silently passed: %+v", r)
 	}
-	_, e := f.owner.Exec(f.ctx, `UPDATE schema_migrations SET checksum='private-corrupt-checksum' WHERE name='020_periodic_budgets.sql'`)
+	_, e := f.owner.Exec(f.ctx, `UPDATE schema_migrations SET checksum='private-corrupt-checksum' WHERE name='current_mvp.sql'`)
 	pbTxMust(t, "corrupt exact migration checksum", e)
-	v, e := NewVerifier(f.owner, VerifyOptions{})
+	v, e := NewCurrentVerifier(f.owner, VerifyOptions{})
 	pbTxMust(t, "construct schema rejection verifier", e)
 	got, e := v.Verify(f.ctx)
 	if !errors.Is(e, ErrVerifySchema) || got != (Verification{}) {
@@ -283,7 +283,7 @@ func TestVerifierPostgresNoBusinessRowLocksAndBoundedFailure(t *testing.T) {
 	_, e = hold.Exec(f.ctx, `SELECT id FROM periodic_budget_controls WHERE id=$1 FOR UPDATE`, control)
 	pbTxMust(t, "hold independent business row", e)
 	ctx, cancel := context.WithTimeout(f.ctx, time.Second)
-	v, e := NewVerifier(f.owner, VerifyOptions{})
+	v, e := NewCurrentVerifier(f.owner, VerifyOptions{})
 	pbTxMust(t, "construct nonlocking verifier", e)
 	report, e := v.Verify(ctx)
 	cancel()

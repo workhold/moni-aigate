@@ -98,5 +98,13 @@ WHERE n.nspname=current_schema()
 			return fmt.Errorf("migration %s commit: %w", item.name, txErr)
 		}
 	}
+	// The frozen current baseline pins a session-level search_path with pg_temp
+	// listed last (pg_dump style). Restore the connection's startup default
+	// before it returns to the pool so a fixture connection keeps ordinary
+	// temporary-table shadowing semantics and does not leak the install-time
+	// path into later sessions on the same pooled connection.
+	if _, err := conn.Exec(ctx, "RESET search_path"); err != nil {
+		return err
+	}
 	return nil
 }
