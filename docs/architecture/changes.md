@@ -6694,3 +6694,20 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `docs/verification/034-coin-units.md`
 
 </details>
+
+## 2026-11-14T04:37:29Z · 76f5a885b37d
+
+034.1 不可变历史修复：追加 current_005 恢复原 operation/audit 字节，读取时投影 COIN；D-034-11 与 §15 冻结状态一致性修订；迁移、catalog、operations 与定价 HTTP 已复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2193 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/direction-review-2026-11-14.md`
+- modified `docs/verification/034-coin-units.md`
+- modified `internal/catalog/pricing_commands.go`
+- added `migrations/current_005_immutable_pricing_history.sql`
+- modified `migrations/virtual_coin_postgres_test.go`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>

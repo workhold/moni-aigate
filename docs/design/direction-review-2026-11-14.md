@@ -58,14 +58,14 @@ D-034-1…13 全部裁决：此前已裁决 5 项（D-034-4 付费先赠送后�
 | 规格条款 | 在途实现 | 结论 |
 |---|---|---|
 | 34.1：三表 `currency` 改 `COIN`、数值不变 | `current_004_virtual_coin_units.sql`：journals/funding_receipts/price_versions 回填 CNY→COIN，显式禁用并恢复 `immutable_*` 与 `wallet_source_fact` 触发器，append-only | 符合 |
-| §4 函数体同步修改（钱包/售价侧） | 迁移内替换 `funding_journal_valid`、`payment_funding_journal_valid`、`wallet_opening_journal_valid`、`meter_insert_token_price`；`assert_pricing_safe_input` 只改 `group_price.publish` 分支、`cost_price.publish` 保持 CNY；`payment_sandbox_journal_valid` 完整重写 | 符合分类 |
+| §4 函数体同步修改（钱包/售价侧） | 迁移内替换 `funding_journal_valid`、`payment_funding_journal_valid`、`wallet_opening_journal_valid`、`meter_insert_token_price`；`assert_pricing_safe_input` 改 `group_price.publish` 与 `default_price.publish` 两个零售分支、`cost_price.publish` 保持 CNY；`payment_sandbox_journal_valid` 完整重写 | 符合分类 |
 | §4 不动的部分：采购观察（576 行）、成本版本（2407/2416）、计量规范化（3425/6134）、payment_* 表 | 迁移未触碰；注释明确"计量 canonical 保留 CNY 规范化" | 符合 |
 | §16 类型区分：法币与币编译期不可互赋 | 新增 `billing.FiatMoney`，刻意不可赋值给 `Money`；payments 的 `Amount` 改 FiatMoney、`WalletCreditAmount` 保持 Money | 符合 |
 | §4 Go 字面量清单（funding.go、funding_sandbox.go、voucher_query.go、catalog/pricing_*、public_catalog.go、reporting/report.go） | 全部在改动集中 | 符合 |
 
 注意点（实现侧评审时确认）：
 
-1. 迁移用 `pg_get_functiondef` + 全文 `replace('CNY','COIN')` 替换四个函数：若函数体内有含 CNY 的注释会被一并改写（无语义影响，但 diff 评审时过一眼）。
+1. 迁移用 `pg_get_functiondef` 后只替换带引号的币种字面量，不改函数体内其他注释或供应商 CNY 文本；目标函数若未发生变化必须失败。
 2. 评审期间该工作树仍在变动（`current_004_virtual_coin_units.sql` 在本审查进行中又被修改），说明实现活跃 —— 这正是先冻结规格的必要性。
 3. §16 的 PG 验收矩阵（单位、守恒、竞态等）尚未运行，属实现片验收，不能用"代码已写"代替。
 
@@ -78,3 +78,8 @@ D-034-1…13 全部裁决：此前已裁决 5 项（D-034-4 付费先赠送后�
 ## 5. 不变量复核结论
 
 逐条复核未发现违反：租户隔离（复合外键与父行锁序）、不可变发布版本（渠道/路由/价格/币价均追加式）、硬预占（Reserve 先于派发）、唯一结算（每请求一个 settlement）、未知消费不重放（`SafeToRetry`/`CanRetry` 未放宽）、迁移只追加（`current_004` 为追加文件）、角色分离（app/projector/owner 与支付 worker 边界保持）。
+
+## 6. 合并后一致性修订
+
+- D-034-11 与既有实施冻结记录统一为：`amount`、`bonus_amount` 分别具有 1,000,000,000,000 微币硬上限，部署配置只能收紧，不能放宽；§16 同步增加边界断言。§15 的裁决状态与状态机文本也改为与 §13 一致，不再保留“建议中/待评审”的旧措辞。
+- 后续不可变性复核发现 current_004 曾改写历史 pricing operation 与审计原件。追加 `current_005_immutable_pricing_history.sql` 在同一升级事务中恢复原 CNY 字节并移除该存储列；读取路径改为验证原始指纹后投影 COIN。升级前后 operation、原始指纹、result snapshot 与审计必须逐字节一致，原 operation 仍可严格重放，不引入旧 DTO 或第二套历史事实。

@@ -27,13 +27,20 @@ type pricingWrite struct {
 	apply    func(context.Context, pgx.Tx, time.Time) error
 }
 
-const pricingOperationSQL = `SELECT operation_id,kind,scope,actor,target,input_fingerprint,pre_coin_input_fingerprint,resource_id,revision::text,pricing_time(created_at),result_schema,result_snapshot FROM pricing_operations WHERE operation_id=$1`
+const pricingOperationSQL = `SELECT operation_id,kind,scope,actor,target,
+ pricing_fingerprint(kind,actor,scope,target,CASE WHEN kind IN ('group_price.publish','default_price.publish') AND safe_input->>'currency'='CNY' THEN jsonb_set(safe_input,'{currency}','"COIN"',false) ELSE safe_input END),
+ CASE WHEN kind IN ('group_price.publish','default_price.publish') AND safe_input->>'currency'='CNY' THEN input_fingerprint ELSE NULL END,
+ input_fingerprint,pricing_fingerprint(kind,actor,scope,target,safe_input),
+ resource_id,revision::text,pricing_time(created_at),result_schema,
+ CASE WHEN kind IN ('group_price.publish','default_price.publish') AND result_snapshot->>'currency'='CNY' THEN jsonb_set(result_snapshot,'{currency}','"COIN"',false) ELSE result_snapshot END
+ FROM pricing_operations WHERE operation_id=$1`
 
 func scanPricingOperation(ctx context.Context, tx pgx.Tx, row pgx.Row) (PricingOperationReceipt, error) {
 	var r PricingOperationReceipt
 	var schema int
 	var raw []byte
-	e := row.Scan(&r.Operation.OperationID, &r.Operation.Kind, &r.Operation.Scope, &r.Operation.Actor, &r.Operation.Target, &r.Operation.InputFingerprint, &r.Operation.PreCoinInputFingerprint, &r.Operation.ResourceID, &r.Operation.Revision, &r.Operation.CreatedAt, &schema, &raw)
+	var originalFingerprint, expectedOriginal string
+	e := row.Scan(&r.Operation.OperationID, &r.Operation.Kind, &r.Operation.Scope, &r.Operation.Actor, &r.Operation.Target, &r.Operation.InputFingerprint, &r.Operation.PreCoinInputFingerprint, &originalFingerprint, &expectedOriginal, &r.Operation.ResourceID, &r.Operation.Revision, &r.Operation.CreatedAt, &schema, &raw)
 	if e != nil {
 		return r, e
 	}
@@ -42,6 +49,9 @@ func scanPricingOperation(ctx context.Context, tx pgx.Tx, row pgx.Row) (PricingO
 		return r, pricingFail("pricing_invariant")
 	}
 	if previous := r.Operation.PreCoinInputFingerprint; previous != nil && (r.Operation.Kind != "group_price.publish" && r.Operation.Kind != "default_price.publish" || !pricingDigest(*previous)) {
+		return r, pricingFail("pricing_invariant")
+	}
+	if originalFingerprint != expectedOriginal || !pricingDigest(expectedOriginal) {
 		return r, pricingFail("pricing_invariant")
 	}
 	r.Result, e = pricingDecodeResult(r.Operation.Kind, raw)

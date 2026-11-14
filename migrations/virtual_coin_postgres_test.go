@@ -1,6 +1,7 @@
 package migrations_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/json"
@@ -213,9 +214,15 @@ func TestVirtualCoinMigrationPreservesAmountsAndCanonical(t *testing.T) {
 	}
 
 	var fingerprintBefore string
-	coinMust(t, "read pre-coin operation fingerprint", f.pool.QueryRow(f.ctx, `SELECT input_fingerprint FROM pricing_operations WHERE operation_id=$1`, priceOperation).Scan(&fingerprintBefore))
+	var originalSafe, originalResult, originalAudit []byte
+	coinMust(t, "snapshot immutable pre-coin operation and audit", f.pool.QueryRow(f.ctx, `SELECT safe_input,result_snapshot,input_fingerprint,(SELECT sanitized_diff FROM audit_events WHERE action='pricing.price.publish' AND sanitized_diff->>'operation_id'=$1) FROM pricing_operations WHERE operation_id=$1`, priceOperation).Scan(&originalSafe, &originalResult, &fingerprintBefore, &originalAudit))
 	coinMust(t, "apply virtual-coin unit migration", migrations.ApplyCurrent(f.ctx, f.pool))
 	coinMust(t, "verify virtual-coin current schema", migrations.VerifyCurrent(f.ctx, f.pool))
+	var afterSafe, afterResult, afterFingerprint, afterAudit []byte
+	coinMust(t, "read immutable migrated operation and audit", f.pool.QueryRow(f.ctx, `SELECT safe_input,result_snapshot,input_fingerprint,(SELECT sanitized_diff FROM audit_events WHERE action='pricing.price.publish' AND sanitized_diff->>'operation_id'=$1) FROM pricing_operations WHERE operation_id=$1`, priceOperation).Scan(&afterSafe, &afterResult, &afterFingerprint, &afterAudit))
+	if !bytes.Equal(afterSafe, originalSafe) || !bytes.Equal(afterResult, originalResult) || string(afterFingerprint) != fingerprintBefore || !bytes.Equal(afterAudit, originalAudit) {
+		t.Fatal("migration changed immutable pricing command, fingerprint, result, or audit bytes")
+	}
 	var afterReceiptAmount, afterJournalAmount int64
 	var afterReceiptCurrency, afterJournalCurrency, afterPriceCurrency, canonicalAfter, digestAfter string
 	coinMust(t, "read migrated receipt", f.pool.QueryRow(f.ctx, `SELECT amount,currency FROM funding_receipts WHERE source_kind='manual_credit' AND source_id=$1`, credit.ID).Scan(&afterReceiptAmount, &afterReceiptCurrency))

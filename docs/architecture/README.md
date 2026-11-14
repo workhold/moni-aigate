@@ -659,7 +659,7 @@ sequenceDiagram
 
 [`current_004_virtual_coin_units.sql`](../../migrations/current_004_virtual_coin_units.sql) 将客户 `journals`、`funding_receipts` 与 `price_versions` 的外层 `currency` 改为 `COIN`，金额和费率数值不缩放；`cost_versions`、采购观察、供应商成本和支付法币事实继续使用 CNY。计量 canonical、历史请求快照和 `TextRates.currency` 刻意保留冻结的 CNY 规范化标签，不能把它与零售外层币种混为一谈。迁移只追加，先移除旧 CHECK 再回填并添加新 CHECK，显式暂停/恢复不可变及 deferred 来源校验触发器，支持非超级用户的 schema owner。
 
-既有 group/default pricing operation 的 safe-input、result snapshot、审计快照与指纹一并升级为 COIN；`pre_coin_input_fingerprint` 只保存迁移前指纹，供浏览器持久化的原 operation ID 做严格只读恢复，不提供 CNY 结果 fallback 或第二套价格 DTO。支付 SKU/订单的 `amount` 使用 [`billing.FiatMoney`](../../internal/billing/fiat.go)，钱包到账 `wallet_credit_amount` 使用 `billing.Money`，处理器内部同样分型。控制台分开显示币、付款法币和采购成本；026 经营窗口报表的付款基准与同币种毛利留到 034.5，不在本片混合改写。实际存量升级、原 operation 重放、角色边界及前端验证见[034.1 验证记录](../verification/034-coin-units.md)。034.2 及后续角色、双来源、五桶、币价版本和现金退款能力尚未据此宣称完成。
+[`current_005_immutable_pricing_history.sql`](../../migrations/current_005_immutable_pricing_history.sql) 在同一升级事务中恢复 current_004 曾改写的历史 pricing operation 与审计原字节，不保留其存储列。[`pricingOperationSQL`](../../internal/catalog/pricing_commands.go) 验证原始 CNY 指纹后在读取时投影 COIN 的当前指纹与结果，历史原件不再改写；`pre_coin_input_fingerprint` 仅作为原 operation 的迁移证明，供浏览器持久化的原 operation ID 做严格只读恢复，不提供旧 DTO 或第二套历史事实。支付 SKU/订单的 `amount` 使用 [`billing.FiatMoney`](../../internal/billing/fiat.go)，钱包到账 `wallet_credit_amount` 使用 `billing.Money`，处理器内部同样分型。控制台分开显示币、付款法币和采购成本；026 经营窗口报表的付款基准与同币种毛利留到 034.5，不在本片混合改写。实际存量升级、原 operation 重放、角色边界及前端验证见[034.1 验证记录](../verification/034-coin-units.md)。034.2 及后续角色、双来源、五桶、币价版本和现金退款能力尚未据此宣称完成。
 
 ### 018 采购单价门禁与成本感知路由
 

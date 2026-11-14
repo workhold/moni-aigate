@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-14T04:18:34Z",
-  "review_reason": "PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最终同步",
-  "snapshot_sha256": "e21cd00b61e844d8478b53e73b051f096219bd6754e0b47b2c5d4b8c9d2c6b95",
-  "architecture_sha256": "8a415996422340651423a76c796a77266d5ac9132135fc4069689318587b9f92",
-  "history_sha256": "4149a779d760b1aa0a74ca0d3c524d31ceaf9cdfc354c06294f385ccc208b9b6",
+  "reviewed_at": "2026-11-14T04:37:29Z",
+  "review_reason": "034.1 不可变历史修复：追加 current_005 恢复原 operation/audit 字节，读取时投影 COIN；D-034-11 与 §15 冻结状态一致性修订；迁移、catalog、operations 与定价 HTTP 已复核",
+  "snapshot_sha256": "76f5a885b37dee89d0c093ea5a9e72075756ff61415e5b6d507f4935311334a7",
+  "architecture_sha256": "e502d6cc145c714be0d46b95696add446184d4eaa3fde323fcd9f3ab45717f00",
+  "history_sha256": "c4897de50cc5a814fb1df753d28ef60426a80cf20c467db068bd555c6d2926a2",
   "files": [
     {
       "path": ".dockerignore",
@@ -193,7 +193,7 @@
     },
     {
       "path": "docs/design/direction-review-2026-11-14.md",
-      "sha256": "f9397208a615aa2d74103f19a439b3ec9b690072db38a15a23ae51f39fde261c"
+      "sha256": "1f1ccad56cb3f7f70f5371fcd12f6168ba6211b9facd08d7941c1c76c8b8cf5f"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -281,7 +281,7 @@
     },
     {
       "path": "docs/verification/034-coin-units.md",
-      "sha256": "f079bd00cf952a7973adb107dcff0ba4ccf825459c43a0c5311378d4672edd26"
+      "sha256": "1851504152a217b72e20812c276e72aa76adc282557d70b494474c4d6e165ed9"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -2461,7 +2461,7 @@
     },
     {
       "path": "internal/catalog/pricing_commands.go",
-      "sha256": "68ca2ee23ebdc8145b70983f34fd5f7caad1417a4ffaf73465da5a93bf54ec35"
+      "sha256": "aab86bedfdfd40c2024a684412ad477d0c90f63f5153b8a3c4a2c38c584f0967"
     },
     {
       "path": "internal/catalog/pricing_concurrency_integration_test.go",
@@ -6652,6 +6652,10 @@
       "sha256": "4a49f2df9be50c1966775d108b5a152dcbf951c5162430a5771573d5cb9a66a9"
     },
     {
+      "path": "migrations/current_005_immutable_pricing_history.sql",
+      "sha256": "1570f8dfb7367d0f7c098e55d63e0ac02e72354dd033766c195f3257f555d42f"
+    },
+    {
       "path": "migrations/current_mvp.sql",
       "sha256": "c3aba37f5fa194bf6f66018e25d1124fe3fd2ab886969d4349d440e85d35381e"
     },
@@ -6733,7 +6737,7 @@
     },
     {
       "path": "migrations/virtual_coin_postgres_test.go",
-      "sha256": "8cca98c69b24d87bebe48d8d3210db7ccf5987456ccdaeb19b47b4f67356e2d3"
+      "sha256": "1f2ff52610540795b6ec5a37fe7f870b60100c90006da4fdffbdd8308ad214ba"
     },
     {
       "path": "migrations/wallet_sources_postgres_test.go",
@@ -8137,7 +8141,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "bbee993ae6d35b95feda37e1237813c7063411f016eeee6e23c46eb728098822"
+      "sha256": "39c0c41b1779b72e75c4c2888d7028a1cf5203d3cff6f8d1da0604dbd1242eb7"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
