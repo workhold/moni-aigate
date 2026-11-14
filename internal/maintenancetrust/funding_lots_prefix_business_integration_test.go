@@ -177,7 +177,7 @@ func periodicPrefixBusinessBase(t *testing.T, ctx context.Context, f *snapshotFi
 	store := billing.New(app)
 	creditID := uuid.NewString()
 	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: h.tenant, ActorID: operator, BusinessRef: creditID,
-		ProofRef: "receipt:prefix-business", Amount: 1000, IdempotencyKey: creditID, RequestHMAC: creditID})
+		ProofRef: "receipt:prefix-business", Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, IdempotencyKey: creditID, RequestHMAC: creditID})
 	if err != nil {
 		t.Fatal("prefix business actual APP credit proposal", err)
 	}

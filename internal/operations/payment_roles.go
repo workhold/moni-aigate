@@ -37,7 +37,7 @@ var paymentTableNames = []string{
 
 // The pre-existing ledger is part of the current wallet privilege boundary,
 // but not the extension's presence count used by offline historical fixtures.
-var paymentBoundaryTableNames = append(slices.Clone(paymentTableNames), "ledger_accounts")
+var paymentBoundaryTableNames = append(slices.Clone(paymentTableNames), "ledger_accounts", "wallet_operator_settings", "wallet_requests")
 
 type paymentTableGrant struct {
 	selectAll, insertAll               bool
@@ -59,12 +59,14 @@ func paymentGrants(role PaymentDatabaseRole) map[string]paymentTableGrant {
 		add("funding_lots funding_lot_balances funding_lot_events funding_reservation_lots funding_settlement_lots funding_consumption_refund_lots ledger_accounts", false, true)
 		add("payment_sandbox_environment payment_runtime_attestations payment_policy payment_skus payment_sku_versions payment_sku_changes payment_orders payment_cancel_intents payment_command_outbox payment_command_observations payment_query_attempts payment_inbox payment_event_conflicts payment_verified_queries payment_verified_evidence payment_evidence_processing payment_provider_revisions payment_transaction_identities payment_order_capture_selections payment_captures payment_effects payment_review_facts", true, false)
 		add("payment_skus payment_sku_versions payment_sku_changes payment_orders payment_cancel_intents payment_command_outbox payment_inbox payment_event_conflicts payment_verified_evidence payment_evidence_processing", false, true)
+		add("wallet_operator_settings wallet_requests", true, true)
 		for name, cols := range map[string][]string{
 			"payment_policy":       {"enabled"},
 			"payment_skus":         {"revision", "last_version", "enabled", "current_version_id", "last_change_operation_id"},
 			"payment_orders":       {"id"},
 			"ledger_accounts":      {"balance"},
 			"funding_lot_balances": {"available_amount", "held_amount", "consumed_amount", "revision"},
+			"wallet_requests":      {"state", "linked_order_id"},
 		} {
 			v := m[name]
 			v.updateCols = cols
@@ -335,6 +337,15 @@ func provisionPaymentRoleACL(ctx context.Context, tx pgx.Tx, schema, name string
 	}
 	for _, f := range paymentFunctionSpecs {
 		fn := pgx.Identifier{schema, f.name}.Sanitize() + "(" + f.arguments + ")"
+		if f.name == "wallet_single_operator" || f.name == "wallet_operator_role_valid" || f.name == "wallet_approval_snapshot_valid" || f.name == "wallet_credit_pair_valid" || f.name == "wallet_request_guard" || f.name == "payment_voucher_journal_valid" {
+			var exists bool
+			if e := tx.QueryRow(ctx, `SELECT to_regprocedure($1) IS NOT NULL`, fn).Scan(&exists); e != nil {
+				return ErrPaymentRolePrivileges
+			}
+			if !exists {
+				continue
+			}
+		}
 		if _, e = tx.Exec(ctx, "REVOKE ALL ON FUNCTION "+fn+" FROM "+qrole+",PUBLIC"); e != nil {
 			return ErrPaymentRolePrivileges
 		}
@@ -485,11 +496,19 @@ func verifyPaymentTables(ctx context.Context, tx pgx.Tx, schemaOID, oid uint32, 
 		return ErrPaymentRolePrivileges
 	}
 	for _, name := range paymentBoundaryTableNames {
+		if !seen[name] && (name == "wallet_operator_settings" || name == "wallet_requests") {
+			continue
+		}
 		if !seen[name] {
 			return ErrPaymentRolePrivileges
 		}
 	}
 	for name := range grants {
+		if !seen[name] && (name == "wallet_operator_settings" || name == "wallet_requests") {
+			// Offline historical prefixes predate these 034 tables. Current schemas
+			// include them in the relation query and cannot bypass exact verification.
+			continue
+		}
 		if !seen[name] {
 			return ErrPaymentRolePrivileges
 		}
@@ -507,9 +526,53 @@ const paymentFunctionDefinitionsSQL = `SELECT p.proname,p.proargtypes::text,p.pr
  p.prokind='f' AND NOT p.prosecdef AND NOT p.proisstrict AND NOT p.proleakproof AND NOT p.proretset AND p.proparallel='u' AND p.pronargdefaults=0 AND p.provariadic=0 AND p.proargmodes IS NULL AND p.proallargtypes IS NULL AND p.proargdefaults IS NULL AND p.probin IS NULL AND p.prosqlbody IS NULL AND p.prosupport=0 AND p.protrftypes IS NULL AND p.proconfig=ARRAY['search_path='||pg_catalog.quote_ident($1)||', pg_catalog, pg_temp'] AND p.proowner=` + paymentSchemaObjectOwnerSQL + `
  FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace JOIN pg_catalog.pg_language l ON l.oid=p.prolang WHERE n.nspname=$1 AND (left(p.proname,8)='payment_' OR left(p.proname,7)='wallet_' OR p.proname IN ('funding_journal_valid','funding_fact_guard')) ORDER BY p.proname,p.proargtypes`
 
+type paymentSchemaCapabilities struct {
+	media, virtualCoin, pairedSources bool
+}
+
+func paymentSchemaCapabilitiesOf(ctx context.Context, tx pgx.Tx, schema string) (paymentSchemaCapabilities, error) {
+	var c paymentSchemaCapabilities
+	e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles'),COALESCE((SELECT pg_get_expr(d.adbin,d.adrelid) FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum WHERE n.nspname=$1 AND c.relname='journals' AND a.attname='currency' AND NOT a.attisdropped),'')='''COIN''::text',EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='funding_receipts' AND a.attname='basis_kind' AND NOT a.attisdropped)`, schema).Scan(&c.media, &c.virtualCoin, &c.pairedSources)
+	return c, e
+}
+
+func paymentExpectedBodySHA(f paymentFunctionSpec, c paymentSchemaCapabilities) string {
+	expected := f.bodySHA
+	if f.name == "wallet_event_valid" && !c.media {
+		expected = legacyWalletEventValidSHA256
+	}
+	if c.virtualCoin {
+		switch f.name {
+		case "payment_funding_journal_valid":
+			expected = virtualCoinPaymentFundingJournalSHA256
+		case "wallet_opening_journal_valid":
+			expected = virtualCoinWalletOpeningJournalSHA256
+		case "payment_sandbox_journal_valid":
+			expected = virtualCoinPaymentSandboxJournalSHA256
+		}
+	}
+	if c.pairedSources {
+		switch f.name {
+		case "payment_funding_journal_valid":
+			expected = pairedPaymentFundingJournalSHA256
+		case "wallet_opening_journal_valid":
+			expected = pairedWalletOpeningJournalSHA256
+		case "payment_sandbox_journal_valid":
+			expected = pairedPaymentSandboxJournalSHA256
+		case "wallet_refund_valid":
+			expected = pairedWalletRefundSHA256
+		case "funding_fact_guard":
+			expected = pairedFundingFactGuardSHA256
+		case "funding_journal_valid":
+			expected = pairedFundingJournalSHA256
+		}
+	}
+	return expected
+}
+
 func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema string) error {
-	var currentMedia, currentVirtualCoin bool
-	if e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles'),COALESCE((SELECT pg_get_expr(d.adbin,d.adrelid) FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum WHERE n.nspname=$1 AND c.relname='journals' AND a.attname='currency' AND NOT a.attisdropped),'')='''COIN''::text'`, schema).Scan(&currentMedia, &currentVirtualCoin); e != nil {
+	capabilities, e := paymentSchemaCapabilitiesOf(ctx, tx, schema)
+	if e != nil {
 		return ErrPaymentRolePrivileges
 	}
 	rows, e := tx.Query(ctx, paymentFunctionDefinitionsSQL, schema)
@@ -528,27 +591,18 @@ func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema str
 		f, ok := paymentFunctionSpecs[name]
 		expectedBody := ""
 		if ok {
-			expectedBody = f.bodySHA
-			if name == "wallet_event_valid" && !currentMedia {
-				expectedBody = legacyWalletEventValidSHA256
-			}
-			if currentVirtualCoin {
-				switch name {
-				case "payment_funding_journal_valid":
-					expectedBody = virtualCoinPaymentFundingJournalSHA256
-				case "wallet_opening_journal_valid":
-					expectedBody = virtualCoinWalletOpeningJournalSHA256
-				case "payment_sandbox_journal_valid":
-					expectedBody = virtualCoinPaymentSandboxJournalSHA256
-				}
-			}
+			expectedBody = paymentExpectedBodySHA(f, capabilities)
 		}
 		if !ok || f.argOIDs != argOIDs || f.resultOID != result || f.language != language || f.volatility != volatility || !slices.Equal(f.argNames, args) || fmt.Sprintf("%x", sha256.Sum256([]byte(body))) != expectedBody {
 			return ErrPaymentRolePrivileges
 		}
 		seen[name] = true
 	}
-	if rows.Err() != nil || len(seen) != len(paymentFunctionSpecs) {
+	expectedCount := len(paymentFunctionSpecs)
+	if !capabilities.pairedSources {
+		expectedCount -= 6
+	}
+	if rows.Err() != nil || len(seen) != expectedCount {
 		return ErrPaymentRolePrivileges
 	}
 	return nil

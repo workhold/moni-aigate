@@ -6711,3 +6711,109 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `specs/034-virtual-coin/spec.md`
 
 </details>
+
+## 2026-11-14T12:44:02Z · baa198d3c35c
+
+034.2：角色字段、独立wallet_requests、单人运营设置CAS与审计、付款基准、成对来源和确定性FIFO；同步当前六来源、应用/worker/projection权限、HTTP/UI和串行验证记录；034.3起仍标为后续能力
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2212 个源文件；本次 95 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-2-paired-wallet-sources.md`
+- added `internal/billing/credit_funding.go`
+- added `internal/billing/credit_input.go`
+- added `internal/billing/credit_sources_integration_test.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/billing/funding_sandbox.go`
+- modified `internal/billing/funding_sandbox_integration_test.go`
+- modified `internal/billing/funding_verify.go`
+- modified `internal/billing/lot_runtime.go`
+- added `internal/billing/operator_settings.go`
+- added `internal/billing/operator_settings_integration_test.go`
+- modified `internal/billing/orders.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/voucher_integration_test.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_query_integration_test.go`
+- modified `internal/billing/voucher_types.go`
+- added `internal/billing/wallet_requests.go`
+- added `internal/billing/wallet_requests_integration_test.go`
+- modified `internal/billing/wallet_sources_application_test.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_summary_test.go`
+- modified `internal/fundinglotscan/wallet_reader_postgres_test.go`
+- modified `internal/maintenancetrust/funding_lots_phase_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_prefix_business_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_runtime_procurement_integration_test.go`
+- modified `internal/operations/funding_integration_test.go`
+- modified `internal/operations/instance_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/operations_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- modified `internal/payments/processor_safety_test.go`
+- modified `internal/paymentsandboxqa/funding.go`
+- modified `internal/periodicbudget/commander_limits_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/pricing/vector_integration_test.go`
+- modified `internal/procurementattemptbirth/attempt_postgres_test.go`
+- modified `internal/procurementattemptbirth/attempt_sync_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_grant_fault_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_postgres_test.go`
+- modified `internal/server/auth_integration_test.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/binding_isolation_integration_test.go`
+- modified `internal/server/capacity_test.go`
+- modified `internal/server/channel_defaults_integration_test.go`
+- modified `internal/server/external_relay_integration_test.go`
+- modified `internal/server/funding_integration_test.go`
+- modified `internal/server/gateway_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- added `internal/server/operator_settings_handlers.go`
+- added `internal/server/operator_settings_integration_test.go`
+- modified `internal/server/periodic_budget_integration_test.go`
+- modified `internal/server/procurement_meter_integration_test.go`
+- modified `internal/server/server.go`
+- added `internal/server/wallet_request_handlers.go`
+- added `internal/server/wallet_request_integration_test.go`
+- modified `internal/server/wallet_sources_integration_test.go`
+- modified `internal/testsupport/funding019/verify_test.go`
+- added `migrations/current_006_paired_wallet_sources.sql`
+- modified `migrations/unified_text_metering_guard_matrix_postgres_test.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `scripts/browser-qa/model_lifecycle_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/App.vue`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/FundingPanel.vue`
+- added `web/src/components/WalletOperatorSettings.vue`
+- added `web/src/components/WalletRequests.vue`
+- modified `web/src/views/OverviewView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PlaygroundView.vue`
+- modified `web/src/views/WalletSourcesView.vue`
+- modified `web/src/views/WalletView.vue`
+- added `web/src/wallet-operator-settings.ts`
+- added `web/src/wallet-requests.ts`
+- modified `web/src/wallet-source-details.ts`
+- modified `web/src/wallet-sources.ts`
+- modified `web/tests/commerce.test.mjs`
+- added `web/tests/wallet-operator-settings.test.mjs`
+- added `web/tests/wallet-requests.test.mjs`
+- modified `web/tests/wallet-source-details.test.mjs`
+- modified `web/tests/wallet-sources.test.mjs`
+
+</details>

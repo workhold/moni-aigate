@@ -139,12 +139,38 @@ func integration(t *testing.T) *fixture {
 func (f *fixture) fund(t *testing.T, amount Money) {
 	t.Helper()
 	key := uuid.NewString()
-	o, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: key, ProofRef: "receipt:test", Amount: amount, IdempotencyKey: key, RequestHMAC: key})
+	o, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: key, ProofRef: "receipt:test", Amount: amount, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: FiatMoney(amount), IdempotencyKey: key, RequestHMAC: key})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err = f.store.ApproveCredit(f.ctx, ApprovalInput{TenantID: f.tenant, OrderID: o.ID, ActorID: f.approver}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// openingBoundaryTenant creates a legal high-balance history without exceeding
+// the per-credit cap. It must be called while the fixture uses the owner pool.
+func openingBoundaryTenant(t *testing.T, f *fixture) {
+	t.Helper()
+	f.tenant = accountBatchTenant(t, f)
+	f.key = uuid.NewString()
+	for _, statement := range []struct {
+		sql  string
+		args []any
+	}{
+		{`INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)`, []any{f.tenant, f.user}},
+		{`INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, []any{f.tenant, f.model}},
+		{`INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) VALUES($1,$2,$3,'boundary','boundary-key',$1,$4,$5)`, []any{f.key, f.tenant, f.user, []string{f.model}, int64(math.MaxInt64)}},
+	} {
+		if _, err := f.pool.Exec(f.ctx, statement.sql, statement.args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	in := openingInput(f)
+	in.Amount = Money(math.MaxInt64)
+	opened, err := f.store.OpenWallet(f.ctx, in)
+	if err != nil || opened.Receipt.Amount != Money(math.MaxInt64) {
+		t.Fatalf("legal opening boundary: %+v %v", opened, err)
 	}
 }
 func (f *fixture) input() ReserveInput {
@@ -303,8 +329,12 @@ func TestPostgresLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = f.store.ApproveRefund(f.ctx, ApprovalInput{TenantID: f.tenant, OrderID: refund.ID, ActorID: f.admin})
+	_, err = f.store.ApproveRefund(f.ctx, ApprovalInput{TenantID: f.tenant, OrderID: refund.ID, ActorID: f.user})
 	assertCode(t, err, "forbidden")
+	adminApproved, err := f.store.ApproveRefund(f.ctx, ApprovalInput{TenantID: f.tenant, OrderID: refund.ID, ActorID: f.admin})
+	if err != nil || adminApproved.State != "approved" || !adminApproved.SingleOperator {
+		t.Fatalf("admin wallet approval under the enabled switch: %+v %v", adminApproved, err)
+	}
 	for i := 0; i < 2; i++ {
 		if _, err = f.store.ApproveRefund(f.ctx, ApprovalInput{TenantID: f.tenant, OrderID: refund.ID, ActorID: f.approver}); err != nil {
 			t.Fatal(err)
@@ -762,7 +792,7 @@ func TestPostgresJournalConstraintsAndProjectionRollback(t *testing.T) {
 
 func TestPostgresCreditIdempotencyAndRoles(t *testing.T) {
 	f := integration(t)
-	in := CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: "bank:second", ProofRef: "receipt:verified", Amount: 100, IdempotencyKey: "credit-key", RequestHMAC: "credit-hmac"}
+	in := CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: "bank:second", ProofRef: "receipt:verified", Amount: 100, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 100, IdempotencyKey: "credit-key", RequestHMAC: "credit-hmac"}
 	order, err := f.store.CreateCredit(f.ctx, in)
 	if err != nil {
 		t.Fatal(err)
@@ -776,7 +806,7 @@ func TestPostgresCreditIdempotencyAndRoles(t *testing.T) {
 	_, err = f.store.CreateCredit(f.ctx, in)
 	assertCode(t, err, "idempotency_conflict")
 	in.IdempotencyKey = "other"
-	in.ActorID = f.admin
+	in.ActorID = f.user
 	_, err = f.store.CreateCredit(f.ctx, in)
 	assertCode(t, err, "forbidden")
 	if _, err = f.pool.Exec(f.ctx, "UPDATE users SET status='suspended' WHERE id=$1", f.operator); err != nil {
@@ -889,7 +919,7 @@ func TestPostgresFinancialBoundaryRollback(t *testing.T) {
 			switch tc.operation {
 			case "credit":
 				id := uuid.NewString()
-				order, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: id, ProofRef: "receipt:verified", Amount: 200, IdempotencyKey: id, RequestHMAC: id})
+				order, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: id, ProofRef: "receipt:verified", Amount: 200, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 200, IdempotencyKey: id, RequestHMAC: id})
 				if err != nil {
 					t.Fatal(err)
 				}

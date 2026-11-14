@@ -134,6 +134,34 @@ func role(ctx context.Context, tx pgx.Tx, actor, required string) error {
 	return nil
 }
 
+func walletRole(ctx context.Context, tx pgx.Tx, actor, required string) error {
+	var valid bool
+	if err := tx.QueryRow(ctx, `SELECT wallet_operator_role_valid($1,$2)`, actor, required).Scan(&valid); err != nil {
+		return err
+	}
+	if !valid {
+		return fail("forbidden", "financial role required")
+	}
+	return nil
+}
+
+func tenantOwner(ctx context.Context, tx pgx.Tx, tenant, actor string) error {
+	var valid bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM tenants t JOIN memberships m ON m.tenant_id=t.id AND m.user_id=$2 JOIN users u ON u.id=m.user_id WHERE t.id=$1 AND t.status='active' AND m.status='active' AND m.role='owner' AND u.status='active')`, tenant, actor).Scan(&valid); err != nil {
+		return err
+	}
+	if !valid {
+		return fail("forbidden", "tenant owner required")
+	}
+	return nil
+}
+
+func walletSingleOperator(ctx context.Context, tx pgx.Tx) (bool, error) {
+	var enabled bool
+	err := tx.QueryRow(ctx, `SELECT wallet_single_operator()`).Scan(&enabled)
+	return enabled, err
+}
+
 const insertAuditSQL = "INSERT INTO audit_events(actor,tenant_scope,action,target,sanitized_diff,request_id) VALUES($1,$2,$3,$4,$5,$6)"
 const insertOutboxSQL = "INSERT INTO projection_outbox(tenant_id,operation_id,kind,sanitized_payload) VALUES($1,$2,$3,$4)"
 

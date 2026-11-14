@@ -347,7 +347,7 @@ func rbGrantBaseline(t *testing.T, f *fixture) {
 	// original verified credit/approval before snapshots, never during a fault.
 	store := billing.New(f.owner)
 	key := uuid.NewString()
-	credit, e := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: key, ProofRef: "fixture:grant-baseline-verified", Amount: 100000, IdempotencyKey: key, RequestHMAC: key})
+	credit, e := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: key, ProofRef: "fixture:grant-baseline-verified", Amount: 100000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 100000, IdempotencyKey: key, RequestHMAC: key})
 	must(t, "prepare sufficient real baseline credit", e)
 	_, e = store.ApproveCredit(f.ctx, billing.ApprovalInput{TenantID: f.tenant, OrderID: credit.ID, ActorID: f.approver})
 	must(t, "approve sufficient original customer funds", e)

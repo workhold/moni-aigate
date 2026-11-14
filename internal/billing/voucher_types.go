@@ -193,6 +193,8 @@ type FundingSummaryView struct {
 	Currency             string    `json:"currency"`
 	TotalAmount          string    `json:"total_amount"`
 	ManualCreditAmount   string    `json:"manual_credit_amount"`
+	ManualBonusAmount    string    `json:"manual_bonus_amount"`
+	ManualUnknownAmount  string    `json:"manual_unknown_amount"`
 	VoucherGrantAmount   string    `json:"voucher_grant_amount"`
 	SandboxCaptureAmount string    `json:"sandbox_capture_amount"`
 	WalletOpeningAmount  string    `json:"wallet_opening_amount"`

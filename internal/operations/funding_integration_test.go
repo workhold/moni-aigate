@@ -269,7 +269,7 @@ func fundingOperationsDB(t *testing.T) *operationFixture {
 func fundingApproveCredit(t *testing.T, f *operationFixture, suffix string) billing.CreditOrder {
 	t.Helper()
 	s := billing.New(f.app)
-	credit, err := s.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BusinessRef: "bank:funding:" + suffix, ProofRef: "proof:funding:" + suffix, IdempotencyKey: "funding:" + suffix, RequestHMAC: "funding-hmac:" + suffix})
+	credit, err := s.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: "bank:funding:" + suffix, ProofRef: "proof:funding:" + suffix, IdempotencyKey: "funding:" + suffix, RequestHMAC: "funding-hmac:" + suffix})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +320,7 @@ func TestFundingProvisionedRolesKeepNewTablesLeastPrivilege(t *testing.T) {
 	for table, allowed := range map[string]map[string]bool{
 		"voucher_policy":  {"enabled": true},
 		"voucher_batches": {"state": true, "approver": true, "activated_at": true, "terminal_actor": true, "terminal_at": true, "redeemed_count": true},
-		"credit_orders":   {"state": true, "approver": true, "journal_id": true},
+		"credit_orders":   {"state": true, "approver": true, "journal_id": true, "single_operator": true},
 	} {
 		rows, err := f.owner.Query(f.ctx, `SELECT column_name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name=$1 ORDER BY ordinal_position`, table)
 		if err != nil {
@@ -391,16 +391,18 @@ func TestFundingProvisionedManualCreditIsUniqueAndProjectable(t *testing.T) {
 	if err != nil || !check.Balanced {
 		t.Fatalf("manual funding failed integrated ledger verification: %+v %v", check, err)
 	}
-	for _, sql := range []string{
-		`UPDATE credit_orders SET amount=amount+1 WHERE id=$1`,
-		`UPDATE credit_orders SET proof_ref='proof:forged' WHERE id=$1`,
-		`DELETE FROM credit_orders WHERE id=$1`,
-		`UPDATE funding_receipts SET amount=amount+1 WHERE source_id=$1`,
-		`DELETE FROM funding_receipts WHERE source_id=$1`,
+	for _, statement := range []struct {
+		sql, appState string
+	}{
+		{`UPDATE credit_orders SET amount=amount+1 WHERE id=$1`, "42501"},
+		{`UPDATE credit_orders SET proof_ref='proof:forged' WHERE id=$1`, "42501"},
+		{`DELETE FROM credit_orders WHERE id=$1`, "42501"},
+		{`UPDATE funding_receipts SET amount=amount+1 WHERE source_id=$1`, "42501"},
+		{`DELETE FROM funding_receipts WHERE source_id=$1`, "42501"},
 	} {
-		_, err = f.app.Exec(f.ctx, sql, approved.ID)
-		fundingRequireSQLState(t, err, "42501")
-		_, err = f.owner.Exec(f.ctx, sql, approved.ID)
+		_, err = f.app.Exec(f.ctx, statement.sql, approved.ID)
+		fundingRequireSQLState(t, err, statement.appState)
+		_, err = f.owner.Exec(f.ctx, statement.sql, approved.ID)
 		fundingRequireSQLState(t, err, "P0001")
 	}
 	_, err = f.app.Exec(f.ctx, `UPDATE credit_orders SET state='pending',approver=NULL,journal_id=NULL WHERE id=$1`, approved.ID)
@@ -446,23 +448,25 @@ func TestFundingOrphanCreditedCannotCommit(t *testing.T) {
 func TestFundingPendingSourceAndIncompleteJournalCannotCommit(t *testing.T) {
 	f := fundingOperationsDB(t)
 	s := billing.New(f.app)
-	credit, err := s.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BusinessRef: "bank:pending-funding", ProofRef: "proof:pending-funding", IdempotencyKey: "pending-funding", RequestHMAC: "pending-funding-hmac"})
+	credit, err := s.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: "bank:pending-funding", ProofRef: "proof:pending-funding", IdempotencyKey: "pending-funding", RequestHMAC: "pending-funding-hmac"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, sql := range []string{
-		`UPDATE credit_orders SET id='forged-source-id' WHERE id=$1`,
-		`UPDATE credit_orders SET tenant_id=NULL WHERE id=$1`,
-		`UPDATE credit_orders SET business_ref='bank:forged' WHERE id=$1`,
-		`UPDATE credit_orders SET amount=amount+1 WHERE id=$1`,
-		`UPDATE credit_orders SET requester=NULL WHERE id=$1`,
-		`UPDATE credit_orders SET proof_ref='proof:forged' WHERE id=$1`,
-		`UPDATE credit_orders SET created_at=created_at+interval '1 second' WHERE id=$1`,
-		`DELETE FROM credit_orders WHERE id=$1`,
+	for _, statement := range []struct {
+		sql, appState string
+	}{
+		{`UPDATE credit_orders SET id='forged-source-id' WHERE id=$1`, "42501"},
+		{`UPDATE credit_orders SET tenant_id=NULL WHERE id=$1`, "42501"},
+		{`UPDATE credit_orders SET business_ref='bank:forged' WHERE id=$1`, "42501"},
+		{`UPDATE credit_orders SET amount=amount+1 WHERE id=$1`, "42501"},
+		{`UPDATE credit_orders SET requester=NULL WHERE id=$1`, "42501"},
+		{`UPDATE credit_orders SET proof_ref='proof:forged' WHERE id=$1`, "42501"},
+		{`UPDATE credit_orders SET created_at=created_at+interval '1 second' WHERE id=$1`, "42501"},
+		{`DELETE FROM credit_orders WHERE id=$1`, "42501"},
 	} {
-		_, err = f.app.Exec(f.ctx, sql, credit.ID)
-		fundingRequireSQLState(t, err, "42501")
-		_, err = f.owner.Exec(f.ctx, sql, credit.ID)
+		_, err = f.app.Exec(f.ctx, statement.sql, credit.ID)
+		fundingRequireSQLState(t, err, statement.appState)
+		_, err = f.owner.Exec(f.ctx, statement.sql, credit.ID)
 		fundingRequireSQLState(t, err, "P0001")
 	}
 	for _, sourceExists := range []bool{false, true} {

@@ -41,8 +41,9 @@ test('exact source amounts and buckets retain micro-yuan beyond JavaScript safe 
   for (const issued_amount of [0, '0', '-1', '01', '1.0', null]) assert.throws(() => parseWalletSource(source({ issued_amount })))
 })
 
-test('source parsing rejects extra private metadata and enforces all four funding classifications', () => {
-  for (const source_kind of ['manual_credit', 'voucher_grant', 'wallet_opening']) assert.equal(parseWalletSource(source({ source_kind })).refund_class, 'nonrefundable')
+test('source parsing rejects extra private metadata and enforces source/refund classifications', () => {
+  assert.equal(parseWalletSource(source({ source_kind: 'manual_credit', refund_class: 'cash_original' })).refund_class, 'cash_original')
+  for (const source_kind of ['manual_bonus', 'manual_unknown', 'voucher_grant', 'wallet_opening']) assert.equal(parseWalletSource(source({ source_kind })).refund_class, 'nonrefundable')
   assert.equal(parseWalletSource(source({ source_kind: 'sandbox_capture', refund_class: 'sandbox_original' })).refund_class, 'sandbox_original')
   for (const patch of [{ actor: 'private' }, { business_ref: 'private' }, { id: id(2) }, { source_kind: 'cash' }, { refund_class: 'cash_original' }, { source_kind: 'wallet_opening', refund_class: 'sandbox_original' }, { source_kind: 'sandbox_capture' }]) assert.throws(() => parseWalletSource(source(patch)))
   const incomplete = source(); delete incomplete.held_amount

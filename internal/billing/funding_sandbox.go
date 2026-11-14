@@ -13,6 +13,8 @@ const sandboxFundingActor = "payment-sandbox-worker"
 type sandboxFundingSource struct {
 	OrderID, TenantID string
 	Amount            Money
+	FiatCurrency      string
+	FiatAmount        FiatMoney
 	Receipt           *FundingReceipt
 }
 
@@ -39,7 +41,7 @@ func readSandboxFundingSource(ctx context.Context, tx pgx.Tx, source FundingSour
 		return out, fail("funding_integrity", "funding source integrity failed")
 	}
 	var valid, claimed, hasJournal bool
-	e := tx.QueryRow(ctx, `SELECT c.order_id,c.tenant_id,c.wallet_credit_amount,
+	e := tx.QueryRow(ctx, `SELECT c.order_id,c.tenant_id,c.wallet_credit_amount,c.amount,c.currency,
  payment_capture_source_valid(c.id) AND EXISTS(SELECT 1 FROM payment_effects x
   WHERE x.capture_id=c.id AND (x.identity_id,x.environment_id,x.merchant_id,x.provider_transaction_id,x.effect_kind,x.effect_id)
    =(c.identity_id,c.environment_id,c.merchant_id,c.provider_transaction_id,'capture','capture')),
@@ -50,7 +52,7 @@ func readSandboxFundingSource(ctx context.Context, tx pgx.Tx, source FundingSour
    AND (p.state IN ('processed','processing_review') OR
     (p.state='leased' AND i.evidence_id=c.verified_evidence_id AND i.processing_generation=c.processing_generation AND p.lease_until>$2))),
  EXISTS(SELECT 1 FROM journals j WHERE j.operation_id=c.id)
- FROM payment_captures c WHERE c.id=$1`, source.ID, at).Scan(&out.OrderID, &out.TenantID, &out.Amount, &valid, &claimed, &hasJournal)
+ FROM payment_captures c WHERE c.id=$1`, source.ID, at).Scan(&out.OrderID, &out.TenantID, &out.Amount, &out.FiatAmount, &out.FiatCurrency, &valid, &claimed, &hasJournal)
 	if errors.Is(e, pgx.ErrNoRows) {
 		return sandboxFundingSource{}, fail("invalid_funding_source", "funding source unavailable")
 	}
@@ -66,7 +68,7 @@ func readSandboxFundingSource(ctx context.Context, tx pgx.Tx, source FundingSour
 		if e = tx.QueryRow(ctx, `SELECT funding_journal_valid($1)`, receipt.JournalID).Scan(&complete); e != nil {
 			return out, e
 		}
-		if !complete || receipt.TenantID != out.TenantID || receipt.Amount != out.Amount || receipt.Currency != "COIN" {
+		if !complete || receipt.TenantID != out.TenantID || receipt.Amount != out.Amount || receipt.Currency != "COIN" || receipt.BasisKind != "paid" || receipt.FiatCurrency != out.FiatCurrency || receipt.FiatAmount == nil || *receipt.FiatAmount != out.FiatAmount || receipt.ParentRef != source.ID {
 			return sandboxFundingSource{}, fail("funding_integrity", "funding source integrity failed")
 		}
 		out.Receipt = &receipt

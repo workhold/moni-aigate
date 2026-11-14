@@ -50,6 +50,31 @@ func (s *Server) financialKey(c *gin.Context) bool {
 	}
 	return true
 }
+func (s *Server) walletFinancial(c *gin.Context, approve bool) bool {
+	required := "finance_operator"
+	if approve {
+		required = "finance_approver"
+	}
+	role := sessionOf(c).User.PlatformRole
+	if role == required {
+		return true
+	}
+	if role != "admin" {
+		s.fail(c, http.StatusForbidden, "forbidden", "需要相应财务操作权限")
+		return false
+	}
+	enabled, err := s.Billing.WalletSingleOperatorEnabled(c.Request.Context())
+	if err != nil {
+		s.error(c, err)
+		return false
+	}
+	if !enabled {
+		s.fail(c, http.StatusForbidden, "forbidden", "单人运营开关已关闭")
+		return false
+	}
+	return true
+}
+
 func (s *Server) wallet(c *gin.Context) {
 	tid, ok := s.tenant(c)
 	if !ok {
@@ -113,10 +138,10 @@ func (s *Server) request(c *gin.Context) {
 	s.ok(c, v[0])
 }
 func (s *Server) credits(c *gin.Context) {
-	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.business_ref,o.amount,o.state,o.requester,o.approver,o.created_at FROM credit_orders o JOIN tenants t ON t.id=o.tenant_id`)
+	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.business_ref,o.amount,o.bonus_amount,o.state,o.requester,o.requested_by,o.approver,o.basis_kind,o.fiat_currency,o.fiat_amount::text AS fiat_amount,o.fx_note,o.transfer_ref,o.single_operator,(o.single_operator AND o.approver=o.requester AND o.requested_by=o.approver) AS single_operator_exception,(SELECT wr.id FROM wallet_requests wr WHERE wr.linked_order_id=o.id AND wr.kind='topup') AS request_id,o.created_at FROM credit_orders o JOIN tenants t ON t.id=o.tenant_id`)
 }
 func (s *Server) createCredit(c *gin.Context) {
-	if !s.financial(c, false) || !s.financialKey(c) {
+	if !s.walletFinancial(c, false) || !s.financialKey(c) {
 		return
 	}
 	var in billing.CreditInput
@@ -126,9 +151,10 @@ func (s *Server) createCredit(c *gin.Context) {
 	in.ActorID = sessionOf(c).User.ID
 	in.IdempotencyKey = c.GetHeader("Idempotency-Key")
 	in.RequestHMAC = s.digestInput(struct {
-		TenantID, BusinessRef, ProofRef string
-		Amount                          billing.Money
-	}{in.TenantID, in.BusinessRef, in.ProofRef, in.Amount})
+		TenantID, BusinessRef, ProofRef, BasisKind, FiatCurrency, FxNote, TransferRef, RequestedBy, RequestID string
+		Amount, BonusAmount                                                                                   billing.Money
+		FiatAmount                                                                                            billing.FiatMoney
+	}{in.TenantID, in.BusinessRef, in.ProofRef, in.BasisKind, in.FiatCurrency, in.FxNote, in.TransferRef, in.RequestedBy, in.RequestID, in.Amount, in.BonusAmount, in.FiatAmount})
 	v, e := s.Billing.CreateCredit(c.Request.Context(), in)
 	if e != nil {
 		s.error(c, e)
@@ -137,7 +163,7 @@ func (s *Server) createCredit(c *gin.Context) {
 	s.ok(c, v)
 }
 func (s *Server) approveCredit(c *gin.Context) {
-	if !s.financial(c, true) || !s.financialKey(c) {
+	if !s.walletFinancial(c, true) || !s.financialKey(c) {
 		return
 	}
 	var tid string
@@ -153,10 +179,10 @@ func (s *Server) approveCredit(c *gin.Context) {
 	s.ok(c, v)
 }
 func (s *Server) refunds(c *gin.Context) {
-	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.settlement_id,o.business_ref,o.amount,o.reason,o.state,o.requester,o.approver,o.created_at FROM refund_orders o JOIN tenants t ON t.id=o.tenant_id`)
+	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.settlement_id,o.business_ref,o.amount,o.reason,o.state,o.requester,o.requested_by,o.approver,o.single_operator,(o.single_operator AND o.approver=o.requester AND o.requested_by=o.approver) AS single_operator_exception,o.created_at FROM refund_orders o JOIN tenants t ON t.id=o.tenant_id`)
 }
 func (s *Server) createRefund(c *gin.Context) {
-	if !s.financial(c, false) || !s.financialKey(c) {
+	if !s.walletFinancial(c, false) || !s.financialKey(c) {
 		return
 	}
 	var in billing.RefundInput
@@ -180,7 +206,7 @@ func (s *Server) createRefund(c *gin.Context) {
 	s.ok(c, v)
 }
 func (s *Server) approveRefund(c *gin.Context) {
-	if !s.financial(c, true) || !s.financialKey(c) {
+	if !s.walletFinancial(c, true) || !s.financialKey(c) {
 		return
 	}
 	var tid string

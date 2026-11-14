@@ -575,7 +575,7 @@ mock的16张自有表分为环境/版本/key、命令/processing/results、订�
 
 开账是停服后owner通过 `open-wallet` 向未使用空钱包显式导入非现金初始余额；同业务意图重读原件，不改造旧历史。`check-wallet-sources` 与平台核对为5秒RR只读观察，不修钱。023拒绝已有金融历史/非零余额；已有开发库保留，当前版本使用独立新库。此决策不增加旧余额导入、旧退款或双模型兼容路径。
 
-来源回执/筛选与累计摘要统一覆盖四来源，新增必填`wallet_opening_amount`；来源余额三桶和原件累计分别展示，不将开账计为销售收入。通用查询DTO输出UTC并保留精度和分页instant，前端保持严格UTC解析。浏览器已核对来源分配、平台零差异及026经营报表/CSV；实际APP/worker/projector四来源与HTTP开账验收见[本片记录](../verification/wallet-sources.md)。
+来源回执/筛选与累计摘要统一覆盖六类来源，必填`manual_bonus_amount`、`manual_unknown_amount`和`wallet_opening_amount`；来源余额三桶和原件累计分别展示，不将开账计为销售收入。034.2增加独立`wallet_requests`、追加式`wallet_operator_settings`、成对人工来源及同单付费优先FIFO，详见[034.2合同](#0342-角色付款基准独立申请与成对来源)与[资金来源明细](wallet-sources.md)。通用查询DTO输出UTC并保留精度和分页instant，前端保持严格UTC解析。
 
 隔离研究只修正原001–022材料及历史helper的固定基线身份，不接受023或新增proof/profile，也未进入serve。旧descriptor继续对当前迁移/provision漂移拒绝；旧checkout镜像正例及其变异矩阵不再作为当前测试，其覆盖边界缩减与首轮失败保留在本片记录。
 
@@ -659,7 +659,19 @@ sequenceDiagram
 
 [`current_004_virtual_coin_units.sql`](../../migrations/current_004_virtual_coin_units.sql) 将客户 `journals`、`funding_receipts` 与 `price_versions` 的外层 `currency` 改为 `COIN`，金额和费率数值不缩放；`cost_versions`、采购观察、供应商成本和支付法币事实继续使用 CNY。计量 canonical、历史请求快照和 `TextRates.currency` 刻意保留冻结的 CNY 规范化标签，不能把它与零售外层币种混为一谈。迁移只追加，先移除旧 CHECK 再回填并添加新 CHECK，显式暂停/恢复不可变及 deferred 来源校验触发器，支持非超级用户的 schema owner。
 
-[`current_005_immutable_pricing_history.sql`](../../migrations/current_005_immutable_pricing_history.sql) 在同一升级事务中恢复 current_004 曾改写的历史 pricing operation 与审计原字节，不保留其存储列。[`pricingOperationSQL`](../../internal/catalog/pricing_commands.go) 验证原始 CNY 指纹后在读取时投影 COIN 的当前指纹与结果，历史原件不再改写；`pre_coin_input_fingerprint` 仅作为原 operation 的迁移证明，供浏览器持久化的原 operation ID 做严格只读恢复，不提供旧 DTO 或第二套历史事实。支付 SKU/订单的 `amount` 使用 [`billing.FiatMoney`](../../internal/billing/fiat.go)，钱包到账 `wallet_credit_amount` 使用 `billing.Money`，处理器内部同样分型。控制台分开显示币、付款法币和采购成本；026 经营窗口报表的付款基准与同币种毛利留到 034.5，不在本片混合改写。实际存量升级、原 operation 重放、角色边界及前端验证见[034.1 验证记录](../verification/034-coin-units.md)。034.2 及后续角色、双来源、五桶、币价版本和现金退款能力尚未据此宣称完成。
+[`current_005_immutable_pricing_history.sql`](../../migrations/current_005_immutable_pricing_history.sql) 在同一升级事务中恢复 current_004 曾改写的历史 pricing operation 与审计原字节，不保留其存储列。[`pricingOperationSQL`](../../internal/catalog/pricing_commands.go) 验证原始 CNY 指纹后在读取时投影 COIN 的当前指纹与结果，历史原件不再改写；`pre_coin_input_fingerprint` 仅作为原 operation 的迁移证明，供浏览器持久化的原 operation ID 做严格只读恢复，不提供旧 DTO 或第二套历史事实。支付 SKU/订单的 `amount` 使用 [`billing.FiatMoney`](../../internal/billing/fiat.go)，钱包到账 `wallet_credit_amount` 使用 `billing.Money`，处理器内部同样分型。控制台分开显示币、付款法币和采购成本；026 经营窗口报表的付款基准与同币种毛利留到 034.5，不在本片混合改写。实际存量升级、原 operation 重放、角色边界及前端验证见[034.1 验证记录](../verification/034-coin-units.md)。034.1 的验证不覆盖后续分片；当前 034.2 见下节，034.3 起仍需独立验收。
+
+### 034.2 角色、付款基准、独立申请与成对来源
+
+[`current_006_paired_wallet_sources.sql`](../../migrations/current_006_paired_wallet_sources.sql) 将充值单限定为 `pending/approved`，增加制单、申请、审批角色字段和 `paid/grant/unknown` 付款基准。`paid` 必须同时记录 `FiatMoney` 与法币币种，纯赠送和未知基准的法币字段必须为 NULL；`amount`、`bonus_amount` 分别受 1e12 微币硬上限约束。receipt/lot 的来源与退款资格组合、直接 SQL guard 和 Go 写入口使用同一封闭集合，人工现金来源为 `manual_credit/cash_original`，赠送、未知、兑换券和开账不可现金退款。
+
+同一 `paid` 充值可写 `manual_credit` 与 `manual_bonus` 两个 receipt、两个独立 journal operation 和对应 lot；纯赠送只写 bonus，未知只写 `manual_unknown`。`wallet_credit_pair_valid` 在 COMMIT 前核对成对数量、金额、主 journal、法币字段与时间关系，缺任一来源整体回滚。赠送时间为 `max(clock_timestamp(), paid_created_at + 1µs)`，因此同单先消耗付费来源，跨单仍按 FIFO；审批重放只读取并复核原来源，不补写第二套事实。[充值制单](../../internal/billing/orders.go)、[成对入账](../../internal/billing/credit_funding.go)、[输入边界](../../internal/billing/credit_input.go)。
+
+[`wallet_requests`](../../internal/billing/wallet_requests.go) 是独立的客户申请，不是充值单或钱包事实。`open/linked/closed` 中前两种状态均无钱包效果；财务在同租户 `topup/open` 申请上制单时，同事务继承 `requested_by` 并回填唯一 `linked_order_id`，审批入账同事务关闭申请。每租户最多 20 个 `open+linked` 申请，数据库 guard 对直接 SQL 同样执行上限、身份和状态约束；`cash_refund` 在 034.4 前只能创建或关闭，不能关联。客户接口为 `GET/POST /api/wallet/requests` 与 `POST /api/wallet/requests/:id/close`，平台使用 `GET /api/platform/wallet-requests` 和对应 close；现有充值创建增加可选 `request_id`，没有旧的 `credit_orders.requested` 兼容路径。[HTTP](../../internal/server/wallet_request_handlers.go)、[客户组件](../../web/src/components/WalletRequests.vue)。
+
+`wallet_operator_settings` 以追加版本保存单人运营开关，初始为 true。`GET/PUT /api/platform/wallet-operator-settings` 仅 admin；PUT 要求近期再认证、CSRF、规范 `operation_id`、正整数 `expected_revision`、理由和显式二次确认。服务事务以 advisory lock 串行化 CAS，设置与审计同时提交，同操作同内容返回原版本，异内容或过期版本拒绝；应用角色只有 SELECT/INSERT，UPDATE/DELETE 由权限和不可变触发器共同拒绝。开关只在批准时快照到钱包单据，只有双方均为 admin 的自批才写 `single_operator_exception`，其他业务域不继承例外。[设置服务](../../internal/billing/operator_settings.go)、[设置 HTTP](../../internal/server/operator_settings_handlers.go)、[管理员面板](../../web/src/components/WalletOperatorSettings.vue)。
+
+当前应用、worker、projection 的数据库表/列/函数权限由[版本化角色核验](../../internal/operations/payment_roles.go)严格检查；离线历史 schema 只允许缺失的 034 表和函数跳过，当前 schema 不存在缺失表回退。034.3 的 `refund_held/retired`、034.3b 币价版本、034.4 现金退款、034.5 报表展示和 034.6 约合/显示名仍属后续分片，不在本节点宣称完成。专项与最终分组结果见[034.2验证记录](../verification/034-2-paired-wallet-sources.md)。
 
 ### 018 采购单价门禁与成本感知路由
 

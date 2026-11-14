@@ -150,7 +150,7 @@ func drill() error {
 	}
 	s := billing.New(source)
 	fund := func(ref string, amount billing.Money) (billing.CreditOrder, error) {
-		o, err := s.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: amount, BusinessRef: ref, ProofRef: "drill-proof", IdempotencyKey: ref, RequestHMAC: ref})
+		o, err := s.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: amount, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: billing.FiatMoney(amount), BusinessRef: ref, ProofRef: "drill-proof", IdempotencyKey: ref, RequestHMAC: ref})
 		if err != nil {
 			return billing.CreditOrder{}, err
 		}

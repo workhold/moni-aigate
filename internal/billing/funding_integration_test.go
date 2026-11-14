@@ -31,7 +31,7 @@ func fundingFixture(t *testing.T) *fixture {
 func fundingCredit(t *testing.T, f *fixture, tenant string, amount Money) CreditOrder {
 	t.Helper()
 	id := uuid.NewString()
-	o, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: tenant, ActorID: f.operator, BusinessRef: "funding:" + id, ProofRef: "funding:verified", Amount: amount, IdempotencyKey: id, RequestHMAC: id})
+	o, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: tenant, ActorID: f.operator, BusinessRef: "funding:" + id, ProofRef: "funding:verified", Amount: amount, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: FiatMoney(amount), IdempotencyKey: id, RequestHMAC: id})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,11 +177,10 @@ func TestPostgresFundingManualAvailableAndClearingBIGINTBoundaries(t *testing.T)
 	f := fundingFixture(t)
 	for _, amount := range []Money{0, -1, Money(math.MinInt64)} {
 		key := uuid.NewString()
-		_, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: amount, BusinessRef: key, ProofRef: "funding:verified", IdempotencyKey: key, RequestHMAC: key})
+		_, err := f.store.CreateCredit(f.ctx, CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: amount, BusinessRef: key, ProofRef: "funding:verified", BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: FiatMoney(amount), IdempotencyKey: key, RequestHMAC: key})
 		assertCode(t, err, "invalid_credit")
 	}
-	maximum := fundingCredit(t, f, f.tenant, Money(math.MaxInt64-1000))
-	fundingApprove(t, f, maximum)
+	openingBoundaryTenant(t, f)
 	f.wallet(t, Money(math.MaxInt64), 0)
 	overflow := fundingCredit(t, f, f.tenant, 1)
 	before := fundingSnapshot(t, f)
@@ -190,13 +189,34 @@ func TestPostgresFundingManualAvailableAndClearingBIGINTBoundaries(t *testing.T)
 	if fundingSnapshot(t, f) != before {
 		t.Fatal("AVAILABLE overflow partially changed funding facts")
 	}
-	// Another tenant can take the clearing account to the exact BIGINT minimum;
-	// its own AVAILABLE is small, so the next failure isolates clearing overflow.
 	other := accountBatchTenant(t, f)
 	fundingApprove(t, f, fundingCredit(t, f, other, 1))
-	var balance int64
-	if err = f.pool.QueryRow(f.ctx, `SELECT balance FROM ledger_accounts WHERE tenant_id IS NULL AND kind='FUNDING_CLEARING'`).Scan(&balance); err != nil || balance != math.MinInt64 {
-		t.Fatalf("exact clearing lower boundary failed: %d %v", balance, err)
+	var clearing int64
+	if err = f.pool.QueryRow(f.ctx, `SELECT balance FROM ledger_accounts WHERE tenant_id IS NULL AND kind='FUNDING_CLEARING'`).Scan(&clearing); err != nil {
+		t.Fatal(err)
+	}
+	originalClearing := clearing
+	// Deliberately corrupt only the shared clearing projection as a checkedAdd
+	// negative control. Restore the valid value before the full source audit.
+	fault, err := f.pool.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fault.Rollback(context.Background())
+	if _, err = fault.Exec(f.ctx, `ALTER TABLE ledger_accounts DISABLE TRIGGER wallet_source_fact`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = fault.Exec(f.ctx, `UPDATE ledger_accounts SET balance=$1 WHERE tenant_id IS NULL AND kind='FUNDING_CLEARING'`, int64(math.MinInt64)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = fault.Exec(f.ctx, `SET CONSTRAINTS ALL IMMEDIATE; ALTER TABLE ledger_accounts ENABLE TRIGGER wallet_source_fact`); err != nil {
+		t.Fatal(err)
+	}
+	if err = fault.Commit(f.ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err = f.pool.QueryRow(f.ctx, `SELECT balance FROM ledger_accounts WHERE tenant_id IS NULL AND kind='FUNDING_CLEARING'`).Scan(&clearing); err != nil || clearing != math.MinInt64 {
+		t.Fatalf("exact clearing lower boundary failed: %d %v", clearing, err)
 	}
 	clearingOverflow := fundingCredit(t, f, other, 1)
 	before = fundingSnapshot(t, f)
@@ -204,6 +224,9 @@ func TestPostgresFundingManualAvailableAndClearingBIGINTBoundaries(t *testing.T)
 	assertCode(t, err, "amount_overflow")
 	if fundingSnapshot(t, f) != before {
 		t.Fatal("clearing overflow partially changed funding facts")
+	}
+	if _, err = f.pool.Exec(f.ctx, `UPDATE ledger_accounts SET balance=$1 WHERE tenant_id IS NULL AND kind='FUNDING_CLEARING'`, originalClearing); err != nil {
+		t.Fatal(err)
 	}
 	fundingCheck(t, f, "")
 	fundingCheck(t, f, f.tenant)
@@ -360,7 +383,7 @@ func TestPostgresFundingCommitRejectsBalancedSourceReceiptJournalAndEventMismatc
 						if boundary == "receipt_amount" {
 							amount = 8
 						}
-						if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id) VALUES($1,'manual_credit',$2,$3,'COIN',$4)`, f.tenant, sourceID, amount, journal); err != nil {
+						if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id,basis_kind,fiat_currency,fiat_amount,parent_ref) VALUES($1,'manual_credit',$2,$3,'COIN',$4,'paid','CNY',$3,$2)`, f.tenant, sourceID, amount, journal); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -403,7 +426,7 @@ func TestPostgresFundingCommitRejectsEqualAmountSourceSwap(t *testing.T) {
 		if _, err = tx.Exec(f.ctx, `UPDATE credit_orders SET state='approved',approver=$2,journal_id=$3 WHERE id=$1`, o.ID, f.approver, journal); err != nil {
 			t.Fatal(err)
 		}
-		if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id) VALUES($1,'manual_credit',$2,11,'COIN',$3)`, f.tenant, orders[1-i].ID, journal); err != nil {
+		if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id,basis_kind,fiat_currency,fiat_amount,parent_ref) VALUES($1,'manual_credit',$2,11,'COIN',$3,'paid','CNY',11,$2)`, f.tenant, orders[1-i].ID, journal); err != nil {
 			t.Fatal(err)
 		}
 		if err = emit(f.ctx, tx, f.tenant, o.ID, "credited", map[string]any{"amount": Money(11)}); err != nil {

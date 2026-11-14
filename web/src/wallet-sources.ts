@@ -3,8 +3,8 @@ import type { Envelope } from './api.ts'
 import { commerceDecimal, commerceObject, commerceUUID } from './commerce.ts'
 import { createCommerceScope } from './commerce-state.ts'
 
-export type WalletSourceKind = 'manual_credit' | 'voucher_grant' | 'sandbox_capture' | 'wallet_opening'
-export type WalletRefundClass = 'nonrefundable' | 'sandbox_original'
+export type WalletSourceKind = 'manual_credit' | 'manual_bonus' | 'manual_unknown' | 'voucher_grant' | 'sandbox_capture' | 'wallet_opening'
+export type WalletRefundClass = 'nonrefundable' | 'sandbox_original' | 'cash_original'
 export interface WalletSourceRow {
   id: string; lot_id: string; source_kind: WalletSourceKind; refund_class: WalletRefundClass
   issued_amount: string; available_amount: string; held_amount: string; consumed_amount: string; created_at: string
@@ -18,7 +18,7 @@ export interface WalletSourcesState {
 }
 type Transport = (path: string, isCurrent: () => boolean) => Promise<Envelope<unknown>>
 const fields = ['id', 'lot_id', 'source_kind', 'refund_class', 'issued_amount', 'available_amount', 'held_amount', 'consumed_amount', 'created_at'] as const
-const kinds: readonly WalletSourceKind[] = ['manual_credit', 'voucher_grant', 'sandbox_capture', 'wallet_opening']
+const kinds: readonly WalletSourceKind[] = ['manual_credit', 'manual_bonus', 'manual_unknown', 'voucher_grant', 'sandbox_capture', 'wallet_opening']
 
 export function canReadWalletSources(access: WalletSourcesAccess): boolean {
   if (!access.authenticated || access.blocked) return false
@@ -27,10 +27,12 @@ export function canReadWalletSources(access: WalletSourcesAccess): boolean {
     : !!access.tenantID && ['owner', 'billing_viewer'].includes(access.tenantRole || '')
 }
 export function walletSourceLabel(kind: WalletSourceKind): string {
-  return { manual_credit: '人工核款', voucher_grant: '运营赠额', sandbox_capture: '本地模拟入账', wallet_opening: '初始余额导入' }[kind]
+  return { manual_credit: '人工核款', manual_bonus: '随单赠送', manual_unknown: '未知付款基准', voucher_grant: '运营赠额', sandbox_capture: '本地模拟入账', wallet_opening: '初始余额导入' }[kind]
 }
 export function walletRefundLabel(refundClass: WalletRefundClass): string {
-  return refundClass === 'sandbox_original' ? '仅本地支付沙箱' : '不可原路退款'
+  if (refundClass === 'sandbox_original') return '仅本地支付沙箱'
+  if (refundClass === 'cash_original') return '原始现金来源'
+  return '不可原路退款'
 }
 function utcTime(value: unknown): string {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/.test(value)) throw new Error('资金来源时间须为有效的 UTC RFC3339 格式。')
@@ -51,9 +53,10 @@ export function walletSourcesPath(target: WalletSourcesTarget, cursor = ''): str
 }
 export function parseWalletSource(value: unknown): WalletSourceRow {
   const raw = commerceObject(value, fields)
-  if (!kinds.includes(raw.source_kind as WalletSourceKind) || !['nonrefundable', 'sandbox_original'].includes(raw.refund_class as string)) throw new Error('资金来源类型或退款类别无效。')
+  if (!kinds.includes(raw.source_kind as WalletSourceKind) || !['nonrefundable', 'sandbox_original', 'cash_original'].includes(raw.refund_class as string)) throw new Error('资金来源类型或退款类别无效。')
   const source_kind = raw.source_kind as WalletSourceKind, refund_class = raw.refund_class as WalletRefundClass
-  if ((source_kind === 'sandbox_capture') !== (refund_class === 'sandbox_original')) throw new Error('资金来源与退款类别不一致。')
+  const valid = source_kind === 'manual_credit' && refund_class === 'cash_original' || source_kind === 'sandbox_capture' && refund_class === 'sandbox_original' || ['manual_bonus', 'manual_unknown', 'voucher_grant', 'wallet_opening'].includes(source_kind) && refund_class === 'nonrefundable'
+  if (!valid) throw new Error('资金来源与退款类别不一致。')
   const row: WalletSourceRow = {
     id: commerceUUID(raw.id), lot_id: commerceUUID(raw.lot_id), source_kind, refund_class,
     issued_amount: commerceDecimal(raw.issued_amount, true), available_amount: commerceDecimal(raw.available_amount),

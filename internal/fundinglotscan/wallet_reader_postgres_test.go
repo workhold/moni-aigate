@@ -72,7 +72,7 @@ func newWalletPGFixture(t *testing.T) *walletPGFixture {
 	_, err = f.owner.Exec(f.ctx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$1||'@example.invalid','fixture-only','finance_operator'),($2,$2||'@example.invalid','fixture-only','finance_approver')`, maker, checker)
 	completeSourcePGMust(t, "seed distinct finance actors", err)
 	store := billing.New(f.owner)
-	credit, err := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: maker, Amount: 40, BusinessRef: "wallet-reader:" + uuid.NewString(), ProofRef: "fixture:verified-bank-transfer", IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString()})
+	credit, err := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: maker, Amount: 40, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 40, BusinessRef: "wallet-reader:" + uuid.NewString(), ProofRef: "fixture:verified-bank-transfer", IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString()})
 	completeSourcePGMust(t, "create original manual credit through API", err)
 	approved, err := store.ApproveCredit(f.ctx, billing.ApprovalInput{TenantID: f.tenant, OrderID: credit.ID, ActorID: checker})
 	completeSourcePGMust(t, "approve original manual credit through API", err)

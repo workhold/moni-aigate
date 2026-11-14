@@ -66,7 +66,7 @@ func TestPostgresWalletSourcesSummaryFourSourcesAndOpeningProjection(t *testing.
 		t.Fatal(err)
 	}
 	var fields map[string]json.RawMessage
-	if err = json.Unmarshal(wire, &fields); err != nil || len(fields) != 7 || string(fields["wallet_opening_amount"]) != `"157"` {
+	if err = json.Unmarshal(wire, &fields); err != nil || len(fields) != 9 || string(fields["wallet_opening_amount"]) != `"157"` || string(fields["manual_bonus_amount"]) != `"0"` || string(fields["manual_unknown_amount"]) != `"0"` {
 		t.Fatal("current summary DTO did not expose the fourth exact amount", string(wire), err)
 	}
 	seedSummary, err := v.GetFundingSummary(f.ctx, VoucherReader{ActorID: f.user, TenantID: seedTenant})

@@ -44,9 +44,10 @@ test('pending allocations keep both settlement fields null and cannot claim a re
 })
 
 test('funding source classification, exact DTO fields and original lot identity are enforced', () => {
-  for (const source_kind of ['manual_credit', 'voucher_grant', 'wallet_opening']) assert.equal(parseRequestFunding(source({ source_kind })).refund_class, 'nonrefundable')
+  assert.equal(parseRequestFunding(source({ source_kind: 'manual_credit', refund_class: 'cash_original' })).refund_class, 'cash_original')
+  for (const source_kind of ['manual_bonus', 'manual_unknown', 'voucher_grant', 'wallet_opening']) assert.equal(parseRequestFunding(source({ source_kind })).refund_class, 'nonrefundable')
   assert.equal(parseRequestFunding(source({ source_kind: 'sandbox_capture', refund_class: 'sandbox_original' })).refund_class, 'sandbox_original')
-  for (const patch of [{ actor: 'private' }, { source_id: 'private' }, { id: id(2) }, { source_kind: 'cash' }, { source_kind: 'sandbox_capture' }, { refund_class: 'cash_original' }, { refund_class: 'sandbox_original' }]) assert.throws(() => parseRequestFunding(source(patch)))
+  for (const patch of [{ source_kind: 'manual_credit', refund_class: 'nonrefundable' }, { source_kind: 'manual_bonus', refund_class: 'cash_original' }, { actor: 'private' }, { source_id: 'private' }, { id: id(2) }, { source_kind: 'cash' }, { source_kind: 'sandbox_capture' }, { refund_class: 'cash_original' }, { refund_class: 'sandbox_original' }]) assert.throws(() => parseRequestFunding(source(patch)))
   const missing = source(); delete missing.charged_amount; assert.throws(() => parseRequestFunding(missing))
 })
 

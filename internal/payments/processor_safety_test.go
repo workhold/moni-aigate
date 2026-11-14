@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/moni-ai/moni-aigate/internal/billing"
 	p "github.com/moni-ai/moni-aigate/internal/paymentproto"
 )
 
@@ -196,15 +195,18 @@ func TestProcessorRealFundingOverflowPreservesSelection(t *testing.T) {
 	f := paymentServiceFixture(t)
 	processor := processorFixture(t, f)
 	o := f.order(t)
-	approver := uuid.NewString()
-	serviceExec(t, f.app, f.ctx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'unused','finance_approver')`, approver, approver+"@test.invalid")
-	store := billing.New(f.app)
-	credit, err := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.finance, Amount: billing.Money(math.MaxInt64), BusinessRef: "overflow:" + uuid.NewString(), IdempotencyKey: uuid.NewString(), RequestHMAC: "overflow-test", ProofRef: "fixture:confirmed"})
+	// Deliberately corrupt only this isolated AVAILABLE projection as a checked
+	// overflow negative control; the source guard is restored before processing.
+	fault, err := f.owner.Begin(f.ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = store.ApproveCredit(f.ctx, billing.ApprovalInput{TenantID: f.tenant, ActorID: approver, OrderID: credit.ID})
-	if err != nil {
+	defer fault.Rollback(context.Background())
+	serviceExec(t, fault, f.ctx, `ALTER TABLE ledger_accounts DISABLE TRIGGER wallet_source_fact`)
+	serviceExec(t, fault, f.ctx, `UPDATE ledger_accounts SET balance=$2 WHERE tenant_id=$1 AND kind='AVAILABLE'`, f.tenant, int64(math.MaxInt64))
+	serviceExec(t, fault, f.ctx, `INSERT INTO ledger_accounts(tenant_id,kind,balance) SELECT $1,'AVAILABLE',$2 WHERE NOT EXISTS(SELECT 1 FROM ledger_accounts WHERE tenant_id=$1 AND kind='AVAILABLE')`, f.tenant, int64(math.MaxInt64))
+	serviceExec(t, fault, f.ctx, `SET CONSTRAINTS ALL IMMEDIATE; ALTER TABLE ledger_accounts ENABLE TRIGGER wallet_source_fact`)
+	if err = fault.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}
 	processorReceive(t, f, processorNotificationFixture(t, f, o, "tx:"+uuid.NewString(), "event:"+uuid.NewString(), "capture.confirmed", 100))

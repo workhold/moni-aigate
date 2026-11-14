@@ -161,7 +161,7 @@ func TestPostgresWalletSourcesApplicationFinancialLifecycle(t *testing.T) {
 		}
 	}
 	f.wallet(t, 150, 0)
-	walletApplicationRows(t, f, `SELECT id,source_kind,refund_class,issued_amount::text FROM funding_lots WHERE tenant_id=$1 ORDER BY fifo_at,id COLLATE "C"`, [][]string{{lots[0], "manual_credit", "nonrefundable", "70"}, {lots[1], "manual_credit", "nonrefundable", "80"}}, f.tenant)
+	walletApplicationRows(t, f, `SELECT id,source_kind,refund_class,issued_amount::text FROM funding_lots WHERE tenant_id=$1 ORDER BY fifo_at,id COLLATE "C"`, [][]string{{lots[0], "manual_credit", "cash_original", "70"}, {lots[1], "manual_credit", "cash_original", "80"}}, f.tenant)
 	walletApplicationChecks(t, f)
 
 	// Publish a legal two-channel fallback route before freezing the request.
@@ -295,4 +295,30 @@ func TestPostgresWalletSourcesApplicationFinancialLifecycle(t *testing.T) {
 	if walletSourceSnapshot(t, f) != beforeChecks || walletSourcesReadSnapshot(t, f) != beforeSources {
 		t.Fatal("actual APP read-only checks mutated financial facts")
 	}
+}
+
+func TestPostgresWalletSourcesApplicationSelfServiceCompletion(t *testing.T) {
+	f := walletSourcesFixture(t)
+	walletSourcesApplication(t, f)
+	request, err := f.store.CreateWalletRequest(f.ctx, WalletRequestInput{TenantID: f.tenant, ActorID: f.user, Kind: "topup", Note: "self-service bank reference", IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString()})
+	if err != nil || request.State != "open" {
+		t.Fatalf("actual APP self-service request: %+v %v", request, err)
+	}
+	f.wallet(t, 0, 0)
+	input := CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: "self-service-app", ProofRef: "proof:self-service", Amount: 25, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 25, IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString(), RequestID: request.ID}
+	pending, err := f.store.CreateCredit(f.ctx, input)
+	if err != nil || pending.State != "pending" || pending.Requester != f.operator || pending.RequestedBy != f.user || pending.RequestID != request.ID {
+		t.Fatalf("actual APP maker link: %+v %v", pending, err)
+	}
+	f.wallet(t, 0, 0)
+	approved, err := f.store.ApproveCredit(f.ctx, ApprovalInput{TenantID: f.tenant, OrderID: pending.ID, ActorID: f.approver})
+	if err != nil || approved.State != "approved" {
+		t.Fatalf("actual APP self-service approval: %+v %v", approved, err)
+	}
+	var state string
+	if err = f.pool.QueryRow(f.ctx, `SELECT state FROM wallet_requests WHERE id=$1 AND linked_order_id=$2`, request.ID, pending.ID).Scan(&state); err != nil || state != "closed" {
+		t.Fatalf("actual APP request close: state=%s err=%v", state, err)
+	}
+	f.wallet(t, 25, 0)
+	walletApplicationChecks(t, f)
 }

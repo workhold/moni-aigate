@@ -36,7 +36,13 @@ const walletSourcesCheckSQL = `WITH
 source_roots AS (
  SELECT c.tenant_id,'manual_credit'::text AS kind,c.id AS source_id,c.amount,
   c.journal_id AS journal_ref,NULL::text AS receipt_ref
- FROM credit_orders c WHERE c.state='approved' AND ($1='' OR c.tenant_id=$1)
+ FROM credit_orders c WHERE c.state='approved' AND c.basis_kind='paid' AND ($1='' OR c.tenant_id=$1)
+ UNION ALL
+ SELECT c.tenant_id,'manual_bonus',c.id,c.bonus_amount,NULL::text,NULL::text
+ FROM credit_orders c WHERE c.state='approved' AND c.basis_kind IN ('paid','grant') AND c.bonus_amount>0 AND ($1='' OR c.tenant_id=$1)
+ UNION ALL
+ SELECT c.tenant_id,'manual_unknown',c.id,c.amount,c.journal_id,NULL::text
+ FROM credit_orders c WHERE c.state='approved' AND c.basis_kind='unknown' AND ($1='' OR c.tenant_id=$1)
  UNION ALL
  SELECT v.tenant_id,'voucher_grant',v.voucher_id,v.amount,v.journal_id,v.funding_receipt_id
  FROM voucher_redemptions v WHERE ($1='' OR v.tenant_id=$1)
@@ -53,6 +59,8 @@ source_roots AS (
   WHERE f.tenant_id=s.tenant_id AND f.source_kind=s.kind AND f.source_id=s.source_id
    AND f.amount=s.amount AND (s.journal_ref IS NULL OR f.journal_id=s.journal_ref)
    AND (s.receipt_ref IS NULL OR f.id=s.receipt_ref) AND funding_journal_valid(f.journal_id))
+ UNION ALL
+ SELECT 'pair',c.id FROM credit_orders c WHERE c.state='approved' AND ($1='' OR c.tenant_id=$1) AND NOT wallet_credit_pair_valid(c.id)
  UNION ALL
  SELECT 'receipt',f.id FROM funding_receipts f WHERE ($1='' OR f.tenant_id=$1)
   AND (funding_journal_valid(f.journal_id) IS DISTINCT FROM true OR NOT EXISTS(
@@ -88,7 +96,7 @@ source_roots AS (
   OR (SELECT count(*) FROM journal_lines x WHERE x.journal_id=j.id)<2
   OR (SELECT coalesce(sum(x.signed_delta::numeric),0) FROM journal_lines x WHERE x.journal_id=j.id)<>0
   OR NOT CASE
-   WHEN j.kind IN ('credit','voucher_grant','sandbox_capture','wallet_opening') THEN funding_journal_valid(j.id)
+   WHEN j.kind IN ('credit','credit_bonus','voucher_grant','sandbox_capture','wallet_opening') THEN funding_journal_valid(j.id)
    WHEN j.kind='reserve' THEN EXISTS(SELECT 1 FROM reservations r
     WHERE r.id=j.operation_id AND r.tenant_id=j.tenant_id AND r.request_id=j.reference)
    WHEN j.kind IN ('settled','released') THEN EXISTS(SELECT 1 FROM settlements s

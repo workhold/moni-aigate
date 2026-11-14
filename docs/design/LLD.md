@@ -116,8 +116,9 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 | metering_events / finalization_records | event身份/来源/schema/request/attempt/发生与接收时间、usage状态/规范量及evidence_ref；终结记录固定协议/传输/本地写入事实和billing_policy版本，关联恢复任务；只保存最终/异常/修正事实，不逐Token写库 |
 | projection_outbox / projection_receipts | event_id, tenant_id, operation_id, kind, schema_version, sanitized_payload, created_at；与资金事务同写；消费回执以(consumer,event_id)唯一，投影更新与回执同事务 |
 | settlements | id, request_id, tenant_id, usage_snapshot, raw_retail_amount, charged_amount, waived_retail_amount, refunded_amount, basis；每请求唯一，退款累计封顶 |
-| credit_orders / refund_orders / cash_refund_orders | tenant_id, business_ref, amount, state, requester, maker, approver, proof_ref, journal_id；业务号唯一、申请人不可审批；034 的现金退款另有 `refund_held`/`retired` 状态流转 |
-| wallet_operator_settings / coin_rate_versions | 034 目标：追加式单人运营开关与币价版本；开关写入需二次确认并在单据/审计中快照；MVP 只记录创世/买入币价，不提供调价入口 |
+| credit_orders / refund_orders / cash_refund_orders | tenant_id, business_ref, amount, state, requester, maker, approver, proof_ref, journal_id；业务号唯一、申请人不可审批；034.4 的现金退款另有 `refund_held`/`retired` 状态流转 |
+| wallet_requests | 034.2 独立客户申请：tenant/kind/requested_by/note/open-linked-closed/linked_order_id；open+linked每租户最多20，关联与关闭跟随对应单据事务，open/linked无钱包效果 |
+| wallet_operator_settings / coin_rate_versions | 034.2 已落地追加式单人运营开关，写入需二次确认并在单据/审计中快照；034.3b 目标为币价版本，MVP只记录创世/买入币价，不提供调价入口 |
 | reconciliation_cases | request_id, reason, evidence_ref, deadline, `proposed_observation_canonical`/`proposed_observation_digest`, requester, approver, resolution；每请求最多一个活动核对项。当前028-U提案原件是绑定请求schema的完整retail QuantitiesWire |
 | audit_events | actor, tenant_scope, action, target, sanitized_diff, request_id, created_at；应用角色只追加 |
 
@@ -143,7 +144,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 采用平衡的业务账本：每笔 journal 的 `signed_delta` 总和等于 0，不代表已接入法定会计总账。余额缓存与分录在同一事务更新；数据库约束触发器在提交时校验平衡，只允许经受控账本写入口追加。应用角色不能 UPDATE/DELETE 已提交分录。
 
-| 事件 | 分录（单位：微元） |
+| 事件 | 分录（单位：微币 COIN） |
 |---|---|
 | 人工收款审批入账 X | 客户 AVAILABLE +X；平台 FUNDING_CLEARING -X |
 | 冻结 R | 客户 AVAILABLE -R；客户 HELD +R |
@@ -174,14 +175,17 @@ amount_micro = metering.Amount(complete_quantities, complete_rates)；费率为�
 
 请求在预占事务按 DB 当前时间选中最新生效售价，保存价格 ID 与完整数值快照。上下文上限、默认输出限制、计费政策同样版本化。跨日、改价、渠道切换都不得改变历史快照。034 尚未实现前，现行售价仍按 CNY 微元处理；034 目标售价改用微币。
 
-#### 5.2.1 034 虚拟币钱包合同（2026-11-14 已冻结；实现按 034 §17 分片进行，未上线）
+#### 5.2.1 034 虚拟币钱包合同（2026-11-14 已冻结；034.1–034.2 本地实现，后续分片未完成）
 
-034 不创建第二个钱包。实现后客户钱包、客户售价、Key 额度和周期预算统一使用整数微币；充值与现金退款额外记录法币金额和币种，供应商成本继续属于平台侧采购域。当前分支的 CNY 运行时合同在 034 实现完成前保持不变。
+034 不创建第二个钱包。034.1 已将客户钱包、客户售价、Key 额度和周期预算统一切换为整数微币；充值额外记录法币金额和币种，供应商成本继续属于平台侧采购域。034.2 增加角色字段、独立申请、付款基准与成对人工来源；现金退款桶、币价版本和现金退款状态机仍按 034 §17 后续分片实现，不提前视为已完成。
 
 - 同一手动充值单拆成付费来源与赠送来源时，付费来源必须先消耗，赠送来源后消耗；不同充值单仍按现有 `(fifo_at, id)` 严格 FIFO。实现必须保持 `funding_lot.fifo_at = funding_receipt.created_at`、文本与媒体 Reserve、Go 计划、SQL guard 的合同一致，并在固定时钟、并发和两条 Reserve 路径上验证。
 - 来源守恒扩展为 `available + held + refund_held + consumed + retired = issued`。`refund_held` 只服务现金退款待转账状态，`retired` 表示已完成现金退出；二者不能进入 Reserve。租户新增 `REFUND_HELD` 账户，账户余额分别与对应来源桶之和一致。
 - 现金退款保留 B 规则：批准时冻结 `min(按当前币价核算、按原付款比例核算)`，全额退款由系统读取可用币，操作人不能填币数；赠送、未知基准和其他不可退来源不能现金退款。MVP 只记录创世币价与付费来源买入币价，当前不提供调价 HTTP、控制台入口或写命令；未来调价必须追加版本、审批、影响预览、不得回溯，并在批准时冻结版本。
 - `wallet_operator_settings` 是追加式平台设置，初始 `single_operator=true`。管理员界面启用、关闭或修改必须二次确认/近期重新认证并写审计；每张单据在批准时保存开关快照。仅当快照允许且制单人与审批人均为 `admin` 时允许同账号操作，并固定写入 `single_operator_exception`；其他业务域的 maker/checker 约束不随之放宽。
+- 设置接口为 `GET/PUT /api/platform/wallet-operator-settings`。PUT 固定字段为 `operation_id`（规范非零UUID）、`expected_revision`（正int64十进制字符串）、`single_operator`、`reason`（1..200字节）和 `confirmation=CONFIRM_SINGLE_OPERATOR_CHANGE`；平台中间件继续执行MFA、CSRF、近期再认证和恢复门禁。`operation_id`同时作为追加行ID，重放核对actor、原expected revision、目标值和理由；不同内容为`idempotency_conflict`，当前版本不符为`revision_conflict`。服务事务使用专用advisory lock串行CAS，设置和审计一起提交，重放不重复审计。APP只有SELECT/INSERT，UPDATE/DELETE由ACL和不可变触发器共同拒绝。
+- `wallet_requests` 是独立客户申请，禁止写入`credit_orders.requested`。`open → linked`必须与同租户`topup`的`pending`充值单同一事务完成并继承`requested_by`；`linked → closed`必须与充值审批入账同一事务完成。`open → closed`仅用于owner取消或财务拒绝，linked不可手工取消。`cash_refund`在034.4前不得关联。每租户open+linked最多20，guard使用租户级事务锁并对直接SQL执行同一上限和状态约束；关联冲突回滚整张单据。
+- 客户接口为`GET/POST /api/wallet/requests`与`POST /api/wallet/requests/:id/close`；平台为`GET /api/platform/wallet-requests`及对应close。创建/关闭使用Idempotency-Key和完整意图摘要，申请正文不复制进审计。`POST /api/platform/credits`的可选`request_id`进入幂等摘要；跨租户、重复关联和034.4前的cash_refund关联均失败且无钱包效果。APP对申请只有SELECT/INSERT及`state,linked_order_id`更新，worker/projection无访问权。
 
 ### 5.3 预占上界
 
@@ -195,7 +199,7 @@ amount_micro = metering.Amount(complete_quantities, complete_rates)；费率为�
 
 ### T0：人工入账
 
-锁定 credit_order → 确认待审批、真实业务号唯一、审批人有角色；若单据快照 `single_operator=true` 且制单人与审批人均为 `admin`，允许同账号，否则审批人必须不同 → 锁定相关 ledger_accounts（account_id 排序）→ 写平衡 journal 与余额 → 单据标记 approved 并引用 journal → 写审计 → commit。重放返回原结果；同业务号不同金额报冲突。凭证仅存受控引用，不在普通日志里存财务附件。
+客户`open`申请只写wallet_request与审计，不产生钱包效果。财务关联时锁定同租户`topup/open`申请 → 创建`pending` credit_order并继承申请人 → 同事务回填linked；此后仍无钱包效果。审批时锁定credit_order → 确认待审批、真实业务号唯一、审批人与制单角色；若当前开关允许且制单人与审批人均为`admin`，允许同账号并保存批准时快照，否则审批人必须不同 → 锁定相关ledger_accounts（account_id排序）→ 写付费/赠送各自平衡journal、receipt、lot与余额 → 单据标记approved并引用主journal → 同事务关闭linked申请 → 写审计 → commit。COMMIT前guard核对成对来源，任一部分失败全部回滚。重放返回原结果；同业务号或同操作不同完整意图报冲突。凭证仅存受控引用，申请正文和财务附件不进入普通日志或审计。
 
 ### T1：接受并预占
 
@@ -1126,7 +1130,7 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 026按原request创建窗口统计唯一收入/退款和全部attempt成本；opening不算销售收入。媒体/任务/实时将复用同一事实，不另开收入总账。供应商与部署验收独立记录；性能在完整能力后进行。
 
-027的入账摘要与回执过滤统一为四来源，wallet_opening_amount是必填精确金额；开账只计钱包入账，不计模型销售收入。通用查询时间统一UTC并保留精度和分页instant；来源/分配UI保持严格校验。实际受限APP/worker/projector、HTTP、浏览器与经营CSV验证见[027记录](../verification/wallet-sources.md)。
+027的入账摘要与回执过滤在034.2扩展为六类来源，`manual_bonus_amount`、`manual_unknown_amount`与`wallet_opening_amount`均为必填精确金额；开账只计钱包入账，不计模型销售收入。独立`wallet_requests`与追加式`wallet_operator_settings`进入同一HTTP/权限边界，成对人工来源保持同单付费优先FIFO。通用查询时间统一UTC并保留精度和分页instant；来源/分配UI保持严格校验。实际受限APP/worker/projector、HTTP、浏览器与经营CSV验证见[027记录](../verification/wallet-sources.md)及[034.2验证记录](../verification/034-2-paired-wallet-sources.md)。
 
 ## 028-U共同纯域与生产替换边界
 

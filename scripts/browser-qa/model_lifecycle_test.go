@@ -158,7 +158,7 @@ func setupModelBusiness(ctx context.Context, live *privateModelLifecycle) (model
 		return b, stage("model_setup_publish_failed")
 	}
 	store := billing.New(live.owner)
-	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: b.tenant, ActorID: operator, Amount: 1000, BusinessRef: uuid.NewString(), ProofRef: "fixture:model-process", IdempotencyKey: uuid.NewString(), RequestHMAC: "model-process-credit"})
+	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: b.tenant, ActorID: operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: uuid.NewString(), ProofRef: "fixture:model-process", IdempotencyKey: uuid.NewString(), RequestHMAC: "model-process-credit"})
 	if err != nil {
 		return b, stage("model_setup_credit_failed")
 	}

@@ -141,7 +141,7 @@ func newFixture(t *testing.T) *fixture {
 	}
 	store := billing.New(f.app)
 	id := uuid.NewString()
-	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BusinessRef: "historical:" + id, ProofRef: "historical:verified", IdempotencyKey: id, RequestHMAC: id})
+	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: "historical:" + id, ProofRef: "historical:verified", IdempotencyKey: id, RequestHMAC: id})
 	must(t, "APP create complete funding source", err)
 	approved, err := store.ApproveCredit(ctx, billing.ApprovalInput{TenantID: f.tenant, ActorID: f.approver, OrderID: credit.ID})
 	must(t, "APP approve complete funding source", err)

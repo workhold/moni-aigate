@@ -203,7 +203,7 @@ func TestProcurementHTTPMeterOriginalBoundsAndPagination(t *testing.T) {
 	authExec(t, f.pool, `INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)`, otherTenant, owner)
 	authExec(t, f.pool, `INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, otherTenant, f.model)
 	authExec(t, f.pool, `INSERT INTO api_keys(id,tenant_id,owner_id,name,prefix,digest,scopes,lifetime_limit) SELECT $1,$2,owner_id,name,'other-meter',$3,scopes,lifetime_limit FROM api_keys WHERE id=$4`, otherKey, otherTenant, uuid.NewString(), f.key)
-	credit, err := f.server.Billing.CreateCredit(context.Background(), billing.CreditInput{TenantID: otherTenant, ActorID: operator, Amount: 1000, IdempotencyKey: uuid.NewString(), RequestHMAC: "other-meter-credit", BusinessRef: uuid.NewString(), ProofRef: "receipt:meter"})
+	credit, err := f.server.Billing.CreateCredit(context.Background(), billing.CreditInput{TenantID: otherTenant, ActorID: operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, IdempotencyKey: uuid.NewString(), RequestHMAC: "other-meter-credit", BusinessRef: uuid.NewString(), ProofRef: "receipt:meter"})
 	if err != nil {
 		t.Fatal(err)
 	}

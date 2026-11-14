@@ -17,7 +17,7 @@ func pbCommandFund(t *testing.T, f *pbTxFixture) {
 	t.Helper()
 	operation := uuid.NewString()
 	store := billing.New(f.app)
-	credit, err := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 200000, BusinessRef: "commander-limits:" + operation, ProofRef: "fixture:verified", IdempotencyKey: operation, RequestHMAC: operation})
+	credit, err := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 200000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 200000, BusinessRef: "commander-limits:" + operation, ProofRef: "fixture:verified", IdempotencyKey: operation, RequestHMAC: operation})
 	pbTxMust(t, "create complete extra source funding", err)
 	_, err = store.ApproveCredit(f.ctx, billing.ApprovalInput{TenantID: f.tenant, ActorID: f.approver, OrderID: credit.ID})
 	pbTxMust(t, "approve complete extra source funding", err)

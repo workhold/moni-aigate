@@ -16,6 +16,8 @@ const (
 	FundingVoucherGrant   FundingSourceKind = "voucher_grant"
 	FundingSandboxCapture FundingSourceKind = "sandbox_capture"
 	FundingWalletOpening  FundingSourceKind = "wallet_opening"
+	FundingManualBonus    FundingSourceKind = "manual_bonus"
+	FundingManualUnknown  FundingSourceKind = "manual_unknown"
 )
 
 type FundingSourceRef struct {
@@ -30,6 +32,10 @@ type FundingReceipt struct {
 	Amount              Money
 	Currency, JournalID string
 	CreatedAt           time.Time
+	BasisKind           string
+	FiatCurrency        string
+	FiatAmount          *FiatMoney
+	ParentRef           string
 }
 type FundingResult struct {
 	Receipt      FundingReceipt
@@ -39,7 +45,7 @@ type FundingResult struct {
 
 func fundingReceiptRow(ctx context.Context, tx pgx.Tx, kind FundingSourceKind, id string) (FundingReceipt, error) {
 	var r FundingReceipt
-	e := tx.QueryRow(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at FROM funding_receipts WHERE source_kind=$1 AND source_id=$2`, string(kind), id).Scan(&r.ID, &r.TenantID, &r.SourceKind, &r.SourceID, &r.Amount, &r.Currency, &r.JournalID, &r.CreatedAt)
+	e := tx.QueryRow(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,coalesce(fiat_currency,''),fiat_amount,parent_ref FROM funding_receipts WHERE source_kind=$1 AND source_id=$2`, string(kind), id).Scan(&r.ID, &r.TenantID, &r.SourceKind, &r.SourceID, &r.Amount, &r.Currency, &r.JournalID, &r.CreatedAt, &r.BasisKind, &r.FiatCurrency, &r.FiatAmount, &r.ParentRef)
 	return r, e
 }
 
@@ -60,44 +66,7 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 	var sandbox sandboxFundingSource
 	switch source.Kind {
 	case FundingManualCredit:
-		if scope.CommandID != "" {
-			return result, fail("invalid_funding_source", "manual funding has no commerce command")
-		}
-		o, e := creditRow(ctx, tx, scope.TenantID, source.ID, false)
-		if e != nil {
-			return result, e
-		}
-		// Plain reads are protected by the outer credit and user SHARE locks.
-		var authorized bool
-		if e = tx.QueryRow(ctx, `SELECT $1<>$2 AND EXISTS(SELECT 1 FROM users WHERE id=$1 AND status='active' AND platform_role='finance_approver') AND EXISTS(SELECT 1 FROM users WHERE id=$2 AND status='active' AND platform_role='finance_operator')`, scope.ActorID, o.Requester).Scan(&authorized); e != nil {
-			return result, e
-		}
-		if !authorized {
-			return result, fail("forbidden", "financial role required")
-		}
-		if o.State == "approved" {
-			receipt, e := fundingReceiptRow(ctx, tx, source.Kind, source.ID)
-			if e != nil {
-				return result, e
-			}
-			var valid bool
-			if e = tx.QueryRow(ctx, `SELECT funding_journal_valid($1)`, o.JournalID).Scan(&valid); e != nil {
-				return result, e
-			}
-			if !valid || receipt.TenantID != scope.TenantID || receipt.JournalID != o.JournalID {
-				return result, fail("funding_integrity", "funding source integrity failed")
-			}
-			if e = verifyFundingReceiptLotTx(ctx, tx, receipt); e != nil {
-				return result, e
-			}
-			result.Receipt = receipt
-			return result, nil
-		}
-		if o.State != "pending" {
-			return result, fail("invalid_funding_source", "funding source unavailable")
-		}
-		amount = o.Amount
-		requester = o.Requester
+		return s.applyCreditTx(ctx, tx, source, scope)
 	case FundingVoucherGrant:
 		if scope.CommandID == "" {
 			return result, fail("invalid_funding_source", "voucher command required")
@@ -226,7 +195,17 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 	if e != nil {
 		return result, e
 	}
-	receipt := FundingReceipt{ID: uuid.NewString(), TenantID: scope.TenantID, SourceKind: source.Kind, SourceID: source.ID, Amount: amount, Currency: "COIN", JournalID: journal, CreatedAt: now}
+	receipt := FundingReceipt{ID: uuid.NewString(), TenantID: scope.TenantID, SourceKind: source.Kind, SourceID: source.ID, Amount: amount, Currency: "COIN", JournalID: journal, CreatedAt: now, ParentRef: source.ID}
+	switch source.Kind {
+	case FundingVoucherGrant:
+		receipt.BasisKind = "grant"
+	case FundingSandboxCapture:
+		receipt.BasisKind = "paid"
+		receipt.FiatCurrency = sandbox.FiatCurrency
+		receipt.FiatAmount = &sandbox.FiatAmount
+	case FundingWalletOpening:
+		receipt.BasisKind = "opening"
+	}
 	switch source.Kind {
 	case FundingManualCredit:
 		if _, e = tx.Exec(ctx, `UPDATE credit_orders SET state='approved',approver=$2,journal_id=$3 WHERE id=$1`, source.ID, scope.ActorID, journal); e != nil {
@@ -244,7 +223,7 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 	default:
 		return result, fail("invalid_funding_source", "funding source unavailable")
 	}
-	if _, e = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at) VALUES($1,$2,$3,$4,$5,'COIN',$6,$7)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now); e != nil {
+	if _, e = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,fiat_currency,fiat_amount,parent_ref) VALUES($1,$2,$3,$4,$5,'COIN',$6,$7,$8,$9,$10,$11)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now, receipt.BasisKind, nullableText(receipt.FiatCurrency), receipt.FiatAmount, receipt.ParentRef); e != nil {
 		return FundingResult{}, e
 	}
 	if e = createFundingLotTx(ctx, tx, receipt, operation); e != nil {

@@ -451,12 +451,26 @@ CREATE TABLE wallet_requests (
   requested_by  text NOT NULL REFERENCES users(id),     -- 租户 owner
   note          text NOT NULL,                          -- 客户自述（如付款流水号），仅供财务核对，不被任何计算引用
   state         text NOT NULL DEFAULT 'open' CHECK (state IN ('open','linked','closed')),
-  linked_order_id text,                                  -- 财务据此创建的单据
+  linked_order_id text UNIQUE,                           -- 财务据此创建的单据；一个单据最多关联一个申请
   created_at    timestamptz NOT NULL DEFAULT clock_timestamp()
 );
 ```
 
-财务操作员核对后创建对应的充值单或退款单，并把 `requested_by` 填为该申请人、`linked_order_id` 回填。申请表的细节（状态迁移、客户页面、每租户未关闭申请数上限）仍待设计，见路线图“设计完整度”。
+状态机与原子边界如下；`linked` 也不代表已付款或已入账：
+
+| 迁移 | 操作者 | 条件与效果 |
+|---|---|---|
+| 创建为 `open` | 当前租户 owner | 只写申请与审计；不得写 credit/refund、journal、receipt、lot 或余额 |
+| `open → linked` | 财务制单人；单人运营例外见 §5.1 | 与创建对应 `credit_orders`（034.2）或 `cash_refund_orders`（034.4）同事务；单据 `requested_by` 取申请人，回填 `linked_order_id` |
+| `open → closed` | 申请人取消，或财务拒绝 | `linked_order_id` 保持 NULL；写操作者与理由审计，不产生钱包效果 |
+| `linked → closed` | 对应单据的审批/终态事务 | 充值在审批入账事务内关闭；现金退款在 034.4 的完成、取消或失败终态事务内关闭 |
+
+- 不删除、不重开。`id/tenant_id/kind/requested_by/note/created_at` 创建后不可变；`linked_order_id` 一旦写入不可改绑。每个 `linked_order_id` 全局唯一，两个财务并发关联同一申请时只能一个成功，另一个返回 `request_revision_conflict`，不得留下半张单据。
+- 每租户 `open + linked` 总数最多 **20**。创建时以租户级事务锁串行化计数，超过返回 `wallet_request_limit`；数据库 guard 对直接 SQL 同样执行该上限，不能只靠前端或 HTTP 限流。
+- `note` 为 1..1000 字节且不含控制字符，仅向该租户 owner/账单查看员及平台 admin/财务角色展示；审计不复制申请正文。跨租户读取、关联、取消均失败。
+- 客户接口为 `POST /api/wallet/requests` 与 `GET /api/wallet/requests`；平台只读列表为 `GET /api/platform/wallet-requests`。创建必须带 `Idempotency-Key`，同租户、同申请人、同键同内容返回原申请，异内容返回 `idempotency_conflict`。
+- 034.2 在现有 `POST /api/platform/credits` 增加可选 `request_id`；提供时必须关联同租户 `topup/open` 申请，并在同一事务创建 `pending` 充值单和 `linked` 申请。审批事务将申请关闭。034.4 的现金退款单使用同一关联合同；在此之前 `cash_refund` 只能保持 `open`，关联返回 `request_link_unavailable`，不得伪造现金退款单。
+- 客户钱包页提供申请与状态列表；人工核款页可填写 `request_id`。申请表不是第二钱包、第二入账来源或第二付款事实来源，财务仍须核对真实付款并填写完整付款基准。
 
 ## 6. 手动充值流程（范围 M）
 
@@ -733,7 +747,8 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 |---|---|---|
 | 单位 | 迁移后钱包 journal、`funding_receipts.currency`、售价版本为 `COIN`；数值与迁移前一致（创世币价 1:1） | PG |
 | 类型区分 | 法币金额与币金额在 Go 中是不同类型，编译期禁止互相赋值；API 字段与文档分别标明单位 | — |
-| 角色约束 | `approver ≠ maker`、`approver ≠ requested_by`、`transfer_executor ≠ approver` 由数据库拒绝；客户自助申请不产生任何钱包效果；审批前无入账 | PG |
+| 角色约束 | `approver ≠ maker`、`approver ≠ requested_by`、`transfer_executor ≠ approver` 由数据库拒绝；客户自助申请只写独立 `wallet_requests`，`open/linked` 均无钱包效果；审批前无入账 | PG |
+| 自助申请 | 申请创建幂等且跨租户隔离；每租户 20 个未关闭申请上限由直接 SQL 同样拒绝；同一申请并发关联只成功一次；充值审批与 `linked → closed` 同事务，失败整体回滚 | PG |
 | 单人运营开关 | 开关开启：同一 `admin` 账号可制单并审批，单据快照 `single_operator=true`、带 `single_operator_exception` 标记，且 `funding_journal_valid` 通过；开关关闭：同一账号被拒；非 `admin` 的财务角色任何情况下不可自批；事后关闭开关不使已批准单据失效；开关与币价调整同样受控 | PG |
 | 手动充值基准 | 付 90 得 100：receipt 记法币 90、币 100；`paid` 缺法币字段被拒；`grant`/`unknown` 带法币字段被拒；receipt 不可修改 | PG |
 | 来源组合 | receipt 的 `(source_kind, basis_kind)` 与 lot 的 `(source_kind, refund_class)` 表外组合各自被 CHECK 拒绝；receipt 与 lot 的 `source_kind` 不一致被 `wallet_lot_valid` 拒绝；`manual_unknown` 不可现金退款 | PG |
@@ -761,7 +776,7 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 |---|---|---|
 | 34.0 | 本规格评审，裁决 D-034-1…13，满足 §15 全部阻断项 | 已完成（2026-11-14 冻结，见[方向审查记录](../../docs/design/direction-review-2026-11-14.md)） |
 | 34.1 | `currency` 约束改为 `COIN`，类型区分；数值不变 | 34.0 |
-| 34.2 | 角色字段、**单人运营开关与 §5.1 的五类位置**、付款基准、来源组合 CHECK（receipt 与 lot 各自单表）、两来源与父关联、先付费后赠送的确定性时间戳 | 34.1 |
+| 34.2 | 角色字段、**单人运营开关与 §5.1 的五类位置**、付款基准、独立 `wallet_requests` 及原子关联、来源组合 CHECK（receipt 与 lot 各自单表）、两来源与父关联、先付费后赠送的确定性时间戳 | 34.1 |
 | 34.3 | 两个新桶 `refund_held`、`retired`：守恒式、事件类型、journal kind 校验、`check-wallet-sources`、guard 更新 | 34.2 |
 | 34.3b | **币价版本表**、创世版本、receipt 记录买入币价版本；MVP 不提供调价入口，调价审批与预览后置 | 34.2 |
 | 34.4 | 现金退款单：状态机、§7.3 退款额核算（`big.Int`）、审批事务、一来源一张未完成单的唯一索引、HTTP 与控制台、告警 | 34.3、34.3b |

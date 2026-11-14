@@ -86,7 +86,7 @@ func TestTakeoverDrainsDurablePriorWindow(t *testing.T) {
 	f := operationDB(t)
 	ctx := f.ctx
 	s := billing.New(f.app)
-	c, err := s.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BusinessRef: "drain", ProofRef: "drain", IdempotencyKey: "drain", RequestHMAC: "drain"})
+	c, err := s.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: "drain", ProofRef: "drain", IdempotencyKey: "drain", RequestHMAC: "drain"})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,7 +1,6 @@
 package billing
 
 import (
-	"math"
 	"testing"
 
 	"github.com/google/uuid"
@@ -172,7 +171,7 @@ func TestPostgresVoucherFundingInfrastructureAndCommitFailureRollbackAllFacts(t 
 func TestPostgresVoucherFundingSummaryUsesNumericBeyondMoneyRange(t *testing.T) {
 	f := fundingFixture(t)
 	v := voucherTestService(t, f)
-	f.fund(t, Money(math.MaxInt64-1000))
+	openingBoundaryTenant(t, f)
 	r := f.reserve(t)
 	f.final(t, r, confirmed(), "completed", "done", "none", false)
 	if s, e := f.store.Settle(f.ctx, SettleInput{TenantID: f.tenant, RequestID: r.RequestID}); e != nil || s.ChargedAmount != 15 {
@@ -183,7 +182,7 @@ func TestPostgresVoucherFundingSummaryUsesNumericBeyondMoneyRange(t *testing.T) 
 		t.Fatal("summary grant", e)
 	}
 	summary, e := v.GetFundingSummary(f.ctx, VoucherReader{f.user, f.tenant})
-	if e != nil || summary.TotalAmount != "9223372036854775822" || summary.ManualCreditAmount != "9223372036854775807" || summary.VoucherGrantAmount != "15" {
+	if e != nil || summary.TotalAmount != "9223372036854775822" || summary.ManualCreditAmount != "0" || summary.ManualBonusAmount != "0" || summary.ManualUnknownAmount != "0" || summary.WalletOpeningAmount != "9223372036854775807" || summary.VoucherGrantAmount != "15" {
 		t.Fatal("NUMERIC summary truncated or wrapped", e)
 	}
 	voucherTestFunding(t, f)

@@ -49,6 +49,6 @@ flowchart LR
 
 ## 027来源与028统一计量的衔接
 
-027四来源入账及非现金opening都不进入settlement消费收入；来源分配不join到收入聚合，避免一个request分配多lot后重复计收入。实际023后报表/CSV及四来源305入账但经营收入0的证据见[来源验证](../verification/wallet-sources.md)。
+027及034.2的六类来源入账与非现金opening都不直接进入settlement消费收入；来源分配不join到收入聚合，避免一个request分配多lot后重复计收入。实际023后报表/CSV及四来源305入账但经营收入0的证据见[来源验证](../verification/wallet-sources.md)；新增人工付费、赠送和未知付款基准的报表分列与毛利口径留到034.5，不在本报表中混算COIN和CNY。
 
 028已经从原request不可变快照读取protocol/execution_kind/profile/schema/variant，筛选、JSON、CSV及前端沿同一合同工作；不能从当前model profile推断历史。当前媒体接缝继续使用同一只读RR快照，把media_requests与media_settlements映射为请求事实，把media_attempts映射为全部attempt事实；媒体操作可通过protocol筛选，video_generation使用asynchronous执行类型。金额继续读原settlement和全部attempt投影，不从向量或`media.raw_amount`重算，也不因人工客户量确认而把上游未知成本改成0。任务生成归原提交request，实时按收费轮次request；poll/下载/heartbeat不增加收入或生成attempt。媒体 supplier cost 只从结算时冻结的 known/unknown 快照读取，失败、取消、缺失或未知消费仍进入未知成本并使毛利为null。跨维度数量若另行汇总须按schema/dimension/unit/side分组，不把Token、图片、字符和时长相加。实施范围见[028消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)与[阶段出口](../../specs/028-unified-metering-media/tasks.md)。

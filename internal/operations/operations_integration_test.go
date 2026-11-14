@@ -133,7 +133,7 @@ func (f *operationFixture) exec(t *testing.T, sql string, args ...any) {
 func TestProvisionedRolesFinancialLifecycle(t *testing.T) {
 	f := operationDB(t)
 	s := billing.New(f.app)
-	credit, err := s.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BusinessRef: "bank:verified", ProofRef: "proof:verified", IdempotencyKey: "credit:1", RequestHMAC: "credit-hmac"})
+	credit, err := s.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: "bank:verified", ProofRef: "proof:verified", IdempotencyKey: "credit:1", RequestHMAC: "credit-hmac"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +320,7 @@ func TestRewrapPreservesCredentialIdentityAndOldBackupKeys(t *testing.T) {
 func TestPersistentRecoveryGateAndDualApproval(t *testing.T) {
 	f := operationDB(t)
 	ctx := f.ctx
-	credit, err := billing.New(f.app).CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BusinessRef: "recovery-credit", ProofRef: "verified", IdempotencyKey: "recovery-credit", RequestHMAC: "recovery-credit"})
+	credit, err := billing.New(f.app).CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: "recovery-credit", ProofRef: "verified", IdempotencyKey: "recovery-credit", RequestHMAC: "recovery-credit"})
 	if err != nil {
 		t.Fatal(err)
 	}

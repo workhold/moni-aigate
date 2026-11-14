@@ -74,13 +74,21 @@ type Reservation struct {
 	RetailPricedAt        time.Time `json:"retail_priced_at"`
 }
 type CreditInput struct {
-	IdempotencyKey string `json:"-"`
-	RequestHMAC    string `json:"-"`
-	TenantID       string `json:"tenant_id"`
-	ActorID        string `json:"actor_id"`
-	BusinessRef    string `json:"business_ref"`
-	ProofRef       string `json:"proof_ref"`
-	Amount         Money  `json:"amount"`
+	IdempotencyKey string    `json:"-"`
+	RequestHMAC    string    `json:"-"`
+	TenantID       string    `json:"tenant_id"`
+	ActorID        string    `json:"actor_id"`
+	BusinessRef    string    `json:"business_ref"`
+	ProofRef       string    `json:"proof_ref"`
+	Amount         Money     `json:"amount"`
+	BasisKind      string    `json:"basis_kind"`
+	FiatCurrency   string    `json:"fiat_currency"`
+	FiatAmount     FiatMoney `json:"fiat_amount"`
+	FxNote         string    `json:"fx_note"`
+	BonusAmount    Money     `json:"bonus_amount"`
+	TransferRef    string    `json:"transfer_ref"`
+	RequestedBy    string    `json:"-"`
+	RequestID      string    `json:"request_id,omitempty"`
 }
 type ApprovalInput struct {
 	TenantID string `json:"tenant_id"`
@@ -88,14 +96,24 @@ type ApprovalInput struct {
 	ActorID  string `json:"actor_id"`
 }
 type CreditOrder struct {
-	ID          string `json:"id"`
-	TenantID    string `json:"tenant_id"`
-	BusinessRef string `json:"business_ref"`
-	Amount      Money  `json:"amount"`
-	State       string `json:"state"`
-	Requester   string `json:"requester"`
-	Approver    string `json:"approver,omitempty"`
-	JournalID   string `json:"journal_id,omitempty"`
+	ID             string     `json:"id"`
+	TenantID       string     `json:"tenant_id"`
+	BusinessRef    string     `json:"business_ref"`
+	ProofRef       string     `json:"proof_ref"`
+	Amount         Money      `json:"amount"`
+	State          string     `json:"state"`
+	Requester      string     `json:"requester"`
+	Approver       string     `json:"approver,omitempty"`
+	JournalID      string     `json:"journal_id,omitempty"`
+	RequestedBy    string     `json:"requested_by"`
+	BasisKind      string     `json:"basis_kind"`
+	FiatCurrency   string     `json:"fiat_currency,omitempty"`
+	FiatAmount     *FiatMoney `json:"fiat_amount"`
+	FxNote         string     `json:"fx_note,omitempty"`
+	BonusAmount    Money      `json:"bonus_amount"`
+	TransferRef    string     `json:"transfer_ref,omitempty"`
+	SingleOperator bool       `json:"single_operator"`
+	RequestID      string     `json:"request_id,omitempty"`
 }
 type AttemptInput struct {
 	TenantID, RequestID, ChannelID, ChannelVersionID, CredentialID, UpstreamModel string
@@ -160,18 +178,21 @@ type RefundInput struct {
 	ActorID        string `json:"actor_id"`
 	SettlementID   string `json:"settlement_id"`
 	BusinessRef    string `json:"business_ref"`
+	ProofRef       string `json:"proof_ref"`
 	Reason         string `json:"reason"`
 	Amount         Money  `json:"amount"`
 }
 type RefundOrder struct {
-	ID           string `json:"id"`
-	TenantID     string `json:"tenant_id"`
-	SettlementID string `json:"settlement_id"`
-	Amount       Money  `json:"amount"`
-	State        string `json:"state"`
-	Requester    string `json:"requester"`
-	Approver     string `json:"approver,omitempty"`
-	JournalID    string `json:"journal_id,omitempty"`
+	ID             string `json:"id"`
+	TenantID       string `json:"tenant_id"`
+	SettlementID   string `json:"settlement_id"`
+	Amount         Money  `json:"amount"`
+	State          string `json:"state"`
+	Requester      string `json:"requester"`
+	Approver       string `json:"approver,omitempty"`
+	JournalID      string `json:"journal_id,omitempty"`
+	RequestedBy    string `json:"requested_by"`
+	SingleOperator bool   `json:"single_operator"`
 }
 type ReconcileInput struct {
 	TenantID, RequestID, ActorID, Action, EvidenceRef, Reason string

@@ -37,13 +37,14 @@ export function requestFundingPath(requestID: string, cursor = ''): string {
 export function walletSourceAuditPath(tenantID: string): string { return `/platform/wallet-sources/check?tenant_id=${commerceUUID(tenantID)}` }
 export function parseRequestFunding(value: unknown): RequestFundingRow {
   const raw = commerceObject(value, fundingFields)
-  if (!['manual_credit', 'voucher_grant', 'sandbox_capture', 'wallet_opening'].includes(raw.source_kind as string) || !['nonrefundable', 'sandbox_original'].includes(raw.refund_class as string)) throw new Error('资金来源类型或退款类别无效。')
+  if (!['manual_credit', 'manual_bonus', 'manual_unknown', 'voucher_grant', 'sandbox_capture', 'wallet_opening'].includes(raw.source_kind as string) || !['nonrefundable', 'sandbox_original', 'cash_original'].includes(raw.refund_class as string)) throw new Error('资金来源类型或退款类别无效。')
   const row: RequestFundingRow = {
     id: commerceUUID(raw.id), lot_id: commerceUUID(raw.lot_id), source_kind: raw.source_kind as WalletSourceKind, refund_class: raw.refund_class as WalletRefundClass,
     created_at: utcTime(raw.created_at), allocation_index: commerceDecimal(raw.allocation_index, true), reserved_amount: commerceDecimal(raw.reserved_amount, true),
     charged_amount: raw.charged_amount === null ? null : commerceDecimal(raw.charged_amount), released_amount: raw.released_amount === null ? null : commerceDecimal(raw.released_amount), refunded_amount: commerceDecimal(raw.refunded_amount),
   }
-  if (row.id !== row.lot_id || (row.source_kind === 'sandbox_capture') !== (row.refund_class === 'sandbox_original')) throw new Error('资金来源标识或退款类别不一致。')
+  const valid = row.source_kind === 'manual_credit' && row.refund_class === 'cash_original' || row.source_kind === 'sandbox_capture' && row.refund_class === 'sandbox_original' || ['manual_bonus', 'manual_unknown', 'voucher_grant', 'wallet_opening'].includes(row.source_kind) && row.refund_class === 'nonrefundable'
+  if (row.id !== row.lot_id || !valid) throw new Error('资金来源标识或退款类别不一致。')
   if ((row.charged_amount === null) !== (row.released_amount === null)) throw new Error('资金分配结算状态不完整。')
   if (row.charged_amount === null) {
     if (row.refunded_amount !== '0') throw new Error('未结算分配不能包含消费退款。')

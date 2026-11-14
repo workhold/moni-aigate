@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -297,7 +296,7 @@ func TestPostgresVoucherRevocationStaleDecisionAndRuntimeOffClose(t *testing.T) 
 func TestPostgresVoucherOverflowAndInfrastructureRollback(t *testing.T) {
 	f := fundingFixture(t)
 	v := voucherTestService(t, f)
-	f.fund(t, Money(math.MaxInt64-1000))
+	openingBoundaryTenant(t, f)
 	issued := voucherTestCreate(t, f, v, 1, 1, true)
 	before := fundingSnapshot(t, f)
 	r, e := v.RedeemVoucher(f.ctx, voucherTestRedeem(f, issued.Codes[0].Code))

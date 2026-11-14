@@ -25,6 +25,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 	for _, source := range []struct{ file, digest string }{
 		{"021_payment_sandbox.sql", paymentRoleMigrationSHA256},
 		{"023_wallet_sources.sql", walletSourcesRoleMigrationSHA256},
+		{"current_006_paired_wallet_sources.sql", pairedSourcesRoleMigrationSHA256},
 	} {
 		body, e := migrations.Files.ReadFile(source.file)
 		if e != nil {
@@ -44,7 +45,14 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 			}
 		}
 		for _, match := range definitions.FindAllSubmatch(body, -1) {
-			functions[string(match[1])] = fmt.Sprintf("%x", sha256.Sum256(match[2]))
+			name := string(match[1])
+			if source.file == "current_006_paired_wallet_sources.sql" && !strings.HasPrefix(name, "payment_") && !strings.HasPrefix(name, "wallet_") {
+				continue
+			}
+			if _, exists := functions[name]; source.file == "current_006_paired_wallet_sources.sql" && exists {
+				continue
+			}
+			functions[name] = fmt.Sprintf("%x", sha256.Sum256(match[2]))
 		}
 	}
 	// 024 is the unissued current baseline. It deliberately replaces the
@@ -70,7 +78,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 	}
 	functions["funding_journal_valid"] = fmt.Sprintf("%x", sha256.Sum256(currentDispatcher[1]))
 	delete(functions, "payment_legacy_funding_journal_valid")
-	if len(paymentFunctionSpecs) != 55 || len(functions) != len(paymentFunctionSpecs) {
+	if len(paymentFunctionSpecs) != 61 || len(functions) != len(paymentFunctionSpecs) {
 		t.Fatal("current payment/wallet function allowlist incomplete")
 	}
 	worker := 0
@@ -166,11 +174,10 @@ func newPaymentRoleFixture(t *testing.T, historical bool) *paymentRoleFixture {
 	if historical {
 		e = migrations.ApplyThrough(ctx, f.owner, "020_periodic_budgets.sql")
 	} else {
-		e = migrations.Apply(ctx, f.owner)
+		e = migrations.ApplyCurrent(ctx, f.owner)
 	}
 	paymentRoleMust(t, "schema installation", e)
 	if err := ProvisionFor(ctx, f.owner, f.schema, f.appRole, f.projectionRole); err != nil {
-		paymentRoleDiagnostics(t, f)
 		paymentRoleMust(t, "initial ProvisionFor", err)
 	}
 	for i, role := range roles {
@@ -233,7 +240,7 @@ func (f *paymentRoleFixture) valid(t *testing.T, marker bool) {
 	if marker {
 		worker = f.workerRole
 		paymentRoleMust(t, "actual worker verification", VerifyPaymentRole(f.ctx, f.worker, PaymentWorkerRole))
-		paymentRoleMust(t, "worker complete migration verification", migrations.Verify(f.ctx, f.worker))
+		paymentRoleMust(t, "worker complete migration verification", migrations.VerifyCurrent(f.ctx, f.worker))
 	}
 	paymentRoleMust(t, "offline named-role verification", VerifyPaymentRolesFor(f.ctx, f.owner, f.schema, f.appRole, worker, f.projectionRole))
 }

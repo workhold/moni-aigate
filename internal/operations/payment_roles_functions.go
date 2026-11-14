@@ -1,13 +1,21 @@
-// Static baselines from reviewed 021, 023, 024 and current 004 SQL. Never derive
+// Static baselines from reviewed 021, 023, 024 and current 004/006 SQL. Never derive
 // expected procedure definitions from the database being verified. See 027 and B2 §7.3.
 package operations
 
 const paymentRoleMigrationSHA256 = "757721a8559ce6710972759aaa1eb4bbd1a4af6d0b1a058d45f69c121643323d"
 const walletSourcesRoleMigrationSHA256 = "67e8289f1e550ea826f4890b1b046e2d10d502537b764e0441d2cb0ae3f5eb4a"
+const pairedSourcesRoleMigrationSHA256 = "9f4785bcc8d912f04e25d37c3d359b73f112f031f95989f089b9d255eeea357f"
 const legacyWalletEventValidSHA256 = "07545d756fa2c25d26fe4bf6d93777330e3839e179877298168ce3d502342b6f"
 const virtualCoinPaymentFundingJournalSHA256 = "10ea84ec2f7bd409044fd8febb2fa90735f0946509e2567ef3b102d7023dd184"
 const virtualCoinWalletOpeningJournalSHA256 = "45f298162c92d5a825a89a06a807dfdfc4e9822a3bc7944f49cf4fdf1339c6d6"
 const virtualCoinPaymentSandboxJournalSHA256 = "0b39ad17c94be382e2086f8812a9a83f031e8f8d3c22819bc957eb6629eeecb2"
+const pairedPaymentFundingJournalSHA256 = "b50881f5b28ccdc60289207568074af25ba6349bcb5faf2237a75d9b8a10fba5"
+const pairedWalletOpeningJournalSHA256 = "0b1159b9e46cab9df1928381fcf9892ab9b0b3b9ba61dcf350d96168206eb633"
+const pairedPaymentSandboxJournalSHA256 = "a184d892c18045ae549b0d444caa98c2901baaaa0f5c9edc42facc0d5fe211bc"
+const pairedWalletRefundSHA256 = "98e27d03adbc421ea6780cf93418a58e171cc836ccae0c7ab6de7099291af21d"
+const pairedFundingFactGuardSHA256 = "edbba29ccb46eb67a22bdf2ad8f740c108a29854cee391d2260c8f05d0bca21e"
+const pairedFundingJournalSHA256 = "8dd76eb25cb0f63ebcbb6f1c7aeb26bdda1af0118bd9227d2052959aac4ccaf7"
+const pairedPaymentVoucherJournalSHA256 = "2e8bb37f9058fba7f12e47b1b18b91aef071f286c71188515998f18bcef599d9"
 
 var paymentFunctionSpecs = map[string]paymentFunctionSpec{
 	"funding_fact_guard":              {"funding_fact_guard", "", "", "2279", "plpgsql", "v", "b82f809ec5663cfa681702e7044541207a08b3d167c051f4933cf2d152412885", nil, true},
@@ -27,6 +35,7 @@ var paymentFunctionSpecs = map[string]paymentFunctionSpec{
 	"payment_human_complete":          {"payment_human_complete", "", "", "2279", "plpgsql", "v", "2b2dc34518fca823db1d3f697ee1989b4e980ab2f61681a922eb0ee716444bac", nil, false},
 	"payment_identity_valid":          {"payment_identity_valid", "text", "25", "16", "sql", "s", "4c6aaedecc39b077dad162dfe0b38fe358f1fb7fcc6f56eb04dca7324562b395", []string{"identity_ref"}, true},
 	"payment_funding_journal_valid":   {"payment_funding_journal_valid", "text", "25", "16", "sql", "s", "b70673e2bc16b7c565d1eed6f8def458361c1baf518649f221fa5f7a06900886", []string{"journal_ref"}, false},
+	"payment_voucher_journal_valid":   {"payment_voucher_journal_valid", "text", "25", "16", "sql", "s", "2e8bb37f9058fba7f12e47b1b18b91aef071f286c71188515998f18bcef599d9", []string{"journal_ref"}, false},
 	"payment_observation_insert":      {"payment_observation_insert", "", "", "2279", "plpgsql", "v", "432bb882429d8be652aca759a5bb22c8b6c31a24c3afc9a3e3316270f5cfbf21", nil, true},
 	"payment_order_insert":            {"payment_order_insert", "", "", "2279", "plpgsql", "v", "0c50ffaa9904a96fa786b06fda603e833e9d58243a8770a2f3b3c407991ee27c", nil, false},
 	"payment_original_complete":       {"payment_original_complete", "", "", "2279", "plpgsql", "v", "fae586952f14002b1c008b15c8611a683ee1521eed21df468f0ecdd4474f71fc", nil, true},
@@ -65,4 +74,9 @@ var paymentFunctionSpecs = map[string]paymentFunctionSpec{
 	"wallet_journal_valid":            {"wallet_journal_valid", "text", "25", "16", "sql", "s", "9a47fbf42d77335834e907f868a158798db1a200e74d2a4206d1bcf9cf7baf8b", []string{"journal_ref"}, true},
 	"wallet_account_valid":            {"wallet_account_valid", "text", "25", "16", "sql", "s", "78eb07c7c877bea6280952fd0202aaa70daa82a01511219019e2a9c0208345ee", []string{"account_ref"}, true},
 	"wallet_source_fact_guard":        {"wallet_source_fact_guard", "", "", "2279", "plpgsql", "v", "48d05ddcdebd596a001fb55973cae00ceb0620a5220ce2124ccdcda50b8f7f39", nil, true},
+	"wallet_single_operator":          {"wallet_single_operator", "", "", "16", "sql", "s", "0bcb527d011a0e1e1506fc9c7e2b96e732d817cd2fd97f68f59be9e57c02827d", nil, false},
+	"wallet_operator_role_valid":      {"wallet_operator_role_valid", "text,text", "25 25", "16", "sql", "s", "f4cffcfe1b6ae7f05608b403c6e94a05e60fa634f304d8e8f8439323ff1d6154", []string{"actor", "required"}, false},
+	"wallet_approval_snapshot_valid":  {"wallet_approval_snapshot_valid", "text,text,text", "25 25 25", "16", "plpgsql", "s", "2adb76e993a92cd96c0c807a35fe48e745e272c3cee4fd046b724d7ec12dabd2", []string{"requester", "approver", "requested_by"}, false},
+	"wallet_credit_pair_valid":        {"wallet_credit_pair_valid", "text", "25", "16", "sql", "s", "38de1c8c67e76d46540e9310e7b00316721a093398901e0214630342206450bf", []string{"credit_ref"}, false},
+	"wallet_request_guard":            {"wallet_request_guard", "", "", "2279", "plpgsql", "v", "1b8b259670efbb4ccd2fe382e0a811e7f454d5a1a079ebc0f1f12d721700a674", nil, false},
 }

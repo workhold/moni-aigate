@@ -1,23 +1,47 @@
-# 现行资金来源与钱包开账（027）
+# 现行资金来源与钱包开账（027、034.1–034.2）
 
-[统一架构](README.md)的当前生产链路；精确合同见[027规格](../../specs/027-wallet-sources/spec.md)，实际执行范围见[验证记录](../verification/wallet-sources.md)。023迁移是新的单一钱包模型，不安装旧C0历史证明候选。
+[统一架构](README.md)的当前生产链路；精确合同见[027规格](../../specs/027-wallet-sources/spec.md)与[034规格](../../specs/034-virtual-coin/spec.md)。023建立单一钱包来源模型，current_004/005建立COIN边界，current_006增加角色、付款基准、独立申请与成对人工来源；不安装旧C0历史证明候选，也不增加第二钱包。
 
 ```mermaid
 flowchart LR
-    Funding[人工核款 / 券 / capture / 非现金开账] --> Apply[ApplyFundingTx]
-    Apply --> Lot[不可变来源本金]
+    Request[独立 wallet_requests\nopen / linked / closed] -->|同租户财务制单| Credit[pending credit_order]
+    Credit -->|审批同一事务| Apply[ApplyFundingTx]
+    Apply --> Paid[manual_credit\npaid / cash_original]
+    Apply --> Bonus[manual_bonus\ngrant / nonrefundable]
+    Apply --> Unknown[manual_unknown\nunknown / nonrefundable]
+    Voucher[voucher_grant] --> Lot[不可变来源本金]
+    Sandbox[sandbox_capture] --> Lot
+    Opening[wallet_opening] --> Lot
+    Paid --> Lot
+    Bonus --> Lot
+    Unknown --> Lot
     Lot --> Available[可用 A]
     Available -->|FIFO预占| Held[冻结 H]
     Held -->|按原分配收费| Consumed[消费 C]
     Held -->|释放未消费部分| Available
     Consumed -->|逆原收费边消费退款| Available
-    Journal[同事务平衡journal / 原审计与outbox] --- Apply
+    Journal[同事务平衡journal / 审计与outbox] --- Apply
     Journal --- Held
     Journal --- Consumed
-    Check[RR只读核对 / HTTP与CLI] -. 核对原件和双向边 .-> Lot
+    Check[RR只读核对 / HTTP与CLI] -. 来源、成对、双向边 .-> Lot
 ```
 
-每来源本金始终等于A+H+C。客户预占与采购预占独立，上游第二次安全尝试不重新分配客户来源；采购unknown不因客户释放清零。manual_credit、voucher_grant与wallet_opening均nonrefundable；sandbox_capture仅有本地沙箱资格。消费退款只回钱包原来源，不恢复Key/周期spent，不产生真实现金退款资格。
+每来源本金始终等于A+H+C；034.3的两个现金退款桶尚未引入。客户预占与采购预占独立，上游第二次安全尝试不重新分配客户来源；采购unknown不因客户释放清零。消费退款只回钱包原来源，不恢复Key/周期spent，不产生真实现金退款资格。
+
+## 来源与付款基准
+
+| source_kind | basis_kind | refund_class | 事实与分录 |
+| --- | --- | --- | --- |
+| manual_credit | paid | cash_original | 批准人工充值；记录法币币种/`FiatMoney`，与到账COIN分型；FUNDING_CLEARING |
+| manual_bonus | grant | nonrefundable | 同单赠送或纯赠送；OPERATING_GRANT_CLEARING，不可现金退款 |
+| manual_unknown | unknown | nonrefundable | 有到账币但付款基准未知；法币字段为NULL，不伪造收入 |
+| voucher_grant | grant | nonrefundable | 兑换券来源 |
+| sandbox_capture | paid | sandbox_original | 仅本地支付沙箱，保留沙箱付款与capture身份 |
+| wallet_opening | opening | nonrefundable | 停服后未使用空钱包的非现金开账 |
+
+同一`paid`充值单可有一个付费receipt与一个赠送receipt，两者各有一笔journal和不同`operation_id`；`bonus_amount=0`不产生赠送。纯`grant`只有bonus，未知只有`manual_unknown`。`wallet_credit_pair_valid`在COMMIT前核对来源数量、金额、主journal、法币字段及赠送时间，缺任一部分整体回滚；`check-wallet-sources`把不成对批准单计入来源不一致，而不是只检查已有lot。
+
+赠送`created_at=max(clock_timestamp(), paid_created_at+1µs)`，同单始终先消耗付费来源，其他来源继续严格FIFO。`amount`、`bonus_amount`分别不得超过1e12微币，且总和不能溢出int64。`paid`缺法币字段、`grant/unknown`携带法币字段、receipt与lot组合不一致均被拒绝。
 
 ## 数据、锁序与约束
 
@@ -29,18 +53,26 @@ flowchart LR
 | 结算 | funding_settlement_lots逐原分配保存charged/released，两者合计等于原预占 |
 | 消费退款 | funding_consumption_refund_lots沿原charged分配逆序退回，累计不得超过已收费 |
 | 开账原件 | wallet_openings绑定唯一tenant、external_ref、管理员、金额和原receipt/journal |
+| 客户申请 | wallet_requests保存open/linked/closed、申请人、说明和唯一linked_order_id；不含钱包余额效果 |
+| 运营设置 | wallet_operator_settings追加version、single_operator、actor、reason和时间；批准单据保存快照 |
 
-[023正式SQL](../../migrations/023_wallet_sources.sql)以复合tenant FK隔离关系，余额写需匹配事件；递延检查核对来源、事件、分配、journal与账户余额。FIFO写前约束拒绝跳过当前更早可用来源，结算/退款检查原分配顺序与精确累计。全部账户按ID锁后，lot余额按lot_id锁；来源/授权/请求/Key/模型/周期控制沿原前序。Reserve在lot等待后再验期限并INSERT request；finish在全部等待后验24小时财务截止。
+[023正式SQL](../../migrations/023_wallet_sources.sql)与[current_006追加SQL](../../migrations/current_006_paired_wallet_sources.sql)以复合tenant FK、CHECK、即时/递延guard隔离关系。余额写需匹配事件；FIFO写前约束拒绝跳过更早可用来源，结算/退款检查原分配顺序与精确累计。全部账户按ID锁后，lot余额按lot_id锁；来源/授权/请求/Key/模型/周期控制沿原前序。Reserve在lot等待后再验期限并INSERT request；finish在全部等待后验24小时财务截止。
 
-四写入口见[入账](../../internal/billing/funding.go)、[预占](../../internal/billing/reserve.go)、[收尾](../../internal/billing/settle.go)、[消费退款](../../internal/billing/orders.go)，共用[来源事务helper](../../internal/billing/lot_runtime.go)与原纯分配算法。helper不另开事务、不联网、不重试模型生成。
+四写入口见[入账](../../internal/billing/funding.go)、[预占](../../internal/billing/reserve.go)、[收尾](../../internal/billing/settle.go)、[消费退款](../../internal/billing/orders.go)，共用[来源事务helper](../../internal/billing/lot_runtime.go)与原纯分配算法；人工成对来源见[credit_funding.go](../../internal/billing/credit_funding.go)。helper不另开事务、不联网、不重试模型生成。
+
+## 独立申请与单人运营
+
+客户申请不是`credit_orders.requested`，该状态不存在。客户owner创建`open`申请只写申请与审计；财务创建`pending`充值单时锁定同租户`topup/open`申请，在同一事务继承`requested_by`并写入`linked_order_id`，此阶段仍无钱包效果。审批入账同事务关闭申请；open申请可由owner取消或财务拒绝。每租户最多20个open+linked申请，guard对直接SQL同样执行上限、owner资格、不可变身份和状态迁移。034.4前cash_refund申请不能关联单据。
+
+`wallet_operator_settings`初始`single_operator=true`。admin读写设置；PUT要求近期再认证、CSRF、规范operation ID、expected_revision、理由及显式二次确认。设置与审计同事务追加，advisory lock串行CAS，重放核对完整意图。只有双方均为admin的自批使用例外并写`single_operator_exception`；其他财务角色不可自批，对账、恢复、采购和兑换券不继承该例外。
 
 ## 角色与维护
 
-APP对来源/事件/分配仅SELECT/INSERT，来源余额只更新三桶/revision；ledger_accounts只更新balance；开账原件只读。projector不读写新来源关系。支付worker只新增lots/balances/events三表读写及余额列写，七个安全wallet函数可执行；funding/event校验使用显式语句分支，不给worker读取人工、券或开账原件。启动沿[现行权限核验](../../internal/operations/payment_roles.go)验证当前表/列/函数边界，期望来自受审迁移源码，不从待验DB学习。
+APP对来源/事件/分配仅SELECT/INSERT，来源余额只更新三桶/revision；ledger_accounts只更新balance；开账原件只读。设置与申请仅SELECT/INSERT及必要的状态列UPDATE，worker/projection无这些表权限。支付worker只新增lots/balances/events三表读写及余额列写，七个安全wallet函数可执行；funding/event校验使用显式语句分支，不给worker读取人工、券、申请、设置或开账原件。启动沿[现行权限核验](../../internal/operations/payment_roles.go)验证当前表/列/函数边界，期望来自受审迁移源码，不从待验DB学习；只有离线历史schema可缺失034表和函数。
 
 `open-wallet`仅在MAINTENANCE_MODE=true、真实migration owner、停服且取得同一服务advisory锁后执行。只允许未使用空钱包，一tenant一次非零开账；同tenant/reference/amount/actor读取原receipt，异意图冲突。初始余额为非现金负债来源，使用WALLET_OPENING_CLEARING平衡，不算收款或销售收入。入口10秒预算；未知COMMIT销毁连接并返回未知，禁止自动重试。
 
-`check-wallet-sources`读取当前RR READ ONLY快照，5秒工作预算，报告来源、事件、分配、钱包四类不一致计数。它双向检查缺失根/孤立边和账户/lot总和，不修余额，不授调用权。失败返回空结果；清理使用独立有界context。[开账](../../internal/billing/wallet_opening.go)、[只读核对](../../internal/billing/wallet_sources_read.go)、[CLI](../../cmd/moni-aigate/main.go)。
+`check-wallet-sources`读取当前RR READ ONLY快照，5秒工作预算，报告来源、事件、分配、钱包四类不一致计数；来源类包含pair错误。它双向检查缺失根/孤立边和账户/lot总和，不修余额，不授调用权。失败返回空结果；清理使用独立有界context。[开账](../../internal/billing/wallet_opening.go)、[只读核对](../../internal/billing/wallet_sources_read.go)、[CLI](../../cmd/moni-aigate/main.go)。
 
 023对已有金融history或非零余额明确拒绝，原事务回滚；已有开发库保留，使用独立空当前数据库。不伪造来源，不自动转换旧余额；旧研究代码不参与serve或普通领域入口。
 
@@ -52,9 +84,15 @@ APP对来源/事件/分配仅SELECT/INSERT，来源余额只更新三桶/revisio
 | GET /api/requests/:id/funding | 原请求详情授权；member仅本人请求，跨tenant/非本人404；原分配与nullable charged/released、累计退款 |
 | GET /api/platform/wallet-sources?tenant_id=UUID | admin/finance_operator/finance_approver，必须显式单tenant |
 | GET /api/platform/wallet-sources/check?tenant_id=UUID | 同上，只读核对结果与as_of；不一致不是修复接口 |
+| GET/POST /api/wallet/requests | owner创建，owner/billing_viewer读取当前租户申请；POST需近期再认证与Idempotency-Key |
+| POST /api/wallet/requests/:id/close | owner取消open申请，异状态拒绝，不产生钱包效果 |
+| GET /api/platform/wallet-requests | admin/财务读取；支持tenant/kind/state过滤与游标 |
+| POST /api/platform/wallet-requests/:id/close | 财务拒绝open申请；admin写权限同样受单人运营开关限制 |
+| GET/PUT /api/platform/wallet-operator-settings | admin读取最近50版；PUT以operation_id和expected_revision追加设置并写审计 |
+| POST /api/platform/credits | 财务制单，可选request_id原子关联topup/open；admin仅在开关开启时获得钱包写例外 |
 
-标准分页按created_at/id倒序，next_cursor空字符串表示结束；请求分配显示原allocation_index，不能把分页显示顺序当FIFO执行顺序。金额均精确微币字符串；未结算charged/released保持null，不填0。
+标准分页按created_at/id倒序，next_cursor空字符串表示结束；请求分配显示原allocation_index，不能把分页显示顺序当FIFO执行顺序。金额均精确微币字符串；未结算charged/released保持null，不填0。申请`open/linked`都不代表已付款或已入账。
 
-原入账回执与摘要也覆盖四来源：可筛选`wallet_opening`，摘要必含`wallet_opening_amount`并与其余三类精确合计。累计入账、当前来源余额和模型销售收入分别来自receipt、lot余额和唯一settlement。通用[查询DTO装配](../../internal/server/queries.go)统一输出UTC时间，保持原精度与分页instant，前端UTC校验不放宽。
+原入账回执与摘要覆盖六类来源，必含`manual_bonus_amount`、`manual_unknown_amount`和`wallet_opening_amount`并精确合计。累计入账、当前来源余额和模型销售收入分别来自receipt、lot余额和唯一settlement。通用[查询DTO装配](../../internal/server/queries.go)统一输出UTC时间，保持原精度与分页instant，前端UTC校验不放宽。
 
-[HTTP](../../internal/server/wallet_sources.go)与[钱包组件](../../web/src/components/WalletSources.vue)、[请求分配](../../web/src/components/RequestFunding.vue)、[平台来源页](../../web/src/views/WalletSourcesView.vue)共享当前合同，身份/租户/路由切换或卸载使旧响应失效。平台核对手动触发。经营报表继续读唯一settlement和全部attempt；opening不计模型收入。媒体后续沿[028](../../specs/028-unified-metering-media/spec.md)进入同一来源模型。
+[来源HTTP](../../internal/server/wallet_sources.go)、[申请HTTP](../../internal/server/wallet_request_handlers.go)、[设置HTTP](../../internal/server/operator_settings_handlers.go)与[钱包组件](../../web/src/components/WalletSources.vue)、[申请组件](../../web/src/components/WalletRequests.vue)、[设置组件](../../web/src/components/WalletOperatorSettings.vue)、[平台来源页](../../web/src/views/WalletSourcesView.vue)共享当前合同，身份/租户/路由切换或卸载使旧响应失效。平台核对手动触发。经营报表继续读唯一settlement和全部attempt；opening不计模型收入。034.3起的现金退款桶、币价版本与现金退款状态机仍需独立实现和验收。

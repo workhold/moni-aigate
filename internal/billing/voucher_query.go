@@ -343,7 +343,7 @@ func (v *VoucherService) GetVoucherRedemption(ctx context.Context, r VoucherRead
 }
 func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReader, page FundingReceiptPageInput) (VoucherPage[FundingReceiptView], error) {
 	out := VoucherPage[FundingReceiptView]{Data: []FundingReceiptView{}}
-	if page.SourceKind != "" && page.SourceKind != FundingManualCredit && page.SourceKind != FundingVoucherGrant && page.SourceKind != FundingSandboxCapture && page.SourceKind != FundingWalletOpening {
+	if page.SourceKind != "" && page.SourceKind != FundingManualCredit && page.SourceKind != FundingManualBonus && page.SourceKind != FundingManualUnknown && page.SourceKind != FundingVoucherGrant && page.SourceKind != FundingSandboxCapture && page.SourceKind != FundingWalletOpening {
 		return out, voucherFail("invalid_request")
 	}
 	filter := voucherFilter("tenant:"+r.TenantID, "funding", string(page.SourceKind))
@@ -376,7 +376,7 @@ func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReade
 func (v *VoucherService) GetFundingSummary(ctx context.Context, r VoucherReader) (FundingSummaryView, error) {
 	out := FundingSummaryView{Currency: "COIN"}
 	e := v.read(ctx, r, false, false, func(ctx context.Context, tx pgx.Tx) error {
-		return tx.QueryRow(ctx, `SELECT coalesce(sum(amount::numeric),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_credit'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='voucher_grant'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='sandbox_capture'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='wallet_opening'),0)::text,clock_timestamp() FROM funding_receipts WHERE tenant_id=$1`, r.TenantID).Scan(&out.TotalAmount, &out.ManualCreditAmount, &out.VoucherGrantAmount, &out.SandboxCaptureAmount, &out.WalletOpeningAmount, &out.AsOf)
+		return tx.QueryRow(ctx, `SELECT coalesce(sum(amount::numeric),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_credit'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='voucher_grant'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='sandbox_capture'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='wallet_opening'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_bonus'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_unknown'),0)::text,clock_timestamp() FROM funding_receipts WHERE tenant_id=$1`, r.TenantID).Scan(&out.TotalAmount, &out.ManualCreditAmount, &out.VoucherGrantAmount, &out.SandboxCaptureAmount, &out.WalletOpeningAmount, &out.ManualBonusAmount, &out.ManualUnknownAmount, &out.AsOf)
 	})
 	return out, e
 }

@@ -38,6 +38,9 @@ func createFundingLotTx(ctx context.Context, tx pgx.Tx, receipt FundingReceipt, 
 	if receipt.SourceKind == FundingSandboxCapture {
 		class = "sandbox_original"
 	}
+	if receipt.SourceKind == FundingManualCredit {
+		class = "cash_original"
+	}
 	if receipt.Amount <= 0 || !voucherID(receipt.ID) || operation == "" {
 		return lotPlanInvariant()
 	}

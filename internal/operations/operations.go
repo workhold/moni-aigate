@@ -88,6 +88,15 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e != nil {
 		return e
 	}
+	var pairedWalletSources bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='credit_orders' AND a.attname='basis_kind' AND NOT a.attisdropped)`, schema).Scan(&pairedWalletSources); e != nil {
+		return e
+	}
+	if pairedWalletSources {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`GRANT UPDATE(single_operator) ON %s TO %s`, table("credit_orders"), qa)); e != nil {
+			return e
+		}
+	}
 	// Revoke table-level UPDATE before granting the pricing/lifecycle columns.
 	// Repeated provisioning must not restore broad writes from the initial grant.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s,%s FROM %s;

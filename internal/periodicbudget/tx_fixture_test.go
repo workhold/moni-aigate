@@ -211,7 +211,7 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 	// clearing journal, approval, outbox and audit. No owner balance shortcut.
 	store := billing.New(f.app)
 	operation := uuid.NewString()
-	credit, e := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 10000, BusinessRef: "pb-fixture:" + operation, ProofRef: "fixture:verified", IdempotencyKey: operation, RequestHMAC: operation})
+	credit, e := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 10000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 10000, BusinessRef: "pb-fixture:" + operation, ProofRef: "fixture:verified", IdempotencyKey: operation, RequestHMAC: operation})
 	pbTxMust(t, "APP create funding source", e)
 	_, e = store.ApproveCredit(ctx, billing.ApprovalInput{TenantID: f.tenant, ActorID: f.approver, OrderID: credit.ID})
 	pbTxMust(t, "APP approve complete funding", e)

@@ -44,7 +44,7 @@ func TestHTTPFundingManualCreditPreservesWalletAndApprovalContract(t *testing.T)
 		return res
 	}
 	key := uuid.NewString()
-	body := map[string]any{"tenant_id": tenant, "amount": "37", "business_ref": "funding-http:" + key, "proof_ref": "funding:verified"}
+	body := map[string]any{"tenant_id": tenant, "amount": "37", "basis_kind": "paid", "fiat_currency": "CNY", "fiat_amount": "37", "business_ref": "funding-http:" + key, "proof_ref": "funding:verified"}
 	created := creditHTTP("/api/platform/credits", operatorRaw, operatorCSRF, key, body)
 	requireAuthStatus(t, created, http.StatusOK)
 	var order billing.CreditOrder

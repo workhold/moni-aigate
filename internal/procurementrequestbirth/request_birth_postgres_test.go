@@ -149,7 +149,7 @@ func newFixture(t *testing.T) *fixture {
 	must(t, "original-profile legacy DELETE", e)
 	must(t, "original-profile queued020 final-missing COMMIT", originalTx.Commit(ctx))
 	ownerStore := billing.New(owned)
-	credit, err := ownerStore.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "fixture:verified", Amount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture:credit"})
+	credit, err := ownerStore.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "fixture:verified", Amount: 10000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture:credit"})
 	must(t, "create real initial customer credit", err)
 	_, err = ownerStore.ApproveCredit(ctx, billing.ApprovalInput{TenantID: f.tenant, OrderID: credit.ID, ActorID: f.approver})
 	must(t, "fund original wallet", err)

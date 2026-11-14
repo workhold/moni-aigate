@@ -188,7 +188,7 @@ func newRelayFixture(t *testing.T) *relayFixture {
 	f.newAPIChannel = f.saveChannel(t, "external-new-api", f.newAPI, "new_api", "newapi-relay-secret", "relay-newapi-model")
 	f.sub2apiChannel = f.saveChannel(t, "external-sub2api", f.sub2api, "sub2api", "sub2api-relay-secret", "relay-sub2api-model")
 	f.directChannel = f.saveChannel(t, "direct-supplier", f.direct, "direct", "direct-supplier-secret", "provider-model")
-	credit, err := s.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:relay-fixture", Amount: 100000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture-credit"})
+	credit, err := s.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:relay-fixture", Amount: 100000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 100000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture-credit"})
 	if err != nil {
 		t.Fatal(err)
 	}

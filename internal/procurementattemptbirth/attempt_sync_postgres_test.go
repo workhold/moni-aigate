@@ -591,7 +591,7 @@ func abSyncOtherTenant(t *testing.T, f *fixture) *fixture {
 	}
 	must(t, "commit second-tenant management parents", tx.Commit(f.ctx))
 	store := billing.New(f.app)
-	credit, err := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: other.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "fixture:verified", Amount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "a4:second-tenant-credit"})
+	credit, err := store.CreateCredit(f.ctx, billing.CreditInput{TenantID: other.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "fixture:verified", Amount: 10000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "a4:second-tenant-credit"})
 	must(t, "actual APP original second-tenant credit proposal", err)
 	_, err = store.ApproveCredit(f.ctx, billing.ApprovalInput{TenantID: other.tenant, ActorID: f.approver, OrderID: credit.ID})
 	must(t, "actual APP original second-tenant distinct approver funding", err)

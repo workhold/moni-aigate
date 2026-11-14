@@ -226,7 +226,7 @@ func fundingLotsMixedHistory(t *testing.T, f *snapshotFixture, pool *pgxpool.Poo
 	credit := func(tenant string, amount int64) {
 		t.Helper()
 		id := uuid.NewString()
-		o, e := store.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: billing.Money(amount), BusinessRef: id, ProofRef: "receipt:init-test", IdempotencyKey: id, RequestHMAC: id})
+		o, e := store.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: billing.Money(amount), BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: billing.FiatMoney(amount), BusinessRef: id, ProofRef: "receipt:init-test", IdempotencyKey: id, RequestHMAC: id})
 		if e != nil {
 			t.Fatal("mixed credit create", e)
 		}

@@ -201,7 +201,7 @@ func TestCapacityConcurrentStreams(t *testing.T) {
 		if _, err := f.pool.Exec(ctx, "INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2) ON CONFLICT DO NOTHING", tenant, f.model); err != nil {
 			t.Fatal(err)
 		}
-		credit, err := f.server.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:capacity-fixture", Amount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "capacity-credit"})
+		credit, err := f.server.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:capacity-fixture", Amount: 10000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "capacity-credit"})
 		if err != nil {
 			t.Fatal(err)
 		}

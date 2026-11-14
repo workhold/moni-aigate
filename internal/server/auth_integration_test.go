@@ -226,10 +226,10 @@ func TestHTTPMFAAndPlatformRoleSeparation(t *testing.T) {
 				requireAuthStatus(t, authHTTP(t, s, "GET", "/api/platform/channels", raw, "", "", nil), 403)
 				requireAuthStatus(t, authHTTP(t, s, "POST", "/api/platform/users", raw, csrf, s.Config.Origin, map[string]any{"email": "must-not-create@auth.test", "password": authTestPassword, "platform_role": "admin"}), 403)
 			}
-			if role != "finance_operator" {
+			if role == "finance_approver" {
 				requireAuthStatus(t, authHTTP(t, s, "POST", "/api/platform/credits", raw, csrf, s.Config.Origin, map[string]any{"tenant_id": "x", "amount": "1000000", "business_ref": "x", "proof_ref": "x"}), 403)
 			}
-			if role != "finance_approver" {
+			if role == "finance_operator" {
 				requireAuthStatus(t, authHTTP(t, s, "POST", "/api/platform/credits/nonexistent/approve", raw, csrf, s.Config.Origin, map[string]any{}), 403)
 			}
 		})
