@@ -3,6 +3,7 @@ package billing
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -14,6 +15,15 @@ func coinRateAt(ctx context.Context, tx pgx.Tx, currency string) (string, error)
 	err := tx.QueryRow(ctx, `SELECT id FROM coin_rate_versions WHERE fiat_currency=$1 AND effective_at<=clock_timestamp() ORDER BY effective_at DESC,id DESC LIMIT 1`, currency).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", fail("coin_rate_unavailable", "coin rate version is unavailable for the payment currency")
+	}
+	return id, err
+}
+
+func coinRateAtTime(ctx context.Context, tx pgx.Tx, currency string, at time.Time) (string, error) {
+	var id string
+	err := tx.QueryRow(ctx, `SELECT id FROM coin_rate_versions WHERE fiat_currency=$1 AND effective_at<=$2 ORDER BY effective_at DESC,id DESC LIMIT 1`, currency, at).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", fail("coin_rate_unavailable", "coin rate version is unavailable at the frozen business time")
 	}
 	return id, err
 }

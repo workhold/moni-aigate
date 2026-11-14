@@ -6900,3 +6900,74 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `docs/verification/034-3b-coin-rates.md`
 
 </details>
+
+## 2026-11-14T21:42:30Z · 1ed30fbb1a47
+
+034.4 实现现金退款状态机、approved_at 与精确金额、五桶生产写入、申请终态关闭、未知提交、HTTP/控制台及第五 cash_refund_pending_aged 告警；补齐历史/当前角色 capability、68 个函数基线和 1001 来源索引验证。034.5/034.6 及真实外部转账仍未完成。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2236 个源文件；本次 48 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/extension-platform.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-4-cash-refunds.md`
+- modified `internal/alerts/alerts_integration_test.go`
+- added `internal/alerts/cash_refund_integration_test.go`
+- modified `internal/alerts/commands.go`
+- modified `internal/alerts/evaluate.go`
+- modified `internal/alerts/source_sql.go`
+- modified `internal/alerts/types.go`
+- modified `internal/alerts/values.go`
+- added `internal/billing/cash_refund.go`
+- added `internal/billing/cash_refund_actions.go`
+- added `internal/billing/cash_refund_commit_unknown_integration_test.go`
+- added `internal/billing/cash_refund_concurrency_integration_test.go`
+- added `internal/billing/cash_refund_integration_test.go`
+- added `internal/billing/cash_refund_tx.go`
+- modified `internal/billing/coin_rates.go`
+- modified `internal/billing/coin_rates_integration_test.go`
+- modified `internal/billing/refund_buckets_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- modified `internal/server/alert_input.go`
+- modified `internal/server/billing_handlers.go`
+- added `internal/server/cash_refund_alert_integration_test.go`
+- added `internal/server/cash_refund_handlers.go`
+- added `internal/server/cash_refund_integration_test.go`
+- added `internal/server/cash_refund_request_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/current_009_cash_refund_workflow.sql`
+- modified `specs/024-extension-platform/a-contract.md`
+- modified `specs/024-extension-platform/acceptance.md`
+- modified `specs/024-extension-platform/contract.md`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/App.vue`
+- modified `web/src/alerts.ts`
+- added `web/src/cash-refunds.ts`
+- modified `web/src/router.ts`
+- added `web/src/views/CashRefundsView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/tests/alerts.test.mjs`
+- added `web/tests/cash-refunds.test.mjs`
+
+</details>
+
+## 2026-11-14T21:43:21Z · 558cc27f3671
+
+记录 034.4 全仓 77 包 race、前端、构建与统一架构检查结果；本次仅定稿验证状态，无模块、链路、数据关系或权限结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2236 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-4-cash-refunds.md`
+
+</details>

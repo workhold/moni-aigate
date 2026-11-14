@@ -53,7 +53,7 @@ func observeSource(ctx context.Context, tx pgx.Tx, r dbRule) (Sample, time.Time,
 			}
 			sample = BudgetSample{r.kind, Time{at}, *state, *limit, *held, *spent, *available, "CNY"}
 		}
-	case CustomerReconciliationAged, ProcurementUnresolvedAged:
+	case CustomerReconciliationAged, ProcurementUnresolvedAged, CashRefundPendingAged:
 		p, e := DecodeParameters(r.kind, r.params)
 		if e != nil {
 			return nil, at, e
@@ -63,6 +63,8 @@ func observeSource(ctx context.Context, tx pgx.Tx, r dbRule) (Sample, time.Time,
 		sql := customerSourceSQL
 		if r.kind == ProcurementUnresolvedAged {
 			sql = procurementSourceSQL
+		} else if r.kind == CashRefundPendingAged {
+			sql = cashRefundSourceSQL
 		}
 		var count string
 		var lower bool

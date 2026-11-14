@@ -83,10 +83,10 @@ func validLabel(v string) bool {
 	return true
 }
 func validKind(k Kind) bool {
-	return k == ChannelQuarantined || k == ProcurementBudgetLow || k == CustomerReconciliationAged || k == ProcurementUnresolvedAged
+	return k == ChannelQuarantined || k == ProcurementBudgetLow || k == CustomerReconciliationAged || k == ProcurementUnresolvedAged || k == CashRefundPendingAged
 }
 func scopeMatches(k Kind, s ScopeType) bool {
-	return k == ChannelQuarantined && s == "channel" || (k == ProcurementBudgetLow || k == ProcurementUnresolvedAged) && s == "procurement_account" || k == CustomerReconciliationAged && s == "tenant"
+	return k == ChannelQuarantined && s == "channel" || (k == ProcurementBudgetLow || k == ProcurementUnresolvedAged) && s == "procurement_account" || (k == CustomerReconciliationAged || k == CashRefundPendingAged) && s == "tenant"
 }
 
 // The decoder preserves the distinction between omitted/null fields, rejects
@@ -240,7 +240,7 @@ func DecodeParameters(k Kind, raw []byte) (Parameters, error) {
 			return nil, e
 		}
 		return p, nil
-	case CustomerReconciliationAged, ProcurementUnresolvedAged:
+	case CustomerReconciliationAged, ProcurementUnresolvedAged, CashRefundPendingAged:
 		var p AgingParameters
 		if e := decodeClosed(raw, &p, "minimum_age_seconds", "trigger_count", "recovery_count"); e != nil {
 			return nil, e
@@ -328,7 +328,7 @@ func (v BudgetSample) MarshalJSON() ([]byte, error) {
 	return encode(wire(v))
 }
 func (v AgingSample) MarshalJSON() ([]byte, error) {
-	if (v.Kind != CustomerReconciliationAged && v.Kind != ProcurementUnresolvedAged) || !validTime(v.AsOf.Time) || !uintBound(v.MinimumAgeSeconds, "604800", true) || !uintBound(v.ObservedCount, "1001", false) {
+	if (v.Kind != CustomerReconciliationAged && v.Kind != ProcurementUnresolvedAged && v.Kind != CashRefundPendingAged) || !validTime(v.AsOf.Time) || !uintBound(v.MinimumAgeSeconds, "604800", true) || !uintBound(v.ObservedCount, "1001", false) {
 		return nil, fail("alert_unavailable")
 	}
 	age, _ := strconv.ParseInt(v.MinimumAgeSeconds, 10, 64)
@@ -372,7 +372,7 @@ func decodeSample(raw []byte) (Sample, error) {
 			return nil, e
 		}
 		v = x
-	case CustomerReconciliationAged, ProcurementUnresolvedAged:
+	case CustomerReconciliationAged, ProcurementUnresolvedAged, CashRefundPendingAged:
 		var x AgingSample
 		obj, e := strictObject(raw, "kind", "as_of", "minimum_age_seconds", "observed_count", "count_is_lower_bound", "oldest_created_at", "oldest_reference_id")
 		if e != nil {

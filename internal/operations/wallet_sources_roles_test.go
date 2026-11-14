@@ -40,7 +40,7 @@ func TestWalletSourcesRolesActualCurrentMatrix(t *testing.T) {
 				worker := role.kind == PaymentWorkerRole
 				workerSource := table == "funding_lots" || table == "funding_lot_balances" || table == "funding_lot_events"
 				wantSelect := app || worker && (workerSource || table == "ledger_accounts") || table == "coin_rate_versions"
-				wantInsert := app && table != "wallet_openings" && table != "cash_refund_orders" && table != "coin_rate_versions" || worker && workerSource
+				wantInsert := app && table != "wallet_openings" && table != "coin_rate_versions" || worker && workerSource
 				var selectAll, insertAll, updateAll, forbidden bool
 				paymentRoleMust(t, "independent table privilege query", f.owner.QueryRow(f.ctx, `SELECT
  has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),
@@ -60,6 +60,12 @@ func TestWalletSourcesRolesActualCurrentMatrix(t *testing.T) {
 					paymentRoleMust(t, "column privilege scan", rows.Scan(&column, &selectCol, &insertCol, &updateCol, &references))
 					wantInsertCol := wantInsert || worker && table == "ledger_accounts" && (column == "tenant_id" || column == "kind")
 					wantUpdate := (app || worker) && (table == "ledger_accounts" && column == "balance" || table == "funding_lot_balances" && (column == "available_amount" || column == "held_amount" || column == "consumed_amount" || column == "revision") || app && table == "wallet_requests" && (column == "state" || column == "linked_order_id"))
+					if app && table == "funding_lot_balances" && (column == "refund_held_amount" || column == "retired_amount") {
+						wantUpdate = true
+					}
+					if app && table == "cash_refund_orders" && (column == "coin_amount" || column == "reason" || column == "state" || column == "approver" || column == "transfer_executor" || column == "fiat_currency" || column == "fiat_amount" || column == "buy_rate_version_id" || column == "refund_rate_version_id" || column == "single_operator" || column == "transfer_order_ref" || column == "transfer_proof_ref" || column == "paid_fiat_amount" || column == "hold_journal_id" || column == "retire_journal_id" || column == "release_journal_id" || column == "approved_at") {
+						wantUpdate = true
+					}
 					if selectCol != wantSelect || insertCol != wantInsertCol || updateCol != wantUpdate || references {
 						t.Fatal("column privileges differ from current source contract")
 					}
@@ -99,8 +105,8 @@ func TestWalletSourcesRolesDMLAndWorkerReadBoundary(t *testing.T) {
 		"DELETE FROM wallet_operator_settings WHERE false",
 		"UPDATE wallet_requests SET note=note WHERE false",
 		"DELETE FROM wallet_requests WHERE false",
-		"INSERT INTO cash_refund_orders(id) VALUES('forbidden')",
-		"UPDATE cash_refund_orders SET reason=reason WHERE false",
+		"UPDATE cash_refund_orders SET business_ref=business_ref WHERE false",
+		"UPDATE cash_refund_orders SET requested_by=requested_by WHERE false",
 		"DELETE FROM cash_refund_orders WHERE false",
 		"INSERT INTO coin_rate_versions(id) VALUES('forbidden')",
 		"UPDATE coin_rate_versions SET reason=reason WHERE false",

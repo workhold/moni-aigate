@@ -37,6 +37,7 @@ const platformLinks = computed(() => [
   { path: '/platform/payments', title: '支付与商品', icon: Money, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/wallet-sources', title: '资金来源与核对', icon: Wallet, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/wallet-requests', title: '客户钱包申请', icon: Document, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
+  { path: '/platform/cash-refunds', title: '现金退款', icon: Money, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/alerts', title: '经营告警', icon: CircleCheck, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/reports', title: '运营与成本报表', icon: DataAnalysis, show: hasPlatform.value },
   { path: '/platform/credits', title: '人工核款', icon: Money, show: hasPlatform.value },

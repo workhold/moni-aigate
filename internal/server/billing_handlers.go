@@ -24,13 +24,13 @@ func billingError(c *gin.Context, s *Server, e error) bool {
 		status = 403
 	case "invalid_credentials", "key_invalid", "key_revoked", "invalid_key":
 		status = 401
-	case "idempotency_conflict", "request_in_progress", "request_exists", "request_finished", "already_approved", "self_approval", "refund_exceeds_charge", "revision_conflict", "route_changed", "procurement_approval_required", "procurement_inflight", "procurement_evidence_stale", "supplier_refund_evidence_required":
+	case "idempotency_conflict", "request_in_progress", "request_exists", "request_finished", "already_approved", "self_approval", "refund_exceeds_charge", "revision_conflict", "route_changed", "procurement_approval_required", "procurement_inflight", "procurement_evidence_stale", "supplier_refund_evidence_required", "cash_refund_open_exists", "cash_refund_state_conflict", "cash_refund_amount_mismatch", "cash_refund_ineligible", "cash_refund_unavailable":
 		status = 409
-	case "procurement_not_found":
+	case "procurement_not_found", "cash_refund_not_found":
 		status = 404
 	case "procurement_execution_forbidden", "procurement_history_invariant", "procurement_execution_protocol", "procurement_history_resource", "procurement_history_exhausted", "procurement_prefix_untracked_domain", "procurement_outcome_unknown":
 		status = 503
-	case "procurement_periodic_budget_exceeded", "periodic_clock_regression", "periodic_budget_invariant", "periodic_budget_unavailable", "channel_unavailable", "profile_blocked", "no_price", "price_unavailable", "cost_quote_stale", "cost_unknown", "cost_limit_exceeded", "procurement_paused", "procurement_budget_exceeded", "procurement_binding_changed", "procurement_bound_invalid", "procurement_invariant":
+	case "procurement_periodic_budget_exceeded", "periodic_clock_regression", "periodic_budget_invariant", "periodic_budget_unavailable", "channel_unavailable", "profile_blocked", "no_price", "price_unavailable", "cost_quote_stale", "cost_unknown", "cost_limit_exceeded", "procurement_paused", "procurement_budget_exceeded", "procurement_binding_changed", "procurement_bound_invalid", "procurement_invariant", "cash_refund_commit_unknown", "coin_rate_unavailable":
 		status = 503
 	}
 	if strings.Contains(be.Code, "conflict") {

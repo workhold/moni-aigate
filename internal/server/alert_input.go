@@ -47,7 +47,7 @@ func alertDecimal(raw json.RawMessage, positive bool) (string, bool) {
 }
 func alertKind(v string) bool {
 	switch alerts.Kind(v) {
-	case alerts.ChannelQuarantined, alerts.ProcurementBudgetLow, alerts.CustomerReconciliationAged, alerts.ProcurementUnresolvedAged:
+	case alerts.ChannelQuarantined, alerts.ProcurementBudgetLow, alerts.CustomerReconciliationAged, alerts.ProcurementUnresolvedAged, alerts.CashRefundPendingAged:
 		return true
 	}
 	return false
@@ -98,7 +98,7 @@ func alertParametersMatch(k alerts.Kind, p alerts.Parameters) bool {
 	case alerts.ProcurementBudgetLow:
 		_, ok := p.(alerts.BudgetParameters)
 		return ok
-	case alerts.CustomerReconciliationAged, alerts.ProcurementUnresolvedAged:
+	case alerts.CustomerReconciliationAged, alerts.ProcurementUnresolvedAged, alerts.CashRefundPendingAged:
 		_, ok := p.(alerts.AgingParameters)
 		return ok
 	}
@@ -108,7 +108,7 @@ func alertScopeMatches(k alerts.Kind, v string) bool {
 	switch k {
 	case alerts.ChannelQuarantined:
 		return v == "channel"
-	case alerts.CustomerReconciliationAged:
+	case alerts.CustomerReconciliationAged, alerts.CashRefundPendingAged:
 		return v == "tenant"
 	case alerts.ProcurementBudgetLow, alerts.ProcurementUnresolvedAged:
 		return v == "procurement_account"

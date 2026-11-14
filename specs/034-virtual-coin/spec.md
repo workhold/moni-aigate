@@ -408,6 +408,7 @@ CREATE TABLE cash_refund_orders (
   hold_journal_id    text,
   retire_journal_id  text,
   release_journal_id text,
+  approved_at        timestamptz,                    -- requested→approved 时由数据库触发器写入，之后不可改
   created_at         timestamptz NOT NULL DEFAULT clock_timestamp(),
   CHECK (approver IS NULL OR single_operator OR (approver <> maker AND approver IS DISTINCT FROM requested_by)),
   CHECK (transfer_executor IS NULL OR single_operator OR transfer_executor <> approver),
@@ -623,6 +624,19 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 - `transfer_proof_ref`：**已完成**转账的凭证，完成时必填，沿用 `security.ValidReference` 的受控引用规则。
 - 系统不触发、不验证任何外部转账。
 
+### 7.7 034.4 实施合同（2026-11-15）
+
+为实现上述状态机、直接 SQL 等价约束、未知提交和告警，补充以下确定性边界；不改变 §7 已冻结业务规则。
+
+1. **批准时刻与版本选点**。`requested → approved` 的数据库触发器写入 `approved_at=clock_timestamp()`，后续迁移不得修改。`refund_rate_version_id` 必须等于该币种在 `approved_at` 的最新生效版本，`buy_rate_version_id` 必须等于原 receipt 的买入版本；`single_operator` 必须等于 `approved_at` 时最新的运营设置快照。034.3 静态历史行以 hold journal 时间回填 `approved_at`，requested 或无 hold 的 cancelled 保持 NULL。告警也使用此不可回改的批准时刻，不使用进程时间或订单创建时间冒充停留时间。
+2. **字段形状**。requested 的币数、法币、两个版本、审批/转账角色、凭证、三个 journal 指针和 `approved_at` 均为 NULL，`single_operator=false`。approved 冻结币数、法币、两个版本、approver、设置快照与 hold；执行时补 `transfer_executor/transfer_order_ref`；完成时补 `transfer_proof_ref/paid_fiat_amount` 且 paid 必须等于冻结法币。取消/失败只允许 release，completed 只允许 retire；申请前 cancelled 无 hold，approved 后 cancelled/failed 有 hold+release。`transfer_executed` 后不能 cancelled，终态不能迁移。
+3. **操作者与直接 SQL**。maker/approver/transfer_executor 使用批准时快照的财务角色合同；同一 admin 的例外只在快照为真时有效。hold journal actor 必须为 approver，release actor 必须为取消时的 maker/approver 或失败时的财务角色，retire actor 必须为 transfer_executor 或另一名财务角色。数据库触发器校验允许的状态迁移、角色、版本选择、精确退款额及上述 actor；仅开放应用需要的 INSERT 和状态列 UPDATE，身份列仍不可改。前态条件更新必须影响恰好一行，重放不得再写 journal/event。
+4. **申请关联**。财务发起时 `requested_by=maker`；客户发起时 `requested_by` 必须来自同租户 `cash_refund/open` 独立申请，创建单据与 `open → linked` 同事务。申请在 completed/cancelled/failed 的同事务 `linked → closed`，approved/transfer_executed 不得提前关闭。requested 的字段预检与预览不修改钱包；创建和审批 API 均不接受币数或法币金额，批准时重新读取全部可用币。
+5. **金额与数据库等价**。Go 使用 `big.Int` 实现 §7.3，数据库使用同一有理数公式和 `numeric` 任意精度乘除复核，结果向下取整并限定 int64。持有版本必须同币种，缺买入/当前版本、版本选择被回改或金额不匹配均失败关闭。`FUNDING_CLEARING` 只在 retire 回正，五桶、独立 operation、事件 revision 与两个账户行沿用 034.3 guard。
+6. **HTTP 与只读回查**。平台入口固定为 `GET/POST /api/platform/cash-refunds`、`GET /api/platform/cash-refunds/:id`、`GET /api/platform/cash-refunds/by-business/:ref`，以及 `:id/approve|execute|complete|cancel|fail` 五个 POST 迁移。列表支持 `tenant_id/state/business_ref/cursor`。create 只接受 `tenant_id,lot_id,business_ref,reason,request_id`；approve 空对象；execute 只接受 `transfer_order_ref`；complete 只接受 `transfer_proof_ref,paid_fiat_amount`；cancel/fail 只接受 `reason`。严格 JSON 拒绝未知字段、重复键、JSON number 金额和调用方填写的币数。写操作要求 Idempotency-Key，按动作和完整意图绑定原单；重复迁移返回当前单，不重复审计或资金事实。
+7. **未知提交与恢复**。批准、执行、完成、取消和失败各自一个数据库事务；COMMIT 结果不明返回 `cash_refund_commit_unknown`（HTTP 503），销毁该连接，不自动重放。调用方按 ID 或 business_ref 只读回查；已前进则取当前状态，未前进才可人工以同一动作重试。恢复任务不得自动批准、完成、释放现金退款，也不得重发任何模型请求。
+8. **第五种站内告警**。新增 `cash_refund_pending_aged / tenant`，复用 024-A 的 `AgingParameters/AgingSample` 与 600..604800 秒、1..1000/0..999 计数和滞回。合格行是 `state IN ('approved','transfer_executed') AND approved_at<=as_of-age`，最多 1001 条，oldest reference 为订单 ID；completed/cancelled/failed 自然恢复。只读 MVCC 观察，不锁业务根、不调用外部转账、不写资金事实，部署开关与恢复模式仍由 024-A 控制。
+
 ## 8. 展示
 
 - 客户侧余额、价格、请求费用、Key 额度、周期预算一律显示币。
@@ -785,6 +799,7 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 | 034.3 guard 负控 | 旧 kind 携带新 delta、NULL/kind 错配、跨租户/lot/journal/reference/operation/指针、错误 delta/额外账户行、复用 operation、重复 `(refund_order_id,kind)`、retire+release、孤儿订单/journal 均拒绝；分别用不同订单验证 retire 和 release。订单 setup 由 migration owner 完成，journal/event/balance 在全部 trigger/constraint 开启下写入；应用订单 I/U/D 被拒绝，禁止以禁用 trigger 或 mock validator 代替验收 | PG |
 | 现金退款资格 | 赠送、兑换券、开账、未知基准来源被拒；冻结与已消费部分不可退 | PG |
 | 现金退款状态机 | 逐条迁移；冻结后 Reserve 看不到被冻结的币；`cancelled/failed` 释放回可用；`completed` 为终态；完成时 `paid_fiat_amount` 与冻结 `fiat_amount` 不等被拒；`transfer_proof_ref` 缺失被拒 | PG |
+| 现金退款 HTTP 与告警 | 严格 DTO 禁止调用方填写币数；客户申请原子关联并在终态关闭；按 ID/business_ref 只读回查未知提交；第五种 tenant aging 告警只观察 approved/transfer_executed，终态恢复，不自动写资金 | PG + HTTP + 前端 |
 | 现金退款金额 | MVP 手算向量：固定币价、折扣充值（付 90 得 100，退 `k×0.9`，折扣不退回）；全额由系统填，操作人传币数被拒；`int64` 边界与 5 个 64 位数相乘不溢出（`big.Int`）；向下取整永不多退；币价或买入版本缺失则失败关闭。未来调价治理另测上调、下调和批准后调价不影响已批准单 | 纯函数 + PG |
 | 退款再充值（后续调价治理） | 在调价能力开放后构造“币价下调后退款再以新价充值”：净所得不大于不退款情形，无套利；币价上调同理 | 纯函数 |
 | 币价版本 | MVP 创建创世版本并在付费 receipt 记录 `buy_rate_version_id`；版本追加式不可改；`(币种, effective_at)` 唯一；无版本时入账与退款失败关闭；MVP 无调价入口。后续调价治理需另测审批、不得回溯和影响预览；receipt 的买入币价版本币种与来源币种一致 | PG |

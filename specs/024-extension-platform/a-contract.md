@@ -973,3 +973,13 @@ go run ./scripts/check-architecture
 ## 8.4 冻结合同的独立原型复核
 
 独立审查员在专用PG随机schema/角色原型运行4个顶层race测试，6.774s通过；覆盖create→open→ACK→recover、13项错误链拒绝、时间/Unicode、六表app/projector负向权限、业务父行锁不阻塞四源MVCC读取与write_revision失败CAS。两个aging源各141002行，默认planner下scalar观察子查询在少量/0合格时只读3/0行（4/3 buffers），created_at进入Index Cond；原SQL对应21002/100000行。样本结果一致，随机schema/roles清理均0。证据在忽略目录.local/024-prototype，非生产实现、真实worker或main验收；生产代码必须重新验证本节与第8节出口。
+
+## 8.5 034.4 增补：现金退款待处理 aging（2026-11-15）
+
+在既有四种 kind 之外，仅追加 `cash_refund_pending_aged / tenant`，不改变既有 kind、规则上限、参数、命令、样本字段、worker 或权限合同：
+
+- 参数仍为有界 `minimum_age_seconds,trigger_count,recovery_count`，样本仍为同一 `AgingSample` 白名单。`scope_id` 是 tenant UUID，`oldest_reference_id` 是现金退款订单 UUID。
+- 合格事实为 `cash_refund_orders.state IN ('approved','transfer_executed') AND approved_at<=as_of-age`。`approved_at` 由 034.4 的数据库批准触发器写入且不可回改，不能换成进程时间或订单创建时间。
+- 同一 tenant 按 `approved_at ASC,id COLLATE "C" ASC` 最多读取 1001 条，1001 继续表示至少；completed/cancelled/failed 不再合格，按既有 recovery_count 滞回恢复。
+- 只读 MVCC，不给订单或 journal 加业务 FK/锁，不调用外部转账、不自动批准/完成/释放。部署暂停、恢复模式、source_missing、超时与 DB 时钟回退语义全部沿用本合同。
+- 该增补由 034 spec §7.7 同步冻结，必须通过真实 PostgreSQL、worker、HTTP 和前端联合验证后，才能将第五 kind 标为已实现。

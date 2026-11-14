@@ -20,13 +20,13 @@ flowchart LR
     Worker --> Alerts
     Alerts --> Rules[规则 / runtime / 命令回执]
     Alerts --> Episodes[发生记录 / 不可变事件]
-    Source[渠道 / 客户预占 / 采购账户与预占] -->|同语句 MVCC 只读| Alerts
+    Source[渠道 / 客户预占 / 采购账户与预占 / 现金退款订单] -->|同语句 MVCC 只读| Alerts
     Alerts --> UI[规则 / 当前发生 / 历史 / 新鲜度]
 ```
 
 图中A的模块均已实现，运行范围见验证记录。该链路不进入Provider、Settle、Recover或邮件发送；没有调用图中未画出的自动隔离、自动充值或资金裁决。现有商业链路继续独立以硬预占和证据决定结果。
 
-A使用独立领域package `internal/alerts`，固定四种类型，负责规范命令、当前平台授权、规则/发生/样本与评估事务；worker只装配有限任务，不拥有财务写接口。server做严格DTO、CSRF/再认证、限流和安全投影。main持有专用双连接pool和worker退出顺序，不把告警塞进当前[财务恢复/投影ticker](../../cmd/moni-aigate/main.go)。Go方法与最终DDL在A0冻结，避免多个工作面各造一套结构。
+A使用独立领域package `internal/alerts`，原固定四种类型及 034.4 追加的第五种 `cash_refund_pending_aged / tenant`，负责规范命令、当前平台授权、规则/发生/样本与评估事务；worker只装配有限任务，不拥有财务写接口。server做严格DTO、CSRF/再认证、限流和安全投影。main持有专用双连接pool和worker退出顺序，不把告警塞进当前[财务恢复/投影ticker](../../cmd/moni-aigate/main.go)。Go方法与最终DDL在A0冻结，避免多个工作面各造一套结构；第五 kind 的精确增补见 [A0 §8.5](../../specs/024-extension-platform/a-contract.md)。
 
 ## 3. 规则、发生记录与确认
 
@@ -46,11 +46,13 @@ stateDiagram-v2
 
 每个rule独立configuration_revision，每个episode独立action_revision，周期样本不增长这些配置/协作版本，避免持续流量让确认CAS永远冲突。事件按action_revision唯一追加，状态改变和事件/审计/回执同事务；rule当前pointer和部分唯一索引共同防止重复open。来源无业务FK，既有财务写路径完全不需要知道告警模块。
 
-## 4. 四个固定观察函数
+## 4. 五个固定观察函数
 
 预算以`limit - spent - held`为余量，不截负数；触发`<=threshold`、恢复`>recovery`形成滞回，避免边缘来回发生。这里的limit是019登记累计预算，人工供应商观察余额可能已过时，不能替换它或当做硬限额。A不承担023周期预算定义。
 
 两类积压使用reservation创建时间和当前状态；旧请求刚变unknown也可能立刻满足年龄，此为明确的“旧预占仍未决”语义，不能称状态已持续同样时长。每个规则只观察一个tenant/account，按时间最多取1001条，足以判断最大1000阈值并保留最旧引用。超过上限显示“至少”，不做部分资金合计或任意全站SUM。
+
+第五种 `cash_refund_pending_aged` 只观察 approved/transfer_executed 的现金退款订单，年龄取数据库批准触发器写入的 `approved_at`；终态按 recovery_count 恢复。它不读取客户请求正文，不锁订单或 journal，不自动迁移退款。
 
 渠道只监控持久quarantined。内存熔断恢复、凭据撤销、binding isolation和profile block各有不同生命周期；后续若需要这些种类，应单独固定source、恢复条件和重启语义，而不是从日志匹配字符串。
 

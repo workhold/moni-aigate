@@ -16,9 +16,34 @@ type refundBucketOrder struct {
 func refundBucketOrderTx(t *testing.T, f *fixture, tx pgx.Tx, lot, state string, amount int64) refundBucketOrder {
 	t.Helper()
 	o := refundBucketOrder{id: uuid.NewString(), lot: lot, amount: amount}
-	if _, err := tx.Exec(f.ctx, `INSERT INTO cash_refund_orders(id,tenant_id,lot_id,business_ref,coin_amount,reason,state,requested_by,maker,approver) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, o.id, f.tenant, lot, uuid.NewString(), amount, "034.3 accounting fixture", state, f.user, f.operator, f.approver); err != nil {
+	if _, err := tx.Exec(f.ctx, `INSERT INTO cash_refund_orders(id,tenant_id,lot_id,business_ref,reason,requested_by,maker) VALUES($1,$2,$3,$4,'034.3 accounting fixture',$5,$5)`, o.id, f.tenant, lot, uuid.NewString(), f.operator); err != nil {
 		t.Fatal(err)
 	}
+	if state == "requested" {
+		return o
+	}
+	if _, err := tx.Exec(f.ctx, `UPDATE cash_refund_orders SET state='approved',coin_amount=$3,approver=$4,single_operator=wallet_single_operator(),fiat_currency='CNY',fiat_amount=$3,buy_rate_version_id=(SELECT buy_rate_version_id FROM funding_receipts WHERE id=$2),refund_rate_version_id=(SELECT id FROM coin_rate_versions WHERE fiat_currency='CNY') WHERE id=$1 AND state='requested'`, o.id, lot, amount, f.approver); err != nil {
+		t.Fatal(err)
+	}
+	if state == "approved" {
+		return o
+	}
+	if _, err := tx.Exec(f.ctx, `UPDATE cash_refund_orders SET state='transfer_executed',transfer_executor=$2,transfer_order_ref='transfer:034-static' WHERE id=$1 AND state='approved'`, o.id, f.operator); err != nil {
+		t.Fatal(err)
+	}
+	if state == "transfer_executed" {
+		return o
+	}
+	if state == "completed" {
+		if _, err := tx.Exec(f.ctx, `UPDATE cash_refund_orders SET state='completed',transfer_proof_ref='transfer:034-proof',paid_fiat_amount=$2 WHERE id=$1 AND state='transfer_executed'`, o.id, amount); err != nil {
+			t.Fatal(err)
+		}
+		return o
+	}
+	if state == "cancelled" || state == "failed" {
+		return o
+	}
+	t.Fatalf("unsupported static refund state %s", state)
 	return o
 }
 
@@ -146,7 +171,10 @@ func TestPostgresRefundBucketsHoldRetireReleaseConservation(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer tx.Rollback(context.Background())
-		if _, err = tx.Exec(f.ctx, `UPDATE cash_refund_orders SET state='completed' WHERE id=$1`, o.id); err != nil {
+		if _, err = tx.Exec(f.ctx, `UPDATE cash_refund_orders SET state='transfer_executed',transfer_executor=$2,transfer_order_ref='transfer:034-complete' WHERE id=$1`, o.id, f.operator); err != nil {
+			t.Fatal(err)
+		}
+		if _, err = tx.Exec(f.ctx, `UPDATE cash_refund_orders SET state='completed',transfer_proof_ref='transfer:034-proof',paid_fiat_amount=$2 WHERE id=$1`, o.id, o.amount); err != nil {
 			t.Fatal(err)
 		}
 		retire := refundBucketRetire(t, f, tx, o, 3)
@@ -209,7 +237,12 @@ func TestPostgresRefundBucketsRejectsEarlyRetireAndNonCash(t *testing.T) {
 			t.Fatal(err)
 		}
 		refundBucketCommitRejected(t, f, func(tx pgx.Tx) error {
-			other := refundBucketOrderTx(t, f, tx, lot, "completed", 40)
+			f.fund(t, 1000)
+			var otherLot string
+			if err := f.pool.QueryRow(f.ctx, `SELECT id FROM funding_receipts WHERE tenant_id=$1 ORDER BY created_at DESC,id DESC LIMIT 1`, f.tenant).Scan(&otherLot); err != nil {
+				return err
+			}
+			other := refundBucketOrderTx(t, f, tx, otherLot, "completed", 40)
 			retire := refundBucketRetire(t, f, tx, other, 3)
 			hold := refundBucketHold(t, f, tx, other, 4)
 			refundBucketSetPointer(t, f, tx, other, "retire_journal_id", retire)

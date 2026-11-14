@@ -173,7 +173,7 @@ func TestPostgresCoinRateUSDFailClosedThenExplicitVersion(t *testing.T) {
 }
 
 func TestCoinRateLookupIsIsolatedFromRequestPaths(t *testing.T) {
-	allowed := map[string]bool{"coin_rates.go": true, "credit_funding.go": true, "funding.go": true}
+	allowed := map[string]bool{"coin_rates.go": true, "credit_funding.go": true, "funding.go": true, "cash_refund.go": true, "cash_refund_actions.go": true}
 	entries, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatal(err)

@@ -2,9 +2,12 @@ package alerts
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -24,9 +27,12 @@ type fixture struct {
 	owner, app, projector                                                                        *pgxpool.Pool
 	store                                                                                        *Store
 	schema, appRole, projectorRole, admin, finance, approver, customer, tenant, account, channel string
+	cashOrder                                                                                    string
 }
 
-func integration(t *testing.T) *fixture {
+func integration(t *testing.T) *fixture { return integrationWithCashRefundHistory(t, false) }
+
+func integrationWithCashRefundHistory(t *testing.T, historical bool, count ...int) *fixture {
 	t.Helper()
 	raw := os.Getenv("TEST_DATABASE_URL")
 	if raw == "" {
@@ -74,8 +80,15 @@ func integration(t *testing.T) *fixture {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if e = migrations.Apply(ctx, f.owner); e != nil {
-		t.Fatal(e)
+	if historical {
+		applyAlertCurrentPrefix(t, f)
+	} else {
+		if e = migrations.ApplyCurrent(ctx, f.owner); e != nil {
+			t.Fatal(e)
+		}
+		if e = migrations.VerifyCurrent(ctx, f.owner); e != nil {
+			t.Fatal(e)
+		}
 	}
 	if e = operations.ProvisionFor(ctx, f.owner, f.schema, f.appRole, f.projectorRole); e != nil {
 		t.Fatal(e)
@@ -124,8 +137,102 @@ func integration(t *testing.T) *fixture {
 	if e = tx.Commit(ctx); e != nil {
 		t.Fatal(e)
 	}
+	if historical {
+		countValue := 1
+		if len(count) > 0 {
+			countValue = count[0]
+		}
+		f.seedCashRefundHistory(countValue)
+		if e = migrations.ApplyCurrent(ctx, f.owner); e != nil {
+			t.Fatal(e)
+		}
+		if e = migrations.VerifyCurrent(ctx, f.owner); e != nil {
+			t.Fatal(e)
+		}
+		if e = operations.ProvisionFor(ctx, f.owner, f.schema, f.appRole, f.projectorRole); e != nil {
+			t.Fatal(e)
+		}
+	}
 	return f
 }
+func applyAlertCurrentPrefix(t *testing.T, f *fixture) {
+	t.Helper()
+	entries, err := migrations.Files.ReadDir(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := []string{"current_mvp.sql"}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "current_") && entry.Name() != "current_mvp.sql" && strings.HasSuffix(entry.Name(), ".sql") {
+			names = append(names, entry.Name())
+		}
+	}
+	sort.Strings(names[1:])
+	f.exec(`CREATE TABLE schema_migrations(name TEXT PRIMARY KEY,checksum TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp())`)
+	installed := false
+	for _, name := range names {
+		body, err := migrations.Files.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.exec(string(body))
+		f.exec(`INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)`, name, fmt.Sprintf("%x", sha256.Sum256(body)))
+		if name == "current_008_coin_rate_versions.sql" {
+			installed = true
+			break
+		}
+	}
+	if !installed {
+		t.Fatal("current_008 migration is missing")
+	}
+}
+
+func (f *fixture) seedCashRefundHistory(count int) {
+	f.t.Helper()
+	tx, err := f.owner.Begin(f.ctx)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	defer tx.Rollback(f.ctx)
+	exec := func(query string, args ...any) {
+		f.t.Helper()
+		if _, err := tx.Exec(f.ctx, query, args...); err != nil {
+			f.t.Fatal(err)
+		}
+	}
+	exec(`CREATE TEMP TABLE alert_cash_src ON COMMIT DROP AS SELECT n,gen_random_uuid()::text AS credit_id,gen_random_uuid()::text AS receipt_id,gen_random_uuid()::text AS journal_id,gen_random_uuid()::text AS event_id,gen_random_uuid()::text AS order_id,gen_random_uuid()::text AS hold_operation_id,gen_random_uuid()::text AS hold_journal_id,gen_random_uuid()::text AS hold_event_id FROM generate_series(1,$1::bigint)n`, count)
+	exec(`INSERT INTO credit_orders(id,tenant_id,business_ref,proof_ref,amount,requester,requested_by,basis_kind,fiat_currency,fiat_amount) SELECT credit_id,$1,'cash-alert:'||n,'proof:cash-alert',1,$2,$2,'paid','CNY',1 FROM alert_cash_src`, f.tenant, f.finance)
+	exec(`INSERT INTO journals(id,tenant_id,operation_id,kind,reference,actor) SELECT journal_id,$1,credit_id,'credit',credit_id,$2 FROM alert_cash_src`, f.tenant, f.approver)
+	exec(`INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,basis_kind,fiat_currency,fiat_amount,buy_rate_version_id,parent_ref) SELECT receipt_id,$1,'manual_credit',credit_id,1,'COIN',journal_id,'paid','CNY',1,(SELECT id FROM coin_rate_versions WHERE fiat_currency='CNY'),credit_id FROM alert_cash_src`, f.tenant)
+	exec(`INSERT INTO funding_lots(id,tenant_id,funding_receipt_id,source_kind,source_id,refund_class,issued_amount,fifo_at) SELECT id,tenant_id,id,'manual_credit',source_id,'cash_original',1,created_at FROM funding_receipts WHERE tenant_id=$1`, f.tenant)
+	exec(`INSERT INTO funding_lot_balances(lot_id,tenant_id,available_amount,held_amount,consumed_amount,refund_held_amount,retired_amount,revision) SELECT receipt_id,$1,1,0,0,0,0,1 FROM alert_cash_src`, f.tenant)
+	exec(`INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired) SELECT event_id,$1,receipt_id,credit_id,journal_id,'funding',1,1,0,0,0,0 FROM alert_cash_src`, f.tenant)
+	exec(`INSERT INTO projection_outbox(tenant_id,operation_id,kind,sanitized_payload) SELECT $1,credit_id,'credited','{"amount":"1"}' FROM alert_cash_src`, f.tenant)
+	exec(`INSERT INTO ledger_accounts(tenant_id,kind) VALUES($1,'AVAILABLE'),($1,'REFUND_HELD'),(NULL,'FUNDING_CLEARING') ON CONFLICT DO NOTHING`, f.tenant)
+	var available, refundHeld, clearing string
+	if err = tx.QueryRow(f.ctx, `SELECT (SELECT id FROM ledger_accounts WHERE tenant_id=$1 AND kind='AVAILABLE'),(SELECT id FROM ledger_accounts WHERE tenant_id=$1 AND kind='REFUND_HELD'),(SELECT id FROM ledger_accounts WHERE tenant_id IS NULL AND kind='FUNDING_CLEARING')`, f.tenant).Scan(&available, &refundHeld, &clearing); err != nil {
+		f.t.Fatal(err)
+	}
+	exec(`INSERT INTO journal_lines(journal_id,account_id,signed_delta) SELECT journal_id,(SELECT id FROM ledger_accounts WHERE tenant_id=$1 AND kind='AVAILABLE'),1 FROM alert_cash_src`, f.tenant)
+	exec(`INSERT INTO journal_lines(journal_id,account_id,signed_delta) SELECT journal_id,(SELECT id FROM ledger_accounts WHERE tenant_id IS NULL AND kind='FUNDING_CLEARING'),-1 FROM alert_cash_src`)
+	exec(`UPDATE credit_orders SET state='approved',approver=$1,journal_id=(SELECT journal_id FROM alert_cash_src WHERE credit_id=credit_orders.id),single_operator=wallet_single_operator() WHERE id IN (SELECT credit_id FROM alert_cash_src)`, f.approver)
+	exec(`INSERT INTO cash_refund_orders(id,tenant_id,lot_id,business_ref,reason,requested_by,maker,state,coin_amount,approver,fiat_currency,fiat_amount,buy_rate_version_id,refund_rate_version_id,hold_journal_id,created_at) SELECT order_id,$1,receipt_id,'cash-alert:'||n,'cash alert history',$2,$2,'approved',1,$3,'CNY',1,(SELECT buy_rate_version_id FROM funding_receipts WHERE id=receipt_id),(SELECT id FROM coin_rate_versions WHERE fiat_currency='CNY'),hold_journal_id,clock_timestamp()-interval '11 minutes' FROM alert_cash_src`, f.tenant, f.finance, f.approver)
+	exec(`INSERT INTO journals(id,tenant_id,operation_id,kind,reference,actor,created_at) SELECT hold_journal_id,$1,hold_operation_id,'cash_refund_hold',order_id,$2,clock_timestamp()-interval '10 minutes' FROM alert_cash_src`, f.tenant, f.approver)
+	exec(`INSERT INTO journal_lines(journal_id,account_id,signed_delta) SELECT hold_journal_id,(SELECT id FROM ledger_accounts WHERE tenant_id=$1 AND kind='AVAILABLE'),-1 FROM alert_cash_src`, f.tenant)
+	exec(`INSERT INTO journal_lines(journal_id,account_id,signed_delta) SELECT hold_journal_id,(SELECT id FROM ledger_accounts WHERE tenant_id=$1 AND kind='REFUND_HELD'),1 FROM alert_cash_src`, f.tenant)
+	exec(`INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired,refund_order_id) SELECT hold_event_id,$1,receipt_id,hold_operation_id,hold_journal_id,'refund_hold',2,-1,0,0,1,0,order_id FROM alert_cash_src`, f.tenant)
+	exec(`UPDATE funding_lot_balances b SET available_amount=0,refund_held_amount=1,revision=2 FROM alert_cash_src s WHERE b.tenant_id=$1 AND b.lot_id=s.receipt_id AND b.revision=1`, f.tenant)
+	exec(`UPDATE ledger_accounts SET balance=0 WHERE id=$1`, available)
+	exec(`UPDATE ledger_accounts SET balance=$2 WHERE id=$1`, refundHeld, count)
+	exec(`UPDATE ledger_accounts SET balance=$2 WHERE id=$1`, clearing, -count)
+	if err = tx.Commit(f.ctx); err != nil {
+		f.t.Fatal(err)
+	}
+	if err = f.owner.QueryRow(f.ctx, `SELECT id FROM cash_refund_orders WHERE tenant_id=$1 ORDER BY created_at,id LIMIT 1`, f.tenant).Scan(&f.cashOrder); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 func (f *fixture) exec(sql string, args ...any) {
 	f.t.Helper()
 	if _, e := f.owner.Exec(f.ctx, sql, args...); e != nil {

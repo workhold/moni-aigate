@@ -695,6 +695,18 @@ sequenceDiagram
 
 `cash_refund_orders.buy_rate_version_id/refund_rate_version_id` 到版本表的 nullable 外键已安装，但现金退款金额计算、版本选择、状态机、生产写权限、HTTP、控制台与告警仍归 034.4。034.3b 不宣称这些能力或真实支付/供应商验收完成。验证证据见[034.3b验证记录](../verification/034-3b-coin-rates.md)。
 
+### 034.4 现金退款状态机与待处理告警
+
+[`current_009_cash_refund_workflow.sql`](../../migrations/current_009_cash_refund_workflow.sql) 将静态现金退款事实扩展为生产状态机：`requested → approved → transfer_executed → completed`，requested/approved 可 cancelled，approved/transfer_executed 可 failed。一来源一张未完成单由部分唯一索引强制；终态只能补写对应 journal 指针，其他字段不可改。requested 只有资格预览，批准重新读取全部可用币，调用方不能指定币数或金额。`approved_at` 由数据库批准触发器写入且不可回改，当前币价与 `single_operator` 均取该时刻快照；034.3 静态历史由 hold journal 时间回填。
+
+批准写 `cash_refund_hold`：来源 `available−k/refund_held+k`、租户 `AVAILABLE−k/REFUND_HELD+k`；完成写 `cash_refund_retire`：来源 `refund_held−k/retired+k`、租户 `REFUND_HELD−k/FUNDING_CLEARING+k`；取消/失败写 `cash_refund_release` 恢复可用。每次迁移使用独立 journal operation 和递增 lot revision，事件带 `refund_order_id`，复用 034.3 五桶、前缀和、actor 与 deferred guard。Go [`big.Int`](../../internal/billing/cash_refund.go) 与 SQL `numeric` 按 §7.3 复核 `min(原付款比例, 当前币价比例)`，缺买入/当前版本失败关闭，直接 SQL 修改冻结金额或版本同样被拒绝。
+
+客户 `requested_by` 来自同租户 `cash_refund/open` 独立申请，创建与 linked 同事务，completed/cancelled/failed 才关闭申请；制单、审批、执行、释放/退出角色和单人运营快照由数据库与 journal actor 共同验证。`cashRefundTransaction` 只对已知序列化失败有限重试，未知 COMMIT 返回 `cash_refund_commit_unknown`、销毁连接，恢复不自动批准、完成、释放或重发模型请求；调用方按 ID/business_ref 只读回查。[核心状态机](../../internal/billing/cash_refund_actions.go)、[事务边界](../../internal/billing/cash_refund_tx.go)。
+
+平台接口为 `GET/POST /api/platform/cash-refunds`、`GET /api/platform/cash-refunds/:id`、`GET /api/platform/cash-refunds/by-business/:ref` 和五个迁移动作，严格 JSON、金额字符串、Idempotency-Key 和独立意图摘要。[HTTP](../../internal/server/cash_refund_handlers.go) 与[独立控制台](../../web/src/views/CashRefundsView.vue) 分离 requested 预览和已冻结事实，不触发或验证外部银行转账。APP 可创建订单并更新状态列和两个退款桶，worker/projection 无订单写权限；历史 provision 保持旧订单只读与旧三桶，当前才开放新函数和写边界。
+
+第五种 `cash_refund_pending_aged / tenant` 复用 024-A 的 aging 参数、样本、滞回和部署/恢复边界，只读 `approved/transfer_executed AND approved_at<=as_of-age`，不锁业务根、不自动迁移退款。[只读来源](../../internal/alerts/source_sql.go)、[评估](../../internal/alerts/evaluate.go)、[执行计划与1001来源验收](../../internal/alerts/cash_refund_integration_test.go)。验证范围见[034.4验证记录](../verification/034-4-cash-refunds.md)；034.5 报表/余额展示和 034.6 约合/显示名仍未实现。
+
 ### 018 采购单价门禁与成本感知路由
 
 018 后端与控制台已实现并通过限定本地验收，实际范围见[018 验证记录](../verification/cost-aware-routing.md)。不可变路由策略新增 `cost_mode=manual|cost_first` 与 `unknown_cost_policy=allow|deny`；完整路由发布仍受模型 revision CAS 保护，每个 binding 可设置输入/输出两维 `max_*_cost_rate`。上限 `null` 表示该维不限，`"0"` 要求该维已知免费；API 费率采用十进制字符串，内部为 CNY 微元/百万计费 token。`cost_first` 必须拒绝未知成本；manual/allow 无上限保留旧行为。启用成本管控后，缺报价、缺任一维或 basis unknown 均被拒绝，不会把未知按零参与比较。

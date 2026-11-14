@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-14T18:29:33Z",
-  "review_reason": "记录 034.3b 全仓 77 包 race、前端、构建与统一架构检查结果；本次仅定稿验证状态，无模块、链路、数据关系或权限结构变化。",
-  "snapshot_sha256": "297d979f522124491583102ded23158ee24dd1892d0a969273ce4eabd0546c59",
-  "architecture_sha256": "400a2badbd475bf93d4d9f92696c1862c18658487bc2a4ac6cc4bcf5a7af6b9e",
-  "history_sha256": "73986b5d7c3dceeb45c1b32b5623f812f7e664b94d63829f8f48dd03f4f4e148",
+  "reviewed_at": "2026-11-14T21:43:21Z",
+  "review_reason": "记录 034.4 全仓 77 包 race、前端、构建与统一架构检查结果；本次仅定稿验证状态，无模块、链路、数据关系或权限结构变化。",
+  "snapshot_sha256": "558cc27f3671a3d5667372ff4b75997b1866e1a68ca69c73bfbbeecf533a5d89",
+  "architecture_sha256": "c24693c75c90fcc3b523c3fd2b73d350652fa9550dc768366dd7c58aa9057d6a",
+  "history_sha256": "803aa126746d58808f7527a390b5d628c0d31414508acfef13aa8779e21f9b02",
   "files": [
     {
       "path": ".dockerignore",
@@ -157,7 +157,7 @@
     },
     {
       "path": "docs/architecture/wallet-sources.md",
-      "sha256": "eb003c2932d872b10da5c3559f8caa55902f5a3cad02338bd73c43a5c947042a"
+      "sha256": "069f5d1fb516be3d05be44dff857973e4274977a76f850a10adb9cb97e7f3cde"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -181,11 +181,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "b4b1d887cea70908e2e5c54bd66d156c189d13944c1871f488c1d00bbd3fb711"
+      "sha256": "969b3f70aeec32208e43a932814281751c1dd85aadfd868f569a1c289721626f"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "5c514acb63add1b3e008d4543d4a50bcfb9482eace57d80c9d0e509f17c28b89"
+      "sha256": "9cbc0946722841c42f99c1344c830eb6047428bf45852985dc264db32e267315"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -197,7 +197,7 @@
     },
     {
       "path": "docs/design/extension-platform.md",
-      "sha256": "a1272acfea742beb313dc8a283ce1b9ab375b7d43bdab83d8076c2cab517564a"
+      "sha256": "fa0468330f933628a97ce20b0b2f62bfe0a9506eda764b8befeb8cabeab96b0d"
     },
     {
       "path": "docs/design/image-http-mvp.md",
@@ -225,7 +225,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "f2720eb0a3c6ea162b5de17ba393fba3b22c488afdecb03d6a0c51bb56d91b03"
+      "sha256": "e76ad83b12e503c320bab6cef8c34c7e1d020afb9445808bc2ab5ee9cfafee7d"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -290,6 +290,10 @@
     {
       "path": "docs/verification/034-3b-coin-rates.md",
       "sha256": "9371da2c771ef805fa76e6c6f2b94dec99ff6c89f8e77bfc4eec9ff5c8acb59d"
+    },
+    {
+      "path": "docs/verification/034-4-cash-refunds.md",
+      "sha256": "a70860e51ccd9b4308ae6b52a122348475601870c4ddcf31e090df491ff33a76"
     },
     {
       "path": "docs/verification/034-coin-units.md",
@@ -1929,11 +1933,15 @@
     },
     {
       "path": "internal/alerts/alerts_integration_test.go",
-      "sha256": "19cd6593d8a9665d6bce74120198e5d84fc228efcb676606fbcf7918536957f2"
+      "sha256": "22369e605d63775b8daa7a5b4753f0280eaea2a0b3973d6491eb0ac91ee562d0"
+    },
+    {
+      "path": "internal/alerts/cash_refund_integration_test.go",
+      "sha256": "4acb9f59157db4241f9efedbf437bf47e4660f2accdb5755321bbb9034462755"
     },
     {
       "path": "internal/alerts/commands.go",
-      "sha256": "0bfa9bbe5e7377364ecfe72623d20fedc33d7869c27576ba7636b6b06925b298"
+      "sha256": "70970331a7fa12149afce519461bc28b9586bc94ae9ed680536716dc00bc4935"
     },
     {
       "path": "internal/alerts/concurrency_integration_test.go",
@@ -1941,7 +1949,7 @@
     },
     {
       "path": "internal/alerts/evaluate.go",
-      "sha256": "77cb3b51eea813641e479f28c8812197979efc430fddb52c02331e67fd6cd217"
+      "sha256": "d08dbd11b5717aacd894eadb141f7455a10bee85d70b84a384aca7d8d6404124"
     },
     {
       "path": "internal/alerts/fault_integration_test.go",
@@ -1961,7 +1969,7 @@
     },
     {
       "path": "internal/alerts/source_sql.go",
-      "sha256": "557475e75ea0ba7d6a548785e7750c4403e1c938ba9489da2844e234ee11990f"
+      "sha256": "a300c6f6dfe44edf8c417603c6b37018d9a118a86a30af44cccb02f9b3a1f325"
     },
     {
       "path": "internal/alerts/store.go",
@@ -1969,11 +1977,11 @@
     },
     {
       "path": "internal/alerts/types.go",
-      "sha256": "b1af5908e17c306ab5556673cffbb6b99b8c6059d306c155b6c1a9b0d17d7882"
+      "sha256": "8d81ffd78514de555890ac2084389ccb0359629c103e915e855478e0e9acf0ab"
     },
     {
       "path": "internal/alerts/values.go",
-      "sha256": "c8d80f5d25787dc8581616920877b936b873a889f2dfa910a8aba8edb5732463"
+      "sha256": "6b8fa8a458f694e8a5435dbad5b215d85fc8f43e485b3f41b740c32ce18a114e"
     },
     {
       "path": "internal/alerts/values_test.go",
@@ -2004,16 +2012,40 @@
       "sha256": "3eedf4055deb8f69cea6b6b76986a3ecfb6b9126926565ed3a14234eff319624"
     },
     {
+      "path": "internal/billing/cash_refund.go",
+      "sha256": "e14f8d072cc57974736dcd053435d974e8a1eede20104509c9abab4695f24ba3"
+    },
+    {
+      "path": "internal/billing/cash_refund_actions.go",
+      "sha256": "f8e42c63772b0c9723c389b4c2c927160b814d5a1bc7a903ef0cf060bf94a8ce"
+    },
+    {
+      "path": "internal/billing/cash_refund_commit_unknown_integration_test.go",
+      "sha256": "b67074977a47dedee426fbc7be92a7d661ed0859a1c3649cca25a77a3ed384fc"
+    },
+    {
+      "path": "internal/billing/cash_refund_concurrency_integration_test.go",
+      "sha256": "8f6881b59a06f6a1b24bd9ae197a07357ecc7825da13632cc3c06e179cf9fb14"
+    },
+    {
+      "path": "internal/billing/cash_refund_integration_test.go",
+      "sha256": "4f2a774b77f3dc92c67dc04c2e8b3a7248f439fb8fe3e34aaad057e4956402c0"
+    },
+    {
+      "path": "internal/billing/cash_refund_tx.go",
+      "sha256": "6ae85cb899c8e5799c56d6e4b3755740cabbc81c6140885115eb8d78a31602d7"
+    },
+    {
       "path": "internal/billing/channel_operations_integration_test.go",
       "sha256": "1ef5579bd97e754351672680510b613e577a632be50c71f500f10ad635127070"
     },
     {
       "path": "internal/billing/coin_rates.go",
-      "sha256": "c4a77387d5de3d65ed78c4474692c55528ab253a41a7184438e23df18a9f5d1b"
+      "sha256": "ded90a0f35a62124d8cc4ef0cf833ad1156971b5a4b27018608585cc46b03b75"
     },
     {
       "path": "internal/billing/coin_rates_integration_test.go",
-      "sha256": "b563e9bf2f53c76dea58d9e0861685f4657b2176a1fee8faf56c651a4531c9fb"
+      "sha256": "d08b00ce667d5ddde5c20dd68c984c03ab90716a37ec4a14e105cf517301f0ce"
     },
     {
       "path": "internal/billing/cost_domain_integration_test.go",
@@ -2297,7 +2329,7 @@
     },
     {
       "path": "internal/billing/refund_buckets_integration_test.go",
-      "sha256": "1b754ecbf0ed6b310e863d063df3808c52e2b6f6f46e5c3ce090429dd5335ed9"
+      "sha256": "826780549c4e8452857aa93d6514a1b7ec08a0d80d16b0776aeeaff32d2aafde"
     },
     {
       "path": "internal/billing/reserve.go",
@@ -4265,7 +4297,7 @@
     },
     {
       "path": "internal/operations/operations.go",
-      "sha256": "c62963f96755d852b9c618c5837e034891ec90b7978a4f48efafc82d8aee511a"
+      "sha256": "0054895129563ef94d1c21b1b54629e5101cd5cbdcf4a56d34a97e02e65fe047"
     },
     {
       "path": "internal/operations/operations_integration_test.go",
@@ -4277,15 +4309,15 @@
     },
     {
       "path": "internal/operations/payment_roles.go",
-      "sha256": "c1769cdbd2f967b161f287d33b3c37ac1fc74d860dfcde000e8189f95eec01e1"
+      "sha256": "391786f7f0651a585f4a2531a8b98ae4fb16e4cd3e566af15ea18abfedf22906"
     },
     {
       "path": "internal/operations/payment_roles_functions.go",
-      "sha256": "7b3355c0fce79adb837ded1af7767cd03391540fc7a02ae4bf6bbb7e24efe8c9"
+      "sha256": "d140eaa19a06519124d5977dcd9553185724a4039e7443a7de0185825870b24b"
     },
     {
       "path": "internal/operations/payment_roles_test.go",
-      "sha256": "9b7af950273897505cd139ff415584096c546832577feb22c511f704f46dcb5d"
+      "sha256": "0c13de87a44daa2fcce5dc602f9c5357234c628e0cad7cc43d01f8d60afed325"
     },
     {
       "path": "internal/operations/periodic_roles.go",
@@ -4313,7 +4345,7 @@
     },
     {
       "path": "internal/operations/wallet_sources_roles_test.go",
-      "sha256": "da9a5f0d3314dca4bb7ca414e4a75c5aa7601af90dac584c44e063b155e8d08e"
+      "sha256": "62f309df08b7994df2a9f0c1312c8fff4a08b1a5293dbf96ddfa2b9602d77e94"
     },
     {
       "path": "internal/paymentproto/fuzz_test.go",
@@ -6001,7 +6033,7 @@
     },
     {
       "path": "internal/server/alert_input.go",
-      "sha256": "41bb60d7c4cd8d87c315d0fdfc475925d2fa4cc0a527fd294a703f7ebb92d44f"
+      "sha256": "0b46e3b724313d3654014d26db7debc36622f136b1ce671b7c3dd026c92cf5a2"
     },
     {
       "path": "internal/server/alert_integration_test.go",
@@ -6029,7 +6061,7 @@
     },
     {
       "path": "internal/server/billing_handlers.go",
-      "sha256": "64a12ccd281953b4857841a010fb6558fa27a9b28f87a8f4d338395a12ce0ed6"
+      "sha256": "0a870991ed1a5a8bada7d36b6071d4674ef8b66726d291ccba2f8a2f5107a0b6"
     },
     {
       "path": "internal/server/binding_isolation.go",
@@ -6050,6 +6082,22 @@
     {
       "path": "internal/server/capacity_test.go",
       "sha256": "7a7e3eadac1fff01d73d6c7c0e025282976c78b5e42f0fa59d098dedb69022fc"
+    },
+    {
+      "path": "internal/server/cash_refund_alert_integration_test.go",
+      "sha256": "d7878c344f3e6cb1a74600e4a2dcf627f2509b76348bbccc7566787a907346e2"
+    },
+    {
+      "path": "internal/server/cash_refund_handlers.go",
+      "sha256": "761af9cc2d9a6232f9eab670170071ab55f659fc6a5986ed96f51f5d54962628"
+    },
+    {
+      "path": "internal/server/cash_refund_integration_test.go",
+      "sha256": "768ddeba93bfcc8ae09ca85d4ec0b75a4587d6d04c0a8849039ef4257145aa0f"
+    },
+    {
+      "path": "internal/server/cash_refund_request_integration_test.go",
+      "sha256": "2889dac6e3317f40703e684a974218663ae2ff3c0061a24b4770dbbb47553777"
     },
     {
       "path": "internal/server/catalog_handlers.go",
@@ -6429,7 +6477,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "daf365769e7087c5358ac65f5549ddadb9372671761d2fdb1aacf00ef12f7eb8"
+      "sha256": "440d23b0101933a38e35d525e469fb3dd114352f7d7d97ace93868521c62a761"
     },
     {
       "path": "internal/server/static.go",
@@ -6738,6 +6786,10 @@
     {
       "path": "migrations/current_008_coin_rate_versions.sql",
       "sha256": "e723be6de772528606cb0178d58d34e914a234d5c6f02ae7914ead13547dfbd2"
+    },
+    {
+      "path": "migrations/current_009_cash_refund_workflow.sql",
+      "sha256": "2f9caf7e040ebd1d9ea088223d20a378780f65dd9bcf62b98a3502d24e2f5783"
     },
     {
       "path": "migrations/current_mvp.sql",
@@ -8081,11 +8133,11 @@
     },
     {
       "path": "specs/024-extension-platform/a-contract.md",
-      "sha256": "b9500ccc218a36aa0ba096da2d9948e156a83bf6e8e62732ed9e1a1d2f1b9cd6"
+      "sha256": "e08692c81175489856bff426895d02146816b4199674041ed0b5ed83b456d8a8"
     },
     {
       "path": "specs/024-extension-platform/acceptance.md",
-      "sha256": "713d447ae8e29e06f2f0002be2eb3155f2cf571560760e4bce948d3a94a9777a"
+      "sha256": "a7140dfe0ae00ec67e078ddc358de271ef380d27d8902e1c1bf5c2d31888d2e7"
     },
     {
       "path": "specs/024-extension-platform/b0-metering-contract.md",
@@ -8097,7 +8149,7 @@
     },
     {
       "path": "specs/024-extension-platform/contract.md",
-      "sha256": "00fd1b48715a5579e05cc8cff95ecfdf4b03ecf69afd3835dd51c2aa2553ccc0"
+      "sha256": "a87a528df012154b34b60820d379011d2483bf51ef69d8acedb3ed4839dac8d8"
     },
     {
       "path": "specs/024-extension-platform/plan.md",
@@ -8221,11 +8273,11 @@
     },
     {
       "path": "specs/034-virtual-coin/implementation-freeze.md",
-      "sha256": "338666fedb4f3f60b5b3153a3cc7bcce643c1a8aef93c782a8da7371f4e3cd3b"
+      "sha256": "88240cd46add88594ec5df1ebe172e7f5e81eb13f303d6bab06dc391e14d9776"
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "578f6ffe5ead423cfb9cd4914cd1b31ee2ce71e81d296ed0d765e52406878bf5"
+      "sha256": "2fac6523025ab98ce5e3b29b891648dd8a7110c2f073c92a345e63e3afd40b09"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
@@ -8257,7 +8309,7 @@
     },
     {
       "path": "web/src/App.vue",
-      "sha256": "68fce514065d08d7a74cc1db0e84482a213c8217d22a7c35bae6db862f3cc9fb"
+      "sha256": "1f390bc716423a25c9318604e1b8e7effc1598ca1e3688690adb2b213bfe3f3d"
     },
     {
       "path": "web/src/alerts-json.ts",
@@ -8273,11 +8325,15 @@
     },
     {
       "path": "web/src/alerts.ts",
-      "sha256": "6dc3fc0f909c9a0d2c2ad84cbf82d43b0e8b09deb0722ce675179c9935aee22d"
+      "sha256": "74750193a72f987664169e192d9ca5608954b40e149f429a1e86d30ab22ee153"
     },
     {
       "path": "web/src/api.ts",
       "sha256": "6de8e4ab42520ea50cfa4140da438642837af0dab33bb75bbba5139b4f41dfed"
+    },
+    {
+      "path": "web/src/cash-refunds.ts",
+      "sha256": "3b48a8790dbdc39523e7b8d72a65f3f04fef8617e74b02d25f74a5bebbba7714"
     },
     {
       "path": "web/src/channel-defaults.json",
@@ -8581,7 +8637,7 @@
     },
     {
       "path": "web/src/router.ts",
-      "sha256": "a43f05ffe6f9f60ea3d9fa3d624d86dc006f43650fa05d0da2ed101b0dce9f6d"
+      "sha256": "dca94e63530fa018c21b8010296fb2fe93603f0aed38dcb9bc6f7e9dce897d1e"
     },
     {
       "path": "web/src/session.ts",
@@ -8594,6 +8650,10 @@
     {
       "path": "web/src/views/AlertsView.vue",
       "sha256": "6e1444734e95d2d2ea2e6a760ad1314f99dd97a2f43ff5cef57a09729598b375"
+    },
+    {
+      "path": "web/src/views/CashRefundsView.vue",
+      "sha256": "3c17c2fecc853200f36e907306ce483af688cdd764f84c6d2c557c2e30082e5b"
     },
     {
       "path": "web/src/views/IdentityCompleteView.vue",
@@ -8629,7 +8689,7 @@
     },
     {
       "path": "web/src/views/PlatformView.vue",
-      "sha256": "9a0441ccd552fe1d4d81b7733dbabd7601904369207f9f18535c3c54eb06d071"
+      "sha256": "782723d9ca575c8b10f4364552a357213f08fc820b949034dc51cee7f3cc442e"
     },
     {
       "path": "web/src/views/PlaygroundView.vue",
@@ -8701,11 +8761,15 @@
     },
     {
       "path": "web/tests/alerts.test.mjs",
-      "sha256": "589ffc511a9371000f380772df6e6991787f827b22e0d53e5a8dbfd2a5940cd0"
+      "sha256": "98c8d982c872ea69e8493c03f3bb616110eb240f607b22b413c5e46abe964365"
     },
     {
       "path": "web/tests/api.test.mjs",
       "sha256": "7f43b730f5b698df424dde9411141a1cd8d50c18b3a70f426bf4c3ad3f999f85"
+    },
+    {
+      "path": "web/tests/cash-refunds.test.mjs",
+      "sha256": "ffd39fdd61bbf1defa4e5e86ffec5ce25d7e6b874a8bc80b89800cdc79afb6cc"
     },
     {
       "path": "web/tests/channel-operations.test.mjs",

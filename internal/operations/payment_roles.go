@@ -60,15 +60,16 @@ func paymentGrants(role PaymentDatabaseRole) map[string]paymentTableGrant {
 		add("payment_sandbox_environment payment_runtime_attestations payment_policy payment_skus payment_sku_versions payment_sku_changes payment_orders payment_cancel_intents payment_command_outbox payment_command_observations payment_query_attempts payment_inbox payment_event_conflicts payment_verified_queries payment_verified_evidence payment_evidence_processing payment_provider_revisions payment_transaction_identities payment_order_capture_selections payment_captures payment_effects payment_review_facts", true, false)
 		add("payment_skus payment_sku_versions payment_sku_changes payment_orders payment_cancel_intents payment_command_outbox payment_inbox payment_event_conflicts payment_verified_evidence payment_evidence_processing", false, true)
 		add("wallet_operator_settings wallet_requests", true, true)
-		add("cash_refund_orders", true, false)
+		add("cash_refund_orders", true, true)
 		add("coin_rate_versions", true, false)
 		for name, cols := range map[string][]string{
 			"payment_policy":       {"enabled"},
 			"payment_skus":         {"revision", "last_version", "enabled", "current_version_id", "last_change_operation_id"},
 			"payment_orders":       {"id"},
 			"ledger_accounts":      {"balance"},
-			"funding_lot_balances": {"available_amount", "held_amount", "consumed_amount", "revision"},
+			"funding_lot_balances": {"available_amount", "held_amount", "consumed_amount", "refund_held_amount", "retired_amount", "revision"},
 			"wallet_requests":      {"state", "linked_order_id"},
+			"cash_refund_orders":   {"coin_amount", "reason", "state", "approver", "transfer_executor", "fiat_currency", "fiat_amount", "buy_rate_version_id", "refund_rate_version_id", "single_operator", "transfer_order_ref", "transfer_proof_ref", "paid_fiat_amount", "hold_journal_id", "retire_journal_id", "release_journal_id", "approved_at"},
 		} {
 			v := m[name]
 			v.updateCols = cols
@@ -101,6 +102,20 @@ func paymentGrants(role PaymentDatabaseRole) map[string]paymentTableGrant {
 		add("coin_rate_versions", true, false)
 	}
 	return m
+}
+
+func paymentGrantsForCapabilities(role PaymentDatabaseRole, capabilities paymentSchemaCapabilities) map[string]paymentTableGrant {
+	grants := paymentGrants(role)
+	if role == PaymentApplicationRole && !capabilities.cashRefunds {
+		orders := grants["cash_refund_orders"]
+		orders.insertAll = false
+		orders.updateCols = nil
+		grants["cash_refund_orders"] = orders
+		balances := grants["funding_lot_balances"]
+		balances.updateCols = []string{"available_amount", "held_amount", "consumed_amount", "revision"}
+		grants["funding_lot_balances"] = balances
+	}
+	return grants
 }
 
 type paymentMarker struct {
@@ -279,7 +294,10 @@ func provisionPaymentRoles(ctx context.Context, tx pgx.Tx, schema, app, projecti
 	if m.present {
 		worker = m.worker
 	}
-	return verifyPaymentRolesFor(ctx, tx, schema, app, worker, projection)
+	if e = verifyPaymentRolesFor(ctx, tx, schema, app, worker, projection); e != nil {
+		return e
+	}
+	return nil
 }
 
 func provisionPaymentRoleACL(ctx context.Context, tx pgx.Tx, schema, name string, role PaymentDatabaseRole) error {
@@ -309,7 +327,11 @@ func provisionPaymentRoleACL(ctx context.Context, tx pgx.Tx, schema, name string
 	if e != nil {
 		return ErrPaymentRolePrivileges
 	}
-	grants := paymentGrants(role)
+	capabilities, e := paymentSchemaCapabilitiesOf(ctx, tx, schema)
+	if e != nil {
+		return ErrPaymentRolePrivileges
+	}
+	grants := paymentGrantsForCapabilities(role, capabilities)
 	for _, r := range relations {
 		qt := pgx.Identifier{schema, r.name}.Sanitize()
 		if _, e = tx.Exec(ctx, "REVOKE ALL ON TABLE "+qt+" FROM "+qrole); e != nil {
@@ -343,7 +365,7 @@ func provisionPaymentRoleACL(ctx context.Context, tx pgx.Tx, schema, name string
 	}
 	for _, f := range paymentFunctionSpecs {
 		fn := pgx.Identifier{schema, f.name}.Sanitize() + "(" + f.arguments + ")"
-		if f.name == "wallet_single_operator" || f.name == "wallet_operator_role_valid" || f.name == "wallet_approval_snapshot_valid" || f.name == "wallet_credit_pair_valid" || f.name == "wallet_request_guard" || f.name == "wallet_cash_refund_journal_valid" || f.name == "wallet_cash_refund_order_valid" || f.name == "payment_voucher_journal_valid" {
+		if f.name == "wallet_single_operator" || f.name == "wallet_operator_role_valid" || f.name == "wallet_approval_snapshot_valid" || f.name == "wallet_credit_pair_valid" || f.name == "wallet_request_guard" || f.name == "wallet_cash_refund_journal_valid" || f.name == "wallet_cash_refund_order_valid" || f.name == "payment_voucher_journal_valid" || f.name == "wallet_reference_valid" || f.name == "wallet_cash_refund_actor_valid" || f.name == "wallet_cash_refund_approval_valid" || f.name == "wallet_cash_refund_fiat_amount" || f.name == "wallet_cash_refund_order_transition_guard" {
 			var exists bool
 			if e := tx.QueryRow(ctx, `SELECT to_regprocedure($1) IS NOT NULL`, fn).Scan(&exists); e != nil {
 				return ErrPaymentRolePrivileges
@@ -455,12 +477,20 @@ const paymentPrivilegesSQL = `SELECT c.relname,c.relkind::text,pg_catalog.pg_has
  FROM pg_catalog.pg_class c WHERE c.relnamespace=$2::oid AND c.relkind IN ('r','p','v','m','f') AND ($3 OR c.relname=ANY($4::text[])) ORDER BY c.relname`
 
 func verifyPaymentTables(ctx context.Context, tx pgx.Tx, schemaOID, oid uint32, role PaymentDatabaseRole, required bool) error {
+	var schema string
+	if tx.QueryRow(ctx, `SELECT nspname FROM pg_catalog.pg_namespace WHERE oid=$1`, schemaOID).Scan(&schema) != nil {
+		return ErrPaymentRolePrivileges
+	}
+	capabilities, e := paymentSchemaCapabilitiesOf(ctx, tx, schema)
+	if e != nil {
+		return ErrPaymentRolePrivileges
+	}
+	grants := paymentGrantsForCapabilities(role, capabilities)
 	rows, e := tx.Query(ctx, paymentPrivilegesSQL, oid, schemaOID, role == PaymentWorkerRole, paymentBoundaryTableNames)
 	if e != nil {
 		return ErrPaymentRolePrivileges
 	}
 	defer rows.Close()
-	grants := paymentGrants(role)
 	seen := map[string]bool{}
 	for rows.Next() {
 		var name, kind string
@@ -533,12 +563,12 @@ const paymentFunctionDefinitionsSQL = `SELECT p.proname,p.proargtypes::text,p.pr
  FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace JOIN pg_catalog.pg_language l ON l.oid=p.prolang WHERE n.nspname=$1 AND (left(p.proname,8)='payment_' OR left(p.proname,7)='wallet_' OR p.proname IN ('funding_journal_valid','funding_fact_guard')) ORDER BY p.proname,p.proargtypes`
 
 type paymentSchemaCapabilities struct {
-	media, virtualCoin, pairedSources, refundBuckets, coinRates bool
+	media, virtualCoin, pairedSources, refundBuckets, coinRates, cashRefunds bool
 }
 
 func paymentSchemaCapabilitiesOf(ctx context.Context, tx pgx.Tx, schema string) (paymentSchemaCapabilities, error) {
 	var c paymentSchemaCapabilities
-	e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles'),COALESCE((SELECT pg_get_expr(d.adbin,d.adrelid) FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum WHERE n.nspname=$1 AND c.relname='journals' AND a.attname='currency' AND NOT a.attisdropped),'')='''COIN''::text',EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='funding_receipts' AND a.attname='basis_kind' AND NOT a.attisdropped),EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='funding_lot_balances' AND a.attname='refund_held_amount' AND NOT a.attisdropped),EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='coin_rate_versions')`, schema).Scan(&c.media, &c.virtualCoin, &c.pairedSources, &c.refundBuckets, &c.coinRates)
+	e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles'),COALESCE((SELECT pg_get_expr(d.adbin,d.adrelid) FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum WHERE n.nspname=$1 AND c.relname='journals' AND a.attname='currency' AND NOT a.attisdropped),'')='''COIN''::text',EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='funding_receipts' AND a.attname='basis_kind' AND NOT a.attisdropped),EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='funding_lot_balances' AND a.attname='refund_held_amount' AND NOT a.attisdropped),EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='coin_rate_versions'),EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='cash_refund_orders' AND a.attname='approved_at' AND NOT a.attisdropped)`, schema).Scan(&c.media, &c.virtualCoin, &c.pairedSources, &c.refundBuckets, &c.coinRates, &c.cashRefunds)
 	return c, e
 }
 
@@ -601,6 +631,16 @@ func paymentExpectedBodySHA(f paymentFunctionSpec, c paymentSchemaCapabilities) 
 			expected = coinRatePaymentSandboxJournalSHA256
 		}
 	}
+	if c.cashRefunds {
+		switch f.name {
+		case "wallet_cash_refund_journal_valid":
+			expected = cashRefundJournalValidSHA256
+		case "wallet_cash_refund_order_valid":
+			expected = cashRefundOrderValidSHA256
+		case "wallet_request_guard":
+			expected = cashRefundRequestGuardSHA256
+		}
+	}
 	return expected
 }
 
@@ -638,6 +678,9 @@ func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema str
 	}
 	if !capabilities.refundBuckets {
 		expectedCount -= 2
+	}
+	if !capabilities.cashRefunds {
+		expectedCount -= 5
 	}
 	if rows.Err() != nil || len(seen) != expectedCount {
 		return ErrPaymentRolePrivileges

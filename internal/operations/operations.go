@@ -138,6 +138,11 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e != nil {
 		return e
 	}
+	for _, signature := range []string{"alert_parameters(text,jsonb)", "alert_snapshot(jsonb)", "alert_sample(jsonb,text)"} {
+		if _, e = tx.Exec(ctx, "GRANT EXECUTE ON FUNCTION "+qs+"."+signature+" TO "+qa); e != nil {
+			return e
+		}
+	}
 	if e = verifyAlertRolesFor(ctx, tx, schema, appRole, projectionRole); e != nil {
 		return e
 	}

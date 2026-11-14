@@ -38,6 +38,8 @@
 
 审批锁序沿用 Reserve：租户→账户 ID→来源余额。必须实测 Reserve、结算、消费退款、两张退款单及重复审批/完成之间的并发，不能出现负余额、重复事件或半提交。
 
+034.4 的 `approved_at` 由数据库触发器在批准时写入且不可回改，是当前币价、运营设置快照与告警年龄的共同选点。requested_by 为 maker 或同租户现金退款申请人，客户关联在终态关闭。Go `big.Int` 与 SQL `numeric` 复核同一退款额；hold/retire/release journal actor 参与直接 SQL 角色校验。HTTP 不允许调用方填写币数，未知提交只读回查。第五种 `cash_refund_pending_aged / tenant` 复用 024-A aging 合同，只观察 approved/transfer_executed，不自动迁移订单。精确实施合同见 spec §7.7。
+
 ## 验收切片
 
 34.1 COIN 与类型；34.2 角色、独立 `wallet_requests`、基准、成对来源和确定性 FIFO；34.3 五桶守恒；34.3b 币价版本；34.4 现金退款状态机/HTTP/控制台/告警；34.5 报表与余额构成；34.6 约合展示和显示名。每片都要求专用 PostgreSQL 全量相关回归、前端测试和架构同步，§16 的 PG 项不得 SKIP。

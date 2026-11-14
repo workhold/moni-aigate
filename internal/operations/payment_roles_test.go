@@ -28,6 +28,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 		{"current_006_paired_wallet_sources.sql", pairedSourcesRoleMigrationSHA256},
 		{"current_007_refund_buckets.sql", refundBucketsRoleMigrationSHA256},
 		{"current_008_coin_rate_versions.sql", coinRatesRoleMigrationSHA256},
+		{"current_009_cash_refund_workflow.sql", cashRefundsRoleMigrationSHA256},
 	} {
 		body, e := migrations.Files.ReadFile(source.file)
 		if e != nil {
@@ -80,7 +81,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 	}
 	functions["funding_journal_valid"] = fmt.Sprintf("%x", sha256.Sum256(currentDispatcher[1]))
 	delete(functions, "payment_legacy_funding_journal_valid")
-	if len(paymentFunctionSpecs) != 63 || len(functions) != len(paymentFunctionSpecs) {
+	if len(paymentFunctionSpecs) != 68 || len(functions) != len(paymentFunctionSpecs) {
 		t.Fatal("current payment/wallet function allowlist incomplete")
 	}
 	worker := 0

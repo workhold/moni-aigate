@@ -21,6 +21,7 @@
 | `procurement_budget_low` / `procurement_account` | `{threshold_amount,recovery_amount}`，两者非负int64且recovery>=threshold | `available=limit_amount-spent_amount-held_amount`，无open记录且available<=threshold则breach；有open记录时available>recovery才clear，其余hold |
 | `customer_reconciliation_aged` / `tenant` | `{minimum_age_seconds,trigger_count,recovery_count}` | age为600..604800秒；trigger为1..1000、recovery为0..999且recovery<trigger；合格行count>=trigger为breach，有open时count<=recovery为clear，其余hold |
 | `procurement_unresolved_aged` / `procurement_account` | 同上 | 同一计数/滞回，采购状态筛选不同；不按客户24h释放清除 |
+| `cash_refund_pending_aged` / `tenant` | 同 aging 参数 | 只观察 `approved/transfer_executed` 且 `approved_at<=as_of-age` 的现金退款；completed/cancelled/failed 按 recovery_count 恢复；见 034.4 增补 |
 
 创建时非锁定SELECT确认资源存在；停用tenant、paused采购账户和disabled渠道仍可被观察，不要求它们可接流量。规则表保存逻辑资源ID，不对业务表加FK/触发器，也不反向锁业务根；运行时资源缺失是`source_missing`评估失败，不能clear。kind/scope匹配由CHECK保护，不接受通配、列表或任意额外参数。
 
@@ -28,7 +29,7 @@
 
 - 客户积压：`reservations.tenant_id=scope_id AND status='pending_reconciliation' AND created_at<=as_of-age`，不把全部在途reserved视为未知。
 - 采购积压：`procurement_reservations.account_id=scope_id AND state IN ('unknown','disputed') AND created_at<=as_of-age`。年龄由创建时间起算，不能展示成unknown持续时间。
-- 两种积压按`created_at ASC,request_id/attempt_id ASC`最多取1001条。observed_count<=1001；恰取到1001时count_is_lower_bound=true，即使实际正好1001也保守显示“至少1001”。阈值最大1000，足以确定触发/恢复；不提供截断行的资金合计。取到的首行给oldest_created_at和oldest_reference_id，空集合两者null。
+- 两种原积压按`created_at ASC,request_id/attempt_id ASC`最多取1001条；现金退款待处理按`approved_at ASC,id ASC`同样最多1001条。observed_count<=1001；恰取到1001时count_is_lower_bound=true，即使实际正好1001也保守显示“至少1001”。阈值最大1000，足以确定触发/恢复；不提供截断行的资金合计。取到的首行给oldest_created_at和oldest_reference_id，空集合两者null。现金退款的 oldest_created_at 是不可回改的 approved_at。
 - 预算样本直接读019账户投影，held/spent保持NUMERIC精度。available允许负数，不截成0；这是登记累计预算余量，绝不是供应商当前现金余额或023周期预算。
 - 渠道样本只读持久quarantined和enabled。内存熔断、凭据健康、profile block及binding isolation不等于该kind，后续另加种类须独立规格。
 
@@ -68,7 +69,7 @@ configuration_revision只随规则配置变化增长；episode.action_revision�
 | `alert_episode_events` | id PK；episode_id FK；action_revision；type；actor文本（worker为system）；observed_at；safe_sample nullable；created_at；UNIQUE(episode_id,action_revision)。type仅opened/acknowledged/recovered/rule_changed/rule_disabled/rule_retired；追加不可变 |
 | `alert_commands` | operation_id PK；actor；kind；target_id nullable；canonical_digest SHA256；status=claimed/applied/rejected；reason；resource_id nullable；result_revision nullable；created_at。claimed仅允许事务内临时claim，reason为空且result为空，deferred检查禁止claimed COMMIT；只许claimed→一个终态，终态不可变；HTTP只见applied/rejected，请求正文不存储，不保存秘密 |
 
-JSONB不是任意文档存储。rule parameters、rule snapshot及四类sample均按本文件字段白名单、类型/大小和kind匹配校验；单样本<=2KiB、规则快照<=1KiB。DB CHECK/触发器保护不可变身份、枚举、规范参数、合法单向状态、revision自动派生及每个action_revision的对应事件；deferred校验在COMMIT时要求发生记录最后action revision有匹配事件、runtime当前指针指向本规则未结束记录。普通SQL不能只改关闭状态而不落事件。
+JSONB不是任意文档存储。rule parameters、rule snapshot及五类sample均按本文件字段白名单、类型/大小和kind匹配校验；单样本<=2KiB、规则快照<=1KiB。DB CHECK/触发器保护不可变身份、枚举、规范参数、合法单向状态、revision自动派生及每个action_revision的对应事件；deferred校验在COMMIT时要求发生记录最后action revision有匹配事件、runtime当前指针指向本规则未结束记录。普通SQL不能只改关闭状态而不落事件。
 
 必要索引：runtime(next_evaluation_at,rule_id) WHERE next_evaluation_at IS NOT NULL；episodes(opened_at DESC,id DESC)、episodes(rule_id,opened_at DESC,id DESC)；events(episode_id,created_at,id)；commands(actor,created_at,operation_id)。业务源表仅追加读索引：客户reservations(tenant_id,created_at,request_id) WHERE status='pending_reconciliation'；采购reservations(account_id,created_at,attempt_id) WHERE state IN ('unknown','disputed')。如现有索引已等价覆盖则不重复创建，并记录EXPLAIN证据。
 
@@ -119,7 +120,7 @@ Sample精确类型：
 
 - channel：`{kind:"channel_quarantined",as_of,enabled:bool,quarantined:bool}`。
 - budget：`{kind:"procurement_budget_low",as_of,account_state:active|paused,limit_amount,held_amount,spent_amount,available_amount,currency:"CNY"}`；held/spent为非负至100位字符串，available为规范有符号至101位字符串，不省略负值。
-- aging：`{kind:customer_reconciliation_aged|procurement_unresolved_aged,as_of,minimum_age_seconds:string,observed_count:string,count_is_lower_bound:bool,oldest_created_at:time|null,oldest_reference_id:id|null}`；observed_count为0..1001，1001必lower_bound，0时oldest两字段null。
+- aging：`{kind:customer_reconciliation_aged|procurement_unresolved_aged|cash_refund_pending_aged,as_of,minimum_age_seconds:string,observed_count:string,count_is_lower_bound:bool,oldest_created_at:time|null,oldest_reference_id:id|null}`；observed_count为0..1001，1001必lower_bound，0时oldest两字段null。
 
 无供应商endpoint、凭据/摘要、prompt/response、邮箱、MFA、完整账务证据或自由文本日志。引用只用于既有受权页面，不接受任意链接。新DTO不能直接复用通用`SELECT *`或报表JSON。
 
