@@ -6197,3 +6197,19 @@ align the HLD link label with the renumbered external upstream contract
 - modified `specs/001-commercial-mvp/contracts/provider.md`
 
 </details>
+
+## 2026-11-14T03:32:58Z · 9608d9b45941
+
+034 冻结与开发方向审查：034 规格 D-034-1…13 全部裁决并标记已冻结；HLD §6.3、LLD §5.2.1、phase-roadmap 三处同步冻结状态；新增 docs/design/direction-review-2026-11-14.md 方向审查记录（含在途实现对照与不变量复核）；修正 034 §4 兑换券校验行号误差。纯文档变更，无代码/迁移影响
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2149 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/design/direction-review-2026-11-14.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
