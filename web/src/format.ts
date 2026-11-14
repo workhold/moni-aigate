@@ -1,12 +1,14 @@
-export function money(value: unknown, precision = 6): string {
+function formatUnits(value: unknown, precision: number, prefix: string, suffix: string): string {
   if (value === null || value === undefined || value === '') return '—'
   try {
     const amount = BigInt(String(value)); const negative = amount < 0n; const magnitude = negative ? -amount : amount
     const whole = (magnitude / 1_000_000n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     const fraction = (magnitude % 1_000_000n).toString().padStart(6, '0').slice(0, precision)
-    return `${negative ? '−' : ''}¥${whole}${fraction ? `.${fraction}` : ''}`
+    return `${negative ? '−' : ''}${prefix}${whole}${fraction ? `.${fraction}` : ''}${suffix}`
   } catch { return '—' }
 }
+export function money(value: unknown, precision = 6): string { return formatUnits(value, precision, '¥', '') }
+export function coin(value: unknown, precision = 6): string { return formatUnits(value, precision, '', ' 币') }
 export function cnyToMicro(value: string): string {
   const normalized = value.trim()
   if (!/^\d+(\.\d{1,6})?$/.test(normalized)) throw new Error('金额须为非负数，最多 6 位小数。')

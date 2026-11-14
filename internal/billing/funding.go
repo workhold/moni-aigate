@@ -226,7 +226,7 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 	if e != nil {
 		return result, e
 	}
-	receipt := FundingReceipt{ID: uuid.NewString(), TenantID: scope.TenantID, SourceKind: source.Kind, SourceID: source.ID, Amount: amount, Currency: "CNY", JournalID: journal, CreatedAt: now}
+	receipt := FundingReceipt{ID: uuid.NewString(), TenantID: scope.TenantID, SourceKind: source.Kind, SourceID: source.ID, Amount: amount, Currency: "COIN", JournalID: journal, CreatedAt: now}
 	switch source.Kind {
 	case FundingManualCredit:
 		if _, e = tx.Exec(ctx, `UPDATE credit_orders SET state='approved',approver=$2,journal_id=$3 WHERE id=$1`, source.ID, scope.ActorID, journal); e != nil {
@@ -244,7 +244,7 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 	default:
 		return result, fail("invalid_funding_source", "funding source unavailable")
 	}
-	if _, e = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at) VALUES($1,$2,$3,$4,$5,'CNY',$6,$7)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now); e != nil {
+	if _, e = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at) VALUES($1,$2,$3,$4,$5,'COIN',$6,$7)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now); e != nil {
 		return FundingResult{}, e
 	}
 	if e = createFundingLotTx(ctx, tx, receipt, operation); e != nil {

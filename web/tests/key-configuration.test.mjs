@@ -5,7 +5,7 @@ import { ApiError, request, setCsrf } from '../src/api.ts'
 import { cnyToMicro } from '../src/format.ts'
 import { createKeyAccessScope, failKeyAccessPolicyReview, keyAccessContext, newKeyAccessPolicyReview, submitKeyAccessPolicyReview } from '../src/key-access-policy.ts'
 import { failKeyLimitsReview, newKeyLimitsReview, submitKeyLimitsReview } from '../src/key-runtime-limits.ts'
-import { acceptKeyConfigurationSave, applyKeyConfigurationToRows, failKeyConfigurationReview, keyConfigurationDraft, keyConfigurationOptions, keyConfigurationPath, keyConfigurationRevision, keyConfigurationSaveRequest, keyCreateWithConfigurationRequest, keyMicroToCNY, newKeyConfigurationReview, normalizeKeyConfigurationExpiry, observeKeyConfiguration, parseKeyConfigurationRow, parseKeyConfigurationRows, parseKeyConfigurationView, retainNewerKeySettings, resumeKeyConfigurationReview, submitKeyConfigurationReview } from '../src/key-configuration.ts'
+import { acceptKeyConfigurationSave, applyKeyConfigurationToRows, failKeyConfigurationReview, keyConfigurationDraft, keyConfigurationOptions, keyConfigurationPath, keyConfigurationRevision, keyConfigurationSaveRequest, keyCreateWithConfigurationRequest, keyMicroToCoin, newKeyConfigurationReview, normalizeKeyConfigurationExpiry, observeKeyConfiguration, parseKeyConfigurationRow, parseKeyConfigurationRows, parseKeyConfigurationView, retainNewerKeySettings, resumeKeyConfigurationReview, submitKeyConfigurationReview } from '../src/key-configuration.ts'
 
 const keyID = 'a9f89d66-fbef-4183-a811-e16b37ba62bb'
 const modelA = '00000000-0000-0000-0000-000000000001', modelB = '00000000-0000-0000-0000-000000000002'
@@ -20,7 +20,7 @@ test('configuration revision and CNY drafts retain exact int64 precision, includ
   for (const revision of ['1', '9007199254740993', '9223372036854775807']) assert.equal(keyConfigurationRevision(revision), revision)
   for (const invalid of [undefined, null, 1, '', '0', '-1', '+1', '01', '1.0', '1e3', ' 1', '9223372036854775808']) assert.throws(() => keyConfigurationRevision(invalid), /int64/)
   for (const [micro, cny] of [['0', '0'], ['1', '0.000001'], ['1000000', '1'], ['1001000', '1.001'], ['9007199254740993', '9007199254.740993'], ['9223372036854775807', '9223372036854.775807']]) {
-    assert.equal(keyMicroToCNY(micro), cny)
+    assert.equal(keyMicroToCoin(micro), cny)
     assert.equal(cnyToMicro(cny), micro)
     assert.equal(keyConfigurationSaveRequest({ ...view, lifetime_limit: micro }, keyConfigurationDraft({ ...view, lifetime_limit: micro })).body.lifetime_limit, micro)
   }

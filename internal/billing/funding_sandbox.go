@@ -66,7 +66,7 @@ func readSandboxFundingSource(ctx context.Context, tx pgx.Tx, source FundingSour
 		if e = tx.QueryRow(ctx, `SELECT funding_journal_valid($1)`, receipt.JournalID).Scan(&complete); e != nil {
 			return out, e
 		}
-		if !complete || receipt.TenantID != out.TenantID || receipt.Amount != out.Amount || receipt.Currency != "CNY" {
+		if !complete || receipt.TenantID != out.TenantID || receipt.Amount != out.Amount || receipt.Currency != "COIN" {
 			return sandboxFundingSource{}, fail("funding_integrity", "funding source integrity failed")
 		}
 		out.Receipt = &receipt

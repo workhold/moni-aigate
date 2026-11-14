@@ -30,8 +30,8 @@ test('snapshot projection has one complete vector identity and no scalar fallbac
 
 test('rate display is exact for fractions and does not convert to Number', () => {
   const parsed = parseTextRetailRates(rates, schema)
-  assert.equal(ratePerMillionText(parsed, 'text_input_token'), '¥1000000/3 微元 / 百万 Tokens')
-  assert.equal(ratePerMillionText(parsed, 'text_output_token'), '¥0.000000')
+  assert.equal(ratePerMillionText(parsed, 'text_input_token'), '1000000/3 微币 / 百万 Tokens')
+  assert.equal(ratePerMillionText(parsed, 'text_output_token'), '0.000000 币 / 百万 Tokens')
 })
 
 test('manual reconciliation accepts only the complete retail QuantitiesWire for the original schema', () => {

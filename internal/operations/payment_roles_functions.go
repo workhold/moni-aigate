@@ -1,10 +1,13 @@
-// Static baselines from reviewed 021 and current 023 SQL. Never derive expected
-// procedure definitions from the database being verified. See 027 and B2 §7.3.
+// Static baselines from reviewed 021, 023, 024 and current 004 SQL. Never derive
+// expected procedure definitions from the database being verified. See 027 and B2 §7.3.
 package operations
 
 const paymentRoleMigrationSHA256 = "757721a8559ce6710972759aaa1eb4bbd1a4af6d0b1a058d45f69c121643323d"
 const walletSourcesRoleMigrationSHA256 = "67e8289f1e550ea826f4890b1b046e2d10d502537b764e0441d2cb0ae3f5eb4a"
 const legacyWalletEventValidSHA256 = "07545d756fa2c25d26fe4bf6d93777330e3839e179877298168ce3d502342b6f"
+const virtualCoinPaymentFundingJournalSHA256 = "10ea84ec2f7bd409044fd8febb2fa90735f0946509e2567ef3b102d7023dd184"
+const virtualCoinWalletOpeningJournalSHA256 = "45f298162c92d5a825a89a06a807dfdfc4e9822a3bc7944f49cf4fdf1339c6d6"
+const virtualCoinPaymentSandboxJournalSHA256 = "0b39ad17c94be382e2086f8812a9a83f031e8f8d3c22819bc957eb6629eeecb2"
 
 var paymentFunctionSpecs = map[string]paymentFunctionSpec{
 	"funding_fact_guard":              {"funding_fact_guard", "", "", "2279", "plpgsql", "v", "b82f809ec5663cfa681702e7044541207a08b3d167c051f4933cf2d152412885", nil, true},

@@ -8,15 +8,15 @@ export interface PricingAssignment { tenant_id: string; price_group_id: string |
 export interface TextRates<S extends 'retail' | 'supplier'> { schema_id: string; version: '1'; side: S; currency: 'CNY'; rates: { dimension: 'text_input_token' | 'text_output_token'; unit: 'token'; numerator: string; denominator: string }[] }
 export type TextRetailRates = TextRates<'retail'>
 export type TextSupplierRates = TextRates<'supplier'>
-export interface GroupPrice { id: string; model_id: string; price_group_id: string; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates; effective_at: string; created_at: string }
+export interface GroupPrice { id: string; model_id: string; price_group_id: string; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'COIN'; rates: TextRetailRates; effective_at: string; created_at: string }
 export interface GroupPriceCompileItem { model_id: string; base_price_version_id: string; base_input_rate: string; base_output_rate: string; input_rate: string; output_rate: string; price_version_id: string | null }
 export interface GroupPriceCompile { group_id: string; multiplier: string; effective_at: string; items: GroupPriceCompileItem[] }
 export interface DefaultPrice extends Omit<GroupPrice, 'price_group_id'> { price_group_id: null }
 export type CostBasis = 'unknown' | 'contract' | 'invoice'
 export interface CostPrice { id: string; channel_id: string; upstream_model: string; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; basis: CostBasis; rates: TextSupplierRates | null; effective_at: string; created_at: string; expected_channel_revision: string; channel_revision: string }
-export interface PriceVersion { id: string; model_id: string; model_name: string; price_group_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates; effective_at: string; created_at: string }
-export interface RetailPrice { model_id: string; source: 'default' | 'group'; status: 'available' | 'unavailable'; price_group_id: string | null; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates | null; effective_at: string | null; as_of: string }
-export interface PricingOperation { operation_id: string; kind: PricingKind; scope: string; actor: string; resource_id: string; revision: string | null; created_at: string; target: string; input_fingerprint: string }
+export interface PriceVersion { id: string; model_id: string; model_name: string; price_group_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'COIN'; rates: TextRetailRates; effective_at: string; created_at: string }
+export interface RetailPrice { model_id: string; source: 'default' | 'group'; status: 'available' | 'unavailable'; price_group_id: string | null; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'COIN'; rates: TextRetailRates | null; effective_at: string | null; as_of: string }
+export interface PricingOperation { operation_id: string; kind: PricingKind; scope: string; actor: string; resource_id: string; revision: string | null; created_at: string; target: string; input_fingerprint: string; pre_coin_input_fingerprint: string | null }
 export interface PricingReceipt { operation: PricingOperation; result: PriceGroup | PricingAssignment | GroupPrice | GroupPriceCompile | DefaultPrice | CostPrice }
 export interface PricingPreviewRow { model_id: string; public_name: string; protocol: string; retail_price: RetailPrice }
 export interface PricingPreviewContext { tenant_id: string; tenant_status: 'active' | 'suspended'; current_price_group_id: string | null; current_pricing_revision: string; target_price_group_id: string | null; target_group_state: 'active' | 'retired' | null; assignable: boolean; as_of: string }
@@ -81,7 +81,7 @@ export function parsePricingAssignment(value: unknown, tenant?: string): Pricing
 export function parseRetailVersion(value: unknown) {
   const r = pricingObject(value, ['id', 'model_id', 'price_group_id', 'schema_id', 'schema_digest', 'variant_key', 'currency', 'rates', 'effective_at', 'created_at'])
   const schema_id = pricingID(r.schema_id)
-  return { group: r.price_group_id, row: { id: pricingID(r.id), model_id: pricingID(r.model_id), schema_id, schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), currency: choice(r.currency, ['CNY']), rates: parseTextRetailRates(r.rates, schema_id), effective_at: pricingTime(r.effective_at), created_at: pricingTime(r.created_at) } }
+  return { group: r.price_group_id, row: { id: pricingID(r.id), model_id: pricingID(r.model_id), schema_id, schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), currency: choice(r.currency, ['COIN']), rates: parseTextRetailRates(r.rates, schema_id), effective_at: pricingTime(r.effective_at), created_at: pricingTime(r.created_at) } }
 }
 export function parseGroupPrice(value: unknown, group?: string): GroupPrice {
   const parsed = parseRetailVersion(value), row: GroupPrice = { ...parsed.row, price_group_id: pricingID(parsed.group) }
@@ -155,7 +155,7 @@ export function pricingInputRates<S extends 'retail' | 'supplier' = 'retail'>(sc
 export function parseRetailPrice(value: unknown, model?: string): RetailPrice {
   const r = pricingObject(value, ['model_id', 'source', 'status', 'price_group_id', 'price_version_id', 'schema_id', 'schema_digest', 'variant_key', 'currency', 'rates', 'effective_at', 'as_of'])
   const status = choice(r.status, ['available', 'unavailable']), schema_id = pricingID(r.schema_id)
-  const row: RetailPrice = { model_id: pricingID(r.model_id), source: choice(r.source, ['default', 'group']), status, price_group_id: nullableID(r.price_group_id), price_version_id: nullableID(r.price_version_id), schema_id, schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), currency: choice(r.currency, ['CNY']), rates: status === 'available' ? parseTextRetailRates(r.rates, schema_id) : r.rates === null ? null : invalid(), effective_at: r.effective_at === null ? null : pricingTime(r.effective_at), as_of: pricingTime(r.as_of) }
+  const row: RetailPrice = { model_id: pricingID(r.model_id), source: choice(r.source, ['default', 'group']), status, price_group_id: nullableID(r.price_group_id), price_version_id: nullableID(r.price_version_id), schema_id, schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), currency: choice(r.currency, ['COIN']), rates: status === 'available' ? parseTextRetailRates(r.rates, schema_id) : r.rates === null ? null : invalid(), effective_at: r.effective_at === null ? null : pricingTime(r.effective_at), as_of: pricingTime(r.as_of) }
   if ((model !== undefined && row.model_id !== pricingID(model)) || (row.source === 'default') !== (row.price_group_id === null)) return invalid()
   const values = [row.price_version_id, row.rates, row.effective_at]
   if (row.status === 'unavailable' ? values.some(value => value !== null) : values.some(value => value === null) || row.effective_at! > row.as_of) return invalid()
@@ -232,7 +232,7 @@ export async function pricingCommand(kind: PricingKind, operation: string, actor
   } else if (kind === 'group_price.publish') {
     const r = pricingObject(value, ['model_id','schema_id','schema_digest','variant_key','input_rate','output_rate','effective_at'])
     safe = { model_id: pricingID(r.model_id), schema_id: pricingID(r.schema_id), schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), input_rate: pricingDecimal(r.input_rate), output_rate: pricingDecimal(r.output_rate), effective_at: pricingTime(r.effective_at, true) }
-    parts = [safe.model_id as string, safe.schema_id as string, safe.schema_digest as string, 'default', 'CNY', JSON.stringify(pricingInputRates(safe.schema_id as string, safe.input_rate, safe.output_rate)), safe.effective_at as string]
+    parts = [safe.model_id as string, safe.schema_id as string, safe.schema_digest as string, 'default', 'COIN', JSON.stringify(pricingInputRates(safe.schema_id as string, safe.input_rate, safe.output_rate)), safe.effective_at as string]
     target += `/${pricingID(targetID)}/price-versions`
   } else if (kind === 'group_price.compile') {
     const r = pricingObject(value), allowed = ['multiplier', 'model_ids', 'effective_at', 'expected_base_version_ids']
@@ -251,7 +251,7 @@ export async function pricingCommand(kind: PricingKind, operation: string, actor
   } else if (kind === 'default_price.publish') {
     const r = pricingObject(value, ['model_id','schema_id','schema_digest','variant_key','input_rate','output_rate','effective_at'])
     safe = { model_id: pricingID(r.model_id), schema_id: pricingID(r.schema_id), schema_digest: pricingSchemaDigest(r.schema_digest), variant_key: choice(r.variant_key, ['default']), input_rate: pricingDecimal(r.input_rate), output_rate: pricingDecimal(r.output_rate), effective_at: pricingTime(r.effective_at, true) }
-    parts = [safe.model_id as string, safe.schema_id as string, safe.schema_digest as string, 'default', 'CNY', JSON.stringify(pricingInputRates(safe.schema_id as string, safe.input_rate, safe.output_rate)), safe.effective_at as string]
+    parts = [safe.model_id as string, safe.schema_id as string, safe.schema_digest as string, 'default', 'COIN', JSON.stringify(pricingInputRates(safe.schema_id as string, safe.input_rate, safe.output_rate)), safe.effective_at as string]
     target = '/api/platform/price-versions'
   } else if (kind === 'cost_price.publish') {
     const r = pricingObject(value, ['channel_id','upstream_model','schema_id','schema_digest','variant_key','basis','input_rate','output_rate','effective_at','expected_channel_revision'])
@@ -268,11 +268,16 @@ export async function pricingCommand(kind: PricingKind, operation: string, actor
   return Object.freeze({ ...identity, path: target.slice(4), method, body: Object.freeze({ operation_id: operation, ...safe }), ...(previous ? { previous: Object.freeze({ ...previous }) } : {}) })
 }
 export function parsePricingReceipt(value: unknown, expected?: PricingCommandIdentity | PricingCommand): PricingReceipt {
-  const r = pricingObject(value, ['operation','result']), raw = pricingObject(r.operation, ['operation_id','kind','scope','actor','resource_id','revision','created_at','target','input_fingerprint'])
+  const r = pricingObject(value, ['operation','result']), raw = pricingObject(r.operation, ['operation_id','kind','scope','actor','resource_id','revision','created_at','target','input_fingerprint','pre_coin_input_fingerprint'])
   const identity = parsePricingIdentity(Object.fromEntries(['operation_id','kind','scope','actor','target','input_fingerprint'].map(key => [key, raw[key]])))
-  const operation: PricingOperation = { ...identity, resource_id: pricingID(raw.resource_id), revision: raw.revision === null ? null : pricingDecimal(raw.revision, true), created_at: pricingTime(raw.created_at) }
+  const preCoin = raw.pre_coin_input_fingerprint
+  if (preCoin !== null && (typeof preCoin !== 'string' || !/^[0-9a-f]{64}$/.test(preCoin)) || preCoin !== null && identity.kind !== 'group_price.publish' && identity.kind !== 'default_price.publish') return invalid()
+  const operation: PricingOperation = { ...identity, pre_coin_input_fingerprint: preCoin, resource_id: pricingID(raw.resource_id), revision: raw.revision === null ? null : pricingDecimal(raw.revision, true), created_at: pricingTime(raw.created_at) }
   if (publishKinds.includes(operation.kind) !== (operation.revision === null)) return invalid()
-  if (expected && Object.entries(pricingIdentity(expected)).some(([key, val]) => operation[key as keyof PricingOperation] !== val)) return invalid()
+  if (expected) {
+    const original = pricingIdentity(expected), migrated = preCoin !== null && original.input_fingerprint === preCoin
+    if (Object.entries(original).some(([key, val]) => key === 'input_fingerprint' ? operation.input_fingerprint !== val && !migrated : operation[key as keyof PricingOperation] !== val)) return invalid()
+  }
   let result: PricingReceipt['result']
   if (operation.kind === 'tenant_pricing.assign') {
     result = parsePricingAssignment(r.result, operation.scope)

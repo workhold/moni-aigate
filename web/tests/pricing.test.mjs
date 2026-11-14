@@ -10,15 +10,15 @@ const rates = () => ({ schema_id: domain.schema_id, version: '1', side: 'retail'
 const at = '2026-11-01T00:00:00.000001Z', before = '2026-10-01T00:00:00.123456Z', huge = '9007199254740993'
 const groupView = patch => ({ id: group, label: '团队组', state: 'active', revision: huge, created_at: before, ...patch })
 const assignment = patch => ({ tenant_id: tenant, price_group_id: null, pricing_revision: huge, ...patch })
-const price = patch => ({ id: version, model_id: model, price_group_id: group, ...domain, currency: 'CNY', rates: rates(), effective_at: before, created_at: at, ...patch })
-const quote = patch => ({ model_id: model, source: 'group', status: 'available', price_group_id: group, price_version_id: version, ...domain, currency: 'CNY', rates: rates(), effective_at: before, as_of: at, ...patch })
+const price = patch => ({ id: version, model_id: model, price_group_id: group, ...domain, currency: 'COIN', rates: rates(), effective_at: before, created_at: at, ...patch })
+const quote = patch => ({ model_id: model, source: 'group', status: 'available', price_group_id: group, price_version_id: version, ...domain, currency: 'COIN', rates: rates(), effective_at: before, as_of: at, ...patch })
 const envelope = data => ({ data, request_id: 'safe-request' })
 const cursor = value => Buffer.from(value).toString('base64url')
 
 test('group vector fingerprint has the frozen Go/SQL golden value and binds the full domain', async () => {
   const body = { model_id: model, ...domain, input_rate: huge, output_rate: '0', effective_at: before }
   const command = await pricingCommand('group_price.publish', operation, actor, body, group)
-  assert.equal(command.input_fingerprint, '14aac71c989772d94efbda8faf1a39a758a618b645a71539a55de7664de26564')
+  assert.equal(command.input_fingerprint, '135996ee4b4062565ed45073ac70a79f4b8151abe0ecb88ea5cad58fe469e261')
   for (const patch of [{ schema_id: tenant }, { schema_digest: '00'.repeat(32) }, { input_rate: '9007199254740994' }, { output_rate: '1' }, { effective_at: at }]) assert.notEqual((await pricingCommand('group_price.publish', operation, actor, { ...body, ...patch }, group)).input_fingerprint, command.input_fingerprint)
   for (const patch of [{ schema_id: undefined }, { schema_digest: 'AB'.repeat(32) }, { variant_key: '' }, { rates: rates() }]) await assert.rejects(pricingCommand('group_price.publish', operation, actor, { ...body, ...patch }, group))
 })
@@ -37,7 +37,7 @@ test('group multiplier commands canonicalize model order, preserve the original 
 test('published multiplier receipt requires every immutable compiled version identity', async () => {
   const command = await pricingCommand('group_price.compile', operation, actor, { multiplier: '0.85', model_ids: [model], effective_at: '2026-12-01T00:00:00Z', expected_base_version_ids: {} }, group)
   const result = { group_id: group, multiplier: '0.85', effective_at: '2026-12-01T00:00:00.000000Z', items: [{ model_id: model, base_price_version_id: version, base_input_rate: '100', base_output_rate: '3', input_rate: '85', output_rate: '3', price_version_id: 'ffffffff-ffff-4fff-8fff-ffffffffffff' }] }
-  const raw = { operation: { operation_id: operation, kind: 'group_price.compile', scope: 'platform', actor, resource_id: group, revision: null, created_at: at, target: command.target, input_fingerprint: command.input_fingerprint }, result }
+  const raw = { operation: { operation_id: operation, kind: 'group_price.compile', scope: 'platform', actor, resource_id: group, revision: null, created_at: at, target: command.target, input_fingerprint: command.input_fingerprint, pre_coin_input_fingerprint: null }, result }
   assert.equal(parsePricingReceipt(raw, command).result.items[0].price_version_id, 'ffffffff-ffff-4fff-8fff-ffffffffffff')
   assert.throws(() => parsePricingReceipt({ ...raw, result: { ...result, items: [{ ...result.items[0], price_version_id: null }] } }, command))
 })
@@ -52,7 +52,7 @@ test('group rates preserve exact reduced int64 values and reject legacy or malfo
   assert.equal(parsePricingModelChoice({ id: model, public_name: 'embedding', protocol: 'openai_embeddings', ...domain }).inputOnly, true)
   assert.throws(() => parsePricingModelChoice({ id: model, public_name: 'bad', protocol: 'audio', ...domain }))
 })
-function receipt(command, result, revision = 'revision' in result ? result.revision : 'pricing_revision' in result ? result.pricing_revision : null) { return { operation: { operation_id: command.operation_id, kind: command.kind, actor, scope: command.scope, target: command.target, input_fingerprint: command.input_fingerprint, resource_id: result.id || tenant, revision, created_at: command.kind === 'price_group.create' ? result.created_at : at }, result } }
+function receipt(command, result, revision = 'revision' in result ? result.revision : 'pricing_revision' in result ? result.pricing_revision : null) { return { operation: { operation_id: command.operation_id, kind: command.kind, actor, scope: command.scope, target: command.target, input_fingerprint: command.input_fingerprint, pre_coin_input_fingerprint: null, resource_id: result.id || tenant, revision, created_at: command.kind === 'price_group.create' ? result.created_at : at }, result } }
 
 test('strict IDs, int64 strings and UTF-8 labels never coerce numbers, nil IDs or surrogate input', () => {
   assert.equal(pricingDecimal(huge, true), huge)
@@ -168,7 +168,7 @@ test('default price publication has a fixed target, frozen golden fingerprint an
   const body = { model_id: model, ...domain, input_rate: huge, output_rate: '0', effective_at: before }
   const command = await pricingCommand('default_price.publish', operation, actor, body)
   assert.equal(command.target, '/api/platform/price-versions'); assert.equal(command.path, '/platform/price-versions')
-  assert.equal(command.input_fingerprint, '5fafc4301d437fa9222ee44c47afae8ad92996b0bdc5545227fc827c73a8b3e3')
+  assert.equal(command.input_fingerprint, '6003e0a838060afd8733f046f303d7ab8928bcb28a825c48344ef86004d7adbc')
   assert.notEqual(command.input_fingerprint, (await pricingCommand('group_price.publish', operation, actor, body, group)).input_fingerprint)
   for (const patch of [{ schema_id: tenant }, { schema_digest: '00'.repeat(32) }, { input_rate: '9007199254740994' }, { output_rate: '1' }, { effective_at: at }]) assert.notEqual((await pricingCommand('default_price.publish', operation, actor, { ...body, ...patch })).input_fingerprint, command.input_fingerprint)
   assert.equal(parsePricingReceipt(receipt(command, defaultPrice()), command).result.price_group_id, null)
@@ -176,6 +176,15 @@ test('default price publication has a fixed target, frozen golden fingerprint an
   const changed = rates(); changed.rates[1] = { ...changed.rates[1], numerator: '1' }
   for (const result of [defaultPrice({ price_group_id: group }), defaultPrice({ rates: changed }), defaultPrice({ effective_at: at }), defaultPrice({ model_id: tenant })]) assert.throws(() => parsePricingReceipt(receipt(command, result), command))
   assert.throws(() => parsePricingReceipt(receipt(command, defaultPrice(), '1'), command))
+})
+test('pre-COIN migration proof permits only exact original-operation recovery', async () => {
+  const body = { model_id: model, ...domain, input_rate: huge, output_rate: '0', effective_at: before }
+  const command = await pricingCommand('default_price.publish', operation, actor, body)
+  const raw = receipt(command, defaultPrice())
+  raw.operation.pre_coin_input_fingerprint = command.input_fingerprint
+  raw.operation.input_fingerprint = 'f'.repeat(64)
+  assert.equal(parsePricingReceipt(raw, command).operation.pre_coin_input_fingerprint, command.input_fingerprint)
+  assert.throws(() => parsePricingReceipt({ ...raw, operation: { ...raw.operation, pre_coin_input_fingerprint: '0'.repeat(64) } }, command))
 })
 test('cost publication keeps the known/unknown union, channel CAS and exact supplier rates', async () => {
   const command = await pricingCommand('cost_price.publish', operation, actor, costBody())

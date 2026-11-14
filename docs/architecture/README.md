@@ -649,11 +649,17 @@ sequenceDiagram
 
 ### 客户资金与上游成本
 
-客户售价固定在请求的零售版本快照中，与最终选到哪个渠道无关。T0 在一个事务内冻结钱包与 Key 可用额度，写请求、reservation、平衡分录和恢复/outbox 依据；T2 只使用可信最终 usage，并以原始预占为上限结算、释放剩余。金额采用 CNY 微元整数，不用浮点数累计。
+客户售价固定在请求的零售版本快照中，与最终选到哪个渠道无关。T0 在一个事务内冻结钱包与 Key 可用额度，写请求、reservation、平衡分录和恢复/outbox 依据；T2 只使用可信最终 usage，并以原始预占为上限结算、释放剩余。客户钱包、售价、Key 额度与客户周期预算采用 COIN 微币整数，不用浮点数累计；供应商成本与采购预算仍为 CNY 微元，付款法币使用独立 `FiatMoney` 类型，不与微币隐式互赋。
 
 成本按每一次已准入 attempt 保存：`channel + upstream_model + effective_at` 命中的成本版本、输入/输出每百万 token 单价，以及 `contract/invoice/unknown` 依据。已知最终用量才能核算可能消费的请求；缺价格或缺用量必须保持 unknown，不能记为零。已明确 `not_sent` 或满足供应商无消费合同的 `rejected` 证据可以确认为零成本，不能与未知消费混淆。平台可以追加幂等成本修正，修正不会改变零售价格、客户钱包或原始事实。[成本接口](../../internal/server/reports.go)、[成本与证据逻辑](../../internal/billing/evidence.go)、[平台成本查询](../../internal/billing/query.go)。
 
 仍可能消费但没有可信最终量的请求进入待核对。数据库时钟和行锁控制 24 小时硬截止：届时仍未结算则释放客户冻结；晚到证据只能补充平台成本，不能自动再扣客户。退款追加补偿分录，累计不超过原消费，不重置 Key 已消费数。[恢复](../../internal/billing/recovery.go)、[结算](../../internal/billing/settle.go)、[财务审批](../../internal/billing/orders.go)。
+
+### 034.1 虚拟币单位边界
+
+[`current_004_virtual_coin_units.sql`](../../migrations/current_004_virtual_coin_units.sql) 将客户 `journals`、`funding_receipts` 与 `price_versions` 的外层 `currency` 改为 `COIN`，金额和费率数值不缩放；`cost_versions`、采购观察、供应商成本和支付法币事实继续使用 CNY。计量 canonical、历史请求快照和 `TextRates.currency` 刻意保留冻结的 CNY 规范化标签，不能把它与零售外层币种混为一谈。迁移只追加，先移除旧 CHECK 再回填并添加新 CHECK，显式暂停/恢复不可变及 deferred 来源校验触发器，支持非超级用户的 schema owner。
+
+既有 group/default pricing operation 的 safe-input、result snapshot、审计快照与指纹一并升级为 COIN；`pre_coin_input_fingerprint` 只保存迁移前指纹，供浏览器持久化的原 operation ID 做严格只读恢复，不提供 CNY 结果 fallback 或第二套价格 DTO。支付 SKU/订单的 `amount` 使用 [`billing.FiatMoney`](../../internal/billing/fiat.go)，钱包到账 `wallet_credit_amount` 使用 `billing.Money`，处理器内部同样分型。控制台分开显示币、付款法币和采购成本；026 经营窗口报表的付款基准与同币种毛利留到 034.5，不在本片混合改写。实际存量升级、原 operation 重放、角色边界及前端验证见[034.1 验证记录](../verification/034-coin-units.md)。034.2 及后续角色、双来源、五桶、币价版本和现金退款能力尚未据此宣称完成。
 
 ### 018 采购单价门禁与成本感知路由
 

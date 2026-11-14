@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T20:29:54Z",
-  "review_reason": "真实本地 New API/Sub2API 三服务三库拓扑验收：固定 New API e449cc7 与 Sub2API 10ba8f9/digest，三库与内部网络、JSON/SSE、唯一结算、receipt 和 route revision 回退通过；供应商资格仍标未验收",
-  "snapshot_sha256": "8c6fc3f6d94848268bd3474191982c6fbe30cfefb5839c6faaaff17ee1a4ae71",
-  "architecture_sha256": "69f6949246fa9d0efc49ecdbe286fee57a9e013ae80b3bd02d89414d550fe763",
-  "history_sha256": "4d2249ee82d1d57944db5acae6411f0cf529869f532e31bed83c3bc980b7759b",
+  "reviewed_at": "2026-11-14T04:12:19Z",
+  "review_reason": "034.1 完整本地验收：存量 COIN 迁移、历史定价回执重放、FiatMoney、前端单位与权限边界；完整 server/PG race、前端和文档已复核",
+  "snapshot_sha256": "dd16169f0c1654930da1019a2012b9fcc4af56b2f5d42ebca89e7a5d5e0af3f6",
+  "architecture_sha256": "8a415996422340651423a76c796a77266d5ac9132135fc4069689318587b9f92",
+  "history_sha256": "45d87f2d66542b8d989868218438fdb1ec3b74072fddc3d1e06737ee998e1bf8",
   "files": [
     {
       "path": ".dockerignore",
@@ -157,7 +157,7 @@
     },
     {
       "path": "docs/architecture/wallet-sources.md",
-      "sha256": "c39e27d109518bc2da80d6dd7532cc715eec0502d8c8dc29397981e48fdc9749"
+      "sha256": "e19bd6f9d694e5665646741689e6e3742dfc9497151763d0d76ae4005e6eb338"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -274,6 +274,10 @@
     {
       "path": "docs/verification/028-u-guard-matrix.md",
       "sha256": "cda131a07e3d2aa7f976c3e0b178d70b2a49a8042a1aaef99b6d2303db0a0049"
+    },
+    {
+      "path": "docs/verification/034-coin-units.md",
+      "sha256": "c96cd81615e989f9f8063fb43db9167ccf4b2f05927d3c65d238d0c5099e5ba0"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -2016,12 +2020,20 @@
       "sha256": "88be1221960a31604b61a9c65353bffdea969ae1611982b949a52c9ab2556ae6"
     },
     {
+      "path": "internal/billing/fiat.go",
+      "sha256": "53bf779f48f903c3ec0d4bba477dfb555275a7f04255b2edf060fd57438e0f12"
+    },
+    {
+      "path": "internal/billing/fiat_test.go",
+      "sha256": "4b38261eaac3b02fe8b434741df28ce454a301994fdada915e982c00b9a4886c"
+    },
+    {
       "path": "internal/billing/finish_tail_integration_test.go",
       "sha256": "b6b15a21b6985d73ba7cda23519b76f983b4d334de020fdd6838390198ae6529"
     },
     {
       "path": "internal/billing/funding.go",
-      "sha256": "319c762a87c4f3f3942f4f9a143914ddf751a78fbd4ac317e18467e11546b1e6"
+      "sha256": "9d0f738a40d71db53d32286e507c06b185b6bec676d0e7c5376f1fffe3efba3d"
     },
     {
       "path": "internal/billing/funding_financial_read.go",
@@ -2033,7 +2045,7 @@
     },
     {
       "path": "internal/billing/funding_integration_test.go",
-      "sha256": "34373cd3aab71930c9ad62e27e1279f5967eb88c151903ee65a416ff80dd23b9"
+      "sha256": "8cc65851137fdc324e5548f226fd409ee28cf7c0bee9e21e003fe057632cb9d1"
     },
     {
       "path": "internal/billing/funding_ledger_facts.go",
@@ -2061,7 +2073,7 @@
     },
     {
       "path": "internal/billing/funding_sandbox.go",
-      "sha256": "f9cc192c00403e74bf9b70eea8716670528d44bacc43372956656f664782c399"
+      "sha256": "b1779090f612230158f461586d16e5af468a33051b3aba91f19080771968d774"
     },
     {
       "path": "internal/billing/funding_sandbox_integration_test.go",
@@ -2329,11 +2341,11 @@
     },
     {
       "path": "internal/billing/voucher_integration_test.go",
-      "sha256": "417c3c5f5209ba71df65b8cb2bd23f30abb19d7b01c89512b943b1e48c52ec2b"
+      "sha256": "71ca55c232f7f2908d4c1a3801a03cfa96ea99e602e80ccbe903fe693b5778ea"
     },
     {
       "path": "internal/billing/voucher_query.go",
-      "sha256": "4570c67b0580afb1b675dd684522438795233ebd7133ac75e661edf1cf383363"
+      "sha256": "bd68f979eeb0dbef593cc2b85a0660fbe643a8428f214e1c2fedeab0c4bd063c"
     },
     {
       "path": "internal/billing/voucher_query_integration_test.go",
@@ -2369,7 +2381,7 @@
     },
     {
       "path": "internal/billing/wallet_sources_read.go",
-      "sha256": "71101a7f394f7aec9937a3ca4ecd03368c64ac935f155fa4c5e9666714ac3ec9"
+      "sha256": "c47d315bfa4530e5c40cb9b00291a368eca2790762fe0471e11e61db03e57d3a"
     },
     {
       "path": "internal/billing/wallet_sources_read_test.go",
@@ -2377,7 +2389,7 @@
     },
     {
       "path": "internal/billing/wallet_sources_summary_test.go",
-      "sha256": "84cb09fc4ae5fa911c4d434840206c15431a199fdf0f2b6ad783a39a75e51c05"
+      "sha256": "5d070d0293821673015358b756ec684fbc3a1ab0da0e2b631fe7cdafb7584d74"
     },
     {
       "path": "internal/catalog/alias_reader_contract_test.go",
@@ -2429,7 +2441,7 @@
     },
     {
       "path": "internal/catalog/group_price_vector_integration_test.go",
-      "sha256": "8d304f3ac5a4a41269957657a37a01429b54d9adb0895e74d06a89ae3b706d4e"
+      "sha256": "78cdb1b83586a153f0ee965d8017024d981b142d035136f0c44942fd0eddfa9d"
     },
     {
       "path": "internal/catalog/model_alias.go",
@@ -2445,7 +2457,7 @@
     },
     {
       "path": "internal/catalog/pricing_commands.go",
-      "sha256": "ce27ab8c57aa692f4bd21db0f50253daea3e457999310b762e164b7b7dbb8117"
+      "sha256": "68ca2ee23ebdc8145b70983f34fd5f7caad1417a4ffaf73465da5a93bf54ec35"
     },
     {
       "path": "internal/catalog/pricing_concurrency_integration_test.go",
@@ -2457,27 +2469,27 @@
     },
     {
       "path": "internal/catalog/pricing_publish.go",
-      "sha256": "1ce6de47ded8af32c849793dff853eafb45f5a145b22b3adc089868eab7b58b6"
+      "sha256": "1e4d2b26655fb82e756c2e66b6b1affd41ea34c26b03790f9f5997906d7b99be"
     },
     {
       "path": "internal/catalog/pricing_queries.go",
-      "sha256": "d37dc92d8004dbf1b697e866ee0147eb857b8eb270e8eec5f1704718161cb1bb"
+      "sha256": "d29b19c68e18a88821f89b7addc26e0649a13d6dd125a6f74c06cdf3ffdead84"
     },
     {
       "path": "internal/catalog/pricing_types.go",
-      "sha256": "5e7c76b801b23a26451502ac454b621ddd3b3abff82809b49d2e7462c789dcc3"
+      "sha256": "ab94f4f11ab310efbafaa70bf3345c2a36167e04d1a5736abe7b6720b1750856"
     },
     {
       "path": "internal/catalog/pricing_vector.go",
-      "sha256": "64e5d30c374e10772a9362bc0f971c8bf6a5dbcadd6481aa922c62e2ba0d6ec2"
+      "sha256": "b69e1ccf8ef87623e817b4fea7eac549c40ba91f67bd2affc32191a72eaee010"
     },
     {
       "path": "internal/catalog/pricing_vector_test.go",
-      "sha256": "8bbc2334922b7c1d9a99614dee9a392c288d8715ae16fbf3dc012a8e78ba38d3"
+      "sha256": "0b3378c7c65a97dc992e0c75d82e0ab585dec8a6069c46fd30e600dbd7a2a198"
     },
     {
       "path": "internal/catalog/public_catalog.go",
-      "sha256": "8ce47bcfa2c9f9f438db9a24b36fe58fcdaf3e39be1876fa511cf074f3035249"
+      "sha256": "c6f08a469dc24234d18bf960fc5b8597c5d70c3f1255eb13452954440b46d7e0"
     },
     {
       "path": "internal/catalog/public_catalog_integration_test.go",
@@ -2489,7 +2501,7 @@
     },
     {
       "path": "internal/catalog/public_catalog_test.go",
-      "sha256": "3e927052fdd09a6ab94f3a17c861c09ce015487d3b5b877d855c3b730301738f"
+      "sha256": "45fb489a856a49de1721b5190b1783effd00fc150c58077d08632a112c77a183"
     },
     {
       "path": "internal/catalog/route_activate.go",
@@ -4005,7 +4017,7 @@
     },
     {
       "path": "internal/metering/types.go",
-      "sha256": "8415683b98a85fc31048641e1dac3f23ddba9c594fac2237af467319368caba1"
+      "sha256": "8c1bf153af49b46ff93dac049514ee5cf5f7d77e6d467606763209b64ea999f5"
     },
     {
       "path": "internal/mockpsp/config.go",
@@ -4153,7 +4165,7 @@
     },
     {
       "path": "internal/operations/funding_integration_test.go",
-      "sha256": "e2b6a88afa1b47a812aee6bdd493161238e9404731fd3c3bee285f58ecc7e0db"
+      "sha256": "77bd4264d0162dcacda963620c4777fd7bce03ad1aa333fb2043780bc1223f2e"
     },
     {
       "path": "internal/operations/instance.go",
@@ -4209,11 +4221,11 @@
     },
     {
       "path": "internal/operations/payment_roles.go",
-      "sha256": "dc32672a96139d6c1b182754b5af890501736df3cee70d6cd7359970ad02cbd5"
+      "sha256": "93eea7615c2e2eb8a79ae3b48377a71a14c9624580db59e9fc08fa6126395e0f"
     },
     {
       "path": "internal/operations/payment_roles_functions.go",
-      "sha256": "bee03002b68042818db69e5c123f4371ca7f1cf2cf2deb0c201f82e56cf59fa9"
+      "sha256": "92e00a2ff8c5ea0112b8a79a097278fa060a881041155889d550e34573a0fbfd"
     },
     {
       "path": "internal/operations/payment_roles_test.go",
@@ -4445,7 +4457,7 @@
     },
     {
       "path": "internal/payments/processor_evidence.go",
-      "sha256": "d930524b6e2844f01c1d94049aa5dff81829e9680aef4e96868e3cd55b3f99c5"
+      "sha256": "0dd44e7a181aeece490c5bb2c3bfcd0dddb9e23f5159fb883f5783fd8cdfeabf"
     },
     {
       "path": "internal/payments/processor_expiry_test.go",
@@ -4469,11 +4481,11 @@
     },
     {
       "path": "internal/payments/processor_test.go",
-      "sha256": "442a380bec59a5316a83cbd39ae32a04e3603bb868c3afcc0db4c31f7297d1bf"
+      "sha256": "6c54afb79a84314162cfaca13b521f1c5883283fe1668e4b80c18510a13fb513"
     },
     {
       "path": "internal/payments/processor_types.go",
-      "sha256": "36f7f974d3549a0738b11c1d85fd3fbf82a99d23ce9f9f3134c91d900d662333"
+      "sha256": "2678a079acc3425ac0242dd64951e2930c418208ce2cf1dfb1ef58c3532bd1f7"
     },
     {
       "path": "internal/payments/runner.go",
@@ -4545,7 +4557,7 @@
     },
     {
       "path": "internal/payments/service_funding_read_test.go",
-      "sha256": "d8b672b533ab1fee95f358f3e106c208f882b2884feba33051be87b81b32995b"
+      "sha256": "afb3f493845abd3fa8e46cefe72a3888b3242b231086f36d6adc1d89b5df0d82"
     },
     {
       "path": "internal/payments/service_notification.go",
@@ -4553,7 +4565,7 @@
     },
     {
       "path": "internal/payments/service_query.go",
-      "sha256": "4636b1a666285abadfa3ac6e89fcabd5952a541d8e4c6dd70f10e66f49dbed78"
+      "sha256": "20adcf446e5e9d46b9692ffd992021648d909207a9f5479e00764f7f1bb97330"
     },
     {
       "path": "internal/payments/service_test.go",
@@ -4561,7 +4573,7 @@
     },
     {
       "path": "internal/payments/service_types.go",
-      "sha256": "708eb8258b885a8a0a698866eec295e88db0ffbcdbe035e95f1e99f50852f2a9"
+      "sha256": "1011b21987d4492dbf2de4daf75db898b8c6194bbdb492204f651042201cbf8e"
     },
     {
       "path": "internal/payments/v1_codec_compat_test.go",
@@ -6173,7 +6185,7 @@
     },
     {
       "path": "internal/server/payment_handlers.go",
-      "sha256": "ebdd1a74338e3bbc039f1bef0302e38b342a68a5cb5982e630ef2c0ea12242d0"
+      "sha256": "459821a94d85db7a264e538ae946d775d5504240f7add3cd03cbe33dfb00553d"
     },
     {
       "path": "internal/server/payment_handlers_test.go",
@@ -6285,7 +6297,7 @@
     },
     {
       "path": "internal/server/queries.go",
-      "sha256": "02f253465d4ae68ab62c0a54a46b27f41a3545d2a6035babeaadbe91396a058a"
+      "sha256": "220d5fb8bfb7095d14d716c9fa65672507b3975f902aa8a3146a212b12ab7520"
     },
     {
       "path": "internal/server/queries_test.go",
@@ -6481,7 +6493,7 @@
     },
     {
       "path": "internal/testsupport/meterquote/publish.go",
-      "sha256": "769dfa0f2c32b5ce3b6f7e1da009802c37473491ee3f22cd4c5149d657bc904e"
+      "sha256": "95f4909d05218188183338ef96dc1619b81958555a349847ccc8340fcd4759c7"
     },
     {
       "path": "internal/testsupport/meterquote/quote.go",
@@ -6632,6 +6644,10 @@
       "sha256": "9bb35a27341bd204e6810974a67b296490f24d49aa76ff04e0fc266a610b33e1"
     },
     {
+      "path": "migrations/current_004_virtual_coin_units.sql",
+      "sha256": "4a49f2df9be50c1966775d108b5a152dcbf951c5162430a5771573d5cb9a66a9"
+    },
+    {
       "path": "migrations/current_mvp.sql",
       "sha256": "c3aba37f5fa194bf6f66018e25d1124fe3fd2ab886969d4349d440e85d35381e"
     },
@@ -6710,6 +6726,10 @@
     {
       "path": "migrations/verify_snapshot_test.go",
       "sha256": "2ee4897083f2433c89e822189ce99c5f5b2da4796647602431920191ef6df9e0"
+    },
+    {
+      "path": "migrations/virtual_coin_postgres_test.go",
+      "sha256": "8cca98c69b24d87bebe48d8d3210db7ccf5987456ccdaeb19b47b4f67356e2d3"
     },
     {
       "path": "migrations/wallet_sources_postgres_test.go",
@@ -8181,7 +8201,7 @@
     },
     {
       "path": "web/src/commerce.ts",
-      "sha256": "dca4bbb1fbc1c9f11fef72343902855767c40c4a383985ca3ceee66485785c61"
+      "sha256": "054a4fdd60af670c203f27b5287a57f1dc4e59f2d2092e124199028723c10fec"
     },
     {
       "path": "web/src/components/AlertCommands.vue",
@@ -8205,11 +8225,11 @@
     },
     {
       "path": "web/src/components/CommerceCommands.vue",
-      "sha256": "43dbf22df6ece6bdb53406f139d2cc791d0f1459e64d17abbe6e130e4e2176fa"
+      "sha256": "2f15ca21c2c541629265a97769a26c471b0a3b750d997a01a4a593822ae444c3"
     },
     {
       "path": "web/src/components/CommerceWriter.vue",
-      "sha256": "f22ae32c8faaba5211f92e7f42e8a2e50662af98314e06ef4da118fe86c300a0"
+      "sha256": "e5f77573a4fc5429c5fdb7e5f01d2d992738d30e22d3c9814adcc229c686ad37"
     },
     {
       "path": "web/src/components/CostEditor.vue",
@@ -8225,7 +8245,7 @@
     },
     {
       "path": "web/src/components/FundingPanel.vue",
-      "sha256": "153d946939f0f2162fa50e05743921d4efd5d38a5256bc48c59a0e26eefbb068"
+      "sha256": "913e639f4a4d6faedf41bae92778a3a1280019ef76c0af102a2c0640c603e80d"
     },
     {
       "path": "web/src/components/GroupMultiplierCompiler.vue",
@@ -8237,7 +8257,7 @@
     },
     {
       "path": "web/src/components/MetricMoney.vue",
-      "sha256": "1d0dd8a25322d8e9458cea8b3a531b00844f194504b7837b8991f0ab23356319"
+      "sha256": "b8702c036c4f186957d13e61883a8c4f5aeed2da1c93cab458d2f871e23354fc"
     },
     {
       "path": "web/src/components/ModelAliases.vue",
@@ -8261,15 +8281,15 @@
     },
     {
       "path": "web/src/components/PaymentsPanel.vue",
-      "sha256": "b9a9b3d411553a158d12ccb2d59e7b911150625ac8cc6ea47f6dba7b3a77e6ba"
+      "sha256": "408a23e9015465661e6f98f6a0ad83cf293943c769dcc6adbc523416e78150a6"
     },
     {
       "path": "web/src/components/PeriodicBudgetPanel.vue",
-      "sha256": "7fcb02c6736fae729e7ba07653e93ad8c7a8d96262bd5c4217dfe233f086367b"
+      "sha256": "06bea6d18a94f4d51192c482118ac5263566c7d32445e0a08b778035e0afd298"
     },
     {
       "path": "web/src/components/PeriodicBudgetWriter.vue",
-      "sha256": "ebd4d144d3e5f1147dcddb5b1d9bfb2ab11b039486166df3d0fc6dd93269f10e"
+      "sha256": "b62e43c849ee340a96ed691e26f52c04b5248e86ead36c5b5749d23825fc8827"
     },
     {
       "path": "web/src/components/PricingCommands.vue",
@@ -8277,7 +8297,7 @@
     },
     {
       "path": "web/src/components/PricingWriter.vue",
-      "sha256": "363543655aa284a92ad67766e59b64cd09612873ad935feea1415127a27ac49d"
+      "sha256": "a9720b70032176a03061999ed0071c616dabe35bd37a6d5884f1d2be30d97531"
     },
     {
       "path": "web/src/components/ProcurementWriter.vue",
@@ -8285,7 +8305,7 @@
     },
     {
       "path": "web/src/components/RequestFunding.vue",
-      "sha256": "b909de2a18740091db74b59971623f3493b87927d8f8656ecffca32e2e08e051"
+      "sha256": "898bcf492472eefd3a20e9dbdb58b4c7320b343367b733f8ee4dd4c4b2a3e89a"
     },
     {
       "path": "web/src/components/RouteAttempts.vue",
@@ -8309,7 +8329,7 @@
     },
     {
       "path": "web/src/components/WalletSources.vue",
-      "sha256": "f5e0c163e9204698f97a1ccea88562620b9bb8ecd74832fdb187acac3b523017"
+      "sha256": "c8d49f2f9b0c9e553f1fd78a3baeab8f0aa9e381463ebd12fc3a8f0316e66b2e"
     },
     {
       "path": "web/src/cost-aware-routing.ts",
@@ -8329,7 +8349,7 @@
     },
     {
       "path": "web/src/format.ts",
-      "sha256": "ac0d874a6c088cffc0eb328359f20df4c688bbc305916d26291a55c5b1c89ce0"
+      "sha256": "09cf5a37724215a1f4726c65740b644e3f7c8f6159966b16c1a333c60ebcb005"
     },
     {
       "path": "web/src/identity-proof.ts",
@@ -8353,7 +8373,7 @@
     },
     {
       "path": "web/src/key-configuration.ts",
-      "sha256": "c0da9f12f43bd636cbeeda093be7642e0fe4c640be69f3d8994a04fa860e07ca"
+      "sha256": "47e355f27d8abe8eb7049966a894399d98a5b631735fa05a44fb48dfe05e12e7"
     },
     {
       "path": "web/src/key-runtime-limits.ts",
@@ -8365,7 +8385,7 @@
     },
     {
       "path": "web/src/metering-wire.ts",
-      "sha256": "7f095d7d5c0d0224303b3dba8d2b092ad5c78de18e9e1e677127c48c7d84131b"
+      "sha256": "970c695de45a6cfb01ea012f6a9d347ba13edbfba3e5aa4dd8aaeb4133981729"
     },
     {
       "path": "web/src/model-aliases.ts",
@@ -8429,7 +8449,7 @@
     },
     {
       "path": "web/src/pricing.ts",
-      "sha256": "df0199e76145cb50385383cc1465bd38413bf703135f7c4c16df39852e9a4093"
+      "sha256": "718b80377087431c33abc42d696ffb5ac68b7e96383180542105f51d0425ed0c"
     },
     {
       "path": "web/src/procurement-state.ts",
@@ -8445,7 +8465,7 @@
     },
     {
       "path": "web/src/public-catalog.ts",
-      "sha256": "476889e0074e9f24b7769548df646bfc3291a059074d01ce7163746e9a7ca3f6"
+      "sha256": "c3a0291e2d2672f27d84d8dee337931a0467bfac7a25482de2cbba9e6e947072"
     },
     {
       "path": "web/src/public-layout.ts",
@@ -8485,7 +8505,7 @@
     },
     {
       "path": "web/src/views/KeysView.vue",
-      "sha256": "b163cdcee00ef8ad32d2ac893c343fa35a7b23c598ce1b6cd2354636524ac713"
+      "sha256": "b277daf1d7ec54c6c6373531442100a476300f98f1e98d8632798df6d11f08dd"
     },
     {
       "path": "web/src/views/LoginView.vue",
@@ -8497,11 +8517,11 @@
     },
     {
       "path": "web/src/views/ModelsView.vue",
-      "sha256": "9db965e5678a9356bb977fffb40c55f0fa8a80b526e6737c009e6e237d1746ab"
+      "sha256": "b7234780b1091dfabf5d0963c3464b784d3726623ccb5e7ad91a463347907bbe"
     },
     {
       "path": "web/src/views/OverviewView.vue",
-      "sha256": "f1902d94d70f5ab3a0c253ccd47321bed8275d0306b67b89107160fba85c7d73"
+      "sha256": "097850d7fbc46e94136ddd13fd898c59ee713dcafcf1d795a4172995dff29a6b"
     },
     {
       "path": "web/src/views/PeriodicBudgetView.vue",
@@ -8509,7 +8529,7 @@
     },
     {
       "path": "web/src/views/PlatformView.vue",
-      "sha256": "4592fd9670e647e18f0600d7ee76e40f56a91a672395c582542b60784e95959e"
+      "sha256": "a05fd2656c4cee73072b8c0fd80fe8fdfe9aa5ca252356432449a0d4f588df48"
     },
     {
       "path": "web/src/views/PlaygroundView.vue",
@@ -8517,11 +8537,11 @@
     },
     {
       "path": "web/src/views/PriceGroupsView.vue",
-      "sha256": "6efd469c0ba1543c399de2d4200be8a8d4563b135447b9e3e042e488e4a55461"
+      "sha256": "fd1555e045ff87add76bd1d80a45350743cfce19a7255f4ec741389aee6893bb"
     },
     {
       "path": "web/src/views/PricingView.vue",
-      "sha256": "3d9f09bf889c4b70a99fab3669d9ead0b97063d6f03e0e5f4e4c927246359b19"
+      "sha256": "717366128d91326f34fe38f48922e171a7d9a1eedc235e697b10f1de0ad57836"
     },
     {
       "path": "web/src/views/ProcurementView.vue",
@@ -8533,11 +8553,11 @@
     },
     {
       "path": "web/src/views/ReportsView.vue",
-      "sha256": "6740aecaa7eea4230cf24dc3880bfbb464d682bbdb4ede6a0d1d8bfb1e008e35"
+      "sha256": "7f7fccf204b34abe8329b9f616538a220a9317c7eadaeebfc03f9d964b17ef14"
     },
     {
       "path": "web/src/views/RequestsView.vue",
-      "sha256": "388eb9cc9fec16b38f2798756e28cf02a39d13986f7047879ee4ac6233dde6ed"
+      "sha256": "76f50d930fc9c19506b4ea1ab94c4dd1cf5fad12abd21ea0bcb8780f966c033e"
     },
     {
       "path": "web/src/views/SecurityView.vue",
@@ -8545,7 +8565,7 @@
     },
     {
       "path": "web/src/views/VouchersView.vue",
-      "sha256": "55b2b785e888a9bfb2a945c2d8c8e6d8c1d102d63a38bf3870f92273caec259f"
+      "sha256": "c91af8f262e78ed53eb69e5dfc21a536c64751060880c3cf45636e530e15b587"
     },
     {
       "path": "web/src/views/WalletSourcesView.vue",
@@ -8553,7 +8573,7 @@
     },
     {
       "path": "web/src/views/WalletView.vue",
-      "sha256": "444ad4187486b172d4f6a42aa999cbc06fddeb8b590824bbbb41dc040ba475f6"
+      "sha256": "75e34398404844bc16232cd3213db1b4c9beac12d01c6674419a219a8bfec776"
     },
     {
       "path": "web/src/wallet-source-details.ts",
@@ -8593,7 +8613,7 @@
     },
     {
       "path": "web/tests/commerce.test.mjs",
-      "sha256": "50c4b815d04161b01e602eb48f308f9662dac7c99f8f8d59fc40dee5275168a8"
+      "sha256": "c68d27f17724d6104e055b71290626e530c552cb7bb46ddaa2484491b6505a5f"
     },
     {
       "path": "web/tests/cost-aware-routing.test.mjs",
@@ -8633,7 +8653,7 @@
     },
     {
       "path": "web/tests/key-configuration.test.mjs",
-      "sha256": "04eabbbf7e1089b2641b28d434cd97d0ee22f75a82c0e8b6109f6fe935550607"
+      "sha256": "cef2d1ed22b3d6ac4ae58becea9b63a403556b3c8bf967a8adca41db395c6ec2"
     },
     {
       "path": "web/tests/key-runtime-limits.test.mjs",
@@ -8641,7 +8661,7 @@
     },
     {
       "path": "web/tests/metering-wire.test.mjs",
-      "sha256": "b582161028876bcaeedf5588e28dc3b487870cc0dc6b01243007aa417410b9cd"
+      "sha256": "2732307abc81efb53fcd797ea54bd516717c8253c41cfa817a9c1ac2f946a1ec"
     },
     {
       "path": "web/tests/model-aliases.test.mjs",
@@ -8689,7 +8709,7 @@
     },
     {
       "path": "web/tests/pricing-state.test.mjs",
-      "sha256": "ba5ae80381af53def0be845568748b4ce80ec659a0a65bab7fbece171a47cb4a"
+      "sha256": "e4bc5d49081acb71c9b46522d9d06ec60f9a6dab35fbf7508aeb762ba6b5ff7b"
     },
     {
       "path": "web/tests/pricing-transport.test.mjs",
@@ -8697,7 +8717,7 @@
     },
     {
       "path": "web/tests/pricing.test.mjs",
-      "sha256": "3696f79bc7a972a31b3921df8b9cbdc07cd11e0e38ef747d348ee79afc63d1af"
+      "sha256": "1cb546e19d9684bbf12654331783ffe88baac2a4a080aba31e296bc0a63eb801"
     },
     {
       "path": "web/tests/procurement-state.test.mjs",
@@ -8713,11 +8733,11 @@
     },
     {
       "path": "web/tests/public-catalog-state.test.mjs",
-      "sha256": "d54586cadd964ce4eb95456131ade9daa20cf94fafec9181a9307b5abfee3226"
+      "sha256": "cea0236a8f3b1b4f5022885f5ee7bdc9b785d896b05c96a57efde424666ead39"
     },
     {
       "path": "web/tests/public-catalog.test.mjs",
-      "sha256": "5a1ec3699a6811a86ebc17617fe7c701d6b2fd025dc0771b05ff7cc931eb3e22"
+      "sha256": "55ee11ce18044264a502d9ce5b8516d650e5b83ac9353ba6100132a7198fab79"
     },
     {
       "path": "web/tests/reporting.test.mjs",

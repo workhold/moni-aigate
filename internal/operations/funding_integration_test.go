@@ -373,7 +373,7 @@ func TestFundingProvisionedManualCreditIsUniqueAndProjectable(t *testing.T) {
 	var receipts, journals, credited, audits int
 	var available int64
 	if err = f.app.QueryRow(f.ctx, `SELECT
- (SELECT count(*) FROM funding_receipts WHERE tenant_id=$1 AND source_kind='manual_credit' AND source_id=$2 AND journal_id=$3 AND amount=1000 AND currency='CNY'),
+ (SELECT count(*) FROM funding_receipts WHERE tenant_id=$1 AND source_kind='manual_credit' AND source_id=$2 AND journal_id=$3 AND amount=1000 AND currency='COIN'),
  (SELECT count(*) FROM journals WHERE operation_id=$2),
  (SELECT count(*) FROM projection_outbox WHERE operation_id=$2 AND kind='credited' AND schema_version=1 AND sanitized_payload='{"amount":"1000"}'::jsonb),
  (SELECT count(*) FROM audit_events WHERE action='credit.approved' AND target=$2),

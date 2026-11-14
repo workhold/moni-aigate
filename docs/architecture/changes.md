@@ -6418,3 +6418,94 @@ align the HLD link label with the renumbered external upstream contract
 - modified `scripts/external-upstream-qa.py`
 
 </details>
+
+## 2026-11-14T04:08:13Z · 97838356cf2b
+
+034.1 COIN 单位、FiatMoney 类型边界与历史定价回执迁移；计量 canonical 与供应商/支付 CNY 保持不变；026 报表留到 034.5
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2191 个源文件；本次 68 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- added `docs/verification/034-coin-units.md`
+- added `internal/billing/fiat.go`
+- added `internal/billing/fiat_test.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/billing/funding_sandbox.go`
+- modified `internal/billing/voucher_integration_test.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_summary_test.go`
+- modified `internal/catalog/group_price_vector_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_publish.go`
+- modified `internal/catalog/pricing_queries.go`
+- modified `internal/catalog/pricing_types.go`
+- modified `internal/catalog/pricing_vector.go`
+- modified `internal/catalog/pricing_vector_test.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_test.go`
+- modified `internal/metering/types.go`
+- modified `internal/operations/funding_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/payments/processor_evidence.go`
+- modified `internal/payments/processor_test.go`
+- modified `internal/payments/processor_types.go`
+- modified `internal/payments/service_funding_read_test.go`
+- modified `internal/payments/service_query.go`
+- modified `internal/payments/service_types.go`
+- modified `internal/server/payment_handlers.go`
+- modified `internal/server/queries.go`
+- modified `internal/testsupport/meterquote/publish.go`
+- added `migrations/current_004_virtual_coin_units.sql`
+- added `migrations/virtual_coin_postgres_test.go`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/CommerceCommands.vue`
+- modified `web/src/components/CommerceWriter.vue`
+- modified `web/src/components/FundingPanel.vue`
+- modified `web/src/components/MetricMoney.vue`
+- modified `web/src/components/PaymentsPanel.vue`
+- modified `web/src/components/PeriodicBudgetPanel.vue`
+- modified `web/src/components/PeriodicBudgetWriter.vue`
+- modified `web/src/components/PricingWriter.vue`
+- modified `web/src/components/RequestFunding.vue`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/format.ts`
+- modified `web/src/key-configuration.ts`
+- modified `web/src/metering-wire.ts`
+- modified `web/src/pricing.ts`
+- modified `web/src/public-catalog.ts`
+- modified `web/src/views/KeysView.vue`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/OverviewView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PriceGroupsView.vue`
+- modified `web/src/views/PricingView.vue`
+- modified `web/src/views/ReportsView.vue`
+- modified `web/src/views/RequestsView.vue`
+- modified `web/src/views/VouchersView.vue`
+- modified `web/src/views/WalletView.vue`
+- modified `web/tests/commerce.test.mjs`
+- modified `web/tests/key-configuration.test.mjs`
+- modified `web/tests/metering-wire.test.mjs`
+- modified `web/tests/pricing-state.test.mjs`
+- modified `web/tests/pricing.test.mjs`
+- modified `web/tests/public-catalog-state.test.mjs`
+- modified `web/tests/public-catalog.test.mjs`
+
+</details>
+
+## 2026-11-14T04:12:19Z · dd16169f0c16
+
+034.1 完整本地验收：存量 COIN 迁移、历史定价回执重放、FiatMoney、前端单位与权限边界；完整 server/PG race、前端和文档已复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2191 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-coin-units.md`
+
+</details>

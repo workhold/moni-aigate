@@ -508,8 +508,8 @@ const paymentFunctionDefinitionsSQL = `SELECT p.proname,p.proargtypes::text,p.pr
  FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace JOIN pg_catalog.pg_language l ON l.oid=p.prolang WHERE n.nspname=$1 AND (left(p.proname,8)='payment_' OR left(p.proname,7)='wallet_' OR p.proname IN ('funding_journal_valid','funding_fact_guard')) ORDER BY p.proname,p.proargtypes`
 
 func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema string) error {
-	var currentMedia bool
-	if e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles')`, schema).Scan(&currentMedia); e != nil {
+	var currentMedia, currentVirtualCoin bool
+	if e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='media_model_profiles'),COALESCE((SELECT pg_get_expr(d.adbin,d.adrelid) FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum WHERE n.nspname=$1 AND c.relname='journals' AND a.attname='currency' AND NOT a.attisdropped),'')='''COIN''::text'`, schema).Scan(&currentMedia, &currentVirtualCoin); e != nil {
 		return ErrPaymentRolePrivileges
 	}
 	rows, e := tx.Query(ctx, paymentFunctionDefinitionsSQL, schema)
@@ -531,6 +531,16 @@ func verifyPaymentFunctionDefinitions(ctx context.Context, tx pgx.Tx, schema str
 			expectedBody = f.bodySHA
 			if name == "wallet_event_valid" && !currentMedia {
 				expectedBody = legacyWalletEventValidSHA256
+			}
+			if currentVirtualCoin {
+				switch name {
+				case "payment_funding_journal_valid":
+					expectedBody = virtualCoinPaymentFundingJournalSHA256
+				case "wallet_opening_journal_valid":
+					expectedBody = virtualCoinWalletOpeningJournalSHA256
+				case "payment_sandbox_journal_valid":
+					expectedBody = virtualCoinPaymentSandboxJournalSHA256
+				}
 			}
 		}
 		if !ok || f.argOIDs != argOIDs || f.resultOID != result || f.language != language || f.volatility != volatility || !slices.Equal(f.argNames, args) || fmt.Sprintf("%x", sha256.Sum256([]byte(body))) != expectedBody {

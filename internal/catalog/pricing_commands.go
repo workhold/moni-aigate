@@ -27,18 +27,21 @@ type pricingWrite struct {
 	apply    func(context.Context, pgx.Tx, time.Time) error
 }
 
-const pricingOperationSQL = `SELECT operation_id,kind,scope,actor,target,input_fingerprint,resource_id,revision::text,pricing_time(created_at),result_schema,result_snapshot FROM pricing_operations WHERE operation_id=$1`
+const pricingOperationSQL = `SELECT operation_id,kind,scope,actor,target,input_fingerprint,pre_coin_input_fingerprint,resource_id,revision::text,pricing_time(created_at),result_schema,result_snapshot FROM pricing_operations WHERE operation_id=$1`
 
 func scanPricingOperation(ctx context.Context, tx pgx.Tx, row pgx.Row) (PricingOperationReceipt, error) {
 	var r PricingOperationReceipt
 	var schema int
 	var raw []byte
-	e := row.Scan(&r.Operation.OperationID, &r.Operation.Kind, &r.Operation.Scope, &r.Operation.Actor, &r.Operation.Target, &r.Operation.InputFingerprint, &r.Operation.ResourceID, &r.Operation.Revision, &r.Operation.CreatedAt, &schema, &raw)
+	e := row.Scan(&r.Operation.OperationID, &r.Operation.Kind, &r.Operation.Scope, &r.Operation.Actor, &r.Operation.Target, &r.Operation.InputFingerprint, &r.Operation.PreCoinInputFingerprint, &r.Operation.ResourceID, &r.Operation.Revision, &r.Operation.CreatedAt, &schema, &raw)
 	if e != nil {
 		return r, e
 	}
 	publish := r.Operation.Kind == "group_price.publish" || r.Operation.Kind == "group_price.compile" || r.Operation.Kind == "default_price.publish" || r.Operation.Kind == "cost_price.publish"
 	if schema != 1 || !pricingID(r.Operation.OperationID) || !pricingID(r.Operation.Actor) || !pricingID(r.Operation.ResourceID) || !pricingWireTime(r.Operation.CreatedAt) || !pricingDigest(r.Operation.InputFingerprint) || publish != (r.Operation.Revision == nil) || !publish && !pricingDecimal(*r.Operation.Revision, true) {
+		return r, pricingFail("pricing_invariant")
+	}
+	if previous := r.Operation.PreCoinInputFingerprint; previous != nil && (r.Operation.Kind != "group_price.publish" && r.Operation.Kind != "default_price.publish" || !pricingDigest(*previous)) {
 		return r, pricingFail("pricing_invariant")
 	}
 	r.Result, e = pricingDecodeResult(r.Operation.Kind, raw)
@@ -333,7 +336,7 @@ func (s *Store) PublishGroupPrice(ctx context.Context, a PricingActor, c GroupPr
 			return pricingWrite{}, pricingFail("price_group_retired")
 		}
 		id := uuid.NewString()
-		v := GroupPriceView{ID: id, ModelID: c.ModelID, PriceGroupID: c.GroupID, Currency: "CNY", SchemaID: c.SchemaID, SchemaDigest: c.SchemaDigest, VariantKey: c.VariantKey, Rates: rawRates, EffectiveAt: pricingStamp(c.EffectiveAt), CreatedAt: pricingStamp(time.Time{})}
+		v := GroupPriceView{ID: id, ModelID: c.ModelID, PriceGroupID: c.GroupID, Currency: "COIN", SchemaID: c.SchemaID, SchemaDigest: c.SchemaDigest, VariantKey: c.VariantKey, Rates: rawRates, EffectiveAt: pricingStamp(c.EffectiveAt), CreatedAt: pricingStamp(time.Time{})}
 		return pricingWrite{resource: id, result: v, apply: func(ctx context.Context, tx pgx.Tx, at time.Time) error {
 			_, e := tx.Exec(ctx, `SELECT meter_insert_token_price($1,$2,$3,$4,$5,$6,$7,$8,$9)`, id, c.ModelID, c.InputRate, c.OutputRate, c.EffectiveAt, a.UserID, c.GroupID, c.OperationID, at)
 			return e

@@ -84,7 +84,7 @@ source_roots AS (
    AND e.prefix_available+e.prefix_held+e.prefix_consumed=l.issued_amount::numeric)
  UNION ALL
  SELECT 'journal',j.id FROM journals j WHERE ($1='' OR j.tenant_id=$1)
- AND (wallet_journal_valid(j.id) IS DISTINCT FROM true OR j.currency<>'CNY'
+ AND (wallet_journal_valid(j.id) IS DISTINCT FROM true OR j.currency<>'COIN'
   OR (SELECT count(*) FROM journal_lines x WHERE x.journal_id=j.id)<2
   OR (SELECT coalesce(sum(x.signed_delta::numeric),0) FROM journal_lines x WHERE x.journal_id=j.id)<>0
   OR NOT CASE

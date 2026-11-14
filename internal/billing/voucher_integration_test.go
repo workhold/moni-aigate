@@ -104,7 +104,7 @@ func TestPostgresVoucherLifecycleAndFundingProjection(t *testing.T) {
 		t.Fatal("redemption replay changed receipt")
 	}
 	view, e := v.GetVoucherRedemption(f.ctx, VoucherReader{f.user, f.tenant}, *r.ResourceID)
-	if e != nil || view.Amount != 17 || view.Currency != "CNY" {
+	if e != nil || view.Amount != 17 || view.Currency != "COIN" {
 		t.Fatal("safe redemption query failed", e)
 	}
 	batch, e := v.GetVoucherBatch(f.ctx, f.approver, issued.Batch.ID)

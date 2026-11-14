@@ -73,7 +73,7 @@ onBeforeUnmount(() => { gate.dispose() })
 </script>
 <template>
   <el-dialog :model-value="modelValue" :title="title" width="650px" destroy-on-close :close-on-click-modal="false" @update:model-value="updateOpen">
-    <p class="dialog-description">售价是 CNY / 百万计费 Tokens 的绝对价格。当前组、模型授权与采购成本分别管理；已接受请求保留原冻结版本。</p>
+    <p class="dialog-description">售价是 COIN / 百万计费 Tokens 的绝对价格。当前组、模型授权与采购成本分别管理；已接受请求保留原冻结版本。</p>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <p v-if="command" class="mono pricing-operation">原操作 ID：{{ command.operation_id }}</p>
     <el-alert v-if="receipt" type="success" title="已核对不可变原回执；当前资源可能已被后续操作修改，请刷新查看。" :closable="false" show-icon />
@@ -90,7 +90,7 @@ onBeforeUnmount(() => { gate.dispose() })
         <p v-else class="field-hint">公共默认价适用于未分配价格组的租户。每次追加不可变版本，同一模型的默认价生效时刻唯一。</p>
         <el-form-item label="模型与已发布计量域"><el-select v-model="model" filterable :loading="modelLoading" placeholder="明确选择模型与原 schema"><el-option v-for="row in models" :key="row.id" :value="row.id" :label="`${row.public_name} · ${row.schema_id}`" /></el-select><el-button link :disabled="busy || modelLoading" @click="loadModels">刷新模型</el-button></el-form-item>
         <p v-if="selectedModel" class="field-hint">{{ selectedModel.schema_id }} · {{ selectedModel.schema_digest }} · default。{{ inputOnly ? '输入型模型：输出价固定为 0。' : '' }}</p>
-        <div class="pricing-form-grid"><el-form-item label="输入价（CNY / 百万 Tokens）"><el-input v-model="input" inputmode="decimal" /></el-form-item><el-form-item label="输出价（CNY / 百万 Tokens）"><el-input v-model="output" :disabled="inputOnly" inputmode="decimal" /></el-form-item></div>
+        <div class="pricing-form-grid"><el-form-item label="输入价（COIN / 百万 Tokens）"><el-input v-model="input" inputmode="decimal" /></el-form-item><el-form-item label="输出价（COIN / 百万 Tokens）"><el-input v-model="output" :disabled="inputOnly" inputmode="decimal" /></el-form-item></div>
         <el-form-item label="明确生效时刻（UTC Z，最多六位微秒）"><el-input v-model="effective" placeholder="2026-11-01T00:00:00.000001Z" /><span class="field-hint">允许过去或未来时刻；新版本不重写已经冻结的请求。服务器仍按真实模型协议验证输出价。</span></el-form-item>
       </template>
       <template v-else>

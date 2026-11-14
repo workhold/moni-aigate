@@ -23,7 +23,7 @@ func TestPostgresPaymentServiceCreditedViewRejectsBrokenJournal(t *testing.T) {
 		t.Fatal("capture funding", e, result)
 	}
 	view, e := f.service.GetWalletOrder(f.ctx, Reader{ActorID: f.user, TenantID: f.tenant}, order.ID)
-	if e != nil || view.FundingState != "credited" || view.FundingReceiptID == nil || *view.FundingReceiptID != *result.FundingReceiptID || view.JournalID == nil || *view.JournalID != *result.JournalID || view.CreditedAt == nil || view.WalletCreditAmount != order.Amount {
+	if e != nil || view.FundingState != "credited" || view.FundingReceiptID == nil || *view.FundingReceiptID != *result.FundingReceiptID || view.JournalID == nil || *view.JournalID != *result.JournalID || view.CreditedAt == nil || view.WalletCreditAmount != order.WalletCreditAmount {
 		t.Fatal("complete safe credit view", e, view)
 	}
 	// Isolated owner-only corruption fixture, never a serving-role mutation.

@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import ErrorNotice from './ErrorNotice.vue'
 import { commerceContext } from '../commerce-state'
-import { money, shortId } from '../format'
+import { coin, shortId } from '../format'
 import { session } from '../session'
 import { canReadWalletSources, createWalletSourcesReader, walletRefundLabel, walletSourceLabel } from '../wallet-sources'
 
@@ -33,17 +33,17 @@ defineExpose({ refresh })
     <el-alert v-if="!allowed" :title="platform ? '资金来源仅向平台管理员、财务制单和财务审批角色开放。' : '资金来源仅向租户所有者和账单查看者开放。'" type="info" :closable="false" />
     <el-alert v-else-if="!tenantID" title="选择客户后可查看该客户的资金来源余额。" type="info" :closable="false" />
     <template v-else>
-      <p class="source-note">金额为 CNY，保留 6 位小数（1 元 = 1,000,000 微元）。初始余额导入为非现金开账；人工核款、运营赠额和开账均不赋予原路现金退款资格。消费退款退回原来源的钱包余额。</p>
+      <p class="source-note">金额为 COIN，保留 6 位小数（1 币 = 1,000,000 微币）。初始余额导入为非现金开账；人工核款、运营赠额和开账均不赋予原路现金退款资格。消费退款退回原来源的钱包余额。</p>
       <p class="source-note">本地模拟入账只具有支付沙箱语义，不代表真实收款或真实原路退款。以下金额按来源展示，不等于现金收入。</p>
       <ErrorNotice :message="state.error" @retry="refresh" />
       <div v-if="state.loading" role="status" aria-live="polite" class="source-loading">正在读取资金来源余额…</div>
       <el-table v-else :data="state.rows" row-key="lot_id" empty-text="当前页暂无资金来源" aria-label="资金来源余额明细">
         <el-table-column label="来源 / 批次" min-width="200"><template #default="{ row }"><div>{{ walletSourceLabel(row.source_kind) }}</div><span class="mono muted small-text" :title="row.lot_id">{{ shortId(row.lot_id) }}</span></template></el-table-column>
         <el-table-column label="退款类别" min-width="160"><template #default="{ row }"><el-tag :type="row.refund_class === 'sandbox_original' ? 'warning' : 'info'">{{ walletRefundLabel(row.refund_class) }}</el-tag><div v-if="row.source_kind === 'wallet_opening'" class="muted small-text">非现金初始余额</div></template></el-table-column>
-        <el-table-column label="来源本金" min-width="175"><template #default="{ row }"><span class="source-money">{{ money(row.issued_amount) }}</span></template></el-table-column>
-        <el-table-column label="可用金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ money(row.available_amount) }}</span></template></el-table-column>
-        <el-table-column label="冻结金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ money(row.held_amount) }}</span></template></el-table-column>
-        <el-table-column label="已消费金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ money(row.consumed_amount) }}</span></template></el-table-column>
+        <el-table-column label="来源本金" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.issued_amount) }}</span></template></el-table-column>
+        <el-table-column label="可用金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.available_amount) }}</span></template></el-table-column>
+        <el-table-column label="冻结金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.held_amount) }}</span></template></el-table-column>
+        <el-table-column label="已消费金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.consumed_amount) }}</span></template></el-table-column>
         <el-table-column label="入账时间（UTC）" min-width="245"><template #default="{ row }"><span class="mono small-text">{{ row.created_at }}</span></template></el-table-column>
       </el-table>
       <div class="table-footer"><span>第 {{ state.history.length + 1 }} 页 · 当前页 {{ state.rows.length }} 条 · 每页最多 50 条</span><div><el-button size="small" :disabled="state.loading || !state.history.length" @click="load('previous')">上一页</el-button><el-button size="small" :disabled="state.loading || !state.nextCursor" @click="load('next')">下一页</el-button></div></div>

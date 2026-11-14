@@ -130,7 +130,7 @@ func TestPostgresFundingManualConcurrentApprovalHasOneReceiptAndCreditedEvent(t 
  j.operation_id,j.reference,j.kind
  FROM funding_receipts r JOIN journals j ON j.id=r.journal_id
  WHERE r.source_kind='manual_credit' AND r.source_id=$1`, o.ID, journal).Scan(&receipts, &journals, &events, &audits, &lines, &amount, &currency, &sourceKind, &sourceID, &receiptJournal, &payload, &operation, &reference, &kind)
-	if err != nil || receipts != 1 || journals != 1 || events != 1 || audits != 1 || lines != 2 || amount != 37 || currency != "CNY" || sourceKind != "manual_credit" || sourceID != o.ID || receiptJournal != journal || payload != "37" || operation != o.ID || reference != o.ID || kind != "credit" {
+	if err != nil || receipts != 1 || journals != 1 || events != 1 || audits != 1 || lines != 2 || amount != 37 || currency != "COIN" || sourceKind != "manual_credit" || sourceID != o.ID || receiptJournal != journal || payload != "37" || operation != o.ID || reference != o.ID || kind != "credit" {
 		t.Fatalf("manual source/receipt/journal/outbox ownership differs: receipts=%d journals=%d events=%d audits=%d lines=%d amount=%v currency=%s source=%s/%s journal=%s payload=%s operation=%s reference=%s kind=%s err=%v", receipts, journals, events, audits, lines, amount, currency, sourceKind, sourceID, receiptJournal, payload, operation, reference, kind, err)
 	}
 	f.wallet(t, 1037, 0)
@@ -268,7 +268,7 @@ func TestPostgresFundingHelperLeavesCommitAndAuditOwnershipWithCaller(t *testing
 	defer tx.Rollback(context.Background())
 	fundingManualLocks(t, f, tx, o)
 	result, err := f.store.ApplyFundingTx(f.ctx, tx, FundingSourceRef{Kind: FundingManualCredit, ID: o.ID}, FundingScope{TenantID: f.tenant, ActorID: f.approver})
-	if err != nil || !result.Applied || result.RedemptionID != "" || result.Receipt.SourceID != o.ID || result.Receipt.Amount != 43 || result.Receipt.TenantID != f.tenant || result.Receipt.SourceKind != FundingManualCredit || result.Receipt.Currency != "CNY" || result.Receipt.ID == "" || result.Receipt.JournalID == "" || result.Receipt.CreatedAt.IsZero() {
+	if err != nil || !result.Applied || result.RedemptionID != "" || result.Receipt.SourceID != o.ID || result.Receipt.Amount != 43 || result.Receipt.TenantID != f.tenant || result.Receipt.SourceKind != FundingManualCredit || result.Receipt.Currency != "COIN" || result.Receipt.ID == "" || result.Receipt.JournalID == "" || result.Receipt.CreatedAt.IsZero() {
 		t.Fatalf("manual helper contract: %+v %v", result, err)
 	}
 	var audits int
@@ -360,7 +360,7 @@ func TestPostgresFundingCommitRejectsBalancedSourceReceiptJournalAndEventMismatc
 						if boundary == "receipt_amount" {
 							amount = 8
 						}
-						if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id) VALUES($1,'manual_credit',$2,$3,'CNY',$4)`, f.tenant, sourceID, amount, journal); err != nil {
+						if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id) VALUES($1,'manual_credit',$2,$3,'COIN',$4)`, f.tenant, sourceID, amount, journal); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -403,7 +403,7 @@ func TestPostgresFundingCommitRejectsEqualAmountSourceSwap(t *testing.T) {
 		if _, err = tx.Exec(f.ctx, `UPDATE credit_orders SET state='approved',approver=$2,journal_id=$3 WHERE id=$1`, o.ID, f.approver, journal); err != nil {
 			t.Fatal(err)
 		}
-		if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id) VALUES($1,'manual_credit',$2,11,'CNY',$3)`, f.tenant, orders[1-i].ID, journal); err != nil {
+		if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id) VALUES($1,'manual_credit',$2,11,'COIN',$3)`, f.tenant, orders[1-i].ID, journal); err != nil {
 			t.Fatal(err)
 		}
 		if err = emit(f.ctx, tx, f.tenant, o.ID, "credited", map[string]any{"amount": Money(11)}); err != nil {

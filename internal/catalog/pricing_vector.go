@@ -79,5 +79,5 @@ func validatePublishedRates(ctx context.Context, tx pgx.Tx, id, digest string, s
 }
 
 func groupPriceSafe(c GroupPriceCommand, rates json.RawMessage) map[string]any {
-	return map[string]any{"model_id": c.ModelID, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": c.VariantKey, "currency": "CNY", "rates": rates, "effective_at": pricingStamp(c.EffectiveAt)}
+	return map[string]any{"model_id": c.ModelID, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": c.VariantKey, "currency": "COIN", "rates": rates, "effective_at": pricingStamp(c.EffectiveAt)}
 }

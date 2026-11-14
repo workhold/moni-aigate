@@ -337,7 +337,7 @@ func (v *VoucherService) GetVoucherRedemption(ctx context.Context, r VoucherRead
 		return out, voucherFail("invalid_request")
 	}
 	e := v.read(ctx, r, false, false, func(ctx context.Context, tx pgx.Tx) error {
-		return tx.QueryRow(ctx, `SELECT id,operation_id,tenant_id,voucher_id,batch_id,actor,amount,'CNY',funding_receipt_id,journal_id,created_at FROM voucher_redemptions WHERE id=$1 AND tenant_id=$2`, id, r.TenantID).Scan(&out.ID, &out.OperationID, &out.TenantID, &out.VoucherID, &out.BatchID, &out.Actor, &out.Amount, &out.Currency, &out.FundingReceiptID, &out.JournalID, &out.CreatedAt)
+		return tx.QueryRow(ctx, `SELECT id,operation_id,tenant_id,voucher_id,batch_id,actor,amount,'COIN',funding_receipt_id,journal_id,created_at FROM voucher_redemptions WHERE id=$1 AND tenant_id=$2`, id, r.TenantID).Scan(&out.ID, &out.OperationID, &out.TenantID, &out.VoucherID, &out.BatchID, &out.Actor, &out.Amount, &out.Currency, &out.FundingReceiptID, &out.JournalID, &out.CreatedAt)
 	})
 	return out, e
 }
@@ -374,7 +374,7 @@ func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReade
 	return out, e
 }
 func (v *VoucherService) GetFundingSummary(ctx context.Context, r VoucherReader) (FundingSummaryView, error) {
-	out := FundingSummaryView{Currency: "CNY"}
+	out := FundingSummaryView{Currency: "COIN"}
 	e := v.read(ctx, r, false, false, func(ctx context.Context, tx pgx.Tx) error {
 		return tx.QueryRow(ctx, `SELECT coalesce(sum(amount::numeric),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_credit'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='voucher_grant'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='sandbox_capture'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='wallet_opening'),0)::text,clock_timestamp() FROM funding_receipts WHERE tenant_id=$1`, r.TenantID).Scan(&out.TotalAmount, &out.ManualCreditAmount, &out.VoucherGrantAmount, &out.SandboxCaptureAmount, &out.WalletOpeningAmount, &out.AsOf)
 	})

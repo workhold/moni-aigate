@@ -41,7 +41,7 @@ func TestPublicCatalogInputBoundsAndCanonicalIDs(t *testing.T) {
 }
 
 func TestPublicCatalogUnavailablePriceHasExplicitNulls(t *testing.T) {
-	body, err := json.Marshal(PublicPricing{Status: "unavailable", SchemaID: "10000000-0000-4000-8000-000000000001", SchemaDigest: strings.Repeat("a", 64), VariantKey: "default", Currency: "CNY"})
+	body, err := json.Marshal(PublicPricing{Status: "unavailable", SchemaID: "10000000-0000-4000-8000-000000000001", SchemaDigest: strings.Repeat("a", 64), VariantKey: "default", Currency: "COIN"})
 	if err != nil {
 		t.Fatal(err)
 	}

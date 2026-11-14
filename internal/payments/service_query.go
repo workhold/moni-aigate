@@ -207,7 +207,7 @@ func paymentOrderTx(ctx context.Context, tx pgx.Tx, id, tenant string) (OrderVie
 		var valid bool
 		var receipt, journal string
 		var at time.Time
-		e = tx.QueryRow(ctx, `SELECT f.id,f.journal_id,f.created_at,payment_capture_source_valid(c.id) AND payment_sandbox_journal_valid(f.journal_id) AND (f.tenant_id,f.source_kind,f.source_id,f.amount,f.currency)=(c.tenant_id,'sandbox_capture',c.id,c.wallet_credit_amount,'CNY') FROM payment_captures c JOIN funding_receipts f ON f.source_kind='sandbox_capture' AND f.source_id=c.id WHERE c.order_id=$1`, id).Scan(&receipt, &journal, &at, &valid)
+		e = tx.QueryRow(ctx, `SELECT f.id,f.journal_id,f.created_at,payment_capture_source_valid(c.id) AND payment_sandbox_journal_valid(f.journal_id) AND (f.tenant_id,f.source_kind,f.source_id,f.amount,f.currency)=(c.tenant_id,'sandbox_capture',c.id,c.wallet_credit_amount,'COIN') FROM payment_captures c JOIN funding_receipts f ON f.source_kind='sandbox_capture' AND f.source_id=c.id WHERE c.order_id=$1`, id).Scan(&receipt, &journal, &at, &valid)
 		if e != nil || !valid || !selection {
 			return OrderView{}, ErrPaymentsIntegrity
 		}

@@ -140,15 +140,16 @@ type RetailPriceView struct {
 	AsOf           string          `json:"as_of"`
 }
 type PricingOperationView struct {
-	OperationID      string  `json:"operation_id"`
-	Kind             string  `json:"kind"`
-	Scope            string  `json:"scope"`
-	Actor            string  `json:"actor"`
-	Target           string  `json:"target"`
-	InputFingerprint string  `json:"input_fingerprint"`
-	ResourceID       string  `json:"resource_id"`
-	Revision         *string `json:"revision"`
-	CreatedAt        string  `json:"created_at"`
+	OperationID             string  `json:"operation_id"`
+	Kind                    string  `json:"kind"`
+	Scope                   string  `json:"scope"`
+	Actor                   string  `json:"actor"`
+	Target                  string  `json:"target"`
+	InputFingerprint        string  `json:"input_fingerprint"`
+	PreCoinInputFingerprint *string `json:"pre_coin_input_fingerprint"`
+	ResourceID              string  `json:"resource_id"`
+	Revision                *string `json:"revision"`
+	CreatedAt               string  `json:"created_at"`
 }
 type PricingOperationReceipt struct {
 	Operation PricingOperationView `json:"operation"`
@@ -311,7 +312,7 @@ func validPricingResult(value any, raw []byte) bool {
 		valid = pricingID(v.ID) && pricingLabel(v.Label) && (v.State == "active" || v.State == "retired") && pricingDecimal(v.Revision, true) && pricingWireTime(v.CreatedAt)
 	case *GroupPriceView:
 		keys = []string{"id", "model_id", "price_group_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at", "created_at"}
-		valid = pricingID(v.ID) && pricingID(v.ModelID) && pricingID(v.PriceGroupID) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "CNY" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
+		valid = pricingID(v.ID) && pricingID(v.ModelID) && pricingID(v.PriceGroupID) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "COIN" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
 	case *GroupPriceCompileView:
 		keys = []string{"group_id", "multiplier", "effective_at", "items"}
 		valid = pricingID(v.GroupID) && validGroupMultiplier(v.Multiplier) && pricingWireTime(v.EffectiveAt) && len(v.Items) >= 1 && len(v.Items) <= 100
@@ -325,7 +326,7 @@ func validPricingResult(value any, raw []byte) bool {
 		}
 	case *DefaultPriceView:
 		keys = []string{"id", "model_id", "price_group_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at", "created_at"}
-		valid = pricingID(v.ID) && pricingID(v.ModelID) && v.PriceGroupID == nil && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "CNY" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
+		valid = pricingID(v.ID) && pricingID(v.ModelID) && v.PriceGroupID == nil && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "COIN" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
 	case *CostPriceView:
 		keys = []string{"id", "channel_id", "upstream_model", "schema_id", "schema_digest", "variant_key", "currency", "basis", "rates", "effective_at", "created_at", "expected_channel_revision", "channel_revision"}
 		valid = pricingID(v.ID) && pricingID(v.ChannelID) && validUpstreamModel(v.UpstreamModel) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "CNY" && (v.Basis == "contract" || v.Basis == "invoice" || v.Basis == "unknown") && pricingDecimal(v.ExpectedChannelRevision, true) && pricingDecimal(v.ChannelRevision, true) && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)

@@ -155,7 +155,7 @@ const publicCatalogSQL = `WITH instant AS MATERIALIZED (SELECT clock_timestamp()
  LEFT JOIN model_capability_versions c ON c.id=(SELECT profile_version FROM models WHERE id=m.lookup_id) AND c.model_id=m.lookup_id
  LEFT JOIN LATERAL (
   SELECT true AS present,CASE WHEN octet_length(id)=36 THEN id END AS id,
-   CASE WHEN currency='CNY' THEN 'CNY' END AS currency,variant_key,rates_canonical,effective_at FROM price_versions
+   CASE WHEN currency='COIN' THEN 'COIN' END AS currency,variant_key,rates_canonical,effective_at FROM price_versions
   WHERE model_id=m.lookup_id AND price_group_id IS NULL AND schema_id=c.schema_id AND schema_digest=c.schema_digest AND variant_key='default' AND effective_at<=instant.at
   ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1
  ) p ON true
@@ -197,9 +197,9 @@ func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id
 		if invalid != nil {
 			return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 		}
-		price := PublicPricing{Status: "unavailable", SchemaID: "", SchemaDigest: "", VariantKey: "default", Currency: "CNY", Rates: nil}
+		price := PublicPricing{Status: "unavailable", SchemaID: "", SchemaDigest: "", VariantKey: "default", Currency: "COIN", Rates: nil}
 		if pricePresent != nil {
-			if priceID == nil || !canonicalPublicUUID(*priceID) || schemaID == nil || !canonicalPublicUUID(*schemaID) || schemaDigest == nil || !pricingDigest(*schemaDigest) || variantKey == nil || *variantKey != "default" || currency == nil || *currency != "CNY" || len(rates) == 0 || effective == nil || effective.Year() < 0 || effective.Year() > 9999 {
+			if priceID == nil || !canonicalPublicUUID(*priceID) || schemaID == nil || !canonicalPublicUUID(*schemaID) || schemaDigest == nil || !pricingDigest(*schemaDigest) || variantKey == nil || *variantKey != "default" || currency == nil || *currency != "COIN" || len(rates) == 0 || effective == nil || effective.Year() < 0 || effective.Year() > 9999 {
 				return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 			}
 			at := effective.UTC()

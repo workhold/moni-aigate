@@ -14,7 +14,7 @@ func TestGroupPriceVectorFingerprintGolden(t *testing.T) {
 	rates := json.RawMessage(`{"schema_id":"` + sid + `","version":"1","side":"retail","currency":"CNY","rates":[{"dimension":"text_input_token","unit":"token","numerator":"9007199254740993","denominator":"1000000"},{"dimension":"text_output_token","unit":"token","numerator":"0","denominator":"1"}]}`)
 	c := GroupPriceCommand{ModelID: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", SchemaID: sid, SchemaDigest: strings.Repeat("ab", 32), VariantKey: "default", EffectiveAt: time.Date(2026, 10, 1, 0, 0, 0, 123456000, time.UTC)}
 	got := pricingFingerprint("group_price.publish", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "platform", "/api/platform/price-groups/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/price-versions", groupPriceSafe(c, rates))
-	if got != "14aac71c989772d94efbda8faf1a39a758a618b645a71539a55de7664de26564" {
+	if got != "135996ee4b4062565ed45073ac70a79f4b8151abe0ecb88ea5cad58fe469e261" {
 		t.Fatal(got)
 	}
 }
@@ -30,7 +30,7 @@ func TestGroupPriceVectorResultRejectsScalarAndInvalidRates(t *testing.T) {
 		t.Fatal(err)
 	}
 	raw, _ := r.CanonicalJSON()
-	v := GroupPriceView{ID: sid, ModelID: sid, PriceGroupID: sid, SchemaID: sid, SchemaDigest: strings.Repeat("ab", 32), VariantKey: "default", Currency: "CNY", Rates: raw, EffectiveAt: "2026-11-01T00:00:00.000000Z", CreatedAt: "2026-11-01T00:00:00.000001Z"}
+	v := GroupPriceView{ID: sid, ModelID: sid, PriceGroupID: sid, SchemaID: sid, SchemaDigest: strings.Repeat("ab", 32), VariantKey: "default", Currency: "COIN", Rates: raw, EffectiveAt: "2026-11-01T00:00:00.000000Z", CreatedAt: "2026-11-01T00:00:00.000001Z"}
 	if err = validateGroupPriceSchema(&v, schema); err != nil {
 		t.Fatal(err)
 	}

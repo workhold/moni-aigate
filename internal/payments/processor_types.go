@@ -298,7 +298,8 @@ func processorReadOutbox(ctx context.Context, tx pgx.Tx, id, lock string) (proce
 
 type processorOrder struct {
 	id, tenant, environment, merchant, merchantOrder, currency string
-	amount, credit                                             int64
+	amount                                                     billing.FiatMoney
+	credit                                                     billing.Money
 	created, expires                                           time.Time
 }
 
@@ -322,7 +323,7 @@ func (p *Processor) boundMutation(ctx context.Context, tx pgx.Tx, b processorOut
 			return ErrPaymentsIntegrity
 		}
 		canonical, e := paymentproto.CanonicalCheckout(r)
-		if e != nil || !processorCanonical(b.canonical, canonical, *b.digest) || r.EnvironmentID != o.environment || r.MerchantID != o.merchant || r.CommandID != *b.command || r.MerchantOrderID != o.merchantOrder || r.Currency != o.currency || r.Amount != processorInt(o.amount) || r.CreatedAt != processorTime(o.created) || r.ExpiresAt != processorTime(o.expires) {
+		if e != nil || !processorCanonical(b.canonical, canonical, *b.digest) || r.EnvironmentID != o.environment || r.MerchantID != o.merchant || r.CommandID != *b.command || r.MerchantOrderID != o.merchantOrder || r.Currency != o.currency || r.Amount != processorInt(int64(o.amount)) || r.CreatedAt != processorTime(o.created) || r.ExpiresAt != processorTime(o.expires) {
 			return ErrPaymentsIntegrity
 		}
 	case "cancel":

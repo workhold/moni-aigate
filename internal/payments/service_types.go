@@ -35,7 +35,7 @@ type PublishSKUInput struct {
 	SKUID            string
 	ExpectedRevision int64
 	DisplayName      string
-	Amount           billing.Money
+	Amount           billing.FiatMoney
 }
 type ActivateSKUInput struct {
 	CommandMeta
@@ -85,18 +85,18 @@ type PaymentCapabilitiesView struct {
 	LocalSimulation bool    `json:"local_simulation"`
 }
 type SKUVersionView struct {
-	ID                 string        `json:"id"`
-	SKUID              string        `json:"sku_id"`
-	Version            string        `json:"version"`
-	DisplayName        string        `json:"display_name"`
-	Amount             billing.Money `json:"amount"`
-	WalletCreditAmount billing.Money `json:"wallet_credit_amount"`
-	Currency           string        `json:"currency"`
-	Environment        string        `json:"environment"`
-	MerchantID         string        `json:"merchant_id"`
-	PayeeLabel         string        `json:"payee_label"`
-	CheckoutTTLSeconds int           `json:"checkout_ttl_seconds"`
-	CreatedAt          time.Time     `json:"created_at"`
+	ID                 string            `json:"id"`
+	SKUID              string            `json:"sku_id"`
+	Version            string            `json:"version"`
+	DisplayName        string            `json:"display_name"`
+	Amount             billing.FiatMoney `json:"amount"`
+	WalletCreditAmount billing.Money     `json:"wallet_credit_amount"`
+	Currency           string            `json:"currency"`
+	Environment        string            `json:"environment"`
+	MerchantID         string            `json:"merchant_id"`
+	PayeeLabel         string            `json:"payee_label"`
+	CheckoutTTLSeconds int               `json:"checkout_ttl_seconds"`
+	CreatedAt          time.Time         `json:"created_at"`
 }
 type PlatformSKUView struct {
 	ID               string          `json:"id"`
@@ -107,29 +107,29 @@ type PlatformSKUView struct {
 	CreatedAt        time.Time       `json:"created_at"`
 }
 type OrderView struct {
-	ID                 string        `json:"id"`
-	TenantID           string        `json:"tenant_id"`
-	Creator            string        `json:"creator"`
-	SKUVersionID       string        `json:"sku_version_id"`
-	DisplayName        string        `json:"display_name"`
-	Amount             billing.Money `json:"amount"`
-	WalletCreditAmount billing.Money `json:"wallet_credit_amount"`
-	Currency           string        `json:"currency"`
-	Environment        string        `json:"environment"`
-	MerchantID         string        `json:"merchant_id"`
-	PayeeLabel         string        `json:"payee_label"`
-	CreatedAt          time.Time     `json:"created_at"`
-	ExpiresAt          time.Time     `json:"expires_at"`
-	CheckoutState      string        `json:"checkout_state"`
-	CreationState      string        `json:"creation_state"`
-	CheckoutRef        *string       `json:"checkout_ref"`
-	FundingState       string        `json:"funding_state"`
-	ReviewRequired     bool          `json:"review_required"`
-	ReviewReason       *string       `json:"review_reason"`
-	FundingReceiptID   *string       `json:"funding_receipt_id"`
-	JournalID          *string       `json:"journal_id"`
-	CreditedAt         *time.Time    `json:"credited_at"`
-	ObservedAt         time.Time     `json:"observed_at"`
+	ID                 string            `json:"id"`
+	TenantID           string            `json:"tenant_id"`
+	Creator            string            `json:"creator"`
+	SKUVersionID       string            `json:"sku_version_id"`
+	DisplayName        string            `json:"display_name"`
+	Amount             billing.FiatMoney `json:"amount"`
+	WalletCreditAmount billing.Money     `json:"wallet_credit_amount"`
+	Currency           string            `json:"currency"`
+	Environment        string            `json:"environment"`
+	MerchantID         string            `json:"merchant_id"`
+	PayeeLabel         string            `json:"payee_label"`
+	CreatedAt          time.Time         `json:"created_at"`
+	ExpiresAt          time.Time         `json:"expires_at"`
+	CheckoutState      string            `json:"checkout_state"`
+	CreationState      string            `json:"creation_state"`
+	CheckoutRef        *string           `json:"checkout_ref"`
+	FundingState       string            `json:"funding_state"`
+	ReviewRequired     bool              `json:"review_required"`
+	ReviewReason       *string           `json:"review_reason"`
+	FundingReceiptID   *string           `json:"funding_receipt_id"`
+	JournalID          *string           `json:"journal_id"`
+	CreditedAt         *time.Time        `json:"credited_at"`
+	ObservedAt         time.Time         `json:"observed_at"`
 }
 type ObservationView struct {
 	ID         string     `json:"id"`

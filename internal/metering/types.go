@@ -1,5 +1,7 @@
-// Package metering validates immutable, fully known billing vectors and computes
-// exact nonnegative CNY amounts. It grants no provider, financial, or actor authority.
+// Package metering validates immutable billing vectors and computes exact
+// nonnegative side-denominated amounts: retail micro-COIN and supplier micro-CNY.
+// Canonical RatesWire normalization intentionally retains its frozen CNY label.
+// It grants no provider, financial, or actor authority.
 package metering
 
 import "errors"

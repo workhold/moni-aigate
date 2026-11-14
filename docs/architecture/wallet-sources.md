@@ -53,7 +53,7 @@ APP对来源/事件/分配仅SELECT/INSERT，来源余额只更新三桶/revisio
 | GET /api/platform/wallet-sources?tenant_id=UUID | admin/finance_operator/finance_approver，必须显式单tenant |
 | GET /api/platform/wallet-sources/check?tenant_id=UUID | 同上，只读核对结果与as_of；不一致不是修复接口 |
 
-标准分页按created_at/id倒序，next_cursor空字符串表示结束；请求分配显示原allocation_index，不能把分页显示顺序当FIFO执行顺序。金额均精确微元字符串；未结算charged/released保持null，不填0。
+标准分页按created_at/id倒序，next_cursor空字符串表示结束；请求分配显示原allocation_index，不能把分页显示顺序当FIFO执行顺序。金额均精确微币字符串；未结算charged/released保持null，不填0。
 
 原入账回执与摘要也覆盖四来源：可筛选`wallet_opening`，摘要必含`wallet_opening_amount`并与其余三类精确合计。累计入账、当前来源余额和模型销售收入分别来自receipt、lot余额和唯一settlement。通用[查询DTO装配](../../internal/server/queries.go)统一输出UTC时间，保持原精度与分页instant，前端UTC校验不放宽。
 

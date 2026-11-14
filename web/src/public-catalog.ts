@@ -15,7 +15,7 @@ export interface PublicModel {
   id: string; public_name: string; aliases?: string[]; protocol: PublicProtocol
   capabilities: { streaming: boolean; tools: boolean; input_only: boolean; text_only: true }
   limits: { context_tokens: number; input_token_upper_bound: number; max_output_tokens: number; default_output_tokens: number }
-  pricing: { status: 'available' | 'unavailable'; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates | null; effective_at: string | null }
+  pricing: { status: 'available' | 'unavailable'; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'COIN'; rates: TextRetailRates | null; effective_at: string | null }
 }
 export interface PublicCatalogPage { data: PublicModel[]; request_id: string; next_cursor: string; as_of: string }
 export interface ModelPublication { id: string; public_name: string; enabled: boolean; public_visible: boolean; public_revision: string }
@@ -70,18 +70,18 @@ export function parsePublicModel(value: unknown): PublicModel {
   const limits = { context_tokens: tokenLimit(limitsRaw.context_tokens), input_token_upper_bound: tokenLimit(limitsRaw.input_token_upper_bound), max_output_tokens: tokenLimit(limitsRaw.max_output_tokens), default_output_tokens: tokenLimit(limitsRaw.default_output_tokens) }
   if (!limits.context_tokens || !limits.input_token_upper_bound || limits.input_token_upper_bound > limits.context_tokens || (inputOnly ? limits.max_output_tokens !== 0 || limits.default_output_tokens !== 0 : limits.default_output_tokens <= 0 || limits.max_output_tokens < limits.default_output_tokens || limits.max_output_tokens > limits.context_tokens)) throw invalid()
   const price = object(raw.pricing, ['status', 'price_version_id', 'schema_id', 'schema_digest', 'variant_key', 'currency', 'rates', 'effective_at'])
-  if (price.currency !== 'CNY' || price.variant_key !== 'default' || price.status !== 'available' && price.status !== 'unavailable') throw invalid()
+  if (price.currency !== 'COIN' || price.variant_key !== 'default' || price.status !== 'available' && price.status !== 'unavailable') throw invalid()
   const schema_id = catalogID(price.schema_id), schema_digest = price.schema_digest
   if (typeof schema_digest !== 'string' || !/^[0-9a-f]{64}$/.test(schema_digest)) throw invalid()
   let pricing: PublicModel['pricing']
   if (price.status === 'unavailable') {
     if ([price.price_version_id, price.rates, price.effective_at].some(v => v !== null)) throw invalid()
-    pricing = { status: 'unavailable', currency: 'CNY', price_version_id: null, schema_id, schema_digest, variant_key: 'default', rates: null, effective_at: null }
+    pricing = { status: 'unavailable', currency: 'COIN', price_version_id: null, schema_id, schema_digest, variant_key: 'default', rates: null, effective_at: null }
   } else {
     if (price.price_version_id === null || price.effective_at === null) throw invalid()
     const rates = parseTextRetailRates(price.rates, schema_id)
     if (inputOnly && !rateIsZero(rates, 'text_output_token')) throw invalid()
-    pricing = { status: 'available', currency: 'CNY', price_version_id: catalogID(price.price_version_id), schema_id, schema_digest, variant_key: 'default', rates, effective_at: catalogTimestamp(price.effective_at) }
+    pricing = { status: 'available', currency: 'COIN', price_version_id: catalogID(price.price_version_id), schema_id, schema_digest, variant_key: 'default', rates, effective_at: catalogTimestamp(price.effective_at) }
   }
   return { id, public_name, ...(aliases === undefined ? {} : { aliases }), protocol: kind, capabilities: { ...capabilities, text_only: true }, limits, pricing }
 }

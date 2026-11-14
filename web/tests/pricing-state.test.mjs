@@ -6,7 +6,7 @@ import { createPricingEpoch, createPricingJournal, createPricingPager, pricingCo
 const actor = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', group = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', tenant = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', operation = '11111111-1111-4111-8111-111111111111', other = '22222222-2222-4222-8222-222222222222', at = '2026-11-01T00:00:00.000001Z'
 function memory() { const values = new Map(); return { values, getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) } }
 const command = (op = operation) => pricingCommand('price_group.create', op, actor, { label: 'safe-private-label' })
-function receipt(c, patch = {}) { return { operation: { operation_id: c.operation_id, actor, kind: c.kind, scope: c.scope, target: c.target, input_fingerprint: c.input_fingerprint, resource_id: group, revision: '1', created_at: at }, result: { id: group, label: 'safe-private-label', state: 'active', revision: '1', created_at: at }, ...patch } }
+function receipt(c, patch = {}) { return { operation: { operation_id: c.operation_id, actor, kind: c.kind, scope: c.scope, target: c.target, input_fingerprint: c.input_fingerprint, pre_coin_input_fingerprint: null, resource_id: group, revision: '1', created_at: at }, result: { id: group, label: 'safe-private-label', state: 'active', revision: '1', created_at: at }, ...patch } }
 test('identity, tenant, role, CSRF, page close and newer tickets suppress late results', () => {
   const scope = createPricingEpoch(), current = pricingContext(actor, tenant, 'admin:owner','csrf',false)
   scope.reset(current); const initial = scope.ticket(); assert(scope.accepts(initial))
