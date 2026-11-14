@@ -6509,3 +6509,188 @@ align the HLD link label with the renumbered external upstream contract
 - modified `docs/verification/034-coin-units.md`
 
 </details>
+
+## 2026-11-14T03:32:58Z · 9608d9b45941
+
+034 冻结与开发方向审查：034 规格 D-034-1…13 全部裁决并标记已冻结；HLD §6.3、LLD §5.2.1、phase-roadmap 三处同步冻结状态；新增 docs/design/direction-review-2026-11-14.md 方向审查记录（含在途实现对照与不变量复核）；修正 034 §4 兑换券校验行号误差。纯文档变更，无代码/迁移影响
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2149 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/design/direction-review-2026-11-14.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-14T04:17:14Z · f6d69e8e7485
+
+PR #8 合入后回合 main 到 local-mvp；034 已冻结
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2192 个源文件；本次 146 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- added `deploy/external-upstreams.compose.yaml`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/034-coin-units.md`
+- added `docs/verification/phase0-external-upstream.md`
+- added `docs/verification/phase1/031-mock-harness.md`
+- added `docs/verification/phase1/P1-CAT-02.md`
+- added `docs/verification/phase1/P1-PR-02.md`
+- modified `docs/verification/unified-metering.md`
+- added `internal/billing/fiat.go`
+- added `internal/billing/fiat_test.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/billing/funding_sandbox.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/voucher_integration_test.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_roles_integration_test.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_summary_test.go`
+- added `internal/catalog/alias_reader_contract_test.go`
+- modified `internal/catalog/cost_policy_integration_test.go`
+- modified `internal/catalog/credential_pool_integration_test.go`
+- added `internal/catalog/group_price_compile.go`
+- added `internal/catalog/group_price_compile_test.go`
+- modified `internal/catalog/group_price_vector_integration_test.go`
+- added `internal/catalog/model_alias.go`
+- added `internal/catalog/model_alias_test.go`
+- added `internal/catalog/phase1_alignment_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_publish.go`
+- modified `internal/catalog/pricing_queries.go`
+- modified `internal/catalog/pricing_types.go`
+- modified `internal/catalog/pricing_vector.go`
+- modified `internal/catalog/pricing_vector_test.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_integration_test.go`
+- modified `internal/catalog/public_catalog_test.go`
+- added `internal/catalog/route_activate.go`
+- modified `internal/catalog/store.go`
+- modified `internal/metering/types.go`
+- modified `internal/operations/funding_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/operations_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/payments/processor_evidence.go`
+- modified `internal/payments/processor_test.go`
+- modified `internal/payments/processor_types.go`
+- modified `internal/payments/service_funding_read_test.go`
+- modified `internal/payments/service_query.go`
+- modified `internal/payments/service_types.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/verifier_integration_test.go`
+- modified `internal/server/alert_main_integration_test.go`
+- added `internal/server/alias_reader_contract_test.go`
+- modified `internal/server/auth_integration_test.go`
+- modified `internal/server/catalog_handlers.go`
+- added `internal/server/external_relay_integration_test.go`
+- modified `internal/server/gateway.go`
+- modified `internal/server/gateway_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- added `internal/server/model_alias_gateway_integration_test.go`
+- added `internal/server/model_alias_handlers.go`
+- added `internal/server/model_alias_handlers_test.go`
+- modified `internal/server/payment_handlers.go`
+- modified `internal/server/pricing_handlers.go`
+- modified `internal/server/pricing_input.go`
+- modified `internal/server/pricing_test.go`
+- modified `internal/server/probe.go`
+- modified `internal/server/public_catalog_integration_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- modified `internal/testsupport/meterquote/publish.go`
+- added `internal/testsupport/mockupstream/config.go`
+- added `internal/testsupport/mockupstream/config_test.go`
+- added `internal/testsupport/mockupstream/provider_contract_test.go`
+- added `internal/testsupport/mockupstream/server.go`
+- added `internal/testsupport/mockupstream/server_test.go`
+- modified `migrations/current.go`
+- added `migrations/current_002_phase1_aliases.sql`
+- added `migrations/current_003_external_channels.sql`
+- added `migrations/current_004_virtual_coin_units.sql`
+- added `migrations/virtual_coin_postgres_test.go`
+- modified `scripts/deployment-business-provision.sh`
+- modified `scripts/deployment-business-qa.test.sh`
+- deleted `scripts/deployment-qa-provider.py`
+- added `scripts/external-upstream-qa.py`
+- added `scripts/mock-upstream/business-qa.json`
+- added `scripts/mock-upstream/main.go`
+- added `scripts/phase1-mock-acceptance.py`
+- added `scripts/phase1-mock-acceptance.sh`
+- added `scripts/phase1-mock-acceptance.test.sh`
+- modified `specs/029-phase1-acceptance/spec.md`
+- added `specs/030-model-aliases-group-multipliers/a-alias-periphery-contract.md`
+- added `specs/030-model-aliases-group-multipliers/integration-contract.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- added `specs/032-phase2-text-data-plane/implementation-freeze.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- added `specs/033-text-dynamic-routing/implementation-freeze.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- added `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/035-external-upstream-integration/spec.md`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/CommerceCommands.vue`
+- modified `web/src/components/CommerceWriter.vue`
+- modified `web/src/components/FundingPanel.vue`
+- added `web/src/components/GroupMultiplierCompiler.vue`
+- modified `web/src/components/MetricMoney.vue`
+- added `web/src/components/ModelAliases.vue`
+- modified `web/src/components/PaymentsPanel.vue`
+- modified `web/src/components/PeriodicBudgetPanel.vue`
+- modified `web/src/components/PeriodicBudgetWriter.vue`
+- modified `web/src/components/PricingWriter.vue`
+- modified `web/src/components/RequestFunding.vue`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/customer-pricing.ts`
+- modified `web/src/format.ts`
+- modified `web/src/key-configuration.ts`
+- modified `web/src/metering-wire.ts`
+- added `web/src/model-aliases.ts`
+- modified `web/src/pricing.ts`
+- modified `web/src/public-catalog.ts`
+- modified `web/src/views/KeysView.vue`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/OverviewView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PriceGroupsView.vue`
+- modified `web/src/views/PricingView.vue`
+- modified `web/src/views/ReportsView.vue`
+- modified `web/src/views/RequestsView.vue`
+- modified `web/src/views/VouchersView.vue`
+- modified `web/src/views/WalletView.vue`
+- modified `web/tests/commerce.test.mjs`
+- modified `web/tests/key-configuration.test.mjs`
+- modified `web/tests/metering-wire.test.mjs`
+- added `web/tests/model-aliases.test.mjs`
+- modified `web/tests/pricing-state.test.mjs`
+- modified `web/tests/pricing.test.mjs`
+- modified `web/tests/public-catalog-state.test.mjs`
+- modified `web/tests/public-catalog.test.mjs`
+
+</details>
+
+## 2026-11-14T04:18:34Z · e21cd00b61e8
+
+PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最终同步
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2192 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-coin-units.md`
+
+</details>

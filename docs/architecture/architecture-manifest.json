@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-14T04:12:19Z",
-  "review_reason": "034.1 完整本地验收：存量 COIN 迁移、历史定价回执重放、FiatMoney、前端单位与权限边界；完整 server/PG race、前端和文档已复核",
-  "snapshot_sha256": "dd16169f0c1654930da1019a2012b9fcc4af56b2f5d42ebca89e7a5d5e0af3f6",
+  "reviewed_at": "2026-11-14T04:18:34Z",
+  "review_reason": "PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最终同步",
+  "snapshot_sha256": "e21cd00b61e844d8478b53e73b051f096219bd6754e0b47b2c5d4b8c9d2c6b95",
   "architecture_sha256": "8a415996422340651423a76c796a77266d5ac9132135fc4069689318587b9f92",
-  "history_sha256": "45d87f2d66542b8d989868218438fdb1ec3b74072fddc3d1e06737ee998e1bf8",
+  "history_sha256": "4149a779d760b1aa0a74ca0d3c524d31ceaf9cdfc354c06294f385ccc208b9b6",
   "files": [
     {
       "path": ".dockerignore",
@@ -181,15 +181,19 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "80a1e0d11cae351609611116969ed40bebfd544959cd529c6b55b2c58231eaba"
+      "sha256": "014a1366911ce75476764ca025b9529d71a5921157c7fc6edf18071e6c4f8e3e"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "3480c31819c527d8348334a3c71b5fb5ff30ed06e46564352365b9e7222903ee"
+      "sha256": "033410e6b6640127b1fab2604c1c8954ebccd9c0905cea76daa6abc2ad01c4af"
     },
     {
       "path": "docs/design/delivery-plan.md",
       "sha256": "7457119b004d06caaf8292c29d944f418c4cd0066e12bda296f590064f90328c"
+    },
+    {
+      "path": "docs/design/direction-review-2026-11-14.md",
+      "sha256": "f9397208a615aa2d74103f19a439b3ec9b690072db38a15a23ae51f39fde261c"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -221,7 +225,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "034d91fc9f99439b4db9a795ce2c39adc6c48ecaee39b431ddd986520caaf7c6"
+      "sha256": "e34588ee0a7961a28997f4748b81d5799d6758f04ee5a0ea6a202deaa3f5ea20"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -277,7 +281,7 @@
     },
     {
       "path": "docs/verification/034-coin-units.md",
-      "sha256": "c96cd81615e989f9f8063fb43db9167ccf4b2f05927d3c65d238d0c5099e5ba0"
+      "sha256": "f079bd00cf952a7973adb107dcff0ba4ccf825459c43a0c5311378d4672edd26"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -8133,7 +8137,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "6e7e84b0c37a62a0f34cf9de0f6b751dc76ce6171fdb1121a9b64e656969d6fa"
+      "sha256": "bbee993ae6d35b95feda37e1237813c7063411f016eeee6e23c46eb728098822"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
