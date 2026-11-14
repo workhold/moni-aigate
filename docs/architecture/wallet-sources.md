@@ -1,6 +1,6 @@
-# 现行资金来源与钱包开账（027、034.1–034.3）
+# 现行资金来源与钱包开账（027、034.1–034.3b）
 
-[统一架构](README.md)的当前生产链路；精确合同见[027规格](../../specs/027-wallet-sources/spec.md)与[034规格](../../specs/034-virtual-coin/spec.md)。023建立单一钱包来源模型，current_004/005建立COIN边界，current_006增加角色、付款基准、独立申请与成对人工来源；不安装旧C0历史证明候选，也不增加第二钱包。
+[统一架构](README.md)的当前生产链路；精确合同见[027规格](../../specs/027-wallet-sources/spec.md)与[034规格](../../specs/034-virtual-coin/spec.md)。023建立单一钱包来源模型，current_004/005建立COIN边界，current_006增加角色、付款基准、独立申请与成对人工来源，current_008增加币价版本与付费receipt冻结引用；不安装旧C0历史证明候选，也不增加第二钱包。
 
 ```mermaid
 flowchart LR
@@ -9,6 +9,8 @@ flowchart LR
     Apply --> Paid[manual_credit\npaid / cash_original]
     Apply --> Bonus[manual_bonus\ngrant / nonrefundable]
     Apply --> Unknown[manual_unknown\nunknown / nonrefundable]
+    Rates[coin_rate_versions\n追加式不可变币价] -->|仅paid入账事务按DB时刻冻结| Paid
+    Rates -->|仅paid入账事务按DB时刻冻结| Sandbox
     Voucher[voucher_grant] --> Lot[不可变来源本金]
     Sandbox[sandbox_capture] --> Lot
     Opening[wallet_opening] --> Lot
@@ -56,6 +58,7 @@ flowchart LR
 | 客户申请 | wallet_requests保存open/linked/closed、申请人、说明和唯一linked_order_id；不含钱包余额效果 |
 | 运营设置 | wallet_operator_settings追加version、single_operator、actor、reason和时间；批准单据保存快照 |
 | 静态退款事实 | cash_refund_orders仅用于会计guard；独立journal operation、hold/retire/release指针与refund_order_id事件关联，应用只读 |
+| 币价版本 | coin_rate_versions按币种/生效时刻追加唯一版本；paid receipt冻结buy_rate_version_id，复合外键保证版本币种一致，非paid为NULL |
 
 [023正式SQL](../../migrations/023_wallet_sources.sql)与[current_006追加SQL](../../migrations/current_006_paired_wallet_sources.sql)以复合tenant FK、CHECK、即时/递延guard隔离关系。余额写需匹配事件；FIFO写前约束拒绝跳过更早可用来源，结算/退款检查原分配顺序与精确累计。全部账户按ID锁后，lot余额按lot_id锁；来源/授权/请求/Key/模型/周期控制沿原前序。Reserve在lot等待后再验期限并INSERT request；finish在全部等待后验24小时财务截止。
 
@@ -73,11 +76,19 @@ flowchart LR
 
 静态 `cash_refund_orders` 不是生产退款工作流。每个迁移使用独立非零规范 UUID 作为 journal operation，订单 ID 仅作 reference 和事件外键；旧事件 `refund_order_id` 必须为 NULL，新 `refund_hold/refund_retire/refund_release` 必须非空且按 `(refund_order_id,kind)` 唯一。retire/release 必须有同订单、同 lot、同 `coin_amount` 的更早 hold，三种事件只允许 `paid+cash_original` 来源。
 
-Deferred `wallet_cash_refund_order_valid` 校验 requested 无事实、approved/transfer_executed 只有 hold、completed 为 hold+retire、cancelled/failed 为无 hold 或 hold+release，retire/release 互斥且数量一致；`wallet_cash_refund_journal_valid` 校验独立 operation、journal kind/reference、订单 pointer、精确两条账户行和事件闭环。订单业务身份不可改、不可删除，应用只有 SELECT，034.4 才追加生产写权限、状态机和一来源一张未完成单索引。034.3b 币价字段仍是惰性 nullable 列，不参与读取或计算。
+Deferred `wallet_cash_refund_order_valid` 校验 requested 无事实、approved/transfer_executed 只有 hold、completed 为 hold+retire、cancelled/failed 为无 hold 或 hold+release，retire/release 互斥且数量一致；`wallet_cash_refund_journal_valid` 校验独立 operation、journal kind/reference、订单 pointer、精确两条账户行和事件闭环。订单业务身份不可改、不可删除，应用只有 SELECT，034.4 才追加生产写权限、状态机和一来源一张未完成单索引。034.3b 只增加两个 nullable 币价外键，不执行现金退款金额计算或版本选择。
+
+## 034.3b 币价版本与请求路径隔离
+
+`coin_rate_versions` 保存精确有理数 `rate_num/rate_den`、币种、生效/创建时刻、理由与操作者，记录不可改、不可删除。只有 CNY `1/1`、epoch 创世版本允许 maker/approver 为 NULL；其他版本必须有真实双角色或受控单人例外，并满足 `effective_at>=created_at`。MVP 没有调价 API、控制台或隐式默认汇率。
+
+人工 paid 与沙箱 paid 只在入账事务内调用 [coinRateAt](../../internal/billing/coin_rates.go)，按数据库时刻选取同币种最新生效版本并冻结 `buy_rate_version_id`；无版本返回 `coin_rate_unavailable` 并回滚整个入账。USD 必须已有显式版本，`fx_note` 不参与计算。paid 的版本引用必填，非 paid 必须为 NULL，复合外键保证版本与付款币种一致；存量 manual/sandbox paid 回填 CNY 创世版本。
+
+Reserve、结算和消费退款不读取币价。journal validator 仅核对冻结引用非空，存在性和币种匹配由 CHECK/复合外键保证，避免余额 guard 形成间接读取；静态 Go 依赖检查与币价表改名后的真实 PostgreSQL 请求链共同验证。现金退款的 buy/refund rate 计算及缺版本失败关闭属于 034.4，本片不提前宣称。
 
 ## 角色与维护
 
-APP对来源/事件/分配仅SELECT/INSERT，来源余额只更新旧三桶/revision；034.3不授新桶生产UPDATE，静态退款订单只读。ledger_accounts只更新balance；开账原件只读。设置与申请仅SELECT/INSERT及必要的状态列UPDATE，worker/projection无这些表及静态退款订单权限。支付worker只新增lots/balances/events三表读写及余额列写，七个安全wallet函数可执行；funding/event校验使用显式语句分支，不给worker读取人工、券、申请、设置或开账原件。启动沿[现行权限核验](../../internal/operations/payment_roles.go)验证当前表/列/函数边界，期望来自受审迁移源码，不从待验DB学习；只有离线历史schema可缺失034表和函数。
+APP对来源/事件/分配仅SELECT/INSERT，来源余额只更新旧三桶/revision；034.3不授新桶生产UPDATE，静态退款订单只读。ledger_accounts只更新balance；开账原件只读。设置与申请仅SELECT/INSERT及必要的状态列UPDATE，worker/projection无这些表及静态退款订单权限。APP、payment worker和projection对`coin_rate_versions`均只有SELECT，无运行时版本写入或修改权限。支付worker只新增lots/balances/events三表读写及余额列写，七个安全wallet函数可执行；funding/event校验使用显式语句分支，不给worker读取人工、券、申请、设置或开账原件。启动沿[现行权限核验](../../internal/operations/payment_roles.go)验证当前表/列/函数边界，期望来自受审迁移源码，不从待验DB学习；只有离线历史schema可缺失034表和函数。
 
 `open-wallet`仅在MAINTENANCE_MODE=true、真实migration owner、停服且取得同一服务advisory锁后执行。只允许未使用空钱包，一tenant一次非零开账；同tenant/reference/amount/actor读取原receipt，异意图冲突。初始余额为非现金负债来源，使用WALLET_OPENING_CLEARING平衡，不算收款或销售收入。入口10秒预算；未知COMMIT销毁连接并返回未知，禁止自动重试。
 
@@ -104,4 +115,4 @@ APP对来源/事件/分配仅SELECT/INSERT，来源余额只更新旧三桶/revi
 
 原入账回执与摘要覆盖六类来源，必含`manual_bonus_amount`、`manual_unknown_amount`和`wallet_opening_amount`并精确合计。累计入账、当前来源余额和模型销售收入分别来自receipt、lot余额和唯一settlement。通用[查询DTO装配](../../internal/server/queries.go)统一输出UTC时间，保持原精度与分页instant，前端UTC校验不放宽。
 
-[来源HTTP](../../internal/server/wallet_sources.go)、[申请HTTP](../../internal/server/wallet_request_handlers.go)、[设置HTTP](../../internal/server/operator_settings_handlers.go)与[钱包组件](../../web/src/components/WalletSources.vue)、[申请组件](../../web/src/components/WalletRequests.vue)、[设置组件](../../web/src/components/WalletOperatorSettings.vue)、[平台来源页](../../web/src/views/WalletSourcesView.vue)共享当前合同，身份/租户/路由切换或卸载使旧响应失效。平台核对手动触发。经营报表继续读唯一settlement和全部attempt；opening不计模型收入。034.3b 起的币价版本与 034.4 生产现金退款状态机仍需独立实现和验收。
+[来源HTTP](../../internal/server/wallet_sources.go)、[申请HTTP](../../internal/server/wallet_request_handlers.go)、[设置HTTP](../../internal/server/operator_settings_handlers.go)与[钱包组件](../../web/src/components/WalletSources.vue)、[申请组件](../../web/src/components/WalletRequests.vue)、[设置组件](../../web/src/components/WalletOperatorSettings.vue)、[平台来源页](../../web/src/views/WalletSourcesView.vue)共享当前合同，身份/租户/路由切换或卸载使旧响应失效。平台核对手动触发。经营报表继续读唯一settlement和全部attempt；opening不计模型收入。034.3b 只实现币价版本与付费来源冻结引用；034.4 生产现金退款状态机、034.5 报表/余额展示和 034.6 约合/显示名仍需独立实现和验收。

@@ -26,6 +26,8 @@
 
 同一充值单的付费与赠送必须在一次事务中成对产生；approved 时付费 receipt 恰一个，bonus>0 时赠送恰一个，否则 COMMIT 前拒绝。重复审批只读回并校验，不自动补建缺失来源。
 
+034.3b 只允许精确的 CNY `1/1`、epoch 创世版本使用 NULL maker/approver；其他版本必须有真实双角色或受控单人例外，且 `effective_at>=created_at`。付费 receipt 在入账事务按数据库时刻冻结同币种版本，复合外键保证版本与币种一致，无版本失败关闭，不存在默认汇率或调价入口。Reserve、结算和消费退款不得直接或间接读取币价表。
+
 ## 五桶与现金退款
 
 `available + held + consumed + refund_held + retired = issued` 是所有迁移、恢复和验证器共同守恒式；AVAILABLE/HELD/REFUND_HELD 账户分别等于对应来源桶之和。新桶不得进入 Reserve 或消费退款。`credit_bonus`、`cash_refund_hold/retire/release` 必须加入 journal kind 白名单与相应 guard。

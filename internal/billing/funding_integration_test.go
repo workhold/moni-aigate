@@ -383,7 +383,7 @@ func TestPostgresFundingCommitRejectsBalancedSourceReceiptJournalAndEventMismatc
 						if boundary == "receipt_amount" {
 							amount = 8
 						}
-						if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id,basis_kind,fiat_currency,fiat_amount,parent_ref) VALUES($1,'manual_credit',$2,$3,'COIN',$4,'paid','CNY',$3,$2)`, f.tenant, sourceID, amount, journal); err != nil {
+						if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id,basis_kind,fiat_currency,fiat_amount,buy_rate_version_id,parent_ref) VALUES($1,'manual_credit',$2,$3,'COIN',$4,'paid','CNY',$3,(SELECT id FROM coin_rate_versions WHERE fiat_currency='CNY'),$2)`, f.tenant, sourceID, amount, journal); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -426,7 +426,7 @@ func TestPostgresFundingCommitRejectsEqualAmountSourceSwap(t *testing.T) {
 		if _, err = tx.Exec(f.ctx, `UPDATE credit_orders SET state='approved',approver=$2,journal_id=$3 WHERE id=$1`, o.ID, f.approver, journal); err != nil {
 			t.Fatal(err)
 		}
-		if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id,basis_kind,fiat_currency,fiat_amount,parent_ref) VALUES($1,'manual_credit',$2,11,'COIN',$3,'paid','CNY',11,$2)`, f.tenant, orders[1-i].ID, journal); err != nil {
+		if _, err = tx.Exec(f.ctx, `INSERT INTO funding_receipts(tenant_id,source_kind,source_id,amount,currency,journal_id,basis_kind,fiat_currency,fiat_amount,buy_rate_version_id,parent_ref) VALUES($1,'manual_credit',$2,11,'COIN',$3,'paid','CNY',11,(SELECT id FROM coin_rate_versions WHERE fiat_currency='CNY'),$2)`, f.tenant, orders[1-i].ID, journal); err != nil {
 			t.Fatal(err)
 		}
 		if err = emit(f.ctx, tx, f.tenant, o.ID, "credited", map[string]any{"amount": Money(11)}); err != nil {

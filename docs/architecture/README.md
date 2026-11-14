@@ -575,7 +575,7 @@ mock的16张自有表分为环境/版本/key、命令/processing/results、订�
 
 开账是停服后owner通过 `open-wallet` 向未使用空钱包显式导入非现金初始余额；同业务意图重读原件，不改造旧历史。`check-wallet-sources` 与平台核对为5秒RR只读观察，不修钱。023拒绝已有金融历史/非零余额；已有开发库保留，当前版本使用独立新库。此决策不增加旧余额导入、旧退款或双模型兼容路径。
 
-来源回执/筛选与累计摘要统一覆盖六类来源，必填`manual_bonus_amount`、`manual_unknown_amount`和`wallet_opening_amount`；来源余额三桶和原件累计分别展示，不将开账计为销售收入。034.2增加独立`wallet_requests`、追加式`wallet_operator_settings`、成对人工来源及同单付费优先FIFO，详见[034.2合同](#0342-角色付款基准独立申请与成对来源)与[资金来源明细](wallet-sources.md)。通用查询DTO输出UTC并保留精度和分页instant，前端保持严格UTC解析。
+来源回执/筛选与累计摘要统一覆盖六类来源，必填`manual_bonus_amount`、`manual_unknown_amount`和`wallet_opening_amount`；来源余额五桶和原件累计分别展示，不将开账计为销售收入。034.2增加独立`wallet_requests`、追加式`wallet_operator_settings`、成对人工来源及同单付费优先FIFO，详见[034.2合同](#0342-角色付款基准独立申请与成对来源)与[资金来源明细](wallet-sources.md)。通用查询DTO输出UTC并保留精度和分页instant，前端保持严格UTC解析。
 
 隔离研究只修正原001–022材料及历史helper的固定基线身份，不接受023或新增proof/profile，也未进入serve。旧descriptor继续对当前迁移/provision漂移拒绝；旧checkout镜像正例及其变异矩阵不再作为当前测试，其覆盖边界缩减与首轮失败保留在本片记录。
 
@@ -659,7 +659,7 @@ sequenceDiagram
 
 [`current_004_virtual_coin_units.sql`](../../migrations/current_004_virtual_coin_units.sql) 将客户 `journals`、`funding_receipts` 与 `price_versions` 的外层 `currency` 改为 `COIN`，金额和费率数值不缩放；`cost_versions`、采购观察、供应商成本和支付法币事实继续使用 CNY。计量 canonical、历史请求快照和 `TextRates.currency` 刻意保留冻结的 CNY 规范化标签，不能把它与零售外层币种混为一谈。迁移只追加，先移除旧 CHECK 再回填并添加新 CHECK，显式暂停/恢复不可变及 deferred 来源校验触发器，支持非超级用户的 schema owner。
 
-[`current_005_immutable_pricing_history.sql`](../../migrations/current_005_immutable_pricing_history.sql) 在同一升级事务中恢复 current_004 曾改写的历史 pricing operation 与审计原字节，不保留其存储列。[`pricingOperationSQL`](../../internal/catalog/pricing_commands.go) 验证原始 CNY 指纹后在读取时投影 COIN 的当前指纹与结果，历史原件不再改写；`pre_coin_input_fingerprint` 仅作为原 operation 的迁移证明，供浏览器持久化的原 operation ID 做严格只读恢复，不提供旧 DTO 或第二套历史事实。支付 SKU/订单的 `amount` 使用 [`billing.FiatMoney`](../../internal/billing/fiat.go)，钱包到账 `wallet_credit_amount` 使用 `billing.Money`，处理器内部同样分型。控制台分开显示币、付款法币和采购成本；026 经营窗口报表的付款基准与同币种毛利留到 034.5，不在本片混合改写。实际存量升级、原 operation 重放、角色边界及前端验证见[034.1 验证记录](../verification/034-coin-units.md)。034.1 的验证不覆盖后续分片；当前 034.2 见下节，034.3 起仍需独立验收。
+[`current_005_immutable_pricing_history.sql`](../../migrations/current_005_immutable_pricing_history.sql) 在同一升级事务中恢复 current_004 曾改写的历史 pricing operation 与审计原字节，不保留其存储列。[`pricingOperationSQL`](../../internal/catalog/pricing_commands.go) 验证原始 CNY 指纹后在读取时投影 COIN 的当前指纹与结果，历史原件不再改写；`pre_coin_input_fingerprint` 仅作为原 operation 的迁移证明，供浏览器持久化的原 operation ID 做严格只读恢复，不提供旧 DTO 或第二套历史事实。支付 SKU/订单的 `amount` 使用 [`billing.FiatMoney`](../../internal/billing/fiat.go)，钱包到账 `wallet_credit_amount` 使用 `billing.Money`，处理器内部同样分型。控制台分开显示币、付款法币和采购成本；026 经营窗口报表的付款基准与同币种毛利留到 034.5，不在本片混合改写。实际存量升级、原 operation 重放、角色边界及前端验证见[034.1 验证记录](../verification/034-coin-units.md)。034.1 的验证不覆盖后续分片；当前 034.2、034.3 与 034.3b 见下节。
 
 ### 034.2 角色、付款基准、独立申请与成对来源
 
@@ -671,7 +671,7 @@ sequenceDiagram
 
 `wallet_operator_settings` 以追加版本保存单人运营开关，初始为 true。`GET/PUT /api/platform/wallet-operator-settings` 仅 admin；PUT 要求近期再认证、CSRF、规范 `operation_id`、正整数 `expected_revision`、理由和显式二次确认。服务事务以 advisory lock 串行化 CAS，设置与审计同时提交，同操作同内容返回原版本，异内容或过期版本拒绝；应用角色只有 SELECT/INSERT，UPDATE/DELETE 由权限和不可变触发器共同拒绝。开关只在批准时快照到钱包单据，只有双方均为 admin 的自批才写 `single_operator_exception`，其他业务域不继承例外。[设置服务](../../internal/billing/operator_settings.go)、[设置 HTTP](../../internal/server/operator_settings_handlers.go)、[管理员面板](../../web/src/components/WalletOperatorSettings.vue)。
 
-当前应用、worker、projection 的数据库表/列/函数权限由[版本化角色核验](../../internal/operations/payment_roles.go)严格检查；离线历史 schema 只允许缺失的 034 表和函数跳过，当前 schema 不存在缺失表回退。034.3 见下节；034.3b 币价版本、034.4 现金退款、034.5 报表展示和 034.6 约合/显示名仍属后续分片，不在本节点宣称完成。专项与最终分组结果见[034.2验证记录](../verification/034-2-paired-wallet-sources.md)。
+当前应用、worker、projection 的数据库表/列/函数权限由[版本化角色核验](../../internal/operations/payment_roles.go)严格检查；离线历史 schema 只允许缺失的 034 表和函数跳过，当前 schema 不存在缺失表回退。034.3 与 034.3b 见下节；034.4 现金退款、034.5 报表展示和 034.6 约合/显示名仍属后续分片，不在本节点宣称完成。专项与最终分组结果见[034.2验证记录](../verification/034-2-paired-wallet-sources.md)。
 
 ### 034.3 五桶会计与静态退款事实
 
@@ -683,7 +683,17 @@ sequenceDiagram
 
 [`lockAccounts`](../../internal/billing/store.go) 和 journal 投影把 `REFUND_HELD` 作为非负租户账户按 ID 初始化/加锁。五桶纯投影、文本和媒体 Reserve/Finish、消费退款保留原分配与零新 delta，Reserve 仍只按 `available_amount>0` 选源。[来源运行投影](../../internal/billing/lot_runtime.go)、[媒体投影](../../internal/billing/media.go)、[账户投影](../../internal/billing/journal_batch.go)。
 
-`check-wallet-sources` 将本金、五个事件前缀和、journal kind、REFUND_HELD 账户与来源汇总纳入 `balanced`，保留 034.2 的 pair 检查；错误计数只报不一致，unknown 总额继续由资金来源摘要单列。逐来源接口和[前端 DTO](../../web/src/wallet-sources.ts)增加 `refund_held_amount/retired_amount` 并验证五桶守恒，Wallet 顶部余额构成和“退款处理中”汇总仍归 034.5。验收范围与分组结果见[034.3验证记录](../verification/034-3-refund-buckets.md)；034.3b 币价版本和 034.4 生产现金退款状态机不在本片能力内。
+`check-wallet-sources` 将本金、五个事件前缀和、journal kind、REFUND_HELD 账户与来源汇总纳入 `balanced`，保留 034.2 的 pair 检查；错误计数只报不一致，unknown 总额继续由资金来源摘要单列。逐来源接口和[前端 DTO](../../web/src/wallet-sources.ts)增加 `refund_held_amount/retired_amount` 并验证五桶守恒，Wallet 顶部余额构成和“退款处理中”汇总仍归 034.5。验收范围与分组结果见[034.3验证记录](../verification/034-3-refund-buckets.md)；034.3b 见下节，034.4 生产现金退款状态机不在前两片能力内。
+
+### 034.3b 币价版本与付费来源冻结
+
+[`current_008_coin_rate_versions.sql`](../../migrations/current_008_coin_rate_versions.sql) 建立唯一币价版本关系 `coin_rate_versions`，按 `(fiat_currency,effective_at)` 唯一并禁止 UPDATE/DELETE。精确 CNY `1/1`、epoch 创世行是唯一允许 NULL maker/approver 的版本，不伪造系统用户；其他版本必须同时记录真实 maker/approver，满足双人或受控单人例外，且 `effective_at>=created_at`。当前没有调价 HTTP、控制台或写命令。
+
+人工 `manual_credit` 与沙箱 `sandbox_capture` 的 paid receipt 在各自入账事务内通过 [`coinRateAt`](../../internal/billing/coin_rates.go) 按数据库时刻选择同币种最新生效版本，并冻结到 `funding_receipts.buy_rate_version_id`。没有版本返回 `coin_rate_unavailable`，整个入账事务回滚；USD 只有显式版本存在时才可入账，`fx_note` 不参与计算，也不存在 CNY/USD 默认回退。`paid` 必须引用版本、非 paid 必须为 NULL；`(buy_rate_version_id,fiat_currency)` 复合外键保证引用版本与付款币种一致。存量 paid receipt 回填到 CNY 创世版本，非 paid 保持 NULL。
+
+币价查询只存在于人工和沙箱 paid 入账路径，不进入 Reserve、结算或消费退款。数据库 journal validator 只核对冻结引用非空，版本存在性及币种一致性交给 CHECK/复合外键，避免余额 guard 间接读取币价表；静态源码检查与币价表改名后的真实 PostgreSQL 请求/结算/消费退款共同覆盖该边界。APP、payment worker 和 projection 对该全局参考表只有 SELECT，所有运行时角色均无 INSERT/UPDATE/DELETE。
+
+`cash_refund_orders.buy_rate_version_id/refund_rate_version_id` 到版本表的 nullable 外键已安装，但现金退款金额计算、版本选择、状态机、生产写权限、HTTP、控制台与告警仍归 034.4。034.3b 不宣称这些能力或真实支付/供应商验收完成。验证证据见[034.3b验证记录](../verification/034-3b-coin-rates.md)。
 
 ### 018 采购单价门禁与成本感知路由
 

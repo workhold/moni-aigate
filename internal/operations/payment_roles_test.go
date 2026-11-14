@@ -27,6 +27,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 		{"023_wallet_sources.sql", walletSourcesRoleMigrationSHA256},
 		{"current_006_paired_wallet_sources.sql", pairedSourcesRoleMigrationSHA256},
 		{"current_007_refund_buckets.sql", refundBucketsRoleMigrationSHA256},
+		{"current_008_coin_rate_versions.sql", coinRatesRoleMigrationSHA256},
 	} {
 		body, e := migrations.Files.ReadFile(source.file)
 		if e != nil {

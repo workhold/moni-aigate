@@ -1,4 +1,4 @@
-// Static baselines from reviewed 021, 023, 024 and current 004/006/007 SQL. Never derive
+// Static baselines from reviewed 021, 023, 024 and current 004/006/007/008 SQL. Never derive
 // expected procedure definitions from the database being verified. See 027 and B2 §7.3.
 package operations
 
@@ -6,6 +6,9 @@ const paymentRoleMigrationSHA256 = "757721a8559ce6710972759aaa1eb4bbd1a4af6d0b1a
 const walletSourcesRoleMigrationSHA256 = "67e8289f1e550ea826f4890b1b046e2d10d502537b764e0441d2cb0ae3f5eb4a"
 const pairedSourcesRoleMigrationSHA256 = "9f4785bcc8d912f04e25d37c3d359b73f112f031f95989f089b9d255eeea357f"
 const refundBucketsRoleMigrationSHA256 = "fe82ab8febcd62c5c529d5c93bd134d1a45cd9839a5bd75dbee6fada39b51938"
+const coinRatesRoleMigrationSHA256 = "e723be6de772528606cb0178d58d34e914a234d5c6f02ae7914ead13547dfbd2"
+const coinRatePaymentFundingJournalSHA256 = "3a70171598ed46380396ef91fe3da9d42a837f3cb63c5e0d88cf8943dad03bad"
+const coinRatePaymentSandboxJournalSHA256 = "2cb027adfa1e356e6a81b669c981173ec7fda211e6680810943b378ec76b4d97"
 const legacyWalletEventValidSHA256 = "07545d756fa2c25d26fe4bf6d93777330e3839e179877298168ce3d502342b6f"
 const virtualCoinPaymentFundingJournalSHA256 = "10ea84ec2f7bd409044fd8febb2fa90735f0946509e2567ef3b102d7023dd184"
 const virtualCoinWalletOpeningJournalSHA256 = "45f298162c92d5a825a89a06a807dfdfc4e9822a3bc7944f49cf4fdf1339c6d6"

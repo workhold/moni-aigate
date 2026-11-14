@@ -34,13 +34,13 @@ func TestWalletSourcesRolesActualCurrentMatrix(t *testing.T) {
 	}{
 		{f.appRole, PaymentApplicationRole}, {f.workerRole, PaymentWorkerRole}, {f.projectionRole, PaymentProjectionRole},
 	} {
-		for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+		for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "coin_rate_versions", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
 			t.Run(string(role.kind)+"/"+table, func(t *testing.T) {
 				app := role.kind == PaymentApplicationRole
 				worker := role.kind == PaymentWorkerRole
 				workerSource := table == "funding_lots" || table == "funding_lot_balances" || table == "funding_lot_events"
-				wantSelect := app || worker && (workerSource || table == "ledger_accounts")
-				wantInsert := app && table != "wallet_openings" && table != "cash_refund_orders" || worker && workerSource
+				wantSelect := app || worker && (workerSource || table == "ledger_accounts") || table == "coin_rate_versions"
+				wantInsert := app && table != "wallet_openings" && table != "cash_refund_orders" && table != "coin_rate_versions" || worker && workerSource
 				var selectAll, insertAll, updateAll, forbidden bool
 				paymentRoleMust(t, "independent table privilege query", f.owner.QueryRow(f.ctx, `SELECT
  has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),
@@ -102,6 +102,9 @@ func TestWalletSourcesRolesDMLAndWorkerReadBoundary(t *testing.T) {
 		"INSERT INTO cash_refund_orders(id) VALUES('forbidden')",
 		"UPDATE cash_refund_orders SET reason=reason WHERE false",
 		"DELETE FROM cash_refund_orders WHERE false",
+		"INSERT INTO coin_rate_versions(id) VALUES('forbidden')",
+		"UPDATE coin_rate_versions SET reason=reason WHERE false",
+		"DELETE FROM coin_rate_versions WHERE false",
 		"UPDATE funding_lots SET source_id=source_id WHERE false",
 		"UPDATE funding_lot_balances SET tenant_id=tenant_id WHERE false",
 		"DELETE FROM funding_lot_balances WHERE false",
@@ -114,7 +117,10 @@ func TestWalletSourcesRolesDMLAndWorkerReadBoundary(t *testing.T) {
 	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "credit_orders", "voucher_redemptions", "reservations", "settlements", "refund_orders"} {
 		denied(t, PaymentWorkerRole, "SELECT * FROM "+pgx.Identifier{table}.Sanitize()+" LIMIT 0")
 	}
-	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "coin_rate_versions", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+		if table == "coin_rate_versions" {
+			continue
+		}
 		denied(t, PaymentProjectionRole, "SELECT * FROM "+pgx.Identifier{table}.Sanitize()+" LIMIT 0")
 	}
 	for _, name := range []string{"wallet_lot_valid", "wallet_event_valid", "wallet_journal_valid", "wallet_account_valid"} {

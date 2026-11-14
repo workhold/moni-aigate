@@ -36,10 +36,7 @@ func normalizeCreditInput(in *CreditInput) error {
 		if in.Amount <= 0 || in.FiatAmount <= 0 || in.FiatCurrency == "" {
 			return fail("invalid_credit", "paid credit requires fiat amount and currency")
 		}
-		if in.FiatCurrency == "USD" {
-			return fail("invalid_credit", "USD coin rate version is not installed")
-		}
-		if in.FiatCurrency != "CNY" {
+		if in.FiatCurrency != "CNY" && in.FiatCurrency != "USD" {
 			return fail("invalid_credit", "unsupported fiat currency")
 		}
 	case "grant":

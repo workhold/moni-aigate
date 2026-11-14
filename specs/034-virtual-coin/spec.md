@@ -438,17 +438,24 @@ CREATE TABLE coin_rate_versions (
   rate_den        bigint NOT NULL CHECK (rate_den BETWEEN 1 AND 1000000),
   effective_at    timestamptz NOT NULL,
   reason          text NOT NULL,
-  maker           text NOT NULL REFERENCES users(id),
-  approver        text NOT NULL REFERENCES users(id),
+  maker           text REFERENCES users(id),           -- 仅创世版本允许 NULL
+  approver        text REFERENCES users(id),           -- 仅创世版本允许 NULL
   single_operator boolean NOT NULL DEFAULT false,
   created_at      timestamptz NOT NULL DEFAULT clock_timestamp(),
   UNIQUE (fiat_currency, effective_at),
-  CHECK (single_operator OR approver <> maker)
-);
+  CHECK (
+    (fiat_currency='CNY' AND rate_num=1 AND rate_den=1
+      AND effective_at='1970-01-01T00:00:00Z'
+      AND maker IS NULL AND approver IS NULL AND NOT single_operator)
+    OR (maker IS NOT NULL AND approver IS NOT NULL
+      AND (single_operator OR approver <> maker)
+      AND effective_at >= created_at)
+  );
 CREATE TRIGGER immutable_coin_rate BEFORE UPDATE OR DELETE ON coin_rate_versions
   FOR EACH ROW EXECUTE FUNCTION reject_history_mutation();
 ```
 
+- **创世操作者**：空库没有业务操作者，CNY `1/1`、epoch 的创世行允许 `maker=approver=NULL`，不创建伪造管理员或系统用户。其他版本必须同时填写 maker/approver，并继续满足 `single_operator OR approver<>maker`。USD 测试版本只能由 migration owner/test fixture 以真实测试用户写入，不能通过生产 API、控制台或隐式默认汇率创建。
 - **币价单位**：`rate_num/rate_den` 是“1 币值多少法币单位”，币与法币都以微单位存储，所以比值无量纲。创世版本 CNY 为 `1/1`，`effective_at = 1970-01-01T00:00:00Z`。
 - **选取规则**：对币种 `X` 在数据库时刻 `t`，取 `effective_at <= t` 中 `effective_at` 最大的一行。**没有版本时失败关闭**（拒绝入账与退款），不使用默认值。
 - **不得回溯**：新版本的 `effective_at` 必须不早于批准时的数据库时刻，所以调价不会改写已经发生的事实。

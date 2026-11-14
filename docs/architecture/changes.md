@@ -6856,3 +6856,47 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `web/tests/wallet-sources.test.mjs`
 
 </details>
+
+## 2026-11-14T18:28:41Z · 79ee964f0003
+
+034.3b 新增不可变币价版本、CNY 创世、paid receipt 买入版本冻结与存量 manual/sandbox 回填；补齐 USD 失败关闭、三角色 SELECT-only 边界，并消除 Reserve/结算/消费退款的间接币价读取。同步五桶现状、HLD/LLD 与验证记录；034.4 现金退款仍未开放。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2220 个源文件；本次 21 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/integrated-wallet-media.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-3b-coin-rates.md`
+- added `internal/billing/coin_rates.go`
+- added `internal/billing/coin_rates_integration_test.go`
+- modified `internal/billing/credit_funding.go`
+- modified `internal/billing/credit_input.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- added `migrations/coin_rate_postgres_test.go`
+- added `migrations/current_008_coin_rate_versions.sql`
+- modified `migrations/virtual_coin_postgres_test.go`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-14T18:29:33Z · 297d979f5221
+
+记录 034.3b 全仓 77 包 race、前端、构建与统一架构检查结果；本次仅定稿验证状态，无模块、链路、数据关系或权限结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2220 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-3b-coin-rates.md`
+
+</details>

@@ -35,6 +35,7 @@ type FundingReceipt struct {
 	BasisKind           string
 	FiatCurrency        string
 	FiatAmount          *FiatMoney
+	BuyRateVersionID    string
 	ParentRef           string
 }
 type FundingResult struct {
@@ -45,7 +46,7 @@ type FundingResult struct {
 
 func fundingReceiptRow(ctx context.Context, tx pgx.Tx, kind FundingSourceKind, id string) (FundingReceipt, error) {
 	var r FundingReceipt
-	e := tx.QueryRow(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,coalesce(fiat_currency,''),fiat_amount,parent_ref FROM funding_receipts WHERE source_kind=$1 AND source_id=$2`, string(kind), id).Scan(&r.ID, &r.TenantID, &r.SourceKind, &r.SourceID, &r.Amount, &r.Currency, &r.JournalID, &r.CreatedAt, &r.BasisKind, &r.FiatCurrency, &r.FiatAmount, &r.ParentRef)
+	e := tx.QueryRow(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,coalesce(fiat_currency,''),fiat_amount,coalesce(buy_rate_version_id,''),parent_ref FROM funding_receipts WHERE source_kind=$1 AND source_id=$2`, string(kind), id).Scan(&r.ID, &r.TenantID, &r.SourceKind, &r.SourceID, &r.Amount, &r.Currency, &r.JournalID, &r.CreatedAt, &r.BasisKind, &r.FiatCurrency, &r.FiatAmount, &r.BuyRateVersionID, &r.ParentRef)
 	return r, e
 }
 
@@ -203,6 +204,10 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 		receipt.BasisKind = "paid"
 		receipt.FiatCurrency = sandbox.FiatCurrency
 		receipt.FiatAmount = &sandbox.FiatAmount
+		receipt.BuyRateVersionID, e = coinRateAt(ctx, tx, sandbox.FiatCurrency)
+		if e != nil {
+			return result, e
+		}
 	case FundingWalletOpening:
 		receipt.BasisKind = "opening"
 	}
@@ -223,7 +228,7 @@ func (s *Store) ApplyFundingTx(ctx context.Context, tx pgx.Tx, source FundingSou
 	default:
 		return result, fail("invalid_funding_source", "funding source unavailable")
 	}
-	if _, e = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,fiat_currency,fiat_amount,parent_ref) VALUES($1,$2,$3,$4,$5,'COIN',$6,$7,$8,$9,$10,$11)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now, receipt.BasisKind, nullableText(receipt.FiatCurrency), receipt.FiatAmount, receipt.ParentRef); e != nil {
+	if _, e = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,fiat_currency,fiat_amount,buy_rate_version_id,parent_ref) VALUES($1,$2,$3,$4,$5,'COIN',$6,$7,$8,$9,$10,$11,$12)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now, receipt.BasisKind, nullableText(receipt.FiatCurrency), receipt.FiatAmount, nullableText(receipt.BuyRateVersionID), receipt.ParentRef); e != nil {
 		return FundingResult{}, e
 	}
 	if e = createFundingLotTx(ctx, tx, receipt, operation); e != nil {

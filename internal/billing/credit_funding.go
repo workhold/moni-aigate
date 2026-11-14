@@ -156,8 +156,12 @@ func writeCreditSourceTx(ctx context.Context, tx pgx.Tx, o CreditOrder, scope Fu
 	if kind == FundingManualCredit {
 		receipt.FiatCurrency = o.FiatCurrency
 		receipt.FiatAmount = o.FiatAmount
+		receipt.BuyRateVersionID, err = coinRateAt(ctx, tx, o.FiatCurrency)
+		if err != nil {
+			return FundingReceipt{}, err
+		}
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,fiat_currency,fiat_amount,parent_ref) VALUES($1,$2,$3,$4,$5,'COIN',$6,$7,$8,$9,$10,$11)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now, receipt.BasisKind, nullableText(receipt.FiatCurrency), receipt.FiatAmount, receipt.ParentRef); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO funding_receipts(id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,fiat_currency,fiat_amount,buy_rate_version_id,parent_ref) VALUES($1,$2,$3,$4,$5,'COIN',$6,$7,$8,$9,$10,$11,$12)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(amount), journal, now, receipt.BasisKind, nullableText(receipt.FiatCurrency), receipt.FiatAmount, nullableText(receipt.BuyRateVersionID), receipt.ParentRef); err != nil {
 		return FundingReceipt{}, err
 	}
 	if err = createFundingLotTx(ctx, tx, receipt, operation); err != nil {

@@ -92,7 +92,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 下表为领域关系，实际字段、约束与trigger以[migrations](../../migrations/001_core.sql)以及后续002–006迁移为准。r4新增`session_families`、`delivery_observations`、`platform_probe_attempts`、`recovery_gate`、`route_binding_isolations`，006补充不可变attempt选路解释。恢复gate按epoch冻结提案并双人批准；明确模型配置错误只隔离精确渠道版本/上游模型，历史隔离不可修改，恢复需创建新版本并发布。实例接管先等待旧执行窗口，恢复只读进程可立即启动，退出恢复须重启后再按付费准入执行窗口检查。
 
-当前运行时代码的金额仍为 `BIGINT` CNY 微元（1 CNY = 1,000,000 微元）。034 的目标合同把客户钱包与客户售价单位切换为整数微币，并将付款法币只保留在充值/退款事实与报表中；该目标尚未实现前不得把设计状态描述成运行时状态。时间为 UTC `timestamptz`，前端按用户时区展示；数据库时钟决定价格生效和期限。JSON 中金额用十进制字符串，前端不能用 JS Number 运算资金。
+当前运行时的客户钱包、客户售价、Key额度和周期预算使用 `BIGINT` 整数微币，外层币种为 COIN；充值/退款事实按付款币种保存整数法币微单位，Go 以 `billing.Money` 与 `billing.FiatMoney` 分型。供应商成本与冻结的计量 canonical 仍保留 CNY 原语义，不因客户外层币单位而重缩放。时间为 UTC `timestamptz`，前端按用户时区展示；数据库时钟决定价格生效和期限。JSON 中金额用十进制字符串，前端不能用 JS Number 运算资金。
 
 | 表 | 核心字段 / 约束 |
 |---|---|
@@ -106,7 +106,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 | tenant_region_policies / key_region_policies | tenant_id、key_id、allowed_regions、revision；平台最大地域集合内再收紧，下层未配置表示继承，显式空集合表示拒绝；成员限制首版仅模型授权 |
 | model_bindings | route_policy_version_id, model_id, channel_id, channel_version_id, upstream_model, priority, weight, max_inflight；随策略版本不可变，版本内候选唯一 |
 | route_policy_versions / active_route_policies | model_id, revision, max_attempts, total_timeout_ms, retry_after_cap_ms, allowed_regions；不可变版本；活动指针以expected revision原子切换 |
-| price_versions | id, model_id, currency, input_rate, output_rate, effective_at, created_by；单价为微元/百万 Token；同模型+生效时间唯一；记录不可修改 |
+| price_versions | id, model_id, currency, input_rate, output_rate, effective_at, created_by；客户单价为微币/百万 Token；同模型+生效时间唯一；记录不可修改 |
 | cost_versions | id, channel_id, upstream_model, input_rate, output_rate, basis, effective_at；首版仅 CNY 成本，未知不记零 |
 | ledger_accounts | id, tenant_id（客户账户）, kind, balance；客户 AVAILABLE/HELD/REFUND_HELD 非负；平台账户显式属于平台域 |
 | journals / journal_lines | kind, reference, idempotency_key, actor；每笔 line 有 account_id 与 signed_delta；同币种总和为 0；已提交后不可修改/删除 |
@@ -118,7 +118,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 | settlements | id, request_id, tenant_id, usage_snapshot, raw_retail_amount, charged_amount, waived_retail_amount, refunded_amount, basis；每请求唯一，退款累计封顶 |
 | credit_orders / refund_orders / cash_refund_orders | tenant_id, business_ref, amount, state, requester, maker, approver, proof_ref, journal_id；业务号唯一、申请人不可审批；034.4 的现金退款另有 `refund_held`/`retired` 状态流转 |
 | wallet_requests | 034.2 独立客户申请：tenant/kind/requested_by/note/open-linked-closed/linked_order_id；open+linked每租户最多20，关联与关闭跟随对应单据事务，open/linked无钱包效果 |
-| wallet_operator_settings / coin_rate_versions | 034.2 已落地追加式单人运营开关，写入需二次确认并在单据/审计中快照；034.3b 目标为币价版本，MVP只记录创世/买入币价，不提供调价入口 |
+| wallet_operator_settings / coin_rate_versions | 034.2 已落地追加式单人运营开关，写入需二次确认并在单据/审计中快照；034.3b 已落地不可变币价版本、CNY创世及paid receipt买入版本冻结，MVP不提供调价入口 |
 | reconciliation_cases | request_id, reason, evidence_ref, deadline, `proposed_observation_canonical`/`proposed_observation_digest`, requester, approver, resolution；每请求最多一个活动核对项。当前028-U提案原件是绑定请求schema的完整retail QuantitiesWire |
 | audit_events | actor, tenant_scope, action, target, sanitized_diff, request_id, created_at；应用角色只追加 |
 
@@ -165,23 +165,24 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 ### 5.2 金额精度与价格快照
 
-单价单位为微元/百万 Token：
+客户单价单位为微币/百万 Token：
 
 ```text
 amount_micro = metering.Amount(complete_quantities, complete_rates)；费率为约分有理数，金额只在该纯核函数末尾一次ceil
 ```
 
-对整次请求合并后向上取整一次，避免每 SSE 分片取整。乘加用带溢出检查的整数或大整数，最终验证 BIGINT 范围；金额/Token 必须非负。例：input_rate=2,000,000、output_rate=8,000,000，input=1,000、output=500，结果为 6,000 微元，即 ¥0.006。
+对整次请求合并后向上取整一次，避免每 SSE 分片取整。乘加用带溢出检查的整数或大整数，最终验证 BIGINT 范围；金额/Token 必须非负。例：input_rate=2,000,000、output_rate=8,000,000，input=1,000、output=500，结果为 6,000 微币。供应商采购成本继续使用独立 CNY 金额与报价快照。
 
-请求在预占事务按 DB 当前时间选中最新生效售价，保存价格 ID 与完整数值快照。上下文上限、默认输出限制、计费政策同样版本化。跨日、改价、渠道切换都不得改变历史快照。034 尚未实现前，现行售价仍按 CNY 微元处理；034 目标售价改用微币。
+请求在预占事务按 DB 当前时间选中最新生效售价，保存价格 ID 与完整数值快照。上下文上限、默认输出限制、计费政策同样版本化。跨日、改价、渠道切换都不得改变历史快照。客户售价为整数微币，计量 canonical 的 CNY 原始字节和供应商成本语义保持冻结。
 
-#### 5.2.1 034 虚拟币钱包合同（2026-11-14 已冻结；034.1–034.3 本地实现，034.3b 起后续分片未完成）
+#### 5.2.1 034 虚拟币钱包合同（2026-11-14 已冻结；034.1–034.3b 本地实现，034.4 起后续分片未完成）
 
-034 不创建第二个钱包。034.1 已将客户钱包、客户售价、Key 额度和周期预算统一切换为整数微币；充值额外记录法币金额和币种，供应商成本继续属于平台侧采购域。034.2 增加角色字段、独立申请、付款基准与成对人工来源；现金退款桶、币价版本和现金退款状态机仍按 034 §17 后续分片实现，不提前视为已完成。
+034 不创建第二个钱包。034.1 已将客户钱包、客户售价、Key 额度和周期预算统一切换为整数微币；充值额外记录法币金额和币种，供应商成本继续属于平台侧采购域。034.2 增加角色字段、独立申请、付款基准与成对人工来源，034.3 安装静态五桶 guard，034.3b 冻结付费来源买入币价；现金退款状态机仍按 034 §17 后续分片实现，不提前视为已完成。
 
 - 同一手动充值单拆成付费来源与赠送来源时，付费来源必须先消耗，赠送来源后消耗；不同充值单仍按现有 `(fifo_at, id)` 严格 FIFO。实现必须保持 `funding_lot.fifo_at = funding_receipt.created_at`、文本与媒体 Reserve、Go 计划、SQL guard 的合同一致，并在固定时钟、并发和两条 Reserve 路径上验证。
 - 来源守恒扩展为 `available + held + refund_held + consumed + retired = issued`。`refund_held` 只服务现金退款待转账状态，`retired` 表示已完成现金退出；二者不能进入 Reserve。租户新增 `REFUND_HELD` 账户，账户余额分别与对应来源桶之和一致。
 - 034.3 安装静态 `cash_refund_orders` 与五桶 guard，不提供应用订单写权限或现金退款入口。每次迁移使用独立非零规范 UUID 作为 journal operation，订单 ID 只作 reference/事件外键；`funding_lot_events.refund_order_id` 对旧 kind 为 NULL，对 `refund_hold/refund_retire/refund_release` 非空且 `(refund_order_id,kind)` 唯一。三种事件只允许 `paid+cash_original`，retire/release 必须有同订单同 lot 同金额的更早 hold。`requested` 无事实、approved/transfer_executed 只有 hold、completed 为 hold+retire、cancelled/failed 为无 hold 或 hold+release；retire/release 互斥。034.4 才实现状态机和一来源一张未完成单索引。
+- 034.3b 的 `coin_rate_versions` 按 `(fiat_currency,effective_at)` 唯一且不可改删；仅 CNY `1/1`、epoch 创世版本允许 NULL maker/approver，其他版本要求真实操作者与 `effective_at>=created_at`。人工/沙箱 paid receipt 在入账事务按数据库时刻冻结同币种版本，无版本失败关闭；`paid` 引用必填、非 paid 为 NULL，复合外键保证币种一致。币价查询不进入 Reserve、结算或消费退款，数据库 validator 也不间接读取版本表。
 - 现金退款保留 B 规则：批准时冻结 `min(按当前币价核算、按原付款比例核算)`，全额退款由系统读取可用币，操作人不能填币数；赠送、未知基准和其他不可退来源不能现金退款。MVP 只记录创世币价与付费来源买入币价，当前不提供调价 HTTP、控制台入口或写命令；未来调价必须追加版本、审批、影响预览、不得回溯，并在批准时冻结版本。
 - `wallet_operator_settings` 是追加式平台设置，初始 `single_operator=true`。管理员界面启用、关闭或修改必须二次确认/近期重新认证并写审计；每张单据在批准时保存开关快照。仅当快照允许且制单人与审批人均为 `admin` 时允许同账号操作，并固定写入 `single_operator_exception`；其他业务域的 maker/checker 约束不随之放宽。
 - 设置接口为 `GET/PUT /api/platform/wallet-operator-settings`。PUT 固定字段为 `operation_id`（规范非零UUID）、`expected_revision`（正int64十进制字符串）、`single_operator`、`reason`（1..200字节）和 `confirmation=CONFIRM_SINGLE_OPERATOR_CHANGE`；平台中间件继续执行MFA、CSRF、近期再认证和恢复门禁。`operation_id`同时作为追加行ID，重放核对actor、原expected revision、目标值和理由；不同内容为`idempotency_conflict`，当前版本不符为`revision_conflict`。服务事务使用专用advisory lock串行CAS，设置和审计一起提交，重放不重复审计。APP只有SELECT/INSERT，UPDATE/DELETE由ACL和不可变触发器共同拒绝。

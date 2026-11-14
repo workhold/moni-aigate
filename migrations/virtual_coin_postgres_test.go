@@ -218,6 +218,12 @@ func TestVirtualCoinMigrationPreservesAmountsAndCanonical(t *testing.T) {
 	coinMust(t, "snapshot immutable pre-coin operation and audit", f.pool.QueryRow(f.ctx, `SELECT safe_input,result_snapshot,input_fingerprint,(SELECT sanitized_diff FROM audit_events WHERE action='pricing.price.publish' AND sanitized_diff->>'operation_id'=$1) FROM pricing_operations WHERE operation_id=$1`, priceOperation).Scan(&originalSafe, &originalResult, &fingerprintBefore, &originalAudit))
 	coinMust(t, "apply virtual-coin unit migration", migrations.ApplyCurrent(f.ctx, f.pool))
 	coinMust(t, "verify virtual-coin current schema", migrations.VerifyCurrent(f.ctx, f.pool))
+	var genesisID, backfilledRate string
+	var rateVersions, paidWithoutRate, nonpaidWithRate int
+	coinMust(t, "read CNY genesis and populated paid backfill", f.pool.QueryRow(f.ctx, `SELECT r.id,(SELECT f.buy_rate_version_id FROM funding_receipts f WHERE f.source_kind='manual_credit' AND f.source_id=$1),(SELECT count(*) FROM coin_rate_versions),(SELECT count(*) FROM funding_receipts WHERE basis_kind='paid' AND buy_rate_version_id IS NULL),(SELECT count(*) FROM funding_receipts WHERE basis_kind<>'paid' AND buy_rate_version_id IS NOT NULL) FROM coin_rate_versions r WHERE r.fiat_currency='CNY' AND r.rate_num=1 AND r.rate_den=1 AND r.effective_at='1970-01-01T00:00:00Z' AND r.maker IS NULL AND r.approver IS NULL AND NOT r.single_operator`, credit.ID).Scan(&genesisID, &backfilledRate, &rateVersions, &paidWithoutRate, &nonpaidWithRate))
+	if genesisID == "" || backfilledRate != genesisID || rateVersions != 1 || paidWithoutRate != 0 || nonpaidWithRate != 0 {
+		t.Fatalf("coin-rate genesis/backfill mismatch: genesis=%s receipt=%s versions=%d paid_without=%d nonpaid_with=%d", genesisID, backfilledRate, rateVersions, paidWithoutRate, nonpaidWithRate)
+	}
 	var afterSafe, afterResult, afterFingerprint, afterAudit []byte
 	coinMust(t, "read immutable migrated operation and audit", f.pool.QueryRow(f.ctx, `SELECT safe_input,result_snapshot,input_fingerprint,(SELECT sanitized_diff FROM audit_events WHERE action='pricing.price.publish' AND sanitized_diff->>'operation_id'=$1) FROM pricing_operations WHERE operation_id=$1`, priceOperation).Scan(&afterSafe, &afterResult, &afterFingerprint, &afterAudit))
 	if !bytes.Equal(afterSafe, originalSafe) || !bytes.Equal(afterResult, originalResult) || string(afterFingerprint) != fingerprintBefore || !bytes.Equal(afterAudit, originalAudit) {
