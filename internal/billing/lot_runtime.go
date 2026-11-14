@@ -12,8 +12,9 @@ import (
 // These helpers participate in the caller's financial transaction. Accounts
 // must already be locked before any lot balance is locked; no helper commits.
 type fundingLotBalance struct {
-	id                                  string
-	available, held, consumed, revision int64
+	id                                             string
+	available, held, consumed, refundHeld, retired int64
+	revision                                       int64
 }
 
 func verifyFundingReceiptLotTx(ctx context.Context, tx pgx.Tx, receipt FundingReceipt) error {
@@ -23,7 +24,7 @@ func verifyFundingReceiptLotTx(ctx context.Context, tx pgx.Tx, receipt FundingRe
  JOIN funding_lot_events e ON e.lot_id=l.id AND e.tenant_id=l.tenant_id AND e.revision=1
  WHERE l.id=$1 AND l.funding_receipt_id=$1 AND l.tenant_id=$2 AND l.source_kind=$3 AND l.source_id=$4
  AND l.issued_amount=$5 AND l.fifo_at=$6 AND e.kind='funding' AND e.journal_id=$7
- AND e.delta_available=$5 AND e.delta_held=0 AND e.delta_consumed=0)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(receipt.Amount), receipt.CreatedAt, receipt.JournalID).Scan(&valid)
+ AND e.delta_available=$5 AND e.delta_held=0 AND e.delta_consumed=0 AND e.delta_refund_held=0 AND e.delta_retired=0)`, receipt.ID, receipt.TenantID, string(receipt.SourceKind), receipt.SourceID, int64(receipt.Amount), receipt.CreatedAt, receipt.JournalID).Scan(&valid)
 	if err != nil {
 		return err
 	}
@@ -49,11 +50,11 @@ func createFundingLotTx(ctx context.Context, tx pgx.Tx, receipt FundingReceipt, 
 	if err != nil {
 		return err
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO funding_lot_balances(lot_id,tenant_id,available_amount,held_amount,consumed_amount,revision) VALUES($1,$2,$3,0,0,1)`, receipt.ID, receipt.TenantID, int64(receipt.Amount)); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO funding_lot_balances(lot_id,tenant_id,available_amount,held_amount,consumed_amount,refund_held_amount,retired_amount,revision) VALUES($1,$2,$3,0,0,0,0,1)`, receipt.ID, receipt.TenantID, int64(receipt.Amount)); err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed)
- VALUES($1,$2,$3,$4,$5,'funding',1,$6,0,0)`, uuid.NewString(), receipt.TenantID, receipt.ID, operation, receipt.JournalID, int64(receipt.Amount))
+	_, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired)
+ VALUES($1,$2,$3,$4,$5,'funding',1,$6,0,0,0,0)`, uuid.NewString(), receipt.TenantID, receipt.ID, operation, receipt.JournalID, int64(receipt.Amount))
 	return err
 }
 
@@ -62,7 +63,7 @@ func lockFundingLotBalancesTx(ctx context.Context, tx pgx.Tx, tenant string, ids
 	if len(ids) == 0 {
 		return result, nil
 	}
-	rows, err := tx.Query(ctx, `SELECT lot_id,available_amount,held_amount,consumed_amount,revision FROM funding_lot_balances
+	rows, err := tx.Query(ctx, `SELECT lot_id,available_amount,held_amount,consumed_amount,refund_held_amount,retired_amount,revision FROM funding_lot_balances
  WHERE tenant_id=$1 AND lot_id=ANY($2::text[]) ORDER BY lot_id COLLATE "C" FOR UPDATE`, tenant, ids)
 	if err != nil {
 		return nil, err
@@ -70,10 +71,10 @@ func lockFundingLotBalancesTx(ctx context.Context, tx pgx.Tx, tenant string, ids
 	defer rows.Close()
 	for rows.Next() {
 		b := &fundingLotBalance{}
-		if err = rows.Scan(&b.id, &b.available, &b.held, &b.consumed, &b.revision); err != nil {
+		if err = rows.Scan(&b.id, &b.available, &b.held, &b.consumed, &b.refundHeld, &b.retired, &b.revision); err != nil {
 			return nil, err
 		}
-		if b.available < 0 || b.held < 0 || b.consumed < 0 || b.revision < 1 {
+		if b.available < 0 || b.held < 0 || b.consumed < 0 || b.refundHeld < 0 || b.retired < 0 || b.revision < 1 {
 			return nil, lotPlanInvariant()
 		}
 		result[b.id] = b
@@ -87,18 +88,18 @@ func lockFundingLotBalancesTx(ctx context.Context, tx pgx.Tx, tenant string, ids
 	return result, nil
 }
 
-func changeFundingLotTx(ctx context.Context, tx pgx.Tx, tenant, operation, journal, kind string, b *fundingLotBalance, available, held, consumed int64) error {
-	next, err := projectFundingLotChange(b, available, held, consumed)
+func changeFundingLotTx(ctx context.Context, tx pgx.Tx, tenant, operation, journal, kind string, b *fundingLotBalance, available, held, consumed, refundHeld, retired int64) error {
+	next, err := projectFundingLotChange(b, available, held, consumed, refundHeld, retired)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed)
- VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, uuid.NewString(), tenant, b.id, operation, journal, kind, next.revision, available, held, consumed)
+	_, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired)
+ VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, uuid.NewString(), tenant, b.id, operation, journal, kind, next.revision, available, held, consumed, refundHeld, retired)
 	if err != nil {
 		return err
 	}
 	tag, err := tx.Exec(ctx, `UPDATE funding_lot_balances SET available_amount=$3,held_amount=$4,consumed_amount=$5,revision=$6
- WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7 AND available_amount=$8 AND held_amount=$9 AND consumed_amount=$10`, tenant, b.id, next.available, next.held, next.consumed, next.revision, b.revision, b.available, b.held, b.consumed)
+ WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7 AND available_amount=$8 AND held_amount=$9 AND consumed_amount=$10 AND refund_held_amount=$11 AND retired_amount=$12`, tenant, b.id, next.available, next.held, next.consumed, next.revision, b.revision, b.available, b.held, b.consumed, b.refundHeld, b.retired)
 	if err != nil {
 		return err
 	}
@@ -109,7 +110,7 @@ func changeFundingLotTx(ctx context.Context, tx pgx.Tx, tenant, operation, journ
 	return nil
 }
 
-func projectFundingLotChange(b *fundingLotBalance, available, held, consumed int64) (fundingLotBalance, error) {
+func projectFundingLotChange(b *fundingLotBalance, available, held, consumed, refundHeld, retired int64) (fundingLotBalance, error) {
 	if b == nil {
 		return fundingLotBalance{}, lotPlanInvariant()
 	}
@@ -125,15 +126,23 @@ func projectFundingLotChange(b *fundingLotBalance, available, held, consumed int
 	if err != nil {
 		return fundingLotBalance{}, err
 	}
+	rh, err := checkedAdd(b.refundHeld, refundHeld)
+	if err != nil {
+		return fundingLotBalance{}, err
+	}
+	r, err := checkedAdd(b.retired, retired)
+	if err != nil {
+		return fundingLotBalance{}, err
+	}
 	revision, err := checkedAdd(b.revision, 1)
 	if err != nil {
 		return fundingLotBalance{}, err
 	}
-	if a < 0 || h < 0 || c < 0 {
+	if a < 0 || h < 0 || c < 0 || rh < 0 || r < 0 {
 		return fundingLotBalance{}, lotPlanInvariant()
 	}
 	next := *b
-	next.available, next.held, next.consumed, next.revision = a, h, c, revision
+	next.available, next.held, next.consumed, next.refundHeld, next.retired, next.revision = a, h, c, rh, r, revision
 	return next, nil
 }
 
@@ -150,7 +159,7 @@ func prepareFundingReserveTx(ctx context.Context, tx pgx.Tx, tenant string, amou
 	if amount == 0 {
 		return plan, nil
 	}
-	rows, err := tx.Query(ctx, `SELECT b.lot_id,l.fifo_at,b.available_amount,b.held_amount,b.consumed_amount,b.revision
+	rows, err := tx.Query(ctx, `SELECT b.lot_id,l.fifo_at,b.available_amount,b.held_amount,b.consumed_amount,b.refund_held_amount,b.retired_amount,b.revision
  FROM funding_lot_balances b JOIN funding_lots l ON l.id=b.lot_id AND l.tenant_id=b.tenant_id
  WHERE b.tenant_id=$1 AND b.available_amount>0 ORDER BY b.lot_id COLLATE "C" FOR UPDATE OF b`, tenant)
 	if err != nil {
@@ -161,10 +170,10 @@ func prepareFundingReserveTx(ctx context.Context, tx pgx.Tx, tenant string, amou
 	for rows.Next() {
 		b := &fundingLotBalance{}
 		var at time.Time
-		if err = rows.Scan(&b.id, &at, &b.available, &b.held, &b.consumed, &b.revision); err != nil {
+		if err = rows.Scan(&b.id, &at, &b.available, &b.held, &b.consumed, &b.refundHeld, &b.retired, &b.revision); err != nil {
 			return fundingReservePlan{}, err
 		}
-		if b.available <= 0 || b.held < 0 || b.consumed < 0 || b.revision < 1 {
+		if b.available <= 0 || b.held < 0 || b.consumed < 0 || b.refundHeld < 0 || b.retired < 0 || b.revision < 1 {
 			return fundingReservePlan{}, lotPlanInvariant()
 		}
 		plan.balances[b.id] = b
@@ -184,15 +193,15 @@ func applyFundingReserveTx(ctx context.Context, tx pgx.Tx, r Reservation, journa
 	batch := &pgx.Batch{}
 	for _, a := range plan.allocations {
 		balance := plan.balances[a.lotID]
-		next, err := projectFundingLotChange(balance, -int64(a.amount), int64(a.amount), 0)
+		next, err := projectFundingLotChange(balance, -int64(a.amount), int64(a.amount), 0, 0, 0)
 		if err != nil {
 			return err
 		}
 		batch.Queue(`INSERT INTO funding_reservation_lots(tenant_id,reservation_id,request_id,lot_id,allocation_index,amount) VALUES($1,$2,$3,$4,$5,$6)`, r.TenantID, r.ID, r.RequestID, a.lotID, a.index, int64(a.amount))
-		batch.Queue(`INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed)
- VALUES($1,$2,$3,$4,$5,'reserve',$6,$7,$8,0)`, uuid.NewString(), r.TenantID, a.lotID, r.ID, journal, next.revision, -int64(a.amount), int64(a.amount))
+		batch.Queue(`INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired)
+ VALUES($1,$2,$3,$4,$5,'reserve',$6,$7,$8,0,0,0)`, uuid.NewString(), r.TenantID, a.lotID, r.ID, journal, next.revision, -int64(a.amount), int64(a.amount))
 		batch.Queue(`UPDATE funding_lot_balances SET available_amount=$3,held_amount=$4,consumed_amount=$5,revision=$6
- WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7 AND available_amount=$8 AND held_amount=$9 AND consumed_amount=$10`, r.TenantID, a.lotID, next.available, next.held, next.consumed, next.revision, balance.revision, balance.available, balance.held, balance.consumed)
+ WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7 AND available_amount=$8 AND held_amount=$9 AND consumed_amount=$10 AND refund_held_amount=$11 AND retired_amount=$12`, r.TenantID, a.lotID, next.available, next.held, next.consumed, next.revision, balance.revision, balance.available, balance.held, balance.consumed, balance.refundHeld, balance.retired)
 		*balance = next
 	}
 	return closeBatch(tx.SendBatch(ctx, batch), nil)
@@ -234,15 +243,15 @@ func applyFundingFinishTx(ctx context.Context, tx pgx.Tx, r financialRequest, se
 	for _, f := range finish {
 		a := f.allocation
 		balance := plan.balances[a.lotID]
-		next, err := projectFundingLotChange(balance, int64(f.released), -int64(a.amount), int64(f.charged))
+		next, err := projectFundingLotChange(balance, int64(f.released), -int64(a.amount), int64(f.charged), 0, 0)
 		if err != nil {
 			return err
 		}
 		batch.Queue(`INSERT INTO funding_settlement_lots(tenant_id,settlement_id,reservation_id,allocation_index,lot_id,charged_amount,released_amount) VALUES($1,$2,$3,$4,$5,$6,$7)`, r.TenantID, settlement, r.ReservationID, a.index, a.lotID, int64(f.charged), int64(f.released))
-		batch.Queue(`INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed)
- VALUES($1,$2,$3,$4,$5,'finish',$6,$7,$8,$9)`, uuid.NewString(), r.TenantID, a.lotID, settlement, journal, next.revision, int64(f.released), -int64(a.amount), int64(f.charged))
+		batch.Queue(`INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired)
+ VALUES($1,$2,$3,$4,$5,'finish',$6,$7,$8,$9,0,0)`, uuid.NewString(), r.TenantID, a.lotID, settlement, journal, next.revision, int64(f.released), -int64(a.amount), int64(f.charged))
 		batch.Queue(`UPDATE funding_lot_balances SET available_amount=$3,held_amount=$4,consumed_amount=$5,revision=$6
- WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7 AND available_amount=$8 AND held_amount=$9 AND consumed_amount=$10`, r.TenantID, a.lotID, next.available, next.held, next.consumed, next.revision, balance.revision, balance.available, balance.held, balance.consumed)
+ WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7 AND available_amount=$8 AND held_amount=$9 AND consumed_amount=$10 AND refund_held_amount=$11 AND retired_amount=$12`, r.TenantID, a.lotID, next.available, next.held, next.consumed, next.revision, balance.revision, balance.available, balance.held, balance.consumed, balance.refundHeld, balance.retired)
 		*balance = next
 	}
 	return closeBatch(tx.SendBatch(ctx, batch), nil)
@@ -301,7 +310,7 @@ func applyFundingRefundTx(ctx context.Context, tx pgx.Tx, tenant, refund, settle
 		if _, err := tx.Exec(ctx, `INSERT INTO funding_consumption_refund_lots(tenant_id,refund_order_id,settlement_id,allocation_index,lot_id,refund_index,amount) VALUES($1,$2,$3,$4,$5,$6,$7)`, tenant, refund, settlement, f.allocationIndex, f.lotID, f.index, int64(f.amount)); err != nil {
 			return err
 		}
-		if err := changeFundingLotTx(ctx, tx, tenant, refund, journal, "refund", plan.balances[f.lotID], int64(f.amount), 0, -int64(f.amount)); err != nil {
+		if err := changeFundingLotTx(ctx, tx, tenant, refund, journal, "refund", plan.balances[f.lotID], int64(f.amount), 0, -int64(f.amount), 0, 0); err != nil {
 			return err
 		}
 	}

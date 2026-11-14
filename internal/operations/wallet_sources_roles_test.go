@@ -13,7 +13,7 @@ import (
 
 func reviewedWalletFunction(t *testing.T, name string) string {
 	t.Helper()
-	body, err := migrations.Files.ReadFile("024_unified_text_metering.sql")
+	body, err := migrations.Files.ReadFile("current_007_refund_buckets.sql")
 	paymentRoleMust(t, "reviewed current wallet source", err)
 	definition := regexp.MustCompile(`(?s)CREATE OR REPLACE FUNCTION ` + regexp.QuoteMeta(name) + `\(.*?\$\$;`).FindString(string(body))
 	if definition == "" {
@@ -34,13 +34,13 @@ func TestWalletSourcesRolesActualCurrentMatrix(t *testing.T) {
 	}{
 		{f.appRole, PaymentApplicationRole}, {f.workerRole, PaymentWorkerRole}, {f.projectionRole, PaymentProjectionRole},
 	} {
-		for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+		for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
 			t.Run(string(role.kind)+"/"+table, func(t *testing.T) {
 				app := role.kind == PaymentApplicationRole
 				worker := role.kind == PaymentWorkerRole
 				workerSource := table == "funding_lots" || table == "funding_lot_balances" || table == "funding_lot_events"
 				wantSelect := app || worker && (workerSource || table == "ledger_accounts")
-				wantInsert := app && table != "wallet_openings" || worker && workerSource
+				wantInsert := app && table != "wallet_openings" && table != "cash_refund_orders" || worker && workerSource
 				var selectAll, insertAll, updateAll, forbidden bool
 				paymentRoleMust(t, "independent table privilege query", f.owner.QueryRow(f.ctx, `SELECT
  has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),
@@ -99,6 +99,9 @@ func TestWalletSourcesRolesDMLAndWorkerReadBoundary(t *testing.T) {
 		"DELETE FROM wallet_operator_settings WHERE false",
 		"UPDATE wallet_requests SET note=note WHERE false",
 		"DELETE FROM wallet_requests WHERE false",
+		"INSERT INTO cash_refund_orders(id) VALUES('forbidden')",
+		"UPDATE cash_refund_orders SET reason=reason WHERE false",
+		"DELETE FROM cash_refund_orders WHERE false",
 		"UPDATE funding_lots SET source_id=source_id WHERE false",
 		"UPDATE funding_lot_balances SET tenant_id=tenant_id WHERE false",
 		"DELETE FROM funding_lot_balances WHERE false",
@@ -108,10 +111,10 @@ func TestWalletSourcesRolesDMLAndWorkerReadBoundary(t *testing.T) {
 	} {
 		denied(t, PaymentApplicationRole, query)
 	}
-	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "credit_orders", "voucher_redemptions", "reservations", "settlements", "refund_orders"} {
+	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "credit_orders", "voucher_redemptions", "reservations", "settlements", "refund_orders"} {
 		denied(t, PaymentWorkerRole, "SELECT * FROM "+pgx.Identifier{table}.Sanitize()+" LIMIT 0")
 	}
-	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
 		denied(t, PaymentProjectionRole, "SELECT * FROM "+pgx.Identifier{table}.Sanitize()+" LIMIT 0")
 	}
 	for _, name := range []string{"wallet_lot_valid", "wallet_event_valid", "wallet_journal_valid", "wallet_account_valid"} {

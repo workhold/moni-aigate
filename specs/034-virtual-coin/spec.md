@@ -330,10 +330,25 @@ ALTER TABLE funding_lot_balances
   ADD COLUMN retired_amount     bigint NOT NULL DEFAULT 0 CHECK (retired_amount >= 0);
 ALTER TABLE funding_lot_events
   ADD COLUMN delta_refund_held bigint NOT NULL DEFAULT 0,
-  ADD COLUMN delta_retired     bigint NOT NULL DEFAULT 0;
+  ADD COLUMN delta_retired     bigint NOT NULL DEFAULT 0,
+  ADD COLUMN refund_order_id  text;                   -- 新退款事件关联订单；旧事件必须为 NULL
 -- 守恒：available + held + consumed + refund_held + retired = issued_amount
 -- ledger_accounts.kind 增加 'REFUND_HELD'（租户账户，balance >= 0）
 ```
+
+每次退款迁移使用独立、不可复用的 journal `operation_id`；`journals.reference` 保存退款单 ID。`funding_lot_events.operation_id` 继续等于其 journal 的唯一 operation，**不得**把退款单 ID 同时用作 hold、retire/release 多个 journal 的 operation，以免违反现有 `journals.operation_id UNIQUE` 与 `(operation_id, lot_id)` 唯一约束。新事件以复合 `(tenant_id, refund_order_id)` 外键关联退款单，并要求 `refund_hold/refund_retire/refund_release` 的 `refund_order_id` 非空、旧 kind 为空；`(refund_order_id, kind)` 唯一，NULL 不限制旧事件。订单的 `hold_journal_id/retire_journal_id/release_journal_id` 分别绑定对应 journal。每个 operation 必须是非零规范 UUID、不同于订单 ID 和 `business_ref`，且不得复用。
+
+三种会计形状如下；`k=cash_refund_orders.coin_amount>0`，未列出的 delta 必须为 0，journal 必须恰有两条对应账户行，不能用混合/额外事件或无关账户行凑平。retire/release 必须存在同订单、同 lot、`revision` 更早且同 `k` 的 `refund_hold`，防止用其他订单的 refund_held 伪造退出。三种事件只允许关联 `basis_kind='paid'` 且 `refund_class='cash_original'` 的 receipt/lot；这只是静态会计资格，不执行“全部可用币”计算。
+
+| 事件 / journal kind | 订单 journal 指针 | 来源 delta（available, held, consumed, refund_held, retired） | 租户/平台账户行 |
+|---|---|---|---|
+| `refund_hold` / `cash_refund_hold` | `hold_journal_id` | `(-k, 0, 0, +k, 0)` | 租户 `AVAILABLE -k`、`REFUND_HELD +k` |
+| `refund_retire` / `cash_refund_retire` | `retire_journal_id` | `(0, 0, 0, -k, +k)` | 租户 `REFUND_HELD -k`、平台 `FUNDING_CLEARING +k` |
+| `refund_release` / `cash_refund_release` | `release_journal_id` | `(+k, 0, 0, -k, 0)` | 租户 `REFUND_HELD -k`、`AVAILABLE +k` |
+
+`refund_order_id` 只是存储关联，`(refund_order_id, kind)` 唯一也只是存储不变量，不等于审批/完成幂等、退休与释放互斥或未知提交恢复已经验收。034.3 的 deferred 订单校验要求：`requested` 无退款事实；`approved/transfer_executed` 只有 hold；`completed` 有 hold+retire；`cancelled` 可以是无 hold 的申请前取消或有 hold+release；`failed` 必须有 hold+release。hold 在批准后的所有状态保持历史有效，retire/release 不得共存。租户、lot、订单引用、journal 指针和独立 operation 必须一致。
+
+034.3 不执行“全部可用币”资格、运营角色授权、条件状态迁移、币价计算、一来源一张未完成单、未知提交恢复、告警或申请关联；这些均属于 034.4。应用角色对静态订单只有 SELECT，034.4 才追加生产写权限和状态约束。`FUNDING_CLEARING = Σ delta_retired` 只对 `cash_refund_retire` 生效，不能用于普通 credit journal。
 
 流转：
 
@@ -356,8 +371,8 @@ ALTER TABLE funding_lot_events
 | `funding_fact_guard`（触发器函数） | 对 `journals` 的 `kind` 有白名单：`kind NOT IN ('credit','voucher_grant','sandbox_capture')` 时，只要该 journal 涉及 `FUNDING_CLEARING`、`OPERATING_GRANT_CLEARING`、`SANDBOX_FUNDING_CLEARING` 任一账户就抛错 | 白名单必须加入 `credit_bonus`（赠送入账）与 `cash_refund_retire`（退出时 `FUNDING_CLEARING` 回正）。**这与我此前“`journals.kind` 无 CHECK 白名单”的说法不符：没有表级 CHECK，但这个触发器是实际的白名单** |
 | `funding_journal_valid` 等按 `kind` 分支的函数 | 对已知 kind 校验 | 新增 `credit_bonus`、`cash_refund_hold`、`cash_refund_retire`、`cash_refund_release` 的合法形态 |
 | `funding_lot_events` 前缀和核对、`wallet_sources_read.go` | 三桶之和 | 五桶；输出分列 |
-| `check-wallet-sources` | 四类不一致 | 加入新桶；新增“父单据来源不成对”类；`unknown` 来源总额单列 |
-| `Wallet` 查询与客户钱包页 | `AVAILABLE`、`HELD` 两项 | 增加“退款处理中”一项 |
+| `check-wallet-sources` | 四类不一致 | 加入新桶；保留“父单据来源不成对”类；错误计数只报不一致，不把金额当作计数。`unknown` 来源总额在既有资金来源摘要中单列 |
+| `Wallet` 查询与客户钱包页 | `AVAILABLE`、`HELD` 两项 | “退款处理中”汇总及余额构成展示归 034.5/§8.1；034.3 只扩展底层逐来源五桶读取合同 |
 | 027、028-U 延迟约束 | 三桶 | 同步 |
 | `wallet_reservation_fifo_guard` | `ORDER BY fifo_at, id` | 见 §5.5 |
 | Reserve 的来源选择 | 只选 `available_amount > 0` | 不变；两个新桶永不进入 |
@@ -365,6 +380,8 @@ ALTER TABLE funding_lot_events
 不变量：新桶不能再次进入 Reserve，不能参与消费退款；每次变动必须有对应现金退款单与 journal；未知提交不能重复写事件（§7.5）。
 
 ### 5.7 现金退款单
+
+**分片边界**：034.3 只安装下面的静态表及事件/journal 校验所需约束，应用角色仅可 SELECT 用于只读核对，不提供 INSERT/UPDATE/DELETE、状态迁移服务、现金退款 HTTP/控制台或告警。034.4 才在该表上实现状态机及相应精确写权限。`buy_rate_version_id/refund_rate_version_id` 在 034.3 只是 nullable 数据列，不引用或验证尚未安装的币价表；034.3b 才建立版本关系。一来源一张未完成单的唯一索引、条件状态迁移、幂等恢复与申请关联全部属于 034.4。034.3 可用 migration owner 的静态订单 fixture 验证五桶 guard，但该 fixture 不是现金退款业务验收。
 
 ```sql
 CREATE TABLE cash_refund_orders (
@@ -588,7 +605,7 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 ### 7.5 未知提交与恢复
 
 - 批准与完成各是一个数据库事务。连接在提交前断开，调用方**只按业务号读回单据状态与事件**，不自动重做；状态已前进则返回现状，未前进才允许人工重试同一迁移。
-- 迁移用条件更新（`WHERE state = <前态>`），同一单据的同一迁移最多成功一次；`refund_hold/retire/release` 事件以 `(refund_order_id, kind)` 唯一，防止重复写入。
+- 迁移用条件更新（`WHERE state = <前态>`），同一单据的同一迁移最多成功一次；每次迁移使用新的 journal operation UUID，`refund_hold/retire/release` 事件以 `(refund_order_id, kind)` 唯一，防止重复写入。订单 ID 仅作 `journals.reference` 与事件外键，不复用为多个 operation ID。
 - 恢复任务不涉及现金退款；不会自动完成或释放。长时间停留在 `approved/transfer_executed` 的单据由告警提示人工处理（接入 024-A 的站内告警）。
 - 释放与退出互斥：一张单只能走其中一条，由状态机与唯一事件约束保证。
 
@@ -757,7 +774,8 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 | 消费顺序 | 同一充值单：**始终先消耗付费来源、后消耗赠送来源**；并发请求下不变；赠送来源 `created_at` 严格大于付费来源（含两次时钟读数相等的构造场景，例如注入固定时钟）；不同充值单严格 FIFO；文本与媒体 Reserve 两条路径一致；SQL guard 与 Go 计划无分歧；既有 FIFO 测试全部不改而通过 | PG |
 | 余额构成 | 付费 + 赠送 + 其他 = 可用余额；存在 `manual_unknown`、开账来源时仍成立；无退款处理时不显示该项；赠送币旁有不可退现金提示 | PG + 前端 |
 | 前端校验 | `wallet-sources.ts` 接受 `manual_bonus`、`manual_unknown`、`cash_original`；非法组合仍被拒 | 前端测试 |
-| 守恒 | 五桶 `available + held + refund_held + consumed + retired = issued` 在所有操作后成立；`AVAILABLE`/`HELD`/`REFUND_HELD` 账户余额分别等于对应来源桶之和；`check-wallet-sources` 无不一致 | PG |
+| 守恒 | 五桶 `available + held + refund_held + consumed + retired = issued` 在现有资金操作后成立；034.3 另以 migration owner 的静态订单 fixture 验证 hold/retire/release 正误形态、独立 operation、事件唯一与直接 SQL guard；`AVAILABLE`/`HELD`/`REFUND_HELD` 账户余额分别等于对应来源桶之和，`check-wallet-sources` 无不一致。034.4 再验证真实现金退款全生命周期及竞态 | PG |
+| 034.3 guard 负控 | 旧 kind 携带新 delta、NULL/kind 错配、跨租户/lot/journal/reference/operation/指针、错误 delta/额外账户行、复用 operation、重复 `(refund_order_id,kind)`、retire+release、孤儿订单/journal 均拒绝；分别用不同订单验证 retire 和 release。订单 setup 由 migration owner 完成，journal/event/balance 在全部 trigger/constraint 开启下写入；应用订单 I/U/D 被拒绝，禁止以禁用 trigger 或 mock validator 代替验收 | PG |
 | 现金退款资格 | 赠送、兑换券、开账、未知基准来源被拒；冻结与已消费部分不可退 | PG |
 | 现金退款状态机 | 逐条迁移；冻结后 Reserve 看不到被冻结的币；`cancelled/failed` 释放回可用；`completed` 为终态；完成时 `paid_fiat_amount` 与冻结 `fiat_amount` 不等被拒；`transfer_proof_ref` 缺失被拒 | PG |
 | 现金退款金额 | MVP 手算向量：固定币价、折扣充值（付 90 得 100，退 `k×0.9`，折扣不退回）；全额由系统填，操作人传币数被拒；`int64` 边界与 5 个 64 位数相乘不溢出（`big.Int`）；向下取整永不多退；币价或买入版本缺失则失败关闭。未来调价治理另测上调、下调和批准后调价不影响已批准单 | 纯函数 + PG |
@@ -777,9 +795,9 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 | 34.0 | 本规格评审，裁决 D-034-1…13，满足 §15 全部阻断项 | 已完成（2026-11-14 冻结，见[方向审查记录](../../docs/design/direction-review-2026-11-14.md)） |
 | 34.1 | `currency` 约束改为 `COIN`，类型区分；数值不变 | 34.0 |
 | 34.2 | 角色字段、**单人运营开关与 §5.1 的五类位置**、付款基准、独立 `wallet_requests` 及原子关联、来源组合 CHECK（receipt 与 lot 各自单表）、两来源与父关联、先付费后赠送的确定性时间戳 | 34.1 |
-| 34.3 | 两个新桶 `refund_held`、`retired`：守恒式、事件类型、journal kind 校验、`check-wallet-sources`、guard 更新 | 34.2 |
+| 34.3 | 两个新桶 `refund_held`、`retired`：守恒式、事件类型、journal kind 校验、`check-wallet-sources`、guard 更新；创建静态 `cash_refund_orders` 及事件关联所需约束，不提供应用写权限、状态迁移服务或现金退款入口 | 34.2 |
 | 34.3b | **币价版本表**、创世版本、receipt 记录买入币价版本；MVP 不提供调价入口，调价审批与预览后置 | 34.2 |
-| 34.4 | 现金退款单：状态机、§7.3 退款额核算（`big.Int`）、审批事务、一来源一张未完成单的唯一索引、HTTP 与控制台、告警 | 34.3、34.3b |
+| 34.4 | 在 034.3 已存在的 `cash_refund_orders` 上实现状态机、§7.3 退款额核算（`big.Int`）、审批事务、一来源一张未完成单的唯一索引、HTTP 与控制台、告警 | 34.3、34.3b |
 | 34.5 | 报表付款基准、客户充值记录与**余额构成展示**（§8.1），前端来源类型校验放开 | 34.2 |
 | 34.6 | “约合”展示与显示名配置 | 34.1 |
 | 后置 P | 支付订单与捕获的两来源、支付宝金额语义、手续费 | 022 |

@@ -198,7 +198,7 @@ func TestPostgresWalletSourcesReadFindsBothDirections(t *testing.T) {
 		{name: "source_without_receipt", sql: `TRUNCATE funding_receipts CASCADE`, category: "source"},
 		{name: "bad_balance_principal", sql: `UPDATE funding_lot_balances SET consumed_amount=consumed_amount+1`, category: "source",
 			prepare: func(t *testing.T, f *fixture) { walletSourcesReadDisable(t, f, "funding_lot_balances") }},
-		{name: "balance_without_lot", sql: `INSERT INTO funding_lot_balances SELECT gen_random_uuid()::text,tenant_id,available_amount,held_amount,consumed_amount,revision FROM funding_lot_balances LIMIT 1`, category: "source",
+		{name: "balance_without_lot", sql: `INSERT INTO funding_lot_balances SELECT gen_random_uuid()::text,tenant_id,available_amount,held_amount,consumed_amount,revision,refund_held_amount,retired_amount FROM funding_lot_balances LIMIT 1`, category: "source",
 			prepare: func(t *testing.T, f *fixture) {
 				walletSourcesReadDropFK(t, f, "funding_lot_balances", "")
 				walletSourcesReadDisable(t, f, "funding_lot_balances")

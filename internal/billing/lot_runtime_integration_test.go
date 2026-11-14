@@ -132,9 +132,9 @@ func TestPostgresWalletSourcesRuntimeFIFOFinishAndReverseRefund(t *testing.T) {
 			t.Fatal("repeated approval changed source history")
 		}
 	}
-	for i, want := range [][3]int64{{15, 0, 55}, {80, 0, 0}} {
-		var available, held, consumed int64
-		if err = f.pool.QueryRow(f.ctx, `SELECT available_amount,held_amount,consumed_amount FROM funding_lot_balances WHERE lot_id=$1`, ids[i]).Scan(&available, &held, &consumed); err != nil || [3]int64{available, held, consumed} != want {
+	for i, want := range [][5]int64{{15, 0, 55, 0, 0}, {80, 0, 0, 0, 0}} {
+		var available, held, consumed, refundHeld, retired int64
+		if err = f.pool.QueryRow(f.ctx, `SELECT available_amount,held_amount,consumed_amount,refund_held_amount,retired_amount FROM funding_lot_balances WHERE lot_id=$1`, ids[i]).Scan(&available, &held, &consumed, &refundHeld, &retired); err != nil || [5]int64{available, held, consumed, refundHeld, retired} != want {
 			t.Fatal(i, available, held, consumed, err)
 		}
 	}
@@ -261,8 +261,8 @@ func TestPostgresWalletSourcesRuntimeReleaseAndZeroPrice(t *testing.T) {
 		t.Fatal(s, err)
 	}
 	f.wallet(t, 150, 0)
-	var available, held, consumed int64
-	if err = f.pool.QueryRow(f.ctx, `SELECT available_amount,held_amount,consumed_amount FROM funding_lot_balances WHERE tenant_id=$1`, f.tenant).Scan(&available, &held, &consumed); err != nil || available != 150 || held != 0 || consumed != 0 {
+	var available, held, consumed, refundHeld, retired int64
+	if err = f.pool.QueryRow(f.ctx, `SELECT available_amount,held_amount,consumed_amount,refund_held_amount,retired_amount FROM funding_lot_balances WHERE tenant_id=$1`, f.tenant).Scan(&available, &held, &consumed, &refundHeld, &retired); err != nil || available != 150 || held != 0 || consumed != 0 || refundHeld != 0 || retired != 0 {
 		t.Fatal(available, held, consumed, err)
 	}
 	publishBillingDefault(t, f, f.model, 0, 0, time.Now().UTC())

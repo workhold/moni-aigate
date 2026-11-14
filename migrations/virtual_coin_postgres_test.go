@@ -239,6 +239,11 @@ func TestVirtualCoinMigrationPreservesAmountsAndCanonical(t *testing.T) {
 	if inputNumerator != 1 || inputDenominator != 4 || outputNumerator != 1 || outputDenominator != 2 {
 		t.Fatalf("unit migration rescaled retail rates: %d/%d %d/%d", inputNumerator, inputDenominator, outputNumerator, outputDenominator)
 	}
+	var refundHeld, retired, deltaRefundHeld, deltaRetired int64
+	coinMust(t, "read zero-default refund buckets after populated upgrade", f.pool.QueryRow(f.ctx, `SELECT b.refund_held_amount,b.retired_amount,e.delta_refund_held,e.delta_retired FROM funding_lot_balances b JOIN funding_receipts f ON f.id=b.lot_id AND f.source_id=$1 JOIN funding_lot_events e ON e.lot_id=b.lot_id AND e.revision=1`, credit.ID).Scan(&refundHeld, &retired, &deltaRefundHeld, &deltaRetired))
+	if refundHeld != 0 || retired != 0 || deltaRefundHeld != 0 || deltaRetired != 0 {
+		t.Fatal("populated upgrade changed historical refund buckets or deltas")
+	}
 	var valid bool
 	coinMust(t, "validate migrated funding journal", f.pool.QueryRow(f.ctx, `SELECT funding_journal_valid($1)`, credit.JournalID).Scan(&valid))
 	if !valid {
@@ -248,6 +253,11 @@ func TestVirtualCoinMigrationPreservesAmountsAndCanonical(t *testing.T) {
 	coinMust(t, "verify migrated funding graph", err)
 	if !check.Balanced {
 		t.Fatalf("migrated funding graph is unbalanced: %+v", check)
+	}
+	wallet, err := store.CheckWalletSources(f.ctx, tenant)
+	coinMust(t, "verify five-bucket wallet graph after populated upgrade", err)
+	if !wallet.Balanced {
+		t.Fatalf("migrated wallet sources are unbalanced: %+v", wallet)
 	}
 	pricingStore := catalog.New(f.pool, nil)
 	replayed, err := pricingStore.PublishDefaultPrice(f.ctx, catalog.PricingActor{UserID: priceActor}, catalog.DefaultPriceCommand{OperationID: priceOperation, ModelID: model, SchemaID: schemaID, SchemaDigest: schemaDigest, VariantKey: "default", InputRate: 250000, OutputRate: 500000, EffectiveAt: createdAt})

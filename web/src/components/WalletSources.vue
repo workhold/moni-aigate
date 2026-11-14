@@ -33,7 +33,7 @@ defineExpose({ refresh })
     <el-alert v-if="!allowed" :title="platform ? '资金来源仅向平台管理员、财务制单和财务审批角色开放。' : '资金来源仅向租户所有者和账单查看者开放。'" type="info" :closable="false" />
     <el-alert v-else-if="!tenantID" title="选择客户后可查看该客户的资金来源余额。" type="info" :closable="false" />
     <template v-else>
-      <p class="source-note">金额为 COIN，保留 6 位小数（1 币 = 1,000,000 微币）。初始余额导入为非现金开账；人工核款、运营赠额和开账均不赋予原路现金退款资格。消费退款退回原来源的钱包余额。</p>
+      <p class="source-note">金额为 COIN，保留 6 位小数（1 币 = 1,000,000 微币）。初始余额导入为非现金开账；赠送、未知基准和开账不赋予原路现金退款资格。人工核款标记现金来源，但 034.4 前不表示已开放现金退款。消费退款退回原来源的钱包余额。</p>
       <p class="source-note">本地模拟入账只具有支付沙箱语义，不代表真实收款或真实原路退款。以下金额按来源展示，不等于现金收入。</p>
       <ErrorNotice :message="state.error" @retry="refresh" />
       <div v-if="state.loading" role="status" aria-live="polite" class="source-loading">正在读取资金来源余额…</div>
@@ -43,7 +43,9 @@ defineExpose({ refresh })
         <el-table-column label="来源本金" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.issued_amount) }}</span></template></el-table-column>
         <el-table-column label="可用金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.available_amount) }}</span></template></el-table-column>
         <el-table-column label="冻结金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.held_amount) }}</span></template></el-table-column>
+        <el-table-column label="退款冻结" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.refund_held_amount) }}</span></template></el-table-column>
         <el-table-column label="已消费金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.consumed_amount) }}</span></template></el-table-column>
+        <el-table-column label="已退出金额" min-width="175"><template #default="{ row }"><span class="source-money">{{ coin(row.retired_amount) }}</span></template></el-table-column>
         <el-table-column label="入账时间（UTC）" min-width="245"><template #default="{ row }"><span class="mono small-text">{{ row.created_at }}</span></template></el-table-column>
       </el-table>
       <div class="table-footer"><span>第 {{ state.history.length + 1 }} 页 · 当前页 {{ state.rows.length }} 条 · 每页最多 50 条</span><div><el-button size="small" :disabled="state.loading || !state.history.length" @click="load('previous')">上一页</el-button><el-button size="small" :disabled="state.loading || !state.nextCursor" @click="load('next')">下一页</el-button></div></div>

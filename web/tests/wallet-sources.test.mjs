@@ -7,7 +7,7 @@ import { canReadWalletSources, createWalletSourcesReader, parseWalletSource, par
 
 const tenant = '11111111-1111-4111-8111-111111111111', other = '22222222-2222-4222-8222-222222222222'
 const id = index => `aaaaaaaa-aaaa-4aaa-8aaa-${String(index).padStart(12, '0')}`
-const source = (patch = {}) => ({ id: id(1), lot_id: id(1), source_kind: 'wallet_opening', refund_class: 'nonrefundable', issued_amount: '9007199254740993', available_amount: '9007199254740991', held_amount: '1', consumed_amount: '1', created_at: '2026-11-04T00:00:00.123456Z', ...patch })
+const source = (patch = {}) => ({ id: id(1), lot_id: id(1), source_kind: 'wallet_opening', refund_class: 'nonrefundable', issued_amount: '9007199254740993', available_amount: '9007199254740991', held_amount: '1', consumed_amount: '1', refund_held_amount: '0', retired_amount: '0', created_at: '2026-11-04T00:00:00.123456Z', ...patch })
 const page = (start = 1) => Array.from({ length: 50 }, (_, i) => source({ id: id(start + i), lot_id: id(start + i) }))
 const envelope = (data, next_cursor = '') => ({ data, next_cursor, request_id: 'safe-request' })
 function deferred() { let resolve, reject; const promise = new Promise((accept, fail) => { resolve = accept; reject = fail }); return { promise, resolve, reject } }
@@ -36,6 +36,11 @@ test('exact source amounts and buckets retain micro-yuan beyond JavaScript safe 
   assert.equal(money(parsed.available_amount), '¥9,007,199,254.740991')
   assert.equal(money(parsed.held_amount), '¥0.000001')
   assert.equal(money(parsed.consumed_amount), '¥0.000001')
+  const buckets = parseWalletSource(source({ issued_amount: '10', available_amount: '5', held_amount: '1', consumed_amount: '1', refund_held_amount: '2', retired_amount: '1' }))
+  assert.equal(buckets.refund_held_amount, '2')
+  assert.equal(buckets.retired_amount, '1')
+  for (const patch of [{ refund_held_amount: '-1' }, { retired_amount: '-1' }, { refund_held_amount: '2' }, { retired_amount: '2' }]) assert.throws(() => parseWalletSource(source(patch)))
+  for (const field of ['refund_held_amount', 'retired_amount']) { const incomplete = source(); delete incomplete[field]; assert.throws(() => parseWalletSource(incomplete)) }
   assert.throws(() => parseWalletSource(source({ available_amount: '9007199254740992' })), /不一致/)
   assert.throws(() => parseWalletSource(source({ issued_amount: '9223372036854775808' })))
   for (const issued_amount of [0, '0', '-1', '01', '1.0', null]) assert.throws(() => parseWalletSource(source({ issued_amount })))

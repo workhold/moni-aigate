@@ -175,12 +175,13 @@ amount_micro = metering.Amount(complete_quantities, complete_rates)；费率为�
 
 请求在预占事务按 DB 当前时间选中最新生效售价，保存价格 ID 与完整数值快照。上下文上限、默认输出限制、计费政策同样版本化。跨日、改价、渠道切换都不得改变历史快照。034 尚未实现前，现行售价仍按 CNY 微元处理；034 目标售价改用微币。
 
-#### 5.2.1 034 虚拟币钱包合同（2026-11-14 已冻结；034.1–034.2 本地实现，后续分片未完成）
+#### 5.2.1 034 虚拟币钱包合同（2026-11-14 已冻结；034.1–034.3 本地实现，034.3b 起后续分片未完成）
 
 034 不创建第二个钱包。034.1 已将客户钱包、客户售价、Key 额度和周期预算统一切换为整数微币；充值额外记录法币金额和币种，供应商成本继续属于平台侧采购域。034.2 增加角色字段、独立申请、付款基准与成对人工来源；现金退款桶、币价版本和现金退款状态机仍按 034 §17 后续分片实现，不提前视为已完成。
 
 - 同一手动充值单拆成付费来源与赠送来源时，付费来源必须先消耗，赠送来源后消耗；不同充值单仍按现有 `(fifo_at, id)` 严格 FIFO。实现必须保持 `funding_lot.fifo_at = funding_receipt.created_at`、文本与媒体 Reserve、Go 计划、SQL guard 的合同一致，并在固定时钟、并发和两条 Reserve 路径上验证。
 - 来源守恒扩展为 `available + held + refund_held + consumed + retired = issued`。`refund_held` 只服务现金退款待转账状态，`retired` 表示已完成现金退出；二者不能进入 Reserve。租户新增 `REFUND_HELD` 账户，账户余额分别与对应来源桶之和一致。
+- 034.3 安装静态 `cash_refund_orders` 与五桶 guard，不提供应用订单写权限或现金退款入口。每次迁移使用独立非零规范 UUID 作为 journal operation，订单 ID 只作 reference/事件外键；`funding_lot_events.refund_order_id` 对旧 kind 为 NULL，对 `refund_hold/refund_retire/refund_release` 非空且 `(refund_order_id,kind)` 唯一。三种事件只允许 `paid+cash_original`，retire/release 必须有同订单同 lot 同金额的更早 hold。`requested` 无事实、approved/transfer_executed 只有 hold、completed 为 hold+retire、cancelled/failed 为无 hold 或 hold+release；retire/release 互斥。034.4 才实现状态机和一来源一张未完成单索引。
 - 现金退款保留 B 规则：批准时冻结 `min(按当前币价核算、按原付款比例核算)`，全额退款由系统读取可用币，操作人不能填币数；赠送、未知基准和其他不可退来源不能现金退款。MVP 只记录创世币价与付费来源买入币价，当前不提供调价 HTTP、控制台入口或写命令；未来调价必须追加版本、审批、影响预览、不得回溯，并在批准时冻结版本。
 - `wallet_operator_settings` 是追加式平台设置，初始 `single_operator=true`。管理员界面启用、关闭或修改必须二次确认/近期重新认证并写审计；每张单据在批准时保存开关快照。仅当快照允许且制单人与审批人均为 `admin` 时允许同账号操作，并固定写入 `single_operator_exception`；其他业务域的 maker/checker 约束不随之放宽。
 - 设置接口为 `GET/PUT /api/platform/wallet-operator-settings`。PUT 固定字段为 `operation_id`（规范非零UUID）、`expected_revision`（正int64十进制字符串）、`single_operator`、`reason`（1..200字节）和 `confirmation=CONFIRM_SINGLE_OPERATOR_CHANGE`；平台中间件继续执行MFA、CSRF、近期再认证和恢复门禁。`operation_id`同时作为追加行ID，重放核对actor、原expected revision、目标值和理由；不同内容为`idempotency_conflict`，当前版本不符为`revision_conflict`。服务事务使用专用advisory lock串行CAS，设置和审计一起提交，重放不重复审计。APP只有SELECT/INSERT，UPDATE/DELETE由ACL和不可变触发器共同拒绝。

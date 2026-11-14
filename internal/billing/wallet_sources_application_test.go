@@ -285,8 +285,8 @@ func TestPostgresWalletSourcesApplicationFinancialLifecycle(t *testing.T) {
 		walletApplicationChecks(t, f)
 	}
 	f.wallet(t, 95, 0)
-	walletApplicationRows(t, f, `SELECT lot_id,available_amount::text,held_amount::text,consumed_amount::text FROM funding_lot_balances WHERE lot_id=$1`, [][]string{{lots[0], "15", "0", "55"}}, lots[0])
-	walletApplicationRows(t, f, `SELECT lot_id,available_amount::text,held_amount::text,consumed_amount::text FROM funding_lot_balances WHERE lot_id=$1`, [][]string{{lots[1], "80", "0", "0"}}, lots[1])
+	walletApplicationRows(t, f, `SELECT lot_id,available_amount::text,held_amount::text,consumed_amount::text,refund_held_amount::text,retired_amount::text FROM funding_lot_balances WHERE lot_id=$1`, [][]string{{lots[0], "15", "0", "55", "0", "0"}}, lots[0])
+	walletApplicationRows(t, f, `SELECT lot_id,available_amount::text,held_amount::text,consumed_amount::text,refund_held_amount::text,retired_amount::text FROM funding_lot_balances WHERE lot_id=$1`, [][]string{{lots[1], "80", "0", "0", "0", "0"}}, lots[1])
 	walletApplicationRows(t, f, `SELECT spent::text,held::text FROM api_keys WHERE id=$1`, [][]string{{"100", "0"}}, f.key)
 	walletApplicationRows(t, f, `SELECT charged_amount::text,refunded_amount::text FROM settlements WHERE id=$1`, [][]string{{"100", "45"}}, settled.ID)
 

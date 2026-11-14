@@ -28,10 +28,10 @@ func TestPostgresWalletOpeningOneNoncashSourceAndIntentReplay(t *testing.T) {
 		t.Fatal(out, err)
 	}
 	var class string
-	var amount, available, held, consumed Money
+	var amount, available, held, consumed, refundHeld, retired Money
 	var valid bool
-	if err = f.pool.QueryRow(f.ctx, `SELECT l.refund_class,l.issued_amount,b.available_amount,b.held_amount,b.consumed_amount,wallet_opening_journal_valid(f.journal_id)
- FROM funding_lots l JOIN funding_lot_balances b ON b.lot_id=l.id JOIN funding_receipts f ON f.id=l.id WHERE l.id=$1`, out.Receipt.ID).Scan(&class, &amount, &available, &held, &consumed, &valid); err != nil || class != "nonrefundable" || amount != 157 || available != 157 || held != 0 || consumed != 0 || !valid {
+	if err = f.pool.QueryRow(f.ctx, `SELECT l.refund_class,l.issued_amount,b.available_amount,b.held_amount,b.consumed_amount,b.refund_held_amount,b.retired_amount,wallet_opening_journal_valid(f.journal_id)
+ FROM funding_lots l JOIN funding_lot_balances b ON b.lot_id=l.id JOIN funding_receipts f ON f.id=l.id WHERE l.id=$1`, out.Receipt.ID).Scan(&class, &amount, &available, &held, &consumed, &refundHeld, &retired, &valid); err != nil || class != "nonrefundable" || amount != 157 || available != 157 || held != 0 || consumed != 0 || refundHeld != 0 || retired != 0 || !valid {
 		t.Fatal(class, amount, available, held, consumed, valid, err)
 	}
 	before := walletSourceSnapshot(t, f)

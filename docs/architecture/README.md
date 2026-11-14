@@ -671,7 +671,19 @@ sequenceDiagram
 
 `wallet_operator_settings` 以追加版本保存单人运营开关，初始为 true。`GET/PUT /api/platform/wallet-operator-settings` 仅 admin；PUT 要求近期再认证、CSRF、规范 `operation_id`、正整数 `expected_revision`、理由和显式二次确认。服务事务以 advisory lock 串行化 CAS，设置与审计同时提交，同操作同内容返回原版本，异内容或过期版本拒绝；应用角色只有 SELECT/INSERT，UPDATE/DELETE 由权限和不可变触发器共同拒绝。开关只在批准时快照到钱包单据，只有双方均为 admin 的自批才写 `single_operator_exception`，其他业务域不继承例外。[设置服务](../../internal/billing/operator_settings.go)、[设置 HTTP](../../internal/server/operator_settings_handlers.go)、[管理员面板](../../web/src/components/WalletOperatorSettings.vue)。
 
-当前应用、worker、projection 的数据库表/列/函数权限由[版本化角色核验](../../internal/operations/payment_roles.go)严格检查；离线历史 schema 只允许缺失的 034 表和函数跳过，当前 schema 不存在缺失表回退。034.3 的 `refund_held/retired`、034.3b 币价版本、034.4 现金退款、034.5 报表展示和 034.6 约合/显示名仍属后续分片，不在本节点宣称完成。专项与最终分组结果见[034.2验证记录](../verification/034-2-paired-wallet-sources.md)。
+当前应用、worker、projection 的数据库表/列/函数权限由[版本化角色核验](../../internal/operations/payment_roles.go)严格检查；离线历史 schema 只允许缺失的 034 表和函数跳过，当前 schema 不存在缺失表回退。034.3 见下节；034.3b 币价版本、034.4 现金退款、034.5 报表展示和 034.6 约合/显示名仍属后续分片，不在本节点宣称完成。专项与最终分组结果见[034.2验证记录](../verification/034-2-paired-wallet-sources.md)。
+
+### 034.3 五桶会计与静态退款事实
+
+[`current_007_refund_buckets.sql`](../../migrations/current_007_refund_buckets.sql) 为 lot 余额增加 `refund_held_amount/retired_amount`，为事件增加 `delta_refund_held/delta_retired`，并新增独立租户 `REFUND_HELD` 账户。守恒扩展为 `available + held + consumed + refund_held + retired = issued`；存量行和两个新 delta 均为零，既有 funding/reserve/finish/consumption-refund 仍要求新 delta 为零。现有 Go 写路径只更新旧三桶，SELECT 读取并保留新桶，034.3 不向应用或 worker 授予新桶 UPDATE。
+
+静态 `cash_refund_orders` 只用于会计校验，应用角色只有 SELECT，不提供订单写入口、状态迁移服务、币价读取、现金退款 HTTP/控制台或告警。每个迁移使用独立非零规范 UUID 作为 journal operation，订单 ID 仅作 reference 与事件外键；`funding_lot_events.refund_order_id` 对旧 kind 必须为 NULL，对三种退款 kind 必须非空，且 `(refund_order_id,kind)` 唯一。`refund_hold/cash_refund_hold`、`refund_retire/cash_refund_retire`、`refund_release/cash_refund_release` 各有精确 delta、两条账户行、订单状态与 journal pointer；retire/release 必须引用同订单同 lot 同金额的更早 hold，且只允许 `paid+cash_original` 来源。
+
+`wallet_cash_refund_order_valid` 在 deferred root guard 中校验 requested 无事实、approved/transfer_executed 只有 hold、completed 为 hold+retire、cancelled/failed 为无 hold 或 hold+release，避免退休与释放共存、孤儿订单和独立第二事实源。订单业务身份不可改、不可删除。`wallet_cash_refund_journal_valid` 校验独立 operation、journal kind/reference、订单 pointer、两条账户行和事件闭环；`FUNDING_CLEARING = Σ delta_retired` 只对 retire 生效。[静态订单校验](../../migrations/current_007_refund_buckets.sql)、[guard fixtures](../../internal/billing/refund_buckets_integration_test.go)。
+
+[`lockAccounts`](../../internal/billing/store.go) 和 journal 投影把 `REFUND_HELD` 作为非负租户账户按 ID 初始化/加锁。五桶纯投影、文本和媒体 Reserve/Finish、消费退款保留原分配与零新 delta，Reserve 仍只按 `available_amount>0` 选源。[来源运行投影](../../internal/billing/lot_runtime.go)、[媒体投影](../../internal/billing/media.go)、[账户投影](../../internal/billing/journal_batch.go)。
+
+`check-wallet-sources` 将本金、五个事件前缀和、journal kind、REFUND_HELD 账户与来源汇总纳入 `balanced`，保留 034.2 的 pair 检查；错误计数只报不一致，unknown 总额继续由资金来源摘要单列。逐来源接口和[前端 DTO](../../web/src/wallet-sources.ts)增加 `refund_held_amount/retired_amount` 并验证五桶守恒，Wallet 顶部余额构成和“退款处理中”汇总仍归 034.5。验收范围与分组结果见[034.3验证记录](../verification/034-3-refund-buckets.md)；034.3b 币价版本和 034.4 生产现金退款状态机不在本片能力内。
 
 ### 018 采购单价门禁与成本感知路由
 

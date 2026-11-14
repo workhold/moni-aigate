@@ -6817,3 +6817,42 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `web/tests/wallet-sources.test.mjs`
 
 </details>
+
+## 2026-11-14T16:51:51Z · 9637224702c2
+
+034.3：refund_held/retired五桶、静态cash_refund_orders及独立operation、deferred订单/journal/事件guard、REFUND_HELD账户与checker；现有路径保留新桶且不授生产UPDATE，034.4工作流仍未实现；同步全仓验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2215 个源文件；本次 28 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-3-refund-buckets.md`
+- modified `internal/billing/journal_batch.go`
+- modified `internal/billing/lot_plan_test.go`
+- modified `internal/billing/lot_runtime.go`
+- modified `internal/billing/lot_runtime_integration_test.go`
+- modified `internal/billing/media.go`
+- added `internal/billing/refund_buckets_integration_test.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/wallet_opening_integration_test.go`
+- modified `internal/billing/wallet_sources_application_test.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_read_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- modified `internal/server/wallet_sources.go`
+- added `migrations/current_007_refund_buckets.sql`
+- modified `migrations/virtual_coin_postgres_test.go`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/wallet-sources.ts`
+- modified `web/tests/wallet-sources.test.mjs`
+
+</details>

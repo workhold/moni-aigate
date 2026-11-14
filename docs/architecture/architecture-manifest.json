@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-14T12:44:02Z",
-  "review_reason": "034.2：角色字段、独立wallet_requests、单人运营设置CAS与审计、付款基准、成对来源和确定性FIFO；同步当前六来源、应用/worker/projection权限、HTTP/UI和串行验证记录；034.3起仍标为后续能力",
-  "snapshot_sha256": "baa198d3c35c1adf2d736f398b28ebbb113094d5604c1475747abfd9905e164b",
-  "architecture_sha256": "71f7f0382e5ebcbbf116c25ebb963410a46b8b46a85607d83530d52718473bf8",
-  "history_sha256": "a537eb7205ecee4005f2a224106a7e8780c8dedb6fe7cb2b11a16a6b657f0df2",
+  "reviewed_at": "2026-11-14T16:51:51Z",
+  "review_reason": "034.3：refund_held/retired五桶、静态cash_refund_orders及独立operation、deferred订单/journal/事件guard、REFUND_HELD账户与checker；现有路径保留新桶且不授生产UPDATE，034.4工作流仍未实现；同步全仓验证记录",
+  "snapshot_sha256": "9637224702c2f9ba71035467de734f5465a5748618718f79a97cdf15ddcf8c0d",
+  "architecture_sha256": "b7134c6877bc395287a41140c461b4d0978ac5e1cd83c378b0772b6cc4ddd704",
+  "history_sha256": "0c5ee397da2b453e38de98310ad97f70d8f263dc14cf5edbbc7320ee323cac40",
   "files": [
     {
       "path": ".dockerignore",
@@ -157,7 +157,7 @@
     },
     {
       "path": "docs/architecture/wallet-sources.md",
-      "sha256": "928835f5c99e9024508134078f07a6bb188ea82bceb5192258bcdcfc6373b0e3"
+      "sha256": "3b8347ee8beb79107249179427ed31dbef03261e8aad8eb41b630959ebe3aa43"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -181,11 +181,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "ce1b854f5c101841447216e9537fca4a15bd2d94c05daf2e55a76af779e4cba5"
+      "sha256": "1598ac6ac4b4776ffc89e5372bb6bc6a8b641032867a99e3d9aab4a648484aa1"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "2e2d0307d28e2f85f76f5872583bcd7a666bbf247423344d611c9284fb06dcee"
+      "sha256": "d3a86cd57e0f7c5f8da9bea7cc544d281a6dba41507f8333e958949649059ca4"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -225,7 +225,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "372ecd1dc7c0d3e3cd2c2e433fd3881b4dc9e150adbeb34b26b478089304d2bd"
+      "sha256": "ee3df0c431aab642ae7df2949b4b3233e142089e2f2d70a54d08549c496bdeea"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -282,6 +282,10 @@
     {
       "path": "docs/verification/034-2-paired-wallet-sources.md",
       "sha256": "c60e7b66511cfc5ea7b8d709b5cdb3e73c8351112d8182541180d4d14dbe4456"
+    },
+    {
+      "path": "docs/verification/034-3-refund-buckets.md",
+      "sha256": "f515b7f39b3657126937f91b32bc307e9fb7e41ad5cf0de19d4654d3256e6f70"
     },
     {
       "path": "docs/verification/034-coin-units.md",
@@ -2133,7 +2137,7 @@
     },
     {
       "path": "internal/billing/journal_batch.go",
-      "sha256": "3f6d891597a3ce08f5d3d931aaaa96a2d40d28f712a2767df36a10b9e3feba2a"
+      "sha256": "736f99e76086dac7c2231739a0f4ea28ea90f56f51ca044284161c6be5c37713"
     },
     {
       "path": "internal/billing/journal_batch_test.go",
@@ -2153,19 +2157,19 @@
     },
     {
       "path": "internal/billing/lot_plan_test.go",
-      "sha256": "929a2bc5d67452b95bd66f2f9ee9d34c3b6c2354a0d64bd3e39536e9fd9b26d6"
+      "sha256": "3cfecb989456da4f37007f7359ab63e052bf2b2604a20037c4c29edbe73ce4e3"
     },
     {
       "path": "internal/billing/lot_runtime.go",
-      "sha256": "34ae61b9824b6c82c24b90eaf893ebf780e560510a1d8563610d91e064bf247a"
+      "sha256": "99096a69bf3b2755d8efbcb4b1dfb7268e7dfa22ec50e8db3ea8869ced20a732"
     },
     {
       "path": "internal/billing/lot_runtime_integration_test.go",
-      "sha256": "e8515452d69815724c1b65aaa08b43fbd64efedfd6c27f91609fe6fbd92843e2"
+      "sha256": "0189cdea347581684704f1da44fa5eece2bd30b1f3063d5582a5998bd012fd6b"
     },
     {
       "path": "internal/billing/media.go",
-      "sha256": "3f2301d83bdb30cb8d4a296064e14c318b8ff829615a4a0ead22a386c4435d32"
+      "sha256": "4700c2b002d92dd901058aa8064a9f3843cbb6fe75624b99ddab7e3bbeb70852"
     },
     {
       "path": "internal/billing/media_integration_test.go",
@@ -2280,6 +2284,10 @@
       "sha256": "57c286f27e6627744963d573a19859048d8a22a4b72a11063dd31efe16163ac5"
     },
     {
+      "path": "internal/billing/refund_buckets_integration_test.go",
+      "sha256": "1b754ecbf0ed6b310e863d063df3808c52e2b6f6f46e5c3ce090429dd5335ed9"
+    },
+    {
       "path": "internal/billing/reserve.go",
       "sha256": "79c74a2dfbaa64a4c3136485b4558dead66e002c1a39812aba85adf9f74eec4e"
     },
@@ -2305,7 +2313,7 @@
     },
     {
       "path": "internal/billing/store.go",
-      "sha256": "b730459bd295e7841939f3bf5e71221fadea5561a3cf02cd7387559a023a8c6a"
+      "sha256": "3a7aa6399feeade956d6b61eee7aaa996929c0727a38abb7936a9afd80d75a06"
     },
     {
       "path": "internal/billing/store_test.go",
@@ -2393,7 +2401,7 @@
     },
     {
       "path": "internal/billing/wallet_opening_integration_test.go",
-      "sha256": "aecc31337fa96a76152c6336277e82661786696fd95e463cf9832d8e3abb3867"
+      "sha256": "1bd410732500f9e3eb812434450f6159b82cfc767e6183fbca9921adfd50aaff"
     },
     {
       "path": "internal/billing/wallet_opening_test.go",
@@ -2409,7 +2417,7 @@
     },
     {
       "path": "internal/billing/wallet_sources_application_test.go",
-      "sha256": "3b658009a15fd5e0686cd75fcb1adcccebbfacc3aea5d33399d74beeaad29cc3"
+      "sha256": "7d5dca1b50dbbf0b8a4c97cef50d060ae89353fdfc80e1323044dee0920345f3"
     },
     {
       "path": "internal/billing/wallet_sources_constraints_test.go",
@@ -2417,11 +2425,11 @@
     },
     {
       "path": "internal/billing/wallet_sources_read.go",
-      "sha256": "21614a0c39be0b80066736b06cb0e692f0f80939149c9fbaf8243ca8fd55a355"
+      "sha256": "c1171d83a4a34d6163d2b53daf38274fefb5bc086784e00713679196006433ad"
     },
     {
       "path": "internal/billing/wallet_sources_read_test.go",
-      "sha256": "5ab16b8c24378e3835049646d6ec1761e19cb3ba1a2a52131cf982820d8acdcc"
+      "sha256": "a859d662f4c9ce598ed8dabfd84fc0b3a55af24063476ff8590ad8ea341bf4d4"
     },
     {
       "path": "internal/billing/wallet_sources_summary_test.go",
@@ -4257,15 +4265,15 @@
     },
     {
       "path": "internal/operations/payment_roles.go",
-      "sha256": "e01a46530d5b76a3e0cec8ca3db7506ae049766fd653fd3652cc58c49e4ba725"
+      "sha256": "1d29217a9fde8ff9d41206ccdfb154aff1a39b0ee37c581773a4f730c47763ae"
     },
     {
       "path": "internal/operations/payment_roles_functions.go",
-      "sha256": "781cbd1be58b9ee56f01d2c32178f1ca9d5a5eb39fde8f08e06e7a10ee7f2e28"
+      "sha256": "f02e8532d3e419a717b7a4f319dc06f54582f90d5144a0a3ff131930ec718c3d"
     },
     {
       "path": "internal/operations/payment_roles_test.go",
-      "sha256": "b08c7a068a062370f1d2ed3f3a924bdff98c19e6b14ff4bb71b7097e91cd7769"
+      "sha256": "ae64006e4e8fdab507b0160ef4105c8e08faa627e1740fad41859fc72d65550b"
     },
     {
       "path": "internal/operations/periodic_roles.go",
@@ -4293,7 +4301,7 @@
     },
     {
       "path": "internal/operations/wallet_sources_roles_test.go",
-      "sha256": "bb829c0b80b133c06edfe792234d7c9bddb0fe5a2e9b6aad80ac3c18ad4a40b6"
+      "sha256": "66842dec8934770b01061ee67729a07ac4976b9395c09f886b63c9929ebfc324"
     },
     {
       "path": "internal/paymentproto/fuzz_test.go",
@@ -6457,7 +6465,7 @@
     },
     {
       "path": "internal/server/wallet_sources.go",
-      "sha256": "471bd715996789dd074766a160b7591fe39bd2e05627f641a84e1c32cf1d4f0f"
+      "sha256": "98dc29b95485801711c214df845d9096fe87e5cd892f750849ee567fb96168b3"
     },
     {
       "path": "internal/server/wallet_sources_integration_test.go",
@@ -6708,6 +6716,10 @@
       "sha256": "9f4785bcc8d912f04e25d37c3d359b73f112f031f95989f089b9d255eeea357f"
     },
     {
+      "path": "migrations/current_007_refund_buckets.sql",
+      "sha256": "fe82ab8febcd62c5c529d5c93bd134d1a45cd9839a5bd75dbee6fada39b51938"
+    },
+    {
       "path": "migrations/current_mvp.sql",
       "sha256": "c3aba37f5fa194bf6f66018e25d1124fe3fd2ab886969d4349d440e85d35381e"
     },
@@ -6789,7 +6801,7 @@
     },
     {
       "path": "migrations/virtual_coin_postgres_test.go",
-      "sha256": "1f2ff52610540795b6ec5a37fe7f870b60100c90006da4fdffbdd8308ad214ba"
+      "sha256": "bbbc113e8930272985ced7d83b079d1bd611d0a293600eb0ceee2e30805618ab"
     },
     {
       "path": "migrations/wallet_sources_postgres_test.go",
@@ -8189,11 +8201,11 @@
     },
     {
       "path": "specs/034-virtual-coin/implementation-freeze.md",
-      "sha256": "c6354b4b3f8db92cfcd89322e0849f96756597d8dc6638af24897d30ce55f4d5"
+      "sha256": "ea5b8eed62e7966d50bfa79dbe6a815751b28ec68c38e7c0c4ec9e028dd32f4d"
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "8764b03b0a3644e775c83eb988a1c6c6c42dcc6b857b45742b760b774cabe363"
+      "sha256": "03098990409d47ac482d4570c769a7aae206fd8b66cd14e0a458ad47c4a67d7c"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
@@ -8397,7 +8409,7 @@
     },
     {
       "path": "web/src/components/WalletSources.vue",
-      "sha256": "c8d49f2f9b0c9e553f1fd78a3baeab8f0aa9e381463ebd12fc3a8f0316e66b2e"
+      "sha256": "e9124afbb89b3165111f755baa0363a9ba2101c1a4d821231b31d7a15df34fac"
     },
     {
       "path": "web/src/cost-aware-routing.ts",
@@ -8657,7 +8669,7 @@
     },
     {
       "path": "web/src/wallet-sources.ts",
-      "sha256": "2db00ce426109aa886bfdb27ae6814e332dae31e02b13c296e864642b0eaf3cc"
+      "sha256": "223eea072983aff6ed3745b2726b5d3d1c17bbc066491e4769cca15288a437df"
     },
     {
       "path": "web/static/index.html",
@@ -8845,7 +8857,7 @@
     },
     {
       "path": "web/tests/wallet-sources.test.mjs",
-      "sha256": "dcca3ae992f246f28f6a3c020dfee29c55da0c6abb24385c10eef2dc54c2684d"
+      "sha256": "faf96a475a011aac28651c3215fae7713f71247183e5f863635e268eb21795c9"
     },
     {
       "path": "web/tsconfig.json",

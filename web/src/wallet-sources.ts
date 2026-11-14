@@ -7,7 +7,7 @@ export type WalletSourceKind = 'manual_credit' | 'manual_bonus' | 'manual_unknow
 export type WalletRefundClass = 'nonrefundable' | 'sandbox_original' | 'cash_original'
 export interface WalletSourceRow {
   id: string; lot_id: string; source_kind: WalletSourceKind; refund_class: WalletRefundClass
-  issued_amount: string; available_amount: string; held_amount: string; consumed_amount: string; created_at: string
+  issued_amount: string; available_amount: string; held_amount: string; consumed_amount: string; refund_held_amount: string; retired_amount: string; created_at: string
 }
 export interface WalletSourcesTarget { platform?: boolean; tenantID?: string }
 export interface WalletSourcesAccess extends WalletSourcesTarget {
@@ -17,7 +17,7 @@ export interface WalletSourcesState {
   rows: WalletSourceRow[]; loading: boolean; error: string; cursor: string; nextCursor: string; history: string[]
 }
 type Transport = (path: string, isCurrent: () => boolean) => Promise<Envelope<unknown>>
-const fields = ['id', 'lot_id', 'source_kind', 'refund_class', 'issued_amount', 'available_amount', 'held_amount', 'consumed_amount', 'created_at'] as const
+const fields = ['id', 'lot_id', 'source_kind', 'refund_class', 'issued_amount', 'available_amount', 'held_amount', 'consumed_amount', 'refund_held_amount', 'retired_amount', 'created_at'] as const
 const kinds: readonly WalletSourceKind[] = ['manual_credit', 'manual_bonus', 'manual_unknown', 'voucher_grant', 'sandbox_capture', 'wallet_opening']
 
 export function canReadWalletSources(access: WalletSourcesAccess): boolean {
@@ -60,10 +60,10 @@ export function parseWalletSource(value: unknown): WalletSourceRow {
   const row: WalletSourceRow = {
     id: commerceUUID(raw.id), lot_id: commerceUUID(raw.lot_id), source_kind, refund_class,
     issued_amount: commerceDecimal(raw.issued_amount, true), available_amount: commerceDecimal(raw.available_amount),
-    held_amount: commerceDecimal(raw.held_amount), consumed_amount: commerceDecimal(raw.consumed_amount), created_at: utcTime(raw.created_at),
+    held_amount: commerceDecimal(raw.held_amount), consumed_amount: commerceDecimal(raw.consumed_amount), refund_held_amount: commerceDecimal(raw.refund_held_amount), retired_amount: commerceDecimal(raw.retired_amount), created_at: utcTime(raw.created_at),
   }
   if (row.id !== row.lot_id) throw new Error('资金来源与批次标识不一致。')
-  if (BigInt(row.issued_amount) !== BigInt(row.available_amount) + BigInt(row.held_amount) + BigInt(row.consumed_amount)) throw new Error('资金来源本金与可用、冻结、已消费金额不一致。')
+  if (BigInt(row.issued_amount) !== BigInt(row.available_amount) + BigInt(row.held_amount) + BigInt(row.consumed_amount) + BigInt(row.refund_held_amount) + BigInt(row.retired_amount)) throw new Error('资金来源本金与可用、冻结、已消费、退款冻结及已退出金额不一致。')
   return row
 }
 export function parseWalletSourcesPage(data: unknown, nextCursor: unknown): { rows: WalletSourceRow[]; nextCursor: string } {

@@ -26,6 +26,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 		{"021_payment_sandbox.sql", paymentRoleMigrationSHA256},
 		{"023_wallet_sources.sql", walletSourcesRoleMigrationSHA256},
 		{"current_006_paired_wallet_sources.sql", pairedSourcesRoleMigrationSHA256},
+		{"current_007_refund_buckets.sql", refundBucketsRoleMigrationSHA256},
 	} {
 		body, e := migrations.Files.ReadFile(source.file)
 		if e != nil {
@@ -46,10 +47,10 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 		}
 		for _, match := range definitions.FindAllSubmatch(body, -1) {
 			name := string(match[1])
-			if source.file == "current_006_paired_wallet_sources.sql" && !strings.HasPrefix(name, "payment_") && !strings.HasPrefix(name, "wallet_") {
+			if strings.HasPrefix(source.file, "current_") && !strings.HasPrefix(name, "payment_") && !strings.HasPrefix(name, "wallet_") {
 				continue
 			}
-			if _, exists := functions[name]; source.file == "current_006_paired_wallet_sources.sql" && exists {
+			if _, exists := functions[name]; strings.HasPrefix(source.file, "current_") && exists {
 				continue
 			}
 			functions[name] = fmt.Sprintf("%x", sha256.Sum256(match[2]))
@@ -78,7 +79,7 @@ func TestPaymentRoleStaticReviewedFunctionBaseline(t *testing.T) {
 	}
 	functions["funding_journal_valid"] = fmt.Sprintf("%x", sha256.Sum256(currentDispatcher[1]))
 	delete(functions, "payment_legacy_funding_journal_valid")
-	if len(paymentFunctionSpecs) != 61 || len(functions) != len(paymentFunctionSpecs) {
+	if len(paymentFunctionSpecs) != 63 || len(functions) != len(paymentFunctionSpecs) {
 		t.Fatal("current payment/wallet function allowlist incomplete")
 	}
 	worker := 0

@@ -30,6 +30,8 @@
 
 `available + held + consumed + refund_held + retired = issued` 是所有迁移、恢复和验证器共同守恒式；AVAILABLE/HELD/REFUND_HELD 账户分别等于对应来源桶之和。新桶不得进入 Reserve 或消费退款。`credit_bonus`、`cash_refund_hold/retire/release` 必须加入 journal kind 白名单与相应 guard。
 
+034.3 只安装静态 `cash_refund_orders` 和五桶 guard，不开放应用写权限或现金退款入口。每次迁移使用独立 journal operation UUID，订单 ID 仅作 reference/事件外键；事件以 nullable `refund_order_id` 区分新退款事件与旧事件，并按 `(refund_order_id,kind)` 唯一，不复用订单 ID 作为多个 journal operation。034.4 才实现状态机和一来源一张未完成单索引。
+
 现金退款严格按 `requested→approved→transfer_executed→completed`；approved 可 cancelled，approved/transfer_executed 可 failed 并释放。批准只冻结，完成才退出；transfer_order_ref 与 transfer_proof_ref 分离，paid_fiat_amount 必须等于批准冻结金额，否则只能失败释放。释放和退出互斥，未知提交只读回，不由恢复任务自动完成或重做。
 
 审批锁序沿用 Reserve：租户→账户 ID→来源余额。必须实测 Reserve、结算、消费退款、两张退款单及重复审批/完成之间的并发，不能出现负余额、重复事件或半提交。

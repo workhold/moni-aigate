@@ -49,7 +49,7 @@ func (s *Server) platformWalletSources(c *gin.Context) {
 
 func (s *Server) sourcePage(c *gin.Context, tenant string) {
 	s.page(c, `SELECT l.id,l.id AS lot_id,l.source_kind,l.refund_class,l.issued_amount::text AS issued_amount,
- b.available_amount::text AS available_amount,b.held_amount::text AS held_amount,b.consumed_amount::text AS consumed_amount,l.fifo_at AS created_at
+ b.available_amount::text AS available_amount,b.held_amount::text AS held_amount,b.consumed_amount::text AS consumed_amount,b.refund_held_amount::text AS refund_held_amount,b.retired_amount::text AS retired_amount,l.fifo_at AS created_at
  FROM funding_lots l JOIN funding_lot_balances b ON b.lot_id=l.id AND b.tenant_id=l.tenant_id WHERE l.tenant_id=$1`, tenant)
 }
 
