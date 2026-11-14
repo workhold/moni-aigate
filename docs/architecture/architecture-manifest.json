@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-13T20:12:16Z",
-  "review_reason": "合入 PR #6/#7：部署定位修订与四阶段路线断链修复；beta usage/reasoning、备份 schema owner 与运营恢复 CLI 回流；保留双方架构历史并补恢复 runbook，已复核实际 app/projection 角色边界",
-  "snapshot_sha256": "d85d3f896ac83bd521d0f03b978a2d8d4d5a10449bc359e7e6b4f183b57e3719",
+  "reviewed_at": "2026-11-14T03:32:58Z",
+  "review_reason": "034 冻结与开发方向审查：034 规格 D-034-1…13 全部裁决并标记已冻结；HLD §6.3、LLD §5.2.1、phase-roadmap 三处同步冻结状态；新增 docs/design/direction-review-2026-11-14.md 方向审查记录（含在途实现对照与不变量复核）；修正 034 §4 兑换券校验行号误差。纯文档变更，无代码/迁移影响",
+  "snapshot_sha256": "9608d9b4594139d04b4e9791d8c6dd66d242dae61503a62dacd2875789276af1",
   "architecture_sha256": "91663911bd5d4c964e300291f6ad8e44cbdc54a42fa0bab6e0c4b35974025b7e",
-  "history_sha256": "5ab6022291cfd61238f38e76680e45060b4112697db103a354ed026dfc16d178",
+  "history_sha256": "1c08cc277368591220c8f640c896bb52df283e1ea192d2633c3294a1fb06a78d",
   "files": [
     {
       "path": ".dockerignore",
@@ -177,15 +177,19 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "d93d7fc0e65df0cbf16bb2c66ab611da0031145aba9fb66bb61708badf945d9c"
+      "sha256": "5bfa1b6c88aadf8ead22a7eae7783efb311d50c22810760cf0f5276368fded9e"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "9d612ea62803a91371d184ca6c12776e52c94c49ac0fcb470f82587d7094735c"
+      "sha256": "f5c3947e7a336ab7c1e0d0380fadbb98ff71221e6e6166c2bd999997e83a2134"
     },
     {
       "path": "docs/design/delivery-plan.md",
       "sha256": "7457119b004d06caaf8292c29d944f418c4cd0066e12bda296f590064f90328c"
+    },
+    {
+      "path": "docs/design/direction-review-2026-11-14.md",
+      "sha256": "f9397208a615aa2d74103f19a439b3ec9b690072db38a15a23ae51f39fde261c"
     },
     {
       "path": "docs/design/extension-platform.md",
@@ -217,7 +221,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "034d91fc9f99439b4db9a795ce2c39adc6c48ecaee39b431ddd986520caaf7c6"
+      "sha256": "e34588ee0a7961a28997f4748b81d5799d6758f04ee5a0ea6a202deaa3f5ea20"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -7977,7 +7981,7 @@
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "26bf6be184f580966e17dcf5f5bb14953d866b1ac19b3bc053931e2f3b4ee8b6"
+      "sha256": "bbee993ae6d35b95feda37e1237813c7063411f016eeee6e23c46eb728098822"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
