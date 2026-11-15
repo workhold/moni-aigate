@@ -7276,3 +7276,16 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `internal/server/queries.go`
 
 </details>
+
+## 2026-11-15T09:42:41Z · 845512de93f9
+
+将已验证的 admin/租户价格游标回归加入 P1-PR-01 必需绑定，现 41 IDs/82 bindings；仅验收证据覆盖，不改变生产行为或权限边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-acceptance-matrix.json`
+
+</details>

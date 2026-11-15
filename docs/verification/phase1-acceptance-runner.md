@@ -4,7 +4,7 @@
 
 ## 防漏项边界
 
-`scripts/phase1-acceptance-matrix.json` 固定 41 个唯一 ID 和 81 个必需 Go 测试绑定。`scripts/phase1-acceptance.py --check` 逐包检查测试名存在；正式执行使用 `go test -json` 验证每个必需测试实际得到 PASS，缺失、FAIL 或 SKIP 均使对应项失败。
+`scripts/phase1-acceptance-matrix.json` 固定 41 个唯一 ID 和 82 个必需 Go 测试绑定。`scripts/phase1-acceptance.py --check` 逐包检查测试名存在；正式执行使用 `go test -json` 验证每个必需测试实际得到 PASS，缺失、FAIL 或 SKIP 均使对应项失败。
 
 全局门禁包括静态架构/采购布局、vet/build、前端测试与严格构建、全 Go race、current-only PostgreSQL/Compose 验证。身份与邮件 real-main 使用独立串行套件；支付使用本地沙箱真实进程；文本部署场景使用 031 deterministic mock。控制台项另需同一提交的隔离浏览器桌面与 390px 证据。任何必需门禁失败都不能产生 MVP 完成结论；修复后必须在新干净提交上整单重跑 41 项，不能只复跑失败项。
 

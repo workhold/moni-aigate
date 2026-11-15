@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T09:38:55Z",
-  "review_reason": "独立复核发现价格分页类型回归：保留 timestamptz 游标比较，生成 next_cursor 后统一六位微秒输出，admin/租户 51 行分页回归通过；仅只读 DTO 与分页兼容，不改资金写入、计量、权限或迁移",
-  "snapshot_sha256": "fd8f0927be0277ed999175391c303e5bbccac633e584eb4ae24ef3d44a8d58e6",
+  "reviewed_at": "2026-11-15T09:42:41Z",
+  "review_reason": "将已验证的 admin/租户价格游标回归加入 P1-PR-01 必需绑定，现 41 IDs/82 bindings；仅验收证据覆盖，不改变生产行为或权限边界",
+  "snapshot_sha256": "845512de93f9d89f06432d42a2e3de3a28af30934adb559f8294e04f143a2d80",
   "architecture_sha256": "9949c5483b32b1408cb0d0e96a8a99028d7e6b6dd5e527ffde7797d783fb5bd7",
-  "history_sha256": "cf061c231caa435e1428499c009b429ef16b7f0c56b800761987b889b1a2a2d1",
+  "history_sha256": "d9da4540211b8f7013e26c00dc94a622944ba604516cab7819c69969d42e410b",
   "files": [
     {
       "path": ".dockerignore",
@@ -1629,7 +1629,7 @@
     },
     {
       "path": "docs/verification/phase1-acceptance-runner.md",
-      "sha256": "817b1bb25fc08e0ce2f2c76676cdf86969fbff9fa4e309c5c8727a0acd5c9e0d"
+      "sha256": "9fc9df168a94bc1d60f261ab18f592cc425240ba9c4ffa9baab6ba9c17bd6a0a"
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
@@ -7389,7 +7389,7 @@
     },
     {
       "path": "scripts/phase1-acceptance-matrix.json",
-      "sha256": "815e9f0f4c5d0fd456c29ba85a4e0f1dc34213aaf35c8a2482f76cd8564a0edf"
+      "sha256": "e8a40d1d46dc97861640ab093d2936241e9e4270c04651231031070f318a6e03"
     },
     {
       "path": "scripts/phase1-acceptance.py",
