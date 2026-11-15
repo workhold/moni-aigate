@@ -24,6 +24,8 @@ moni-aigate 是对外提供 API 的商业运营平台。它借鉴 New API/One AP
 
 2026-11-15 029 终验执行入口：`scripts/phase1-acceptance.py` 与固定矩阵登记全部 41 个唯一验收 ID，复用 current-only PostgreSQL/Compose、全包 race、前端、real-main、支付沙箱与 031 部署 mock，并要求同一提交的隔离桌面及 390px 浏览器证据。JSON 测试事件用于拒绝缺失、FAIL 或必需 SKIP；任何全局套件失败均阻止通过结论，修复后整单重跑。该入口只增加验证与证据边界，不新增生产模块、资金写路径、迁移或第二事实源；在 `summary.json` 实际达到 41/41 前，系统仍为内测，详见[终验执行手册](../verification/phase1-acceptance-runner.md)。
 
+隔离浏览器/部署预览由 `scripts/phase1-browser-preview.sh` 在 55439 专库创建随机 `phase1qa_*` schema，经 current-only 迁移和显式 `operations.ProvisionFor(schema)` 授权后启动 app/worker；退出只清理自己的容器、网络与 schema，不使用或授权 public 业务事实。Dockerfile/Compose 新增可选 `GOPROXY` 构建参数，默认代理和运行拓扑不变，本地验收可显式选择公共镜像且仍受 `go.sum` 校验。预览凭据只写入仓库外的私有缓存，不进入源码或日志。
+
 2026-11-14 phase0 外部上游合同落地：`current_003_external_channels.sql` 为不可变 `channel_versions` 增加 `channel_kind`（`direct`/`new_api`/`sub2api`）与 `integration_mode`（`external_relay`/`embedded_adapter`/`migrated_capability`）。外部 New API/Sub2API channel 通过同一 OpenAI-compatible `provider.Client` relay 路径接入，模型绑定负责下游模型名映射，usage、错误分类、成本未知、`provider.SafeToRetry` 与最多两次 attempt 全部复用现有商业链；下游账号池不会新建客户 reservation、wallet 或 settlement。`catalog.CandidateSnapshot` 只提供 channel 候选，`POST /api/platform/models/:id/route-revisions/:revision/activate` 以 expected revision CAS 激活已发布版本并审计，支持外部 relay 与内置 adapter 间回退，在途请求继续使用冻结 revision。平台 probe 分别报告 channel kind、integration mode、协议成功、usage、成本 basis、错误类别和消费分类，不把下游 HTTP 200 当作可售认证。当前证据包括 55439 专库上的 deterministic relay、Compose mock，以及真实本地 New API/Sub2API 三服务三库拓扑的 JSON/SSE、唯一结算、receipt 和 revision 回退验收；真实凭据、真实 usage/成本和逐 profile 供应商认证仍未验收，详见[0 阶段外部上游验证记录](../verification/phase0-external-upstream.md)。
 
 2026-11-14 当前安装器连接卫生：`ApplyCurrent` 在 DDL 提交后恢复连接启动时的 `search_path`，避免冻结基线中的会话级 pg_dump 路径随连接池泄漏到后续业务或 fixture 会话。历史 `Apply`/`ApplyThrough` fixture 继续隔离；current-MVP 的 operations、periodic-budget billing/verifier fixture 使用 `ApplyCurrent`/`VerifyCurrent`，不增加缺表或旧计量兼容分支。
@@ -89,7 +91,7 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 
 New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration-plan.md)登记为可统一部署的外部 channel。aigate 是唯一公网入口，负责客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算和审计；下游网关保留自己的供应商账号池、协议适配和局部重试。三个服务可以放在同一 Compose 编排（或等效部署脚本）中，1Panel 等面板可选导入同一编排，但数据库、管理端口和客户账单事实保持独立。动态路由在 `internal/routing` 选择 channel，下游账号选择不改变 aigate 的 route revision 或结算身份。外部模型列表、单次 HTTP 200 和连通性 probe 不能替代逐 profile 资格认证。
 
-0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)。若以后把上游源码纳入本仓库，必须保留 LICENSE/NOTICE、来源提交、修改记录和适用的源码提供方式；许可证合规是发布门禁，不是能力路线阻塞项。
+0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)，七项本地验收已逐项勾选并附证据路径。当前 New API/Sub2API 仍以外部 relay 运行，未 vendor 修改版源码；`third_party/` 保存固定提交的 LICENSE/NOTICE 与 SOURCE 记录，`upstream-provenance-check` 在 `make check` 和 `make verify-mvp` 中校验来源、许可证、修改记录和固定镜像，详见[来源验收](../verification/phase0-upstream-provenance.md)。真实生产部署、供应商认证和完整发布 SBOM 仍需独立验收。
 
 ```mermaid
 flowchart LR

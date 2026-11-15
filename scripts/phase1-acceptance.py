@@ -233,11 +233,14 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         for name in ("PHASE1_BASE_URL", "PHASE1_APP_CONTAINER", "PHASE1_WORKER_CONTAINER", "PHASE1_ADMIN_PASSWORD"):
             if not os.environ.get(name):
                 raise ValueError(f"{name} is required for deterministic deployment acceptance")
-    subprocess.run(["docker", "compose", "version"], cwd=ROOT, check=True, capture_output=True)
+    compose = subprocess.run(["docker", "compose", "version"], cwd=ROOT, capture_output=True)
+    if compose.returncode:
+        subprocess.run(["docker-compose", "version"], cwd=ROOT, check=True, capture_output=True)
     output = ROOT / "docs" / "verification" / "phase1"
     artifact = pathlib.Path(args.artifacts).resolve() if args.artifacts else output / "evidence" / commit
     artifact.mkdir(parents=True, exist_ok=False)
     env = os.environ.copy()
+    env.setdefault("GOPROXY", "https://goproxy.cn,direct")
     env.update({"BUSINESS_QA_FAIL_ON_SKIP": "true", "DEPLOY_QA_BUSINESS": "true", "VERIFY_CURRENT_MVP_LOG_DIR": str(artifact / "current-mvp")})
     suites: list[dict] = []
 

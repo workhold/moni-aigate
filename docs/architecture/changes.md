@@ -7093,19 +7093,39 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 
 </details>
 
-## 2026-11-15T05:05:21Z · 24c346de5c02
+## 2026-11-15T04:37:04Z · 769f639a2698
 
-新增 029 全量终验矩阵、执行器、自测和运行手册；仅验证与证据边界，不新增生产模块、数据库迁移、资金写入或第二事实源，未据此宣称 41 项验收通过；架构正文已登记该入口
+035 合入已冻结的 029/031 main：架构正文与历史以 main 为准，保留 035 七项勾选和告警索引测试修正；仅重新计算清单，无新增生产结构或权限边界
 
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2258 个源文件；本次 6 个源文件变化，架构正文变化：true。
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2254 个源文件；本次 5 个源文件变化，架构正文变化：true。
 
 <details><summary>源文件变化</summary>
 
+- modified `Makefile`
+- added `docs/verification/phase0-upstream-provenance.md`
+- modified `internal/alerts/alerts_integration_test.go`
+- added `scripts/check-upstream-provenance/main.go`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>
+
+## 2026-11-15T05:30:31Z · a91e756a6cf5
+
+035 合入 main 并新增隔离浏览器预览：专库随机 schema、显式 ProvisionFor、可选 GOPROXY 构建参数与 029 执行器；生产 public provision、运行模块、资金与权限边界不变，仍未执行 41 项通过结论；架构正文已同步
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2262 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
 - added `docs/verification/phase1-acceptance-runner.md`
 - added `scripts/phase1-acceptance-matrix.json`
 - added `scripts/phase1-acceptance.py`
 - added `scripts/phase1-acceptance.sh`
 - added `scripts/phase1-acceptance.test.sh`
+- added `scripts/phase1-browser-preview.sh`
+- added `scripts/phase1-provision/main.go`
 - added `scripts/phase1_acceptance_test.py`
 
 </details>

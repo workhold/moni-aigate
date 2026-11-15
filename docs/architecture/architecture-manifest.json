@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T05:05:21Z",
-  "review_reason": "新增 029 全量终验矩阵、执行器、自测和运行手册；仅验证与证据边界，不新增生产模块、数据库迁移、资金写入或第二事实源，未据此宣称 41 项验收通过；架构正文已登记该入口",
-  "snapshot_sha256": "24c346de5c02bdce78f9f005decab4b7bb68467b7c22c86a587c51b176019c9f",
-  "architecture_sha256": "6f425d685c8202372c95f9d4cb5a2b7778ebdcf79903916026159e589b6f9219",
-  "history_sha256": "7738235412125caa01216b8f5170bba9d0ae1f22146caf026b09ff5928a324eb",
+  "reviewed_at": "2026-11-15T05:30:31Z",
+  "review_reason": "035 合入 main 并新增隔离浏览器预览：专库随机 schema、显式 ProvisionFor、可选 GOPROXY 构建参数与 029 执行器；生产 public provision、运行模块、资金与权限边界不变，仍未执行 41 项通过结论；架构正文已同步",
+  "snapshot_sha256": "a91e756a6cf5ca001a96e54b3bb161efcd940c16cdc952ec75fe8f474b83e19a",
+  "architecture_sha256": "f0202cae616bf9cf6cea44e225eb739a895cc716e675261a32aad5ef0cdf49d8",
+  "history_sha256": "bcf578bae038cc695cc0f40dbfc068e6f642905970473d16e26ca22ee6413976",
   "files": [
     {
       "path": ".dockerignore",
@@ -41,11 +41,11 @@
     },
     {
       "path": "Dockerfile",
-      "sha256": "4f44fb785e1845a55309271a2ac825640f55b167bec7d3eaa168b6c6fdda5c8c"
+      "sha256": "11377461c63cfa478b2c6b859191aea2384bb1bff18112305d5f3b7d6802aac3"
     },
     {
       "path": "Makefile",
-      "sha256": "c6d2af63fac09fb49adc9e8244a51ef926a31f93aecf5d02d7814bd8f14d1665"
+      "sha256": "589a677154db0dcab9aa8076c01297aa9274c77d9698cd59c1efb91f897ae55a"
     },
     {
       "path": "README.md",
@@ -97,7 +97,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "8b5a3fec78eabadc65ddd19a9d8d1d64d25c10c33d5a9efff02f720f03e4d6a1"
+      "sha256": "c432797c907c29a16d8d9b9bbe631c26d72389e0dd6eb88c7f98d65994cb9732"
     },
     {
       "path": "deploy/external-upstreams.compose.yaml",
@@ -1624,8 +1624,12 @@
       "sha256": "1a588449102c3a023897edfac91174af4b49de6c364836d9a4aca1a9c6325fb1"
     },
     {
+      "path": "docs/verification/phase0-upstream-provenance.md",
+      "sha256": "fdbde2e489efa0462e915dbe905d0acdf3687dd8241382ea8f8d1ecb6bf142e6"
+    },
+    {
       "path": "docs/verification/phase1-acceptance-runner.md",
-      "sha256": "ead513e398d29350dc95866830a8da85e1686b868e68a8183df4a088ef4b33e9"
+      "sha256": "f070aaf17c98b51332501db7481687e5426be55ad9f131caac699d6fc9997ad6"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -1953,7 +1957,7 @@
     },
     {
       "path": "internal/alerts/alerts_integration_test.go",
-      "sha256": "22369e605d63775b8daa7a5b4753f0280eaea2a0b3973d6491eb0ac91ee562d0"
+      "sha256": "b122183340ebd9269ac0a93444805320562de544215b918f5e75d7c843a448c1"
     },
     {
       "path": "internal/alerts/cash_refund_integration_test.go",
@@ -7036,6 +7040,10 @@
       "sha256": "24c456dc5df27d0b0756cf1d9358f4195db320f6ab59b1a3ebab5e3ad72d154b"
     },
     {
+      "path": "scripts/check-upstream-provenance/main.go",
+      "sha256": "7db267fb2f6d41ac1c8273370ef899132dc07220cad4bdee8af85105a95ba47e"
+    },
+    {
       "path": "scripts/check-wallet-profile-roots.py",
       "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
     },
@@ -7205,7 +7213,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "dea4dc37fd67fb642ae34dfbf43b6b4c14d4660960ea6e1b438e3f613e53bb26"
+      "sha256": "a09bf719af6ae3282c3c08963e578ae303b6e7848ef46292f0414e7b690882ab"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -7214,6 +7222,10 @@
     {
       "path": "scripts/phase1-acceptance.test.sh",
       "sha256": "cd4b7cc1dc03ad57e900c9f70a4d3c9bcba89bdbc2449513011ae53366fb2527"
+    },
+    {
+      "path": "scripts/phase1-browser-preview.sh",
+      "sha256": "aef90c1280e0252c7cc484dab24eb5a818f2554494869fac87baa5c49914c693"
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
@@ -7226,6 +7238,10 @@
     {
       "path": "scripts/phase1-mock-acceptance.test.sh",
       "sha256": "dea21c3f20aac604fbe8b4dc2c36d158c050a0ae2b7b65558d276e651bc9b143"
+    },
+    {
+      "path": "scripts/phase1-provision/main.go",
+      "sha256": "6ca6ffb81882dbd8e90ed2f6b7ee43df3979a98f1b52553f8fbb18661b03dd45"
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
@@ -8357,7 +8373,7 @@
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
-      "sha256": "f0f1f7ef32ed45ae75c7373d83d8323fe4eec00902871ccd823a71ebf3953b05"
+      "sha256": "3505ffd70e7504d128db31ccc2ca5617b70f50e2e880bb1283601ba8b6746c4a"
     },
     {
       "path": "web/.gitignore",

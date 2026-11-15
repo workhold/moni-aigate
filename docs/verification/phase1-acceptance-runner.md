@@ -16,6 +16,16 @@ scripts/phase1-acceptance.test.sh
 
 这只验证执行器和测试清单，不是 029 验收。
 
+## 隔离浏览器/部署预览
+
+```bash
+scripts/phase1-browser-preview.sh
+```
+
+该前台进程使用当前源码构建镜像，在 55439 专库创建随机 `phase1qa_*` schema，执行 current-only 迁移和显式 `operations.ProvisionFor(schema)`，再启动 `moni-phase1-browser-app` / `moni-phase1-browser-worker`。`scripts/phase1-provision` 只用于这个隔离测试目标；生产 `provision` 仍只处理 public，不改变默认部署行为。预览退出时删除自己的容器、网络和随机 schema。
+
+随机管理员密码与运行时密钥只写入 `/Users/vchive/.cache/moni-phase1-browser/` 的 0600 文件，不应打印到终端或复制进证据。浏览器驱动直接读取受保护文件。`Dockerfile`/`compose.yaml` 的 `GOPROXY` 构建参数保持默认代理；本地预览显式使用可访问的公共镜像并继续执行 `go.sum` 校验。
+
 ## 正式执行前置
 
 1. 所有实现与验收工具已合入，当前工作树位于最终干净提交；`TEST_DATABASE_URL` 必须逐字为 `postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable`。
