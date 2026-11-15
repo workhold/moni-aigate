@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T01:55:19Z",
-  "review_reason": "034.6 最终验收收口：77包统一race、364项前端测试、构建、vet与make check通过；独立展示表和权限边界已同步，无会计/请求/计量结构变化",
-  "snapshot_sha256": "4c0324c615876196eb0f88249bf94feaf1d2d1f2c8d0a599a2c176222c897a25",
-  "architecture_sha256": "7bbb42e12960d0751d37562dabf288231f216fae33f0d7aa1aa9a172310f0376",
-  "history_sha256": "fd01d1fe04e12908362d59872bb703ca8f8b3033e5c1fb99bd92a0d349eca4ec",
+  "reviewed_at": "2026-11-15T02:51:27Z",
+  "review_reason": "035 七项验收逐项勾选并附 phase0 证据；补齐固定提交 LICENSE/NOTICE、SOURCE 与上游 provenance 发布检查，无运行时代码或资金结构变化",
+  "snapshot_sha256": "7edfa84686925731fc76f083113f25aa51dcc4f11b0775c56ee8001a7349f8fe",
+  "architecture_sha256": "6044da109b175a248730df525796af19ab9cba89cc96f70166211d7801628562",
+  "history_sha256": "bc27a1fc19422d85f05cfcb361f78d8e00aaa590eeabedfc045895de29bd8be1",
   "files": [
     {
       "path": ".dockerignore",
@@ -45,7 +45,7 @@
     },
     {
       "path": "Makefile",
-      "sha256": "c6d2af63fac09fb49adc9e8244a51ef926a31f93aecf5d02d7814bd8f14d1665"
+      "sha256": "589a677154db0dcab9aa8076c01297aa9274c77d9698cd59c1efb91f897ae55a"
     },
     {
       "path": "README.md",
@@ -1618,6 +1618,10 @@
     {
       "path": "docs/verification/phase0-external-upstream.md",
       "sha256": "1a588449102c3a023897edfac91174af4b49de6c364836d9a4aca1a9c6325fb1"
+    },
+    {
+      "path": "docs/verification/phase0-upstream-provenance.md",
+      "sha256": "fdbde2e489efa0462e915dbe905d0acdf3687dd8241382ea8f8d1ecb6bf142e6"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -7028,6 +7032,10 @@
       "sha256": "24c456dc5df27d0b0756cf1d9358f4195db320f6ab59b1a3ebab5e3ad72d154b"
     },
     {
+      "path": "scripts/check-upstream-provenance/main.go",
+      "sha256": "7db267fb2f6d41ac1c8273370ef899132dc07220cad4bdee8af85105a95ba47e"
+    },
+    {
       "path": "scripts/check-wallet-profile-roots.py",
       "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
     },
@@ -8329,7 +8337,7 @@
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
-      "sha256": "f0f1f7ef32ed45ae75c7373d83d8323fe4eec00902871ccd823a71ebf3953b05"
+      "sha256": "3505ffd70e7504d128db31ccc2ca5617b70f50e2e880bb1283601ba8b6746c4a"
     },
     {
       "path": "web/.gitignore",

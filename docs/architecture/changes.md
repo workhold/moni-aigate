@@ -7078,3 +7078,18 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `docs/verification/034-6-coin-display.md`
 
 </details>
+
+## 2026-11-15T02:51:27Z · 7edfa8468692
+
+035 七项验收逐项勾选并附 phase0 证据；补齐固定提交 LICENSE/NOTICE、SOURCE 与上游 provenance 发布检查，无运行时代码或资金结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2253 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Makefile`
+- added `docs/verification/phase0-upstream-provenance.md`
+- added `scripts/check-upstream-provenance/main.go`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>

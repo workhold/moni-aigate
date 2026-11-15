@@ -1,6 +1,6 @@
 # 035：New API / Sub2API 外部上游接入
 
-状态：草案，作为 0 阶段和 MVP 的验收合同。它只规定 aigate 与下游网关之间的边界，不声称 New API 或 Sub2API 的全部功能已经在 aigate 中实现。当前 deterministic relay 与 Compose mock 证据见[0 阶段验证记录](../../docs/verification/phase0-external-upstream.md)；真实三服务三库、真实凭据和逐 profile 认证仍未完成。
+状态：七项本地验收已勾选（2026-11-15），作为 0 阶段和 MVP 的验收合同。它只规定 aigate 与下游网关之间的边界，不声称 New API 或 Sub2API 的全部功能已经在 aigate 中实现；真实生产部署、真实供应商账号与逐 profile 认证仍未完成。
 
 ## 目标
 
@@ -35,13 +35,13 @@
 
 ## MVP 验收
 
-- [ ] 三服务和三个数据库可在同一 Compose 编排（或等效部署脚本）中启动，服务之间使用内部网络；1Panel 等面板导入为可选等价方式。
-- [ ] aigate 可以把一个已发布逻辑模型路由到 direct、new_api、sub2api 三类 channel 中至少两类。
-- [ ] Chat、SSE、usage、错误分类和成本未知状态都有真实或 deterministic fixture 证据。
-- [ ] 下游局部重试、aigate 跨 channel 重试和未知消费均有不重放负向测试。
-- [ ] 客户售价、预占、唯一 settlement、采购成本和审计只在 aigate 生成。
-- [ ] 至少一个能力完成 `external_relay → embedded_adapter` 的切片，并能按 route revision 回退。
-- [ ] 源码复用的组件携带 LICENSE/NOTICE、来源提交和修改记录；许可证义务进入发布检查。
+- [x] 三服务和三个数据库可在同一 Compose 编排（或等效部署脚本）中启动，服务之间使用内部网络；1Panel 等面板导入为可选等价方式。（证据：`deploy/external-upstreams.compose.yaml`、[0 阶段真实三服务三库记录](../../docs/verification/phase0-external-upstream.md)。）
+- [x] aigate 可以把一个已发布逻辑模型路由到 direct、new_api、sub2api 三类 channel 中至少两类。（证据：同一记录的真实运行结果 `direct=true,new_api=true,sub2api=true`。）
+- [x] Chat、SSE、usage、错误分类和成本未知状态都有真实或 deterministic fixture 证据。（证据：`internal/server/external_relay_integration_test.go`、`scripts/external-upstream-qa.py`、[0 阶段记录](../../docs/verification/phase0-external-upstream.md) 与 [031 harness](../../docs/verification/phase1/031-mock-harness.md)。）
+- [x] 下游局部重试、aigate 跨 channel 重试和未知消费均有不重放负向测试。（证据：0 阶段专用 PG 用例 3–4、真实 Compose 单 receipt 断言及 [031 harness](../../docs/verification/phase1/031-mock-harness.md)。）
+- [x] 客户售价、预占、唯一 settlement、采购成本和审计只在 aigate 生成。（证据：[0 阶段记录](../../docs/verification/phase0-external-upstream.md) 的拓扑、专用 PG 与真实三服务三库结果；下游不写 aigate 钱包/settlement。）
+- [x] 至少一个能力完成 `external_relay → embedded_adapter` 的切片，并能按 route revision 回退。（证据：0 阶段专用 PG 用例 5 与真实运行 `rollback_revision=2`。）
+- [x] 源码复用的组件携带 LICENSE/NOTICE、来源提交和修改记录；许可证义务进入发布检查。（证据：[上游来源与许可证验收](../../docs/verification/phase0-upstream-provenance.md)、`third_party/*/SOURCE.md` 与 `make upstream-provenance-check`。）
 
 ## 非目标
 

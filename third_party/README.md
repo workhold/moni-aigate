@@ -1,6 +1,6 @@
 # 上游源码集成区
 
-本目录用于存放按许可证纳入同一仓库开发的上游组件。当前修正版只提交接入合同和来源规则，没有把未固定提交的 New API 或 Sub2API 源码伪装成已集成代码。
+本目录用于存放按许可证纳入同一仓库开发的上游组件及来源证明。当前没有 vendor 修改版 New API 或 Sub2API 源码；`new-api/` 与 `sub2api/` 保存固定提交的 LICENSE/NOTICE 和 SOURCE 记录，执行形态仍为 `external_relay`。
 
 ## 纳入步骤
 
@@ -20,4 +20,4 @@ git -C third_party/new-api checkout <NEW_API_COMMIT>
 git -C third_party/sub2api checkout <SUB2API_COMMIT>
 ```
 
-两个 `<..._COMMIT>` 必须替换为经过审查的固定 SHA，不能用 `main`、`latest` 或浮动镜像标签。当前环境无法解析 `github.com`，因此本分支没有执行克隆，也没有提交未核实的上游代码。
+本次通过 GitHub API 按固定提交取得 LICENSE/NOTICE 并记录来源；未执行源码克隆，也未提交未核实的上游代码。`make check` 的 `upstream-provenance-check` 校验这些文件、固定提交、镜像 digest 和本地修改记录。
