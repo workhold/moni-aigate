@@ -7108,3 +7108,24 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `specs/035-external-upstream-integration/spec.md`
 
 </details>
+
+## 2026-11-15T05:30:31Z · a91e756a6cf5
+
+035 合入 main 并新增隔离浏览器预览：专库随机 schema、显式 ProvisionFor、可选 GOPROXY 构建参数与 029 执行器；生产 public provision、运行模块、资金与权限边界不变，仍未执行 41 项通过结论；架构正文已同步
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2262 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- added `docs/verification/phase1-acceptance-runner.md`
+- added `scripts/phase1-acceptance-matrix.json`
+- added `scripts/phase1-acceptance.py`
+- added `scripts/phase1-acceptance.sh`
+- added `scripts/phase1-acceptance.test.sh`
+- added `scripts/phase1-browser-preview.sh`
+- added `scripts/phase1-provision/main.go`
+- added `scripts/phase1_acceptance_test.py`
+
+</details>

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T04:37:04Z",
-  "review_reason": "035 合入已冻结的 029/031 main：架构正文与历史以 main 为准，保留 035 七项勾选和告警索引测试修正；仅重新计算清单，无新增生产结构或权限边界",
-  "snapshot_sha256": "769f639a26984c343ac060df95424e9630e7fe25f2b97b6a91fa2a825c41c4ea",
-  "architecture_sha256": "c2571f0a8ecbe4f352f4b6bfde97ab18d6b2baad384bd1844285f9ac64131fa4",
-  "history_sha256": "5fc7b2d8afb419c4a274934edb0c52f22cfa7adf0d43ad5aff609c2eb2db09eb",
+  "reviewed_at": "2026-11-15T05:30:31Z",
+  "review_reason": "035 合入 main 并新增隔离浏览器预览：专库随机 schema、显式 ProvisionFor、可选 GOPROXY 构建参数与 029 执行器；生产 public provision、运行模块、资金与权限边界不变，仍未执行 41 项通过结论；架构正文已同步",
+  "snapshot_sha256": "a91e756a6cf5ca001a96e54b3bb161efcd940c16cdc952ec75fe8f474b83e19a",
+  "architecture_sha256": "f0202cae616bf9cf6cea44e225eb739a895cc716e675261a32aad5ef0cdf49d8",
+  "history_sha256": "bcf578bae038cc695cc0f40dbfc068e6f642905970473d16e26ca22ee6413976",
   "files": [
     {
       "path": ".dockerignore",
@@ -41,7 +41,7 @@
     },
     {
       "path": "Dockerfile",
-      "sha256": "4f44fb785e1845a55309271a2ac825640f55b167bec7d3eaa168b6c6fdda5c8c"
+      "sha256": "11377461c63cfa478b2c6b859191aea2384bb1bff18112305d5f3b7d6802aac3"
     },
     {
       "path": "Makefile",
@@ -97,7 +97,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "8b5a3fec78eabadc65ddd19a9d8d1d64d25c10c33d5a9efff02f720f03e4d6a1"
+      "sha256": "c432797c907c29a16d8d9b9bbe631c26d72389e0dd6eb88c7f98d65994cb9732"
     },
     {
       "path": "deploy/external-upstreams.compose.yaml",
@@ -1626,6 +1626,10 @@
     {
       "path": "docs/verification/phase0-upstream-provenance.md",
       "sha256": "fdbde2e489efa0462e915dbe905d0acdf3687dd8241382ea8f8d1ecb6bf142e6"
+    },
+    {
+      "path": "docs/verification/phase1-acceptance-runner.md",
+      "sha256": "f070aaf17c98b51332501db7481687e5426be55ad9f131caac699d6fc9997ad6"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -7204,6 +7208,26 @@
       "sha256": "5af6379fd7bb77af22beb3211c6f3960ab9d62e42daefc9c3c2e6fdcf0eab5d0"
     },
     {
+      "path": "scripts/phase1-acceptance-matrix.json",
+      "sha256": "c14b918f80a9a5607b9497002bed877c6a5fff6e966eaaf9cbfb6adfce7f1a10"
+    },
+    {
+      "path": "scripts/phase1-acceptance.py",
+      "sha256": "a09bf719af6ae3282c3c08963e578ae303b6e7848ef46292f0414e7b690882ab"
+    },
+    {
+      "path": "scripts/phase1-acceptance.sh",
+      "sha256": "7aaf0c28fe078b1b45a316f3c0a5cceb6679d6e8a24acc30eead74f629c690c2"
+    },
+    {
+      "path": "scripts/phase1-acceptance.test.sh",
+      "sha256": "cd4b7cc1dc03ad57e900c9f70a4d3c9bcba89bdbc2449513011ae53366fb2527"
+    },
+    {
+      "path": "scripts/phase1-browser-preview.sh",
+      "sha256": "aef90c1280e0252c7cc484dab24eb5a818f2554494869fac87baa5c49914c693"
+    },
+    {
       "path": "scripts/phase1-mock-acceptance.py",
       "sha256": "8f9d3696d9eb8179fb3c1d08d3196b02a7ca59540fdfa8b75836d451d012b61f"
     },
@@ -7214,6 +7238,14 @@
     {
       "path": "scripts/phase1-mock-acceptance.test.sh",
       "sha256": "dea21c3f20aac604fbe8b4dc2c36d158c050a0ae2b7b65558d276e651bc9b143"
+    },
+    {
+      "path": "scripts/phase1-provision/main.go",
+      "sha256": "6ca6ffb81882dbd8e90ed2f6b7ee43df3979a98f1b52553f8fbb18661b03dd45"
+    },
+    {
+      "path": "scripts/phase1_acceptance_test.py",
+      "sha256": "ae09cb09417b5d7277763932702adbf16168d3ed6b01728169d1e78e69ddfea9"
     },
     {
       "path": "scripts/provider-qualification/README.md",

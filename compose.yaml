@@ -19,7 +19,10 @@ services:
     restart: unless-stopped
 
   migrate: &one_shot
-    build: .
+    build:
+      context: .
+      args:
+        GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
     image: ${MONI_IMAGE:-moni-aigate:local}
     command: [migrate]
     environment: &migration-env
@@ -44,7 +47,10 @@ services:
         condition: service_completed_successfully
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
     image: ${MONI_IMAGE:-moni-aigate:local}
     environment:
       DATABASE_URL: postgres://moni_app:${APP_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
@@ -100,7 +106,10 @@ services:
       start_period: 10s
 
   worker:
-    build: .
+    build:
+      context: .
+      args:
+        GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
     image: ${MONI_IMAGE:-moni-aigate:local}
     command: [worker]
     environment:
@@ -129,7 +138,10 @@ services:
 
   qa-provider:
     profiles: [business-qa]
-    build: .
+    build:
+      context: .
+      args:
+        GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
     image: ${MONI_IMAGE:-moni-aigate:local}
     entrypoint: [/usr/local/bin/mock-upstream]
     command: [--config, /etc/moni/mock-upstream.json, --addr, :8090, --allow-directives]
