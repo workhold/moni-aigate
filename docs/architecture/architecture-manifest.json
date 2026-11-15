@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T05:31:12Z",
-  "review_reason": "同步 main 232e343 后保留第一阶段 mock 验收/自测工具、验证记录和0600可选UI账号交接；架构冲突正文以 main 为准，manifest 由工具重建。生产网关、路由、计费、迁移、权限和部署仍按 main，本分支仅新增测试/验证工具，无额外结构变化",
-  "snapshot_sha256": "5dc99dae145699ee6bb4a472e793322728037286987cc90937b15d6c57529dff",
+  "reviewed_at": "2026-11-15T06:39:57Z",
+  "review_reason": "修正第一阶段 mock provision 的034 paid credit测试DTO并增加现有paid-credit/tenant-group HTTP合同绑定；仅测试与验证记录变化，不修改服务端校验、生产DTO、业务行为、迁移或权限边界",
+  "snapshot_sha256": "1a7a3d1f98a3857fe46e9d53be69dd735b338199321880350f3d04ee304d0e5d",
   "architecture_sha256": "c2571f0a8ecbe4f352f4b6bfde97ab18d6b2baad384bd1844285f9ac64131fa4",
-  "history_sha256": "3123a48c7a563265eebfd84f72fe2252b4f423e518d013a16b8647baad997f27",
+  "history_sha256": "be49e21825a06f4c7f0f980133e54921f64ed60c004795cfc141969745bcdfc7",
   "files": [
     {
       "path": ".dockerignore",
@@ -1629,7 +1629,7 @@
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
-      "sha256": "ef6c70e906078ac03ce974c0df04b0c31b5c5a82267e9c944de657f7bf78e217"
+      "sha256": "65e0cf70f0e921522af240cac1c86dc8198cdf2949292d60bb5fc7c0165ede3b"
     },
     {
       "path": "docs/verification/phase1/P1-CAT-02.md",
@@ -7209,7 +7209,7 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
-      "sha256": "28351e0af28c80bfd7473454947e3a1a692739211ae74d3f1efd68ea39d306dd"
+      "sha256": "890071dc42c27de2c6188baf5924ed4308f28da1a2a1e4f576aae396bf74e9f5"
     },
     {
       "path": "scripts/phase1-mock-acceptance.sh",
@@ -7221,7 +7221,7 @@
     },
     {
       "path": "scripts/phase1_mock_acceptance_test.py",
-      "sha256": "6c0e2a2a39fce4143bba1b56ab24e5eb7d5b4d7b466958ed716780a9af4a76fa"
+      "sha256": "6b9f64d9b9e3298bad6b622fb8e4b8a7c0b40e30299b5b3d45f77e068f3bc27d"
     },
     {
       "path": "scripts/provider-qualification/README.md",

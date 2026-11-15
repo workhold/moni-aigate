@@ -93,6 +93,16 @@ class Phase1HarnessTest(unittest.TestCase):
         with self.assertRaises(StopIteration):
             instance.query("unexpected extra query")
 
+    def test_paid_credit_body_matches_current_034_contract(self) -> None:
+        body = harness.paid_credit_body("tenant", "business", "100000000")
+        self.assertEqual(body["basis_kind"], "paid")
+        self.assertEqual(body["fiat_currency"], "CNY")
+        self.assertEqual(body["amount"], "100000000")
+        self.assertEqual(body["fiat_amount"], body["amount"])
+        self.assertEqual(body["tenant_id"], "tenant")
+        self.assertEqual(body["business_ref"], "business")
+        self.assertNotIn("request_id", body)
+
     def test_ui_accounts_export_is_opt_in_private_and_secret_free(self) -> None:
         payload = {
             "run_id": "run",

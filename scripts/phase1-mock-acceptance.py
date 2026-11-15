@@ -71,6 +71,8 @@ POSTGRES_GO_TEST_BINDINGS = {
     "cancellation_pending_no_replay": ("./internal/server", "TestGatewayPostgresClientCancellationKeepsUnknownUsagePending"),
     "alias_authorization_and_original_name": ("./internal/server", "TestModelAliasHTTPGatewayAuthorizationAndOriginalName"),
     "group_multiplier_compilation": ("./internal/catalog", "TestPhase1GroupMultiplierCompilesImmutablePrices"),
+    "paid_credit_http_contract": ("./internal/server", "TestHTTPFundingManualCreditPreservesWalletAndApprovalContract"),
+    "tenant_group_assignment_http_contract": ("./internal/server", "TestPricingHTTPBusinessAndCurrentDomainIsolation"),
 }
 REQUIRED_PURE_CASES = frozenset({
     "weights_3_to_1", "capacity_full_demotion", "circuit_health", "cost_first",
@@ -127,6 +129,19 @@ def expected_charge(input_tokens: int, output_tokens: int, input_rate: int, outp
     if any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in values):
         raise HarnessFailure(f"invalid quantities or absolute rates for charge: {values}")
     return (input_tokens * input_rate + output_tokens * output_rate + 999_999) // 1_000_000
+
+
+def paid_credit_body(tenant_id: str, business_ref: str, amount: str) -> dict:
+    """Current 034 paid-credit DTO; COIN and CNY test amounts intentionally match."""
+    return {
+        "tenant_id": tenant_id,
+        "amount": amount,
+        "basis_kind": "paid",
+        "fiat_currency": "CNY",
+        "fiat_amount": amount,
+        "business_ref": business_ref,
+        "proof_ref": "phase1-mock-acceptance",
+    }
 
 
 def keyed_values(value: object, key: str) -> list[object]:
@@ -515,7 +530,7 @@ class Harness:
         self.api.expect("POST", "/api/platform/users", {"email": operator_email, "password": operator_password, "platform_role": "finance_operator"}, csrf=True)
         self.api.expect("POST", "/api/platform/users", {"email": approver_email, "password": approver_password, "platform_role": "finance_approver"}, csrf=True)
         self.api.login(operator_email, operator_password)
-        credit = self.api.expect("POST", "/api/platform/credits", {"tenant_id": tenant_id, "amount": "100000000", "business_ref": self.run_id, "proof_ref": "phase1-mock-acceptance"}, csrf=True, headers={"Idempotency-Key": self.run_id})
+        credit = self.api.expect("POST", "/api/platform/credits", paid_credit_body(tenant_id, self.run_id, "100000000"), csrf=True, headers={"Idempotency-Key": self.run_id})
         credit_id = str(credit["id"])
         self.api.login(approver_email, approver_password)
         self.api.expect("POST", f"/api/platform/credits/{credit_id}/approve", {}, csrf=True, headers={"Idempotency-Key": str(uuid.uuid4())})

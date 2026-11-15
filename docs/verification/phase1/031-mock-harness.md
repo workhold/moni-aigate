@@ -68,6 +68,7 @@ scripts/phase1-mock-acceptance.sh
 | missing usage | mock/provider 故障矩阵 | `server.TestGatewayPostgresMissingUsageNeverSendsSuccessDone` |
 | 别名授权与原模型名 | 六协议部署脚本；尚未执行 | `server.TestModelAliasHTTPGatewayAuthorizationAndOriginalName`（仅 Chat，不冒充六协议） |
 | 倍率编译 | 六协议实际价格/计费部署脚本；尚未执行 | `catalog.TestPhase1GroupMultiplierCompilesImmutablePrices`（编译域，不替代实际调用） |
+| 034 paid credit 与 tenant 组价赋值 | provision 使用 `basis_kind=paid`、`fiat_currency=CNY`，且 `fiat_amount=amount`；赋值 DTO 与现行 HTTP 合同一致 | `server.TestHTTPFundingManualCreditPreservesWalletAndApprovalContract`、`server.TestPricingHTTPBusinessAndCurrentDomainIsolation` |
 
 ## 本分支已执行的验证
 
@@ -77,14 +78,14 @@ scripts/phase1-mock-acceptance.sh
 scripts/phase1-mock-acceptance.test.sh
 ```
 
-结果：PASS。8 个 hermetic Python 单元测试通过，覆盖绑定存在性、receipt 基数/顺序、别名 JSON/SSE 回显、合并一次 ceil、实际价格断言和 UI 文件权限/秘密字段拒绝；随后 15 个非 PG Go 绑定在 `-race` 下通过，包为 `internal/provider`、`internal/routing`、`internal/testsupport/mockupstream`。
+结果：PASS。9 个 hermetic Python 单元测试通过，覆盖绑定存在性、receipt 基数/顺序、别名 JSON/SSE 回显、合并一次 ceil、实际价格断言、034 paid credit DTO 和 UI 文件权限/秘密字段拒绝；随后 15 个非 PG Go 绑定在 `-race` 下通过，包为 `internal/provider`、`internal/routing`、`internal/testsupport/mockupstream`。
 
 ```sh
 TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
   scripts/phase1-mock-acceptance.sh --run-postgres-go-tests
 ```
 
-结果：PASS。7 个命名 PG 绑定在 `-race -p 1` 下串行通过；`internal/catalog` 与 `internal/server` 均 PASS。数据库地址不含凭据，未运行长整仓 PG 测试或并行 Compose。
+结果：PASS。9 个命名 PG 绑定在 `-race -p 1` 下串行通过；`internal/catalog` 与 `internal/server` 均 PASS。数据库地址不含凭据，未运行长整仓 PG 测试或并行 Compose。新增的 paid-credit 与 tenant-group HTTP 合同验证通过，provision 不再使用 034 之前的无付款基准 DTO；group/tenant 赋值字段未发现其他 DTO 偏差。
 
 ## 未覆盖/阻塞缺口
 

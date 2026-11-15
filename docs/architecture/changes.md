@@ -7125,3 +7125,17 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - added `scripts/phase1_mock_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T06:39:57Z · 1a7a3d1f98a3
+
+修正第一阶段 mock provision 的034 paid credit测试DTO并增加现有paid-credit/tenant-group HTTP合同绑定；仅测试与验证记录变化，不修改服务端校验、生产DTO、业务行为、迁移或权限边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2256 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_mock_acceptance_test.py`
+
+</details>
