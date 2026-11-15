@@ -39,13 +39,15 @@ scripts/phase1-mock-acceptance.sh
 1. **P1-CAT-02 六协议别名调用**：Chat、Responses、Messages、Embeddings、Rerank、Gemini 全部使用别名发真实 HTTP 请求；生成协议覆盖 JSON/SSE。断言响应回显别名、`request_records.requested_model_name=alias`、`model_id` 仍是逻辑模型、恰好 a→b 两个 receipt/attempt、一个 settlement。另一个公开名 Chat 对照请求必须复用相同路由和编译组价。
 2. **P1-PR-02 编译价格实际计费**：六模型先发布默认价，再以 `0.5` 倍率 preview/compile，核对该组绝对 input/output rate、基准版本和新版本 ID，随后把 tenant 分配到该价格组。每个成功请求都联查 `request_meter_snapshots`、settlement、finalization 和 `meter_event_quantities`，断言实际使用编译后的 price version，且 `charged_amount=ceil(input×input_rate+output×output_rate)`，只合并取整一次。管理操作成功本身不计为计费通过。
 3. **可信无消费切换**：六协议正常请求均要求恰好 a→b 两个有序 receipt、两个 attempt、一个收费 settlement。
-4. **未知/可能已消费不重放**：`drop_after_headers`、`drop_after_events:2`、`error_after_usage`、`conflicting_usage`、`stall_first_event` 和 `missing_usage` 各自按 nonce 断言恰好一个 mock receipt、一个 attempt，且没有成功收费。协议、usage 和资金分别断言：
+4. **未知/可能已消费不重放**：`drop_after_headers`、`drop_after_events:2`、`error_after_usage`、`conflicting_usage`、`stall_first_event` 和 `missing_usage` 各自按 nonce 断言恰好一个 mock receipt、一个 attempt，且没有成功收费。每个故障前都通过当前路由发布 API 创建新的双渠道/新 credential 身份并激活新 revision，避免前一故障的 circuit/cooldown 把后一故障变成零 attempt 的 `no_available_channel`；这不是绕过健康门禁，而是隔离独立故障用例。协议、usage 和资金分别断言：
    - drop headers/首事件 stall：protocol failed、usage missing、释放且零收费；
    - drop events：protocol failed、usage missing、已写部分内容后待核对；
    - error after usage：protocol failed、提前 usage 仅为 provisional、待核对，不把它当 confirmed final；
    - conflicting usage：protocol completed、usage conflicting、待核对；
    - missing usage：protocol completed、usage missing、待核对。
    `stall_first_event` 的客户端等待上限大于网关首事件超时，避免把客户端超时误记为网关分类。
+5. **故障指令的内容事件**：provider 层明确断言 `conflicting_usage`、`drop_after_events` 和 `error_after_usage` 都先产生 `Event.Content=true` 的可提交事件，再进入各自协议/usage 终态；部署状态断言附带 request ID 和响应摘要，避免再把零派发 503 误认为流已提交。
+6. **P1-CAT-01 显式公开目录**：provision 对每个新模型先读取 `public_revision`，再调用 `PUT /api/platform/models/:id/publication` 设置 `public_visible=true`。模型默认私有，只有这六个 QA 模型被显式公开。随后无会话读取 `/api/public/models`，逐一核对六模型、别名和默认 price version，确保公开 `/pricing` 不再是空目录；不把 tenant 组价当作公开默认价。
 
 未知/释放场景的 settlement 数及 `charged_amount=0` 也会核对；已知 cost 必须有金额，unknown cost 不得填零金额。
 
@@ -69,6 +71,7 @@ scripts/phase1-mock-acceptance.sh
 | 别名授权与原模型名 | 六协议部署脚本；尚未执行 | `server.TestModelAliasHTTPGatewayAuthorizationAndOriginalName`（仅 Chat，不冒充六协议） |
 | 倍率编译 | 六协议实际价格/计费部署脚本；尚未执行 | `catalog.TestPhase1GroupMultiplierCompilesImmutablePrices`（编译域，不替代实际调用） |
 | 034 paid credit 与 tenant 组价赋值 | provision 使用 `basis_kind=paid`、`fiat_currency=CNY`，且 `fiat_amount=amount`；赋值 DTO 与现行 HTTP 合同一致 | `server.TestHTTPFundingManualCreditPreservesWalletAndApprovalContract`、`server.TestPricingHTTPBusinessAndCurrentDomainIsolation` |
+| 显式公开模型与匿名目录 | 六模型 publication CAS + 匿名模型/别名/默认价断言；部署复跑待执行 | `server.TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist` |
 
 ## 本分支已执行的验证
 
@@ -78,18 +81,22 @@ scripts/phase1-mock-acceptance.sh
 scripts/phase1-mock-acceptance.test.sh
 ```
 
-结果：PASS。9 个 hermetic Python 单元测试通过，覆盖绑定存在性、receipt 基数/顺序、别名 JSON/SSE 回显、合并一次 ceil、实际价格断言、034 paid credit DTO 和 UI 文件权限/秘密字段拒绝；随后 15 个非 PG Go 绑定在 `-race` 下通过，包为 `internal/provider`、`internal/routing`、`internal/testsupport/mockupstream`。
+结果：PASS。11 个 hermetic Python 单元测试通过，覆盖绑定存在性、receipt 基数/顺序、别名 JSON/SSE 回显、合并一次 ceil、实际价格断言、034 paid credit DTO、故障路由隔离、匿名公开目录和 UI 文件权限/秘密字段拒绝；随后 15 个非 PG Go 绑定在 `-race` 下通过，包为 `internal/provider`、`internal/routing`、`internal/testsupport/mockupstream`。
 
 ```sh
 TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
   scripts/phase1-mock-acceptance.sh --run-postgres-go-tests
 ```
 
-结果：PASS。9 个命名 PG 绑定在 `-race -p 1` 下串行通过；`internal/catalog` 与 `internal/server` 均 PASS。数据库地址不含凭据，未运行长整仓 PG 测试或并行 Compose。新增的 paid-credit 与 tenant-group HTTP 合同验证通过，provision 不再使用 034 之前的无付款基准 DTO；group/tenant 赋值字段未发现其他 DTO 偏差。
+结果：PASS。10 个命名 PG 绑定在 `-race -p 1` 下串行通过；`internal/catalog` 与 `internal/server` 均 PASS。数据库地址不含凭据，未运行长整仓 PG 测试或并行 Compose。paid-credit、tenant-group 与 public-catalog HTTP 合同均验证通过；group/tenant 赋值字段未发现其他 DTO 偏差。
+
+### 失败重试的诊断证据（不计为通过）
+
+一次扩展实跑在 `conflicting_usage` 返回 HTTP 503。只读专库事实显示 request `cbc8e576-aa62-477d-ac88-d82cc3e54b81` 为 `failed/released`，attempt=0 且无 finalization；此前 `missing_usage`、`drop_after_events`、`error_after_usage` 已使共享候选 b 连续三次失败并进入 open。因此该 503 是 harness 用例间健康状态污染导致的零派发，不是 mock 未发内容事件，也不是已证实的生产流提交缺陷。修复采用每故障新 credential/新 route revision 隔离，并保留 HTTP 200、内容事件、一个 receipt/attempt 和 pending usage 的原有强断言。
 
 ## 未覆盖/阻塞缺口
 
-- **扩展部署 harness 尚未执行**：因此 P1-CAT-02 的六协议别名实际部署调用、P1-PR-02 的六协议编译组价实际计费仍是阻塞缺口。当前只有可执行断言和上述有限 PG 专项，不能标为这两项部署复验 PASS。
+- **扩展部署 harness 尚未完成修复后的复跑**：因此 P1-CAT-02 的六协议别名实际部署调用、P1-PR-02 的六协议编译组价实际计费，以及 P1-CAT-01 的六模型公开价格页仍是阻塞缺口。当前只有可执行断言和上述有限 PG 专项，不能标为这些部署复验 PASS。
 - 权重、容量、熔断、成本门禁、连接拒绝和取消的本轮证据是命名 Go 测试，不是新的完整部署复跑；029 要求的同提交部署证据仍待执行。
 - 未运行完整 Compose business-qa、隔离浏览器桌面/390px 或 UI 终验；`PHASE1_UI_ACCOUNTS_FILE` 只是可选准备工具。
 - 没有真实供应商、真实凭据、真实 usage/采购账单或生产验收证据。

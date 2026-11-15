@@ -73,6 +73,7 @@ POSTGRES_GO_TEST_BINDINGS = {
     "group_multiplier_compilation": ("./internal/catalog", "TestPhase1GroupMultiplierCompilesImmutablePrices"),
     "paid_credit_http_contract": ("./internal/server", "TestHTTPFundingManualCreditPreservesWalletAndApprovalContract"),
     "tenant_group_assignment_http_contract": ("./internal/server", "TestPricingHTTPBusinessAndCurrentDomainIsolation"),
+    "public_catalog_http_contract": ("./internal/server", "TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist"),
 }
 REQUIRED_PURE_CASES = frozenset({
     "weights_3_to_1", "capacity_full_demotion", "circuit_health", "cost_first",
@@ -181,6 +182,23 @@ def assert_model_echo(short: str, raw: bytes, requested_name: str, stream: bool)
         names.extend(keyed_values(value, key))
     if not names or any(name != requested_name for name in names):
         raise HarnessFailure(f"{short} SSE did not consistently echo requested model {requested_name}: {names}")
+
+
+def assert_public_models(page: dict, models: dict[str, dict], default_price_ids: dict[str, str]) -> None:
+    rows = page.get("data")
+    if not isinstance(rows, list):
+        raise HarnessFailure("anonymous public catalog data is not a list")
+    by_id = {str(row.get("id")): row for row in rows if isinstance(row, dict)}
+    for short, expected in models.items():
+        model_id = expected["model_id"]
+        row = by_id.get(model_id)
+        if not row:
+            raise HarnessFailure(f"explicitly published {short} model is absent from anonymous public catalog")
+        if row.get("public_name") != expected["model"] or row.get("aliases") != [expected["alias"]]:
+            raise HarnessFailure(f"public catalog identity/alias mismatch for {short}: {row}")
+        pricing = row.get("pricing")
+        if not isinstance(pricing, dict) or pricing.get("status") != "available" or pricing.get("price_version_id") != default_price_ids[model_id]:
+            raise HarnessFailure(f"public catalog default price mismatch for {short}: {pricing}")
 
 
 def check_receipt_sequence(receipts: list[dict], nonce: str, *, expected: list[str] | None = None, count: int | None = None) -> list[dict]:
@@ -451,6 +469,44 @@ class Harness:
     def assert_receipts(self, nonce: str, *, expected: list[str] | None = None, count: int | None = None) -> None:
         check_receipt_sequence(self.receipts(), nonce, expected=expected, count=count)
 
+    def anonymous_public_models(self) -> dict:
+        request = urllib.request.Request(self.base_url + "/api/public/models", headers={"Accept": "application/json"}, method="GET")
+        with urllib.request.urlopen(request, timeout=10) as response:
+            if response.status != 200:
+                raise HarnessFailure(f"anonymous public catalog returned HTTP {response.status}")
+            value = json.loads(response.read())
+        if not isinstance(value, dict):
+            raise HarnessFailure("anonymous public catalog response is not an object")
+        return value
+
+    def isolate_chat_fault_route(self, models: dict[str, dict], case_name: str) -> None:
+        """Fresh credential identities prevent earlier fault health from masking the next case."""
+        if re.fullmatch(r"[a-z0-9-]+", case_name) is None:
+            raise HarnessFailure(f"invalid fault route case name: {case_name}")
+        assert self.api
+        self.api.login(self.admin_email, self.admin_password)
+        model_id = models["chat"]["model_id"]
+        directory = self.api.expect("GET", "/api/platform/models")
+        row = next((item for item in directory if str(item.get("id")) == model_id), None)
+        if not row:
+            raise HarnessFailure("chat model disappeared before fault-route isolation")
+        schema_id, schema_digest = str(row["schema_id"]), str(row["schema_digest"])
+        active_revision = int(row["active_revision"])
+        channels: dict[str, str] = {}
+        for candidate, secret in (("a", "phase1-a-secret"), ("b", "phase1-b-secret")):
+            channel = self.api.expect("POST", "/api/platform/channels", {"name": f"mock-{self.run_id}-{case_name}-{candidate}", "base_url": f"http://phase1-mock-upstream:8090/c/{candidate}/v1", "provider": "openai", "data_region": "global", "secret": secret, "allowed_cidrs": ["172.16.0.0/12"]}, csrf=True)
+            channels[candidate] = str(channel["id"])
+        channel_list = self.api.expect("GET", "/api/platform/channels")
+        revisions = {str(item["id"]): int(item["management_revision"]) for item in channel_list}
+        for candidate in ("a", "b"):
+            self.api.expect("POST", "/api/platform/cost-versions", {"operation_id": str(uuid.uuid4()), "channel_id": channels[candidate], "upstream_model": "chat", "schema_id": schema_id, "schema_digest": schema_digest, "variant_key": "default", "basis": "contract", "input_rate": "1000000", "output_rate": "1000000", "effective_at": now_wire(), "expected_channel_revision": str(revisions[channels[candidate]])}, csrf=True)
+            time.sleep(0.6)
+        bindings = [
+            {"channel_id": channels["a"], "upstream_model": "chat", "priority": 1, "weight": 1, "max_inflight": 10},
+            {"channel_id": channels["b"], "upstream_model": "chat", "priority": 0, "weight": 1, "max_inflight": 10},
+        ]
+        self.api.expect("PUT", f"/api/platform/models/{model_id}/bindings", {"expected_revision": active_revision, "bindings": bindings, "cost_policy": {"mode": "manual", "unknown_cost_policy": "allow"}}, csrf=True)
+
     def provision(self) -> dict[str, dict]:
         assert self.api and self.mock
         self.api.login(self.admin_email, self.admin_password)
@@ -520,6 +576,15 @@ class Harness:
             alias = f"{self.run_id}-alias-{short}"
             self.api.expect("POST", f"/api/platform/models/{model_ids[short]}/aliases", {"operation_id": str(uuid.uuid4()), "alias": alias}, csrf=True)
             aliases[short] = alias
+        public_models: dict[str, dict] = {}
+        for short, _, _, _ in PROTOCOLS:
+            model_id = model_ids[short]
+            current = self.api.expect("GET", f"/api/platform/models/{model_id}/publication")
+            updated = self.api.expect("PUT", f"/api/platform/models/{model_id}/publication", {"expected_revision": str(current["public_revision"]), "public_visible": True}, csrf=True)
+            if not updated.get("enabled") or not updated.get("public_visible"):
+                raise HarnessFailure(f"explicit public visibility did not take effect for {short}: {updated}")
+            public_models[short] = {"model_id": model_id, "model": f"{self.run_id}-{short}", "alias": aliases[short]}
+        assert_public_models(self.anonymous_public_models(), public_models, default_price_ids)
         owner_email = f"{self.run_id}-owner@example.invalid"
         owner_password = secrets.token_urlsafe(18)
         tenant = self.api.expect("POST", "/api/platform/tenants", {"name": self.run_id, "owner_email": owner_email, "owner_password": owner_password, "model_ids": list(model_ids.values())}, csrf=True)
@@ -555,7 +620,7 @@ class Harness:
                 "approver": {"email": approver_email, "password": approver_password},
             },
             "models": [
-                {"model_id": values["model_id"], "public_name": values["model"], "alias": values["alias"], "protocol": protocols[short]}
+                {"model_id": values["model_id"], "public_name": values["model"], "alias": values["alias"], "protocol": protocols[short], "public_visible": True}
                 for short, values in sorted(models.items())
             ],
         }
@@ -706,11 +771,13 @@ class Harness:
         self.assert_receipts(self.request_nonce("chat", False, False, "", "public-model"), expected=["a", "b"])
 
         fault_statuses: dict[str, int] = {}
+        self.isolate_chat_fault_route(models, "drop-headers")
         request_id, status, _ = self.request("chat", models["chat"]["alias"], models["chat"]["key"], False, unknown=True)
         fault_statuses["drop_after_headers"] = status
         self.assert_request(request_id, unknown=True, expected_attempts=1, expected_status="failed", expected_billing="released", expected_requested_name=models["chat"]["alias"], expected_protocol="failed", expected_usage="missing")
         self.assert_receipts(self.request_nonce("chat", False, True, "", ""), expected=["a"])
 
+        self.isolate_chat_fault_route(models, "missing-usage")
         request_id, missing_status, _ = self.request("chat", models["chat"]["alias"], models["chat"]["key"], False, unknown=True, fault="missing_usage")
         fault_statuses["missing_usage"] = missing_status
         self.assert_request(request_id, unknown=True, expected_attempts=1, expected_status="succeeded", expected_billing="pending_reconciliation", expected_requested_name=models["chat"]["alias"], expected_protocol="completed", expected_usage="missing")
@@ -721,15 +788,17 @@ class Harness:
             ("error_after_usage", "error-usage", "failed", "provisional", "pending_reconciliation"),
             ("conflicting_usage", "conflicting-usage", "completed", "conflicting", "pending_reconciliation"),
         ):
-            request_id, status, _ = self.request("chat", models["chat"]["alias"], models["chat"]["key"], True, unknown=True, fault=fault, case_name=case_name)
+            self.isolate_chat_fault_route(models, case_name)
+            request_id, status, raw = self.request("chat", models["chat"]["alias"], models["chat"]["key"], True, unknown=True, fault=fault, case_name=case_name)
             fault_statuses[fault] = status
             if status != 200:
-                raise HarnessFailure(f"{fault} stream should commit partial output before the terminal error; HTTP {status}")
+                raise HarnessFailure(f"{fault} stream should commit partial output before the terminal error; HTTP {status}, request_id={request_id}, body={raw[:500].decode(errors='replace')}")
             self.assert_request(request_id, unknown=True, expected_attempts=1, expected_status="succeeded" if expected_protocol == "completed" else "failed", expected_billing=expected_billing, expected_requested_name=models["chat"]["alias"], expected_protocol=expected_protocol, expected_usage=expected_usage)
             self.assert_receipts(self.request_nonce("chat", True, True, fault, case_name), count=1)
 
         # The mock never emits a first event. Allow the gateway's own 60-second
         # first-event timeout to classify it rather than timing out the client.
+        self.isolate_chat_fault_route(models, "stall-first")
         request_id, status, _ = self.request("chat", models["chat"]["alias"], models["chat"]["key"], True, unknown=True, fault="stall_first_event", case_name="stall-first", timeout_seconds=90)
         fault_statuses["stall_first_event"] = status
         if status < 400:

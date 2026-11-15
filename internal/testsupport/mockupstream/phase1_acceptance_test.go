@@ -219,10 +219,11 @@ func TestPhase1StreamFaultsHaveOneReceiptAndNoReplay(t *testing.T) {
 		fault, wantProtocol, wantErrorCode string
 		wantUsage                          provider.UsageStatus
 		wantEvents                         int
+		wantContent                        bool
 	}{
-		{fault: "drop_after_events:2", wantProtocol: "failed", wantUsage: provider.UsageMissing, wantEvents: 2},
-		{fault: "error_after_usage", wantProtocol: "failed", wantUsage: provider.UsageProvisional},
-		{fault: "conflicting_usage", wantProtocol: "completed", wantUsage: provider.UsageConflicting},
+		{fault: "drop_after_events:2", wantProtocol: "failed", wantUsage: provider.UsageMissing, wantEvents: 2, wantContent: true},
+		{fault: "error_after_usage", wantProtocol: "failed", wantUsage: provider.UsageProvisional, wantContent: true},
+		{fault: "conflicting_usage", wantProtocol: "completed", wantUsage: provider.UsageConflicting, wantContent: true},
 		{fault: "stall_first_event", wantProtocol: "failed", wantUsage: provider.UsageMissing, wantErrorCode: "upstream_first_event_timeout"},
 	} {
 		t.Run(tc.fault, func(t *testing.T) {
@@ -249,11 +250,13 @@ func TestPhase1StreamFaultsHaveOneReceiptAndNoReplay(t *testing.T) {
 			}
 			defer response.Close()
 			events := 0
+			sawContent := false
 			var terminal error
 			for {
 				event, readErr := response.ReadEvent()
 				if event != nil {
 					events++
+					sawContent = sawContent || event.Content
 				}
 				if readErr != nil {
 					terminal = readErr
@@ -277,6 +280,9 @@ func TestPhase1StreamFaultsHaveOneReceiptAndNoReplay(t *testing.T) {
 			}
 			if tc.wantEvents != 0 && events != tc.wantEvents {
 				t.Fatalf("drop_after_events delivered %d events, want %d", events, tc.wantEvents)
+			}
+			if tc.wantContent && !sawContent {
+				t.Fatal("fault directive did not produce a commit-capable content event")
 			}
 			if response.ProtocolOutcome != tc.wantProtocol || response.Usage.Status != tc.wantUsage {
 				t.Fatalf("terminal mismatch: outcome=%s usage=%s error=%v", response.ProtocolOutcome, response.Usage.Status, terminal)

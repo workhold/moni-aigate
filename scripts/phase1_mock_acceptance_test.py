@@ -13,6 +13,7 @@ import sys
 import tempfile
 import types
 import unittest
+from unittest import mock
 
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -23,6 +24,31 @@ if SPEC is None or SPEC.loader is None:
 harness = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = harness
 SPEC.loader.exec_module(harness)
+
+
+class FakeRouteAPI:
+    def __init__(self) -> None:
+        self.channels: list[dict] = []
+        self.bindings: dict | None = None
+
+    def login(self, email: str, password: str) -> None:
+        return None
+
+    def expect(self, method: str, path: str, value: object | None = None, **kwargs: object) -> object:
+        if method == "GET" and path == "/api/platform/models":
+            return [{"id": "chat-id", "schema_id": "schema", "schema_digest": "digest", "active_revision": 7}]
+        if method == "POST" and path == "/api/platform/channels":
+            channel = {"id": f"channel-{len(self.channels) + 1}", "management_revision": 1}
+            self.channels.append(channel)
+            return channel
+        if method == "GET" and path == "/api/platform/channels":
+            return self.channels
+        if method == "POST" and path == "/api/platform/cost-versions":
+            return {}
+        if method == "PUT" and path == "/api/platform/models/chat-id/bindings":
+            self.bindings = value
+            return {}
+        raise AssertionError(f"unexpected API call: {method} {path} {value}")
 
 
 class Phase1HarnessTest(unittest.TestCase):
@@ -92,6 +118,26 @@ class Phase1HarnessTest(unittest.TestCase):
         instance.assert_request("request", unknown=False, expected_attempts=2, expected_requested_name="alias", expected_protocol="completed", expected_usage="confirmed_final")
         with self.assertRaises(StopIteration):
             instance.query("unexpected extra query")
+
+    def test_fault_route_isolation_uses_new_credentials_and_current_revision(self) -> None:
+        instance = harness.Harness(argparse.Namespace())
+        instance.api = FakeRouteAPI()
+        with mock.patch.object(harness.time, "sleep", return_value=None):
+            instance.isolate_chat_fault_route({"chat": {"model_id": "chat-id"}}, "conflicting-usage")
+        self.assertEqual(len(instance.api.channels), 2)
+        self.assertEqual(instance.api.bindings["expected_revision"], 7)
+        self.assertEqual([row["channel_id"] for row in instance.api.bindings["bindings"]], ["channel-1", "channel-2"])
+        self.assertEqual([row["upstream_model"] for row in instance.api.bindings["bindings"]], ["chat", "chat"])
+
+    def test_anonymous_public_catalog_requires_all_models_aliases_and_prices(self) -> None:
+        models = {"chat": {"model_id": "model-1", "model": "public-chat", "alias": "alias-chat"}}
+        page = {"data": [{"id": "model-1", "public_name": "public-chat", "aliases": ["alias-chat"], "pricing": {"status": "available", "price_version_id": "price-1"}}]}
+        harness.assert_public_models(page, models, {"model-1": "price-1"})
+        with self.assertRaises(harness.HarnessFailure):
+            harness.assert_public_models({"data": []}, models, {"model-1": "price-1"})
+        page["data"][0]["pricing"]["price_version_id"] = "other-price"
+        with self.assertRaises(harness.HarnessFailure):
+            harness.assert_public_models(page, models, {"model-1": "price-1"})
 
     def test_paid_credit_body_matches_current_034_contract(self) -> None:
         body = harness.paid_credit_body("tenant", "business", "100000000")

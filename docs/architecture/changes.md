@@ -7146,3 +7146,18 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - added `scripts/phase1_mock_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T07:00:33Z · e4c15d9363c9
+
+修复第一阶段mock故障矩阵的用例健康隔离，保留内容/重放/账务强断言；provision按现有publication API显式公开六QA模型并匿名核价。仅测试工具、mock测试和验证记录变化，生产协议、路由、资金、权限与部署结构未改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `internal/testsupport/mockupstream/phase1_acceptance_test.go`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_mock_acceptance_test.py`
+
+</details>
