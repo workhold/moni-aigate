@@ -7092,3 +7092,20 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `specs/031-deterministic-mock-upstream/spec.md`
 
 </details>
+
+## 2026-11-15T05:05:21Z · 24c346de5c02
+
+新增 029 全量终验矩阵、执行器、自测和运行手册；仅验证与证据边界，不新增生产模块、数据库迁移、资金写入或第二事实源，未据此宣称 41 项验收通过；架构正文已登记该入口
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2258 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/phase1-acceptance-runner.md`
+- added `scripts/phase1-acceptance-matrix.json`
+- added `scripts/phase1-acceptance.py`
+- added `scripts/phase1-acceptance.sh`
+- added `scripts/phase1-acceptance.test.sh`
+- added `scripts/phase1_acceptance_test.py`
+
+</details>
