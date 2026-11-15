@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T09:42:41Z",
-  "review_reason": "将已验证的 admin/租户价格游标回归加入 P1-PR-01 必需绑定，现 41 IDs/82 bindings；仅验收证据覆盖，不改变生产行为或权限边界",
-  "snapshot_sha256": "845512de93f9d89f06432d42a2e3de3a28af30934adb559f8294e04f143a2d80",
+  "reviewed_at": "2026-11-15T09:44:51Z",
+  "review_reason": "将预览文档的必需测试绑定计数同步为实际 82；仅证据文字同步，无生产或权限变化",
+  "snapshot_sha256": "92e9a9e1b784f2f4396338a9433a9778717a657c4b6c3df2e9782f99f78ac7bd",
   "architecture_sha256": "9949c5483b32b1408cb0d0e96a8a99028d7e6b6dd5e527ffde7797d783fb5bd7",
-  "history_sha256": "d9da4540211b8f7013e26c00dc94a622944ba604516cab7819c69969d42e410b",
+  "history_sha256": "a4dba05789d35f5e95428d3731f514e43e2c29026ba9c28caf6a39d31a442d78",
   "files": [
     {
       "path": ".dockerignore",
@@ -1633,7 +1633,7 @@
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
-      "sha256": "dbe2e1461ba8ffecad1c9f3e45fef2862a1a7dc8917a3eca13e65809c3309993"
+      "sha256": "e1d123e124dfbc6d820bc38243cd6902308cf22e167eca43f523a245ecd1e72a"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",

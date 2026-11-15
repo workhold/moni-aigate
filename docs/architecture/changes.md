@@ -7289,3 +7289,15 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1-acceptance-matrix.json`
 
 </details>
+
+## 2026-11-15T09:44:51Z · 92e9a9e1b784
+
+将预览文档的必需测试绑定计数同步为实际 82；仅证据文字同步，无生产或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-browser-preview.md`
+
+</details>
