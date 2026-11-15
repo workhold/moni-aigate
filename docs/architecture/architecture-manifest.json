@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T10:10:56Z",
-  "review_reason": "修正实际 main 告警测试的观察会话查询，使其只统计当前临时数据库；生产默认关闭、退出和恢复逻辑不变，架构模块与合同不变，同步验证记录。",
-  "snapshot_sha256": "fb470219127e236baf1f2cd85d0199d8d99b28ae08ce97055f4b24c43311fd96",
-  "architecture_sha256": "934d38bd9b66ac577816ae83ccc110f8d95d56e9f6db4a1736f3c7a0bc6fa474",
-  "history_sha256": "ae00bd3d701f969bb420c61acf49dd4a5dcef57c0d3eb26d25b834d610c14a6a",
+  "reviewed_at": "2026-11-15T11:55:23Z",
+  "review_reason": "收口 029 浏览器终验证据完整性：完整成功后才发布 PASS，绑定干净 HEAD 归档与不可变运行镜像，保留分阶段截图，部署重启后重验并避免预览误清理；Compose 仅增加验收构建标签，无生产资金、迁移或运行拓扑变化。",
+  "snapshot_sha256": "8c93510de663d8face67e38e77bff61e16d37ed9623549edb2d6be10459d48d0",
+  "architecture_sha256": "de8ea58ca44922714c34c8119a4a9366b6b030c4a216fb02ef9f247a5bd2c4c2",
+  "history_sha256": "b37a1b92c98a205d91882c704a88d3b4e8a4fdadeabe312fda7fecc59c6dd7bf",
   "files": [
     {
       "path": ".dockerignore",
@@ -97,7 +97,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "c432797c907c29a16d8d9b9bbe631c26d72389e0dd6eb88c7f98d65994cb9732"
+      "sha256": "4d6d2080468356a4c8001f9ad6f204ca81573f7b3d8b521ddebe9e7ef71c14ad"
     },
     {
       "path": "deploy/external-upstreams.compose.yaml",
@@ -1629,11 +1629,11 @@
     },
     {
       "path": "docs/verification/phase1-acceptance-runner.md",
-      "sha256": "9fc9df168a94bc1d60f261ab18f592cc425240ba9c4ffa9baab6ba9c17bd6a0a"
+      "sha256": "672b24e309f0abd49b41cd2d50e69ceddebc2707e36b79706de9d168070bd7f0"
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
-      "sha256": "f483d09918757d872199994e93217d4e9c6c021479aa46508f7b580878d7915d"
+      "sha256": "733c2df8f1448aec60ae607057ac81ebc895a74e15adfa6683923b3d4dec3f4a"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -7393,7 +7393,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "8ab87495568cec4ce128c779a6c0338e2c1975beace2f18b69f937b98ff28fdc"
+      "sha256": "186b4fafb73424f36d23fcec3eeda551c2a07dec2f6d37e70db0e0776ea09465"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -7405,7 +7405,7 @@
     },
     {
       "path": "scripts/phase1-browser-preview.sh",
-      "sha256": "6c57a7d2f62b087201ab7f30be4c1a942a04c87efc772d2f5cbc38fb99fa5982"
+      "sha256": "b93579c7ab88ccbccea2748912acc7c19f3583e4c35c2903a2d4a8d41e607e95"
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
@@ -7425,15 +7425,15 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "ae09cb09417b5d7277763932702adbf16168d3ed6b01728169d1e78e69ddfea9"
+      "sha256": "d5a37f3d4fa2003b215a021ce3e266353b0f0e2a6ae788781fd4154d12d55620"
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "cd1d3a9d857c88e9ea4c62bf798f78c93f4791e3f60a6a0fc68cd53d25cbd1ee"
+      "sha256": "7a73e1ad072fc1dc440b908c4618a8a6ac1a1fd654608b416da8f18f7f2a4c25"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
-      "sha256": "09a0aa0e11148e81b165d69b12090b6a62b7ac2c65dc3022088e94cc72342800"
+      "sha256": "94475a5989caf0821692b8f76e0ce8441987cb96ef761e43a038e686119b6d94"
     },
     {
       "path": "scripts/phase1_mock_acceptance_test.py",

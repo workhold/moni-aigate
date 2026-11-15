@@ -154,6 +154,13 @@ def load_browser(path: pathlib.Path, commit: str) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     if value.get("schema_version") != 1 or value.get("commit") != commit or value.get("isolated") is not True:
         raise ValueError("browser evidence must be isolated and bound to the final commit")
+    if value.get("status") != "PASS" or value.get("completed") is not True:
+        raise ValueError("browser evidence must come from a fully completed final run")
+    runtime = value.get("runtime")
+    if not isinstance(runtime, dict) or runtime.get("source_commit") != commit or runtime.get("source_clean") is not True:
+        raise ValueError("browser evidence lacks clean runtime source binding")
+    if not re.fullmatch(r"[0-9a-f]{40}", str(runtime.get("source_tree", ""))) or not re.fullmatch(r"sha256:[0-9a-f]{64}", str(runtime.get("image_id", ""))):
+        raise ValueError("browser evidence has invalid runtime source or image identity")
     records = value.get("items")
     if not isinstance(records, dict):
         raise ValueError("browser evidence items must be an object")
@@ -167,6 +174,43 @@ def load_browser(path: pathlib.Path, commit: str) -> dict:
             if viewport == "mobile390" and entry.get("width") != 390:
                 raise ValueError(f"mobile viewport is not 390px: {item_id}")
     return value
+
+
+def verify_browser_runtime(browser: dict, commit: str) -> None:
+    runtime = browser["runtime"]
+    if runtime["source_tree"] != git("rev-parse", "HEAD^{tree}"):
+        raise ValueError("browser runtime source tree differs from the final checkout")
+    image_ids = []
+    for name in (os.environ["PHASE1_APP_CONTAINER"], os.environ["PHASE1_WORKER_CONTAINER"]):
+        result = subprocess.run(["docker", "inspect", "--format", "{{.Image}}", name], text=True, capture_output=True)
+        if result.returncode:
+            raise ValueError("cannot inspect the browser acceptance runtime")
+        image_ids.append(result.stdout.strip())
+    if image_ids != [runtime["image_id"], runtime["image_id"]]:
+        raise ValueError("running app/worker differ from the completed browser evidence")
+    result = subprocess.run(["docker", "image", "inspect", "--format", "{{json .Config.Labels}}", runtime["image_id"]], text=True, capture_output=True)
+    if result.returncode:
+        raise ValueError("cannot inspect the browser acceptance image")
+    labels = json.loads(result.stdout.strip() or "{}")
+    expected = {
+        "ai.moni.phase1.source-commit": commit,
+        "ai.moni.phase1.source-tree": runtime["source_tree"],
+        "ai.moni.phase1.source-clean": "true",
+    }
+    if any(labels.get(key) != value for key, value in expected.items()):
+        raise ValueError("browser runtime image labels do not match the final clean source")
+
+
+def recheck_browser_runtime(browser: dict, commit: str, log: pathlib.Path) -> bool:
+    try:
+        verify_browser_runtime(browser, commit)
+    except Exception as error:
+        with log.open("a", encoding="utf-8") as output:
+            output.write(f"runtime_recheck: FAIL: {error}\n")
+        return False
+    with log.open("a", encoding="utf-8") as output:
+        output.write("runtime_recheck: PASS\n")
+    return True
 
 
 def write_evidence(output: pathlib.Path, items: list[dict], summary: dict, go_results: dict[str, dict[str, str]], browser: dict | None) -> None:
@@ -258,6 +302,8 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         for name in ("PHASE1_BASE_URL", "PHASE1_APP_CONTAINER", "PHASE1_WORKER_CONTAINER", "PHASE1_ADMIN_PASSWORD"):
             if not os.environ.get(name):
                 raise ValueError(f"{name} is required for deterministic deployment acceptance")
+    if browser is not None:
+        verify_browser_runtime(browser, commit)
     compose = subprocess.run(["docker", "compose", "version"], cwd=ROOT, capture_output=True)
     if compose.returncode:
         subprocess.run(["docker-compose", "version"], cwd=ROOT, check=True, capture_output=True)
@@ -315,12 +361,16 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         mock_log = artifact / "mock-deployment.log"
         mock_env = env.copy()
         mock_env.pop("PHASE1_UI_ACCOUNTS_FILE", None)
+        if browser is not None:
+            mock_env["PHASE1_MOCK_IMAGE"] = browser["runtime"]["image_id"]
         mock_commands = [run_logged(["docker", "start", os.environ["PHASE1_APP_CONTAINER"], os.environ["PHASE1_WORKER_CONTAINER"]], artifact / "preview-start.log", mock_env)]
         if mock_commands[0]["status"] == "PASS":
             try:
                 wait_for_ready()
             except ValueError:
                 mock_commands[0]["status"] = "FAIL"
+        if mock_commands[0]["status"] == "PASS" and browser is not None and not recheck_browser_runtime(browser, commit, artifact / "preview-start.log"):
+            mock_commands[0]["status"] = "FAIL"
         if mock_commands[0]["status"] == "PASS":
             mock_commands.append(run_logged(["./scripts/phase1-mock-acceptance.sh"], mock_log, mock_env))
         add("mock-deployment", mock_commands)
@@ -328,7 +378,7 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         if '"status":"passed"' not in text and '"status": "passed"' not in text:
             suites[-1]["status"] = "FAIL"
 
-    summary = {"schema_version": 1, "spec": "029-phase1-acceptance", "commit": commit, "database": "127.0.0.1:55439/moni_test", "started_at": started_at, "suites": suites, "required_go_results": go_results, "browser_evidence": str(browser_path.relative_to(ROOT)) if browser_path and browser_path.is_relative_to(ROOT) else str(browser_path), "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项"}
+    summary = {"schema_version": 1, "spec": "029-phase1-acceptance", "commit": commit, "database": "127.0.0.1:55439/moni_test", "started_at": started_at, "suites": suites, "required_go_results": go_results, "browser_evidence": str(browser_path.relative_to(ROOT)) if browser_path and browser_path.is_relative_to(ROOT) else str(browser_path), "browser_runtime": (browser or {}).get("runtime", {}), "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项"}
     write_evidence(output, items, summary, go_results, browser)
     print(json.dumps({"overall_status": summary["overall_status"], "counts": summary["counts"], "summary": str(output / "summary.json")}, ensure_ascii=False))
     return 0 if summary["overall_status"] == "PASS" else 1

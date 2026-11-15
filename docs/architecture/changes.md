@@ -7314,3 +7314,22 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `internal/server/alert_main_integration_test.go`
 
 </details>
+
+## 2026-11-15T11:55:23Z · 8c93510de663
+
+收口 029 浏览器终验证据完整性：完整成功后才发布 PASS，绑定干净 HEAD 归档与不可变运行镜像，保留分阶段截图，部署重启后重验并避免预览误清理；Compose 仅增加验收构建标签，无生产资金、迁移或运行拓扑变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `compose.yaml`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1-browser-preview.sh`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/phase1_browser_qa.py`
+- modified `scripts/phase1_browser_qa_test.py`
+
+</details>

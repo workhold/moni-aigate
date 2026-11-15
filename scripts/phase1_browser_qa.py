@@ -589,15 +589,64 @@ def stop_ui_mock(runtime: tuple[str, pathlib.Path] | None):
     shutil.rmtree(config_dir)
 
 
+def docker_output(*args: str) -> str:
+    return subprocess.run(["docker", *args], text=True, capture_output=True, check=True).stdout.strip()
+
+
+def final_runtime_metadata(root: pathlib.Path, commit: str, app_container: str, worker_container: str, mock_image: str) -> dict:
+    if not mock_image:
+        raise RuntimeError("final browser evidence requires the app image for the isolated UI mock")
+    tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
+    app_image = docker_output("inspect", "--format", "{{.Image}}", app_container)
+    worker_image = docker_output("inspect", "--format", "{{.Image}}", worker_container)
+    ui_mock_image = docker_output("image", "inspect", "--format", "{{.Id}}", mock_image)
+    if not app_image or len({app_image, worker_image, ui_mock_image}) != 1:
+        raise RuntimeError("final app, worker and UI mock must use the same runtime image")
+    raw_labels = docker_output("image", "inspect", "--format", "{{json .Config.Labels}}", app_image)
+    labels = json.loads(raw_labels or "{}")
+    expected = {
+        "ai.moni.phase1.source-commit": commit,
+        "ai.moni.phase1.source-tree": tree,
+        "ai.moni.phase1.source-clean": "true",
+    }
+    if any(labels.get(key) != value for key, value in expected.items()):
+        raise RuntimeError("runtime image does not match the final clean commit and source tree")
+    return {
+        "app_container": app_container,
+        "worker_container": worker_container,
+        "image_id": app_image,
+        "source_commit": commit,
+        "source_tree": tree,
+        "source_clean": True,
+    }
+
+
 class Evidence:
-    def __init__(self, output: pathlib.Path, commit: str, base_url: str, final: bool):
+    def __init__(self, output: pathlib.Path, commit: str, base_url: str, final: bool, runtime: dict | None = None):
         self.output = output
-        self.value = {"schema_version": 1, "commit": commit, "isolated": True, "base_url": base_url, "created_at": dt.datetime.now(dt.timezone.utc).isoformat(), "items": {}}
+        self.occurrences = {}
+        self.value = {"schema_version": 1, "status": "PARTIAL" if final else "PREVIEW", "completed": False, "commit": commit, "isolated": True, "base_url": base_url, "created_at": dt.datetime.now(dt.timezone.utc).isoformat(), "runtime": runtime or {}, "items": {}}
+
+    def write(self):
+        temporary = self.output / "browser-evidence.json.tmp"
+        temporary.write_text(json.dumps(self.value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        temporary.replace(self.output / "browser-evidence.json")
+
+    def complete(self, final: bool):
+        self.value["status"] = "PASS" if final else "PREVIEW"
+        self.value["completed"] = True
+        if not final:
+            for item in self.value["items"].values():
+                for record in item.values():
+                    record["status"] = "PREVIEW"
+        self.write()
 
     def record(self, browser: Browser, item: str, viewport: str, width: int, checks: list[dict], final: bool):
         folder = self.output / item
         folder.mkdir(parents=True, exist_ok=True)
-        stem = f"{viewport}.png"
+        occurrence = self.occurrences.get((item, viewport), 0) + 1
+        self.occurrences[(item, viewport)] = occurrence
+        stem = f"{viewport}-{occurrence:02d}.png"
         browser.screenshot(folder / stem)
         status = "PASS" if final else "PREVIEW"
         record = {"status": status, "width": width, "checks": [check["name"] for check in checks], "observations": checks, "evidence": str((folder / stem).relative_to(self.output))}
@@ -607,8 +656,8 @@ class Evidence:
             record["observations"] = previous["observations"] + record["observations"]
             record["additional_evidence"] = [previous["evidence"], *previous.get("additional_evidence", [])]
         self.value["items"].setdefault(item, {})[viewport] = record
-        (folder / f"{viewport}.json").write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        (self.output / "browser-evidence.json").write_text(json.dumps(self.value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (folder / f"{viewport}-{occurrence:02d}.json").write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        self.write()
 
 
 def check_page(browser: Browser, path: str, expected: str) -> dict:
@@ -621,11 +670,12 @@ def check_page(browser: Browser, path: str, expected: str) -> dict:
 
 
 def run(args: argparse.Namespace) -> int:
+    root = pathlib.Path(__file__).resolve().parent.parent
     output = pathlib.Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=False)
-    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=pathlib.Path(__file__).resolve().parent.parent, text=True, capture_output=True, check=True).stdout.strip()
+    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
     if args.final:
-        dirty = subprocess.run(["git", "status", "--porcelain"], cwd=pathlib.Path(__file__).resolve().parent.parent, text=True, capture_output=True, check=True).stdout.strip()
+        dirty = subprocess.run(["git", "status", "--porcelain"], cwd=root, text=True, capture_output=True, check=True).stdout.strip()
         if dirty:
             raise RuntimeError("final browser evidence requires a clean worktree")
         if not args.accounts_file:
@@ -635,7 +685,9 @@ def run(args: argparse.Namespace) -> int:
     if account_payload and account_payload.get("base_url") != args.base_url.rstrip("/"):
         raise RuntimeError("browser account file belongs to a different base URL")
     accounts = account_payload.get("accounts", account_payload)
-    evidence = Evidence(output, commit, args.base_url, args.final)
+    runtime = final_runtime_metadata(root, commit, args.app_container, args.worker_container, args.ui_mock_image) if args.final else {}
+    ui_mock_image = runtime["image_id"] if args.final else args.ui_mock_image
+    evidence = Evidence(output, commit, args.base_url, args.final, runtime)
     browser = Browser(args.base_url, output)
     mock_runtime = None
     try:
@@ -676,7 +728,7 @@ def run(args: argparse.Namespace) -> int:
             browser.create_budget_alert(alert_account, alert_label)
         if accounts:
             if args.ui_mock_image:
-                mock_runtime = start_ui_mock(args.app_container, args.ui_mock_image)
+                mock_runtime = start_ui_mock(args.app_container, ui_mock_image)
             owner = accounts["owner"]
             browser.logout()
             browser.login(owner["email"], owner["password"])
@@ -742,14 +794,10 @@ def run(args: argparse.Namespace) -> int:
                 browser.viewport(width, height)
                 evidence.record(browser, "P1-OP-01", viewport, width, [alert_result, check_page(browser, "/platform/alerts", "共同确认"), check_page(browser, "/platform/audit", "操作审计")], args.final)
             browser.logout()
-        if not args.final:
-            for item in evidence.value["items"].values():
-                for record in item.values():
-                    record["status"] = "PREVIEW"
-            (output / "browser-evidence.json").write_text(json.dumps(evidence.value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     finally:
         browser.close()
         stop_ui_mock(mock_runtime)
+    evidence.complete(args.final)
     print(json.dumps({"status": "PASS" if args.final else "PREVIEW", "evidence": str(output / "browser-evidence.json"), "items": len(evidence.value["items"])}, ensure_ascii=False))
     return 0
 
@@ -760,6 +808,7 @@ def main() -> int:
     parser.add_argument("--admin-password-file", required=True)
     parser.add_argument("--accounts-file")
     parser.add_argument("--app-container", default="moni-phase1-browser-app")
+    parser.add_argument("--worker-container", default="moni-phase1-browser-worker")
     parser.add_argument("--ui-mock-image")
     parser.add_argument("--output", required=True)
     parser.add_argument("--final", action="store_true")

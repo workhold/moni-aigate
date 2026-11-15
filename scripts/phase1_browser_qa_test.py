@@ -103,7 +103,73 @@ class BrowserProtocolTest(unittest.TestCase):
             record = evidence.value["items"]["P1-CAT-01"]["desktop"]
             self.assertEqual("PREVIEW", record["status"])
             self.assertNotIn("password", json.dumps(evidence.value).lower())
-            self.assertTrue((output / "P1-CAT-01" / "desktop.png").is_file())
+            self.assertTrue((output / "P1-CAT-01" / "desktop-01.png").is_file())
+
+    def test_final_evidence_is_partial_until_the_entire_run_completes(self):
+        class FakeBrowser:
+            def screenshot(self, path):
+                path.write_bytes(b"png")
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = pathlib.Path(directory)
+            evidence = MODULE.Evidence(output, "a" * 40, "http://127.0.0.1:18081", True)
+            evidence.record(FakeBrowser(), "P1-CAT-01", "desktop", 1440, [{"name": "public catalog"}], True)
+            partial = json.loads((output / "browser-evidence.json").read_text(encoding="utf-8"))
+            self.assertEqual("PARTIAL", partial["status"])
+            self.assertFalse(partial["completed"])
+            evidence.complete(True)
+            completed = json.loads((output / "browser-evidence.json").read_text(encoding="utf-8"))
+            self.assertEqual("PASS", completed["status"])
+            self.assertTrue(completed["completed"])
+
+    def test_repeated_records_preserve_distinct_screenshots(self):
+        class FakeBrowser:
+            def screenshot(self, path):
+                path.write_bytes(path.name.encode())
+
+        with tempfile.TemporaryDirectory() as directory:
+            output = pathlib.Path(directory)
+            evidence = MODULE.Evidence(output, "a" * 40, "http://127.0.0.1:18081", True)
+            evidence.record(FakeBrowser(), "P1-FN-03", "desktop", 1440, [{"name": "issued"}], True)
+            evidence.record(FakeBrowser(), "P1-FN-03", "desktop", 1440, [{"name": "approved"}], True)
+            first = output / "P1-FN-03" / "desktop-01.png"
+            second = output / "P1-FN-03" / "desktop-02.png"
+            self.assertEqual(b"desktop-01.png", first.read_bytes())
+            self.assertEqual(b"desktop-02.png", second.read_bytes())
+            record = evidence.value["items"]["P1-FN-03"]["desktop"]
+            self.assertEqual("P1-FN-03/desktop-02.png", record["evidence"])
+            self.assertEqual(["P1-FN-03/desktop-01.png"], record["additional_evidence"])
+
+    def test_final_runtime_requires_one_clean_source_image(self):
+        commit = "a" * 40
+        tree = "b" * 40
+        image = "sha256:" + "c" * 64
+
+        def run_with_clean(clean):
+            def fake_run(command, **kwargs):
+                if command[:2] == ["git", "rev-parse"]:
+                    return mock.Mock(stdout=tree + "\n")
+                if command[:2] == ["docker", "inspect"]:
+                    return mock.Mock(stdout=image + "\n")
+                if command[:3] == ["docker", "image", "inspect"] and "{{.Id}}" in command:
+                    return mock.Mock(stdout=image + "\n")
+                if command[:3] == ["docker", "image", "inspect"]:
+                    return mock.Mock(stdout=json.dumps({"ai.moni.phase1.source-commit": commit, "ai.moni.phase1.source-tree": tree, "ai.moni.phase1.source-clean": clean}) + "\n")
+                raise AssertionError(command)
+
+            with mock.patch.object(MODULE.subprocess, "run", side_effect=fake_run):
+                return MODULE.final_runtime_metadata(pathlib.Path("/repo"), commit, "app", "worker", "image")
+
+        metadata = run_with_clean("true")
+        self.assertEqual(image, metadata["image_id"])
+        self.assertEqual(tree, metadata["source_tree"])
+        with self.assertRaisesRegex(RuntimeError, "clean commit"):
+            run_with_clean("false")
+
+    def test_final_mock_uses_immutable_verified_image(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('ui_mock_image = runtime["image_id"] if args.final else args.ui_mock_image', source)
+        self.assertIn("start_ui_mock(args.app_container, ui_mock_image)", source)
 
     def test_expected_guard_alert_is_distinct_from_unexpected_error(self):
         class FakeBrowser:

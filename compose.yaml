@@ -23,6 +23,10 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     command: [migrate]
     environment: &migration-env
@@ -51,6 +55,10 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     environment:
       DATABASE_URL: postgres://moni_app:${APP_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
@@ -110,6 +118,10 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     command: [worker]
     environment:
@@ -142,6 +154,10 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     entrypoint: [/usr/local/bin/mock-upstream]
     command: [--config, /etc/moni/mock-upstream.json, --addr, :8090, --allow-directives]
