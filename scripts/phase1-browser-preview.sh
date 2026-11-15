@@ -135,7 +135,16 @@ if [[ -n "${PHASE1_BUILD_HTTPS_PROXY:-}" ]]; then
   build+=(--add-host "host.docker.internal:host-gateway"
     --build-arg "HTTPS_PROXY=$PHASE1_BUILD_HTTPS_PROXY"
     --build-arg "HTTP_PROXY=${PHASE1_BUILD_HTTP_PROXY:-$PHASE1_BUILD_HTTPS_PROXY}"
-    --build-arg "NO_PROXY=${PHASE1_BUILD_NO_PROXY:-localhost,127.0.0.1}")
+    --build-arg "NO_PROXY=${PHASE1_BUILD_NO_PROXY:-localhost,127.0.0.1}"
+    --build-arg "https_proxy=$PHASE1_BUILD_HTTPS_PROXY"
+    --build-arg "http_proxy=${PHASE1_BUILD_HTTP_PROXY:-$PHASE1_BUILD_HTTPS_PROXY}"
+    --build-arg "no_proxy=${PHASE1_BUILD_NO_PROXY:-localhost,127.0.0.1}")
+fi
+if [[ -n "${PHASE1_BUILD_NPM_REGISTRY:-}" ]]; then
+  build+=(--build-arg "NPM_CONFIG_REGISTRY=$PHASE1_BUILD_NPM_REGISTRY")
+fi
+if [[ -n "${PHASE1_BUILD_ALPINE_REPOSITORY:-}" ]]; then
+  build+=(--build-arg "ALPINE_REPOSITORY=$PHASE1_BUILD_ALPINE_REPOSITORY")
 fi
 "${build[@]}" "$build_context"
 docker network create "$network" >/dev/null

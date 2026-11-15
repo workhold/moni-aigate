@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T13:24:16Z",
-  "review_reason": "验收 VM 直连 npm 下载失败，新增仅预览使用的可选构建期代理参数；代理默认空且不进入运行配置，HEAD 归档与不可变镜像合同不变，无生产请求、资金、迁移或部署拓扑变化。",
-  "snapshot_sha256": "3f3c0599a073e633c2ce8f07da361b7d0ae422deda34f3f0639e4ae0559d8b51",
-  "architecture_sha256": "296bdd32c7526b77d6d04dc9b77568fe9a85c69d2c2ebb4d191d4b86f0d4915e",
-  "history_sha256": "44055b79b982a7b2629bd1ea4d0561c62d568324e4d170bb3f419a065149e735",
+  "reviewed_at": "2026-11-15T14:03:15Z",
+  "review_reason": "完整镜像预检已通过：npm 与 Alpine 可选镜像、大小写构建代理、Compose 独立构建参数均可用；默认源和运行配置不变，锁文件 integrity、HEAD 归档与不可变镜像边界不变。",
+  "snapshot_sha256": "932612168977677a19342690ce0bee1bff5536917ecd29636733474f2b84a336",
+  "architecture_sha256": "2f7e0e8d7f77e7e88816129b70f4226875596cbc30645230605891163f907b1c",
+  "history_sha256": "21d2da6f512d21d4812a835ef28799932c6f67886fa57f64d603a8cc631db375",
   "files": [
     {
       "path": ".dockerignore",
@@ -41,7 +41,7 @@
     },
     {
       "path": "Dockerfile",
-      "sha256": "ee513a79728f39cb5b8cd99aea4e9284ae82a0e5d2640dd20529c393113a1092"
+      "sha256": "1bb786a24e7ba292372675bd8603b025654c4a7e70c2440aa1ceedc4e0985931"
     },
     {
       "path": "Makefile",
@@ -97,7 +97,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "4d6d2080468356a4c8001f9ad6f204ca81573f7b3d8b521ddebe9e7ef71c14ad"
+      "sha256": "9e99fef58894678176e200d824a13eb092a38521c22f6cd090ca16efefb67bf7"
     },
     {
       "path": "deploy/external-upstreams.compose.yaml",
@@ -1629,7 +1629,7 @@
     },
     {
       "path": "docs/verification/phase1-acceptance-runner.md",
-      "sha256": "77720dd3f2a878f5b38434e84ba2aa91fd0435ed10fbd18b1378cc1f5e3f1cd0"
+      "sha256": "cc982b813cb4c4329a28cb4363647303da0321e5fc8c98c6ec02c25e44382263"
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
@@ -7405,7 +7405,7 @@
     },
     {
       "path": "scripts/phase1-browser-preview.sh",
-      "sha256": "451ad008f559bcc4452e9324416b127bd8d67afd1181486ed9223e7cc77182e2"
+      "sha256": "9638cadb111c7da8bebfe655716efb586d80928dff632e6bfdcd2e790c8b9a35"
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
@@ -7425,7 +7425,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "919db8e69ba26ad95fef74a94368e3d5e76ce4fb10e0494c56a28ec67c32d5e9"
+      "sha256": "14d1584d03a7b1b0f360a96367215fccf50931e98c76abd182f5c420c8e93527"
     },
     {
       "path": "scripts/phase1_browser_qa.py",

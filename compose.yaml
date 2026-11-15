@@ -23,6 +23,16 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
       labels:
         ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
         ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
@@ -55,6 +65,16 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
       labels:
         ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
         ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
@@ -118,6 +138,16 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
       labels:
         ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
         ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
@@ -154,6 +184,16 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
       labels:
         ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
         ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"

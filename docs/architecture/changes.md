@@ -7348,3 +7348,19 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T14:03:15Z · 932612168977
+
+完整镜像预检已通过：npm 与 Alpine 可选镜像、大小写构建代理、Compose 独立构建参数均可用；默认源和运行配置不变，锁文件 integrity、HEAD 归档与不可变镜像边界不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-browser-preview.sh`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
