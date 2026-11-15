@@ -87,7 +87,7 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 
 New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration-plan.md)登记为可统一部署的外部 channel。aigate 是唯一公网入口，负责客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算和审计；下游网关保留自己的供应商账号池、协议适配和局部重试。三个服务可以放在同一 Compose 编排（或等效部署脚本）中，1Panel 等面板可选导入同一编排，但数据库、管理端口和客户账单事实保持独立。动态路由在 `internal/routing` 选择 channel，下游账号选择不改变 aigate 的 route revision 或结算身份。外部模型列表、单次 HTTP 200 和连通性 probe 不能替代逐 profile 资格认证。
 
-0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)。若以后把上游源码纳入本仓库，必须保留 LICENSE/NOTICE、来源提交、修改记录和适用的源码提供方式；许可证合规是发布门禁，不是能力路线阻塞项。
+0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)，七项本地验收已逐项勾选并附证据路径。当前 New API/Sub2API 仍以外部 relay 运行，未 vendor 修改版源码；`third_party/` 保存固定提交的 LICENSE/NOTICE 与 SOURCE 记录，`upstream-provenance-check` 在 `make check` 和 `make verify-mvp` 中校验来源、许可证、修改记录和固定镜像，详见[来源验收](../verification/phase0-upstream-provenance.md)。真实生产部署、供应商认证和完整发布 SBOM 仍需独立验收。
 
 ```mermaid
 flowchart LR

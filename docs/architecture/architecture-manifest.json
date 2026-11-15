@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T03:13:14Z",
-  "review_reason": "029/031 仅补冻结状态和评审记录，技术内容不变；清单按实际41个唯一验收ID计数，终验仍待同一提交全量执行",
-  "snapshot_sha256": "56b164ac6ba2fec60afe0c1be4f1e32c7e0a4c479f74ca9ca1fe9a91e0bc5eb2",
-  "architecture_sha256": "d7229063b92111f6cb08732ea2774b2e131a3bb8ce08be41e6a4cb9448da408d",
-  "history_sha256": "6d363166f9a07e3a5e008d589813815befb2b2a3b20edf0ca9959dced0c5ddf7",
+  "reviewed_at": "2026-11-15T04:37:04Z",
+  "review_reason": "035 合入已冻结的 029/031 main：架构正文与历史以 main 为准，保留 035 七项勾选和告警索引测试修正；仅重新计算清单，无新增生产结构或权限边界",
+  "snapshot_sha256": "769f639a26984c343ac060df95424e9630e7fe25f2b97b6a91fa2a825c41c4ea",
+  "architecture_sha256": "c2571f0a8ecbe4f352f4b6bfde97ab18d6b2baad384bd1844285f9ac64131fa4",
+  "history_sha256": "5fc7b2d8afb419c4a274934edb0c52f22cfa7adf0d43ad5aff609c2eb2db09eb",
   "files": [
     {
       "path": ".dockerignore",
@@ -45,7 +45,7 @@
     },
     {
       "path": "Makefile",
-      "sha256": "c6d2af63fac09fb49adc9e8244a51ef926a31f93aecf5d02d7814bd8f14d1665"
+      "sha256": "589a677154db0dcab9aa8076c01297aa9274c77d9698cd59c1efb91f897ae55a"
     },
     {
       "path": "README.md",
@@ -1624,6 +1624,10 @@
       "sha256": "1a588449102c3a023897edfac91174af4b49de6c364836d9a4aca1a9c6325fb1"
     },
     {
+      "path": "docs/verification/phase0-upstream-provenance.md",
+      "sha256": "fdbde2e489efa0462e915dbe905d0acdf3687dd8241382ea8f8d1ecb6bf142e6"
+    },
+    {
       "path": "docs/verification/phase1/031-mock-harness.md",
       "sha256": "6dbb78fb3ca5bbfaeea940af8500353f20e6caab8da1b1ad3ca3c91964308033"
     },
@@ -1949,7 +1953,7 @@
     },
     {
       "path": "internal/alerts/alerts_integration_test.go",
-      "sha256": "22369e605d63775b8daa7a5b4753f0280eaea2a0b3973d6491eb0ac91ee562d0"
+      "sha256": "b122183340ebd9269ac0a93444805320562de544215b918f5e75d7c843a448c1"
     },
     {
       "path": "internal/alerts/cash_refund_integration_test.go",
@@ -7032,6 +7036,10 @@
       "sha256": "24c456dc5df27d0b0756cf1d9358f4195db320f6ab59b1a3ebab5e3ad72d154b"
     },
     {
+      "path": "scripts/check-upstream-provenance/main.go",
+      "sha256": "7db267fb2f6d41ac1c8273370ef899132dc07220cad4bdee8af85105a95ba47e"
+    },
+    {
       "path": "scripts/check-wallet-profile-roots.py",
       "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
     },
@@ -8333,7 +8341,7 @@
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
-      "sha256": "f0f1f7ef32ed45ae75c7373d83d8323fe4eec00902871ccd823a71ebf3953b05"
+      "sha256": "3505ffd70e7504d128db31ccc2ca5617b70f50e2e880bb1283601ba8b6746c4a"
     },
     {
       "path": "web/.gitignore",

@@ -7092,3 +7092,19 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `specs/031-deterministic-mock-upstream/spec.md`
 
 </details>
+
+## 2026-11-15T04:37:04Z · 769f639a2698
+
+035 合入已冻结的 029/031 main：架构正文与历史以 main 为准，保留 035 七项勾选和告警索引测试修正；仅重新计算清单，无新增生产结构或权限边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2254 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Makefile`
+- added `docs/verification/phase0-upstream-provenance.md`
+- modified `internal/alerts/alerts_integration_test.go`
+- added `scripts/check-upstream-provenance/main.go`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>
