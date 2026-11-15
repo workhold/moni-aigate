@@ -7093,3 +7093,15 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `specs/035-external-upstream-integration/spec.md`
 
 </details>
+
+## 2026-11-15T04:32:11Z · e619a0110b11
+
+修正告警 partial-index 测试夹具的非合格历史规模，仅测试数据选择性与索引验证，无生产模块、合同或权限结构变化；完整 alerts 专用 PostgreSQL 回归已通过
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2253 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/alerts/alerts_integration_test.go`
+
+</details>

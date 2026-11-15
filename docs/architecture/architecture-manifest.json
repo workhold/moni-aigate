@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T02:51:27Z",
-  "review_reason": "035 七项验收逐项勾选并附 phase0 证据；补齐固定提交 LICENSE/NOTICE、SOURCE 与上游 provenance 发布检查，无运行时代码或资金结构变化",
-  "snapshot_sha256": "7edfa84686925731fc76f083113f25aa51dcc4f11b0775c56ee8001a7349f8fe",
+  "reviewed_at": "2026-11-15T04:32:11Z",
+  "review_reason": "修正告警 partial-index 测试夹具的非合格历史规模，仅测试数据选择性与索引验证，无生产模块、合同或权限结构变化；完整 alerts 专用 PostgreSQL 回归已通过",
+  "snapshot_sha256": "e619a0110b11a4fd1f0c62ee2e20e112aefc5a517c4b7d002468bc4d29a6d134",
   "architecture_sha256": "6044da109b175a248730df525796af19ab9cba89cc96f70166211d7801628562",
-  "history_sha256": "bc27a1fc19422d85f05cfcb361f78d8e00aaa590eeabedfc045895de29bd8be1",
+  "history_sha256": "e6b5d5752b1115c3c2b0fd9984600440c287bab7f4f4da96b5d6db01683e71c7",
   "files": [
     {
       "path": ".dockerignore",
@@ -1949,7 +1949,7 @@
     },
     {
       "path": "internal/alerts/alerts_integration_test.go",
-      "sha256": "22369e605d63775b8daa7a5b4753f0280eaea2a0b3973d6491eb0ac91ee562d0"
+      "sha256": "b122183340ebd9269ac0a93444805320562de544215b918f5e75d7c843a448c1"
     },
     {
       "path": "internal/alerts/cash_refund_integration_test.go",
