@@ -36,7 +36,7 @@
 - `go test -race ./internal/server -run '^(TestAdminAndTenantPricesPreserveCursorPagination|TestPricingHTTPBusinessAndCurrentDomainIsolation)$'`：51 个真实价格版本的 admin/租户游标与第二页读取均通过，时间仍为六位微秒。
 - `go test -race ./internal/billing -run '^(TestHTTPCommerceIssuanceDualApprovalUniqueFundingAndOffReadback|TestVoucher.*)$'`：券工作流与时间投影。
 - `go test ./internal/server -run '^(TestCommerceWireUsesVoucherTimeMarshaler|TestCommerceWirePreservesExactMoneyNullAndSixMicroseconds)$'`：反射映射器尊重 `json.Marshaler`，不再把 `VoucherTime` 展开为对象。
-- `scripts/phase1-acceptance.test.sh`：执行器、浏览器协议、TOTP step、登录 pacing、41 ID/82 测试绑定、部分证据拒绝、不可变运行镜像、HEAD 归档构建、截图不可覆盖、重启重验及 Docker 故障保留资源检查全部通过。
+- `scripts/phase1-acceptance.test.sh`：执行器、浏览器协议、TOTP step、登录 pacing、41 ID/82 测试绑定、部分证据拒绝、不可变运行镜像、HEAD 归档构建、截图不可覆盖、重启重验、Docker 故障保留资源及原始日志仓库外暂存检查全部通过。
 - `go test -race ./internal/server -run '^TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery$' -count=1`：实际 main 的默认关闭、优雅退出与崩溃恢复；观察会话断言限定到当前临时数据库，避免把同 PostgreSQL 实例中预览数据库的合法会话算入本次进程。
 
 ## 未完成

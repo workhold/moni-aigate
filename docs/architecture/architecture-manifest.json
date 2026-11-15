@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T14:03:15Z",
-  "review_reason": "完整镜像预检已通过：npm 与 Alpine 可选镜像、大小写构建代理、Compose 独立构建参数均可用；默认源和运行配置不变，锁文件 integrity、HEAD 归档与不可变镜像边界不变。",
-  "snapshot_sha256": "932612168977677a19342690ce0bee1bff5536917ecd29636733474f2b84a336",
-  "architecture_sha256": "2f7e0e8d7f77e7e88816129b70f4226875596cbc30645230605891163f907b1c",
-  "history_sha256": "21d2da6f512d21d4812a835ef28799932c6f67886fa57f64d603a8cc631db375",
+  "reviewed_at": "2026-11-15T15:43:29Z",
+  "review_reason": "补充发布时改写 current-mvp 等日志正文中的暂存路径，避免删除暂存目录后失败调查链接失效；嵌套日志反例测试同步覆盖，无生产或架构合同变化。",
+  "snapshot_sha256": "88bd3aeeda3d4653a5731d3381e16ca6f5cb7383d791100d6a915ee9393be39b",
+  "architecture_sha256": "a24f51f3e1902e45357ca23b89cb9cecc4c1fbe5d7ae620dd8f10d151525cbb3",
+  "history_sha256": "7b12b6d2c29f2c14b1e2c88ff5aae49d538d91bc970e4a05d74e710fc45fcd66",
   "files": [
     {
       "path": ".dockerignore",
@@ -1629,11 +1629,11 @@
     },
     {
       "path": "docs/verification/phase1-acceptance-runner.md",
-      "sha256": "cc982b813cb4c4329a28cb4363647303da0321e5fc8c98c6ec02c25e44382263"
+      "sha256": "7134c4e972febbe356b927b1c38636b06f6cb770d24dd05cfddea3237201ecc5"
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
-      "sha256": "733c2df8f1448aec60ae607057ac81ebc895a74e15adfa6683923b3d4dec3f4a"
+      "sha256": "1a246d2f6820589f0c3bf48040b214a224b3fa9c2646b54ba0a9d49365af0221"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -7393,7 +7393,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "186b4fafb73424f36d23fcec3eeda551c2a07dec2f6d37e70db0e0776ea09465"
+      "sha256": "91f7116610213af85f23fe0b87953ad0e8803c20481cc2bccf26c20bb177f64d"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -7425,7 +7425,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "14d1584d03a7b1b0f360a96367215fccf50931e98c76abd182f5c420c8e93527"
+      "sha256": "652abff6db1641d414e8a4232b168fa96104277e4e837669c40071f79536f70a"
     },
     {
       "path": "scripts/phase1_browser_qa.py",

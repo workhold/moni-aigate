@@ -7364,3 +7364,32 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T15:34:28Z · db8d42507f43
+
+正式 029 首次运行发现原始证据目录在静态架构检查前写入导致 FAIL；改为全部日志仓库外暂存、结束后发布并映射路径，不降低清单覆盖，无生产模块、资金或运行拓扑变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T15:43:29Z · 88bd3aeeda3d
+
+补充发布时改写 current-mvp 等日志正文中的暂存路径，避免删除暂存目录后失败调查链接失效；嵌套日志反例测试同步覆盖，无生产或架构合同变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
