@@ -7078,3 +7078,17 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `docs/verification/034-6-coin-display.md`
 
 </details>
+
+## 2026-11-15T03:13:14Z · 56b164ac6ba2
+
+029/031 仅补冻结状态和评审记录，技术内容不变；清单按实际41个唯一验收ID计数，终验仍待同一提交全量执行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2252 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/design/freeze-review-029-031-2026-11-15.md`
+- modified `specs/029-phase1-acceptance/spec.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+
+</details>

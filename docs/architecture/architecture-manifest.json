@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T01:55:19Z",
-  "review_reason": "034.6 最终验收收口：77包统一race、364项前端测试、构建、vet与make check通过；独立展示表和权限边界已同步，无会计/请求/计量结构变化",
-  "snapshot_sha256": "4c0324c615876196eb0f88249bf94feaf1d2d1f2c8d0a599a2c176222c897a25",
-  "architecture_sha256": "7bbb42e12960d0751d37562dabf288231f216fae33f0d7aa1aa9a172310f0376",
-  "history_sha256": "fd01d1fe04e12908362d59872bb703ca8f8b3033e5c1fb99bd92a0d349eca4ec",
+  "reviewed_at": "2026-11-15T03:13:14Z",
+  "review_reason": "029/031 仅补冻结状态和评审记录，技术内容不变；清单按实际41个唯一验收ID计数，终验仍待同一提交全量执行",
+  "snapshot_sha256": "56b164ac6ba2fec60afe0c1be4f1e32c7e0a4c479f74ca9ca1fe9a91e0bc5eb2",
+  "architecture_sha256": "d7229063b92111f6cb08732ea2774b2e131a3bb8ce08be41e6a4cb9448da408d",
+  "history_sha256": "6d363166f9a07e3a5e008d589813815befb2b2a3b20edf0ca9959dced0c5ddf7",
   "files": [
     {
       "path": ".dockerignore",
@@ -202,6 +202,10 @@
     {
       "path": "docs/design/extension-platform.md",
       "sha256": "fa0468330f933628a97ce20b0b2f62bfe0a9506eda764b8befeb8cabeab96b0d"
+    },
+    {
+      "path": "docs/design/freeze-review-029-031-2026-11-15.md",
+      "sha256": "a014539a5736daab2815c8758815cf1d0ccefae72304f0a56f929f2c1f3eef7a"
     },
     {
       "path": "docs/design/image-http-mvp.md",
@@ -8285,7 +8289,7 @@
     },
     {
       "path": "specs/029-phase1-acceptance/spec.md",
-      "sha256": "84ff753e05a253d77ee4b4db02c73b788028bb7c2e7553dc530d4342a608afc6"
+      "sha256": "3b831ef86c1af388473496ca9e6811c37dde7c2834b11a6378e9b0fe537c974c"
     },
     {
       "path": "specs/030-model-aliases-group-multipliers/a-alias-periphery-contract.md",
@@ -8301,7 +8305,7 @@
     },
     {
       "path": "specs/031-deterministic-mock-upstream/spec.md",
-      "sha256": "d7fc7dfcb709caaca40619061a2055b6d95b8097ac842660629043657c784582"
+      "sha256": "d1b2923ee46ac740d8a7595b6f7eea276c6b25617621f8392ed60b061b3485a1"
     },
     {
       "path": "specs/032-phase2-text-data-plane/implementation-freeze.md",

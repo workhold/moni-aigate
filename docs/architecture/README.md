@@ -728,6 +728,10 @@ sequenceDiagram
 
 前端[公开配置模块](../../web/src/coin-display.ts)和[管理页](../../web/src/components/CoinDisplaySettings.vue)分别严格解析安全DTO与历史/命令。[`coin()`](../../web/src/format.ts)以BigInt向零截断计算约合，显示版本与“仅供参考”；[MetricMoney](../../web/src/components/MetricMoney.vue)保留基础金额样式。读取失败只保留默认“币”且不显示约合，配置不写localStorage。会计币价、请求、预占、结算、退款、报表付款基准与canonical均不读取展示比例。详见[展示架构](coin-display.md)与[034.6验证](../verification/034-6-coin-display.md)。
 
+### 029/031 验收合同冻结与计数
+
+[029](../../specs/029-phase1-acceptance/spec.md) 与 [031](../../specs/031-deterministic-mock-upstream/spec.md) 已于 2026-11-15 评审冻结，技术内容不变，见[冻结评审记录](../design/freeze-review-029-031-2026-11-15.md)。当前清单为 41 个唯一验收 ID，后续终验必须在同一提交上覆盖专用 PostgreSQL、deterministic mock 和隔离浏览器（桌面+390px），逐项写 `docs/verification/phase1/<ID>.md` 与 `summary.json`。在整单通过前，当前仍仅为内测，不宣称 MVP/第一阶段完成。
+
 ### 018 采购单价门禁与成本感知路由
 
 018 后端与控制台已实现并通过限定本地验收，实际范围见[018 验证记录](../verification/cost-aware-routing.md)。不可变路由策略新增 `cost_mode=manual|cost_first` 与 `unknown_cost_policy=allow|deny`；完整路由发布仍受模型 revision CAS 保护，每个 binding 可设置输入/输出两维 `max_*_cost_rate`。上限 `null` 表示该维不限，`"0"` 要求该维已知免费；API 费率采用十进制字符串，内部为 CNY 微元/百万计费 token。`cost_first` 必须拒绝未知成本；manual/allow 无上限保留旧行为。启用成本管控后，缺报价、缺任一维或 basis unknown 均被拒绝，不会把未知按零参与比较。
