@@ -352,14 +352,14 @@ func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReade
 		return out, e
 	}
 	e = v.read(ctx, r, false, false, func(ctx context.Context, tx pgx.Tx) error {
-		rows, e := tx.Query(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at FROM funding_receipts WHERE tenant_id=$1 AND ($2='' OR source_kind=$2) AND ($3::timestamptz IS NULL OR created_at<$3 OR (created_at=$3 AND id COLLATE "C"<$4)) ORDER BY created_at DESC,id COLLATE "C" DESC LIMIT 51`, r.TenantID, string(page.SourceKind), before, id)
+		rows, e := tx.Query(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,fiat_currency,fiat_amount FROM funding_receipts WHERE tenant_id=$1 AND ($2='' OR source_kind=$2) AND ($3::timestamptz IS NULL OR created_at<$3 OR (created_at=$3 AND id COLLATE "C"<$4)) ORDER BY created_at DESC,id COLLATE "C" DESC LIMIT 51`, r.TenantID, string(page.SourceKind), before, id)
 		if e != nil {
 			return e
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var f FundingReceiptView
-			if e = rows.Scan(&f.ID, &f.TenantID, &f.SourceKind, &f.SourceID, &f.Amount, &f.Currency, &f.JournalID, &f.CreatedAt); e != nil {
+			if e = rows.Scan(&f.ID, &f.TenantID, &f.SourceKind, &f.SourceID, &f.Amount, &f.Currency, &f.JournalID, &f.CreatedAt, &f.BasisKind, &f.FiatCurrency, &f.FiatAmount); e != nil {
 				return e
 			}
 			out.Data = append(out.Data, f)

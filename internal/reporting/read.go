@@ -3,6 +3,7 @@ package reporting
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -44,6 +45,21 @@ const mediaAttemptsSQL = `SELECT a.tenant_id,a.id,a.request_id,q.operation,
  AND ($7='' OR CASE WHEN q.operation='video_generation' THEN 'asynchronous' ELSE 'synchronous' END=$7)
  ORDER BY a.request_id COLLATE "C",a.created_at,a.id COLLATE "C"`
 
+const settlementLotsSQL = `SELECT s.tenant_id,s.settlement_id,s.allocation_index,st.request_id,s.charged_amount,coalesce(f.fiat_currency,''),coalesce(f.fiat_amount,0),l.issued_amount,f.basis_kind,coalesce(f.buy_rate_version_id,'')
+ FROM funding_settlement_lots s JOIN settlements st ON st.tenant_id=s.tenant_id AND st.id=s.settlement_id
+ JOIN funding_lots l ON l.tenant_id=s.tenant_id AND l.id=s.lot_id
+ JOIN funding_receipts f ON f.tenant_id=l.tenant_id AND f.id=l.funding_receipt_id
+ WHERE st.request_id=ANY($1::pg_catalog.text[]) ORDER BY s.settlement_id,s.allocation_index`
+
+const mediaSettlementLotsSQL = `SELECT s.tenant_id,s.settlement_id,s.allocation_index,st.request_id,s.charged_amount,coalesce(f.fiat_currency,''),coalesce(f.fiat_amount,0),l.issued_amount,f.basis_kind,coalesce(f.buy_rate_version_id,'')
+ FROM media_settlement_lots s JOIN media_settlements st ON st.tenant_id=s.tenant_id AND st.id=s.settlement_id
+ JOIN funding_lots l ON l.tenant_id=s.tenant_id AND l.id=s.lot_id
+ JOIN funding_receipts f ON f.tenant_id=l.tenant_id AND f.id=l.funding_receipt_id
+ WHERE st.request_id=ANY($1::pg_catalog.text[]) ORDER BY s.settlement_id,s.allocation_index`
+
+const cashRefundsSQL = `SELECT fiat_currency,coalesce(sum(paid_fiat_amount::numeric),0)::text FROM cash_refund_orders
+ WHERE state='completed' AND approved_at >= $1 AND approved_at < $2 AND ($3='' OR tenant_id=$3) GROUP BY fiat_currency ORDER BY fiat_currency`
+
 // ceilMicro preserves [from,to) for database timestamps whose stored precision
 // is a microsecond, including when an RFC3339 caller supplied nanoseconds.
 func ceilMicro(at time.Time) time.Time {
@@ -52,6 +68,47 @@ func ceilMicro(at time.Time) time.Time {
 		at = at.Add(time.Duration(1000-remainder) * time.Nanosecond)
 	}
 	return at
+}
+
+func readSettlementLots(ctx context.Context, tx pgx.Tx, sql string, source factSource, ids []string) ([]settlementLotFact, error) {
+	rows, err := tx.Query(ctx, sql, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var result []settlementLotFact
+	for rows.Next() {
+		var tenant, request, currency, basis, buyRate string
+		var settlement string
+		var index, charged, fiat, issued int64
+		if err = rows.Scan(&tenant, &settlement, &index, &request, &charged, &currency, &fiat, &issued, &basis, &buyRate); err != nil {
+			return nil, err
+		}
+		keyID := settlement
+		if source == mediaFactSource {
+			keyID = tenant + "|" + settlement
+			request = tenant + "|" + request
+		}
+		result = append(result, settlementLotFact{key: sourceKey(source, keyID+"|"+strconv.FormatInt(index, 10)), request: sourceKey(source, request), currency: currency, basisKind: basis, buyRateID: buyRate, charged: charged, fiat: fiat, issued: issued})
+	}
+	return result, rows.Err()
+}
+
+func readCashRefunds(ctx context.Context, tx pgx.Tx, filter Filter) ([]cashRefundFact, error) {
+	rows, err := tx.Query(ctx, cashRefundsSQL, ceilMicro(filter.From), ceilMicro(filter.To), filter.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var result []cashRefundFact
+	for rows.Next() {
+		var fact cashRefundFact
+		if err = rows.Scan(&fact.currency, &fact.amount); err != nil {
+			return nil, err
+		}
+		result = append(result, fact)
+	}
+	return result, rows.Err()
 }
 
 // Read uses current facts only. It neither depends on asynchronous projections
@@ -204,7 +261,26 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 			return Report{}, err
 		}
 	}
-	report, err = aggregate(filter, asOf, facts, attempts)
+	allocations := make([]settlementLotFact, 0)
+	if len(textIDs) > 0 {
+		allocations, err = readSettlementLots(work, tx, settlementLotsSQL, textFactSource, textIDs)
+		if err != nil {
+			return Report{}, err
+		}
+	}
+	if len(mediaIDs) > 0 {
+		var mediaAllocations []settlementLotFact
+		mediaAllocations, err = readSettlementLots(work, tx, mediaSettlementLotsSQL, mediaFactSource, mediaIDs)
+		if err != nil {
+			return Report{}, err
+		}
+		allocations = append(allocations, mediaAllocations...)
+	}
+	refunds, err := readCashRefunds(work, tx, filter)
+	if err != nil {
+		return Report{}, err
+	}
+	report, err = aggregate(filter, asOf, facts, attempts, allocations, refunds)
 	if err == nil {
 		err = work.Err()
 	}

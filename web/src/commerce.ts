@@ -11,7 +11,7 @@ export interface VoucherDecision { id: string; operation_id: string; status: 'ac
 export interface VoucherRevocation { id: string; batch_id: string; expected_revision: string; expected_redeemed_count: string; reason: string; maker: string; created_at: string; decision: VoucherDecision | null }
 export const fundingSourceKinds = ['manual_credit', 'manual_bonus', 'manual_unknown', 'voucher_grant', 'sandbox_capture', 'wallet_opening'] as const
 export type FundingSourceKind = typeof fundingSourceKinds[number]
-export interface FundingReceipt { id: string; tenant_id: string; source_kind: FundingSourceKind; source_id: string; amount: string; currency: 'COIN'; journal_id: string; created_at: string }
+export interface FundingReceipt { id: string; tenant_id: string; source_kind: FundingSourceKind; source_id: string; amount: string; currency: 'COIN'; journal_id: string; created_at: string; basis_kind: 'paid' | 'grant' | 'unknown' | 'opening'; fiat_currency: 'CNY' | 'USD' | null; fiat_amount: string | null }
 export interface FundingSummary { currency: 'COIN'; total_amount: string; manual_credit_amount: string; manual_bonus_amount: string; manual_unknown_amount: string; voucher_grant_amount: string; sandbox_capture_amount: string; wallet_opening_amount: string; as_of: string }
 export interface VoucherRedemption { id: string; operation_id: string; tenant_id: string; voucher_id: string; batch_id: string; actor: string; amount: string; currency: 'COIN'; funding_receipt_id: string; journal_id: string; created_at: string }
 
@@ -97,10 +97,11 @@ export function parseVoucherRevocation(value: unknown, batchID?: string): Vouche
   return result
 }
 export function parseFundingReceipt(value: unknown, tenantID: string): FundingReceipt {
-  const raw = commerceObject(value, ['id', 'tenant_id', 'source_kind', 'source_id', 'amount', 'currency', 'journal_id', 'created_at'])
+  const raw = commerceObject(value, ['id', 'tenant_id', 'source_kind', 'source_id', 'amount', 'currency', 'journal_id', 'created_at', 'basis_kind', 'fiat_currency', 'fiat_amount'])
   if (typeof raw.source_id !== 'string' || !raw.source_id.length) throw new Error('原资金来源标识无效。')
-  const result: FundingReceipt = { id: commerceUUID(raw.id), tenant_id: commerceUUID(raw.tenant_id), source_kind: enumeration(raw.source_kind, fundingSourceKinds), source_id: raw.source_id, amount: commerceDecimal(raw.amount, true), currency: enumeration(raw.currency, ['COIN']), journal_id: commerceUUID(raw.journal_id), created_at: commerceTime(raw.created_at) }
-  if (result.tenant_id !== tenantID) throw new Error('资金来源不属于当前租户。')
+  const result: FundingReceipt = { id: commerceUUID(raw.id), tenant_id: commerceUUID(raw.tenant_id), source_kind: enumeration(raw.source_kind, fundingSourceKinds), source_id: raw.source_id, amount: commerceDecimal(raw.amount, true), currency: enumeration(raw.currency, ['COIN']), journal_id: commerceUUID(raw.journal_id), created_at: commerceTime(raw.created_at), basis_kind: enumeration(raw.basis_kind, ['paid', 'grant', 'unknown', 'opening']), fiat_currency: raw.fiat_currency === null ? null : enumeration(raw.fiat_currency, ['CNY', 'USD'] as const), fiat_amount: nullable(raw.fiat_amount, value => commerceDecimal(value, true)) }
+  const basis = result.source_kind === 'manual_credit' || result.source_kind === 'sandbox_capture' ? 'paid' : result.source_kind === 'manual_unknown' ? 'unknown' : result.source_kind === 'wallet_opening' ? 'opening' : 'grant'
+  if (result.basis_kind !== basis || basis === 'paid' && (result.fiat_amount === null || result.fiat_currency === null) || basis !== 'paid' && (result.fiat_amount !== null || result.fiat_currency !== null) || result.tenant_id !== tenantID) throw new Error('资金付款基准或租户不一致。')
   if (result.source_kind !== 'manual_credit') commerceUUID(result.source_id)
   return result
 }

@@ -72,15 +72,17 @@ func (f Filter) Validate() error {
 }
 
 type Totals struct {
-	RequestCount         int64   `json:"request_count"`
-	UnsettledRequests    int64   `json:"unsettled_requests"`
-	AttemptCount         int64   `json:"attempt_count"`
-	UnknownProviderCosts int64   `json:"unknown_provider_costs"`
-	Charged              string  `json:"charged"`
-	Refunded             string  `json:"refunded"`
-	NetRevenue           string  `json:"net_revenue"`
-	KnownProviderCost    string  `json:"known_provider_cost"`
-	GrossMargin          *string `json:"gross_margin"`
+	RequestCount         int64             `json:"request_count"`
+	UnsettledRequests    int64             `json:"unsettled_requests"`
+	AttemptCount         int64             `json:"attempt_count"`
+	UnknownProviderCosts int64             `json:"unknown_provider_costs"`
+	Charged              string            `json:"charged"`
+	Refunded             string            `json:"refunded"`
+	NetRevenue           string            `json:"net_revenue"`
+	KnownProviderCost    string            `json:"known_provider_cost"`
+	PaymentBasis         map[string]string `json:"payment_basis"`
+	CashRefunded         map[string]string `json:"cash_refunded"`
+	GrossMargin          *string           `json:"gross_margin"`
 }
 
 type ModelReport struct {

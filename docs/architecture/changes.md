@@ -6971,3 +6971,59 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `docs/verification/034-4-cash-refunds.md`
 
 </details>
+
+## 2026-11-15T00:07:42Z · 380f122a6d1d
+
+034.5 增加钱包构成、客户付款回执与只读付款基准/现金退款报表；无迁移、请求写链或角色变更，已复核模块图、数据关系、权限边界、故障语义及全部77包串行和race结果
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2240 个源文件；本次 33 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-5-reporting-wallet-composition.md`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_types.go`
+- added `internal/billing/wallet_composition.go`
+- added `internal/billing/wallet_composition_integration_test.go`
+- modified `internal/reporting/csv.go`
+- modified `internal/reporting/read.go`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/reporting/types.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/commerce_handlers.go`
+- modified `internal/server/funding_integration_test.go`
+- added `internal/server/operating_payment_basis_integration_test.go`
+- modified `internal/server/operating_reports_integration_test.go`
+- modified `specs/026-operating-reports/spec.md`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/FundingPanel.vue`
+- modified `web/src/components/OperatingReport.vue`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/operating-report.ts`
+- modified `web/src/views/WalletView.vue`
+- modified `web/tests/commerce.test.mjs`
+- modified `web/tests/operating-report.test.mjs`
+
+</details>
+
+## 2026-11-15T00:08:36Z · 8e5128aa9bba
+
+034.5 最终验收记录收口：77包专库串行与race、359项前端测试、构建、vet和make check均通过；无迁移、请求写链、计量canonical或角色结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2240 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-5-reporting-wallet-composition.md`
+
+</details>

@@ -19,6 +19,12 @@ func testFilter() Filter {
 	return Filter{From: from, To: from.Add(7 * 24 * time.Hour)}
 }
 func text(value string) *string { return &value }
+func testTextAllocation(id string, amount int64) settlementLotFact {
+	return settlementLotFact{key: id + "|1", request: sourceKey(textFactSource, id), currency: "CNY", basisKind: "paid", buyRateID: "rate", charged: amount, fiat: amount, issued: amount}
+}
+func testMediaAllocation(tenant, id string, amount int64) settlementLotFact {
+	return settlementLotFact{key: tenant + "|" + id + "|1", request: sourceKey(mediaFactSource, id), currency: "CNY", basisKind: "paid", buyRateID: "rate", charged: amount, fiat: amount, issued: amount}
+}
 
 func TestFilterAndMicrosecondWindow(t *testing.T) {
 	base := testFilter()
@@ -78,11 +84,11 @@ func TestOperatingReportExactRequestAndAttemptAccounting(t *testing.T) {
 		{id: "a3", request: "r2", channel: "c1", channelName: "channel one", status: "unknown", amount: text("999")},
 		{id: "a4", request: "r3", channel: "c3", channelName: "channel three", status: "contract", amount: text("0")},
 	}
-	report, err := aggregate(f, at, facts, attempts)
+	report, err := aggregate(f, at, facts, attempts, []settlementLotFact{testTextAllocation("r1", 100), testTextAllocation("r2", 50)}, []cashRefundFact{{currency: "CNY", amount: "7"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := Totals{RequestCount: 3, UnsettledRequests: 1, AttemptCount: 4, UnknownProviderCosts: 1, Charged: "150", Refunded: "20", NetRevenue: "130", KnownProviderCost: "30"}
+	want := Totals{RequestCount: 3, UnsettledRequests: 1, AttemptCount: 4, UnknownProviderCosts: 1, Charged: "150", Refunded: "20", NetRevenue: "130", KnownProviderCost: "30", PaymentBasis: map[string]string{"CNY": "150"}, CashRefunded: map[string]string{"CNY": "7"}}
 	if !reflect.DeepEqual(report.Summary, want) {
 		t.Fatalf("income duplicated across attempts or unknown cost counted: got %#v", report.Summary)
 	}
@@ -96,15 +102,73 @@ func TestOperatingReportExactRequestAndAttemptAccounting(t *testing.T) {
 		t.Fatal("request ordering not deterministic", report.Requests)
 	}
 	r1 := report.Requests[2]
-	if r1.RequestCount != 1 || r1.Charged != "100" || r1.Refunded != "20" || r1.AttemptCount != 2 || r1.GrossMargin == nil || *r1.GrossMargin != "50" {
+	if r1.RequestCount != 1 || r1.Charged != "100" || r1.Refunded != "20" || r1.AttemptCount != 2 || r1.GrossMargin == nil || *r1.GrossMargin != "70" || r1.PaymentBasis["CNY"] != "100" || r1.CashRefunded["CNY"] != "" {
 		t.Fatal("one request's sale or both costs counted incorrectly", r1)
 	}
-	// Monetary totals can become negative after a full consumption refund,
-	// even though each persisted sale/refund/cost is nonnegative.
+	// Net COIN revenue can become zero or negative after a full consumption refund,
+	// while the allocated original payment basis remains independent of that refund.
 	facts[0].refunded = text("100")
-	one, err := aggregate(f, at, facts[:1], attempts[:2])
-	if err != nil || one.Summary.GrossMargin == nil || *one.Summary.GrossMargin != "-30" {
+	one, err := aggregate(f, at, facts[:1], attempts[:2], []settlementLotFact{testTextAllocation("r1", 100)}, nil)
+	if err != nil || one.Summary.GrossMargin == nil || *one.Summary.GrossMargin != "70" {
 		t.Fatal("negative margin was clamped or rejected", err)
+	}
+}
+
+func TestOperatingReportPaymentBasisAndUnknowns(t *testing.T) {
+	f := testFilter()
+	facts := []requestFact{{row: RequestRow{RequestID: "r", ModelID: "m", CreatedAt: f.From}, charged: text("90"), refunded: text("0")}}
+	attempts := []attemptFact{{id: "a", request: "r", channel: "c", status: "contract", amount: text("10")}}
+	paid := testTextAllocation("r", 50)
+	paid.fiat = 90
+	paid.issued = 100
+	unknown := testTextAllocation("r", 30)
+	unknown.key = "unknown|1"
+	unknown.basisKind = "unknown"
+	grant := testTextAllocation("r", 40)
+	grant.key = "grant|1"
+	grant.basisKind = "grant"
+	grant.currency, grant.buyRateID, grant.fiat = "", "", 0
+	refunds := []cashRefundFact{{currency: "CNY", amount: "7"}, {currency: "USD", amount: "11"}}
+	report, err := aggregate(f, f.From, facts, attempts, []settlementLotFact{paid, unknown, grant}, refunds)
+	if err != nil || report.Summary.PaymentBasis["CNY"] != "45" || report.Summary.CashRefunded["CNY"] != "7" || report.Summary.CashRefunded["USD"] != "11" || report.Summary.GrossMargin != nil {
+		t.Fatalf("unknown source or cash-refund columns are wrong: %+v err=%v", report.Summary, err)
+	}
+	report, err = aggregate(f, f.From, facts, attempts, []settlementLotFact{paid}, refunds)
+	if err != nil || report.Summary.GrossMargin != nil {
+		t.Fatalf("partial allocation edges produced a margin: %+v err=%v", report.Summary, err)
+	}
+	report, err = aggregate(f, f.From, facts, attempts, []settlementLotFact{paid, grant}, refunds)
+	if err != nil || report.Summary.GrossMargin == nil || *report.Summary.GrossMargin != "35" || report.Summary.PaymentBasis["CNY"] != "45" {
+		t.Fatalf("allocated CNY margin mismatch: %+v err=%v", report.Summary, err)
+	}
+	opening := grant
+	opening.basisKind = "opening"
+	report, err = aggregate(f, f.From, facts, attempts, []settlementLotFact{paid, opening}, refunds)
+	if err != nil || report.Summary.GrossMargin == nil || *report.Summary.GrossMargin != "35" || report.Summary.PaymentBasis["CNY"] != "45" {
+		t.Fatalf("opening basis did not contribute exact zero: %+v err=%v", report.Summary, err)
+	}
+	missingRate := paid
+	missingRate.buyRateID = ""
+	missingFiat := paid
+	missingFiat.fiat = 0
+	for _, allocation := range []settlementLotFact{missingRate, missingFiat} {
+		report, err = aggregate(f, f.From, facts, attempts, []settlementLotFact{allocation, grant}, refunds)
+		if err != nil || report.Summary.GrossMargin != nil {
+			t.Fatalf("missing rate or fiat produced a margin: %+v err=%v", report.Summary, err)
+		}
+	}
+	usd := testTextAllocation("r", 1)
+	usd.key = "usd|1"
+	usd.currency = "USD"
+	grant39 := grant
+	grant39.charged = 39
+	report, err = aggregate(f, f.From, facts, attempts, []settlementLotFact{paid, usd, grant39}, refunds)
+	if err != nil || report.Summary.GrossMargin != nil {
+		t.Fatalf("multi-currency margin was fabricated: %+v err=%v", report.Summary, err)
+	}
+	report, err = aggregate(f, f.From, facts, attempts, nil, refunds)
+	if err != nil || report.Summary.GrossMargin != nil {
+		t.Fatalf("missing allocation edge produced a margin: %+v err=%v", report.Summary, err)
 	}
 }
 
@@ -118,7 +182,7 @@ func TestOperatingReportSeparatesTextAndMediaIdentities(t *testing.T) {
 		{id: "attempt", request: "same", channel: "text-channel", status: "contract", amount: text("3")},
 		{id: "attempt", request: "same", channel: "media:tts", channelName: "media/tts", status: "completed", source: mediaFactSource},
 	}
-	report, err := aggregate(f, f.From, facts, attempts)
+	report, err := aggregate(f, f.From, facts, attempts, []settlementLotFact{testTextAllocation("same", 10), testMediaAllocation("", "same", 20)}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +196,7 @@ func TestOperatingReportExactLargeAmountsAndUnknownUnions(t *testing.T) {
 	huge := strings.Repeat("9", 100)
 	facts := []requestFact{{row: RequestRow{RequestID: "r", ModelID: "m", CreatedAt: f.From}, charged: text("9223372036854775807"), refunded: text("0")}}
 	attempts := []attemptFact{{id: "a1", request: "r", channel: "c", status: "contract", amount: &huge}, {id: "a2", request: "r", channel: "c", status: "invoice", amount: &huge}}
-	report, err := aggregate(f, f.From, facts, attempts)
+	report, err := aggregate(f, f.From, facts, attempts, []settlementLotFact{testTextAllocation("r", 9223372036854775807)}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,14 +218,14 @@ func TestOperatingReportExactLargeAmountsAndUnknownUnions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			a := attempts[:1]
 			a[0] = attemptFact{id: "a", request: "r", channel: "c", status: tc.status, amount: tc.cost}
-			r, err := aggregate(f, f.From, facts, a)
+			r, err := aggregate(f, f.From, facts, a, nil, nil)
 			if err != nil || r.Summary.UnknownProviderCosts != 1 || r.Summary.KnownProviderCost != "0" || r.Summary.GrossMargin != nil {
 				t.Fatal("unknown cost fabricated as final zero", err)
 			}
 		})
 	}
 	facts[0].charged, facts[0].refunded = nil, nil
-	r, err := aggregate(f, f.From, facts, nil)
+	r, err := aggregate(f, f.From, facts, nil, nil, nil)
 	if err != nil || r.Summary.UnsettledRequests != 1 || r.Summary.GrossMargin != nil {
 		t.Fatal("unfinished request reported complete margin")
 	}
@@ -169,15 +233,15 @@ func TestOperatingReportExactLargeAmountsAndUnknownUnions(t *testing.T) {
 
 func TestOperatingReportEmptyLimitAndCorruptFacts(t *testing.T) {
 	f := testFilter()
-	empty, err := aggregate(f, f.From, nil, nil)
+	empty, err := aggregate(f, f.From, nil, nil, nil, nil)
 	if err != nil || empty.Summary.GrossMargin == nil || *empty.Summary.GrossMargin != "0" || empty.Requests == nil || empty.Models == nil || empty.Channels == nil {
 		t.Fatal("empty report is not a complete zero result")
 	}
 	encoded, _ := json.Marshal(empty)
-	if strings.Contains(string(encoded), ":null") || !strings.Contains(string(encoded), `"amount_unit":"micro_cny"`) {
+	if strings.Contains(string(encoded), ":null") || !strings.Contains(string(encoded), `"amount_unit":"micro_coin"`) {
 		t.Fatal("empty report JSON contract differs", string(encoded))
 	}
-	if r, err := aggregate(f, f.From, make([]requestFact, MaxRequests+1), nil); !errors.Is(err, ErrRangeTooLarge) || !reflect.DeepEqual(r, Report{}) {
+	if r, err := aggregate(f, f.From, make([]requestFact, MaxRequests+1), nil, nil, nil); !errors.Is(err, ErrRangeTooLarge) || !reflect.DeepEqual(r, Report{}) {
 		t.Fatal("5001 requests silently truncated")
 	}
 	for _, tc := range []struct {
@@ -196,7 +260,7 @@ func TestOperatingReportEmptyLimitAndCorruptFacts(t *testing.T) {
 		{"invalid known cost", []requestFact{{row: RequestRow{RequestID: "r"}}}, []attemptFact{{id: "a", request: "r", status: "contract", amount: text("1.5")}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			r, err := aggregate(f, f.From, tc.facts, tc.attempts)
+			r, err := aggregate(f, f.From, tc.facts, tc.attempts, nil, nil)
 			if err == nil || !reflect.DeepEqual(r, Report{}) {
 				t.Fatal("incomplete/invalid facts published partial report")
 			}
@@ -232,7 +296,7 @@ func TestCSVExactNumbersQuotedTextAndFormulaProtection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 3 || len(rows[0]) != 21 || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[2][14] != "" {
+	if len(rows) != 3 || len(rows[0]) != 25 || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[2][14] != "" {
 		t.Fatal("CSV precision/escaping/unknown contract differs", rows)
 	}
 	want := errors.New("writer unavailable")

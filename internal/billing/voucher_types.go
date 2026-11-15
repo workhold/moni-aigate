@@ -180,14 +180,17 @@ type VoucherRedemptionView struct {
 	CreatedAt        time.Time `json:"created_at"`
 }
 type FundingReceiptView struct {
-	ID         string            `json:"id"`
-	TenantID   string            `json:"tenant_id"`
-	SourceKind FundingSourceKind `json:"source_kind"`
-	SourceID   string            `json:"source_id"`
-	Amount     Money             `json:"amount"`
-	Currency   string            `json:"currency"`
-	JournalID  string            `json:"journal_id"`
-	CreatedAt  time.Time         `json:"created_at"`
+	ID           string            `json:"id"`
+	TenantID     string            `json:"tenant_id"`
+	SourceKind   FundingSourceKind `json:"source_kind"`
+	SourceID     string            `json:"source_id"`
+	Amount       Money             `json:"amount"`
+	Currency     string            `json:"currency"`
+	JournalID    string            `json:"journal_id"`
+	CreatedAt    time.Time         `json:"created_at"`
+	BasisKind    string            `json:"basis_kind"`
+	FiatCurrency *string           `json:"fiat_currency"`
+	FiatAmount   *FiatMoney        `json:"fiat_amount"`
 }
 type FundingSummaryView struct {
 	Currency             string    `json:"currency"`

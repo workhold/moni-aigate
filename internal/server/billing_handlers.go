@@ -94,7 +94,18 @@ func (s *Server) wallet(c *gin.Context) {
 		s.error(c, e)
 		return
 	}
-	data := gin.H{"tenant_id": v.TenantID, "available": v.Available, "held": v.Held}
+	data := gin.H{"tenant_id": v.TenantID}
+	composition, err := s.Billing.WalletComposition(c.Request.Context(), billing.Query{TenantID: tid})
+	if err != nil {
+		s.error(c, err)
+		return
+	}
+	data["available"] = composition.Available
+	data["held"] = composition.Held
+	data["paid_available"] = composition.PaidAvailable
+	data["grant_available"] = composition.GrantAvailable
+	data["other_available"] = composition.OtherAvailable
+	data["refund_held"] = composition.RefundHeld
 	for k, value := range totals[0] {
 		data[k] = value
 	}

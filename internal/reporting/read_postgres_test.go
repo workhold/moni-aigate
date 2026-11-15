@@ -74,8 +74,13 @@ CREATE TABLE models(id text PRIMARY KEY,public_name text NOT NULL);
 CREATE TABLE channels(id text PRIMARY KEY,name text NOT NULL);
 CREATE TABLE request_records(id text PRIMARY KEY,tenant_id text NOT NULL,model_id text NOT NULL,status text NOT NULL DEFAULT 'accepted',billing_status text NOT NULL DEFAULT 'reserved',protocol text,execution_kind text,created_at timestamptz NOT NULL);
 CREATE TABLE request_meter_snapshots(tenant_id text NOT NULL,request_id text PRIMARY KEY,profile_version text NOT NULL,schema_id text NOT NULL,schema_digest bytea NOT NULL,variant_key text NOT NULL);
-CREATE TABLE settlements(request_id text PRIMARY KEY,tenant_id text NOT NULL,charged_amount bigint NOT NULL,refunded_amount bigint NOT NULL);
+CREATE TABLE settlements(id text PRIMARY KEY,request_id text NOT NULL UNIQUE,tenant_id text NOT NULL,charged_amount bigint NOT NULL,refunded_amount bigint NOT NULL);
 CREATE TABLE upstream_attempts(id text PRIMARY KEY,request_id text NOT NULL,channel_id text NOT NULL,sequence integer NOT NULL,cost_status text NOT NULL,cost_amount numeric(100,0));
+CREATE TABLE funding_receipts(id text PRIMARY KEY,tenant_id text NOT NULL,basis_kind text NOT NULL,fiat_currency text,fiat_amount bigint,buy_rate_version_id text);
+CREATE TABLE funding_lots(id text PRIMARY KEY,tenant_id text NOT NULL,funding_receipt_id text NOT NULL,issued_amount bigint NOT NULL);
+CREATE TABLE funding_settlement_lots(tenant_id text NOT NULL,settlement_id text NOT NULL,allocation_index integer NOT NULL,lot_id text NOT NULL,charged_amount bigint NOT NULL,PRIMARY KEY(tenant_id,settlement_id,allocation_index));
+CREATE TABLE media_settlement_lots(tenant_id text NOT NULL,settlement_id text NOT NULL,allocation_index integer NOT NULL,lot_id text NOT NULL,charged_amount bigint NOT NULL,PRIMARY KEY(tenant_id,settlement_id,allocation_index));
+CREATE TABLE cash_refund_orders(tenant_id text NOT NULL,state text NOT NULL,approved_at timestamptz,fiat_currency text NOT NULL,paid_fiat_amount numeric(100,0));
 CREATE TABLE media_requests(tenant_id text NOT NULL,id text NOT NULL,model_key text NOT NULL,operation text NOT NULL,profile_version text NOT NULL,state text NOT NULL,created_at timestamptz NOT NULL,PRIMARY KEY(tenant_id,id));
 CREATE TABLE media_attempts(tenant_id text NOT NULL,id text NOT NULL,request_id text NOT NULL,delivery_state text NOT NULL,created_at timestamptz NOT NULL,PRIMARY KEY(tenant_id,id));
 CREATE TABLE media_settlements(tenant_id text NOT NULL,id text NOT NULL,request_id text NOT NULL,charged_amount bigint NOT NULL,raw_amount numeric(100,0) NOT NULL,supplier_cost_status text NOT NULL,supplier_cost_amount bigint,status text NOT NULL,PRIMARY KEY(tenant_id,id),UNIQUE(tenant_id,request_id));`)
@@ -114,19 +119,29 @@ func TestPostgresReadOperatingReportScopesAndNumeric100(t *testing.T) {
 	f := newReadFixture(t)
 	ids := []string{uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString()}
 	f.exec(t, `INSERT INTO request_records(id,tenant_id,model_id,created_at) VALUES($1,$5,$7,$9),($2,$6,$7,$9),($3,$5,$8,$9),($4,$5,$7,$10)`, ids[0], ids[1], ids[2], ids[3], f.tenant, f.otherTenant, f.model, f.otherModel, f.filter.From, f.filter.To)
-	f.exec(t, `INSERT INTO settlements VALUES($1,$2,100,20)`, ids[0], f.tenant)
+	settlement, receipt, lot := uuid.NewString(), uuid.NewString(), uuid.NewString()
+	f.exec(t, `INSERT INTO settlements(id,request_id,tenant_id,charged_amount,refunded_amount) VALUES($1,$2,$3,100,20)`, settlement, ids[0], f.tenant)
+	f.exec(t, `INSERT INTO funding_receipts VALUES($1,$2,'paid','CNY',100,'cny-genesis')`, receipt, f.tenant)
+	f.exec(t, `INSERT INTO funding_lots VALUES($1,$2,$3,100)`, lot, f.tenant, receipt)
+	f.exec(t, `INSERT INTO funding_settlement_lots VALUES($1,$2,0,$3,100)`, f.tenant, settlement, lot)
 	huge := strings.Repeat("9", 100)
 	f.exec(t, `INSERT INTO upstream_attempts VALUES($1,$2,$3,1,'invoice',$4::numeric)`, uuid.NewString(), ids[0], f.channel, huge)
+	f.exec(t, `INSERT INTO cash_refund_orders(tenant_id,state,approved_at,fiat_currency,paid_fiat_amount) VALUES
+ ($1,'completed',$3,'CNY',7),($2,'completed',$3,'CNY',11),($1,'completed',$3,'USD',5),
+ ($1,'failed',$3,'CNY',100),($1,'completed',$4,'CNY',100),($1,'completed',$3-interval '1 microsecond','CNY',100)`, f.tenant, f.otherTenant, f.filter.From, f.filter.To)
 	report, err := Read(f.ctx, f.pool, f.filter)
 	if err != nil || report.Summary.RequestCount != 3 || report.Summary.UnsettledRequests != 2 || report.Summary.Charged != "100" || report.Summary.NetRevenue != "80" || report.Summary.KnownProviderCost != huge || report.Summary.GrossMargin != nil || len(report.Models) != 2 {
 		t.Fatal("request/model/NUMERIC100 facts not preserved", err)
+	}
+	if report.Summary.CashRefunded["CNY"] != "18" || report.Summary.CashRefunded["USD"] != "5" {
+		t.Fatalf("completed/window/tenant cash-refund scope mismatch: %+v", report.Summary.CashRefunded)
 	}
 	filter := f.filter
 	filter.TenantID = f.tenant
 	filter.ModelID = f.model
 	report, err = Read(f.ctx, f.pool, filter)
-	if err != nil || len(report.Requests) != 1 || report.Requests[0].RequestID != ids[0] || report.Summary.GrossMargin == nil {
-		t.Fatal("tenant/model intersection or exclusive upper bound incorrect", err)
+	if err != nil || len(report.Requests) != 1 || report.Requests[0].RequestID != ids[0] || report.Summary.GrossMargin == nil || report.Summary.CashRefunded["CNY"] != "7" || report.Summary.CashRefunded["USD"] != "5" {
+		t.Fatal("tenant/model intersection, independent USD cash refund, or exclusive upper bound incorrect", err)
 	}
 	f.exec(t, `UPDATE upstream_attempts SET cost_amount=NULL WHERE request_id=$1`, ids[0])
 	report, err = Read(f.ctx, f.pool, filter)
@@ -139,7 +154,11 @@ func TestPostgresReadOperatingReportUsesOneReadOnlySnapshot(t *testing.T) {
 	f := newReadFixture(t)
 	request := uuid.NewString()
 	f.exec(t, `INSERT INTO request_records(id,tenant_id,model_id,created_at) VALUES($1,$2,$3,$4)`, request, f.tenant, f.model, f.filter.From)
-	f.exec(t, `INSERT INTO settlements VALUES($1,$2,100,0)`, request, f.tenant)
+	settlement, receipt, lot := uuid.NewString(), uuid.NewString(), uuid.NewString()
+	f.exec(t, `INSERT INTO settlements(id,request_id,tenant_id,charged_amount,refunded_amount) VALUES($1,$2,$3,100,0)`, settlement, request, f.tenant)
+	f.exec(t, `INSERT INTO funding_receipts VALUES($1,$2,'paid','CNY',100,'cny-genesis')`, receipt, f.tenant)
+	f.exec(t, `INSERT INTO funding_lots VALUES($1,$2,$3,100)`, lot, f.tenant, receipt)
+	f.exec(t, `INSERT INTO funding_settlement_lots VALUES($1,$2,0,$3,100)`, f.tenant, settlement, lot)
 	f.exec(t, `INSERT INTO upstream_attempts VALUES($1,$2,$3,1,'contract',10)`, uuid.NewString(), request, f.channel)
 	block, err := f.pool.Begin(f.ctx)
 	if err != nil {
@@ -203,8 +222,12 @@ func TestPostgresReadOperatingReportIncludesMediaSupplierCostOnce(t *testing.T) 
 	at := f.filter.From.Add(time.Hour)
 	f.exec(t, `INSERT INTO media_requests(tenant_id,id,model_key,operation,profile_version,state,created_at)
 VALUES($1,$2,'mock-tts','tts',$5,'settled',$4),($1,$3,'mock-image-generation','image_generation',$5,'released',$4 + interval '1 second'),($1,$6,'mock-video-generation','video_generation',$5,'pending',$4 + interval '2 seconds')`, f.tenant, first, second, at, profile, third)
+	mediaSettlement, receipt, lot := uuid.NewString(), uuid.NewString(), uuid.NewString()
 	f.exec(t, `INSERT INTO media_settlements(tenant_id,id,request_id,charged_amount,raw_amount,supplier_cost_status,supplier_cost_amount,status)
-VALUES($1,$2,$3,125,999,'known',60,'settled'),($1,$4,$5,0,0,'unknown',NULL,'released')`, f.tenant, uuid.NewString(), first, uuid.NewString(), second)
+VALUES($1,$2,$3,125,999,'known',60,'settled'),($1,$4,$5,0,0,'unknown',NULL,'released')`, f.tenant, mediaSettlement, first, uuid.NewString(), second)
+	f.exec(t, `INSERT INTO funding_receipts VALUES($1,$2,'paid','CNY',125,'cny-genesis')`, receipt, f.tenant)
+	f.exec(t, `INSERT INTO funding_lots VALUES($1,$2,$3,125)`, lot, f.tenant, receipt)
+	f.exec(t, `INSERT INTO media_settlement_lots VALUES($1,$2,0,$3,125)`, f.tenant, mediaSettlement, lot)
 	f.exec(t, `INSERT INTO media_attempts(tenant_id,id,request_id,delivery_state,created_at)
 VALUES($1,$2,$3,'completed',$4),($1,$5,$3,'failed',$4 + interval '1 microsecond'),($1,$6,$7,'unknown',$4),($1,$8,$9,'sending',$4)`, f.tenant, uuid.NewString(), first, at, uuid.NewString(), uuid.NewString(), second, uuid.NewString(), third)
 

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-14T21:43:21Z",
-  "review_reason": "记录 034.4 全仓 77 包 race、前端、构建与统一架构检查结果；本次仅定稿验证状态，无模块、链路、数据关系或权限结构变化。",
-  "snapshot_sha256": "558cc27f3671a3d5667372ff4b75997b1866e1a68ca69c73bfbbeecf533a5d89",
-  "architecture_sha256": "c24693c75c90fcc3b523c3fd2b73d350652fa9550dc768366dd7c58aa9057d6a",
-  "history_sha256": "803aa126746d58808f7527a390b5d628c0d31414508acfef13aa8779e21f9b02",
+  "reviewed_at": "2026-11-15T00:08:36Z",
+  "review_reason": "034.5 最终验收记录收口：77包专库串行与race、359项前端测试、构建、vet和make check均通过；无迁移、请求写链、计量canonical或角色结构变化",
+  "snapshot_sha256": "8e5128aa9bba071d5583c86e9b766ba9c24534b774218fb6bf6227f1d64f49e3",
+  "architecture_sha256": "643ae95bf5ecd04ab2c710c3f02d1b3cec811904a966ad6318bedc3c7f0edf0f",
+  "history_sha256": "1e5d8ee42078a417e34f01d0bc8192018ba6459f5b1f77d87f481deb38493ee2",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "fc7730d08cf806c8149f1d3034c65ecd54b9aaea497e3691e06df91dfbe35cef"
+      "sha256": "69fed391c7fd903de7925046c43c49648b5c4470ee03aae02a3970c9168042be"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -121,7 +121,7 @@
     },
     {
       "path": "docs/architecture/operating-reports.md",
-      "sha256": "99f7c794eaf4a6acbeedb8f3f44bd4b66a3c89babbf2d13fd4aeb47885965677"
+      "sha256": "94c4bf5bc1a1d14906524fed15ba8b5b0a1f3f2651c812c48c4cfc2cd607ecbe"
     },
     {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
@@ -157,7 +157,7 @@
     },
     {
       "path": "docs/architecture/wallet-sources.md",
-      "sha256": "069f5d1fb516be3d05be44dff857973e4274977a76f850a10adb9cb97e7f3cde"
+      "sha256": "16c8ace2174f2b05a1f6d1217440fef8ea58675e2d6b9eb844d7adcd477cd91f"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -181,11 +181,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "969b3f70aeec32208e43a932814281751c1dd85aadfd868f569a1c289721626f"
+      "sha256": "62b26fe5658a3dddfa4cf25f448df6dfeef2c9fcfc210d70e2d74147d73abe77"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "9cbc0946722841c42f99c1344c830eb6047428bf45852985dc264db32e267315"
+      "sha256": "2bdcdf3027054bfa4e4c84554813e2b76bb21e94910d82ae015dcf0092cb8112"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -225,7 +225,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "e76ad83b12e503c320bab6cef8c34c7e1d020afb9445808bc2ab5ee9cfafee7d"
+      "sha256": "d9eef1189146781b4b25d6bf218f109aeef4207259d6cc82be59ad10737b9ab6"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -294,6 +294,10 @@
     {
       "path": "docs/verification/034-4-cash-refunds.md",
       "sha256": "a70860e51ccd9b4308ae6b52a122348475601870c4ddcf31e090df491ff33a76"
+    },
+    {
+      "path": "docs/verification/034-5-reporting-wallet-composition.md",
+      "sha256": "4a44ab00cd3a63aff41c6ff5dc8267aa7a44ef8d7a3ff2165ef6d8599f82e8db"
     },
     {
       "path": "docs/verification/034-coin-units.md",
@@ -2425,7 +2429,7 @@
     },
     {
       "path": "internal/billing/voucher_query.go",
-      "sha256": "c93e8caa25ba8c01ef4ed72c2c8d4efe7e2d9096eaf43a8bd49b9ef88a699a53"
+      "sha256": "5f1ee5dac1f01198016e21fc9f2660851da2b6fedfc6acf1b0df7e038ea458bd"
     },
     {
       "path": "internal/billing/voucher_query_integration_test.go",
@@ -2437,7 +2441,15 @@
     },
     {
       "path": "internal/billing/voucher_types.go",
-      "sha256": "47428876abedc8bfaebab4971b7c83b3540b5a73ae765c60da49c0cc603f5a5c"
+      "sha256": "b555ddf88e6527678480cf497263cce28471d401a8ac671bd617f789b3c09567"
+    },
+    {
+      "path": "internal/billing/wallet_composition.go",
+      "sha256": "ec9b67c681c5ce36334eec515b175ce61edbab77383a0712ec173a637b7ae45d"
+    },
+    {
+      "path": "internal/billing/wallet_composition_integration_test.go",
+      "sha256": "38b6b8d1d7b6ac34e1bd0927529c51c762d0e357a0f9214df067496b655138fd"
     },
     {
       "path": "internal/billing/wallet_opening.go",
@@ -5917,27 +5929,27 @@
     },
     {
       "path": "internal/reporting/csv.go",
-      "sha256": "049a0280a20dcab6fcae60299fe2548eea179c00611390e52916c14fa4f93d89"
+      "sha256": "979e4bd5d4b3862f0ec67f95dfcb55be2520f2703e018acf615a22353a9ad72d"
     },
     {
       "path": "internal/reporting/read.go",
-      "sha256": "0037fca30a68355b3a5e52ce8f6cdac413b31db634dcd624d3f3f2c1c0d7a854"
+      "sha256": "9114e94f11194ef9c8f0e137ef0de12a384215f63d824375e6b5a96494855610"
     },
     {
       "path": "internal/reporting/read_postgres_test.go",
-      "sha256": "7ab77119a946e6222f31c70eba8eeec0edbcf11c8d7b4a8f050c8b9419eb0313"
+      "sha256": "1969b13a073dfcd3dc9e92a6b2f9a3726baeca5998fff7d1f09361d1d8cfab43"
     },
     {
       "path": "internal/reporting/report.go",
-      "sha256": "56e52d6792542068612ed1c227ea724f32dd0261aae1d5558e58968275d96435"
+      "sha256": "ce506ebf4cce91ea6fe3635d239f75be532b8a612ea4ac110614fe19df8145ba"
     },
     {
       "path": "internal/reporting/report_test.go",
-      "sha256": "a93f82aecd406c6264f4c44198ddbee959796576c0fde1e555a1ba441b4747c4"
+      "sha256": "8a48da5fbd1fe1f0da4a6d7056bfa3b9ec5409be3500d36c8232b53cb58c84e1"
     },
     {
       "path": "internal/reporting/types.go",
-      "sha256": "e1c4f567df7545fa351ab15d8088645a9d67e0e20c493d2f0d1771f54dd91c48"
+      "sha256": "1c6f7fa72cf545f2910330f247bebb476234e9cbce59c4f3a45e65aeac65bfa2"
     },
     {
       "path": "internal/routecost/quote.go",
@@ -6061,7 +6073,7 @@
     },
     {
       "path": "internal/server/billing_handlers.go",
-      "sha256": "0a870991ed1a5a8bada7d36b6071d4674ef8b66726d291ccba2f8a2f5107a0b6"
+      "sha256": "ef077df6d5e6100347df9fb96b26c7f0ed1eaa9a5b750f208cceb4fd34d205ca"
     },
     {
       "path": "internal/server/binding_isolation.go",
@@ -6121,7 +6133,7 @@
     },
     {
       "path": "internal/server/commerce_handlers.go",
-      "sha256": "62047c0c7e68a7d96654a9589543b6223d853ffd63999f2a9784f8b6abfead5d"
+      "sha256": "257828d6c585a882028993d833b97ee99e71644110c197e078d7638a44a6aa09"
     },
     {
       "path": "internal/server/commerce_input.go",
@@ -6173,7 +6185,7 @@
     },
     {
       "path": "internal/server/funding_integration_test.go",
-      "sha256": "dfb3b04e42cb6058f3afb3bb4d787fecd325a8a01279051af2eaab7d063b8b63"
+      "sha256": "deaec8530444bc9cf41d2cf77149f67bc563824f684a55043feb52915e93d86d"
     },
     {
       "path": "internal/server/gateway.go",
@@ -6268,12 +6280,16 @@
       "sha256": "d2b61e76d78431d77aaa178e6cb23a31f7c13c045de348112b4f1f871e0e1148"
     },
     {
+      "path": "internal/server/operating_payment_basis_integration_test.go",
+      "sha256": "c6210e0f660df91de99babfad162576bb6dd7e50f0dae94504289e851a3c216c"
+    },
+    {
       "path": "internal/server/operating_reports.go",
       "sha256": "9708100a934296672ff3f1c2d370a9f168b786226bd95de63967b5188fdc3475"
     },
     {
       "path": "internal/server/operating_reports_integration_test.go",
-      "sha256": "628ed7b407f6d9ad0ee2ffcb132e044e46427ca29d6bbe8652d0ddd498628c51"
+      "sha256": "08abca68c6adca1abd6d102bc2f0e6d61c1ea76f099d3eaeb698fbd725155094"
     },
     {
       "path": "internal/server/operating_reports_test.go",
@@ -8197,7 +8213,7 @@
     },
     {
       "path": "specs/026-operating-reports/spec.md",
-      "sha256": "54eaa24f064318667ce5a8bbb7dc4e54200917d5fe1846e5cb67ec72b5aca51e"
+      "sha256": "c9f2ac19472a4fc50810ee1bfc0e97bfdf18cd8672f45041ab0b45955d38e26d"
     },
     {
       "path": "specs/027-wallet-sources/spec.md",
@@ -8273,11 +8289,11 @@
     },
     {
       "path": "specs/034-virtual-coin/implementation-freeze.md",
-      "sha256": "88240cd46add88594ec5df1ebe172e7f5e81eb13f303d6bab06dc391e14d9776"
+      "sha256": "23c9d9643fbd5caf67039eff3d5125a037b33449284a5125c1b7c35d663dd934"
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "2fac6523025ab98ce5e3b29b891648dd8a7110c2f073c92a345e63e3afd40b09"
+      "sha256": "268d72369336bbb8a71efd64de3c65a5ead3c86afaa591529cfa8adcd9e8f117"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
@@ -8349,7 +8365,7 @@
     },
     {
       "path": "web/src/commerce.ts",
-      "sha256": "1910837427e37c42ce2d7ddab348d660e7de7dadcb5e51fba581beda1636d09c"
+      "sha256": "2781bfea8c54e0d72d498d0726bc6be359fa818151bed0717a90f9b0e3502b57"
     },
     {
       "path": "web/src/components/AlertCommands.vue",
@@ -8393,7 +8409,7 @@
     },
     {
       "path": "web/src/components/FundingPanel.vue",
-      "sha256": "f5748877d2c1c2994cfcc57b0ec4e48170a98567c8350882bcaf686a39b9b9c4"
+      "sha256": "31901c9301bb2af461d8271c174dc041192c89e04df4517169cb702ef66d5c63"
     },
     {
       "path": "web/src/components/GroupMultiplierCompiler.vue",
@@ -8417,7 +8433,7 @@
     },
     {
       "path": "web/src/components/OperatingReport.vue",
-      "sha256": "db63afe3330bd5e85b15c567eb62c3d72cfb532f69d28f171a3f682dd379ac12"
+      "sha256": "63666b41fbed3cc05762a10231d455542216104a9d179d2705705ecebe211216"
     },
     {
       "path": "web/src/components/PageHeader.vue",
@@ -8485,7 +8501,7 @@
     },
     {
       "path": "web/src/components/WalletSources.vue",
-      "sha256": "e9124afbb89b3165111f755baa0363a9ba2101c1a4d821231b31d7a15df34fac"
+      "sha256": "03bb4bce946bac58c7e6ef093be15ea6d2527d0d02ffd59c2305f05495e5c92c"
     },
     {
       "path": "web/src/cost-aware-routing.ts",
@@ -8553,7 +8569,7 @@
     },
     {
       "path": "web/src/operating-report.ts",
-      "sha256": "cfe17812e0c8e5289dbafaf4f1e53122fd387e2757a6cd24a451627ca4c2a3ec"
+      "sha256": "53b7ed1348d3a678ff09f56d3c9e9b7b9377e91f9e9516667dcea9ebd86dbfbd"
     },
     {
       "path": "web/src/payments-journal.ts",
@@ -8733,7 +8749,7 @@
     },
     {
       "path": "web/src/views/WalletView.vue",
-      "sha256": "9978ffbcd5668cae6566ece6fbb348ceccedc18cafed0958c5f82a2cc7ecf15b"
+      "sha256": "362b1c8980de63804edfbd8b85b182a8c9f655b24ee9514e5afefaca11ee205c"
     },
     {
       "path": "web/src/wallet-operator-settings.ts",
@@ -8785,7 +8801,7 @@
     },
     {
       "path": "web/tests/commerce.test.mjs",
-      "sha256": "84553b22965015c1ff23ae9894ee760afa66e7c823c74f055ab5b01580005b05"
+      "sha256": "6301d665ea1640469dca44b5a657eab9b6527cea07a90483d83403a922f02437"
     },
     {
       "path": "web/tests/cost-aware-routing.test.mjs",
@@ -8845,7 +8861,7 @@
     },
     {
       "path": "web/tests/operating-report.test.mjs",
-      "sha256": "1a50c8e3b12b28abad47670ba8f967d979ab79b5b2f811abe45fae4eab89dfd5"
+      "sha256": "eb508252f6a4af21a00984bcdaff3dcb9c273c57aaeab5c88923fecb94d3c6cd"
     },
     {
       "path": "web/tests/payments-indexeddb.browser.mjs",

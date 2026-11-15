@@ -171,6 +171,8 @@ flowchart TD
     Billing --> PB[客户与采购周期预算]
     Billing --> Sources[027 来源 / FIFO / 结算与逆序退款]
     Server --> Report[026 经营报表 / 对账 CSV]
+    Sources -->|原结算分配边与 receipt 付款基准| Report
+    Billing -->|completed 现金退款事实| Report
     Maintenance[离线开账 / 只读来源核对] --> Billing
     Main --> Workers[恢复 / 投影 / 邮件 / 告警 / 支付沙箱]
     Identity --> DB[(PostgreSQL)]
@@ -468,7 +470,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 协议与出口 | 请求约束、响应/usage 校验、SSE、SSRF/DNS/重定向限制 | [provider](../../internal/provider)、[协议合同](../../specs/001-commercial-mvp/contracts/provider.md) |
 | 媒体/任务/Realtime MVP（028-S/A/R） | 图片与 TTS 受限 inline 结果、统一 media Reserve/Attempt/Observe/Settle、持久任务与 worker lease、PostgreSQL session/turn/event、结果正文保护和 mock provider；真实供应商/浏览器/目标部署仍另验 | [媒体 handler](../../internal/server/image_handlers.go)、[TTS](../../internal/server/media_handlers.go)、[任务](../../internal/server/task_handlers.go)、[Realtime](../../internal/server/realtime.go)、[统一细图](unified-metering.md) |
 | 财务与恢复 | 客户硬预占、不可变证据、唯一结算/释放、成本、补偿、恢复/投影 | [billing](../../internal/billing)、[计费合同](../../specs/001-commercial-mvp/contracts/billing.md) |
-| 经营报表与对账（026/028接缝） | 当前请求创建窗口、模型消费收入/退款/毛利、全部文本与媒体attempt成本口径、请求级CSV；平台只读，同一有界快照，媒体成本读取不可变 settlement supplier cost snapshot，unknown 保留待核对 | [reporting](../../internal/reporting)、[HTTP](../../internal/server/operating_reports.go)、[控制台](../../web/src/components/OperatingReport.vue)、[细图与口径](operating-reports.md)、[验证](../verification/operating-reports.md) |
+| 经营报表与对账（026/028/034.5） | 当前请求创建窗口、COIN消费/退回/净额、文本与媒体原结算分配边的分币种付款基准、独立completed现金退款、全部attempt采购成本与可空的同币种毛利；平台只读同一有界快照，缺失/不完整分配、unknown、多币种或未知成本均不伪造毛利，请求级CSV保留协议计量元数据 | [reporting](../../internal/reporting)、[HTTP](../../internal/server/operating_reports.go)、[控制台](../../web/src/components/OperatingReport.vue)、[细图与口径](operating-reports.md)、[034.5验证](../verification/034-5-reporting-wallet-composition.md) |
 | 共同入账与双审券（022-A） | 人工核款/运营赠额唯一入账、六命令回执、独立HMAC、一次codes、来源查询与未知提交保护 | [funding](../../internal/billing/funding.go)、[核验](../../internal/billing/funding_verify.go)、[券命令](../../internal/billing/voucher_commands.go)、[安全查询](../../internal/billing/voucher_query.go)、[keyring](../../internal/security/voucher.go)、[HTTP](../../internal/server/commerce_handlers.go)、[017迁移](../../migrations/017_funding_vouchers.sql)、[证据](../verification/funding-vouchers.md) |
 | 分组售价（023-A） | 单tenant单组、绝对价/缺价拒绝、不可变请求快照、原操作回执、缺价预览和分组倍率批量编译；已完成限定本地集成验收 | [Tx helper](../../internal/pricing/pricing.go)、[管理](../../internal/catalog/pricing_commands.go)、[倍率编译](../../internal/catalog/group_price_compile.go)、[查询](../../internal/catalog/pricing_queries.go)、[HTTP](../../internal/server/pricing_handlers.go)、[023-A合同](../../specs/023-periodic-products/a-contract.md)、[030合同](../../specs/030-model-aliases-group-multipliers/spec.md) |
 | 独立本地支付沙箱（022-B0） | P协议、M模拟器/receiver/持久回调和私密运行证明已编码；专项真实PG/race和真实进程短程通过，长程故障验收按记录推进；独立M/Q进程限定验证；应用接线另见B3 | [协议](../../internal/paymentproto)、[模拟器](../../internal/mockpsp)、[接收器](../../internal/paymentreceiver)、[运行证明](../../internal/paymentruntime)、[版本1 SQL/inventory](../../internal/paymentsandboxschema)、[离线QA](../../internal/paymentsandboxqa)、[精确合同](../../specs/022-self-service-payments/b-runtime-contract.md)、[验证记录](../verification/payment-sandbox.md) |
@@ -705,7 +707,15 @@ sequenceDiagram
 
 平台接口为 `GET/POST /api/platform/cash-refunds`、`GET /api/platform/cash-refunds/:id`、`GET /api/platform/cash-refunds/by-business/:ref` 和五个迁移动作，严格 JSON、金额字符串、Idempotency-Key 和独立意图摘要。[HTTP](../../internal/server/cash_refund_handlers.go) 与[独立控制台](../../web/src/views/CashRefundsView.vue) 分离 requested 预览和已冻结事实，不触发或验证外部银行转账。APP 可创建订单并更新状态列和两个退款桶，worker/projection 无订单写权限；历史 provision 保持旧订单只读与旧三桶，当前才开放新函数和写边界。
 
-第五种 `cash_refund_pending_aged / tenant` 复用 024-A 的 aging 参数、样本、滞回和部署/恢复边界，只读 `approved/transfer_executed AND approved_at<=as_of-age`，不锁业务根、不自动迁移退款。[只读来源](../../internal/alerts/source_sql.go)、[评估](../../internal/alerts/evaluate.go)、[执行计划与1001来源验收](../../internal/alerts/cash_refund_integration_test.go)。验证范围见[034.4验证记录](../verification/034-4-cash-refunds.md)；034.5 报表/余额展示和 034.6 约合/显示名仍未实现。
+第五种 `cash_refund_pending_aged / tenant` 复用 024-A 的 aging 参数、样本、滞回和部署/恢复边界，只读 `approved/transfer_executed AND approved_at<=as_of-age`，不锁业务根、不自动迁移退款。[只读来源](../../internal/alerts/source_sql.go)、[评估](../../internal/alerts/evaluate.go)、[执行计划与1001来源验收](../../internal/alerts/cash_refund_integration_test.go)。验证范围见[034.4验证记录](../verification/034-4-cash-refunds.md)。
+
+### 034.5 余额构成、客户回执与付款基准报表
+
+本片不追加迁移，不改变钱包、结算、现金退款或路由写路径。[WalletComposition](../../internal/billing/wallet_composition.go) 在同一 SQL 快照中汇总 lot 的 `paid/grant/other` 可用额、推理 HELD 与退款 REFUND_HELD，并与三类租户账户余额核对；`GET /api/wallet` 返回 `paid_available/grant_available/other_available/refund_held`，可用总额和三来源构成来自同一次一致性读取，前端仅在退款冻结大于零时显示该项。客户入账回执增加原 receipt 的 `basis_kind/fiat_currency/fiat_amount`，非付费币种和金额为 JSON null，不含供应商成本或采购字段。[钱包页](../../web/src/views/WalletView.vue)、[回执解析](../../web/src/commerce.ts)、[回执面板](../../web/src/components/FundingPanel.vue)。
+
+[经营报表读取器](../../internal/reporting/read.go) 在同一 RR READ ONLY 快照追加读取文本 `funding_settlement_lots`、媒体 `media_settlement_lots`、共享 lot/receipt 与 completed 现金退款。每条分配边以 `big.Int` 计算 `floor(charged×fiat/issued)`，grant/opening 为零，unknown、缺买入版本、缺付款字段、缺失或合计不等于 settlement 的分配边均使毛利为 null；`payment_basis` 按 CNY/USD 分列。`charged/refunded/net_revenue` 仍是 COIN，后者不再作为毛利输入。只有请求全部结算、成本全已知、分配完整且付款基准仅 CNY 时，毛利才是 CNY 付款基准减已知采购成本；多币种不折算、不猜测。
+
+`cash_refunded` 只汇总报表时间窗及可选 tenant 内 completed 订单的实际法币，不冲减付款基准，也不按模型或请求重复分摊；summary 展示汇总，model/request 映射和请求级 CSV 现金退款列为空。JSON/CSV 与[控制台](../../web/src/operating-report.ts)严格区分 COIN 微币和 CNY/USD 微法币，拒绝旧 `micro_cny` 消费口径。权限沿用平台报表与现有 APP SELECT，没有新增表、第二事实源、运行时写权限或供应商/生产验收。完整验证见[034.5验证记录](../verification/034-5-reporting-wallet-composition.md)；034.6 约合展示和显示名仍未实现。
 
 ### 018 采购单价门禁与成本感知路由
 

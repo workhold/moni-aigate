@@ -661,6 +661,7 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 | 退款处理中 | `refund_held_amount` 之和，仅大于 0 时显示 |
 
 - **恒等式**：付费 + 赠送 + 其他 = 可用余额。该恒等式由现有 `wallet_account_valid`（`AVAILABLE` 账户余额等于 `Σ available_amount`）保证，不是新增风险；“其他”必须单列，否则存在 `manual_unknown` 或开账来源时前三项之和会小于总额。
+- **接口字段**：`GET /api/wallet` 在保留 `available/held` 的同时返回 `paid_available/grant_available/other_available/refund_held`，服务端同事务校验来源汇总与对应账户余额一致。充值回执列表增加 `basis_kind/fiat_currency/fiat_amount`；这些字段均来自原 receipt，不向客户暴露供应商成本、渠道或采购信息。
 - **展示不等于区分消耗顺序**：客户只看到余额构成，没有“先用哪个”的选项，消耗顺序由 §5.5 固定。
 - **客户提示**：在“其中赠送”旁标注“赠送币不可退现金”，与 §7.1 的资格一致，避免退款争议。
 - 来源表中 `source_kind` 对客户的文案由前端映射（例如 `manual_bonus` 显示为“充值赠送”，`voucher_grant` 显示为“兑换券”）；文案清单随 34.5 一起给出。
@@ -693,6 +694,8 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 **这不是会计收入。** HLD 已说明业务流水不宣称法定会计总账；赠送币的收入确认、未使用余额的会计处理由财务和法务决定。该口径只作为经营报表与毛利参考的输入。
 
 按来源分配的付款基准是对现有事实的只读计算，不改动请求路径或结算写入。现金退款退出的法币不进入该口径，作为单独的“已线下退还法币”列按币种汇总，供财务对账。
+
+**034.5 实施补充（2026-11-15）**：每条文本/媒体结算分配边均用 `big.Int`（Go）或 `numeric`（SQL）计算 `floor(charged_amount × fiat_amount / issued_amount)` 的整数微法币，禁止浮点和隐式四舍五入。`grant/opening` 计 0，`unknown`、缺买入版本、缺法币字段均使对应汇总及毛利为 null。JSON 以 `payment_basis`、`cash_refunded` 两个按币种分列的十进制字符串映射返回；CSV 对应 `payment_basis_cny/usd`、`cash_refunded_cny/usd` 列。消费币数继续来自唯一 settlement，`Currency='COIN'`、`AmountUnit='micro_coin'`；`net_revenue` 是 charged−refunded 的币数，**不是**毛利输入。毛利只在全部结算完成、采购成本已知、付款基准无 unknown 且仅含 CNY 时计算（付款基准−已知采购成本）；多币种或供应商币种/汇率缺失均为 null。`cash_refunded` 仅汇总 completed 现金退款且与付款基准分列，不冲减它；其时间窗口和 `tenant_id`（若指定）与报表筛选一致，模型、协议和执行类型筛选不适用于该独立事实。它只填充 summary，model/request 的映射及请求级 CSV 两列保持为空，防止一笔线下退款被重复分摊。每个请求的分配边 charged 合计必须等于唯一 settlement 的 charged，缺失或不完整时毛利同样为 null。
 
 ## 11. 对其他规格的影响
 

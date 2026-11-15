@@ -82,9 +82,23 @@ test('one-time code envelopes are validated; safe GET/replay never invents codes
 })
 
 test('funding sources preserve legacy TEXT identity and reject cross-tenant data', () => {
-  const value = { id: voucherID, tenant_id: tenant, source_kind: 'manual_credit', source_id: 'legacy-credit:text-id', amount: '9007199254740993', currency: 'COIN', journal_id: proposalID, created_at: at }
+  const value = { id: voucherID, tenant_id: tenant, source_kind: 'manual_credit', source_id: 'legacy-credit:text-id', amount: '9007199254740993', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'paid', fiat_currency: 'CNY', fiat_amount: '9007199254740993' }
   assert.equal(parseFundingReceipt(value, tenant).source_id, value.source_id)
-  for (const patch of [{ tenant_id: otherTenant }, { source_kind: 'sandbox_capture' }, { currency: 'USD' }, { source_kind: 'voucher_grant' }, { source_kind: 'wallet_opening' }, { proof_ref: 'not-public' }]) assert.throws(() => parseFundingReceipt({ ...value, ...patch }, tenant))
+  for (const patch of [{ tenant_id: otherTenant }, { source_kind: 'sandbox_capture', basis_kind: 'grant' }, { currency: 'USD' }, { source_kind: 'voucher_grant' }, { source_kind: 'wallet_opening' }, { proof_ref: 'not-public' }]) assert.throws(() => parseFundingReceipt({ ...value, ...patch }, tenant))
+})
+
+test('customer receipts expose payment fiat and basis without supplier cost fields', () => {
+  const value = { id: voucherID, tenant_id: tenant, source_kind: 'manual_credit', source_id: 'legacy-credit:text-id', amount: '100', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'paid', fiat_currency: 'CNY', fiat_amount: '90' }
+  const paid = parseFundingReceipt(value, tenant)
+  assert.equal(paid.fiat_amount, '90')
+  assert.equal(paid.fiat_currency, 'CNY')
+  assert.equal(paid.basis_kind, 'paid')
+  for (const patch of [{ fiat_amount: '0' }, { fiat_amount: 90 }, { fiat_currency: 'EUR' }, { supplier_cost: '1' }]) assert.throws(() => parseFundingReceipt({ ...value, ...patch }, tenant))
+  const bonus = parseFundingReceipt({ id: voucherID, tenant_id: tenant, source_kind: 'manual_bonus', source_id: proposalID, amount: '20', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'grant', fiat_currency: null, fiat_amount: null }, tenant)
+  assert.equal(bonus.fiat_amount, null)
+  assert.equal(bonus.fiat_currency, null)
+  assert.throws(() => parseFundingReceipt({ id: voucherID, tenant_id: tenant, source_kind: 'manual_bonus', source_id: proposalID, amount: '20', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'paid', fiat_currency: 'CNY', fiat_amount: '20', supplier_cost: '1' }, tenant))
+  assert.throws(() => parseFundingReceipt({ id: voucherID, tenant_id: tenant, source_kind: 'manual_bonus', source_id: proposalID, amount: '20', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'paid', fiat_currency: 'CNY', fiat_amount: '20' }, tenant))
 })
 
 test('synchronous funding summary validates NUMERIC totals without treating it as wallet availability', () => {
@@ -100,7 +114,7 @@ test('synchronous funding summary validates NUMERIC totals without treating it a
 })
 
 test('opening receipts retain exact principal and identify a noncash opening rather than cash collection', () => {
-  const value = { id: voucherID, tenant_id: tenant, source_kind: 'wallet_opening', source_id: batchID, amount: '9223372036854775807', currency: 'COIN', journal_id: proposalID, created_at: at }
+  const value = { id: voucherID, tenant_id: tenant, source_kind: 'wallet_opening', source_id: batchID, amount: '9223372036854775807', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'opening', fiat_currency: null, fiat_amount: null }
   assert.deepEqual(parseFundingReceipt(value, tenant), value)
   assert.equal(coin(parseFundingReceipt(value, tenant).amount), '9,223,372,036,854.775807 币')
   assert.equal(fundingSourceLabel(value.source_kind), '初始余额导入（非现金）')
@@ -111,13 +125,14 @@ test('opening receipts retain exact principal and identify a noncash opening rat
 
 test('the existing receipt endpoint filters all six sources and refuses rows outside the chosen source or tenant', () => {
   assert.deepEqual(fundingSourceKinds, ['manual_credit', 'manual_bonus', 'manual_unknown', 'voucher_grant', 'sandbox_capture', 'wallet_opening'])
-  const value = { id: voucherID, tenant_id: tenant, source_kind: 'wallet_opening', source_id: batchID, amount: '9007199254740993', currency: 'COIN', journal_id: proposalID, created_at: at }
+  const value = { id: voucherID, tenant_id: tenant, source_kind: 'wallet_opening', source_id: batchID, amount: '9007199254740993', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'opening', fiat_currency: null, fiat_amount: null }
   assert.equal(fundingReceiptsPath(), '/wallet/funding-receipts')
   assert.equal(fundingReceiptsPath('wallet_opening', 'a_B-c'), '/wallet/funding-receipts?source_kind=wallet_opening&cursor=a_B-c')
   assert.deepEqual(parseFundingReceiptsPage([value], null, tenant, 'wallet_opening'), { rows: [value], next: '' })
   assert.deepEqual(parseFundingReceiptsPage([value], null, tenant), { rows: [value], next: '' })
   for (const source_kind of fundingSourceKinds) {
-    const row = { ...value, source_kind }
+    const basis = source_kind === 'manual_credit' || source_kind === 'sandbox_capture' ? 'paid' : source_kind === 'manual_unknown' ? 'unknown' : source_kind === 'wallet_opening' ? 'opening' : 'grant'
+    const row = { ...value, source_kind, basis_kind: basis, fiat_currency: basis === 'paid' ? 'CNY' : null, fiat_amount: basis === 'paid' ? value.amount : null }
     assert.equal(new URL(fundingReceiptsPath(source_kind), 'https://console.test').searchParams.get('source_kind'), source_kind)
     assert.deepEqual(parseFundingReceiptsPage([row], null, tenant, source_kind).rows, [row])
     if (source_kind !== 'wallet_opening') assert.throws(() => parseFundingReceiptsPage([row], null, tenant, 'wallet_opening'))
@@ -132,7 +147,7 @@ test('the existing receipt endpoint filters all six sources and refuses rows out
 })
 
 test('sandbox sources have canonical capture identity and an explicit simulation label', () => {
-  const value = { id: voucherID, tenant_id: tenant, source_kind: 'sandbox_capture', source_id: batchID, amount: '9007199254740993', currency: 'COIN', journal_id: proposalID, created_at: at }
+  const value = { id: voucherID, tenant_id: tenant, source_kind: 'sandbox_capture', source_id: batchID, amount: '9007199254740993', currency: 'COIN', journal_id: proposalID, created_at: at, basis_kind: 'paid', fiat_currency: 'CNY', fiat_amount: '9007199254740993' }
   assert.deepEqual(parseFundingReceipt(value, tenant), value)
   assert.equal(fundingSourceLabel(value.source_kind), '本地模拟入账')
   assert.equal(fundingSourceLabel('manual_credit'), '人工核款')
