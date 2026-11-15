@@ -89,6 +89,8 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
         self.assertNotIn("docker logs -f", script)
         self.assertIn('git -C "$root" archive --format=tar "$commit"', script)
         self.assertIn('cd "$build_context"', script)
+        self.assertIn('docker build --file "$build_context/Dockerfile"', script)
+        self.assertIn("PHASE1_BUILD_HTTPS_PROXY", script)
         self.assertIn('*"No such object"*|*"No such container"*) break', script)
         self.assertIn("Docker inspect unavailable; retaining isolated preview resources", script)
         self.assertLess(script.index("status --porcelain"), script.index('"$private/admin-password"'))

@@ -24,7 +24,7 @@ DOCKER_CONTEXT=colima-moni-acceptance scripts/phase1-browser-preview.sh
 
 该前台进程要求干净工作树，从 HEAD 的私有 `git archive` 快照执行 current-only 迁移、provision、bootstrap 和镜像构建，在 55439 专库创建随机 `phase1qa_*` schema，经显式 `operations.ProvisionFor(schema)` 授权后启动 `moni-phase1-browser-app` / `moni-phase1-browser-worker`。`scripts/phase1-provision` 只用于这个隔离测试目标；生产 `provision` 仍只处理 public，不改变默认部署行为。镜像构建标签记录 source commit、source tree 和干净构建状态，标签对应实际归档内容而非构建前的一次工作树采样。终验主动停止 app/worker 时，预览启动器仍保持运行，不会因日志跟随退出而提前删除同一组容器和 schema；只有明确返回 NotFound 或操作者退出启动器时才执行清理，Docker daemon/context 临时失败会保留资源并重试。
 
-随机管理员密码与运行时密钥只写入 `/Users/vchive/.cache/moni-phase1-browser/` 的 0600 文件，不应打印到终端或复制进证据。浏览器驱动直接读取受保护文件。`Dockerfile`/`compose.yaml` 的 `GOPROXY` 构建参数保持默认代理；本地预览显式使用可访问的公共镜像并继续执行 `go.sum` 校验。
+随机管理员密码与运行时密钥只写入 `/Users/vchive/.cache/moni-phase1-browser/` 的 0600 文件，不应打印到终端或复制进证据。浏览器驱动直接读取受保护文件。`Dockerfile`/`compose.yaml` 的 `GOPROXY` 构建参数保持默认代理；本地预览显式使用可访问的公共镜像并继续执行 `go.sum` 校验。直连 npm 不稳定时，可为预览启动命令设置 `PHASE1_BUILD_HTTPS_PROXY=http://host.docker.internal:<代理端口>`，也可分别设置 `PHASE1_BUILD_HTTP_PROXY` 和 `PHASE1_BUILD_NO_PROXY`；这些值只注入 Dockerfile 构建阶段，默认空，不进入最终运行配置。
 
 扩展 031 harness 设置 `PHASE1_UI_ACCOUNTS_FILE` 后，浏览器驱动通过 Chrome DevTools Protocol 启动独立 Chrome，执行公开目录、客户/运营页面、Key 创建/Playground/撤销、TOTP 与密码变更、人工核款及退款双审、券发行/审批/兑换、报表 CSV 和站内告警共同确认。所有截图都在一次性秘密清除后保存；证据不含密码、Cookie、API Key、券码或 MFA 秘密。
 

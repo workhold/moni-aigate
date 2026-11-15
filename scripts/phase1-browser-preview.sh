@@ -126,7 +126,18 @@ export GOPROXY=https://goproxy.cn,direct
 )
 compose=(docker-compose --project-directory "$build_context" --project-name "$project" --env-file "$compose_env" --profile business-qa)
 "${compose[@]}" config --quiet
-"${compose[@]}" build
+build=(docker build --file "$build_context/Dockerfile" --tag "$image"
+  --build-arg "GOPROXY=https://goproxy.cn,direct"
+  --label "ai.moni.phase1.source-commit=$commit"
+  --label "ai.moni.phase1.source-tree=$source_tree"
+  --label "ai.moni.phase1.source-clean=true")
+if [[ -n "${PHASE1_BUILD_HTTPS_PROXY:-}" ]]; then
+  build+=(--add-host "host.docker.internal:host-gateway"
+    --build-arg "HTTPS_PROXY=$PHASE1_BUILD_HTTPS_PROXY"
+    --build-arg "HTTP_PROXY=${PHASE1_BUILD_HTTP_PROXY:-$PHASE1_BUILD_HTTPS_PROXY}"
+    --build-arg "NO_PROXY=${PHASE1_BUILD_NO_PROXY:-localhost,127.0.0.1}")
+fi
+"${build[@]}" "$build_context"
 docker network create "$network" >/dev/null
 docker run -d --name "$app" --network "$network" --network-alias app --add-host=host.docker.internal:host-gateway --env-file "$runtime_env" -p 127.0.0.1:${port}:8080 --restart unless-stopped --init "$image" serve >/dev/null
 docker run -d --name "$worker" --network "$network" --network-alias worker --add-host=host.docker.internal:host-gateway --env-file "$runtime_env" --restart unless-stopped --init "$image" worker >/dev/null

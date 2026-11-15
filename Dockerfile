@@ -1,4 +1,7 @@
 FROM node:22-alpine AS console
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
 WORKDIR /src/web
 COPY web/package*.json ./
 RUN npm ci

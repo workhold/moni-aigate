@@ -7333,3 +7333,18 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_browser_qa_test.py`
 
 </details>
+
+## 2026-11-15T13:24:16Z · 3f3c0599a073
+
+验收 VM 直连 npm 下载失败，新增仅预览使用的可选构建期代理参数；代理默认空且不进入运行配置，HEAD 归档与不可变镜像合同不变，无生产请求、资金、迁移或部署拓扑变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-browser-preview.sh`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
