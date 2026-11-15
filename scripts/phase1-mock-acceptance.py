@@ -27,6 +27,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -36,6 +37,7 @@ FAIL = 1
 SKIP = 3
 USAGE = 2
 EXPECTED_DB = "postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable"
+AUTH_LOGIN_COMPLETION_INTERVAL = 12.05
 PROTOCOLS = (
     ("chat", "openai_chat", "/v1/chat/completions", False),
     ("responses", "openai_responses", "/v1/responses", False),
@@ -301,13 +303,16 @@ def write_ui_accounts_file(raw_path: str, payload: dict) -> None:
 
 
 class API:
-    def __init__(self, base_url: str, admin_email: str, admin_password: str):
+    def __init__(self, base_url: str, admin_email: str, admin_password: str, *, monotonic: Callable[[], float] = time.monotonic, sleep: Callable[[float], None] = time.sleep):
         self.base_url = base_url.rstrip("/")
         self.admin_email = admin_email
         self.admin_password = admin_password
         self.csrf = ""
         self.cookies = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookies))
+        self.monotonic = monotonic
+        self.sleep = sleep
+        self.login_completed_at: float | None = None
 
     def call(self, method: str, path: str, value: object | None = None, *, csrf: bool = False, headers: dict[str, str] | None = None) -> tuple[int, dict, bytes, dict[str, str]]:
         request_headers = {"Accept": "application/json", "Origin": self.base_url}
@@ -341,12 +346,19 @@ class API:
         return parsed.get("data", parsed)
 
     def login(self, email: str, password: str) -> None:
+        if self.login_completed_at is not None:
+            remaining = AUTH_LOGIN_COMPLETION_INTERVAL - (self.monotonic() - self.login_completed_at)
+            if remaining > 0:
+                self.sleep(remaining)
         self.expect("POST", "/api/auth/login", {"email": email, "password": password})
         me = self.expect("GET", "/api/me")
         self.csrf = str(me.get("csrf_token", ""))
         if not self.csrf:
             raise HarnessFailure(f"{email} login did not return CSRF token")
         self.expect("POST", "/api/auth/reauth", {"password": password}, csrf=True)
+        # Pace the next complete login+reauth from this successful completion.
+        # Authentication errors, including 429, propagate without a retry.
+        self.login_completed_at = self.monotonic()
 
 
 @dataclass

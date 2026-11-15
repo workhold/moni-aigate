@@ -22,6 +22,10 @@ scripts/phase1-mock-acceptance.sh
 
 `PHASE1_MOCK_CONFIG_TRANSPORT` 默认是 `bind`，保持原 `-v host/config.json:/etc/moni/mock-upstream.json:ro` 行为。`colima` 等宿主机目录不可共享的环境可显式设置 `PHASE1_MOCK_CONFIG_TRANSPORT=copy`：harness 改用 `docker create` → `docker cp - <container>:/etc` → `docker start`，tar 中只有 `moni/mock-upstream.json`，不再依赖宿主挂载或 `/etc/moni` 父目录预存在。宿主私有配置固定为 `0600`；考虑到容器以 `USER moni` 运行，tar 内非生产 fixture 固定为 `0644`，避免 root:0600 造成 permission denied。配置内容不会写入 stdout，健康检查及失败清理不变。
 
+### 登录 pacing
+
+`API.login` 对 admin/operator/approver/owner 及故障路由重建共用同一 pacing：第一次完整 login+reauth 不等待；每次成功后记录完成时刻，下一次至少间隔 `12.05s`。这遵守服务端 `login:<ip>` 每 12 秒一许可、burst 5 的限制，不捕获或重试 429，也不放宽认证断言。hermetic fake-clock 测试覆盖首次等待为零、后续间隔和失败不重试。
+
 ### 可选浏览器账号交接
 
 只有显式设置 `PHASE1_UI_ACCOUNTS_FILE` 时，provision 才额外写出浏览器后续终验所需的 owner/operator/approver 随机账号，以及 `base_url`、tenant、price group、六个模型的逻辑 ID/公开名/别名/协议。约束如下：
@@ -83,7 +87,7 @@ scripts/phase1-mock-acceptance.sh
 scripts/phase1-mock-acceptance.test.sh
 ```
 
-结果：PASS。13 个 hermetic Python 单元测试通过，覆盖绑定存在性、receipt 基数/顺序、别名 JSON/SSE 回显、合并一次 ceil、实际价格断言、034 paid credit DTO、故障路由隔离、匿名公开目录、bind/copy 两种 mock 配置传输和 UI 文件权限/秘密字段拒绝；copy 测试还核对 tar 成员路径及容器可读权限。随后 15 个非 PG Go 绑定在 `-race` 下通过，包为 `internal/provider`、`internal/routing`、`internal/testsupport/mockupstream`。另以 `PHASE1_MOCK_CONFIG_TRANSPORT=copy` 仅启动临时 mock，实际 `docker create/cp/start` 与原健康检查通过，随后已清理容器和配置；未据此运行完整 Compose 或宣称部署验收完成。
+结果：PASS。14 个 hermetic Python 单元测试通过，覆盖绑定存在性、receipt 基数/顺序、别名 JSON/SSE 回显、合并一次 ceil、实际价格断言、034 paid credit DTO、故障路由隔离、匿名公开目录、bind/copy 两种 mock 配置传输、登录 pacing 和 UI 文件权限/秘密字段拒绝；copy 测试还核对 tar 成员路径及容器可读权限。随后 15 个非 PG Go 绑定在 `-race` 下通过，包为 `internal/provider`、`internal/routing`、`internal/testsupport/mockupstream`。另以 `PHASE1_MOCK_CONFIG_TRANSPORT=copy` 仅启动临时 mock，实际 `docker create/cp/start` 与原健康检查通过，随后已清理容器和配置；未据此运行完整 Compose 或宣称部署验收完成。
 
 ```sh
 TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \

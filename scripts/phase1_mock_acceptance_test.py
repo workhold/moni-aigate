@@ -71,6 +71,19 @@ class FakeDocker:
         return types.SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
 
+class FakeClock:
+    def __init__(self) -> None:
+        self.now = 100.0
+        self.sleeps: list[float] = []
+
+    def monotonic(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+
 class Phase1HarnessTest(unittest.TestCase):
     def test_required_pure_go_bindings_exist(self) -> None:
         self.assertFalse(harness.REQUIRED_PURE_CASES - harness.PURE_GO_TEST_BINDINGS.keys())
@@ -138,6 +151,45 @@ class Phase1HarnessTest(unittest.TestCase):
         instance.assert_request("request", unknown=False, expected_attempts=2, expected_requested_name="alias", expected_protocol="completed", expected_usage="confirmed_final")
         with self.assertRaises(StopIteration):
             instance.query("unexpected extra query")
+
+    def test_login_pacing_is_shared_after_completion_and_never_retries(self) -> None:
+        clock = FakeClock()
+        api = harness.API("http://qa.invalid", "admin@example.invalid", "secret", monotonic=clock.monotonic, sleep=clock.sleep)
+        calls: list[str] = []
+        completed: list[float] = []
+
+        def expect(self, method, path, value=None, **kwargs):
+            calls.append(path)
+            if path == "/api/me":
+                return {"csrf_token": "csrf"}
+            if path == "/api/auth/reauth":
+                clock.now += 0.25
+            return {}
+
+        api.expect = types.MethodType(expect, api)
+        for index, email in enumerate(("admin", "operator", "approver")):
+            api.login(email + "@example.invalid", "secret")
+            completed.append(api.login_completed_at)
+            if index == 0:
+                self.assertEqual(clock.sleeps, [])
+        self.assertEqual([round(value, 2) for value in clock.sleeps], [12.05, 12.05])
+        self.assertEqual([round(value, 2) for value in completed], [100.25, 112.55, 124.85])
+        self.assertEqual(calls, ["/api/auth/login", "/api/me", "/api/auth/reauth"] * 3)
+
+        failed_clock = FakeClock()
+        failed = harness.API("http://qa.invalid", "admin@example.invalid", "secret", monotonic=failed_clock.monotonic, sleep=failed_clock.sleep)
+        attempts = []
+
+        def reject(self, method, path, value=None, **kwargs):
+            attempts.append(path)
+            raise harness.HarnessFailure("HTTP 429")
+
+        failed.expect = types.MethodType(reject, failed)
+        with self.assertRaises(harness.HarnessFailure):
+            failed.login("admin@example.invalid", "secret")
+        self.assertEqual(attempts, ["/api/auth/login"])
+        self.assertEqual(failed_clock.sleeps, [])
+        self.assertIsNone(failed.login_completed_at)
 
     def test_mock_copy_transport_streams_readable_tar_without_bind(self) -> None:
         fake = FakeDocker()

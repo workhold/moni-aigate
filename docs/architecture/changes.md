@@ -7175,3 +7175,17 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_mock_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T07:22:38Z · 48fc421120c9
+
+第一阶段mock provision在API.login内统一12.05秒完成间隔，首次不等待且429不重试；仅测试工具和验证记录变化，服务端认证限流、生产代码与权限边界未改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_mock_acceptance_test.py`
+
+</details>
