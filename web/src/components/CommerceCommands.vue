@@ -5,7 +5,7 @@ import { commerceReasonLabels, commerceUUID, parseCommerceReceipt } from '../com
 import type { CommerceReceipt } from '../commerce'
 import { commerceContext, commerceJournal, createCommerceScope } from '../commerce-state'
 import type { SafeCommerceCommand } from '../commerce-state'
-import { money } from '../format'
+import { coin } from '../format'
 import { session } from '../session'
 const props = defineProps<{ scope: string }>(), emit = defineEmits<{ settled: [receipt: CommerceReceipt] }>()
 const scope = createCommerceScope(), context = computed(() => commerceContext(session.me?.user.id, props.scope, `${session.me?.user.platform_role}:${session.me?.tenant?.role}:${session.me?.csrf_token}`))
@@ -37,7 +37,7 @@ onBeforeUnmount(() => { scope.reset(); window.removeEventListener('moni:commerce
     <el-alert v-if="error" :title="error" type="warning" :closable="false" />
     <div class="commerce-query"><el-input v-model="id" placeholder="原 operation UUID" aria-label="原操作 ID" @input="change" /><el-button :loading="busy" :disabled="!id" @click="inspect()">只读查询</el-button></div>
     <div v-for="entry in pending" :key="entry.operation_id" class="commerce-pending"><div><strong>结果待核查</strong><span class="mono">{{ entry.operation_id }}</span><small>{{ entry.kind }} · {{ entry.created_at }}</small></div><el-button :loading="busy" @click="inspect(entry)">核查原回执</el-button></div>
-    <template v-if="result"><el-alert :type="result.status === 'accepted' ? 'success' : 'warning'" :title="commerceReasonLabels[result.reason] || result.reason" :closable="false" /><dl class="commerce-result"><dt>原操作</dt><dd class="mono">{{ result.operation_id }}</dd><dt>操作类型</dt><dd>{{ result.kind }}</dd><dt>资源</dt><dd class="mono">{{ result.resource_id || '无业务效果' }}</dd><template v-if="result.amount"><dt>已入账</dt><dd>{{ money(result.amount) }}</dd><dt>来源 / 流水</dt><dd class="mono">{{ result.funding_receipt_id }} / {{ result.journal_id }}</dd></template><dt>提交时刻（UTC）</dt><dd>{{ result.created_at }}</dd></dl><p v-if="result.kind === 'voucher.batch.create' && result.status === 'accepted'" class="field-hint">查询不会恢复兑换券。丢失明文应按原资源作废/双审撤销后再明确新建。</p></template>
+    <template v-if="result"><el-alert :type="result.status === 'accepted' ? 'success' : 'warning'" :title="commerceReasonLabels[result.reason] || result.reason" :closable="false" /><dl class="commerce-result"><dt>原操作</dt><dd class="mono">{{ result.operation_id }}</dd><dt>操作类型</dt><dd>{{ result.kind }}</dd><dt>资源</dt><dd class="mono">{{ result.resource_id || '无业务效果' }}</dd><template v-if="result.amount"><dt>已入账</dt><dd>{{ coin(result.amount) }}</dd><dt>来源 / 流水</dt><dd class="mono">{{ result.funding_receipt_id }} / {{ result.journal_id }}</dd></template><dt>提交时刻（UTC）</dt><dd>{{ result.created_at }}</dd></dl><p v-if="result.kind === 'voucher.batch.create' && result.status === 'accepted'" class="field-hint">查询不会恢复兑换券。丢失明文应按原资源作废/双审撤销后再明确新建。</p></template>
   </section>
 </template>
 <style scoped>.commerce-commands{margin-top:24px}.commerce-query{display:flex;gap:12px;max-width:650px;margin:16px 0}.commerce-pending{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-top:1px solid var(--border-color,#e8edf1)}.commerce-pending>div{display:grid;gap:5px;overflow-wrap:anywhere;font-size:12px}.commerce-pending small{color:var(--text-secondary)}.commerce-result{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;font-size:12px}.commerce-result dd{margin:0;overflow-wrap:anywhere}</style>

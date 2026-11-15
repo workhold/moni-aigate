@@ -1,6 +1,6 @@
 # 035：New API / Sub2API 外部上游接入
 
-状态：草案，作为 0 阶段和 MVP 的验收合同。它只规定 aigate 与下游网关之间的边界，不声称 New API 或 Sub2API 的全部功能已经在 aigate 中实现。
+状态：草案，作为 0 阶段和 MVP 的验收合同。它只规定 aigate 与下游网关之间的边界，不声称 New API 或 Sub2API 的全部功能已经在 aigate 中实现。当前 deterministic relay 与 Compose mock 证据见[0 阶段验证记录](../../docs/verification/phase0-external-upstream.md)；真实三服务三库、真实凭据和逐 profile 认证仍未完成。
 
 ## 目标
 

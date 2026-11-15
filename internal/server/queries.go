@@ -124,7 +124,7 @@ func (s *Server) channels(c *gin.Context) {
 	if !s.admin(c) {
 		return
 	}
-	s.page(c, `SELECT c.id,c.name,c.enabled,c.quarantined,c.current_version,c.management_revision::text AS management_revision,c.created_at,v.base_url,v.provider,v.region AS data_region,v.region,v.allowed_cidrs,CASE WHEN c.quarantined THEN 'quarantined' WHEN c.enabled THEN 'active' ELSE 'disabled' END AS status FROM channels c JOIN channel_versions v ON v.id=c.current_version`)
+	s.page(c, `SELECT c.id,c.name,c.enabled,c.quarantined,c.current_version,c.management_revision::text AS management_revision,c.created_at,v.base_url,v.provider,v.channel_kind,v.integration_mode,v.region AS data_region,v.region,v.allowed_cidrs,CASE WHEN c.quarantined THEN 'quarantined' WHEN c.enabled THEN 'active' ELSE 'disabled' END AS status FROM channels c JOIN channel_versions v ON v.id=c.current_version`)
 }
 func modelSelect() string {
 	return modelSelectFor(false)
@@ -134,10 +134,10 @@ func modelSelectFor(publication bool) string {
 	if publication {
 		publicationColumns = ",m.public_visible,m.public_revision::text AS public_revision,c.schema_id,encode(c.schema_digest,'hex') AS schema_digest,'default' AS variant_key"
 	}
-	return `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT m.id` + publicationColumns + `,m.public_name,m.enabled,meter_model_profile(m.id) AS profile,m.profile_version,COALESCE(NULLIF(meter_model_profile(m.id)->>'protocol',''),'openai_chat') AS protocol,m.active_revision,m.active_revision AS revision,m.created_at,(meter_model_profile(m.id)->>'context_limit')::bigint AS context_limit,(meter_model_profile(m.id)->>'output_limit')::bigint AS output_limit,(meter_model_profile(m.id)->>'default_output_limit')::bigint AS default_output_limit,(meter_model_profile(m.id)->>'input_token_upper_bound')::bigint AS input_token_upper_bound,(meter_model_profile(m.id)->>'supports_tools')::boolean AS supports_tools,'profile_input_bound' AS reservation_strategy,jsonb_build_object('model_id',m.id,'source','default','status',CASE WHEN p.id IS NULL THEN 'unavailable' ELSE 'available' END,'price_group_id',NULL::text,'price_version_id',p.id,'schema_id',c.schema_id,'schema_digest',encode(c.schema_digest,'hex'),'variant_key','default','currency','CNY','rates',CASE WHEN p.id IS NULL THEN NULL ELSE convert_from(p.rates_canonical,'UTF8')::jsonb END,'effective_at',CASE WHEN p.id IS NULL THEN NULL ELSE pricing_time(p.effective_at) END,'as_of',pricing_time(instant.at)) AS default_price FROM instant CROSS JOIN models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id LEFT JOIN LATERAL(SELECT id,rates_canonical,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NULL AND schema_id=c.schema_id AND schema_digest=c.schema_digest AND variant_key='default' AND effective_at<=instant.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true`
+	return `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT m.id` + publicationColumns + `,m.public_name,m.enabled,meter_model_profile(m.id) AS profile,m.profile_version,COALESCE(NULLIF(meter_model_profile(m.id)->>'protocol',''),'openai_chat') AS protocol,m.active_revision,m.active_revision AS revision,m.created_at,(meter_model_profile(m.id)->>'context_limit')::bigint AS context_limit,(meter_model_profile(m.id)->>'output_limit')::bigint AS output_limit,(meter_model_profile(m.id)->>'default_output_limit')::bigint AS default_output_limit,(meter_model_profile(m.id)->>'input_token_upper_bound')::bigint AS input_token_upper_bound,(meter_model_profile(m.id)->>'supports_tools')::boolean AS supports_tools,'profile_input_bound' AS reservation_strategy,jsonb_build_object('model_id',m.id,'source','default','status',CASE WHEN p.id IS NULL THEN 'unavailable' ELSE 'available' END,'price_group_id',NULL::text,'price_version_id',p.id,'schema_id',c.schema_id,'schema_digest',encode(c.schema_digest,'hex'),'variant_key','default','currency','COIN','rates',CASE WHEN p.id IS NULL THEN NULL ELSE convert_from(p.rates_canonical,'UTF8')::jsonb END,'effective_at',CASE WHEN p.id IS NULL THEN NULL ELSE pricing_time(p.effective_at) END,'as_of',pricing_time(instant.at)) AS default_price FROM instant CROSS JOIN models m JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id LEFT JOIN LATERAL(SELECT id,rates_canonical,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NULL AND schema_id=c.schema_id AND schema_digest=c.schema_digest AND variant_key='default' AND effective_at<=instant.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true`
 }
 func customerModelSelect() string {
-	return `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT m.id,m.public_name,m.enabled,meter_model_profile(m.id) AS profile,m.profile_version,COALESCE(NULLIF(meter_model_profile(m.id)->>'protocol',''),'openai_chat') AS protocol,m.active_revision,m.active_revision AS revision,m.created_at,(meter_model_profile(m.id)->>'context_limit')::bigint AS context_limit,(meter_model_profile(m.id)->>'output_limit')::bigint AS output_limit,(meter_model_profile(m.id)->>'default_output_limit')::bigint AS default_output_limit,(meter_model_profile(m.id)->>'input_token_upper_bound')::bigint AS input_token_upper_bound,(meter_model_profile(m.id)->>'supports_tools')::boolean AS supports_tools,'profile_input_bound' AS reservation_strategy,jsonb_build_object('model_id',m.id,'source',CASE WHEN t.price_group_id IS NULL THEN 'default' ELSE 'group' END,'status',CASE WHEN p.id IS NULL THEN 'unavailable' ELSE 'available' END,'price_group_id',t.price_group_id,'price_version_id',p.id,'schema_id',c.schema_id,'schema_digest',encode(c.schema_digest,'hex'),'variant_key','default','currency','CNY','rates',CASE WHEN p.id IS NULL THEN NULL ELSE convert_from(p.rates_canonical,'UTF8')::jsonb END,'effective_at',CASE WHEN p.id IS NULL THEN NULL ELSE pricing_time(p.effective_at) END,'as_of',pricing_time(instant.at)) AS retail_price FROM instant CROSS JOIN tenants t JOIN memberships mb ON mb.tenant_id=t.id AND mb.user_id=$2 JOIN users u ON u.id=mb.user_id JOIN tenant_model_grants g ON g.tenant_id=t.id JOIN models m ON m.id=g.model_id JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id LEFT JOIN LATERAL(SELECT id,rates_canonical,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NOT DISTINCT FROM t.price_group_id AND schema_id=c.schema_id AND schema_digest=c.schema_digest AND variant_key='default' AND effective_at<=instant.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true WHERE t.id=$1 AND t.status='active' AND mb.status='active' AND u.status='active' AND m.enabled AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=t.id AND mg.user_id=$2 AND mg.model_id=m.id))`
+	return `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT m.id,m.public_name,m.enabled,meter_model_profile(m.id) AS profile,m.profile_version,COALESCE(NULLIF(meter_model_profile(m.id)->>'protocol',''),'openai_chat') AS protocol,m.active_revision,m.active_revision AS revision,m.created_at,(meter_model_profile(m.id)->>'context_limit')::bigint AS context_limit,(meter_model_profile(m.id)->>'output_limit')::bigint AS output_limit,(meter_model_profile(m.id)->>'default_output_limit')::bigint AS default_output_limit,(meter_model_profile(m.id)->>'input_token_upper_bound')::bigint AS input_token_upper_bound,(meter_model_profile(m.id)->>'supports_tools')::boolean AS supports_tools,'profile_input_bound' AS reservation_strategy,jsonb_build_object('model_id',m.id,'source',CASE WHEN t.price_group_id IS NULL THEN 'default' ELSE 'group' END,'status',CASE WHEN p.id IS NULL THEN 'unavailable' ELSE 'available' END,'price_group_id',t.price_group_id,'price_version_id',p.id,'schema_id',c.schema_id,'schema_digest',encode(c.schema_digest,'hex'),'variant_key','default','currency','COIN','rates',CASE WHEN p.id IS NULL THEN NULL ELSE convert_from(p.rates_canonical,'UTF8')::jsonb END,'effective_at',CASE WHEN p.id IS NULL THEN NULL ELSE pricing_time(p.effective_at) END,'as_of',pricing_time(instant.at)) AS retail_price FROM instant CROSS JOIN tenants t JOIN memberships mb ON mb.tenant_id=t.id AND mb.user_id=$2 JOIN users u ON u.id=mb.user_id JOIN tenant_model_grants g ON g.tenant_id=t.id JOIN models m ON m.id=g.model_id JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id LEFT JOIN LATERAL(SELECT id,rates_canonical,effective_at FROM price_versions WHERE model_id=m.id AND price_group_id IS NOT DISTINCT FROM t.price_group_id AND schema_id=c.schema_id AND schema_digest=c.schema_digest AND variant_key='default' AND effective_at<=instant.at ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1)p ON true WHERE t.id=$1 AND t.status='active' AND mb.status='active' AND u.status='active' AND m.enabled AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=t.id AND mg.user_id=$2 AND mg.model_id=m.id))`
 }
 func (s *Server) models(c *gin.Context) {
 	tid, ok := s.tenant(c)
@@ -149,6 +149,10 @@ func (s *Server) models(c *gin.Context) {
 		s.error(c, e)
 		return
 	}
+	if e = s.attachActiveModelAliases(c, v); e != nil {
+		s.error(c, e)
+		return
+	}
 	s.ok(c, v)
 }
 func (s *Server) platformModels(c *gin.Context) {
@@ -157,6 +161,10 @@ func (s *Server) platformModels(c *gin.Context) {
 	}
 	v, e := s.query(c.Request.Context(), modelSelectFor(true)+` ORDER BY m.public_name LIMIT 1000`)
 	if e != nil {
+		s.error(c, e)
+		return
+	}
+	if e = s.attachActiveModelAliases(c, v); e != nil {
 		s.error(c, e)
 		return
 	}
@@ -179,6 +187,41 @@ func (s *Server) platformModels(c *gin.Context) {
 		m["cost_policy"] = gin.H{"mode": mode, "unknown_cost_policy": unknown}
 	}
 	s.ok(c, v)
+}
+
+const activeModelAliasesSQL = `SELECT model_id,alias
+FROM model_aliases
+WHERE state='active' AND model_id=ANY($1::text[])
+ORDER BY model_id COLLATE "C",alias COLLATE "C"`
+
+func (s *Server) attachActiveModelAliases(c *gin.Context, rows []map[string]any) error {
+	ids := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if id, ok := row["id"].(string); ok {
+			ids = append(ids, id)
+		}
+	}
+	aliasRows, err := s.query(c.Request.Context(), activeModelAliasesSQL, ids)
+	if err != nil {
+		return err
+	}
+	aliases := make(map[string][]string, len(ids))
+	for _, id := range ids {
+		aliases[id] = []string{}
+	}
+	for _, aliasRow := range aliasRows {
+		modelID, modelOK := aliasRow["model_id"].(string)
+		alias, aliasOK := aliasRow["alias"].(string)
+		if modelOK && aliasOK {
+			aliases[modelID] = append(aliases[modelID], alias)
+		}
+	}
+	for _, row := range rows {
+		if id, ok := row["id"].(string); ok {
+			row["aliases"] = aliases[id]
+		}
+	}
+	return nil
 }
 func (s *Server) prices(c *gin.Context) {
 	if sessionOf(c).User.PlatformRole == "admin" {

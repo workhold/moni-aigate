@@ -79,7 +79,7 @@ func buildJournalPlan(id, tenant, operation, kind, reference, actor string, delt
 		if err != nil {
 			return journalPlan{}, err
 		}
-		if (account.kind == "AVAILABLE" || account.kind == "HELD") && balance < 0 {
+		if (account.kind == "AVAILABLE" || account.kind == "HELD" || account.kind == "REFUND_HELD") && balance < 0 {
 			return journalPlan{}, fail("insufficient_balance", "insufficient wallet balance")
 		}
 		plan.accounts = append(plan.accounts, journalPlanAccount{

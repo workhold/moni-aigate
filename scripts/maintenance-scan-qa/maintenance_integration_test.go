@@ -325,7 +325,7 @@ func seedConsumerFundingSources(t *testing.T, f *consumerFixture, ctx context.Co
 	f.pools = append(f.pools, app)
 	store := billing.New(app)
 	credit, err := store.CreateCredit(ctx, billing.CreditInput{
-		TenantID: f.env.ApplicationTenantID, ActorID: f.env.ActorIDs["finance_operator"], Amount: 219,
+		TenantID: f.env.ApplicationTenantID, ActorID: f.env.ActorIDs["finance_operator"], Amount: 219, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 219,
 		BusinessRef: "bank:maintenance-qa:" + uuid.NewString(), ProofRef: "proof:maintenance-qa:verified",
 		IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString(),
 	})

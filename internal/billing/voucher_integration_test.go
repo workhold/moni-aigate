@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -104,7 +103,7 @@ func TestPostgresVoucherLifecycleAndFundingProjection(t *testing.T) {
 		t.Fatal("redemption replay changed receipt")
 	}
 	view, e := v.GetVoucherRedemption(f.ctx, VoucherReader{f.user, f.tenant}, *r.ResourceID)
-	if e != nil || view.Amount != 17 || view.Currency != "CNY" {
+	if e != nil || view.Amount != 17 || view.Currency != "COIN" {
 		t.Fatal("safe redemption query failed", e)
 	}
 	batch, e := v.GetVoucherBatch(f.ctx, f.approver, issued.Batch.ID)
@@ -297,7 +296,7 @@ func TestPostgresVoucherRevocationStaleDecisionAndRuntimeOffClose(t *testing.T) 
 func TestPostgresVoucherOverflowAndInfrastructureRollback(t *testing.T) {
 	f := fundingFixture(t)
 	v := voucherTestService(t, f)
-	f.fund(t, Money(math.MaxInt64-1000))
+	openingBoundaryTenant(t, f)
 	issued := voucherTestCreate(t, f, v, 1, 1, true)
 	before := fundingSnapshot(t, f)
 	r, e := v.RedeemVoucher(f.ctx, voucherTestRedeem(f, issued.Codes[0].Code))

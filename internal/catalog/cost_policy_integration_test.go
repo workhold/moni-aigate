@@ -490,7 +490,29 @@ func TestCostMigrationPreservesLegacyDuplicatesAndDeterministicQuotes(t *testing
 	}
 	secrets := &security.Secrets{Keys: map[string][]byte{"pool": bytes.Repeat([]byte{0x63}, 32)}, Active: "pool", Pepper: bytes.Repeat([]byte{0x77}, 32)}
 	f.store = catalog.New(f.owner, secrets)
-	if f.channel, err = f.store.SaveChannel(f.ctx, "pool-admin", "", catalog.ChannelInput{Name: "legacy-cost", BaseURL: "https://example.com/v1", Secret: "legacy-cost-secret"}); err != nil {
+	// This fixture intentionally stops at the pre-013 historical schema. Seed
+	// the legacy channel with its original tables instead of calling the
+	// current SaveChannel writer, whose channel_kind contract does not exist
+	// in this isolated historical plan.
+	f.channel = uuid.NewString()
+	legacyVersion, legacyCredential := uuid.NewString(), uuid.NewString()
+	legacyTx, err := f.owner.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = legacyTx.Exec(f.ctx, "INSERT INTO channels(id,name,current_version) VALUES($1,'legacy-cost',$2)", f.channel, legacyVersion); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = legacyTx.Exec(f.ctx, "INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'legacy-cost-secret')", legacyCredential, f.channel); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = legacyTx.Exec(f.ctx, "INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://example.com/v1',$3)", legacyVersion, f.channel, legacyCredential); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = legacyTx.Exec(f.ctx, "INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,1000)", legacyVersion, f.channel, legacyCredential); err != nil {
+		t.Fatal(err)
+	}
+	if err = legacyTx.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}
 	f.model = uuid.NewString()

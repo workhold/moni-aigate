@@ -34,6 +34,7 @@ type PublicCatalogPage struct {
 type PublicModel struct {
 	ID           string             `json:"id"`
 	PublicName   string             `json:"public_name"`
+	Aliases      []string           `json:"aliases"`
 	Protocol     string             `json:"protocol"`
 	Capabilities PublicCapabilities `json:"capabilities"`
 	Limits       PublicLimits       `json:"limits"`
@@ -154,11 +155,16 @@ const publicCatalogSQL = `WITH instant AS MATERIALIZED (SELECT clock_timestamp()
  LEFT JOIN model_capability_versions c ON c.id=(SELECT profile_version FROM models WHERE id=m.lookup_id) AND c.model_id=m.lookup_id
  LEFT JOIN LATERAL (
   SELECT true AS present,CASE WHEN octet_length(id)=36 THEN id END AS id,
-   CASE WHEN currency='CNY' THEN 'CNY' END AS currency,variant_key,rates_canonical,effective_at FROM price_versions
+   CASE WHEN currency='COIN' THEN 'COIN' END AS currency,variant_key,rates_canonical,effective_at FROM price_versions
   WHERE model_id=m.lookup_id AND price_group_id IS NULL AND schema_id=c.schema_id AND schema_digest=c.schema_digest AND variant_key='default' AND effective_at<=instant.at
   ORDER BY effective_at DESC,created_at DESC,id DESC LIMIT 1
  ) p ON true
  ORDER BY m.public_name COLLATE "C",m.id COLLATE "C"`
+
+const activePublicModelAliasesSQL = `SELECT model_id,alias
+FROM model_aliases
+WHERE state='active' AND model_id=ANY($1::text[])
+ORDER BY model_id COLLATE "C",alias COLLATE "C"`
 
 func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id string) (PublicCatalogPage, error) {
 	page := PublicCatalogPage{Data: []PublicModel{}}
@@ -191,9 +197,9 @@ func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id
 		if invalid != nil {
 			return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 		}
-		price := PublicPricing{Status: "unavailable", SchemaID: "", SchemaDigest: "", VariantKey: "default", Currency: "CNY", Rates: nil}
+		price := PublicPricing{Status: "unavailable", SchemaID: "", SchemaDigest: "", VariantKey: "default", Currency: "COIN", Rates: nil}
 		if pricePresent != nil {
-			if priceID == nil || !canonicalPublicUUID(*priceID) || schemaID == nil || !canonicalPublicUUID(*schemaID) || schemaDigest == nil || !pricingDigest(*schemaDigest) || variantKey == nil || *variantKey != "default" || currency == nil || *currency != "CNY" || len(rates) == 0 || effective == nil || effective.Year() < 0 || effective.Year() > 9999 {
+			if priceID == nil || !canonicalPublicUUID(*priceID) || schemaID == nil || !canonicalPublicUUID(*schemaID) || schemaDigest == nil || !pricingDigest(*schemaDigest) || variantKey == nil || *variantKey != "default" || currency == nil || *currency != "COIN" || len(rates) == 0 || effective == nil || effective.Year() < 0 || effective.Year() > 9999 {
 				return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 			}
 			at := effective.UTC()
@@ -214,11 +220,42 @@ func (s *Store) publicModels(ctx context.Context, filter PublicCatalogFilter, id
 	if rows.Err() != nil || page.AsOf.IsZero() {
 		return PublicCatalogPage{}, ErrPublicCatalogUnavailable
 	}
+	ids := make([]string, 0, len(page.Data))
+	for _, model := range page.Data {
+		ids = append(ids, model.ID)
+	}
+	aliases, err := s.activePublicModelAliases(ctx, ids)
+	if err != nil {
+		return PublicCatalogPage{}, ErrPublicCatalogUnavailable
+	}
+	for i := range page.Data {
+		page.Data[i].Aliases = aliases[page.Data[i].ID]
+	}
 	page.HasMore = len(page.Data) > 50
 	if page.HasMore {
 		page.Data = page.Data[:50]
 	}
 	return page, nil
+}
+
+func (s *Store) activePublicModelAliases(ctx context.Context, modelIDs []string) (map[string][]string, error) {
+	aliases := make(map[string][]string, len(modelIDs))
+	for _, modelID := range modelIDs {
+		aliases[modelID] = []string{}
+	}
+	rows, err := s.Pool.Query(ctx, activePublicModelAliasesSQL, modelIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var modelID, alias string
+		if err := rows.Scan(&modelID, &alias); err != nil {
+			return nil, err
+		}
+		aliases[modelID] = append(aliases[modelID], alias)
+	}
+	return aliases, rows.Err()
 }
 
 func (s *Store) PublicModels(ctx context.Context, filter PublicCatalogFilter) (PublicCatalogPage, error) {

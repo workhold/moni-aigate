@@ -24,13 +24,13 @@ func billingError(c *gin.Context, s *Server, e error) bool {
 		status = 403
 	case "invalid_credentials", "key_invalid", "key_revoked", "invalid_key":
 		status = 401
-	case "idempotency_conflict", "request_in_progress", "request_exists", "request_finished", "already_approved", "self_approval", "refund_exceeds_charge", "revision_conflict", "route_changed", "procurement_approval_required", "procurement_inflight", "procurement_evidence_stale", "supplier_refund_evidence_required":
+	case "idempotency_conflict", "request_in_progress", "request_exists", "request_finished", "already_approved", "self_approval", "refund_exceeds_charge", "revision_conflict", "route_changed", "procurement_approval_required", "procurement_inflight", "procurement_evidence_stale", "supplier_refund_evidence_required", "cash_refund_open_exists", "cash_refund_state_conflict", "cash_refund_amount_mismatch", "cash_refund_ineligible", "cash_refund_unavailable":
 		status = 409
-	case "procurement_not_found":
+	case "procurement_not_found", "cash_refund_not_found":
 		status = 404
 	case "procurement_execution_forbidden", "procurement_history_invariant", "procurement_execution_protocol", "procurement_history_resource", "procurement_history_exhausted", "procurement_prefix_untracked_domain", "procurement_outcome_unknown":
 		status = 503
-	case "procurement_periodic_budget_exceeded", "periodic_clock_regression", "periodic_budget_invariant", "periodic_budget_unavailable", "channel_unavailable", "profile_blocked", "no_price", "price_unavailable", "cost_quote_stale", "cost_unknown", "cost_limit_exceeded", "procurement_paused", "procurement_budget_exceeded", "procurement_binding_changed", "procurement_bound_invalid", "procurement_invariant":
+	case "procurement_periodic_budget_exceeded", "periodic_clock_regression", "periodic_budget_invariant", "periodic_budget_unavailable", "channel_unavailable", "profile_blocked", "no_price", "price_unavailable", "cost_quote_stale", "cost_unknown", "cost_limit_exceeded", "procurement_paused", "procurement_budget_exceeded", "procurement_binding_changed", "procurement_bound_invalid", "procurement_invariant", "cash_refund_commit_unknown", "coin_rate_unavailable":
 		status = 503
 	}
 	if strings.Contains(be.Code, "conflict") {
@@ -50,6 +50,31 @@ func (s *Server) financialKey(c *gin.Context) bool {
 	}
 	return true
 }
+func (s *Server) walletFinancial(c *gin.Context, approve bool) bool {
+	required := "finance_operator"
+	if approve {
+		required = "finance_approver"
+	}
+	role := sessionOf(c).User.PlatformRole
+	if role == required {
+		return true
+	}
+	if role != "admin" {
+		s.fail(c, http.StatusForbidden, "forbidden", "需要相应财务操作权限")
+		return false
+	}
+	enabled, err := s.Billing.WalletSingleOperatorEnabled(c.Request.Context())
+	if err != nil {
+		s.error(c, err)
+		return false
+	}
+	if !enabled {
+		s.fail(c, http.StatusForbidden, "forbidden", "单人运营开关已关闭")
+		return false
+	}
+	return true
+}
+
 func (s *Server) wallet(c *gin.Context) {
 	tid, ok := s.tenant(c)
 	if !ok {
@@ -69,7 +94,18 @@ func (s *Server) wallet(c *gin.Context) {
 		s.error(c, e)
 		return
 	}
-	data := gin.H{"tenant_id": v.TenantID, "available": v.Available, "held": v.Held}
+	data := gin.H{"tenant_id": v.TenantID}
+	composition, err := s.Billing.WalletComposition(c.Request.Context(), billing.Query{TenantID: tid})
+	if err != nil {
+		s.error(c, err)
+		return
+	}
+	data["available"] = composition.Available
+	data["held"] = composition.Held
+	data["paid_available"] = composition.PaidAvailable
+	data["grant_available"] = composition.GrantAvailable
+	data["other_available"] = composition.OtherAvailable
+	data["refund_held"] = composition.RefundHeld
 	for k, value := range totals[0] {
 		data[k] = value
 	}
@@ -113,10 +149,10 @@ func (s *Server) request(c *gin.Context) {
 	s.ok(c, v[0])
 }
 func (s *Server) credits(c *gin.Context) {
-	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.business_ref,o.amount,o.state,o.requester,o.approver,o.created_at FROM credit_orders o JOIN tenants t ON t.id=o.tenant_id`)
+	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.business_ref,o.amount,o.bonus_amount,o.state,o.requester,o.requested_by,o.approver,o.basis_kind,o.fiat_currency,o.fiat_amount::text AS fiat_amount,o.fx_note,o.transfer_ref,o.single_operator,(o.single_operator AND o.approver=o.requester AND o.requested_by=o.approver) AS single_operator_exception,(SELECT wr.id FROM wallet_requests wr WHERE wr.linked_order_id=o.id AND wr.kind='topup') AS request_id,o.created_at FROM credit_orders o JOIN tenants t ON t.id=o.tenant_id`)
 }
 func (s *Server) createCredit(c *gin.Context) {
-	if !s.financial(c, false) || !s.financialKey(c) {
+	if !s.walletFinancial(c, false) || !s.financialKey(c) {
 		return
 	}
 	var in billing.CreditInput
@@ -126,9 +162,10 @@ func (s *Server) createCredit(c *gin.Context) {
 	in.ActorID = sessionOf(c).User.ID
 	in.IdempotencyKey = c.GetHeader("Idempotency-Key")
 	in.RequestHMAC = s.digestInput(struct {
-		TenantID, BusinessRef, ProofRef string
-		Amount                          billing.Money
-	}{in.TenantID, in.BusinessRef, in.ProofRef, in.Amount})
+		TenantID, BusinessRef, ProofRef, BasisKind, FiatCurrency, FxNote, TransferRef, RequestedBy, RequestID string
+		Amount, BonusAmount                                                                                   billing.Money
+		FiatAmount                                                                                            billing.FiatMoney
+	}{in.TenantID, in.BusinessRef, in.ProofRef, in.BasisKind, in.FiatCurrency, in.FxNote, in.TransferRef, in.RequestedBy, in.RequestID, in.Amount, in.BonusAmount, in.FiatAmount})
 	v, e := s.Billing.CreateCredit(c.Request.Context(), in)
 	if e != nil {
 		s.error(c, e)
@@ -137,7 +174,7 @@ func (s *Server) createCredit(c *gin.Context) {
 	s.ok(c, v)
 }
 func (s *Server) approveCredit(c *gin.Context) {
-	if !s.financial(c, true) || !s.financialKey(c) {
+	if !s.walletFinancial(c, true) || !s.financialKey(c) {
 		return
 	}
 	var tid string
@@ -153,10 +190,10 @@ func (s *Server) approveCredit(c *gin.Context) {
 	s.ok(c, v)
 }
 func (s *Server) refunds(c *gin.Context) {
-	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.settlement_id,o.business_ref,o.amount,o.reason,o.state,o.requester,o.approver,o.created_at FROM refund_orders o JOIN tenants t ON t.id=o.tenant_id`)
+	s.page(c, `SELECT o.id,o.tenant_id,t.name AS tenant_name,o.settlement_id,o.business_ref,o.amount,o.reason,o.state,o.requester,o.requested_by,o.approver,o.single_operator,(o.single_operator AND o.approver=o.requester AND o.requested_by=o.approver) AS single_operator_exception,o.created_at FROM refund_orders o JOIN tenants t ON t.id=o.tenant_id`)
 }
 func (s *Server) createRefund(c *gin.Context) {
-	if !s.financial(c, false) || !s.financialKey(c) {
+	if !s.walletFinancial(c, false) || !s.financialKey(c) {
 		return
 	}
 	var in billing.RefundInput
@@ -180,7 +217,7 @@ func (s *Server) createRefund(c *gin.Context) {
 	s.ok(c, v)
 }
 func (s *Server) approveRefund(c *gin.Context) {
-	if !s.financial(c, true) || !s.financialKey(c) {
+	if !s.walletFinancial(c, true) || !s.financialKey(c) {
 		return
 	}
 	var tid string

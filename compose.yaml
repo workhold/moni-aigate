@@ -129,12 +129,17 @@ services:
 
   qa-provider:
     profiles: [business-qa]
-    image: python:3.12-alpine
-    command: [python3, /opt/moni/deployment-qa-provider.py]
+    build: .
+    image: ${MONI_IMAGE:-moni-aigate:local}
+    entrypoint: [/usr/local/bin/mock-upstream]
+    command: [--config, /etc/moni/mock-upstream.json, --addr, :8090, --allow-directives]
+    environment:
+      MOCK_UPSTREAM_ENABLE: "1"
+      MOCK_UPSTREAM_ALLOW_DIRECTIVES: "1"
     volumes:
-      - ./scripts/deployment-qa-provider.py:/opt/moni/deployment-qa-provider.py:ro
+      - ./scripts/mock-upstream/business-qa.json:/etc/moni/mock-upstream.json:ro
     healthcheck:
-      test: [CMD, python3, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1/health', timeout=2)"]
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8090/health]
       interval: 5s
       timeout: 3s
       retries: 20

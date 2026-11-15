@@ -285,7 +285,7 @@ func (p *Processor) ProcessEvidence(ctx context.Context, lease EvidenceLease) (P
 			if e.amount == nil || e.currency == nil || e.happened == nil || e.revision == nil || e.transaction == nil {
 				return nil, ErrPaymentsIntegrity
 			}
-			if *e.amount != o.amount {
+			if billing.FiatMoney(*e.amount) != o.amount {
 				reason = "amount_mismatch"
 			} else if *e.currency != o.currency {
 				reason = "currency_mismatch"
@@ -456,7 +456,7 @@ func (p *Processor) applyCapture(ctx context.Context, tx pgx.Tx, e processorEvid
 		}
 		return ProcessResult{}, err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO audit_events(id,actor,tenant_scope,action,target,request_id,sanitized_diff) VALUES($1,'payment-sandbox-worker',$2,'payment.capture.credited',$3,'',jsonb_build_object('amount',$4::text))`, uuid.NewString(), o.tenant, ids.capture, processorInt(o.credit))
+	_, err = tx.Exec(ctx, `INSERT INTO audit_events(id,actor,tenant_scope,action,target,request_id,sanitized_diff) VALUES($1,'payment-sandbox-worker',$2,'payment.capture.credited',$3,'',jsonb_build_object('amount',$4::text))`, uuid.NewString(), o.tenant, ids.capture, processorInt(int64(o.credit)))
 	if err != nil {
 		return ProcessResult{}, err
 	}
@@ -556,7 +556,7 @@ func processorReviewValid(ctx context.Context, tx pgx.Tx, e processorEvidence, o
 	case "unsupported_effect_review":
 		valid = e.kind == "unsupported"
 	case "amount_mismatch":
-		valid = o != nil && e.amount != nil && *e.amount != o.amount
+		valid = o != nil && e.amount != nil && billing.FiatMoney(*e.amount) != o.amount
 	case "currency_mismatch":
 		valid = o != nil && e.currency != nil && *e.currency != o.currency
 	case "capture_outside_window":

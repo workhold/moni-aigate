@@ -80,8 +80,8 @@ func tryDefault(ctx context.Context, db Beginner, p DefaultPrice) (string, error
 	}
 	at = at.UTC().Truncate(time.Microsecond)
 	sd := hex.EncodeToString(digest)
-	safe := map[string]any{"model_id": p.ModelID, "schema_id": sid, "schema_digest": sd, "variant_key": "default", "currency": "CNY", "rates": json.RawMessage(raw), "effective_at": at.Format("2006-01-02T15:04:05.000000Z")}
-	result := map[string]any{"id": p.ID, "model_id": p.ModelID, "price_group_id": nil, "schema_id": sid, "schema_digest": sd, "variant_key": "default", "currency": "CNY", "rates": json.RawMessage(raw), "effective_at": at.Format("2006-01-02T15:04:05.000000Z"), "created_at": ""}
+	safe := map[string]any{"model_id": p.ModelID, "schema_id": sid, "schema_digest": sd, "variant_key": "default", "currency": "COIN", "rates": json.RawMessage(raw), "effective_at": at.Format("2006-01-02T15:04:05.000000Z")}
+	result := map[string]any{"id": p.ID, "model_id": p.ModelID, "price_group_id": nil, "schema_id": sid, "schema_digest": sd, "variant_key": "default", "currency": "COIN", "rates": json.RawMessage(raw), "effective_at": at.Format("2006-01-02T15:04:05.000000Z"), "created_at": ""}
 	in, _ := json.Marshal(safe)
 	out, _ := json.Marshal(result)
 	op := uuid.NewString()

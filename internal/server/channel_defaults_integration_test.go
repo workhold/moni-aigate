@@ -105,7 +105,7 @@ func TestChannelFormDefaultRegionMatchesFreshCustomerAndKey(t *testing.T) {
 	if err := f.pool.QueryRow(ctx, "SELECT id FROM users WHERE platform_role='finance_approver'").Scan(&approver); err != nil {
 		t.Fatal(err)
 	}
-	credit, err := f.server.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: 1_000_000, BusinessRef: uuid.NewString(), ProofRef: "fixture:default-region", IdempotencyKey: uuid.NewString(), RequestHMAC: "default-region-fixture"})
+	credit, err := f.server.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: 1_000_000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1_000_000, BusinessRef: uuid.NewString(), ProofRef: "fixture:default-region", IdempotencyKey: uuid.NewString(), RequestHMAC: "default-region-fixture"})
 	if err != nil {
 		t.Fatal(err)
 	}

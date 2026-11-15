@@ -139,7 +139,7 @@ func TestProcessorActualWorkerCaptureDedupAndRestore(t *testing.T) {
 	}
 	var count int
 	var balance int64
-	if err = f.owner.QueryRow(f.ctx, `SELECT (SELECT count(*) FROM journals WHERE kind='sandbox_capture'),balance FROM ledger_accounts WHERE tenant_id=$1 AND kind='AVAILABLE'`, f.tenant).Scan(&count, &balance); err != nil || count != 1 || balance != int64(o.Amount) {
+	if err = f.owner.QueryRow(f.ctx, `SELECT (SELECT count(*) FROM journals WHERE kind='sandbox_capture'),balance FROM ledger_accounts WHERE tenant_id=$1 AND kind='AVAILABLE'`, f.tenant).Scan(&count, &balance); err != nil || count != 1 || balance != int64(o.WalletCreditAmount) {
 		t.Fatal(count, balance, err)
 	}
 	// A second signed event for the same transaction is a separate evidence

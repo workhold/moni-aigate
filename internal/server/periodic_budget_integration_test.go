@@ -157,7 +157,7 @@ func newPeriodicHTTPFixture(t *testing.T) *periodicHTTPFixture {
 	_, err = owner.Exec(f.ctx, `INSERT INTO procurement_accounts(id,label,provider,state,limit_amount) VALUES($1,'periodic-http','fixture','active',1000000)`, f.account)
 	periodicHTTPMust(t, "seed static HTTP procurement catalog", err)
 	op := uuid.NewString()
-	credit, err := f.server.Billing.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.actors["operator"].id, Amount: 10000, BusinessRef: "periodic-http:" + op, ProofRef: "fixture:verified", IdempotencyKey: op, RequestHMAC: op})
+	credit, err := f.server.Billing.CreateCredit(f.ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.actors["operator"].id, Amount: 10000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 10000, BusinessRef: "periodic-http:" + op, ProofRef: "fixture:verified", IdempotencyKey: op, RequestHMAC: op})
 	periodicHTTPMust(t, "APP create complete HTTP fixture funding", err)
 	_, err = f.server.Billing.ApproveCredit(f.ctx, billing.ApprovalInput{TenantID: f.tenant, ActorID: f.actors["approver"].id, OrderID: credit.ID})
 	periodicHTTPMust(t, "APP independently approve complete HTTP fixture funding", err)

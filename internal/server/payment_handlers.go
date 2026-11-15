@@ -348,7 +348,7 @@ func (s *Server) paymentPublishSKU(c *gin.Context) {
 		s.paymentFailure(c, 400, "invalid_request")
 		return
 	}
-	v, e := s.Payments.PublishSKU(c.Request.Context(), payments.PublishSKUInput{CommandMeta: paymentCommandMeta(c, operation, ""), SKUID: sku, ExpectedRevision: revision, DisplayName: name, Amount: billing.Money(amount)})
+	v, e := s.Payments.PublishSKU(c.Request.Context(), payments.PublishSKUInput{CommandMeta: paymentCommandMeta(c, operation, ""), SKUID: sku, ExpectedRevision: revision, DisplayName: name, Amount: billing.FiatMoney(amount)})
 	if e != nil {
 		s.paymentError(c, e, false)
 		return

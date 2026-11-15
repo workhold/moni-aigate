@@ -36,7 +36,13 @@ const walletSourcesCheckSQL = `WITH
 source_roots AS (
  SELECT c.tenant_id,'manual_credit'::text AS kind,c.id AS source_id,c.amount,
   c.journal_id AS journal_ref,NULL::text AS receipt_ref
- FROM credit_orders c WHERE c.state='approved' AND ($1='' OR c.tenant_id=$1)
+ FROM credit_orders c WHERE c.state='approved' AND c.basis_kind='paid' AND ($1='' OR c.tenant_id=$1)
+ UNION ALL
+ SELECT c.tenant_id,'manual_bonus',c.id,c.bonus_amount,NULL::text,NULL::text
+ FROM credit_orders c WHERE c.state='approved' AND c.basis_kind IN ('paid','grant') AND c.bonus_amount>0 AND ($1='' OR c.tenant_id=$1)
+ UNION ALL
+ SELECT c.tenant_id,'manual_unknown',c.id,c.amount,c.journal_id,NULL::text
+ FROM credit_orders c WHERE c.state='approved' AND c.basis_kind='unknown' AND ($1='' OR c.tenant_id=$1)
  UNION ALL
  SELECT v.tenant_id,'voucher_grant',v.voucher_id,v.amount,v.journal_id,v.funding_receipt_id
  FROM voucher_redemptions v WHERE ($1='' OR v.tenant_id=$1)
@@ -54,6 +60,8 @@ source_roots AS (
    AND f.amount=s.amount AND (s.journal_ref IS NULL OR f.journal_id=s.journal_ref)
    AND (s.receipt_ref IS NULL OR f.id=s.receipt_ref) AND funding_journal_valid(f.journal_id))
  UNION ALL
+ SELECT 'pair',c.id FROM credit_orders c WHERE c.state='approved' AND ($1='' OR c.tenant_id=$1) AND NOT wallet_credit_pair_valid(c.id)
+ UNION ALL
  SELECT 'receipt',f.id FROM funding_receipts f WHERE ($1='' OR f.tenant_id=$1)
   AND (funding_journal_valid(f.journal_id) IS DISTINCT FROM true OR NOT EXISTS(
    SELECT 1 FROM funding_lots l WHERE l.id=f.id AND l.funding_receipt_id=f.id AND l.tenant_id=f.tenant_id
@@ -65,13 +73,15 @@ source_roots AS (
  UNION ALL
  SELECT 'balance',b.lot_id FROM funding_lot_balances b WHERE ($1='' OR b.tenant_id=$1)
   AND NOT EXISTS(SELECT 1 FROM funding_lots l WHERE l.id=b.lot_id AND l.tenant_id=b.tenant_id
-   AND b.available_amount>=0 AND b.held_amount>=0 AND b.consumed_amount>=0 AND b.revision>0
-   AND b.available_amount::numeric+b.held_amount::numeric+b.consumed_amount::numeric=l.issued_amount::numeric)
+   AND b.available_amount>=0 AND b.held_amount>=0 AND b.consumed_amount>=0 AND b.refund_held_amount>=0 AND b.retired_amount>=0 AND b.revision>0
+   AND b.available_amount::numeric+b.held_amount::numeric+b.consumed_amount::numeric+b.refund_held_amount::numeric+b.retired_amount::numeric=l.issued_amount::numeric)
 ), event_prefix AS (
  SELECT e.*,
   sum(e.delta_available::numeric) OVER w AS prefix_available,
   sum(e.delta_held::numeric) OVER w AS prefix_held,
-  sum(e.delta_consumed::numeric) OVER w AS prefix_consumed
+  sum(e.delta_consumed::numeric) OVER w AS prefix_consumed,
+  sum(e.delta_refund_held::numeric) OVER w AS prefix_refund_held,
+  sum(e.delta_retired::numeric) OVER w AS prefix_retired
  FROM funding_lot_events e WHERE ($1='' OR e.tenant_id=$1)
  WINDOW w AS (PARTITION BY e.tenant_id,e.lot_id ORDER BY e.revision ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
 ), event_errors AS (
@@ -79,22 +89,23 @@ source_roots AS (
  WHERE wallet_event_valid(e.id) IS DISTINCT FROM true
   OR NOT EXISTS(SELECT 1 FROM journals j WHERE j.id=e.journal_id AND j.tenant_id=e.tenant_id
    AND j.operation_id=e.operation_id AND e.created_xid::text::numeric=j.created_txid::numeric)
-  OR e.prefix_available<0 OR e.prefix_held<0 OR e.prefix_consumed<0
+  OR e.prefix_available<0 OR e.prefix_held<0 OR e.prefix_consumed<0 OR e.prefix_refund_held<0 OR e.prefix_retired<0
   OR NOT EXISTS(SELECT 1 FROM funding_lots l WHERE l.id=e.lot_id AND l.tenant_id=e.tenant_id
-   AND e.prefix_available+e.prefix_held+e.prefix_consumed=l.issued_amount::numeric)
+   AND e.prefix_available+e.prefix_held+e.prefix_consumed+e.prefix_refund_held+e.prefix_retired=l.issued_amount::numeric)
  UNION ALL
  SELECT 'journal',j.id FROM journals j WHERE ($1='' OR j.tenant_id=$1)
- AND (wallet_journal_valid(j.id) IS DISTINCT FROM true OR j.currency<>'CNY'
+ AND (wallet_journal_valid(j.id) IS DISTINCT FROM true OR j.currency<>'COIN'
   OR (SELECT count(*) FROM journal_lines x WHERE x.journal_id=j.id)<2
   OR (SELECT coalesce(sum(x.signed_delta::numeric),0) FROM journal_lines x WHERE x.journal_id=j.id)<>0
   OR NOT CASE
-   WHEN j.kind IN ('credit','voucher_grant','sandbox_capture','wallet_opening') THEN funding_journal_valid(j.id)
+   WHEN j.kind IN ('credit','credit_bonus','voucher_grant','sandbox_capture','wallet_opening') THEN funding_journal_valid(j.id)
    WHEN j.kind='reserve' THEN EXISTS(SELECT 1 FROM reservations r
     WHERE r.id=j.operation_id AND r.tenant_id=j.tenant_id AND r.request_id=j.reference)
    WHEN j.kind IN ('settled','released') THEN EXISTS(SELECT 1 FROM settlements s
     WHERE s.id=j.operation_id AND s.tenant_id=j.tenant_id AND s.request_id=j.reference AND s.journal_id=j.id AND s.status=j.kind)
    WHEN j.kind='refund' THEN EXISTS(SELECT 1 FROM refund_orders r
     WHERE r.id=j.operation_id AND r.tenant_id=j.tenant_id AND r.settlement_id=j.reference AND r.journal_id=j.id AND r.state='approved')
+   WHEN j.kind IN ('cash_refund_hold','cash_refund_retire','cash_refund_release') THEN wallet_cash_refund_journal_valid(j.id) AND wallet_cash_refund_order_valid(j.reference)
    ELSE false END)
  UNION ALL
  SELECT 'journal_line',x.id FROM journal_lines x
@@ -164,6 +175,8 @@ source_roots AS (
    IS DISTINCT FROM (SELECT coalesce(sum(b.available_amount::numeric),0) FROM funding_lot_balances b WHERE b.tenant_id=t.id)
   OR (SELECT coalesce(sum(a.balance::numeric),0) FROM ledger_accounts a WHERE a.tenant_id=t.id AND a.kind='HELD')
    IS DISTINCT FROM (SELECT coalesce(sum(b.held_amount::numeric),0) FROM funding_lot_balances b WHERE b.tenant_id=t.id)
+  OR (SELECT coalesce(sum(a.balance::numeric),0) FROM ledger_accounts a WHERE a.tenant_id=t.id AND a.kind='REFUND_HELD')
+   IS DISTINCT FROM (SELECT coalesce(sum(b.refund_held_amount::numeric),0) FROM funding_lot_balances b WHERE b.tenant_id=t.id)
   OR (SELECT coalesce(sum(b.held_amount::numeric),0) FROM funding_lot_balances b WHERE b.tenant_id=t.id)
    IS DISTINCT FROM (SELECT coalesce(sum(r.amount::numeric),0) FROM reservations r WHERE r.tenant_id=t.id AND r.status IN ('reserved','pending_reconciliation'))
   OR (SELECT coalesce(sum(b.consumed_amount::numeric),0) FROM funding_lot_balances b WHERE b.tenant_id=t.id)

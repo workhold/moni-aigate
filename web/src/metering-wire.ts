@@ -133,6 +133,13 @@ export function ratePerMillionText<S extends MeterSide>(rates: TextRates<S> | nu
   let denominator = BigInt(line.denominator)
   const gcd = (a: bigint, b: bigint): bigint => { while (b) { const next = a % b; a = b; b = next }; return a }
   const factor = gcd(numerator, denominator); numerator /= factor; denominator /= factor
+  if (rates?.side === 'retail') {
+    if (denominator === 1n) {
+      const whole = numerator / 1_000_000n, fraction = (numerator % 1_000_000n).toString().padStart(6, '0')
+      return `${whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction} 币 / 百万 Tokens`
+    }
+    return `${numerator.toString()}/${denominator.toString()} 微币 / 百万 Tokens`
+  }
   if (denominator === 1n) {
     const whole = numerator / 1_000_000n, fraction = (numerator % 1_000_000n).toString().padStart(6, '0')
     return `¥${whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${fraction}`

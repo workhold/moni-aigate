@@ -2,6 +2,8 @@
 
 2026-11-04；状态：已实现并完成限定本地专项，最终集成结果见[验证记录](../../docs/verification/operating-reports.md)。依据[ADR-005](../../docs/decisions/ADR-005-pre-mvp-single-path.md)，直接扩展当前正式业务模型，不依赖历史proof候选或旧版本兼容。
 
+**034.5 当前修订（2026-11-15）**：请求窗口、31天/5000上限、平台权限、同一RR只读快照、未知成本及导出安全边界保持不变；[034规格§10](../034-virtual-coin/spec.md)取代本页旧CNY消费和`net_revenue`毛利公式。当前`currency=COIN`、`amount_unit=micro_coin`，`charged/refunded/net_revenue`为微币；每个Totals另含`payment_basis`、`cash_refunded`两个CNY/USD十进制微法币映射。毛利仅由完整CNY付款基准减已知采购成本得到，unknown、多币种、缺失/不完整分配、未结算或未知成本均为null。读取增加文本/媒体分配边、共享lot/receipt和completed现金退款；现金退款只进summary，不按请求重复分摊。CSV在`gross_margin`后依次增加`payment_basis_cny/payment_basis_usd/cash_refunded_cny/cash_refunded_usd`，请求级现金退款两列为空。当前实现与验收见[034.5记录](../../docs/verification/034-5-reporting-wallet-composition.md)，下文未修订段落保留026原始决策，不再提供旧DTO或旧毛利兼容路径。
+
 ## 场景与边界
 
 平台运营希望知道某段时间受理的模型请求赚取多少消费收入、退回多少、上游各渠道花费多少，哪些成本尚待核对，并下载请求级对账明细。只读能力，不改变资金、采购、路由或模型调用。V1仅平台角色使用；客户原钱包累计报表继续表达不同业务口径，不是新旧兼容双路径。

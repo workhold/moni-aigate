@@ -104,7 +104,7 @@ func TestOperatingReportPostgresCommercialFlowAndAuthorization(t *testing.T) {
 			t.Fatal(err)
 		}
 		r := read(params, adminSession)
-		if r.Summary.KnownProviderCost != "18" || r.Summary.Refunded != "5" || r.Summary.NetRevenue != "15" || r.Summary.UnknownProviderCosts != 0 || r.Summary.GrossMargin == nil || *r.Summary.GrossMargin != "-3" {
+		if r.AmountUnit != "micro_coin" || r.Summary.PaymentBasis["CNY"] != "20" || len(r.Summary.CashRefunded) != 0 || r.Summary.KnownProviderCost != "18" || r.Summary.Refunded != "5" || r.Summary.NetRevenue != "15" || r.Summary.UnknownProviderCosts != 0 || r.Summary.GrossMargin == nil || *r.Summary.GrossMargin != "2" {
 			t.Fatal("refund/cost aggregation", r.Summary)
 		}
 	})
@@ -134,11 +134,11 @@ func TestOperatingReportPostgresCommercialFlowAndAuthorization(t *testing.T) {
 			t.Fatal(w.Code, w.Header(), w.Body.String())
 		}
 		rows, err := csv.NewReader(strings.NewReader(w.Body.String())).ReadAll()
-		header := []string{"request_id", "tenant_id", "tenant_name", "model_id", "model_name", "created_at", "status", "billing_status", "charged", "refunded", "net_revenue", "attempt_count", "known_provider_cost", "unknown_provider_costs", "gross_margin", "protocol", "execution_kind", "profile_version", "schema_id", "schema_digest", "variant_key"}
-		if err != nil || len(rows) != 2 || !reflect.DeepEqual(rows[0], header) || len(rows[1]) != len(header) || rows[1][0] != requestID || rows[1][10] != "15" || rows[1][14] != "-3" {
+		header := []string{"request_id", "tenant_id", "tenant_name", "model_id", "model_name", "created_at", "status", "billing_status", "charged", "refunded", "net_revenue", "attempt_count", "known_provider_cost", "unknown_provider_costs", "gross_margin", "payment_basis_cny", "payment_basis_usd", "cash_refunded_cny", "cash_refunded_usd", "protocol", "execution_kind", "profile_version", "schema_id", "schema_digest", "variant_key"}
+		if err != nil || len(rows) != 2 || !reflect.DeepEqual(rows[0], header) || len(rows[1]) != len(header) || rows[1][0] != requestID || rows[1][10] != "15" || rows[1][14] != "2" || rows[1][15] != "20" || rows[1][16] != "" || rows[1][17] != "" || rows[1][18] != "" {
 			t.Fatal("CSV facts", rows, err)
 		}
-		if rows[1][15] == "" || rows[1][16] != "synchronous" || rows[1][17] == "" || rows[1][18] == "" || len(rows[1][19]) != 64 || rows[1][20] != "default" {
+		if rows[1][19] == "" || rows[1][20] != "synchronous" || rows[1][21] == "" || rows[1][22] == "" || len(rows[1][23]) != 64 || rows[1][24] != "default" {
 			t.Fatal("CSV request metering metadata", rows[1][15:])
 		}
 	})

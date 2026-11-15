@@ -1,11 +1,8 @@
 package operations
 
 import (
-	"crypto/sha256"
 	"errors"
-	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 	"testing"
 
@@ -14,78 +11,9 @@ import (
 	"github.com/moni-ai/moni-aigate/migrations"
 )
 
-// Diagnostics emit only allowlisted names, comparisons and SHA-256 values.
-// Never print prosrc, DSNs, raw driver errors or arbitrary catalog strings.
-func paymentRoleDiagnostics(t *testing.T, f *paymentRoleFixture) {
-	t.Helper()
-	tx, err := f.owner.Begin(f.ctx)
-	if err != nil {
-		t.Log("role diagnostic could not begin")
-		return
-	}
-	defer tx.Rollback(f.ctx)
-	rows, err := tx.Query(f.ctx, paymentFunctionDefinitionsSQL, f.schema)
-	if err != nil {
-		t.Log("role diagnostic could not read function catalog")
-		return
-	}
-	count, mismatches := 0, 0
-	for rows.Next() {
-		var name, argOIDs, result, language, volatility, body string
-		var args []string
-		var valid *bool
-		if rows.Scan(&name, &argOIDs, &args, &result, &language, &volatility, &body, &valid) != nil {
-			rows.Close()
-			t.Log("role diagnostic function scan failed")
-			return
-		}
-		count++
-		definition, known := paymentFunctionSpecs[name]
-		if !known {
-			mismatches++
-			t.Log("role diagnostic found an unreviewed function")
-			continue
-		}
-		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(body)))
-		attributes := valid != nil && *valid
-		if !attributes || definition.argOIDs != argOIDs || definition.resultOID != result || definition.language != language || definition.volatility != volatility || !slices.Equal(definition.argNames, args) || definition.bodySHA != hash {
-			mismatches++
-			t.Logf("role function %s: attributes_nonnull=%t attributes=%t arguments=%t names=%t result=%t language=%t volatility=%t body=%t expected_sha=%s actual_sha=%s", definition.name, valid != nil, attributes, definition.argOIDs == argOIDs, slices.Equal(definition.argNames, args), definition.resultOID == result, definition.language == language, definition.volatility == volatility, definition.bodySHA == hash, definition.bodySHA, hash)
-		}
-	}
-	err = rows.Err()
-	rows.Close()
-	if err != nil {
-		t.Log("role diagnostic function iteration failed")
-		return
-	}
-	t.Logf("role diagnostic function count=%d expected=%d mismatches=%d", count, len(paymentFunctionSpecs), mismatches)
-	if mismatches != 0 || count != len(paymentFunctionSpecs) {
-		return
-	}
-	for _, entry := range []struct {
-		name string
-		kind PaymentDatabaseRole
-	}{{f.appRole, PaymentApplicationRole}, {f.projectionRole, PaymentProjectionRole}} {
-		if provisionPaymentRoleACL(f.ctx, tx, f.schema, entry.name, entry.kind) != nil {
-			t.Logf("role diagnostic scoped provision failed: %s", entry.kind)
-			return
-		}
-		var schemaOID, roleOID uint32
-		if tx.QueryRow(f.ctx, "SELECT n.oid,r.oid FROM pg_namespace n CROSS JOIN pg_roles r WHERE n.nspname=$1 AND r.rolname=$2", f.schema, entry.name).Scan(&schemaOID, &roleOID) != nil {
-			t.Log("role diagnostic identity query failed")
-			return
-		}
-		t.Logf("role diagnostic scoped %s: tables=%t functions=%t complete=%t", entry.kind,
-			verifyPaymentTables(f.ctx, tx, schemaOID, roleOID, entry.kind, true) == nil,
-			verifyPaymentFunctionPrivileges(f.ctx, tx, schemaOID, roleOID, entry.kind, true) == nil,
-			verifyPaymentRole(f.ctx, tx, f.schema, entry.name, entry.kind, paymentMarker{}, false) == nil)
-	}
-}
-
 func reviewedWalletFunction(t *testing.T, name string) string {
 	t.Helper()
-	body, err := migrations.Files.ReadFile("024_unified_text_metering.sql")
+	body, err := migrations.Files.ReadFile("current_007_refund_buckets.sql")
 	paymentRoleMust(t, "reviewed current wallet source", err)
 	definition := regexp.MustCompile(`(?s)CREATE OR REPLACE FUNCTION ` + regexp.QuoteMeta(name) + `\(.*?\$\$;`).FindString(string(body))
 	if definition == "" {
@@ -106,13 +34,13 @@ func TestWalletSourcesRolesActualCurrentMatrix(t *testing.T) {
 	}{
 		{f.appRole, PaymentApplicationRole}, {f.workerRole, PaymentWorkerRole}, {f.projectionRole, PaymentProjectionRole},
 	} {
-		for _, table := range []string{"wallet_openings", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+		for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "coin_rate_versions", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
 			t.Run(string(role.kind)+"/"+table, func(t *testing.T) {
 				app := role.kind == PaymentApplicationRole
 				worker := role.kind == PaymentWorkerRole
 				workerSource := table == "funding_lots" || table == "funding_lot_balances" || table == "funding_lot_events"
-				wantSelect := app || worker && (workerSource || table == "ledger_accounts")
-				wantInsert := app && table != "wallet_openings" || worker && workerSource
+				wantSelect := app || worker && (workerSource || table == "ledger_accounts") || table == "coin_rate_versions"
+				wantInsert := app && table != "wallet_openings" && table != "coin_rate_versions" || worker && workerSource
 				var selectAll, insertAll, updateAll, forbidden bool
 				paymentRoleMust(t, "independent table privilege query", f.owner.QueryRow(f.ctx, `SELECT
  has_table_privilege($1::name,$2::text,'SELECT'),has_table_privilege($1::name,$2::text,'INSERT'),has_table_privilege($1::name,$2::text,'UPDATE'),
@@ -131,7 +59,13 @@ func TestWalletSourcesRolesActualCurrentMatrix(t *testing.T) {
 					var selectCol, insertCol, updateCol, references bool
 					paymentRoleMust(t, "column privilege scan", rows.Scan(&column, &selectCol, &insertCol, &updateCol, &references))
 					wantInsertCol := wantInsert || worker && table == "ledger_accounts" && (column == "tenant_id" || column == "kind")
-					wantUpdate := (app || worker) && (table == "ledger_accounts" && column == "balance" || table == "funding_lot_balances" && (column == "available_amount" || column == "held_amount" || column == "consumed_amount" || column == "revision"))
+					wantUpdate := (app || worker) && (table == "ledger_accounts" && column == "balance" || table == "funding_lot_balances" && (column == "available_amount" || column == "held_amount" || column == "consumed_amount" || column == "revision") || app && table == "wallet_requests" && (column == "state" || column == "linked_order_id"))
+					if app && table == "funding_lot_balances" && (column == "refund_held_amount" || column == "retired_amount") {
+						wantUpdate = true
+					}
+					if app && table == "cash_refund_orders" && (column == "coin_amount" || column == "reason" || column == "state" || column == "approver" || column == "transfer_executor" || column == "fiat_currency" || column == "fiat_amount" || column == "buy_rate_version_id" || column == "refund_rate_version_id" || column == "single_operator" || column == "transfer_order_ref" || column == "transfer_proof_ref" || column == "paid_fiat_amount" || column == "hold_journal_id" || column == "retire_journal_id" || column == "release_journal_id" || column == "approved_at") {
+						wantUpdate = true
+					}
 					if selectCol != wantSelect || insertCol != wantInsertCol || updateCol != wantUpdate || references {
 						t.Fatal("column privileges differ from current source contract")
 					}
@@ -167,6 +101,16 @@ func TestWalletSourcesRolesDMLAndWorkerReadBoundary(t *testing.T) {
 	}
 	for _, query := range []string{
 		"INSERT INTO wallet_openings(id) VALUES('forbidden')",
+		"UPDATE wallet_operator_settings SET reason=reason WHERE false",
+		"DELETE FROM wallet_operator_settings WHERE false",
+		"UPDATE wallet_requests SET note=note WHERE false",
+		"DELETE FROM wallet_requests WHERE false",
+		"UPDATE cash_refund_orders SET business_ref=business_ref WHERE false",
+		"UPDATE cash_refund_orders SET requested_by=requested_by WHERE false",
+		"DELETE FROM cash_refund_orders WHERE false",
+		"INSERT INTO coin_rate_versions(id) VALUES('forbidden')",
+		"UPDATE coin_rate_versions SET reason=reason WHERE false",
+		"DELETE FROM coin_rate_versions WHERE false",
 		"UPDATE funding_lots SET source_id=source_id WHERE false",
 		"UPDATE funding_lot_balances SET tenant_id=tenant_id WHERE false",
 		"DELETE FROM funding_lot_balances WHERE false",
@@ -176,10 +120,13 @@ func TestWalletSourcesRolesDMLAndWorkerReadBoundary(t *testing.T) {
 	} {
 		denied(t, PaymentApplicationRole, query)
 	}
-	for _, table := range []string{"wallet_openings", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "credit_orders", "voucher_redemptions", "reservations", "settlements", "refund_orders"} {
+	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "credit_orders", "voucher_redemptions", "reservations", "settlements", "refund_orders"} {
 		denied(t, PaymentWorkerRole, "SELECT * FROM "+pgx.Identifier{table}.Sanitize()+" LIMIT 0")
 	}
-	for _, table := range []string{"wallet_openings", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+	for _, table := range []string{"wallet_openings", "wallet_operator_settings", "wallet_requests", "cash_refund_orders", "coin_rate_versions", "funding_lots", "funding_lot_balances", "funding_lot_events", "funding_reservation_lots", "funding_settlement_lots", "funding_consumption_refund_lots", "ledger_accounts"} {
+		if table == "coin_rate_versions" {
+			continue
+		}
 		denied(t, PaymentProjectionRole, "SELECT * FROM "+pgx.Identifier{table}.Sanitize()+" LIMIT 0")
 	}
 	for _, name := range []string{"wallet_lot_valid", "wallet_event_valid", "wallet_journal_valid", "wallet_account_valid"} {

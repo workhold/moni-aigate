@@ -127,6 +127,7 @@ func (s *Server) Engine() *gin.Engine {
 	r.POST("/api/auth/password-reset/complete", s.completeIdentityPasswordReset)
 	r.GET("/api/public/models", s.publicModels)
 	r.GET("/api/public/models/:id", s.publicModel)
+	r.GET("/api/coin-display", s.coinDisplay)
 	s.registerPaymentNotifications(r)
 	a := r.Group("/api")
 	a.Use(s.session())
@@ -158,6 +159,9 @@ func (s *Server) Engine() *gin.Engine {
 	a.DELETE("/keys/:id", s.revokeKey)
 	a.GET("/wallet", s.wallet)
 	a.GET("/wallet/sources", s.walletSources)
+	a.GET("/wallet/requests", s.walletRequests)
+	a.POST("/wallet/requests", s.createWalletRequest)
+	a.POST("/wallet/requests/:id/close", s.customerCloseWalletRequest)
 	a.GET("/journals", s.journals)
 	a.GET("/reports/summary", s.customerReport)
 	a.GET("/requests", s.requests)
@@ -168,6 +172,13 @@ func (s *Server) Engine() *gin.Engine {
 	p.Use(s.platform())
 	p.GET("/wallet-sources", s.platformWalletSources)
 	p.GET("/wallet-sources/check", s.checkWalletSources)
+	p.GET("/wallet-operator-settings", s.walletOperatorSettings)
+	p.PUT("/wallet-operator-settings", s.updateWalletOperatorSettings)
+	p.GET("/coin-display-settings", s.coinDisplaySettings)
+	p.GET("/coin-display-settings/:operationID", s.coinDisplayOperation)
+	p.PUT("/coin-display-settings", s.updateCoinDisplay)
+	p.GET("/wallet-requests", s.platformWalletRequests)
+	p.POST("/wallet-requests/:id/close", s.platformCloseWalletRequest)
 	s.registerPlatformCommerce(p)
 	s.registerPayments(a, p)
 	s.registerPricing(a, p)
@@ -198,9 +209,13 @@ func (s *Server) Engine() *gin.Engine {
 	p.GET("/models", s.platformModels)
 	p.POST("/models", s.createModel)
 	p.PATCH("/models/:id", s.updateModel)
+	p.GET("/models/:id/aliases", s.modelAliases)
+	p.POST("/models/:id/aliases", s.createModelAlias)
+	p.POST("/model-aliases/:alias/retire", s.retireModelAlias)
 	p.GET("/models/:id/publication", s.modelPublication)
 	p.PUT("/models/:id/publication", s.setModelPublication)
 	p.PUT("/models/:id/bindings", s.publishBindings)
+	p.POST("/models/:id/route-revisions/:revision/activate", s.activateRouteRevision)
 	p.POST("/price-versions", s.publishDefaultPrice)
 	p.GET("/credits", s.credits)
 	p.POST("/credits", s.createCredit)
@@ -208,6 +223,15 @@ func (s *Server) Engine() *gin.Engine {
 	p.GET("/refunds", s.refunds)
 	p.POST("/refunds", s.createRefund)
 	p.POST("/refunds/:id/approve", s.approveRefund)
+	p.GET("/cash-refunds", s.cashRefunds)
+	p.POST("/cash-refunds", s.createCashRefund)
+	p.GET("/cash-refunds/by-business/*ref", s.cashRefundByBusiness)
+	p.GET("/cash-refunds/:id", s.cashRefund)
+	p.POST("/cash-refunds/:id/approve", s.approveCashRefund)
+	p.POST("/cash-refunds/:id/execute", s.executeCashRefund)
+	p.POST("/cash-refunds/:id/complete", s.completeCashRefund)
+	p.POST("/cash-refunds/:id/cancel", s.cancelCashRefund)
+	p.POST("/cash-refunds/:id/fail", s.failCashRefund)
 	p.GET("/reconciliations", s.reconciliations)
 	p.POST("/reconciliations/:id/resolve", s.resolve)
 	p.POST("/reconciliations/:id/approve", s.approveResolve)
@@ -380,6 +404,26 @@ func (s *Server) error(c *gin.Context, e error) {
 	}
 	if errors.Is(e, catalog.ErrInvalid) {
 		s.fail(c, 400, "invalid_configuration", "配置无效，请检查参数与引用")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasInvalid) {
+		s.fail(c, 400, "invalid_model_alias", "模型别名参数无效")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasConflict) {
+		s.fail(c, 409, "model_name_conflict", "模型公开名或别名已存在")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasRetired) {
+		s.fail(c, 409, "model_alias_retired", "模型别名已经退役")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasTargetUnavailable) {
+		s.fail(c, 409, "model_alias_target_unavailable", "目标模型未启用")
+		return
+	}
+	if errors.Is(e, catalog.ErrModelAliasTableUnavailable) {
+		s.fail(c, 503, "model_alias_unavailable", "模型别名能力尚未安装")
 		return
 	}
 	if errors.Is(e, procurement.ErrInvalid) {

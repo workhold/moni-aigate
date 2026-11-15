@@ -41,21 +41,21 @@
 | ID | 对齐内容 | 验收方式 | 历史证据 | 状态 |
 |---|---|---|---|---|
 | P1-CAT-01 | 模型目录：`/v1/models`、客户目录、公开价格页 | 真实 PG + HTTP + 浏览器 | [public-catalog](../../docs/verification/public-catalog.md) | 待复验 |
-| P1-CAT-02 | 模型别名 | 按 [030](../030-model-aliases-group-multipliers/spec.md) | — | 缺口（未实现） |
+| P1-CAT-02 | 模型别名 | 按 [030](../030-model-aliases-group-multipliers/spec.md) | [当前专项证据](../../docs/verification/phase1/P1-CAT-02.md) | 待复验（当前迁移、operation、授权读取与生命周期专项已通过；浏览器和六协议复验未完成） |
 | P1-CH-01 | 渠道、不可变版本、凭据池 1..32 成员 | 真实 PG | [credential-pools](../../docs/verification/credential-pools.md) | 待复验 |
 | P1-CH-02 | 模型发现与差异预览 | 真实 PG + mock 目录 | [model-discovery](../../docs/verification/model-discovery.md) | 待复验 |
 | P1-CH-03 | 跨渠道批量启停与回执 | 真实 PG | [channel-operations](../../docs/verification/channel-operations.md) | 待复验 |
-| P1-RT-01 | 同一逻辑模型多渠道：优先级、权重、容量、健康 | 真实 PG + [031](../031-deterministic-mock-upstream/spec.md) 多候选 | [cost-aware-routing](../../docs/verification/cost-aware-routing.md) | 缺口（部署 mock 只有单候选 Chat） |
+| P1-RT-01 | 同一逻辑模型多渠道：优先级、权重、容量、健康 | 真实 PG + [031](../031-deterministic-mock-upstream/spec.md) 多候选 | [cost-aware-routing](../../docs/verification/cost-aware-routing.md) | 待复验（多候选 mock 已接入；完整部署场景仍待复跑） |
 | P1-RT-02 | 成本优先、未知成本拒绝、采购单价上限 | 同上 | 同上 | 缺口（同上） |
-| P1-RT-03 | 基础故障切换：可信无消费拒绝换渠道，最多两次 | 031 故障注入：429 无消费、连接拒绝 | — | 缺口（同上） |
-| P1-RT-04 | 可能已消费的请求不重放 | 031 故障注入：发送后断开、读超时、流内错误；mock 记录每个请求的上游接收次数恰为 1 | — | 缺口（同上） |
+| P1-RT-03 | 基础故障切换：可信无消费拒绝换渠道，最多两次 | 031 故障注入：429 无消费、连接拒绝 | — | 待复验（多候选 mock 已接入；完整部署场景仍待复跑） |
+| P1-RT-04 | 可能已消费的请求不重放 | 031 故障注入：发送后断开、读超时、流内错误；mock 记录每个请求的上游接收次数恰为 1 | — | 待复验（接收记录和故障注入已接入；完整部署场景仍待复跑） |
 
 ### 3.4 计价、资金与采购
 
 | ID | 对齐内容 | 验收方式 | 历史证据 | 状态 |
 |---|---|---|---|---|
 | P1-PR-01 | 默认售价版本、价格组、缺价拒绝 | 真实 PG | [tenant-pricing](../../docs/verification/tenant-pricing.md) | 待复验 |
-| P1-PR-02 | 分组倍率录入并编译为绝对价格 | 按 [030](../030-model-aliases-group-multipliers/spec.md) | — | 缺口（未实现） |
+| P1-PR-02 | 分组倍率录入并编译为绝对价格 | 按 [030](../030-model-aliases-group-multipliers/spec.md) | [当前专项证据](../../docs/verification/phase1/P1-PR-02.md) | 待复验（当前 operation、guard、回放和预览专项已通过；控制台和完整清单仍待复跑） |
 | P1-FN-01 | 硬预占、唯一结算、未知用量待核对、24 小时释放 | 真实 PG + 031 | [unified-metering](../../docs/verification/unified-metering.md) | 待复验 |
 | P1-FN-02 | 人工核款双审、消费退款、核对 | 真实 PG + 浏览器 | [mvp-release-qualification](../../docs/verification/mvp-release-qualification.md) | 待复验 |
 | P1-FN-03 | 双审兑换券 | 真实 PG + 浏览器 | [funding-vouchers](../../docs/verification/funding-vouchers.md) | 待复验 |
@@ -69,7 +69,7 @@
 | ID | 对齐内容 | 验收方式 | 状态 |
 |---|---|---|---|
 | P1-PT-01 | Chat JSON/SSE、函数工具 | 031 + 真实 PG：成功、工具增量、取消、缺 usage、冲突 usage | 待复验 |
-| P1-PT-02 | Responses JSON/SSE | 同上 | 缺口（部署 mock 不支持） |
+| P1-PT-02 | Responses JSON/SSE | 同上 | 同 [031 mock harness](../../docs/verification/phase1/031-mock-harness.md) | 待复验（部署 mock 已支持；完整业务链仍待复跑） |
 | P1-PT-03 | Messages JSON/SSE | 同上 | 缺口（同上） |
 | P1-PT-04 | Gemini 文本 JSON/SSE | 同上 | 缺口（同上） |
 | P1-PT-05 | Embeddings | 同上 | 缺口（同上） |
@@ -101,7 +101,7 @@
 2. 证据在同一提交上产生；
 3. 统一架构的能力表与本清单一致。
 
-“缺口”项按依赖顺序处理：先 [031](../031-deterministic-mock-upstream/spec.md)（解除 P1-RT-01..04、P1-PT-02..06），再 [030](../030-model-aliases-group-multipliers/spec.md)（解除 P1-CAT-02、P1-PR-02），最后统一复验。
+当前已迁移 [031](../031-deterministic-mock-upstream/spec.md) 的多候选部署 mock，以及 [030](../030-model-aliases-group-multipliers/spec.md) 的别名和分组倍率代码。后续按证据记录复跑 P1-RT-01..04、P1-PT-02..06、P1-CAT-02 和 P1-PR-02 的完整 PostgreSQL/HTTP/UI 场景。
 
 ## 5. 证据格式
 

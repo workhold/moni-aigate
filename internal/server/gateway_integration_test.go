@@ -84,7 +84,7 @@ func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noCo
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	if err = migrations.Apply(ctx, pool); err != nil {
+	if err = migrations.ApplyCurrent(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
 	secrets := &security.Secrets{Active: "test", Keys: map[string][]byte{"test": bytes.Repeat([]byte{0x51}, 32)}, Pepper: bytes.Repeat([]byte{0x67}, 32)}
@@ -176,7 +176,7 @@ func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noCo
 	if _, err = s.Catalog.Publish(ctx, operator, f.model, 0, bindings); err != nil {
 		t.Fatal(err)
 	}
-	credit, err := s.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:gateway-fixture", Amount: 1000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture-credit"})
+	credit, err := s.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:gateway-fixture", Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture-credit"})
 	if err != nil {
 		t.Fatal(err)
 	}

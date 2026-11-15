@@ -138,20 +138,21 @@ func applyMediaReserveLots(ctx context.Context, tx pgx.Tx, tenant, reservation s
 	if amount == 0 {
 		return nil
 	}
-	rows, err := tx.Query(ctx, `SELECT b.lot_id,l.fifo_at,b.available_amount,b.held_amount,b.consumed_amount,b.revision FROM funding_lot_balances b JOIN funding_lots l ON l.tenant_id=b.tenant_id AND l.id=b.lot_id WHERE b.tenant_id=$1 AND b.available_amount>0 ORDER BY l.fifo_at,l.id COLLATE "C" FOR UPDATE OF b`, tenant)
+	rows, err := tx.Query(ctx, `SELECT b.lot_id,l.fifo_at,b.available_amount,b.held_amount,b.consumed_amount,b.refund_held_amount,b.retired_amount,b.revision FROM funding_lot_balances b JOIN funding_lots l ON l.tenant_id=b.tenant_id AND l.id=b.lot_id WHERE b.tenant_id=$1 AND b.available_amount>0 ORDER BY l.fifo_at,l.id COLLATE "C" FOR UPDATE OF b`, tenant)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 	type candidate struct {
-		id                                  string
-		available, held, consumed, revision int64
+		id                                             string
+		available, held, consumed, refundHeld, retired int64
+		revision                                       int64
 	}
 	var candidates []candidate
 	for rows.Next() {
 		var c candidate
 		var fifo time.Time
-		if err = rows.Scan(&c.id, &fifo, &c.available, &c.held, &c.consumed, &c.revision); err != nil {
+		if err = rows.Scan(&c.id, &fifo, &c.available, &c.held, &c.consumed, &c.refundHeld, &c.retired, &c.revision); err != nil {
 			return err
 		}
 		candidates = append(candidates, c)
@@ -168,7 +169,7 @@ func applyMediaReserveLots(ctx context.Context, tx pgx.Tx, tenant, reservation s
 		if part > remaining {
 			part = remaining
 		}
-		next, err := projectFundingLotChange(&fundingLotBalance{id: c.id, available: c.available, held: c.held, consumed: c.consumed, revision: c.revision}, -part, part, 0)
+		next, err := projectFundingLotChange(&fundingLotBalance{id: c.id, available: c.available, held: c.held, consumed: c.consumed, refundHeld: c.refundHeld, retired: c.retired, revision: c.revision}, -part, part, 0, 0, 0)
 		if err != nil {
 			return err
 		}
@@ -176,7 +177,7 @@ func applyMediaReserveLots(ctx context.Context, tx pgx.Tx, tenant, reservation s
 		if _, err = tx.Exec(ctx, `INSERT INTO media_reservation_lots(tenant_id,reservation_id,allocation_index,lot_id,amount) VALUES($1,$2,$3,$4,$5)`, tenant, reservation, allocation, c.id, part); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed) VALUES($1,$2,$3,$4,$5,'reserve',$6,$7,$8,0)`, uuid.NewString(), tenant, c.id, reservation, journal, next.revision, -part, part); err != nil {
+		if _, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired) VALUES($1,$2,$3,$4,$5,'reserve',$6,$7,$8,0,0,0)`, uuid.NewString(), tenant, c.id, reservation, journal, next.revision, -part, part); err != nil {
 			return err
 		}
 		if _, err = tx.Exec(ctx, `UPDATE funding_lot_balances SET available_amount=$3,held_amount=$4,consumed_amount=$5,revision=$6 WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7`, tenant, c.id, next.available, next.held, next.consumed, next.revision, c.revision); err != nil {
@@ -381,14 +382,14 @@ func applyMediaFinishLots(ctx context.Context, tx pgx.Tx, tenant, reservation, s
 	}
 	for _, item := range finish {
 		balance := balances[item.allocation.lotID]
-		next, err := projectFundingLotChange(balance, int64(item.released), -int64(item.allocation.amount), int64(item.charged))
+		next, err := projectFundingLotChange(balance, int64(item.released), -int64(item.allocation.amount), int64(item.charged), 0, 0)
 		if err != nil {
 			return err
 		}
 		if _, err = tx.Exec(ctx, `INSERT INTO media_settlement_lots(tenant_id,settlement_id,reservation_id,allocation_index,lot_id,charged_amount,released_amount) VALUES($1,$2,$3,$4,$5,$6,$7)`, tenant, settlement, reservation, item.allocation.index, item.allocation.lotID, item.charged, item.released); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed) VALUES($1,$2,$3,$4,$5,'finish',$6,$7,$8,$9)`, uuid.NewString(), tenant, item.allocation.lotID, settlement, journal, next.revision, item.released, -int64(item.allocation.amount), item.charged); err != nil {
+		if _, err = tx.Exec(ctx, `INSERT INTO funding_lot_events(id,tenant_id,lot_id,operation_id,journal_id,kind,revision,delta_available,delta_held,delta_consumed,delta_refund_held,delta_retired) VALUES($1,$2,$3,$4,$5,'finish',$6,$7,$8,$9,0,0)`, uuid.NewString(), tenant, item.allocation.lotID, settlement, journal, next.revision, item.released, -int64(item.allocation.amount), item.charged); err != nil {
 			return err
 		}
 		if _, err = tx.Exec(ctx, `UPDATE funding_lot_balances SET available_amount=$3,held_amount=$4,consumed_amount=$5,revision=$6 WHERE tenant_id=$1 AND lot_id=$2 AND revision=$7`, tenant, item.allocation.lotID, next.available, next.held, next.consumed, next.revision, balance.revision); err != nil {

@@ -214,30 +214,35 @@ func TestFundingLotPlanValueConservationAcrossManyLots(t *testing.T) {
 }
 
 func TestProjectFundingLotChangeIsPureAndOverflowSafe(t *testing.T) {
-	original := fundingLotBalance{id: lotPlanID(1), available: 10, held: 2, consumed: 3, revision: 7}
-	next, err := projectFundingLotChange(&original, -4, 4, 0)
+	original := fundingLotBalance{id: lotPlanID(1), available: 10, held: 2, consumed: 3, refundHeld: 4, retired: 5, revision: 7}
+	next, err := projectFundingLotChange(&original, -4, 4, 0, -2, 3)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if original.available != 10 || original.held != 2 || original.consumed != 3 || original.revision != 7 {
+	if original.available != 10 || original.held != 2 || original.consumed != 3 || original.refundHeld != 4 || original.retired != 5 || original.revision != 7 {
 		t.Fatalf("projection mutated its input: %+v", original)
 	}
-	if next.available != 6 || next.held != 6 || next.consumed != 3 || next.revision != 8 {
+	if next.available != 6 || next.held != 6 || next.consumed != 3 || next.refundHeld != 2 || next.retired != 8 || next.revision != 8 {
 		t.Fatalf("wrong projected balance: %+v", next)
 	}
 	for _, tc := range []struct {
-		name                                     string
-		available, held, consumed, rev           int64
-		deltaAvailable, deltaHeld, deltaConsumed int64
-		want                                     string
+		name                                                string
+		available, held, consumed, refundHeld, retired, rev int64
+		deltaAvailable, deltaHeld, deltaConsumed            int64
+		deltaRefundHeld, deltaRetired                       int64
+		want                                                string
 	}{
 		{name: "negative available", available: 1, deltaAvailable: -2, want: "funding_lot_invariant"},
 		{name: "negative held", held: 1, deltaHeld: -2, want: "funding_lot_invariant"},
 		{name: "negative consumed", consumed: 1, deltaConsumed: -2, want: "funding_lot_invariant"},
+		{name: "negative refund held", consumed: 1, deltaRefundHeld: -1, want: "funding_lot_invariant"},
+		{name: "negative retired", consumed: 1, deltaRetired: -1, want: "funding_lot_invariant"},
+		{name: "refund held overflow", refundHeld: math.MaxInt64, deltaRefundHeld: 1, want: "amount_overflow"},
+		{name: "retired overflow", retired: math.MaxInt64, deltaRetired: 1, want: "amount_overflow"},
 		{name: "revision overflow", rev: math.MaxInt64, want: "amount_overflow"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := projectFundingLotChange(&fundingLotBalance{available: tc.available, held: tc.held, consumed: tc.consumed, revision: tc.rev}, tc.deltaAvailable, tc.deltaHeld, tc.deltaConsumed)
+			_, err := projectFundingLotChange(&fundingLotBalance{available: tc.available, held: tc.held, consumed: tc.consumed, refundHeld: tc.refundHeld, retired: tc.retired, revision: tc.rev}, tc.deltaAvailable, tc.deltaHeld, tc.deltaConsumed, tc.deltaRefundHeld, tc.deltaRetired)
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Fatalf("got %v, want %s", err, tc.want)
 			}

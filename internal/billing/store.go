@@ -134,6 +134,34 @@ func role(ctx context.Context, tx pgx.Tx, actor, required string) error {
 	return nil
 }
 
+func walletRole(ctx context.Context, tx pgx.Tx, actor, required string) error {
+	var valid bool
+	if err := tx.QueryRow(ctx, `SELECT wallet_operator_role_valid($1,$2)`, actor, required).Scan(&valid); err != nil {
+		return err
+	}
+	if !valid {
+		return fail("forbidden", "financial role required")
+	}
+	return nil
+}
+
+func tenantOwner(ctx context.Context, tx pgx.Tx, tenant, actor string) error {
+	var valid bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM tenants t JOIN memberships m ON m.tenant_id=t.id AND m.user_id=$2 JOIN users u ON u.id=m.user_id WHERE t.id=$1 AND t.status='active' AND m.status='active' AND m.role='owner' AND u.status='active')`, tenant, actor).Scan(&valid); err != nil {
+		return err
+	}
+	if !valid {
+		return fail("forbidden", "tenant owner required")
+	}
+	return nil
+}
+
+func walletSingleOperator(ctx context.Context, tx pgx.Tx) (bool, error) {
+	var enabled bool
+	err := tx.QueryRow(ctx, `SELECT wallet_single_operator()`).Scan(&enabled)
+	return enabled, err
+}
+
 const insertAuditSQL = "INSERT INTO audit_events(actor,tenant_scope,action,target,sanitized_diff,request_id) VALUES($1,$2,$3,$4,$5,$6)"
 const insertOutboxSQL = "INSERT INTO projection_outbox(tenant_id,operation_id,kind,sanitized_payload) VALUES($1,$2,$3,$4)"
 
@@ -162,12 +190,12 @@ type lockedAccount struct {
 
 func lockAccounts(ctx context.Context, tx pgx.Tx, tenant string, required ...string) (accounts []lockedAccount, err error) {
 	if len(required) == 0 {
-		required = []string{"AVAILABLE", "HELD", "FUNDING_CLEARING", "REVENUE", "OPERATING_GRANT_CLEARING"}
+		required = []string{"AVAILABLE", "HELD", "REFUND_HELD", "FUNDING_CLEARING", "REVENUE", "OPERATING_GRANT_CLEARING"}
 	}
 	kinds := []string{}
 	seen := map[string]bool{}
 	for _, kind := range required {
-		if !oneOf(kind, "AVAILABLE", "HELD", "FUNDING_CLEARING", "REVENUE", "OPERATING_GRANT_CLEARING", "SANDBOX_FUNDING_CLEARING", "WALLET_OPENING_CLEARING") {
+		if !oneOf(kind, "AVAILABLE", "HELD", "REFUND_HELD", "FUNDING_CLEARING", "REVENUE", "OPERATING_GRANT_CLEARING", "SANDBOX_FUNDING_CLEARING", "WALLET_OPENING_CLEARING") {
 			return nil, fail("invalid_account", "unknown account kind")
 		}
 		if !seen[kind] {
@@ -180,7 +208,7 @@ func lockAccounts(ctx context.Context, tx pgx.Tx, tenant string, required ...str
 	// snapshot. Every selected account is locked in the global ID order.
 	batch := &pgx.Batch{}
 	batch.Queue(`INSERT INTO ledger_accounts(tenant_id,kind)
- SELECT CASE WHEN k.kind IN ('AVAILABLE','HELD') THEN $1::text ELSE NULL END,k.kind
+ SELECT CASE WHEN k.kind IN ('AVAILABLE','HELD','REFUND_HELD') THEN $1::text ELSE NULL END,k.kind
  FROM unnest($2::text[]) AS k(kind) ON CONFLICT DO NOTHING`, tenant, kinds)
 	batch.Queue("SELECT id,kind,balance FROM ledger_accounts WHERE kind=ANY($2::text[]) AND (tenant_id=$1 OR tenant_id IS NULL) ORDER BY id FOR UPDATE", tenant, kinds)
 	results := tx.SendBatch(ctx, batch)

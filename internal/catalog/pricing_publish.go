@@ -96,7 +96,7 @@ func (s *Store) PublishDefaultPrice(ctx context.Context, a PricingActor, c Defau
 			return nil, pricingFail("invalid_price")
 		}
 		raw, _ = rates.CanonicalJSON()
-		return map[string]any{"model_id": c.ModelID, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": "default", "currency": "CNY", "rates": raw, "effective_at": pricingStamp(c.EffectiveAt)}, nil
+		return map[string]any{"model_id": c.ModelID, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": "default", "currency": "COIN", "rates": raw, "effective_at": pricingStamp(c.EffectiveAt)}, nil
 	}, prepare: func(ctx context.Context, tx pgx.Tx) (pricingWrite, error) {
 		if err := lockModelSchema(ctx, tx, c.ModelID, c.SchemaID, c.SchemaDigest, c.VariantKey); err != nil {
 			return pricingWrite{}, err
@@ -105,7 +105,7 @@ func (s *Store) PublishDefaultPrice(ctx context.Context, a PricingActor, c Defau
 			return pricingWrite{}, pricingFail("invalid_price")
 		}
 		id := uuid.NewString()
-		v := DefaultPriceView{ID: id, ModelID: c.ModelID, SchemaID: c.SchemaID, SchemaDigest: c.SchemaDigest, VariantKey: "default", Currency: "CNY", Rates: raw, EffectiveAt: pricingStamp(c.EffectiveAt)}
+		v := DefaultPriceView{ID: id, ModelID: c.ModelID, SchemaID: c.SchemaID, SchemaDigest: c.SchemaDigest, VariantKey: "default", Currency: "COIN", Rates: raw, EffectiveAt: pricingStamp(c.EffectiveAt)}
 		return pricingWrite{resource: id, result: v, apply: func(ctx context.Context, tx pgx.Tx, at time.Time) error {
 			_, err := tx.Exec(ctx, `SELECT meter_insert_token_price($1,$2,$3,$4,$5,$6,NULL,$7,$8)`, id, c.ModelID, c.InputRate, c.OutputRate, c.EffectiveAt, a.UserID, c.OperationID, at)
 			return err

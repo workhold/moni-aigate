@@ -12,20 +12,20 @@ import { rateIsZero } from './metering-wire.ts'
 import type { TextRetailRates } from './pricing.ts'
 export interface PublicFilters { q: string; protocol: PublicProtocol | '' }
 export interface PublicModel {
-  id: string; public_name: string; protocol: PublicProtocol
+  id: string; public_name: string; aliases?: string[]; protocol: PublicProtocol
   capabilities: { streaming: boolean; tools: boolean; input_only: boolean; text_only: true }
   limits: { context_tokens: number; input_token_upper_bound: number; max_output_tokens: number; default_output_tokens: number }
-  pricing: { status: 'available' | 'unavailable'; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'CNY'; rates: TextRetailRates | null; effective_at: string | null }
+  pricing: { status: 'available' | 'unavailable'; price_version_id: string | null; schema_id: string; schema_digest: string; variant_key: 'default'; currency: 'COIN'; rates: TextRetailRates | null; effective_at: string | null }
 }
 export interface PublicCatalogPage { data: PublicModel[]; request_id: string; next_cursor: string; as_of: string }
 export interface ModelPublication { id: string; public_name: string; enabled: boolean; public_visible: boolean; public_revision: string }
 export interface PublicationRequest { readonly path: string; readonly method: 'PUT'; readonly body: { readonly expected_revision: string; readonly public_visible: boolean } }
 
 const invalid = () => new Error('目录响应格式无效，请刷新后重试。')
-function object(value: unknown, keys: readonly string[]): Record<string, unknown> {
+function object(value: unknown, keys: readonly string[], optional: readonly string[] = []): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid()
-  const raw = value as Record<string, unknown>, own = Object.keys(raw)
-  if (own.length !== keys.length || own.some(key => !keys.includes(key))) throw invalid()
+  const raw = value as Record<string, unknown>, own = Object.keys(raw), allowed = [...keys, ...optional]
+  if (own.some(key => !allowed.includes(key)) || keys.some(key => !own.includes(key))) throw invalid()
   return raw
 }
 function bytes(value: string) { return new TextEncoder().encode(value).length }
@@ -54,8 +54,14 @@ function tokenLimit(value: unknown): number {
   return value
 }
 export function parsePublicModel(value: unknown): PublicModel {
-  const raw = object(value, ['id', 'public_name', 'protocol', 'capabilities', 'limits', 'pricing'])
+  const raw = object(value, ['id', 'public_name', 'protocol', 'capabilities', 'limits', 'pricing'], ['aliases'])
   const id = catalogID(raw.id), public_name = name(raw.public_name), kind = protocol(raw.protocol)
+  let aliases: string[] | undefined
+  if (raw.aliases !== undefined) {
+    if (!Array.isArray(raw.aliases) || raw.aliases.length > 100) throw invalid()
+    aliases = raw.aliases.map(name)
+    if (new Set(aliases).size !== aliases.length) throw invalid()
+  }
   const caps = object(raw.capabilities, ['streaming', 'tools', 'input_only', 'text_only'])
   const inputOnly = kind === 'openai_embeddings' || kind === 'jina_rerank'
   const capabilities = { streaming: bool(caps.streaming), tools: bool(caps.tools), input_only: bool(caps.input_only), text_only: bool(caps.text_only) }
@@ -64,20 +70,20 @@ export function parsePublicModel(value: unknown): PublicModel {
   const limits = { context_tokens: tokenLimit(limitsRaw.context_tokens), input_token_upper_bound: tokenLimit(limitsRaw.input_token_upper_bound), max_output_tokens: tokenLimit(limitsRaw.max_output_tokens), default_output_tokens: tokenLimit(limitsRaw.default_output_tokens) }
   if (!limits.context_tokens || !limits.input_token_upper_bound || limits.input_token_upper_bound > limits.context_tokens || (inputOnly ? limits.max_output_tokens !== 0 || limits.default_output_tokens !== 0 : limits.default_output_tokens <= 0 || limits.max_output_tokens < limits.default_output_tokens || limits.max_output_tokens > limits.context_tokens)) throw invalid()
   const price = object(raw.pricing, ['status', 'price_version_id', 'schema_id', 'schema_digest', 'variant_key', 'currency', 'rates', 'effective_at'])
-  if (price.currency !== 'CNY' || price.variant_key !== 'default' || price.status !== 'available' && price.status !== 'unavailable') throw invalid()
+  if (price.currency !== 'COIN' || price.variant_key !== 'default' || price.status !== 'available' && price.status !== 'unavailable') throw invalid()
   const schema_id = catalogID(price.schema_id), schema_digest = price.schema_digest
   if (typeof schema_digest !== 'string' || !/^[0-9a-f]{64}$/.test(schema_digest)) throw invalid()
   let pricing: PublicModel['pricing']
   if (price.status === 'unavailable') {
     if ([price.price_version_id, price.rates, price.effective_at].some(v => v !== null)) throw invalid()
-    pricing = { status: 'unavailable', currency: 'CNY', price_version_id: null, schema_id, schema_digest, variant_key: 'default', rates: null, effective_at: null }
+    pricing = { status: 'unavailable', currency: 'COIN', price_version_id: null, schema_id, schema_digest, variant_key: 'default', rates: null, effective_at: null }
   } else {
     if (price.price_version_id === null || price.effective_at === null) throw invalid()
     const rates = parseTextRetailRates(price.rates, schema_id)
     if (inputOnly && !rateIsZero(rates, 'text_output_token')) throw invalid()
-    pricing = { status: 'available', currency: 'CNY', price_version_id: catalogID(price.price_version_id), schema_id, schema_digest, variant_key: 'default', rates, effective_at: catalogTimestamp(price.effective_at) }
+    pricing = { status: 'available', currency: 'COIN', price_version_id: catalogID(price.price_version_id), schema_id, schema_digest, variant_key: 'default', rates, effective_at: catalogTimestamp(price.effective_at) }
   }
-  return { id, public_name, protocol: kind, capabilities: { ...capabilities, text_only: true }, limits, pricing }
+  return { id, public_name, ...(aliases === undefined ? {} : { aliases }), protocol: kind, capabilities: { ...capabilities, text_only: true }, limits, pricing }
 }
 function requestID(value: unknown): string {
   if (typeof value !== 'string' || !value || value.length > 200 || /[\s\p{Cc}]/u.test(value)) throw invalid()

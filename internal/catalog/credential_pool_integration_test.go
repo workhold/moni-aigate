@@ -76,7 +76,7 @@ func credentialPoolDB(t *testing.T, apply bool) *credentialPoolFixture {
 	if !apply {
 		return f
 	}
-	if err = migrations.Apply(ctx, f.owner); err != nil {
+	if err = migrations.ApplyCurrent(ctx, f.owner); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = f.owner.Exec(ctx, `INSERT INTO users(id,email,password_hash,platform_role) VALUES('pool-admin','pool-admin@fixture.invalid','fixture','admin')`); err != nil {
@@ -97,13 +97,14 @@ func credentialPoolDB(t *testing.T, apply bool) *credentialPoolFixture {
 		t.Fatal(err)
 	}
 	secrets := &security.Secrets{Keys: map[string][]byte{"pool": bytes.Repeat([]byte{0x63}, 32)}, Active: "pool", Pepper: bytes.Repeat([]byte{0x77}, 32)}
+	bootstrap := catalog.New(f.owner, secrets)
+	if f.channel, err = bootstrap.SaveChannel(ctx, "pool-admin", "", catalog.ChannelInput{Name: "pool-channel", BaseURL: "https://example.com/v1", Secret: "pool-primary-secret"}); err != nil {
+		t.Fatal(err)
+	}
+	if f.model, err = bootstrap.CreateModel(ctx, "pool-admin", catalog.ModelInput{PublicName: "pool-model", ContextLimit: 100, InputUpperBound: 80, OutputLimit: 20, DefaultOutputLimit: 20}); err != nil {
+		t.Fatal(err)
+	}
 	f.store = catalog.New(f.app, secrets)
-	if f.channel, err = f.store.SaveChannel(ctx, "pool-admin", "", catalog.ChannelInput{Name: "pool-channel", BaseURL: "https://example.com/v1", Secret: "pool-primary-secret"}); err != nil {
-		t.Fatal(err)
-	}
-	if f.model, err = f.store.CreateModel(ctx, "pool-admin", catalog.ModelInput{PublicName: "pool-model", ContextLimit: 100, InputUpperBound: 80, OutputLimit: 20, DefaultOutputLimit: 20}); err != nil {
-		t.Fatal(err)
-	}
 	return f
 }
 

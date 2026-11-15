@@ -208,7 +208,7 @@ func TestGroupPriceVectorRawCommitRejectsGaps(t *testing.T) {
 			if kind == "wrong_schema" {
 				c.SchemaDigest = strings.Repeat("00", 32)
 			}
-			safe := map[string]any{"model_id": c.ModelID, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": "default", "currency": "CNY", "rates": rates, "effective_at": c.EffectiveAt.Format("2006-01-02T15:04:05.000000Z")}
+			safe := map[string]any{"model_id": c.ModelID, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": "default", "currency": "COIN", "rates": rates, "effective_at": c.EffectiveAt.Format("2006-01-02T15:04:05.000000Z")}
 			result := map[string]any{}
 			for k, v := range safe {
 				result[k] = v
@@ -260,8 +260,8 @@ func TestGroupPriceVectorRawCommitRejectsGaps(t *testing.T) {
 	}
 	// Same framing golden value as independent Go/TS tests, not JSONB text.
 	var fp string
-	err = f.app.QueryRow(f.ctx, `SELECT pricing_fingerprint('group_price.publish','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','platform','/api/platform/price-groups/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/price-versions',$1::jsonb)`, `{"model_id":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","schema_id":"10000000-0000-4000-8000-000000000001","schema_digest":"`+strings.Repeat("ab", 32)+`","variant_key":"default","currency":"CNY","rates":{"schema_id":"10000000-0000-4000-8000-000000000001","version":"1","side":"retail","currency":"CNY","rates":[{"dimension":"text_input_token","unit":"token","numerator":"9007199254740993","denominator":"1000000"},{"dimension":"text_output_token","unit":"token","numerator":"0","denominator":"1"}]},"effective_at":"2026-10-01T00:00:00.123456Z"}`).Scan(&fp)
-	if err != nil || fp != "14aac71c989772d94efbda8faf1a39a758a618b645a71539a55de7664de26564" {
+	err = f.app.QueryRow(f.ctx, `SELECT pricing_fingerprint('group_price.publish','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','platform','/api/platform/price-groups/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/price-versions',$1::jsonb)`, `{"model_id":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","schema_id":"10000000-0000-4000-8000-000000000001","schema_digest":"`+strings.Repeat("ab", 32)+`","variant_key":"default","currency":"COIN","rates":{"schema_id":"10000000-0000-4000-8000-000000000001","version":"1","side":"retail","currency":"CNY","rates":[{"dimension":"text_input_token","unit":"token","numerator":"9007199254740993","denominator":"1000000"},{"dimension":"text_output_token","unit":"token","numerator":"0","denominator":"1"}]},"effective_at":"2026-10-01T00:00:00.123456Z"}`).Scan(&fp)
+	if err != nil || fp != "135996ee4b4062565ed45073ac70a79f4b8151abe0ecb88ea5cad58fe469e261" {
 		t.Fatal(fp, err)
 	}
 	// An audit appended in a later transaction cannot borrow the original op.

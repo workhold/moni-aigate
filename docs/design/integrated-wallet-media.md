@@ -54,14 +54,14 @@ flowchart TB
 | 关系 | 职责 |
 | --- | --- |
 | `funding_lots` | 每个正额 receipt 的不可变本金、来源、退款类别与 FIFO 时点；lot ID 等于 receipt ID |
-| `funding_lot_balances` | 来源可用 A、冻结 H、已消费 C 三桶及 revision；A+H+C 必须等于本金 |
-| `funding_lot_events` | 与同一事务、operation、journal 和 revision 绑定的不可变三桶变化 |
+| `funding_lot_balances` | 来源可用 A、冻结 H、已消费 C、退款冻结 RH、已退出 R 五桶及 revision；A+H+C+RH+R 必须等于本金 |
+| `funding_lot_events` | 与同一事务、operation、journal 和 revision 绑定的不可变五桶变化 |
 | `funding_reservation_lots` | 一次客户预占沿来源 FIFO 的分配，第二次安全上游尝试不重复分配 |
 | `funding_settlement_lots` | 原预占边的收费与释放，逐边 charged+released 等于原分配 |
 | `funding_consumption_refund_lots` | 消费退款精确回到原收费来源，累计不超过原收费 |
 | `wallet_openings` | 管理员在停服、新钱包上显式确认的初始余额原件；不是历史迁移证明 |
 
-manual_credit、voucher_grant、wallet_opening 为 `nonrefundable`；sandbox_capture 为 `sandbox_original`，仅具有本地支付沙箱语义。消费退回平台钱包与真实原路现金退款分开，不能因为来源可识别就显示“现金退款已支持”。
+manual_credit 为 `cash_original`，manual_bonus、manual_unknown、voucher_grant、wallet_opening 为 `nonrefundable`；sandbox_capture 为 `sandbox_original`，仅具有本地支付沙箱语义。消费退回平台钱包与真实原路现金退款分开，不能因为来源可识别就显示“现金退款已支持”。
 
 所有来源、事件和分配边不可修改或删除；余额更新必须有相同 operation、revision、事务的精确事件。租户复合外键约束每条关联，数据库不能只依赖 handler 的 URL 授权。应用、投影、迁移角色继续分离，开账原件不授应用角色创建。
 
@@ -76,7 +76,7 @@ manual_credit、voucher_grant、wallet_opening 为 `nonrefundable`；sandbox_cap
 | 明确免收或截止释放 | H-=R，A+=R，结算收费为 0 | 只释放原分配；未知消费不伪造为上游未消费 |
 | 消费退款 F | 沿原 charged 边逆序，C-=F，A+=F | 双人审批；逐来源累计不超原收费；不回退 Key.spent 或周期 spent |
 
-一个 lot 可以同时包含可用、冻结和已消费金额，不能用一个互斥 status 代替三桶。未知消费仍保留 H；已结算后的交付失败不自动退款或重生成，争议沿原消费退款处理。
+一个 lot 可以同时包含可用、冻结、已消费、退款冻结和已退出金额，不能用一个互斥 status 代替五桶。未知消费仍保留 H；已结算后的交付失败不自动退款或重生成，争议沿原消费退款处理。
 
 ### 3.3 事务所有权与锁
 
@@ -92,7 +92,7 @@ receipt、journal、lot/event、分配边与原审计/outbox 在同一业务事�
 
 MVP 不维护旧内部历史的迁移与退款分支。023 在发现既有资金历史、非零余额或已用 Key 时明确拒迁并回滚；不能补一个 opening 伪装旧来源。**保留现有开发库，另建全新现行数据库验收**；不删库，不修改已应用 SQL，不改旧校验和。后续若承诺正式升级，再单独设计一次性升级合同。
 
-`check-wallet-sources` 只读核对 receipt、本金、事件序列、三桶、预占/结算/退款与钱包汇总。它不修余额、不发行资金写权限，也不将早期完整历史 proof 实验重新引入在线前置。
+`check-wallet-sources` 只读核对 receipt、本金、事件序列、五桶、预占/结算/退款与钱包汇总。它不修余额、不发行资金写权限，也不将早期完整历史 proof 实验重新引入在线前置。
 
 ## 4. 一套现行计量与两侧定价
 

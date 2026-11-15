@@ -74,14 +74,14 @@ onMounted(async () => {
   <el-alert v-if="!allowed" title="当前角色没有资金报表查看权限。请联系租户所有者。" type="info" :closable="false" />
   <template v-else>
     <OperatingReport v-if="platform" />
-    <section v-if="platform" class="panel"><div class="filters"><span class="muted">累计钱包指标与成本核对</span><el-select v-model="tenantId" clearable filterable placeholder="全部客户" style="width:250px" aria-label="报表客户范围" @change="filterTenant"><el-option v-for="tenant in tenants" :key="tenant.id" :label="tenant.name" :value="tenant.id" /></el-select><span class="muted small-text">全生命周期累计 · CNY</span></div></section>
+    <section v-if="platform" class="panel"><div class="filters"><span class="muted">累计钱包指标与成本核对</span><el-select v-model="tenantId" clearable filterable placeholder="全部客户" style="width:250px" aria-label="报表客户范围" @change="filterTenant"><el-option v-for="tenant in tenants" :key="tenant.id" :label="tenant.name" :value="tenant.id" /></el-select><span class="muted small-text">全生命周期累计 · 钱包 COIN / 供应商成本 CNY</span></div></section>
     <ErrorNotice :message="error" @retry="load()" />
     <el-alert v-if="summary?.projection_pending" type="warning" :closable="false" show-icon :title="`还有 ${integer(summary.projection_pending)} 条业务事件等待报表更新，累计指标可能暂未包含最新操作。钱包余额以同步账本为准。`" style="margin-bottom:22px" />
     <div v-loading="loading" class="metric-grid">
-      <div class="metric-card"><div class="metric-label">累计钱包入账</div><MetricMoney :value="summary?.credited" /><div class="metric-note">含人工核款、赠额、模拟入账及非现金开账，不等于现金收款</div></div>
-      <div class="metric-card"><div class="metric-label">累计客户消费</div><MetricMoney :value="summary?.charged" /><div class="metric-note">已结算收费，退款另记</div></div>
-      <div class="metric-card"><div class="metric-label">累计钱包退款</div><MetricMoney :value="summary?.refunded" /><div class="metric-note">消费退款补偿，非现金退款</div></div>
-      <div class="metric-card"><div class="metric-label">累计释放冻结</div><MetricMoney :value="summary?.released" /><div class="metric-note">预占未消费部分的释放</div></div>
+      <div class="metric-card"><div class="metric-label">累计钱包入账</div><MetricMoney unit="COIN" :value="summary?.credited" /><div class="metric-note">含人工核款、赠额、模拟入账及非现金开账，不等于现金收款</div></div>
+      <div class="metric-card"><div class="metric-label">累计客户消费</div><MetricMoney unit="COIN" :value="summary?.charged" /><div class="metric-note">已结算收费，退款另记</div></div>
+      <div class="metric-card"><div class="metric-label">累计钱包退款</div><MetricMoney unit="COIN" :value="summary?.refunded" /><div class="metric-note">消费退款补偿，非现金退款</div></div>
+      <div class="metric-card"><div class="metric-label">累计释放冻结</div><MetricMoney unit="COIN" :value="summary?.released" /><div class="metric-note">预占未消费部分的释放</div></div>
       <div class="metric-card"><div class="metric-label">已受理请求</div><div class="metric-value">{{ integer(summary?.requests) }}</div><div class="metric-note">由已接受请求业务事件累计</div></div>
       <template v-if="platform">
         <div class="metric-card"><div class="metric-label">已知供应商成本</div><MetricMoney :value="summary?.known_provider_cost" /><div class="metric-note">仅汇总具备有效成本事实的部分</div></div>

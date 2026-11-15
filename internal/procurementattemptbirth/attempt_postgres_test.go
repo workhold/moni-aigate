@@ -160,7 +160,7 @@ func newFixture(t *testing.T, beforeInstall ...func(*fixture)) *fixture {
 	exec("INSERT INTO cost_versions(id,channel_id,upstream_model,input_rate,output_rate,basis,effective_at) VALUES($1,$2,'upstream',2000000,2000000,'contract',clock_timestamp()-interval '1 day')", f.cost, f.channel)
 	must(t, "commit business parents", tx.Commit(ctx))
 	store := billing.New(owned)
-	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "fixture:verified", Amount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture:credit"})
+	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, BusinessRef: uuid.NewString(), ProofRef: "fixture:verified", Amount: 10000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 10000, IdempotencyKey: uuid.NewString(), RequestHMAC: "fixture:credit"})
 	must(t, "create original credit", err)
 	_, err = store.ApproveCredit(ctx, billing.ApprovalInput{TenantID: f.tenant, OrderID: credit.ID, ActorID: f.approver})
 	must(t, "fund original wallet", err)

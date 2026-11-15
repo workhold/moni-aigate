@@ -8,7 +8,7 @@ const id = '11111111-1111-4111-8111-111111111111', priceID = '22222222-2222-4222
 const rates = (input = '9007199254740993', output = '2000000') => { const reduce = (raw) => { let n = BigInt(raw), d = 1000000n; if (n === 0n) return ['0', '1']; const gcd = (a, b) => { while (b) { const next = a % b; a = b; b = next } return a }; const factor = gcd(n, d); return [String(n / factor), String(d / factor)] }; const [inN, inD] = reduce(input), [outN, outD] = reduce(output); return { schema_id: schemaID, version: '1', side: 'retail', currency: 'CNY', rates: [{ dimension: 'text_input_token', unit: 'token', numerator: inN, denominator: inD }, { dimension: 'text_output_token', unit: 'token', numerator: outN, denominator: outD }] } }
 function model(protocol = 'openai_chat') {
   const inputOnly = ['openai_embeddings', 'jina_rerank'].includes(protocol)
-  return { id, public_name: 'test-chat', protocol, capabilities: { streaming: !inputOnly, tools: !inputOnly && protocol !== 'gemini_generate_content', input_only: inputOnly, text_only: true }, limits: { context_tokens: 128000, input_token_upper_bound: 120000, max_output_tokens: inputOnly ? 0 : 8000, default_output_tokens: inputOnly ? 0 : 2000 }, pricing: { status: 'available', price_version_id: priceID, schema_id: schemaID, schema_digest: 'ab'.repeat(32), variant_key: 'default', currency: 'CNY', rates: rates('9007199254740993', inputOnly ? '0' : '2000000'), effective_at: '2026-11-01T00:00:00Z' } }
+  return { id, public_name: 'test-chat', protocol, capabilities: { streaming: !inputOnly, tools: !inputOnly && protocol !== 'gemini_generate_content', input_only: inputOnly, text_only: true }, limits: { context_tokens: 128000, input_token_upper_bound: 120000, max_output_tokens: inputOnly ? 0 : 8000, default_output_tokens: inputOnly ? 0 : 2000 }, pricing: { status: 'available', price_version_id: priceID, schema_id: schemaID, schema_digest: 'ab'.repeat(32), variant_key: 'default', currency: 'COIN', rates: rates('9007199254740993', inputOnly ? '0' : '2000000'), effective_at: '2026-11-01T00:00:00Z' } }
 }
 const page = data => ({ data, request_id: 'request-safe', next_cursor: '', as_of: '2026-11-01T01:00:00.000001Z' })
 
@@ -24,14 +24,14 @@ test('all six public protocols retain exact capability contracts and DTO key set
 test('zero is a known price and absence is an all-null price, never free', () => {
   const zero = { ...model(), pricing: { ...model().pricing, rates: rates('0', '0') } }
   assert.equal(parsePublicModel(zero).pricing.rates?.rates[0].numerator, '0')
-  const unavailable = { ...model(), pricing: { status: 'unavailable', price_version_id: null, schema_id: schemaID, schema_digest: 'ab'.repeat(32), variant_key: 'default', currency: 'CNY', rates: null, effective_at: null } }
+  const unavailable = { ...model(), pricing: { status: 'unavailable', price_version_id: null, schema_id: schemaID, schema_digest: 'ab'.repeat(32), variant_key: 'default', currency: 'COIN', rates: null, effective_at: null } }
   assert.equal(parsePublicModel(unavailable).pricing.status, 'unavailable')
   for (const field of ['price_version_id', 'rates', 'effective_at']) assert.throws(() => parsePublicModel({ ...unavailable, pricing: { ...unavailable.pricing, [field]: field === 'rates' ? rates() : '0' } }))
   assert.throws(() => parsePublicModel({ ...model('jina_rerank'), pricing: { ...model('jina_rerank').pricing, rates: rates('1', '1') } }))
   for (const value of [0, -1, null, '01', '+1', '-1', '1e6', '9223372036854775808']) assert.throws(() => parsePublicModel({ ...model(), pricing: { ...model().pricing, rates: { ...rates(), rates: [{ ...rates().rates[0], numerator: value }, rates().rates[1]] } } }))
-  assert.equal(ratePerMillionText(rates('0', '0'), 'text_input_token'), '¥0.000000')
-  assert.equal(ratePerMillionText(rates('9007199254740993', '0'), 'text_input_token'), '¥9,007,199,254.740993')
-  assert.equal(ratePerMillionText(rates('9223372036854775807', '0'), 'text_input_token'), '¥9,223,372,036,854.775807')
+  assert.equal(ratePerMillionText(rates('0', '0'), 'text_input_token'), '0.000000 币 / 百万 Tokens')
+  assert.equal(ratePerMillionText(rates('9007199254740993', '0'), 'text_input_token'), '9,007,199,254.740993 币 / 百万 Tokens')
+  assert.equal(ratePerMillionText(rates('9223372036854775807', '0'), 'text_input_token'), '9,223,372,036,854.775807 币 / 百万 Tokens')
 })
 
 test('invalid limits, identities and dates fail closed without private fallback', () => {

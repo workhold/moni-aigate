@@ -20,9 +20,29 @@ import (
 	"golang.org/x/time/rate"
 )
 
+const inferenceModelsSQL = `SELECT name AS id,'model' AS object,'moni-aigate' AS owned_by,0 AS created FROM (
+	SELECT m.public_name AS name,m.id
+	FROM models m
+	JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1
+	JOIN memberships mb ON mb.tenant_id=$1 AND mb.user_id=$2
+	JOIN api_keys k ON k.id=$3
+	WHERE m.enabled AND (m.id=ANY(k.scopes) OR '*'=ANY(k.scopes))
+	  AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=$1 AND mg.user_id=$2 AND mg.model_id=m.id))
+	UNION ALL
+	SELECT a.alias AS name,a.model_id AS id
+	FROM model_aliases a
+	JOIN models m ON m.id=a.model_id
+	JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1
+	JOIN memberships mb ON mb.tenant_id=$1 AND mb.user_id=$2
+	JOIN api_keys k ON k.id=$3
+	WHERE a.state='active' AND m.enabled
+	  AND (m.id=ANY(k.scopes) OR '*'=ANY(k.scopes))
+	  AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=$1 AND mg.user_id=$2 AND mg.model_id=m.id))
+) names ORDER BY name COLLATE "C"`
+
 func (s *Server) inferenceModels(c *gin.Context) {
 	p := c.MustGet("principal").(identity.Principal)
-	v, e := s.query(c.Request.Context(), `SELECT m.public_name AS id,'model' AS object,'moni-aigate' AS owned_by,0 AS created FROM models m JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1 JOIN memberships mb ON mb.tenant_id=$1 AND mb.user_id=$2 JOIN api_keys k ON k.id=$3 WHERE m.enabled AND (m.id=ANY(k.scopes) OR '*'=ANY(k.scopes)) AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=$1 AND mg.user_id=$2 AND mg.model_id=m.id)) ORDER BY m.public_name`, p.TenantID, p.UserID, p.KeyID)
+	v, e := s.query(c.Request.Context(), inferenceModelsSQL, p.TenantID, p.UserID, p.KeyID)
 	if e != nil {
 		s.error(c, e)
 		return
@@ -92,6 +112,10 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		s.error(c, e)
 		return
 	}
+	// Provider parsing validates the public model field. Keep the logical
+	// model/profile and billing identity unchanged while making the requested
+	// alias the response model for SDK compatibility.
+	model.Profile.Model = model.RequestedName
 	var request *provider.Request
 	if protocol == provider.ProtocolGemini {
 		request, e = provider.ParseGemini(raw, model.Profile, stream)
@@ -158,7 +182,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 	if protocol == provider.ProtocolGemini {
 		identityBody = protocol + "\x00" + pathModel + "\x00" + fmt.Sprint(stream) + "\x00" + identityBody
 	}
-	reservation, e := s.Billing.Reserve(c.Request.Context(), billing.ReserveInput{Principal: billing.Principal{TenantID: p.TenantID, UserID: p.UserID, KeyID: p.KeyID, ClientIP: p.ClientIP}, RequestID: c.GetString("request_id"), ModelID: model.ID, IdempotencyKey: c.GetHeader("Idempotency-Key"), RequestHMAC: s.Config.Secrets.Digest(identityBody), ProfileVersion: model.ProfileVersion, RouteRevision: model.Revision, PolicyVersion: "retail-r3", InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, RequestDeadline: deadline, Streaming: request.Stream})
+	reservation, e := s.Billing.Reserve(c.Request.Context(), billing.ReserveInput{Principal: billing.Principal{TenantID: p.TenantID, UserID: p.UserID, KeyID: p.KeyID, ClientIP: p.ClientIP}, RequestID: c.GetString("request_id"), ModelID: model.ID, RequestedModelName: model.RequestedName, IdempotencyKey: c.GetHeader("Idempotency-Key"), RequestHMAC: s.Config.Secrets.Digest(identityBody), ProfileVersion: model.ProfileVersion, RouteRevision: model.Revision, PolicyVersion: "retail-r3", InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, RequestDeadline: deadline, Streaming: request.Stream})
 	if e != nil {
 		releaseAdmission()
 		releaseAdmission = nil

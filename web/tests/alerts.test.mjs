@@ -87,3 +87,12 @@ test('configure/no-op/retire/ack preserve CAS above 2^53 and unified target lock
  for(const patch of [{kind:'rule_retire'},{operation_id:resource},{resource_id:resource},{status:'rejected',reason:'unexpected',result_revision:null},{status:'rejected',reason:'alert_revision_stale'},{status:'applied',reason:'ok'}])assert.throws(()=>parseAlertReceipt(receipt(changed,patch),changed))
  const identity=Object.fromEntries(['operation_id','actor','kind','target_id','target_key','canonical_digest','expected_revision','expected_result_revision'].map(k=>[k,ack[k]]));assert.equal(parseAlertIdentity(identity).expected_result_revision,'9007199254740994');assert.throws(()=>parseAlertIdentity({...identity,expected_result_revision:huge}))
 })
+
+test('cash-refund pending alert reuses the exact tenant aging DTO',()=>{
+ const sample={kind:'cash_refund_pending_aged',as_of:at,minimum_age_seconds:'600',observed_count:'1',count_is_lower_bound:false,oldest_created_at:'2026-10-31T23:50:00.123456Z',oldest_reference_id:resource}
+ assert.deepEqual(parseAlertSample(sample,'cash_refund_pending_aged'),sample)
+ assert.deepEqual(parseAlertParameters('cash_refund_pending_aged',{minimum_age_seconds:'600',trigger_count:'1',recovery_count:'0'}),{minimum_age_seconds:'600',trigger_count:'1',recovery_count:'0'})
+ assert.throws(()=>parseAlertSample({...sample,observed_count:'0',count_is_lower_bound:false},'cash_refund_pending_aged'))
+ assert.throws(()=>parseAlertSample({...sample,oldest_created_at:at},'cash_refund_pending_aged'))
+ assert.throws(()=>parseAlertParameters('cash_refund_pending_aged',{minimum_age_seconds:'599',trigger_count:'1',recovery_count:'0'}))
+})

@@ -403,7 +403,7 @@ func (s *Server) walletFundingReceipts(c *gin.Context) {
 		return
 	}
 	kind := billing.FundingSourceKind(query.Get("source_kind"))
-	if kind != "" && kind != billing.FundingManualCredit && kind != billing.FundingVoucherGrant && kind != billing.FundingSandboxCapture && kind != billing.FundingWalletOpening {
+	if kind != "" && kind != billing.FundingManualCredit && kind != billing.FundingManualBonus && kind != billing.FundingManualUnknown && kind != billing.FundingVoucherGrant && kind != billing.FundingSandboxCapture && kind != billing.FundingWalletOpening {
 		s.commerceInvalid(c)
 		return
 	}

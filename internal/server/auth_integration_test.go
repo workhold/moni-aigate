@@ -55,7 +55,7 @@ func newAuthFixture(t *testing.T) (*Server, *pgxpool.Pool) {
 		_, _ = admin.Exec(ctx, "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE")
 		admin.Close()
 	})
-	if e = migrations.Apply(ctx, pool); e != nil {
+	if e = migrations.ApplyCurrent(ctx, pool); e != nil {
 		t.Fatal(e)
 	}
 	secrets := &security.Secrets{Keys: map[string][]byte{"test": []byte(strings.Repeat("k", 32))}, Active: "test", Pepper: []byte(strings.Repeat("p", 32))}
@@ -226,10 +226,10 @@ func TestHTTPMFAAndPlatformRoleSeparation(t *testing.T) {
 				requireAuthStatus(t, authHTTP(t, s, "GET", "/api/platform/channels", raw, "", "", nil), 403)
 				requireAuthStatus(t, authHTTP(t, s, "POST", "/api/platform/users", raw, csrf, s.Config.Origin, map[string]any{"email": "must-not-create@auth.test", "password": authTestPassword, "platform_role": "admin"}), 403)
 			}
-			if role != "finance_operator" {
+			if role == "finance_approver" {
 				requireAuthStatus(t, authHTTP(t, s, "POST", "/api/platform/credits", raw, csrf, s.Config.Origin, map[string]any{"tenant_id": "x", "amount": "1000000", "business_ref": "x", "proof_ref": "x"}), 403)
 			}
-			if role != "finance_approver" {
+			if role == "finance_operator" {
 				requireAuthStatus(t, authHTTP(t, s, "POST", "/api/platform/credits/nonexistent/approve", raw, csrf, s.Config.Origin, map[string]any{}), 403)
 			}
 		})

@@ -337,13 +337,13 @@ func (v *VoucherService) GetVoucherRedemption(ctx context.Context, r VoucherRead
 		return out, voucherFail("invalid_request")
 	}
 	e := v.read(ctx, r, false, false, func(ctx context.Context, tx pgx.Tx) error {
-		return tx.QueryRow(ctx, `SELECT id,operation_id,tenant_id,voucher_id,batch_id,actor,amount,'CNY',funding_receipt_id,journal_id,created_at FROM voucher_redemptions WHERE id=$1 AND tenant_id=$2`, id, r.TenantID).Scan(&out.ID, &out.OperationID, &out.TenantID, &out.VoucherID, &out.BatchID, &out.Actor, &out.Amount, &out.Currency, &out.FundingReceiptID, &out.JournalID, &out.CreatedAt)
+		return tx.QueryRow(ctx, `SELECT id,operation_id,tenant_id,voucher_id,batch_id,actor,amount,'COIN',funding_receipt_id,journal_id,created_at FROM voucher_redemptions WHERE id=$1 AND tenant_id=$2`, id, r.TenantID).Scan(&out.ID, &out.OperationID, &out.TenantID, &out.VoucherID, &out.BatchID, &out.Actor, &out.Amount, &out.Currency, &out.FundingReceiptID, &out.JournalID, &out.CreatedAt)
 	})
 	return out, e
 }
 func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReader, page FundingReceiptPageInput) (VoucherPage[FundingReceiptView], error) {
 	out := VoucherPage[FundingReceiptView]{Data: []FundingReceiptView{}}
-	if page.SourceKind != "" && page.SourceKind != FundingManualCredit && page.SourceKind != FundingVoucherGrant && page.SourceKind != FundingSandboxCapture && page.SourceKind != FundingWalletOpening {
+	if page.SourceKind != "" && page.SourceKind != FundingManualCredit && page.SourceKind != FundingManualBonus && page.SourceKind != FundingManualUnknown && page.SourceKind != FundingVoucherGrant && page.SourceKind != FundingSandboxCapture && page.SourceKind != FundingWalletOpening {
 		return out, voucherFail("invalid_request")
 	}
 	filter := voucherFilter("tenant:"+r.TenantID, "funding", string(page.SourceKind))
@@ -352,14 +352,14 @@ func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReade
 		return out, e
 	}
 	e = v.read(ctx, r, false, false, func(ctx context.Context, tx pgx.Tx) error {
-		rows, e := tx.Query(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at FROM funding_receipts WHERE tenant_id=$1 AND ($2='' OR source_kind=$2) AND ($3::timestamptz IS NULL OR created_at<$3 OR (created_at=$3 AND id COLLATE "C"<$4)) ORDER BY created_at DESC,id COLLATE "C" DESC LIMIT 51`, r.TenantID, string(page.SourceKind), before, id)
+		rows, e := tx.Query(ctx, `SELECT id,tenant_id,source_kind,source_id,amount,currency,journal_id,created_at,basis_kind,fiat_currency,fiat_amount FROM funding_receipts WHERE tenant_id=$1 AND ($2='' OR source_kind=$2) AND ($3::timestamptz IS NULL OR created_at<$3 OR (created_at=$3 AND id COLLATE "C"<$4)) ORDER BY created_at DESC,id COLLATE "C" DESC LIMIT 51`, r.TenantID, string(page.SourceKind), before, id)
 		if e != nil {
 			return e
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var f FundingReceiptView
-			if e = rows.Scan(&f.ID, &f.TenantID, &f.SourceKind, &f.SourceID, &f.Amount, &f.Currency, &f.JournalID, &f.CreatedAt); e != nil {
+			if e = rows.Scan(&f.ID, &f.TenantID, &f.SourceKind, &f.SourceID, &f.Amount, &f.Currency, &f.JournalID, &f.CreatedAt, &f.BasisKind, &f.FiatCurrency, &f.FiatAmount); e != nil {
 				return e
 			}
 			out.Data = append(out.Data, f)
@@ -374,9 +374,9 @@ func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReade
 	return out, e
 }
 func (v *VoucherService) GetFundingSummary(ctx context.Context, r VoucherReader) (FundingSummaryView, error) {
-	out := FundingSummaryView{Currency: "CNY"}
+	out := FundingSummaryView{Currency: "COIN"}
 	e := v.read(ctx, r, false, false, func(ctx context.Context, tx pgx.Tx) error {
-		return tx.QueryRow(ctx, `SELECT coalesce(sum(amount::numeric),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_credit'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='voucher_grant'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='sandbox_capture'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='wallet_opening'),0)::text,clock_timestamp() FROM funding_receipts WHERE tenant_id=$1`, r.TenantID).Scan(&out.TotalAmount, &out.ManualCreditAmount, &out.VoucherGrantAmount, &out.SandboxCaptureAmount, &out.WalletOpeningAmount, &out.AsOf)
+		return tx.QueryRow(ctx, `SELECT coalesce(sum(amount::numeric),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_credit'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='voucher_grant'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='sandbox_capture'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='wallet_opening'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_bonus'),0)::text,coalesce(sum(amount::numeric) FILTER(WHERE source_kind='manual_unknown'),0)::text,clock_timestamp() FROM funding_receipts WHERE tenant_id=$1`, r.TenantID).Scan(&out.TotalAmount, &out.ManualCreditAmount, &out.VoucherGrantAmount, &out.SandboxCaptureAmount, &out.WalletOpeningAmount, &out.ManualBonusAmount, &out.ManualUnknownAmount, &out.AsOf)
 	})
 	return out, e
 }

@@ -41,19 +41,19 @@ func (s *Store) VerifyFunding(ctx context.Context, tenantID string) (FundingChec
 func verifyFundingTx(ctx context.Context, tx pgx.Tx, tenant string) (FundingCheck, error) {
 	var c FundingCheck
 	e := tx.QueryRow(ctx, `SELECT
- (SELECT count(*) FROM credit_orders c WHERE ($1='' OR c.tenant_id=$1) AND c.state='approved' AND NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='manual_credit' AND f.source_id=c.id))+
+ (SELECT count(*) FROM credit_orders c WHERE ($1='' OR c.tenant_id=$1) AND c.state='approved' AND NOT wallet_credit_pair_valid(c.id))+
  (SELECT count(*) FROM voucher_redemptions r WHERE ($1='' OR r.tenant_id=$1) AND NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.id=r.funding_receipt_id AND f.source_kind='voucher_grant' AND f.source_id=r.voucher_id))+
  (SELECT count(*) FROM payment_captures c LEFT JOIN payment_orders o ON o.id=c.order_id WHERE ($1='' OR o.tenant_id=$1) AND NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='sandbox_capture' AND f.source_id=c.id))+
  (SELECT count(*) FROM wallet_openings o WHERE ($1='' OR o.tenant_id=$1) AND NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='wallet_opening' AND f.source_id=o.id)),
  (SELECT count(*) FROM funding_receipts f WHERE ($1='' OR f.tenant_id=$1) AND
-  ((f.source_kind='manual_credit' AND NOT EXISTS(SELECT 1 FROM credit_orders c WHERE c.id=f.source_id AND c.state='approved')) OR
+  ((f.source_kind IN ('manual_credit','manual_bonus','manual_unknown') AND NOT EXISTS(SELECT 1 FROM credit_orders c WHERE c.id=f.source_id AND c.state='approved' AND wallet_credit_pair_valid(c.id))) OR
    (f.source_kind='voucher_grant' AND NOT EXISTS(SELECT 1 FROM voucher_redemptions r WHERE r.voucher_id=f.source_id AND r.funding_receipt_id=f.id)) OR
    (f.source_kind='sandbox_capture' AND NOT EXISTS(SELECT 1 FROM payment_captures c JOIN payment_orders o ON o.id=c.order_id WHERE c.id=f.source_id AND c.tenant_id=f.tenant_id AND o.tenant_id=f.tenant_id)) OR
    (f.source_kind='wallet_opening' AND NOT EXISTS(SELECT 1 FROM wallet_openings o WHERE o.id=f.source_id AND o.tenant_id=f.tenant_id)) OR
-   f.source_kind NOT IN ('manual_credit','voucher_grant','sandbox_capture','wallet_opening'))),
+   f.source_kind NOT IN ('manual_credit','manual_bonus','manual_unknown','voucher_grant','sandbox_capture','wallet_opening'))),
  (SELECT count(*) FROM credit_orders c WHERE ($1='' OR c.tenant_id=$1) AND
-  ((c.state='approved' AND NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='manual_credit' AND f.source_id=c.id AND f.tenant_id=c.tenant_id AND f.amount=c.amount AND f.journal_id=c.journal_id)) OR
-   (c.state='pending' AND (c.journal_id IS NOT NULL OR c.approver IS NOT NULL OR EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='manual_credit' AND f.source_id=c.id)))))+
+  ((c.state='approved' AND NOT wallet_credit_pair_valid(c.id)) OR
+   (c.state='pending' AND (c.journal_id IS NOT NULL OR c.approver IS NOT NULL OR EXISTS(SELECT 1 FROM funding_receipts f WHERE f.parent_ref=c.id)))))+
  (SELECT count(*) FROM wallet_openings o WHERE ($1='' OR o.tenant_id=$1) AND NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='wallet_opening' AND f.source_id=o.id AND f.tenant_id=o.tenant_id AND f.amount=o.amount AND wallet_opening_journal_valid(f.journal_id)))+
  (SELECT count(*) FROM payment_captures c LEFT JOIN payment_orders o ON o.id=c.order_id WHERE ($1='' OR o.tenant_id=$1)
   AND NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='sandbox_capture' AND f.source_id=c.id AND payment_sandbox_journal_valid(f.journal_id)))+
@@ -61,8 +61,8 @@ func verifyFundingTx(ctx context.Context, tx pgx.Tx, tenant string) (FundingChec
   WHERE ($1='' OR o.tenant_id=$1) AND (c.id IS NULL OR NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='sandbox_capture' AND f.source_id=c.id AND payment_sandbox_journal_valid(f.journal_id))))+
  (SELECT count(*) FROM audit_events a LEFT JOIN payment_captures c ON c.id=a.target LEFT JOIN payment_orders o ON o.id=c.order_id
   WHERE a.action='payment.capture.credited' AND ($1='' OR o.tenant_id=$1) AND (c.id IS NULL OR NOT EXISTS(SELECT 1 FROM funding_receipts f WHERE f.source_kind='sandbox_capture' AND f.source_id=c.id AND payment_sandbox_journal_valid(f.journal_id)))),
- (SELECT count(*) FROM journals j WHERE ($1='' OR j.tenant_id=$1) AND j.kind IN ('credit','voucher_grant','sandbox_capture','wallet_opening') AND NOT funding_journal_valid(j.id))+
- (SELECT count(*) FROM funding_receipts f JOIN journals j ON j.id=f.journal_id WHERE ($1='' OR f.tenant_id=$1) AND j.kind NOT IN ('credit','voucher_grant','sandbox_capture','wallet_opening')),
+ (SELECT count(*) FROM journals j WHERE ($1='' OR j.tenant_id=$1) AND j.kind IN ('credit','credit_bonus','voucher_grant','sandbox_capture','wallet_opening') AND NOT funding_journal_valid(j.id))+
+ (SELECT count(*) FROM funding_receipts f JOIN journals j ON j.id=f.journal_id WHERE ($1='' OR f.tenant_id=$1) AND j.kind NOT IN ('credit','credit_bonus','voucher_grant','sandbox_capture','wallet_opening')),
  (SELECT count(*) FROM projection_outbox o WHERE ($1='' OR o.tenant_id=$1) AND o.kind='credited' AND NOT EXISTS(
   SELECT 1 FROM journals j JOIN funding_receipts f ON f.journal_id=j.id WHERE j.operation_id=o.operation_id AND j.tenant_id=o.tenant_id AND o.schema_version=1 AND jsonb_typeof(o.sanitized_payload->'amount')='string' AND o.sanitized_payload->>'amount'=f.amount::text AND funding_journal_valid(j.id)))+
  (SELECT count(*) FROM funding_receipts f JOIN journals j ON j.id=f.journal_id WHERE ($1='' OR f.tenant_id=$1) AND (SELECT count(*) FROM projection_outbox o WHERE o.operation_id=j.operation_id AND o.kind='credited')<>1),
@@ -74,7 +74,7 @@ func verifyFundingTx(ctx context.Context, tx pgx.Tx, tenant string) (FundingChec
  (SELECT count(*) FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id JOIN journals j ON j.id=l.journal_id
   WHERE ($1='' OR j.tenant_id=$1) AND a.kind IN ('FUNDING_CLEARING','OPERATING_GRANT_CLEARING','SANDBOX_FUNDING_CLEARING','WALLET_OPENING_CLEARING') AND NOT funding_journal_valid(j.id))+
  (SELECT count(*) FROM funding_receipts f JOIN journals j ON j.id=f.journal_id WHERE ($1='' OR f.tenant_id=$1) AND NOT EXISTS(
-  SELECT 1 FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id WHERE l.journal_id=j.id AND a.tenant_id IS NULL AND a.kind=CASE f.source_kind WHEN 'manual_credit' THEN 'FUNDING_CLEARING' WHEN 'voucher_grant' THEN 'OPERATING_GRANT_CLEARING' WHEN 'sandbox_capture' THEN 'SANDBOX_FUNDING_CLEARING' WHEN 'wallet_opening' THEN 'WALLET_OPENING_CLEARING' END AND l.signed_delta=-f.amount)),
+  SELECT 1 FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id WHERE l.journal_id=j.id AND a.tenant_id IS NULL AND a.kind=CASE f.source_kind WHEN 'manual_credit' THEN 'FUNDING_CLEARING' WHEN 'manual_bonus' THEN 'OPERATING_GRANT_CLEARING' WHEN 'manual_unknown' THEN 'OPERATING_GRANT_CLEARING' WHEN 'voucher_grant' THEN 'OPERATING_GRANT_CLEARING' WHEN 'sandbox_capture' THEN 'SANDBOX_FUNDING_CLEARING' WHEN 'wallet_opening' THEN 'WALLET_OPENING_CLEARING' END AND l.signed_delta=-f.amount)),
  (SELECT count(*) FROM payment_transaction_identities i LEFT JOIN payment_orders o ON o.id=i.order_id WHERE ($1='' OR o.tenant_id=$1) AND
   (NOT payment_identity_valid(i.id)
    OR NOT EXISTS(SELECT 1 FROM payment_evidence_processing p WHERE p.evidence_id=i.evidence_id AND p.generation=i.processing_generation AND p.state IN ('processed','processing_review'))

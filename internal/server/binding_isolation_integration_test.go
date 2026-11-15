@@ -209,7 +209,7 @@ func TestPostgresContextLengthExceededDoesNotIsolateBindingAcrossTenants(t *test
 			t.Fatal(err)
 		}
 	}
-	credit, err := f.server.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: otherTenant, ActorID: operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:context-length", Amount: 1000, IdempotencyKey: uuid.NewString(), RequestHMAC: "context-length-credit"})
+	credit, err := f.server.Billing.CreateCredit(ctx, billing.CreditInput{TenantID: otherTenant, ActorID: operator, BusinessRef: uuid.NewString(), ProofRef: "receipt:context-length", Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, IdempotencyKey: uuid.NewString(), RequestHMAC: "context-length-credit"})
 	if err != nil {
 		t.Fatal(err)
 	}

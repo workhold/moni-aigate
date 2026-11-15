@@ -12,10 +12,12 @@ RUN go mod download
 COPY . .
 COPY --from=console /src/web/dist ./web/dist
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /moni-aigate ./cmd/moni-aigate
+RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /mock-upstream ./scripts/mock-upstream
 
 FROM alpine:3.23
 RUN apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
 COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
+COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
 USER moni
 WORKDIR /app
 EXPOSE 8080

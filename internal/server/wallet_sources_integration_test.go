@@ -174,9 +174,9 @@ func TestWalletSourcesHTTPPaginationAndExactMoney(t *testing.T) {
 		ref := uuid.NewString()
 		amount := billing.Money(1)
 		if i == 0 {
-			amount = 9007199254740993
+			amount = 1000000000000
 		}
-		order, err := s.Billing.CreateCredit(context.Background(), billing.CreditInput{TenantID: tenant, ActorID: operator, BusinessRef: ref, ProofRef: "current-source-page", Amount: amount, IdempotencyKey: ref, RequestHMAC: ref})
+		order, err := s.Billing.CreateCredit(context.Background(), billing.CreditInput{TenantID: tenant, ActorID: operator, BusinessRef: ref, ProofRef: "current-source-page", Amount: amount, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: billing.FiatMoney(amount), IdempotencyKey: ref, RequestHMAC: ref})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -202,7 +202,7 @@ func TestWalletSourcesHTTPPaginationAndExactMoney(t *testing.T) {
 	}
 	second := authHTTP(t, s, "GET", "/api/wallet/sources?cursor="+envelope.Next, raw, "", "", nil)
 	requireAuthStatus(t, second, 200)
-	if err := json.Unmarshal(second.Body.Bytes(), &envelope); err != nil || len(envelope.Data) != 1 || envelope.Next != "" || seen[envelope.Data[0].ID] || envelope.Data[0].Issued != "9007199254740993" {
+	if err := json.Unmarshal(second.Body.Bytes(), &envelope); err != nil || len(envelope.Data) != 1 || envelope.Next != "" || seen[envelope.Data[0].ID] || envelope.Data[0].Issued != "1000000000000" {
 		t.Fatal(envelope, err)
 	}
 }

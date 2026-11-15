@@ -17,8 +17,9 @@ import (
 const pricingTimeLayout = "2006-01-02T15:04:05.000000Z"
 
 type PricingError struct {
-	Code          string
-	CommitUnknown bool
+	Code            string
+	CommitUnknown   bool
+	MissingModelIDs []string
 }
 
 func (e *PricingError) Error() string { return e.Code }
@@ -35,6 +36,12 @@ type GroupPriceCommand struct {
 	SchemaID, SchemaDigest, VariantKey string
 	InputRate, OutputRate              int64
 	EffectiveAt                        time.Time
+}
+type GroupPriceCompileCommand struct {
+	OperationID, GroupID, Multiplier string
+	ModelIDs                         []string
+	EffectiveAt                      time.Time
+	ExpectedBaseVersionIDs           map[string]string
 }
 type DefaultPriceCommand struct {
 	OperationID, ModelID, SchemaID, SchemaDigest, VariantKey string
@@ -75,6 +82,21 @@ type GroupPriceView struct {
 	Rates        json.RawMessage `json:"rates"`
 	EffectiveAt  string          `json:"effective_at"`
 	CreatedAt    string          `json:"created_at"`
+}
+type GroupPriceCompileItem struct {
+	ModelID            string  `json:"model_id"`
+	BasePriceVersionID string  `json:"base_price_version_id"`
+	BaseInputRate      string  `json:"base_input_rate"`
+	BaseOutputRate     string  `json:"base_output_rate"`
+	InputRate          string  `json:"input_rate"`
+	OutputRate         string  `json:"output_rate"`
+	PriceVersionID     *string `json:"price_version_id"`
+}
+type GroupPriceCompileView struct {
+	GroupID     string                  `json:"group_id"`
+	Multiplier  string                  `json:"multiplier"`
+	EffectiveAt string                  `json:"effective_at"`
+	Items       []GroupPriceCompileItem `json:"items"`
 }
 type DefaultPriceView struct {
 	ID           string          `json:"id"`
@@ -118,15 +140,16 @@ type RetailPriceView struct {
 	AsOf           string          `json:"as_of"`
 }
 type PricingOperationView struct {
-	OperationID      string  `json:"operation_id"`
-	Kind             string  `json:"kind"`
-	Scope            string  `json:"scope"`
-	Actor            string  `json:"actor"`
-	Target           string  `json:"target"`
-	InputFingerprint string  `json:"input_fingerprint"`
-	ResourceID       string  `json:"resource_id"`
-	Revision         *string `json:"revision"`
-	CreatedAt        string  `json:"created_at"`
+	OperationID             string  `json:"operation_id"`
+	Kind                    string  `json:"kind"`
+	Scope                   string  `json:"scope"`
+	Actor                   string  `json:"actor"`
+	Target                  string  `json:"target"`
+	InputFingerprint        string  `json:"input_fingerprint"`
+	PreCoinInputFingerprint *string `json:"pre_coin_input_fingerprint"`
+	ResourceID              string  `json:"resource_id"`
+	Revision                *string `json:"revision"`
+	CreatedAt               string  `json:"created_at"`
 }
 type PricingOperationReceipt struct {
 	Operation PricingOperationView `json:"operation"`
@@ -200,8 +223,14 @@ func pricingFingerprint(kind, actor, scope, target string, safe map[string]any) 
 		fields = []string{"label"}
 	case "price_group.update":
 		fields = []string{"expected_revision", "label", "state"}
+	case "model_alias.create":
+		fields = []string{"model_id", "alias"}
+	case "model_alias.retire":
+		fields = []string{"alias", "expected_revision"}
 	case "group_price.publish":
 		fields = []string{"model_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at"}
+	case "group_price.compile":
+		fields = []string{"multiplier", "model_ids", "effective_at", "expected_base_version_ids"}
 	case "default_price.publish":
 		fields = []string{"model_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at"}
 	case "cost_price.publish":
@@ -210,12 +239,28 @@ func pricingFingerprint(kind, actor, scope, target string, safe map[string]any) 
 		fields = []string{"expected_revision", "price_group_id"}
 	}
 	for _, f := range fields {
-		if safe[f] == nil {
+		value := safe[f]
+		if kind == "group_price.compile" && f == "expected_base_version_ids" {
+			if expected, ok := value.(map[string]string); ok && expected == nil {
+				value = nil
+			}
+		}
+		if value == nil {
 			parts = append(parts, nil)
 		} else {
-			v, ok := safe[f].(string)
+			v, ok := value.(string)
 			if !ok {
-				v = string(safe[f].(json.RawMessage))
+				switch value := value.(type) {
+				case json.RawMessage:
+					v = string(value)
+				default:
+					raw, err := json.Marshal(value)
+					if err != nil {
+						v = ""
+					} else {
+						v = string(raw)
+					}
+				}
 			}
 			parts = append(parts, &v)
 		}
@@ -230,6 +275,8 @@ func pricingDecodeResult(kind string, raw []byte) (any, error) {
 		dst = &GroupView{}
 	case "group_price.publish":
 		dst = &GroupPriceView{}
+	case "group_price.compile":
+		dst = &GroupPriceCompileView{}
 	case "default_price.publish":
 		dst = &DefaultPriceView{}
 	case "cost_price.publish":
@@ -265,10 +312,21 @@ func validPricingResult(value any, raw []byte) bool {
 		valid = pricingID(v.ID) && pricingLabel(v.Label) && (v.State == "active" || v.State == "retired") && pricingDecimal(v.Revision, true) && pricingWireTime(v.CreatedAt)
 	case *GroupPriceView:
 		keys = []string{"id", "model_id", "price_group_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at", "created_at"}
-		valid = pricingID(v.ID) && pricingID(v.ModelID) && pricingID(v.PriceGroupID) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "CNY" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
+		valid = pricingID(v.ID) && pricingID(v.ModelID) && pricingID(v.PriceGroupID) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "COIN" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
+	case *GroupPriceCompileView:
+		keys = []string{"group_id", "multiplier", "effective_at", "items"}
+		valid = pricingID(v.GroupID) && validGroupMultiplier(v.Multiplier) && pricingWireTime(v.EffectiveAt) && len(v.Items) >= 1 && len(v.Items) <= 100
+		seen := make(map[string]bool, len(v.Items))
+		for _, item := range v.Items {
+			if !pricingID(item.ModelID) || seen[item.ModelID] || !pricingID(item.BasePriceVersionID) || !pricingDecimal(item.BaseInputRate, false) || !pricingDecimal(item.BaseOutputRate, false) || !pricingDecimal(item.InputRate, false) || !pricingDecimal(item.OutputRate, false) || item.PriceVersionID != nil && !pricingID(*item.PriceVersionID) {
+				valid = false
+				break
+			}
+			seen[item.ModelID] = true
+		}
 	case *DefaultPriceView:
 		keys = []string{"id", "model_id", "price_group_id", "schema_id", "schema_digest", "variant_key", "currency", "rates", "effective_at", "created_at"}
-		valid = pricingID(v.ID) && pricingID(v.ModelID) && v.PriceGroupID == nil && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "CNY" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
+		valid = pricingID(v.ID) && pricingID(v.ModelID) && v.PriceGroupID == nil && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "COIN" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
 	case *CostPriceView:
 		keys = []string{"id", "channel_id", "upstream_model", "schema_id", "schema_digest", "variant_key", "currency", "basis", "rates", "effective_at", "created_at", "expected_channel_revision", "channel_revision"}
 		valid = pricingID(v.ID) && pricingID(v.ChannelID) && validUpstreamModel(v.UpstreamModel) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "CNY" && (v.Basis == "contract" || v.Basis == "invoice" || v.Basis == "unknown") && pricingDecimal(v.ExpectedChannelRevision, true) && pricingDecimal(v.ChannelRevision, true) && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)

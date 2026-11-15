@@ -2,12 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { ApiError } from '../src/api.ts'
 import { money } from '../src/format.ts'
-import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../src/operating-report.ts'
+import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFiatMapText, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../src/operating-report.ts'
 
 const tenant = '11111111-1111-4111-8111-111111111111', model = '22222222-2222-4222-8222-222222222222', schema = '33333333-3333-4333-8333-333333333333'
 const draft = { from: '2026-11-01T08:00:00+08:00', to: '2026-11-02T08:00:00+08:00', tenant_id: '', model_id: '', protocol: '', execution_kind: '' }
-const totals = { request_count: 1, unsettled_requests: 0, attempt_count: 2, unknown_provider_costs: 0, charged: '9007199254740993', refunded: '1', net_revenue: '9007199254740992', known_provider_cost: '2', gross_margin: '9007199254740990' }
-const report = (amount = totals.charged) => ({ from: '2026-11-01T00:00:00Z', to: '2026-11-02T00:00:00Z', as_of: '2026-11-02T01:00:00Z', currency: 'CNY', amount_unit: 'micro_cny', scope: 'request_created_window', summary: { ...totals, charged: amount }, models: [], channels: [], requests: [] })
+const totals = { request_count: 1, unsettled_requests: 0, attempt_count: 2, unknown_provider_costs: 0, charged: '9007199254740993', refunded: '1', net_revenue: '9007199254740992', known_provider_cost: '2', gross_margin: '9007199254740990', payment_basis: { CNY: '9007199254740992' }, cash_refunded: { CNY: '7', USD: '8' } }
+const report = (amount = totals.charged) => ({ from: '2026-11-01T00:00:00Z', to: '2026-11-02T00:00:00Z', as_of: '2026-11-02T01:00:00Z', currency: 'COIN', amount_unit: 'micro_coin', scope: 'request_created_window', summary: { ...totals, charged: amount }, models: [], channels: [], requests: [] })
 
 test('operating report parser rejects old token/rate projections and preserves exact report totals', () => {
   const value = parseOperatingReport(report())
@@ -16,6 +16,23 @@ test('operating report parser rejects old token/rate projections and preserves e
   assert.throws(() => parseOperatingReport({ ...report(), summary: { ...totals, output_tokens: 1 } }), /旧标量|未定义/)
 })
 
+test('operating report parser separates COIN consumption from exact per-currency payment and cash refund facts', () => {
+  const value = parseOperatingReport(report())
+  assert.equal(value.currency, 'COIN')
+  assert.equal(value.amount_unit, 'micro_coin')
+  assert.deepEqual(value.summary.payment_basis, { CNY: '9007199254740992' })
+  assert.deepEqual(value.summary.cash_refunded, { CNY: '7', USD: '8' })
+  assert.equal(operatingFiatMapText({ CNY: '1000000', USD: '2000001' }), '¥1.000000 · $2.000001')
+  assert.equal(operatingFiatMapText({ USD: '-2000001' }), '−$2.000001')
+  assert.equal(operatingFiatMapText({}), '—')
+  for (const summary of [
+    { ...totals, payment_basis: { EUR: '1' } },
+    { ...totals, payment_basis: { CNY: 1 } },
+    { ...totals, cash_refunded: { USD: '01' } },
+    { ...totals, cash_refunded: null },
+  ]) assert.throws(() => parseOperatingReport({ ...report(), summary }), /旧标量|未定义/)
+  for (const patch of [{ currency: 'CNY' }, { amount_unit: 'micro_cny' }]) assert.throws(() => parseOperatingReport({ ...report(), ...patch }))
+})
 test('operating report parser keeps current media protocols and asynchronous tasks', () => {
   const value = parseOperatingReport({ ...report(), requests: [{ request_id: 'task', tenant_id: tenant, tenant_name: 'tenant', model_id: 'mock-video-generation', model_name: 'video', status: 'succeeded', billing_status: 'settled', created_at: '2026-11-02T00:00:00Z', protocol: 'video_generation', execution_kind: 'asynchronous', profile_version: '10000000-0000-4000-8000-000000000001', schema_id: schema, schema_digest: 'ab'.repeat(32), variant_key: 'default', ...totals }] })
   assert.equal(value.requests[0].protocol, 'video_generation')
@@ -108,7 +125,7 @@ test('money remains exact beyond safe integers and unresolved costs or settlemen
   assert.equal(operatingMarginText(totals), '¥9,007,199,254.740990')
   assert.equal(operatingMarginText({ ...totals, gross_margin: '-1000001' }), '−¥1.000001')
   assert.equal(operatingMarginText({ ...totals, request_count: 0, attempt_count: 0, charged: '0', gross_margin: '0' }), '¥0.000000')
-  for (const patch of [{ gross_margin: null }, { unsettled_requests: 1 }, { unknown_provider_costs: 1 }]) {
+  for (const patch of [{ gross_margin: null }, { unsettled_requests: 1 }, { unknown_provider_costs: 1 }, { payment_basis: { USD: '3' } }]) {
     assert.equal(operatingMarginKnown({ ...totals, ...patch }), false)
     assert.equal(operatingMarginText({ ...totals, ...patch }), '待核对')
   }

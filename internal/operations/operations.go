@@ -44,6 +44,20 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e != nil {
 		return e
 	}
+	// Current alias/compile helpers are invoker-only and scoped to APP. The
+	// historical provisioning fixtures deliberately do not have this append
+	// schema, so the current-only grants are conditional on its table marker.
+	var phase1Aliases bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='model_aliases')`, schema).Scan(&phase1Aliases); e != nil {
+		return e
+	}
+	if phase1Aliases {
+		for _, signature := range []string{"phase1_model_name_lock(text)", "pricing_model_alias_result(" + table("model_aliases") + ")", "phase1_compile_models(jsonb)", "phase1_compile_expected(jsonb)"} {
+			if _, e = tx.Exec(ctx, "GRANT EXECUTE ON FUNCTION "+qs+"."+signature+" TO "+qa); e != nil {
+				return e
+			}
+		}
+	}
 	// Customer money changes only the balance, never account ownership or kind.
 	// The current payment/wallet ACL pass below also clears any old column grants.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;
@@ -74,6 +88,24 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e != nil {
 		return e
 	}
+	var pairedWalletSources bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='credit_orders' AND a.attname='basis_kind' AND NOT a.attisdropped)`, schema).Scan(&pairedWalletSources); e != nil {
+		return e
+	}
+	if pairedWalletSources {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`GRANT UPDATE(single_operator) ON %s TO %s`, table("credit_orders"), qa)); e != nil {
+			return e
+		}
+	}
+	var coinDisplay bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='coin_display_versions')`, schema).Scan(&coinDisplay); e != nil {
+		return e
+	}
+	if coinDisplay {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s`, table("coin_display_versions"), qa)); e != nil {
+			return e
+		}
+	}
 	// Revoke table-level UPDATE before granting the pricing/lifecycle columns.
 	// Repeated provisioning must not restore broad writes from the initial grant.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s,%s FROM %s;
@@ -92,6 +124,13 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 	if e != nil {
 		return e
 	}
+	if phase1Aliases {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;
+ GRANT UPDATE(state,revision,operation_id,retired_at) ON %s TO %s;
+ REVOKE ALL ON %s FROM %s;`, table("model_aliases"), qa, table("model_aliases"), qa, table("model_aliases"), qp)); e != nil {
+			return e
+		}
+	}
 	// Alerts observe business rows with existing SELECT privileges. Their
 	// protected history is writable only through the closed alert state machine.
 	alertTables := strings.Join([]string{table("alert_control"), table("alert_commands"), table("alert_rules"), table("alert_rule_runtime"), table("alert_episodes"), table("alert_episode_events")}, ",")
@@ -107,6 +146,11 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 		table("alert_episode_events"), qa))
 	if e != nil {
 		return e
+	}
+	for _, signature := range []string{"alert_parameters(text,jsonb)", "alert_snapshot(jsonb)", "alert_sample(jsonb,text)"} {
+		if _, e = tx.Exec(ctx, "GRANT EXECUTE ON FUNCTION "+qs+"."+signature+" TO "+qa); e != nil {
+			return e
+		}
 	}
 	if e = verifyAlertRolesFor(ctx, tx, schema, appRole, projectionRole); e != nil {
 		return e

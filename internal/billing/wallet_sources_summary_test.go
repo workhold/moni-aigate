@@ -47,7 +47,7 @@ func TestPostgresWalletSourcesSummaryFourSourcesAndOpeningProjection(t *testing.
 	x.finish(t, tx, capture, evidence)
 
 	summary, err := v.GetFundingSummary(f.ctx, reader)
-	if err != nil || summary.Currency != "CNY" || summary.TotalAmount != "305" || summary.ManualCreditAmount != "31" || summary.VoucherGrantAmount != "17" || summary.SandboxCaptureAmount != "100" || summary.WalletOpeningAmount != "157" || summary.AsOf.IsZero() {
+	if err != nil || summary.Currency != "COIN" || summary.TotalAmount != "305" || summary.ManualCreditAmount != "31" || summary.VoucherGrantAmount != "17" || summary.SandboxCaptureAmount != "100" || summary.WalletOpeningAmount != "157" || summary.AsOf.IsZero() {
 		t.Fatal("four source summary", summary, err)
 	}
 	classified := new(big.Int)
@@ -66,7 +66,7 @@ func TestPostgresWalletSourcesSummaryFourSourcesAndOpeningProjection(t *testing.
 		t.Fatal(err)
 	}
 	var fields map[string]json.RawMessage
-	if err = json.Unmarshal(wire, &fields); err != nil || len(fields) != 7 || string(fields["wallet_opening_amount"]) != `"157"` {
+	if err = json.Unmarshal(wire, &fields); err != nil || len(fields) != 9 || string(fields["wallet_opening_amount"]) != `"157"` || string(fields["manual_bonus_amount"]) != `"0"` || string(fields["manual_unknown_amount"]) != `"0"` {
 		t.Fatal("current summary DTO did not expose the fourth exact amount", string(wire), err)
 	}
 	seedSummary, err := v.GetFundingSummary(f.ctx, VoucherReader{ActorID: f.user, TenantID: seedTenant})
@@ -90,7 +90,7 @@ func TestPostgresWalletSourcesSummaryFourSourcesAndOpeningProjection(t *testing.
 	seen := map[FundingSourceKind]bool{}
 	for _, receipt := range all.Data {
 		want, ok := expected[receipt.SourceKind]
-		if !ok || seen[receipt.SourceKind] || receipt.TenantID != f.tenant || receipt.SourceID != want.source || receipt.Amount != want.amount || receipt.Currency != "CNY" || receipt.JournalID == "" {
+		if !ok || seen[receipt.SourceKind] || receipt.TenantID != f.tenant || receipt.SourceID != want.source || receipt.Amount != want.amount || receipt.Currency != "COIN" || receipt.JournalID == "" {
 			t.Fatal("current receipt list has a wrong source identity or amount", receipt)
 		}
 		seen[receipt.SourceKind] = true

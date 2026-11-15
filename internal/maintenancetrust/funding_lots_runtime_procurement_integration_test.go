@@ -74,7 +74,7 @@ func runtimePrepareActiveProcurementConfigured(t *testing.T, pool, business *pgx
 	store := billing.New(business)
 	creditID := uuid.NewString()
 	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: h.tenant, ActorID: operator, BusinessRef: creditID,
-		ProofRef: "receipt:runtime-active-procurement", Amount: 1000, IdempotencyKey: creditID, RequestHMAC: creditID})
+		ProofRef: "receipt:runtime-active-procurement", Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, IdempotencyKey: creditID, RequestHMAC: creditID})
 	if err != nil {
 		t.Fatal("active procurement original credit proposal", err)
 	}

@@ -47,7 +47,7 @@ func (e *Environment) fund(ctx context.Context) error {
 		}
 	}
 	s := billing.New(p)
-	in := billing.CreditInput{TenantID: tenant, ActorID: maker, Amount: 1000, BusinessRef: "bank:qa:" + uuid.NewString(), ProofRef: "proof:qa:verified", IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString()}
+	in := billing.CreditInput{TenantID: tenant, ActorID: maker, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: "bank:qa:" + uuid.NewString(), ProofRef: "proof:qa:verified", IdempotencyKey: uuid.NewString(), RequestHMAC: uuid.NewString()}
 	order, err := s.CreateCredit(ctx, in)
 	if err != nil {
 		return stage("credit")

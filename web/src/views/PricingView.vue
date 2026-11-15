@@ -37,7 +37,7 @@ onBeforeUnmount(() => { clearTimeout(filterTimer); pager.dispose(); controller?.
       <div class="eyebrow">MODELS &amp; RETAIL PRICING</div>
       <h1>看清模型能力，<br class="pricing-mobile-break" />再开始接入。</h1>
       <p>查看平台公开模型的协议、产品限制与公共默认售价，选择适合你的 AI API。账号实际价以当前租户价格域为准。</p>
-      <div class="pricing-facts"><span><span class="status-dot" /> 公共默认价 · CNY / 百万计费 Tokens</span><span>价格由实际调用时的服务端冻结</span></div>
+      <div class="pricing-facts"><span><span class="status-dot" /> 公共默认价 · COIN / 百万计费 Tokens</span><span>价格由实际调用时的服务端冻结</span></div>
     </section>
 
     <section class="pricing-catalog" aria-label="公开模型目录">

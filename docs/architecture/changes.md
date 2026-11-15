@@ -6119,6 +6119,164 @@ align the HLD link label with the renumbered external upstream contract
 
 </details>
 
+## 2026-11-13T09:11:05Z · 3278d1a7e352
+
+迁移模型别名、分组倍率编译与确定性多协议 mock，并同步当前迁移、目录、billing、Compose 与验收文档
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2171 个源文件；本次 67 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/phase1/031-mock-harness.md`
+- added `docs/verification/phase1/P1-CAT-02.md`
+- added `docs/verification/phase1/P1-PR-02.md`
+- modified `docs/verification/unified-metering.md`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/voucher_roles_integration_test.go`
+- added `internal/catalog/alias_reader_contract_test.go`
+- modified `internal/catalog/credential_pool_integration_test.go`
+- added `internal/catalog/group_price_compile.go`
+- added `internal/catalog/group_price_compile_test.go`
+- added `internal/catalog/model_alias.go`
+- added `internal/catalog/model_alias_test.go`
+- added `internal/catalog/phase1_alignment_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_types.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_integration_test.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- added `internal/server/alias_reader_contract_test.go`
+- modified `internal/server/auth_integration_test.go`
+- modified `internal/server/gateway.go`
+- modified `internal/server/gateway_integration_test.go`
+- added `internal/server/model_alias_handlers.go`
+- added `internal/server/model_alias_handlers_test.go`
+- modified `internal/server/pricing_handlers.go`
+- modified `internal/server/pricing_input.go`
+- modified `internal/server/pricing_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- added `internal/testsupport/mockupstream/config.go`
+- added `internal/testsupport/mockupstream/config_test.go`
+- added `internal/testsupport/mockupstream/provider_contract_test.go`
+- added `internal/testsupport/mockupstream/server.go`
+- added `internal/testsupport/mockupstream/server_test.go`
+- modified `migrations/current.go`
+- added `migrations/current_002_phase1_aliases.sql`
+- modified `scripts/deployment-business-provision.sh`
+- modified `scripts/deployment-business-qa.test.sh`
+- deleted `scripts/deployment-qa-provider.py`
+- added `scripts/mock-upstream/business-qa.json`
+- added `scripts/mock-upstream/main.go`
+- added `scripts/phase1-mock-acceptance.py`
+- added `scripts/phase1-mock-acceptance.sh`
+- added `scripts/phase1-mock-acceptance.test.sh`
+- modified `specs/029-phase1-acceptance/spec.md`
+- added `specs/030-model-aliases-group-multipliers/a-alias-periphery-contract.md`
+- added `specs/030-model-aliases-group-multipliers/integration-contract.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- added `web/src/components/GroupMultiplierCompiler.vue`
+- added `web/src/components/ModelAliases.vue`
+- modified `web/src/components/PricingWriter.vue`
+- modified `web/src/customer-pricing.ts`
+- added `web/src/model-aliases.ts`
+- modified `web/src/pricing.ts`
+- modified `web/src/public-catalog.ts`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PriceGroupsView.vue`
+- added `web/tests/model-aliases.test.mjs`
+- modified `web/tests/pricing.test.mjs`
+
+</details>
+
+## 2026-11-13T16:15:11Z · 6286f7ec4ffd
+
+收口 0 阶段外部上游：current-only channel kind/mode、relay/probe、route revision 回退、current fixture 修复及 030/031/Compose 验证记录；真实上游与三库拓扑仍标为未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2176 个源文件；本次 25 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/phase0-external-upstream.md`
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `docs/verification/phase1/P1-CAT-02.md`
+- modified `docs/verification/phase1/P1-PR-02.md`
+- modified `internal/catalog/cost_policy_integration_test.go`
+- added `internal/catalog/route_activate.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/verifier_integration_test.go`
+- modified `internal/server/catalog_handlers.go`
+- added `internal/server/external_relay_integration_test.go`
+- added `internal/server/model_alias_gateway_integration_test.go`
+- modified `internal/server/probe.go`
+- modified `internal/server/public_catalog_integration_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- modified `internal/testsupport/mockupstream/server.go`
+- modified `internal/testsupport/mockupstream/server_test.go`
+- modified `migrations/current.go`
+- added `migrations/current_003_external_channels.sql`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>
+
+## 2026-11-13T16:27:44Z · 34dae2a5c461
+
+补强 035 route revision 回退：目标 channel/credential 固定锁序，拒绝整池撤销及并发撤销竞态；补专用 PostgreSQL 负向测试并同步验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2176 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/LLD.md`
+- modified `docs/verification/phase0-external-upstream.md`
+- modified `internal/catalog/route_activate.go`
+- modified `internal/server/external_relay_integration_test.go`
+
+</details>
+
+## 2026-11-13T17:08:21Z · 474a9be974b0
+
+修正实际主进程 fixture 清理边界：当前基线删库与角色清理由共享 10 秒改为有界 30 秒；业务状态机不变，支付失败确认为专用库时区环境恢复，不修改冻结清单
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2176 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/alert_main_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+
+</details>
+
+## 2026-11-13T18:37:27Z · 87d8e6809697
+
+创建 local-mvp 基线并冻结 032 缓存/熔断/预算、033 动态路由/物理计量/回放、034 虚拟币五桶/现金退款实施合同；仅设计冻结，未把规划能力写成已实现
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2179 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `specs/032-phase2-text-data-plane/implementation-freeze.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- added `specs/033-text-dynamic-routing/implementation-freeze.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- added `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
 ## 2026-11-13T19:18:07Z · 67815182e87b
 
 部署定位修订：产品定位从“自托管/1Panel 体验”改为仓库自带 Compose/脚本部署，1Panel 等面板降为可选部署环境、非验收门禁；同步 README、统一架构、HLD、overview、四阶段路线、交付计划、new-api 路线图、上游接入路线、ADR-001 及 001/014/025/028/029/035 规格；附带修复四阶段路线 0 阶段插入后小节未重编号导致的断链（小节归位 4.x/5.x/6.x，更新 029–034 与 new-api-roadmap 的锚点）
@@ -6198,6 +6356,160 @@ align the HLD link label with the renumbered external upstream contract
 
 </details>
 
+## 2026-11-13T20:15:21Z · 1e5660faedaf
+
+将合入 PR #6/#7 的 main 同步到 local-mvp：保留 032/033/034 实施冻结与真实上游 checkpoint，合并部署定位、运营恢复与 beta 加固，保留双方架构历史并复核冲突
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2186 个源文件；本次 38 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/user_command.go`
+- added `cmd/moni-aigate/user_command_test.go`
+- added `deploy/external-upstreams.compose.yaml`
+- modified `docs/decisions/ADR-001-source-strategy.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/overview.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- modified `docs/runbooks/deployment.md`
+- modified `docs/runbooks/development.md`
+- added `docs/runbooks/operator-account-recovery.md`
+- added `internal/identity/operator.go`
+- added `internal/identity/operator_integration_test.go`
+- modified `internal/provider/request_test.go`
+- modified `internal/provider/response.go`
+- modified `internal/provider/response_test.go`
+- modified `internal/provider/usage.go`
+- modified `scripts/backup-restore-drill.go`
+- added `scripts/external-upstream-qa.py`
+- modified `specs/001-commercial-mvp/contracts/provider.md`
+- modified `specs/001-commercial-mvp/spec.md`
+- modified `specs/014-mvp-release-qualification/spec.md`
+- modified `specs/025-production-ha/a0-compose-config-contract.md`
+- modified `specs/025-production-ha/acceptance.md`
+- modified `specs/025-production-ha/contract.md`
+- modified `specs/025-production-ha/spec.md`
+- modified `specs/028-unified-metering-media/spec.md`
+- modified `specs/029-phase1-acceptance/spec.md`
+- modified `specs/030-model-aliases-group-multipliers/spec.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `specs/035-external-upstream-integration/spec.md`
+
+</details>
+
+## 2026-11-13T20:29:54Z · 8c6fc3f6d948
+
+真实本地 New API/Sub2API 三服务三库拓扑验收：固定 New API e449cc7 与 Sub2API 10ba8f9/digest，三库与内部网络、JSON/SSE、唯一结算、receipt 和 route revision 回退通过；供应商资格仍标未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2186 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/verification/phase0-external-upstream.md`
+- modified `scripts/external-upstream-qa.py`
+
+</details>
+
+## 2026-11-14T04:08:13Z · 97838356cf2b
+
+034.1 COIN 单位、FiatMoney 类型边界与历史定价回执迁移；计量 canonical 与供应商/支付 CNY 保持不变；026 报表留到 034.5
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2191 个源文件；本次 68 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- added `docs/verification/034-coin-units.md`
+- added `internal/billing/fiat.go`
+- added `internal/billing/fiat_test.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/billing/funding_sandbox.go`
+- modified `internal/billing/voucher_integration_test.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_summary_test.go`
+- modified `internal/catalog/group_price_vector_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_publish.go`
+- modified `internal/catalog/pricing_queries.go`
+- modified `internal/catalog/pricing_types.go`
+- modified `internal/catalog/pricing_vector.go`
+- modified `internal/catalog/pricing_vector_test.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_test.go`
+- modified `internal/metering/types.go`
+- modified `internal/operations/funding_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/payments/processor_evidence.go`
+- modified `internal/payments/processor_test.go`
+- modified `internal/payments/processor_types.go`
+- modified `internal/payments/service_funding_read_test.go`
+- modified `internal/payments/service_query.go`
+- modified `internal/payments/service_types.go`
+- modified `internal/server/payment_handlers.go`
+- modified `internal/server/queries.go`
+- modified `internal/testsupport/meterquote/publish.go`
+- added `migrations/current_004_virtual_coin_units.sql`
+- added `migrations/virtual_coin_postgres_test.go`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/CommerceCommands.vue`
+- modified `web/src/components/CommerceWriter.vue`
+- modified `web/src/components/FundingPanel.vue`
+- modified `web/src/components/MetricMoney.vue`
+- modified `web/src/components/PaymentsPanel.vue`
+- modified `web/src/components/PeriodicBudgetPanel.vue`
+- modified `web/src/components/PeriodicBudgetWriter.vue`
+- modified `web/src/components/PricingWriter.vue`
+- modified `web/src/components/RequestFunding.vue`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/format.ts`
+- modified `web/src/key-configuration.ts`
+- modified `web/src/metering-wire.ts`
+- modified `web/src/pricing.ts`
+- modified `web/src/public-catalog.ts`
+- modified `web/src/views/KeysView.vue`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/OverviewView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PriceGroupsView.vue`
+- modified `web/src/views/PricingView.vue`
+- modified `web/src/views/ReportsView.vue`
+- modified `web/src/views/RequestsView.vue`
+- modified `web/src/views/VouchersView.vue`
+- modified `web/src/views/WalletView.vue`
+- modified `web/tests/commerce.test.mjs`
+- modified `web/tests/key-configuration.test.mjs`
+- modified `web/tests/metering-wire.test.mjs`
+- modified `web/tests/pricing-state.test.mjs`
+- modified `web/tests/pricing.test.mjs`
+- modified `web/tests/public-catalog-state.test.mjs`
+- modified `web/tests/public-catalog.test.mjs`
+
+</details>
+
+## 2026-11-14T04:12:19Z · dd16169f0c16
+
+034.1 完整本地验收：存量 COIN 迁移、历史定价回执重放、FiatMoney、前端单位与权限边界；完整 server/PG race、前端和文档已复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2191 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-coin-units.md`
+
+</details>
+
 ## 2026-11-14T03:32:58Z · 9608d9b45941
 
 034 冻结与开发方向审查：034 规格 D-034-1…13 全部裁决并标记已冻结；HLD §6.3、LLD §5.2.1、phase-roadmap 三处同步冻结状态；新增 docs/design/direction-review-2026-11-14.md 方向审查记录（含在途实现对照与不变量复核）；修正 034 §4 兑换券校验行号误差。纯文档变更，无代码/迁移影响
@@ -6211,5 +6523,558 @@ align the HLD link label with the renumbered external upstream contract
 - added `docs/design/direction-review-2026-11-14.md`
 - modified `docs/design/phase-roadmap.md`
 - modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-14T04:17:14Z · f6d69e8e7485
+
+PR #8 合入后回合 main 到 local-mvp；034 已冻结
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2192 个源文件；本次 146 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- added `deploy/external-upstreams.compose.yaml`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/034-coin-units.md`
+- added `docs/verification/phase0-external-upstream.md`
+- added `docs/verification/phase1/031-mock-harness.md`
+- added `docs/verification/phase1/P1-CAT-02.md`
+- added `docs/verification/phase1/P1-PR-02.md`
+- modified `docs/verification/unified-metering.md`
+- added `internal/billing/fiat.go`
+- added `internal/billing/fiat_test.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/billing/funding_sandbox.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/voucher_integration_test.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_roles_integration_test.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_summary_test.go`
+- added `internal/catalog/alias_reader_contract_test.go`
+- modified `internal/catalog/cost_policy_integration_test.go`
+- modified `internal/catalog/credential_pool_integration_test.go`
+- added `internal/catalog/group_price_compile.go`
+- added `internal/catalog/group_price_compile_test.go`
+- modified `internal/catalog/group_price_vector_integration_test.go`
+- added `internal/catalog/model_alias.go`
+- added `internal/catalog/model_alias_test.go`
+- added `internal/catalog/phase1_alignment_integration_test.go`
+- modified `internal/catalog/pricing_commands.go`
+- modified `internal/catalog/pricing_publish.go`
+- modified `internal/catalog/pricing_queries.go`
+- modified `internal/catalog/pricing_types.go`
+- modified `internal/catalog/pricing_vector.go`
+- modified `internal/catalog/pricing_vector_test.go`
+- modified `internal/catalog/public_catalog.go`
+- modified `internal/catalog/public_catalog_integration_test.go`
+- modified `internal/catalog/public_catalog_test.go`
+- added `internal/catalog/route_activate.go`
+- modified `internal/catalog/store.go`
+- modified `internal/metering/types.go`
+- modified `internal/operations/funding_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/operations_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/payments/processor_evidence.go`
+- modified `internal/payments/processor_test.go`
+- modified `internal/payments/processor_types.go`
+- modified `internal/payments/service_funding_read_test.go`
+- modified `internal/payments/service_query.go`
+- modified `internal/payments/service_types.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/verifier_integration_test.go`
+- modified `internal/server/alert_main_integration_test.go`
+- added `internal/server/alias_reader_contract_test.go`
+- modified `internal/server/auth_integration_test.go`
+- modified `internal/server/catalog_handlers.go`
+- added `internal/server/external_relay_integration_test.go`
+- modified `internal/server/gateway.go`
+- modified `internal/server/gateway_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- added `internal/server/model_alias_gateway_integration_test.go`
+- added `internal/server/model_alias_handlers.go`
+- added `internal/server/model_alias_handlers_test.go`
+- modified `internal/server/payment_handlers.go`
+- modified `internal/server/pricing_handlers.go`
+- modified `internal/server/pricing_input.go`
+- modified `internal/server/pricing_test.go`
+- modified `internal/server/probe.go`
+- modified `internal/server/public_catalog_integration_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/server.go`
+- modified `internal/testsupport/meterquote/publish.go`
+- added `internal/testsupport/mockupstream/config.go`
+- added `internal/testsupport/mockupstream/config_test.go`
+- added `internal/testsupport/mockupstream/provider_contract_test.go`
+- added `internal/testsupport/mockupstream/server.go`
+- added `internal/testsupport/mockupstream/server_test.go`
+- modified `migrations/current.go`
+- added `migrations/current_002_phase1_aliases.sql`
+- added `migrations/current_003_external_channels.sql`
+- added `migrations/current_004_virtual_coin_units.sql`
+- added `migrations/virtual_coin_postgres_test.go`
+- modified `scripts/deployment-business-provision.sh`
+- modified `scripts/deployment-business-qa.test.sh`
+- deleted `scripts/deployment-qa-provider.py`
+- added `scripts/external-upstream-qa.py`
+- added `scripts/mock-upstream/business-qa.json`
+- added `scripts/mock-upstream/main.go`
+- added `scripts/phase1-mock-acceptance.py`
+- added `scripts/phase1-mock-acceptance.sh`
+- added `scripts/phase1-mock-acceptance.test.sh`
+- modified `specs/029-phase1-acceptance/spec.md`
+- added `specs/030-model-aliases-group-multipliers/a-alias-periphery-contract.md`
+- added `specs/030-model-aliases-group-multipliers/integration-contract.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- added `specs/032-phase2-text-data-plane/implementation-freeze.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- added `specs/033-text-dynamic-routing/implementation-freeze.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- added `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/035-external-upstream-integration/spec.md`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/CommerceCommands.vue`
+- modified `web/src/components/CommerceWriter.vue`
+- modified `web/src/components/FundingPanel.vue`
+- added `web/src/components/GroupMultiplierCompiler.vue`
+- modified `web/src/components/MetricMoney.vue`
+- added `web/src/components/ModelAliases.vue`
+- modified `web/src/components/PaymentsPanel.vue`
+- modified `web/src/components/PeriodicBudgetPanel.vue`
+- modified `web/src/components/PeriodicBudgetWriter.vue`
+- modified `web/src/components/PricingWriter.vue`
+- modified `web/src/components/RequestFunding.vue`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/customer-pricing.ts`
+- modified `web/src/format.ts`
+- modified `web/src/key-configuration.ts`
+- modified `web/src/metering-wire.ts`
+- added `web/src/model-aliases.ts`
+- modified `web/src/pricing.ts`
+- modified `web/src/public-catalog.ts`
+- modified `web/src/views/KeysView.vue`
+- modified `web/src/views/ModelsView.vue`
+- modified `web/src/views/OverviewView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PriceGroupsView.vue`
+- modified `web/src/views/PricingView.vue`
+- modified `web/src/views/ReportsView.vue`
+- modified `web/src/views/RequestsView.vue`
+- modified `web/src/views/VouchersView.vue`
+- modified `web/src/views/WalletView.vue`
+- modified `web/tests/commerce.test.mjs`
+- modified `web/tests/key-configuration.test.mjs`
+- modified `web/tests/metering-wire.test.mjs`
+- added `web/tests/model-aliases.test.mjs`
+- modified `web/tests/pricing-state.test.mjs`
+- modified `web/tests/pricing.test.mjs`
+- modified `web/tests/public-catalog-state.test.mjs`
+- modified `web/tests/public-catalog.test.mjs`
+
+</details>
+
+## 2026-11-14T04:18:34Z · e21cd00b61e8
+
+PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最终同步
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2192 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-coin-units.md`
+
+</details>
+
+## 2026-11-14T04:37:29Z · 76f5a885b37d
+
+034.1 不可变历史修复：追加 current_005 恢复原 operation/audit 字节，读取时投影 COIN；D-034-11 与 §15 冻结状态一致性修订；迁移、catalog、operations 与定价 HTTP 已复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2193 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/direction-review-2026-11-14.md`
+- modified `docs/verification/034-coin-units.md`
+- modified `internal/catalog/pricing_commands.go`
+- added `migrations/current_005_immutable_pricing_history.sql`
+- modified `migrations/virtual_coin_postgres_test.go`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-14T12:44:02Z · baa198d3c35c
+
+034.2：角色字段、独立wallet_requests、单人运营设置CAS与审计、付款基准、成对来源和确定性FIFO；同步当前六来源、应用/worker/projection权限、HTTP/UI和串行验证记录；034.3起仍标为后续能力
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2212 个源文件；本次 95 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-2-paired-wallet-sources.md`
+- added `internal/billing/credit_funding.go`
+- added `internal/billing/credit_input.go`
+- added `internal/billing/credit_sources_integration_test.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/billing/funding_sandbox.go`
+- modified `internal/billing/funding_sandbox_integration_test.go`
+- modified `internal/billing/funding_verify.go`
+- modified `internal/billing/lot_runtime.go`
+- added `internal/billing/operator_settings.go`
+- added `internal/billing/operator_settings_integration_test.go`
+- modified `internal/billing/orders.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/voucher_integration_test.go`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_query_integration_test.go`
+- modified `internal/billing/voucher_types.go`
+- added `internal/billing/wallet_requests.go`
+- added `internal/billing/wallet_requests_integration_test.go`
+- modified `internal/billing/wallet_sources_application_test.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_summary_test.go`
+- modified `internal/fundinglotscan/wallet_reader_postgres_test.go`
+- modified `internal/maintenancetrust/funding_lots_phase_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_prefix_business_integration_test.go`
+- modified `internal/maintenancetrust/funding_lots_runtime_procurement_integration_test.go`
+- modified `internal/operations/funding_integration_test.go`
+- modified `internal/operations/instance_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/operations_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- modified `internal/payments/processor_safety_test.go`
+- modified `internal/paymentsandboxqa/funding.go`
+- modified `internal/periodicbudget/commander_limits_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/pricing/vector_integration_test.go`
+- modified `internal/procurementattemptbirth/attempt_postgres_test.go`
+- modified `internal/procurementattemptbirth/attempt_sync_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_grant_fault_postgres_test.go`
+- modified `internal/procurementrequestbirth/request_birth_postgres_test.go`
+- modified `internal/server/auth_integration_test.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/binding_isolation_integration_test.go`
+- modified `internal/server/capacity_test.go`
+- modified `internal/server/channel_defaults_integration_test.go`
+- modified `internal/server/external_relay_integration_test.go`
+- modified `internal/server/funding_integration_test.go`
+- modified `internal/server/gateway_integration_test.go`
+- modified `internal/server/main_shutdown_integration_test.go`
+- added `internal/server/operator_settings_handlers.go`
+- added `internal/server/operator_settings_integration_test.go`
+- modified `internal/server/periodic_budget_integration_test.go`
+- modified `internal/server/procurement_meter_integration_test.go`
+- modified `internal/server/server.go`
+- added `internal/server/wallet_request_handlers.go`
+- added `internal/server/wallet_request_integration_test.go`
+- modified `internal/server/wallet_sources_integration_test.go`
+- modified `internal/testsupport/funding019/verify_test.go`
+- added `migrations/current_006_paired_wallet_sources.sql`
+- modified `migrations/unified_text_metering_guard_matrix_postgres_test.go`
+- modified `scripts/backup-restore-drill.go`
+- modified `scripts/browser-qa/model_lifecycle_test.go`
+- modified `scripts/maintenance-scan-qa/maintenance_integration_test.go`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/App.vue`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/FundingPanel.vue`
+- added `web/src/components/WalletOperatorSettings.vue`
+- added `web/src/components/WalletRequests.vue`
+- modified `web/src/views/OverviewView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PlaygroundView.vue`
+- modified `web/src/views/WalletSourcesView.vue`
+- modified `web/src/views/WalletView.vue`
+- added `web/src/wallet-operator-settings.ts`
+- added `web/src/wallet-requests.ts`
+- modified `web/src/wallet-source-details.ts`
+- modified `web/src/wallet-sources.ts`
+- modified `web/tests/commerce.test.mjs`
+- added `web/tests/wallet-operator-settings.test.mjs`
+- added `web/tests/wallet-requests.test.mjs`
+- modified `web/tests/wallet-source-details.test.mjs`
+- modified `web/tests/wallet-sources.test.mjs`
+
+</details>
+
+## 2026-11-14T16:51:51Z · 9637224702c2
+
+034.3：refund_held/retired五桶、静态cash_refund_orders及独立operation、deferred订单/journal/事件guard、REFUND_HELD账户与checker；现有路径保留新桶且不授生产UPDATE，034.4工作流仍未实现；同步全仓验证记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2215 个源文件；本次 28 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-3-refund-buckets.md`
+- modified `internal/billing/journal_batch.go`
+- modified `internal/billing/lot_plan_test.go`
+- modified `internal/billing/lot_runtime.go`
+- modified `internal/billing/lot_runtime_integration_test.go`
+- modified `internal/billing/media.go`
+- added `internal/billing/refund_buckets_integration_test.go`
+- modified `internal/billing/store.go`
+- modified `internal/billing/wallet_opening_integration_test.go`
+- modified `internal/billing/wallet_sources_application_test.go`
+- modified `internal/billing/wallet_sources_read.go`
+- modified `internal/billing/wallet_sources_read_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- modified `internal/server/wallet_sources.go`
+- added `migrations/current_007_refund_buckets.sql`
+- modified `migrations/virtual_coin_postgres_test.go`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/wallet-sources.ts`
+- modified `web/tests/wallet-sources.test.mjs`
+
+</details>
+
+## 2026-11-14T18:28:41Z · 79ee964f0003
+
+034.3b 新增不可变币价版本、CNY 创世、paid receipt 买入版本冻结与存量 manual/sandbox 回填；补齐 USD 失败关闭、三角色 SELECT-only 边界，并消除 Reserve/结算/消费退款的间接币价读取。同步五桶现状、HLD/LLD 与验证记录；034.4 现金退款仍未开放。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2220 个源文件；本次 21 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/integrated-wallet-media.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-3b-coin-rates.md`
+- added `internal/billing/coin_rates.go`
+- added `internal/billing/coin_rates_integration_test.go`
+- modified `internal/billing/credit_funding.go`
+- modified `internal/billing/credit_input.go`
+- modified `internal/billing/funding.go`
+- modified `internal/billing/funding_integration_test.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- added `migrations/coin_rate_postgres_test.go`
+- added `migrations/current_008_coin_rate_versions.sql`
+- modified `migrations/virtual_coin_postgres_test.go`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+
+</details>
+
+## 2026-11-14T18:29:33Z · 297d979f5221
+
+记录 034.3b 全仓 77 包 race、前端、构建与统一架构检查结果；本次仅定稿验证状态，无模块、链路、数据关系或权限结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2220 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-3b-coin-rates.md`
+
+</details>
+
+## 2026-11-14T21:42:30Z · 1ed30fbb1a47
+
+034.4 实现现金退款状态机、approved_at 与精确金额、五桶生产写入、申请终态关闭、未知提交、HTTP/控制台及第五 cash_refund_pending_aged 告警；补齐历史/当前角色 capability、68 个函数基线和 1001 来源索引验证。034.5/034.6 及真实外部转账仍未完成。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2236 个源文件；本次 48 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/extension-platform.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-4-cash-refunds.md`
+- modified `internal/alerts/alerts_integration_test.go`
+- added `internal/alerts/cash_refund_integration_test.go`
+- modified `internal/alerts/commands.go`
+- modified `internal/alerts/evaluate.go`
+- modified `internal/alerts/source_sql.go`
+- modified `internal/alerts/types.go`
+- modified `internal/alerts/values.go`
+- added `internal/billing/cash_refund.go`
+- added `internal/billing/cash_refund_actions.go`
+- added `internal/billing/cash_refund_commit_unknown_integration_test.go`
+- added `internal/billing/cash_refund_concurrency_integration_test.go`
+- added `internal/billing/cash_refund_integration_test.go`
+- added `internal/billing/cash_refund_tx.go`
+- modified `internal/billing/coin_rates.go`
+- modified `internal/billing/coin_rates_integration_test.go`
+- modified `internal/billing/refund_buckets_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- modified `internal/operations/wallet_sources_roles_test.go`
+- modified `internal/server/alert_input.go`
+- modified `internal/server/billing_handlers.go`
+- added `internal/server/cash_refund_alert_integration_test.go`
+- added `internal/server/cash_refund_handlers.go`
+- added `internal/server/cash_refund_integration_test.go`
+- added `internal/server/cash_refund_request_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/current_009_cash_refund_workflow.sql`
+- modified `specs/024-extension-platform/a-contract.md`
+- modified `specs/024-extension-platform/acceptance.md`
+- modified `specs/024-extension-platform/contract.md`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/App.vue`
+- modified `web/src/alerts.ts`
+- added `web/src/cash-refunds.ts`
+- modified `web/src/router.ts`
+- added `web/src/views/CashRefundsView.vue`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/tests/alerts.test.mjs`
+- added `web/tests/cash-refunds.test.mjs`
+
+</details>
+
+## 2026-11-14T21:43:21Z · 558cc27f3671
+
+记录 034.4 全仓 77 包 race、前端、构建与统一架构检查结果；本次仅定稿验证状态，无模块、链路、数据关系或权限结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2236 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-4-cash-refunds.md`
+
+</details>
+
+## 2026-11-15T00:07:42Z · 380f122a6d1d
+
+034.5 增加钱包构成、客户付款回执与只读付款基准/现金退款报表；无迁移、请求写链或角色变更，已复核模块图、数据关系、权限边界、故障语义及全部77包串行和race结果
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2240 个源文件；本次 33 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-5-reporting-wallet-composition.md`
+- modified `internal/billing/voucher_query.go`
+- modified `internal/billing/voucher_types.go`
+- added `internal/billing/wallet_composition.go`
+- added `internal/billing/wallet_composition_integration_test.go`
+- modified `internal/reporting/csv.go`
+- modified `internal/reporting/read.go`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/reporting/types.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/commerce_handlers.go`
+- modified `internal/server/funding_integration_test.go`
+- added `internal/server/operating_payment_basis_integration_test.go`
+- modified `internal/server/operating_reports_integration_test.go`
+- modified `specs/026-operating-reports/spec.md`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `web/src/commerce.ts`
+- modified `web/src/components/FundingPanel.vue`
+- modified `web/src/components/OperatingReport.vue`
+- modified `web/src/components/WalletSources.vue`
+- modified `web/src/operating-report.ts`
+- modified `web/src/views/WalletView.vue`
+- modified `web/tests/commerce.test.mjs`
+- modified `web/tests/operating-report.test.mjs`
+
+</details>
+
+## 2026-11-15T00:08:36Z · 8e5128aa9bba
+
+034.5 最终验收记录收口：77包专库串行与race、359项前端测试、构建、vet和make check均通过；无迁移、请求写链、计量canonical或角色结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2240 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-5-reporting-wallet-composition.md`
+
+</details>
+
+## 2026-11-15T01:54:35Z · 02b01ee84f27
+
+034.6 新增独立展示版本、公开安全DTO、admin CAS/审计与前端约合；current_010仅新增展示表和APP SELECT/INSERT，会计币价/请求/计量不变，已复核模块图、数据关系、权限和故障边界及77包race
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2251 个源文件；本次 28 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- added `docs/architecture/coin-display.md`
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-6-coin-display.md`
+- added `internal/billing/coin_display.go`
+- added `internal/billing/coin_display_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- added `internal/server/coin_display_handlers.go`
+- added `internal/server/coin_display_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/coin_display_postgres_test.go`
+- added `migrations/current_010_coin_display.sql`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- added `web/src/coin-display.ts`
+- added `web/src/components/CoinDisplaySettings.vue`
+- modified `web/src/components/MetricMoney.vue`
+- modified `web/src/format.ts`
+- modified `web/src/main.ts`
+- modified `web/src/views/WalletSourcesView.vue`
+- added `web/tests/coin-display.test.mjs`
+
+</details>
+
+## 2026-11-15T01:55:19Z · 4c0324c61587
+
+034.6 最终验收收口：77包统一race、364项前端测试、构建、vet与make check通过；独立展示表和权限边界已同步，无会计/请求/计量结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2251 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-6-coin-display.md`
 
 </details>

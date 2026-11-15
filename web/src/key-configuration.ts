@@ -45,7 +45,7 @@ export function keyConfigurationRevision(value: unknown): string {
   if (typeof value !== 'string' || !/^[1-9][0-9]{0,18}$/.test(value) || BigInt(value) > 9223372036854775807n) throw new Error('基本配置版本须为正 int64 十进制字符串。')
   return value
 }
-export function keyMicroToCNY(value: string): string {
+export function keyMicroToCoin(value: string): string {
   const amount = BigInt(decimal(value)), fraction = (amount % 1000000n).toString().padStart(6, '0').replace(/0+$/, '')
   return `${amount / 1000000n}${fraction ? `.${fraction}` : ''}`
 }
@@ -95,7 +95,7 @@ export function parseKeyConfigurationRows(value: unknown): KeyConfigurationRow[]
 }
 export function keyConfigurationDraft(value: KeyConfigurationFields): KeyConfigurationDraft {
   const source = fields(value)
-  return { name: source.name, scopes: [...source.scopes], allowed_regions: [...source.allowed_regions], limit: source.lifetime_limit === null ? '' : keyMicroToCNY(source.lifetime_limit), expiry_mode: 'keep', expiry: source.expires_at ?? '' }
+  return { name: source.name, scopes: [...source.scopes], allowed_regions: [...source.allowed_regions], limit: source.lifetime_limit === null ? '' : keyMicroToCoin(source.lifetime_limit), expiry_mode: 'keep', expiry: source.expires_at ?? '' }
 }
 function changedName(value: string): string {
   const name = trimText(value)

@@ -65,7 +65,7 @@ func newVectorFixture(t *testing.T) *vectorFixture {
 		}
 		admin.Close()
 	})
-	if err = migrations.Apply(ctx, owner); err != nil {
+	if err = migrations.ApplyCurrent(ctx, owner); err != nil {
 		t.Fatal(err)
 	}
 	f := &fixture{t: t, ctx: ctx, pool: owner, owner: owner, actor: uuid.NewString(), tenant: uuid.NewString(), model: uuid.NewString(), defaultPrice: uuid.NewString(), schema: schema}
@@ -155,6 +155,7 @@ func vectorModel(t *testing.T, f *vectorFixture, input int64) string {
 // immutable row or constraint is modified, even for intentionally invalid data.
 func vectorRawPrice(t *testing.T, f *vectorFixture, tx pgx.Tx, model, source string, mutate func([]byte, []byte) ([]byte, []byte)) string {
 	t.Helper()
+	t.Cleanup(func() { _ = tx.Rollback(f.ctx) })
 	if _, err := tx.Exec(f.ctx, `SET LOCAL session_replication_role='replica'`); err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +168,7 @@ func vectorRawPrice(t *testing.T, f *vectorFixture, tx pgx.Tx, model, source str
 	}
 	id := uuid.NewString()
 	mustExec(t, f.ctx, tx, `INSERT INTO price_versions(id,model_id,currency,effective_at,created_by,created_at,price_group_id,pricing_operation_id,schema_id,schema_digest,variant_key,rates_canonical,rates_digest)
- SELECT $1,$2,'CNY',clock_timestamp(),$3,clock_timestamp(),NULL,$4,schema_id,schema_digest,variant_key,$5,$6 FROM price_versions WHERE id=$7`, id, model, f.actor, uuid.NewString(), canonical, digest, source)
+ SELECT $1,$2,'COIN',clock_timestamp(),$3,clock_timestamp(),NULL,$4,schema_id,schema_digest,variant_key,$5,$6 FROM price_versions WHERE id=$7`, id, model, f.actor, uuid.NewString(), canonical, digest, source)
 	mustExec(t, f.ctx, tx, `INSERT INTO price_rate_lines(price_version_id,dimension,unit,numerator,denominator)
  SELECT $1,dimension,unit,numerator,denominator FROM price_rate_lines WHERE price_version_id=$2`, id, source)
 	return id

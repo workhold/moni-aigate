@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +10,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/moni-ai/moni-aigate/internal/identity"
 )
+
+func TestPricingCompileBodyAcceptsOptionalBaseCASAndRejectsNestedDuplicates(t *testing.T) {
+	model := "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+	version := "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+	raw := `{"operation_id":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","multiplier":"0.85","model_ids":["` + model + `"],"effective_at":"2026-12-01T00:00:00Z","expected_base_version_ids":{"` + model + `":"` + version + `"}}`
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest("POST", "/", strings.NewReader(raw))
+	s := &Server{}
+	command, ok := s.compileGroupPriceBody(c)
+	if !ok || command.Multiplier != "0.85" || command.ExpectedBaseVersionIDs[model] != version || len(command.ModelIDs) != 1 {
+		t.Fatalf("compile body: %#v/%v", command, ok)
+	}
+	if _, ok = strictPricingRawObject(json.RawMessage(`{"x":"1","x":"2"}`)); ok {
+		t.Fatal("accepted duplicate expected base key")
+	}
+}
 
 func TestPricingStrictBodyAndUnicode(t *testing.T) {
 	for _, tc := range []struct {

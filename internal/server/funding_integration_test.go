@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -44,7 +45,7 @@ func TestHTTPFundingManualCreditPreservesWalletAndApprovalContract(t *testing.T)
 		return res
 	}
 	key := uuid.NewString()
-	body := map[string]any{"tenant_id": tenant, "amount": "37", "business_ref": "funding-http:" + key, "proof_ref": "funding:verified"}
+	body := map[string]any{"tenant_id": tenant, "amount": "37", "basis_kind": "paid", "fiat_currency": "CNY", "fiat_amount": "37", "business_ref": "funding-http:" + key, "proof_ref": "funding:verified"}
 	created := creditHTTP("/api/platform/credits", operatorRaw, operatorCSRF, key, body)
 	requireAuthStatus(t, created, http.StatusOK)
 	var order billing.CreditOrder
@@ -82,12 +83,48 @@ func TestHTTPFundingManualCreditPreservesWalletAndApprovalContract(t *testing.T)
 		if err := json.Unmarshal(authData(t, res), &wallet); err != nil {
 			t.Fatal(err)
 		}
-		if len(wallet) != 6 || string(wallet["total_credited"]) != `"`+check.credited+`"` || string(wallet["available"]) != `"`+check.credited+`"` || string(wallet["held"]) != `"0"` || string(wallet["total_charged"]) != `"0"` || string(wallet["total_refunded"]) != `"0"` {
+		if len(wallet) != 10 || string(wallet["total_credited"]) != `"`+check.credited+`"` || string(wallet["available"]) != `"`+check.credited+`"` || string(wallet["held"]) != `"0"` || string(wallet["paid_available"]) != `"`+check.credited+`"` || string(wallet["grant_available"]) != `"0"` || string(wallet["other_available"]) != `"0"` || string(wallet["refund_held"]) != `"0"` || string(wallet["total_charged"]) != `"0"` || string(wallet["total_refunded"]) != `"0"` {
 			t.Fatalf("wallet shape or tenant funding changed: %s", authData(t, res))
 		}
 	}
+	if err := s.InitializeVouchers(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	receiptPage := authHTTP(t, s, http.MethodGet, "/api/wallet/funding-receipts", ownerRaw, "", "", nil)
+	requireAuthStatus(t, receiptPage, http.StatusOK)
+	if !strings.Contains(receiptPage.Body.String(), `"basis_kind":"paid"`) || !strings.Contains(receiptPage.Body.String(), `"fiat_currency":"CNY"`) || !strings.Contains(receiptPage.Body.String(), `"fiat_amount":"37"`) || strings.Contains(receiptPage.Body.String(), "supplier_cost") {
+		t.Fatalf("customer receipt lost payment basis: %s", receiptPage.Body.String())
+	}
 	// A customer role does not gain platform credit rights from the new receipt.
 	requireAuthStatus(t, creditHTTP(path, ownerRaw, ownerCSRF, uuid.NewString(), map[string]any{}), http.StatusForbidden)
+	for _, extra := range []struct {
+		kind, source, amount string
+		basis                string
+		bonus                string
+	}{
+		{kind: "grant", source: "manual_bonus", amount: "0", basis: "grant", bonus: "5"},
+		{kind: "unknown", source: "manual_unknown", amount: "7", basis: "unknown", bonus: "0"},
+	} {
+		key := uuid.NewString()
+		body := map[string]any{"tenant_id": tenant, "amount": extra.amount, "bonus_amount": extra.bonus, "basis_kind": extra.basis, "business_ref": "funding-http:" + key, "proof_ref": "funding:" + extra.kind}
+		created := creditHTTP("/api/platform/credits", operatorRaw, operatorCSRF, key, body)
+		requireAuthStatus(t, created, http.StatusOK)
+		var order billing.CreditOrder
+		if err := json.Unmarshal(authData(t, created), &order); err != nil {
+			t.Fatal(err)
+		}
+		requireAuthStatus(t, creditHTTP("/api/platform/credits/"+order.ID+"/approve", approverRaw, approverCSRF, uuid.NewString(), map[string]any{}), http.StatusOK)
+		filtered := authHTTP(t, s, http.MethodGet, "/api/wallet/funding-receipts?source_kind="+extra.source, ownerRaw, "", "", nil)
+		requireAuthStatus(t, filtered, http.StatusOK)
+		if !strings.Contains(filtered.Body.String(), `"source_kind":"`+extra.source+`"`) || !strings.Contains(filtered.Body.String(), `"basis_kind":"`+extra.basis+`"`) || !strings.Contains(filtered.Body.String(), `"fiat_currency":null`) || !strings.Contains(filtered.Body.String(), `"fiat_amount":null`) {
+			t.Fatalf("%s receipt filter or null payment fields failed: %s", extra.source, filtered.Body.String())
+		}
+	}
+	walletAfterSources := authHTTP(t, s, http.MethodGet, "/api/wallet", ownerRaw, "", "", nil)
+	requireAuthStatus(t, walletAfterSources, http.StatusOK)
+	if body := walletAfterSources.Body.String(); !strings.Contains(body, `"available":"49"`) || !strings.Contains(body, `"paid_available":"37"`) || !strings.Contains(body, `"grant_available":"5"`) || !strings.Contains(body, `"other_available":"7"`) {
+		t.Fatalf("wallet composition omitted bonus or unknown sources: %s", body)
+	}
 	if check, err := s.Billing.VerifyFunding(context.Background(), tenant); err != nil || !check.Balanced {
 		t.Fatalf("funding verification: %+v %v", check, err)
 	}

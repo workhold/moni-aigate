@@ -49,3 +49,22 @@ SELECT EXISTS(SELECT 1 FROM procurement_accounts WHERE id=$1) AS source_exists,o
  m.observed_count::text,(m.observed_count=1001) AS count_is_lower_bound,
  oldest.created_at,oldest.reference_id
 FROM observed o CROSS JOIN measured m LEFT JOIN oldest ON true;`
+
+const cashRefundSourceSQL = `-- 现金退款批准后待处理年龄；approved_at不可回改，终态不参与。
+WITH observed AS MATERIALIZED (SELECT clock_timestamp()::timestamptz(6) AS as_of),
+eligible AS MATERIALIZED (
+ SELECT r.approved_at,r.id AS reference_id
+ FROM cash_refund_orders r
+ WHERE r.tenant_id=$1 AND r.state IN ('approved','transfer_executed')
+  AND r.approved_at<=(SELECT as_of FROM observed)-$2::bigint*interval '1 second'
+ ORDER BY r.approved_at ASC,r.id COLLATE "C" ASC LIMIT 1001
+), measured AS (
+ SELECT count(*) AS observed_count FROM eligible
+), oldest AS (
+ SELECT approved_at,reference_id FROM eligible
+ ORDER BY approved_at ASC,reference_id COLLATE "C" ASC LIMIT 1
+)
+SELECT EXISTS(SELECT 1 FROM tenants WHERE id=$1) AS source_exists,o.as_of,
+ m.observed_count::text,(m.observed_count=1001) AS count_is_lower_bound,
+ oldest.approved_at,oldest.reference_id
+FROM observed o CROSS JOIN measured m LEFT JOIN oldest ON true;`

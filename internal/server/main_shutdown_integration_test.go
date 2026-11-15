@@ -206,7 +206,10 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 	createdRoles := []string{}
 	t.Cleanup(func() {
 		owner.Close()
-		cleanup, done := context.WithTimeout(context.Background(), 10*time.Second)
+		// Dropping the complete current baseline can take more than ten seconds
+		// with race instrumentation. Keep cleanup bounded without treating slow
+		// DDL cleanup as an SSE drain/replay failure.
+		cleanup, done := context.WithTimeout(context.Background(), 30*time.Second)
 		defer done()
 		// Use a new administrative connection: the test's deferred pool.Close
 		// runs before Cleanup, and never terminate unrelated test sessions.
@@ -304,7 +307,7 @@ func TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay(t *testing
 		t.Fatal(err)
 	}
 	store := billing.New(owner)
-	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: 1000, BusinessRef: uuid.NewString(), ProofRef: "receipt:actual-main-fixture", IdempotencyKey: uuid.NewString(), RequestHMAC: "shutdown-credit"})
+	credit, err := store.CreateCredit(ctx, billing.CreditInput{TenantID: tenant, ActorID: operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000, BusinessRef: uuid.NewString(), ProofRef: "receipt:actual-main-fixture", IdempotencyKey: uuid.NewString(), RequestHMAC: "shutdown-credit"})
 	if err != nil {
 		t.Fatal(err)
 	}

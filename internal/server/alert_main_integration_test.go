@@ -82,7 +82,12 @@ func newAlertMainFixture(t *testing.T, ctx context.Context) *alertMainFixture {
 		if f.owner != nil {
 			f.owner.Close()
 		}
-		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// The current baseline contains thousands of functions and guard
+		// relations. Dropping that database plus both roles can legitimately
+		// exceed ten seconds under race instrumentation, so keep a larger but
+		// still bounded cleanup window rather than misreporting a passed drill
+		// as a crash-recovery failure.
+		cleanup, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if _, e := admin.Exec(cleanup, "DROP DATABASE "+pgx.Identifier{prefix}.Sanitize()+" WITH (FORCE)"); e != nil {
 			t.Errorf("alert main database cleanup: %v", e)

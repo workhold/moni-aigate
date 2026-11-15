@@ -192,7 +192,7 @@ func sourceExists(ctx context.Context, tx pgx.Tx, kind Kind, id ID) (bool, error
 		table = "channels"
 	case ProcurementBudgetLow, ProcurementUnresolvedAged:
 		table = "procurement_accounts"
-	case CustomerReconciliationAged:
+	case CustomerReconciliationAged, CashRefundPendingAged:
 		table = "tenants"
 	default:
 		return false, fail("invalid_request")

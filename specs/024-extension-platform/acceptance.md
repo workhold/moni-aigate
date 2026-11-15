@@ -49,3 +49,9 @@
 - [ ] F各站点运营/通知切片独立冻结/验收；外发通知不滥用021身份outbox，不把本地SMTP或回调fixture当真实收件/交付保证。
 
 A不做性能竞品、支付、容器/1Panel或HA认证；对应外部门禁保留。没有这些证据时不得宣传完整New API替代、所有媒体支持或024平台整体完成。
+
+## 034.4 增补：第五 kind（本地验收通过）
+
+- [x] `cash_refund_pending_aged / tenant` 仅观察 approved/transfer_executed，年龄取不可回改的 approved_at；0/1/1000/1001、精确边界和 oldest reference 符合 aging 合同。
+- [x] completed/cancelled/failed 按 recovery_count 恢复；source 缺失、暂停、恢复模式、超时和时钟回退不冒充恢复。
+- [x] 真实 PG/worker/HTTP/前端通过，告警不锁业务根、不调用外部转账、不自动写资金；034.4 验证记录与统一架构同步。

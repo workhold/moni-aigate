@@ -3,6 +3,7 @@ package server
 import (
 	"net/netip"
 	"net/url"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
@@ -71,6 +72,28 @@ func (s *Server) saveChannel(c *gin.Context, id string) {
 }
 func (s *Server) createChannel(c *gin.Context) { s.saveChannel(c, "") }
 func (s *Server) updateChannel(c *gin.Context) { s.saveChannel(c, c.Param("id")) }
+func (s *Server) activateRouteRevision(c *gin.Context) {
+	if !s.admin(c) {
+		return
+	}
+	var in struct {
+		Expected int64 `json:"expected_revision"`
+	}
+	if !s.bind(c, &in) {
+		return
+	}
+	target, e := strconv.ParseInt(c.Param("revision"), 10, 64)
+	if e != nil || target <= 0 {
+		s.fail(c, 400, "invalid_request", "路由版本无效")
+		return
+	}
+	revision, e := s.Catalog.ActivateRouteRevision(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, target)
+	if e != nil {
+		s.error(c, e)
+		return
+	}
+	s.ok(c, gin.H{"revision": revision})
+}
 func (s *Server) publishBindings(c *gin.Context) {
 	if !s.admin(c) {
 		return

@@ -119,7 +119,7 @@ func newGuardFixture(t testing.TB) *guardFixture {
 	f.store = billing.New(owner)
 	for i, tenant := range []guardTenant{f.a, f.b} {
 		credit, err := f.store.CreateCredit(ctx, billing.CreditInput{
-			TenantID: tenant.tenant, ActorID: f.operator, Amount: 1000,
+			TenantID: tenant.tenant, ActorID: f.operator, Amount: 1000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 1000,
 			BusinessRef: fmt.Sprintf("guard-credit-%d-%s", i, uuid.NewString()),
 			ProofRef:    "guard-proof", IdempotencyKey: uuid.NewString(), RequestHMAC: strings.Repeat("c", 64),
 		})
@@ -352,7 +352,7 @@ func TestUnifiedTextMeteringGuardMatrix(t *testing.T) {
 
 	t.Run("settlement and funding cross-request and amount boundaries", func(t *testing.T) {
 		credit, err := f.store.CreateCredit(f.ctx, billing.CreditInput{
-			TenantID: f.a.tenant, ActorID: f.operator, Amount: 100,
+			TenantID: f.a.tenant, ActorID: f.operator, Amount: 100, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 100,
 			BusinessRef: "guard-extra-lot-" + uuid.NewString(), ProofRef: "guard-proof",
 			IdempotencyKey: uuid.NewString(), RequestHMAC: strings.Repeat("e", 64),
 		})

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -332,7 +333,7 @@ func TestPostgresFundingSandboxActualWorkerUniqueReceiptAndRebuild(t *testing.T)
 		t.Fatal(e)
 	}
 	replay, e := New(x.worker).ApplyFundingTx(x.ctx, tx, FundingSourceRef{FundingSandboxCapture, capture}, FundingScope{x.tenant, sandboxFundingActor, ""})
-	if e != nil || replay.Applied || replay.Receipt != r.Receipt {
+	if e != nil || replay.Applied || !reflect.DeepEqual(replay.Receipt, r.Receipt) {
 		t.Fatalf("replay %+v %v", replay, e)
 	}
 	if e = tx.Commit(x.ctx); e != nil {
@@ -408,9 +409,9 @@ func TestPostgresFundingSandboxMixedSourcesNumericSummaryBeyondInt64(t *testing.
 	x := sandboxFundingTest(t)
 	// Leave room in the wallet through real metered consumption. The sum of
 	// retained funding receipts can exceed int64 while every live balance fits.
+	openingBoundaryTenant(t, x.fixture)
 	appFixture := *x.fixture
 	appFixture.store = New(x.app)
-	appFixture.fund(t, Money(math.MaxInt64-1000))
 	for i := 0; i < 7; i++ {
 		r := appFixture.reserve(t)
 		appFixture.final(t, r, confirmed(), "completed", "done", "none", false)
@@ -430,7 +431,7 @@ func TestPostgresFundingSandboxMixedSourcesNumericSummaryBeyondInt64(t *testing.
 		t.Fatal(r, e)
 	}
 	summary, e := service.GetFundingSummary(x.ctx, VoucherReader{x.user, x.tenant})
-	if e != nil || summary.TotalAmount != "9223372036854775912" || summary.ManualCreditAmount != "9223372036854775807" || summary.VoucherGrantAmount != "5" || summary.SandboxCaptureAmount != "100" {
+	if e != nil || summary.TotalAmount != "9223372036854775912" || summary.ManualCreditAmount != "0" || summary.ManualBonusAmount != "0" || summary.ManualUnknownAmount != "0" || summary.WalletOpeningAmount != "9223372036854775807" || summary.VoucherGrantAmount != "5" || summary.SandboxCaptureAmount != "100" {
 		t.Fatalf("numeric three-source totals %+v %v", summary, e)
 	}
 	for _, scope := range []string{"", x.tenant} {

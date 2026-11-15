@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	. "github.com/moni-ai/moni-aigate/internal/periodicbudget"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -164,27 +163,27 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 	if through != "" {
 		pbTxMust(t, "apply explicit historical application migrations", migrations.ApplyThrough(ctx, f.owner, through))
 	} else if latest {
-		pbTxMust(t, "apply actual latest application migrations", migrations.Apply(ctx, f.owner))
+		// The billing-path fixture installs the current-only plan (frozen
+		// baseline plus append migrations). It drives the real Reserve/
+		// RecordAttempt path, whose request_records contract only exists in
+		// the current plan; the historical Apply set is not a valid baseline
+		// for these tests.
+		pbTxMust(t, "apply current-only application migrations", migrations.ApplyCurrent(ctx, f.owner))
 	} else {
 		pbTxMust(t, "apply actual migrations 001–019", migrations.ApplyThrough(ctx, f.owner, "019_operations_alerts.sql"))
 	}
-	var count, max int
-	pbTxMust(t, "verify migration baseline", f.owner.QueryRow(ctx, `SELECT count(*),max(left(name,3)::integer) FROM schema_migrations`).Scan(&count, &max))
-	expected := 19
-	if through == "022_payment_runtime_attestation.sql" {
-		expected = 22
-	} else if latest {
-		names, e := fs.Glob(migrations.Files, "*.sql")
-		pbTxMust(t, "read complete embedded migration manifest", e)
-		expected = 0
-		for _, name := range names {
-			if name != "current_mvp.sql" && !strings.HasPrefix(name, "current_") {
-				expected++
-			}
+	if latest {
+		pbTxMust(t, "verify current-only migration plan", migrations.VerifyCurrent(ctx, f.owner))
+	} else {
+		var count, max int
+		pbTxMust(t, "verify migration baseline", f.owner.QueryRow(ctx, `SELECT count(*),max(left(name,3)::integer) FROM schema_migrations`).Scan(&count, &max))
+		expected := 19
+		if through == "022_payment_runtime_attestation.sql" {
+			expected = 22
 		}
-	}
-	if count != expected || max != expected {
-		t.Fatal("fixture migration baseline does not match its explicit version")
+		if count != expected || max != expected {
+			t.Fatal("fixture migration baseline does not match its explicit version")
+		}
 	}
 	f.seedCatalog(t)
 	for _, role := range []string{f.appRole, f.projectionRole} {
@@ -212,7 +211,7 @@ func newPBTxFixtureBaseline(t *testing.T, latest bool, through string) *pbTxFixt
 	// clearing journal, approval, outbox and audit. No owner balance shortcut.
 	store := billing.New(f.app)
 	operation := uuid.NewString()
-	credit, e := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 10000, BusinessRef: "pb-fixture:" + operation, ProofRef: "fixture:verified", IdempotencyKey: operation, RequestHMAC: operation})
+	credit, e := store.CreateCredit(ctx, billing.CreditInput{TenantID: f.tenant, ActorID: f.operator, Amount: 10000, BasisKind: "paid", FiatCurrency: "CNY", FiatAmount: 10000, BusinessRef: "pb-fixture:" + operation, ProofRef: "fixture:verified", IdempotencyKey: operation, RequestHMAC: operation})
 	pbTxMust(t, "APP create funding source", e)
 	_, e = store.ApproveCredit(ctx, billing.ApprovalInput{TenantID: f.tenant, ActorID: f.approver, OrderID: credit.ID})
 	pbTxMust(t, "APP approve complete funding", e)

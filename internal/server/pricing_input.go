@@ -84,3 +84,50 @@ func pricingBody(c *gin.Context, fields ...string) (map[string]json.RawMessage, 
 	ok := decodeCanonicalJSON(bytes.NewReader(raw), &obj, 8192, fields...) && len(obj) == len(fields)
 	return obj, ok
 }
+
+func pricingBodyOptional(c *gin.Context, required []string, optional ...string) (map[string]json.RawMessage, bool) {
+	raw, e := io.ReadAll(io.LimitReader(c.Request.Body, 8193))
+	if e != nil || len(raw) > 8192 || !pricingUnicode(raw) {
+		return nil, false
+	}
+	fields := append(append([]string(nil), required...), optional...)
+	obj, ok := strictPricingRawObject(raw, fields...)
+	if !ok || len(obj) < len(required) || len(obj) > len(fields) {
+		return nil, false
+	}
+	for _, field := range required {
+		if value, ok := obj[field]; !ok || string(value) == "null" {
+			return nil, false
+		}
+	}
+	return obj, true
+}
+
+func strictPricingRawObject(raw []byte, fields ...string) (map[string]json.RawMessage, bool) {
+	allowed := make(map[string]bool, len(fields))
+	for _, field := range fields {
+		allowed[field] = true
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	token, err := dec.Token()
+	if err != nil || token != json.Delim('{') {
+		return nil, false
+	}
+	obj := make(map[string]json.RawMessage, len(fields))
+	for dec.More() {
+		token, err = dec.Token()
+		key, valid := token.(string)
+		if err != nil || !valid || len(fields) > 0 && !allowed[key] || obj[key] != nil {
+			return nil, false
+		}
+		var value json.RawMessage
+		if err = dec.Decode(&value); err != nil {
+			return nil, false
+		}
+		obj[key] = value
+	}
+	if token, err = dec.Token(); err != nil || token != json.Delim('}') || dec.Decode(new(any)) != io.EOF {
+		return nil, false
+	}
+	return obj, true
+}

@@ -16,6 +16,7 @@ const (
 	ProcurementBudgetLow       Kind = "procurement_budget_low"
 	CustomerReconciliationAged Kind = "customer_reconciliation_aged"
 	ProcurementUnresolvedAged  Kind = "procurement_unresolved_aged"
+	CashRefundPendingAged      Kind = "cash_refund_pending_aged"
 )
 
 type ScopeType string         // channel | procurement_account | tenant
