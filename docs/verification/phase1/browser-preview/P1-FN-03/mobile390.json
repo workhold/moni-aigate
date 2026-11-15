@@ -1,0 +1,61 @@
+{
+  "status": "PREVIEW",
+  "width": 390,
+  "checks": [
+    "finance_operator 通过 UI 发行单张券并安全清除一次性明文",
+    "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+    "finance_approver 通过 UI 完成独立券批次审批",
+    "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+    "owner 通过 UI 兑换已审批券并形成唯一入账回执",
+    "/wallet: 兑换明细核查，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "finance_operator 通过 UI 发行单张券并安全清除一次性明文"
+    },
+    {
+      "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+      "path": "/platform/vouchers",
+      "title": "运营赠额券 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "finance_approver 通过 UI 完成独立券批次审批"
+    },
+    {
+      "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+      "path": "/platform/vouchers",
+      "title": "运营赠额券 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "owner 通过 UI 兑换已审批券并形成唯一入账回执"
+    },
+    {
+      "name": "/wallet: 兑换明细核查，无页面横向溢出或错误告警",
+      "path": "/wallet",
+      "title": "钱包与流水 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-FN-03/mobile390.png",
+  "additional_evidence": [
+    "P1-FN-03/mobile390.png",
+    "P1-FN-03/mobile390.png"
+  ]
+}

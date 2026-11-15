@@ -23,6 +23,20 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     command: [migrate]
     environment: &migration-env
@@ -51,6 +65,20 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     environment:
       DATABASE_URL: postgres://moni_app:${APP_DB_PASSWORD}@postgres:5432/moni?sslmode=disable
@@ -110,6 +138,20 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     command: [worker]
     environment:
@@ -142,6 +184,20 @@ services:
       context: .
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        HTTP_PROXY: ${MONI_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${MONI_BUILD_HTTPS_PROXY:-}
+        NO_PROXY: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${MONI_BUILD_HTTP_PROXY:-}
+        https_proxy: ${MONI_BUILD_HTTPS_PROXY:-}
+        no_proxy: ${MONI_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        NPM_CONFIG_REGISTRY: ${MONI_BUILD_NPM_REGISTRY:-}
+        ALPINE_REPOSITORY: ${MONI_BUILD_ALPINE_REPOSITORY:-}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      labels:
+        ai.moni.phase1.source-commit: "${PHASE1_SOURCE_COMMIT:-}"
+        ai.moni.phase1.source-tree: "${PHASE1_SOURCE_TREE:-}"
+        ai.moni.phase1.source-clean: "${PHASE1_SOURCE_CLEAN:-false}"
     image: ${MONI_IMAGE:-moni-aigate:local}
     entrypoint: [/usr/local/bin/mock-upstream]
     command: [--config, /etc/moni/mock-upstream.json, --addr, :8090, --allow-directives]

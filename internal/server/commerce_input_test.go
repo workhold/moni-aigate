@@ -78,9 +78,20 @@ func TestCommerceQueryRejectsAmbiguityInsteadOfDroppingMalformedPairs(t *testing
 	}
 }
 
+func TestCommerceWireUsesVoucherTimeMarshaler(t *testing.T) {
+	value := billing.FundingSummaryView{AsOf: billing.VoucherTime{Time: time.Date(2026, 11, 1, 0, 0, 0, 123000, time.UTC)}}
+	raw, err := json.Marshal(commerceWire(value))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), `"as_of":"2026-11-01T00:00:00.000123Z"`) {
+		t.Fatalf("voucher timestamp was expanded instead of formatted: %s", raw)
+	}
+}
+
 func TestCommerceWirePreservesExactMoneyNullAndSixMicroseconds(t *testing.T) {
 	amount := billing.Money(math.MaxInt64)
-	r := billing.VoucherOperationReceipt{Amount: &amount, CreatedAt: time.Date(2026, 11, 1, 0, 0, 0, 0, time.FixedZone("offset", 3600))}
+	r := billing.VoucherOperationReceipt{Amount: &amount, CreatedAt: billing.VoucherTime{Time: time.Date(2026, 11, 1, 0, 0, 0, 0, time.FixedZone("offset", 3600))}}
 	raw, err := json.Marshal(commerceWire(r))
 	if err != nil {
 		t.Fatal(err)

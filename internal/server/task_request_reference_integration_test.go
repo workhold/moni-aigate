@@ -37,6 +37,16 @@ func TestCustomerRequestDetailExposesTaskReferenceFacts(t *testing.T) {
 			t.Fatalf("request detail omitted task reference %s: %v", field, row)
 		}
 	}
+	lines, ok := row["retail_quantities"].([]any)
+	if !ok || len(lines) != 2 {
+		t.Fatalf("request detail final quantity lines are incomplete: %v", row["retail_quantities"])
+	}
+	for _, raw := range lines {
+		line, ok := raw.(map[string]any)
+		if !ok || line["status"] != "confirmed_final" {
+			t.Fatalf("request detail quantity line lost confirmed_final status: %v", line)
+		}
+	}
 	funding := authHTTP(t, f.server, http.MethodGet, "/api/requests/"+requestID+"/funding", session, csrf, f.server.Config.Origin, nil)
 	if funding.Code != http.StatusOK {
 		t.Fatalf("request funding status=%d body=%s", funding.Code, funding.Body.String())

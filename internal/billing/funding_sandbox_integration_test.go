@@ -150,14 +150,14 @@ func (x *sandboxFundingFixture) evidence(t *testing.T) (order, evidence string) 
 	}
 	now = now.UTC()
 	command, outbox := uuid.NewString(), uuid.NewString()
-	body, e := p.CanonicalCheckout(p.CheckoutRequest{SchemaVersion: 1, EnvironmentID: x.environment, MerchantID: "fixture", CommandID: command, MerchantOrderID: merchant, Amount: "100", Currency: "CNY", CreatedAt: created.UTC().Format(voucherTimeLayout), ExpiresAt: expires.UTC().Format(voucherTimeLayout)})
+	body, e := p.CanonicalCheckout(p.CheckoutRequest{SchemaVersion: 1, EnvironmentID: x.environment, MerchantID: "fixture", CommandID: command, MerchantOrderID: merchant, Amount: "100", Currency: "CNY", CreatedAt: created.UTC().Format(VoucherTimeLayout), ExpiresAt: expires.UTC().Format(VoucherTimeLayout)})
 	if e != nil {
 		t.Fatal(e)
 	}
 	x.exec(t, tx, `INSERT INTO payment_command_outbox(id,order_id,kind,external_command_id,canonical_parameters) VALUES($1,$2,'checkout',$3,$4)`, outbox, order, command, body)
 	x.terminal(t, tx, order, order)
 	transaction := "fixture:" + uuid.NewString()
-	body, e = p.CanonicalNotification(p.Notification{SchemaVersion: 1, EventID: "event:" + uuid.NewString(), EventType: "capture.confirmed", EnvironmentID: x.environment, MerchantID: "fixture", OrderID: order, ProviderTransactionID: &transaction, Amount: "100", Currency: "CNY", OccurredAt: now.Format(voucherTimeLayout), ProviderOrderRevision: "2"})
+	body, e = p.CanonicalNotification(p.Notification{SchemaVersion: 1, EventID: "event:" + uuid.NewString(), EventType: "capture.confirmed", EnvironmentID: x.environment, MerchantID: "fixture", OrderID: order, ProviderTransactionID: &transaction, Amount: "100", Currency: "CNY", OccurredAt: now.Format(VoucherTimeLayout), ProviderOrderRevision: "2"})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -256,7 +256,7 @@ func (x *sandboxFundingFixture) queryEvidence(t *testing.T, order, original stri
 	if e = tx.Commit(x.ctx); e != nil {
 		t.Fatal(e)
 	}
-	body, e := p.CanonicalQueryReply(p.QueryReply{SchemaVersion: 1, QueryID: query, EnvironmentID: x.environment, MerchantID: "fixture", MerchantOrderID: merchant, CommandID: command, CommandKind: "checkout", ParameterDigest: p.RequestDigest(parameters), CommandState: "completed", ProviderOrderRevision: &revision, Result: &p.CommandResult{Status: "captured", Capture: &p.CaptureFact{ProviderTransactionID: transaction, Amount: amount, Currency: currency, OccurredAt: occurred.UTC().Format(voucherTimeLayout), ProviderOrderRevision: revision}}})
+	body, e := p.CanonicalQueryReply(p.QueryReply{SchemaVersion: 1, QueryID: query, EnvironmentID: x.environment, MerchantID: "fixture", MerchantOrderID: merchant, CommandID: command, CommandKind: "checkout", ParameterDigest: p.RequestDigest(parameters), CommandState: "completed", ProviderOrderRevision: &revision, Result: &p.CommandResult{Status: "captured", Capture: &p.CaptureFact{ProviderTransactionID: transaction, Amount: amount, Currency: currency, OccurredAt: occurred.UTC().Format(VoucherTimeLayout), ProviderOrderRevision: revision}}})
 	if e != nil {
 		t.Fatal(e)
 	}

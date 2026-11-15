@@ -158,6 +158,9 @@ func commerceWireValue(value reflect.Value) any {
 	if instant, ok := value.Interface().(time.Time); ok {
 		return instant.UTC().Format("2006-01-02T15:04:05.000000Z")
 	}
+	if marshaler, ok := value.Interface().(json.Marshaler); ok {
+		return marshaler
+	}
 	switch value.Kind() {
 	case reflect.Struct:
 		result := map[string]any{}

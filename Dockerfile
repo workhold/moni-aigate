@@ -1,4 +1,11 @@
 FROM node:22-alpine AS console
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+ARG NPM_CONFIG_REGISTRY
 WORKDIR /src/web
 COPY web/package*.json ./
 RUN npm ci
@@ -6,6 +13,12 @@ COPY web/ ./
 RUN npm run build
 
 FROM golang:1.26-alpine AS api
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
 ARG GOPROXY=https://proxy.golang.org,direct
 ENV GOPROXY=${GOPROXY}
 WORKDIR /src
@@ -17,7 +30,14 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /moni-aigate ./cmd/moni
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /mock-upstream ./scripts/mock-upstream
 
 FROM alpine:3.23
-RUN apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+ARG ALPINE_REPOSITORY
+RUN if [ -n "$ALPINE_REPOSITORY" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|$ALPINE_REPOSITORY|g" /etc/apk/repositories; fi && apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
 COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
 COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
 USER moni

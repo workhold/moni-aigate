@@ -296,7 +296,7 @@ func (f *alertMainFixture) blockedPID(t *testing.T, blocker int) int {
 	var pid int
 	until := time.Now().Add(5 * time.Second)
 	for time.Now().Before(until) {
-		err := f.owner.QueryRow(f.ctx, `SELECT pid FROM pg_stat_activity WHERE application_name='moni-aigate-alerts' AND wait_event_type='Lock' AND wait_event='advisory' AND $1::int=ANY(pg_blocking_pids(pid)) AND lower(query) LIKE 'update alert_rule_runtime%' LIMIT 1`, blocker).Scan(&pid)
+		err := f.owner.QueryRow(f.ctx, `SELECT pid FROM pg_stat_activity WHERE datname=current_database() AND application_name='moni-aigate-alerts' AND wait_event_type='Lock' AND wait_event='advisory' AND $1::int=ANY(pg_blocking_pids(pid)) AND lower(query) LIKE 'update alert_rule_runtime%' LIMIT 1`, blocker).Scan(&pid)
 		if err == nil {
 			return pid
 		}
@@ -602,7 +602,7 @@ func TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery(t *testing.T) {
 	time.Sleep(1200 * time.Millisecond)
 	f.empty(t, rule)
 	var observers int
-	if err = f.owner.QueryRow(ctx, `SELECT count(*) FROM pg_stat_activity WHERE application_name='moni-aigate-alerts'`).Scan(&observers); err != nil || observers != 0 {
+	if err = f.owner.QueryRow(ctx, `SELECT count(*) FROM pg_stat_activity WHERE datname=current_database() AND application_name='moni-aigate-alerts'`).Scan(&observers); err != nil || observers != 0 {
 		t.Fatal("default-off main created observer database sessions", observers, err)
 	}
 	alertMainTerm(t, defaultOff)
@@ -614,7 +614,7 @@ func TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery(t *testing.T) {
 	// Keep the external lock held while SIGTERM must cancel and join the real
 	// observer slot. Releasing it first would not prove lifecycle cancellation.
 	alertMainTerm(t, graceful)
-	alertMainWait(t, ctx, f.owner, "SIGTERM did not join/close actual observer sessions", `SELECT NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='moni-aigate-alerts')`)
+	alertMainWait(t, ctx, f.owner, "SIGTERM did not join/close actual observer sessions", `SELECT NOT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='moni-aigate-alerts')`)
 	f.empty(t, rule)
 
 	beforeCommit := start("before-commit-kill", map[string]string{"OPERATIONS_ALERTS_ENABLED": "true"})

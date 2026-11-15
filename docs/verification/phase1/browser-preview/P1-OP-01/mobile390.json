@@ -1,0 +1,65 @@
+{
+  "status": "PREVIEW",
+  "width": 390,
+  "checks": [
+    "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+    "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+    "预算阈值触发站内告警、读取事件并完成共同确认",
+    "/platform/alerts: 共同确认，无页面横向溢出或错误告警",
+    "/platform/audit: 操作审计，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+      "path": "/platform/alerts",
+      "title": "经营告警 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+      "path": "/platform/audit",
+      "title": "平台管理 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "预算阈值触发站内告警、读取事件并完成共同确认",
+      "rule_label": "phase1-browser-alert-2a089af6e2"
+    },
+    {
+      "name": "/platform/alerts: 共同确认，无页面横向溢出或错误告警",
+      "path": "/platform/alerts",
+      "title": "经营告警 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+      "path": "/platform/audit",
+      "title": "平台管理 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-OP-01/mobile390.png",
+  "additional_evidence": [
+    "P1-OP-01/mobile390.png"
+  ]
+}

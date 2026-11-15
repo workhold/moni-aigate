@@ -1,0 +1,21 @@
+{
+  "status": "PREVIEW",
+  "width": 1440,
+  "checks": [
+    "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警",
+      "path": "/platform/price-groups",
+      "title": "价格组与租户定价 · moni-aigate",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-PR-02/desktop.png"
+}

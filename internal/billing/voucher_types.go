@@ -2,7 +2,9 @@ package billing
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/moni-ai/moni-aigate/internal/security"
 	"time"
 )
@@ -26,6 +28,34 @@ type VoucherOptions struct {
 	RuntimeAllowed, RecoveryMode bool
 	Keys                         *security.VoucherKeyring
 }
+type VoucherTime struct{ time.Time }
+
+func (t VoucherTime) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.UTC().Format(VoucherTimeLayout))
+}
+
+func (t *VoucherTime) Scan(src any) error {
+	switch v := src.(type) {
+	case time.Time:
+		t.Time = v
+		return nil
+	case string:
+		parsed, err := time.Parse(time.RFC3339Nano, v)
+		if err != nil {
+			return err
+		}
+		t.Time = parsed
+		return nil
+	case []byte:
+		return t.Scan(string(v))
+	case nil:
+		t.Time = time.Time{}
+		return nil
+	default:
+		return fmt.Errorf("unsupported voucher timestamp %T", src)
+	}
+}
+
 type VoucherService struct {
 	store   *Store
 	options VoucherOptions
@@ -102,17 +132,17 @@ type CreateVoucherBatchResult struct {
 	SecretsAvailable, Created bool
 }
 type VoucherOperationReceipt struct {
-	OperationID      string    `json:"operation_id"`
-	Kind             string    `json:"kind"`
-	Scope            string    `json:"scope"`
-	Actor            string    `json:"actor"`
-	Status           string    `json:"status"`
-	Reason           string    `json:"reason"`
-	ResourceID       *string   `json:"resource_id"`
-	Amount           *Money    `json:"amount"`
-	FundingReceiptID *string   `json:"funding_receipt_id"`
-	JournalID        *string   `json:"journal_id"`
-	CreatedAt        time.Time `json:"created_at"`
+	OperationID      string      `json:"operation_id"`
+	Kind             string      `json:"kind"`
+	Scope            string      `json:"scope"`
+	Actor            string      `json:"actor"`
+	Status           string      `json:"status"`
+	Reason           string      `json:"reason"`
+	ResourceID       *string     `json:"resource_id"`
+	Amount           *Money      `json:"amount"`
+	FundingReceiptID *string     `json:"funding_receipt_id"`
+	JournalID        *string     `json:"journal_id"`
+	CreatedAt        VoucherTime `json:"created_at"`
 }
 type VoucherPolicyView struct {
 	Enabled          bool   `json:"enabled"`
@@ -125,32 +155,32 @@ type CommerceCapabilitiesView struct {
 	PaymentsMode    string `json:"payments_mode"`
 }
 type VoucherBatchView struct {
-	ID             string     `json:"id"`
-	State          string     `json:"state"`
-	FaceAmount     Money      `json:"face_amount"`
-	Count          int        `json:"count"`
-	ExpiresAt      time.Time  `json:"expires_at"`
-	PurposeRef     string     `json:"purpose_ref"`
-	Reason         string     `json:"reason"`
-	Maker          string     `json:"maker"`
-	Approver       *string    `json:"approver"`
-	ActivatedAt    *time.Time `json:"activated_at"`
-	TerminalActor  *string    `json:"terminal_actor"`
-	TerminalAt     *time.Time `json:"terminal_at"`
-	Revision       string     `json:"revision"`
-	RedeemedCount  string     `json:"redeemed_count"`
-	RemainingCount string     `json:"remaining_count"`
-	CreatedAt      time.Time  `json:"created_at"`
-	Expired        bool       `json:"expired"`
-	ObservedAt     time.Time  `json:"observed_at"`
+	ID             string       `json:"id"`
+	State          string       `json:"state"`
+	FaceAmount     Money        `json:"face_amount"`
+	Count          int          `json:"count"`
+	ExpiresAt      VoucherTime  `json:"expires_at"`
+	PurposeRef     string       `json:"purpose_ref"`
+	Reason         string       `json:"reason"`
+	Maker          string       `json:"maker"`
+	Approver       *string      `json:"approver"`
+	ActivatedAt    *VoucherTime `json:"activated_at"`
+	TerminalActor  *string      `json:"terminal_actor"`
+	TerminalAt     *VoucherTime `json:"terminal_at"`
+	Revision       string       `json:"revision"`
+	RedeemedCount  string       `json:"redeemed_count"`
+	RemainingCount string       `json:"remaining_count"`
+	CreatedAt      VoucherTime  `json:"created_at"`
+	Expired        bool         `json:"expired"`
+	ObservedAt     VoucherTime  `json:"observed_at"`
 }
 type VoucherDecisionView struct {
-	ID          string    `json:"id"`
-	OperationID string    `json:"operation_id"`
-	Status      string    `json:"status"`
-	Reason      string    `json:"reason"`
-	Approver    string    `json:"approver"`
-	DecidedAt   time.Time `json:"decided_at"`
+	ID          string      `json:"id"`
+	OperationID string      `json:"operation_id"`
+	Status      string      `json:"status"`
+	Reason      string      `json:"reason"`
+	Approver    string      `json:"approver"`
+	DecidedAt   VoucherTime `json:"decided_at"`
 }
 type VoucherRevocationView struct {
 	ID                    string               `json:"id"`
@@ -159,7 +189,7 @@ type VoucherRevocationView struct {
 	ExpectedRedeemedCount string               `json:"expected_redeemed_count"`
 	Reason                string               `json:"reason"`
 	Maker                 string               `json:"maker"`
-	CreatedAt             time.Time            `json:"created_at"`
+	CreatedAt             VoucherTime          `json:"created_at"`
 	Decision              *VoucherDecisionView `json:"decision"`
 }
 type VoucherPage[T any] struct {
@@ -167,17 +197,17 @@ type VoucherPage[T any] struct {
 	NextCursor *string `json:"next_cursor"`
 }
 type VoucherRedemptionView struct {
-	ID               string    `json:"id"`
-	OperationID      string    `json:"operation_id"`
-	TenantID         string    `json:"tenant_id"`
-	VoucherID        string    `json:"voucher_id"`
-	BatchID          string    `json:"batch_id"`
-	Actor            string    `json:"actor"`
-	Amount           Money     `json:"amount"`
-	Currency         string    `json:"currency"`
-	FundingReceiptID string    `json:"funding_receipt_id"`
-	JournalID        string    `json:"journal_id"`
-	CreatedAt        time.Time `json:"created_at"`
+	ID               string      `json:"id"`
+	OperationID      string      `json:"operation_id"`
+	TenantID         string      `json:"tenant_id"`
+	VoucherID        string      `json:"voucher_id"`
+	BatchID          string      `json:"batch_id"`
+	Actor            string      `json:"actor"`
+	Amount           Money       `json:"amount"`
+	Currency         string      `json:"currency"`
+	FundingReceiptID string      `json:"funding_receipt_id"`
+	JournalID        string      `json:"journal_id"`
+	CreatedAt        VoucherTime `json:"created_at"`
 }
 type FundingReceiptView struct {
 	ID           string            `json:"id"`
@@ -187,21 +217,21 @@ type FundingReceiptView struct {
 	Amount       Money             `json:"amount"`
 	Currency     string            `json:"currency"`
 	JournalID    string            `json:"journal_id"`
-	CreatedAt    time.Time         `json:"created_at"`
+	CreatedAt    VoucherTime       `json:"created_at"`
 	BasisKind    string            `json:"basis_kind"`
 	FiatCurrency *string           `json:"fiat_currency"`
 	FiatAmount   *FiatMoney        `json:"fiat_amount"`
 }
 type FundingSummaryView struct {
-	Currency             string    `json:"currency"`
-	TotalAmount          string    `json:"total_amount"`
-	ManualCreditAmount   string    `json:"manual_credit_amount"`
-	ManualBonusAmount    string    `json:"manual_bonus_amount"`
-	ManualUnknownAmount  string    `json:"manual_unknown_amount"`
-	VoucherGrantAmount   string    `json:"voucher_grant_amount"`
-	SandboxCaptureAmount string    `json:"sandbox_capture_amount"`
-	WalletOpeningAmount  string    `json:"wallet_opening_amount"`
-	AsOf                 time.Time `json:"as_of"`
+	Currency             string      `json:"currency"`
+	TotalAmount          string      `json:"total_amount"`
+	ManualCreditAmount   string      `json:"manual_credit_amount"`
+	ManualBonusAmount    string      `json:"manual_bonus_amount"`
+	ManualUnknownAmount  string      `json:"manual_unknown_amount"`
+	VoucherGrantAmount   string      `json:"voucher_grant_amount"`
+	SandboxCaptureAmount string      `json:"sandbox_capture_amount"`
+	WalletOpeningAmount  string      `json:"wallet_opening_amount"`
+	AsOf                 VoucherTime `json:"as_of"`
 }
 type VoucherReader struct{ ActorID, TenantID string }
 type VoucherPageInput struct{ Cursor string }

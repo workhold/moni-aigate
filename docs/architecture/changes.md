@@ -7189,3 +7189,178 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_mock_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T09:17:14Z · a11f35f417ee
+
+新增隔离浏览器/CDP 验收与完整预览证据；修正价格时间、confirmed_final 数量行和 voucherTime/commerce 反射序列化，仅只读 DTO，不改资金写入、CNY normalization、迁移、模块或权限边界；已运行真实 PG、race、前端和 harness，正式 029 仍未执行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 62 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- added `docs/verification/phase1-browser-preview.md`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/browser-evidence.json`
+- added `docs/verification/phase1/browser-preview/downloads/moni-aigate-operations.csv`
+- modified `internal/billing/funding_sandbox_integration_test.go`
+- modified `internal/billing/voucher_commands.go`
+- modified `internal/billing/voucher_query.go`
+- added `internal/billing/voucher_time_test.go`
+- modified `internal/billing/voucher_types.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/commerce_handlers.go`
+- modified `internal/server/commerce_input_test.go`
+- modified `internal/server/payment_handlers_test.go`
+- modified `internal/server/pricing_integration_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/task_request_reference_integration_test.go`
+- modified `scripts/phase1-acceptance-matrix.json`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1-acceptance.test.sh`
+- modified `scripts/phase1-browser-preview.sh`
+- added `scripts/phase1_browser_qa.py`
+- added `scripts/phase1_browser_qa_test.py`
+
+</details>
+
+## 2026-11-15T09:38:55Z · fd8f0927be02
+
+独立复核发现价格分页类型回归：保留 timestamptz 游标比较，生成 next_cursor 后统一六位微秒输出，admin/租户 51 行分页回归通过；仅只读 DTO 与分页兼容，不改资金写入、计量、权限或迁移
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `internal/server/pricing_integration_test.go`
+- modified `internal/server/queries.go`
+
+</details>
+
+## 2026-11-15T09:42:41Z · 845512de93f9
+
+将已验证的 admin/租户价格游标回归加入 P1-PR-01 必需绑定，现 41 IDs/82 bindings；仅验收证据覆盖，不改变生产行为或权限边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-acceptance-matrix.json`
+
+</details>
+
+## 2026-11-15T09:44:51Z · 92e9a9e1b784
+
+将预览文档的必需测试绑定计数同步为实际 82；仅证据文字同步，无生产或权限变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-browser-preview.md`
+
+</details>
+
+## 2026-11-15T10:10:56Z · fb470219127e
+
+修正实际 main 告警测试的观察会话查询，使其只统计当前临时数据库；生产默认关闭、退出和恢复逻辑不变，架构模块与合同不变，同步验证记录。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `internal/server/alert_main_integration_test.go`
+
+</details>
+
+## 2026-11-15T11:55:23Z · 8c93510de663
+
+收口 029 浏览器终验证据完整性：完整成功后才发布 PASS，绑定干净 HEAD 归档与不可变运行镜像，保留分阶段截图，部署重启后重验并避免预览误清理；Compose 仅增加验收构建标签，无生产资金、迁移或运行拓扑变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `compose.yaml`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1-browser-preview.sh`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/phase1_browser_qa.py`
+- modified `scripts/phase1_browser_qa_test.py`
+
+</details>
+
+## 2026-11-15T13:24:16Z · 3f3c0599a073
+
+验收 VM 直连 npm 下载失败，新增仅预览使用的可选构建期代理参数；代理默认空且不进入运行配置，HEAD 归档与不可变镜像合同不变，无生产请求、资金、迁移或部署拓扑变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-browser-preview.sh`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T14:03:15Z · 932612168977
+
+完整镜像预检已通过：npm 与 Alpine 可选镜像、大小写构建代理、Compose 独立构建参数均可用；默认源和运行配置不变，锁文件 integrity、HEAD 归档与不可变镜像边界不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-browser-preview.sh`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
