@@ -669,6 +669,17 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 
 **前端校验必须放开**：`web/src/wallet-sources.ts` 现在只接受现有的四种 `source_kind` 与两种 `refund_class`，并硬编码 `(source_kind === 'sandbox_capture') === (refund_class === 'sandbox_original')`。新增 `manual_bonus`、`manual_unknown`、`cash_original` 后这些校验会直接抛错，必须同步修改并有前端测试。
 
+### 8.2 034.6 展示版本与显示名实施合同（2026-11-15）
+
+“约合”和显示名只改变控制台展示，**不得**复用 `coin_rate_versions`、改变会计币价、请求预占/结算/退款、供应商成本或计量 canonical。技术字段 `currency='COIN'`、`AmountUnit='micro_coin'` 保持不变；显示名只是 `coin()` 的可见后缀。
+
+1. **独立追加式版本**。新增 `coin_display_versions`，字段为 `operation_id/version/display_name/fiat_currency/rate_num/rate_den/actor/reason/created_at`。版本为从 1 开始递增的正整数，记录不可 UPDATE/DELETE；创世 version=1 为 `display_name='币'` 且约合关闭、actor 为 NULL；后续版本必须记录真实 admin actor。当前展示只取最大 version，不提供回填、未来生效或按业务时刻选择历史版本的入口。
+2. **字段组合**。显示名须为去除首尾空白后的 1..32 UTF-8 字节文本且不含控制字符。约合关闭时 `fiat_currency/rate_num/rate_den` 全部为 NULL；开启时币种只允许 CNY/USD，分子与分母均为正 int64，含义为 `1 COIN = rate_num/rate_den` 对应法币。不得接收零、负数、浮点、JSON number 或部分 NULL 的组合。
+3. **公开与管理读取**。`GET /api/coin-display` 可匿名读取，但只返回当前 `version/display_name/fiat_currency/rate_num/rate_den`，不返回 actor、reason、operation_id 或历史。`GET /api/platform/coin-display-settings` 仅 admin，返回 current 与最近 50 个版本（含完整审计字段）；没有 genesis 或读取损坏时失败关闭，不伪造配置。
+4. **受控写入**。`PUT /api/platform/coin-display-settings` 仅 admin，沿用平台近期再认证、CSRF、恢复模式禁止写和严格 JSON。字段固定为 `operation_id/expected_revision/display_name/fiat_currency/rate_num/rate_den/reason/confirmation`，confirmation 必须为 `CONFIRM_COIN_DISPLAY_CHANGE`。服务用独立 advisory lock 串行 CAS，追加 version=current+1 并写 `coin_display.updated` 审计。相同 operation 的完整意图重放返回原版本，不同意图为 `idempotency_conflict`，过期 expected_revision 为 `revision_conflict`。提交结果不明时不自动重试，调用方按 operation_id 通过 `GET /api/platform/coin-display-settings/:operation_id` 只读历史确认。
+5. **前端展示与故障边界**。页面加载时读取公开当前版本，管理写入成功后立即应用返回版本；不把配置写入 localStorage。读取失败只保留默认“币”标签且不显示约合，管理页展示读取错误，绝不沿用未验证的响应或编造比例。启用约合时，`coin()` 额外显示“约合 <法币> · v<版本>，仅供参考”。
+6. **精确换算**。前端以 BigInt 计算 `micro_fiat = trunc(micro_coin × rate_num / rate_den)`，禁止 Number 浮点和 int64 乘积溢出；正数即向下取整，负数向零截断。该结果只用于展示，不进入任何 API 资金字段、报表付款基准、预占、退款或请求。§16 必须覆盖大整数、显示名、禁用组合、配置失败不显示约合，以及真实 PostgreSQL 的不可变/CAS/并发/权限验证；将展示表改名后真实网关请求、预占和结算仍须成功，证明不存在隐藏资金依赖。
+
 ## 9. 换算配置入口
 
 | 范围 | 入口 | 规则 |
@@ -812,6 +823,8 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 | 请求路径 | Reserve、结算、消费退款不读取任何汇率（静态检查与真实 PG 用例） | PG |
 | 报表 | 付款基准按币种分列；`unknown` 基准与缺汇率时毛利为 null | PG |
 | 客户展示 | 客户能看到自己的付款金额与到账币数；看不到供应商成本 | — |
+| 034.6 展示配置 | 创世默认“币”且约合关闭；比例/显示名/NULL 组合、不可变历史、admin/CAS/幂等/并发与公开字段边界成立；改名展示表不影响真实请求 | PG + HTTP + 前端 |
+| 034.6 精确约合 | 显示名只改标签；BigInt 大整数向零截断、版本与“仅供参考”提示正确，读取失败不显示约合，配置不进入资金请求 | 前端测试 |
 
 ## 17. 分片
 

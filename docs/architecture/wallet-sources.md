@@ -1,6 +1,6 @@
-# 现行资金来源与钱包开账（027、034.1–034.5）
+# 现行资金来源与钱包开账（027、034.1–034.6）
 
-[统一架构](README.md)的当前生产链路；精确合同见[027规格](../../specs/027-wallet-sources/spec.md)与[034规格](../../specs/034-virtual-coin/spec.md)。023建立单一钱包来源模型，current_004/005建立COIN边界，current_006增加角色、付款基准、独立申请与成对人工来源，current_008增加币价版本与付费receipt冻结引用，current_009增加现金退款生产状态机与待处理告警；034.5只增加余额构成、回执和报表读取，不追加迁移、不安装旧C0历史证明候选，也不增加第二钱包。
+[统一架构](README.md)的当前生产链路；精确合同见[027规格](../../specs/027-wallet-sources/spec.md)与[034规格](../../specs/034-virtual-coin/spec.md)。023建立单一钱包来源模型，current_004/005建立COIN边界，current_006增加角色、付款基准、独立申请与成对人工来源，current_008增加币价版本与付费receipt冻结引用，current_009增加现金退款生产状态机与待处理告警，current_010增加独立展示版本；034.5只增加余额构成、回执和报表读取，034.6只增加控制台展示，不安装旧C0历史证明候选，也不增加第二钱包或第二币价。
 
 ```mermaid
 flowchart LR
@@ -102,6 +102,12 @@ hold/retire/release 使用独立 operation、journal actor 和五桶事件：hol
 
 经营报表只读原结算分配边、lot/receipt和completed现金退款，具体公式、跨租户与CSV边界见[经营报表架构](operating-reports.md)。本片没有新存储、新角色、第二钱包或第二计量/付款事实源，完整验证见[034.5记录](../verification/034-5-reporting-wallet-composition.md)。
 
+## 034.6 展示配置不属于资金汇率
+
+`coin_display_versions`只保存显示名和可选展示比例，创世为“币”且约合关闭，后续版本由admin以operation/CAS/二次确认追加并写审计。公开当前DTO不暴露actor/reason/operation，admin历史和operation回查分离。约合关闭时三个字段全NULL，开启时仅CNY/USD和正int64有理数；当前只取最大version，历史不可改。
+
+前端`coin()`用BigInt向零截断并标注展示版本与“仅供参考”，读取失败只保留默认“币”且不显示约合。此表与`coin_rate_versions`无关，不参与买入、预占、结算、退款、报表或canonical；真实网关测试将展示表改名后仍成功。详见[展示架构](coin-display.md)和[034.6验证](../verification/034-6-coin-display.md)。
+
 ## 角色与维护
 
 APP对来源/事件/分配仅SELECT/INSERT，来源余额可更新available/held/consumed/refund_held/retired/revision，034.4才授予后两桶生产UPDATE；ledger_accounts只更新balance；开账原件只读。设置与申请仅SELECT/INSERT及必要的状态列UPDATE，worker/projection无这些表及现金退款订单权限。APP可创建现金退款订单并只更新状态列，不能修改身份列；worker/projection无订单写权限。APP、payment worker和projection对`coin_rate_versions`均只有SELECT，无运行时版本写入或修改权限。支付worker只新增lots/balances/events三表读写及旧三桶余额列写，七个安全wallet函数可执行；funding/event校验使用显式语句分支，不给worker读取人工、券、申请、设置、开账原件或现金退款订单。启动沿[现行权限核验](../../internal/operations/payment_roles.go)验证当前表/列/函数边界，期望来自受审迁移源码，不从待验DB学习；只有离线历史schema可缺失034表和函数。
@@ -127,6 +133,8 @@ APP对来源/事件/分配仅SELECT/INSERT，来源余额可更新available/held
 | GET /api/platform/wallet-requests | admin/财务读取；支持tenant/kind/state过滤与游标 |
 | POST /api/platform/wallet-requests/:id/close | 财务拒绝open申请；admin写权限同样受单人运营开关限制 |
 | GET/PUT /api/platform/wallet-operator-settings | admin读取最近50版；PUT以operation_id和expected_revision追加设置并写审计 |
+| GET /api/coin-display | 匿名/客户只读当前显示名、约合币种/比例和version，不含actor/reason/operation |
+| GET/PUT /api/platform/coin-display-settings、GET .../:operation_id | admin读取最近50版/单条操作；PUT再认证+CSRF+operation/CAS/二次确认，追加不可变展示版本 |
 | POST /api/platform/credits | 财务制单，可选request_id原子关联topup/open；admin仅在开关开启时获得钱包写例外 |
 | GET/POST /api/platform/cash-refunds | 财务创建现金退款申请并分页读取；只接受来源、业务号、原因和可选request_id，不接受币数/金额 |
 | GET /api/platform/cash-refunds/:id、/by-business/:ref | 按ID或业务号只读回查，含requested预览与已冻结事实 |
@@ -136,4 +144,4 @@ APP对来源/事件/分配仅SELECT/INSERT，来源余额可更新available/held
 
 原入账回执与摘要覆盖六类来源，必含`manual_bonus_amount`、`manual_unknown_amount`和`wallet_opening_amount`并精确合计。累计入账、当前来源余额和模型消费币数分别来自receipt、lot余额和唯一settlement。通用[查询DTO装配](../../internal/server/queries.go)统一输出UTC时间，保持原精度与分页instant，前端UTC校验不放宽。
 
-[来源HTTP](../../internal/server/wallet_sources.go)、[申请HTTP](../../internal/server/wallet_request_handlers.go)、[设置HTTP](../../internal/server/operator_settings_handlers.go)与[钱包组件](../../web/src/components/WalletSources.vue)、[申请组件](../../web/src/components/WalletRequests.vue)、[设置组件](../../web/src/components/WalletOperatorSettings.vue)、[平台来源页](../../web/src/views/WalletSourcesView.vue)共享当前合同，身份/租户/路由切换或卸载使旧响应失效。平台核对手动触发。经营报表继续读唯一settlement和全部attempt，opening不计模型消费；034.5已实现余额构成、客户付款回执、分币种付款基准与独立现金退款展示，034.6约合展示和显示名仍需独立实现和验收。
+[来源HTTP](../../internal/server/wallet_sources.go)、[申请HTTP](../../internal/server/wallet_request_handlers.go)、[设置HTTP](../../internal/server/operator_settings_handlers.go)与[钱包组件](../../web/src/components/WalletSources.vue)、[申请组件](../../web/src/components/WalletRequests.vue)、[设置组件](../../web/src/components/WalletOperatorSettings.vue)、[平台来源页](../../web/src/views/WalletSourcesView.vue)共享当前合同，身份/租户/路由切换或卸载使旧响应失效。平台核对手动触发。经营报表继续读唯一settlement和全部attempt，opening不计模型消费；034.5已实现余额构成、客户付款回执、分币种付款基准与独立现金退款展示，034.6已实现独立显示名和约合配置；二者不改变钱包或会计事实，真实外部汇率和生产验收不属于这些本地分片。

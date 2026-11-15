@@ -171,6 +171,8 @@ flowchart TD
     Billing --> PB[客户与采购周期预算]
     Billing --> Sources[027 来源 / FIFO / 结算与逆序退款]
     Server --> Report[026 经营报表 / 对账 CSV]
+    Server --> Display[034.6 展示配置]
+    Display --> DB
     Sources -->|原结算分配边与 receipt 付款基准| Report
     Billing -->|completed 现金退款事实| Report
     Maintenance[离线开账 / 只读来源核对] --> Billing
@@ -471,6 +473,7 @@ LedgerReader保留原caller-owned RR入口；billing的[LedgerFactQuery/Rows与R
 | 媒体/任务/Realtime MVP（028-S/A/R） | 图片与 TTS 受限 inline 结果、统一 media Reserve/Attempt/Observe/Settle、持久任务与 worker lease、PostgreSQL session/turn/event、结果正文保护和 mock provider；真实供应商/浏览器/目标部署仍另验 | [媒体 handler](../../internal/server/image_handlers.go)、[TTS](../../internal/server/media_handlers.go)、[任务](../../internal/server/task_handlers.go)、[Realtime](../../internal/server/realtime.go)、[统一细图](unified-metering.md) |
 | 财务与恢复 | 客户硬预占、不可变证据、唯一结算/释放、成本、补偿、恢复/投影 | [billing](../../internal/billing)、[计费合同](../../specs/001-commercial-mvp/contracts/billing.md) |
 | 经营报表与对账（026/028/034.5） | 当前请求创建窗口、COIN消费/退回/净额、文本与媒体原结算分配边的分币种付款基准、独立completed现金退款、全部attempt采购成本与可空的同币种毛利；平台只读同一有界快照，缺失/不完整分配、unknown、多币种或未知成本均不伪造毛利，请求级CSV保留协议计量元数据 | [reporting](../../internal/reporting)、[HTTP](../../internal/server/operating_reports.go)、[控制台](../../web/src/components/OperatingReport.vue)、[细图与口径](operating-reports.md)、[034.5验证](../verification/034-5-reporting-wallet-composition.md) |
+| 展示配置（034.6） | 独立追加式显示名/约合版本，匿名只读当前安全DTO，admin以再认证、CSRF、operation幂等和CAS追加；约合仅前端BigInt展示并带版本/仅供参考，不进入会计、计量、请求、退款或付款基准 | [展示服务](../../internal/billing/coin_display.go)、[HTTP](../../internal/server/coin_display_handlers.go)、[前端配置](../../web/src/components/CoinDisplaySettings.vue)、[细化架构](coin-display.md)、[验证](../verification/034-6-coin-display.md) |
 | 共同入账与双审券（022-A） | 人工核款/运营赠额唯一入账、六命令回执、独立HMAC、一次codes、来源查询与未知提交保护 | [funding](../../internal/billing/funding.go)、[核验](../../internal/billing/funding_verify.go)、[券命令](../../internal/billing/voucher_commands.go)、[安全查询](../../internal/billing/voucher_query.go)、[keyring](../../internal/security/voucher.go)、[HTTP](../../internal/server/commerce_handlers.go)、[017迁移](../../migrations/017_funding_vouchers.sql)、[证据](../verification/funding-vouchers.md) |
 | 分组售价（023-A） | 单tenant单组、绝对价/缺价拒绝、不可变请求快照、原操作回执、缺价预览和分组倍率批量编译；已完成限定本地集成验收 | [Tx helper](../../internal/pricing/pricing.go)、[管理](../../internal/catalog/pricing_commands.go)、[倍率编译](../../internal/catalog/group_price_compile.go)、[查询](../../internal/catalog/pricing_queries.go)、[HTTP](../../internal/server/pricing_handlers.go)、[023-A合同](../../specs/023-periodic-products/a-contract.md)、[030合同](../../specs/030-model-aliases-group-multipliers/spec.md) |
 | 独立本地支付沙箱（022-B0） | P协议、M模拟器/receiver/持久回调和私密运行证明已编码；专项真实PG/race和真实进程短程通过，长程故障验收按记录推进；独立M/Q进程限定验证；应用接线另见B3 | [协议](../../internal/paymentproto)、[模拟器](../../internal/mockpsp)、[接收器](../../internal/paymentreceiver)、[运行证明](../../internal/paymentruntime)、[版本1 SQL/inventory](../../internal/paymentsandboxschema)、[离线QA](../../internal/paymentsandboxqa)、[精确合同](../../specs/022-self-service-payments/b-runtime-contract.md)、[验证记录](../verification/payment-sandbox.md) |
@@ -715,7 +718,15 @@ sequenceDiagram
 
 [经营报表读取器](../../internal/reporting/read.go) 在同一 RR READ ONLY 快照追加读取文本 `funding_settlement_lots`、媒体 `media_settlement_lots`、共享 lot/receipt 与 completed 现金退款。每条分配边以 `big.Int` 计算 `floor(charged×fiat/issued)`，grant/opening 为零，unknown、缺买入版本、缺付款字段、缺失或合计不等于 settlement 的分配边均使毛利为 null；`payment_basis` 按 CNY/USD 分列。`charged/refunded/net_revenue` 仍是 COIN，后者不再作为毛利输入。只有请求全部结算、成本全已知、分配完整且付款基准仅 CNY 时，毛利才是 CNY 付款基准减已知采购成本；多币种不折算、不猜测。
 
-`cash_refunded` 只汇总报表时间窗及可选 tenant 内 completed 订单的实际法币，不冲减付款基准，也不按模型或请求重复分摊；summary 展示汇总，model/request 映射和请求级 CSV 现金退款列为空。JSON/CSV 与[控制台](../../web/src/operating-report.ts)严格区分 COIN 微币和 CNY/USD 微法币，拒绝旧 `micro_cny` 消费口径。权限沿用平台报表与现有 APP SELECT，没有新增表、第二事实源、运行时写权限或供应商/生产验收。完整验证见[034.5验证记录](../verification/034-5-reporting-wallet-composition.md)；034.6 约合展示和显示名仍未实现。
+`cash_refunded` 只汇总报表时间窗及可选 tenant 内 completed 订单的实际法币，不冲减付款基准，也不按模型或请求重复分摊；summary 展示汇总，model/request 映射和请求级 CSV 现金退款列为空。JSON/CSV 与[控制台](../../web/src/operating-report.ts)严格区分 COIN 微币和 CNY/USD 微法币，拒绝旧 `micro_cny` 消费口径。权限沿用平台报表与现有 APP SELECT，没有新增表、第二事实源、运行时写权限或供应商/生产验收。完整验证见[034.5验证记录](../verification/034-5-reporting-wallet-composition.md)。
+
+### 034.6 独立展示版本与约合
+
+[`current_010_coin_display.sql`](../../migrations/current_010_coin_display.sql)新增独立 `coin_display_versions`，创世为“币”且约合关闭，后续显示名/比例版本追加不可变。它不是 `coin_rate_versions` 的扩展，也没有钱包、settlement、route或metering外键。当前只取最大version；显示名限1..32字节，约合关闭时三个字段全NULL，开启时只允许CNY/USD和正int64有理数。APP仅SELECT/INSERT，worker/projection无业务写入，历史schema按capability处理，既有68个受审函数不变。
+
+`GET /api/coin-display`只公开当前version、显示名、币种和比例；admin通过`GET/PUT /api/platform/coin-display-settings`及operation回查管理最近50版。[展示服务](../../internal/billing/coin_display.go)以独立advisory lock串行CAS，写操作要求近期再认证、CSRF、operation幂等、二次确认和`coin_display.updated`审计；异意图与过期revision冲突，未知结果只读核查，不自动重试。[HTTP](../../internal/server/coin_display_handlers.go)不进入模型请求处理器，真实网关测试将展示表改名后仍完成请求与结算。
+
+前端[公开配置模块](../../web/src/coin-display.ts)和[管理页](../../web/src/components/CoinDisplaySettings.vue)分别严格解析安全DTO与历史/命令。[`coin()`](../../web/src/format.ts)以BigInt向零截断计算约合，显示版本与“仅供参考”；[MetricMoney](../../web/src/components/MetricMoney.vue)保留基础金额样式。读取失败只保留默认“币”且不显示约合，配置不写localStorage。会计币价、请求、预占、结算、退款、报表付款基准与canonical均不读取展示比例。详见[展示架构](coin-display.md)与[034.6验证](../verification/034-6-coin-display.md)。
 
 ### 018 采购单价门禁与成本感知路由
 

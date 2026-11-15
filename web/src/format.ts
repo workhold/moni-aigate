@@ -1,3 +1,5 @@
+import { coinDisplayState } from './coin-display.ts'
+
 function formatUnits(value: unknown, precision: number, prefix: string, suffix: string): string {
   if (value === null || value === undefined || value === '') return '—'
   try {
@@ -8,7 +10,15 @@ function formatUnits(value: unknown, precision: number, prefix: string, suffix: 
   } catch { return '—' }
 }
 export function money(value: unknown, precision = 6): string { return formatUnits(value, precision, '¥', '') }
-export function coin(value: unknown, precision = 6): string { return formatUnits(value, precision, '', ' 币') }
+export function coin(value: unknown, precision = 6): string {
+  const base = formatUnits(value, precision, '', ` ${coinDisplayState.displayName}`)
+  if (base === '—' || !coinDisplayState.loaded || !coinDisplayState.fiatCurrency || !coinDisplayState.rateNum || !coinDisplayState.rateDen) return base
+  try {
+    const micro = BigInt(String(value)) * BigInt(coinDisplayState.rateNum) / BigInt(coinDisplayState.rateDen)
+    const approximate = formatUnits(micro, 6, coinDisplayState.fiatCurrency === 'USD' ? '$' : '¥', '')
+    return `${base}（约合 ${approximate} · v${coinDisplayState.version}，仅供参考）`
+  } catch { return base }
+}
 export function cnyToMicro(value: string): string {
   const normalized = value.trim()
   if (!/^\d+(\.\d{1,6})?$/.test(normalized)) throw new Error('金额须为非负数，最多 6 位小数。')

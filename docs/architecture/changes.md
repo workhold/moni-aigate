@@ -7027,3 +7027,54 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `docs/verification/034-5-reporting-wallet-composition.md`
 
 </details>
+
+## 2026-11-15T01:54:35Z · 02b01ee84f27
+
+034.6 新增独立展示版本、公开安全DTO、admin CAS/审计与前端约合；current_010仅新增展示表和APP SELECT/INSERT，会计币价/请求/计量不变，已复核模块图、数据关系、权限和故障边界及77包race
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2251 个源文件；本次 28 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- added `docs/architecture/coin-display.md`
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/architecture/wallet-sources.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/phase-roadmap.md`
+- added `docs/verification/034-6-coin-display.md`
+- added `internal/billing/coin_display.go`
+- added `internal/billing/coin_display_integration_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/payment_roles.go`
+- modified `internal/operations/payment_roles_functions.go`
+- modified `internal/operations/payment_roles_test.go`
+- added `internal/server/coin_display_handlers.go`
+- added `internal/server/coin_display_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/coin_display_postgres_test.go`
+- added `migrations/current_010_coin_display.sql`
+- modified `specs/034-virtual-coin/implementation-freeze.md`
+- modified `specs/034-virtual-coin/spec.md`
+- added `web/src/coin-display.ts`
+- added `web/src/components/CoinDisplaySettings.vue`
+- modified `web/src/components/MetricMoney.vue`
+- modified `web/src/format.ts`
+- modified `web/src/main.ts`
+- modified `web/src/views/WalletSourcesView.vue`
+- added `web/tests/coin-display.test.mjs`
+
+</details>
+
+## 2026-11-15T01:55:19Z · 4c0324c61587
+
+034.6 最终验收收口：77包统一race、364项前端测试、构建、vet与make check通过；独立展示表和权限边界已同步，无会计/请求/计量结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2251 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/034-6-coin-display.md`
+
+</details>

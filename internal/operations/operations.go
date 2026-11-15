@@ -97,6 +97,15 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 			return e
 		}
 	}
+	var coinDisplay bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='coin_display_versions')`, schema).Scan(&coinDisplay); e != nil {
+		return e
+	}
+	if coinDisplay {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s`, table("coin_display_versions"), qa)); e != nil {
+			return e
+		}
+	}
 	// Revoke table-level UPDATE before granting the pricing/lifecycle columns.
 	// Repeated provisioning must not restore broad writes from the initial grant.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s,%s FROM %s;

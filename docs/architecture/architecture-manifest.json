@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T00:08:36Z",
-  "review_reason": "034.5 最终验收记录收口：77包专库串行与race、359项前端测试、构建、vet和make check均通过；无迁移、请求写链、计量canonical或角色结构变化",
-  "snapshot_sha256": "8e5128aa9bba071d5583c86e9b766ba9c24534b774218fb6bf6227f1d64f49e3",
-  "architecture_sha256": "643ae95bf5ecd04ab2c710c3f02d1b3cec811904a966ad6318bedc3c7f0edf0f",
-  "history_sha256": "1e5d8ee42078a417e34f01d0bc8192018ba6459f5b1f77d87f481deb38493ee2",
+  "reviewed_at": "2026-11-15T01:55:19Z",
+  "review_reason": "034.6 最终验收收口：77包统一race、364项前端测试、构建、vet与make check通过；独立展示表和权限边界已同步，无会计/请求/计量结构变化",
+  "snapshot_sha256": "4c0324c615876196eb0f88249bf94feaf1d2d1f2c8d0a599a2c176222c897a25",
+  "architecture_sha256": "7bbb42e12960d0751d37562dabf288231f216fae33f0d7aa1aa9a172310f0376",
+  "history_sha256": "fd01d1fe04e12908362d59872bb703ca8f8b3033e5c1fb99bd92a0d349eca4ec",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "69fed391c7fd903de7925046c43c49648b5c4470ee03aae02a3970c9168042be"
+      "sha256": "5ced67e35f7247063d8cff4791d396671894551683d3ce42f4952bb92d8359bc"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -112,6 +112,10 @@
       "sha256": "542e3151ae346a541d025911c2bc3ecef2931af08882f70d4855a333088d4f78"
     },
     {
+      "path": "docs/architecture/coin-display.md",
+      "sha256": "3cdc44b5ebb16c5f615e2a624e5ad3cbb35d65a7487c2bd483363f16548043b1"
+    },
+    {
       "path": "docs/architecture/funding-lot-catalog.md",
       "sha256": "fd56975808e51a67d97d453489287189e98b7332818637cc5b0d28e1fa8f8749"
     },
@@ -121,7 +125,7 @@
     },
     {
       "path": "docs/architecture/operating-reports.md",
-      "sha256": "94c4bf5bc1a1d14906524fed15ba8b5b0a1f3f2651c812c48c4cfc2cd607ecbe"
+      "sha256": "5bef742eae223b1d83f20aefb23bb64547305bb08b1ce1431d369eb2c7e66dc1"
     },
     {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
@@ -157,7 +161,7 @@
     },
     {
       "path": "docs/architecture/wallet-sources.md",
-      "sha256": "16c8ace2174f2b05a1f6d1217440fef8ea58675e2d6b9eb844d7adcd477cd91f"
+      "sha256": "ff767c3b63319f220fe99382837458920f67b5e993446aecadff2e10f2660d7f"
     },
     {
       "path": "docs/decisions/ADR-001-source-strategy.md",
@@ -181,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "62b26fe5658a3dddfa4cf25f448df6dfeef2c9fcfc210d70e2d74147d73abe77"
+      "sha256": "63ff80bf0281b5c12a598589b6e7a2588faa66f919ac84b61fd3c114271b109c"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "2bdcdf3027054bfa4e4c84554813e2b76bb21e94910d82ae015dcf0092cb8112"
+      "sha256": "fd03bcc7fba668f8dcc676effc9f721c6c4e6b1d33ee46820d49811b5b1debae"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -225,7 +229,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "d9eef1189146781b4b25d6bf218f109aeef4207259d6cc82be59ad10737b9ab6"
+      "sha256": "0d116898bced5d304b883bf7c17467c38397e7e760f278cf616cf6eea7e8d78c"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -298,6 +302,10 @@
     {
       "path": "docs/verification/034-5-reporting-wallet-composition.md",
       "sha256": "4a44ab00cd3a63aff41c6ff5dc8267aa7a44ef8d7a3ff2165ef6d8599f82e8db"
+    },
+    {
+      "path": "docs/verification/034-6-coin-display.md",
+      "sha256": "7660494c8d53d4fa520d6d552e7260c1b2a15a0f6bf8c190eaa9a5dbf7af1cf7"
     },
     {
       "path": "docs/verification/034-coin-units.md",
@@ -2042,6 +2050,14 @@
     {
       "path": "internal/billing/channel_operations_integration_test.go",
       "sha256": "1ef5579bd97e754351672680510b613e577a632be50c71f500f10ad635127070"
+    },
+    {
+      "path": "internal/billing/coin_display.go",
+      "sha256": "7439b47c868f7713cdf9640ba65ee0190a08575db4ebf34e2d2f0c07ec1a14fc"
+    },
+    {
+      "path": "internal/billing/coin_display_integration_test.go",
+      "sha256": "7aea6b6913adf241f6c891dfa41e6047c4e34fa8f0c54518d6fe5add8a263aca"
     },
     {
       "path": "internal/billing/coin_rates.go",
@@ -4309,7 +4325,7 @@
     },
     {
       "path": "internal/operations/operations.go",
-      "sha256": "0054895129563ef94d1c21b1b54629e5101cd5cbdcf4a56d34a97e02e65fe047"
+      "sha256": "bb6e0b60a9ce000f1361f513fcfa711204537e9f1be9a8c6a23f41a1178f8836"
     },
     {
       "path": "internal/operations/operations_integration_test.go",
@@ -4321,15 +4337,15 @@
     },
     {
       "path": "internal/operations/payment_roles.go",
-      "sha256": "391786f7f0651a585f4a2531a8b98ae4fb16e4cd3e566af15ea18abfedf22906"
+      "sha256": "37fb22e89e843cccbc22cb1b80c54ab104b4404dad3caddb7754fcde425e1666"
     },
     {
       "path": "internal/operations/payment_roles_functions.go",
-      "sha256": "d140eaa19a06519124d5977dcd9553185724a4039e7443a7de0185825870b24b"
+      "sha256": "0bcb09d6061787c1b5b202142f00621152cfc29e6960469a22a8846659329518"
     },
     {
       "path": "internal/operations/payment_roles_test.go",
-      "sha256": "0c13de87a44daa2fcce5dc602f9c5357234c628e0cad7cc43d01f8d60afed325"
+      "sha256": "d020bb7ee25837a47a4c516507654504fe1facc6055260343fd8a8746587c330"
     },
     {
       "path": "internal/operations/periodic_roles.go",
@@ -6128,6 +6144,14 @@
       "sha256": "bef647421e54290c623ee82e541d188b9d0bf6987b72ec39a8a7fc1e4522ad5e"
     },
     {
+      "path": "internal/server/coin_display_handlers.go",
+      "sha256": "4df8a017790ffc5da3effb5851016d82769069be6c0ae717be2328c485529f6a"
+    },
+    {
+      "path": "internal/server/coin_display_integration_test.go",
+      "sha256": "0cf4273667c677ef5e79ebcc601c59fcc46d955c1e749762a3eadbbfc216c47a"
+    },
+    {
       "path": "internal/server/commerce_admission.go",
       "sha256": "1299c227579400e0b144d72cb9772850fddb3a9f6950ec9022befd022bed4638"
     },
@@ -6493,7 +6517,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "440d23b0101933a38e35d525e469fb3dd114352f7d7d97ace93868521c62a761"
+      "sha256": "021b4c043b961c48d4f052da8cb47409885ea1f0dd57776c0b7339d8bae7ea7e"
     },
     {
       "path": "internal/server/static.go",
@@ -6764,6 +6788,10 @@
       "sha256": "6b28b3786d853782f137a89f769bca35d32fd981d848f3fe685961c99cdf0a87"
     },
     {
+      "path": "migrations/coin_display_postgres_test.go",
+      "sha256": "d08733ab07dc298baac6d749bff421aea0c2b2315bd5b996de479af4055304f2"
+    },
+    {
       "path": "migrations/coin_rate_postgres_test.go",
       "sha256": "d48ae61ee5b98d35c2c8df00a15623b272d6bb51bf4d95cc29706b1b9bf9ae14"
     },
@@ -6806,6 +6834,10 @@
     {
       "path": "migrations/current_009_cash_refund_workflow.sql",
       "sha256": "2f9caf7e040ebd1d9ea088223d20a378780f65dd9bcf62b98a3502d24e2f5783"
+    },
+    {
+      "path": "migrations/current_010_coin_display.sql",
+      "sha256": "05232da9e8e23b05da38e80ff8aca2da6e6acc466c5db16ec333ec67167e346e"
     },
     {
       "path": "migrations/current_mvp.sql",
@@ -8289,11 +8321,11 @@
     },
     {
       "path": "specs/034-virtual-coin/implementation-freeze.md",
-      "sha256": "23c9d9643fbd5caf67039eff3d5125a037b33449284a5125c1b7c35d663dd934"
+      "sha256": "190a74753d613840594293661192ce685411e5d0a56fd1208c1886be37df79f2"
     },
     {
       "path": "specs/034-virtual-coin/spec.md",
-      "sha256": "268d72369336bbb8a71efd64de3c65a5ead3c86afaa591529cfa8adcd9e8f117"
+      "sha256": "65090a24586f4a7db9744ac8479106bc8947130a70733996c32dabcb986abd0b"
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
@@ -8360,6 +8392,10 @@
       "sha256": "fc1d09319c09ac60d2f900c1a43d0bea81c4bb5293ef3ec38edb553bdd6b33cf"
     },
     {
+      "path": "web/src/coin-display.ts",
+      "sha256": "8c6bb21f438dccf64cc1799d1e4476dc1ac613d1993cf9d213126c03851bd500"
+    },
+    {
       "path": "web/src/commerce-state.ts",
       "sha256": "16a5f92d05716280bbed8fb451218f75ca94f4abd3395e967f988a050020ed1d"
     },
@@ -8386,6 +8422,10 @@
     {
       "path": "web/src/components/ChannelOperations.vue",
       "sha256": "656241f1ca4a590d9c2126b90707b997082b3b10fff94e6c57c689ca0fe4db20"
+    },
+    {
+      "path": "web/src/components/CoinDisplaySettings.vue",
+      "sha256": "1ffd3bb9b8f82905804586d3bc6d7a30ce5177c244d2b16bdf824cced03d65b5"
     },
     {
       "path": "web/src/components/CommerceCommands.vue",
@@ -8421,7 +8461,7 @@
     },
     {
       "path": "web/src/components/MetricMoney.vue",
-      "sha256": "b8702c036c4f186957d13e61883a8c4f5aeed2da1c93cab458d2f871e23354fc"
+      "sha256": "90352385abd1c9e031fc5d1de4145d4288c68796af1461981cbceace4785f02d"
     },
     {
       "path": "web/src/components/ModelAliases.vue",
@@ -8521,7 +8561,7 @@
     },
     {
       "path": "web/src/format.ts",
-      "sha256": "09cf5a37724215a1f4726c65740b644e3f7c8f6159966b16c1a333c60ebcb005"
+      "sha256": "6e0b8de203301ade0e331ce1f3a2aceee8b964cd1b61962f138f1c3d2a8684e9"
     },
     {
       "path": "web/src/identity-proof.ts",
@@ -8553,7 +8593,7 @@
     },
     {
       "path": "web/src/main.ts",
-      "sha256": "4967077046758dff1a4ba8f6d4e54f41095161aa04976fc623d767fce90a775d"
+      "sha256": "1373927bca6bde84767836772a6f45ea6ea92198034664152c38de915caf5f87"
     },
     {
       "path": "web/src/metering-wire.ts",
@@ -8745,7 +8785,7 @@
     },
     {
       "path": "web/src/views/WalletSourcesView.vue",
-      "sha256": "dfa48502565870abba34539a577ab2e940f2e779a081dac176141556bc915849"
+      "sha256": "4d4b980250060624c47e8b5be3ce16aeb20769168cc3c4661eb7ca54e3fe1c3d"
     },
     {
       "path": "web/src/views/WalletView.vue",
@@ -8790,6 +8830,10 @@
     {
       "path": "web/tests/channel-operations.test.mjs",
       "sha256": "4ab6086de2b0faad7443af9365e1bd0980e02b23c0460c18fd5f7d67f105241d"
+    },
+    {
+      "path": "web/tests/coin-display.test.mjs",
+      "sha256": "01db2c453e2f04c08641e8a567c09df99f5b98dce89ed16f6aa7ff6d1d33b5ab"
     },
     {
       "path": "web/tests/commerce-state.test.mjs",

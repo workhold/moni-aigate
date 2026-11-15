@@ -45,3 +45,5 @@
 34.1 COIN 与类型；34.2 角色、独立 `wallet_requests`、基准、成对来源和确定性 FIFO；34.3 五桶守恒；34.3b 币价版本；34.4 现金退款状态机/HTTP/控制台/告警；34.5 报表与余额构成；34.6 约合展示和显示名。每片都要求专用 PostgreSQL 全量相关回归、前端测试和架构同步，§16 的 PG 项不得 SKIP。
 
 034.5 的 `/api/wallet` 构成字段为 `paid_available/grant_available/other_available/refund_held`，必须同时与账户和来源汇总一致；充值回执增加 `basis_kind/fiat_currency/fiat_amount`。报表分配边用 `big.Int`/`numeric` 向下取整得到整数微法币，`payment_basis` 与 `cash_refunded` 分币种返回，多币种、unknown、缺买入版本、缺失/不完整分配边或供应商缺汇率时毛利为 null；不得用 charged−refunded 代替付款基准。现金退款汇总遵守相同时间窗口和可选 `tenant_id`，只进入 summary，不按模型或请求重复分摊。
+
+034.6 使用独立 `coin_display_versions`，创世为“币”且约合关闭；公开当前版本与 admin 历史分离，admin 以 operation_id/CAS/二次确认追加不可变版本。约合关闭时三个换算字段全 NULL，开启时仅 CNY/USD 和正 int64 有理数。前端 BigInt 向零截断并标注版本及“仅供参考”，读取失败不显示约合；会计币价、请求、预占、结算、退款和 canonical 均不得读取该展示配置。
