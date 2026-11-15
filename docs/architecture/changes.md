@@ -7262,3 +7262,17 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - added `scripts/phase1_browser_qa_test.py`
 
 </details>
+
+## 2026-11-15T09:38:55Z · fd8f0927be02
+
+独立复核发现价格分页类型回归：保留 timestamptz 游标比较，生成 next_cursor 后统一六位微秒输出，admin/租户 51 行分页回归通过；仅只读 DTO 与分页兼容，不改资金写入、计量、权限或迁移
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `internal/server/pricing_integration_test.go`
+- modified `internal/server/queries.go`
+
+</details>

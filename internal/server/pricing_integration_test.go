@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -105,5 +106,56 @@ func TestPricingHTTPBusinessAndCurrentDomainIsolation(t *testing.T) {
 	requireAuthStatus(t, authHTTP(t, s, "GET", "/api/platform/price-groups/"+group, fin, fc, "", nil), 403)
 	for _, q := range []string{"?limit=50", "?cursor=x&cursor=y", "?cursor=%FF"} {
 		requireAuthStatus(t, call("GET", "/api/platform/price-groups"+q, nil), 400)
+	}
+}
+
+func TestAdminAndTenantPricesPreserveCursorPagination(t *testing.T) {
+	s, pool := newAuthFixture(t)
+	admin, _ := authUser(t, s, pool, "admin")
+	owner, _ := authUser(t, s, pool, "none")
+	tenant := uuid.NewString()
+	authExec(t, pool, `INSERT INTO tenants(id,name) VALUES($1,'pricing-pagination')`, tenant)
+	authExec(t, pool, `INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)`, tenant, owner)
+	model, err := s.Catalog.CreateModel(context.Background(), admin, catalog.ModelInput{PublicName: "pricing-pagination-model", ContextLimit: 120, InputUpperBound: 100, OutputLimit: 20, DefaultOutputLimit: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	authExec(t, pool, `INSERT INTO tenant_model_grants(tenant_id,model_id) VALUES($1,$2)`, tenant, model)
+	var schema, digest string
+	if err = pool.QueryRow(context.Background(), `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version WHERE m.id=$1`, model).Scan(&schema, &digest); err != nil {
+		t.Fatal(err)
+	}
+	raw, csrf := authSession(t, s, pool, admin, "", true, true)
+	for i := 0; i < 51; i++ {
+		effective := time.Date(2026, 10, 1, i/24, i%24, 0, 123000, time.UTC).Format("2006-01-02T15:04:05.000000Z")
+		response := pricingHTTP(t, s, "POST", "/api/platform/price-versions", raw, csrf, defaultPriceBody(uuid.NewString(), model, schema, digest, "900", "900", effective))
+		requireAuthStatus(t, response, 201)
+	}
+	customer, customerCSRF := authSession(t, s, pool, owner, tenant, true, true)
+	for _, session := range []struct{ raw, csrf string }{{raw, csrf}, {customer, customerCSRF}} {
+		first := authHTTP(t, s, "GET", "/api/prices", session.raw, session.csrf, "", nil)
+		requireAuthStatus(t, first, 200)
+		var page struct {
+			Data []struct {
+				CreatedAt string `json:"created_at"`
+			} `json:"data"`
+			NextCursor string `json:"next_cursor"`
+		}
+		if err = json.Unmarshal(first.Body.Bytes(), &page); err != nil || len(page.Data) != 50 || page.NextCursor == "" {
+			t.Fatalf("first price page did not emit a cursor: %s", first.Body.String())
+		}
+		for _, row := range page.Data {
+			if len(row.CreatedAt) != 27 {
+				t.Fatalf("price timestamp is not six microseconds: %q", row.CreatedAt)
+			}
+		}
+		second := authHTTP(t, s, "GET", "/api/prices?cursor="+url.QueryEscape(page.NextCursor), session.raw, session.csrf, "", nil)
+		requireAuthStatus(t, second, 200)
+		var remaining struct {
+			Data []json.RawMessage `json:"data"`
+		}
+		if err = json.Unmarshal(second.Body.Bytes(), &remaining); err != nil || len(remaining.Data) != 1 {
+			t.Fatalf("cursor pagination did not reach the final price version: %s", second.Body.String())
+		}
 	}
 }

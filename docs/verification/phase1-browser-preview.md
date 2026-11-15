@@ -33,6 +33,7 @@
 
 - `go test -race ./internal/server -run '^TestPricingHTTPBusinessAndCurrentDomainIsolation$'`：admin 与租户价格列表固定六位微秒。
 - `go test -race ./internal/server -run '^TestCustomerRequestDetailExposesTaskReferenceFacts$'`：`confirmed_final` 数量行保留状态与原始数组形状。
+- `go test -race ./internal/server -run '^(TestAdminAndTenantPricesPreserveCursorPagination|TestPricingHTTPBusinessAndCurrentDomainIsolation)$'`：51 个真实价格版本的 admin/租户游标与第二页读取均通过，时间仍为六位微秒。
 - `go test -race ./internal/billing -run '^(TestHTTPCommerceIssuanceDualApprovalUniqueFundingAndOffReadback|TestVoucher.*)$'`：券工作流与时间投影。
 - `go test ./internal/server -run '^(TestCommerceWireUsesVoucherTimeMarshaler|TestCommerceWirePreservesExactMoneyNullAndSixMicroseconds)$'`：反射映射器尊重 `json.Marshaler`，不再把 `VoucherTime` 展开为对象。
 - `scripts/phase1-acceptance.test.sh`：执行器、浏览器协议、TOTP step、登录 pacing 和 41 ID/81 测试绑定检查全部通过。

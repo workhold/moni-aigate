@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T09:17:14Z",
-  "review_reason": "新增隔离浏览器/CDP 验收与完整预览证据；修正价格时间、confirmed_final 数量行和 voucherTime/commerce 反射序列化，仅只读 DTO，不改资金写入、CNY normalization、迁移、模块或权限边界；已运行真实 PG、race、前端和 harness，正式 029 仍未执行",
-  "snapshot_sha256": "a11f35f417ee1036f6bb3d0f42b09385ce1ad83ef19757027653ea76892caa03",
-  "architecture_sha256": "83773c89031d16db168348618b591716ac357572bb57347bd3b1c93f819f213a",
-  "history_sha256": "4b48a7d86d2822e0fc10878a0456adc61dcc1cf737921559c941ab310549c114",
+  "reviewed_at": "2026-11-15T09:38:55Z",
+  "review_reason": "独立复核发现价格分页类型回归：保留 timestamptz 游标比较，生成 next_cursor 后统一六位微秒输出，admin/租户 51 行分页回归通过；仅只读 DTO 与分页兼容，不改资金写入、计量、权限或迁移",
+  "snapshot_sha256": "fd8f0927be0277ed999175391c303e5bbccac633e584eb4ae24ef3d44a8d58e6",
+  "architecture_sha256": "9949c5483b32b1408cb0d0e96a8a99028d7e6b6dd5e527ffde7797d783fb5bd7",
+  "history_sha256": "cf061c231caa435e1428499c009b429ef16b7f0c56b800761987b889b1a2a2d1",
   "files": [
     {
       "path": ".dockerignore",
@@ -1633,7 +1633,7 @@
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
-      "sha256": "343e8d5ffa586f652c95429f083fc2f3f95a1d1dab0d83831b4a5e70d6afd02e"
+      "sha256": "dbe2e1461ba8ffecad1c9f3e45fef2862a1a7dc8917a3eca13e65809c3309993"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -6569,7 +6569,7 @@
     },
     {
       "path": "internal/server/pricing_integration_test.go",
-      "sha256": "20a1349e0fcaccc208002bb9b7e3799207bc0f9e06ee9f602e34ae5a327e67f1"
+      "sha256": "f32766fb36019375261f22cb391f790ff4b1f139d39101b62f9416ae92434fa6"
     },
     {
       "path": "internal/server/pricing_publish_http_integration_test.go",
@@ -6637,7 +6637,7 @@
     },
     {
       "path": "internal/server/queries.go",
-      "sha256": "692d149d2beb87cb069a57c348995c1a14bc1f3b6f186e5ca6606c18bafea5c9"
+      "sha256": "ed911a666d2866fd842cc5200ef9343d61d59649dcd035467d8a0c79d055bac8"
     },
     {
       "path": "internal/server/queries_test.go",

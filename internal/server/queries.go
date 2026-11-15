@@ -86,6 +86,11 @@ func (s *Server) page(c *gin.Context, sql string, args ...any) {
 			next = base64.RawURLEncoding.EncodeToString(b)
 		}
 	}
+	for _, row := range all {
+		if ts, ok := row["created_at"].(time.Time); ok {
+			row["created_at"] = ts.UTC().Format("2006-01-02T15:04:05.000000Z")
+		}
+	}
 	c.JSON(200, gin.H{"data": all, "request_id": c.GetString("request_id"), "next_cursor": next})
 }
 func (s *Server) keys(c *gin.Context) {
@@ -225,14 +230,14 @@ func (s *Server) attachActiveModelAliases(c *gin.Context, rows []map[string]any)
 }
 func (s *Server) prices(c *gin.Context) {
 	if sessionOf(c).User.PlatformRole == "admin" {
-		s.page(c, `SELECT p.id,p.model_id,m.public_name AS model_name,p.price_group_id,p.schema_id,encode(p.schema_digest,'hex') AS schema_digest,p.variant_key,p.currency,convert_from(p.rates_canonical,'UTF8')::jsonb AS rates,pricing_time(p.effective_at) AS effective_at,pricing_time(p.created_at) AS created_at FROM price_versions p JOIN models m ON m.id=p.model_id WHERE p.price_group_id IS NULL`)
+		s.page(c, `SELECT p.id,p.model_id,m.public_name AS model_name,p.price_group_id,p.schema_id,encode(p.schema_digest,'hex') AS schema_digest,p.variant_key,p.currency,convert_from(p.rates_canonical,'UTF8')::jsonb AS rates,pricing_time(p.effective_at) AS effective_at,p.created_at AS created_at FROM price_versions p JOIN models m ON m.id=p.model_id WHERE p.price_group_id IS NULL`)
 		return
 	}
 	tid, ok := s.tenant(c)
 	if !ok {
 		return
 	}
-	s.page(c, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT p.id,p.model_id,m.public_name AS model_name,p.price_group_id,p.schema_id,encode(p.schema_digest,'hex') AS schema_digest,p.variant_key,p.currency,convert_from(p.rates_canonical,'UTF8')::jsonb AS rates,pricing_time(p.effective_at) AS effective_at,pricing_time(p.created_at) AS created_at FROM instant CROSS JOIN price_versions p JOIN models m ON m.id=p.model_id JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id JOIN tenants t ON t.id=$1 JOIN memberships mb ON mb.tenant_id=t.id AND mb.user_id=$2 JOIN users u ON u.id=mb.user_id WHERE p.price_group_id IS NOT DISTINCT FROM t.price_group_id AND p.schema_id=c.schema_id AND p.schema_digest=c.schema_digest AND p.variant_key='default' AND p.effective_at<=instant.at AND t.status='active' AND mb.status='active' AND u.status='active' AND m.enabled AND EXISTS(SELECT 1 FROM tenant_model_grants g WHERE g.tenant_id=t.id AND g.model_id=m.id) AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=t.id AND mg.user_id=$2 AND mg.model_id=m.id))`, tid, sessionOf(c).User.ID)
+	s.page(c, `WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT p.id,p.model_id,m.public_name AS model_name,p.price_group_id,p.schema_id,encode(p.schema_digest,'hex') AS schema_digest,p.variant_key,p.currency,convert_from(p.rates_canonical,'UTF8')::jsonb AS rates,pricing_time(p.effective_at) AS effective_at,p.created_at AS created_at FROM instant CROSS JOIN price_versions p JOIN models m ON m.id=p.model_id JOIN model_capability_versions c ON c.id=m.profile_version AND c.model_id=m.id JOIN tenants t ON t.id=$1 JOIN memberships mb ON mb.tenant_id=t.id AND mb.user_id=$2 JOIN users u ON u.id=mb.user_id WHERE p.price_group_id IS NOT DISTINCT FROM t.price_group_id AND p.schema_id=c.schema_id AND p.schema_digest=c.schema_digest AND p.variant_key='default' AND p.effective_at<=instant.at AND t.status='active' AND mb.status='active' AND u.status='active' AND m.enabled AND EXISTS(SELECT 1 FROM tenant_model_grants g WHERE g.tenant_id=t.id AND g.model_id=m.id) AND (mb.allow_all_models OR EXISTS(SELECT 1 FROM member_model_grants mg WHERE mg.tenant_id=t.id AND mg.user_id=$2 AND mg.model_id=m.id))`, tid, sessionOf(c).User.ID)
 }
 func (s *Server) audits(c *gin.Context) {
 	s.page(c, `SELECT id,actor,tenant_scope,action,target,sanitized_diff,created_at FROM audit_events`)

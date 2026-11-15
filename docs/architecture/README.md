@@ -24,7 +24,7 @@ moni-aigate 是对外提供 API 的商业运营平台。它借鉴 New API/One AP
 
 2026-11-15 029 终验执行入口：`scripts/phase1-acceptance.py` 与固定矩阵登记全部 41 个唯一验收 ID，复用 current-only PostgreSQL/Compose、全包 race、前端、real-main、支付沙箱与 031 部署 mock，并要求同一提交的隔离桌面及 390px 浏览器证据。JSON 测试事件用于拒绝缺失、FAIL 或必需 SKIP；任何全局套件失败均阻止通过结论，修复后整单重跑。该入口只增加验证与证据边界，不新增生产模块、资金写路径、迁移或第二事实源；在 `summary.json` 实际达到 41/41 前，系统仍为内测，详见[终验执行手册](../verification/phase1-acceptance-runner.md)。
 
-当前 admin 与租户 `/api/prices` 列表通过 `pricing_time()` 输出固定六位微秒；毫秒精度的有效时间输入会规范化为当前读取合同，不放宽前端严格校验，也不改变 CNY canonical normalization、计费向量或资金写路径。请求详情与列表在 `confirmed_final` 时为每条数量行补充同一状态，数组形状、顺序、quantity 与原始 canonical 不变；缺失/冲突用量仍不伪造数量。两项边界分别由 `TestPricingHTTPBusinessAndCurrentDomainIsolation` 和 `TestCustomerRequestDetailExposesTaskReferenceFacts` 在专用 PostgreSQL 上验证。
+当前 admin 与租户 `/api/prices` 列表通过分页层与 `pricing_time()` 输出固定六位微秒；游标继续以 `timestamptz` 比较，HTTP 时间格式化在游标生成后进行。毫秒精度的有效时间输入会规范化为当前读取合同，不放宽前端严格校验，也不改变 CNY canonical normalization、计费向量或资金写路径。请求详情与列表在 `confirmed_final` 时为每条数量行补充同一状态，数组形状、顺序、quantity 与原始 canonical 不变；缺失/冲突用量仍不伪造数量。三项边界分别由 `TestPricingHTTPBusinessAndCurrentDomainIsolation`、`TestAdminAndTenantPricesPreserveCursorPagination` 和 `TestCustomerRequestDetailExposesTaskReferenceFacts` 在专用 PostgreSQL 上验证。
 
 券批次、撤销、兑换、回执与资金汇总使用统一 `voucherTime` 只读格式输出六位微秒，游标仍使用原始 `time.Time` 比较，数量、审批状态和业务时间不变；该边界由 `TestVoucherTimeRoundTripUsesSixMicroseconds` 与真实 PostgreSQL 券工作流回归共同验证。
 
