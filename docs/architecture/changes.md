@@ -7301,3 +7301,16 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `docs/verification/phase1-browser-preview.md`
 
 </details>
+
+## 2026-11-15T10:10:56Z · fb470219127e
+
+修正实际 main 告警测试的观察会话查询，使其只统计当前临时数据库；生产默认关闭、退出和恢复逻辑不变，架构模块与合同不变，同步验证记录。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `internal/server/alert_main_integration_test.go`
+
+</details>

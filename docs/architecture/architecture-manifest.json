@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T09:44:51Z",
-  "review_reason": "将预览文档的必需测试绑定计数同步为实际 82；仅证据文字同步，无生产或权限变化",
-  "snapshot_sha256": "92e9a9e1b784f2f4396338a9433a9778717a657c4b6c3df2e9782f99f78ac7bd",
-  "architecture_sha256": "9949c5483b32b1408cb0d0e96a8a99028d7e6b6dd5e527ffde7797d783fb5bd7",
-  "history_sha256": "a4dba05789d35f5e95428d3731f514e43e2c29026ba9c28caf6a39d31a442d78",
+  "reviewed_at": "2026-11-15T10:10:56Z",
+  "review_reason": "修正实际 main 告警测试的观察会话查询，使其只统计当前临时数据库；生产默认关闭、退出和恢复逻辑不变，架构模块与合同不变，同步验证记录。",
+  "snapshot_sha256": "fb470219127e236baf1f2cd85d0199d8d99b28ae08ce97055f4b24c43311fd96",
+  "architecture_sha256": "934d38bd9b66ac577816ae83ccc110f8d95d56e9f6db4a1736f3c7a0bc6fa474",
+  "history_sha256": "ae00bd3d701f969bb420c61acf49dd4a5dcef57c0d3eb26d25b834d610c14a6a",
   "files": [
     {
       "path": ".dockerignore",
@@ -1633,7 +1633,7 @@
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
-      "sha256": "e1d123e124dfbc6d820bc38243cd6902308cf22e167eca43f523a245ecd1e72a"
+      "sha256": "f483d09918757d872199994e93217d4e9c6c021479aa46508f7b580878d7915d"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -6257,7 +6257,7 @@
     },
     {
       "path": "internal/server/alert_main_integration_test.go",
-      "sha256": "ab30f2c30bd2c7e860e6b0e4bb4f30abd49949d5f06a4e6659efd5b67ff8584f"
+      "sha256": "79111b0fdb064f12b6496f9abd07552fdd35d61a02348cc8629e383dcd76dc70"
     },
     {
       "path": "internal/server/alert_test.go",

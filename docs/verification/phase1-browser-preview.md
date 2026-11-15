@@ -37,6 +37,7 @@
 - `go test -race ./internal/billing -run '^(TestHTTPCommerceIssuanceDualApprovalUniqueFundingAndOffReadback|TestVoucher.*)$'`：券工作流与时间投影。
 - `go test ./internal/server -run '^(TestCommerceWireUsesVoucherTimeMarshaler|TestCommerceWirePreservesExactMoneyNullAndSixMicroseconds)$'`：反射映射器尊重 `json.Marshaler`，不再把 `VoucherTime` 展开为对象。
 - `scripts/phase1-acceptance.test.sh`：执行器、浏览器协议、TOTP step、登录 pacing 和 41 ID/82 测试绑定检查全部通过。
+- `go test -race ./internal/server -run '^TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery$' -count=1`：实际 main 的默认关闭、优雅退出与崩溃恢复；观察会话断言限定到当前临时数据库，避免把同 PostgreSQL 实例中预览数据库的合法会话算入本次进程。
 
 ## 未完成
 
