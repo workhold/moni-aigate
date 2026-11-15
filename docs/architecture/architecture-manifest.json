@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T03:13:14Z",
-  "review_reason": "029/031 仅补冻结状态和评审记录，技术内容不变；清单按实际41个唯一验收ID计数，终验仍待同一提交全量执行",
-  "snapshot_sha256": "56b164ac6ba2fec60afe0c1be4f1e32c7e0a4c479f74ca9ca1fe9a91e0bc5eb2",
+  "reviewed_at": "2026-11-15T05:27:38Z",
+  "review_reason": "仅扩展第一阶段 mock 验收/自测工具与验证记录：新增权重、连接拒绝、流故障、别名和编译组价实际请求断言及可选0600 UI账号交接；未改变生产网关、路由、计费、迁移、权限、部署或数据合同，现有模块图、请求链路、数据关系和权限边界无需修改",
+  "snapshot_sha256": "209df448e055fbfd72575421239d4d1118c3c57783a92dc5acf9a14fe09c2b34",
   "architecture_sha256": "d7229063b92111f6cb08732ea2774b2e131a3bb8ce08be41e6a4cb9448da408d",
-  "history_sha256": "6d363166f9a07e3a5e008d589813815befb2b2a3b20edf0ca9959dced0c5ddf7",
+  "history_sha256": "200f4daf42b261469c66639ce3e149e5241730d8b5462935c05a8d03f6ed8cc9",
   "files": [
     {
       "path": ".dockerignore",
@@ -1625,7 +1625,7 @@
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
-      "sha256": "6dbb78fb3ca5bbfaeea940af8500353f20e6caab8da1b1ad3ca3c91964308033"
+      "sha256": "ef6c70e906078ac03ce974c0df04b0c31b5c5a82267e9c944de657f7bf78e217"
     },
     {
       "path": "docs/verification/phase1/P1-CAT-02.md",
@@ -6672,12 +6672,16 @@
       "sha256": "b075e8713ea018b4252f7aa349f66ddb715b6323fe739206933b933a8d74d443"
     },
     {
+      "path": "internal/testsupport/mockupstream/phase1_acceptance_test.go",
+      "sha256": "f7e1bef389a12c19c23191d582ce8b4cfb1fca4c37eb44a5816a5315f35839bc"
+    },
+    {
       "path": "internal/testsupport/mockupstream/provider_contract_test.go",
       "sha256": "be6feab2805bf7037a25a6753a3b509b06dca5a8f4f24f9652d9ded3607fcd9d"
     },
     {
       "path": "internal/testsupport/mockupstream/server.go",
-      "sha256": "fd7c16501099bf7ca4f86f777a5dfd62b348f32d42fc3f52f79b652eb4bb2bae"
+      "sha256": "2b4133aac117dcdfc37467fbdcd5132ca21904b9662fcf412b6d1536e1341485"
     },
     {
       "path": "internal/testsupport/mockupstream/server_test.go",
@@ -7197,7 +7201,7 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
-      "sha256": "8f9d3696d9eb8179fb3c1d08d3196b02a7ca59540fdfa8b75836d451d012b61f"
+      "sha256": "28351e0af28c80bfd7473454947e3a1a692739211ae74d3f1efd68ea39d306dd"
     },
     {
       "path": "scripts/phase1-mock-acceptance.sh",
@@ -7205,7 +7209,11 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.test.sh",
-      "sha256": "dea21c3f20aac604fbe8b4dc2c36d158c050a0ae2b7b65558d276e651bc9b143"
+      "sha256": "0eda25367557ac463bb8f77f6d41ced9294da55ac52a36fb9abee5abe427cfc2"
+    },
+    {
+      "path": "scripts/phase1_mock_acceptance_test.py",
+      "sha256": "6c0e2a2a39fce4143bba1b56ab24e5eb7d5b4d7b466958ed716780a9af4a76fa"
     },
     {
       "path": "scripts/provider-qualification/README.md",

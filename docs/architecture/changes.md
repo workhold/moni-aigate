@@ -7092,3 +7092,20 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `specs/031-deterministic-mock-upstream/spec.md`
 
 </details>
+
+## 2026-11-15T05:27:38Z · 209df448e055
+
+仅扩展第一阶段 mock 验收/自测工具与验证记录：新增权重、连接拒绝、流故障、别名和编译组价实际请求断言及可选0600 UI账号交接；未改变生产网关、路由、计费、迁移、权限、部署或数据合同，现有模块图、请求链路、数据关系和权限边界无需修改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2254 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- added `internal/testsupport/mockupstream/phase1_acceptance_test.go`
+- modified `internal/testsupport/mockupstream/server.go`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1-mock-acceptance.test.sh`
+- added `scripts/phase1_mock_acceptance_test.py`
+
+</details>
