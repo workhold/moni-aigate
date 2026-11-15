@@ -7079,29 +7079,32 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 
 </details>
 
-## 2026-11-15T02:51:27Z · 7edfa8468692
+## 2026-11-15T03:13:14Z · 56b164ac6ba2
 
-035 七项验收逐项勾选并附 phase0 证据；补齐固定提交 LICENSE/NOTICE、SOURCE 与上游 provenance 发布检查，无运行时代码或资金结构变化
+029/031 仅补冻结状态和评审记录，技术内容不变；清单按实际41个唯一验收ID计数，终验仍待同一提交全量执行
 
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2253 个源文件；本次 4 个源文件变化，架构正文变化：true。
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2252 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/design/freeze-review-029-031-2026-11-15.md`
+- modified `specs/029-phase1-acceptance/spec.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+
+</details>
+
+## 2026-11-15T04:37:04Z · 769f639a2698
+
+035 合入已冻结的 029/031 main：架构正文与历史以 main 为准，保留 035 七项勾选和告警索引测试修正；仅重新计算清单，无新增生产结构或权限边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2254 个源文件；本次 5 个源文件变化，架构正文变化：true。
 
 <details><summary>源文件变化</summary>
 
 - modified `Makefile`
 - added `docs/verification/phase0-upstream-provenance.md`
+- modified `internal/alerts/alerts_integration_test.go`
 - added `scripts/check-upstream-provenance/main.go`
 - modified `specs/035-external-upstream-integration/spec.md`
-
-</details>
-
-## 2026-11-15T04:32:11Z · e619a0110b11
-
-修正告警 partial-index 测试夹具的非合格历史规模，仅测试数据选择性与索引验证，无生产模块、合同或权限结构变化；完整 alerts 专用 PostgreSQL 回归已通过
-
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2253 个源文件；本次 1 个源文件变化，架构正文变化：false。
-
-<details><summary>源文件变化</summary>
-
-- modified `internal/alerts/alerts_integration_test.go`
 
 </details>
