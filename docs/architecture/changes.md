@@ -7161,3 +7161,17 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_mock_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T07:14:29Z · 993362044ccb
+
+为第一阶段mock验收harness增加显式copy配置传输：docker create/cp/start和tar成员权限适配，默认bind不变；仅测试工具与验证记录变化，生产镜像入口、部署拓扑、健康断言和业务代码未改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_mock_acceptance_test.py`
+
+</details>

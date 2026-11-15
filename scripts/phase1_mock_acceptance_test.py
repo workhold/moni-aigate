@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import io
 import json
+import os
 import pathlib
 import re
 import stat
 import sys
+import tarfile
 import tempfile
 import types
 import unittest
@@ -49,6 +52,23 @@ class FakeRouteAPI:
             self.bindings = value
             return {}
         raise AssertionError(f"unexpected API call: {method} {path} {value}")
+
+
+class FakeDocker:
+    def __init__(self) -> None:
+        self.calls: list[list[str]] = []
+        self.cp_calls: list[tuple[list[str], dict]] = []
+
+    def run(self, command: list[str], **kwargs: object) -> object:
+        self.calls.append(command)
+        stdout = ""
+        if command[:2] == ["docker", "inspect"]:
+            stdout = '{"qa-network":{}}'
+        return types.SimpleNamespace(returncode=0, stdout=stdout, stderr="")
+
+    def cp(self, command: list[str], **kwargs: object) -> object:
+        self.cp_calls.append((command, kwargs))
+        return types.SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
 
 class Phase1HarnessTest(unittest.TestCase):
@@ -118,6 +138,52 @@ class Phase1HarnessTest(unittest.TestCase):
         instance.assert_request("request", unknown=False, expected_attempts=2, expected_requested_name="alias", expected_protocol="completed", expected_usage="confirmed_final")
         with self.assertRaises(StopIteration):
             instance.query("unexpected extra query")
+
+    def test_mock_copy_transport_streams_readable_tar_without_bind(self) -> None:
+        fake = FakeDocker()
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(os.environ, {"PHASE1_MOCK_CONFIG_DIR": directory, "PHASE1_MOCK_CONFIG_TRANSPORT": "copy"}, clear=False):
+            instance = harness.Harness(argparse.Namespace())
+            instance.app_container = "qa-app"
+            with mock.patch.object(harness, "run", new=fake.run), mock.patch.object(harness.subprocess, "run", new=fake.cp):
+                instance.start_mock()
+                try:
+                    config_path = instance.mock.config_path
+                    self.assertEqual(stat.S_IMODE(config_path.stat().st_mode), 0o600)
+                    create = next(call for call in fake.calls if call[:2] == ["docker", "create"])
+                    self.assertNotIn("-v", create)
+                    self.assertNotIn(str(config_path), create)
+                    self.assertTrue(any(call[:2] == ["docker", "start"] for call in fake.calls))
+                    self.assertEqual(len(fake.cp_calls), 1)
+                    cp_command, cp_kwargs = fake.cp_calls[0]
+                    self.assertEqual(cp_command[:3], ["docker", "cp", "-"])
+                    self.assertTrue(cp_command[-1].endswith(":/etc"))
+                    with tarfile.open(fileobj=io.BytesIO(cp_kwargs["input"]), mode="r:") as bundle:
+                        members = bundle.getmembers()
+                        self.assertEqual([member.name for member in members], ["moni/mock-upstream.json"])
+                        self.assertEqual(members[0].mode, 0o644)
+                        payload = json.loads(bundle.extractfile(members[0]).read())
+                        self.assertEqual(set(payload["candidates"]), {"a", "b"})
+                finally:
+                    instance.stop_mock()
+                self.assertFalse(config_path.exists())
+
+    def test_mock_default_transport_preserves_bind_run(self) -> None:
+        fake = FakeDocker()
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(os.environ, {"PHASE1_MOCK_CONFIG_DIR": directory}, clear=False):
+            os.environ.pop("PHASE1_MOCK_CONFIG_TRANSPORT", None)
+            instance = harness.Harness(argparse.Namespace())
+            instance.app_container = "qa-app"
+            with mock.patch.object(harness, "run", new=fake.run), mock.patch.object(harness.subprocess, "run", new=fake.cp):
+                instance.start_mock()
+                try:
+                    run_command = next(call for call in fake.calls if call[:2] == ["docker", "run"])
+                    self.assertIn("-v", run_command)
+                    self.assertIn(f"{instance.mock.config_path}:/etc/moni/mock-upstream.json:ro", run_command)
+                    self.assertFalse(any(call[:2] == ["docker", "create"] for call in fake.calls))
+                    self.assertEqual(fake.cp_calls, [])
+                    self.assertEqual(stat.S_IMODE(instance.mock.config_path.stat().st_mode), 0o600)
+                finally:
+                    instance.stop_mock()
 
     def test_fault_route_isolation_uses_new_credentials_and_current_revision(self) -> None:
         instance = harness.Harness(argparse.Namespace())

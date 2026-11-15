@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import http.cookiejar
+import io
 import json
 import os
 import pathlib
@@ -19,6 +20,7 @@ import re
 import secrets
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 import urllib.error
@@ -114,6 +116,23 @@ def run(command: list[str], *, check: bool = True, timeout: int = 20, input_text
 
 def json_body(value: object) -> bytes:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode()
+
+
+def mock_config_archive(config: dict) -> bytes:
+    """Build the docker-cp stdin archive without depending on a host mount."""
+    payload = json_body(config)
+    archive = io.BytesIO()
+    with tarfile.open(fileobj=archive, mode="w") as bundle:
+        member = tarfile.TarInfo("moni/mock-upstream.json")
+        member.size = len(payload)
+        member.mode = 0o644  # Container USER moni must be able to read this non-production fixture.
+        member.mtime = 0
+        member.uid = 0
+        member.gid = 0
+        member.uname = ""
+        member.gname = ""
+        bundle.addfile(member, io.BytesIO(payload))
+    return archive.getvalue()
 
 
 def now_wire() -> str:
@@ -412,6 +431,9 @@ class Harness:
     def start_mock(self) -> None:
         if not self.app_container:
             raise HarnessSkip("app container is required to attach the temporary mock")
+        transport = os.environ.get("PHASE1_MOCK_CONFIG_TRANSPORT", "bind")
+        if transport not in ("bind", "copy"):
+            raise HarnessFailure("PHASE1_MOCK_CONFIG_TRANSPORT must be bind or copy")
         networks = json.loads(run(["docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", self.app_container], timeout=10).stdout)
         if not networks:
             raise HarnessSkip("app container has no Docker network")
@@ -433,9 +455,21 @@ class Harness:
         temp_dir = pathlib.Path(tempfile.mkdtemp(prefix=".phase1-mock-", dir=config_root))
         config_path = temp_dir / "config.json"
         config_path.write_text(json.dumps(config, separators=(",", ":")), encoding="utf-8")
+        config_path.chmod(0o600)
         container = unique("mock").replace("phase1-", "phase1mock-")
-        run(["docker", "run", "-d", "--name", container, "--network", network, "--network-alias", "phase1-mock-upstream", "--entrypoint", "/usr/local/bin/mock-upstream", "-e", "MOCK_UPSTREAM_ENABLE=1", "-v", f"{config_path}:/etc/moni/mock-upstream.json:ro", self.mock_image, "--config", "/etc/moni/mock-upstream.json", "--addr", ":8090", "--allow-directives"], timeout=30)
-        self.mock = MockRuntime(container, network, config_path)
+        common = ["--name", container, "--network", network, "--network-alias", "phase1-mock-upstream", "--entrypoint", "/usr/local/bin/mock-upstream", "-e", "MOCK_UPSTREAM_ENABLE=1"]
+        command = ["--config", "/etc/moni/mock-upstream.json", "--addr", ":8090", "--allow-directives"]
+        if transport == "copy":
+            run(["docker", "create", *common, self.mock_image, *command], timeout=30)
+            self.mock = MockRuntime(container, network, config_path)
+            copied = subprocess.run(["docker", "cp", "-", f"{container}:/etc"], input=mock_config_archive(config), capture_output=True, timeout=30)
+            if copied.returncode != 0:
+                detail = (copied.stderr or copied.stdout).decode(errors="replace").strip()
+                raise HarnessFailure(f"docker cp of mock config failed: {detail[:500]}")
+            run(["docker", "start", container], timeout=30)
+        else:
+            run(["docker", "run", "-d", *common, "-v", f"{config_path}:/etc/moni/mock-upstream.json:ro", self.mock_image, *command], timeout=30)
+            self.mock = MockRuntime(container, network, config_path)
         for _ in range(30):
             probe = run(["docker", "exec", container, "wget", "-q", "-O", "-", "http://127.0.0.1:8090/health"], check=False, timeout=5)
             if probe.returncode == 0:

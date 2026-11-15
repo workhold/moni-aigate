@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T07:00:33Z",
-  "review_reason": "修复第一阶段mock故障矩阵的用例健康隔离，保留内容/重放/账务强断言；provision按现有publication API显式公开六QA模型并匿名核价。仅测试工具、mock测试和验证记录变化，生产协议、路由、资金、权限与部署结构未改",
-  "snapshot_sha256": "e4c15d9363c9a472c1c0f2999e856a91cf37d1493af3e7f538f1d9af379575d3",
+  "reviewed_at": "2026-11-15T07:14:29Z",
+  "review_reason": "为第一阶段mock验收harness增加显式copy配置传输：docker create/cp/start和tar成员权限适配，默认bind不变；仅测试工具与验证记录变化，生产镜像入口、部署拓扑、健康断言和业务代码未改",
+  "snapshot_sha256": "993362044ccbc878fbc37dbcc16d429c21843ac5985500bc680289bb6b3f84f3",
   "architecture_sha256": "f0202cae616bf9cf6cea44e225eb739a895cc716e675261a32aad5ef0cdf49d8",
-  "history_sha256": "b902fc93d2c55ed152bb1c4926d33942e56758d43f1146e88f80ee2f831a064e",
+  "history_sha256": "36483f72f2c97dc6c041ec6d44beecb8a4ab2c0fff7c5c4750866f2d2d99a72f",
   "files": [
     {
       "path": ".dockerignore",
@@ -1633,7 +1633,7 @@
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
-      "sha256": "92fc8930d8c553a097648ac4f164ad5184933af29557266b15defb23b5e7924c"
+      "sha256": "d910684d2e15290a8a104d473da7328f950b914eb94fc12720db3f21b6cdae21"
     },
     {
       "path": "docs/verification/phase1/P1-CAT-02.md",
@@ -7233,7 +7233,7 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
-      "sha256": "1e11b2aa2339e7ebd8c183a5c5e9afb96856cdb9e6ed258f4228cc4bed2b4d5d"
+      "sha256": "c2dbd5167b349cd619053394d7c18d381c622bb31f1908aa4858344026c3a29d"
     },
     {
       "path": "scripts/phase1-mock-acceptance.sh",
@@ -7253,7 +7253,7 @@
     },
     {
       "path": "scripts/phase1_mock_acceptance_test.py",
-      "sha256": "f0695df2ea33708c12d2d4557aac35192dce8bd9f9e63c0934f52495b8c7ed7f"
+      "sha256": "b2586babc0741d00c4e97ea923922ca4301d1a91eb3de79eeb9f7c732314a802"
     },
     {
       "path": "scripts/provider-qualification/README.md",
