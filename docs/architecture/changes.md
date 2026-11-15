@@ -7453,3 +7453,42 @@ PR #15 支付回调超时根因为双槽 Prepare gate 竞争丢弃 pre-IO claim�
 - modified `internal/mockpsp/runner_integration_test.go`
 
 </details>
+
+## 2026-11-15T18:08:28Z · 609be3471984
+
+CI identity累计10分钟为整套耗时而非单测死锁；同runner按完整顶层名单分四个独立测试进程，保留10分钟单进程上限和全部覆盖，新增合同与验证记录，无生产行为变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/verification/ci-profile-contract.md`
+
+</details>
+
+## 2026-11-15T18:13:00Z · 494cb7bc0e0b
+
+独立复核发现identity误读不存在的聚合测试名单并在测试前退出的风险；跳过该聚合表达式，仅使用实际存在的四个分区文件，专库四分实跑全部通过。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/verification/ci-profile-contract.md`
+
+</details>
+
+## 2026-11-15T18:17:49Z · 06d3c126c845
+
+identity四分现收集失败状态，所有分区执行完后统一非零，避免pipefail提前退出造成缺测；专库61项全过、聚合文件和失败聚合路径均验证。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/verification/ci-profile-contract.md`
+
+</details>

@@ -115,7 +115,7 @@ jobs:
           fi
           mapfile -t packages < "$RUNNER_TEMP/ci-packages-$package_class.txt"
           run_filter=()
-          if [[ "$package_class" == billing || "$package_class" == server || "$package_class" == attempt ]]; then
+          if [[ "$package_class" == billing || "$package_class" == server || "$package_class" == attempt || "$package_class" == identity ]]; then
             if [[ ${#packages[@]} -ne 1 ]]; then
               echo "Large-package partition must contain exactly one package" >&2
               exit 1
@@ -177,8 +177,12 @@ jobs:
             fi
             # Legal identifiers contain no regex metacharacters. Anchoring the
             # whole parent name retains all of that parent's subtests together.
-            expression="^($(paste -sd '|' "$RUNNER_TEMP/ci-tests-$GO_TEST_SHARD.txt"))$"
-            run_filter=(-run "$expression")
+            # Identity executes each part in its own process below, rather than
+            # reading the nonexistent aggregate ci-tests-identity.txt file.
+            if [[ "$package_class" != identity ]]; then
+              expression="^($(paste -sd '|' "$RUNNER_TEMP/ci-tests-$GO_TEST_SHARD.txt"))$"
+              run_filter=(-run "$expression")
+            fi
           fi
           # Prefix and pure identity acceptance own random schemas in this
           # job's disposable database. Neither changes ordinary startup.
@@ -195,8 +199,30 @@ jobs:
           # Serialize package execution just as make verify-mvp does: isolated
           # schemas do not isolate ALTER DEFAULT PRIVILEGES for that creator.
           # Explicit within-test concurrency and every discovered test remain.
-          env "${test_env[@]}" go test -json -race -p 1 -count=1 -timeout=10m "${run_filter[@]}" "${packages[@]}" \
-            | tee "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"
+          # Identity also exceeded the cumulative ten-minute per-process budget.
+          # Keep its runner name and complete test set, but invoke four independent
+          # test binaries so no single process is asked to exceed that bound.
+          if [[ "$package_class" == identity ]]; then
+            : > "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"
+            identity_failed=0
+            for part in 0 1 2 3; do
+              expression="^($(paste -sd '|' "$RUNNER_TEMP/ci-tests-$package_class-$part.txt"))$"
+              if env "${test_env[@]}" go test -json -race -p 1 -count=1 -timeout=10m -run "$expression" "${packages[@]}" \
+                | tee -a "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"; then
+                :
+              else
+                identity_failed=1
+              fi
+            done
+            # A failing partition must not remove the remaining tests from the
+            # evidence set. Report failure only after all four have completed.
+            if [[ "$identity_failed" -ne 0 ]]; then
+              exit "$identity_failed"
+            fi
+          else
+            env "${test_env[@]}" go test -json -race -p 1 -count=1 -timeout=10m "${run_filter[@]}" "${packages[@]}" \
+              | tee "$RUNNER_TEMP/go-tests-$GO_TEST_SHARD.jsonl"
+          fi
       - run: go vet ./...
         if: matrix.shard == 'other'
       - run: go build -trimpath ./cmd/moni-aigate

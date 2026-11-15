@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T17:13:57Z",
-  "review_reason": "消除回归时序窗口：在真实Prepare阻塞期间以TryLock确定性证明互斥未释放，完整沙箱与真实进程测试通过，冻结合同和运行行为不变。",
-  "snapshot_sha256": "4e59c0c43e0f55054dbf05ef507470150e3ef111d6759ac39b802a9472907891",
-  "architecture_sha256": "3bdb309ae381394eb57f024fa711e133d086e9b8c1edf4dc11073423a0896bac",
-  "history_sha256": "34476a333b5c60337edcfb8f650dbc02af28a4a9e415476ee72a1b60fd31fbe9",
+  "reviewed_at": "2026-11-15T18:17:49Z",
+  "review_reason": "identity四分现收集失败状态，所有分区执行完后统一非零，避免pipefail提前退出造成缺测；专库61项全过、聚合文件和失败聚合路径均验证。",
+  "snapshot_sha256": "06d3c126c84559dc98082c1359b7f6c62f23ea1ad96c9259d341eb849209524d",
+  "architecture_sha256": "8be92fdb71e22d960b3fbdd2ee4b3193b804688ae72ff71f0f9c6d34c922445c",
+  "history_sha256": "711fc87eb46cf4f5bcc612cec04ea233536ce40cd4413ebbf3d1a7f4dfd3ed5f",
   "files": [
     {
       "path": ".dockerignore",
@@ -29,7 +29,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "d4f00745891286cbe6937ab0084202a0860e205a325a1c713630e2ea001341f2"
+      "sha256": "bd9f6147f6f92e0d95b36d294a0a3055fc289d464eb1e22a0f805fe16a07152e"
     },
     {
       "path": ".gitignore",
@@ -1045,7 +1045,7 @@
     },
     {
       "path": "docs/verification/ci-profile-contract.md",
-      "sha256": "f4f90ef067c4c128eeded610927e1d582063782769c929f6f2f0610d08975836"
+      "sha256": "d3d4d00587f620007c93b416044cd8305ae9386a4f86251067ed1273f854c7eb"
     },
     {
       "path": "docs/verification/commerce-concurrency.md",
