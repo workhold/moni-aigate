@@ -182,7 +182,7 @@ func scanVoucherRevocation(row pgx.Row) (r VoucherRevocationView, e error) {
 		if op == nil || status == nil || reason == nil || actor == nil || at == nil {
 			return r, voucherFail("commerce_unavailable")
 		}
-		r.Decision = &VoucherDecisionView{ID: *id, OperationID: *op, Status: *status, Reason: *reason, Approver: *actor, DecidedAt: *at}
+		r.Decision = &VoucherDecisionView{ID: *id, OperationID: *op, Status: *status, Reason: *reason, Approver: *actor, DecidedAt: VoucherTime{Time: *at}}
 	}
 	return
 }
@@ -206,7 +206,7 @@ type voucherCursor struct {
 	Filter    string `json:"filter"`
 }
 
-const voucherTimeLayout = "2006-01-02T15:04:05.000000Z"
+const VoucherTimeLayout = "2006-01-02T15:04:05.000000Z"
 
 func voucherFilter(scope, kind, filter string) string {
 	b, _ := json.Marshal([]string{scope, kind, filter})
@@ -252,14 +252,14 @@ func decodeVoucherCursor(raw, filter string) (*time.Time, string, error) {
 	if json.Unmarshal(b, &cur) != nil || cur.V != 1 || cur.Filter != filter || !voucherID(cur.ID) {
 		return nil, "", voucherFail("invalid_cursor")
 	}
-	at, e := time.Parse(voucherTimeLayout, cur.CreatedAt)
-	if e != nil || at.Format(voucherTimeLayout) != cur.CreatedAt {
+	at, e := time.Parse(VoucherTimeLayout, cur.CreatedAt)
+	if e != nil || at.Format(VoucherTimeLayout) != cur.CreatedAt {
 		return nil, "", voucherFail("invalid_cursor")
 	}
 	return &at, cur.ID, nil
 }
 func encodeVoucherCursor(at time.Time, id, filter string) *string {
-	b, _ := json.Marshal(voucherCursor{1, at.UTC().Format(voucherTimeLayout), id, filter})
+	b, _ := json.Marshal(voucherCursor{1, at.UTC().Format(VoucherTimeLayout), id, filter})
 	s := base64.RawURLEncoding.EncodeToString(b)
 	return &s
 }
@@ -287,7 +287,7 @@ func (v *VoucherService) ListVoucherBatches(ctx context.Context, actor string, p
 	})
 	if e == nil && len(out.Data) > 50 {
 		b := out.Data[49]
-		out.NextCursor = encodeVoucherCursor(b.CreatedAt, b.ID, filter)
+		out.NextCursor = encodeVoucherCursor(b.CreatedAt.Time, b.ID, filter)
 		out.Data = out.Data[:50]
 	}
 	return out, e
@@ -326,7 +326,7 @@ func (v *VoucherService) ListVoucherRevocations(ctx context.Context, actor, batc
 	})
 	if e == nil && len(out.Data) > 50 {
 		r := out.Data[49]
-		out.NextCursor = encodeVoucherCursor(r.CreatedAt, r.ID, filter)
+		out.NextCursor = encodeVoucherCursor(r.CreatedAt.Time, r.ID, filter)
 		out.Data = out.Data[:50]
 	}
 	return out, e
@@ -368,7 +368,7 @@ func (v *VoucherService) ListFundingReceipts(ctx context.Context, r VoucherReade
 	})
 	if e == nil && len(out.Data) > 50 {
 		f := out.Data[49]
-		out.NextCursor = encodeVoucherCursor(f.CreatedAt, f.ID, filter)
+		out.NextCursor = encodeVoucherCursor(f.CreatedAt.Time, f.ID, filter)
 		out.Data = out.Data[:50]
 	}
 	return out, e

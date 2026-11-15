@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/identity"
 	"github.com/moni-ai/moni-aigate/internal/payments"
 )
@@ -171,8 +172,8 @@ func TestPaymentHTTPCreateAcceptanceReplayRejectionAndUTC6(t *testing.T) {
 				if state == "postcommit_failure" {
 					return payments.OrderResult{}, payments.ErrPaymentsOutcomeUnknown
 				}
-				receipt := payments.OperationReceipt{OperationID: operation, Kind: "payment.order.create", Actor: session.User.ID, Scope: session.Tenant.ID, Status: "accepted", Reason: "accepted", ResourceID: &operation, CreatedAt: time.Date(2026, 11, 1, 0, 0, 0, 123456000, time.UTC)}
-				result := payments.OrderResult{Receipt: receipt, Created: state == "first", Order: &payments.OrderView{ID: operation, Amount: 100, WalletCreditAmount: 100, CreatedAt: receipt.CreatedAt}}
+				receipt := payments.OperationReceipt{OperationID: operation, Kind: "payment.order.create", Actor: session.User.ID, Scope: session.Tenant.ID, Status: "accepted", Reason: "accepted", ResourceID: &operation, CreatedAt: billing.VoucherTime{Time: time.Date(2026, 11, 1, 0, 0, 0, 123456000, time.UTC)}}
+				result := payments.OrderResult{Receipt: receipt, Created: state == "first", Order: &payments.OrderView{ID: operation, Amount: 100, WalletCreditAmount: 100, CreatedAt: receipt.CreatedAt.Time}}
 				if state == "rejected" {
 					result.Receipt.Status = "rejected"
 					result.Receipt.Reason = "payments_disabled"

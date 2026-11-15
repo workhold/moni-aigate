@@ -1,0 +1,28 @@
+{
+  "status": "PREVIEW",
+  "width": 1440,
+  "checks": [
+    "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+    "请求级 CSV 实际下载成功"
+  ],
+  "observations": [
+    {
+      "name": "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+      "path": "/platform/reports",
+      "title": "运营与成本报表 · moni-aigate",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "请求级 CSV 实际下载成功",
+      "file": "downloads/moni-aigate-operations.csv",
+      "bytes": 7502,
+      "sha256": "e0f1137fa2a214354bac4174cf4274bce9a45400f3dbfd611cfb86cfe3f453e1"
+    }
+  ],
+  "evidence": "P1-RP-01/desktop.png"
+}

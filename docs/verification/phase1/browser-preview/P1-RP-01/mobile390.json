@@ -1,0 +1,21 @@
+{
+  "status": "PREVIEW",
+  "width": 390,
+  "checks": [
+    "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+      "path": "/platform/reports",
+      "title": "运营与成本报表 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-RP-01/mobile390.png"
+}

@@ -18,6 +18,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.request
 from collections import Counter
 
 EXPECTED_DATABASE = "postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable"
@@ -220,6 +221,30 @@ def write_evidence(output: pathlib.Path, items: list[dict], summary: dict, go_re
     (output / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def wait_for_instance_release() -> None:
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        result = subprocess.run(["psql", EXPECTED_DATABASE, "-Atc", "SELECT count(*) FROM pg_locks WHERE locktype='advisory'"], text=True, capture_output=True)
+        if result.returncode == 0 and result.stdout.strip() == "0":
+            return
+        time.sleep(0.5)
+    raise ValueError("the previous preview did not release the dedicated service lock")
+
+
+def wait_for_ready() -> None:
+    base = os.environ["PHASE1_BASE_URL"].rstrip("/")
+    deadline = time.monotonic() + 120
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(base + "/health/ready", timeout=2) as response:
+                if response.status == 200:
+                    return
+        except OSError:
+            pass
+        time.sleep(0.5)
+    raise ValueError("the deployment did not become ready for mock acceptance")
+
+
 def execute(items: list[dict], args: argparse.Namespace) -> int:
     started_at = now()
     commit = clean_commit()
@@ -241,12 +266,18 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     artifact.mkdir(parents=True, exist_ok=False)
     env = os.environ.copy()
     env.setdefault("GOPROXY", "https://goproxy.cn,direct")
+    env.setdefault("PHASE1_MOCK_CONFIG_TRANSPORT", "copy")
     env.update({"BUSINESS_QA_FAIL_ON_SKIP": "true", "DEPLOY_QA_BUSINESS": "true", "VERIFY_CURRENT_MVP_LOG_DIR": str(artifact / "current-mvp")})
     suites: list[dict] = []
 
     def add(name: str, commands: list[dict]) -> None:
         status = "PASS" if all(command["status"] == "PASS" for command in commands) else "FAIL"
         suites.append({"name": name, "status": status, "commands": commands, "logs": [command["log"] for command in commands]})
+
+    preview_stop = run_logged(["docker", "stop", "-t", "30", os.environ["PHASE1_APP_CONTAINER"], os.environ["PHASE1_WORKER_CONTAINER"]], artifact / "preview-stop.log", env)
+    if preview_stop["status"] != "PASS":
+        raise ValueError("could not stop the existing preview before real-main acceptance")
+    wait_for_instance_release()
 
     static = [
         run_logged(["go", "run", "./scripts/check-architecture"], artifact / "static-architecture.log", env),
@@ -259,7 +290,7 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     race_log = artifact / "go-race.jsonl"
     add("go-race", [run_logged(["go", "test", "-race", "-p", "1", "-count=1", "-timeout", "1200s", "-json", "./..."], race_log, env)])
     go_results = required_go_results(race_log, items)
-    add("current-mvp", [run_logged(["./scripts/verify-current-mvp.sh"], artifact / "current-mvp.log", env)])
+    add("current-mvp", [preview_stop, run_logged(["./scripts/verify-current-mvp.sh"], artifact / "current-mvp.log", env)])
 
     for name, package, test, variable in (
         ("identity-lifecycle", "scripts/browser-qa", "TestBrowserQARealMainLifecycle", "BROWSER_QA_REAL_MAIN_TEST"),
@@ -282,8 +313,18 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         add("payment-process", [run_logged(["go", "run", "./scripts/payment-application-qa", "--require-database", "--process"], artifact / "payment-process.log", env)])
     if any("mock-deployment" in item.get("suites", []) for item in items):
         mock_log = artifact / "mock-deployment.log"
-        add("mock-deployment", [run_logged(["./scripts/phase1-mock-acceptance.sh"], mock_log, env)])
-        text = mock_log.read_text(encoding="utf-8")
+        mock_env = env.copy()
+        mock_env.pop("PHASE1_UI_ACCOUNTS_FILE", None)
+        mock_commands = [run_logged(["docker", "start", os.environ["PHASE1_APP_CONTAINER"], os.environ["PHASE1_WORKER_CONTAINER"]], artifact / "preview-start.log", mock_env)]
+        if mock_commands[0]["status"] == "PASS":
+            try:
+                wait_for_ready()
+            except ValueError:
+                mock_commands[0]["status"] = "FAIL"
+        if mock_commands[0]["status"] == "PASS":
+            mock_commands.append(run_logged(["./scripts/phase1-mock-acceptance.sh"], mock_log, mock_env))
+        add("mock-deployment", mock_commands)
+        text = mock_log.read_text(encoding="utf-8") if mock_log.exists() else ""
         if '"status":"passed"' not in text and '"status": "passed"' not in text:
             suites[-1]["status"] = "FAIL"
 

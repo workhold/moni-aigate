@@ -323,7 +323,7 @@ func (v *VoucherService) CreateVoucherBatch(ctx context.Context, in CreateVouche
 		Expires string `json:"expires_at"`
 		Purpose string `json:"purpose_ref"`
 		Reason  string `json:"reason"`
-	}{in.FaceAmount, in.Count, in.ExpiresAt.Format(voucherTimeLayout), in.PurposeRef, in.Reason})
+	}{in.FaceAmount, in.Count, in.ExpiresAt.Format(VoucherTimeLayout), in.PurposeRef, in.Reason})
 	out, e := v.run(ctx, voucherCommandSpec{command: in.Command, kind: "voucher.batch.create", body: func(string) (json.RawMessage, error) { return body, nil }}, func(x *voucherExecution) (voucherEffect, error) {
 		enabled, e := voucherPolicyLock(x.ctx, x.tx)
 		if e != nil {
@@ -406,7 +406,7 @@ func (v *VoucherService) ApproveVoucherBatch(ctx context.Context, in ApproveVouc
 		if e = x.tx.QueryRow(x.ctx, `SELECT clock_timestamp()`).Scan(&now); e != nil {
 			return voucherEffect{}, e
 		}
-		if b.State != "proposed" || !now.Before(b.ExpiresAt) {
+		if b.State != "proposed" || !now.Before(b.ExpiresAt.Time) {
 			return voucherEffect{}, voucherReject("voucher_state_conflict")
 		}
 		if e = x.begin(); e != nil {

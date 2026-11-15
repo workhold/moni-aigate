@@ -12,7 +12,7 @@ app=${project}-app
 worker=${project}-worker
 port=18081
 export PATH="/opt/homebrew/bin:$PATH"
-export DOCKER_CONTEXT=colima
+export DOCKER_CONTEXT="${DOCKER_CONTEXT:-colima}"
 mkdir -p "$private"
 chmod 700 "$private"
 umask 077

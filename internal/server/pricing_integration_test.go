@@ -27,6 +27,27 @@ func TestPricingHTTPBusinessAndCurrentDomainIsolation(t *testing.T) {
 		s.pricing = pricingAdmission{}
 		return authHTTP(t, s, method, path, raw, csrf, s.Config.Origin, body)
 	}
+	requirePriceTimes := func(w *httptest.ResponseRecorder) {
+		var page struct {
+			Data []struct {
+				EffectiveAt string `json:"effective_at"`
+				CreatedAt   string `json:"created_at"`
+			} `json:"data"`
+		}
+		if json.Unmarshal(w.Body.Bytes(), &page) != nil || len(page.Data) == 0 {
+			t.Fatal("price list is empty or invalid", w.Body.String())
+		}
+		for _, row := range page.Data {
+			for _, value := range []string{row.EffectiveAt, row.CreatedAt} {
+				if len(value) != 27 {
+					t.Fatalf("price timestamp does not use six microseconds: %q", value)
+				}
+				if _, err := time.Parse("2006-01-02T15:04:05.000000Z", value); err != nil {
+					t.Fatalf("invalid price timestamp %q: %v", value, err)
+				}
+			}
+		}
+	}
 	var receipt catalog.PricingOperationReceipt
 	decode := func(w *httptest.ResponseRecorder) map[string]any {
 		var v map[string]any
@@ -52,18 +73,23 @@ func TestPricingHTTPBusinessAndCurrentDomainIsolation(t *testing.T) {
 	if e = pool.QueryRow(context.Background(), `SELECT c.schema_id,encode(c.schema_digest,'hex') FROM models m JOIN model_capability_versions c ON c.id=m.profile_version WHERE m.id=$1`, model).Scan(&schema, &digest); e != nil {
 		t.Fatal(e)
 	}
-	requireAuthStatus(t, call("POST", "/api/platform/price-versions", map[string]any{"operation_id": uuid.NewString(), "model_id": model, "schema_id": schema, "schema_digest": digest, "variant_key": "default", "input_rate": "900", "output_rate": "900", "effective_at": time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond).Format("2006-01-02T15:04:05.000000Z")}), 201)
+	millisecond := time.Now().UTC().Add(-time.Hour).Truncate(time.Millisecond).Format("2006-01-02T15:04:05.000Z")
+	requireAuthStatus(t, call("POST", "/api/platform/price-versions", map[string]any{"operation_id": uuid.NewString(), "model_id": model, "schema_id": schema, "schema_digest": digest, "variant_key": "default", "input_rate": "900", "output_rate": "900", "effective_at": millisecond}), 201)
 	now := time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond).Format("2006-01-02T15:04:05.000000Z")
 	requireAuthStatus(t, call("POST", "/api/platform/price-groups/"+group+"/price-versions", map[string]any{"operation_id": uuid.NewString(), "model_id": model, "schema_id": schema, "schema_digest": digest, "variant_key": "default", "input_rate": "123", "output_rate": "456", "effective_at": now}), 201)
 	requireAuthStatus(t, call("PUT", "/api/platform/tenants/"+tenant+"/pricing", map[string]any{"operation_id": uuid.NewString(), "expected_revision": "1", "price_group_id": group}), 200)
 	for _, path := range []string{"/api/models", "/api/prices", "/api/models/" + model + "/retail-price"} {
 		w := authHTTP(t, s, "GET", path, customer, cc, "", nil)
 		requireAuthStatus(t, w, 200)
+		if path == "/api/prices" {
+			requirePriceTimes(w)
+		}
 		if !strings.Contains(w.Body.String(), `"123"`) || strings.Contains(w.Body.String(), `"900"`) {
 			t.Fatal(path, w.Body.String())
 		}
 	}
 	adminPrice := call("GET", "/api/prices", nil)
+	requirePriceTimes(adminPrice)
 	if !strings.Contains(adminPrice.Body.String(), `"numerator":"9"`) || !strings.Contains(adminPrice.Body.String(), `"denominator":"10000"`) || strings.Contains(adminPrice.Body.String(), `"numerator":"123"`) {
 		t.Fatal(adminPrice.Body.String())
 	}

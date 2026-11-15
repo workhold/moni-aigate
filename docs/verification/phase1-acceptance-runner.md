@@ -1,6 +1,6 @@
 # 029 第一阶段 41 项终验执行入口
 
-状态：**执行工具已具备，尚未据此宣称第一阶段通过。** 本入口只执行冻结清单，不改变 `specs/029-phase1-acceptance/spec.md` 的技术内容，也不沿用历史局部证据作为本次通过结论。
+状态：**执行工具已具备，尚未据此宣称第一阶段通过。** 本入口只执行冻结清单，不改变 `specs/029-phase1-acceptance/spec.md` 的技术内容，也不沿用历史局部证据作为本次通过结论。已完成的工具/流程预检见[浏览器与部署预览](phase1-browser-preview.md)，该记录不是最终验收。
 
 ## 防漏项边界
 
@@ -25,6 +25,22 @@ scripts/phase1-browser-preview.sh
 该前台进程使用当前源码构建镜像，在 55439 专库创建随机 `phase1qa_*` schema，执行 current-only 迁移和显式 `operations.ProvisionFor(schema)`，再启动 `moni-phase1-browser-app` / `moni-phase1-browser-worker`。`scripts/phase1-provision` 只用于这个隔离测试目标；生产 `provision` 仍只处理 public，不改变默认部署行为。预览退出时删除自己的容器、网络和随机 schema。
 
 随机管理员密码与运行时密钥只写入 `/Users/vchive/.cache/moni-phase1-browser/` 的 0600 文件，不应打印到终端或复制进证据。浏览器驱动直接读取受保护文件。`Dockerfile`/`compose.yaml` 的 `GOPROXY` 构建参数保持默认代理；本地预览显式使用可访问的公共镜像并继续执行 `go.sum` 校验。
+
+扩展 031 harness 设置 `PHASE1_UI_ACCOUNTS_FILE` 后，浏览器驱动通过 Chrome DevTools Protocol 启动独立 Chrome，执行公开目录、客户/运营页面、Key 创建/Playground/撤销、TOTP 与密码变更、人工核款及退款双审、券发行/审批/兑换、报表 CSV 和站内告警共同确认。所有截图都在一次性秘密清除后保存；证据不含密码、Cookie、API Key、券码或 MFA 秘密。
+
+```bash
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+PHASE1_DATABASE_SCHEMA="$(cat /Users/vchive/.cache/moni-phase1-browser/schema)" \
+DOCKER_CONTEXT=colima \
+python3 scripts/phase1_browser_qa.py \
+  --admin-password-file /Users/vchive/.cache/moni-phase1-browser/admin-password \
+  --accounts-file /Users/vchive/.cache/moni-phase1-browser/ui-accounts.json \
+  --ui-mock-image "$(docker inspect --format '{{.Config.Image}}' moni-phase1-browser-app)" \
+  --output /Users/vchive/.cache/moni-phase1-browser/browser-final \
+  --final
+```
+
+不带 `--final` 的预检全部标为 `PREVIEW`，终验执行器不会接受。最终模式要求干净提交、全部必需账号和独立 UI mock；任一实际操作、页面断言、390px 溢出检查或下载失败都会使命令失败，不能输出部分 PASS。若流程在 TOTP 启用或密码修改后失败，必须重建隔离 schema、harness 账号和浏览器 profile，不能复用已变化的账号文件、禁用 MFA 或恢复旧密码。UI mock 配置通过 `docker create`、`docker cp` 和 `docker start` 注入，不依赖 Colima 的宿主 bind-mount；宿主私有文件保持 0600，容器内固定测试配置对非 root mock 用户可读，启动后仍必须通过健康检查。
 
 ## 正式执行前置
 
@@ -66,7 +82,7 @@ scripts/phase1-acceptance.sh --execute \
   --browser-evidence '<同一提交的 browser-evidence.json>'
 ```
 
-执行器依次运行全局静态/前端/race/current-mvp、独立 real-main、支付沙箱与部署 mock，再生成：
+执行器先停止预览 app/worker 并确认专用实例锁释放，再依次运行全局静态/前端/race/current-mvp、独立 real-main、支付沙箱；随后启动同一组容器并执行部署 mock，避免多个真实主进程同时持有服务锁。最后生成：
 
 - `docs/verification/phase1/<ID>.md`：41 个逐项结论、命令套件、日志、测试计数、mock 与未覆盖范围；
 - `docs/verification/phase1/summary.json`：机器可读总状态与 41 项计数；

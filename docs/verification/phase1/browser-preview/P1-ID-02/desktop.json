@@ -1,0 +1,25 @@
+{
+  "status": "PREVIEW",
+  "width": 1440,
+  "checks": [
+    "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功",
+    "/security: 已启用，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功"
+    },
+    {
+      "name": "/security: 已启用，无页面横向溢出或错误告警",
+      "path": "/security",
+      "title": "账号安全 · moni-aigate",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-ID-02/desktop.png"
+}

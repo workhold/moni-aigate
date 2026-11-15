@@ -7189,3 +7189,76 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_mock_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T09:17:14Z · a11f35f417ee
+
+新增隔离浏览器/CDP 验收与完整预览证据；修正价格时间、confirmed_final 数量行和 voucherTime/commerce 反射序列化，仅只读 DTO，不改资金写入、CNY normalization、迁移、模块或权限边界；已运行真实 PG、race、前端和 harness，正式 029 仍未执行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 62 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- added `docs/verification/phase1-browser-preview.md`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-CAT-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-FN-03/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-ID-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-OP-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-PR-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-RP-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-01/mobile390.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/desktop.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/desktop.png`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/mobile390.json`
+- added `docs/verification/phase1/browser-preview/P1-UI-02/mobile390.png`
+- added `docs/verification/phase1/browser-preview/browser-evidence.json`
+- added `docs/verification/phase1/browser-preview/downloads/moni-aigate-operations.csv`
+- modified `internal/billing/funding_sandbox_integration_test.go`
+- modified `internal/billing/voucher_commands.go`
+- modified `internal/billing/voucher_query.go`
+- added `internal/billing/voucher_time_test.go`
+- modified `internal/billing/voucher_types.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/commerce_handlers.go`
+- modified `internal/server/commerce_input_test.go`
+- modified `internal/server/payment_handlers_test.go`
+- modified `internal/server/pricing_integration_test.go`
+- modified `internal/server/queries.go`
+- modified `internal/server/task_request_reference_integration_test.go`
+- modified `scripts/phase1-acceptance-matrix.json`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1-acceptance.test.sh`
+- modified `scripts/phase1-browser-preview.sh`
+- added `scripts/phase1_browser_qa.py`
+- added `scripts/phase1_browser_qa_test.py`
+
+</details>

@@ -1,0 +1,25 @@
+{
+  "status": "PREVIEW",
+  "width": 390,
+  "checks": [
+    "/models: 模型与价格，无页面横向溢出或错误告警",
+    "六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用"
+  ],
+  "observations": [
+    {
+      "name": "/models: 模型与价格，无页面横向溢出或错误告警",
+      "path": "/models",
+      "title": "模型与价格 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用"
+    }
+  ],
+  "evidence": "P1-CAT-02/mobile390.png"
+}
