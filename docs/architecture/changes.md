@@ -7109,11 +7109,32 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 
 </details>
 
-## 2026-11-15T05:31:12Z · 5dc99dae1456
+## 2026-11-15T05:30:31Z · a91e756a6cf5
 
-同步 main 232e343 后保留第一阶段 mock 验收/自测工具、验证记录和0600可选UI账号交接；架构冲突正文以 main 为准，manifest 由工具重建。生产网关、路由、计费、迁移、权限和部署仍按 main，本分支仅新增测试/验证工具，无额外结构变化
+035 合入 main 并新增隔离浏览器预览：专库随机 schema、显式 ProvisionFor、可选 GOPROXY 构建参数与 029 执行器；生产 public provision、运行模块、资金与权限边界不变，仍未执行 41 项通过结论；架构正文已同步
 
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2256 个源文件；本次 6 个源文件变化，架构正文变化：false。
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2262 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `Dockerfile`
+- modified `compose.yaml`
+- added `docs/verification/phase1-acceptance-runner.md`
+- added `scripts/phase1-acceptance-matrix.json`
+- added `scripts/phase1-acceptance.py`
+- added `scripts/phase1-acceptance.sh`
+- added `scripts/phase1-acceptance.test.sh`
+- added `scripts/phase1-browser-preview.sh`
+- added `scripts/phase1-provision/main.go`
+- added `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T06:41:33Z · 278308e2133b
+
+同步 main da91a8f 后保留034 paid credit provision修复及全部mock验收工具；架构冲突正文以 main 为准，manifest由工具重建。本分支仍仅修改测试/验证工具，不放宽服务端校验或改变生产结构
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 6 个源文件变化，架构正文变化：false。
 
 <details><summary>源文件变化</summary>
 
@@ -7123,19 +7144,5 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1-mock-acceptance.py`
 - modified `scripts/phase1-mock-acceptance.test.sh`
 - added `scripts/phase1_mock_acceptance_test.py`
-
-</details>
-
-## 2026-11-15T06:39:57Z · 1a7a3d1f98a3
-
-修正第一阶段 mock provision 的034 paid credit测试DTO并增加现有paid-credit/tenant-group HTTP合同绑定；仅测试与验证记录变化，不修改服务端校验、生产DTO、业务行为、迁移或权限边界
-
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2256 个源文件；本次 3 个源文件变化，架构正文变化：false。
-
-<details><summary>源文件变化</summary>
-
-- modified `docs/verification/phase1/031-mock-harness.md`
-- modified `scripts/phase1-mock-acceptance.py`
-- modified `scripts/phase1_mock_acceptance_test.py`
 
 </details>

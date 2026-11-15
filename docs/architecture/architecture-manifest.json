@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T06:39:57Z",
-  "review_reason": "修正第一阶段 mock provision 的034 paid credit测试DTO并增加现有paid-credit/tenant-group HTTP合同绑定；仅测试与验证记录变化，不修改服务端校验、生产DTO、业务行为、迁移或权限边界",
-  "snapshot_sha256": "1a7a3d1f98a3857fe46e9d53be69dd735b338199321880350f3d04ee304d0e5d",
-  "architecture_sha256": "c2571f0a8ecbe4f352f4b6bfde97ab18d6b2baad384bd1844285f9ac64131fa4",
-  "history_sha256": "be49e21825a06f4c7f0f980133e54921f64ed60c004795cfc141969745bcdfc7",
+  "reviewed_at": "2026-11-15T06:41:33Z",
+  "review_reason": "同步 main da91a8f 后保留034 paid credit provision修复及全部mock验收工具；架构冲突正文以 main 为准，manifest由工具重建。本分支仍仅修改测试/验证工具，不放宽服务端校验或改变生产结构",
+  "snapshot_sha256": "278308e2133bfbc2c96a8c488572af2d8589a885559331e32348c3020fcdb317",
+  "architecture_sha256": "f0202cae616bf9cf6cea44e225eb739a895cc716e675261a32aad5ef0cdf49d8",
+  "history_sha256": "90ec7d4446643bf2f87c366014962f20c2bc1df2963db35c1334634a2277a041",
   "files": [
     {
       "path": ".dockerignore",
@@ -41,7 +41,7 @@
     },
     {
       "path": "Dockerfile",
-      "sha256": "4f44fb785e1845a55309271a2ac825640f55b167bec7d3eaa168b6c6fdda5c8c"
+      "sha256": "11377461c63cfa478b2c6b859191aea2384bb1bff18112305d5f3b7d6802aac3"
     },
     {
       "path": "Makefile",
@@ -97,7 +97,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "8b5a3fec78eabadc65ddd19a9d8d1d64d25c10c33d5a9efff02f720f03e4d6a1"
+      "sha256": "c432797c907c29a16d8d9b9bbe631c26d72389e0dd6eb88c7f98d65994cb9732"
     },
     {
       "path": "deploy/external-upstreams.compose.yaml",
@@ -1626,6 +1626,10 @@
     {
       "path": "docs/verification/phase0-upstream-provenance.md",
       "sha256": "fdbde2e489efa0462e915dbe905d0acdf3687dd8241382ea8f8d1ecb6bf142e6"
+    },
+    {
+      "path": "docs/verification/phase1-acceptance-runner.md",
+      "sha256": "f070aaf17c98b51332501db7481687e5426be55ad9f131caac699d6fc9997ad6"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -7208,6 +7212,26 @@
       "sha256": "5af6379fd7bb77af22beb3211c6f3960ab9d62e42daefc9c3c2e6fdcf0eab5d0"
     },
     {
+      "path": "scripts/phase1-acceptance-matrix.json",
+      "sha256": "c14b918f80a9a5607b9497002bed877c6a5fff6e966eaaf9cbfb6adfce7f1a10"
+    },
+    {
+      "path": "scripts/phase1-acceptance.py",
+      "sha256": "a09bf719af6ae3282c3c08963e578ae303b6e7848ef46292f0414e7b690882ab"
+    },
+    {
+      "path": "scripts/phase1-acceptance.sh",
+      "sha256": "7aaf0c28fe078b1b45a316f3c0a5cceb6679d6e8a24acc30eead74f629c690c2"
+    },
+    {
+      "path": "scripts/phase1-acceptance.test.sh",
+      "sha256": "cd4b7cc1dc03ad57e900c9f70a4d3c9bcba89bdbc2449513011ae53366fb2527"
+    },
+    {
+      "path": "scripts/phase1-browser-preview.sh",
+      "sha256": "aef90c1280e0252c7cc484dab24eb5a818f2554494869fac87baa5c49914c693"
+    },
+    {
       "path": "scripts/phase1-mock-acceptance.py",
       "sha256": "890071dc42c27de2c6188baf5924ed4308f28da1a2a1e4f576aae396bf74e9f5"
     },
@@ -7218,6 +7242,14 @@
     {
       "path": "scripts/phase1-mock-acceptance.test.sh",
       "sha256": "0eda25367557ac463bb8f77f6d41ced9294da55ac52a36fb9abee5abe427cfc2"
+    },
+    {
+      "path": "scripts/phase1-provision/main.go",
+      "sha256": "6ca6ffb81882dbd8e90ed2f6b7ee43df3979a98f1b52553f8fbb18661b03dd45"
+    },
+    {
+      "path": "scripts/phase1_acceptance_test.py",
+      "sha256": "ae09cb09417b5d7277763932702adbf16168d3ed6b01728169d1e78e69ddfea9"
     },
     {
       "path": "scripts/phase1_mock_acceptance_test.py",
