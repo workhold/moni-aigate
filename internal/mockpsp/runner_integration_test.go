@@ -3,6 +3,7 @@ package mockpsp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -159,5 +160,108 @@ func TestPostgresCallbackRunnerTwoSlotsNoLocksDuringHTTP(t *testing.T) {
 	}
 	if invalid.Load() || maxActive.Load() != 2 {
 		t.Fatal("fixed transport/signatures or two-slot bound failed")
+	}
+}
+
+func TestPostgresCallbackRunnerClaimPrepareSerializesSlots(t *testing.T) {
+	r, env, _, ctx := newRepositoryPG(t)
+	eventID := callbackPGCapture(t, r, ctx)
+	armed := repositoryPGControl(t, r, ctx, ControlInput{Action: "arm_fault", Scenario: "before_callback_send_once", EventID: &eventID})
+	if armed.Reply.Status != "accepted" {
+		t.Fatal("could not arm the fixture-only Prepare boundary")
+	}
+	owner, err := env.OpenPool(ctx, "mock_owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer owner.Close()
+	holder, err := r.pool.Acquire(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	holderActive := true
+	t.Cleanup(func() {
+		if !holderActive {
+			return
+		}
+		cleanup, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		_, _ = holder.Exec(cleanup, `SELECT pg_advisory_unlock(782193999,1)`)
+		holder.Release()
+	})
+	t.Cleanup(func() {
+		cleanup, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		_, _ = owner.Exec(cleanup, `DROP TRIGGER IF EXISTS runner_prepare_barrier ON mock_fault_plans;DROP FUNCTION IF EXISTS runner_prepare_barrier()`)
+	})
+	if _, err = owner.Exec(ctx, `CREATE FUNCTION runner_prepare_barrier() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_advisory_xact_lock(782193999,1); RETURN NEW; END $$;CREATE TRIGGER runner_prepare_barrier BEFORE UPDATE ON mock_fault_plans FOR EACH ROW EXECUTE FUNCTION runner_prepare_barrier()`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = holder.Exec(ctx, `SELECT pg_advisory_lock(782193999,1)`); err != nil {
+		t.Fatal(err)
+	}
+	var holderPID int
+	if err = holder.QueryRow(ctx, `SELECT pg_backend_pid()`).Scan(&holderPID); err != nil {
+		t.Fatal(err)
+	}
+	runner := &callbackRunner{server: &Server{repository: r}}
+	type result struct {
+		claim    DeliveryClaim
+		prepared PreparedDelivery
+		ok       bool
+		err      error
+	}
+	firstDone := make(chan result, 1)
+	go func() {
+		claim, prepared, ok, err := runner.claimAndPrepare(ctx)
+		firstDone <- result{claim, prepared, ok, err}
+	}()
+	blocked := false
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline) && !blocked; {
+		if err = r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND wait_event='advisory' AND $1::int=ANY(pg_blocking_pids(pid)) AND lower(query) LIKE 'update mock_fault_plans%')`, holderPID).Scan(&blocked); err != nil {
+			t.Fatal(err)
+		}
+		if !blocked {
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+	if !blocked {
+		t.Fatal("first claim did not reach the actual Prepare barrier")
+	}
+	if runner.claimPrepareMu.TryLock() {
+		runner.claimPrepareMu.Unlock()
+		t.Fatal("claim/prepare mutex was released during the actual Prepare barrier")
+	}
+	if _, err = holder.Exec(ctx, `SELECT pg_advisory_unlock(782193999,1)`); err != nil {
+		t.Fatal(err)
+	}
+	holder.Release()
+	holderActive = false
+	var first result
+	select {
+	case first = <-firstDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("first claim did not resume after the fixture barrier was released")
+	}
+	if first.claim.eventID != eventID || !errors.Is(first.err, ErrDeliveryDeferred) {
+		t.Fatalf("fixture fault did not retain its deferred result: event=%s err=%v", first.claim.eventID, first.err)
+	}
+	secondDone := make(chan result, 1)
+	go func() {
+		claim, prepared, ok, err := runner.claimAndPrepare(ctx)
+		secondDone <- result{claim, prepared, ok, err}
+	}()
+	select {
+	case second := <-secondDone:
+		if second.err != nil || second.ok {
+			t.Fatalf("live deferred claim was immediately reused by the second slot: ok=%t err=%v", second.ok, second.err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("second slot did not finish after the first deferred Prepare")
+	}
+	var state string
+	var generation, attempts, observations int
+	if err = r.pool.QueryRow(ctx, `SELECT d.state,d.generation,d.attempt_count,(SELECT count(*) FROM mock_delivery_observations o WHERE o.event_id=d.event_id) FROM mock_notification_delivery d WHERE d.event_id=$1`, first.claim.eventRowID).Scan(&state, &generation, &attempts, &observations); err != nil || state != "leased" || generation != 1 || attempts != 1 || observations != 0 {
+		t.Fatalf("serialized deferred facts differ: state=%s generation=%d attempts=%d observations=%d err=%v", state, generation, attempts, observations, err)
 	}
 }

@@ -7393,3 +7393,63 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T16:43:14Z · 455641e5a2a9
+
+PR #15 支付回调超时根因为双槽 Prepare gate 竞争丢弃 pre-IO claim；仅对明确 gate busy 以同 claim 有界重试，故障与未知 deferred 不重放，新增真实 advisory gate 回归和验证记录。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/repo_delivery.go`
+- modified `internal/mockpsp/runner.go`
+- modified `internal/mockpsp/runner_integration_test.go`
+- modified `internal/mockpsp/types.go`
+- modified `internal/mockpsp/types_test.go`
+
+</details>
+
+## 2026-11-15T16:56:01Z · 53c4a4468a3b
+
+按冻结 callback 合同改用进程内 ClaimDue+Prepare 互斥避免自身槽间 gate 竞争；外部竞争仍 deferred 至 lease 到期，不重发同 claim，HTTP 双槽并发不变，完整沙箱与真实进程回归通过。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/repo_delivery.go`
+- modified `internal/mockpsp/runner.go`
+- modified `internal/mockpsp/runner_integration_test.go`
+- modified `internal/mockpsp/types.go`
+- modified `internal/mockpsp/types_test.go`
+
+</details>
+
+## 2026-11-15T17:10:58Z · 96caadb12a5f
+
+补强 Prepare 串行回归：owner-only fixture触发器确定性阻塞首个Prepare，证明第二槽不能进入且原deferred lease不变；完整沙箱与真实进程测试通过，冻结合同不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/runner_integration_test.go`
+
+</details>
+
+## 2026-11-15T17:13:57Z · 4e59c0c43e0f
+
+消除回归时序窗口：在真实Prepare阻塞期间以TryLock确定性证明互斥未释放，完整沙箱与真实进程测试通过，冻结合同和运行行为不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/runner_integration_test.go`
+
+</details>

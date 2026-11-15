@@ -556,6 +556,8 @@ Acquire本身仍不发BEGIN。T1按[根冻结生命周期](../../specs/022-self-
 
 启动先验证私有文件、DSN、数据库/schema/角色OID、精确静态catalog inventory、最小权限、不可变marker/key摘要，再取得独占ownership；失败前不打开listener。运行时fresh Guard失败永久fence并取消服务。模拟器API与QA control分别认证并有独立准入；receiver仅接受固定路径的exact raw HMAC通知。签名密钥、nonce、token、DSN不进入日志或持久安全回执。关闭先取消并排空HTTP、事务与两个回调槽，再释放ownership。
 
+两个回调槽的进程内`ClaimDue + Prepare`预IO阶段由互斥锁串行，避免一个槽提交claim并释放gate后，另一个槽的迟到候选立即占用该事件Prepare gate。外部连接造成的真实gate竞争仍返回`ErrDeliveryDeferred`并保留原lease至到期，不重发同claim或提前释放；互斥锁在HTTP前释放，两个网络槽仍可并发发送。`TestPostgresCallbackRunnerClaimPrepareSerializesSlots`以owner-only fixture触发器确定性阻塞首个Prepare，并以`TryLock`证明互斥在实际Prepare期间未释放，释放后原deferred lease不变；`TestRepositoryDeliveryPGPrepareContentionPreservesLease`继续证明外部竞争不改原租约/attempt或制造IO证据。
+
 ```mermaid
 sequenceDiagram
     participant Q as 离线QA/测试客户端

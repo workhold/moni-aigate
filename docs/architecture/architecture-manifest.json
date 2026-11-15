@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T15:43:29Z",
-  "review_reason": "补充发布时改写 current-mvp 等日志正文中的暂存路径，避免删除暂存目录后失败调查链接失效；嵌套日志反例测试同步覆盖，无生产或架构合同变化。",
-  "snapshot_sha256": "88bd3aeeda3d4653a5731d3381e16ca6f5cb7383d791100d6a915ee9393be39b",
-  "architecture_sha256": "a24f51f3e1902e45357ca23b89cb9cecc4c1fbe5d7ae620dd8f10d151525cbb3",
-  "history_sha256": "7b12b6d2c29f2c14b1e2c88ff5aae49d538d91bc970e4a05d74e710fc45fcd66",
+  "reviewed_at": "2026-11-15T17:13:57Z",
+  "review_reason": "消除回归时序窗口：在真实Prepare阻塞期间以TryLock确定性证明互斥未释放，完整沙箱与真实进程测试通过，冻结合同和运行行为不变。",
+  "snapshot_sha256": "4e59c0c43e0f55054dbf05ef507470150e3ef111d6759ac39b802a9472907891",
+  "architecture_sha256": "3bdb309ae381394eb57f024fa711e133d086e9b8c1edf4dc11073423a0896bac",
+  "history_sha256": "34476a333b5c60337edcfb8f650dbc02af28a4a9e415476ee72a1b60fd31fbe9",
   "files": [
     {
       "path": ".dockerignore",
@@ -1561,7 +1561,7 @@
     },
     {
       "path": "docs/verification/payment-sandbox.md",
-      "sha256": "2fdad820316dbc766ba298d80be32b2926415de2ded210aff6a8ad2b9b8b448b"
+      "sha256": "50a682004d839e650f61b98722766e4bf0a0675b7dbdc1770d0833d10be63053"
     },
     {
       "path": "docs/verification/performance-audit.md",
@@ -4425,11 +4425,11 @@
     },
     {
       "path": "internal/mockpsp/runner.go",
-      "sha256": "19210ce481d4623f068c9a1fd54164d2be7b501ad72786fa5d8c3427da2c5d9a"
+      "sha256": "4951c4bc9cef3e1ed09fb439ef9375b07f7f9013e74565c340c6b0672539b202"
     },
     {
       "path": "internal/mockpsp/runner_integration_test.go",
-      "sha256": "88a8d070e2e91ea8516bb1521dada5c902a989809a1667223e934e90f90a3fe1"
+      "sha256": "75bd144b56ffb7d451655e56205bc1463f2f7bc99973f2d3a8948fdb2f7f2901"
     },
     {
       "path": "internal/mockpsp/server.go",
