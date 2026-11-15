@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T05:30:31Z",
-  "review_reason": "035 合入 main 并新增隔离浏览器预览：专库随机 schema、显式 ProvisionFor、可选 GOPROXY 构建参数与 029 执行器；生产 public provision、运行模块、资金与权限边界不变，仍未执行 41 项通过结论；架构正文已同步",
-  "snapshot_sha256": "a91e756a6cf5ca001a96e54b3bb161efcd940c16cdc952ec75fe8f474b83e19a",
+  "reviewed_at": "2026-11-15T07:22:38Z",
+  "review_reason": "第一阶段mock provision在API.login内统一12.05秒完成间隔，首次不等待且429不重试；仅测试工具和验证记录变化，服务端认证限流、生产代码与权限边界未改",
+  "snapshot_sha256": "48fc421120c9ea380a72c9de61a3ede5909eb03c85128f9e26761f79f1bca806",
   "architecture_sha256": "f0202cae616bf9cf6cea44e225eb739a895cc716e675261a32aad5ef0cdf49d8",
-  "history_sha256": "bcf578bae038cc695cc0f40dbfc068e6f642905970473d16e26ca22ee6413976",
+  "history_sha256": "d26fad6d8b09083d662ebc24840ead2ae4864d0d3f22195722c3d23137970b67",
   "files": [
     {
       "path": ".dockerignore",
@@ -1633,7 +1633,7 @@
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
-      "sha256": "6dbb78fb3ca5bbfaeea940af8500353f20e6caab8da1b1ad3ca3c91964308033"
+      "sha256": "703673cbbd0ce1f41a042023e54405d0659e153f01f2bced6558998ad56864b7"
     },
     {
       "path": "docs/verification/phase1/P1-CAT-02.md",
@@ -6680,12 +6680,16 @@
       "sha256": "b075e8713ea018b4252f7aa349f66ddb715b6323fe739206933b933a8d74d443"
     },
     {
+      "path": "internal/testsupport/mockupstream/phase1_acceptance_test.go",
+      "sha256": "25d8665aefc3a3400b4ab6084fe8e28c45d23c3f22f3a304ade2f3694c5e5c11"
+    },
+    {
       "path": "internal/testsupport/mockupstream/provider_contract_test.go",
       "sha256": "be6feab2805bf7037a25a6753a3b509b06dca5a8f4f24f9652d9ded3607fcd9d"
     },
     {
       "path": "internal/testsupport/mockupstream/server.go",
-      "sha256": "fd7c16501099bf7ca4f86f777a5dfd62b348f32d42fc3f52f79b652eb4bb2bae"
+      "sha256": "2b4133aac117dcdfc37467fbdcd5132ca21904b9662fcf412b6d1536e1341485"
     },
     {
       "path": "internal/testsupport/mockupstream/server_test.go",
@@ -7229,7 +7233,7 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
-      "sha256": "8f9d3696d9eb8179fb3c1d08d3196b02a7ca59540fdfa8b75836d451d012b61f"
+      "sha256": "192b2bfcce8e5236522e4218e367905741587c40fcddd8764e6951b5c4a79d84"
     },
     {
       "path": "scripts/phase1-mock-acceptance.sh",
@@ -7237,7 +7241,7 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.test.sh",
-      "sha256": "dea21c3f20aac604fbe8b4dc2c36d158c050a0ae2b7b65558d276e651bc9b143"
+      "sha256": "0eda25367557ac463bb8f77f6d41ced9294da55ac52a36fb9abee5abe427cfc2"
     },
     {
       "path": "scripts/phase1-provision/main.go",
@@ -7246,6 +7250,10 @@
     {
       "path": "scripts/phase1_acceptance_test.py",
       "sha256": "ae09cb09417b5d7277763932702adbf16168d3ed6b01728169d1e78e69ddfea9"
+    },
+    {
+      "path": "scripts/phase1_mock_acceptance_test.py",
+      "sha256": "994a7df7132a4d0160bd0d27c1ba360538215e6b7a66fcca6f2284ad62a47b49"
     },
     {
       "path": "scripts/provider-qualification/README.md",

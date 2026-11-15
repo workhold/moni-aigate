@@ -706,7 +706,7 @@ func streamGemini(write func(string, any) error, model, text string, input, outp
 	if fault.kind == "invalid_json" {
 		return writeRawSSE(write, "", "{")
 	}
-	first := map[string]any{"candidates": []any{map[string]any{"index": 0, "content": map[string]any{"role": "model", "parts": []any{map[string]string{"text": text}}}}}, "usageMetadata": geminiUsage(input, output)}
+	first := map[string]any{"modelVersion": model, "candidates": []any{map[string]any{"index": 0, "content": map[string]any{"role": "model", "parts": []any{map[string]string{"text": text}}}}}, "usageMetadata": geminiUsage(input, output)}
 	if err := write("", first); err != nil {
 		return err
 	}
@@ -720,7 +720,7 @@ func streamGemini(write func(string, any) error, model, text string, input, outp
 	if fault.kind == "conflicting_usage" {
 		usage = map[string]int64{"promptTokenCount": input, "candidatesTokenCount": output, "totalTokenCount": input + output + 1}
 	}
-	finish := map[string]any{"candidates": []any{map[string]any{"index": 0, "finishReason": "STOP"}}}
+	finish := map[string]any{"modelVersion": model, "candidates": []any{map[string]any{"index": 0, "finishReason": "STOP"}}}
 	if usage != nil {
 		finish["usageMetadata"] = usage
 	}

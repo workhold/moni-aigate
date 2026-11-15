@@ -7129,3 +7129,63 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - added `scripts/phase1_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T06:41:33Z · 278308e2133b
+
+同步 main da91a8f 后保留034 paid credit provision修复及全部mock验收工具；架构冲突正文以 main 为准，manifest由工具重建。本分支仍仅修改测试/验证工具，不放宽服务端校验或改变生产结构
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 6 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- added `internal/testsupport/mockupstream/phase1_acceptance_test.go`
+- modified `internal/testsupport/mockupstream/server.go`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1-mock-acceptance.test.sh`
+- added `scripts/phase1_mock_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T07:00:33Z · e4c15d9363c9
+
+修复第一阶段mock故障矩阵的用例健康隔离，保留内容/重放/账务强断言；provision按现有publication API显式公开六QA模型并匿名核价。仅测试工具、mock测试和验证记录变化，生产协议、路由、资金、权限与部署结构未改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `internal/testsupport/mockupstream/phase1_acceptance_test.go`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_mock_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T07:14:29Z · 993362044ccb
+
+为第一阶段mock验收harness增加显式copy配置传输：docker create/cp/start和tar成员权限适配，默认bind不变；仅测试工具与验证记录变化，生产镜像入口、部署拓扑、健康断言和业务代码未改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_mock_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T07:22:38Z · 48fc421120c9
+
+第一阶段mock provision在API.login内统一12.05秒完成间隔，首次不等待且429不重试；仅测试工具和验证记录变化，服务端认证限流、生产代码与权限边界未改
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2264 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1/031-mock-harness.md`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_mock_acceptance_test.py`
+
+</details>
