@@ -15,10 +15,11 @@ import (
 // callbackRunner owns exactly two network slots. It never holds a transaction
 // or session gate during HTTP and never preclaims work for a busy slot.
 type callbackRunner struct {
-	server    *Server
-	client    *http.Client
-	transport *http.Transport
-	callback  string
+	server         *Server
+	client         *http.Client
+	transport      *http.Transport
+	callback       string
+	claimPrepareMu sync.Mutex
 }
 
 func newCallbackRunner(s *Server) (*callbackRunner, error) {
@@ -55,6 +56,20 @@ func pause(ctx context.Context) bool {
 		return true
 	}
 }
+func (r *callbackRunner) claimAndPrepare(ctx context.Context) (DeliveryClaim, PreparedDelivery, bool, error) {
+	r.claimPrepareMu.Lock()
+	defer r.claimPrepareMu.Unlock()
+	// Serialize only this process's pre-IO stages so one slot's stale candidate
+	// cannot take the gate after another slot commits. External contention keeps
+	// its deferred lease; HTTP still runs concurrently in both network slots.
+	claim, ok, err := r.server.repository.ClaimDue(ctx)
+	if err != nil || !ok {
+		return DeliveryClaim{}, PreparedDelivery{}, ok, err
+	}
+	prepared, err := r.server.repository.Prepare(ctx, claim)
+	return claim, prepared, true, err
+}
+
 func (r *callbackRunner) slot(ctx context.Context) {
 	for ctx.Err() == nil {
 		// Expiration is a bounded state transition, not another delivery slot.
@@ -64,15 +79,8 @@ func (r *callbackRunner) slot(ctx context.Context) {
 			}
 			continue
 		}
-		claim, ok, e := r.server.repository.ClaimDue(ctx)
+		claim, prepared, ok, e := r.claimAndPrepare(ctx)
 		if e != nil || !ok {
-			if !pause(ctx) {
-				return
-			}
-			continue
-		}
-		prepared, e := r.server.repository.Prepare(ctx, claim)
-		if e != nil {
 			if !pause(ctx) {
 				return
 			}

@@ -7364,3 +7364,131 @@ PR #8 合入后回合 main 到 local-mvp；034.1 验证记录与冻结规格最�
 - modified `scripts/phase1_acceptance_test.py`
 
 </details>
+
+## 2026-11-15T15:34:28Z · db8d42507f43
+
+正式 029 首次运行发现原始证据目录在静态架构检查前写入导致 FAIL；改为全部日志仓库外暂存、结束后发布并映射路径，不降低清单覆盖，无生产模块、资金或运行拓扑变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `docs/verification/phase1-browser-preview.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T15:43:29Z · 88bd3aeeda3d
+
+补充发布时改写 current-mvp 等日志正文中的暂存路径，避免删除暂存目录后失败调查链接失效；嵌套日志反例测试同步覆盖，无生产或架构合同变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-15T16:43:14Z · 455641e5a2a9
+
+PR #15 支付回调超时根因为双槽 Prepare gate 竞争丢弃 pre-IO claim；仅对明确 gate busy 以同 claim 有界重试，故障与未知 deferred 不重放，新增真实 advisory gate 回归和验证记录。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/repo_delivery.go`
+- modified `internal/mockpsp/runner.go`
+- modified `internal/mockpsp/runner_integration_test.go`
+- modified `internal/mockpsp/types.go`
+- modified `internal/mockpsp/types_test.go`
+
+</details>
+
+## 2026-11-15T16:56:01Z · 53c4a4468a3b
+
+按冻结 callback 合同改用进程内 ClaimDue+Prepare 互斥避免自身槽间 gate 竞争；外部竞争仍 deferred 至 lease 到期，不重发同 claim，HTTP 双槽并发不变，完整沙箱与真实进程回归通过。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 6 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/repo_delivery.go`
+- modified `internal/mockpsp/runner.go`
+- modified `internal/mockpsp/runner_integration_test.go`
+- modified `internal/mockpsp/types.go`
+- modified `internal/mockpsp/types_test.go`
+
+</details>
+
+## 2026-11-15T17:10:58Z · 96caadb12a5f
+
+补强 Prepare 串行回归：owner-only fixture触发器确定性阻塞首个Prepare，证明第二槽不能进入且原deferred lease不变；完整沙箱与真实进程测试通过，冻结合同不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/runner_integration_test.go`
+
+</details>
+
+## 2026-11-15T17:13:57Z · 4e59c0c43e0f
+
+消除回归时序窗口：在真实Prepare阻塞期间以TryLock确定性证明互斥未释放，完整沙箱与真实进程测试通过，冻结合同和运行行为不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/payment-sandbox.md`
+- modified `internal/mockpsp/runner_integration_test.go`
+
+</details>
+
+## 2026-11-15T18:08:28Z · 609be3471984
+
+CI identity累计10分钟为整套耗时而非单测死锁；同runner按完整顶层名单分四个独立测试进程，保留10分钟单进程上限和全部覆盖，新增合同与验证记录，无生产行为变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/verification/ci-profile-contract.md`
+
+</details>
+
+## 2026-11-15T18:13:00Z · 494cb7bc0e0b
+
+独立复核发现identity误读不存在的聚合测试名单并在测试前退出的风险；跳过该聚合表达式，仅使用实际存在的四个分区文件，专库四分实跑全部通过。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/verification/ci-profile-contract.md`
+
+</details>
+
+## 2026-11-15T18:17:49Z · 06d3c126c845
+
+identity四分现收集失败状态，所有分区执行完后统一非零，避免pipefail提前退出造成缺测；专库61项全过、聚合文件和失败聚合路径均验证。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2310 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/verification/ci-profile-contract.md`
+
+</details>

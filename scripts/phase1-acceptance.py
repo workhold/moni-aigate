@@ -15,8 +15,10 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from collections import Counter
@@ -101,7 +103,22 @@ def run_logged(command: list[str], log: pathlib.Path, env: dict[str, str]) -> di
         output.write(f"\ncompleted_at: {now()}\nexit_status: {result.returncode}\n")
     status = "PASS" if result.returncode == 0 else "FAIL"
     print(f"END {log.stem}: {status} ({time.monotonic() - started:.1f}s), log={log}", flush=True)
-    return {"command": printable, "status": status, "exit_status": result.returncode, "log": str(log.relative_to(ROOT)), "seconds": round(time.monotonic() - started, 3)}
+    return {"command": printable, "status": status, "exit_status": result.returncode, "log": str(log), "seconds": round(time.monotonic() - started, 3)}
+
+
+def publish_artifacts(staging: pathlib.Path, final: pathlib.Path, suites: list[dict]) -> None:
+    if final.exists():
+        raise ValueError(f"artifact directory already exists: {final}")
+    final.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(staging, final)
+    for published_log in final.rglob("*.log"):
+        published_log.write_text(published_log.read_text(encoding="utf-8").replace(str(staging), str(final)), encoding="utf-8")
+    for suite in suites:
+        suite["logs"] = []
+        for command in suite["commands"]:
+            published = final / pathlib.Path(command["log"]).relative_to(staging)
+            command["log"] = str(published.relative_to(ROOT)) if published.is_relative_to(ROOT) else str(published)
+            suite["logs"].append(command["log"])
 
 
 def required_go_results(log: pathlib.Path, items: list[dict]) -> dict[str, dict[str, str]]:
@@ -308,8 +325,12 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     if compose.returncode:
         subprocess.run(["docker-compose", "version"], cwd=ROOT, check=True, capture_output=True)
     output = ROOT / "docs" / "verification" / "phase1"
-    artifact = pathlib.Path(args.artifacts).resolve() if args.artifacts else output / "evidence" / commit
-    artifact.mkdir(parents=True, exist_ok=False)
+    published_artifact = pathlib.Path(args.artifacts).resolve() if args.artifacts else output / "evidence" / commit
+    if published_artifact.exists():
+        raise ValueError(f"artifact directory already exists: {published_artifact}")
+    # Keep raw logs outside the source tree until every read-only architecture
+    # check has finished; only their final published copies enter the repository.
+    artifact = pathlib.Path(tempfile.mkdtemp(prefix="phase1-acceptance-"))
     env = os.environ.copy()
     env.setdefault("GOPROXY", "https://goproxy.cn,direct")
     env.setdefault("PHASE1_MOCK_CONFIG_TRANSPORT", "copy")
@@ -378,6 +399,8 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         if '"status":"passed"' not in text and '"status": "passed"' not in text:
             suites[-1]["status"] = "FAIL"
 
+    publish_artifacts(artifact, published_artifact, suites)
+    shutil.rmtree(artifact)
     summary = {"schema_version": 1, "spec": "029-phase1-acceptance", "commit": commit, "database": "127.0.0.1:55439/moni_test", "started_at": started_at, "suites": suites, "required_go_results": go_results, "browser_evidence": str(browser_path.relative_to(ROOT)) if browser_path and browser_path.is_relative_to(ROOT) else str(browser_path), "browser_runtime": (browser or {}).get("runtime", {}), "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项"}
     write_evidence(output, items, summary, go_results, browser)
     print(json.dumps({"overall_status": summary["overall_status"], "counts": summary["counts"], "summary": str(output / "summary.json")}, ensure_ascii=False))
@@ -389,7 +412,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="validate 41 IDs and required Go test inventory without executing acceptance")
     parser.add_argument("--execute", action="store_true", help="execute the complete same-commit acceptance run")
     parser.add_argument("--browser-evidence", help="same-commit isolated desktop+390px browser JSON")
-    parser.add_argument("--artifacts", help="new directory for raw logs; defaults inside docs/verification/phase1/evidence")
+    parser.add_argument("--artifacts", help="new final directory for raw logs; staged outside the repository and published at completion")
     args = parser.parse_args()
     if args.check == args.execute:
         parser.error("choose exactly one of --check or --execute")

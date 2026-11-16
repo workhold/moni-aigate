@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-15T14:03:15Z",
-  "review_reason": "完整镜像预检已通过：npm 与 Alpine 可选镜像、大小写构建代理、Compose 独立构建参数均可用；默认源和运行配置不变，锁文件 integrity、HEAD 归档与不可变镜像边界不变。",
-  "snapshot_sha256": "932612168977677a19342690ce0bee1bff5536917ecd29636733474f2b84a336",
-  "architecture_sha256": "2f7e0e8d7f77e7e88816129b70f4226875596cbc30645230605891163f907b1c",
-  "history_sha256": "21d2da6f512d21d4812a835ef28799932c6f67886fa57f64d603a8cc631db375",
+  "reviewed_at": "2026-11-15T18:17:49Z",
+  "review_reason": "identity四分现收集失败状态，所有分区执行完后统一非零，避免pipefail提前退出造成缺测；专库61项全过、聚合文件和失败聚合路径均验证。",
+  "snapshot_sha256": "06d3c126c84559dc98082c1359b7f6c62f23ea1ad96c9259d341eb849209524d",
+  "architecture_sha256": "8be92fdb71e22d960b3fbdd2ee4b3193b804688ae72ff71f0f9c6d34c922445c",
+  "history_sha256": "711fc87eb46cf4f5bcc612cec04ea233536ce40cd4413ebbf3d1a7f4dfd3ed5f",
   "files": [
     {
       "path": ".dockerignore",
@@ -29,7 +29,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "d4f00745891286cbe6937ab0084202a0860e205a325a1c713630e2ea001341f2"
+      "sha256": "bd9f6147f6f92e0d95b36d294a0a3055fc289d464eb1e22a0f805fe16a07152e"
     },
     {
       "path": ".gitignore",
@@ -1045,7 +1045,7 @@
     },
     {
       "path": "docs/verification/ci-profile-contract.md",
-      "sha256": "f4f90ef067c4c128eeded610927e1d582063782769c929f6f2f0610d08975836"
+      "sha256": "d3d4d00587f620007c93b416044cd8305ae9386a4f86251067ed1273f854c7eb"
     },
     {
       "path": "docs/verification/commerce-concurrency.md",
@@ -1561,7 +1561,7 @@
     },
     {
       "path": "docs/verification/payment-sandbox.md",
-      "sha256": "2fdad820316dbc766ba298d80be32b2926415de2ded210aff6a8ad2b9b8b448b"
+      "sha256": "50a682004d839e650f61b98722766e4bf0a0675b7dbdc1770d0833d10be63053"
     },
     {
       "path": "docs/verification/performance-audit.md",
@@ -1629,11 +1629,11 @@
     },
     {
       "path": "docs/verification/phase1-acceptance-runner.md",
-      "sha256": "cc982b813cb4c4329a28cb4363647303da0321e5fc8c98c6ec02c25e44382263"
+      "sha256": "7134c4e972febbe356b927b1c38636b06f6cb770d24dd05cfddea3237201ecc5"
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
-      "sha256": "733c2df8f1448aec60ae607057ac81ebc895a74e15adfa6683923b3d4dec3f4a"
+      "sha256": "1a246d2f6820589f0c3bf48040b214a224b3fa9c2646b54ba0a9d49365af0221"
     },
     {
       "path": "docs/verification/phase1/031-mock-harness.md",
@@ -4425,11 +4425,11 @@
     },
     {
       "path": "internal/mockpsp/runner.go",
-      "sha256": "19210ce481d4623f068c9a1fd54164d2be7b501ad72786fa5d8c3427da2c5d9a"
+      "sha256": "4951c4bc9cef3e1ed09fb439ef9375b07f7f9013e74565c340c6b0672539b202"
     },
     {
       "path": "internal/mockpsp/runner_integration_test.go",
-      "sha256": "88a8d070e2e91ea8516bb1521dada5c902a989809a1667223e934e90f90a3fe1"
+      "sha256": "75bd144b56ffb7d451655e56205bc1463f2f7bc99973f2d3a8948fdb2f7f2901"
     },
     {
       "path": "internal/mockpsp/server.go",
@@ -7393,7 +7393,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "186b4fafb73424f36d23fcec3eeda551c2a07dec2f6d37e70db0e0776ea09465"
+      "sha256": "91f7116610213af85f23fe0b87953ad0e8803c20481cc2bccf26c20bb177f64d"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -7425,7 +7425,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "14d1584d03a7b1b0f360a96367215fccf50931e98c76abd182f5c420c8e93527"
+      "sha256": "652abff6db1641d414e8a4232b168fa96104277e4e837669c40071f79536f70a"
     },
     {
       "path": "scripts/phase1_browser_qa.py",

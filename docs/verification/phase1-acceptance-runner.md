@@ -91,7 +91,7 @@ scripts/phase1-acceptance.sh --execute \
   --browser-evidence '<同一提交的 browser-evidence.json>'
 ```
 
-执行器先停止预览 app/worker 并确认专用实例锁释放，再依次运行全局静态/前端/race/current-mvp、独立 real-main、支付沙箱；随后启动同一组容器，就绪后重新核对 app/worker 的实际镜像 ID 与标签，并强制以浏览器证据中已复核的镜像 ID 执行部署 mock，避免多个真实主进程同时持有服务锁、长跑期间替换容器或依赖可变的本地镜像标签。最后生成：
+执行器先停止预览 app/worker 并确认专用实例锁释放，再依次运行全局静态/前端/race/current-mvp、独立 real-main、支付沙箱；随后启动同一组容器，就绪后重新核对 app/worker 的实际镜像 ID 与标签，并强制以浏览器证据中已复核的镜像 ID 执行部署 mock，避免多个真实主进程同时持有服务锁、长跑期间替换容器或依赖可变的本地镜像标签。全部原始日志在运行期间暂存仓库外，避免新增证据文件使只读架构清单失效；套件结束后一次性发布到最终证据目录并把汇总中的日志路径及日志正文中的暂存路径映射到发布位置。最后生成：
 
 - `docs/verification/phase1/<ID>.md`：41 个逐项结论、命令套件、日志、测试计数、mock 与未覆盖范围；
 - `docs/verification/phase1/summary.json`：机器可读总状态与 41 项计数；

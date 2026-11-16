@@ -25,3 +25,9 @@ namespace启动证明已补充冻结并实施：先前独立enum/domain/无冲�
 仍须独立完成：包含最终worker存活oracle的版本验证、末代/live lease崩溃恢复、真正数据库COMMIT回包丢失、首发前/receiver commit后丢ACK、after业务commit到fault消费之间精确kill、旧备份恢复及完整最终检查。旧binary的20次耗尽、转review与禁止第21次已按上文收齐结果，不再列为运行中。短程SIGKILL发生在已确认提交后，不冒充上述崩溃缝隙。HTTP代理/redirect/压缩/限流/timeout完整矩阵按各包专项另记，脚本不泛化声称已全覆盖。B1核心设计/SQL已冻结，但应用支付/SKU/inbox/outbox/capture资金接线与C来源lot/退款尚未完成，不能把沙箱回执当作客户余额入账。
 
 统一架构12幅Mermaid图使用官方mermaid 12.2.0在独立headless Chrome实际解析/渲染12/12通过（3流程、7时序、2ER），并已人工查看[模块图快照](assets/payment-sandbox-architecture.png)；4384×2972完整无裁切，SHA-256为`a9ebcf3340ef1d01daa433c430829add58a1b7a9958e46c741bd849600d8aee6`。没有操作用户现有浏览器或预览。图验证证明语法与可读性，不代替源码语义复核。
+
+## 2026-11-16 Prepare gate 竞争回归
+
+PR #15 的CI曾在`TestShortActualProcessesPG`出现`condition_timeout`。独立代码复核与对抗验证确认：两个回调槽可先选中同一候选，先提交claim的槽释放gate后，另一槽的迟到候选可短暂持有Prepare gate；原runner把该竞争与其他deferred同等丢弃，未到期leased行只能等60秒恢复，造成15秒等待失败。没有据此放宽测试超时或资金/权限断言。
+
+冻结`b-runtime-contract`明确禁止解锁后重发同一claim，因此修复只在进程内用互斥锁串行两个槽的`ClaimDue + Prepare`预IO阶段，避免自身槽间制造这次竞争；外部真实gate竞争仍保留原lease至到期，HTTP继续双槽并发。`TestPostgresCallbackRunnerClaimPrepareSerializesSlots`以owner-only fixture触发器确定性阻塞首个Prepare，并以`TryLock`证明互斥在实际Prepare期间未释放，释放后generation=1、attempts=1、observations=0且deferred lease不变；既有真实gate竞争用例继续要求deferred不改原lease。完整`internal/mockpsp` race通过（38.799s），`scripts/payment-sandbox-qa` race通过（12.873s），包含`TestShortActualProcessesPG`真实三listener、回调、SIGTERM/SIGKILL和精确清理。该记录只覆盖本地沙箱及本次回归，不是正式支付商或生产验收。

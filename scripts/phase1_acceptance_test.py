@@ -104,6 +104,30 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
                 self.assertFalse(MODULE.recheck_browser_runtime({"runtime": {}}, "a" * 40, log))
             self.assertIn("runtime_recheck: FAIL: image changed", log.read_text(encoding="utf-8"))
 
+    def test_external_raw_logs_publish_with_final_evidence_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            staging = root / "staging"
+            staging.mkdir()
+            result = MODULE.run_logged(["true"], staging / "suite.log", MODULE.os.environ.copy())
+            self.assertEqual(str(staging / "suite.log"), result["log"])
+            suites = [{"commands": [result], "logs": [result["log"]]}]
+            final = root / "published"
+            nested = staging / "current-mvp" / "group.log"
+            nested.parent.mkdir()
+            nested.write_text("group failure\n", encoding="utf-8")
+            with (staging / "suite.log").open("a", encoding="utf-8") as output:
+                output.write(f"logs: {staging}/current-mvp\n")
+            MODULE.publish_artifacts(staging, final, suites)
+            self.assertEqual(str(final / "suite.log"), result["log"])
+            self.assertEqual([str(final / "suite.log")], suites[0]["logs"])
+            self.assertIn("exit_status: 0", (final / "suite.log").read_text(encoding="utf-8"))
+            self.assertIn(f"logs: {final}/current-mvp", (final / "suite.log").read_text(encoding="utf-8"))
+            self.assertNotIn(str(staging), (final / "suite.log").read_text(encoding="utf-8"))
+            self.assertTrue((final / "current-mvp" / "group.log").is_file())
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                MODULE.publish_artifacts(staging, final, suites)
+
     def test_failed_global_suite_never_generates_mvp_pass(self):
         items = MODULE.load_matrix()
         suite_names = ["static-build", "frontend", "go-race", "current-mvp", "mock-deployment", "identity-lifecycle", "mail-lifecycle", "payment-process"]
