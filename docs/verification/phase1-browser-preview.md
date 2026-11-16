@@ -4,6 +4,8 @@
 
 本轮基线提交为 `e87cdaf40c7981bb46acc10a0f064480359d9948`，之后仍有 DTO 与验收工具变更需要单独提交。预览不能替代最终干净提交上的 41 项结果，也不证明真实供应商、正式支付商、生产 SLA 或多实例 HA。
 
+**后续正式结果：**2026-11-16 已在 `2634329bb3befd52749a2c8afb08b3260b6180d1` 上完成 41/41 PASS；正式证据见[汇总](phase1/summary.json)和[同提交浏览器归档](phase1/browser-final-2634329/)。本文件仍只描述当时的 PREVIEW，不用预览替代正式证据。
+
 ## 部署 harness
 
 在专用 `colima-moni-acceptance` VM、专用 PostgreSQL `127.0.0.1:55439/moni_test` 的随机隔离 schema 中，使用 `PHASE1_MOCK_CONFIG_TRANSPORT=copy` 执行 `scripts/phase1-mock-acceptance.sh`。结果：

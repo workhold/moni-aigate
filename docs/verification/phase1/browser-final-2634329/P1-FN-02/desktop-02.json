@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "width": 1440,
+  "checks": [
+    "finance_operator 通过 UI 创建独立核款单 phase1-browser-credit-91f3027ead98，并对真实 settlement 创建小额退款",
+    "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+    "finance_approver 通过 UI 完成独立核款与消费退款审批",
+    "/platform/credits: 已批准，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "finance_operator 通过 UI 创建独立核款单 phase1-browser-credit-91f3027ead98，并对真实 settlement 创建小额退款"
+    },
+    {
+      "name": "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+      "path": "/platform/credits",
+      "title": "平台管理 · moni-aigate",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "finance_approver 通过 UI 完成独立核款与消费退款审批"
+    },
+    {
+      "name": "/platform/credits: 已批准，无页面横向溢出或错误告警",
+      "path": "/platform/credits",
+      "title": "平台管理 · moni-aigate",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-FN-02/desktop-02.png",
+  "additional_evidence": [
+    "P1-FN-02/desktop-01.png"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "width": 390,
+  "checks": [
+    "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功",
+    "/security: 已启用，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功"
+    },
+    {
+      "name": "/security: 已启用，无页面横向溢出或错误告警",
+      "path": "/security",
+      "title": "账号安全 · moni-aigate",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-ID-02/mobile390-01.png"
+}

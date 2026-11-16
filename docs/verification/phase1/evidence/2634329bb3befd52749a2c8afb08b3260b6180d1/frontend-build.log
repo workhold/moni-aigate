@@ -1,0 +1,88 @@
+command: npm --prefix web run build
+started_at: 2026-11-16T07:45:45.420956+00:00
+
+
+> moni-aigate-console@0.1.0 build
+> vue-tsc --noEmit && vite build
+
+vite v7.2.2 building client environment for production...
+transforming...
+✓ 1698 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/.gitkeep                                                              0.00 kB
+dist/index.html                                                            0.67 kB │ gzip:   0.40 kB
+dist/assets/MetricMoney-DPuG41JN.css                                       0.08 kB │ gzip:   0.10 kB
+dist/assets/CashRefundsView-DbwVCYPf.css                                   0.23 kB │ gzip:   0.15 kB
+dist/assets/ModelsView-BrCTEIaZ.css                                        0.28 kB │ gzip:   0.20 kB
+dist/assets/VouchersView-BBE3aSgM.css                                      0.40 kB │ gzip:   0.21 kB
+dist/assets/LoginView-eLJQw0oC.css                                         0.40 kB │ gzip:   0.21 kB
+dist/assets/PricingWriter-ETiOmQZu.css                                     0.47 kB │ gzip:   0.26 kB
+dist/assets/RequestsView-fvSQtWCU.css                                      0.55 kB │ gzip:   0.29 kB
+dist/assets/WalletSources-Bsr8Yfbh.css                                     0.61 kB │ gzip:   0.29 kB
+dist/assets/CommerceCommands-BgR9kqDU.css                                  1.07 kB │ gzip:   0.43 kB
+dist/assets/RouteAttempts-BiZpLfkV.css                                     1.17 kB │ gzip:   0.45 kB
+dist/assets/ReportsView-C1rZugWD.css                                       1.29 kB │ gzip:   0.46 kB
+dist/assets/WalletView-CSWsPVpr.css                                        1.30 kB │ gzip:   0.46 kB
+dist/assets/KeysView-BhNTFtlV.css                                          1.47 kB │ gzip:   0.51 kB
+dist/assets/SecurityView-BmT_mhJy.css                                      1.48 kB │ gzip:   0.58 kB
+dist/assets/PeriodicBudgetView-BcKPlY0B.css                                1.62 kB │ gzip:   0.55 kB
+dist/assets/PaymentsPage-CVEj8qnt.css                                      1.64 kB │ gzip:   0.59 kB
+dist/assets/PlaygroundView-Da5jaibT.css                                    1.68 kB │ gzip:   0.60 kB
+dist/assets/PriceGroupsView-Q6LRA-fk.css                                   1.71 kB │ gzip:   0.58 kB
+dist/assets/ProcurementView-CLP8DfoK.css                                   2.30 kB │ gzip:   0.67 kB
+dist/assets/identity-public-state-CEMeDPRb.css                             2.46 kB │ gzip:   0.83 kB
+dist/assets/WalletSourcesView-DCYI65KO.css                                 3.10 kB │ gzip:   0.79 kB
+dist/assets/PlatformView-0Nu08GS5.css                                      3.79 kB │ gzip:   0.97 kB
+dist/assets/AlertsView-C7R-n4Xa.css                                        3.82 kB │ gzip:   1.12 kB
+dist/assets/PricingView-Bxp2kdwJ.css                                       4.80 kB │ gzip:   1.21 kB
+dist/assets/index-Cth3px-v.css                                           358.75 kB │ gzip:  50.89 kB
+dist/assets/PageHeader.vue_vue_type_script_setup_true_lang-DJ2WRCTS.js     0.49 kB │ gzip:   0.32 kB
+dist/assets/ErrorNotice.vue_vue_type_script_setup_true_lang-DlTc8_Zc.js    0.54 kB │ gzip:   0.39 kB
+dist/assets/MetricMoney-DbpbS9i1.js                                        0.93 kB │ gzip:   0.58 kB
+dist/assets/wallet-operator-settings-CScgbajf.js                           1.81 kB │ gzip:   0.91 kB
+dist/assets/identity-public-state-uJNTsxX0.js                              2.89 kB │ gzip:   1.59 kB
+dist/assets/credential-pool-BG3qebJJ.js                                    3.69 kB │ gzip:   1.64 kB
+dist/assets/pricing-state-BBkIKC6l.js                                      4.42 kB │ gzip:   2.05 kB
+dist/assets/wallet-sources-BqGeD1LO.js                                     4.47 kB │ gzip:   2.02 kB
+dist/assets/LoginView-CtzdIK8n.js                                          4.79 kB │ gzip:   2.32 kB
+dist/assets/IdentityRequestView-DMzxoWKv.js                                4.97 kB │ gzip:   2.51 kB
+dist/assets/RouteAttempts-CBEqgcEa.js                                      5.00 kB │ gzip:   2.58 kB
+dist/assets/identity-public-BHVDGn0Z.js                                    5.36 kB │ gzip:   2.40 kB
+dist/assets/wallet-source-details-CKaEGpQK.js                              5.38 kB │ gzip:   2.15 kB
+dist/assets/WalletSources-BHmRsNVy.js                                      5.43 kB │ gzip:   2.54 kB
+dist/assets/key-access-policy-BjlXlvan.js                                  6.32 kB │ gzip:   2.50 kB
+dist/assets/MembersView-B19yKGjm.js                                        7.02 kB │ gzip:   2.92 kB
+dist/assets/RecoveryView-SFhdaLHa.js                                       7.20 kB │ gzip:   2.96 kB
+dist/assets/PricingView-CC1yziuN.js                                        7.53 kB │ gzip:   3.38 kB
+dist/assets/IdentityCompleteView-Y-x5vAaM.js                               7.69 kB │ gzip:   3.29 kB
+dist/assets/OverviewView-NKJzln8e.js                                       9.40 kB │ gzip:   3.91 kB
+dist/assets/public-catalog-state-BaR3iiNG.js                              10.25 kB │ gzip:   4.06 kB
+dist/assets/ModelsView-Du1AiGUs.js                                        11.50 kB │ gzip:   4.92 kB
+dist/assets/inference-CzWM9b8d.js                                         13.54 kB │ gzip:   5.04 kB
+dist/assets/commerce-BfC6YCTd.js                                          13.74 kB │ gzip:   4.67 kB
+dist/assets/RequestsView-CXoQ8V4-.js                                      13.95 kB │ gzip:   5.31 kB
+dist/assets/VouchersView-2DSJvv3d.js                                      15.51 kB │ gzip:   5.62 kB
+dist/assets/PlaygroundView-DoxHCdlw.js                                    16.07 kB │ gzip:   6.24 kB
+dist/assets/CommerceCommands-I3wNzTEI.js                                  16.12 kB │ gzip:   6.29 kB
+dist/assets/WalletSourcesView-B1Ut6gMQ.js                                 19.48 kB │ gzip:   6.55 kB
+dist/assets/metering-wire-BnHwpxFX.js                                     22.12 kB │ gzip:   6.30 kB
+dist/assets/CashRefundsView-CdKsGif-.js                                   22.51 kB │ gzip:   6.74 kB
+dist/assets/PriceGroupsView-DfeHR01e.js                                   22.86 kB │ gzip:   7.87 kB
+dist/assets/WalletView-6g7cEDbL.js                                        23.14 kB │ gzip:   8.32 kB
+dist/assets/PricingWriter-CfzjGM8A.js                                     26.98 kB │ gzip:   9.61 kB
+dist/assets/index-DjykDVXJ.js                                             35.82 kB │ gzip:  12.95 kB
+dist/assets/SecurityView-DHi_mNsM.js                                      38.53 kB │ gzip:  14.93 kB
+dist/assets/PeriodicBudgetView-BiYVGGQ9.js                                39.65 kB │ gzip:  14.45 kB
+dist/assets/ReportsView-CP0xUaDC.js                                       40.40 kB │ gzip:  12.81 kB
+dist/assets/PaymentsPage-DvEm4SCd.js                                      50.83 kB │ gzip:  17.08 kB
+dist/assets/KeysView-DFemnutJ.js                                          52.80 kB │ gzip:  14.81 kB
+dist/assets/ProcurementView-DC1-hUiw.js                                   53.27 kB │ gzip:  16.11 kB
+dist/assets/AlertsView-VPjb6LoH.js                                        60.05 kB │ gzip:  19.44 kB
+dist/assets/vue-BO_h6NWt.js                                              104.25 kB │ gzip:  40.45 kB
+dist/assets/PlatformView-CH17pr9f.js                                     115.13 kB │ gzip:  35.14 kB
+dist/assets/elements-Cqpi74r2.js                                         889.82 kB │ gzip: 285.51 kB
+✓ built in 4.31s
+
+completed_at: 2026-11-16T07:45:57.070105+00:00
+exit_status: 0
