@@ -128,6 +128,10 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "already exists"):
                 MODULE.publish_artifacts(staging, final, suites)
 
+    def test_required_procurement_binding_receives_dedicated_database(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('"PROCUREMENT_ATTEMPT_RULES_DATABASE_URL": os.environ["TEST_DATABASE_URL"]', source)
+
     def test_failed_global_suite_never_generates_mvp_pass(self):
         items = MODULE.load_matrix()
         suite_names = ["static-build", "frontend", "go-race", "current-mvp", "mock-deployment", "identity-lifecycle", "mail-lifecycle", "payment-process"]

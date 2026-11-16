@@ -334,7 +334,7 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     env = os.environ.copy()
     env.setdefault("GOPROXY", "https://goproxy.cn,direct")
     env.setdefault("PHASE1_MOCK_CONFIG_TRANSPORT", "copy")
-    env.update({"BUSINESS_QA_FAIL_ON_SKIP": "true", "DEPLOY_QA_BUSINESS": "true", "VERIFY_CURRENT_MVP_LOG_DIR": str(artifact / "current-mvp")})
+    env.update({"BUSINESS_QA_FAIL_ON_SKIP": "true", "DEPLOY_QA_BUSINESS": "true", "PROCUREMENT_ATTEMPT_RULES_DATABASE_URL": os.environ["TEST_DATABASE_URL"], "VERIFY_CURRENT_MVP_LOG_DIR": str(artifact / "current-mvp")})
     suites: list[dict] = []
 
     def add(name: str, commands: list[dict]) -> None:

@@ -1,0 +1,14 @@
+command: go test -race -p 1 -count=1 -timeout 1200s -json ./scripts/browser-qa -run ^TestBrowserQARealMainLifecycle$
+started_at: 2026-11-16T06:16:36.281107+00:00
+
+{"Time":"2026-11-16T14:16:37.944182+08:00","Action":"start","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa"}
+{"Time":"2026-11-16T14:16:38.57006+08:00","Action":"run","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa","Test":"TestBrowserQARealMainLifecycle"}
+{"Time":"2026-11-16T14:16:38.570141+08:00","Action":"output","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa","Test":"TestBrowserQARealMainLifecycle","Output":"=== RUN   TestBrowserQARealMainLifecycle\n","OutputType":"frame"}
+{"Time":"2026-11-16T14:17:02.706437+08:00","Action":"output","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa","Test":"TestBrowserQARealMainLifecycle","Output":"--- PASS: TestBrowserQARealMainLifecycle (24.14s)\n","OutputType":"frame"}
+{"Time":"2026-11-16T14:17:02.706698+08:00","Action":"pass","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa","Test":"TestBrowserQARealMainLifecycle","Elapsed":24.14}
+{"Time":"2026-11-16T14:17:02.706978+08:00","Action":"output","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-16T14:17:03.713429+08:00","Action":"output","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa","Output":"ok  \tgithub.com/moni-ai/moni-aigate/scripts/browser-qa\t25.769s\n"}
+{"Time":"2026-11-16T14:17:03.713484+08:00","Action":"pass","Package":"github.com/moni-ai/moni-aigate/scripts/browser-qa","Elapsed":25.77}
+
+completed_at: 2026-11-16T06:17:03.729141+00:00
+exit_status: 0

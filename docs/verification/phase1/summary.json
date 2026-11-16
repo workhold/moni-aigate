@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "spec": "029-phase1-acceptance",
-  "commit": "7afe425dbcd04f51b9a32a63b2231a1064247754",
+  "commit": "a938116056e377bf1615633ab21e84ba11eef099",
   "database": "127.0.0.1:55439/moni_test",
-  "started_at": "2026-11-16T01:32:13.731205+00:00",
+  "started_at": "2026-11-16T05:23:18.359123+00:00",
   "suites": [
     {
       "name": "static-build",
@@ -13,36 +13,36 @@
           "command": "go run ./scripts/check-architecture",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log",
-          "seconds": 0.341
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-architecture.log",
+          "seconds": 0.374
         },
         {
           "command": "go run ./scripts/check-procurement-layout",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log",
-          "seconds": 0.452
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-procurement.log",
+          "seconds": 0.06
         },
         {
           "command": "go vet ./...",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log",
-          "seconds": 0.603
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-vet.log",
+          "seconds": 0.626
         },
         {
           "command": "go build -trimpath -o /Users/vchive/.codex/worktrees/final-acceptance/moni-aigate/bin/moni-aigate ./cmd/moni-aigate",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log",
-          "seconds": 1.747
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-build.log",
+          "seconds": 1.836
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log",
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log",
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log",
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-architecture.log",
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-procurement.log",
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-vet.log",
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-build.log"
       ]
     },
     {
@@ -53,60 +53,60 @@
           "command": "npm --prefix web test",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log",
-          "seconds": 1.38
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-test.log",
+          "seconds": 1.467
         },
         {
           "command": "npm --prefix web run build",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log",
-          "seconds": 5.911
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-build.log",
+          "seconds": 5.793
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log",
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-test.log",
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-build.log"
       ]
     },
     {
       "name": "go-race",
-      "status": "FAIL",
+      "status": "PASS",
       "commands": [
         {
           "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./...",
-          "status": "FAIL",
-          "exit_status": 1,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl",
-          "seconds": 2191.62
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/go-race.jsonl",
+          "seconds": 2744.22
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/go-race.jsonl"
       ]
     },
     {
       "name": "current-mvp",
-      "status": "FAIL",
+      "status": "PASS",
       "commands": [
         {
           "command": "docker stop -t 30 moni-phase1-browser-app moni-phase1-browser-worker",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log",
-          "seconds": 0.164
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-stop.log",
+          "seconds": 0.151
         },
         {
           "command": "./scripts/verify-current-mvp.sh",
-          "status": "FAIL",
-          "exit_status": 1,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log",
-          "seconds": 436.564
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/current-mvp.log",
+          "seconds": 443.204
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log",
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-stop.log",
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/current-mvp.log"
       ]
     },
     {
@@ -117,12 +117,12 @@
           "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./scripts/browser-qa -run ^TestBrowserQARealMainLifecycle$",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/identity-lifecycle.jsonl",
-          "seconds": 26.157
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/identity-lifecycle.jsonl",
+          "seconds": 27.45
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/identity-lifecycle.jsonl"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/identity-lifecycle.jsonl"
       ]
     },
     {
@@ -133,28 +133,28 @@
           "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./scripts/browser-qa -run ^TestMailLifecycleRealMainRecovery$",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mail-lifecycle.jsonl",
-          "seconds": 135.306
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mail-lifecycle.jsonl",
+          "seconds": 137.071
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mail-lifecycle.jsonl"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mail-lifecycle.jsonl"
       ]
     },
     {
       "name": "payment-process",
-      "status": "FAIL",
+      "status": "PASS",
       "commands": [
         {
           "command": "go run ./scripts/payment-application-qa --require-database --process",
-          "status": "FAIL",
-          "exit_status": 1,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/payment-process.log",
-          "seconds": 241.708
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/payment-process.log",
+          "seconds": 206.406
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/payment-process.log"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/payment-process.log"
       ]
     },
     {
@@ -165,20 +165,20 @@
           "command": "docker start moni-phase1-browser-app moni-phase1-browser-worker",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-start.log",
-          "seconds": 0.743
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-start.log",
+          "seconds": 0.394
         },
         {
           "command": "./scripts/phase1-mock-acceptance.sh",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mock-deployment.log",
-          "seconds": 180.487
+          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mock-deployment.log",
+          "seconds": 178.203
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-start.log",
-        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mock-deployment.log"
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-start.log",
+        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mock-deployment.log"
       ]
     }
   ],
@@ -351,20 +351,20 @@
       "internal/operations:TestPersistentRecoveryGateAndDualApproval": "PASS"
     }
   },
-  "browser_evidence": "/Users/vchive/.cache/moni-phase1-browser/browser-final-7afe425/browser-evidence.json",
+  "browser_evidence": "/Users/vchive/.cache/moni-phase1-browser/browser-final-a938116/browser-evidence.json",
   "browser_runtime": {
     "app_container": "moni-phase1-browser-app",
     "worker_container": "moni-phase1-browser-worker",
-    "image_id": "sha256:b319270f066483a74ddc30d501b8c517c20519760a1ab1c0e2277a802e6d537a",
-    "source_commit": "7afe425dbcd04f51b9a32a63b2231a1064247754",
-    "source_tree": "09f861b6339bf776f829740f557704b9861ead27",
+    "image_id": "sha256:fb48cdfff71350ecd84c043e64d3b7130a8a276bf835d5a9847c498b142ca674",
+    "source_commit": "a938116056e377bf1615633ab21e84ba11eef099",
+    "source_tree": "6a0204d3900767eacc200c739cc5258ccbcc35dd",
     "source_clean": true
   },
   "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项",
   "counts": {
     "total": 41,
-    "pass": 0,
-    "fail": 41,
+    "pass": 40,
+    "fail": 1,
     "skip": 0
   },
   "overall_status": "FAIL",
@@ -378,7 +378,7 @@
         "internal/identity:TestIdentityKeyRechecksCurrentRole",
         "internal/operations:TestSelfServiceIdentityMinimalRolesAndImmutableProofLifecycle"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-ID-01.md",
       "test_counts": {
         "pass": 3,
@@ -407,7 +407,7 @@
         "identity-lifecycle"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-ID-02.md",
       "test_counts": {
         "pass": 3,
@@ -431,7 +431,7 @@
         "mail-lifecycle"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-ID-03.md",
       "test_counts": {
         "pass": 4,
@@ -448,7 +448,7 @@
         "internal/identity:TestOperatorSuspendProtectsLastAdminAndRevokesSessions",
         "internal/identity:TestOperatorSuspendConcurrentAdminsKeepsOne"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-ID-04.md",
       "test_counts": {
         "pass": 4,
@@ -470,7 +470,7 @@
         "internal/server:TestKeyConfigurationHTTPCreateCASProjectionAndBudgetErrors",
         "internal/server:TestKeyConfigurationHTTPCurrentRolesAndSecurityGates"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-KEY-01.md",
       "test_counts": {
         "pass": 3,
@@ -492,7 +492,7 @@
         "internal/identity:TestKeyConfigurationLegacyValuesAndExpiredRenewal",
         "internal/server:TestKeyConfigurationHTTPAllProtocolsRejectWithoutFinancialFacts"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-KEY-02.md",
       "test_counts": {
         "pass": 3,
@@ -514,7 +514,7 @@
         "internal/server:TestKeyAccessPolicyHTTPAllProtocolsResolveTrustedSourceAndRejectSpoofing",
         "internal/server:TestKeyAccessPolicyHTTPAlreadySentStreamSettlesAfterTightening"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-KEY-03.md",
       "test_counts": {
         "pass": 3,
@@ -536,7 +536,7 @@
         "internal/server:TestKeyRuntimeLimitsHTTPAllProtocolsRejectWithoutFinancialFacts",
         "internal/server:TestKeyRuntimeLimitsHTTPRuntimeCapacityFailsClosedBeforeFinancialFacts"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-KEY-04.md",
       "test_counts": {
         "pass": 3,
@@ -557,7 +557,7 @@
         "internal/server:TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-CAT-01.md",
       "test_counts": {
         "pass": 1,
@@ -587,7 +587,7 @@
       ],
       "browser": true,
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-CAT-02.md",
       "test_counts": {
         "pass": 2,
@@ -603,7 +603,7 @@
         "internal/server:TestCredentialPoolGatewayFrozenPublicationActualIdentityAndRevocation",
         "internal/catalog:TestCredentialPoolMaximumMembersAndLegacySecretEditBoundary"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-CH-01.md",
       "test_counts": {
         "pass": 3,
@@ -626,7 +626,7 @@
         "internal/operations:TestProvisionedDiscoveryFactsAreReadableAppendOnlyAndUnique"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-CH-02.md",
       "test_counts": {
         "pass": 3,
@@ -648,7 +648,7 @@
         "internal/server:TestChannelOperationsHTTPMixedRejectionsHaveNoPartialChanges",
         "internal/catalog:TestChannelOperationApplyReplayReorderConflictAndNoop"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-CH-03.md",
       "test_counts": {
         "pass": 3,
@@ -676,7 +676,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-RT-01.md",
       "test_counts": {
         "pass": 1,
@@ -699,7 +699,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-RT-02.md",
       "test_counts": {
         "pass": 2,
@@ -721,7 +721,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-RT-03.md",
       "test_counts": {
         "pass": 1,
@@ -744,7 +744,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-RT-04.md",
       "test_counts": {
         "pass": 2,
@@ -760,7 +760,7 @@
         "internal/catalog:TestTenantPricingReadIsolationPreviewAndPagination",
         "internal/server:TestAdminAndTenantPricesPreserveCursorPagination"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PR-01.md",
       "test_counts": {
         "pass": 3,
@@ -790,7 +790,7 @@
       ],
       "browser": true,
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PR-02.md",
       "test_counts": {
         "pass": 2,
@@ -814,7 +814,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-FN-01.md",
       "test_counts": {
         "pass": 3,
@@ -830,7 +830,7 @@
         "internal/billing:TestPostgresFundingManualAuditAndOutboxFailuresRollbackAllFacts"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-FN-02.md",
       "test_counts": {
         "pass": 2,
@@ -858,7 +858,7 @@
         "identity-lifecycle"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-FN-03.md",
       "test_counts": {
         "pass": 2,
@@ -880,7 +880,7 @@
         "payment-process"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-FN-04.md",
       "test_counts": {
         "pass": 1,
@@ -896,7 +896,7 @@
         "internal/billing:TestPostgresWalletSourcesRuntimeEventFailureRollsBack",
         "internal/server:TestWalletSourcesHTTPCommercialFlowAndAuthorization"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-FN-05.md",
       "test_counts": {
         "pass": 3,
@@ -940,7 +940,7 @@
         "internal/billing:TestPostgresProcurementSharedBudgetAcrossTenantsAndChannels",
         "internal/server:TestProcurementHTTPAdministrationReceiptsAndBoundedSafePages"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PC-02.md",
       "test_counts": {
         "pass": 2,
@@ -969,7 +969,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PT-01.md",
       "test_counts": {
         "pass": 2,
@@ -991,7 +991,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PT-02.md",
       "test_counts": {
         "pass": 1,
@@ -1013,7 +1013,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PT-03.md",
       "test_counts": {
         "pass": 1,
@@ -1035,7 +1035,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PT-04.md",
       "test_counts": {
         "pass": 1,
@@ -1057,7 +1057,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PT-05.md",
       "test_counts": {
         "pass": 1,
@@ -1079,7 +1079,7 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PT-06.md",
       "test_counts": {
         "pass": 1,
@@ -1097,7 +1097,7 @@
         "internal/server:TestExplicitMockMediaMarksResultsAndDoesNotSpendWallet"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-MD-01.md",
       "test_counts": {
         "pass": 4,
@@ -1119,7 +1119,7 @@
         "internal/server:TestVideoTaskUnknownSubmissionReleasesMediaAndPreventsResubmit"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-MD-02.md",
       "test_counts": {
         "pass": 2,
@@ -1141,7 +1141,7 @@
         "internal/server:TestPostgresRealtimePersistenceLifecycleAndTenantIsolation"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-MD-03.md",
       "test_counts": {
         "pass": 2,
@@ -1162,7 +1162,7 @@
         "internal/server:TestKeyConfigurationHTTPCurrentRolesAndSecurityGates"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-UI-01.md",
       "test_counts": {
         "pass": 1,
@@ -1183,7 +1183,7 @@
         "internal/server:TestChannelOperationsHTTPPreviewAtomicLiveGateAndPermanentReceipts"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-UI-02.md",
       "test_counts": {
         "pass": 1,
@@ -1204,7 +1204,7 @@
         "internal/server:TestOperatingReportPostgresCommercialFlowAndAuthorization"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-RP-01.md",
       "test_counts": {
         "pass": 1,
@@ -1233,7 +1233,7 @@
         "identity-lifecycle"
       ],
       "browser": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-OP-01.md",
       "test_counts": {
         "pass": 3,
@@ -1251,7 +1251,7 @@
         "go-race",
         "current-mvp"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-DP-01.md",
       "test_counts": {
         "pass": 0,
@@ -1265,7 +1265,7 @@
       "tests": [
         "internal/operations:TestPersistentRecoveryGateAndDualApproval"
       ],
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-DP-02.md",
       "test_counts": {
         "pass": 1,
@@ -1280,5 +1280,5 @@
       ]
     }
   ],
-  "completed_at": "2026-11-16T03:11:15.029385+00:00"
+  "completed_at": "2026-11-16T06:25:46.438940+00:00"
 }

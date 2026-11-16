@@ -1,17 +1,17 @@
 # P1-KEY-04：Key RPM、burst 与并发且拒绝不预占
 
-- 结论：**FAIL**（本次同一提交终验，非历史证据）。
-- 提交：`7afe425dbcd04f51b9a32a63b2231a1064247754`。
+- 结论：**PASS**（本次同一提交终验，非历史证据）。
+- 提交：`a938116056e377bf1615633ab21e84ba11eef099`。
 - 数据库：`127.0.0.1:55439/moni_test`，专用 PostgreSQL；凭据不写入证据。
 - deterministic mock：未用于本项直接断言；全局部署 mock 门禁仍执行。
 - 必需 Go 测试：PASS=3，FAIL/MISSING=0，SKIP=0。
 
 ## 本次执行套件与日志
 
-- `static-build`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log。
-- `frontend`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log。
-- `go-race`：**FAIL**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl。
-- `current-mvp`：**FAIL**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log。
+- `static-build`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-architecture.log, docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-procurement.log, docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-vet.log, docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-build.log。
+- `frontend`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-test.log, docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-build.log。
+- `go-race`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/go-race.jsonl。
+- `current-mvp`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-stop.log, docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/current-mvp.log。
 
 ## 绑定的 Go 测试
 
