@@ -33,3 +33,9 @@
 [018 预览核对](tenant-pricing-023-preview.json)：确认原 PID36238 的工作区/监听后 SIGTERM，退出 0、端口关闭；owner migrate/provision 后受限 app `check-ledger` 返回 balanced=true、两种 mismatch 均 0。新 PID57801 ready、非恢复模式；首页和 **48 assets** 与最终 dist 逐字节一致。二进制 SHA-256 为 `8ac937eaf3e3d6acaaf79508aab6cb01f679bf7901c392aab04ff70416c609aa`。
 
 app 不能更新 pricing_operations 或请求价格快照；projector 没有价格组、资金来源、身份、采购读权。注册/邮件/券保持默认 off。未修改原评审账号、密码、MFA或业务资金。正式供应商、正式支付、生产部署/灾备、许可和竞品性能仍分别待外部验收。
+
+## 2026-11-16 退休并发观察器回归
+
+最终 029 运行中 `TestTenantPricingRetirementWinsBeforePublishAndAssignment` 曾以 `[model FOR SHARE, price_groups FOR SHARE]` 失败。独立复核确认：`pg_stat_activity.query` 与 `pg_blocking_pids` 不是同一时刻快照，发布可能已从模型语句转入价格组等待，而观察器仍读到上一条文本；这符合既有合同对非原子观察的明确警告，不是生产锁顺序反转。
+
+修复只让该场景在原 8 秒上下文内轮询到**两个**匹配 `FROM price_groups` 与 `FOR SHARE` 的等待者，不再以任意两个 waiter 的数量提前返回。退休、发布/分配、零部分事实及最终归属断言全部保留，生产 SQL、锁顺序和超时不变。修复后同一场景连续 20 次真实 PostgreSQL/race 通过（22.741s）。本轮原始失败仍保留在 029 失败证据中，不把历史 PASS 当作这次修复验证。

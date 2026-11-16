@@ -1,0 +1,316 @@
+checking Compose rendering
+building image
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Building 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Building 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Building 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Building 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 6.85kB done
+#1 DONE 0.0s
+
+#2 [worker internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.31kB done
+#2 DONE 0.0s
+
+#3 [worker internal] load metadata for docker.io/library/golang:1.26-alpine
+#3 DONE 0.0s
+
+#4 [qa-provider internal] load metadata for docker.io/library/alpine:3.23
+#4 DONE 0.0s
+
+#5 [app internal] load metadata for docker.io/library/node:22-alpine
+#5 DONE 0.0s
+
+#6 [worker internal] load .dockerignore
+#6 transferring context: 113B done
+#6 DONE 0.0s
+
+#7 [provision console 1/6] FROM docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202
+#7 resolve docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 0.0s done
+#7 DONE 0.0s
+
+#8 [migrate api 1/8] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#8 resolve docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696 0.0s done
+#8 DONE 0.0s
+
+#9 [worker stage-2 1/5] FROM docker.io/library/alpine:3.23@sha256:f3d55900449227ae9e237ede521e7b665d53a253b42065ba90b9db9275e198ad
+#9 resolve docker.io/library/alpine:3.23@sha256:f3d55900449227ae9e237ede521e7b665d53a253b42065ba90b9db9275e198ad 0.0s done
+#9 DONE 0.0s
+
+#10 [provision internal] load build context
+#10 transferring context: 3.70MB 0.1s done
+#10 transferring context: 3.70MB 0.1s done
+#10 DONE 0.1s
+
+#11 [worker console 2/6] WORKDIR /src/web
+#11 CACHED
+
+#12 [worker console 3/6] COPY web/package*.json ./
+#12 CACHED
+
+#13 [worker console 4/6] RUN npm ci
+#13 CACHED
+
+#14 [worker console 5/6] COPY web/ ./
+#14 CACHED
+
+#15 [worker api 2/8] WORKDIR /src
+#15 CACHED
+
+#16 [worker api 3/8] COPY go.mod go.sum ./
+#16 CACHED
+
+#17 [provision console 6/6] RUN npm run build
+#17 CACHED
+
+#18 [worker api 4/8] RUN go mod download
+#18 CACHED
+
+#19 [migrate api 5/8] COPY . .
+#19 DONE 0.7s
+
+#20 [provision api 6/8] COPY --from=console /src/web/dist ./web/dist
+#20 DONE 0.1s
+
+#21 [qa-provider api 7/8] RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /moni-aigate ./cmd/moni-aigate
+#21 DONE 15.4s
+
+#22 [app api 8/8] RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /mock-upstream ./scripts/mock-upstream
+#22 DONE 0.4s
+
+#23 [migrate stage-2 4/5] COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
+#23 CACHED
+
+#24 [migrate stage-2 2/5] RUN if [ -n "https://mirrors.aliyun.com/alpine" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g" /etc/apk/repositories; fi && apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
+#24 CACHED
+
+#25 [migrate stage-2 3/5] COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
+#25 CACHED
+
+#26 [migrate stage-2 5/5] WORKDIR /app
+#26 CACHED
+
+#24 [qa-provider stage-2 2/5] RUN if [ -n "https://mirrors.aliyun.com/alpine" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g" /etc/apk/repositories; fi && apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
+#24 CACHED
+
+#25 [qa-provider stage-2 3/5] COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
+#25 CACHED
+
+#23 [qa-provider stage-2 4/5] COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
+#23 CACHED
+
+#27 [provision] exporting to image
+#27 exporting layers done
+#27 exporting manifest sha256:7d007bd188031521e4165779e76c048298d1ad7da4187a4a1ee2046329b76613 0.0s done
+#27 exporting config sha256:2d93965b4d6b3da2b606004498c85bcca31aca6947be3638a90a28092cf87d54 0.0s done
+#27 exporting attestation manifest sha256:eb06d4014cf27c322a5dad9490b18998043f1d989fad53d3f2e4252bbb6ce536 0.0s done
+#27 exporting manifest list sha256:788f9b3a4b01d961887e94c11bee21bec5ae3c9c209bebe97f0d3ed96d3642b5 0.0s done
+#27 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#27 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806
+#27 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#27 DONE 0.1s
+
+#28 [qa-provider] exporting to image
+#28 exporting layers done
+#28 exporting manifest sha256:fd14ab38514277d543e0a39712bf46b1655fb93ef4907936eaebae33bb3bfbac 0.0s done
+#28 exporting config sha256:08a5a2b651e684061f42916536d94ce60dae509e69832cac8dc7d05de31d1242 0.0s done
+#28 exporting attestation manifest sha256:97eebdab278c09832d766afd2d5aa5d096db53b8f9e2524e58b85cc892a93acb 0.0s done
+#28 exporting manifest list sha256:83b7a99fcaedde3c74e8dffa9d8d3a43d6e1b1b07206e4e374af250b6ba5b660 0.0s done
+#28 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#28 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#28 DONE 0.1s
+
+#29 [migrate] exporting to image
+#29 exporting layers done
+#29 exporting manifest sha256:b37ba33725d4a9675bafa4970cda7775aec496648a24b942e393442cced8a8ae 0.0s done
+#29 exporting config sha256:b8e5f84ca3cd8e242f3159b7c3ca1fbe2260f3d7272f17d5174ec25acb3462ba 0.0s done
+#29 exporting attestation manifest sha256:e625bf7f52eb1203a44c7a30069cefa403a9e088cdaaa9613e339664a12fb896 0.0s done
+#29 exporting manifest list sha256:c505d42ba98021acea3f460bef3ee9e87d7645b23fd0eca00753f4b3b38e947c 0.0s done
+#29 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#29 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#29 DONE 0.1s
+
+#30 [worker] exporting to image
+#30 exporting layers done
+#30 exporting manifest sha256:e1ba8df25a41d9e5874eab2c3434ff1287fc2f461b90784ef87ffeb2198c0286 0.0s done
+#30 exporting config sha256:0c90173b8a4e2aa00d8df8241ed934b17cfc00f09ea1621cb7daf36db5b1c7b0 0.0s done
+#30 exporting attestation manifest sha256:22df51da5c44863c5e686295be603e6a7ccdeb1afb948eb58a5f4f618ec0f96d 0.0s done
+#30 exporting manifest list sha256:0952e7338700277370544f3c0414c30995d918cd0a5b472e6f860d6469d0454b 0.0s done
+#30 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#30 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#30 DONE 0.1s
+
+#31 [app] exporting to image
+#31 exporting layers done
+#31 exporting manifest sha256:5f48e11d0eb07a6e5308e05ee74fd960e97f99855f9571487cfe4788de0e1ae0 0.0s done
+#31 exporting config sha256:fb58bacc2e24d8fe5bb2f44914770b1ed574bcef8a1134806f14b4adaac62cf0 0.0s done
+#31 exporting attestation manifest sha256:e53e92983157890dda2c971f3c14be057e3fbfb749aa0b406c40e337f67b44cc 0.0s done
+#31 exporting manifest list sha256:b43a32a7102280bfbf40ed1ce9a5d5d916a981b54b69166a8d4c44c606d5d82a 0.0s done
+#31 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#31 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-21715-92806 done
+#31 DONE 0.1s
+
+#32 [migrate] resolving provenance for metadata file
+#32 DONE 0.0s
+
+#33 [worker] resolving provenance for metadata file
+#33 DONE 0.0s
+
+#34 [app] resolving provenance for metadata file
+#34 DONE 0.0s
+
+#35 [provision] resolving provenance for metadata file
+#35 DONE 0.0s
+
+#36 [qa-provider] resolving provenance for metadata file
+#36 DONE 0.0s
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Built 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Built 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Built 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Built 
+ Image moni-aigate:qa-moni-aigate-qa-21715-92806 Built 
+starting PostgreSQL
+ Network moni-aigate-qa-21715-92806_default Creating 
+ Volume moni-aigate-qa-21715-92806_postgres-data Creating 
+ Volume moni-aigate-qa-21715-92806_postgres-data Creating 
+ Network moni-aigate-qa-21715-92806_default Creating 
+ Volume moni-aigate-qa-21715-92806_postgres-data Created 
+ Volume moni-aigate-qa-21715-92806_postgres-data Created 
+ Network moni-aigate-qa-21715-92806_default Created 
+ Network moni-aigate-qa-21715-92806_default Created 
+ Container moni-aigate-qa-21715-92806-postgres-1 Creating 
+ Container moni-aigate-qa-21715-92806-postgres-1 Created 
+ Container moni-aigate-qa-21715-92806-postgres-1 Starting 
+ Container moni-aigate-qa-21715-92806-postgres-1 Started 
+running the current empty-database migration
+ Container moni-aigate-qa-21715-92806-postgres-1 Running 
+ Container moni-aigate-qa-21715-92806-postgres-1 Waiting 
+ Container moni-aigate-qa-21715-92806-postgres-1 Healthy 
+ Container moni-aigate-qa-21715-92806-migrate-run-5b71b7ccbab2 Creating 
+ Container moni-aigate-qa-21715-92806-migrate-run-5b71b7ccbab2 Created 
+migrations applied
+rerunning the current migration plan as an idempotent no-op
+ Container moni-aigate-qa-21715-92806-postgres-1 Running 
+ Container moni-aigate-qa-21715-92806-postgres-1 Waiting 
+ Container moni-aigate-qa-21715-92806-postgres-1 Healthy 
+ Container moni-aigate-qa-21715-92806-migrate-run-8f3d1b284ab0 Creating 
+ Container moni-aigate-qa-21715-92806-migrate-run-8f3d1b284ab0 Created 
+migrations applied
+provisioning roles twice
+ Container moni-aigate-qa-21715-92806-provision-run-c091c414c874 Creating 
+ Container moni-aigate-qa-21715-92806-provision-run-c091c414c874 Created 
+database roles provisioned
+ Container moni-aigate-qa-21715-92806-provision-run-e2b5c829a3c9 Creating 
+ Container moni-aigate-qa-21715-92806-provision-run-e2b5c829a3c9 Created 
+database roles provisioned
+bootstrapping first administrator
+ Container moni-aigate-qa-21715-92806-app-run-2aec1f497959 Creating 
+ Container moni-aigate-qa-21715-92806-app-run-2aec1f497959 Created 
+administrator created; MFA is optional unless enforced by deployment policy
+rejecting a repeated bootstrap
+ Container moni-aigate-qa-21715-92806-app-run-fbd6b91814a2 Creating 
+ Container moni-aigate-qa-21715-92806-app-run-fbd6b91814a2 Created 
+bootstrap refused or failed
+
+starting app and worker
+ Container moni-aigate-qa-21715-92806-worker-1 Creating 
+ Container moni-aigate-qa-21715-92806-app-1 Creating 
+ Container moni-aigate-qa-21715-92806-qa-provider-1 Creating 
+ Container moni-aigate-qa-21715-92806-qa-provider-1 Created 
+ Container moni-aigate-qa-21715-92806-app-1 Created 
+ Container moni-aigate-qa-21715-92806-worker-1 Created 
+ Container moni-aigate-qa-21715-92806-worker-1 Starting 
+ Container moni-aigate-qa-21715-92806-app-1 Starting 
+ Container moni-aigate-qa-21715-92806-qa-provider-1 Starting 
+ Container moni-aigate-qa-21715-92806-worker-1 Started 
+ Container moni-aigate-qa-21715-92806-app-1 Started 
+ Container moni-aigate-qa-21715-92806-qa-provider-1 Started 
+checking live and ready endpoints
+provisioning disposable business fixture through HTTP
+credit failed HTTP 400
+{"error":{"code":"invalid_credit","message":"操作未完成，请检查权限、余额、状态及 request_id"},"request_id":"8ccfedd0-571a-439a-a296-4d7237f566a0"}deployment QA failed. Recent service state follows:
+NAME                                       IMAGE                                       COMMAND                  SERVICE       CREATED          STATUS                            PORTS
+moni-aigate-qa-21715-92806-app-1           moni-aigate:qa-moni-aigate-qa-21715-92806   "moni-aigate serve"      app           3 seconds ago    Up 2 seconds (health: starting)   127.0.0.1:18082->8080/tcp
+moni-aigate-qa-21715-92806-postgres-1      postgres:16-alpine                          "docker-entrypoint.s…"   postgres      10 seconds ago   Up 10 seconds (healthy)           5432/tcp
+moni-aigate-qa-21715-92806-qa-provider-1   moni-aigate:qa-moni-aigate-qa-21715-92806   "/usr/local/bin/mock…"   qa-provider   3 seconds ago    Up 2 seconds (health: starting)   8080/tcp
+moni-aigate-qa-21715-92806-worker-1        moni-aigate:qa-moni-aigate-qa-21715-92806   "moni-aigate worker"     worker        3 seconds ago    Up 2 seconds                      8080/tcp
+postgres-1  | The files belonging to this database system will be owned by user "postgres".
+postgres-1  | This user must also own the server process.
+postgres-1  | 
+postgres-1  | The database cluster will be initialized with locale "en_US.utf8".
+app-1       | {"stage":"startup","code":"0.1.0-dev"}
+app-1       | {"request_id":"948a964f-1d92-4701-af26-a9cb0576c837","stage":"http","code":"200"}
+app-1       | {"request_id":"2eececec-64e4-4a06-a3d4-37a59e6bcdee","stage":"http","code":"200"}
+app-1       | {"request_id":"6af31bea-eff3-4edf-990d-245bbbfda2b3","stage":"http","code":"200","duration_ms":190}
+app-1       | {"request_id":"d6e45695-3947-4aad-af31-0c881ad20c32","stage":"http","code":"200"}
+app-1       | {"request_id":"660494e3-1867-4a84-a8bc-bf58c76dca9c","stage":"http","code":"200","duration_ms":188}
+app-1       | {"request_id":"f6ce7890-9aa0-49d4-a1c5-7703cb12e4ab","stage":"http","code":"200","duration_ms":7}
+app-1       | {"request_id":"4da18cdd-ba56-4086-845f-34d3f021993c","stage":"http","code":"200","duration_ms":3}
+app-1       | {"request_id":"15bcea1d-d280-4f7a-a114-3adb3cdfa4eb","stage":"http","code":"200","duration_ms":3}
+app-1       | {"request_id":"4af8e799-21ab-4b8a-a793-9ea6e0193614","stage":"http","code":"200","duration_ms":4}
+app-1       | {"request_id":"c0080a52-89d2-4003-8905-a17fd791ec37","stage":"http","code":"201","duration_ms":10}
+app-1       | {"request_id":"0e991589-8bdc-453a-9a12-628d41ff2ad3","stage":"http","code":"200","duration_ms":188}
+app-1       | {"request_id":"c6ef0183-8779-4df3-bf90-1e7176cb9774","stage":"http","code":"200","duration_ms":187}
+app-1       | {"request_id":"4d122d35-b74b-4645-a551-95cd93d41dc4","stage":"http","code":"200","duration_ms":189}
+app-1       | {"request_id":"ad5c5d22-a860-4351-bd30-7903a84c5cae","stage":"http","code":"200","duration_ms":188}
+app-1       | {"request_id":"fff21493-9c60-4cc8-91b4-cdab09adfda9","stage":"http","code":"200"}
+app-1       | {"request_id":"d31d10bf-fed8-49c5-942b-8726ebd6f35e","stage":"http","code":"200","duration_ms":188}
+app-1       | {"request_id":"8ccfedd0-571a-439a-a296-4d7237f566a0","stage":"http","code":"400"}
+postgres-1  | The default database encoding has accordingly been set to "UTF8".
+postgres-1  | The default text search configuration will be set to "english".
+postgres-1  | 
+postgres-1  | Data page checksums are disabled.
+postgres-1  | 
+postgres-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+postgres-1  | creating subdirectories ... ok
+postgres-1  | selecting dynamic shared memory implementation ... posix
+postgres-1  | selecting default max_connections ... 100
+postgres-1  | selecting default shared_buffers ... 128MB
+postgres-1  | selecting default time zone ... UTC
+postgres-1  | creating configuration files ... ok
+postgres-1  | running bootstrap script ... ok
+postgres-1  | sh: locale: not found
+postgres-1  | 2026-11-16 02:16:02.565 UTC [34] WARNING:  no usable system locales were found
+postgres-1  | performing post-bootstrap initialization ... ok
+postgres-1  | syncing data to disk ... ok
+postgres-1  | 
+postgres-1  | 
+postgres-1  | Success. You can now start the database server using:
+postgres-1  | 
+postgres-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+postgres-1  | 
+postgres-1  | initdb: warning: enabling "trust" authentication for local connections
+postgres-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+postgres-1  | waiting for server to start....2026-11-16 02:16:02.762 UTC [40] LOG:  starting PostgreSQL 16.16 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+postgres-1  | 2026-11-16 02:16:02.762 UTC [40] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-11-16 02:16:02.764 UTC [43] LOG:  database system was shut down at 2026-11-16 02:16:02 UTC
+postgres-1  | 2026-11-16 02:16:02.765 UTC [40] LOG:  database system is ready to accept connections
+postgres-1  |  done
+postgres-1  | server started
+postgres-1  | CREATE DATABASE
+postgres-1  | 
+postgres-1  | 
+postgres-1  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/10-roles.sh
+postgres-1  | ALTER SCHEMA
+postgres-1  | CREATE ROLE
+postgres-1  | CREATE ROLE
+postgres-1  | 
+postgres-1  | waiting for server to shut down....2026-11-16 02:16:02.906 UTC [40] LOG:  received fast shutdown request
+postgres-1  | 2026-11-16 02:16:02.907 UTC [40] LOG:  aborting any active transactions
+postgres-1  | 2026-11-16 02:16:02.908 UTC [40] LOG:  background worker "logical replication launcher" (PID 46) exited with exit code 1
+postgres-1  | 2026-11-16 02:16:02.908 UTC [41] LOG:  shutting down
+postgres-1  | 2026-11-16 02:16:02.909 UTC [41] LOG:  checkpoint starting: shutdown immediate
+postgres-1  | 2026-11-16 02:16:02.924 UTC [41] LOG:  checkpoint complete: wrote 939 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.010 s, total=0.016 s; sync files=305, longest=0.004 s, average=0.001 s; distance=4359 kB, estimate=4359 kB; lsn=0/194AC78, redo lsn=0/194AC78
+postgres-1  | 2026-11-16 02:16:02.926 UTC [40] LOG:  database system is shut down
+postgres-1  |  done
+postgres-1  | server stopped
+postgres-1  | 
+postgres-1  | PostgreSQL init process complete; ready for start up.
+postgres-1  | 
+postgres-1  | 2026-11-16 02:16:03.017 UTC [1] LOG:  starting PostgreSQL 16.16 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+postgres-1  | 2026-11-16 02:16:03.017 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres-1  | 2026-11-16 02:16:03.017 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres-1  | 2026-11-16 02:16:03.018 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-11-16 02:16:03.021 UTC [59] LOG:  database system was shut down at 2026-11-16 02:16:02 UTC
+postgres-1  | 2026-11-16 02:16:03.022 UTC [1] LOG:  database system is ready to accept connections

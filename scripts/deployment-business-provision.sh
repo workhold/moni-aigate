@@ -157,7 +157,7 @@ tenant_id=$(json_value "$tenant" data.id)
 login "$operator_email" "$operator_password"
 credit=$(request credit POST /api/platform/credits "$(python3 - "$tenant_id" <<'PY'
 import json, sys
-print(json.dumps({"tenant_id": sys.argv[1], "amount": "1000000", "business_ref": "qa-compose-credit", "proof_ref": "qa-compose-provision"}, separators=(",", ":")))
+print(json.dumps({"tenant_id": sys.argv[1], "amount": "1000000", "basis_kind": "paid", "fiat_currency": "CNY", "fiat_amount": "1000000", "business_ref": "qa-compose-credit", "proof_ref": "qa-compose-provision"}, separators=(",", ":")))
 PY
 )" "Origin: ${BUSINESS_QA_ORIGIN:-http://127.0.0.1:${DEPLOY_QA_PORT:-18080}}" "X-CSRF-Token: $csrf" "Idempotency-Key: qa-compose-credit")
 credit_id=$(json_value "$credit" data.id)

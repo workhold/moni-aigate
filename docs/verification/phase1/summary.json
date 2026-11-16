@@ -1,0 +1,1284 @@
+{
+  "schema_version": 1,
+  "spec": "029-phase1-acceptance",
+  "commit": "7afe425dbcd04f51b9a32a63b2231a1064247754",
+  "database": "127.0.0.1:55439/moni_test",
+  "started_at": "2026-11-16T01:32:13.731205+00:00",
+  "suites": [
+    {
+      "name": "static-build",
+      "status": "PASS",
+      "commands": [
+        {
+          "command": "go run ./scripts/check-architecture",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log",
+          "seconds": 0.341
+        },
+        {
+          "command": "go run ./scripts/check-procurement-layout",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log",
+          "seconds": 0.452
+        },
+        {
+          "command": "go vet ./...",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log",
+          "seconds": 0.603
+        },
+        {
+          "command": "go build -trimpath -o /Users/vchive/.codex/worktrees/final-acceptance/moni-aigate/bin/moni-aigate ./cmd/moni-aigate",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log",
+          "seconds": 1.747
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log",
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log",
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log",
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log"
+      ]
+    },
+    {
+      "name": "frontend",
+      "status": "PASS",
+      "commands": [
+        {
+          "command": "npm --prefix web test",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log",
+          "seconds": 1.38
+        },
+        {
+          "command": "npm --prefix web run build",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log",
+          "seconds": 5.911
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log",
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log"
+      ]
+    },
+    {
+      "name": "go-race",
+      "status": "FAIL",
+      "commands": [
+        {
+          "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./...",
+          "status": "FAIL",
+          "exit_status": 1,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl",
+          "seconds": 2191.62
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl"
+      ]
+    },
+    {
+      "name": "current-mvp",
+      "status": "FAIL",
+      "commands": [
+        {
+          "command": "docker stop -t 30 moni-phase1-browser-app moni-phase1-browser-worker",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log",
+          "seconds": 0.164
+        },
+        {
+          "command": "./scripts/verify-current-mvp.sh",
+          "status": "FAIL",
+          "exit_status": 1,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log",
+          "seconds": 436.564
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log",
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log"
+      ]
+    },
+    {
+      "name": "identity-lifecycle",
+      "status": "PASS",
+      "commands": [
+        {
+          "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./scripts/browser-qa -run ^TestBrowserQARealMainLifecycle$",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/identity-lifecycle.jsonl",
+          "seconds": 26.157
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/identity-lifecycle.jsonl"
+      ]
+    },
+    {
+      "name": "mail-lifecycle",
+      "status": "PASS",
+      "commands": [
+        {
+          "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./scripts/browser-qa -run ^TestMailLifecycleRealMainRecovery$",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mail-lifecycle.jsonl",
+          "seconds": 135.306
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mail-lifecycle.jsonl"
+      ]
+    },
+    {
+      "name": "payment-process",
+      "status": "FAIL",
+      "commands": [
+        {
+          "command": "go run ./scripts/payment-application-qa --require-database --process",
+          "status": "FAIL",
+          "exit_status": 1,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/payment-process.log",
+          "seconds": 241.708
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/payment-process.log"
+      ]
+    },
+    {
+      "name": "mock-deployment",
+      "status": "PASS",
+      "commands": [
+        {
+          "command": "docker start moni-phase1-browser-app moni-phase1-browser-worker",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-start.log",
+          "seconds": 0.743
+        },
+        {
+          "command": "./scripts/phase1-mock-acceptance.sh",
+          "status": "PASS",
+          "exit_status": 0,
+          "log": "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mock-deployment.log",
+          "seconds": 180.487
+        }
+      ],
+      "logs": [
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-start.log",
+        "docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mock-deployment.log"
+      ]
+    }
+  ],
+  "required_go_results": {
+    "P1-ID-01": {
+      "internal/identity:TestIdentitySessionRotationAndTenantBoundary": "PASS",
+      "internal/identity:TestIdentityKeyRechecksCurrentRole": "PASS",
+      "internal/operations:TestSelfServiceIdentityMinimalRolesAndImmutableProofLifecycle": "PASS"
+    },
+    "P1-ID-02": {
+      "internal/identity:TestIdentityMFAEnrollmentInvalidatesLegacySessions": "PASS",
+      "internal/identity:TestIdentityMFARecoveryCodesAreBoundToAccount": "PASS",
+      "scripts/browser-qa:TestBrowserQARealMainLifecycle": "PASS"
+    },
+    "P1-ID-03": {
+      "internal/identity:TestSelfServiceRegistrationInitializationMinimumPrivilegesAndSingleUse": "PASS",
+      "internal/identity:TestSelfServicePasswordResetSingleUseRevisionAndAllSessionFamilies": "PASS",
+      "internal/identity:TestMailOutboxProvisionedAppRoleSupportsWorkerLifecycle": "PASS",
+      "scripts/browser-qa:TestMailLifecycleRealMainRecovery": "PASS"
+    },
+    "P1-ID-04": {
+      "internal/identity:TestOperatorSetPasswordReplacesCredentialAndRevokesSessions": "PASS",
+      "internal/identity:TestOperatorResetMFAClearsFactorAndSessions": "PASS",
+      "internal/identity:TestOperatorSuspendProtectsLastAdminAndRevokesSessions": "PASS",
+      "internal/identity:TestOperatorSuspendConcurrentAdminsKeepsOne": "PASS"
+    },
+    "P1-KEY-01": {
+      "internal/identity:TestKeyConfigurationCreateProjectionAndTypedInputErrors": "PASS",
+      "internal/server:TestKeyConfigurationHTTPCreateCASProjectionAndBudgetErrors": "PASS",
+      "internal/server:TestKeyConfigurationHTTPCurrentRolesAndSecurityGates": "PASS"
+    },
+    "P1-KEY-02": {
+      "internal/identity:TestKeyConfigurationBudgetProtectsUsageWithoutOverflow": "PASS",
+      "internal/identity:TestKeyConfigurationLegacyValuesAndExpiredRenewal": "PASS",
+      "internal/server:TestKeyConfigurationHTTPAllProtocolsRejectWithoutFinancialFacts": "PASS"
+    },
+    "P1-KEY-03": {
+      "internal/identity:TestKeyPolicyCreateAndPrincipal": "PASS",
+      "internal/server:TestKeyAccessPolicyHTTPAllProtocolsResolveTrustedSourceAndRejectSpoofing": "PASS",
+      "internal/server:TestKeyAccessPolicyHTTPAlreadySentStreamSettlesAfterTightening": "PASS"
+    },
+    "P1-KEY-04": {
+      "internal/identity:TestKeyRuntimeLimitsCreatePrincipalAndIndependentCAS": "PASS",
+      "internal/server:TestKeyRuntimeLimitsHTTPAllProtocolsRejectWithoutFinancialFacts": "PASS",
+      "internal/server:TestKeyRuntimeLimitsHTTPRuntimeCapacityFailsClosedBeforeFinancialFacts": "PASS"
+    },
+    "P1-CAT-01": {
+      "internal/server:TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist": "PASS"
+    },
+    "P1-CAT-02": {
+      "internal/catalog:TestPhase1ModelAliasOperationLifecycle": "PASS",
+      "internal/server:TestModelAliasHTTPGatewayAuthorizationAndOriginalName": "PASS"
+    },
+    "P1-CH-01": {
+      "internal/server:TestCredentialPoolHTTPManagementCASHistoryAndSecretBoundary": "PASS",
+      "internal/server:TestCredentialPoolGatewayFrozenPublicationActualIdentityAndRevocation": "PASS",
+      "internal/catalog:TestCredentialPoolMaximumMembersAndLegacySecretEditBoundary": "PASS"
+    },
+    "P1-CH-02": {
+      "internal/server:TestDiscoveryHTTPFormatsSnapshotsAndHistory": "PASS",
+      "internal/server:TestDiscoveryHTTPFailuresKeepHistoryWithoutPartialDiffOrHealthChanges": "PASS",
+      "internal/operations:TestProvisionedDiscoveryFactsAreReadableAppendOnlyAndUnique": "PASS"
+    },
+    "P1-CH-03": {
+      "internal/server:TestChannelOperationsHTTPPreviewAtomicLiveGateAndPermanentReceipts": "PASS",
+      "internal/server:TestChannelOperationsHTTPMixedRejectionsHaveNoPartialChanges": "PASS",
+      "internal/catalog:TestChannelOperationApplyReplayReorderConflictAndNoop": "PASS"
+    },
+    "P1-RT-01": {
+      "internal/server:TestCredentialPoolGatewayRetryBudgetIsPerChannel": "PASS"
+    },
+    "P1-RT-02": {
+      "internal/server:TestCostRoutingSelectsLowerCostAndKeepsRetailPrice": "PASS",
+      "internal/server:TestCostRoutingUnknownAndRateCapsApplyToAllSixProtocols": "PASS"
+    },
+    "P1-RT-03": {
+      "internal/provider:TestHeaderAndFirstEventTimeout": "PASS"
+    },
+    "P1-RT-04": {
+      "internal/provider:TestNativeUsageFailuresRemainUnbillable": "PASS",
+      "internal/provider:TestIdleTimeoutIsSeparateFromFirstEventAndProgress": "PASS"
+    },
+    "P1-PR-01": {
+      "internal/catalog:TestTenantPricingCommandsAndOriginalReceipts": "PASS",
+      "internal/catalog:TestTenantPricingReadIsolationPreviewAndPagination": "PASS",
+      "internal/server:TestAdminAndTenantPricesPreserveCursorPagination": "PASS"
+    },
+    "P1-PR-02": {
+      "internal/catalog:TestPhase1GroupMultiplierCompilesImmutablePrices": "PASS",
+      "internal/catalog:TestGroupPriceVectorApplicationReplayAndConcurrency": "PASS"
+    },
+    "P1-FN-01": {
+      "internal/billing:TestPostgresLifecycle": "PASS",
+      "internal/billing:TestPostgresEvidenceAndReconciliation": "PASS",
+      "internal/billing:TestPostgresSettlementPolicy": "PASS"
+    },
+    "P1-FN-02": {
+      "internal/billing:TestPostgresFundingManualConcurrentApprovalHasOneReceiptAndCreditedEvent": "PASS",
+      "internal/billing:TestPostgresFundingManualAuditAndOutboxFailuresRollbackAllFacts": "PASS"
+    },
+    "P1-FN-03": {
+      "internal/server:TestHTTPCommerceIssuanceDualApprovalUniqueFundingAndOffReadback": "PASS",
+      "scripts/browser-qa:TestBrowserQARealMainLifecycle": "PASS"
+    },
+    "P1-FN-04": {
+      "internal/payments:TestRuntimeActualEightRolesFilesAttestation": "PASS"
+    },
+    "P1-FN-05": {
+      "internal/billing:TestPostgresWalletSourcesRuntimeFIFOFinishAndReverseRefund": "PASS",
+      "internal/billing:TestPostgresWalletSourcesRuntimeEventFailureRollsBack": "PASS",
+      "internal/server:TestWalletSourcesHTTPCommercialFlowAndAuthorization": "PASS"
+    },
+    "P1-PC-01": {
+      "internal/server:TestCostVectorApplicationUnknownIsNotFree": "PASS",
+      "internal/billing:TestPostgresProcurementAttemptOriginalRules": "SKIP"
+    },
+    "P1-PC-02": {
+      "internal/billing:TestPostgresProcurementSharedBudgetAcrossTenantsAndChannels": "PASS",
+      "internal/server:TestProcurementHTTPAdministrationReceiptsAndBoundedSafePages": "PASS"
+    },
+    "P1-PT-01": {
+      "internal/provider:TestOpenAICompatibleDeepSeekUsageAcrossHTTPModes": "PASS",
+      "internal/provider:TestNativeUsageFailuresRemainUnbillable": "PASS"
+    },
+    "P1-PT-02": {
+      "internal/provider:TestNativeSSEFragmentationFinalEventsAndCacheAccounting": "PASS"
+    },
+    "P1-PT-03": {
+      "internal/provider:TestNativeSSEFragmentationFinalEventsAndCacheAccounting": "PASS"
+    },
+    "P1-PT-04": {
+      "internal/server:TestGeminiCommercialJSONAndSSE": "PASS"
+    },
+    "P1-PT-05": {
+      "internal/provider:TestRetrievalHTTPContractSinglePost": "PASS"
+    },
+    "P1-PT-06": {
+      "internal/provider:TestRetrievalHTTPContractSinglePost": "PASS"
+    },
+    "P1-MD-01": {
+      "internal/server:TestImageGenerationHTTPUsesCurrentMediaWalletFacts": "PASS",
+      "internal/server:TestSpeechHTTPUsesCurrentMediaWalletFacts": "PASS",
+      "internal/server:TestInnerTestMediaIsUnavailableBeforeAnyBillingFact": "PASS",
+      "internal/server:TestExplicitMockMediaMarksResultsAndDoesNotSpendWallet": "PASS"
+    },
+    "P1-MD-02": {
+      "internal/server:TestVideoTaskUsesCurrentMediaWalletAcrossSubmitAndTerminalObservation": "PASS",
+      "internal/server:TestVideoTaskUnknownSubmissionReleasesMediaAndPreventsResubmit": "PASS"
+    },
+    "P1-MD-03": {
+      "internal/server:TestRealtimeHTTPPostgresOneSessionOneTurn": "PASS",
+      "internal/server:TestPostgresRealtimePersistenceLifecycleAndTenantIsolation": "PASS"
+    },
+    "P1-UI-01": {
+      "internal/server:TestKeyConfigurationHTTPCurrentRolesAndSecurityGates": "PASS"
+    },
+    "P1-UI-02": {
+      "internal/server:TestChannelOperationsHTTPPreviewAtomicLiveGateAndPermanentReceipts": "PASS"
+    },
+    "P1-RP-01": {
+      "internal/server:TestOperatingReportPostgresCommercialFlowAndAuthorization": "PASS"
+    },
+    "P1-OP-01": {
+      "internal/server:TestAlertHTTPStateHistoryReceiptsAndAccessBoundaries": "PASS",
+      "internal/server:TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery": "PASS",
+      "scripts/browser-qa:TestBrowserQARealMainLifecycle": "PASS"
+    },
+    "P1-DP-01": {},
+    "P1-DP-02": {
+      "internal/operations:TestPersistentRecoveryGateAndDualApproval": "PASS"
+    }
+  },
+  "browser_evidence": "/Users/vchive/.cache/moni-phase1-browser/browser-final-7afe425/browser-evidence.json",
+  "browser_runtime": {
+    "app_container": "moni-phase1-browser-app",
+    "worker_container": "moni-phase1-browser-worker",
+    "image_id": "sha256:b319270f066483a74ddc30d501b8c517c20519760a1ab1c0e2277a802e6d537a",
+    "source_commit": "7afe425dbcd04f51b9a32a63b2231a1064247754",
+    "source_tree": "09f861b6339bf776f829740f557704b9861ead27",
+    "source_clean": true
+  },
+  "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项",
+  "counts": {
+    "total": 41,
+    "pass": 0,
+    "fail": 41,
+    "skip": 0
+  },
+  "overall_status": "FAIL",
+  "mvp_status": "内测；第一阶段尚未完成",
+  "items": [
+    {
+      "id": "P1-ID-01",
+      "title": "平台用户、租户、成员与六角色边界",
+      "tests": [
+        "internal/identity:TestIdentitySessionRotationAndTenantBoundary",
+        "internal/identity:TestIdentityKeyRechecksCurrentRole",
+        "internal/operations:TestSelfServiceIdentityMinimalRolesAndImmutableProofLifecycle"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-ID-01.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-ID-02",
+      "title": "邀请、密码、会话与可选 TOTP",
+      "tests": [
+        "internal/identity:TestIdentityMFAEnrollmentInvalidatesLegacySessions",
+        "internal/identity:TestIdentityMFARecoveryCodesAreBoundToAccount"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "identity-lifecycle"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-ID-02.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-ID-03",
+      "title": "开放注册、邮箱验证、密码找回及默认关闭",
+      "tests": [
+        "internal/identity:TestSelfServiceRegistrationInitializationMinimumPrivilegesAndSingleUse",
+        "internal/identity:TestSelfServicePasswordResetSingleUseRevisionAndAllSessionFamilies",
+        "internal/identity:TestMailOutboxProvisionedAppRoleSupportsWorkerLifecycle"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mail-lifecycle"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-ID-03.md",
+      "test_counts": {
+        "pass": 4,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-ID-04",
+      "title": "运维账号恢复 CLI",
+      "tests": [
+        "internal/identity:TestOperatorSetPasswordReplacesCredentialAndRevokesSessions",
+        "internal/identity:TestOperatorResetMFAClearsFactorAndSessions",
+        "internal/identity:TestOperatorSuspendProtectsLastAdminAndRevokesSessions",
+        "internal/identity:TestOperatorSuspendConcurrentAdminsKeepsOne"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-ID-04.md",
+      "test_counts": {
+        "pass": 4,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-KEY-01",
+      "title": "Key 创建、一次性展示与撤销",
+      "tests": [
+        "internal/identity:TestKeyConfigurationCreateProjectionAndTypedInputErrors",
+        "internal/server:TestKeyConfigurationHTTPCreateCASProjectionAndBudgetErrors",
+        "internal/server:TestKeyConfigurationHTTPCurrentRolesAndSecurityGates"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-KEY-01.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-KEY-02",
+      "title": "Key 模型、地域、累计额度与有效期",
+      "tests": [
+        "internal/identity:TestKeyConfigurationBudgetProtectsUsageWithoutOverflow",
+        "internal/identity:TestKeyConfigurationLegacyValuesAndExpiredRenewal",
+        "internal/server:TestKeyConfigurationHTTPAllProtocolsRejectWithoutFinancialFacts"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-KEY-02.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-KEY-03",
+      "title": "Key 来源 IP/CIDR 与可信反代",
+      "tests": [
+        "internal/identity:TestKeyPolicyCreateAndPrincipal",
+        "internal/server:TestKeyAccessPolicyHTTPAllProtocolsResolveTrustedSourceAndRejectSpoofing",
+        "internal/server:TestKeyAccessPolicyHTTPAlreadySentStreamSettlesAfterTightening"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-KEY-03.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-KEY-04",
+      "title": "Key RPM、burst 与并发且拒绝不预占",
+      "tests": [
+        "internal/identity:TestKeyRuntimeLimitsCreatePrincipalAndIndependentCAS",
+        "internal/server:TestKeyRuntimeLimitsHTTPAllProtocolsRejectWithoutFinancialFacts",
+        "internal/server:TestKeyRuntimeLimitsHTTPRuntimeCapacityFailsClosedBeforeFinancialFacts"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-KEY-04.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-CAT-01",
+      "title": "模型目录、客户目录与公开价格页",
+      "tests": [
+        "internal/server:TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-CAT-01.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-CAT-02",
+      "title": "模型别名及六协议实际调用",
+      "tests": [
+        "internal/catalog:TestPhase1ModelAliasOperationLifecycle",
+        "internal/server:TestModelAliasHTTPGatewayAuthorizationAndOriginalName"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "browser": true,
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-CAT-02.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-CH-01",
+      "title": "渠道、不可变版本与 1..32 凭据池",
+      "tests": [
+        "internal/server:TestCredentialPoolHTTPManagementCASHistoryAndSecretBoundary",
+        "internal/server:TestCredentialPoolGatewayFrozenPublicationActualIdentityAndRevocation",
+        "internal/catalog:TestCredentialPoolMaximumMembersAndLegacySecretEditBoundary"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-CH-01.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-CH-02",
+      "title": "模型发现与差异预览",
+      "tests": [
+        "internal/server:TestDiscoveryHTTPFormatsSnapshotsAndHistory",
+        "internal/server:TestDiscoveryHTTPFailuresKeepHistoryWithoutPartialDiffOrHealthChanges",
+        "internal/operations:TestProvisionedDiscoveryFactsAreReadableAppendOnlyAndUnique"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-CH-02.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-CH-03",
+      "title": "跨渠道批量启停与回执",
+      "tests": [
+        "internal/server:TestChannelOperationsHTTPPreviewAtomicLiveGateAndPermanentReceipts",
+        "internal/server:TestChannelOperationsHTTPMixedRejectionsHaveNoPartialChanges",
+        "internal/catalog:TestChannelOperationApplyReplayReorderConflictAndNoop"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-CH-03.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-RT-01",
+      "title": "多渠道优先级、权重、容量与健康",
+      "tests": [
+        "internal/server:TestCredentialPoolGatewayRetryBudgetIsPerChannel"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-RT-01.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-RT-02",
+      "title": "成本优先、未知成本拒绝与采购单价上限",
+      "tests": [
+        "internal/server:TestCostRoutingSelectsLowerCostAndKeepsRetailPrice",
+        "internal/server:TestCostRoutingUnknownAndRateCapsApplyToAllSixProtocols"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-RT-02.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-RT-03",
+      "title": "可信无消费换渠道且最多两次",
+      "tests": [
+        "internal/provider:TestHeaderAndFirstEventTimeout"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-RT-03.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-RT-04",
+      "title": "可能已消费请求不重放",
+      "tests": [
+        "internal/provider:TestNativeUsageFailuresRemainUnbillable",
+        "internal/provider:TestIdleTimeoutIsSeparateFromFirstEventAndProgress"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-RT-04.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-PR-01",
+      "title": "默认售价版本、价格组与缺价拒绝",
+      "tests": [
+        "internal/catalog:TestTenantPricingCommandsAndOriginalReceipts",
+        "internal/catalog:TestTenantPricingReadIsolationPreviewAndPagination",
+        "internal/server:TestAdminAndTenantPricesPreserveCursorPagination"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-PR-01.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-PR-02",
+      "title": "分组倍率编译为不可变绝对价格",
+      "tests": [
+        "internal/catalog:TestPhase1GroupMultiplierCompilesImmutablePrices",
+        "internal/catalog:TestGroupPriceVectorApplicationReplayAndConcurrency"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "browser": true,
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PR-02.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-FN-01",
+      "title": "硬预占、唯一结算、未知用量与 24 小时释放",
+      "tests": [
+        "internal/billing:TestPostgresLifecycle",
+        "internal/billing:TestPostgresEvidenceAndReconciliation",
+        "internal/billing:TestPostgresSettlementPolicy"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-FN-01.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-FN-02",
+      "title": "人工核款双审、消费退款与核对",
+      "tests": [
+        "internal/billing:TestPostgresFundingManualConcurrentApprovalHasOneReceiptAndCreditedEvent",
+        "internal/billing:TestPostgresFundingManualAuditAndOutboxFailuresRollbackAllFacts"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-FN-02.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-FN-03",
+      "title": "双审兑换券",
+      "tests": [
+        "internal/server:TestHTTPCommerceIssuanceDualApprovalUniqueFundingAndOffReadback"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "identity-lifecycle"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-FN-03.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-FN-04",
+      "title": "本地支付沙箱订单与真实进程",
+      "tests": [
+        "internal/payments:TestRuntimeActualEightRolesFilesAttestation"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "payment-process"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-FN-04.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-FN-05",
+      "title": "资金来源、确定性 FIFO 与逆序退款",
+      "tests": [
+        "internal/billing:TestPostgresWalletSourcesRuntimeFIFOFinishAndReverseRefund",
+        "internal/billing:TestPostgresWalletSourcesRuntimeEventFailureRollsBack",
+        "internal/server:TestWalletSourcesHTTPCommercialFlowAndAuthorization"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-FN-05.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-PC-01",
+      "title": "采购成本版本、逐 attempt 成本与未知非零",
+      "tests": [
+        "internal/server:TestCostVectorApplicationUnknownIsNotFree",
+        "internal/billing:TestPostgresProcurementAttemptOriginalRules"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PC-01.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 1
+      }
+    },
+    {
+      "id": "P1-PC-02",
+      "title": "采购账户、共享预算与周期预算",
+      "tests": [
+        "internal/billing:TestPostgresProcurementSharedBudgetAcrossTenantsAndChannels",
+        "internal/server:TestProcurementHTTPAdministrationReceiptsAndBoundedSafePages"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-PC-02.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-PT-01",
+      "title": "Chat JSON/SSE、工具、取消与 usage 边界",
+      "tests": [
+        "internal/provider:TestOpenAICompatibleDeepSeekUsageAcrossHTTPModes",
+        "internal/provider:TestNativeUsageFailuresRemainUnbillable"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PT-01.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-PT-02",
+      "title": "Responses JSON/SSE",
+      "tests": [
+        "internal/provider:TestNativeSSEFragmentationFinalEventsAndCacheAccounting"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PT-02.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-PT-03",
+      "title": "Messages JSON/SSE",
+      "tests": [
+        "internal/provider:TestNativeSSEFragmentationFinalEventsAndCacheAccounting"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PT-03.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-PT-04",
+      "title": "Gemini 文本 JSON/SSE",
+      "tests": [
+        "internal/server:TestGeminiCommercialJSONAndSSE"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PT-04.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-PT-05",
+      "title": "Embeddings",
+      "tests": [
+        "internal/provider:TestRetrievalHTTPContractSinglePost"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PT-05.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-PT-06",
+      "title": "Rerank",
+      "tests": [
+        "internal/provider:TestRetrievalHTTPContractSinglePost"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "mock-deployment"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-PT-06.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-MD-01",
+      "title": "图片与 TTS 显式 mock 及 inner-test 关闭",
+      "tests": [
+        "internal/server:TestImageGenerationHTTPUsesCurrentMediaWalletFacts",
+        "internal/server:TestSpeechHTTPUsesCurrentMediaWalletFacts",
+        "internal/server:TestInnerTestMediaIsUnavailableBeforeAnyBillingFact",
+        "internal/server:TestExplicitMockMediaMarksResultsAndDoesNotSpendWallet"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-MD-01.md",
+      "test_counts": {
+        "pass": 4,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-MD-02",
+      "title": "异步视频任务与重启不重复提交",
+      "tests": [
+        "internal/server:TestVideoTaskUsesCurrentMediaWalletAcrossSubmitAndTerminalObservation",
+        "internal/server:TestVideoTaskUnknownSubmissionReleasesMediaAndPreventsResubmit"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-MD-02.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-MD-03",
+      "title": "单 turn Realtime 且接收结算不重新派发",
+      "tests": [
+        "internal/server:TestRealtimeHTTPPostgresOneSessionOneTurn",
+        "internal/server:TestPostgresRealtimePersistenceLifecycleAndTenantIsolation"
+      ],
+      "mock": true,
+      "status": "FAIL",
+      "evidence": "P1-MD-03.md",
+      "test_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-UI-01",
+      "title": "客户控制台八类页面桌面与移动",
+      "tests": [
+        "internal/server:TestKeyConfigurationHTTPCurrentRolesAndSecurityGates"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-UI-01.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-UI-02",
+      "title": "管理控制台八类页面桌面与移动",
+      "tests": [
+        "internal/server:TestChannelOperationsHTTPPreviewAtomicLiveGateAndPermanentReceipts"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-UI-02.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-RP-01",
+      "title": "经营报表、请求 CSV 与未知成本待核对",
+      "tests": [
+        "internal/server:TestOperatingReportPostgresCommercialFlowAndAuthorization"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-RP-01.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    },
+    {
+      "id": "P1-OP-01",
+      "title": "站内告警与审计",
+      "tests": [
+        "internal/server:TestAlertHTTPStateHistoryReceiptsAndAccessBoundaries",
+        "internal/server:TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery"
+      ],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp",
+        "identity-lifecycle"
+      ],
+      "browser": true,
+      "status": "FAIL",
+      "evidence": "P1-OP-01.md",
+      "test_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-DP-01",
+      "title": "Compose 空库、provision、健康与重启",
+      "tests": [],
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-DP-01.md",
+      "test_counts": {
+        "pass": 0,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    {
+      "id": "P1-DP-02",
+      "title": "备份、恢复演练与 recovery mode",
+      "tests": [
+        "internal/operations:TestPersistentRecoveryGateAndDualApproval"
+      ],
+      "status": "FAIL",
+      "evidence": "P1-DP-02.md",
+      "test_counts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "suites": [
+        "static-build",
+        "frontend",
+        "go-race",
+        "current-mvp"
+      ]
+    }
+  ],
+  "completed_at": "2026-11-16T03:11:15.029385+00:00"
+}

@@ -80,3 +80,9 @@ Compose 和媒体使用 deterministic mock，只证明开发环境内测的接�
 独立的[浏览器等价内测 smoke](browser-qa.md)已在 55439 专库通过：真实构建二进制的二租户 HTTP 测试覆盖跨租户请求不可见、缺 CSRF、错误 Origin 和客户 API Key 边界；脚本还覆盖图片 PNG、TTS WAV、异步 task 制品和 Realtime WS 的响应结构。它仍不等同真实浏览器 UI、真实供应商或生产环境验收。
 
 对于已部署且已有业务引用的环境，另提供 [`scripts/browser-qa/current-mvp-smoke.sh`](../../scripts/browser-qa/current-mvp-smoke.sh) 只读 sidecar。它强制 `TEST_DATABASE_URL` 为本机 55439 `moni_test`，但不连接数据库、不创建身份/租户/钱包/任务事实，只要求文本 HTTP 和 Realtime WebSocket 实际通过；可选媒体/task 输入缺失时显式 SKIP。
+
+## 2026-11-16 终验工具与 Compose 核款修复
+
+在 029 的 `7afe425` 运行中，Config→Server timeout 审计因宿主没有 `rg` 而失败，不能据此认定 provider 未接线。静态审计改用标准 `grep -R -E`，字段存在、Server 使用 `ProviderTimeouts`/`ClientOptions()` 且无空 `ClientOptions{}` 的路径已直接验证。产品 provider 配置与超时未改。
+
+同轮 Compose 核款脚本的 `paid` 请求只有 COIN 数量，缺少当前 `paid` 合同必需的 `fiat_currency`/`fiat_amount`，服务端正确拒绝 `invalid_credit`。fixture 现补齐 `basis_kind=paid`、`fiat_currency=CNY`、`fiat_amount=1000000`，与服务端规范化及既有 harness 一致；没有放宽校验、增加 SKIP 或修改会计币价。修复后，完整 current-mvp 在同一修复工作树上 18 个分组全部通过，含静态接线审计、六文本、媒体、真实 Compose 核款和 app/worker/PostgreSQL 重启恢复；最终 41 项仍需在修复 PR 合入后的新 merge commit 上整单重跑。

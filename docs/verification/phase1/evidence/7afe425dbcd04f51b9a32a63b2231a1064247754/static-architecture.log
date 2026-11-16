@@ -1,0 +1,7 @@
+command: go run ./scripts/check-architecture
+started_at: 2026-11-16T01:32:14.068689+00:00
+
+architecture snapshot verified: 2310 files, 06d3c126c845
+
+completed_at: 2026-11-16T01:32:14.408848+00:00
+exit_status: 0

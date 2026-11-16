@@ -842,7 +842,7 @@ sequenceDiagram
 
 匿名目录与旧平台默认价接口显式过滤NULL域；客户模型/报价和已生效历史在同SQL核对当前user/tenant/membership/模型授权后读取本域，不回落默认。平台缺价preview以目标tenant当前启用且已授权模型为范围，每页统一SQL时刻并返回完整context；可明确接受缺价分配，预览不保证未来调用可用。列表50+1、游标绑定当前actor/接口/target、末页空串；新读/写/preview/客户报价各有独立有界准入。额外模型报价不改变/v1/models结构。
 
-数据关系为tenant→price_group、price_version→可选group、group/归属事件→immutable operation、request→原price与组快照。018只追加列/表/guard与唯一性，NULLS NOT DISTINCT保护默认域同生效时刻唯一；历史不更新，不产生资金。app仅组状态列、tenant业务及pricing列、request生命周期三列有UPDATE权；projector无新表读取权。023-A真实PG分包回归/并发故障、227项前端/strict、真实main浏览器和018预览升级通过[限定本地验收](../verification/tenant-pricing.md)；周期预算与商品不因A接通而完成。
+数据关系为tenant→price_group、price_version→可选group、group/归属事件→immutable operation、request→原price与组快照。018只追加列/表/guard与唯一性，NULLS NOT DISTINCT保护默认域同生效时刻唯一；历史不更新，不产生资金。app仅组状态列、tenant业务及pricing列、request生命周期三列有UPDATE权；projector无新表读取权。退休并发验收的观察器不将 `pg_stat_activity.query` 与 `pg_blocking_pids` 当作同一时刻快照，而是在原期限内等待完整的双价格组 SHARE 谓词，避免模型语句旧文本造成误判；生产锁顺序、SQL和资金路径不变。023-A真实PG分包回归/并发故障、227项前端/strict、真实main浏览器和018预览升级通过[限定本地验收](../verification/tenant-pricing.md)；周期预算与商品不因A接通而完成。
 
 023-A的assignment-first并发验收现用同一pg_locks采样中的精确tenant tuple与事务XID等待边，替代pg_stat_activity SQL文本推定；pgx批处理下两种观察可不同步。该场景关闭可选幂等键以避免先行FK KEY SHARE使tuple排队标记省略，仍实际核分组/价格/revision及钱包与禁止重试掩盖死锁。生产锁序、价格选择、身份/权限、迁移、超时和请求路径均无变化；模块/链路图不变。CI失败及修正范围见[CI屏障记录](../verification/pricing-lock-ci.md)。
 

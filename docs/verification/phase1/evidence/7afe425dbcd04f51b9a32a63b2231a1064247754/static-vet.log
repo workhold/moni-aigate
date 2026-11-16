@@ -1,0 +1,6 @@
+command: go vet ./...
+started_at: 2026-11-16T01:32:14.861514+00:00
+
+
+completed_at: 2026-11-16T01:32:15.464040+00:00
+exit_status: 0

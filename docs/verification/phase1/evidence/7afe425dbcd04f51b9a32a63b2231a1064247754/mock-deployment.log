@@ -1,0 +1,7 @@
+command: ./scripts/phase1-mock-acceptance.sh
+started_at: 2026-11-16T02:24:28.873221+00:00
+
+{"status":"passed","run_id":"phase1-acceptance-1f23d27c2093","requests":17,"alias_protocols":6,"compiled_group_price":true,"fault_http_status":{"drop_after_headers":502,"missing_usage":503,"drop_after_events:2":200,"error_after_usage":200,"conflicting_usage":200,"stall_first_event":504},"database":"127.0.0.1:55439/moni_test","mock":true}
+
+completed_at: 2026-11-16T03:11:14.988700+00:00
+exit_status: 0

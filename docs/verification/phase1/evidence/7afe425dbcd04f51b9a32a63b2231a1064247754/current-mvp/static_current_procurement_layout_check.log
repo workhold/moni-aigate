@@ -1,0 +1,1 @@
+PASS specs/023-periodic-products/b-procurement-column-layout-v1.json: 32 tables, 715 columns (68 generated, 647 nongenerated); design only, no DDL/keys/ACL/reader/catalog attestation

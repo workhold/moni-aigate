@@ -134,15 +134,15 @@ checked_go_race_test() {
 check_provider_timeout_wiring() {
   local failed_wiring=0
   local timeout_fields='ConnectTimeout|HeaderTimeout|FirstEventTimeout|IdleTimeout|ProgressTimeout'
-  if ! rg -q "$timeout_fields" internal/config; then
+  if ! grep -R -E -q "$timeout_fields" internal/config; then
     echo 'provider timeout fields are absent from internal/config'
     failed_wiring=1
   fi
-  if ! rg -q 'ProviderTimeouts|ClientOptions\(\)' internal/server cmd/moni-aigate; then
+  if ! grep -R -E -q 'ProviderTimeouts|ClientOptions\(\)' internal/server cmd/moni-aigate; then
     echo 'provider timeout fields are not consumed by server startup'
     failed_wiring=1
   fi
-  if rg -q 'provider\.NewClient\(provider\.ClientOptions\{\}\)' internal/server cmd/moni-aigate; then
+  if grep -R -E -q 'provider\.NewClient\(provider\.ClientOptions\{\}\)' internal/server cmd/moni-aigate; then
     echo 'server still constructs provider.NewClient with an empty ClientOptions value'
     failed_wiring=1
   fi
