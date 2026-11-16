@@ -229,7 +229,9 @@ func (s *processSession) lifecycleTerminateOwnedInstance(g *lifecycleGate, m lif
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		if conn.Hijack().Close(ctx) != nil {
-			result = failure("lifecycle_admin_physical_close_failed")
+			cleanupErr := failure("lifecycle_admin_physical_close_failed")
+			reportCleanupFailure(s.report.out, "admin_connection", cleanupErr)
+			result = preferPrimaryFailure(result, cleanupErr)
 		}
 	}()
 	config := conn.Conn().Config()
@@ -316,6 +318,9 @@ func (s *processSession) lifecycleRecoverOriginal(order string, m lifecycleMutat
 		return err
 	}
 	if err = waitStage(s.ctx, 100*time.Second, "lifecycle_natural_lease_recovery_timeout", func(ctx context.Context) (bool, error) {
+		if !childRunning(s.app) {
+			return false, failure("lifecycle_recovery_app_exited")
+		}
 		var state, command, digest string
 		var raw []byte
 		var generation int64
@@ -369,10 +374,12 @@ func (s *processSession) exerciseLifecycleCase(kind string) (result error) {
 	}
 	defer func() {
 		if result != nil && childRunning(s.app) {
-			_ = stopProcess(s.app, syscall.SIGTERM, true)
+			if stopErr := stopProcess(s.app, syscall.SIGTERM, true); stopErr != nil {
+				reportCleanupFailure(s.report.out, "app", stopErr)
+			}
 		}
 		if closeErr := gate.close(); closeErr != nil {
-			result = closeErr
+			result = preferPrimaryFailure(result, closeErr)
 		}
 	}()
 	if err = s.lifecycleCreateOrder(order); err != nil {

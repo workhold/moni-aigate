@@ -78,6 +78,10 @@ func pricingConcurrencyTx(t *testing.T, f *publicFixture) pgx.Tx {
 }
 func pricingConcurrencyWaiters(t *testing.T, ctx context.Context, f *publicFixture, blocker uint32, n int) []string {
 	t.Helper()
+	return pricingConcurrencyWaitersMatching(t, ctx, f, blocker, n, nil)
+}
+func pricingConcurrencyWaitersMatching(t *testing.T, ctx context.Context, f *publicFixture, blocker uint32, n int, matches func(string) bool) []string {
+	t.Helper()
 	ticker := time.NewTicker(5 * time.Millisecond)
 	defer ticker.Stop()
 	for {
@@ -92,13 +96,17 @@ func pricingConcurrencyWaiters(t *testing.T, ctx context.Context, f *publicFixtu
 				rows.Close()
 				t.Fatal(e)
 			}
-			queries = append(queries, q)
+			if matches == nil || matches(q) {
+				queries = append(queries, q)
+			}
 		}
 		e = rows.Err()
 		rows.Close()
 		if e != nil {
 			t.Fatal(e)
 		}
+		// query text and blocking PIDs are not an atomic statement snapshot. Wait
+		// for the complete lock predicate, not merely a transient waiter count.
 		if len(queries) >= n {
 			return queries
 		}
@@ -256,7 +264,9 @@ func TestTenantPricingRetirementWinsBeforePublishAndAssignment(t *testing.T) {
 		_, e := f.store.AssignTenantPricing(ctx, catalog.PricingActor{UserID: f.admin}, catalog.TenantPricingCommand{OperationID: assignOp, TenantID: tenant, ExpectedRevision: 1, GroupID: &group})
 		assign <- e
 	}()
-	queries := pricingConcurrencyWaiters(t, ctx, f, retirementPID, 2)
+	queries := pricingConcurrencyWaitersMatching(t, ctx, f, retirementPID, 2, func(query string) bool {
+		return strings.Contains(query, "FROM price_groups") && strings.Contains(query, "FOR SHARE")
+	})
 	for _, q := range queries {
 		if !strings.Contains(q, "FROM price_groups") || !strings.Contains(q, "FOR SHARE") {
 			t.Fatal("later command did not synchronize group active state", queries)

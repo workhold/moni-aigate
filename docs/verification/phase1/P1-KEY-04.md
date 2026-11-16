@@ -1,0 +1,25 @@
+# P1-KEY-04：Key RPM、burst 与并发且拒绝不预占
+
+- 结论：**FAIL**（本次同一提交终验，非历史证据）。
+- 提交：`7afe425dbcd04f51b9a32a63b2231a1064247754`。
+- 数据库：`127.0.0.1:55439/moni_test`，专用 PostgreSQL；凭据不写入证据。
+- deterministic mock：未用于本项直接断言；全局部署 mock 门禁仍执行。
+- 必需 Go 测试：PASS=3，FAIL/MISSING=0，SKIP=0。
+
+## 本次执行套件与日志
+
+- `static-build`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log。
+- `frontend`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log。
+- `go-race`：**FAIL**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl。
+- `current-mvp`：**FAIL**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log。
+
+## 绑定的 Go 测试
+
+- `internal/identity:TestKeyRuntimeLimitsCreatePrincipalAndIndependentCAS`：PASS。
+- `internal/server:TestKeyRuntimeLimitsHTTPAllProtocolsRejectWithoutFinancialFacts`：PASS。
+- `internal/server:TestKeyRuntimeLimitsHTTPRuntimeCapacityFailsClosedBeforeFinancialFacts`：PASS。
+
+## 未覆盖范围
+
+- 本记录不证明真实供应商、真实支付商、生产凭据、生产 SLA、多实例 HA 或 032 第二阶段能力；这些均不在第一阶段本项验收范围。
+- 任何必需套件失败、测试缺失/SKIP 或浏览器视口缺失都会使本项 FAIL；修复后必须整单重跑，不能只复跑本项。

@@ -1,26 +1,30 @@
-# P1-CAT-02 模型别名实现验证
+# P1-CAT-02：模型别名及六协议实际调用
 
-状态：当前专项通过（2026-11-14）。该记录覆盖 030-A 的 current-only 迁移、管理 HTTP、授权解析、请求原始模型名和目录投影，不宣称完整第一阶段或真实供应商验收完成。
+- 结论：**FAIL**（本次同一提交终验，非历史证据）。
+- 提交：`7afe425dbcd04f51b9a32a63b2231a1064247754`。
+- 数据库：`127.0.0.1:55439/moni_test`，专用 PostgreSQL；凭据不写入证据。
+- deterministic mock：是；仅为本地内测证据，不是供应商或生产认证。
+- 必需 Go 测试：PASS=2，FAIL/MISSING=0，SKIP=0。
 
-## 本提交范围
+## 本次执行套件与日志
 
-- 迁移：`current_002_phase1_aliases.sql` 的名字空间、退役终态、operation、audit、请求原始模型名和当前角色权限。
-- Server：授权解析、`/v1/models`、公开目录的活跃别名投影、平台 admin 列出/创建/退役 API。
-- Billing：Reserve 将请求原始模型名写入 `request_records.requested_model_name`，并保留解析后的逻辑模型计量身份。
-- UI：平台模型页登记/退役，客户模型页显示活跃别名。
-- 明确未覆盖：隔离浏览器桌面/390px、完整 029 清单和真实供应商。
+- `static-build`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log。
+- `frontend`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log。
+- `go-race`：**FAIL**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl。
+- `current-mvp`：**FAIL**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log。
+- `mock-deployment`：**PASS**；命令见 `summary.json`，日志：docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-start.log, docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mock-deployment.log。
 
-## 本次证据
+## 绑定的 Go 测试
 
-数据库：`127.0.0.1:55439/moni_test`，不记录凭据。
+- `internal/catalog:TestPhase1ModelAliasOperationLifecycle`：PASS。
+- `internal/server:TestModelAliasHTTPGatewayAuthorizationAndOriginalName`：PASS。
 
-| 项目 | 命令 | 结果 |
-| --- | --- | --- |
-| 别名/倍率/目录汇总专项 | `TEST_DATABASE_URL=… go test -race -p 1 -count=1 ./internal/catalog ./internal/server -run '^(TestPhase1GroupMultiplierCompilesImmutablePrices\|TestPhase1ModelAliasOperationLifecycle\|TestGroupPriceVector.*\|TestTenantPricing.*\|TestModelAlias.*\|TestAlias.*\|TestPublicCatalogProjectionProtocolsPricesAndSecrets\|TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist)$'` | PASS |
-| 别名 HTTP 与商业链 | `TestModelAliasHTTPGatewayAuthorizationAndOriginalName`（包含在上述 server 专项中） | PASS：非 admin 403；admin 创建/幂等/列表；`/v1/models` 同时列公开名和别名；响应回显别名；`requested_model_name` 保存别名而 `model_id` 保持逻辑模型；Key scope 收缩和别名退役均不再派发 |
-| 公开目录 | `TestPublicCatalogHTTPPublicationCASAndAnonymousWhitelist` | PASS：`aliases` 白名单与活跃别名内容均验证 |
-| 前端 | `npm --prefix web test` | PASS |
-| 前端类型检查与构建 | `npm --prefix web run build`（先执行 `vue-tsc --noEmit`） | PASS |
-| 浏览器桌面/390px | 未执行 | SKIP，不记为通过 |
+## 隔离浏览器
 
-别名与公开名冲突、重复 operation、退役复用、目标未发布/未启用等数据库边界由 `TestPhase1ModelAliasOperationLifecycle` 和 catalog 汇总专项覆盖。当前授权失败仍使用既有 `model_forbidden` 响应，未单独承诺 030 草案中的退役 404 文案；完整六协议别名调用和浏览器页面验收不在本专项 PASS 范围内。
+- desktop（1440px）：PASS；检查：/models: 模型与价格，无页面横向溢出或错误告警; 六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用；证据：P1-CAT-02/desktop-01.png。
+- mobile390（390px）：PASS；检查：/models: 模型与价格，无页面横向溢出或错误告警; 六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用；证据：P1-CAT-02/mobile390-01.png。
+
+## 未覆盖范围
+
+- 本记录不证明真实供应商、真实支付商、生产凭据、生产 SLA、多实例 HA 或 032 第二阶段能力；这些均不在第一阶段本项验收范围。
+- 任何必需套件失败、测试缺失/SKIP 或浏览器视口缺失都会使本项 FAIL；修复后必须整单重跑，不能只复跑本项。

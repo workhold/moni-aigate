@@ -7492,3 +7492,124 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `docs/verification/ci-profile-contract.md`
 
 </details>
+
+## 2026-11-16T03:42:22Z · 4833a06a2c97
+
+修复本轮029失败：catalog观察器完整谓词、标准grep、Compose paid法币字段及支付QA主错误/恢复清理诊断；生产锁序、资金、权限和冻结合同不变，保存真实失败与修复验证记录。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2382 个源文件；本次 83 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/current-mvp.md`
+- modified `docs/verification/payment-application.md`
+- added `docs/verification/phase1/P1-CAT-01.md`
+- modified `docs/verification/phase1/P1-CAT-02.md`
+- added `docs/verification/phase1/P1-CH-01.md`
+- added `docs/verification/phase1/P1-CH-02.md`
+- added `docs/verification/phase1/P1-CH-03.md`
+- added `docs/verification/phase1/P1-DP-01.md`
+- added `docs/verification/phase1/P1-DP-02.md`
+- added `docs/verification/phase1/P1-FN-01.md`
+- added `docs/verification/phase1/P1-FN-02.md`
+- added `docs/verification/phase1/P1-FN-03.md`
+- added `docs/verification/phase1/P1-FN-04.md`
+- added `docs/verification/phase1/P1-FN-05.md`
+- added `docs/verification/phase1/P1-ID-01.md`
+- added `docs/verification/phase1/P1-ID-02.md`
+- added `docs/verification/phase1/P1-ID-03.md`
+- added `docs/verification/phase1/P1-ID-04.md`
+- added `docs/verification/phase1/P1-KEY-01.md`
+- added `docs/verification/phase1/P1-KEY-02.md`
+- added `docs/verification/phase1/P1-KEY-03.md`
+- added `docs/verification/phase1/P1-KEY-04.md`
+- added `docs/verification/phase1/P1-MD-01.md`
+- added `docs/verification/phase1/P1-MD-02.md`
+- added `docs/verification/phase1/P1-MD-03.md`
+- added `docs/verification/phase1/P1-OP-01.md`
+- added `docs/verification/phase1/P1-PC-01.md`
+- added `docs/verification/phase1/P1-PC-02.md`
+- added `docs/verification/phase1/P1-PR-01.md`
+- modified `docs/verification/phase1/P1-PR-02.md`
+- added `docs/verification/phase1/P1-PT-01.md`
+- added `docs/verification/phase1/P1-PT-02.md`
+- added `docs/verification/phase1/P1-PT-03.md`
+- added `docs/verification/phase1/P1-PT-04.md`
+- added `docs/verification/phase1/P1-PT-05.md`
+- added `docs/verification/phase1/P1-PT-06.md`
+- added `docs/verification/phase1/P1-RP-01.md`
+- added `docs/verification/phase1/P1-RT-01.md`
+- added `docs/verification/phase1/P1-RT-02.md`
+- added `docs/verification/phase1/P1-RT-03.md`
+- added `docs/verification/phase1/P1-RT-04.md`
+- added `docs/verification/phase1/P1-UI-01.md`
+- added `docs/verification/phase1/P1-UI-02.md`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/028-u_postgresql_guard_matrix.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/backup_restore_and_recovery_lock_drill.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/compose_current_migration_provision_restart_and_business_mock_smoke.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/config_and_catalog_current_contract_race.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/config_to_server_provider_timeout_wiring_audit.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/current-only_migration_verifycurrent_and_append_path.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/current_go_vet.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/current_permissions_and_legacy_refusal_boundaries.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/frontend_production_build.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/frontend_tests.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/image_tts_async-video_and_realtime_current_postgresql_path.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/media_state-machine_and_adapter_safety_tests.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/provider_config_catalog_server_race_compile.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/provider_usage_and_current_error_timeout_handling.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/six-text_commercial_path.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/static_current_architecture_checks.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/static_current_procurement_layout_check.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/current-mvp/wallet_funding_billing_and_settlement.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-build.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/frontend-test.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/go-race.jsonl`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/identity-lifecycle.jsonl`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mail-lifecycle.jsonl`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/mock-deployment.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/payment-process.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-start.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/preview-stop.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-architecture.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-build.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-procurement.log`
+- added `docs/verification/phase1/evidence/7afe425dbcd04f51b9a32a63b2231a1064247754/static-vet.log`
+- added `docs/verification/phase1/summary.json`
+- modified `docs/verification/tenant-pricing.md`
+- modified `internal/catalog/pricing_concurrency_integration_test.go`
+- modified `scripts/deployment-business-provision.sh`
+- modified `scripts/payment-application-qa/exercise_lifecycle.go`
+- modified `scripts/payment-application-qa/main_test.go`
+- modified `scripts/payment-application-qa/process.go`
+- modified `scripts/verify-current-mvp.sh`
+
+</details>
+
+## 2026-11-16T03:53:41Z · 920cf802268c
+
+综合复核补齐支付QA最外层私密目录删除和管理员连接关闭的主错误优先与安全诊断；不再有任何清理路径覆盖首个生命周期失败，单测通过，无生产合同变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2382 个源文件；本次 4 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/backup-restore-local.json`
+- modified `docs/verification/payment-application.md`
+- modified `scripts/payment-application-qa/exercise_lifecycle.go`
+- modified `scripts/payment-application-qa/main.go`
+
+</details>
+
+## 2026-11-16T03:54:28Z · 5e34eec1d68a
+
+完整 current-mvp 修复工作树18组全部通过，含provider审计、Compose核款、媒体和重启恢复；更新验证记录，最终029仍需合入后整单重跑。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2382 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/current-mvp.md`
+
+</details>

@@ -72,7 +72,9 @@ func run(ctx context.Context, args []string, out io.Writer) (result error) {
 	}
 	defer func() {
 		if os.RemoveAll(root) != nil {
-			result = failure("private_directory_cleanup_failed")
+			cleanupErr := failure("private_directory_cleanup_failed")
+			reportCleanupFailure(out, "private_directory", cleanupErr)
+			result = preferPrimaryFailure(result, cleanupErr)
 		}
 	}()
 	if os.Chmod(root, 0700) != nil {

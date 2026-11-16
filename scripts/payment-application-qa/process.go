@@ -7,6 +7,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -27,6 +29,7 @@ type processChild struct {
 	err      error
 	expected bool
 	log      string
+	kind     string
 }
 type processSession struct {
 	ctx                         context.Context
@@ -118,9 +121,7 @@ func exerciseProcesses(ctx context.Context, dsn, root string, report reporter, h
 	}
 	s := &processSession{ctx: ctx, env: env, root: root, appBinary: appBinary, mockBinary: mockBinary, report: report}
 	defer func() {
-		if err := s.cleanup(); err != nil {
-			result = err
-		}
+		result = preferPrimaryFailure(result, s.cleanup())
 	}()
 	_, _ = io.WriteString(report.out, "environment_id "+env.Protocol.ID+"\n")
 	s.master, err = processSecret()
@@ -200,7 +201,7 @@ func (s *processSession) start(kind, mode string, recovery, proof bool) (*proces
 	cmd.Env = env
 	cmd.Stdout = log
 	cmd.Stderr = log
-	child := &processChild{cmd: cmd, done: make(chan struct{}), log: path}
+	child := &processChild{cmd: cmd, done: make(chan struct{}), log: path, kind: kind}
 	err = cmd.Start()
 	_ = log.Close()
 	if err != nil {
@@ -344,16 +345,34 @@ func (s *processSession) refused(c *processChild, expected string) error {
 		return failure("refusal_process_remained_running")
 	}
 }
+func reportCleanupFailure(out io.Writer, kind string, err error) {
+	code := "process_cleanup_failed"
+	var safe failure
+	if errors.As(err, &safe) {
+		code = string(safe)
+	}
+	_, _ = fmt.Fprintf(out, "cleanup_%s_%s\n", kind, code)
+}
+
+func preferPrimaryFailure(primary, cleanup error) error {
+	if primary != nil {
+		return primary
+	}
+	return cleanup
+}
+
 func (s *processSession) cleanup() error {
 	failed := false
 	for i := len(s.children) - 1; i >= 0; i-- {
 		c := s.children[i]
 		if childRunning(c) {
-			if stopProcess(c, syscall.SIGTERM, true) != nil {
+			if err := stopProcess(c, syscall.SIGTERM, true); err != nil {
 				failed = true
+				reportCleanupFailure(s.report.out, c.kind, err)
 			}
 		} else if !c.expected {
 			failed = true
+			_, _ = fmt.Fprintf(s.report.out, "cleanup_%s_unexpected_exit\n", c.kind)
 		}
 	}
 	if s.transport != nil {
@@ -367,8 +386,10 @@ func (s *processSession) cleanup() error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if s.env.VerifyLegacyFundingUnchanged(ctx) != nil {
+	fundingErr := s.env.VerifyLegacyFundingUnchanged(ctx)
+	if fundingErr != nil {
 		failed = true
+		reportCleanupFailure(s.report.out, "funding", fundingErr)
 	} else {
 		s.report.pass("retained_a_funding_unchanged")
 	}
@@ -382,19 +403,22 @@ func (s *processSession) cleanup() error {
 				roles = append(roles, name)
 			}
 		}
-		if waitStage(ctx, 5*time.Second, "runtime_connections_remained", func(ctx context.Context) (bool, error) {
+		waitErr := waitStage(ctx, 5*time.Second, "runtime_connections_remained", func(ctx context.Context) (bool, error) {
 			var n int
 			if observer.QueryRow(ctx, `SELECT count(*) FROM pg_stat_activity WHERE usename=ANY($1::text[])`, roles).Scan(&n) != nil {
 				return false, failure("cleanup_observation_failed")
 			}
 			return n == 0, nil
-		}) != nil {
+		})
+		if waitErr != nil {
 			failed = true
+			reportCleanupFailure(s.report.out, "runtime_connections", waitErr)
 		}
 		observer.Close()
 	}
-	if s.env.Close(ctx) != nil {
+	if closeErr := s.env.Close(ctx); closeErr != nil {
 		failed = true
+		reportCleanupFailure(s.report.out, "environment", closeErr)
 	} else {
 		s.report.pass("exact_eight_role_environment_cleanup")
 	}
