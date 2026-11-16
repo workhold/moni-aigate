@@ -1,4 +1,4 @@
-# 036：New API 能力内收总合同与能力台账
+# 038：New API 能力内收总合同与能力台账
 
 2026-11-17；状态：PR-1 设计基线。本规格是后续迁移切片的总索引和共同边界，不表示任何新增运行能力已经实现，也不替代 032、033、供应商资格或生产验收。具体代码、迁移和 UI 变更必须先形成独立切片合同，再按本规格验收。
 
@@ -150,7 +150,7 @@ NA-01…NA-18 是能力域汇总，不替代具体 profile 明细。每个 NA �
 7. **恢复**：复用原操作回执、只读刷新和显式恢复编辑；需要跨刷新保留时复用 IndexedDB journal，不保存秘密。
 8. **移动端**：桌面和 390px 下主要操作、错误、审批、下载均可完成；不得只有页面截图或存在性断言。
 
-实现优先复用 `web/src/api.ts`、`session.ts`、`PlatformView.vue`、各域 `*-state.ts`、`CommerceCommands.vue`/`PricingCommands.vue`/`AlertCommands.vue`、`operating-report.ts` 和 `scripts/phase1_browser_qa.py`。完整候选池、抽签和回放不在 UI 或 036 另建事实，统一使用 033 合同。
+实现优先复用 `web/src/api.ts`、`session.ts`、`PlatformView.vue`、各域 `*-state.ts`、`CommerceCommands.vue`/`PricingCommands.vue`/`AlertCommands.vue`、`operating-report.ts` 和 `scripts/phase1_browser_qa.py`。完整候选池、抽签和回放不在 UI 或 038 另建事实，统一使用 033 合同。
 
 ## 7. 源码复用、许可证与来源
 
@@ -166,11 +166,11 @@ NA-01…NA-18 是能力域汇总，不替代具体 profile 明细。每个 NA �
 
 | 顺序 | 工作包 | 范围与依赖 |
 | --- | --- | --- |
-| M0 | 036 总合同、能力台账和发布门禁设计 | 本片只交付设计；PR-2 另冻物理合同 |
+| M0 | 038 总合同、能力台账和发布门禁设计 | 本片只交付设计；PR-2 另冻物理合同 |
 | M1 | 核心文本逐 profile 内收 | 先 OpenAI-compatible Chat JSON/SSE、工具、usage、错误/取消，再 Responses、Messages、Gemini、Embeddings、Rerank；本阶段以 deterministic/mock 和统一商业链验收，真实供应商资格留第四阶段 |
 | M2 | 渠道运营与控制台缺口 | 模型同步草稿、标签/筛选、只读余额、已有失败诊断展示、客户 CSV/用量视图、待核查体验；不复制资金模型 |
 | M3 | 032 文本数据面 | 遵循已冻结合同；缓存须先裁决 D-032-1/D-032-2，性能按同条件实测 |
-| M4 | 033 文本动态路由 | 在 032 后实施；物理模型、质量档位、完整决策、回放和粘性使用 033，不在 036 重建 |
+| M4 | 033 文本动态路由 | 在 032 后实施；物理模型、质量档位、完整决策、回放和粘性使用 033，不在 038 重建 |
 | M5 | 扩展产品能力 | 真实媒体/长连接、正式支付/原路退款、订阅、OAuth/OIDC/Passkey、站点运营分别立项和验收 |
 
 后续切片按“一种供应商/协议 profile 或一个运营工作流一个 PR”交付。可以并行做互不依赖的设计与只读取证，但共享资金、路由、迁移和 UI 集成由集成人统一复核。

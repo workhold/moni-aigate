@@ -65,7 +65,7 @@ moni-aigate（唯一公网入口）
 
 ## 4. 逐步内收
 
-能力迁移按下面顺序进行，每一步都能回退到前一层。逐项实现状态、验证标签、UI 合同和退役证据由[036 总合同与能力台账](../../specs/036-new-api-capability-migration/spec.md)跟踪；迁移状态与真实供应商资格分别记录。
+能力迁移按下面顺序进行，每一步都能回退到前一层。逐项实现状态、验证标签、UI 合同和退役证据由[038 总合同与能力台账](../../specs/038-new-api-capability-migration/spec.md)跟踪；迁移状态与真实供应商资格分别记录。
 
 1. **外部上游阶段**：先把 New API 和 Sub2API 作为内部 OpenAI-compatible/已验证协议渠道接入，完成 Chat/Responses/SSE/usage/错误/成本证据和 Compose 联调。
 2. **合同适配阶段**：在 aigate 的 `provider`/`routing` 中补齐缺失的协议与计量合同；下游继续承担账号池，aigate 先做影子路由和只读对账。

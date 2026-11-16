@@ -1,6 +1,6 @@
 # 四阶段产品路线（含 0 阶段接入）
 
-状态：2026-11-12 用户确认的现行路线。本文是阶段顺序、阶段范围和完成定义的唯一事实源；HLD、LLD、[New API 路线图](new-api-roadmap.md)、[交付计划](delivery-plan.md)、[上游接入路线](upstream-integration-plan.md)和 README 只链接本文，不各写一份阶段表。本文只定义顺序和边界，不表示列出的能力已经实现。New API 能力的逐项迁移状态、证据和退役门禁由[036 总合同与能力台账](../../specs/036-new-api-capability-migration/spec.md)跟踪；它不替代本文阶段或 032/033 的实施合同。
+状态：2026-11-12 用户确认的现行路线。本文是阶段顺序、阶段范围和完成定义的唯一事实源；HLD、LLD、[New API 路线图](new-api-roadmap.md)、[交付计划](delivery-plan.md)、[上游接入路线](upstream-integration-plan.md)和 README 只链接本文，不各写一份阶段表。本文只定义顺序和边界，不表示列出的能力已经实现。New API 能力的逐项迁移状态、证据和退役门禁由[038 总合同与能力台账](../../specs/038-new-api-capability-migration/spec.md)跟踪；它不替代本文阶段或 032/033 的实施合同。
 
 ## 1. 总体顺序
 

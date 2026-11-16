@@ -1,6 +1,6 @@
 # New API 能力对齐路线图
 
-**2026-11-12 起，阶段顺序与范围以[四阶段路线](phase-roadmap.md)为准。** 本页的对齐目标是“固定版本 New API 核心业务闭环”，即固定提交 `e449cc7` 的公开产品能力在第一阶段可验收地对齐；不是“New API 全部能力”，不追赶 New API 后续 main。能力可先通过 [New API/Sub2API 外部上游 channel](upstream-integration-plan.md)提供，再按 profile 迁入 aigate 的 adapter 或已许可源码模块；不共享下游客户、钱包、数据库或内部 quota 事实。第一阶段的能力分类（必须完成、Mock 验收、明确后置、不属于目标）见[四阶段路线 §4.1](phase-roadmap.md#41-能力分类)。真实供应商认证属于第四阶段，不是本页任何能力在第一阶段的完成条件。逐项内收状态、验证标签和退役条件见[036 总合同与能力台账](../../specs/036-new-api-capability-migration/spec.md)。下文 A/B/C 现在只表示能力域，不再表示阶段。
+**2026-11-12 起，阶段顺序与范围以[四阶段路线](phase-roadmap.md)为准。** 本页的对齐目标是“固定版本 New API 核心业务闭环”，即固定提交 `e449cc7` 的公开产品能力在第一阶段可验收地对齐；不是“New API 全部能力”，不追赶 New API 后续 main。能力可先通过 [New API/Sub2API 外部上游 channel](upstream-integration-plan.md)提供，再按 profile 迁入 aigate 的 adapter 或已许可源码模块；不共享下游客户、钱包、数据库或内部 quota 事实。第一阶段的能力分类（必须完成、Mock 验收、明确后置、不属于目标）见[四阶段路线 §4.1](phase-roadmap.md#41-能力分类)。真实供应商认证属于第四阶段，不是本页任何能力在第一阶段的完成条件。逐项内收状态、验证标签和退役条件见[038 总合同与能力台账](../../specs/038-new-api-capability-migration/spec.md)。下文 A/B/C 现在只表示能力域，不再表示阶段。
 
 2026-11-01（历史记录）。开发者要求New API的能力也应支持，并明确“核心是完善所有能力，然后再推进性能优化”。当前路线先以 external relay 复用下游能力，再逐项在 aigate 内收口；当前 v0.1 仍不是 New API 或 Sub2API 的完整替代品。
 
