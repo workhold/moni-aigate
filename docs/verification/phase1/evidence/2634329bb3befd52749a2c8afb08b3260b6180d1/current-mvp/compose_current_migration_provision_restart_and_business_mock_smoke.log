@@ -1,0 +1,252 @@
+checking Compose rendering
+building image
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Building 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Building 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Building 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Building 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 6.85kB done
+#1 DONE 0.0s
+
+#2 [migrate internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.31kB done
+#2 DONE 0.0s
+
+#3 [provision internal] load metadata for docker.io/library/node:22-alpine
+#3 DONE 0.0s
+
+#4 [app internal] load metadata for docker.io/library/golang:1.26-alpine
+#4 DONE 0.0s
+
+#5 [migrate internal] load metadata for docker.io/library/alpine:3.23
+#5 DONE 0.0s
+
+#6 [worker internal] load .dockerignore
+#6 transferring context: 113B done
+#6 DONE 0.0s
+
+#7 [app console 1/6] FROM docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202
+#7 resolve docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 0.0s done
+#7 DONE 0.0s
+
+#8 [worker stage-2 1/5] FROM docker.io/library/alpine:3.23@sha256:f3d55900449227ae9e237ede521e7b665d53a253b42065ba90b9db9275e198ad
+#8 resolve docker.io/library/alpine:3.23@sha256:f3d55900449227ae9e237ede521e7b665d53a253b42065ba90b9db9275e198ad 0.0s done
+#8 DONE 0.0s
+
+#9 [qa-provider api 1/8] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#9 resolve docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696 0.0s done
+#9 DONE 0.0s
+
+#10 [app internal] load build context
+#10 transferring context: 16.33MB 0.3s done
+#10 transferring context: 16.33MB 0.3s done
+#10 DONE 0.3s
+
+#11 [qa-provider api 2/8] WORKDIR /src
+#11 CACHED
+
+#12 [qa-provider api 3/8] COPY go.mod go.sum ./
+#12 CACHED
+
+#13 [app console 2/6] WORKDIR /src/web
+#13 CACHED
+
+#14 [app console 3/6] COPY web/package*.json ./
+#14 CACHED
+
+#15 [app console 4/6] RUN npm ci
+#15 CACHED
+
+#16 [app console 5/6] COPY web/ ./
+#16 CACHED
+
+#17 [qa-provider api 4/8] RUN go mod download
+#17 CACHED
+
+#18 [app console 6/6] RUN npm run build
+#18 CACHED
+
+#19 [qa-provider api 5/8] COPY . .
+#19 DONE 1.9s
+
+#20 [app api 6/8] COPY --from=console /src/web/dist ./web/dist
+#20 DONE 0.1s
+
+#21 [app api 7/8] RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /moni-aigate ./cmd/moni-aigate
+#21 DONE 18.7s
+
+#22 [provision api 8/8] RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /mock-upstream ./scripts/mock-upstream
+#22 DONE 0.6s
+
+#23 [provision stage-2 4/5] COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
+#23 CACHED
+
+#24 [provision stage-2 2/5] RUN if [ -n "https://mirrors.aliyun.com/alpine" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g" /etc/apk/repositories; fi && apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
+#24 CACHED
+
+#25 [provision stage-2 3/5] COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
+#25 CACHED
+
+#26 [provision stage-2 5/5] WORKDIR /app
+#26 CACHED
+
+#24 [migrate stage-2 2/5] RUN if [ -n "https://mirrors.aliyun.com/alpine" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g" /etc/apk/repositories; fi && apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
+#24 CACHED
+
+#25 [migrate stage-2 3/5] COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
+#25 CACHED
+
+#23 [migrate stage-2 4/5] COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
+#23 CACHED
+
+#27 [qa-provider] exporting to image
+#27 exporting layers done
+#27 exporting manifest sha256:081bfed084229d2d007a685798de75269c8c07c0f5d7a18ff827636024843d30 0.0s done
+#27 exporting config sha256:344276a84ec91c393fe19a77d209c819f9b45d92a89f7eec194dc25d3f8a4b66 0.0s done
+#27 exporting attestation manifest sha256:ef496e60f92e852bd42d8292cb922f09c7dd798f1c3f9a22c3eb354dc8f055d5 0.0s done
+#27 exporting manifest list sha256:ffd9dcf04f614d65c71ee752933f350df83f59f4430c1f90bca43d6922b8108e 0.0s done
+#27 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#27 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142
+#27 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#27 DONE 0.1s
+
+#28 [app] exporting to image
+#28 exporting layers done
+#28 exporting manifest sha256:0ccbcb2ec04ca40dcc424fa702eaf23718f6ea1b1c10b131dca7666a8c5ff935 0.0s done
+#28 exporting config sha256:ca151175a87c89d3b77ff7b3be7b59aab6d74276104da24ea6dae1b41bcf8106 0.0s done
+#28 exporting attestation manifest sha256:d5f61b2ed2e652514f8503ff73b0d560d24c33c1bc0fb5357cf61da6b2cbfcb5 0.0s done
+#28 exporting manifest list sha256:26f47e7b98a3566c893b07233ccb423feea42908dd3e94d838deedf969d1fe78 0.0s done
+#28 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#28 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#28 DONE 0.1s
+
+#29 [provision] exporting to image
+#29 exporting layers done
+#29 exporting manifest sha256:2e2c172590d9231592eb83745f8d1a5e35d7c4a3ba7e3c2e563c2347f3edca43 0.0s done
+#29 exporting config sha256:65bb75c14e605d7d5adb068c5e99f931742f55a1068ce297b32b66eec13d6ef3 0.0s done
+#29 exporting attestation manifest sha256:0cb1be77de75837ef303968dc3b571494e204329da546c59a05807943f684441 0.0s done
+#29 exporting manifest list sha256:1c66f9344fd7c788a5d70598e3d4d967ecd05d52d8394f1be890dc140c47a6fa 0.0s done
+#29 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#29 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#29 DONE 0.1s
+
+#30 [migrate] exporting to image
+#30 exporting layers done
+#30 exporting manifest sha256:5731eef160c5a5e82768eaac3700b829b8f88bdb4f5f8d4d3a2d56f9f2de2000 0.0s done
+#30 exporting config sha256:2b6c2c8453d7af863af2aac6056e96e1373b1317e611c1e7480b9e6c5c0d1a48 0.0s done
+#30 exporting attestation manifest sha256:62507b86a9147761d13aa5f61723a578384b61b81e04587437451f4375c675a4 0.0s done
+#30 exporting manifest list sha256:3849949580ab2f8bd04308080341e798b9af3912add23894cbb961a4ac5000aa 0.0s done
+#30 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#30 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 0.0s done
+#30 DONE 0.1s
+
+#31 [worker] exporting to image
+#31 exporting layers done
+#31 exporting manifest sha256:1bda32e8277d2ff4baac2bf3bea287f33461a045a0a95b4e82319c7e2ae015f8 0.0s done
+#31 exporting config sha256:5922eabdca0de569f12a47c657d801d7d3ad82ec134ae72504751f4aeacd384d 0.0s done
+#31 exporting attestation manifest sha256:eada4ae0f8c334f8d3b8b3fcbd7e255da9ce3b9c36adf9103e3d7c9b864254ba 0.0s done
+#31 exporting manifest list sha256:7b38815deb1ac22846f4309f4c7ab17a95f545b171827d4c75ed63c67ef9771b 0.0s done
+#31 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#31 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-28437-65142 done
+#31 DONE 0.1s
+
+#32 [provision] resolving provenance for metadata file
+#32 DONE 0.1s
+
+#33 [migrate] resolving provenance for metadata file
+#33 DONE 0.0s
+
+#34 [worker] resolving provenance for metadata file
+#34 DONE 0.0s
+
+#35 [app] resolving provenance for metadata file
+#35 DONE 0.1s
+
+#36 [qa-provider] resolving provenance for metadata file
+#36 DONE 0.0s
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Built 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Built 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Built 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Built 
+ Image moni-aigate:qa-moni-aigate-qa-28437-65142 Built 
+starting PostgreSQL
+ Volume moni-aigate-qa-28437-65142_postgres-data Creating 
+ Network moni-aigate-qa-28437-65142_default Creating 
+ Network moni-aigate-qa-28437-65142_default Creating 
+ Volume moni-aigate-qa-28437-65142_postgres-data Creating 
+ Volume moni-aigate-qa-28437-65142_postgres-data Created 
+ Volume moni-aigate-qa-28437-65142_postgres-data Created 
+ Network moni-aigate-qa-28437-65142_default Created 
+ Network moni-aigate-qa-28437-65142_default Created 
+ Container moni-aigate-qa-28437-65142-postgres-1 Creating 
+ Container moni-aigate-qa-28437-65142-postgres-1 Created 
+ Container moni-aigate-qa-28437-65142-postgres-1 Starting 
+ Container moni-aigate-qa-28437-65142-postgres-1 Started 
+running the current empty-database migration
+ Container moni-aigate-qa-28437-65142-postgres-1 Running 
+ Container moni-aigate-qa-28437-65142-postgres-1 Waiting 
+ Container moni-aigate-qa-28437-65142-postgres-1 Healthy 
+ Container moni-aigate-qa-28437-65142-migrate-run-2c96617748bd Creating 
+ Container moni-aigate-qa-28437-65142-migrate-run-2c96617748bd Created 
+migrations applied
+rerunning the current migration plan as an idempotent no-op
+ Container moni-aigate-qa-28437-65142-postgres-1 Running 
+ Container moni-aigate-qa-28437-65142-postgres-1 Waiting 
+ Container moni-aigate-qa-28437-65142-postgres-1 Healthy 
+ Container moni-aigate-qa-28437-65142-migrate-run-c7fa06b8075d Creating 
+ Container moni-aigate-qa-28437-65142-migrate-run-c7fa06b8075d Created 
+migrations applied
+provisioning roles twice
+ Container moni-aigate-qa-28437-65142-provision-run-aa773bc4dbe4 Creating 
+ Container moni-aigate-qa-28437-65142-provision-run-aa773bc4dbe4 Created 
+database roles provisioned
+ Container moni-aigate-qa-28437-65142-provision-run-c553a2856ae7 Creating 
+ Container moni-aigate-qa-28437-65142-provision-run-c553a2856ae7 Created 
+database roles provisioned
+bootstrapping first administrator
+ Container moni-aigate-qa-28437-65142-app-run-99dbb65f2e86 Creating 
+ Container moni-aigate-qa-28437-65142-app-run-99dbb65f2e86 Created 
+administrator created; MFA is optional unless enforced by deployment policy
+rejecting a repeated bootstrap
+ Container moni-aigate-qa-28437-65142-app-run-0a00a68148ff Creating 
+ Container moni-aigate-qa-28437-65142-app-run-0a00a68148ff Created 
+bootstrap refused or failed
+
+starting app and worker
+ Container moni-aigate-qa-28437-65142-app-1 Creating 
+ Container moni-aigate-qa-28437-65142-qa-provider-1 Creating 
+ Container moni-aigate-qa-28437-65142-worker-1 Creating 
+ Container moni-aigate-qa-28437-65142-worker-1 Created 
+ Container moni-aigate-qa-28437-65142-app-1 Created 
+ Container moni-aigate-qa-28437-65142-qa-provider-1 Created 
+ Container moni-aigate-qa-28437-65142-worker-1 Starting 
+ Container moni-aigate-qa-28437-65142-app-1 Starting 
+ Container moni-aigate-qa-28437-65142-qa-provider-1 Starting 
+ Container moni-aigate-qa-28437-65142-worker-1 Started 
+ Container moni-aigate-qa-28437-65142-app-1 Started 
+ Container moni-aigate-qa-28437-65142-qa-provider-1 Started 
+checking live and ready endpoints
+provisioning disposable business fixture through HTTP
+checking live and ready at http://127.0.0.1:18082
+PASS health
+PASS administrator authentication
+PASS text
+PASS image
+PASS tts
+PASS async task id=aef6493b-8a2b-47f9-b569-7a10283d3388
+checking configured Realtime WebSocket
+Realtime WebSocket passed session=98f012f8-e3dd-4624-96e0-db13b818cc24 turn=25b8190c-ae54-4dc5-8b31-f637ab1d18d0
+PASS Realtime WebSocket
+business QA passed all enabled checks
+restarting app and worker
+ Container moni-aigate-qa-28437-65142-app-1 Restarting 
+ Container moni-aigate-qa-28437-65142-worker-1 Restarting 
+ Container moni-aigate-qa-28437-65142-app-1 Started 
+ Container moni-aigate-qa-28437-65142-worker-1 Started 
+curl: (52) Empty reply from server
+restarting PostgreSQL and waiting for app recovery
+ Container moni-aigate-qa-28437-65142-postgres-1 Restarting 
+ Container moni-aigate-qa-28437-65142-postgres-1 Started 
+curl: (22) The requested URL returned error: 503
+deployment QA passed

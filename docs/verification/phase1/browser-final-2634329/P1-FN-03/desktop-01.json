@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "width": 1440,
+  "checks": [
+    "finance_operator 通过 UI 发行单张券并安全清除一次性明文",
+    "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警"
+  ],
+  "observations": [
+    {
+      "name": "finance_operator 通过 UI 发行单张券并安全清除一次性明文"
+    },
+    {
+      "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+      "path": "/platform/vouchers",
+      "title": "运营赠额券 · moni-aigate",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    }
+  ],
+  "evidence": "P1-FN-03/desktop-01.png"
+}

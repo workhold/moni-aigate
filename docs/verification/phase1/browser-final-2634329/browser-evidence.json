@@ -1,0 +1,1362 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "completed": true,
+  "commit": "2634329bb3befd52749a2c8afb08b3260b6180d1",
+  "isolated": true,
+  "base_url": "http://127.0.0.1:18081",
+  "created_at": "2026-11-16T07:39:40.055948+00:00",
+  "runtime": {
+    "app_container": "moni-phase1-browser-app",
+    "worker_container": "moni-phase1-browser-worker",
+    "image_id": "sha256:351a08859d45b3ecd4ffcbfa86019d9fcabb0732c334a2840b47eb4c8be1e53f",
+    "source_commit": "2634329bb3befd52749a2c8afb08b3260b6180d1",
+    "source_tree": "e0375f29343eef04b8350908d0a7b523c3136f2f",
+    "source_clean": true
+  },
+  "items": {
+    "P1-CAT-01": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "/pricing: 公共默认价，无页面横向溢出或错误告警",
+          "公开价格页展示已发布模型与当前价格"
+        ],
+        "observations": [
+          {
+            "name": "/pricing: 公共默认价，无页面横向溢出或错误告警",
+            "path": "/pricing",
+            "title": "模型与价格 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "公开价格页展示已发布模型与当前价格",
+            "model": "phase1-acceptance-7a400d3e450b-chat"
+          }
+        ],
+        "evidence": "P1-CAT-01/desktop-01.png"
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "/pricing: 公共默认价，无页面横向溢出或错误告警",
+          "公开价格页展示已发布模型与当前价格"
+        ],
+        "observations": [
+          {
+            "name": "/pricing: 公共默认价，无页面横向溢出或错误告警",
+            "path": "/pricing",
+            "title": "模型与价格 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "公开价格页展示已发布模型与当前价格",
+            "model": "phase1-acceptance-7a400d3e450b-chat"
+          }
+        ],
+        "evidence": "P1-CAT-01/mobile390-01.png"
+      }
+    },
+    "P1-UI-02": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "/platform/tenants: 客户与成员，无页面横向溢出或错误告警",
+          "/platform/users: 平台账号，无页面横向溢出或错误告警",
+          "/platform/channels: 上游渠道，无页面横向溢出或错误告警",
+          "/platform/catalog: 模型与路由，无页面横向溢出或错误告警",
+          "/platform/prices: 售价版本，无页面横向溢出或错误告警",
+          "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警",
+          "/platform/procurement: 采购账户与对账，无页面横向溢出或错误告警",
+          "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+          "/platform/refunds: 消费退款，无页面横向溢出或错误告警",
+          "/platform/reconciliations: 收费核对，无页面横向溢出或错误告警",
+          "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+          "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+          "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+          "/platform/cash-refunds: 现金退款，无页面横向溢出或错误告警",
+          "/platform/wallet-sources: 资金来源与核对，无页面横向溢出或错误告警",
+          "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+          "/platform/payments: 支付与商品，无页面横向溢出或错误告警",
+          "/platform/recovery: 恢复核对，无页面横向溢出或错误告警",
+          "/platform/periodic-budget?tenant=02131072-af1a-4e39-ae79-c0c560b23c00: 客户周期预算，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/platform/tenants: 客户与成员，无页面横向溢出或错误告警",
+            "path": "/platform/tenants",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/users: 平台账号，无页面横向溢出或错误告警",
+            "path": "/platform/users",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/channels: 上游渠道，无页面横向溢出或错误告警",
+            "path": "/platform/channels",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/catalog: 模型与路由，无页面横向溢出或错误告警",
+            "path": "/platform/catalog",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/prices: 售价版本，无页面横向溢出或错误告警",
+            "path": "/platform/prices",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警",
+            "path": "/platform/price-groups",
+            "title": "价格组与租户定价 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/procurement: 采购账户与对账，无页面横向溢出或错误告警",
+            "path": "/platform/procurement",
+            "title": "采购账户与对账 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+            "path": "/platform/credits",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/refunds: 消费退款，无页面横向溢出或错误告警",
+            "path": "/platform/refunds",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/reconciliations: 收费核对，无页面横向溢出或错误告警",
+            "path": "/platform/reconciliations",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+            "path": "/platform/alerts",
+            "title": "经营告警 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+            "path": "/platform/reports",
+            "title": "运营与成本报表 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+            "path": "/platform/audit",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/cash-refunds: 现金退款，无页面横向溢出或错误告警",
+            "path": "/platform/cash-refunds",
+            "title": "现金退款 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/wallet-sources: 资金来源与核对，无页面横向溢出或错误告警",
+            "path": "/platform/wallet-sources",
+            "title": "资金来源与核对 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+            "path": "/platform/vouchers",
+            "title": "运营赠额券 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/payments: 支付与商品，无页面横向溢出或错误告警",
+            "path": "/platform/payments",
+            "title": "支付与商品 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/recovery: 恢复核对，无页面横向溢出或错误告警",
+            "path": "/platform/recovery",
+            "title": "恢复核对 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/periodic-budget?tenant=02131072-af1a-4e39-ae79-c0c560b23c00: 客户周期预算，无页面横向溢出或错误告警",
+            "path": "/platform/periodic-budget",
+            "title": "周期预算 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-UI-02/desktop-01.png"
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "/platform/tenants: 客户与成员，无页面横向溢出或错误告警",
+          "/platform/users: 平台账号，无页面横向溢出或错误告警",
+          "/platform/channels: 上游渠道，无页面横向溢出或错误告警",
+          "/platform/catalog: 模型与路由，无页面横向溢出或错误告警",
+          "/platform/prices: 售价版本，无页面横向溢出或错误告警",
+          "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警",
+          "/platform/procurement: 采购账户与对账，无页面横向溢出或错误告警",
+          "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+          "/platform/refunds: 消费退款，无页面横向溢出或错误告警",
+          "/platform/reconciliations: 收费核对，无页面横向溢出或错误告警",
+          "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+          "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+          "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+          "/platform/cash-refunds: 现金退款，无页面横向溢出或错误告警",
+          "/platform/wallet-sources: 资金来源与核对，无页面横向溢出或错误告警",
+          "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+          "/platform/payments: 支付与商品，无页面横向溢出或错误告警",
+          "/platform/recovery: 恢复核对，无页面横向溢出或错误告警",
+          "/platform/periodic-budget?tenant=02131072-af1a-4e39-ae79-c0c560b23c00: 客户周期预算，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/platform/tenants: 客户与成员，无页面横向溢出或错误告警",
+            "path": "/platform/tenants",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/users: 平台账号，无页面横向溢出或错误告警",
+            "path": "/platform/users",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/channels: 上游渠道，无页面横向溢出或错误告警",
+            "path": "/platform/channels",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/catalog: 模型与路由，无页面横向溢出或错误告警",
+            "path": "/platform/catalog",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/prices: 售价版本，无页面横向溢出或错误告警",
+            "path": "/platform/prices",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警",
+            "path": "/platform/price-groups",
+            "title": "价格组与租户定价 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/procurement: 采购账户与对账，无页面横向溢出或错误告警",
+            "path": "/platform/procurement",
+            "title": "采购账户与对账 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+            "path": "/platform/credits",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/refunds: 消费退款，无页面横向溢出或错误告警",
+            "path": "/platform/refunds",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/reconciliations: 收费核对，无页面横向溢出或错误告警",
+            "path": "/platform/reconciliations",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+            "path": "/platform/alerts",
+            "title": "经营告警 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+            "path": "/platform/reports",
+            "title": "运营与成本报表 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+            "path": "/platform/audit",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/cash-refunds: 现金退款，无页面横向溢出或错误告警",
+            "path": "/platform/cash-refunds",
+            "title": "现金退款 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/wallet-sources: 资金来源与核对，无页面横向溢出或错误告警",
+            "path": "/platform/wallet-sources",
+            "title": "资金来源与核对 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+            "path": "/platform/vouchers",
+            "title": "运营赠额券 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/payments: 支付与商品，无页面横向溢出或错误告警",
+            "path": "/platform/payments",
+            "title": "支付与商品 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/recovery: 恢复核对，无页面横向溢出或错误告警",
+            "path": "/platform/recovery",
+            "title": "恢复核对 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/periodic-budget?tenant=02131072-af1a-4e39-ae79-c0c560b23c00: 客户周期预算，无页面横向溢出或错误告警",
+            "path": "/platform/periodic-budget",
+            "title": "周期预算 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-UI-02/mobile390-01.png"
+      }
+    },
+    "P1-OP-01": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+          "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+          "预算阈值触发站内告警、读取事件并完成共同确认",
+          "/platform/alerts: 共同确认，无页面横向溢出或错误告警",
+          "/platform/audit: 操作审计，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+            "path": "/platform/alerts",
+            "title": "经营告警 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+            "path": "/platform/audit",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "预算阈值触发站内告警、读取事件并完成共同确认",
+            "rule_label": "phase1-browser-alert-879e16d7a2"
+          },
+          {
+            "name": "/platform/alerts: 共同确认，无页面横向溢出或错误告警",
+            "path": "/platform/alerts",
+            "title": "经营告警 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+            "path": "/platform/audit",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-OP-01/desktop-02.png",
+        "additional_evidence": [
+          "P1-OP-01/desktop-01.png"
+        ]
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+          "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+          "预算阈值触发站内告警、读取事件并完成共同确认",
+          "/platform/alerts: 共同确认，无页面横向溢出或错误告警",
+          "/platform/audit: 操作审计，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/platform/alerts: 经营告警，无页面横向溢出或错误告警",
+            "path": "/platform/alerts",
+            "title": "经营告警 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+            "path": "/platform/audit",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "预算阈值触发站内告警、读取事件并完成共同确认",
+            "rule_label": "phase1-browser-alert-879e16d7a2"
+          },
+          {
+            "name": "/platform/alerts: 共同确认，无页面横向溢出或错误告警",
+            "path": "/platform/alerts",
+            "title": "经营告警 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/platform/audit: 操作审计，无页面横向溢出或错误告警",
+            "path": "/platform/audit",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-OP-01/mobile390-02.png",
+        "additional_evidence": [
+          "P1-OP-01/mobile390-01.png"
+        ]
+      }
+    },
+    "P1-RP-01": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+          "请求级 CSV 实际下载成功"
+        ],
+        "observations": [
+          {
+            "name": "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+            "path": "/platform/reports",
+            "title": "运营与成本报表 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "请求级 CSV 实际下载成功",
+            "file": "downloads/moni-aigate-operations.csv",
+            "bytes": 7504,
+            "sha256": "f99cf77879bb445160855f826afd32081b7b33e319ad7c42b371109fbc082dd8"
+          }
+        ],
+        "evidence": "P1-RP-01/desktop-01.png"
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/platform/reports: 运营与成本报表，无页面横向溢出或错误告警",
+            "path": "/platform/reports",
+            "title": "运营与成本报表 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-RP-01/mobile390-01.png"
+      }
+    },
+    "P1-PR-02": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警",
+            "path": "/platform/price-groups",
+            "title": "价格组与租户定价 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-PR-02/desktop-01.png"
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/platform/price-groups: 价格组与租户定价，无页面横向溢出或错误告警",
+            "path": "/platform/price-groups",
+            "title": "价格组与租户定价 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-PR-02/mobile390-01.png"
+      }
+    },
+    "P1-UI-01": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "Key 一次性展示、Playground 实际完成调用、随后撤销",
+          "/: 工作台，无页面横向溢出或错误告警",
+          "/keys: API 密钥，无页面横向溢出或错误告警",
+          "/members: 成员与权限，无页面横向溢出或错误告警",
+          "/models: 模型与价格，无页面横向溢出或错误告警",
+          "/wallet: 钱包与流水，无页面横向溢出或错误告警",
+          "/requests: 调用记录，无页面横向溢出或错误告警",
+          "/playground: API 联调，无页面横向溢出或错误告警",
+          "/reports: 用量与资金报表，无页面横向溢出或错误告警",
+          "/periodic-budget: 周期预算，无页面横向溢出或错误告警",
+          "/payments: 充值订单，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "Key 一次性展示、Playground 实际完成调用、随后撤销",
+            "request_id": "d0b4effa-363e-481e-b9c5-305ea25b2df9",
+            "settlement_id": "193175f0-9b27-4280-98c4-06bfc39e450e",
+            "path": "/requests",
+            "title": "调用记录 · moni-aigate"
+          },
+          {
+            "name": "/: 工作台，无页面横向溢出或错误告警",
+            "path": "/",
+            "title": "工作台 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/keys: API 密钥，无页面横向溢出或错误告警",
+            "path": "/keys",
+            "title": "API 密钥 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/members: 成员与权限，无页面横向溢出或错误告警",
+            "path": "/members",
+            "title": "成员与权限 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/models: 模型与价格，无页面横向溢出或错误告警",
+            "path": "/models",
+            "title": "模型与价格 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/wallet: 钱包与流水，无页面横向溢出或错误告警",
+            "path": "/wallet",
+            "title": "钱包与流水 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/requests: 调用记录，无页面横向溢出或错误告警",
+            "path": "/requests",
+            "title": "调用记录 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/playground: API 联调，无页面横向溢出或错误告警",
+            "path": "/playground",
+            "title": "API 联调 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/reports: 用量与资金报表，无页面横向溢出或错误告警",
+            "path": "/reports",
+            "title": "用量与资金报表 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/periodic-budget: 周期预算，无页面横向溢出或错误告警",
+            "path": "/periodic-budget",
+            "title": "周期预算 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/payments: 充值订单，无页面横向溢出或错误告警",
+            "path": "/payments",
+            "title": "充值订单 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-UI-01/desktop-01.png"
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "/: 工作台，无页面横向溢出或错误告警",
+          "/keys: API 密钥，无页面横向溢出或错误告警",
+          "/members: 成员与权限，无页面横向溢出或错误告警",
+          "/models: 模型与价格，无页面横向溢出或错误告警",
+          "/wallet: 钱包与流水，无页面横向溢出或错误告警",
+          "/requests: 调用记录，无页面横向溢出或错误告警",
+          "/playground: API 联调，无页面横向溢出或错误告警",
+          "/reports: 用量与资金报表，无页面横向溢出或错误告警",
+          "/periodic-budget: 周期预算，无页面横向溢出或错误告警",
+          "/payments: 充值订单，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "/: 工作台，无页面横向溢出或错误告警",
+            "path": "/",
+            "title": "工作台 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/keys: API 密钥，无页面横向溢出或错误告警",
+            "path": "/keys",
+            "title": "API 密钥 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/members: 成员与权限，无页面横向溢出或错误告警",
+            "path": "/members",
+            "title": "成员与权限 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/models: 模型与价格，无页面横向溢出或错误告警",
+            "path": "/models",
+            "title": "模型与价格 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/wallet: 钱包与流水，无页面横向溢出或错误告警",
+            "path": "/wallet",
+            "title": "钱包与流水 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/requests: 调用记录，无页面横向溢出或错误告警",
+            "path": "/requests",
+            "title": "调用记录 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/playground: API 联调，无页面横向溢出或错误告警",
+            "path": "/playground",
+            "title": "API 联调 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/reports: 用量与资金报表，无页面横向溢出或错误告警",
+            "path": "/reports",
+            "title": "用量与资金报表 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/periodic-budget: 周期预算，无页面横向溢出或错误告警",
+            "path": "/periodic-budget",
+            "title": "周期预算 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "/payments: 充值订单，无页面横向溢出或错误告警",
+            "path": "/payments",
+            "title": "充值订单 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-UI-01/mobile390-01.png"
+      }
+    },
+    "P1-ID-02": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功",
+          "/security: 已启用，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功"
+          },
+          {
+            "name": "/security: 已启用，无页面横向溢出或错误告警",
+            "path": "/security",
+            "title": "账号安全 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-ID-02/desktop-01.png"
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功",
+          "/security: 已启用，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功"
+          },
+          {
+            "name": "/security: 已启用，无页面横向溢出或错误告警",
+            "path": "/security",
+            "title": "账号安全 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-ID-02/mobile390-01.png"
+      }
+    },
+    "P1-CAT-02": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "/models: 模型与价格，无页面横向溢出或错误告警",
+          "六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用"
+        ],
+        "observations": [
+          {
+            "name": "/models: 模型与价格，无页面横向溢出或错误告警",
+            "path": "/models",
+            "title": "模型与价格 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用"
+          }
+        ],
+        "evidence": "P1-CAT-02/desktop-01.png"
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "/models: 模型与价格，无页面横向溢出或错误告警",
+          "六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用"
+        ],
+        "observations": [
+          {
+            "name": "/models: 模型与价格，无页面横向溢出或错误告警",
+            "path": "/models",
+            "title": "模型与价格 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "六个模型别名均在客户目录显示；部署 harness 已断言六协议别名实际调用"
+          }
+        ],
+        "evidence": "P1-CAT-02/mobile390-01.png"
+      }
+    },
+    "P1-FN-02": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "finance_operator 通过 UI 创建独立核款单 phase1-browser-credit-91f3027ead98，并对真实 settlement 创建小额退款",
+          "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+          "finance_approver 通过 UI 完成独立核款与消费退款审批",
+          "/platform/credits: 已批准，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "finance_operator 通过 UI 创建独立核款单 phase1-browser-credit-91f3027ead98，并对真实 settlement 创建小额退款"
+          },
+          {
+            "name": "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+            "path": "/platform/credits",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "finance_approver 通过 UI 完成独立核款与消费退款审批"
+          },
+          {
+            "name": "/platform/credits: 已批准，无页面横向溢出或错误告警",
+            "path": "/platform/credits",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-FN-02/desktop-02.png",
+        "additional_evidence": [
+          "P1-FN-02/desktop-01.png"
+        ]
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "finance_operator 通过 UI 创建独立核款单 phase1-browser-credit-91f3027ead98，并对真实 settlement 创建小额退款",
+          "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+          "finance_approver 通过 UI 完成独立核款与消费退款审批",
+          "/platform/credits: 已批准，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "finance_operator 通过 UI 创建独立核款单 phase1-browser-credit-91f3027ead98，并对真实 settlement 创建小额退款"
+          },
+          {
+            "name": "/platform/credits: 人工核款，无页面横向溢出或错误告警",
+            "path": "/platform/credits",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "finance_approver 通过 UI 完成独立核款与消费退款审批"
+          },
+          {
+            "name": "/platform/credits: 已批准，无页面横向溢出或错误告警",
+            "path": "/platform/credits",
+            "title": "平台管理 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-FN-02/mobile390-02.png",
+        "additional_evidence": [
+          "P1-FN-02/mobile390-01.png"
+        ]
+      }
+    },
+    "P1-FN-03": {
+      "desktop": {
+        "status": "PASS",
+        "width": 1440,
+        "checks": [
+          "finance_operator 通过 UI 发行单张券并安全清除一次性明文",
+          "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+          "finance_approver 通过 UI 完成独立券批次审批",
+          "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+          "owner 通过 UI 兑换已审批券并形成唯一入账回执",
+          "/wallet: 兑换明细核查，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "finance_operator 通过 UI 发行单张券并安全清除一次性明文"
+          },
+          {
+            "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+            "path": "/platform/vouchers",
+            "title": "运营赠额券 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "finance_approver 通过 UI 完成独立券批次审批"
+          },
+          {
+            "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+            "path": "/platform/vouchers",
+            "title": "运营赠额券 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "owner 通过 UI 兑换已审批券并形成唯一入账回执"
+          },
+          {
+            "name": "/wallet: 兑换明细核查，无页面横向溢出或错误告警",
+            "path": "/wallet",
+            "title": "钱包与流水 · moni-aigate",
+            "viewport": 1440,
+            "scrollWidth": 1440,
+            "bodyScrollWidth": 1440,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-FN-03/desktop-03.png",
+        "additional_evidence": [
+          "P1-FN-03/desktop-02.png",
+          "P1-FN-03/desktop-01.png"
+        ]
+      },
+      "mobile390": {
+        "status": "PASS",
+        "width": 390,
+        "checks": [
+          "finance_operator 通过 UI 发行单张券并安全清除一次性明文",
+          "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+          "finance_approver 通过 UI 完成独立券批次审批",
+          "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+          "owner 通过 UI 兑换已审批券并形成唯一入账回执",
+          "/wallet: 兑换明细核查，无页面横向溢出或错误告警"
+        ],
+        "observations": [
+          {
+            "name": "finance_operator 通过 UI 发行单张券并安全清除一次性明文"
+          },
+          {
+            "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+            "path": "/platform/vouchers",
+            "title": "运营赠额券 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "finance_approver 通过 UI 完成独立券批次审批"
+          },
+          {
+            "name": "/platform/vouchers: 运营赠额券，无页面横向溢出或错误告警",
+            "path": "/platform/vouchers",
+            "title": "运营赠额券 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          },
+          {
+            "name": "owner 通过 UI 兑换已审批券并形成唯一入账回执"
+          },
+          {
+            "name": "/wallet: 兑换明细核查，无页面横向溢出或错误告警",
+            "path": "/wallet",
+            "title": "钱包与流水 · moni-aigate",
+            "viewport": 390,
+            "scrollWidth": 390,
+            "bodyScrollWidth": 390,
+            "hasError": false,
+            "errorText": "",
+            "hasContent": true
+          }
+        ],
+        "evidence": "P1-FN-03/mobile390-03.png",
+        "additional_evidence": [
+          "P1-FN-03/mobile390-02.png",
+          "P1-FN-03/mobile390-01.png"
+        ]
+      }
+    }
+  }
+}

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "spec": "029-phase1-acceptance",
-  "commit": "a938116056e377bf1615633ab21e84ba11eef099",
+  "commit": "2634329bb3befd52749a2c8afb08b3260b6180d1",
   "database": "127.0.0.1:55439/moni_test",
-  "started_at": "2026-11-16T05:23:18.359123+00:00",
+  "started_at": "2026-11-16T07:45:37.706688+00:00",
   "suites": [
     {
       "name": "static-build",
@@ -13,36 +13,36 @@
           "command": "go run ./scripts/check-architecture",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-architecture.log",
-          "seconds": 0.374
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-architecture.log",
+          "seconds": 0.523
         },
         {
           "command": "go run ./scripts/check-procurement-layout",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-procurement.log",
-          "seconds": 0.06
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-procurement.log",
+          "seconds": 0.074
         },
         {
           "command": "go vet ./...",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-vet.log",
-          "seconds": 0.626
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-vet.log",
+          "seconds": 0.846
         },
         {
           "command": "go build -trimpath -o /Users/vchive/.codex/worktrees/final-acceptance/moni-aigate/bin/moni-aigate ./cmd/moni-aigate",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-build.log",
-          "seconds": 1.836
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-build.log",
+          "seconds": 2.52
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-architecture.log",
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-procurement.log",
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-vet.log",
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/static-build.log"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-architecture.log",
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-procurement.log",
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-vet.log",
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/static-build.log"
       ]
     },
     {
@@ -53,20 +53,20 @@
           "command": "npm --prefix web test",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-test.log",
-          "seconds": 1.467
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/frontend-test.log",
+          "seconds": 3.285
         },
         {
           "command": "npm --prefix web run build",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-build.log",
-          "seconds": 5.793
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/frontend-build.log",
+          "seconds": 11.65
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-test.log",
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/frontend-build.log"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/frontend-test.log",
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/frontend-build.log"
       ]
     },
     {
@@ -77,12 +77,12 @@
           "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./...",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/go-race.jsonl",
-          "seconds": 2744.22
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/go-race.jsonl",
+          "seconds": 2515.223
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/go-race.jsonl"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/go-race.jsonl"
       ]
     },
     {
@@ -93,20 +93,20 @@
           "command": "docker stop -t 30 moni-phase1-browser-app moni-phase1-browser-worker",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-stop.log",
-          "seconds": 0.151
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/preview-stop.log",
+          "seconds": 0.196
         },
         {
           "command": "./scripts/verify-current-mvp.sh",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/current-mvp.log",
-          "seconds": 443.204
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/current-mvp.log",
+          "seconds": 452.42
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-stop.log",
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/current-mvp.log"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/preview-stop.log",
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/current-mvp.log"
       ]
     },
     {
@@ -117,12 +117,12 @@
           "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./scripts/browser-qa -run ^TestBrowserQARealMainLifecycle$",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/identity-lifecycle.jsonl",
-          "seconds": 27.45
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/identity-lifecycle.jsonl",
+          "seconds": 27.333
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/identity-lifecycle.jsonl"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/identity-lifecycle.jsonl"
       ]
     },
     {
@@ -133,12 +133,12 @@
           "command": "go test -race -p 1 -count=1 -timeout 1200s -json ./scripts/browser-qa -run ^TestMailLifecycleRealMainRecovery$",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mail-lifecycle.jsonl",
-          "seconds": 137.071
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/mail-lifecycle.jsonl",
+          "seconds": 136.181
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mail-lifecycle.jsonl"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/mail-lifecycle.jsonl"
       ]
     },
     {
@@ -149,12 +149,12 @@
           "command": "go run ./scripts/payment-application-qa --require-database --process",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/payment-process.log",
-          "seconds": 206.406
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/payment-process.log",
+          "seconds": 211.769
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/payment-process.log"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/payment-process.log"
       ]
     },
     {
@@ -165,20 +165,20 @@
           "command": "docker start moni-phase1-browser-app moni-phase1-browser-worker",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-start.log",
-          "seconds": 0.394
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/preview-start.log",
+          "seconds": 0.323
         },
         {
           "command": "./scripts/phase1-mock-acceptance.sh",
           "status": "PASS",
           "exit_status": 0,
-          "log": "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mock-deployment.log",
-          "seconds": 178.203
+          "log": "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/mock-deployment.log",
+          "seconds": 176.337
         }
       ],
       "logs": [
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/preview-start.log",
-        "docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/mock-deployment.log"
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/preview-start.log",
+        "docs/verification/phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/mock-deployment.log"
       ]
     }
   ],
@@ -293,7 +293,7 @@
     },
     "P1-PC-01": {
       "internal/server:TestCostVectorApplicationUnknownIsNotFree": "PASS",
-      "internal/billing:TestPostgresProcurementAttemptOriginalRules": "SKIP"
+      "internal/billing:TestPostgresProcurementAttemptOriginalRules": "PASS"
     },
     "P1-PC-02": {
       "internal/billing:TestPostgresProcurementSharedBudgetAcrossTenantsAndChannels": "PASS",
@@ -351,24 +351,24 @@
       "internal/operations:TestPersistentRecoveryGateAndDualApproval": "PASS"
     }
   },
-  "browser_evidence": "/Users/vchive/.cache/moni-phase1-browser/browser-final-a938116/browser-evidence.json",
+  "browser_evidence": "/Users/vchive/.cache/moni-phase1-browser/browser-final-2634329/browser-evidence.json",
   "browser_runtime": {
     "app_container": "moni-phase1-browser-app",
     "worker_container": "moni-phase1-browser-worker",
-    "image_id": "sha256:fb48cdfff71350ecd84c043e64d3b7130a8a276bf835d5a9847c498b142ca674",
-    "source_commit": "a938116056e377bf1615633ab21e84ba11eef099",
-    "source_tree": "6a0204d3900767eacc200c739cc5258ccbcc35dd",
+    "image_id": "sha256:351a08859d45b3ecd4ffcbfa86019d9fcabb0732c334a2840b47eb4c8be1e53f",
+    "source_commit": "2634329bb3befd52749a2c8afb08b3260b6180d1",
+    "source_tree": "e0375f29343eef04b8350908d0a7b523c3136f2f",
     "source_clean": true
   },
   "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项",
   "counts": {
     "total": 41,
-    "pass": 40,
-    "fail": 1,
+    "pass": 41,
+    "fail": 0,
     "skip": 0
   },
-  "overall_status": "FAIL",
-  "mvp_status": "内测；第一阶段尚未完成",
+  "overall_status": "PASS",
+  "mvp_status": "第一阶段本地 MVP 验收通过；仍不是供应商或生产认证",
   "items": [
     {
       "id": "P1-ID-01",
@@ -925,12 +925,12 @@
         "mock-deployment"
       ],
       "mock": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": "P1-PC-01.md",
       "test_counts": {
-        "pass": 1,
+        "pass": 2,
         "fail": 0,
-        "skip": 1
+        "skip": 0
       }
     },
     {
@@ -1280,5 +1280,5 @@
       ]
     }
   ],
-  "completed_at": "2026-11-16T06:25:46.438940+00:00"
+  "completed_at": "2026-11-16T08:44:37.647828+00:00"
 }

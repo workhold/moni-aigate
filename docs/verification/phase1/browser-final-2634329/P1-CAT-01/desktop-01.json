@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "width": 1440,
+  "checks": [
+    "/pricing: 公共默认价，无页面横向溢出或错误告警",
+    "公开价格页展示已发布模型与当前价格"
+  ],
+  "observations": [
+    {
+      "name": "/pricing: 公共默认价，无页面横向溢出或错误告警",
+      "path": "/pricing",
+      "title": "模型与价格 · moni-aigate",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "hasError": false,
+      "errorText": "",
+      "hasContent": true
+    },
+    {
+      "name": "公开价格页展示已发布模型与当前价格",
+      "model": "phase1-acceptance-7a400d3e450b-chat"
+    }
+  ],
+  "evidence": "P1-CAT-01/desktop-01.png"
+}

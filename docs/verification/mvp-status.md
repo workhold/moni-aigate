@@ -1,5 +1,11 @@
 # MVP 交付状态
 
+## 2026-11-16 第一阶段本地 MVP 正式验收
+
+029 冻结清单已在提交 `2634329bb3befd52749a2c8afb08b3260b6180d1` 上整单达到 **41/41 PASS、0 FAIL、0 必需 SKIP**。专用 PostgreSQL、current-only 迁移、真实 main、Compose、支付沙箱、031 deterministic mock，以及桌面和 390px 隔离浏览器证据均已通过；完整 Go race 为 71 包通过且无失败。逐项记录、机器汇总和原始证据分别见[phase1 清单](phase1/)、[summary.json](phase1/summary.json)与[本次原始证据](phase1/evidence/2634329bb3befd52749a2c8afb08b3260b6180d1/)。
+
+这标志着**第一阶段本地 MVP 正式验收完成并具备内测条件**。它不构成真实供应商、正式支付商、生产凭据、生产 SLA、多实例 HA 或第二阶段 032 的认证；这些边界不被本次通过扩大。
+
 2026-11-04，`v0.1.0-dev`，本地可运行的商业网关MVP候选。人工入账、授权、多协议调用与结算的基础闭环已实现；正式支付扩展、001/002中的生产发布与性能门禁尚未全部通过，不能标成生产试运营验收完成。
 
 当前扩展状态以此表及[统一架构](../architecture/README.md)为准；下文各轮测试、预览PID与二进制摘要保留当期范围，不表示所有轮次已部署到当前预览。
@@ -13,7 +19,7 @@
 | 自助经营 | 021邮箱证明/恢复、022-A双审券、023-A分组售价与023-B周期预算，均限定本地验收 | 正式SMTP、023-C商品/订阅 |
 | 应用支付 | 022-B3普通main/受限worker/HTTP/UI及本地模拟整链；在途SIGTERM/Guard失权恢复已验 | 正式PSP、main数据库COMMIT回包丢失及外部事实灾备 |
 | 来源与退款 | [027现行来源](wallet-sources.md)：正式023、四写入口、非现金开账CLI、来源/分配HTTP与控制台、只读核对已实现；真实专项范围见记录。旧C0历史proof候选冻结 | 真实原路现金退款、拒付/债务、外部事实灾备；旧金融历史不自动迁移 |
-| 扩展和生产 | 026经营报表/CSV、024-A告警、028-U当前文本向量链、图片/TTS、video task、单 turn Realtime、Docker Compose 单机 smoke | 028-U完整guard/商业总矩阵、浏览器、正式渠道、1Panel、HA、备份恢复和最后性能；当前媒体只使用 deterministic mock provider |
+| 扩展和生产 | 026经营报表/CSV、024-A告警、028-U当前文本向量链、图片/TTS、video task、单 turn Realtime、Docker Compose 单机 smoke；029 第一阶段 41 项已于 2026-11-16 整单通过 | 正式渠道、1Panel、HA 和后续性能；当前媒体只使用 deterministic mock provider |
 
 [来源候选回归](funding-lot-candidate.md)、[纯退款协议](payment-refund-protocol-v2.md)、[计量](metering-vectors.md)、[Compose渲染](compose-render-025.json)和[邮件进程](mail-lifecycle-025.md)分别说明各自边界；纯层和QA工具不产生生产资金能力。
 
