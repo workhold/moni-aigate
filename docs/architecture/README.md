@@ -4,7 +4,7 @@
 
 moni-aigate 是对外提供 API 的商业运营平台。它借鉴 New API/One API 的模型接入、渠道经营和客户控制台；核心账务和客户边界由 aigate 统一定义，同时允许在许可证和来源记录完整的前提下纳入上游组件。部署由仓库自带的 Compose/脚本完成，1Panel 等面板只是可选的运行环境，不构成产品定位或验收前提。当前以业务与资金正确性优先，先完善能力，再推进性能专项；竞品全功能、生产发布或性能对标均需独立验收。
 
-建议先看系统上下文、请求时序和部署图，再按模块表进入源码。设计入口：[HLD](../design/HLD.md)、[LLD](../design/LLD.md)、[四阶段路线](../design/phase-roadmap.md)、[上游接入路线](../design/upstream-integration-plan.md)、[能力路线图](../design/new-api-roadmap.md)、[商业 MVP 合同](../../specs/001-commercial-mvp/spec.md)、[035 接入合同](../../specs/035-external-upstream-integration/spec.md)。当前验收入口：[MVP 状态](../verification/mvp-status.md)、[逐项验收边界](../verification/acceptance-execution.md)与[001–028整体盘点](../verification/overall-delivery-inventory.md)。
+建议先看系统上下文、请求时序和部署图，再按模块表进入源码。设计入口：[HLD](../design/HLD.md)、[LLD](../design/LLD.md)、[四阶段路线](../design/phase-roadmap.md)、[上游接入路线](../design/upstream-integration-plan.md)、[能力路线图](../design/new-api-roadmap.md)、[036 能力内收总合同与台账](../../specs/036-new-api-capability-migration/spec.md)、[商业 MVP 合同](../../specs/001-commercial-mvp/spec.md)、[035 接入合同](../../specs/035-external-upstream-integration/spec.md)。当前验收入口：[MVP 状态](../verification/mvp-status.md)、[逐项验收边界](../verification/acceptance-execution.md)与[001–028整体盘点](../verification/overall-delivery-inventory.md)。
 
 **当前研发原则**：[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)采用单一现行模型，MVP 前优先架构完整与业务能力，不新增旧版本兼容、双写或自动回退。下面的隔离历史证明候选保留其事实与验证边界，暂不扩展，也不作为经营功能的前置依赖；它们没有接入默认服务。现行资金与租户正确性继续保持。
 
@@ -96,6 +96,8 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration-plan.md)登记为可统一部署的外部 channel。aigate 是唯一公网入口，负责客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算和审计；下游网关保留自己的供应商账号池、协议适配和局部重试。三个服务可以放在同一 Compose 编排（或等效部署脚本）中，1Panel 等面板可选导入同一编排，但数据库、管理端口和客户账单事实保持独立。动态路由在 `internal/routing` 选择 channel，下游账号选择不改变 aigate 的 route revision 或结算身份。外部模型列表、单次 HTTP 200 和连通性 probe 不能替代逐 profile 资格认证。
 
 0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)，七项本地验收已逐项勾选并附证据路径。当前 New API/Sub2API 仍以外部 relay 运行，未 vendor 修改版源码；`third_party/` 保存固定提交的 LICENSE/NOTICE 与 SOURCE 记录，`upstream-provenance-check` 在 `make check` 和 `make verify-mvp` 中校验来源、许可证、修改记录和固定镜像，详见[来源验收](../verification/phase0-upstream-provenance.md)。真实生产部署、供应商认证和完整发布 SBOM 仍需独立验收。
+
+2026-11-17 新增[036 能力内收总合同与能力台账](../../specs/036-new-api-capability-migration/spec.md)作为后续迁移的规划与证据索引：实现位置、mock/外部流程验证、真实供应商资格和生产资格分别记录；切换与回退继续使用不可变 channel/version 和 route revision，完整动态决策仍归 033。本次只增加设计和台账，没有新增运行模块、API、数据表、迁移、依赖、部署拓扑或供应商资格，也没有改变现有五图、权限边界和商业链。
 
 ```mermaid
 flowchart LR
