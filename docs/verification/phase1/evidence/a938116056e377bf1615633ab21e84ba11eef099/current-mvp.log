@@ -1,0 +1,896 @@
+command: ./scripts/verify-current-mvp.sh
+started_at: 2026-11-16T06:09:13.082716+00:00
+
+
+===== static current architecture checks =====
+command: go run ./scripts/check-architecture
+architecture snapshot verified: 2382 files, 5e34eec1d68a
+----- static current architecture checks: PASS (0s) -----
+
+===== static current procurement layout check =====
+command: go run ./scripts/check-procurement-layout
+PASS specs/023-periodic-products/b-procurement-column-layout-v1.json: 32 tables, 715 columns (68 generated, 647 nongenerated); design only, no DDL/keys/ACL/reader/catalog attestation
+----- static current procurement layout check: PASS (1s) -----
+
+===== current-only migration VerifyCurrent and append path =====
+command: checked_go_race_test 300s \^\(TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline\|TestEmbeddedPrefixIsExactClosedSet\)\$ ./migrations:TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline ./migrations:TestEmbeddedPrefixIsExactClosedSet -- ./migrations
+ok  	github.com/moni-ai/moni-aigate/migrations	3.603s
+----- current-only migration VerifyCurrent and append path: PASS (7s) -----
+
+===== current permissions and legacy/refusal boundaries =====
+command: checked_go_race_test 600s \^\(TestUnifiedTextMeteringRejectsEveryListedLegacyRelation\|TestUnifiedTextMeteringRejectsChanged023DependencyBeforeDDL\|TestUnifiedTextMeteringRejectsChanged023ACLBeforeDDL\|TestUnifiedTextMeteringRejectsZeroBalanceBusinessHistory\|TestMeterRoleBoundaryWithActualLoginConnections\|TestWalletSourcesRolesActualCurrentMatrix\|TestWalletSourcesRolesDMLAndWorkerReadBoundary\|TestWalletSourcesRolesDetectPrivilegeAndFunctionDrift\|TestPaymentRolesImplicitDatabaseOwnerSchema\|TestPaymentRolesEmptyOffActualLoginsAndRepeatedProvision\)\$ ./migrations:TestUnifiedTextMeteringRejectsEveryListedLegacyRelation ./migrations:TestUnifiedTextMeteringRejectsChanged023DependencyBeforeDDL ./migrations:TestUnifiedTextMeteringRejectsChanged023ACLBeforeDDL ./migrations:TestUnifiedTextMeteringRejectsZeroBalanceBusinessHistory ./internal/operations:TestMeterRoleBoundaryWithActualLoginConnections ./internal/operations:TestWalletSourcesRolesActualCurrentMatrix ./internal/operations:TestWalletSourcesRolesDMLAndWorkerReadBoundary ./internal/operations:TestWalletSourcesRolesDetectPrivilegeAndFunctionDrift ./internal/operations:TestPaymentRolesImplicitDatabaseOwnerSchema ./internal/operations:TestPaymentRolesEmptyOffActualLoginsAndRepeatedProvision -- ./migrations ./internal/operations
+ok  	github.com/moni-ai/moni-aigate/migrations	67.573s
+ok  	github.com/moni-ai/moni-aigate/internal/operations	18.749s
+----- current permissions and legacy/refusal boundaries: PASS (96s) -----
+
+===== 028-U PostgreSQL guard matrix =====
+command: checked_go_race_test 900s \^Test\(UnifiedTextMeteringCanonical\|MeterCompletenessRejectsGaps\|UnifiedTextMeteringGuardMatrix\|UnifiedTextMeteringGuardRoleMatrix\|UnifiedTextMeteringAmountAndSettlementGuards\|UnifiedTextMeteringSchemaAndCapabilityCompletenessGuards\|UnifiedTextMeteringFinalizationPointerAndEventIdentityGuards\|UnifiedTextMeteringConcurrentCorrectionIdentityIsUnique\|UnifiedTextMeteringCurrentShapeHasNoScalarProjection\|UnifiedTextMeteringCurrentGuardFunctionsAreInvokerAndPinned\|UnifiedTextMeteringAttemptQuoteBindingAndSendingGuards\|UnifiedTextMeteringSnapshotTenantBindingRollsBack\|UnifiedTextMeteringSupplierCorrectionPointerGuard\|UnifiedTextMeteringDoesNotRetainRouteRevisionBypass\|UnifiedTextMeteringGuardClosureDeferredAggregateRollback\|UnifiedTextMeteringGuardClosureRuntimeCrossRequestAttemptRollsBack\|UnifiedTextMeteringGuardClosureSourceIdentityTenantScopeAndConflictRace\|UnifiedTextMeteringGuardClosureActualLoginFunctionSurface\|UnifiedTextMeteringGuardAuditGlobalFactsAreTenantNeutral\|UnifiedTextMeteringGuardAuditConcurrentImmutableGlobalFacts\|UnifiedTextMeteringGuardAuditActualLoginTableSurface\)\$ ./migrations:TestUnifiedTextMeteringCanonical ./migrations:TestMeterCompletenessRejectsGaps ./migrations:TestUnifiedTextMeteringGuardMatrix ./migrations:TestUnifiedTextMeteringGuardRoleMatrix ./migrations:TestUnifiedTextMeteringAmountAndSettlementGuards ./migrations:TestUnifiedTextMeteringSchemaAndCapabilityCompletenessGuards ./migrations:TestUnifiedTextMeteringFinalizationPointerAndEventIdentityGuards ./migrations:TestUnifiedTextMeteringConcurrentCorrectionIdentityIsUnique ./migrations:TestUnifiedTextMeteringCurrentShapeHasNoScalarProjection ./migrations:TestUnifiedTextMeteringCurrentGuardFunctionsAreInvokerAndPinned ./migrations:TestUnifiedTextMeteringAttemptQuoteBindingAndSendingGuards ./migrations:TestUnifiedTextMeteringSnapshotTenantBindingRollsBack ./migrations:TestUnifiedTextMeteringSupplierCorrectionPointerGuard ./migrations:TestUnifiedTextMeteringDoesNotRetainRouteRevisionBypass ./migrations:TestUnifiedTextMeteringGuardClosureDeferredAggregateRollback ./migrations:TestUnifiedTextMeteringGuardClosureRuntimeCrossRequestAttemptRollsBack ./migrations:TestUnifiedTextMeteringGuardClosureSourceIdentityTenantScopeAndConflictRace ./migrations:TestUnifiedTextMeteringGuardClosureActualLoginFunctionSurface ./migrations:TestUnifiedTextMeteringGuardAuditGlobalFactsAreTenantNeutral ./migrations:TestUnifiedTextMeteringGuardAuditConcurrentImmutableGlobalFacts ./migrations:TestUnifiedTextMeteringGuardAuditActualLoginTableSurface -- ./migrations
+ok  	github.com/moni-ai/moni-aigate/migrations	15.847s
+----- 028-U PostgreSQL guard matrix: PASS (39s) -----
+
+===== wallet funding billing and settlement =====
+command: checked_go_race_test 1200s \^\(TestPostgresLifecycle\|TestPostgresEvidenceAndReconciliation\|TestPostgresSettlementPolicy\|TestPostgresFundingManualConcurrentApprovalHasOneReceiptAndCreditedEvent\|TestPostgresFundingManualAuditAndOutboxFailuresRollbackAllFacts\|TestPostgresWalletOpeningOneNoncashSourceAndIntentReplay\|TestPostgresWalletOpeningAuditFailureRollsBackSource\|TestPostgresWalletOpeningUnknownCommitDoesNotPublishOrRepeat\|TestPostgresWalletSourcesRuntimeFIFOFinishAndReverseRefund\|TestPostgresWalletSourcesRuntimeEventFailureRollsBack\|TestPostgresMediaReserveFinalizeUsesWalletLotsAndIsIdempotent\|TestPostgresMediaUnknownFinalizationReleasesWithoutCharge\|TestHTTPCommerceIssuanceDualApprovalUniqueFundingAndOffReadback\|TestWalletSourcesHTTPCommercialFlowAndAuthorization\)\$ ./internal/billing:TestPostgresLifecycle ./internal/billing:TestPostgresEvidenceAndReconciliation ./internal/billing:TestPostgresSettlementPolicy ./internal/billing:TestPostgresFundingManualConcurrentApprovalHasOneReceiptAndCreditedEvent ./internal/billing:TestPostgresFundingManualAuditAndOutboxFailuresRollbackAllFacts ./internal/billing:TestPostgresWalletOpeningOneNoncashSourceAndIntentReplay ./internal/billing:TestPostgresWalletOpeningAuditFailureRollsBackSource ./internal/billing:TestPostgresWalletOpeningUnknownCommitDoesNotPublishOrRepeat ./internal/billing:TestPostgresWalletSourcesRuntimeFIFOFinishAndReverseRefund ./internal/billing:TestPostgresWalletSourcesRuntimeEventFailureRollsBack ./internal/billing:TestPostgresMediaReserveFinalizeUsesWalletLotsAndIsIdempotent ./internal/billing:TestPostgresMediaUnknownFinalizationReleasesWithoutCharge ./internal/server:TestHTTPCommerceIssuanceDualApprovalUniqueFundingAndOffReadback ./internal/server:TestWalletSourcesHTTPCommercialFlowAndAuthorization -- ./internal/billing ./internal/server
+ok  	github.com/moni-ai/moni-aigate/internal/billing	19.978s
+ok  	github.com/moni-ai/moni-aigate/internal/server	13.215s
+----- wallet funding billing and settlement: PASS (52s) -----
+
+===== backup restore and recovery lock drill =====
+command: go run ./scripts/backup-restore-drill.go
+{
+  "active_service_backup_rejected": true,
+  "actual_main_process_recovery_http": {
+    "create_credit": 503,
+    "paid_api": 503
+  },
+  "backup_seconds": 0.276609625,
+  "business_facts": {
+    "credit_approved": true,
+    "funding_receipt": true,
+    "request": true,
+    "attempt": true,
+    "finalization": true,
+    "settlement": true,
+    "refund_approved": true,
+    "tenant_audit_events": 7
+  },
+  "checkpoint_at": "2026-11-16T06:12:29.319375Z",
+  "checkpoint_wallet": {
+    "tenant_id": "af1660a5-cec1-4304-aef2-1f9b01b2e70c",
+    "available": "875",
+    "held": "120"
+  },
+  "container_deployment_executed": false,
+  "date": "2026-11-16T06:12:33Z",
+  "effective_recovery_mode": true,
+  "env_recovery_mode": false,
+  "ledger": {
+    "balanced": true,
+    "account_mismatches": 0,
+    "unbalanced_journals": 0
+  },
+  "main_process_graceful_shutdown": true,
+  "nonempty_target_rejected": true,
+  "old_master_key_required_and_verified": true,
+  "persistent_recovery_required": true,
+  "post_snapshot_credit_excluded_micro": "100",
+  "postgresql": "16.15",
+  "recovered_point": "quiesced snapshot before deliberately omitted post-backup credit",
+  "recovery_audit_count": 1,
+  "recovery_http_status": {
+    "approve_credit": 503,
+    "approve_refund": 503,
+    "create_credit": 503,
+    "create_refund": 503,
+    "paid_api": 503,
+    "wallet_read": 200
+  },
+  "restore_to_verified_recovery_http_seconds": 1.417486,
+  "restored_current_verified": true,
+  "restored_wallet": {
+    "tenant_id": "af1660a5-cec1-4304-aef2-1f9b01b2e70c",
+    "available": "875",
+    "held": "120"
+  },
+  "source_current_verified": true,
+  "tampered_bundle_rejected": true,
+  "writes_during_recovery_blocked": true
+}
+----- backup restore and recovery lock drill: PASS (12s) -----
+
+===== provider usage and current error/timeout handling =====
+command: checked_go_race_test 600s \^Test\(OpenAICompatibleDeepSeekUsageAcrossHTTPModes\|DeepSeekCacheUsageNormalizesOnlyCompleteCacheEvidence\|NativeSSEFragmentationFinalEventsAndCacheAccounting\|NativeUsageFailuresRemainUnbillable\|HeaderAndFirstEventTimeout\|IdleTimeoutIsSeparateFromFirstEventAndProgress\|RoleHeartbeatCannotExtendProgressOrTotalDeadline\)\$ ./internal/provider:TestOpenAICompatibleDeepSeekUsageAcrossHTTPModes ./internal/provider:TestDeepSeekCacheUsageNormalizesOnlyCompleteCacheEvidence ./internal/provider:TestNativeSSEFragmentationFinalEventsAndCacheAccounting ./internal/provider:TestNativeUsageFailuresRemainUnbillable ./internal/provider:TestHeaderAndFirstEventTimeout ./internal/provider:TestIdleTimeoutIsSeparateFromFirstEventAndProgress ./internal/provider:TestRoleHeartbeatCannotExtendProgressOrTotalDeadline -- ./internal/provider
+ok  	github.com/moni-ai/moni-aigate/internal/provider	2.221s
+----- provider usage and current error/timeout handling: PASS (10s) -----
+
+===== provider config catalog server race compile =====
+command: go_race_test ./internal/provider ./internal/config ./internal/catalog ./internal/server -timeout 600s -run \^\$
+ok  	github.com/moni-ai/moni-aigate/internal/provider	1.524s [no tests to run]
+ok  	github.com/moni-ai/moni-aigate/internal/config	1.554s [no tests to run]
+ok  	github.com/moni-ai/moni-aigate/internal/catalog	1.618s [no tests to run]
+ok  	github.com/moni-ai/moni-aigate/internal/server	2.198s [no tests to run]
+----- provider config catalog server race compile: PASS (9s) -----
+
+===== config and catalog current contract race =====
+command: checked_go_race_test 900s \^Test\(OperationsAlertsDefaultOffAndInvalidConfiguration\|MFAEnrollmentPolicyConfiguration\|DisabledMailDropsUnusedCredentials\|MailConfigurationBoundaries\|PaymentsModeFailsClosedBeforeConnection\|TrustedProxyCIDRsAreExplicitAndBounded\|TrustedProxyConfigurationLoadRejectsInvalidValues\|VoucherConfigurationDefaultsAndIndependentStrictKeys\|GroupPriceVectorApplicationReplayAndConcurrency\|GroupPriceVectorFailuresRollback\|GroupPriceVectorHistoryPagingAndZero\|GroupPriceVectorRawCommitRejectsGaps\|GroupPriceVectorFingerprintGolden\|GroupPriceVectorResultRejectsScalarAndInvalidRates\|TenantPricingCommandsAndOriginalReceipts\|TenantPricingConcurrentOperationAndAuditRollback\|TenantPricingReadIsolationPreviewAndPagination\)\$ ./internal/config:TestOperationsAlertsDefaultOffAndInvalidConfiguration ./internal/config:TestMFAEnrollmentPolicyConfiguration ./internal/config:TestDisabledMailDropsUnusedCredentials ./internal/config:TestMailConfigurationBoundaries ./internal/config:TestPaymentsModeFailsClosedBeforeConnection ./internal/config:TestTrustedProxyCIDRsAreExplicitAndBounded ./internal/config:TestTrustedProxyConfigurationLoadRejectsInvalidValues ./internal/config:TestVoucherConfigurationDefaultsAndIndependentStrictKeys ./internal/catalog:TestGroupPriceVectorApplicationReplayAndConcurrency ./internal/catalog:TestGroupPriceVectorFailuresRollback ./internal/catalog:TestGroupPriceVectorHistoryPagingAndZero ./internal/catalog:TestGroupPriceVectorRawCommitRejectsGaps ./internal/catalog:TestGroupPriceVectorFingerprintGolden ./internal/catalog:TestGroupPriceVectorResultRejectsScalarAndInvalidRates ./internal/catalog:TestTenantPricingCommandsAndOriginalReceipts ./internal/catalog:TestTenantPricingConcurrentOperationAndAuditRollback ./internal/catalog:TestTenantPricingReadIsolationPreviewAndPagination -- ./internal/config ./internal/catalog
+ok  	github.com/moni-ai/moni-aigate/internal/config	1.492s
+ok  	github.com/moni-ai/moni-aigate/internal/catalog	8.921s
+----- config and catalog current contract race: PASS (25s) -----
+
+===== Config to Server provider timeout wiring audit =====
+command: check_provider_timeout_wiring
+Config -> Server provider timeout wiring is present
+----- Config to Server provider timeout wiring audit: PASS (0s) -----
+
+===== six-text commercial path =====
+command: checked_go_race_test 1800s \^TestCostVectorApplication\(QuoteChain\|UnknownIsNotFree\|RecoveryDoesNotRegenerate\|IdempotencyChargesOnceAcrossProtocols\|DefaultAndGroupPricesAcrossProtocols\)\$ ./internal/server:TestCostVectorApplicationQuoteChain ./internal/server:TestCostVectorApplicationUnknownIsNotFree ./internal/server:TestCostVectorApplicationRecoveryDoesNotRegenerate ./internal/server:TestCostVectorApplicationIdempotencyChargesOnceAcrossProtocols ./internal/server:TestCostVectorApplicationDefaultAndGroupPricesAcrossProtocols -- ./internal/server
+ok  	github.com/moni-ai/moni-aigate/internal/server	42.035s
+----- six-text commercial path: PASS (52s) -----
+
+===== image TTS async-video and Realtime current PostgreSQL path =====
+command: checked_go_race_test 1800s \^\(TestImageGenerationHTTPUsesCurrentMediaWalletFacts\|TestSpeechHTTPUsesCurrentMediaWalletFacts\|TestMediaResultsSurviveProcessCacheReset\|TestVideoTaskUsesCurrentMediaWalletAcrossSubmitAndTerminalObservation\|TestVideoTaskArtifactSurvivesStoreAndProviderRestart\|TestVideoTaskObservationSurvivesWorkerProviderRestart\|TestVideoTaskFailureAndCancelReleaseMedia\|TestVideoTaskUnknownSubmissionReleasesMediaAndPreventsResubmit\|TestRealtimeHTTPPostgresOneSessionOneTurn\|TestPostgresRealtimePersistenceLifecycleAndTenantIsolation\|TestPostgresRealtimeServerSelectsDatabasePersistence\|TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery\|TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay\)\$ ./internal/server:TestImageGenerationHTTPUsesCurrentMediaWalletFacts ./internal/server:TestSpeechHTTPUsesCurrentMediaWalletFacts ./internal/server:TestMediaResultsSurviveProcessCacheReset ./internal/server:TestVideoTaskUsesCurrentMediaWalletAcrossSubmitAndTerminalObservation ./internal/server:TestVideoTaskArtifactSurvivesStoreAndProviderRestart ./internal/server:TestVideoTaskObservationSurvivesWorkerProviderRestart ./internal/server:TestVideoTaskFailureAndCancelReleaseMedia ./internal/server:TestVideoTaskUnknownSubmissionReleasesMediaAndPreventsResubmit ./internal/server:TestRealtimeHTTPPostgresOneSessionOneTurn ./internal/server:TestPostgresRealtimePersistenceLifecycleAndTenantIsolation ./internal/server:TestPostgresRealtimeServerSelectsDatabasePersistence ./internal/server:TestMVPPostgresActualMainAlertsDefaultOffAndCrashRecovery ./internal/server:TestMVPPostgresActualMainSIGTERMDrainsSSEAndRestartDoesNotReplay -- ./internal/server
+ok  	github.com/moni-ai/moni-aigate/internal/server	44.839s
+----- image TTS async-video and Realtime current PostgreSQL path: PASS (65s) -----
+
+===== media state-machine and adapter safety tests =====
+command: checked_go_race_test 600s \^\(TestLifecycleNeverInfersConsumptionFromResult\|TestLifecyclePostDispatchFailureIsUnknown\|TestOrchestratorFullLifecycleAndRefs\|TestOrchestratorUnknownIsTerminalAndNeverResubmits\|TestOrchestratorCancellationIsSingleUse\|TestMockRealtimeAdapterCompletesOneResponse\|TestMockRealtimeAdapterUnknownHandleIsAnError\|TestImageGenerationStrictInputAndInlineResult\|TestImageGenerationIdempotencyDoesNotRegenerate\|TestSynthesizeSpeechReturnsWAVAndReplaysWithoutProviderCall\|TestSynthesizeSpeechUnknownSubmissionCannotRetry\)\$ ./internal/media:TestLifecycleNeverInfersConsumptionFromResult ./internal/media:TestLifecyclePostDispatchFailureIsUnknown ./internal/media:TestOrchestratorFullLifecycleAndRefs ./internal/media:TestOrchestratorUnknownIsTerminalAndNeverResubmits ./internal/media:TestOrchestratorCancellationIsSingleUse ./internal/provider:TestMockRealtimeAdapterCompletesOneResponse ./internal/provider:TestMockRealtimeAdapterUnknownHandleIsAnError ./internal/server:TestImageGenerationStrictInputAndInlineResult ./internal/server:TestImageGenerationIdempotencyDoesNotRegenerate ./internal/server:TestSynthesizeSpeechReturnsWAVAndReplaysWithoutProviderCall ./internal/server:TestSynthesizeSpeechUnknownSubmissionCannotRetry -- ./internal/media ./internal/provider ./internal/server
+ok  	github.com/moni-ai/moni-aigate/internal/media	1.621s
+ok  	github.com/moni-ai/moni-aigate/internal/provider	1.534s
+ok  	github.com/moni-ai/moni-aigate/internal/server	1.872s
+----- media state-machine and adapter safety tests: PASS (19s) -----
+
+===== current Go vet =====
+command: go vet ./migrations ./internal/billing ./internal/catalog ./internal/operations ./internal/provider ./internal/media ./internal/server
+----- current Go vet: PASS (1s) -----
+
+===== frontend tests =====
+command: npm --prefix web test
+
+> moni-aigate-console@0.1.0 test
+> node --experimental-strip-types --test tests/*.test.mjs
+
+✔ identity, role, tenant, CSRF, MFA, filters, close and superseding request suppress stale replies (0.458583ms)
+✔ pager has explicit null terminal, serial reads, cursor cycle detection and old-identity rejection (0.707791ms)
+✔ safe unknown journal survives close/reload, never stores body/sample/label/CSRF and 404 never unlocks (39.789084ms)
+✔ configure and retire share the same resource lock; mismatched immutable receipt never unlocks (1.511375ms)
+✔ only known preclaim HTTP failures release; transport, bad success, 404 and operation conflict remain unknown (0.122417ms)
+✔ HTTP 200 rejected receipt is a business rejection, never reported as applied (0.6185ms)
+✔ malformed HTTP 200 stays unknown and never issues automatic retries or a new operation (0.308666ms)
+✔ late successful write after close is discarded while original operation remains discoverable (0.866708ms)
+✔ corrupt/unavailable storage fails before POST and preserves pending lock rather than clearing it (0.6595ms)
+✔ strict transport has exact 200 success, no-store same-origin credentials and no hidden retries (0.832084ms)
+✔ transport rejects duplicate JSON, invalid UTF8, oversized streamed response and oversized request (0.696625ms)
+✔ timeout aborts the actual fetch and remains unknown; stale authentication reply does not dispatch (7.095834ms)
+✔ strict UUID, canonical decimal and Unicode labels enforce separate bounds without Number conversion (0.8005ms)
+✔ UTC microseconds preserve pre-epoch and single-microsecond boundaries; no browser freshness inference (8.762875ms)
+✔ parameters use exact kind unions, hysteresis and bounded integer strings (0.698583ms)
+✔ budget sample preserves 100-digit projections and negative 101-digit available arithmetic (0.1695ms)
+✔ aging 1001 always means at least; zero has explicit nullable oldest fields and age is creation age (0.4805ms)
+✔ capabilities preserve default-off and recovery priority, never call disabled worker healthy (0.295209ms)
+✔ strict rules and episodes preserve sample/error/history identities and nullable lifecycle pairs (1.107125ms)
+✔ nonempty pages call row parsers without exposing Array.map indices as expected IDs (0.233667ms)
+✔ strict raw JSON detects nested and escaped duplicate fields, trailing data, bad UTF8 surrogate and excessive depth (2.259708ms)
+✔ list pagination has explicit null terminal and exact canonical cursor schema, never 023 empty string (3.374333ms)
+✔ command digest matches independent frozen JSON order and escaping; operation ID is excluded (16.206584ms)
+✔ configure/no-op/retire/ack preserve CAS above 2^53 and unified target locks (2.073042ms)
+✔ cash-refund pending alert reuses the exact tenant aging DTO (0.205667ms)
+✔ funding writes send same-origin session, CSRF and stable idempotency; conflicts do not retry (31.946625ms)
+✔ invalid upstream response is not exposed as raw HTML (0.246625ms)
+✔ cash-refund DTO separates requested preview from completed frozen facts (2.175916ms)
+✔ cash-refund DTO rejects amount numbers and invalid state/fact combinations (0.428667ms)
+✔ cash-refund paths and command bodies forbid caller supplied amounts (0.732084ms)
+✔ selection is confined to the visible current page and retains revision precision (44.764375ms)
+✔ command builders canonicalize order and use only the fixed preflight and apply contracts (16.247917ms)
+✔ UUID, target count and canonical int64 strings reject ambiguous or rounded inputs (0.364875ms)
+✔ preflight is only an observation, and any blocked target makes the whole batch unconfirmable (0.319083ms)
+✔ enable requires a live unquarantined pool even when a channel is already enabled (0.092625ms)
+✔ applied receipts prove enabled-only changes while no-op application remains a valid terminal outcome (0.28825ms)
+✔ HTTP-200 rejected receipts stay rejected with zero changed targets and never imply partial success (0.118958ms)
+✔ public receipt projections reject unsafe diagnostics and do not expose unexpected provider fields (0.113292ms)
+✔ the journal allocates once, survives UI epoch resets and isolates actors without exposing mutable commands (0.236791ms)
+✔ a receipt for another command, operation ID or submitting actor cannot resolve an uncertain write (0.1335ms)
+✔ missing applied after states or rejected after states leave the original write uncertain (2.982208ms)
+✔ list, preflight and receipt lanes reject late responses without invalidating unrelated receipts (0.188833ms)
+✔ network or invalid responses retain one operation ID and use GET-only recovery including a non-final 404 (19.533458ms)
+✔ a late apply receipt cannot replace a newer historical selection or pair it with the wrong operation ID (0.130875ms)
+✔ the transport returns a durable rejected receipt and history without provider, route or financial writes (0.45075ms)
+✔ definite authorization rejection is distinct from an uncertain write and does not trigger automatic resubmission (0.079541ms)
+✔ display genesis is label-only and public settings expose no administration fields (2.88925ms)
+✔ approximate display uses exact BigInt rational conversion with version and disclaimer (0.236083ms)
+✔ display parsers reject invalid rate combinations, unsafe names and stale histories (0.248458ms)
+✔ display command requires confirmation and complete enabled or disabled fields (0.119416ms)
+✔ failed public reload removes a previously enabled approximate display (16.5515ms)
+✔ safe journal persists only five metadata fields across reload; secret body and result are never retained (13.451209ms)
+✔ only a matching known receipt resolves unknown; 404/read failure and identical policy do not unlock (2.486542ms)
+✔ terminal rejected receipt releases protection without reporting money or a resource (3.490542ms)
+✔ target-level protection spans different batch actions and validates original receipt resource (0.525209ms)
+✔ storage unavailable or malformed fails closed before a new write can begin (0.490458ms)
+✔ deadline makes late 201 ineligible for secret display; lookup activity cannot revive the delivery gate (5.173792ms)
+✔ close/reopen and identity epoch invalidate old secret deliveries and old private response events (1.979958ms)
+✔ ambiguous transport/parse/timeout failures remain unknown; static 4xx are distinct (0.248916ms)
+✔ session/CSRF POST sends the precise redeem body once and 200 rejected remains no-credit terminal (26.919209ms)
+✔ network unknown followed by GET404 cannot replay; later GET receipt alone resolves the same original ID (0.56975ms)
+✔ receipt matrix preserves exact >2^53 amounts and verifies identity, scope, kind and operation (5.252167ms)
+✔ HTTP200 rejected is a terminal rejection with all associations null and kind-specific reason (0.858042ms)
+✔ UTC microseconds remain strings and reject offsets, impossible dates and precision loss (0.226875ms)
+✔ voucher codes reject trimming, nil IDs and non-canonical 32-byte encoding (0.236292ms)
+✔ batch lifecycle checks nullable fields without turning expiry into a different state (1.183459ms)
+✔ revocation uses immutable decision status and rejects maker as checker or invented proposal state (0.517417ms)
+✔ all six writes emit only frozen-schema fields and count/amount/expiry keep exact semantics (1.534708ms)
+✔ one-time code envelopes are validated; safe GET/replay never invents codes (0.724084ms)
+✔ funding sources preserve legacy TEXT identity and reject cross-tenant data (0.395584ms)
+✔ customer receipts expose payment fiat and basis without supplier cost fields (0.303625ms)
+✔ synchronous funding summary validates NUMERIC totals without treating it as wallet availability (0.326541ms)
+✔ opening receipts retain exact principal and identify a noncash opening rather than cash collection (0.433834ms)
+✔ the existing receipt endpoint filters all six sources and refuses rows outside the chosen source or tenant (0.883ms)
+✔ sandbox sources have canonical capture identity and an explicit simulation label (0.170667ms)
+✔ redemption detail requires redemption identity and tenant, never voucher or operation identity (0.157625ms)
+✔ capabilities and policy fail closed on missing data without inventing off on DB errors (0.278958ms)
+✔ fixed 50-item pages require explicit null cursor and safe response identities (0.2425ms)
+✔ cost domain choices are explicit and safe (33.426458ms)
+✔ route projection keeps full cost policy, exact strings and safe fields only (5.19675ms)
+✔ CNY conversion distinguishes unlimited null, known free zero and int64 precision (2.763292ms)
+✔ complete route writes freeze all bindings and policy under the existing numeric CAS (4.845416ms)
+✔ route success validates precisely the next revision and treats malformed success as unknown (1.105125ms)
+✔ cost channel and version projections never retain secrets (1.629333ms)
+✔ actual Vue ref and nested reactive metadata can enter the journal without DataCloneError (1.514542ms)
+✔ journal blocks duplicate submit, conflict and unknown until read-only observation plus explicit resume (0.65075ms)
+✔ observation cannot regress or alter a snapshot at the same revision and reads cannot resolve writes (0.443417ms)
+✔ known 4xx rejection permits corrected edit; identities and targets isolate the tab-local journal (0.384833ms)
+✔ close, page and identity epochs reject late observations and mutations; journal still records original outcome (0.312292ms)
+✔ configuration pagination supports 1000 models and all 50-row channel/cost pages (19.588167ms)
+✔ paginated inspection rejects malformed lists and repeated cursors without partial success (0.309042ms)
+✔ uncertain publish performs no automatic replay and explicit inspection uses only safe GETs (0.299708ms)
+✔ editors invalidate context and unmount while platform routes use only the dedicated cost editors (4.56425ms)
+✔ credential metadata projects only bounded public fields and never recovers provider secrets (4.904333ms)
+✔ fixed pool and revocation paths encode identities and historical version separately (11.58725ms)
+✔ replacement freezes expected_version and first-member primary order without publishing anything (0.894458ms)
+✔ historical content remains read-only while its credential identity remains independently revocable (0.437458ms)
+✔ a revoked member can be removed from the current draft but can never be retained or silently replaced (0.871ms)
+✔ pool cardinality, duplicate identities, numeric limits and byte-sized labels match management validation (1.358291ms)
+✔ new secrets are input-only, validated without trimming, and explicitly cleared after save, close or selection change (0.20575ms)
+✔ newer loads, close and channel changes reject late reads, writes and revocation confirmations (0.088583ms)
+✔ management uses existing session and CSRF transport, with no automatic route or financial writes (19.5135ms)
+✔ a stale expected_version fails once without retrying or replacing the frozen version (1.864958ms)
+✔ pool editor never stores secrets or creates persisted operation keys and displays actual discovery identity compatibly (4.174167ms)
+✔ discovery only constructs the fixed observation and history endpoints with encoded identifiers (2.374708ms)
+✔ discovery projection preserves all public bindings and directory-missing mappings without altering source data (12.601834ms)
+✔ discovery treats stale observations and empty complete directories as evidence for manual review (0.107083ms)
+✔ incomplete or invalid discovery evidence cannot be displayed as a successful partial directory (1.95575ms)
+✔ history metadata stays bounded and omits directory contents and supplier text (0.094625ms)
+✔ closing or changing channels and newer selections reject previous asynchronous responses (0.073ms)
+✔ a late history refresh cannot restore A after a newer detail selection B, while an unchanged selection can refresh (0.075208ms)
+✔ discovery uses the existing session and CSRF transport once, then read-only history without model or money writes (12.84575ms)
+✔ failed discovery preserves its record identifier and never retries automatically (0.220084ms)
+✔ Gemini uses model and action in the URL while curl and fetch receive exact native JSON (2.916625ms)
+✔ Gemini model publication forces tools off and preserves generation output limits (0.593375ms)
+✔ Gemini JSON hides thought text and confirms candidate plus thought usage without counting cache twice (0.618417ms)
+✔ Gemini SSE only confirms a post-billing finish with final trusted native usage (0.428084ms)
+✔ Gemini JSON and split UTF8 SSE use one bearer POST with no query credential or native model field (67.353625ms)
+✔ Gemini stream EOF, uncertain usage, billing_pending and error after finish reject the call without replay (2.693ms)
+✔ cancelling Gemini closes the reader, preserves request ID and does not replay (0.308083ms)
+✔ switching from another model to Gemini clears prior results without clearing request inputs (0.073833ms)
+✔ canonical identity proof requires exactly 32 bytes and canonical base64url bits (1.178292ms)
+✔ proof capture cleans URL and history state before router history snapshots, including later push/back (0.815375ms)
+✔ invalid, duplicate, encoded and query-only proof are cleaned without being accepted (0.108709ms)
+✔ mail fragments on non-target paths are removed, and wrong-path claim destroys a proof (0.151583ms)
+✔ unclaimed proof is discarded on leaving its path; unrelated public anchors are preserved (0.063666ms)
+✔ router initializes proof handoff before createWebHistory invocation and never reads token from query (5.1055ms)
+✔ mail request requires an explicit begin, blocks duplicate pending/accepted sends and resets only explicitly (1.4695ms)
+✔ completion requires matching path/purpose and never stores proof/password in safe state (0.499625ms)
+✔ known proof rejection permits manual correction, while success consumes local proof (0.105667ms)
+✔ unknown completion clears proof and cannot replay, silently issue mail or auto login (0.137084ms)
+✔ explicit 4xx rejection is user-retryable and capability pause does not revoke an in-memory proof (0.067875ms)
+✔ route, identity and unmount disposal invalidate pending results and clear a proof (0.069084ms)
+✔ capability reads ignore stale refresh, identity invalidation and unmount results (0.0805ms)
+✔ anonymous layouts are narrowly defined and earliest guard preserves private MFA gates (10.253041ms)
+✔ identity views mount only GET discovery, clear inputs on submit/unmount and explicitly invalidate session before login (2.591792ms)
+✔ capability DTO uses exact safe keys and consistent availability reasons (2.087541ms)
+✔ email normalization retains plus tags and dots while rejecting display names and controls (0.183875ms)
+✔ password and tenant byte boundaries follow UTF-8 without trimming passwords (8.178833ms)
+✔ completion DTOs stay fixed, immutable and include required empty mfa_code (0.601166ms)
+✔ MFA/recovery input follows the frozen 128 UTF-8 byte limit before network dispatch (17.821792ms)
+✔ accepted/completed DTOs cannot silently grant sessions or accept false success (0.104875ms)
+✔ anonymous GET/POST omit credentials, CSRF, authorization and private events; each explicit action sends once (0.421166ms)
+✔ reset transport rejects missing/non-string mfa_code and accidental extra fields before dispatch (0.064917ms)
+✔ error bodies never expose account/factor hints or raw messages and never fire private events (0.486583ms)
+✔ network, 5xx, malformed success and unexpected status are unknown with no automatic retry (0.345541ms)
+✔ native text requests choose exact endpoints, output fields and stateless Responses (0.601208ms)
+✔ SSE parser handles CR/LF, comments, multiline data, split UTF8 and bounded/incomplete events (4.3935ms)
+✔ Chat SSE uses real bearer key without session cookies, completes once and never retries (14.541875ms)
+✔ Responses and Messages keep native usage, named events and post-billing terminals (0.784833ms)
+✔ missing terminal, billing_pending, upstream HTML and network errors never imply success or retry (0.852959ms)
+✔ JSON text extraction and HTTP rejection use sanitized messages and preserve request ID (0.44325ms)
+✔ cancellation reaches the body reader, keeps request identity and performs no replay (0.219792ms)
+✔ source text distinguishes unrestricted input from empty items and leaves normalization to the server (14.602792ms)
+✔ obvious address mistakes, forbidden universal masks and byte bounds fail before writing (2.850916ms)
+✔ revision preserves positive int64 precision and rejects numeric or noncanonical responses (1.735333ms)
+✔ metadata projection includes only safe policy and key display fields (0.522458ms)
+✔ legacy safe display text cannot invalidate the whole key page because new forms use narrower validation (0.078292ms)
+✔ creation sends explicit source policy and only the established create fields (0.325792ms)
+✔ a late list or metadata read cannot replace an already observed newer source policy (0.077ms)
+✔ CAS request freezes identity revision and complete source array without touching scopes or money (0.12575ms)
+✔ successful save accepts exactly current or next revision and never treats inconsistent data as success (0.141583ms)
+✔ conflict and uncertain outcomes stay blocked after observation until explicit review (0.302791ms)
+✔ actor tenant role changes and close reject late results and confirmations while lanes stay independent (0.128833ms)
+✔ policy uses session CSRF and an uncertain write permits only an explicit GET check (28.224583ms)
+✔ key page keeps secrets in memory and clears dialogs on context changes and unmount (8.878584ms)
+✔ configuration revision and CNY drafts retain exact int64 precision, including zero and no cap (3.490458ms)
+✔ configuration GET safely projects nine explicit fields and does not infer nullable omissions (0.995458ms)
+✔ unchanged legacy fields and expired microseconds survive unrelated edits without normalization (1.375834ms)
+✔ only changed labels and arrays normalize with Go whitespace, UTF-8 bounds and codepoint ordering (1.493417ms)
+✔ changed scopes enforce canonical UUID inputs and original wildcard cardinality before deduplication (2.015209ms)
+✔ RFC3339 expiry retains seconds, truncates nanos and normalizes offsets using exact microseconds (1.066ms)
+✔ expiry keep, set-same-instant and explicit removal do not silently alter old microseconds (0.264625ms)
+✔ configuration CAS freezes exactly six fields independently of source, runtime and financial observations (0.365958ms)
+✔ creation explicitly submits normalized regions and three limits while retaining the existing safe create shape (0.212292ms)
+✔ successful saves require the complete frozen tuple and exact changed or no-op revision (0.7275ms)
+✔ budget/CAS conflicts and uncertain writes require GET and explicit review, even when the tuple matches (3.182334ms)
+✔ old lists and basic GET/save snapshots preserve all three independent revisions and current list consumption (0.617625ms)
+✔ three unknown reviews and request lanes stay independent until actor, tenant or role changes (3.504875ms)
+✔ directory options preserve empty, control, duplicate and unlisted historical values without altering selection (0.109583ms)
+✔ configuration transport sends one session-CSRF PUT and an explicit GET after response loss (27.173375ms)
+✔ basic editor keeps separate unknown state, explicit expiry and complete legacy scope/region visibility (6.472708ms)
+✔ runtime limits enforce exact numeric integers and bounds without coercing cleared values or defaulting omissions (0.853334ms)
+✔ default create draft is fresh while a cleared or invalid submitted draft stays invalid (0.196834ms)
+✔ limit revision remains a canonical positive int64 string with full precision (0.08525ms)
+✔ GET and list metadata project only safe fields and retain legacy display text without inferring missing limits (0.499208ms)
+✔ create request sends all three explicit runtime settings and source policy without unrelated write fields (0.287958ms)
+✔ runtime CAS freezes identity, revision and all three settings independently of source policy (0.592292ms)
+✔ save success must match the frozen tuple and changed or no-op revision exactly (0.393084ms)
+✔ 409 and unknown writes remain blocked through GET observation until explicit review, with no replacement of the old command (0.60575ms)
+✔ independent revisions merge interleaved old source and runtime snapshots without rolling either configuration back (0.267375ms)
+✔ source and runtime unknown outcomes stay independent, while context changes invalidate both request lanes (0.832375ms)
+✔ runtime transport writes exactly once with session CSRF and only explicitly GETs after an uncertain result (26.347625ms)
+✔ runtime editor keeps source state separate and explains runtime boundaries without persisting secrets (6.232917ms)
+✔ bounds and quantities keep complete ordered wires and bigint strings (0.816584ms)
+✔ snapshot projection has one complete vector identity and no scalar fallback (0.179542ms)
+✔ rate display is exact for fractions and does not convert to Number (0.113708ms)
+✔ manual reconciliation accepts only the complete retail QuantitiesWire for the original schema (0.11625ms)
+✔ model alias parser preserves terminal state and rejects ambiguous rows (2.05ms)
+✔ model alias commands use canonical encoded paths and exact revisions (3.397125ms)
+✔ micro-CNY conversion remains exact beyond JavaScript safe integers (0.392584ms)
+✔ unknown balances stay unknown and input cannot silently round money (0.105625ms)
+✔ operating report parser rejects old token/rate projections and preserves exact report totals (2.330708ms)
+✔ operating report parser separates COIN consumption from exact per-currency payment and cash refund facts (2.5285ms)
+✔ operating report parser keeps current media protocols and asynchronous tasks (0.42525ms)
+✔ default seven day window and explicit timezone/UUID filters produce one exact GET query (1.548ms)
+✔ invalid filters cannot silently broaden the range or normalize impossible dates (9.859125ms)
+✔ editing filters and changing route or identity discard reads, exports and prior amounts immediately (0.60275ms)
+✔ latest read wins and an error or oversized range never leaves old totals displayed (0.314333ms)
+✔ download has an independent slot and unmount permanently invalidates every pending action (0.117958ms)
+✔ money remains exact beyond safe integers and unresolved costs or settlement never imply zero margin (0.298458ms)
+✔ CSV transport uses the same-origin cookie and exact filter while preserving large amount bytes (21.86025ms)
+✔ JSON errors, HTML errors, bad success content type and network failure never become CSV files (1.05425ms)
+✔ only current CSV authentication failures dispatch existing session events (0.53275ms)
+✔ filter change during body transfer discards a successful CSV before it can be saved (0.215666ms)
+✔ a body transfer failure does not yield a partial CSV or expose the stream cause (0.166375ms)
+✔ an identity change while reading a CSV error body suppresses late authentication events (0.146708ms)
+✔ saved CSV uses a fixed filename and always revokes the object URL, including click failures (0.179541ms)
+✔ identity, route, replacement lane, deadline and dispose reject old tickets (0.391875ms)
+✔ reload stays unknown; only received precommit rejection is known; polling is bounded (0.348375ms)
+✔ journal admission restores original target, enforces 128 and rejects corruption (3.192083ms)
+✔ unavailable IndexedDB never falls back or permits a write (0.311709ms)
+✔ only fixed matching precommit error pairs may release a write journal (3.051625ms)
+✔ a human write sends one exact request and never retries (21.024209ms)
+✔ bounded raw response and strict DTO failure retain unknown write (2.42075ms)
+✔ 12s local deadline invalidates ticket, aborts fetch and ignores late success (16.847583ms)
+✔ path/query/method and local preflight never touch fetch or release durable lock (1.270792ms)
+✔ raw JSON rejects duplicate aliases, invalid UTF16, number coercion and byte overflow (6.552959ms)
+✔ SKU exact shape preserves bigint strings and binds current immutable version (8.468417ms)
+✔ order tenant/TTL/review/funding null matrix rejects partial or invented credit (0.632583ms)
+✔ public format and capabilities validate calendar, ref and role boundaries (2.99125ms)
+✔ four command receipts bind actor/scope/op and only provable resource links (1.087209ms)
+✔ observations support unknown logical order and paged envelopes keep explicit null (0.330541ms)
+✔ auth, target, lane replacement and command epoch cancel actual old requests (1.02575ms)
+✔ refresh pending always resumes unknown and terminal cleanup failure continues blocking (0.646917ms)
+✔ unavailable IndexedDB fails closed without memory or sessionStorage fallback (0.964708ms)
+✔ page 1→2→3→2→3 follows the current path while real cursor loops fail (0.207084ms)
+✔ only exact error/status pairs classify a PUT failure as known (1.11125ms)
+✔ transport sends one canonical PUT with exact string amounts and bound abort signal (46.289709ms)
+✔ malformed, truncated, oversized, wrong status and binding failures remain unknown (1.365291ms)
+✔ timeout and external abort actually abort fetch without retrying (6.186917ms)
+✔ local preflight cannot terminate an already durable pending operation (0.805917ms)
+✔ opaque cursor is encoded once and unsupported paths / queries never fetch (0.97975ms)
+✔ periodic values preserve BIGINT and Numeric100 and reject aliases (0.568084ms)
+✔ UTC6 validates the actual calendar without Date year 0/99 normalization (0.548667ms)
+✔ strict JSON rejects escaped duplicates, invalid Unicode and partial documents (0.33025ms)
+✔ exact DTO distinguishes unconfigured, scheduled, disabled and current calendar bounds (2.657167ms)
+✔ allocation unions retain supplier overruns and forbid customer disputed / legacy windows (0.106875ms)
+✔ immutable receipt binds all metadata and treats control ID independently from scope ID (0.353959ms)
+✔ fingerprint matches the shared PostgreSQL / Python / Go golden (9.930125ms)
+✔ pages require exact envelope, empty string cursor and descending UUID tie order (0.674708ms)
+✔ independent page targets reject mixed / duplicate / invalid query before transport (0.619625ms)
+✔ identity, tenant, role, CSRF, page close and newer tickets suppress late results (1.578292ms)
+✔ pager uses per-page observations, serializes more, blocks cursor cycles and discards old identity (0.555ms)
+✔ unknown submission locks target through 404, close and reload; safe storage excludes body and result (17.538583ms)
+✔ definite CAS rejection allows explicit new operation, schema/transport/cancel are unknown (1.668125ms)
+✔ receipt mismatch never unlocks unknown target and confirmed original result is immutable (0.950041ms)
+✔ corrupt or unavailable session storage fails before a new write and never silently clears pending (0.955542ms)
+✔ new transport performs one exact request with CSRF, and never auto retries 5xx/unknown (89.271208ms)
+✔ identity epoch and local deadline both suppress late authentication events (20.850958ms)
+✔ group vector fingerprint has the frozen Go/SQL golden value and binds the full domain (13.632291ms)
+✔ group multiplier commands canonicalize model order, preserve the original multiplier and bind the optional base CAS (5.83125ms)
+✔ published multiplier receipt requires every immutable compiled version identity (22.950959ms)
+✔ group rates preserve exact reduced int64 values and reject legacy or malformed arrays without sorting (0.911458ms)
+✔ strict IDs, int64 strings and UTF-8 labels never coerce numbers, nil IDs or surrogate input (0.939458ms)
+✔ UTC6 normalization preserves microseconds and rejects invalid calendars, offsets and zero time (0.116708ms)
+✔ framing matches an independent byte construction and distinguishes NULL, empty, Unicode and domains (7.987791ms)
+✔ all four requests freeze exact safe input, target, scope, normalized time and operation-independent fingerprint (18.755875ms)
+✔ strict group, assignment and price DTOs reject secrets, omitted NULL and numeric precision loss (0.787916ms)
+✔ available/unavailable is a complete vector union; no free fallback, future quote or cross-model acceptance (1.146541ms)
+✔ receipts match every identity field and original body/CAS, and never reconstruct current values (3.011334ms)
+✔ create, publish and assignment receipts enforce resource/type/domain and stored timestamps (19.032958ms)
+✔ opaque cursor consumes canonical base64url, preserves empty-string terminal and rejects 022 null (0.444292ms)
+✔ preview keeps page context for empty/suspended/retired and prevents partial-page totals or mixed observations (0.204791ms)
+✔ default price publication has a fixed target, frozen golden fingerprint and null group receipt (7.427417ms)
+✔ pre-COIN migration proof permits only exact original-operation recovery (2.031167ms)
+✔ cost publication keeps the known/unknown union, channel CAS and exact supplier rates (4.864375ms)
+✔ procurement UUIDs are canonical and reject arbitrary lookup paths (1.134583ms)
+✔ reactive commands are frozen safely and exact money survives journal snapshots (1.491375ms)
+✔ submitting and unknown commands block duplicate target writes until the original receipt is confirmed (0.52775ms)
+✔ receipt lookup errors do not resolve uncertain writes; explicit rejection remains distinct from conflict (0.361541ms)
+✔ journal isolates actor, tenant, role and targets and retains old outcomes after page/context invalidation (1.933625ms)
+✔ nondefinitive transport outcomes are unknown and conflicting durable receipts cannot overwrite history (0.229458ms)
+✔ account money and revisions preserve int64 precision while cumulative numeric facts may exceed int64 (1.861209ms)
+✔ account create/configuration commands rebuild safe complete bodies with captured string CAS (2.272416ms)
+✔ permanent binding captures the exact credential/account and channel management revision without provider secrets (0.298416ms)
+✔ manual observations distinguish unknown from known free and never submit stale typed amount for nonknown status (5.184916ms)
+✔ unknown/disputed procurement projections and signed budget events remain exact and do not become customer money (0.98575ms)
+✔ procurement bounds accept only the complete original supplier vector and copy exact quantities (1.006791ms)
+✔ HTTP-success rejected management receipts remain rejected and strip arbitrary before/after snapshots (0.181708ms)
+✔ cost proposals use original operation ID as proposal ID and validate frozen content and requester attribution (0.251167ms)
+✔ dual approval uses a distinct operation ID and only matching approval attribution confirms the original write (0.151916ms)
+✔ confirmed proposal may advance only from proposed to approved without changing immutable evidence or money (0.803ms)
+✔ stale evidence rejection retains the original code and ID so approval cannot silently become a fresh command (0.261208ms)
+✔ safe configuration option loading covers all 50-row pages and rejects malformed or repeating cursors (25.160958ms)
+✔ unknown command transport sends operation_id only once, uses session CSRF, and recovery performs only GET (1.922625ms)
+✔ procurement editors and independent platform route wire context/close epochs and explicit original-result inspection (8.438958ms)
+✔ switching retrieval pricing back to generation requires a deliberate output price (0.405ms)
+✔ selecting a different model clears all response facts while preserving key and request inputs (0.305917ms)
+✔ refreshing the same model retains its result, request ID, usage and timing (0.082ms)
+✔ more is serialized, IDs deduplicate across pages and original price observation stays with row (6.109792ms)
+✔ filter/reset/unmount epochs prevent stale pages, errors and cursor reuse (0.255083ms)
+✔ failed more can retry safe GET without losing rows, cursor cycles fail rather than looping (0.432042ms)
+✔ publication no-op and changed success require exactly matching full CAS result (0.403209ms)
+✔ uncertain PUT and conflict only GET-observe then explicit new edit, never resubmit (0.360416ms)
+✔ tab journal retains closed uncertain edit scoped by actor/tenant/role and rejects implicit replay (0.328125ms)
+✔ all six public protocols retain exact capability contracts and DTO key sets (5.15825ms)
+✔ zero is a known price and absence is an all-null price, never free (3.708666ms)
+✔ invalid limits, identities and dates fail closed without private fallback (6.607541ms)
+✔ page boundaries require exact envelope, bounded rows, unique IDs and per-page DB time (0.949167ms)
+✔ filter construction preserves literal prefix characters and never sends empty cursor (0.5355ms)
+✔ anonymous transport omits credentials and private session/reauth side effects even for 401 (0.65ms)
+✔ anonymous malformed success and network failures remain safe directory errors (0.589792ms)
+✔ publication DTO and full CAS body keep independent int64 revision exact (0.591125ms)
+✔ public route bypass precedes session load and layout is independent of private navigation (19.921417ms)
+✔ unknown provider cost is never rendered as free, including populated or unsupported facts (0.932959ms)
+✔ summary and provider-cost responses reject scalar leakage and unknown fields (0.340625ms)
+✔ request rows project only the current vector contract and preserve complete RatesWire (0.755875ms)
+✔ request rows reject old usage, scalar rates and unknown response fields before projection (1.394291ms)
+✔ retrieval request builders use exact native JSON contracts without generation settings (1.627666ms)
+✔ retrieval form boundaries reject empty, excessive, and fractional inputs while optional fields remain absent (0.567ms)
+✔ input-only model publication overrides stale generated settings, while generation still requires positive output (0.3205ms)
+✔ retrieval JSON exposes bounded vector/ranking previews and trusted usage without provider metadata (0.677083ms)
+✔ retrieval results without trustworthy input usage or usable results cannot mark success (0.63925ms)
+✔ retrieval HTTP calls use bearer JSON, preserve request identity and never replay errors (41.278916ms)
+✔ cancelling retrieval response parsing preserves request identity and never replays the POST (0.489375ms)
+✔ same epoch joins in-flight reads; force refreshes a ready cache and still joins another force (12.778875ms)
+✔ clearSession invalidates old success, CSRF, MFA flags and operation-key cache (1.090833ms)
+✔ old 401 catch/finally cannot emit private events, clear new state or remove a new in-flight read (0.27725ms)
+✔ late success or network failure cannot overwrite a completed new identity (0.43075ms)
+✔ current-epoch 401 retains existing private event behavior (0.143083ms)
+✔ operator settings expose only append-only versions and the current snapshot (1.679958ms)
+✔ operator settings reject private fields, stale current snapshots and broken history (0.584125ms)
+✔ operator commands require canonical CAS identity and explicit risk confirmation (0.570333ms)
+✔ wallet request paths accept only an opaque cursor (0.375084ms)
+✔ wallet request DTO binds tenant, note, state and linked order without private metadata (1.3675ms)
+✔ wallet request pages reject duplicates, invalid cursors and incomplete next pages (1.135333ms)
+✔ request funding uses only the current request and audit requires one explicit canonical tenant (0.66375ms)
+✔ funding amounts preserve exact micro-yuan and allocation sequence beyond safe integers (1.027ms)
+✔ pending allocations keep both settlement fields null and cannot claim a refund (0.0985ms)
+✔ funding source classification, exact DTO fields and original lot identity are enforced (0.220917ms)
+✔ UTC timestamps retain RFC3339 precision and reject normalized invalid dates (0.16ms)
+✔ funding page preserves server order and accepts empty zero-price allocations (0.474791ms)
+✔ audit results bind the explicit tenant and expose only coherent safe counts (0.107959ms)
+✔ funding pagination advances only after a validated response and retains page sequence (0.58625ms)
+✔ refresh clears previous financial data while loading and failures leave no success state (0.249084ms)
+✔ identity, role, route, CSRF and MFA resets suppress old success and authentication callbacks (0.779292ms)
+✔ direct target switches invalidate an in-flight request even without an explicit reset (0.161125ms)
+✔ disposed readers cannot revive data and snapshots cannot mutate financial state (0.183209ms)
+✔ real transport suppresses late unauthenticated events for both financial readers (8.402834ms)
+✔ invalid targets and nonadvancing pages fail without partial rows or false audit success (0.679625ms)
+✔ wallet sources require tenant billing access; platform role does not grant member access (0.512ms)
+✔ current tenant requests never accept a tenant query override; platform requires an explicit UUID (0.517875ms)
+✔ exact source amounts and buckets retain micro-yuan beyond JavaScript safe integers (0.9445ms)
+✔ source parsing rejects extra private metadata and enforces source/refund classifications (0.140791ms)
+✔ UTC RFC3339 timestamps preserve supplier-independent database precision and reject normalized impossible dates (0.097708ms)
+✔ pagination follows the current page envelope and rejects duplicates, overlong pages and inconsistent continuations (0.27425ms)
+✔ next and previous commit cursor history only after a validated response (0.412084ms)
+✔ a refresh clears old amounts while loading and a failure leaves no stale rows or paging data (0.162209ms)
+✔ an invalid next page never advances history or displays partial rows (0.193542ms)
+✔ identity, tenant, role and route resets invalidate late values and late authentication events (0.255ms)
+✔ unmount disposes pending values and errors permanently without reviving page state (0.112209ms)
+✔ the real request transport suppresses a late 401 event after identity changes (7.769458ms)
+✔ snapshots cannot mutate the reader and repeated cursor pages fail closed (0.64775ms)
+ℹ tests 364
+ℹ suites 0
+ℹ pass 364
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1185.549333
+----- frontend tests: PASS (1s) -----
+
+===== frontend production build =====
+command: npm --prefix web run build
+
+> moni-aigate-console@0.1.0 build
+> vue-tsc --noEmit && vite build
+
+vite v7.2.2 building client environment for production...
+transforming...
+✓ 1698 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/.gitkeep                                                              0.00 kB
+dist/index.html                                                            0.67 kB │ gzip:   0.40 kB
+dist/assets/MetricMoney-DPuG41JN.css                                       0.08 kB │ gzip:   0.10 kB
+dist/assets/CashRefundsView-DbwVCYPf.css                                   0.23 kB │ gzip:   0.15 kB
+dist/assets/ModelsView-BrCTEIaZ.css                                        0.28 kB │ gzip:   0.20 kB
+dist/assets/VouchersView-BBE3aSgM.css                                      0.40 kB │ gzip:   0.21 kB
+dist/assets/LoginView-eLJQw0oC.css                                         0.40 kB │ gzip:   0.21 kB
+dist/assets/PricingWriter-ETiOmQZu.css                                     0.47 kB │ gzip:   0.26 kB
+dist/assets/RequestsView-fvSQtWCU.css                                      0.55 kB │ gzip:   0.29 kB
+dist/assets/WalletSources-Bsr8Yfbh.css                                     0.61 kB │ gzip:   0.29 kB
+dist/assets/CommerceCommands-BgR9kqDU.css                                  1.07 kB │ gzip:   0.43 kB
+dist/assets/RouteAttempts-BiZpLfkV.css                                     1.17 kB │ gzip:   0.45 kB
+dist/assets/ReportsView-C1rZugWD.css                                       1.29 kB │ gzip:   0.46 kB
+dist/assets/WalletView-CSWsPVpr.css                                        1.30 kB │ gzip:   0.46 kB
+dist/assets/KeysView-BhNTFtlV.css                                          1.47 kB │ gzip:   0.51 kB
+dist/assets/SecurityView-BmT_mhJy.css                                      1.48 kB │ gzip:   0.58 kB
+dist/assets/PeriodicBudgetView-BcKPlY0B.css                                1.62 kB │ gzip:   0.55 kB
+dist/assets/PaymentsPage-CVEj8qnt.css                                      1.64 kB │ gzip:   0.59 kB
+dist/assets/PlaygroundView-Da5jaibT.css                                    1.68 kB │ gzip:   0.60 kB
+dist/assets/PriceGroupsView-Q6LRA-fk.css                                   1.71 kB │ gzip:   0.58 kB
+dist/assets/ProcurementView-CLP8DfoK.css                                   2.30 kB │ gzip:   0.67 kB
+dist/assets/identity-public-state-CEMeDPRb.css                             2.46 kB │ gzip:   0.83 kB
+dist/assets/WalletSourcesView-DCYI65KO.css                                 3.10 kB │ gzip:   0.79 kB
+dist/assets/PlatformView-0Nu08GS5.css                                      3.79 kB │ gzip:   0.97 kB
+dist/assets/AlertsView-C7R-n4Xa.css                                        3.82 kB │ gzip:   1.12 kB
+dist/assets/PricingView-Bxp2kdwJ.css                                       4.80 kB │ gzip:   1.21 kB
+dist/assets/index-Cth3px-v.css                                           358.75 kB │ gzip:  50.89 kB
+dist/assets/PageHeader.vue_vue_type_script_setup_true_lang-DJ2WRCTS.js     0.49 kB │ gzip:   0.32 kB
+dist/assets/ErrorNotice.vue_vue_type_script_setup_true_lang-DlTc8_Zc.js    0.54 kB │ gzip:   0.39 kB
+dist/assets/MetricMoney-DbpbS9i1.js                                        0.93 kB │ gzip:   0.58 kB
+dist/assets/wallet-operator-settings-CScgbajf.js                           1.81 kB │ gzip:   0.91 kB
+dist/assets/identity-public-state-uJNTsxX0.js                              2.89 kB │ gzip:   1.59 kB
+dist/assets/credential-pool-BG3qebJJ.js                                    3.69 kB │ gzip:   1.64 kB
+dist/assets/pricing-state-BBkIKC6l.js                                      4.42 kB │ gzip:   2.05 kB
+dist/assets/wallet-sources-BqGeD1LO.js                                     4.47 kB │ gzip:   2.02 kB
+dist/assets/LoginView-CtzdIK8n.js                                          4.79 kB │ gzip:   2.32 kB
+dist/assets/IdentityRequestView-DMzxoWKv.js                                4.97 kB │ gzip:   2.51 kB
+dist/assets/RouteAttempts-CBEqgcEa.js                                      5.00 kB │ gzip:   2.58 kB
+dist/assets/identity-public-BHVDGn0Z.js                                    5.36 kB │ gzip:   2.40 kB
+dist/assets/wallet-source-details-CKaEGpQK.js                              5.38 kB │ gzip:   2.15 kB
+dist/assets/WalletSources-BHmRsNVy.js                                      5.43 kB │ gzip:   2.54 kB
+dist/assets/key-access-policy-BjlXlvan.js                                  6.32 kB │ gzip:   2.50 kB
+dist/assets/MembersView-B19yKGjm.js                                        7.02 kB │ gzip:   2.92 kB
+dist/assets/RecoveryView-SFhdaLHa.js                                       7.20 kB │ gzip:   2.96 kB
+dist/assets/PricingView-CC1yziuN.js                                        7.53 kB │ gzip:   3.38 kB
+dist/assets/IdentityCompleteView-Y-x5vAaM.js                               7.69 kB │ gzip:   3.29 kB
+dist/assets/OverviewView-NKJzln8e.js                                       9.40 kB │ gzip:   3.91 kB
+dist/assets/public-catalog-state-BaR3iiNG.js                              10.25 kB │ gzip:   4.06 kB
+dist/assets/ModelsView-Du1AiGUs.js                                        11.50 kB │ gzip:   4.92 kB
+dist/assets/inference-CzWM9b8d.js                                         13.54 kB │ gzip:   5.04 kB
+dist/assets/commerce-BfC6YCTd.js                                          13.74 kB │ gzip:   4.67 kB
+dist/assets/RequestsView-CXoQ8V4-.js                                      13.95 kB │ gzip:   5.31 kB
+dist/assets/VouchersView-2DSJvv3d.js                                      15.51 kB │ gzip:   5.62 kB
+dist/assets/PlaygroundView-DoxHCdlw.js                                    16.07 kB │ gzip:   6.24 kB
+dist/assets/CommerceCommands-I3wNzTEI.js                                  16.12 kB │ gzip:   6.29 kB
+dist/assets/WalletSourcesView-B1Ut6gMQ.js                                 19.48 kB │ gzip:   6.55 kB
+dist/assets/metering-wire-BnHwpxFX.js                                     22.12 kB │ gzip:   6.30 kB
+dist/assets/CashRefundsView-CdKsGif-.js                                   22.51 kB │ gzip:   6.74 kB
+dist/assets/PriceGroupsView-DfeHR01e.js                                   22.86 kB │ gzip:   7.87 kB
+dist/assets/WalletView-6g7cEDbL.js                                        23.14 kB │ gzip:   8.32 kB
+dist/assets/PricingWriter-CfzjGM8A.js                                     26.98 kB │ gzip:   9.61 kB
+dist/assets/index-DjykDVXJ.js                                             35.82 kB │ gzip:  12.95 kB
+dist/assets/SecurityView-DHi_mNsM.js                                      38.53 kB │ gzip:  14.93 kB
+dist/assets/PeriodicBudgetView-BiYVGGQ9.js                                39.65 kB │ gzip:  14.45 kB
+dist/assets/ReportsView-CP0xUaDC.js                                       40.40 kB │ gzip:  12.81 kB
+dist/assets/PaymentsPage-DvEm4SCd.js                                      50.83 kB │ gzip:  17.08 kB
+dist/assets/KeysView-DFemnutJ.js                                          52.80 kB │ gzip:  14.81 kB
+dist/assets/ProcurementView-DC1-hUiw.js                                   53.27 kB │ gzip:  16.11 kB
+dist/assets/AlertsView-VPjb6LoH.js                                        60.05 kB │ gzip:  19.44 kB
+dist/assets/vue-BO_h6NWt.js                                              104.25 kB │ gzip:  40.45 kB
+dist/assets/PlatformView-CH17pr9f.js                                     115.13 kB │ gzip:  35.14 kB
+dist/assets/elements-Cqpi74r2.js                                         889.82 kB │ gzip: 285.51 kB
+✓ built in 2.72s
+----- frontend production build: PASS (6s) -----
+
+===== Compose current migration provision restart and business mock smoke =====
+command: env DEPLOY_QA_BUSINESS=true scripts/deployment-qa.sh
+checking Compose rendering
+building image
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Building 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Building 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Building 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Building 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 6.85kB done
+#1 DONE 0.0s
+
+#2 [worker internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.31kB done
+#2 DONE 0.0s
+
+#3 [worker internal] load metadata for docker.io/library/node:22-alpine
+#3 DONE 0.0s
+
+#4 [provision internal] load metadata for docker.io/library/golang:1.26-alpine
+#4 DONE 0.0s
+
+#5 [worker internal] load metadata for docker.io/library/alpine:3.23
+#5 DONE 0.0s
+
+#6 [migrate internal] load .dockerignore
+#6 transferring context: 113B done
+#6 DONE 0.0s
+
+#7 [qa-provider internal] load build context
+#7 DONE 0.0s
+
+#8 [qa-provider stage-2 1/5] FROM docker.io/library/alpine:3.23@sha256:f3d55900449227ae9e237ede521e7b665d53a253b42065ba90b9db9275e198ad
+#8 resolve docker.io/library/alpine:3.23@sha256:f3d55900449227ae9e237ede521e7b665d53a253b42065ba90b9db9275e198ad
+#8 resolve docker.io/library/alpine:3.23@sha256:f3d55900449227ae9e237ede521e7b665d53a253b42065ba90b9db9275e198ad 0.0s done
+#8 DONE 0.0s
+
+#9 [worker api 1/8] FROM docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696
+#9 resolve docker.io/library/golang:1.26-alpine@sha256:87c65a688975c0b1d4585d204874c45ca78354670e3a5f11368c5a492303d696 0.0s done
+#9 DONE 0.0s
+
+#10 [worker console 1/6] FROM docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202
+#10 resolve docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 0.0s done
+#10 DONE 0.0s
+
+#7 [provision internal] load build context
+#7 transferring context: 975.41kB 0.2s done
+#7 transferring context: 975.41kB 0.2s done
+#7 DONE 0.2s
+
+#11 [app console 4/6] RUN npm ci
+#11 CACHED
+
+#12 [app console 5/6] COPY web/ ./
+#12 CACHED
+
+#13 [app console 2/6] WORKDIR /src/web
+#13 CACHED
+
+#14 [app console 3/6] COPY web/package*.json ./
+#14 CACHED
+
+#15 [provision api 2/8] WORKDIR /src
+#15 CACHED
+
+#16 [provision api 3/8] COPY go.mod go.sum ./
+#16 CACHED
+
+#17 [app console 6/6] RUN npm run build
+#17 CACHED
+
+#18 [qa-provider api 4/8] RUN go mod download
+#18 CACHED
+
+#19 [qa-provider api 5/8] COPY . .
+#19 DONE 4.1s
+
+#20 [worker api 6/8] COPY --from=console /src/web/dist ./web/dist
+#20 DONE 0.1s
+
+#21 [migrate api 7/8] RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /moni-aigate ./cmd/moni-aigate
+#21 DONE 21.2s
+
+#22 [worker api 8/8] RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /mock-upstream ./scripts/mock-upstream
+#22 DONE 0.5s
+
+#23 [worker stage-2 2/5] RUN if [ -n "https://mirrors.aliyun.com/alpine" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g" /etc/apk/repositories; fi && apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
+#23 CACHED
+
+#24 [worker stage-2 3/5] COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
+#24 CACHED
+
+#25 [worker stage-2 4/5] COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
+#25 CACHED
+
+#26 [worker stage-2 5/5] WORKDIR /app
+#26 CACHED
+
+#23 [migrate stage-2 2/5] RUN if [ -n "https://mirrors.aliyun.com/alpine" ]; then sed -i "s|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g" /etc/apk/repositories; fi && apk add --no-cache ca-certificates tzdata && addgroup -S moni && adduser -S -G moni moni
+#23 CACHED
+
+#25 [migrate stage-2 4/5] COPY --from=api /mock-upstream /usr/local/bin/mock-upstream
+#25 CACHED
+
+#24 [migrate stage-2 3/5] COPY --from=api /moni-aigate /usr/local/bin/moni-aigate
+#24 CACHED
+
+#27 [app] exporting to image
+#27 exporting layers done
+#27 exporting manifest sha256:841716952af2130d365fe20295882264739162d055e3fd7cd12212ac78befbc4 0.0s done
+#27 exporting config sha256:c0ccb5e8c740315d907341367211d2d8294f84057cea51ee407f173773f367ff 0.0s done
+#27 exporting attestation manifest sha256:b82eb240b3eabc1c2d8bf7d647a12e8e57da980acf15a79a096397a6b7516dd8 0.0s done
+#27 exporting manifest list sha256:075a4e667620780e96c3153a7ced991cd3092d001791da7c60632c847533b8f2
+#27 exporting manifest list sha256:075a4e667620780e96c3153a7ced991cd3092d001791da7c60632c847533b8f2 0.0s done
+#27 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 0.0s done
+#27 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 0.0s done
+#27 DONE 0.2s
+
+#28 [migrate] exporting to image
+#28 exporting layers done
+#28 exporting manifest sha256:ba9e9bcdc8a2c56b624fa4159b536d7693a8dbccb44c0b40c2d9b1673b4a3046 0.0s done
+#28 exporting config sha256:2bd11a74578ff3878af9531eba8fcc98510bfcbdd94dadfb2eea6ff964a0562d 0.0s done
+#28 exporting attestation manifest sha256:63c0c2be347dc13e0452a92c08ff2af41cd31bd2bfb78b980ff0c25ab4396578 0.0s done
+#28 exporting manifest list sha256:7c634134b3a4517426a772dbbf1c7865cff8b68c15032a67bf98565f94ac380b 0.0s done
+#28 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 done
+#28 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 done
+#28 DONE 0.2s
+
+#29 [provision] exporting to image
+#29 exporting layers done
+#29 exporting manifest sha256:0225ed1933592b9f43d6bf20425ad5bf70aeed11adc3c15ddba65ee8c7f41470 0.0s done
+#29 exporting config sha256:14703c58388cd5a4ebae4082e7adb7cc096c5a3b806633de967102a99d194f25 0.0s done
+#29 exporting attestation manifest sha256:195e27533fdc7861ca4d7218c292a711497768fddcd255e992a16591d9906219 0.0s done
+#29 exporting manifest list sha256:825e5207d5d5b412694400027efc95790424f1513b88f08e695c599362768784 0.0s done
+#29 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 0.0s done
+#29 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 done
+#29 DONE 0.2s
+
+#30 [worker] exporting to image
+#30 exporting layers done
+#30 exporting manifest sha256:cdc25edf75cc814e743aef3a5ac715ed3762019bb26bd84513904d6e997cb531 0.0s done
+#30 exporting config sha256:4d6b82e93583884170a6deec03366c1c21359c7381f02921ed6b7a22e7e7a934 0.0s done
+#30 exporting attestation manifest sha256:7e1321317275a99298cbc3c9ba5d492a8e735195a02b8b5e10dc75af078061f0 0.0s done
+#30 exporting manifest list sha256:75f38e350917a39b0b6338593a98c0d05353ed436897e13a4346ffa24b8fde52 0.0s done
+#30 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 done
+#30 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 0.0s done
+#30 DONE 0.2s
+
+#31 [qa-provider] exporting to image
+#31 exporting layers done
+#31 exporting manifest sha256:413fd50a0b6238327201fb8e79b7eac37f72b565d4d872f662462bf3d72b8e9f 0.0s done
+#31 exporting config sha256:7350fd6984ab70b21479cb3c95b8676c817f1bb568bc6fd82ddfa86a677e4ca6 0.0s done
+#31 exporting attestation manifest sha256:f155d60904036d7444cd4eaa5044419c752655771ec2f3d53002d6a97ac9e03b 0.0s done
+#31 exporting manifest list sha256:058f85e9cc2fe76a3fe7b13a9534016b2c9570e61fca658b98b7977327001d94 0.0s done
+#31 naming to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 done
+#31 unpacking to docker.io/library/moni-aigate:qa-moni-aigate-qa-19185-33064 0.0s done
+#31 DONE 0.2s
+
+#32 [provision] resolving provenance for metadata file
+#32 DONE 0.1s
+
+#33 [worker] resolving provenance for metadata file
+#33 DONE 0.0s
+
+#34 [migrate] resolving provenance for metadata file
+#34 DONE 0.0s
+
+#35 [app] resolving provenance for metadata file
+#35 DONE 0.1s
+
+#36 [qa-provider] resolving provenance for metadata file
+#36 DONE 0.1s
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Built 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Built 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Built 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Built 
+ Image moni-aigate:qa-moni-aigate-qa-19185-33064 Built 
+starting PostgreSQL
+ Network moni-aigate-qa-19185-33064_default Creating 
+ Volume moni-aigate-qa-19185-33064_postgres-data Creating 
+ Volume moni-aigate-qa-19185-33064_postgres-data Creating 
+ Network moni-aigate-qa-19185-33064_default Creating 
+ Volume moni-aigate-qa-19185-33064_postgres-data Created 
+ Volume moni-aigate-qa-19185-33064_postgres-data Created 
+ Network moni-aigate-qa-19185-33064_default Created 
+ Network moni-aigate-qa-19185-33064_default Created 
+ Container moni-aigate-qa-19185-33064-postgres-1 Creating 
+ Container moni-aigate-qa-19185-33064-postgres-1 Created 
+ Container moni-aigate-qa-19185-33064-postgres-1 Starting 
+ Container moni-aigate-qa-19185-33064-postgres-1 Started 
+running the current empty-database migration
+ Container moni-aigate-qa-19185-33064-postgres-1 Running 
+ Container moni-aigate-qa-19185-33064-postgres-1 Waiting 
+ Container moni-aigate-qa-19185-33064-postgres-1 Healthy 
+ Container moni-aigate-qa-19185-33064-migrate-run-691862a9937d Creating 
+ Container moni-aigate-qa-19185-33064-migrate-run-691862a9937d Created 
+migrations applied
+rerunning the current migration plan as an idempotent no-op
+ Container moni-aigate-qa-19185-33064-postgres-1 Running 
+ Container moni-aigate-qa-19185-33064-postgres-1 Waiting 
+ Container moni-aigate-qa-19185-33064-postgres-1 Healthy 
+ Container moni-aigate-qa-19185-33064-migrate-run-4eb7e2b6b100 Creating 
+ Container moni-aigate-qa-19185-33064-migrate-run-4eb7e2b6b100 Created 
+migrations applied
+provisioning roles twice
+ Container moni-aigate-qa-19185-33064-provision-run-4a064c1e0767 Creating 
+ Container moni-aigate-qa-19185-33064-provision-run-4a064c1e0767 Created 
+database roles provisioned
+ Container moni-aigate-qa-19185-33064-provision-run-baf47cad9d2b Creating 
+ Container moni-aigate-qa-19185-33064-provision-run-baf47cad9d2b Created 
+database roles provisioned
+bootstrapping first administrator
+ Container moni-aigate-qa-19185-33064-app-run-51188c685945 Creating 
+ Container moni-aigate-qa-19185-33064-app-run-51188c685945 Created 
+administrator created; MFA is optional unless enforced by deployment policy
+rejecting a repeated bootstrap
+ Container moni-aigate-qa-19185-33064-app-run-6b58b15fa7e2 Creating 
+ Container moni-aigate-qa-19185-33064-app-run-6b58b15fa7e2 Created 
+bootstrap refused or failed
+
+starting app and worker
+ Container moni-aigate-qa-19185-33064-worker-1 Creating 
+ Container moni-aigate-qa-19185-33064-app-1 Creating 
+ Container moni-aigate-qa-19185-33064-qa-provider-1 Creating 
+ Container moni-aigate-qa-19185-33064-worker-1 Created 
+ Container moni-aigate-qa-19185-33064-app-1 Created 
+ Container moni-aigate-qa-19185-33064-qa-provider-1 Created 
+ Container moni-aigate-qa-19185-33064-worker-1 Starting 
+ Container moni-aigate-qa-19185-33064-app-1 Starting 
+ Container moni-aigate-qa-19185-33064-qa-provider-1 Starting 
+ Container moni-aigate-qa-19185-33064-worker-1 Started 
+ Container moni-aigate-qa-19185-33064-app-1 Started 
+ Container moni-aigate-qa-19185-33064-qa-provider-1 Started 
+checking live and ready endpoints
+provisioning disposable business fixture through HTTP
+checking live and ready at http://127.0.0.1:18082
+PASS health
+PASS administrator authentication
+PASS text
+PASS image
+PASS tts
+PASS async task id=7c7b55bd-c8bd-4494-99c3-5bf93af8038e
+checking configured Realtime WebSocket
+Realtime WebSocket passed session=46ca7189-5075-4c65-8e07-8529bf652b52 turn=21f32859-e98a-4302-9e86-1a10ba73ef13
+PASS Realtime WebSocket
+business QA passed all enabled checks
+restarting app and worker
+ Container moni-aigate-qa-19185-33064-worker-1 Restarting 
+ Container moni-aigate-qa-19185-33064-app-1 Restarting 
+ Container moni-aigate-qa-19185-33064-app-1 Started 
+ Container moni-aigate-qa-19185-33064-worker-1 Started 
+curl: (52) Empty reply from server
+restarting PostgreSQL and waiting for app recovery
+ Container moni-aigate-qa-19185-33064-postgres-1 Restarting 
+ Container moni-aigate-qa-19185-33064-postgres-1 Started 
+curl: (22) The requested URL returned error: 503
+deployment QA passed
+----- Compose current migration provision restart and business mock smoke: PASS (48s) -----
+
+===== current MVP verification summary =====
+group                                                          status   seconds
+-------------------------------------------------------------- ------- --------
+static current architecture checks                             PASS           0
+static current procurement layout check                        PASS           1
+current-only migration VerifyCurrent and append path           PASS           7
+current permissions and legacy/refusal boundaries              PASS          96
+028-U PostgreSQL guard matrix                                  PASS          39
+wallet funding billing and settlement                          PASS          52
+backup restore and recovery lock drill                         PASS          12
+provider usage and current error/timeout handling              PASS          10
+provider config catalog server race compile                    PASS           9
+config and catalog current contract race                       PASS          25
+Config to Server provider timeout wiring audit                 PASS           0
+six-text commercial path                                       PASS          52
+image TTS async-video and Realtime current PostgreSQL path     PASS          65
+media state-machine and adapter safety tests                   PASS          19
+current Go vet                                                 PASS           1
+frontend tests                                                 PASS           1
+frontend production build                                      PASS           6
+Compose current migration provision restart and business mock smoke PASS          48
+database: postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable
+logs: /Users/vchive/.codex/worktrees/final-acceptance/moni-aigate/docs/verification/phase1/evidence/a938116056e377bf1615633ab21e84ba11eef099/current-mvp
+
+completed_at: 2026-11-16T06:16:36.277958+00:00
+exit_status: 0
