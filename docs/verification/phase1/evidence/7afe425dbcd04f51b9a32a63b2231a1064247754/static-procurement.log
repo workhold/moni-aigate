@@ -1,0 +1,7 @@
+command: go run ./scripts/check-procurement-layout
+started_at: 2026-11-16T01:32:14.409248+00:00
+
+PASS specs/023-periodic-products/b-procurement-column-layout-v1.json: 32 tables, 715 columns (68 generated, 647 nongenerated); design only, no DDL/keys/ACL/reader/catalog attestation
+
+completed_at: 2026-11-16T01:32:14.861258+00:00
+exit_status: 0

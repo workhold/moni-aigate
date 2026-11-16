@@ -1,0 +1,6 @@
+./scripts/verify-current-mvp.sh: line 137: rg: command not found
+provider timeout fields are absent from internal/config
+./scripts/verify-current-mvp.sh: line 141: rg: command not found
+provider timeout fields are not consumed by server startup
+./scripts/verify-current-mvp.sh: line 145: rg: command not found
+Config -> Server provider timeout wiring is not complete

@@ -1,0 +1,6 @@
+command: go build -trimpath -o /Users/vchive/.codex/worktrees/final-acceptance/moni-aigate/bin/moni-aigate ./cmd/moni-aigate
+started_at: 2026-11-16T01:32:15.464308+00:00
+
+
+completed_at: 2026-11-16T01:32:17.211257+00:00
+exit_status: 0

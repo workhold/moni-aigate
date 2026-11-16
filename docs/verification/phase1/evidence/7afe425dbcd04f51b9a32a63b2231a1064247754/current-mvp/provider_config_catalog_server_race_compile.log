@@ -1,0 +1,4 @@
+ok  	github.com/moni-ai/moni-aigate/internal/provider	1.400s [no tests to run]
+ok  	github.com/moni-ai/moni-aigate/internal/config	1.433s [no tests to run]
+ok  	github.com/moni-ai/moni-aigate/internal/catalog	1.491s [no tests to run]
+ok  	github.com/moni-ai/moni-aigate/internal/server	1.613s [no tests to run]

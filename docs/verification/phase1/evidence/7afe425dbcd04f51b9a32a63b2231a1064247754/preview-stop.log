@@ -1,0 +1,8 @@
+command: docker stop -t 30 moni-phase1-browser-app moni-phase1-browser-worker
+started_at: 2026-11-16T01:32:13.879634+00:00
+
+moni-phase1-browser-app
+moni-phase1-browser-worker
+
+completed_at: 2026-11-16T01:32:14.043384+00:00
+exit_status: 0
