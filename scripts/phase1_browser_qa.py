@@ -697,8 +697,10 @@ def check_release_dialog(browser: Browser, path: str, row_text: str, fixture: di
     browser.navigate(path)
     browser.click_row_action(row_text, "资格证据")
     browser.wait("!!document.querySelector('[data-testid=release-evidence-list]')")
+    browser.wait("(()=>{const root=document.querySelector('[data-testid=release-evidence-list]');return !!root&&[...root.querySelectorAll('button')].some(x=>x.innerText.trim().includes('详情')&&!x.disabled&&x.getClientRects().length)})()")
     browser.click_text("详情", "[data-testid=release-evidence-list] button")
     browser.wait(f"document.body.innerText.includes({json.dumps(fixture['evidence_ref'])})")
+    browser.wait("(()=>{const dialog=document.querySelector('[data-testid=release-evidence-dialog]');const overlay=dialog&&dialog.closest('.el-overlay');return !!overlay&&getComputedStyle(overlay).opacity==='1'})()")
     observation = browser.evaluate("(()=>({text:document.body.innerText,scrollWidth:document.documentElement.scrollWidth,bodyScrollWidth:document.body.scrollWidth,viewport:innerWidth}))()")
     required = ["Mock 已验证（非供应商资格）", fixture["commit"], fixture["evidence_ref"], "只读证据登记"]
     if any(value not in observation["text"] for value in required):

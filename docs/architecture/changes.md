@@ -7940,3 +7940,15 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - added `web/tests/release-qualification.test.mjs`
 
 </details>
+
+## 2026-11-17T04:54:13Z · f7fb82c43939
+
+修复PR-2浏览器证据 harness 的列表就绪竞争，并在截图前等待对话框overlay完成；仅验收工具时序，无运行结构或合同变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2529 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+
+</details>

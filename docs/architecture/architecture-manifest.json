@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T03:44:43Z",
-  "review_reason": "实现038-PR2追加式发布资格证据、direct商业发布/回滚门禁、admin只读UI和provenance闭集检查；复核迁移、权限、数据关系、CI与验收链路，真实供应商和生产资格不变",
-  "snapshot_sha256": "ee6b1094fb7dc00585067e48911b62ec71e5f18c840ef904155975922a9eb001",
+  "reviewed_at": "2026-11-17T04:54:13Z",
+  "review_reason": "修复PR-2浏览器证据 harness 的列表就绪竞争，并在截图前等待对话框overlay完成；仅验收工具时序，无运行结构或合同变化",
+  "snapshot_sha256": "f7fb82c43939684f84d6774d7aacec4fda97a0cd7f9a28b14cc1f1c3fbd2bf6f",
   "architecture_sha256": "f322eb11012f1a21abdfc7f2a6855cc5105a3be815611413ab07b4c0f0e71c06",
-  "history_sha256": "8ac3cbffa7b6a8ab6a15ec74861344684f8a43fc044b07f5203c726fd1a604d8",
+  "history_sha256": "ddbb6204f189943ea76731cf12d13e084effae584b5c58807398f5a26b44df81",
   "files": [
     {
       "path": ".dockerignore",
@@ -8245,7 +8245,7 @@
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "db3998ea5b842419dbb5e87f20b28bd78a7029092cfc42f132204c0bb38926a9"
+      "sha256": "7212570fbcfe70ce7b739b3590f2e1da0ea4067d06c883aebb6da278b425a7ee"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
