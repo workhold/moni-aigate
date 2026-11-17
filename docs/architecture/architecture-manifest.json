@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T09:28:19Z",
-  "review_reason": "收口CI发现的unknown-submit旧断言：同身份返回原任务且唯一unknown事件/结算，不恢复竞争503、不删测试；需最终整单复验",
-  "snapshot_sha256": "bbd16a4884df9ce90b02edb8d73fab0e68bbf910c8ee615aa8b2b4747e288351",
-  "architecture_sha256": "61255c6453546da053a4a91bc5b7c9f9af49634b216a8914d692968655327fe2",
-  "history_sha256": "3c5a765be26f9c66cf9eb80447ec26bd175ad11d43f2d47d8eb28bf20befd253",
+  "reviewed_at": "2026-11-17T09:39:52Z",
+  "review_reason": "修复移动抽屉200ms打开动画与当前项滚动的间歇竞争；动画完成后二次定位且关闭回调不生效，无业务或权限变化，需同提交复验",
+  "snapshot_sha256": "df9788cf267477c3d7faef1107b4dedbd8c82585a12cdee84869cbc3dea934e7",
+  "architecture_sha256": "28c99944d03a1dd734e13b2be4dbc8307b269304eeffaed6b4a077794b3f21e0",
+  "history_sha256": "a46bb64dd6f32edbe88383a33a4f93d966296214fbb414c77d80df1dac944be3",
   "files": [
     {
       "path": ".dockerignore",
@@ -2793,7 +2793,7 @@
     },
     {
       "path": "docs/verification/release-evidence-gate.md",
-      "sha256": "a293c3a0d5954fc9db42211f01d4eba400e40e03f21dfc787ca88e804659b04b"
+      "sha256": "b45be891eb82be5451f71cec5675b25df939c937ccf51893facfc42df3cbfca7"
     },
     {
       "path": "docs/verification/retrieval-protocols.md",
@@ -9397,7 +9397,7 @@
     },
     {
       "path": "specs/038-new-api-capability-migration/navigation-refinement.md",
-      "sha256": "db774f1019db70f0cac90d00de8022e4758b89e46320f3b35efd27f1b5d1b45e"
+      "sha256": "04c82093abfce1c1f439f5d31489a04714c848731de4f46466509b01b758e041"
     },
     {
       "path": "specs/038-new-api-capability-migration/release-evidence-gate.md",
@@ -9465,7 +9465,7 @@
     },
     {
       "path": "web/src/App.vue",
-      "sha256": "806a47d4eef914b3537e6fc059b099f5a20bcd4cee0b5fb37c61d01e904b839a"
+      "sha256": "492ce912d4eda065192ffbbc8c7f2044f9afef0c2e22e5b65e693c47c4b339f6"
     },
     {
       "path": "web/src/alerts-json.ts",

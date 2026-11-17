@@ -8034,3 +8034,17 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `internal/server/task_media_billing_integration_test.go`
 
 </details>
+
+## 2026-11-17T09:39:52Z · df9788cf2674
+
+修复移动抽屉200ms打开动画与当前项滚动的间歇竞争；动画完成后二次定位且关闭回调不生效，无业务或权限变化，需同提交复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/release-evidence-gate.md`
+- modified `specs/038-new-api-capability-migration/navigation-refinement.md`
+- modified `web/src/App.vue`
+
+</details>

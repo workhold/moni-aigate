@@ -76,7 +76,13 @@ function togglePlatformGroup(id: string) {
   try { sessionStorage.setItem('moni:platform-navigation:v1', serializeNavigationGroupState(expandedGroups.value)) } catch { /* storage is an optional UI preference */ }
 }
 function setMobileOpen(open: boolean) {
-  if (open) { expandCurrentGroup(); scrollCurrentNav() }
+  if (open) {
+    expandCurrentGroup()
+    scrollCurrentNav()
+    if (mobileViewport.value) {
+      window.setTimeout(() => { if (mobileOpen.value) scrollCurrentNav() }, 220)
+    }
+  }
   mobileOpen.value = open
 }
 function sidebarKeys(event: KeyboardEvent) {
