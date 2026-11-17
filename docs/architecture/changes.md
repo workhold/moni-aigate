@@ -7973,3 +7973,16 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - added `web/tests/navigation.test.mjs`
 
 </details>
+
+## 2026-11-17T06:54:14Z · b7a02c3b619d
+
+修复移动导航在桌面/移动会话切换时的测试状态依赖，并让Escape关闭后的焦点可靠回退顶栏触发器；补充断点和重开定位验收，无业务边界变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2532 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+- modified `web/src/App.vue`
+
+</details>

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T06:37:38Z",
-  "review_reason": "按用户确认的New API对照方案收口平台侧栏：四组导航、独立滚动、当前项定位和移动可访问性；仅前端/验收与文档变化，无业务路由、权限或商业链变化",
-  "snapshot_sha256": "6f1e94edceae8e10cbf336f305a25eeb54111c42b1620169fedb4533a688eea6",
+  "reviewed_at": "2026-11-17T06:54:14Z",
+  "review_reason": "修复移动导航在桌面/移动会话切换时的测试状态依赖，并让Escape关闭后的焦点可靠回退顶栏触发器；补充断点和重开定位验收，无业务边界变化",
+  "snapshot_sha256": "b7a02c3b619dd6765c5bc9f898d5abc9709fc803f02ac11e42e8c0245867a7fe",
   "architecture_sha256": "9a690788ab218daa436157433d19288df9aa0942967924beedf5ab7015daaacc",
-  "history_sha256": "d16d5f5c269453eb727d1788f2021952b7c9e59a0b221588a2828927743f06c0",
+  "history_sha256": "18de52addfa08cae89c0be6154edb5f257e6e983d618b10330c74391e4d35673",
   "files": [
     {
       "path": ".dockerignore",
@@ -8245,7 +8245,7 @@
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "cf68b728afe6bd3dae23bdd25893cdd83a74ce150a8fd3ab14b37e66827d20ad"
+      "sha256": "171092d18b892b21195bfa167ec3d363d93e5fc4dc8af8985676a9345f9802fd"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
@@ -9457,7 +9457,7 @@
     },
     {
       "path": "web/src/App.vue",
-      "sha256": "bc4b0357d47dbfe61c0f909b399175418904cc601cf2e84cebdcd0ca7291d551"
+      "sha256": "806a47d4eef914b3537e6fc059b099f5a20bcd4cee0b5fb37c61d01e904b839a"
     },
     {
       "path": "web/src/alerts-json.ts",

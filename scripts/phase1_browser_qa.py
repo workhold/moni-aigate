@@ -723,6 +723,10 @@ def current_nav_visible(browser: Browser):
 
 
 def check_platform_navigation(browser: Browser) -> list[dict]:
+    mobile = browser.evaluate("innerWidth <= 800")
+    if mobile:
+        browser.evaluate("document.querySelector('.mobile-menu').click()")
+        browser.wait("document.querySelector('.sidebar').classList.contains('is-mobile-open') && !document.querySelector('.sidebar').inert")
     browser.navigate('/platform/reports', '运营与成本报表')
     current_nav_visible(browser)
     report = browser.evaluate("(()=>{const selected=document.querySelector('.sidebar .nav-link.selected');return{groups:[...document.querySelectorAll('.nav-group')].map(g=>({title:g.querySelector('.nav-group-title').innerText,expanded:g.querySelector('.nav-group-title').getAttribute('aria-expanded')==='true'})),selectedPath:selected&&selected.getAttribute('href'),selectedGroup:selected&&selected.closest('.nav-group-links').id}})()")
@@ -739,10 +743,12 @@ def check_platform_navigation(browser: Browser) -> list[dict]:
     browser.evaluate("document.querySelector('.sidebar-nav').scrollTop=0")
     browser.navigate('/platform/periodic-budget', '周期预算')
     current_nav_visible(browser)
+    before_toggle = browser.evaluate("document.querySelector('.nav-group-title[aria-controls=\"platform-group-channels\"]').getAttribute('aria-expanded')==='true'")
     browser.click_text('渠道与定价', '.nav-group-title')
-    browser.wait("document.querySelector('#platform-group-channels')?.previousElementSibling?.getAttribute('aria-expanded')==='true'")
+    expected_toggle = 'false' if before_toggle else 'true'
+    browser.wait(f"document.querySelector('.nav-group-title[aria-controls=\"platform-group-channels\"]').getAttribute('aria-expanded')==='{expected_toggle}'")
     stored = browser.evaluate("sessionStorage.getItem('moni:platform-navigation:v1')")
-    if not stored or not json.loads(stored).get('channels'):
+    if not stored or json.loads(stored).get('channels') != (not before_toggle):
         raise RuntimeError('navigation expansion preference was not retained')
     browser.cdp.call('Emulation.setEmulatedMedia', {'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
     try:
@@ -751,6 +757,9 @@ def check_platform_navigation(browser: Browser) -> list[dict]:
             raise RuntimeError(f'reduced-motion transition remains active: {reduced}')
     finally:
         browser.cdp.call('Emulation.setEmulatedMedia', {'features':[]})
+    if mobile:
+        browser.evaluate("document.querySelector('.sidebar-close').click()")
+        browser.wait("!document.querySelector('.sidebar').classList.contains('is-mobile-open')")
     return [
         {'name':'平台四组导航、当前报表组自动展开且当前项滚入视野','observation':report},
         {'name':'周期预算直链及同组路由恢复资金组与当前项，分组状态写入会话偏好','observation':periodic},

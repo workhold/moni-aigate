@@ -100,7 +100,10 @@ watch(mobileOpen, open => {
     void nextTick(() => document.querySelector<HTMLElement>('.sidebar-close')?.focus())
   } else {
     document.body.style.overflow = previousBodyOverflow
-    returnFocus?.focus()
+    const sidebar = document.getElementById('app-sidebar')
+    const validReturn = returnFocus !== null && returnFocus.isConnected && !sidebar?.contains(returnFocus) && returnFocus.matches('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')
+    const target = validReturn ? returnFocus : document.querySelector<HTMLElement>('.mobile-menu')
+    target?.focus()
     returnFocus = null
   }
 })
