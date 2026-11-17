@@ -69,6 +69,10 @@ npm --prefix web run build
 
 随后支付真实进程 QA 完整通过，包括 checkout、capture、唯一入账、Recovery、冻结查询重放、attested off、SIGTERM/SIGKILL、Guard-loss、自然 lease 恢复及八角色清理。Compose 业务 QA 也独立通过，覆盖修复后的 task submit。以上结果证明本次失败的环境与竞争根因，但最终 PR-2 仍须在新的最终提交上整单重跑 029；预存在的 `database_commit_reply_loss_no_wire_fault_facility` 显式 SKIP 没有被改写或计作必需通过。
 
+## CI 旧断言收口
+
+远端 server-2 在任务语义变更后精确发现旧断言仍期待 `ErrNoResubmit`。没有恢复 HTTP/worker 竞争产生的 503，也没有删除或跳过测试。`TestVideoTaskUnknownSubmissionReleasesMediaAndPreventsResubmit` 现在要求同身份 Submit 返回原 unknown 任务，并同时断言 settlement=1、submission_unknown 事件=1；与真实 worker/HTTP 竞争测试一起运行通过。随后须在包含该断言修正的新提交上重跑完整 029。
+
 ## 独立审查修正
 
 三路代码审查及逐项反驳已汇总。修复包括：精确 `..` 与大小写 key 绕过、manifest/SOURCE 漂移、未登记组件、测试浅复制、model INSERT 门禁、Go/SQL 输入差异、登记历史证据 stale 不一致，以及失败分页提前修改游标历史。修正后相关专项均重跑通过。

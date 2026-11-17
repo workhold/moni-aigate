@@ -8021,3 +8021,16 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `specs/038-new-api-capability-migration/release-evidence-gate.md`
 
 </details>
+
+## 2026-11-17T09:28:19Z · bbd16a4884df
+
+收口CI发现的unknown-submit旧断言：同身份返回原任务且唯一unknown事件/结算，不恢复竞争503、不删测试；需最终整单复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/release-evidence-gate.md`
+- modified `internal/server/task_media_billing_integration_test.go`
+
+</details>

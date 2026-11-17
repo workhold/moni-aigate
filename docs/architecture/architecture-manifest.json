@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T09:02:08Z",
-  "review_reason": "记录029环境目录膨胀根因和支付/Compose独立通过；完善支付context/SQLSTATE/network固定诊断分类，无业务合同变化，准备最终整单复验",
-  "snapshot_sha256": "e13307b88db84d249f34218090cb4a6af2d4d1f7a57f23466da48fa23249b362",
+  "reviewed_at": "2026-11-17T09:28:19Z",
+  "review_reason": "收口CI发现的unknown-submit旧断言：同身份返回原任务且唯一unknown事件/结算，不恢复竞争503、不删测试；需最终整单复验",
+  "snapshot_sha256": "bbd16a4884df9ce90b02edb8d73fab0e68bbf910c8ee615aa8b2b4747e288351",
   "architecture_sha256": "61255c6453546da053a4a91bc5b7c9f9af49634b216a8914d692968655327fe2",
-  "history_sha256": "88ad0f13653c6a7817de01133dbbc95324938eae3af8c98522bd7c2b77e6a013",
+  "history_sha256": "3c5a765be26f9c66cf9eb80447ec26bd175ad11d43f2d47d8eb28bf20befd253",
   "files": [
     {
       "path": ".dockerignore",
@@ -2793,7 +2793,7 @@
     },
     {
       "path": "docs/verification/release-evidence-gate.md",
-      "sha256": "5d8c332e5af5983ee8e0b3e01a7186ebf64bf2327b1365d272a89ab73f87cdad"
+      "sha256": "a293c3a0d5954fc9db42211f01d4eba400e40e03f21dfc787ca88e804659b04b"
     },
     {
       "path": "docs/verification/retrieval-protocols.md",
@@ -7537,7 +7537,7 @@
     },
     {
       "path": "internal/server/task_media_billing_integration_test.go",
-      "sha256": "875081f4932a4aa4aeb4bf65ad80000bf805f677b806d6c13f88d8fda5adc434"
+      "sha256": "ec2cc6fa413a53a16cd39e89356fc4335f80dafe29680d118989ecc39528eec6"
     },
     {
       "path": "internal/server/task_request_reference_integration_test.go",
