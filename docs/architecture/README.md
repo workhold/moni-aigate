@@ -103,7 +103,7 @@ New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration
 
 PR-2 侧栏收口按[导航子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)只重组现有管理入口：`web/src/navigation.ts` 固定四组路径闭集，App.vue 继续使用原角色过滤和路由守卫，空组消失，当前组展开并定位当前项。品牌/底部状态固定，导航区独立滚动；移动抽屉有焦点圈定/返回、Escape、关闭按钮、inert 和背景滚动恢复。会话偏好不是权限事实，周期预算仅获得现有页面的真实导航入口。该变化不新增业务路由、API、迁移或供应商能力。
 
-029 运行时还修正了任务 HTTP/worker 同身份提交竞争：`tasks.Service.Submit` 对已非 prepared 的任务使用原持久化幂等身份返回同一任务，不新增 adapter 调用、attempt 或生成请求；真实 PostgreSQL 竞争测试验证唯一 submission_accepted/attempt。支付主进程的 worker 初始化失败仅附加 `payments.SafeErrorCode` 封闭分类，原始错误、DSN、凭据和供应商正文不进入日志。详细合同见[038 运行时修正](../../specs/038-new-api-capability-migration/release-evidence-gate.md#10-029-发现的运行时修正)。
+029 运行时还修正了任务 HTTP/worker 同身份提交竞争：`tasks.Service.Submit` 对已非 prepared 的任务使用原持久化幂等身份返回同一任务，不新增 adapter 调用、attempt 或生成请求；真实 PostgreSQL 竞争测试验证唯一 submission_accepted/attempt。支付主进程的初始化失败仅附加 `payments.SafeErrorCode` 封闭分类，原始错误、DSN、凭据和供应商正文不进入日志；context、SQLSTATE 与网络错误也只映射为固定诊断类别。详细合同见[038 运行时修正](../../specs/038-new-api-capability-migration/release-evidence-gate.md#10-029-发现的运行时修正)。
 
 ```mermaid
 flowchart LR

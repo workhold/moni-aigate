@@ -8005,3 +8005,19 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `specs/038-new-api-capability-migration/release-evidence-gate.md`
 
 </details>
+
+## 2026-11-17T09:02:08Z · e13307b88db8
+
+记录029环境目录膨胀根因和支付/Compose独立通过；完善支付context/SQLSTATE/network固定诊断分类，无业务合同变化，准备最终整单复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/verification/release-evidence-gate.md`
+- modified `internal/payments/safe_error_test.go`
+- modified `internal/payments/service_base.go`
+- modified `specs/038-new-api-capability-migration/release-evidence-gate.md`
+
+</details>

@@ -254,7 +254,7 @@ func run() error {
 		}
 	}
 	if e = app.InitializePayments(ctx, paymentStart.application); e != nil {
-		return fmt.Errorf("payment service initialization failed")
+		return fmt.Errorf("payment service initialization failed: %s", payments.SafeErrorCode(e))
 	}
 	var paymentProcessor *payments.Processor
 	var paymentRunner *payments.Runner

@@ -163,6 +163,6 @@ activation 不接受新 intent/evidence，不提升 test-only 历史 revision。
 
 ### 10.2 支付启动诊断
 
-支付主进程初始化失败可以附加 `payments.SafeErrorCode` 的封闭错误身份；原始 cause、SQL、DSN、凭据、Cookie、供应商正文和内部密钥不得进入日志。未知错误固定归为 `payments_unavailable`。该诊断不改变启动失败关闭、实例锁、恢复或支付资金行为。
+支付主进程初始化失败可以附加 `payments.SafeErrorCode` 的封闭错误身份；原始 cause、SQL、DSN、凭据、Cookie、供应商正文和内部密钥不得进入日志。未知错误固定归为 `payments_unavailable`；context 截止/取消、SQLSTATE 和网络错误只能映射为对应的固定诊断类别，不得包含原始文本。该诊断不改变启动失败关闭、实例锁、恢复或支付资金行为。
 
 这些运行时修正由完整 029 触发，不能因局部测试或较早提交通过而免除同提交整单重跑。

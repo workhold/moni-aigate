@@ -61,7 +61,13 @@ npm --prefix web run build
 
 现按[运行时修正合同](../../specs/038-new-api-capability-migration/release-evidence-gate.md#10-029-发现的运行时修正)改为原身份 `ReplaySubmit` 返回同一任务，不新增供应商调用。真实 PostgreSQL 竞争测试已通过：HTTP 202、worker 无业务错误或合法无工作、一个 submission_accepted 事件和一个 attempt；既有 unknown-submit 测试仍要求不重新提交，adapter 调用总数保持 1。
 
-支付私有日志确认 Recovery 子进程在 `OpenProcessor` 退出，未把清理错误当主因。新增 `payments.SafeErrorCode` 封闭分类和主进程安全日志，不输出原始 cause/秘密。分类单测已覆盖 Guard、领域错误和未知含秘密错误；真实 Recovery 复跑与最终整单结果仍待确认，不提前宣称通过。
+支付私有日志确认 Recovery 子进程在 `OpenProcessor` 退出，未把清理错误当主因。新增 `payments.SafeErrorCode` 封闭分类和主进程安全日志，不输出原始 cause/秘密。分类单测已覆盖 Guard、领域错误、context、SQLSTATE、网络和未知含秘密错误；真实 Recovery 复跑与最终整单结果仍待确认，不提前宣称通过。
+
+## 环境根因与独立复测
+
+支付分类曾捕获 `payment_deadline_exceeded`。只读资源核查发现专用测试库残留大量历史 meter fixture：约 245 个 schema、15 万 relation 和 5.5 万函数。核对其创建/清理代码并确认无其他 active 测试、无未授予锁后，仅对精确 `meter_gap/u/login/roles` 测试前缀按独立小事务清理，避免单事务超过锁表空间。清理后约为 71 个 schema、1 万 relation 和 6 千函数；其他业务/用户对象未纳入删除范围。
+
+随后支付真实进程 QA 完整通过，包括 checkout、capture、唯一入账、Recovery、冻结查询重放、attested off、SIGTERM/SIGKILL、Guard-loss、自然 lease 恢复及八角色清理。Compose 业务 QA 也独立通过，覆盖修复后的 task submit。以上结果证明本次失败的环境与竞争根因，但最终 PR-2 仍须在新的最终提交上整单重跑 029；预存在的 `database_commit_reply_loss_no_wire_fault_facility` 显式 SKIP 没有被改写或计作必需通过。
 
 ## 独立审查修正
 
