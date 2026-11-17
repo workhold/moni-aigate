@@ -50,6 +50,6 @@
 
 ## 6. 首批台账展开顺序
 
-1. PR-2 展开 NA-04/NA-06 的发布资格、来源、重试和成本证据字段，物理设计另审。
+1. PR-2 已建立[发布资格与证据门禁](release-evidence-gate.md)，展开 NA-04/NA-06 的资格、来源、重试、成本与凭据覆盖；实现和专项范围见[验证记录](../../docs/verification/release-evidence-gate.md)，不据此授予真实供应商资格。
 2. PR-3 展开 NA-01 的一个 OpenAI-compatible Chat/SSE profile，完成内置适配和 deterministic/mock 验收；不得用 NA-01 总体行或内测探测替代第四阶段真实 profile 资格。
 3. 后续依次展开 NA-02/03/04 的其他 profile、NA-06 的运营工作流和 NA-12 的客户观测；032/033 与 M5 保持各自合同和门禁。

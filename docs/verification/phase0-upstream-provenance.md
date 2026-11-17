@@ -29,3 +29,9 @@
 | `third_party/sub2api/LICENSE` | `a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b` |
 
 修改上游版本时必须重新获取并审查来源文件、更新 SOURCE 与预期摘要，不能用浮动 `main/latest` 或只改检查常量通过门禁。发布镜像还需另行审查该镜像内完整第三方 notice bundle；本项不宣称完成该完整 SBOM 或生产法律审查。
+
+## 038-PR2 机器清单与执行边界
+
+2026-11-17 新增 `third_party/provenance.json`，把组件、固定仓库/提交、参考源码路径、LICENSE/NOTICE、SOURCE、本地修改和 source offer 纳入严格 JSON 与文件摘要检查；reference-only 组件不得携带 vendored inventory，未来 vendored 组件必须声明精确文件闭集。checker 同时核对固定组件与 SOURCE 的一致性、third_party 目录闭集、路径穿越和符号链接，且在实际 CI、current-MVP 与 029 静态门中执行。
+
+这些增强只证明仓库来源元数据及引用完整性，不读取或认证外部供应商制品，不授予 supplier/profile 或生产资格。原有 035 固定拓扑与本地验收结论保持不变。

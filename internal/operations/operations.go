@@ -58,6 +58,16 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 			}
 		}
 	}
+	var releaseEvidence bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='channel_profile_release_evidence')`, schema).Scan(&releaseEvidence); e != nil {
+		return e
+	}
+	if releaseEvidence {
+		releaseTables := strings.Join([]string{table("channel_profile_release_evidence"), table("channel_profile_release_evidence_credentials"), table("channel_profile_release_withdrawals")}, ",")
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s; REVOKE ALL ON %s FROM %s,PUBLIC;`, releaseTables, qa, releaseTables, qp)); e != nil {
+			return e
+		}
+	}
 	// Customer money changes only the balance, never account ownership or kind.
 	// The current payment/wallet ACL pass below also clears any old column grants.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;

@@ -21,3 +21,5 @@ git -C third_party/sub2api checkout <SUB2API_COMMIT>
 ```
 
 本次通过 GitHub API 按固定提交取得 LICENSE/NOTICE 并记录来源；未执行源码克隆，也未提交未核实的上游代码。`make check` 的 `upstream-provenance-check` 校验这些文件、固定提交、镜像 digest 和本地修改记录。
+
+2026-11-17 起，`third_party/provenance.json` 是组件、固定提交、参考路径、许可证/NOTICE、source offer 与 vendored 文件闭集的机器可读索引。检查器同时核对 SOURCE 记录、组件目录闭集、实际文件摘要和路径/符号链接安全；CI、current-MVP 与 029 静态门实际执行它。该 PASS 只表示仓库元数据和引用完整性，不是供应商、法律、完整 SBOM 或生产资格证明。

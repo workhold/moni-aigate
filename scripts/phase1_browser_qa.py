@@ -199,6 +199,13 @@ class Browser:
             raise RuntimeError("page evaluation failed")
         return result.get("result", {}).get("value")
 
+    def api(self, path: str, method: str = "GET", body: dict | None = None):
+        expression = f"""(()=>{{const path={json.dumps(path)},method={json.dumps(method)},body={json.dumps(body)};return (async()=>{{let headers={{'Accept':'application/json'}};if(body!==null){{const me=await fetch('/api/me',{{credentials:'include'}}).then(r=>r.json());headers['Content-Type']='application/json';headers['X-CSRF-Token']=me.data.csrf_token;}}const response=await fetch(path,{{method,headers,credentials:'include',body:body===null?undefined:JSON.stringify(body)}});const payload=await response.json();return{{status:response.status,payload}};}})();}})()"""
+        result = self.evaluate(expression)
+        if not result or not 200 <= result["status"] < 300:
+            raise RuntimeError(f"browser API {method} {path} failed: {result}")
+        return result["payload"]
+
     def wait(self, expression: str, timeout: float = 20):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -669,6 +676,46 @@ def check_page(browser: Browser, path: str, expected: str) -> dict:
     return {"name": f"{path}: {expected}，无页面横向溢出或错误告警", **observation}
 
 
+def record_mock_release_evidence(browser: Browser, commit: str) -> dict:
+    channels = browser.api("/api/platform/channels")["data"]
+    models = browser.api("/api/platform/models")["data"]
+    by_id = {row["id"]: row for row in channels}
+    for model in models:
+        for binding in model.get("bindings", []):
+            channel = by_id.get(binding["channel_id"])
+            if not channel or channel.get("channel_kind") != "direct":
+                continue
+            pool = browser.api("/api/platform/channels/" + channel["id"] + "/credential-pool")["data"]
+            evidence_ref = "evidence/phase1-browser/" + uuid.uuid4().hex
+            body = {"channel_id": channel["id"], "channel_version_id": channel["current_version"], "model_id": model["id"], "profile_version": model["profile_version"], "upstream_model": binding["upstream_model"], "variant_key": "default", "supplier": "phase1-deterministic-mock", "protocol": model["protocol"], "qualification": "mock_verified", "observed_at": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()) + ".000000Z", "evidence_commit": commit, "evidence_ref": evidence_ref, "evidence_sha256": hashlib.sha256(evidence_ref.encode()).hexdigest(), "source_mode": "reference_only", "source_repository": "https://github.com/QuantumNous/new-api", "source_commit": "e449cc700eb569cdfc2199cb73e97de46944f43c", "license_ref": "third_party/new-api/LICENSE", "notice_ref": "third_party/new-api/NOTICE", "modification_ref": "third_party/new-api/SOURCE.md", "boundary_ref": "evidence/mock-boundary", "usage_ref": "evidence/mock-usage", "retry_ref": "evidence/mock-retry", "cost_ref": "evidence/mock-cost", "cost_status": "known", "open_issue_codes": [], "credential_ids": [member["credential_id"] for member in pool["members"]]}
+            recorded = browser.api("/api/platform/release-evidence", "POST", body)["data"]
+            return {"id": recorded["id"], "channel": channel["name"], "model": model["public_name"], "evidence_ref": evidence_ref, "commit": commit}
+    raise RuntimeError("no direct model binding is available for release-evidence browser coverage")
+
+
+def check_release_dialog(browser: Browser, path: str, row_text: str, fixture: dict) -> dict:
+    browser.navigate(path)
+    browser.click_row_action(row_text, "资格证据")
+    browser.wait("!!document.querySelector('[data-testid=release-evidence-list]')")
+    browser.click_text("详情", "[data-testid=release-evidence-list] button")
+    browser.wait(f"document.body.innerText.includes({json.dumps(fixture['evidence_ref'])})")
+    observation = browser.evaluate("(()=>({text:document.body.innerText,scrollWidth:document.documentElement.scrollWidth,bodyScrollWidth:document.body.scrollWidth,viewport:innerWidth}))()")
+    required = ["Mock 已验证（非供应商资格）", fixture["commit"], fixture["evidence_ref"], "只读证据登记"]
+    if any(value not in observation["text"] for value in required):
+        raise RuntimeError(f"release-evidence DOM is incomplete: {observation}")
+    for canary in ["phase1-a-secret", "phase1-b-secret", "secret_ciphertext", "base_url", "allowed_cidrs"]:
+        if canary in observation["text"]:
+            raise RuntimeError(f"release-evidence leaked {canary}")
+    if observation["scrollWidth"] > observation["viewport"] or observation["bodyScrollWidth"] > observation["viewport"]:
+        raise RuntimeError(f"release-evidence horizontal overflow: {observation}")
+    return {"name": f"{path}: 只读 mock 证据、精确提交/引用、无秘密或横向溢出", "observation": observation}
+
+
+def close_release_dialog(browser: Browser):
+    browser.click_text("关闭", "[data-testid=release-evidence-dialog] button")
+    browser.wait("!document.querySelector('[data-testid=release-evidence-dialog]')")
+
+
 def run(args: argparse.Namespace) -> int:
     root = pathlib.Path(__file__).resolve().parent.parent
     output = pathlib.Path(args.output).resolve()
@@ -705,6 +752,7 @@ def run(args: argparse.Namespace) -> int:
                 checks.append({"name": "公开价格页展示已发布模型与当前价格", "model": public_name})
             evidence.record(browser, "P1-CAT-01", viewport, width, checks, args.final)
         browser.login("admin@example.com", admin_password)
+        release_fixture = record_mock_release_evidence(browser, commit) if accounts else None
         for viewport, width, height in VIEWPORTS:
             browser.viewport(width, height)
             admin_checks = [check_page(browser, path, expected) for path, expected in ADMIN_PAGES]
@@ -712,7 +760,13 @@ def run(args: argparse.Namespace) -> int:
                 admin_checks.append(check_page(browser, "/platform/periodic-budget?tenant=" + account_payload["tenant"]["id"], "客户周期预算"))
             else:
                 admin_checks.append(check_expected_alert(browser, "/platform/periodic-budget", "预算目标无效"))
+            if release_fixture:
+                admin_checks.append(check_release_dialog(browser, "/platform/channels", release_fixture["channel"], release_fixture))
+                close_release_dialog(browser)
+                admin_checks.append(check_release_dialog(browser, "/platform/catalog", release_fixture["model"], release_fixture))
             evidence.record(browser, "P1-UI-02", viewport, width, admin_checks, args.final)
+            if release_fixture:
+                close_release_dialog(browser)
             evidence.record(browser, "P1-OP-01", viewport, width, [check_page(browser, "/platform/alerts", "经营告警"), check_page(browser, "/platform/audit", "操作审计")], args.final)
             report_checks = [check_page(browser, "/platform/reports", "运营与成本报表")]
             if viewport == "desktop":

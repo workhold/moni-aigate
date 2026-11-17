@@ -317,6 +317,7 @@ type BindingInput struct {
 	MaxInflight       int     `json:"max_inflight"`
 	MaxInputCostRate  *string `json:"max_input_cost_rate"`
 	MaxOutputCostRate *string `json:"max_output_cost_rate"`
+	ReleaseEvidenceID string  `json:"release_evidence_id,omitempty"`
 }
 
 func (s *Store) Publish(ctx context.Context, actor, model string, expected int64, bindings []BindingInput) (int64, error) {
@@ -324,6 +325,17 @@ func (s *Store) Publish(ctx context.Context, actor, model string, expected int64
 }
 
 func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy) (int64, error) {
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly)
+}
+
+func (s *Store) PublishCommercialWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy) (int64, error) {
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial)
+}
+
+func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, releaseIntent string) (int64, error) {
+	if releaseIntent != ReleaseTestOnly && releaseIntent != ReleaseCommercial {
+		return 0, ErrInvalid
+	}
 	if routing.ValidateCostPolicy(costPolicy) != nil {
 		return 0, ErrInvalid
 	}
@@ -338,8 +350,9 @@ func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, 
 	}
 	defer tx.Rollback(ctx)
 	var revision int64
+	var profileVersion string
 	var profileJSON []byte
-	if e = tx.QueryRow(ctx, "SELECT active_revision,meter_model_profile(id) FROM models WHERE id=$1 FOR UPDATE", model).Scan(&revision, &profileJSON); e != nil {
+	if e = tx.QueryRow(ctx, "SELECT active_revision,profile_version,meter_model_profile(id) FROM models WHERE id=$1 FOR UPDATE", model).Scan(&revision, &profileVersion, &profileJSON); e != nil {
 		return 0, e
 	}
 	var profile provider.Profile
@@ -350,7 +363,7 @@ func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, 
 		return 0, ErrConflict
 	}
 	policy := uuid.NewString()
-	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,$3,$4,$5)", policy, model, revision+1, costPolicy.Mode, costPolicy.UnknownCostPolicy); e != nil {
+	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy,release_intent) VALUES($1,$2,$3,$4,$5,$6)", policy, model, revision+1, costPolicy.Mode, costPolicy.UnknownCostPolicy, releaseIntent); e != nil {
 		return 0, e
 	}
 	for _, b := range bindings {
@@ -406,8 +419,17 @@ func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, 
 		if isolated {
 			return 0, ErrInvalid
 		}
+		var releaseEvidence any
+		if releaseIntent == ReleaseCommercial {
+			if err = validateCommercialBinding(ctx, tx, b.ReleaseEvidenceID, model, profileVersion, b.ChannelID, ver, b.UpstreamModel, "default"); err != nil {
+				return 0, err
+			}
+			releaseEvidence = b.ReleaseEvidenceID
+		} else if b.ReleaseEvidenceID != "" {
+			return 0, ErrInvalid
+		}
 		var bindingID string
-		if e = tx.QueryRow(ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,$5,$6,$7,'default') RETURNING id`, policy, b.ChannelID, ver, b.UpstreamModel, b.Priority, b.Weight, b.MaxInflight).Scan(&bindingID); e != nil {
+		if e = tx.QueryRow(ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key,release_evidence_id) VALUES($1,$2,$3,$4,$5,$6,$7,'default',$8) RETURNING id`, policy, b.ChannelID, ver, b.UpstreamModel, b.Priority, b.Weight, b.MaxInflight, releaseEvidence).Scan(&bindingID); e != nil {
 			return 0, e
 		}
 		if maxInput != nil {

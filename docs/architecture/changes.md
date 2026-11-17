@@ -7889,3 +7889,54 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - added `specs/038-new-api-capability-migration/spec.md`
 
 </details>
+
+## 2026-11-17T03:44:43Z · ee6b1094fb7d
+
+实现038-PR2追加式发布资格证据、direct商业发布/回滚门禁、admin只读UI和provenance闭集检查；复核迁移、权限、数据关系、CI与验收链路，真实供应商和生产资格不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2529 个源文件；本次 40 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/research/dependency-provenance.md`
+- modified `docs/verification/phase0-upstream-provenance.md`
+- added `docs/verification/release-evidence-gate.md`
+- modified `internal/catalog/cost_policy.go`
+- added `internal/catalog/release_evidence.go`
+- added `internal/catalog/release_evidence_integration_test.go`
+- modified `internal/catalog/route_activate.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- modified `internal/server/catalog_handlers.go`
+- added `internal/server/release_evidence_handlers.go`
+- added `internal/server/release_evidence_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/current_011_release_qualification.sql`
+- modified `scripts/check-architecture/main.go`
+- modified `scripts/check-architecture/main_test.go`
+- modified `scripts/check-upstream-provenance/main.go`
+- added `scripts/check-upstream-provenance/main_test.go`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_browser_qa.py`
+- modified `scripts/verify-current-mvp.sh`
+- modified `specs/038-new-api-capability-migration/capability-matrix.md`
+- added `specs/038-new-api-capability-migration/release-evidence-gate.md`
+- modified `specs/038-new-api-capability-migration/spec.md`
+- added `third_party/README.md`
+- added `third_party/new-api/LICENSE`
+- added `third_party/new-api/NOTICE`
+- added `third_party/new-api/SOURCE.md`
+- added `third_party/new-api/THIRD-PARTY-LICENSES.md`
+- added `third_party/provenance.json`
+- added `third_party/sub2api/LICENSE`
+- added `third_party/sub2api/SOURCE.md`
+- added `web/src/components/ReleaseQualification.vue`
+- added `web/src/release-qualification-state.ts`
+- added `web/src/release-qualification.ts`
+- modified `web/src/views/PlatformView.vue`
+- added `web/tests/release-qualification.test.mjs`
+
+</details>

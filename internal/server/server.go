@@ -206,6 +206,10 @@ func (s *Server) Engine() *gin.Engine {
 	p.POST("/channels/:id/discover-models", s.discoverModels)
 	p.GET("/channels/:id/model-discoveries", s.modelDiscoveries)
 	p.GET("/channels/:id/model-discoveries/:discoveryID", s.modelDiscovery)
+	p.POST("/release-evidence", s.recordReleaseEvidence)
+	p.GET("/release-evidence", s.releaseEvidenceList)
+	p.GET("/release-evidence/:id", s.releaseEvidence)
+	p.POST("/release-evidence/:id/withdraw", s.withdrawReleaseEvidence)
 	p.GET("/models", s.platformModels)
 	p.POST("/models", s.createModel)
 	p.PATCH("/models/:id", s.updateModel)
@@ -361,6 +365,17 @@ func (s *Server) fail(c *gin.Context, status int, code, message string) {
 }
 func (s *Server) error(c *gin.Context, e error) {
 	if e == nil {
+		return
+	}
+	if code := catalog.ReleaseErrorCode(e); code != "" {
+		status := http.StatusBadRequest
+		if code == "release_evidence_not_found" {
+			status = http.StatusNotFound
+		}
+		if code == "release_evidence_withdrawn" {
+			status = http.StatusConflict
+		}
+		s.fail(c, status, code, "发布资格证据校验失败")
 		return
 	}
 	if errors.Is(e, errMediaProviderUnavailable) {
