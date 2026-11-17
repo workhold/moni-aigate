@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Grid, Key, Cpu, Connection, Wallet, Setting, OfficeBuilding, Switch, ArrowRight, Menu, Refresh, Lock, Money, Tickets, Document, User, PriceTag, CircleCheck, DataAnalysis } from '@element-plus/icons-vue'
+import { Grid, Key, Cpu, Connection, Wallet, Setting, OfficeBuilding, Switch, ArrowRight, Menu, Refresh, Lock, Money, Tickets, Document, User, PriceTag, CircleCheck, DataAnalysis, Close } from '@element-plus/icons-vue'
 import { clearSession, hasPlatform, isAdmin, isFinance, loadMe, session } from './session'
 import { errorText, request } from './api'
 import { label } from './format'
 import { isAnonymousLayout } from './public-layout'
+import { groupPlatformLinks, parseNavigationGroupState, platformGroupForPath, serializeNavigationGroupState } from './navigation'
 
 const route = useRoute(); const router = useRouter()
 const mobileOpen = ref(false); const switching = ref(false)
@@ -33,6 +34,7 @@ const platformLinks = computed(() => [
   { path: '/platform/price-groups', title: '价格组与租户定价', icon: PriceTag, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/cost-versions', title: '渠道成本版本', icon: PriceTag, show: isAdmin.value },
   { path: '/platform/procurement', title: '采购账户与对账', icon: Wallet, show: hasPlatform.value },
+  { path: '/platform/periodic-budget', title: '周期预算', icon: CircleCheck, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/vouchers', title: '运营赠额券', icon: Tickets, show: hasPlatform.value },
   { path: '/platform/payments', title: '支付与商品', icon: Money, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
   { path: '/platform/wallet-sources', title: '资金来源与核对', icon: Wallet, show: ['admin', 'finance_operator', 'finance_approver'].includes(session.me?.user.platform_role || '') },
@@ -47,6 +49,69 @@ const platformLinks = computed(() => [
   { path: '/platform/audit', title: '操作审计', icon: Document, show: hasPlatform.value },
 ].filter(item => item.show))
 const currentTitle = computed(() => [...links.value, ...platformLinks.value].find(item => item.path === route.path)?.title || String(route.meta.title || '控制台'))
+const platformGroups = computed(() => groupPlatformLinks(platformLinks.value))
+const currentPlatformGroup = computed(() => {
+  const id = platformGroupForPath(route.path)
+  return platformGroups.value.some(group => group.id === id) ? id : ''
+})
+let storedGroups: Record<string, boolean> = {}
+try { storedGroups = parseNavigationGroupState(sessionStorage.getItem('moni:platform-navigation:v1')) } catch { storedGroups = {} }
+const expandedGroups = ref<Record<string, boolean>>(storedGroups)
+const mobileViewport = ref(false)
+let viewportMedia: MediaQueryList | null = null
+let returnFocus: HTMLElement | null = null
+let previousBodyOverflow = ''
+function expandCurrentGroup() {
+  if (!currentPlatformGroup.value) return
+  expandedGroups.value = { ...expandedGroups.value, [currentPlatformGroup.value]: true }
+}
+function scrollCurrentNav() {
+  void nextTick(() => {
+    const current = document.querySelector('.sidebar .nav-link.selected')
+    if (current) current.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+  })
+}
+function togglePlatformGroup(id: string) {
+  expandedGroups.value = { ...expandedGroups.value, [id]: !expandedGroups.value[id] }
+  try { sessionStorage.setItem('moni:platform-navigation:v1', serializeNavigationGroupState(expandedGroups.value)) } catch { /* storage is an optional UI preference */ }
+}
+function setMobileOpen(open: boolean) {
+  if (open) { expandCurrentGroup(); scrollCurrentNav() }
+  mobileOpen.value = open
+}
+function sidebarKeys(event: KeyboardEvent) {
+  if (!mobileOpen.value || !mobileViewport.value) return
+  if (event.key === 'Escape') { event.preventDefault(); setMobileOpen(false); return }
+  if (event.key !== 'Tab') return
+  const sidebar = document.getElementById('app-sidebar')
+  if (!sidebar) return
+  const focusable = [...sidebar.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(element => element.getClientRects().length)
+  if (!focusable.length) return
+  const first = focusable[0], last = focusable[focusable.length - 1]
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+}
+watch([() => route.path, currentPlatformGroup], () => { expandCurrentGroup(); scrollCurrentNav() }, { immediate: true })
+watch(mobileOpen, open => {
+  if (open) {
+    returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    void nextTick(() => document.querySelector<HTMLElement>('.sidebar-close')?.focus())
+  } else {
+    document.body.style.overflow = previousBodyOverflow
+    returnFocus?.focus()
+    returnFocus = null
+  }
+})
+onMounted(() => {
+  viewportMedia = window.matchMedia('(max-width: 800px)')
+  const update = () => { mobileViewport.value = viewportMedia!.matches; if (!mobileViewport.value) mobileOpen.value = false }
+  update()
+  viewportMedia.addEventListener('change', update)
+  document.addEventListener('keydown', sidebarKeys)
+  onBeforeUnmount(() => { viewportMedia?.removeEventListener('change', update) })
+})
 
 async function switchTenant(id: string) {
   switching.value = true
@@ -70,7 +135,7 @@ function publicLogin() { if (route.meta.publicLayout === 'identity') clearSessio
 watch(() => route.meta.publicLayout, value => { if (isAnonymousLayout(value)) { securityOpen.value = false; mobileOpen.value = false; reauth.value = { password: '', code: '' } } })
 window.addEventListener('moni:reauth', openReauth)
 window.addEventListener('moni:unauthenticated', unauthenticated)
-onBeforeUnmount(() => { window.removeEventListener('moni:reauth', openReauth); window.removeEventListener('moni:unauthenticated', unauthenticated) })
+onBeforeUnmount(() => { window.removeEventListener('moni:reauth', openReauth); window.removeEventListener('moni:unauthenticated', unauthenticated); document.removeEventListener('keydown', sidebarKeys); document.body.style.overflow = previousBodyOverflow })
 </script>
 
 <template>
@@ -80,23 +145,23 @@ onBeforeUnmount(() => { window.removeEventListener('moni:reauth', openReauth); w
   </div>
   <div v-else-if="route.path === '/login'" class="login-root"><router-view /></div>
   <div v-else class="app-shell">
-    <div v-if="mobileOpen" class="sidebar-backdrop" @click="mobileOpen = false" />
-    <aside class="sidebar" :class="{ 'is-mobile-open': mobileOpen }">
-      <router-link to="/" class="brand" @click="mobileOpen = false"><span class="brand-mark">m<span>·</span></span><span>moni<span class="brand-suffix">aigate</span></span><span class="version">0.1</span></router-link>
+    <div v-if="mobileOpen" class="sidebar-backdrop" @click="setMobileOpen(false)" />
+    <aside id="app-sidebar" class="sidebar" :class="{ 'is-mobile-open': mobileOpen }" :inert="mobileViewport && !mobileOpen">
+      <div class="sidebar-head"><router-link to="/" class="brand" @click="setMobileOpen(false)"><span class="brand-mark">m<span>·</span></span><span>moni<span class="brand-suffix">aigate</span></span><span class="version">0.1</span></router-link><button type="button" class="sidebar-close" aria-label="关闭导航" @click="setMobileOpen(false)"><el-icon><Close /></el-icon></button></div>
       <div class="workspace-caption">AI API OPERATIONS</div>
-      <nav aria-label="主导航">
+      <nav class="sidebar-nav" aria-label="主导航">
         <div class="nav-heading">工作空间</div>
-        <router-link v-for="item in links" :key="item.path" :to="item.path" class="nav-link" :class="{ selected: route.path === item.path }" @click="mobileOpen = false"><el-icon><component :is="item.icon" /></el-icon><span>{{ item.title }}</span><span v-if="route.path === item.path" class="nav-active-dot" /></router-link>
-        <template v-if="platformLinks.length"><div class="nav-heading platform-heading">平台运营</div><router-link v-for="item in platformLinks" :key="item.path" :to="item.path" class="nav-link" :class="{ selected: route.path === item.path }" @click="mobileOpen = false"><el-icon><component :is="item.icon" /></el-icon><span>{{ item.title }}</span><span v-if="route.path === item.path" class="nav-active-dot" /></router-link></template>
+        <router-link v-for="item in links" :key="item.path" :to="item.path" class="nav-link" :class="{ selected: route.path === item.path }" @click="setMobileOpen(false)"><el-icon><component :is="item.icon" /></el-icon><span>{{ item.title }}</span><span v-if="route.path === item.path" class="nav-active-dot" /></router-link>
+        <template v-if="platformGroups.length"><div class="nav-heading platform-heading">平台运营</div><div v-for="group in platformGroups" :key="group.id" class="nav-group"><button type="button" class="nav-group-title" :aria-expanded="!!expandedGroups[group.id]" :aria-controls="`platform-group-${group.id}`" @click="togglePlatformGroup(group.id)"><span>{{ group.title }}</span><el-icon class="nav-group-chevron" :class="{ expanded: !!expandedGroups[group.id] }"><ArrowRight /></el-icon></button><el-collapse-transition><div v-show="expandedGroups[group.id]" :id="`platform-group-${group.id}`" class="nav-group-links"><router-link v-for="item in group.items" :key="item.path" :to="item.path" class="nav-link" :class="{ selected: route.path === item.path }" @click="setMobileOpen(false)"><el-icon><component :is="item.icon" /></el-icon><span>{{ item.title }}</span><span v-if="route.path === item.path" class="nav-active-dot" /></router-link></div></el-collapse-transition></div></template>
         <div class="nav-heading platform-heading">设置</div>
-        <router-link to="/security" class="nav-link" :class="{ selected: route.path === '/security' }" @click="mobileOpen = false"><el-icon><Setting /></el-icon><span>账号安全</span></router-link>
+        <router-link to="/security" class="nav-link" :class="{ selected: route.path === '/security' }" @click="setMobileOpen(false)"><el-icon><Setting /></el-icon><span>账号安全</span><span v-if="route.path === '/security'" class="nav-active-dot" /></router-link>
       </nav>
       <div class="sidebar-bottom"><span class="status-dot" /><div><strong>可控试运营</strong><span>文本多协议 · 单实例</span></div><el-icon><Lock /></el-icon></div>
     </aside>
 
     <section class="main-column">
       <header class="topbar">
-        <div class="breadcrumbs"><el-button class="mobile-menu" text :icon="Menu" aria-label="打开导航" @click="mobileOpen = true" /><span class="breadcrumb-root">控制台</span><el-icon><ArrowRight /></el-icon><strong>{{ currentTitle }}</strong></div>
+        <div class="breadcrumbs"><el-button class="mobile-menu" text :icon="Menu" aria-label="打开导航" :aria-expanded="mobileOpen" aria-controls="app-sidebar" @click="setMobileOpen(true)" /><span class="breadcrumb-root">控制台</span><el-icon><ArrowRight /></el-icon><strong>{{ currentTitle }}</strong></div>
         <div class="topbar-right">
           <el-select v-if="session.me?.tenants?.length" :model-value="session.me?.tenant?.id" :disabled="switching" placeholder="选择工作空间" class="tenant-switch" @change="switchTenant"><el-option v-for="tenant in session.me?.tenants || []" :key="tenant.id" :label="tenant.name" :value="tenant.id" /></el-select>
           <el-dropdown trigger="click"><button class="user-button"><span class="avatar">{{ session.me?.user.email.slice(0, 1).toUpperCase() }}</span><span class="user-email">{{ session.me?.user.email }}</span></button><template #dropdown><el-dropdown-menu><el-dropdown-item disabled>{{ label(session.me?.user.platform_role || session.me?.tenant?.role) }}</el-dropdown-item><el-dropdown-item :icon="Lock" @click="openReauth">敏感操作再认证</el-dropdown-item><el-dropdown-item :icon="Setting" @click="router.push('/security')">账号安全</el-dropdown-item><el-dropdown-item divided :icon="Switch" @click="logout">退出登录</el-dropdown-item></el-dropdown-menu></template></el-dropdown>

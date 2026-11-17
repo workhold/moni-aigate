@@ -144,7 +144,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 现有 `Publish`/`PublishWithCostPolicy` 继续走 test-only 包装。显式 commercial 与现有方法共用同一发布事务，逐 binding 校验 direct、supplier-profile 标签、未撤回、已知成本、无 open issue 和全部 live credential coverage；deferred DB guard 在 active revision 提交前复核，阻止绕过 Store 的直接 SQL。`ActivateRouteRevision` 按目标历史 intent 重核冻结证据和当前 live credential，不接受新证据或提升 intent。撤回只追加历史，不改在途请求或旧 route。
 
-管理 API 提供严格登记/撤回和 admin-only 分页读面；控制台只读展示安全元数据。证据 ref、来源和许可证记录不进入客户/公开 DTO，仓库 provenance checker 只证明引用完整性，不证明真实供应商质量。
+管理 API 提供严格登记/撤回和 admin-only 分页读面；控制台只读展示安全元数据。证据 ref、来源和许可证记录不进入客户/公开 DTO，仓库 provenance checker 只证明引用完整性，不证明真实供应商质量。导航模型、会话偏好和移动焦点/滚动边界另见[侧栏子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)。
 
 ## 5. 资金模型与计价
 

@@ -7952,3 +7952,24 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `scripts/phase1_browser_qa.py`
 
 </details>
+
+## 2026-11-17T06:37:38Z · 6f1e94edceae
+
+按用户确认的New API对照方案收口平台侧栏：四组导航、独立滚动、当前项定位和移动可访问性；仅前端/验收与文档变化，无业务路由、权限或商业链变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2532 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/release-evidence-gate.md`
+- modified `scripts/phase1_browser_qa.py`
+- added `specs/038-new-api-capability-migration/navigation-refinement.md`
+- modified `specs/038-new-api-capability-migration/spec.md`
+- modified `web/src/App.vue`
+- added `web/src/navigation.ts`
+- modified `web/src/style.css`
+- added `web/tests/navigation.test.mjs`
+
+</details>

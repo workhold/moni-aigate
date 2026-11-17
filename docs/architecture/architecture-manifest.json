@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T04:54:13Z",
-  "review_reason": "修复PR-2浏览器证据 harness 的列表就绪竞争，并在截图前等待对话框overlay完成；仅验收工具时序，无运行结构或合同变化",
-  "snapshot_sha256": "f7fb82c43939684f84d6774d7aacec4fda97a0cd7f9a28b14cc1f1c3fbd2bf6f",
-  "architecture_sha256": "f322eb11012f1a21abdfc7f2a6855cc5105a3be815611413ab07b4c0f0e71c06",
-  "history_sha256": "ddbb6204f189943ea76731cf12d13e084effae584b5c58807398f5a26b44df81",
+  "reviewed_at": "2026-11-17T06:37:38Z",
+  "review_reason": "按用户确认的New API对照方案收口平台侧栏：四组导航、独立滚动、当前项定位和移动可访问性；仅前端/验收与文档变化，无业务路由、权限或商业链变化",
+  "snapshot_sha256": "6f1e94edceae8e10cbf336f305a25eeb54111c42b1620169fedb4533a688eea6",
+  "architecture_sha256": "9a690788ab218daa436157433d19288df9aa0942967924beedf5ab7015daaacc",
+  "history_sha256": "d16d5f5c269453eb727d1788f2021952b7c9e59a0b221588a2828927743f06c0",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "a16b8e0e0d1d6e9ed7144f06fa8e253a12ab2ebacf0f5012437beae7d988286e"
+      "sha256": "af118cfb14297e02b6d8302dc1e96e3280b2fb679c4d0b779b3865cf441cbcf6"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "9c6835a902b73a3f5ffc703c6b6f110675f438d270bde51851b134b882bae841"
+      "sha256": "435030056943aeb4522e96d990af1c7f40bc967d0d9decfcdcb96182bda470ed"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -2793,7 +2793,7 @@
     },
     {
       "path": "docs/verification/release-evidence-gate.md",
-      "sha256": "ee2d1eff32c70eb19364982343409de01b044a9326fec39d2698a18e40a38e9e"
+      "sha256": "515ec3bc4edca193a198ed5be26c7543f38a8cc458c3bc0b9152790f87007378"
     },
     {
       "path": "docs/verification/retrieval-protocols.md",
@@ -8245,7 +8245,7 @@
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "7212570fbcfe70ce7b739b3590f2e1da0ea4067d06c883aebb6da278b425a7ee"
+      "sha256": "cf68b728afe6bd3dae23bdd25893cdd83a74ce150a8fd3ab14b37e66827d20ad"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
@@ -9388,12 +9388,16 @@
       "sha256": "ecc8cfd190b686fa59fec48e9cc2954992590eda73cc34ab97d68e33307f2150"
     },
     {
+      "path": "specs/038-new-api-capability-migration/navigation-refinement.md",
+      "sha256": "db774f1019db70f0cac90d00de8022e4758b89e46320f3b35efd27f1b5d1b45e"
+    },
+    {
       "path": "specs/038-new-api-capability-migration/release-evidence-gate.md",
       "sha256": "c56302dd3131ce974000f2c2b2848541a77b87de0943551283de28e96d314921"
     },
     {
       "path": "specs/038-new-api-capability-migration/spec.md",
-      "sha256": "5389aa64e1a547ccd3611b4a6e05bc325e536d5749a24bd542444527a432077c"
+      "sha256": "5501c0c7d85d0e03283ab98a2fa9dcd97f72bbf8aadae59e2f51ab56328e0e5e"
     },
     {
       "path": "third_party/README.md",
@@ -9453,7 +9457,7 @@
     },
     {
       "path": "web/src/App.vue",
-      "sha256": "1f390bc716423a25c9318604e1b8e7effc1598ca1e3688690adb2b213bfe3f3d"
+      "sha256": "bc4b0357d47dbfe61c0f909b399175418904cc601cf2e84cebdcd0ca7291d551"
     },
     {
       "path": "web/src/alerts-json.ts",
@@ -9708,6 +9712,10 @@
       "sha256": "7face84388a4948f2d26f7a175036b9906bd010162364af611e39c8b2b37f15c"
     },
     {
+      "path": "web/src/navigation.ts",
+      "sha256": "b988fd274ca27cba2e08abc3ba02b664f9d4b222b087d1307b0abe6d810ad31a"
+    },
+    {
       "path": "web/src/operating-report.ts",
       "sha256": "53b7ed1348d3a678ff09f56d3c9e9b7b9377e91f9e9516667dcea9ebd86dbfbd"
     },
@@ -9809,7 +9817,7 @@
     },
     {
       "path": "web/src/style.css",
-      "sha256": "60a36decc896de0694cb5e97b6dc25ca66a025844f45a628d1dabe64e8afe17f"
+      "sha256": "f59dd8d8cad30c630a00e80890cd5b2101f557df1493e8670a5fa51031d87334"
     },
     {
       "path": "web/src/views/AlertsView.vue",
@@ -10010,6 +10018,10 @@
     {
       "path": "web/tests/money.test.mjs",
       "sha256": "b01a15715779cf01d46edc36b3a0a48f1a1b01457c4f4da0fe4120a250bcdaaa"
+    },
+    {
+      "path": "web/tests/navigation.test.mjs",
+      "sha256": "f32856c6088015a0b525d6b7881c8032e584836d392487a856ac22a43e1a689e"
     },
     {
       "path": "web/tests/operating-report.test.mjs",

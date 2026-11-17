@@ -718,6 +718,85 @@ def close_release_dialog(browser: Browser):
     browser.wait("!document.querySelector('[data-testid=release-evidence-dialog]')")
 
 
+def current_nav_visible(browser: Browser):
+    browser.wait("(()=>{const nav=document.querySelector('.sidebar-nav'),current=document.querySelector('.sidebar .nav-link.selected');if(!nav||!current)return false;const n=nav.getBoundingClientRect(),c=current.getBoundingClientRect();return c.top>=n.top-1&&c.bottom<=n.bottom+1})()")
+
+
+def check_platform_navigation(browser: Browser) -> list[dict]:
+    browser.navigate('/platform/reports', '运营与成本报表')
+    current_nav_visible(browser)
+    report = browser.evaluate("(()=>{const selected=document.querySelector('.sidebar .nav-link.selected');return{groups:[...document.querySelectorAll('.nav-group')].map(g=>({title:g.querySelector('.nav-group-title').innerText,expanded:g.querySelector('.nav-group-title').getAttribute('aria-expanded')==='true'})),selectedPath:selected&&selected.getAttribute('href'),selectedGroup:selected&&selected.closest('.nav-group-links').id}})()")
+    if [g['title'] for g in report['groups']] != ['客户与权限','渠道与定价','资金与结算','运营与审计'] or report['selectedPath'] != '/platform/reports' or report['selectedGroup'] != 'platform-group-operations':
+        raise RuntimeError(f'platform navigation grouping/current route failed: {report}')
+    if not next(g['expanded'] for g in report['groups'] if g['title']=='运营与审计'):
+        raise RuntimeError('current platform group did not expand')
+    browser.navigate('/platform/periodic-budget', '周期预算')
+    current_nav_visible(browser)
+    periodic = browser.evaluate("(()=>{const selected=document.querySelector('.sidebar .nav-link.selected');return{selectedPath:selected&&selected.getAttribute('href'),selectedGroup:selected&&selected.closest('.nav-group-links').id,title:document.querySelector('.breadcrumbs').innerText}})()")
+    if periodic['selectedPath'] != '/platform/periodic-budget' or periodic['selectedGroup'] != 'platform-group-funds':
+        raise RuntimeError(f'periodic budget lost navigation context: {periodic}')
+    browser.navigate('/platform/procurement', '采购账户与对账')
+    browser.evaluate("document.querySelector('.sidebar-nav').scrollTop=0")
+    browser.navigate('/platform/periodic-budget', '周期预算')
+    current_nav_visible(browser)
+    browser.click_text('渠道与定价', '.nav-group-title')
+    browser.wait("document.querySelector('#platform-group-channels')?.previousElementSibling?.getAttribute('aria-expanded')==='true'")
+    stored = browser.evaluate("sessionStorage.getItem('moni:platform-navigation:v1')")
+    if not stored or not json.loads(stored).get('channels'):
+        raise RuntimeError('navigation expansion preference was not retained')
+    browser.cdp.call('Emulation.setEmulatedMedia', {'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
+    try:
+        reduced = browser.evaluate("getComputedStyle(document.querySelector('.nav-group-chevron')).transitionDuration")
+        if reduced not in ('0s','0s, 0s'):
+            raise RuntimeError(f'reduced-motion transition remains active: {reduced}')
+    finally:
+        browser.cdp.call('Emulation.setEmulatedMedia', {'features':[]})
+    return [
+        {'name':'平台四组导航、当前报表组自动展开且当前项滚入视野','observation':report},
+        {'name':'周期预算直链及同组路由恢复资金组与当前项，分组状态写入会话偏好','observation':periodic},
+        {'name':'prefers-reduced-motion 关闭分组动画','observation':{'transitionDuration':reduced}},
+    ]
+
+
+def check_mobile_navigation(browser: Browser) -> dict:
+    browser.navigate('/platform/reports','运营与成本报表')
+    def key(name: str, shift=False):
+        for kind in ('keyDown','keyUp'):
+            browser.cdp.call('Input.dispatchKeyEvent',{'type':kind,'key':name,'code':name,'windowsVirtualKeyCode':27 if name=='Escape' else 9,'modifiers':8 if shift else 0})
+    browser.evaluate("document.querySelector('.mobile-menu').click()")
+    browser.wait("document.querySelector('.sidebar').classList.contains('is-mobile-open') && document.activeElement===document.querySelector('.sidebar-close') && document.body.style.overflow==='hidden' && !document.querySelector('.sidebar').inert")
+    key('Tab',True)
+    browser.wait("document.activeElement===document.querySelector('.sidebar .brand')")
+    key('Tab',True)
+    browser.wait("document.querySelector('.sidebar').contains(document.activeElement) && document.activeElement!==document.querySelector('.sidebar-close') && document.activeElement!==document.querySelector('.sidebar .brand')")
+    key('Tab')
+    browser.wait("document.activeElement===document.querySelector('.sidebar .brand')")
+    key('Escape')
+    browser.wait("!document.querySelector('.sidebar').classList.contains('is-mobile-open') && document.querySelector('.sidebar').inert && document.body.style.overflow!=='hidden' && document.activeElement===document.querySelector('.mobile-menu')")
+    browser.evaluate("document.querySelector('.mobile-menu').click()")
+    browser.wait("document.activeElement===document.querySelector('.sidebar-close')")
+    browser.evaluate("document.querySelector('.sidebar-close').click()")
+    browser.wait("!document.querySelector('.sidebar').classList.contains('is-mobile-open')")
+    browser.evaluate("document.querySelector('.mobile-menu').click()")
+    browser.wait("document.body.style.overflow==='hidden'")
+    browser.viewport(1440,1000)
+    browser.wait("!document.querySelector('.sidebar').classList.contains('is-mobile-open') && !document.querySelector('.sidebar').inert && document.body.style.overflow!=='hidden'")
+    browser.viewport(390,844)
+    browser.wait("document.querySelector('.sidebar').inert && document.body.style.overflow!=='hidden'")
+    browser.evaluate("document.querySelector('.mobile-menu').click()")
+    browser.wait("document.querySelector('.sidebar').classList.contains('is-mobile-open') && document.activeElement===document.querySelector('.sidebar-close')")
+    browser.evaluate("document.querySelector('.sidebar-nav').scrollTop=0")
+    browser.evaluate("document.querySelector('.sidebar-close').click()")
+    browser.wait("!document.querySelector('.sidebar').classList.contains('is-mobile-open')")
+    browser.evaluate("document.querySelector('.mobile-menu').click()")
+    browser.wait("document.querySelector('.sidebar').classList.contains('is-mobile-open')")
+    current_nav_visible(browser)
+    observation=browser.evaluate("(()=>({drawerOpen:document.querySelector('.sidebar').classList.contains('is-mobile-open'),focusInside:document.querySelector('.sidebar').contains(document.activeElement),bodyLocked:document.body.style.overflow==='hidden',ariaExpanded:document.querySelector('.mobile-menu').getAttribute('aria-expanded'),scrollWidth:document.documentElement.scrollWidth,viewport:innerWidth}))()")
+    if not observation['drawerOpen'] or not observation['focusInside'] or not observation['bodyLocked'] or observation['ariaExpanded']!='true' or observation['scrollWidth']>observation['viewport']:
+        raise RuntimeError(f'mobile navigation observation failed: {observation}')
+    return {'name':'390px 抽屉焦点圈定/返回、Escape、关闭按钮、滚动锁、断点切换、重开定位与当前项可见','observation':observation}
+
+
 def run(args: argparse.Namespace) -> int:
     root = pathlib.Path(__file__).resolve().parent.parent
     output = pathlib.Path(args.output).resolve()
@@ -769,6 +848,13 @@ def run(args: argparse.Namespace) -> int:
             evidence.record(browser, "P1-UI-02", viewport, width, admin_checks, args.final)
             if release_fixture:
                 close_release_dialog(browser)
+            admin_checks.extend(check_platform_navigation(browser))
+            if viewport == 'mobile390':
+                admin_checks.append(check_mobile_navigation(browser))
+            evidence.record(browser, "P1-UI-02", viewport, width, admin_checks, args.final)
+            if viewport == 'mobile390':
+                browser.evaluate("document.querySelector('.sidebar-close').click()")
+                browser.wait("!document.querySelector('.sidebar').classList.contains('is-mobile-open')")
             evidence.record(browser, "P1-OP-01", viewport, width, [check_page(browser, "/platform/alerts", "经营告警"), check_page(browser, "/platform/audit", "操作审计")], args.final)
             report_checks = [check_page(browser, "/platform/reports", "运营与成本报表")]
             if viewport == "desktop":

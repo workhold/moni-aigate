@@ -101,6 +101,8 @@ New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration
 
 038-PR2 的[发布资格与证据门禁](../../specs/038-new-api-capability-migration/release-evidence-gate.md)随后落地 `current_011_release_qualification.sql`：insert-only evidence/credential coverage/withdrawal 表绑定精确 channel/version/model/profile/upstream/variant；route policy 缺省 `test_only`，commercial binding 冻结证据 ID。现有 Publish 与 HTTP 缺省路径不变，显式 direct commercial 发布和历史重激活共用资格、撤回、成本、open issue 与全 live credential 覆盖校验，deferred INSERT/UPDATE guard 防止直接 SQL 绕过。admin API 提供严格登记/撤回和分页读取，channels/catalog 的 `ReleaseQualification` 对话框只读展示安全元数据；外部 channel 保持 test-only，证据登记不授予真实供应商或生产资格。`third_party/provenance.json` 与可测试 checker 校验固定组件、SOURCE/许可证一致性、组件目录及 vendored 文件闭集；third_party 和依赖来源记录进入架构清单，CI/current-MVP/029 静态门实际执行 checker。
 
+PR-2 侧栏收口按[导航子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)只重组现有管理入口：`web/src/navigation.ts` 固定四组路径闭集，App.vue 继续使用原角色过滤和路由守卫，空组消失，当前组展开并定位当前项。品牌/底部状态固定，导航区独立滚动；移动抽屉有焦点圈定/返回、Escape、关闭按钮、inert 和背景滚动恢复。会话偏好不是权限事实，周期预算仅获得现有页面的真实导航入口。该变化不新增业务路由、API、迁移或供应商能力。
+
 ```mermaid
 flowchart LR
     Customer[客户应用] --> Gateway[moni-aigate\n唯一公网入口]

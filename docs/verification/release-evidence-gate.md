@@ -41,7 +41,19 @@ npm --prefix web run build
 
 结果：PASS。覆盖 provenance 固定身份、SOURCE 漂移、目录闭集、reference/vendored inventory、精确父路径、大小写变体/重复/未知 JSON key、digest、symlink 和只读性；执行器自测、严格 DTO、防晚回和失败分页状态均通过。
 
-在实现中途还执行过 catalog 与 server 全包真实 PostgreSQL/race，均通过；最终修改后的完整结果由后续 `make verify-mvp` 重新确认，不沿用中途输出。
+在实现中途还执行过 catalog 与 server 全包真实 PostgreSQL/race，均通过；最终修改后的完整 `make verify-mvp` 已再次执行并以退出码 0 完成，全部 Go 包、前端、vet/build 通过。
+
+## 首轮同提交浏览器与 029
+
+提交 `fa6336b1414c1c40106eb5a9cd8ffc55a60ff7c0` 上，最终浏览器为 `PASS/completed=true`，10 个 ID 均覆盖桌面和 390px；source commit/tree 与不可变镜像 ID 一致。随后完整 029 为 **41/41 PASS、0 FAIL、0 必需 SKIP**，static/frontend/go-race/current-MVP/identity/mail/payment/mock-deployment 全部 PASS。逐项、原始日志和浏览器证据保存在 `.local/phase2-pr2-fa6336b/`。
+
+该首轮 PASS 发生于侧栏收口之前。导航变更必须在新的提交上重新执行浏览器与完整 029，不能把首轮结果当作最终导航验收。
+
+## 导航收口实施与检查
+
+[导航子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)保持客户工作空间、权限和路由不变，平台侧栏按客户与权限、渠道与定价、资金与结算、运营与审计四组生成；当前组展开、当前项滚动定位、会话内偏好、独立导航滚动和移动抽屉键盘/焦点/滚动锁均已实现。
+
+导航单测使用独立冻结的 21 条授权路径闭集，不以待测分组自证。前端全量测试、strict 构建和浏览器 harness 自测通过。独立实现与 UX 审查发现的断点滚动锁、同组路由/重开定位和测试闭集问题已修正，并新增同组跳转、390px↔桌面断点、焦点圈定/返回和重开定位的真实浏览器断言；最终结果待新提交复验。
 
 ## 独立审查修正
 

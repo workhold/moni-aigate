@@ -107,7 +107,7 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 ### 4.3 038-PR2 发布资格与证据门禁
 
-发布资格使用独立的追加式 channel/profile 证据，不原地改写 channel version。现有路由和 HTTP 缺省发布保持 `test_only`；commercial route revision 必须显式冻结每个 binding 采用的证据 ID，并在发布与历史重激活时复核相同作用域、direct 拓扑、未撤回状态、已知成本、无未关闭问题和全部 live credential 覆盖。外部 New API/Sub2API 在本片保持 test-only，不用一次 probe 或外部 HTTP 200 推导资格。该门禁只扩展目录发布准入，不新建路由、钱包或结算事实。物理合同见[发布资格与证据门禁](../../specs/038-new-api-capability-migration/release-evidence-gate.md)。
+发布资格使用独立的追加式 channel/profile 证据，不原地改写 channel version。现有路由和 HTTP 缺省发布保持 `test_only`；commercial route revision 必须显式冻结每个 binding 采用的证据 ID，并在发布与历史重激活时复核相同作用域、direct 拓扑、未撤回状态、已知成本、无未关闭问题和全部 live credential 覆盖。外部 New API/Sub2API 在本片保持 test-only，不用一次 probe 或外部 HTTP 200 推导资格。该门禁只扩展目录发布准入，不新建路由、钱包或结算事实。物理合同见[发布资格与证据门禁](../../specs/038-new-api-capability-migration/release-evidence-gate.md)。平台导航分组与移动可访问性见[侧栏子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)。
 
 ## 5. 技术选型与理由
 
