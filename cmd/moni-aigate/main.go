@@ -261,7 +261,7 @@ func run() error {
 	if paymentStart.environment {
 		paymentProcessor, e = payments.OpenProcessor(ctx, paymentStart.worker)
 		if e != nil {
-			return fmt.Errorf("payment processor initialization failed")
+			return fmt.Errorf("payment processor initialization failed: %s", payments.SafeErrorCode(e))
 		}
 		defer func() { _ = paymentProcessor.Close(context.Background()) }()
 		paymentRunner, e = payments.NewRunner(paymentProcessor)

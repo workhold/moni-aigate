@@ -152,3 +152,17 @@ activation 不接受新 intent/evidence，不提升 test-only 历史 revision。
 - 第二套 route decision、钱包、结算、采购成本或公开目录授权。
 - 证据正文在线下载、自动供应商探测推断资格、自动修改历史 route。
 - 多实例 HA、032/033、媒体/Realtime 路由和正式支付。
+
+## 10. 029 发现的运行时修正
+
+### 10.1 HTTP 与 worker 同任务提交竞争
+
+`tasks.Service.Submit` 在任务已不是 prepared 时，必须使用该任务持久化的原幂等键和请求 digest 调用 `ReplaySubmit`：身份一致则返回同一任务，不调用 adapter、不新增媒体 attempt 或供应商生成；身份不一致仍返回冲突，未知 submission 仍不得重发。真实 PostgreSQL 测试必须让 worker 与 HTTP 同时提交同一任务，验证 HTTP 202、worker 无业务错误/合法无工作、恰好一个 submission_accepted 事件和一个 attempt。
+
+该规则不是放宽重试，而是消除“worker 已完成唯一提交，HTTP 却向客户返回 503”的错误。原冻结的 unknown/no-resubmit 资金边界不变。
+
+### 10.2 支付启动诊断
+
+支付主进程初始化失败可以附加 `payments.SafeErrorCode` 的封闭错误身份；原始 cause、SQL、DSN、凭据、Cookie、供应商正文和内部密钥不得进入日志。未知错误固定归为 `payments_unavailable`。该诊断不改变启动失败关闭、实例锁、恢复或支付资金行为。
+
+这些运行时修正由完整 029 触发，不能因局部测试或较早提交通过而免除同提交整单重跑。

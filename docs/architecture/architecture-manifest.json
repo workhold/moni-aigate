@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T06:54:14Z",
-  "review_reason": "修复移动导航在桌面/移动会话切换时的测试状态依赖，并让Escape关闭后的焦点可靠回退顶栏触发器；补充断点和重开定位验收，无业务边界变化",
-  "snapshot_sha256": "b7a02c3b619dd6765c5bc9f898d5abc9709fc803f02ac11e42e8c0245867a7fe",
-  "architecture_sha256": "9a690788ab218daa436157433d19288df9aa0942967924beedf5ab7015daaacc",
-  "history_sha256": "18de52addfa08cae89c0be6154edb5f257e6e983d618b10330c74391e4d35673",
+  "reviewed_at": "2026-11-17T08:34:16Z",
+  "review_reason": "修复029发现的任务HTTP/worker同身份提交竞争并增加支付封闭启动错误分类；复核无重放、唯一事件/attempt、日志秘密和恢复边界，需整单复验",
+  "snapshot_sha256": "3e9f23c28e98e06a087990ef0f97ad26863ebaf163c7b3f32b72b36e5527f7ff",
+  "architecture_sha256": "0d00ec59b17205a080062b3e0eb03887442f5ce2f559c62c3b47ea11aff79a5b",
+  "history_sha256": "39eb0d6c0b10a5c7130c291bf5885cfe3da4dbf1c33e6a602bf8451f662a69a9",
   "files": [
     {
       "path": ".dockerignore",
@@ -53,7 +53,7 @@
     },
     {
       "path": "cmd/moni-aigate/main.go",
-      "sha256": "9e4f696b843440162b4ebbe49ec9ac8f0a8fd05fa59458fca9a08457b2cc5366"
+      "sha256": "d13314e7ca88e80d130fa69884b7371ccf606e46e26ac8236f80ae246467cedb"
     },
     {
       "path": "cmd/moni-aigate/main_test.go",
@@ -2793,7 +2793,7 @@
     },
     {
       "path": "docs/verification/release-evidence-gate.md",
-      "sha256": "515ec3bc4edca193a198ed5be26c7543f38a8cc458c3bc0b9152790f87007378"
+      "sha256": "558d074caafe9e7ed0094037559b86e4598b64023f31eeba4b1d336db641b548"
     },
     {
       "path": "docs/verification/retrieval-protocols.md",
@@ -5644,8 +5644,12 @@
       "sha256": "71de9483264e54158d24a73c3a393112a70585af4ef6883844e6c91e23671224"
     },
     {
+      "path": "internal/payments/safe_error_test.go",
+      "sha256": "25fec828c90101015e79f10c7770697dfad4492ee5d64edc7bcd31f2b52055fb"
+    },
+    {
       "path": "internal/payments/service_base.go",
-      "sha256": "a0a2a7f7ff2f0b5fe7be699e31f2c59fddec0517f015fcb2628f09ecda44d226"
+      "sha256": "6989c2ac328c9e69b3f2182f62e68505a6c426123957b300f685b62ee97cbcfb"
     },
     {
       "path": "internal/payments/service_commands.go",
@@ -7540,6 +7544,10 @@
       "sha256": "fce6d02063cf412bf142f9d162f0fd00e80df0095a43eed0bfb406f7aed13f52"
     },
     {
+      "path": "internal/server/task_submit_race_integration_test.go",
+      "sha256": "ff5440aa8e4001d55cfa137703dc771b3da8ce4133baa0627e4658e6c706fd90"
+    },
+    {
       "path": "internal/server/test_cost_helpers_test.go",
       "sha256": "7631bf915521ed9979b8486f6ede200aef79342b66897328ab7dc27e0c9b4ea2"
     },
@@ -7585,11 +7593,11 @@
     },
     {
       "path": "internal/tasks/service.go",
-      "sha256": "9ef75a5738a05ef7fa6c8906eddd8c4b4d29a2c5aec96e21af57fef7aa38f7fd"
+      "sha256": "5e51fcf7178035a2ae37afcd0adb7e16a416d701c56e3cb3d1738683641af4e4"
     },
     {
       "path": "internal/tasks/service_test.go",
-      "sha256": "3300f309650e4cdd91113ca93290779717a69d25bc3e5cb4359fe611066c4d5c"
+      "sha256": "0832f65eb6719b545cf70e9d18ed2e2c639d614767e98dc247f99b5bdd2addd6"
     },
     {
       "path": "internal/tasks/state.go",
@@ -9393,7 +9401,7 @@
     },
     {
       "path": "specs/038-new-api-capability-migration/release-evidence-gate.md",
-      "sha256": "c56302dd3131ce974000f2c2b2848541a77b87de0943551283de28e96d314921"
+      "sha256": "d05807617b51a9e1927b0e353540930a5c548acd3dbe2ed45118929cf372719d"
     },
     {
       "path": "specs/038-new-api-capability-migration/spec.md",

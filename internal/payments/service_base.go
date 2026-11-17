@@ -53,6 +53,15 @@ func paymentSafeError(err error) error {
 	}
 	return ErrPaymentsUnavailable
 }
+
+// SafeErrorCode exposes only the closed payment failure identity for startup
+// diagnostics; raw causes, credentials, DSNs and provider bodies are omitted.
+func SafeErrorCode(err error) string {
+	if err == nil {
+		return ""
+	}
+	return paymentSafeError(err).Error()
+}
 func paymentRetryable(err error) bool {
 	var e *pgconn.PgError
 	return errors.As(err, &e) && (e.Code == "40P01" || e.Code == "40001")

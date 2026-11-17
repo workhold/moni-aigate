@@ -67,8 +67,9 @@ func TestServiceUnknownSubmitIsPersistedAndNeverResubmitted(t *testing.T) {
 	if !errors.Is(err, adapter.err) || !task.SubmissionUnknown() {
 		t.Fatalf("unknown submit not preserved: task=%v err=%v", task, err)
 	}
-	if _, err := service.Submit(context.Background(), input.TaskID, testBase.Add(2*time.Second)); !errors.Is(err, ErrNoResubmit) {
-		t.Fatalf("unknown task was resubmitted: %v", err)
+	replayedSubmit, err := service.Submit(context.Background(), input.TaskID, testBase.Add(2*time.Second))
+	if err != nil || !replayedSubmit.SubmissionUnknown() {
+		t.Fatalf("same-identity submit did not preserve unknown task: task=%v err=%v", replayedSubmit, err)
 	}
 	if replay, err := service.SubmitByIdempotency(context.Background(), input.Owner, input.IdempotencyKey, input.RequestDigest, testBase.Add(2*time.Second)); err != nil || !replay.SubmissionUnknown() {
 		t.Fatalf("idempotent replay changed unknown state: task=%v err=%v", replay, err)

@@ -7986,3 +7986,22 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `web/src/App.vue`
 
 </details>
+
+## 2026-11-17T08:34:16Z · 3e9f23c28e98
+
+修复029发现的任务HTTP/worker同身份提交竞争并增加支付封闭启动错误分类；复核无重放、唯一事件/attempt、日志秘密和恢复边界，需整单复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/verification/release-evidence-gate.md`
+- added `internal/payments/safe_error_test.go`
+- modified `internal/payments/service_base.go`
+- added `internal/server/task_submit_race_integration_test.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+- modified `specs/038-new-api-capability-migration/release-evidence-gate.md`
+
+</details>

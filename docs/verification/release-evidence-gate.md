@@ -55,6 +55,14 @@ npm --prefix web run build
 
 导航单测使用独立冻结的 21 条授权路径闭集，不以待测分组自证。前端全量测试、strict 构建和浏览器 harness 自测通过。独立实现与 UX 审查发现的断点滚动锁、同组路由/重开定位和测试闭集问题已修正，并新增同组跳转、390px↔桌面断点、焦点圈定/返回和重开定位的真实浏览器断言；最终结果待新提交复验。
 
+## 后续 029 运行时诊断与修正
+
+侧栏最终候选的完整 029 曾失败于 Compose task-submit 503 和支付 Recovery 重启，不能用较早提交的 PASS 覆盖。独立只读分析将 Compose 定位为 HTTP/worker 同时提交 prepared 任务的竞争；原实现把输家 `ErrNoResubmit` 误映射为 503。
+
+现按[运行时修正合同](../../specs/038-new-api-capability-migration/release-evidence-gate.md#10-029-发现的运行时修正)改为原身份 `ReplaySubmit` 返回同一任务，不新增供应商调用。真实 PostgreSQL 竞争测试已通过：HTTP 202、worker 无业务错误或合法无工作、一个 submission_accepted 事件和一个 attempt；既有 unknown-submit 测试仍要求不重新提交，adapter 调用总数保持 1。
+
+支付私有日志确认 Recovery 子进程在 `OpenProcessor` 退出，未把清理错误当主因。新增 `payments.SafeErrorCode` 封闭分类和主进程安全日志，不输出原始 cause/秘密。分类单测已覆盖 Guard、领域错误和未知含秘密错误；真实 Recovery 复跑与最终整单结果仍待确认，不提前宣称通过。
+
 ## 独立审查修正
 
 三路代码审查及逐项反驳已汇总。修复包括：精确 `..` 与大小写 key 绕过、manifest/SOURCE 漂移、未登记组件、测试浅复制、model INSERT 门禁、Go/SQL 输入差异、登记历史证据 stale 不一致，以及失败分页提前修改游标历史。修正后相关专项均重跑通过。
