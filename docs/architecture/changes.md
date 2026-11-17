@@ -7851,3 +7851,41 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `specs/029-phase1-acceptance/spec.md`
 
 </details>
+
+## 2026-11-16T17:43:02Z · 8399947cc4f9
+
+新增036能力内收总合同与NA-01至NA-18台账；仅规划、证据索引和设计链接，无运行模块、接口、数据关系、权限或部署变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2508 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- added `specs/036-new-api-capability-migration/capability-matrix.md`
+- added `specs/036-new-api-capability-migration/spec.md`
+
+</details>
+
+## 2026-11-16T18:10:24Z · bfb6081d31a2
+
+将未合并的New API能力内收总合同从036改号为038，避开独立036体验评审与037 DTO修复；恢复误改的历史CI计数，无运行结构或验收范围变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2508 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- deleted `specs/036-new-api-capability-migration/capability-matrix.md`
+- deleted `specs/036-new-api-capability-migration/spec.md`
+- added `specs/038-new-api-capability-migration/capability-matrix.md`
+- added `specs/038-new-api-capability-migration/spec.md`
+
+</details>

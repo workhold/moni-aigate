@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-16T08:51:25Z",
-  "review_reason": "029在2634329上41/41 PASS，发布逐项、原始日志和桌面/390px正式浏览器证据，更新MVP、统一架构与阶段路线状态；真实供应商/生产/032边界不变，秘密扫描和链接检查通过。",
-  "snapshot_sha256": "b7101b414265b88cc1f07e8064c5cb6f18c59c630370bde25a127d16ffd13bbe",
-  "architecture_sha256": "704fb8e5617453f60069f63418fa9800a50b1a0e8e5c89bb0156d6db36b08d44",
-  "history_sha256": "2e5d65bcf2090b9a85f23cf2632551809b045d6cdecee043d4ae1cd3add03de0",
+  "reviewed_at": "2026-11-16T18:10:24Z",
+  "review_reason": "将未合并的New API能力内收总合同从036改号为038，避开独立036体验评审与037 DTO修复；恢复误改的历史CI计数，无运行结构或验收范围变化",
+  "snapshot_sha256": "bfb6081d31a250bbda5b04b63b6b53d05a1bc311c6567d9acbdf919a31251a26",
+  "architecture_sha256": "38282554ccd5b8768fd622a4b1775d1fc0fda231efa37773526f1fe58f09587c",
+  "history_sha256": "7b334311f1afbc4cc4775f388a4c2856f10dfd67dbae72efd105c398acdffa32",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "63ff80bf0281b5c12a598589b6e7a2588faa66f919ac84b61fd3c114271b109c"
+      "sha256": "debb9c6cec86c394a72a5a27361604f81c9dbb73c06d79d59f94f1f9094e1419"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "fd03bcc7fba668f8dcc676effc9f721c6c4e6b1d33ee46820d49811b5b1debae"
+      "sha256": "fea676e769c22fac47a3f5b8a4c82ee48854c51381304f09a1f9b6321cd7e013"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -221,7 +221,7 @@
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "8265d1723dc7b8f1cdbe8d227591ae80d4ee91ef539adf5aff1b1e62331850b5"
+      "sha256": "7287c42d704c202329dab133f8cb13f260f38770aaa9f0ff0ed96528e0acc483"
     },
     {
       "path": "docs/design/overview.md",
@@ -233,7 +233,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "d401f4f508ff5a522b61f83290727fe558556dc12981b787b1a0ab04af22ec34"
+      "sha256": "2cdddd50b29946acfd6f5a0cad109f4468a0abcb73f960f8010ba7567f24f5a2"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -257,7 +257,7 @@
     },
     {
       "path": "docs/design/upstream-integration-plan.md",
-      "sha256": "8e821acce69fc67343cb934bf2f1dfe50c91525d8a324d88469598c4d54facd9"
+      "sha256": "5ad85057c276a38f4a31bb7fe9e39cebaec03cb9093629e2b4581b4c0b03e1d7"
     },
     {
       "path": "docs/runbooks/backup-restore.md",
@@ -9350,6 +9350,14 @@
     {
       "path": "specs/035-external-upstream-integration/spec.md",
       "sha256": "3505ffd70e7504d128db31ccc2ca5617b70f50e2e880bb1283601ba8b6746c4a"
+    },
+    {
+      "path": "specs/038-new-api-capability-migration/capability-matrix.md",
+      "sha256": "b811327270fbbfa09ce734a2aa1e87f38093a320d365a60a21d4add64a0cc612"
+    },
+    {
+      "path": "specs/038-new-api-capability-migration/spec.md",
+      "sha256": "df8821f8ade515687165902c47cf80f7e1ede80baf183ce5357b2556f608671a"
     },
     {
       "path": "web/.gitignore",
