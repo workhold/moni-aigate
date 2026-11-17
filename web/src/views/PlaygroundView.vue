@@ -9,6 +9,8 @@ import { embeddingsRequest, geminiRequest, inferenceHTTP, inputLines, protocolIn
 import type { Protocol } from '../inference'
 import { resetResponseForModelChange } from '../playground-state'
 import type { PlaygroundResponseState } from '../playground-state'
+import { ChatToolCallAssembler } from '../chat-tools'
+import type { ChatFinishReason } from '../chat-tools'
 import { integer } from '../format'
 import { isAdmin, session } from '../session'
 
@@ -20,9 +22,10 @@ const systemInstruction = ref('')
 const embeddingBatch = ref(false); const encodingFormat = ref<'float' | 'base64'>('float'); const dimensions = ref<number | undefined>()
 const query = ref('什么是 AI 网关？'); const documents = ref('AI 网关统一管理模型接口、密钥和用量。\n向量数据库用于相似度检索。'); const topN = ref<number | undefined>(); const returnDocuments = ref(false)
 const busy = ref(false)
-const responseState = reactive<PlaygroundResponseState>({ output: '', usage: {}, requestId: '', metrics: null, error: '', status: '' })
-const { status, error, output, usage, requestId, metrics } = toRefs(responseState)
+const responseState = reactive<PlaygroundResponseState>({ output: '', toolCalls: [], finishReason: '', usage: {}, requestId: '', metrics: null, error: '', status: '' })
+const { status, error, output, toolCalls, finishReason, usage, requestId, metrics } = toRefs(responseState)
 let controller: AbortController | undefined
+let toolAssembler = new ChatToolCallAssembler()
 const selected = computed(() => models.value.find(model => model.id === modelId.value))
 function property(model: Model | undefined, field: string) { return model?.[field as keyof Model] ?? model?.profile?.[field] }
 const info = computed(() => protocolInfo(property(selected.value, 'protocol')))
@@ -55,6 +58,10 @@ const snippet = computed(() => {
   return `curl${target.stream ? ' -N' : ''} '${window.location.origin}${target.endpoint}' \\\n${auth} \\\n  -H 'Content-Type: application/json' \\\n  --data-binary @request.json\n\n# request.json\n${JSON.stringify(target.body, null, 2)}`
 })
 const usageText = computed(() => Object.keys(usage.value).length ? JSON.stringify(usage.value, null, 2) : '')
+const finishText = computed(() => {
+  const labels: Record<ChatFinishReason, string> = { stop: '正常停止', length: '达到输出上限', tool_calls: '模型请求调用工具', content_filter: '内容过滤终止' }
+  return finishReason.value ? labels[finishReason.value] : ''
+})
 async function load() {
   if (!session.me?.tenant) return
   loading.value = true; loadError.value = ''
@@ -68,7 +75,7 @@ watch(selected, (model, previous) => {
   outputLimit.value = Math.min(Number.isSafeInteger(n) && n > 0 ? n : 128, maximum.value)
   resetResponseForModelChange(responseState, previous?.id, model?.id)
 })
-function clear() { key.value = ''; output.value = ''; usage.value = {}; requestId.value = ''; metrics.value = null; error.value = ''; status.value = '' }
+function clear() { key.value = ''; output.value = ''; toolCalls.value = []; finishReason.value = ''; usage.value = {}; requestId.value = ''; metrics.value = null; error.value = ''; status.value = ''; toolAssembler = new ChatToolCallAssembler() }
 async function run() {
   if (busy.value) return
   error.value = ''
@@ -76,21 +83,24 @@ async function run() {
   if (!inputOnly.value && outputLimit.value > maximum.value) { error.value = `输出上限不能超过模型允许的 ${maximum.value} Tokens。`; return }
   const protocol: Protocol = info.value.id
   const body = payload.value
-  busy.value = true; output.value = ''; usage.value = {}; requestId.value = ''; metrics.value = null; status.value = '等待响应'
+  busy.value = true; output.value = ''; toolCalls.value = []; finishReason.value = ''; usage.value = {}; requestId.value = ''; metrics.value = null; status.value = '等待响应'
+  toolAssembler = new ChatToolCallAssembler()
   controller = new AbortController()
   try {
     metrics.value = await runInference(protocol, key.value, body, controller.signal, update => {
       if (update.delta) { output.value += update.delta; status.value = '正在接收' }
+      if (update.toolCalls) { toolAssembler.apply(update.toolCalls); toolCalls.value = toolAssembler.list(); status.value = '正在接收工具增量' }
+      if (update.finishReason) { finishReason.value = update.finishReason; status.value = `生成终态：${update.finishReason}` }
       if (update.usage) usage.value = { ...usage.value, ...update.usage }
     }, id => { requestId.value = id })
-    status.value = '调用完成'
+    status.value = '响应接收完成'
   } catch (e) {
     if (controller.signal.aborted) { status.value = '已停止接收'; error.value = '已取消本次调用。供应商可能已产生用量，请凭请求 ID 查询最终账单。' }
     else { status.value = '调用未完成'; error.value = errorText(e) }
   } finally { busy.value = false; controller = undefined }
 }
 onMounted(load)
-onBeforeUnmount(() => { controller?.abort(); key.value = ''; prompt.value = ''; systemInstruction.value = ''; query.value = ''; documents.value = ''; output.value = ''; usage.value = {} })
+onBeforeUnmount(() => { controller?.abort(); key.value = ''; prompt.value = ''; systemInstruction.value = ''; query.value = ''; documents.value = ''; output.value = ''; toolCalls.value = []; finishReason.value = ''; usage.value = {} })
 </script>
 
 <template>
@@ -121,12 +131,14 @@ onBeforeUnmount(() => { controller?.abort(); key.value = ''; prompt.value = ''; 
         <div class="list-action"><el-button type="primary" :icon="VideoPlay" :disabled="busy || !selected || !info || !key.trim() || !payload" @click="run">发送请求</el-button><el-button v-if="busy" :icon="VideoPause" @click="controller?.abort()">停止接收</el-button><el-button v-else :icon="Delete" @click="clear">清空结果与密钥</el-button></div>
       </el-form>
     </div></section>
-    <section class="panel playground-output"><div class="panel-header"><div><div class="panel-title">模型响应</div><p class="panel-subtitle">{{ status || '发送请求后，在这里查看实际结果。' }}</p></div><el-tag v-if="busy" type="warning">调用中</el-tag><el-tag v-else-if="metrics" type="success">已完成</el-tag></div><div class="panel-body">
+    <section class="panel playground-output"><div class="panel-header"><div><div class="panel-title">模型响应</div><p class="panel-subtitle">{{ status || '发送请求后，在这里查看实际结果。' }}</p></div><el-tag v-if="busy" type="warning">接收中</el-tag><el-tag v-else-if="metrics" type="success">接收完成</el-tag></div><div class="panel-body">
       <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-bottom:18px" />
-      <div v-if="requestId" class="playground-request"><span>请求 ID</span><code class="mono">{{ requestId }}</code><router-link :to="{ path: '/requests', query: { request_id: requestId } }" class="text-success">查询调用记录</router-link></div>
-      <pre v-if="output" class="playground-response">{{ output }}</pre><div v-else class="playground-placeholder"><el-icon><Connection /></el-icon><span>{{ busy ? '等待有效内容…' : '暂无响应' }}</span></div>
+      <div v-if="requestId" class="playground-request"><span>请求 ID</span><code class="mono">{{ requestId }}</code><router-link :to="{ path: '/requests', query: { request_id: requestId } }" class="text-success">查询调用与结算记录</router-link></div>
+      <el-alert v-if="finishReason" :title="`模型终态：${finishReason} · ${finishText}`" :type="finishReason === 'stop' ? 'success' : 'info'" :closable="false" show-icon class="playground-finish" />
+      <pre v-if="output" class="playground-response">{{ output }}</pre><div v-else-if="!toolCalls.length" class="playground-placeholder"><el-icon><Connection /></el-icon><span>{{ busy ? '等待有效内容…' : '暂无响应' }}</span></div>
+      <section v-if="toolCalls.length" class="playground-tools" aria-label="函数工具调用"><div class="playground-tools-heading"><h3>函数工具调用</h3><el-tag type="info">仅展示 · 未执行</el-tag></div><article v-for="call in toolCalls" :key="call.index" class="playground-tool" :data-tool-index="call.index"><div><strong>{{ call.name || '函数名尚未到达' }}</strong><code class="mono">{{ call.id || `index ${call.index}` }}</code></div><pre>{{ call.arguments || '（空参数）' }}</pre></article><p class="field-hint">参数按 tool index 重组；页面不会执行函数、访问 URL 或自动发起下一轮。</p></section>
       <div v-if="metrics" class="playground-timing"><span>首字节 <strong>{{ metrics.firstByteMs?.toFixed(1) ?? '—' }} ms</strong></span><span>首有效内容 <strong>{{ metrics.firstContentMs?.toFixed(1) ?? '—' }} ms</strong></span><span>总耗时 <strong>{{ metrics.durationMs.toFixed(1) }} ms</strong></span><span>响应大小 <strong>{{ integer(metrics.bytes) }} B</strong></span></div>
-      <p v-if="metrics" class="field-hint">本次浏览器端测量包含网络、网关和供应商等待；单次耗时不代表网关额外开销或 P95。非流式的首有效内容在完整响应解析后记录。</p>
+      <p v-if="metrics" class="field-hint">浏览器只确认响应接收完成，不代表已结算。本次耗时包含网络、网关和供应商等待；单次耗时不代表网关额外开销或 P95。</p>
       <div v-if="usageText" class="playground-usage"><h3>{{ inputOnly ? '可信输入用量' : '供应商用量' }}</h3><pre class="code-block">{{ usageText }}</pre><p class="field-hint">{{ inputOnly ? '仅按整个请求的可信输入 Tokens 计费，输出用量为 0。' : '流中用量可能分步到达。' }}最终收费以调用记录中的已结算账单为准。</p></div>
     </div></section>
   </div>
@@ -134,5 +146,5 @@ onBeforeUnmount(() => { controller?.abort(); key.value = ''; prompt.value = ''; 
 </template>
 
 <style scoped>
-.playground-grid{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.2fr);gap:22px;align-items:start}.playground-input .panel-body{padding-bottom:26px}.playground-protocol{margin:-6px 0 22px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}.playground-protocol p{width:100%;margin-top:0}.playground-output{min-height:580px}.playground-request{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;line-height:1.8;color:#8493a5;margin-bottom:20px}.playground-request code{overflow-wrap:anywhere}.playground-response{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.95;font-family:inherit;font-size:13px;color:#334e64;margin:0;min-height:220px}.playground-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:15px;color:#a5b3c3;font-size:12px;min-height:300px}.playground-placeholder .el-icon{font-size:32px}.playground-timing{display:grid;grid-template-columns:1fr 1fr;gap:15px;background:#f6f9fb;padding:17px;border-radius:8px;margin-top:23px;font-size:10px;color:#8191a4}.playground-timing strong{display:block;color:#3e6276;font-size:12px;font-weight:500;margin-top:7px}.playground-usage{margin-top:26px}.playground-usage h3{font-size:12px;font-weight:500;margin-bottom:12px}.playground-usage .code-block{margin:0}@media(max-width:1100px){.playground-grid{grid-template-columns:1fr}.playground-output{min-height:400px}}
+.playground-grid{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.2fr);gap:22px;align-items:start}.playground-input .panel-body{padding-bottom:26px}.playground-protocol{margin:-6px 0 22px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}.playground-protocol p{width:100%;margin-top:0}.playground-output{min-height:580px}.playground-request{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;line-height:1.8;color:#8493a5;margin-bottom:20px}.playground-request code{overflow-wrap:anywhere}.playground-response{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.95;font-family:inherit;font-size:13px;color:#334e64;margin:0;min-height:220px}.playground-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:15px;color:#a5b3c3;font-size:12px;min-height:300px}.playground-placeholder .el-icon{font-size:32px}.playground-finish{margin-bottom:16px}.playground-tools{margin:18px 0}.playground-tools-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.playground-tools h3{font-size:13px;font-weight:600;margin:0 0 10px}.playground-tool{border:1px solid #e3eaf0;background:#f6f9fb;border-radius:8px;padding:13px;margin-bottom:10px;min-width:0}.playground-tool>div{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.playground-tool strong,.playground-tool code{overflow-wrap:anywhere}.playground-tool code{font-size:11px;color:#72869a}.playground-tool pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0 0;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;color:#334e64}.playground-timing{display:grid;grid-template-columns:1fr 1fr;gap:15px;background:#f6f9fb;padding:17px;border-radius:8px;margin-top:23px;font-size:10px;color:#8191a4}.playground-timing strong{display:block;color:#3e6276;font-size:12px;font-weight:500;margin-top:7px}.playground-usage{margin-top:26px}.playground-usage h3{font-size:12px;font-weight:500;margin-bottom:12px}.playground-usage .code-block{margin:0}@media(max-width:1100px){.playground-grid{grid-template-columns:1fr}.playground-output{min-height:400px}}
 </style>

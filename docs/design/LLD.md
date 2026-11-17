@@ -1,6 +1,6 @@
 # LLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-17（新增 038 能力内收总合同与台账链接，不新增接口或数据表）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。后续迁移切片的逻辑字段、UI/证据合同和状态机见[038](../../specs/038-new-api-capability-migration/spec.md)，物理 API/SQL 仍须逐片冻结。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-17（新增 038 能力内收总合同、PR-2 物理门禁与 PR-3 Chat/route-history 切片）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。后续迁移切片的逻辑字段、UI/证据合同和状态机见[038](../../specs/038-new-api-capability-migration/spec.md)，物理 API/SQL 仍须逐片冻结。
 
 ## 1. 工程布局与模块依赖
 
@@ -145,6 +145,12 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 现有 `Publish`/`PublishWithCostPolicy` 继续走 test-only 包装。显式 commercial 与现有方法共用同一发布事务，逐 binding 校验 direct、supplier-profile 标签、未撤回、已知成本、无 open issue 和全部 live credential coverage；deferred DB guard 在 active revision 提交前复核，阻止绕过 Store 的直接 SQL。`ActivateRouteRevision` 按目标历史 intent 重核冻结证据和当前 live credential，不接受新证据或提升 intent。撤回只追加历史，不改在途请求或旧 route。
 
 管理 API 提供严格登记/撤回和 admin-only 分页读面；控制台只读展示安全元数据。证据 ref、来源和许可证记录不进入客户/公开 DTO，仓库 provenance checker 只证明引用完整性，不证明真实供应商质量。导航模型、会话偏好和移动焦点/滚动边界另见[侧栏子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)。
+
+### 4.3 038-PR3 route history 与 Chat 工具投影
+
+[PR-3 切片合同](../../specs/038-new-api-capability-migration/openai-chat-profile.md)新增 admin-only `GET /api/platform/models/{id}/route-revisions` 只读分页投影，每行只暴露安全 route/binding 元数据，不包含 endpoint、CIDR、凭据、证据 ID、成本或正文。activation 继续使用既有 POST 和 expected-revision CAS；前端 activation journal 不复用要求版本单调递增的 publish journal，冲突/未知只读核查且不自动重试。发布事务在模型 `FOR UPDATE` 锁内以历史 `MAX(revision)+1` 分配新号，避免 rollback 后复用 route/binding；前端 publish receipt 要求返回大于原 active 的号并重新读取，不再要求 expected+1。
+
+deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分片 SSE，保留 `finish_reason=tool_calls` 和最终 usage。Web `frameUpdate/jsonUpdate` 输出工具增量与实际 finish reason，Playground 仅按 index 重组展示，不执行工具；ID/type/name 冲突失败关闭，arguments 只追加。浏览器完成只表示响应接收完成，最终收费仍以调用记录为准。
 
 ## 5. 资金模型与计价
 

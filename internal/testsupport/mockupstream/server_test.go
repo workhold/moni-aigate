@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -137,6 +138,62 @@ func TestDirectivesReceiptsAndFaults(t *testing.T) {
 	missing, data := post(t, srv.Client(), srv.URL+"/c/b/v1/chat/completions", `{"model":"qa-text","messages":[{"role":"user","content":"[[mock:fault=missing_usage]] hello"}]}`, "Authorization", "Bearer b-secret")
 	if missing.StatusCode != http.StatusOK || !strings.Contains(string(data), `"usage":null`) {
 		t.Fatalf("missing usage response = %d %s", missing.StatusCode, data)
+	}
+}
+
+func TestChatToolCallFixturePreservesJSONAndFragmentedSSE(t *testing.T) {
+	srv := testServer(t, true)
+	defer srv.Close()
+	for _, stream := range []bool{false, true} {
+		t.Run(fmt.Sprintf("stream_%t", stream), func(t *testing.T) {
+			body := fmt.Sprintf(`{"model":"qa-text","messages":[{"role":"user","content":"[[mock:fault=chat_tool_calls]] weather"}],"max_tokens":2,"stream":%t}`, stream)
+			resp, data := post(t, srv.Client(), srv.URL+"/c/a/v1/chat/completions", body, "Authorization", "Bearer a-secret")
+			if resp.StatusCode != http.StatusOK {
+				t.Fatalf("tool fixture status=%d body=%s", resp.StatusCode, data)
+			}
+			text := string(data)
+			for _, marker := range []string{"call_weather", "call_time", `"finish_reason":"tool_calls"`, `"prompt_tokens":`, `"completion_tokens":2`, `"total_tokens":`} {
+				if !strings.Contains(text, marker) {
+					t.Fatalf("tool fixture missing %s: %s", marker, text)
+				}
+			}
+			if stream {
+				ordered := []string{`"arguments":""`, `"arguments":"{\"city\":"`, `"arguments":"\"Paris\"}"`, `"id":"call_time"`, `"arguments":"{\"zone\":\"UTC\"}"`, `"finish_reason":"tool_calls"`, `data: [DONE]`}
+				at := -1
+				for _, marker := range ordered {
+					next := strings.Index(text[at+1:], marker)
+					if next < 0 {
+						t.Fatalf("tool stream missing/out of order %q: %s", marker, text)
+					}
+					at += next + 1
+				}
+				return
+			}
+			var decoded struct {
+				Choices []struct {
+					Message struct {
+						Content   *string `json:"content"`
+						ToolCalls []struct {
+							ID       string `json:"id"`
+							Function struct {
+								Name, Arguments string
+							} `json:"function"`
+						} `json:"tool_calls"`
+					} `json:"message"`
+				} `json:"choices"`
+			}
+			if err := json.Unmarshal(data, &decoded); err != nil || len(decoded.Choices) != 1 || decoded.Choices[0].Message.Content != nil || len(decoded.Choices[0].Message.ToolCalls) != 2 {
+				t.Fatalf("invalid JSON tool fixture: %s (%v)", data, err)
+			}
+			calls := decoded.Choices[0].Message.ToolCalls
+			if calls[0].Function.Name != "weather" || calls[0].Function.Arguments != `{"city":"Paris"}` || calls[1].Function.Name != "time" || calls[1].Function.Arguments != `{"zone":"UTC"}` {
+				t.Fatalf("unexpected tool calls: %+v", calls)
+			}
+		})
+	}
+	resp, data := post(t, srv.Client(), srv.URL+"/c/a/v1/responses", `{"model":"qa-text","input":"[[mock:fault=chat_tool_calls]]","max_output_tokens":2}`, "Authorization", "Bearer a-secret")
+	if resp.StatusCode != http.StatusBadRequest || !strings.Contains(string(data), "invalid_fault_protocol") {
+		t.Fatalf("Chat-only fixture escaped to Responses: %d %s", resp.StatusCode, data)
 	}
 }
 

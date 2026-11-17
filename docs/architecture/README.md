@@ -4,7 +4,7 @@
 
 moni-aigate 是对外提供 API 的商业运营平台。它借鉴 New API/One API 的模型接入、渠道经营和客户控制台；核心账务和客户边界由 aigate 统一定义，同时允许在许可证和来源记录完整的前提下纳入上游组件。部署由仓库自带的 Compose/脚本完成，1Panel 等面板只是可选的运行环境，不构成产品定位或验收前提。当前以业务与资金正确性优先，先完善能力，再推进性能专项；竞品全功能、生产发布或性能对标均需独立验收。
 
-建议先看系统上下文、请求时序和部署图，再按模块表进入源码。设计入口：[HLD](../design/HLD.md)、[LLD](../design/LLD.md)、[四阶段路线](../design/phase-roadmap.md)、[上游接入路线](../design/upstream-integration-plan.md)、[能力路线图](../design/new-api-roadmap.md)、[038 能力内收总合同与台账](../../specs/038-new-api-capability-migration/spec.md)、[商业 MVP 合同](../../specs/001-commercial-mvp/spec.md)、[035 接入合同](../../specs/035-external-upstream-integration/spec.md)。当前验收入口：[MVP 状态](../verification/mvp-status.md)、[逐项验收边界](../verification/acceptance-execution.md)与[001–028整体盘点](../verification/overall-delivery-inventory.md)。
+建议先看系统上下文、请求时序和部署图，再按模块表进入源码。设计入口：[HLD](../design/HLD.md)、[LLD](../design/LLD.md)、[四阶段路线](../design/phase-roadmap.md)、[上游接入路线](../design/upstream-integration-plan.md)、[能力路线图](../design/new-api-roadmap.md)、[038 能力内收总合同与台账](../../specs/038-new-api-capability-migration/spec.md)、[PR-3 Chat profile](../../specs/038-new-api-capability-migration/openai-chat-profile.md)、[商业 MVP 合同](../../specs/001-commercial-mvp/spec.md)、[035 接入合同](../../specs/035-external-upstream-integration/spec.md)。当前验收入口：[MVP 状态](../verification/mvp-status.md)、[逐项验收边界](../verification/acceptance-execution.md)与[001–028整体盘点](../verification/overall-delivery-inventory.md)。
 
 **当前研发原则**：[ADR-005](../decisions/ADR-005-pre-mvp-single-path.md)采用单一现行模型，MVP 前优先架构完整与业务能力，不新增旧版本兼容、双写或自动回退。下面的隔离历史证明候选保留其事实与验证边界，暂不扩展，也不作为经营功能的前置依赖；它们没有接入默认服务。现行资金与租户正确性继续保持。
 
@@ -100,6 +100,8 @@ New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration
 2026-11-17 新增[038 能力内收总合同与能力台账](../../specs/038-new-api-capability-migration/spec.md)作为后续迁移的规划与证据索引：实现位置、mock/外部流程验证、真实供应商资格和生产资格分别记录；切换与回退继续使用不可变 channel/version 和 route revision，完整动态决策仍归 033。PR-1 只增加设计和台账，没有新增运行模块、API、数据表、迁移、依赖、部署拓扑或供应商资格，也没有改变现有五图、权限边界和商业链。
 
 038-PR2 的[发布资格与证据门禁](../../specs/038-new-api-capability-migration/release-evidence-gate.md)随后落地 `current_011_release_qualification.sql`：insert-only evidence/credential coverage/withdrawal 表绑定精确 channel/version/model/profile/upstream/variant；route policy 缺省 `test_only`，commercial binding 冻结证据 ID。现有 Publish 与 HTTP 缺省路径不变，显式 direct commercial 发布和历史重激活共用资格、撤回、成本、open issue 与全 live credential 覆盖校验，deferred INSERT/UPDATE guard 防止直接 SQL 绕过。admin API 提供严格登记/撤回和分页读取，channels/catalog 的 `ReleaseQualification` 对话框只读展示安全元数据；外部 channel 保持 test-only，证据登记不授予真实供应商或生产资格。`third_party/provenance.json` 与可测试 checker 校验固定组件、SOURCE/许可证一致性、组件目录及 vendored 文件闭集；third_party 和依赖来源记录进入架构清单，CI/current-MVP/029 静态门实际执行 checker。
+
+038-PR3 按[deterministic Chat profile 合同](../../specs/038-new-api-capability-migration/openai-chat-profile.md)复用现有 provider 和统一商业链，增加 Chat 双工具 JSON/SSE fixture、按 index 的 Web 工具增量重组与真实 finish reason 展示；浏览器接收完成不再被文案等同为已结算。[`catalog.ListRouteRevisions`](../../internal/catalog/route_revisions.go) 与 admin-only `GET /api/platform/models/:id/route-revisions` 只读投影安全历史元数据，[路由历史对话框](../../web/src/components/RouteRevisions.vue) 通过既有 activation CAS 明确切换/回退；active revision 可下降，冲突/未知结果只读核查，不自动重发 POST；回退后再次发布在模型锁内按历史 MAX+1 分配新号，不复用不可变 route/binding。没有新增 SQL、钱包、计量、路由执行或供应商资格事实，所有 fixture 仍 test-only；专项和整单边界见[PR-3 验证记录](../verification/openai-chat-profile.md)。
 
 PR-2 侧栏收口按[导航子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)只重组现有管理入口：`web/src/navigation.ts` 固定四组路径闭集，App.vue 继续使用原角色过滤和路由守卫，空组消失，当前组展开并定位当前项。品牌/底部状态固定，导航区独立滚动；移动抽屉有焦点圈定/返回、Escape、关闭按钮、inert 和背景滚动恢复，并在 200ms 打开动画完成后再次定位当前项。会话偏好不是权限事实，周期预算仅获得现有页面的真实导航入口。该变化不新增业务路由、API、迁移或供应商能力。
 
@@ -612,7 +614,7 @@ mock的16张自有表分为环境/版本/key、命令/processing/results、订�
 
 | 协议 | 入口 | 当前范围与计费 |
 | --- | --- | --- |
-| OpenAI Chat | `POST /v1/chat/completions` | 文本 JSON/SSE；基础客户端函数工具转发；输入/输出 token |
+| OpenAI Chat | `POST /v1/chat/completions` | 文本 JSON/SSE；基础客户端函数工具转发与按 index 的分片展示；stop/length/tool_calls/content_filter 终态；输入/输出 token |
 | OpenAI Responses | `POST /v1/responses` | 文本与基础函数工具；输入/输出 token |
 | Anthropic Messages | `POST /v1/messages` | 文本与基础工具；输入/输出 token |
 | OpenAI Embeddings | `POST /v1/embeddings` | 非流，受界限的批量输入；仅输入 token |

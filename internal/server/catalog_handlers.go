@@ -1,6 +1,8 @@
 package server
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"net/netip"
 	"net/url"
 	"strconv"
@@ -72,6 +74,41 @@ func (s *Server) saveChannel(c *gin.Context, id string) {
 }
 func (s *Server) createChannel(c *gin.Context) { s.saveChannel(c, "") }
 func (s *Server) updateChannel(c *gin.Context) { s.saveChannel(c, c.Param("id")) }
+func (s *Server) routeRevisions(c *gin.Context) {
+	if !s.admin(c) {
+		return
+	}
+	var after *catalog.RouteRevisionCursor
+	if raw := c.Query("cursor"); raw != "" {
+		if len(raw) > 512 {
+			s.fail(c, 400, "invalid_cursor", "分页游标无效")
+			return
+		}
+		decoded, err := base64.RawURLEncoding.DecodeString(raw)
+		var value cursor
+		if err != nil || json.Unmarshal(decoded, &value) != nil || value.ID == "" || value.CreatedAt.IsZero() {
+			s.fail(c, 400, "invalid_cursor", "分页游标无效")
+			return
+		}
+		after = &catalog.RouteRevisionCursor{CreatedAt: value.CreatedAt, ID: value.ID}
+	}
+	rows, next, err := s.Catalog.ListRouteRevisions(c.Request.Context(), c.Param("id"), after)
+	if err != nil {
+		s.error(c, err)
+		return
+	}
+	data := make([]gin.H, 0, len(rows))
+	for _, row := range rows {
+		data = append(data, gin.H{"id": row.ID, "revision": row.Revision, "created_at": row.CreatedAt.UTC().Format("2006-01-02T15:04:05.000000Z"), "profile_version": row.ProfileVersion, "release_intent": row.ReleaseIntent, "active": row.Active, "current_profile": row.CurrentProfile, "bindings": row.Bindings})
+	}
+	nextCursor := ""
+	if next != nil {
+		raw, _ := json.Marshal(cursor{CreatedAt: next.CreatedAt, ID: next.ID})
+		nextCursor = base64.RawURLEncoding.EncodeToString(raw)
+	}
+	c.JSON(200, gin.H{"data": data, "request_id": c.GetString("request_id"), "next_cursor": nextCursor})
+}
+
 func (s *Server) activateRouteRevision(c *gin.Context) {
 	if !s.admin(c) {
 		return

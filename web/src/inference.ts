@@ -1,3 +1,5 @@
+import type { ChatFinishReason, ChatToolCallDelta } from './chat-tools'
+
 export type Protocol = 'openai_chat' | 'openai_responses' | 'anthropic_messages' | 'openai_embeddings' | 'jina_rerank' | 'gemini_generate_content'
 export interface ProtocolInfo { id: Protocol; title: string; endpoint: string; outputField: string; scope: string; inputOnly?: boolean }
 export const protocols: ProtocolInfo[] = [
@@ -108,7 +110,25 @@ function record(value: unknown): Value { return value && typeof value === 'objec
 function list(value: unknown): unknown[] { return Array.isArray(value) ? value : [] }
 function text(value: unknown): string { return typeof value === 'string' ? value : '' }
 function safeCode(value: unknown): string { const code = text(value); return /^[a-zA-Z0-9_]{1,64}$/.test(code) ? code : 'inference_failed' }
-export interface InferenceUpdate { delta?: string; usage?: Value; terminal?: boolean; error?: string }
+function chatFinish(value: unknown): ChatFinishReason | undefined {
+  const finish = text(value)
+  if (!finish) return undefined
+  if (!['stop', 'length', 'tool_calls', 'content_filter'].includes(finish)) throw new Error('Chat 响应含有不支持的终态，请凭请求 ID 查询账单。')
+  return finish as ChatFinishReason
+}
+function chatToolDeltas(value: unknown, stream: boolean): ChatToolCallDelta[] | undefined {
+  if (value === undefined) return undefined
+  const calls = list(value)
+  if (!calls.length || calls.length > 64) throw new Error('Chat 工具调用格式无效，请凭请求 ID 查询结果。')
+  return calls.map((item, position) => {
+    const call = record(item), fn = record(call.function)
+    const index = stream ? call.index : position
+    if (!Number.isSafeInteger(index) || Number(index) < 0 || Number(index) > 63 || (call.type !== undefined && call.type !== 'function') || ['id', 'type'].some(key => call[key] !== undefined && typeof call[key] !== 'string') || ['name', 'arguments'].some(key => fn[key] !== undefined && typeof fn[key] !== 'string')) throw new Error('Chat 工具调用格式无效，请凭请求 ID 查询结果。')
+    if (!stream && (!text(call.id) || call.type !== 'function' || fn.name === undefined || fn.arguments === undefined)) throw new Error('Chat 工具调用缺少完整身份或参数，请凭请求 ID 查询结果。')
+    return { index: Number(index), ...(call.id !== undefined ? { id: String(call.id) } : {}), ...(call.type !== undefined ? { type: 'function' as const } : {}), ...(fn.name !== undefined ? { name: String(fn.name) } : {}), ...(fn.arguments !== undefined ? { arguments: String(fn.arguments) } : {}) }
+  })
+}
+export interface InferenceUpdate { delta?: string; toolCalls?: ChatToolCallDelta[]; finishReason?: ChatFinishReason; usage?: Value; terminal?: boolean; error?: string }
 export function frameUpdate(protocol: Protocol, frame: SSEFrame): InferenceUpdate {
   if (protocolInfo(protocol)?.inputOnly) throw new Error('检索协议只支持 JSON 响应，不支持 SSE。')
   if (frame.data.trim() === '[DONE]') {
@@ -121,8 +141,9 @@ export function frameUpdate(protocol: Protocol, frame: SSEFrame): InferenceUpdat
   if (value.error || kind === 'error' || kind === 'response.failed') return { error: safeCode(record(value.error || record(value.response).error).code) }
   if (protocol === 'gemini_generate_content') return geminiUpdate(value, false)
   if (protocol === 'openai_chat') {
-    const delta = record(record(list(value.choices)[0]).delta)
-    return { delta: text(delta.content) || text(delta.refusal), usage: value.usage ? record(value.usage) : undefined }
+    const choice = record(list(value.choices)[0])
+    const delta = record(choice.delta)
+    return { delta: text(delta.content) || text(delta.refusal), toolCalls: chatToolDeltas(delta.tool_calls, true), finishReason: chatFinish(choice.finish_reason), usage: value.usage ? record(value.usage) : undefined }
   }
   if (protocol === 'openai_responses') {
     if (kind === 'response.completed' || kind === 'response.incomplete') return { terminal: true, usage: record(record(value.response).usage) }
@@ -146,10 +167,15 @@ export function jsonUpdate(protocol: Protocol, value: unknown): InferenceUpdate 
   if (protocol === 'gemini_generate_content') return geminiUpdate(body, true)
   if (protocolInfo(protocol)?.inputOnly) return retrievalUpdate(protocol, body)
   let delta = ''
+  let toolCalls: ChatToolCallDelta[] | undefined
+  let finishReason: ChatFinishReason | undefined
   if (protocol === 'openai_chat') {
-    const message = record(record(list(body.choices)[0]).message)
+    const choice = record(list(body.choices)[0])
+    const message = record(choice.message)
     delta = text(message.content) || text(message.refusal)
-    for (const call of list(message.tool_calls)) delta += `\n[函数 ${text(record(record(call).function).name)}] ${text(record(record(call).function).arguments)}`
+    toolCalls = chatToolDeltas(message.tool_calls, false)
+    finishReason = chatFinish(choice.finish_reason)
+    if (!finishReason) throw new Error('Chat 响应缺少成功终态，请凭请求 ID 查询账单。')
   } else if (protocol === 'openai_responses') {
     for (const item of list(body.output)) {
       const output = record(item)
@@ -163,7 +189,7 @@ export function jsonUpdate(protocol: Protocol, value: unknown): InferenceUpdate 
       if (content.type === 'tool_use') delta += `\n[函数 ${text(content.name)}] ${JSON.stringify(content.input || {})}`
     }
   }
-  return { delta, usage: record(body.usage), terminal: true }
+  return { delta, toolCalls, finishReason, usage: record(body.usage), terminal: true }
 }
 
 function geminiUpdate(body: Value, requireTerminal: boolean): InferenceUpdate {
@@ -252,7 +278,7 @@ export async function runInference(protocol: Protocol, key: string, body: Record
   function update(value: InferenceUpdate) {
     if (value.error) throw new Error(`调用未完成（${value.error}），请凭请求 ID 查询账单。`)
     if (terminal) throw new Error('结束标记后仍有响应事件，请查询请求状态。')
-    if (value.delta && result.firstContentMs === undefined) result.firstContentMs = performance.now() - start
+    if ((value.delta || value.toolCalls?.length) && result.firstContentMs === undefined) result.firstContentMs = performance.now() - start
     if (value.terminal) terminal = true
     onUpdate(value)
   }

@@ -112,7 +112,7 @@ test('JSON text extraction and HTTP rejection use sanitized messages and preserv
   const oldFetch = globalThis.fetch
   try {
     for (const protocol of ['openai_chat', 'openai_responses', 'anthropic_messages']) {
-      const body = protocol === 'openai_chat' ? { choices: [{ message: { content: 'hello' } }], usage: { prompt_tokens: 3, completion_tokens: 1 } }
+      const body = protocol === 'openai_chat' ? { choices: [{ message: { role: 'assistant', content: 'hello' }, finish_reason: 'stop' }], usage: { prompt_tokens: 3, completion_tokens: 1 } }
         : protocol === 'openai_responses' ? { output: [{ type: 'message', content: [{ type: 'output_text', text: 'hello' }] }], usage: { input_tokens: 3, output_tokens: 1 } }
           : { content: [{ type: 'text', text: 'hello' }], usage: { input_tokens: 3, output_tokens: 1 } }
       globalThis.fetch = async () => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } })

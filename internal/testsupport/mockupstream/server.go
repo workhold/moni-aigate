@@ -143,6 +143,10 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "invalid_fault_configuration")
 		return
 	}
+	if fault.kind == "chat_tool_calls" && protocol != "chat" {
+		writeError(w, http.StatusBadRequest, "invalid_fault_protocol")
+		return
+	}
 	seq := s.recordReceipt(Receipt{
 		Candidate:  candidateName,
 		Protocol:   protocol,
@@ -409,7 +413,7 @@ func parseFault(value string) (parsedFault, error) {
 		"reject_429": true, "reject_429_unlisted": true, "http_500": true,
 		"drop_after_headers": true, "stall_first_event": true, "missing_usage": true,
 		"conflicting_usage": true, "error_after_usage": true, "reasoning_events": true,
-		"invalid_json": true,
+		"chat_tool_calls": true, "invalid_json": true,
 	}
 	if known[value] {
 		return parsedFault{kind: value}, nil
@@ -603,15 +607,36 @@ func (s *Server) streamResponse(ctx context.Context, w http.ResponseWriter, seq 
 	return nil
 }
 
+func chatToolCallDeltas() []any {
+	return []any{
+		map[string]any{"role": "assistant", "content": nil, "tool_calls": []any{map[string]any{"index": 0, "id": "call_weather", "type": "function", "function": map[string]any{"name": "weather", "arguments": ""}}}},
+		map[string]any{"tool_calls": []any{map[string]any{"index": 0, "function": map[string]any{"arguments": `{"city":`}}}},
+		map[string]any{"tool_calls": []any{map[string]any{"index": 0, "function": map[string]any{"arguments": `"Paris"}`}}}},
+		map[string]any{"tool_calls": []any{map[string]any{"index": 1, "id": "call_time", "type": "function", "function": map[string]any{"name": "time", "arguments": ""}}}},
+		map[string]any{"tool_calls": []any{map[string]any{"index": 1, "function": map[string]any{"arguments": `{"zone":"UTC"}`}}}},
+	}
+}
+
 func streamChat(write func(string, any) error, model, text string, input, output int64, fault parsedFault) error {
 	if fault.kind == "invalid_json" {
 		return writeRawSSE(write, "", "{")
 	}
-	if err := write("", map[string]any{"id": "chatcmpl_mock", "object": "chat.completion.chunk", "model": model, "choices": []any{map[string]any{"index": 0, "delta": map[string]any{"role": "assistant", "content": text}, "finish_reason": nil}}}); err != nil {
-		return err
-	}
-	if err := write("", map[string]any{"id": "chatcmpl_mock", "object": "chat.completion.chunk", "model": model, "choices": []any{map[string]any{"index": 0, "delta": map[string]any{}, "finish_reason": "stop"}}}); err != nil {
-		return err
+	if fault.kind == "chat_tool_calls" {
+		for _, delta := range chatToolCallDeltas() {
+			if err := write("", map[string]any{"id": "chatcmpl_mock", "object": "chat.completion.chunk", "model": model, "choices": []any{map[string]any{"index": 0, "delta": delta, "finish_reason": nil}}}); err != nil {
+				return err
+			}
+		}
+		if err := write("", map[string]any{"id": "chatcmpl_mock", "object": "chat.completion.chunk", "model": model, "choices": []any{map[string]any{"index": 0, "delta": map[string]any{}, "finish_reason": "tool_calls"}}}); err != nil {
+			return err
+		}
+	} else {
+		if err := write("", map[string]any{"id": "chatcmpl_mock", "object": "chat.completion.chunk", "model": model, "choices": []any{map[string]any{"index": 0, "delta": map[string]any{"role": "assistant", "content": text}, "finish_reason": nil}}}); err != nil {
+			return err
+		}
+		if err := write("", map[string]any{"id": "chatcmpl_mock", "object": "chat.completion.chunk", "model": model, "choices": []any{map[string]any{"index": 0, "delta": map[string]any{}, "finish_reason": "stop"}}}); err != nil {
+			return err
+		}
 	}
 	if fault.kind != "missing_usage" {
 		usage := map[string]any{"prompt_tokens": input, "completion_tokens": output, "total_tokens": input + output}
@@ -752,7 +777,17 @@ func jsonResponse(protocol, model, text string, input, output int64, document an
 		if fault.kind == "conflicting_usage" {
 			usage = map[string]int64{"prompt_tokens": input, "completion_tokens": output, "total_tokens": input + output + 1}
 		}
-		return json.Marshal(map[string]any{"id": fmt.Sprintf("chatcmpl_mock_%d", seq), "object": "chat.completion", "model": model, "choices": []any{map[string]any{"index": 0, "message": map[string]string{"role": "assistant", "content": text}, "finish_reason": "stop"}}, "usage": usage})
+		message := map[string]any{"role": "assistant", "content": text}
+		finish := "stop"
+		if fault.kind == "chat_tool_calls" {
+			message["content"] = nil
+			message["tool_calls"] = []any{
+				map[string]any{"id": "call_weather", "type": "function", "function": map[string]any{"name": "weather", "arguments": `{"city":"Paris"}`}},
+				map[string]any{"id": "call_time", "type": "function", "function": map[string]any{"name": "time", "arguments": `{"zone":"UTC"}`}},
+			}
+			finish = "tool_calls"
+		}
+		return json.Marshal(map[string]any{"id": fmt.Sprintf("chatcmpl_mock_%d", seq), "object": "chat.completion", "model": model, "choices": []any{map[string]any{"index": 0, "message": message, "finish_reason": finish}}, "usage": usage})
 	case "responses":
 		var usage any = map[string]any{"input_tokens": input, "output_tokens": output, "total_tokens": input + output, "input_tokens_details": map[string]int64{"cached_tokens": 0}, "output_tokens_details": map[string]int64{"reasoning_tokens": 0}}
 		if fault.kind == "missing_usage" {

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T09:39:52Z",
-  "review_reason": "修复移动抽屉200ms打开动画与当前项滚动的间歇竞争；动画完成后二次定位且关闭回调不生效，无业务或权限变化，需同提交复验",
-  "snapshot_sha256": "df9788cf267477c3d7faef1107b4dedbd8c82585a12cdee84869cbc3dea934e7",
-  "architecture_sha256": "28c99944d03a1dd734e13b2be4dbc8307b269304eeffaed6b4a077794b3f21e0",
-  "history_sha256": "a46bb64dd6f32edbe88383a33a4f93d966296214fbb414c77d80df1dac944be3",
+  "reviewed_at": "2026-11-17T15:16:09Z",
+  "review_reason": "038 PR-3：复用统一Chat商业链，新增工具fixture与终态展示、admin只读路由历史及CAS回退；回退后发布从历史MAX+1分配不可变新号；无迁移、依赖、部署或真实供应商资格变化，已复核模块图、请求链、权限与源码链接",
+  "snapshot_sha256": "7437ffe3c29380339561a5ad15e289410d5c68e174a2801bd7bb51c2bdc7c384",
+  "architecture_sha256": "d1e1b3f4ec9e4bd98eace262fccd5fd9efeb32908a648e97cbd74a2440a3678e",
+  "history_sha256": "b39b6653a57d57c028307b4e226cb07813762b81370a85af2e92a77e2be6163a",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "af118cfb14297e02b6d8302dc1e96e3280b2fb679c4d0b779b3865cf441cbcf6"
+      "sha256": "b6f41a9f85fff0062c904fd89046478e029932e3c2e9360f5472a021713d1103"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "435030056943aeb4522e96d990af1c7f40bc967d0d9decfcdcb96182bda470ed"
+      "sha256": "acb9a729e6334af513745955f574649c44e363324b314aba8e65b8e122c8cb45"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -1486,6 +1486,10 @@
     {
       "path": "docs/verification/native-sdk.md",
       "sha256": "4e54458a90718c4d26b805b38ac7f5f0ec4d3d76433c551fd7b4c711b987cc5d"
+    },
+    {
+      "path": "docs/verification/openai-chat-profile.md",
+      "sha256": "0ebd78b8a3b06c30345f3aa12b879d4783cc795c83b0313d279d0bfc61dcfbea"
     },
     {
       "path": "docs/verification/operating-reports.json",
@@ -3612,8 +3616,12 @@
       "sha256": "faf0dcfd8a635e3e62f1e931b3aa1a063757975c11aba344f7500cbaa313d87d"
     },
     {
+      "path": "internal/catalog/route_revisions.go",
+      "sha256": "feafc1f26b1a0baacf1bcf5369df46556237ede5562c91868625e7d28f4aeff4"
+    },
+    {
       "path": "internal/catalog/store.go",
-      "sha256": "9628f3b0e6351beed47bf29492cff4dd61a67ed91903942a29c43c4b6f5eb48d"
+      "sha256": "384adda7a80a13243b0031b347e9aebde8178b9e3e75eea9f2c878a56c987cd5"
     },
     {
       "path": "internal/config/alerts_test.go",
@@ -7121,7 +7129,7 @@
     },
     {
       "path": "internal/server/catalog_handlers.go",
-      "sha256": "fce0ae37a3e732b07788ecac6a21c9f7724ece5544ddfd937b8551dc140850eb"
+      "sha256": "5d1adb8166d87a52213b04d8c7e50c2d8df13e4859fddd67dd098e632ff1b4d4"
     },
     {
       "path": "internal/server/channel_defaults_integration_test.go",
@@ -7197,7 +7205,7 @@
     },
     {
       "path": "internal/server/external_relay_integration_test.go",
-      "sha256": "f3a318126bc2ced22839ccf54b90869b5907a40e3341703271ea1fc5656e2f44"
+      "sha256": "5a4c9ff669847e93c0d52d970c8a6328ef61ba0acbff59b37bae655727d0a0d9"
     },
     {
       "path": "internal/server/funding_integration_test.go",
@@ -7294,6 +7302,10 @@
     {
       "path": "internal/server/native_protocols_integration_test.go",
       "sha256": "d2b61e76d78431d77aaa178e6cb23a31f7c13c045de348112b4f1f871e0e1148"
+    },
+    {
+      "path": "internal/server/openai_chat_profile_integration_test.go",
+      "sha256": "67fb1a0b92840dd492e883a5a0fc939b1215cf4079275f226cd32d75ff03a1ab"
     },
     {
       "path": "internal/server/operating_payment_basis_integration_test.go",
@@ -7504,6 +7516,10 @@
       "sha256": "402969c427006fef194ddae3631404f00b56ada906c5a75e48f3e17919ffb914"
     },
     {
+      "path": "internal/server/route_revisions_integration_test.go",
+      "sha256": "446bcfc678d8df1e0e7f996c131c4be04c63ffb3f93f05298a07215f0a88a217"
+    },
+    {
       "path": "internal/server/self_service_handlers.go",
       "sha256": "28b84bcb66f1e33724bfcb2793d7ca355fbbf99f907e9e35632d4fea9f12d458"
     },
@@ -7517,7 +7533,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "a7dac16ab60f4f5fed162bbc8b753e9a8ee818ac46f7580b458ad1d4e68ff1b6"
+      "sha256": "9c6668b19e5531bc2fc28105a0742721e538ad2f5042a4eec0a19944b48979cc"
     },
     {
       "path": "internal/server/static.go",
@@ -7669,7 +7685,7 @@
     },
     {
       "path": "internal/testsupport/mockupstream/config_test.go",
-      "sha256": "b075e8713ea018b4252f7aa349f66ddb715b6323fe739206933b933a8d74d443"
+      "sha256": "a9b11cf44d040c862e5c614f9a396daf97d1ad47c60e6ee8bbc8b47e29b5a423"
     },
     {
       "path": "internal/testsupport/mockupstream/phase1_acceptance_test.go",
@@ -7681,11 +7697,11 @@
     },
     {
       "path": "internal/testsupport/mockupstream/server.go",
-      "sha256": "2b4133aac117dcdfc37467fbdcd5132ca21904b9662fcf412b6d1536e1341485"
+      "sha256": "e72fb7519ec88759c55bc891bbdfa62d73f508e1ad4c3512acc921da73a86898"
     },
     {
       "path": "internal/testsupport/mockupstream/server_test.go",
-      "sha256": "8360e0592a3d6e268c7c2b6a607cd3c517ae3a10bf45a3d25c5dcb6734874745"
+      "sha256": "e3b4984526355a2e9fbb7b9859adff8dd0f1188aa5fe16cde5ddc61af523eea5"
     },
     {
       "path": "internal/testsupport/periodicprefix/install.go",
@@ -8233,7 +8249,7 @@
     },
     {
       "path": "scripts/phase1-mock-acceptance.py",
-      "sha256": "192b2bfcce8e5236522e4218e367905741587c40fcddd8764e6951b5c4a79d84"
+      "sha256": "0c882a6f2b5f901ea7988ca7cd1de1e54221bf1c0687984e7f10aa8a91248328"
     },
     {
       "path": "scripts/phase1-mock-acceptance.sh",
@@ -8253,7 +8269,7 @@
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "171092d18b892b21195bfa167ec3d363d93e5fc4dc8af8985676a9345f9802fd"
+      "sha256": "1cb68d1b84dc2196e1bfd2477ffd66c08f80088f9330bab154b9f0d208755606"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
@@ -9393,11 +9409,15 @@
     },
     {
       "path": "specs/038-new-api-capability-migration/capability-matrix.md",
-      "sha256": "ecc8cfd190b686fa59fec48e9cc2954992590eda73cc34ab97d68e33307f2150"
+      "sha256": "a7859f2826b9f5be449a0bbe8fcfcbde154d01164715443e2a34c2eea4c87c3c"
     },
     {
       "path": "specs/038-new-api-capability-migration/navigation-refinement.md",
       "sha256": "04c82093abfce1c1f439f5d31489a04714c848731de4f46466509b01b758e041"
+    },
+    {
+      "path": "specs/038-new-api-capability-migration/openai-chat-profile.md",
+      "sha256": "03691bfe294a7f96226ac91ca5052403b39412ba809b2a106560f18eb2f1d256"
     },
     {
       "path": "specs/038-new-api-capability-migration/release-evidence-gate.md",
@@ -9405,7 +9425,7 @@
     },
     {
       "path": "specs/038-new-api-capability-migration/spec.md",
-      "sha256": "5501c0c7d85d0e03283ab98a2fa9dcd97f72bbf8aadae59e2f51ab56328e0e5e"
+      "sha256": "bc1a73d74b1376faf60857eedb3465be2a563adf417be3357587bd2e14c624a5"
     },
     {
       "path": "third_party/README.md",
@@ -9498,6 +9518,10 @@
     {
       "path": "web/src/channel-operations.ts",
       "sha256": "fc1d09319c09ac60d2f900c1a43d0bea81c4bb5293ef3ec38edb553bdd6b33cf"
+    },
+    {
+      "path": "web/src/chat-tools.ts",
+      "sha256": "b4d1095428008d0dc597c922242cec1af6340acc3e3d86a07709b036d470ec5f"
     },
     {
       "path": "web/src/coin-display.ts",
@@ -9632,6 +9656,10 @@
       "sha256": "8ba33b4240aae095457909d5f14ecaff27a1bc35ba38825a597c5805ca0e4f51"
     },
     {
+      "path": "web/src/components/RouteRevisions.vue",
+      "sha256": "fd422cb09dec5cd86400e648f44a610de5efb53ec7e467cd93386a9cd1dd8ccf"
+    },
+    {
       "path": "web/src/components/TenantPricing.vue",
       "sha256": "d1fd555631ae43fe79cee1d92846c9c48227c55758b1ded0c3d13a35cb313aa8"
     },
@@ -9657,7 +9685,7 @@
     },
     {
       "path": "web/src/cost-aware-routing.ts",
-      "sha256": "2b190fc32977ccf4e1faab17b5053febbd38ac320b3a2ab055b70a77959887e1"
+      "sha256": "52ae330c54a90e85dbc98ae37ff2d4d92183c44efee4c37356368c4f9fbdcd5d"
     },
     {
       "path": "web/src/credential-pool.ts",
@@ -9689,7 +9717,7 @@
     },
     {
       "path": "web/src/inference.ts",
-      "sha256": "958ca92fc05c887a5ae23cc26194b84ab4240d835e6f4122a8d8fdd4635952c2"
+      "sha256": "376c3da2f155adbc0ffd9708b05d838d87c387b6807388d2ace5d904ed83a1e5"
     },
     {
       "path": "web/src/key-access-policy.ts",
@@ -9769,7 +9797,7 @@
     },
     {
       "path": "web/src/playground-state.ts",
-      "sha256": "8977d411a6b446b90b4cbb0cbaed5d14da83974c38ce29be69e3fcad7488c4e9"
+      "sha256": "87ff0b548fce842f90f130486f3be5cbc857e5bf37efff61ab0d628751108f8b"
     },
     {
       "path": "web/src/pricing-state.ts",
@@ -9814,6 +9842,10 @@
     {
       "path": "web/src/request-wire.ts",
       "sha256": "4fb6a8c8b12da93bebea173682436e844376a6e4fa62283d040e7250a65aa744"
+    },
+    {
+      "path": "web/src/route-revisions.ts",
+      "sha256": "5b23a868fadfebf18f3634e5b2261102f64a9fab87e2afdd0d5833171ecf0e75"
     },
     {
       "path": "web/src/router.ts",
@@ -9869,11 +9901,11 @@
     },
     {
       "path": "web/src/views/PlatformView.vue",
-      "sha256": "8e04844820be55d8974168d73151bf8288e9761dda863080e828b23020c08856"
+      "sha256": "f4a53c05b11d80a8142afda11162a281e45ddc7e9f00264556bc18b3fbac6b05"
     },
     {
       "path": "web/src/views/PlaygroundView.vue",
-      "sha256": "53aa71ac524caea299c1b31f1942773fc6405d308b8b187f52a471b6ff98939c"
+      "sha256": "e51fea98e5cbe9a328b4e01491b983859bb1630fd4910b05024b6ad1baa28217"
     },
     {
       "path": "web/src/views/PriceGroupsView.vue",
@@ -9956,6 +9988,10 @@
       "sha256": "4ab6086de2b0faad7443af9365e1bd0980e02b23c0460c18fd5f7d67f105241d"
     },
     {
+      "path": "web/tests/chat-tools.test.mjs",
+      "sha256": "27321763e7184b0bf25a7250dcfd1d091ec6d87dca745b0ab7bcd4ef5834dbe1"
+    },
+    {
       "path": "web/tests/coin-display.test.mjs",
       "sha256": "01db2c453e2f04c08641e8a567c09df99f5b98dce89ed16f6aa7ff6d1d33b5ab"
     },
@@ -9973,7 +10009,7 @@
     },
     {
       "path": "web/tests/cost-aware-routing.test.mjs",
-      "sha256": "d970c828307531443ac6c0809693d4b9c1a3c647688dd8bb9414e293bf323ab6"
+      "sha256": "2984301fb3b99cafae9963213495e76cb5c856bf26b83b6425c64d5ea224c589"
     },
     {
       "path": "web/tests/credential-pool.test.mjs",
@@ -10001,7 +10037,7 @@
     },
     {
       "path": "web/tests/inference.test.mjs",
-      "sha256": "3933c8f3ef24c0e77247f8466da2787dc91794e198d353885ce037f8380ecacf"
+      "sha256": "f1e3b97924423e5d4da0b65e019169a72d1c70fd564e4cf806c46ec20addacae"
     },
     {
       "path": "web/tests/key-access-policy.test.mjs",
@@ -10089,7 +10125,7 @@
     },
     {
       "path": "web/tests/protocol-switching.test.mjs",
-      "sha256": "17f5e50be3411147bbd263b290c31bd3ed5d6ff8a124aaef209af9e52572fd26"
+      "sha256": "620cf4247bf8db1e1e3abf7758ef04dda229bb5d914156e5b13d6b832c7bed67"
     },
     {
       "path": "web/tests/public-catalog-state.test.mjs",
@@ -10114,6 +10150,10 @@
     {
       "path": "web/tests/retrieval.test.mjs",
       "sha256": "8ca78d1e6ee84ae6bba81eb35c758fdf33597af0a4d2052c4fe62eb34bc3b82b"
+    },
+    {
+      "path": "web/tests/route-revisions.test.mjs",
+      "sha256": "220eec4ae702029325086da6b2b64f831c1a571d7781ba0d811f770fff507c72"
     },
     {
       "path": "web/tests/session.test.mjs",

@@ -206,6 +206,6 @@ NA-01…NA-18 是能力域汇总，不替代具体 profile 明细。每个 NA �
 
 1. PR-1：本总合同、[能力台账](capability-matrix.md)、设计链接和架构记录，不改运行行为。
 2. PR-2：[发布资格与证据门禁物理合同](release-evidence-gate.md)、追加迁移、服务端校验、只读管理 UI 与 provenance 检查；平台导航收口见[侧栏子规格](navigation-refinement.md)。
-3. PR-3：一个 OpenAI-compatible Chat/SSE profile，完成内置适配差异、deterministic/mock 统一商业链、控制台、回退和桌面/390px 证据。可并行做真实内测探测，但它不是本 PR 的完成条件，也不授予真实供应商资格。
+3. PR-3：[deterministic OpenAI-compatible Chat profile 合同](openai-chat-profile.md)，完成内置适配差异、deterministic/mock 统一商业链、控制台、回退和桌面/390px 证据。可并行做真实内测探测，但它不是本 PR 的完成条件，也不授予真实供应商资格。
 
 每个 PR 只扩大已验证的范围，不把 M0–M5 合并为巨型迁移。
