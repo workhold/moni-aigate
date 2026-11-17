@@ -71,7 +71,14 @@ func (s *Service) Submit(ctx context.Context, id ID, now time.Time) (Task, error
 		return Task{}, err
 	}
 	if !task.CanSubmit() {
-		return task, ErrNoResubmit
+		// A worker or a previous HTTP request may already own the one provider
+		// submission. Prove the original identity and return that task unchanged;
+		// never turn the losing side into a second generation or a false outage.
+		replayed, replayErr := task.ReplaySubmit(task.idempotencyKey, task.requestDigest)
+		if replayErr != nil {
+			return Task{}, replayErr
+		}
+		return replayed, nil
 	}
 	var started Task
 	err = s.store.WithTask(ctx, id, func(tx TaskTx) error {

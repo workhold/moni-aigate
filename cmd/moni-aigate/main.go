@@ -254,14 +254,14 @@ func run() error {
 		}
 	}
 	if e = app.InitializePayments(ctx, paymentStart.application); e != nil {
-		return fmt.Errorf("payment service initialization failed")
+		return fmt.Errorf("payment service initialization failed: %s", payments.SafeErrorCode(e))
 	}
 	var paymentProcessor *payments.Processor
 	var paymentRunner *payments.Runner
 	if paymentStart.environment {
 		paymentProcessor, e = payments.OpenProcessor(ctx, paymentStart.worker)
 		if e != nil {
-			return fmt.Errorf("payment processor initialization failed")
+			return fmt.Errorf("payment processor initialization failed: %s", payments.SafeErrorCode(e))
 		}
 		defer func() { _ = paymentProcessor.Close(context.Background()) }()
 		paymentRunner, e = payments.NewRunner(paymentProcessor)

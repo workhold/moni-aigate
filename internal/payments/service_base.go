@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"strings"
 	"time"
 	"unicode"
@@ -52,6 +53,29 @@ func paymentSafeError(err error) error {
 		}
 	}
 	return ErrPaymentsUnavailable
+}
+
+// SafeErrorCode exposes only the closed payment failure identity for startup
+// diagnostics; raw causes, credentials, DSNs and provider bodies are omitted.
+func SafeErrorCode(err error) string {
+	if err == nil {
+		return ""
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "payment_deadline_exceeded"
+	}
+	if errors.Is(err, context.Canceled) {
+		return "payment_cancelled"
+	}
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) && pg.Code != "" {
+		return "payment_postgres_" + pg.Code
+	}
+	var network net.Error
+	if errors.As(err, &network) {
+		return "payment_network_unavailable"
+	}
+	return paymentSafeError(err).Error()
 }
 func paymentRetryable(err error) bool {
 	var e *pgconn.PgError

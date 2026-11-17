@@ -99,7 +99,7 @@ func (s *Server) publishBindings(c *gin.Context) {
 		return
 	}
 	var in catalog.RoutePublishInput
-	if !decodeCanonicalJSON(c.Request.Body, &in, 1048576, "expected_revision", "bindings", "cost_policy", "mode", "unknown_cost_policy", "channel_id", "upstream_model", "priority", "weight", "max_inflight", "max_input_cost_rate", "max_output_cost_rate") {
+	if !decodeCanonicalJSON(c.Request.Body, &in, 1048576, "expected_revision", "bindings", "cost_policy", "mode", "unknown_cost_policy", "channel_id", "upstream_model", "priority", "weight", "max_inflight", "max_input_cost_rate", "max_output_cost_rate", "release_intent", "release_evidence_id") {
 		s.fail(c, 400, "invalid_request", "路由发布参数无效")
 		return
 	}
@@ -107,7 +107,13 @@ func (s *Server) publishBindings(c *gin.Context) {
 	if in.CostPolicy != nil {
 		policy = *in.CostPolicy
 	}
-	revision, e := s.Catalog.PublishWithCostPolicy(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, in.Bindings, policy)
+	var revision int64
+	var e error
+	if in.ReleaseIntent == catalog.ReleaseCommercial {
+		revision, e = s.Catalog.PublishCommercialWithCostPolicy(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, in.Bindings, policy)
+	} else {
+		revision, e = s.Catalog.PublishWithCostPolicy(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, in.Bindings, policy)
+	}
 	if e != nil {
 		s.error(c, e)
 		return

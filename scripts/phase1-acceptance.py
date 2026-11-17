@@ -349,6 +349,7 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     static = [
         run_logged(["go", "run", "./scripts/check-architecture"], artifact / "static-architecture.log", env),
         run_logged(["go", "run", "./scripts/check-procurement-layout"], artifact / "static-procurement.log", env),
+        run_logged(["go", "run", "./scripts/check-upstream-provenance"], artifact / "static-upstream-provenance.log", env),
         run_logged(["go", "vet", "./..."], artifact / "static-vet.log", env),
         run_logged(["go", "build", "-trimpath", "-o", str(ROOT / "bin" / "moni-aigate"), "./cmd/moni-aigate"], artifact / "static-build.log", env),
     ]

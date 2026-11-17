@@ -406,14 +406,15 @@ SELECT (SELECT delivery_state FROM media_attempts WHERE tenant_id=$1 AND request
 	if attemptState != "unknown" || settlementStatus != "released" || charged != 0 {
 		t.Fatalf("unknown submission did not release media attempt=%s settlement=%s charged=%d", attemptState, settlementStatus, charged)
 	}
-	if _, err = service.Submit(context.Background(), taskID, time.Now().UTC()); !errors.Is(err, tasks.ErrNoResubmit) {
-		t.Fatalf("unknown task became resubmittable: %v", err)
+	replayed, err := service.Submit(context.Background(), taskID, time.Now().UTC())
+	if err != nil || !replayed.SubmissionUnknown() {
+		t.Fatalf("same-identity unknown submit did not return the original task: %v", err)
 	}
-	var settlements int
-	if err = f.pool.QueryRow(context.Background(), `SELECT count(*) FROM media_settlements WHERE tenant_id=$1 AND request_id=$2`, f.tenant, fixture.requestID).Scan(&settlements); err != nil {
+	var settlements, submissions int
+	if err = f.pool.QueryRow(context.Background(), `SELECT (SELECT count(*) FROM media_settlements WHERE tenant_id=$1 AND request_id=$2),(SELECT count(*) FROM media_task_events WHERE task_id=$3 AND kind='submission_unknown')`, f.tenant, fixture.requestID, fixture.taskID).Scan(&settlements, &submissions); err != nil {
 		t.Fatal(err)
 	}
-	if settlements != 1 {
-		t.Fatalf("unknown replay duplicated settlement count=%d", settlements)
+	if settlements != 1 || submissions != 1 {
+		t.Fatalf("unknown replay duplicated facts settlements=%d submissions=%d", settlements, submissions)
 	}
 }

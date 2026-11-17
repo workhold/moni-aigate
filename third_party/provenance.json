@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "components": [
+    {
+      "id": "new-api",
+      "source_mode": "reference_only",
+      "repository": "https://github.com/QuantumNous/new-api",
+      "commit": "e449cc700eb569cdfc2199cb73e97de46944f43c",
+      "reference_paths": [
+        "router/relay-router.go",
+        "router/api-router.go",
+        "router/channel-router.go",
+        "relay/channel/openai/relay-openai.go",
+        "model/channel.go",
+        "service/billing.go"
+      ],
+      "license": {
+        "path": "third_party/new-api/LICENSE",
+        "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef"
+      },
+      "notice": {
+        "path": "third_party/new-api/NOTICE",
+        "sha256": "528067fcdf4f9d7e3fdb489d02cbdd36a0efa63fc2eb1686340612c26beb9f33",
+        "absence_reason": ""
+      },
+      "additional_notices": [
+        {
+          "path": "third_party/new-api/THIRD-PARTY-LICENSES.md",
+          "sha256": "3848811f99c7b7ad802eea23775ccd262228c980f81eef64027f587689b0841d"
+        }
+      ],
+      "source_record": "third_party/new-api/SOURCE.md",
+      "modification_record": "third_party/new-api/SOURCE.md",
+      "source_offer": "third_party/new-api/SOURCE.md",
+      "vendored_roots": [],
+      "vendored_files": []
+    },
+    {
+      "id": "sub2api",
+      "source_mode": "reference_only",
+      "repository": "https://github.com/Wei-Shaw/sub2api",
+      "commit": "10ba8f9b4dc2e6023d4a9879ab77b21841babd10",
+      "reference_paths": ["README.md"],
+      "license": {
+        "path": "third_party/sub2api/LICENSE",
+        "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b"
+      },
+      "notice": {
+        "path": "",
+        "sha256": "",
+        "absence_reason": "The fixed upstream commit does not contain a separate NOTICE file."
+      },
+      "additional_notices": [],
+      "source_record": "third_party/sub2api/SOURCE.md",
+      "modification_record": "third_party/sub2api/SOURCE.md",
+      "source_offer": "third_party/sub2api/SOURCE.md",
+      "vendored_roots": [],
+      "vendored_files": []
+    }
+  ]
+}

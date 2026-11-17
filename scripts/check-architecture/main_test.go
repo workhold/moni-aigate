@@ -113,7 +113,7 @@ func TestDetectsContentAdditionsAndDeletionsWithoutGit(t *testing.T) {
 
 func TestCoverageIncludesContractsAndExcludesArtifactsAndSecrets(t *testing.T) {
 	root := fixture(t)
-	for _, name := range []string{"specs/018-test/spec.md", "docs/design/HLD.md", "docs/runbooks/deployment.md", "docs/verification/proof.json", "AGENTS.md", "Makefile", "compose.yaml", ".env.example", ".github/workflows/ci.yml", "web/package-lock.json", "web/tests/test.mjs", "scripts/new-tool.py", "future-module/new.go", ".vite-config.json", "web/.vite-source/entry.ts"} {
+	for _, name := range []string{"specs/018-test/spec.md", "docs/design/HLD.md", "docs/runbooks/deployment.md", "docs/verification/proof.json", "AGENTS.md", "Makefile", "compose.yaml", ".env.example", ".github/workflows/ci.yml", "web/package-lock.json", "web/tests/test.mjs", "scripts/new-tool.py", "third_party/new-api/SOURCE.md", "third_party/new-api/LICENSE", "third_party/new-api/NOTICE", "docs/research/dependency-provenance.md", "future-module/new.go", ".vite-config.json", "web/.vite-source/entry.ts"} {
 		writeFixture(t, root, name, "covered\n")
 	}
 	refreshFixture(t, root)
@@ -158,6 +158,15 @@ func TestCoverageIncludesContractsAndExcludesArtifactsAndSecrets(t *testing.T) {
 	writeFixture(t, root, "specs/018-test/spec.md", "revised design\n")
 	if err := run(root, false, false, "", fixedTime, new(bytes.Buffer)); err == nil {
 		t.Fatal("design changes must require architecture review")
+	}
+	writeFixture(t, root, "specs/018-test/spec.md", "covered\n")
+	for _, name := range []string{"third_party/new-api/SOURCE.md", "third_party/new-api/LICENSE", "third_party/new-api/NOTICE", "docs/research/dependency-provenance.md"} {
+		writeFixture(t, root, name, "changed provenance\n")
+		var output bytes.Buffer
+		if err := run(root, false, false, "", fixedTime, &output); err == nil || !strings.Contains(output.String(), "modified "+name) {
+			t.Fatalf("provenance change %s bypassed architecture review: %s", name, output.String())
+		}
+		writeFixture(t, root, name, "covered\n")
 	}
 }
 

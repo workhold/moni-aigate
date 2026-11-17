@@ -183,13 +183,13 @@ func covered(name string) bool {
 	if excluded(name, false) || name == documentPath || name == historyPath || name == manifestPath {
 		return false
 	}
-	for _, prefix := range []string{"cmd/", "internal/", "migrations/", "scripts/", "deploy/", ".github/", "web/", "specs/", "docs/architecture/", "docs/design/", "docs/runbooks/", "docs/verification/", "docs/decisions/"} {
+	for _, prefix := range []string{"cmd/", "internal/", "migrations/", "scripts/", "deploy/", ".github/", "web/", "specs/", "third_party/", "docs/architecture/", "docs/design/", "docs/runbooks/", "docs/verification/", "docs/decisions/"} {
 		if strings.HasPrefix(name, prefix) {
 			return true
 		}
 	}
 	switch name {
-	case "AGENTS.md", "README.md", "Makefile", "Dockerfile", ".dockerignore", ".gitignore", ".env.example", "go.mod", "go.sum":
+	case "AGENTS.md", "README.md", "Makefile", "Dockerfile", ".dockerignore", ".gitignore", ".env.example", "go.mod", "go.sum", "docs/research/dependency-provenance.md":
 		return true
 	}
 	switch path.Ext(name) {

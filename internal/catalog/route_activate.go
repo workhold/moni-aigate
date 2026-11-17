@@ -41,7 +41,8 @@ func (s *Store) ActivateRouteRevision(ctx context.Context, actor, model string, 
 	// The database trigger meter_model_route_matches already rejects an
 	// active revision without a matching published policy and profile.
 	var published bool
-	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM route_policy_versions p JOIN models m ON m.id=p.model_id AND m.profile_version=p.profile_version WHERE p.model_id=$1 AND p.revision=$2 AND p.profile_version=(SELECT profile_version FROM models WHERE id=$1))`, model, target).Scan(&published); e != nil {
+	var releaseIntent string
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM route_policy_versions p JOIN models m ON m.id=p.model_id AND m.profile_version=p.profile_version WHERE p.model_id=$1 AND p.revision=$2 AND p.profile_version=(SELECT profile_version FROM models WHERE id=$1)),COALESCE((SELECT release_intent FROM route_policy_versions WHERE model_id=$1 AND revision=$2),'')`, model, target).Scan(&published, &releaseIntent); e != nil {
 		return 0, e
 	}
 	if !published {
@@ -81,6 +82,32 @@ func (s *Store) ActivateRouteRevision(ctx context.Context, actor, model string, 
 	}
 	if bindings == 0 || dead != 0 {
 		return 0, ErrInvalid
+	}
+	if releaseIntent == ReleaseCommercial {
+		type commercialBinding struct{ evidenceID, channelID, channelVersionID, upstreamModel, variantKey, profileVersion string }
+		checks := []commercialBinding{}
+		rows, e = tx.Query(ctx, `SELECT b.release_evidence_id,b.channel_id,b.channel_version_id,b.upstream_model,b.variant_key,p.profile_version FROM model_bindings b JOIN route_policy_versions p ON p.id=b.route_policy_version_id WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id`, model, target)
+		if e != nil {
+			return 0, e
+		}
+		for rows.Next() {
+			var b commercialBinding
+			if e = rows.Scan(&b.evidenceID, &b.channelID, &b.channelVersionID, &b.upstreamModel, &b.variantKey, &b.profileVersion); e != nil {
+				rows.Close()
+				return 0, e
+			}
+			checks = append(checks, b)
+		}
+		if e = rows.Err(); e != nil {
+			rows.Close()
+			return 0, e
+		}
+		rows.Close()
+		for _, b := range checks {
+			if e = validateCommercialBinding(ctx, tx, b.evidenceID, model, b.profileVersion, b.channelID, b.channelVersionID, b.upstreamModel, b.variantKey); e != nil {
+				return 0, e
+			}
+		}
 	}
 	if _, e = tx.Exec(ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", model, target); e != nil {
 		return 0, e

@@ -7889,3 +7889,162 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - added `specs/038-new-api-capability-migration/spec.md`
 
 </details>
+
+## 2026-11-17T03:44:43Z · ee6b1094fb7d
+
+实现038-PR2追加式发布资格证据、direct商业发布/回滚门禁、admin只读UI和provenance闭集检查；复核迁移、权限、数据关系、CI与验收链路，真实供应商和生产资格不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2529 个源文件；本次 40 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/research/dependency-provenance.md`
+- modified `docs/verification/phase0-upstream-provenance.md`
+- added `docs/verification/release-evidence-gate.md`
+- modified `internal/catalog/cost_policy.go`
+- added `internal/catalog/release_evidence.go`
+- added `internal/catalog/release_evidence_integration_test.go`
+- modified `internal/catalog/route_activate.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- modified `internal/server/catalog_handlers.go`
+- added `internal/server/release_evidence_handlers.go`
+- added `internal/server/release_evidence_integration_test.go`
+- modified `internal/server/server.go`
+- added `migrations/current_011_release_qualification.sql`
+- modified `scripts/check-architecture/main.go`
+- modified `scripts/check-architecture/main_test.go`
+- modified `scripts/check-upstream-provenance/main.go`
+- added `scripts/check-upstream-provenance/main_test.go`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_browser_qa.py`
+- modified `scripts/verify-current-mvp.sh`
+- modified `specs/038-new-api-capability-migration/capability-matrix.md`
+- added `specs/038-new-api-capability-migration/release-evidence-gate.md`
+- modified `specs/038-new-api-capability-migration/spec.md`
+- added `third_party/README.md`
+- added `third_party/new-api/LICENSE`
+- added `third_party/new-api/NOTICE`
+- added `third_party/new-api/SOURCE.md`
+- added `third_party/new-api/THIRD-PARTY-LICENSES.md`
+- added `third_party/provenance.json`
+- added `third_party/sub2api/LICENSE`
+- added `third_party/sub2api/SOURCE.md`
+- added `web/src/components/ReleaseQualification.vue`
+- added `web/src/release-qualification-state.ts`
+- added `web/src/release-qualification.ts`
+- modified `web/src/views/PlatformView.vue`
+- added `web/tests/release-qualification.test.mjs`
+
+</details>
+
+## 2026-11-17T04:54:13Z · f7fb82c43939
+
+修复PR-2浏览器证据 harness 的列表就绪竞争，并在截图前等待对话框overlay完成；仅验收工具时序，无运行结构或合同变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2529 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+
+</details>
+
+## 2026-11-17T06:37:38Z · 6f1e94edceae
+
+按用户确认的New API对照方案收口平台侧栏：四组导航、独立滚动、当前项定位和移动可访问性；仅前端/验收与文档变化，无业务路由、权限或商业链变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2532 个源文件；本次 10 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/release-evidence-gate.md`
+- modified `scripts/phase1_browser_qa.py`
+- added `specs/038-new-api-capability-migration/navigation-refinement.md`
+- modified `specs/038-new-api-capability-migration/spec.md`
+- modified `web/src/App.vue`
+- added `web/src/navigation.ts`
+- modified `web/src/style.css`
+- added `web/tests/navigation.test.mjs`
+
+</details>
+
+## 2026-11-17T06:54:14Z · b7a02c3b619d
+
+修复移动导航在桌面/移动会话切换时的测试状态依赖，并让Escape关闭后的焦点可靠回退顶栏触发器；补充断点和重开定位验收，无业务边界变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2532 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+- modified `web/src/App.vue`
+
+</details>
+
+## 2026-11-17T08:34:16Z · 3e9f23c28e98
+
+修复029发现的任务HTTP/worker同身份提交竞争并增加支付封闭启动错误分类；复核无重放、唯一事件/attempt、日志秘密和恢复边界，需整单复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/verification/release-evidence-gate.md`
+- added `internal/payments/safe_error_test.go`
+- modified `internal/payments/service_base.go`
+- added `internal/server/task_submit_race_integration_test.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+- modified `specs/038-new-api-capability-migration/release-evidence-gate.md`
+
+</details>
+
+## 2026-11-17T09:02:08Z · e13307b88db8
+
+记录029环境目录膨胀根因和支付/Compose独立通过；完善支付context/SQLSTATE/network固定诊断分类，无业务合同变化，准备最终整单复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/verification/release-evidence-gate.md`
+- modified `internal/payments/safe_error_test.go`
+- modified `internal/payments/service_base.go`
+- modified `specs/038-new-api-capability-migration/release-evidence-gate.md`
+
+</details>
+
+## 2026-11-17T09:28:19Z · bbd16a4884df
+
+收口CI发现的unknown-submit旧断言：同身份返回原任务且唯一unknown事件/结算，不恢复竞争503、不删测试；需最终整单复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/release-evidence-gate.md`
+- modified `internal/server/task_media_billing_integration_test.go`
+
+</details>
+
+## 2026-11-17T09:39:52Z · df9788cf2674
+
+修复移动抽屉200ms打开动画与当前项滚动的间歇竞争；动画完成后二次定位且关闭回调不生效，无业务或权限变化，需同提交复验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2534 个源文件；本次 3 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/release-evidence-gate.md`
+- modified `specs/038-new-api-capability-migration/navigation-refinement.md`
+- modified `web/src/App.vue`
+
+</details>

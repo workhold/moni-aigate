@@ -10,9 +10,10 @@ import (
 )
 
 type RoutePublishInput struct {
-	Expected   int64               `json:"expected_revision"`
-	Bindings   []BindingInput      `json:"bindings"`
-	CostPolicy *routing.CostPolicy `json:"cost_policy"`
+	Expected      int64               `json:"expected_revision"`
+	Bindings      []BindingInput      `json:"bindings"`
+	CostPolicy    *routing.CostPolicy `json:"cost_policy"`
+	ReleaseIntent string              `json:"release_intent,omitempty"`
 }
 
 func (in *RoutePublishInput) UnmarshalJSON(data []byte) error {
@@ -31,6 +32,12 @@ func (in *RoutePublishInput) UnmarshalJSON(data []byte) error {
 		return ErrInvalid
 	}
 	if value.CostPolicy != nil && routing.ValidateCostPolicy(*value.CostPolicy) != nil {
+		return ErrInvalid
+	}
+	if value.ReleaseIntent == "" {
+		value.ReleaseIntent = ReleaseTestOnly
+	}
+	if value.ReleaseIntent != ReleaseTestOnly && value.ReleaseIntent != ReleaseCommercial {
 		return ErrInvalid
 	}
 	*in = RoutePublishInput(value)

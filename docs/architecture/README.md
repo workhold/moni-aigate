@@ -97,7 +97,13 @@ New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration
 
 0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)，七项本地验收已逐项勾选并附证据路径。当前 New API/Sub2API 仍以外部 relay 运行，未 vendor 修改版源码；`third_party/` 保存固定提交的 LICENSE/NOTICE 与 SOURCE 记录，`upstream-provenance-check` 在 `make check` 和 `make verify-mvp` 中校验来源、许可证、修改记录和固定镜像，详见[来源验收](../verification/phase0-upstream-provenance.md)。真实生产部署、供应商认证和完整发布 SBOM 仍需独立验收。
 
-2026-11-17 新增[038 能力内收总合同与能力台账](../../specs/038-new-api-capability-migration/spec.md)作为后续迁移的规划与证据索引：实现位置、mock/外部流程验证、真实供应商资格和生产资格分别记录；切换与回退继续使用不可变 channel/version 和 route revision，完整动态决策仍归 033。本次只增加设计和台账，没有新增运行模块、API、数据表、迁移、依赖、部署拓扑或供应商资格，也没有改变现有五图、权限边界和商业链。
+2026-11-17 新增[038 能力内收总合同与能力台账](../../specs/038-new-api-capability-migration/spec.md)作为后续迁移的规划与证据索引：实现位置、mock/外部流程验证、真实供应商资格和生产资格分别记录；切换与回退继续使用不可变 channel/version 和 route revision，完整动态决策仍归 033。PR-1 只增加设计和台账，没有新增运行模块、API、数据表、迁移、依赖、部署拓扑或供应商资格，也没有改变现有五图、权限边界和商业链。
+
+038-PR2 的[发布资格与证据门禁](../../specs/038-new-api-capability-migration/release-evidence-gate.md)随后落地 `current_011_release_qualification.sql`：insert-only evidence/credential coverage/withdrawal 表绑定精确 channel/version/model/profile/upstream/variant；route policy 缺省 `test_only`，commercial binding 冻结证据 ID。现有 Publish 与 HTTP 缺省路径不变，显式 direct commercial 发布和历史重激活共用资格、撤回、成本、open issue 与全 live credential 覆盖校验，deferred INSERT/UPDATE guard 防止直接 SQL 绕过。admin API 提供严格登记/撤回和分页读取，channels/catalog 的 `ReleaseQualification` 对话框只读展示安全元数据；外部 channel 保持 test-only，证据登记不授予真实供应商或生产资格。`third_party/provenance.json` 与可测试 checker 校验固定组件、SOURCE/许可证一致性、组件目录及 vendored 文件闭集；third_party 和依赖来源记录进入架构清单，CI/current-MVP/029 静态门实际执行 checker。
+
+PR-2 侧栏收口按[导航子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)只重组现有管理入口：`web/src/navigation.ts` 固定四组路径闭集，App.vue 继续使用原角色过滤和路由守卫，空组消失，当前组展开并定位当前项。品牌/底部状态固定，导航区独立滚动；移动抽屉有焦点圈定/返回、Escape、关闭按钮、inert 和背景滚动恢复，并在 200ms 打开动画完成后再次定位当前项。会话偏好不是权限事实，周期预算仅获得现有页面的真实导航入口。该变化不新增业务路由、API、迁移或供应商能力。
+
+029 运行时还修正了任务 HTTP/worker 同身份提交竞争：`tasks.Service.Submit` 对已非 prepared 的任务使用原持久化幂等身份返回同一任务，不新增 adapter 调用、attempt 或生成请求；真实 PostgreSQL 竞争测试验证唯一 submission_accepted/attempt。支付主进程的初始化失败仅附加 `payments.SafeErrorCode` 封闭分类，原始错误、DSN、凭据和供应商正文不进入日志；context、SQLSTATE 与网络错误也只映射为固定诊断类别。详细合同见[038 运行时修正](../../specs/038-new-api-capability-migration/release-evidence-gate.md#10-029-发现的运行时修正)。
 
 ```mermaid
 flowchart LR
@@ -1121,6 +1127,11 @@ erDiagram
     channel_credentials ||--o{ channel_version_credentials : participates
     channel_versions ||--o{ model_bindings : binds
     route_policy_versions ||--o{ model_bindings : groups
+    model_capability_versions ||--o{ channel_profile_release_evidence : scopes
+    channel_versions ||--o{ channel_profile_release_evidence : qualifies
+    channel_profile_release_evidence ||--o{ channel_profile_release_evidence_credentials : covers
+    channel_profile_release_evidence ||--o| channel_profile_release_withdrawals : withdraws
+    channel_profile_release_evidence |o--o{ model_bindings : authorizes_commercial
     channels ||--o{ cost_versions : costs
     api_keys ||--o{ request_records : authorizes
     request_records ||--|| reservations : reserves
@@ -1174,6 +1185,7 @@ erDiagram
 | --- | --- |
 | 身份 | users/password_revision、session_families/sessions、memberships、tenant/member grants、api_keys；初始化标志不可变；mail_subjects/challenges/outbox用途绑定、单次消费与受控秘密清理 |
 | 目录 | models.public_visible/public_revision为独立公开线，默认私有；model_capability_versions、channel_versions、route_policy_versions、model_bindings、price_versions、cost_versions 为已发布历史事实；018 冻结成本模式/未知处理/两维上限，逐 attempt 固化报价 |
+| 发布资格 | channel_profile_release_evidence/credentials/withdrawals 为 insert-only 证据与覆盖；route release_intent 缺省 test_only，commercial binding 冻结证据 ID，发布与重激活复核 direct 范围、撤回、成本、问题和 live 凭据覆盖；不新建客户或资金事实 |
 | 周期预算 | 六表保存稳定control/配置版本/原窗/allocation/不可变event/operation；source stamp和scope屏障保护首次导入，所有projection由精确源event派生；账务与HTTP/控制台已接，专项/多tab/隔离main通过，020最终相关回归/预览已通过，独立三态核验器专项通过，当前源码交叉回归继续 |
 | 分组售价 | price_groups状态/配置revision、tenant独立pricing_revision、不可变pricing_operations/safe_input/result与归属事件；request固定域/revision/观察时刻，旧三列全NULL是legacy |
 | 凭据池与运营 | channel_version_credentials 固化成员与 revision；撤销永久生效；channel_batch_operations 保存整批 applied/rejected 回执和同事务审计 |

@@ -159,6 +159,9 @@ run_group 'static current architecture checks' \
 run_group 'static current procurement layout check' \
   go run ./scripts/check-procurement-layout
 
+run_group 'static upstream provenance and reference integrity' \
+  go run ./scripts/check-upstream-provenance
+
 run_group 'current-only migration VerifyCurrent and append path' \
   checked_go_race_test 300s \
     '^(TestCurrentInstallerRequiresEmptyDatabaseAndVerifiesCompleteBaseline|TestEmbeddedPrefixIsExactClosedSet)$' \
