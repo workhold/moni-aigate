@@ -337,10 +337,11 @@ func validatePlan(plan Plan) error {
 					return fmt.Errorf("invalid test filter for %s", part.Name)
 				}
 				for _, test := range part.Tests {
-					if previous, exists := seenTests[test]; exists {
+					key := shard.Class + "\x00" + test
+					if previous, exists := seenTests[key]; exists {
 						return fmt.Errorf("duplicate top-level test %s in %s and %s", test, previous, part.Name)
 					}
-					seenTests[test] = part.Name
+					seenTests[key] = part.Name
 				}
 			}
 			if !reflect.DeepEqual(part.Args, testArgs(part)) {

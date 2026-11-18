@@ -178,8 +178,26 @@ func TestCurrentTreeMatchesLegacyPartitionArtifacts(t *testing.T) {
 	if len(decoded.Shards) != 14 || decoded.Commit != strings.TrimSpace(commit) || decoded.Tree != strings.TrimSpace(tree) || decoded.Digest != plan.Digest {
 		t.Fatalf("unexpected shard plan identity or count: %+v", decoded)
 	}
+	for _, index := range []int{0, 4} {
+		part := &plan.Shards[index].Parts[0]
+		part.Tests[0] = "TestSameNameAcrossPackages"
+		part.RunFilter = "^(" + strings.Join(part.Tests, "|") + ")$"
+		part.Args = testArgs(*part)
+	}
+	plan.Digest, err = planDigest(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := validatePlan(plan); err != nil {
+		t.Fatalf("the same test name in different packages must be allowed: %v", err)
+	}
 	plan.Shards[0].Parts[0].Tests[0] = "TestDuplicate"
 	plan.Shards[1].Parts[0].Tests[0] = "TestDuplicate"
+	for _, index := range []int{0, 1} {
+		part := &plan.Shards[index].Parts[0]
+		part.RunFilter = "^(" + strings.Join(part.Tests, "|") + ")$"
+		part.Args = testArgs(*part)
+	}
 	plan.Digest, err = planDigest(plan)
 	if err != nil {
 		t.Fatal(err)

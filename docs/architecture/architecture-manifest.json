@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-18T15:33:30Z",
-  "review_reason": "040 PR-A 共享分片器：CI/本地统一14逻辑分片、精确argv/digest、干净detached worktree和legacy artifact，保留原测试执行与超时；多库runner未实施，已复核模块、权限和源码链接",
-  "snapshot_sha256": "badb1f4cdefb10a6afb9c0d1077ca17e3c99f132c1383b47f7f771c0643bcd64",
+  "reviewed_at": "2026-11-18T15:36:54Z",
+  "review_reason": "PR-A 重复检测按class/package作用域，允许跨包同名测试并确保负例同步更新filter/argv；其余分片、证据和CI合同不变，已复核独立审查",
+  "snapshot_sha256": "c948bbc123133b2ade255548de2297e45601c2ef144ac17758c473415f3552bc",
   "architecture_sha256": "9f5e7fe375db99588e103eb99268b9ea3be99924e0ea6ea085e798d7f8639399",
-  "history_sha256": "81bc062ec2ab7f5bb65935a20aaafafda5e664d5de85f021bc1936ab42a7179d",
+  "history_sha256": "75b55f31c77eecde12eb415f7ba779bcc54368ffd490ebbd6a1bcd99f0a9d6bc",
   "files": [
     {
       "path": ".dockerignore",
@@ -7969,11 +7969,11 @@
     },
     {
       "path": "scripts/acceptance-shard-plan/main.go",
-      "sha256": "5d2f76802961090792a3904bbaf169e472966eceff3943b9ed4f676b205048d6"
+      "sha256": "fbbd428c725fd342e2079d14a15b24c7e3a451dd4479401610add511ad69f91b"
     },
     {
       "path": "scripts/acceptance-shard-plan/main_test.go",
-      "sha256": "e1835579fc1f884d31edafaea5efe70d5c3e8dc15a2dd7b8d1e1ae5dff4257f6"
+      "sha256": "211dc2c70747a1a8cbda67c74f06b6dbd3deecb23520d79adac42917840ae7f8"
     },
     {
       "path": "scripts/backup-restore-drill.go",

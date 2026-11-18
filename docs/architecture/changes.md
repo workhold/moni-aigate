@@ -8183,3 +8183,16 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `specs/040-acceptance-parallelism/plan.md`
 
 </details>
+
+## 2026-11-18T15:36:54Z · c948bbc12313
+
+PR-A 重复检测按class/package作用域，允许跨包同名测试并确保负例同步更新filter/argv；其余分片、证据和CI合同不变，已复核独立审查
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2560 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/acceptance-shard-plan/main.go`
+- modified `scripts/acceptance-shard-plan/main_test.go`
+
+</details>
