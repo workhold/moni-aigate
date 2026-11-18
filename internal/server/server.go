@@ -219,6 +219,7 @@ func (s *Server) Engine() *gin.Engine {
 	p.GET("/models/:id/publication", s.modelPublication)
 	p.PUT("/models/:id/publication", s.setModelPublication)
 	p.PUT("/models/:id/bindings", s.publishBindings)
+	p.GET("/models/:id/route-revisions", s.routeRevisions)
 	p.POST("/models/:id/route-revisions/:revision/activate", s.activateRouteRevision)
 	p.POST("/price-versions", s.publishDefaultPrice)
 	p.GET("/credits", s.credits)

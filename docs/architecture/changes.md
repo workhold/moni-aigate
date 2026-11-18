@@ -8048,3 +8048,45 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `web/src/App.vue`
 
 </details>
+
+## 2026-11-17T15:16:09Z · 7437ffe3c293
+
+038 PR-3：复用统一Chat商业链，新增工具fixture与终态展示、admin只读路由历史及CAS回退；回退后发布从历史MAX+1分配不可变新号；无迁移、依赖、部署或真实供应商资格变化，已复核模块图、请求链、权限与源码链接
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2544 个源文件；本次 31 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/openai-chat-profile.md`
+- added `internal/catalog/route_revisions.go`
+- modified `internal/catalog/store.go`
+- modified `internal/server/catalog_handlers.go`
+- modified `internal/server/external_relay_integration_test.go`
+- added `internal/server/openai_chat_profile_integration_test.go`
+- added `internal/server/route_revisions_integration_test.go`
+- modified `internal/server/server.go`
+- modified `internal/testsupport/mockupstream/config_test.go`
+- modified `internal/testsupport/mockupstream/server.go`
+- modified `internal/testsupport/mockupstream/server_test.go`
+- modified `scripts/phase1-mock-acceptance.py`
+- modified `scripts/phase1_browser_qa.py`
+- modified `specs/038-new-api-capability-migration/capability-matrix.md`
+- added `specs/038-new-api-capability-migration/openai-chat-profile.md`
+- modified `specs/038-new-api-capability-migration/spec.md`
+- added `web/src/chat-tools.ts`
+- added `web/src/components/RouteRevisions.vue`
+- modified `web/src/cost-aware-routing.ts`
+- modified `web/src/inference.ts`
+- modified `web/src/playground-state.ts`
+- added `web/src/route-revisions.ts`
+- modified `web/src/views/PlatformView.vue`
+- modified `web/src/views/PlaygroundView.vue`
+- added `web/tests/chat-tools.test.mjs`
+- modified `web/tests/cost-aware-routing.test.mjs`
+- modified `web/tests/inference.test.mjs`
+- modified `web/tests/protocol-switching.test.mjs`
+- added `web/tests/route-revisions.test.mjs`
+
+</details>

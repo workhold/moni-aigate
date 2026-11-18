@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -36,11 +37,17 @@ type relayUpstream struct {
 	kind   string
 	secret string
 
-	mu        sync.Mutex
-	behavior  string
-	requests  int
-	lastModel string
-	lastAuth  string
+	mu          sync.Mutex
+	behavior    string
+	requests    int
+	lastModel   string
+	lastAuth    string
+	lastRequest relayRequestObservation
+}
+
+type relayRequestObservation struct {
+	stream, parallel, includeUsage bool
+	tools                          int
 }
 
 func (u *relayUpstream) setBehavior(behavior string) {
@@ -61,6 +68,12 @@ func (u *relayUpstream) observed() (string, string) {
 	return u.lastModel, u.lastAuth
 }
 
+func (u *relayUpstream) observedRequest() relayRequestObservation {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	return u.lastRequest
+}
+
 // newRelayUpstream stands in for a downstream New API or Sub2API gateway (or
 // a direct supplier). It speaks the same OpenAI-compatible chat shape all
 // three topologies share.
@@ -75,13 +88,20 @@ func newRelayUpstream(t *testing.T, kind, secret string) *relayUpstream {
 		}
 		raw, _ := io.ReadAll(io.LimitReader(r.Body, 1<<20))
 		var head struct {
-			Model string `json:"model"`
+			Model    string `json:"model"`
+			Stream   bool   `json:"stream"`
+			Tools    []any  `json:"tools"`
+			Parallel bool   `json:"parallel_tool_calls"`
+			Options  struct {
+				IncludeUsage bool `json:"include_usage"`
+			} `json:"stream_options"`
 		}
 		_ = json.Unmarshal(raw, &head)
 		u.mu.Lock()
 		u.requests++
 		u.lastModel = head.Model
 		u.lastAuth = r.Header.Get("Authorization")
+		u.lastRequest = relayRequestObservation{stream: head.Stream, parallel: head.Parallel, includeUsage: head.Options.IncludeUsage, tools: len(head.Tools)}
 		behavior := u.behavior
 		u.mu.Unlock()
 		switch behavior {
@@ -100,6 +120,30 @@ func newRelayUpstream(t *testing.T, kind, secret string) *relayUpstream {
 				return
 			}
 			w.WriteHeader(http.StatusBadGateway)
+		case "chat_tool_calls":
+			if head.Stream {
+				w.Header().Set("Content-Type", "text/event-stream")
+				for _, chunk := range openAIChatToolChunks {
+					_, _ = fmt.Fprintf(w, "data: %s\n\n", chunk)
+				}
+				_, _ = io.WriteString(w, "data: [DONE]\n\n")
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = io.WriteString(w, openAIChatToolJSON)
+			}
+		case "finish_length", "finish_content_filter":
+			reason := strings.TrimPrefix(behavior, "finish_")
+			if head.Stream {
+				w.Header().Set("Content-Type", "text/event-stream")
+				finish := fmt.Sprintf(`{"id":"local-result","choices":[{"index":0,"delta":{},"finish_reason":%q}]}`, reason)
+				for _, chunk := range []string{gatewayContent, finish, gatewayUsage} {
+					_, _ = fmt.Fprintf(w, "data: %s\n\n", chunk)
+				}
+				_, _ = io.WriteString(w, "data: [DONE]\n\n")
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = io.WriteString(w, strings.Replace(gatewayJSON, `"finish_reason":"stop"`, `"finish_reason":"`+reason+`"`, 1))
+			}
 		default:
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = io.WriteString(w, gatewayJSON)
@@ -172,7 +216,7 @@ func newRelayFixture(t *testing.T) *relayFixture {
 		exec("INSERT INTO users(id,email,password_hash,platform_role) VALUES($1,$2,'fixture',$3)", u.id, u.id+"@relay.invalid", u.role)
 	}
 	exec("INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)", f.tenant, user)
-	profile := &provider.Profile{Model: "retail-model", Protocol: provider.ProtocolChat, InputTokenUpperBound: 100, ContextLimit: 120, OutputLimit: 20, DefaultOutputLimit: 20, NoConsumptionStatuses: []int{429}, UsageSemantics: "final"}
+	profile := &provider.Profile{Model: "retail-model", Protocol: provider.ProtocolChat, InputTokenUpperBound: 100, ContextLimit: 120, OutputLimit: 20, DefaultOutputLimit: 20, SupportsTools: true, SupportsParallelToolCalls: true, NoConsumptionStatuses: []int{429}, UsageSemantics: "final"}
 	f.model, err = s.Catalog.CreateModel(ctx, f.operator, catalog.ModelInput{PublicName: "retail-model", Profile: profile})
 	if err != nil {
 		t.Fatal(err)
@@ -392,6 +436,20 @@ func TestExternalRelayEmbeddedAdapterSliceRollsBackByRouteRevision(t *testing.T)
 	// Revision 2 migrates the same capability to aigate's embedded direct
 	// adapter; this is the external_relay -> embedded_adapter slice.
 	embeddedRevision := f.publish(t, catalog.BindingInput{ChannelID: f.directChannel, UpstreamModel: "provider-model", Priority: 1, Weight: 1, MaxInflight: 4})
+	history, next, err := f.server.Catalog.ListRouteRevisions(context.Background(), f.model, nil)
+	if err != nil || next != nil || len(history) != 2 {
+		t.Fatalf("route history projection: rows=%d next=%v err=%v", len(history), next, err)
+	}
+	byRevision := map[int64]catalog.RouteRevision{}
+	for _, row := range history {
+		byRevision[row.Revision] = row
+	}
+	if row := byRevision[relayRevision]; row.Active || !row.CurrentProfile || row.ReleaseIntent != catalog.ReleaseTestOnly || len(row.Bindings) != 1 || row.Bindings[0].ChannelKind != "new_api" || row.Bindings[0].IntegrationMode != "external_relay" || row.Bindings[0].UpstreamModel != "relay-newapi-model" {
+		t.Fatalf("external history projection drifted: %+v", row)
+	}
+	if row := byRevision[embeddedRevision]; !row.Active || len(row.Bindings) != 1 || row.Bindings[0].ChannelKind != "direct" || row.Bindings[0].IntegrationMode != "embedded_adapter" || row.Bindings[0].UpstreamModel != "provider-model" {
+		t.Fatalf("embedded history projection drifted: %+v", row)
+	}
 	embeddedID, status, _ := f.request(t)
 	if status != http.StatusOK || f.direct.count() != 1 {
 		t.Fatalf("embedded revision did not serve: HTTP %d direct=%d", status, f.direct.count())

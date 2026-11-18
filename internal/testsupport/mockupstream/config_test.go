@@ -24,7 +24,7 @@ func TestFaultGrammarCoversContract(t *testing.T) {
 	for _, name := range []string{
 		"reject_429", "reject_429_unlisted", "http_500", "drop_after_headers",
 		"drop_after_events:2", "stall_first_event", "missing_usage", "conflicting_usage",
-		"error_after_usage", "reasoning_events", "invalid_json", "slow_ttfb:25",
+		"error_after_usage", "reasoning_events", "chat_tool_calls", "invalid_json", "slow_ttfb:25",
 	} {
 		if _, err := parseFault(name); err != nil {
 			t.Errorf("fault %q rejected: %v", name, err)

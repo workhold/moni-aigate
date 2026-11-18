@@ -9,6 +9,7 @@ import ChannelDiscovery from '../components/ChannelDiscovery.vue'
 import CredentialPool from '../components/CredentialPool.vue'
 import ChannelOperations from '../components/ChannelOperations.vue'
 import RouteEditor from '../components/RouteEditor.vue'
+import RouteRevisions from '../components/RouteRevisions.vue'
 import CostEditor from '../components/CostEditor.vue'
 import PricingWriter from '../components/PricingWriter.vue'
 import ModelPublicationEditor from '../components/ModelPublicationEditor.vue'
@@ -111,6 +112,7 @@ const detailFields = computed(() => {
 })
 const memberTenant = ref<Row | null>(null); const members = ref<Row[]>([]); const membersOpen = ref(false); const membersBusy = ref(false); const membersError = ref('')
 const routeModel = ref<Row | null>(null); const routeOpen = ref(false); const costOpen = ref(false); const priceOpen = ref(false)
+const historyModel = ref<Row | null>(null); const historyOpen = ref(false)
 const publicationModel = ref<{ id: string; public_name: string } | null>(null), publicationOpen = ref(false)
 const aliasModel = ref<{ id: string; public_name: string } | null>(null), aliasOpen = ref(false)
 const platformContext = computed(() => keyAccessContext(session.me?.user.id, session.me?.tenant?.id, session.me?.user.platform_role))
@@ -280,6 +282,7 @@ function editMember(row: Row) {
   openForm('修改成员权限', fs, `/platform/tenants/${encodeURIComponent(String(memberTenant.value.id))}/members/${encodeURIComponent(String(row.user_id || row.id))}`, 'PATCH', { role: String(row.role), status: String(row.status), allow_all_models: !!row.allow_all_models, model_ids: (row.model_ids || []) as string[] })
 }
 function editRoute(row: Row) { if (isAdmin.value) { routeModel.value = row; routeOpen.value = true } }
+function showRouteHistory(row: Row) { if (isAdmin.value) { historyModel.value = row; historyOpen.value = true } }
 function editPublication(row: Row) { if (isAdmin.value) { publicationModel.value = { id: String(row.id), public_name: String(row.public_name) }; publicationOpen.value = true } }
 function editAliases(row: Row) { if (isAdmin.value) { aliasModel.value = { id: String(row.id), public_name: String(row.public_name) }; aliasOpen.value = true } }
 function rowPublicationLabel(row: Row) { return typeof row.public_visible === 'boolean' ? publicationLabel({ enabled: row.enabled === true, public_visible: row.public_visible }) : '查看公开设置' }
@@ -299,7 +302,7 @@ function showDetail(row: Row) { detailRow.value = row; detailOpen.value = true }
 function formatDetail(value: unknown): string { return typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value ?? '—') }
 async function next() { const page = nextCursor.value; cursors.value.push(page); await load(page) }
 async function previous() { cursors.value.pop(); await load() }
-watch([resource, platformContext], () => { listScope.reset(); clearChannelSelection(); operationsOpen.value = false; discoveryOpen.value = false; discoveryChannel.value = null; releaseOpen.value = false; releaseChannel.value = null; releaseModel.value = null; credentialOpen.value = false; credentialChannel.value = null; routeOpen.value = false; routeModel.value = null; publicationOpen.value = false; publicationModel.value = null; aliasOpen.value = false; aliasModel.value = null; costOpen.value = false; dialog.value = false; values.value = {}; reconciliationSchemaID.value = ''; rows.value = []; search.value = ''; cursors.value = []; lookups.value = { tenants: [], models: [], channels: [] }; void load(); void lookup(); void loadWalletOperator() }, { flush: 'sync' })
+watch([resource, platformContext], () => { listScope.reset(); clearChannelSelection(); operationsOpen.value = false; discoveryOpen.value = false; discoveryChannel.value = null; releaseOpen.value = false; releaseChannel.value = null; releaseModel.value = null; credentialOpen.value = false; credentialChannel.value = null; routeOpen.value = false; routeModel.value = null; historyOpen.value = false; historyModel.value = null; publicationOpen.value = false; publicationModel.value = null; aliasOpen.value = false; aliasModel.value = null; costOpen.value = false; dialog.value = false; values.value = {}; reconciliationSchemaID.value = ''; rows.value = []; search.value = ''; cursors.value = []; lookups.value = { tenants: [], models: [], channels: [] }; void load(); void lookup(); void loadWalletOperator() }, { flush: 'sync' })
 onMounted(() => { void load(); void lookup(); void loadWalletOperator() })
 onBeforeUnmount(() => listScope.reset())
 </script>
@@ -313,10 +316,10 @@ onBeforeUnmount(() => listScope.reset())
         <el-table-column v-if="resource === 'channels' && isAdmin" type="selection" width="44" :reserve-selection="false" :selectable="() => !loading" />
         <el-table-column v-for="column in config.columns" :key="column.key" :label="column.title" :width="column.width" :min-width="column.minWidth || 120"><template #default="{ row }"><span v-if="column.type === 'coin'">{{ coin(cell(row, column.key)) }}</span><span v-else-if="column.type === 'money'">{{ money(cell(row, column.key)) }}</span><span v-else-if="column.type === 'date'">{{ time(cell(row, column.key)) }}</span><el-tag v-else-if="column.type === 'status'" :type="tagType(cell(row, column.key))">{{ label(cell(row, column.key)) }}</el-tag><el-tag v-else-if="column.type === 'bool'" :type="cell(row, column.key) ? (column.key === 'quarantined' ? 'danger' : 'success') : 'info'">{{ cell(row, column.key) ? '是' : '否' }}</el-tag><span v-else-if="column.type === 'id'" class="mono" :title="String(cell(row, column.key) || '')">{{ shortId(cell(row, column.key)) }}</span><span v-else-if="column.type === 'integer'">{{ integer(cell(row, column.key)) }}</span><span v-else>{{ cell(row, column.key) ?? '—' }}</span></template></el-table-column>
         <el-table-column v-if="resource === 'catalog'" label="公开目录" min-width="180"><template #default="{ row }"><el-tag :type="row.public_visible === true && row.enabled === true ? 'success' : 'info'">{{ rowPublicationLabel(row) }}</el-tag></template></el-table-column>
-        <el-table-column label="操作" :width="resource === 'channels' ? 440 : resource === 'tenants' ? 350 : resource === 'catalog' ? 340 : resource === 'reconciliations' ? 225 : 100" fixed="right"><template #default="{ row }"><div class="list-action">
+        <el-table-column label="操作" :width="resource === 'channels' ? 440 : resource === 'tenants' ? 350 : resource === 'catalog' ? 400 : resource === 'reconciliations' ? 225 : 100" fixed="right"><template #default="{ row }"><div class="list-action">
           <template v-if="resource === 'tenants'"><el-button link type="primary" @click="loadMembers(row)">成员</el-button><el-button link type="primary" @click="editGrant(row)">授权</el-button><router-link :to="{ path: '/platform/price-groups', query: { tenant: String(row.id) } }" class="tenant-pricing-link">定价</router-link><router-link :to="{ path: '/platform/periodic-budget', query: { tenant: String(row.id) } }" class="tenant-pricing-link">周期预算</router-link><el-button link :type="row.status === 'active' ? 'danger' : 'primary'" @click="toggle(row)">{{ row.status === 'active' ? '暂停' : '启用' }}</el-button></template>
           <template v-else-if="resource === 'channels'"><el-button link type="primary" @click="editChannel(row)">更新</el-button><el-button v-if="isAdmin" link type="primary" @click="showChannelRelease(row)">资格证据</el-button><el-button v-if="isAdmin" link type="primary" @click="manageCredentials(row)">凭据池</el-button><el-button link type="primary" @click="probe(row)">探测</el-button><el-button v-if="isAdmin" link type="primary" @click="discoverModels(row)">发现模型</el-button><el-button link :type="row.enabled ? 'danger' : 'primary'" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template>
-          <template v-else-if="resource === 'catalog'"><el-button link type="primary" @click="editRoute(row)">路由</el-button><el-button v-if="isAdmin" link type="primary" @click="showModelRelease(row)">资格证据</el-button><el-button v-if="isAdmin" link type="primary" @click="editAliases(row)">别名</el-button><el-button v-if="isAdmin" link type="primary" @click="editPublication(row)">公开设置</el-button><el-button link :type="row.enabled ? 'danger' : 'primary'" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template>
+          <template v-else-if="resource === 'catalog'"><el-button link type="primary" @click="editRoute(row)">路由</el-button><el-button v-if="isAdmin" link type="primary" @click="showRouteHistory(row)">历史</el-button><el-button v-if="isAdmin" link type="primary" @click="showModelRelease(row)">资格证据</el-button><el-button v-if="isAdmin" link type="primary" @click="editAliases(row)">别名</el-button><el-button v-if="isAdmin" link type="primary" @click="editPublication(row)">公开设置</el-button><el-button link :type="row.enabled ? 'danger' : 'primary'" @click="toggle(row)">{{ row.enabled ? '停用' : '启用' }}</el-button></template>
           <template v-else-if="resource === 'wallet-requests'"><el-button v-if="row.state === 'open' && canCreateWalletFinance" link type="warning" @click="rejectWalletRequest(row)">拒绝并关闭</el-button><el-button link type="primary" @click="showDetail(row)">明细</el-button></template>
           <template v-else-if="['credits','refunds'].includes(resource)"><el-button v-if="canApprove(row)" link type="primary" @click="approve(row)">{{ resource === 'refunds' ? '批准退款' : '审批入账' }}</el-button><span v-else-if="['pending','pending_approval'].includes(String(row.state || row.status))" class="muted small-text">待其他账号审批</span><el-button v-else link type="primary" @click="showDetail(row)">明细</el-button></template>
           <template v-else-if="resource === 'reconciliations'"><el-button v-if="canCreateFinance" link type="primary" @click="resolve(row, 'settle')">提交证据</el-button><el-button v-if="isApprover" link type="warning" @click="resolve(row, 'release')">释放</el-button><el-button v-if="canApprove(row)" link type="primary" @click="approve(row)">批准</el-button></template>
@@ -327,6 +330,7 @@ onBeforeUnmount(() => listScope.reset())
   </template>
   <el-empty v-else description="没有这个管理页面" />
   <RouteEditor v-model="routeOpen" :model="routeModel" @saved="load()" />
+  <RouteRevisions v-model="historyOpen" :model="historyModel" @saved="load()" />
   <ModelAliases v-model="aliasOpen" :model="aliasModel" />
   <ModelPublicationEditor v-model="publicationOpen" :model="publicationModel" @saved="load()" />
   <CostEditor v-model="costOpen" @saved="load()" />

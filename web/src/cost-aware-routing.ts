@@ -70,7 +70,9 @@ export function routeWrite(view: RouteView, policy: CostPolicy, drafts: BindingD
 }
 export function acceptRouteWrite(operation: RouteWrite, value: unknown): void {
   const raw = record(value)
-  if (integer(raw.revision, 1, Number.MAX_SAFE_INTEGER) !== operation.body.expected_revision + 1) throw new Error('发布结果不能证明预期路由版本，请只读核查。')
+  // Rollback may make the active revision lower than immutable history. A fresh
+  // publication must advance beyond the submitted active pointer, not reuse expected+1.
+  if (integer(raw.revision, 1, Number.MAX_SAFE_INTEGER) <= operation.body.expected_revision) throw new Error('发布结果不能证明新的路由版本，请只读核查。')
 }
 export function parseCostChannel(value: unknown, expectedID?: string): CostChannel {
   const raw = record(value), id = identity(raw.id)

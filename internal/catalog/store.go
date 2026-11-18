@@ -362,8 +362,14 @@ func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, 
 	if expected != revision {
 		return 0, ErrConflict
 	}
+	// Activation may legitimately point at an older revision. Allocate from
+	// immutable history while holding the model lock, never from that pointer.
+	var nextRevision int64
+	if e = tx.QueryRow(ctx, "SELECT COALESCE(MAX(revision),0)+1 FROM route_policy_versions WHERE model_id=$1", model).Scan(&nextRevision); e != nil {
+		return 0, e
+	}
 	policy := uuid.NewString()
-	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy,release_intent) VALUES($1,$2,$3,$4,$5,$6)", policy, model, revision+1, costPolicy.Mode, costPolicy.UnknownCostPolicy, releaseIntent); e != nil {
+	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy,release_intent) VALUES($1,$2,$3,$4,$5,$6)", policy, model, nextRevision, costPolicy.Mode, costPolicy.UnknownCostPolicy, releaseIntent); e != nil {
 		return 0, e
 	}
 	for _, b := range bindings {
@@ -443,13 +449,13 @@ func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, 
 			}
 		}
 	}
-	if _, e = tx.Exec(ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", model, revision+1); e != nil {
+	if _, e = tx.Exec(ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", model, nextRevision); e != nil {
 		return 0, e
 	}
 	if e = audit(ctx, tx, actor, "route.publish", model); e != nil {
 		return 0, e
 	}
-	return revision + 1, tx.Commit(ctx)
+	return nextRevision, tx.Commit(ctx)
 }
 
 type Model struct {

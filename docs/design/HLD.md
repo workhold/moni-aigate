@@ -1,6 +1,6 @@
 # HLD：moni-aigate 商业 API 网关
 
-状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-17（新增 038 能力内收总合同与台账链接，不改变运行结构）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。逐项迁移状态、供应商资格和退役门禁见[038](../../specs/038-new-api-capability-migration/spec.md)。
+状态：r3 设计基线已获开发者同意，r5 实施对齐；目标版本：0.1.0-dev；基线日期：2026-10-30；最新修订：2026-11-17（新增 038 能力内收总合同、PR-2 门禁与 PR-3 deterministic Chat profile 切片）。实现与验收进度见[实施记录](../verification/implementation.md)，不代表生产发布验收通过。逐项迁移状态、供应商资格和退役门禁见[038](../../specs/038-new-api-capability-migration/spec.md)。
 
 ## 1. 目标、前提与边界
 
@@ -108,6 +108,10 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 ### 4.3 038-PR2 发布资格与证据门禁
 
 发布资格使用独立的追加式 channel/profile 证据，不原地改写 channel version。现有路由和 HTTP 缺省发布保持 `test_only`；commercial route revision 必须显式冻结每个 binding 采用的证据 ID，并在发布与历史重激活时复核相同作用域、direct 拓扑、未撤回状态、已知成本、无未关闭问题和全部 live credential 覆盖。外部 New API/Sub2API 在本片保持 test-only，不用一次 probe 或外部 HTTP 200 推导资格。该门禁只扩展目录发布准入，不新建路由、钱包或结算事实。物理合同见[发布资格与证据门禁](../../specs/038-new-api-capability-migration/release-evidence-gate.md)。平台导航分组与移动可访问性见[侧栏子规格](../../specs/038-new-api-capability-migration/navigation-refinement.md)。
+
+### 4.4 038-PR3 deterministic Chat profile 候选
+
+首个内收切片固定一个 test-only OpenAI-compatible Chat profile，在 external New API channel 与 embedded direct channel 上运行同一工具/usage fixture。继续复用现有 provider 与统一商业链，只补 deterministic 双工具分片、Playground 终态展示和 admin-only route history/明确回退，不新增执行核心或资金事实。历史 revision 允许数值下降；激活仍由现有 CAS、live credential 和发布资格门禁裁决，未知结果只读核查且不自动重发。回退后的再次发布在同一模型锁下从历史 MAX+1 分配新号，CAS 仍比较 active，不复用不可变 revision。接口、安全差异与验收矩阵见[PR-3 切片合同](../../specs/038-new-api-capability-migration/openai-chat-profile.md)；mock 证据不授予真实供应商或生产资格。
 
 ## 5. 技术选型与理由
 

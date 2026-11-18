@@ -19,7 +19,7 @@ test('switching retrieval pricing back to generation requires a deliberate outpu
 
 function completedPageState() {
   return {
-    output: 'previous generated answer', usage: { input_tokens: 10, output_tokens: 5 }, requestId: 'previous-request',
+    output: 'previous generated answer', toolCalls: [{ index: 0, id: 'old-call', type: 'function', name: 'old', arguments: '{}' }], finishReason: 'tool_calls', usage: { input_tokens: 10, output_tokens: 5 }, requestId: 'previous-request',
     metrics: { requestId: 'previous-request', durationMs: 10, bytes: 200 }, error: 'previous warning', status: '调用完成',
     key: 'page-only-key', prompt: 'input text', query: 'search query', documents: 'first\nsecond',
   }
@@ -29,7 +29,7 @@ test('selecting a different model clears all response facts while preserving key
   const state = completedPageState()
   resetResponseForModelChange(state, 'generated-model', 'embedding-model')
   assert.deepEqual(state, {
-    output: '', usage: {}, requestId: '', metrics: null, error: '', status: '',
+    output: '', toolCalls: [], finishReason: '', usage: {}, requestId: '', metrics: null, error: '', status: '',
     key: 'page-only-key', prompt: 'input text', query: 'search query', documents: 'first\nsecond',
   })
   // Losing authorization/selection also removes the previous model's result.

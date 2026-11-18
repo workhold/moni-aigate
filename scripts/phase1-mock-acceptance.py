@@ -564,7 +564,11 @@ class Harness:
                 profile.update({"output_limit": 0, "default_output_limit": 0, "output_limit_field": ""})
             else:
                 profile.update({"output_limit": 20, "default_output_limit": 8, "output_limit_field": "maxOutputTokens" if short == "gemini" else ("max_output_tokens" if short == "responses" else "max_tokens"), "usage_semantics": "cumulative" if short == "gemini" else "final"})
-            model_data = self.api.expect("POST", "/api/platform/models", {"public_name": model, "protocol": protocol, "context_limit": 120, "output_limit": profile["output_limit"], "default_output_limit": profile["default_output_limit"], "input_token_upper_bound": 100, "supports_tools": False, "profile": profile}, csrf=True)
+            if short == "chat":
+                # PR-3 browser evidence deliberately exercises two fragmented
+                # function calls through the same deterministic mock chain.
+                profile.update({"supports_tools": True, "supports_parallel_tool_calls": True})
+            model_data = self.api.expect("POST", "/api/platform/models", {"public_name": model, "protocol": protocol, "context_limit": 120, "output_limit": profile["output_limit"], "default_output_limit": profile["default_output_limit"], "input_token_upper_bound": 100, "supports_tools": short == "chat", "profile": profile}, csrf=True)
             model_ids[short] = str(model_data["id"])
         directory = self.api.expect("GET", "/api/platform/models")
         schemas = {str(row["id"]): (str(row["schema_id"]), str(row["schema_digest"])) for row in directory}

@@ -67,10 +67,12 @@ test('complete route writes freeze all bindings and policy under the existing nu
   for (const invalid of [{ priority: 1.5 }, { weight: 0 }, { weight: 1000001 }, { max_inflight: 1001 }, { upstream_model: 'bad\nmodel' }]) assert.throws(() => routeWrite(parseRouteView(model), model.cost_policy, [{ ...routeDrafts(parseRouteView(model))[0], ...invalid }]))
 })
 
-test('route success validates precisely the next revision and treats malformed success as unknown', () => {
+test('route success requires a fresh revision above active, including publish after rollback', () => {
   const operation = routeWrite(parseRouteView(model), model.cost_policy, routeDrafts(parseRouteView(model)))
   assert.doesNotThrow(() => acceptRouteWrite(operation, { revision: 4 }))
-  for (const value of [{}, { revision: 3 }, { revision: 5 }, { revision: '4' }]) assert.throws(() => acceptRouteWrite(operation, value))
+  const rolledBack = routeWrite(parseRouteView({ ...model, active_revision: 2 }), model.cost_policy, routeDrafts(parseRouteView(model)))
+  assert.doesNotThrow(() => acceptRouteWrite(rolledBack, { revision: 4 }), 'history may already contain revision 3 after rollback')
+  for (const value of [{}, { revision: 3 }, { revision: 2 }, { revision: '4' }]) assert.throws(() => acceptRouteWrite(operation, value))
   assert.equal(unknownCostWriteResult(new Error('malformed success')), true)
 })
 

@@ -323,6 +323,22 @@ class Browser:
         self.click_text("更改密码并重新登录")
         self.wait("location.pathname === '/login'")
 
+    def check_chat_tool_response(self, viewport: str) -> dict:
+        self.wait("document.body.innerText.includes('响应接收完成') && document.body.innerText.includes('tool_calls')", 45)
+        observation = self.evaluate("(()=>({text:document.body.innerText,calls:[...document.querySelectorAll('.playground-tool')].map(e=>({index:e.getAttribute('data-tool-index'),text:e.innerText})),requestId:document.querySelector('.playground-request code')?.textContent||'',scrollWidth:document.documentElement.scrollWidth,bodyScrollWidth:document.body.scrollWidth,viewport:innerWidth}))()")
+        required = ["模型终态：tool_calls", "仅展示 · 未执行", "浏览器只确认响应接收完成，不代表已结算", "call_weather", "call_time", '{"city":"Paris"}', '{"zone":"UTC"}']
+        if len(observation["calls"]) != 2 or [call["index"] for call in observation["calls"]] != ["0", "1"] or any(value not in observation["text"] for value in required):
+            raise RuntimeError(f"Chat tool terminal DOM is incomplete: {observation}")
+        if observation["scrollWidth"] > observation["viewport"] or observation["bodyScrollWidth"] > observation["viewport"]:
+            raise RuntimeError(f"Chat tool response has horizontal overflow: {observation}")
+        if not re.fullmatch(r"[0-9a-f-]{36}", observation["requestId"]):
+            raise RuntimeError("Chat tool request identity is missing")
+        folder = self.output / "P1-UI-01"
+        folder.mkdir(parents=True, exist_ok=True)
+        screenshot = folder / f"chat-tools-{viewport}.png"
+        self.screenshot(screenshot)
+        return {"name": f"Chat SSE 双工具按 index 重组、tool_calls 终态、未执行与结算边界（{viewport}）", "request_id": observation["requestId"], "settlement_id": settlement_for_request(observation["requestId"]), "calls": observation["calls"], "viewport": viewport, "screenshot": str(screenshot.relative_to(self.output))}
+
     def create_key_use_playground_and_revoke(self, name: str, model: str) -> dict:
         self.navigate("/keys", "API 密钥")
         self.click_text("创建密钥")
@@ -340,19 +356,78 @@ class Browser:
             self.select_form_item("模型", model)
         self.fill('input[placeholder="粘贴当前租户的 API 密钥"]', api_key)
         self.click_text("发送请求")
-        self.wait("document.body.innerText.includes('调用完成')", 45)
+        self.wait("document.body.innerText.includes('响应接收完成')", 45)
         request_id = self.text_value(".playground-request code").strip()
-        if not request_id or not self.text_value(".playground-response").strip():
-            raise RuntimeError("Playground did not produce a completed response")
+        if not request_id or not self.text_value(".playground-response").strip() or "模型终态：stop" not in self.evaluate("document.body.innerText"):
+            raise RuntimeError("Playground did not produce a completed text response with its actual finish reason")
         settlement_id = settlement_for_request(request_id)
+        self.fill_form_item("测试消息", "[[mock:fault=chat_tool_calls]] 查询巴黎天气与 UTC 时间")
+        self.click_text("发送请求")
+        tool_observations = {}
+        tool_request_id = ""
+        for viewport, width, height in VIEWPORTS:
+            self.viewport(width, height)
+            current = self.check_chat_tool_response(viewport)
+            if tool_request_id and current["request_id"] != tool_request_id:
+                raise RuntimeError("viewport checks accidentally replayed the tool request")
+            tool_request_id = current["request_id"]
+            tool_observations[viewport] = current
+        self.navigate("/requests?request_id=" + urllib.parse.quote(tool_request_id), "调用记录")
+        self.wait("document.body.innerText.includes('已结算')")
         self.navigate("/requests?request_id=" + urllib.parse.quote(request_id), "调用记录")
-        observation = {"name": "Key 一次性展示、Playground 实际完成调用、随后撤销", "request_id": request_id, "settlement_id": settlement_id, "path": "/requests", "title": self.evaluate("document.title")}
+        observation = {"name": "Key 一次性展示、Playground 文本与双工具实际完成并分别结算、随后撤销", "request_id": request_id, "settlement_id": settlement_id, "tool_request_id": tool_request_id, "path": "/requests", "title": self.evaluate("document.title")}
         self.navigate("/keys", "API 密钥")
         self.click_row_action(name, "撤销")
         self.click_text("确认撤销", ".el-message-box button")
         self.wait(f"[...document.querySelectorAll('.el-table__row')].some(x=>x.innerText.includes({json.dumps(name)})&&x.innerText.includes('已撤销'))")
         api_key = ""
-        return observation
+        return {**observation, "tool": tool_observations}
+
+    def check_route_history_rollback(self, model: str) -> dict:
+        rows = self.api("/api/platform/models")["data"]
+        selected = next((row for row in rows if row.get("public_name") == model), None)
+        if not selected:
+            raise RuntimeError("Chat model is missing before route history check")
+        model_id = selected["id"]
+        before = int(selected["active_revision"])
+        history_before = self.api(f"/api/platform/models/{model_id}/route-revisions")["data"]
+        fresh = max((int(row["revision"]) for row in history_before), default=0) + 1
+        self.navigate("/platform/catalog", "模型与路由")
+        self.click_row_action(model, "路由")
+        self.wait("document.body.innerText.includes('路由配置') && [...document.querySelectorAll('.el-dialog button')].some(x=>x.innerText.includes('校验并发布完整路由')&&!x.disabled)")
+        self.click_text("校验并发布完整路由", ".el-dialog button")
+        self.wait("!document.querySelector('.el-dialog')")
+        published = self.api("/api/platform/models")["data"]
+        current = next(row for row in published if row.get("id") == model_id)
+        if int(current["active_revision"]) != fresh:
+            raise RuntimeError("route editor reused immutable history instead of allocating MAX+1")
+        self.click_row_action(model, "历史")
+        self.wait("!!document.querySelector('[data-testid=route-history-dialog]')")
+        self.wait(f"!!document.querySelector('[data-route-revision=\"{fresh}\"].active') && !!document.querySelector('[data-route-revision=\"{before}\"]')")
+        history = self.api(f"/api/platform/models/{model_id}/route-revisions")["data"]
+        if not any(int(row["revision"]) == fresh and row["active"] for row in history) or not any(int(row["revision"]) == before for row in history):
+            raise RuntimeError("route history API omitted the published or rollback revision")
+        browser_text = self.evaluate("document.body.innerText")
+        if "test-only" not in browser_text or "embedded_adapter" not in browser_text or "版本号可以下降" not in browser_text:
+            raise RuntimeError("route history does not expose its immutable/test-only boundary")
+        self.click_text("回退到此版本", f"[data-route-revision=\"{before}\"] button")
+        self.click_text("确认激活此版本", ".el-message-box button")
+        self.wait(f"!!document.querySelector('[data-route-revision=\"{before}\"].active') && !document.querySelector('[data-route-revision=\"{fresh}\"].active')")
+        activated = self.api(f"/api/platform/models/{model_id}/route-revisions")["data"]
+        active = [int(row["revision"]) for row in activated if row["active"]]
+        if active != [before]:
+            raise RuntimeError(f"non-monotonic route rollback did not persist: {active}")
+        observation = self.evaluate("(()=>({scrollWidth:document.documentElement.scrollWidth,bodyScrollWidth:document.body.scrollWidth,viewport:innerWidth}))()")
+        if observation["scrollWidth"] > observation["viewport"] or observation["bodyScrollWidth"] > observation["viewport"]:
+            raise RuntimeError(f"route history has horizontal overflow: {observation}")
+        folder = self.output / "P1-UI-02"
+        folder.mkdir(parents=True, exist_ok=True)
+        viewport = "mobile390" if observation["viewport"] == 390 else "desktop"
+        screenshot = folder / f"route-history-{viewport}.png"
+        self.screenshot(screenshot)
+        self.click_text("关闭", "[data-testid=route-history-dialog] button")
+        self.wait("!document.querySelector('[data-testid=route-history-dialog]')")
+        return {"name": f"真实 UI 发布新版本 {fresh}、读取不可变历史并显式回退到较小 active 版本 {before}（{viewport}）", "model_id": model_id, "published_revision": fresh, "active_revision": before, "screenshot": str(screenshot.relative_to(self.output))}
 
     def create_credit(self, tenant: str, business_ref: str):
         self.navigate("/platform/credits", "人工核款")
@@ -843,6 +918,7 @@ def run(args: argparse.Namespace) -> int:
             evidence.record(browser, "P1-CAT-01", viewport, width, checks, args.final)
         browser.login("admin@example.com", admin_password)
         release_fixture = record_mock_release_evidence(browser, commit) if accounts else None
+        chat_model = next((row["public_name"] for row in account_payload.get("models", []) if row.get("protocol") == "openai_chat"), "")
         for viewport, width, height in VIEWPORTS:
             browser.viewport(width, height)
             admin_checks = [check_page(browser, path, expected) for path, expected in ADMIN_PAGES]
@@ -857,6 +933,8 @@ def run(args: argparse.Namespace) -> int:
             evidence.record(browser, "P1-UI-02", viewport, width, admin_checks, args.final)
             if release_fixture:
                 close_release_dialog(browser)
+            if accounts:
+                admin_checks.append(browser.check_route_history_rollback(chat_model))
             admin_checks.extend(check_platform_navigation(browser))
             if viewport == 'mobile390':
                 admin_checks.append(check_mobile_navigation(browser))
@@ -898,7 +976,7 @@ def run(args: argparse.Namespace) -> int:
             identity_actions = [{"name": "TOTP 已启用并用动态码重新登录；密码修改后再次通过 MFA；敏感操作再认证成功"}]
             for viewport, width, height in VIEWPORTS:
                 browser.viewport(width, height)
-                evidence.record(browser, "P1-UI-01", viewport, width, [*([playground] if viewport == "desktop" else []), *[check_page(browser, path, expected) for path, expected in CUSTOMER_PAGES]], args.final)
+                evidence.record(browser, "P1-UI-01", viewport, width, [*([playground] if viewport == "desktop" else []), playground["tool"][viewport], *[check_page(browser, path, expected) for path, expected in CUSTOMER_PAGES]], args.final)
                 evidence.record(browser, "P1-ID-02", viewport, width, [*identity_actions, check_page(browser, "/security", "已启用")], args.final)
                 alias_checks = [check_page(browser, "/models", "模型与价格")]
                 for row in model_rows:
