@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-18T12:24:15Z",
-  "review_reason": "040 仅新增多独立PostgreSQL验收并行化设计：CI 14逻辑分片、最多2 worker、独立cluster/netns与detached worktree、v2证据及整单重试边界；未实施运行变化，已复核模块、权限和源码链接",
-  "snapshot_sha256": "8251ce3b4efbd4a1c05352c897d15c16af6a5e20ed47e240e648877a12e0336b",
-  "architecture_sha256": "044b2ebe189e1b8230671121543a6b71debcd12f1409823cb3cc160aaaa4b67c",
-  "history_sha256": "cb87e4daa862776e67174f36f50a36d651716073bd388d89a956acac69a1886b",
+  "reviewed_at": "2026-11-18T15:33:30Z",
+  "review_reason": "040 PR-A 共享分片器：CI/本地统一14逻辑分片、精确argv/digest、干净detached worktree和legacy artifact，保留原测试执行与超时；多库runner未实施，已复核模块、权限和源码链接",
+  "snapshot_sha256": "badb1f4cdefb10a6afb9c0d1077ca17e3c99f132c1383b47f7f771c0643bcd64",
+  "architecture_sha256": "9f5e7fe375db99588e103eb99268b9ea3be99924e0ea6ea085e798d7f8639399",
+  "history_sha256": "81bc062ec2ab7f5bb65935a20aaafafda5e664d5de85f021bc1936ab42a7179d",
   "files": [
     {
       "path": ".dockerignore",
@@ -29,7 +29,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "19e36bfd21024e2e72aa8774fa8ee1cc7f3654c716170fc8f0537b043387fe5c"
+      "sha256": "8ea25db63c167252a5e1027e12e5d48eef10b970f768f81bda91c7b50a2f4d7b"
     },
     {
       "path": ".gitignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "eba99e8fabe34cea61ecbf3a34a0ccd1ee2f1fc256dc152eaf8deacc37cfd720"
+      "sha256": "ae39b47cf186bc34c185a15ce5cc63ae5593c4f6d1b71c31f04122845c295c92"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "87a85612fddc655cc8f31a3406ec8df7e947cccc4b60101688d9f18c76a7e5ff"
+      "sha256": "ba8e3ea92f7704ba7cc8fd38b0b1d69c32a7272d17cc8d3acb703b81c1ffa8da"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -7960,6 +7960,22 @@
       "sha256": "ab52b642f74491ad4f1ba4155ecaaf412488b651aa62d9a5e6ba793d7e51135d"
     },
     {
+      "path": "scripts/acceptance-shard-plan/README.md",
+      "sha256": "ca9526268379c2f4488d511ad6d3b794069312e22e77cec856c9cba854cf1872"
+    },
+    {
+      "path": "scripts/acceptance-shard-plan/ci_workflow_test.go",
+      "sha256": "a453da3b4e84e7e5a1192d421ea82ef463cedd570b9a245e4b97f1449fd7e4ff"
+    },
+    {
+      "path": "scripts/acceptance-shard-plan/main.go",
+      "sha256": "5d2f76802961090792a3904bbaf169e472966eceff3943b9ed4f676b205048d6"
+    },
+    {
+      "path": "scripts/acceptance-shard-plan/main_test.go",
+      "sha256": "e1835579fc1f884d31edafaea5efe70d5c3e8dc15a2dd7b8d1e1ae5dff4257f6"
+    },
+    {
       "path": "scripts/backup-restore-drill.go",
       "sha256": "891a25901d41acc74471c1b8c3eba007d36cfea50d10a5e6b640247c602025e8"
     },
@@ -9449,7 +9465,7 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "0d2b7ee76cdf2b533e3d865d23e91d32de32490f4a00df0ad192ccdbe756c75d"
+      "sha256": "8de101f43caf8e7c51f2969440809b1c61a91f56fd16c08e2c68ae31be6d2b7b"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",

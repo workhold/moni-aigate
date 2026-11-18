@@ -125,6 +125,10 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 [040 设计](../../specs/040-acceptance-parallelism/spec.md)只优化测试编排：复用 CI 的 14 个逻辑分片，每片使用独立 cluster/volume/network namespace，本机默认最多两个 worker。v2 证据索引保留原始 JSONL，合并后继续满足 41 项、82 个绑定和 current-MVP 100 项复用。独立 identity/mail real-main、Compose、支付、邮件自然 lease、备份恢复和浏览器仍串行；server 包内 actual-main 仅在分片自有数据库、netns 和子进程边界内并行。workers=1 canary、workers=2 连续两轮全绿和分片器 CI 等价是默认化前置条件，每轮使用独立 detached git worktree 和 artifact，并保留 HEAD/tree/status 校验。
 
+### 4.8 PR-A 共享分片器实现
+
+`scripts/acceptance-shard-plan` 已将 CI 的包/顶层测试发现提取为 CI/本地共用 CLI。它生成 14 个逻辑分片、原始 discovery、精确执行 argv 和 SHA-256 计划摘要，并继续输出 CI 使用的 legacy `ci-packages`/`ci-tests` artifact。大包仍按 C 序轮转，identity 保留同一逻辑片中的四个顺序进程，其他包自动进入 `other`。发现只读取 stdout，要求干净 detached worktree、完整包/测试覆盖、合法标识符和精确 part/package 一致性。CI 的真实执行环境、`-p 1`、`-count=1`、原超时和 artifact 名称不变；workers=2 及多库 runner 仍未实施。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |

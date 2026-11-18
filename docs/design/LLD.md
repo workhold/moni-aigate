@@ -164,6 +164,10 @@ deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分�
 
 [040](../../specs/040-acceptance-parallelism/spec.md)预期新增并行证据索引，而不是拼接单一 go-race.jsonl：每个逻辑分片拥有精确 argv、原始 JSONL 摘要、独立 pg_system_identifier 和清理证明。共享 CI 分片器负责包/顶层测试互斥穷尽，v2 合并器负责 77 个唯一测试到 82 个绑定的映射以及 current-MVP 100 个唯一测试的单次 PASS。server 包内 actual-main 及其恢复子进程必须留在本分片 netns/数据库边界；独立 identity/mail 套件仍串行。workers=1 只验证单分片工具链，workers=2 才验证双 cluster 的锁互不影响，每轮使用新的 detached git worktree、run_id 和 artifact，并保留 HEAD/tree/status 校验。任一 shard/merge/cleanup 失败都无可复用证据，操作者只能以新 run_id 完整重跑。具体字段、隔离拓扑和 rollout 以该规格为准。
 
+### 4.7 PR-A 分片计划接口
+
+`Plan{schema_version,commit,tree,module,shards,digest}` 中每个 shard 包含 class/packages/discovery/parts；part 包含 name/packages/tests/run_filter/args。`buildPlanAt` 在 detached worktree 中执行 `go list -m`、`go list ./...` 和 `go test -race -count=1 -list .`，只使用 stdout。`validatePlan` 检查 14 个矩阵项、part 名称与包一致性、测试唯一性、精确 `-run`、`-count=1`、`-timeout=10m` 和 digest；`emitLegacy` 保留原始 discovery 与排序后 all/actual 文件，避免重复包或重复 discovery。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水

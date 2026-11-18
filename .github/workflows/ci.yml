@@ -82,109 +82,16 @@ jobs:
             identity|other) package_class=$GO_TEST_SHARD ;;
             *) echo "Unknown Go test partition" >&2; exit 1 ;;
           esac
-          module=$(go list -m)
-          go list ./... > "$RUNNER_TEMP/ci-packages-all.txt"
-          for shard in billing identity server attempt other; do
-            : > "$RUNNER_TEMP/ci-packages-$shard.txt"
-          done
-          while IFS= read -r package; do
-            case "$package" in
-              "$module/internal/billing") shard=billing ;;
-              "$module/internal/identity") shard=identity ;;
-              "$module/internal/server") shard=server ;;
-              "$module/internal/procurementattemptbirth") shard=attempt ;;
-              *) shard=other ;;
-            esac
-            printf '%s\n' "$package" >> "$RUNNER_TEMP/ci-packages-$shard.txt"
-          done < "$RUNNER_TEMP/ci-packages-all.txt"
-          for shard in billing identity server attempt other; do
-            if [[ ! -s "$RUNNER_TEMP/ci-packages-$shard.txt" ]]; then
-              echo "Empty Go test partition: $shard" >&2
-              exit 1
-            fi
-          done
-          sort "$RUNNER_TEMP/ci-packages-all.txt" > "$RUNNER_TEMP/ci-packages-expected.txt"
-          cat "$RUNNER_TEMP/ci-packages-billing.txt" \
-            "$RUNNER_TEMP/ci-packages-identity.txt" \
-            "$RUNNER_TEMP/ci-packages-server.txt" \
-            "$RUNNER_TEMP/ci-packages-attempt.txt" \
-            "$RUNNER_TEMP/ci-packages-other.txt" \
-            | sort > "$RUNNER_TEMP/ci-packages-actual.txt"
-          cmp "$RUNNER_TEMP/ci-packages-expected.txt" "$RUNNER_TEMP/ci-packages-actual.txt"
-          if [[ $(uniq -d "$RUNNER_TEMP/ci-packages-actual.txt" | wc -l) -ne 0 ]]; then
-            echo "Duplicate package in Go test partitions" >&2
-            exit 1
-          fi
+          go run ./scripts/acceptance-shard-plan --emit-legacy "$RUNNER_TEMP"
+
+          # Legacy artifact names are emitted from the same complete plan.
+          # Package and test execution below intentionally keeps its original
+          # environment, race, -p 1, -count=1 and per-process timeout contract.
           mapfile -t packages < "$RUNNER_TEMP/ci-packages-$package_class.txt"
           run_filter=()
-          if [[ "$package_class" == billing || "$package_class" == server || "$package_class" == attempt || "$package_class" == identity ]]; then
-            if [[ ${#packages[@]} -ne 1 ]]; then
-              echo "Large-package partition must contain exactly one package" >&2
-              exit 1
-            fi
-            # Discover with the same race build configuration as execution.
-            # Listing does not run tests; ordinary go test does not run benchmarks.
-            go test -race -count=1 -list . "${packages[0]}" \
-              > "$RUNNER_TEMP/ci-tests-$package_class-discovery.txt"
-            : > "$RUNNER_TEMP/ci-tests-$package_class-unsorted.txt"
-            while IFS= read -r name; do
-              case "$name" in
-                Test*|Fuzz*|Example*)
-                  if [[ ! "$name" =~ ^(Test|Fuzz|Example)[A-Za-z0-9_]*$ ]]; then
-                    echo "Invalid top-level Go test identifier" >&2
-                    exit 1
-                  fi
-                  printf '%s\n' "$name" >> "$RUNNER_TEMP/ci-tests-$package_class-unsorted.txt"
-                  ;;
-                Benchmark*)
-                  if [[ ! "$name" =~ ^Benchmark[A-Za-z0-9_]*$ ]]; then
-                    echo "Invalid Go benchmark identifier in discovery" >&2
-                    exit 1
-                  fi
-                  ;;
-                *)
-                  if [[ -n "$name" && ! "$name" =~ ^ok[[:space:]] ]]; then
-                    echo "Unexpected go test discovery output" >&2
-                    exit 1
-                  fi
-                  ;;
-              esac
-            done < "$RUNNER_TEMP/ci-tests-$package_class-discovery.txt"
-            sort "$RUNNER_TEMP/ci-tests-$package_class-unsorted.txt" \
-              > "$RUNNER_TEMP/ci-tests-$package_class-all.txt"
-            for part in 0 1 2 3; do
-              : > "$RUNNER_TEMP/ci-tests-$package_class-$part.txt"
-            done
-            index=0
-            while IFS= read -r name; do
-              printf '%s\n' "$name" >> "$RUNNER_TEMP/ci-tests-$package_class-$index.txt"
-              index=$(((index + 1) % 4))
-            done < "$RUNNER_TEMP/ci-tests-$package_class-all.txt"
-            for part in 0 1 2 3; do
-              if [[ ! -s "$RUNNER_TEMP/ci-tests-$package_class-$part.txt" ]]; then
-                echo "Empty top-level Go test partition: $package_class-$part" >&2
-                exit 1
-              fi
-            done
-            cat "$RUNNER_TEMP/ci-tests-$package_class-0.txt" \
-              "$RUNNER_TEMP/ci-tests-$package_class-1.txt" \
-              "$RUNNER_TEMP/ci-tests-$package_class-2.txt" \
-              "$RUNNER_TEMP/ci-tests-$package_class-3.txt" \
-              | sort > "$RUNNER_TEMP/ci-tests-$package_class-actual.txt"
-            cmp "$RUNNER_TEMP/ci-tests-$package_class-all.txt" \
-              "$RUNNER_TEMP/ci-tests-$package_class-actual.txt"
-            if [[ $(uniq -d "$RUNNER_TEMP/ci-tests-$package_class-actual.txt" | wc -l) -ne 0 ]]; then
-              echo "Duplicate top-level Go test in partitions" >&2
-              exit 1
-            fi
-            # Legal identifiers contain no regex metacharacters. Anchoring the
-            # whole parent name retains all of that parent's subtests together.
-            # Identity executes each part in its own process below, rather than
-            # reading the nonexistent aggregate ci-tests-identity.txt file.
-            if [[ "$package_class" != identity ]]; then
-              expression="^($(paste -sd '|' "$RUNNER_TEMP/ci-tests-$GO_TEST_SHARD.txt"))$"
-              run_filter=(-run "$expression")
-            fi
+          if [[ "$package_class" != identity && "$package_class" != other ]]; then
+            expression="^($(paste -sd '|' "$RUNNER_TEMP/ci-tests-$GO_TEST_SHARD.txt"))$"
+            run_filter=(-run "$expression")
           fi
           # Prefix and pure identity acceptance own random schemas in this
           # job's disposable database. Neither changes ordinary startup.
@@ -238,6 +145,7 @@ jobs:
         with:
           name: go-tests-${{ matrix.shard }}
           path: |
+            ${{ runner.temp }}/shard-plan.json
             ${{ runner.temp }}/go-tests-${{ matrix.shard }}.jsonl
             ${{ runner.temp }}/ci-packages-*.txt
             ${{ runner.temp }}/ci-tests-*.txt

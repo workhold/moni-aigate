@@ -8164,3 +8164,22 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - added `specs/040-acceptance-parallelism/spec.md`
 
 </details>
+
+## 2026-11-18T15:33:30Z · badb1f4cdefb
+
+040 PR-A 共享分片器：CI/本地统一14逻辑分片、精确argv/digest、干净detached worktree和legacy artifact，保留原测试执行与超时；多库runner未实施，已复核模块、权限和源码链接
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2560 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `scripts/acceptance-shard-plan/README.md`
+- added `scripts/acceptance-shard-plan/ci_workflow_test.go`
+- added `scripts/acceptance-shard-plan/main.go`
+- added `scripts/acceptance-shard-plan/main_test.go`
+- modified `specs/040-acceptance-parallelism/plan.md`
+
+</details>
