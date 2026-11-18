@@ -22,7 +22,7 @@ class GoTestEvidenceTest(unittest.TestCase):
         self.run_id = "a" * 32
         self.environment = mock.patch.dict(checker.os.environ, {checker.RUN_ID_ENV: self.run_id})
         self.environment.start()
-        self.clean = mock.patch.object(checker, "require_clean_source", lambda: None)
+        self.clean = mock.patch.object(checker, "source_status", return_value="")
         self.clean.start()
         self.specs = ["./internal/server:TestOne", "./migrations:TestTwo"]
 
@@ -83,6 +83,11 @@ class GoTestEvidenceTest(unittest.TestCase):
                     checker.verify(self.manifest, [spec])
     def test_dirty_source_and_duplicate_json_keys_are_rejected(self):
         self.write(self.passing())
+        with mock.patch.object(checker, "source_status", return_value=" M docs/verification/backup-restore-local.json\n"):
+            self.assertEqual(checker.verify(self.manifest, self.specs), 2)
+        with mock.patch.object(checker, "source_status", return_value=" M internal/server/gateway.go\n"):
+            with self.assertRaises(checker.EvidenceError):
+                checker.verify(self.manifest, self.specs)
         with mock.patch.object(checker, "require_clean_source", side_effect=checker.EvidenceError("dirty worktree")):
             with self.assertRaises(checker.EvidenceError):
                 checker.verify(self.manifest, self.specs)

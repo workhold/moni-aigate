@@ -158,7 +158,7 @@ deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分�
 
 ### 4.5 验收证据复用状态与接口
 
-[039](../../specs/039-acceptance-evidence-reuse/spec.md)在 `phase1-acceptance.execute` 的 go-race 完成后生成 `go-race-evidence.json`，并在调用 current-MVP 前设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE`。`checked_go_race_test` 仅在该变量存在时进入复用分支，否则保留原 inventory 和 `go test` 路径。`scripts/check-go-test-evidence.py` 校验 manifest schema/run_id/创建时效/commit/database/log digest，并要求干净工作树和匹配的 `PHASE1_ACCEPTANCE_RUN_ID`，随后以 `package:TestName` 检查精确顶层事件：每个必需测试一次 PASS、无重复、无缺失、无必需 SKIP，且日志中不允许任何 package/test FAIL。manifest 与日志必须在同一暂存目录，checker 每次重新计算摘要；只豁免 `run_logged` 的固定头尾，重复 JSON key 和其他非 JSON 内容失败。
+[039](../../specs/039-acceptance-evidence-reuse/spec.md)在 `phase1-acceptance.execute` 的 go-race 完成后生成 `go-race-evidence.json`，并在调用 current-MVP 前设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE`。`checked_go_race_test` 仅在该变量存在时进入复用分支，否则保留原 inventory 和 `go test` 路径。`scripts/check-go-test-evidence.py` 校验 manifest schema/run_id/创建时效/commit/database/log digest，要求匹配的 `PHASE1_ACCEPTANCE_RUN_ID`，并拒绝除备份恢复组生成证据 `docs/verification/backup-restore-local.json` 之外的工作树变更，随后以 `package:TestName` 检查精确顶层事件：每个必需测试一次 PASS、无重复、无缺失、无必需 SKIP，且日志中不允许任何 package/test FAIL。manifest 与日志必须在同一暂存目录，checker 每次重新计算摘要；只豁免 `run_logged` 的固定头尾，重复 JSON key 和其他非 JSON 内容失败。
 
 ## 5. 资金模型与计价
 

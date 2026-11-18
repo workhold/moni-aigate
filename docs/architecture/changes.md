@@ -8133,3 +8133,19 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - added `specs/039-acceptance-evidence-reuse/spec.md`
 
 </details>
+
+## 2026-11-18T08:46:37Z · a92af8fddbad
+
+039 修正验收输出误判：仅豁免备份恢复组生成的 backup-restore-local.json，其他工作树变更继续拒绝；复用覆盖与产品行为不变，已复核独立审查和源码链接
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2554 个源文件；本次 5 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-evidence-reuse.md`
+- modified `scripts/check-go-test-evidence.py`
+- modified `scripts/check_go_test_evidence_test.py`
+- modified `specs/039-acceptance-evidence-reuse/spec.md`
+
+</details>

@@ -18,7 +18,7 @@
 - 同一暂存 `go-race.jsonl` 的 SHA-256；
 - `-count=1` 所要求的单次运行事实。
 
-current-MVP 只接受该 manifest，不接受任意旧日志路径。每次复用都重新计算日志摘要，拒绝被替换或后续修改的文件。manifest commit 必须等于当前 HEAD，checker 还要求干净工作树和匹配的运行 ID；最终发布仍由外层同提交和镜像检查约束。数据库变更不能被 JSON 摘要证明，因此复用只允许在外层 runner 刚生成 manifest 的同一受控执行链中，不能把该文件当成跨时间通用凭证。
+current-MVP 只接受该 manifest，不接受任意旧日志路径。每次复用都重新计算日志摘要，拒绝被替换或后续修改的文件。manifest commit 必须等于当前 HEAD，checker 要求匹配的运行 ID，并拒绝除备份恢复组自身生成的 `docs/verification/backup-restore-local.json` 之外的工作树变更；该文件只是验收输出，不是测试源码。最终发布仍由外层同提交和镜像检查约束。数据库变更不能被 JSON 摘要证明，因此复用只允许在外层 runner 刚生成 manifest 的同一受控执行链中，不能把该文件当成跨时间通用凭证。
 
 ## 3. 逐项核验
 

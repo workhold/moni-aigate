@@ -56,8 +56,12 @@ def source_status() -> str:
 
 
 def require_clean_source() -> None:
-    if source_status():
-        raise EvidenceError("evidence reuse requires a clean worktree")
+    # The backup drill runs between reused Go groups and intentionally updates
+    # its own evidence artifact. No source/test change is allowed through.
+    allowed_generated = {"docs/verification/backup-restore-local.json"}
+    for line in source_status().splitlines():
+        if line.strip() and line[3:] not in allowed_generated:
+            raise EvidenceError("evidence reuse requires a clean worktree")
 
 
 def timestamp(value: str) -> dt.datetime:

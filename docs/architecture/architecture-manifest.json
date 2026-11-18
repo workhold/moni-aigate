@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-18T04:47:04Z",
-  "review_reason": "039 同次验收 Go 证据复用：current-MVP逐项复用外层race精确PASS，绑定运行ID、时效、干净HEAD、专库和日志摘要，standalone行为不变；无产品、资金、API或测试覆盖变化，已复核架构与源码链接",
-  "snapshot_sha256": "e7f972cb864aee5096602b9575db5f3140605159f0181052ef91621a4d5423e7",
+  "reviewed_at": "2026-11-18T08:46:37Z",
+  "review_reason": "039 修正验收输出误判：仅豁免备份恢复组生成的 backup-restore-local.json，其他工作树变更继续拒绝；复用覆盖与产品行为不变，已复核独立审查和源码链接",
+  "snapshot_sha256": "a92af8fddbad06d265273887e8c65e51ab34b4ca438f56bb1f2227300661577a",
   "architecture_sha256": "aca68a5ac1cb90207b0296ca7e0fc555befed0f42fa4b053f2c9509ea4dabda3",
-  "history_sha256": "273ed6d30400f984bd037149259122e6861d96dc1a21bb2eaaffac358fa989b5",
+  "history_sha256": "54a4163aa9ed45b8982f862dcdf0a2d6bc0560022f56832cac5b1a44495324b1",
   "files": [
     {
       "path": ".dockerignore",
@@ -189,7 +189,7 @@
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "a3e40f0f9653e03ca105928f13a0da00e2f0993940ff293ec573402f031f45fc"
+      "sha256": "4dfef5e5b341599706e574b81adb219fab4586fc5956e7c19cc7db940ad4e9df"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -321,7 +321,7 @@
     },
     {
       "path": "docs/verification/acceptance-evidence-reuse.md",
-      "sha256": "98d36341f30e4447930c058e1af8684805c362d6284b56402f466e877c66e4c0"
+      "sha256": "f55445793b3b739adeedd57723871c5633f4ba0a028c76f983f8f11ef9550ad1"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -8037,7 +8037,7 @@
     },
     {
       "path": "scripts/check-go-test-evidence.py",
-      "sha256": "4486099f34437d42b943a7acfcec6093dd47687def19533f4382c3fe6f84c13f"
+      "sha256": "f0c3760d87382596499d5b10ff4607691f5b5acf4d3d0aefa6b7cc4a4034761f"
     },
     {
       "path": "scripts/check-periodic-prefix-compatibility.py",
@@ -8077,7 +8077,7 @@
     },
     {
       "path": "scripts/check_go_test_evidence_test.py",
-      "sha256": "1ee0c4a18508d81cd696104e94a045ca028c1eceecedb5b8494655a7e3898cdb"
+      "sha256": "143ab0dd03824da6b56f08cc25b767884b431eda2a08dbafe44641a6df4a8975"
     },
     {
       "path": "scripts/current-runtime-path-audit.sh",
@@ -9445,7 +9445,7 @@
     },
     {
       "path": "specs/039-acceptance-evidence-reuse/spec.md",
-      "sha256": "9cec62413110ac3ddb9d47ef383fbad9968cfdc82f5e3070b22082d9da7fb74e"
+      "sha256": "f30f96d9211089abb07343fa2fd1f4bcb65f650cf0e3fc061e69cc5e7b4601c3"
     },
     {
       "path": "third_party/README.md",
