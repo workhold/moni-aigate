@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T15:16:09Z",
-  "review_reason": "038 PR-3：复用统一Chat商业链，新增工具fixture与终态展示、admin只读路由历史及CAS回退；回退后发布从历史MAX+1分配不可变新号；无迁移、依赖、部署或真实供应商资格变化，已复核模块图、请求链、权限与源码链接",
-  "snapshot_sha256": "7437ffe3c29380339561a5ad15e289410d5c68e174a2801bd7bb51c2bdc7c384",
-  "architecture_sha256": "d1e1b3f4ec9e4bd98eace262fccd5fd9efeb32908a648e97cbd74a2440a3678e",
-  "history_sha256": "b39b6653a57d57c028307b4e226cb07813762b81370a85af2e92a77e2be6163a",
+  "reviewed_at": "2026-11-18T03:40:49Z",
+  "review_reason": "周期预算裸入口改为明确目标选择：复用现有只读列表与权限，新增响应式卡片、状态代际和真实双视口验收；无预算、支付、后端API或资金事实变化，已复核模块图、权限与源码链接",
+  "snapshot_sha256": "5a0ae8949d20a53dac02fb4d7958e39521026696bfe7eb10248b78edc758cbf4",
+  "architecture_sha256": "ea2bb615183bdfffb97b24b4931294ce86f400ca35cce0e7830a0c5909a9a9a7",
+  "history_sha256": "32fe01a69a566766d801a40ab6dbe0c4781c99a329a9dd23b87002c8bbc11b82",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "b6f41a9f85fff0062c904fd89046478e029932e3c2e9360f5472a021713d1103"
+      "sha256": "04c8f7e07664cd31fdc15b9ebd25f308341071d8e3d6cd89567dc73525f9199d"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "acb9a729e6334af513745955f574649c44e363324b314aba8e65b8e122c8cb45"
+      "sha256": "34b83076529f9e22ce3becffb1fcde3da53a7c81318ba0e9a49a1c13b3f3a26a"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -8269,7 +8269,7 @@
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "1cb68d1b84dc2196e1bfd2477ffd66c08f80088f9330bab154b9f0d208755606"
+      "sha256": "625b1d18182b0bdcc7743eaf43830e925f7b9cde7522cd5f4ef63c94a908ef5d"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
@@ -9420,6 +9420,10 @@
       "sha256": "03691bfe294a7f96226ac91ca5052403b39412ba809b2a106560f18eb2f1d256"
     },
     {
+      "path": "specs/038-new-api-capability-migration/periodic-target-selection.md",
+      "sha256": "df98ee8dfe5a836ffdc883fea2556bedc84e327621671f16014f07f4680a40a3"
+    },
+    {
       "path": "specs/038-new-api-capability-migration/release-evidence-gate.md",
       "sha256": "d1f808220c8b92b12b4b049f49baad58d5fb4429ca98d14026609e0ea44de490"
     },
@@ -9628,6 +9632,10 @@
       "sha256": "b62e43c849ee340a96ed691e26f52c04b5248e86ead36c5b5749d23825fc8827"
     },
     {
+      "path": "web/src/components/PeriodicTargetPicker.vue",
+      "sha256": "f791fa4f84408bbaa67d3bc05e390cc875a2d515422268213d90ad5c6580f2b3"
+    },
+    {
       "path": "web/src/components/PricingCommands.vue",
       "sha256": "cf3288e29237dd09babb994290ea9eb4f61a756a588482f4e8a1bc03fef40ec3"
     },
@@ -9793,7 +9801,15 @@
     },
     {
       "path": "web/src/periodic-budget.ts",
-      "sha256": "9ddc129e4f33e00d87639639ee705890022638dd47edf2b18b92d12c06d0100f"
+      "sha256": "08280fcf086b02833e9fb54be8136de6fe00d6c778664e5b82bac3c2d7bd011b"
+    },
+    {
+      "path": "web/src/periodic-target-state.ts",
+      "sha256": "9d4bd84d6b318f29c55c3d8f2047b438f267bab89b8b9909a87fa73f4c08edfc"
+    },
+    {
+      "path": "web/src/periodic-target.ts",
+      "sha256": "151d28eb972705171ed955fadfbd5498fe7a45ce99c96178ad7ea08064d27434"
     },
     {
       "path": "web/src/playground-state.ts",
@@ -9813,7 +9829,7 @@
     },
     {
       "path": "web/src/procurement.ts",
-      "sha256": "231f0fedc8ca5d50d385cc774c2501457db33ddacc142f3806553ce6afda4036"
+      "sha256": "654607605ef60a4a0499ddc7f4bdc6333f1990ccd9033e95fedd5d766322da9e"
     },
     {
       "path": "web/src/public-catalog-state.ts",
@@ -9897,7 +9913,7 @@
     },
     {
       "path": "web/src/views/PeriodicBudgetView.vue",
-      "sha256": "934f41807531db2e7a1a15576d975e1862a56c9111df374f7b4a63bb330a991a"
+      "sha256": "6f3e092af53977ea9f2148dbcb9a949af97a01f90fa0677a6198a8e092020aa0"
     },
     {
       "path": "web/src/views/PlatformView.vue",
@@ -10102,6 +10118,14 @@
     {
       "path": "web/tests/periodic-budget.test.mjs",
       "sha256": "bff4cc40255fc2ebe0e136f21e679327af113a17549fc19f08e86989a2012ee1"
+    },
+    {
+      "path": "web/tests/periodic-target-state.test.mjs",
+      "sha256": "e54fd8eae6d4f1f364b87fae0d19b4ec5caf42ee0ce7fdf3ddc74d093ca3b977"
+    },
+    {
+      "path": "web/tests/periodic-target.test.mjs",
+      "sha256": "6f30bd558ad76a644132f1f346626a4aec7e58ea671e3f4e55677f0e0103652d"
     },
     {
       "path": "web/tests/pricing-state.test.mjs",

@@ -152,6 +152,10 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分片 SSE，保留 `finish_reason=tool_calls` 和最终 usage。Web `frameUpdate/jsonUpdate` 输出工具增量与实际 finish reason，Playground 仅按 index 重组展示，不执行工具；ID/type/name 冲突失败关闭，arguments 只追加。浏览器完成只表示响应接收完成，最终收费仍以调用记录为准。
 
+### 4.4 周期预算目标选择投影
+
+[目标选择子规格](../../specs/038-new-api-capability-migration/periodic-target-selection.md)规定：平台裸路径由 `PeriodicBudgetView` 显式进入 `PeriodicTargetPicker`，严格 target parser 不伪造空目标。选择器复用 `readProcurementRows` 和现有 tenant/procurement 只读列表，身份代际隔离晚回响应，搜索和每页 20 条仅在客户端执行。点击后由 `periodicTargetChoicePath` 生成规范 tenant/procurement 深链；错误参数、列表失败和空目录分别显示，不把失败伪装成空态。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水

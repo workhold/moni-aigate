@@ -8090,3 +8090,26 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - added `web/tests/route-revisions.test.mjs`
 
 </details>
+
+## 2026-11-18T03:40:49Z · 5a0ae8949d20
+
+周期预算裸入口改为明确目标选择：复用现有只读列表与权限，新增响应式卡片、状态代际和真实双视口验收；无预算、支付、后端API或资金事实变化，已复核模块图、权限与源码链接
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2550 个源文件；本次 12 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `scripts/phase1_browser_qa.py`
+- added `specs/038-new-api-capability-migration/periodic-target-selection.md`
+- added `web/src/components/PeriodicTargetPicker.vue`
+- modified `web/src/periodic-budget.ts`
+- added `web/src/periodic-target-state.ts`
+- added `web/src/periodic-target.ts`
+- modified `web/src/procurement.ts`
+- modified `web/src/views/PeriodicBudgetView.vue`
+- added `web/tests/periodic-target-state.test.mjs`
+- added `web/tests/periodic-target.test.mjs`
+
+</details>

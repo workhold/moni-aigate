@@ -235,6 +235,13 @@ class Browser:
         if not self.evaluate(expression):
             raise RuntimeError(f"click target not found: {text}")
 
+    def click_visible(self, selector: str):
+        point = self.evaluate(f"(()=>{{const e=document.querySelector({json.dumps(selector)});if(!e)return null;e.scrollIntoView({{block:'center',inline:'center'}});const r=e.getBoundingClientRect();const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return{{x:r.left+r.width/2,y:r.top+r.height/2,left:r.left,right:r.right,top:r.top,bottom:r.bottom,viewport:innerWidth,height:innerHeight,hit:hit===e||e.contains(hit)}}}})()")
+        if not point or not point['hit'] or point['left'] < 0 or point['right'] > point['viewport'] or point['top'] < 0 or point['bottom'] > point['height']:
+            raise RuntimeError(f"visible click target is outside the viewport or covered: {selector} {point}")
+        for event in ('mousePressed', 'mouseReleased'):
+            self.cdp.call('Input.dispatchMouseEvent', {'type': event, 'x': point['x'], 'y': point['y'], 'button': 'left', 'clickCount': 1})
+
     def login(self, email: str, password: str):
         self.pace_login()
         self.navigate("/login")
@@ -703,6 +710,39 @@ def final_runtime_metadata(root: pathlib.Path, commit: str, app_container: str, 
     }
 
 
+def check_periodic_target_picker_empty(browser: Browser) -> dict:
+    browser.navigate('/platform/periodic-budget', '选择预算目标')
+    browser.wait("document.body.innerText.includes('还没有可选择的预算目标') && !document.querySelector('.el-loading-mask')")
+    observation = browser.page_checks('/platform/periodic-budget', '选择预算目标')
+    if observation['hasError'] or observation['scrollWidth'] > observation['viewport'] or observation['bodyScrollWidth'] > observation['viewport']:
+        raise RuntimeError(f'empty periodic target picker failed: {observation}')
+    return {'name': '无账户时平台预算入口显示可操作的空目标选择器，而非错误或横向溢出', 'observation': observation}
+
+
+def check_periodic_target_picker(browser: Browser, tenant: dict) -> dict:
+    marker = 'periodic-target-filter-' + uuid.uuid4().hex[:12]
+    browser.api('/api/platform/tenants', 'POST', {'name': marker, 'owner_email': marker + '@example.invalid', 'owner_password': 'periodic-filter-' + secrets.token_urlsafe(18), 'model_ids': []})
+    browser.navigate('/platform/periodic-budget', '选择预算目标')
+    browser.wait("[...document.querySelectorAll('[data-testid=periodic-target-picker] .target-card')].length>=2 && !document.querySelector('.el-loading-mask')")
+    browser.fill('[data-testid=periodic-target-picker] input', tenant['id'])
+    browser.wait(f"[...document.querySelectorAll('[data-testid=periodic-target-picker] .target-card')].length===1 && document.querySelector('[data-testid=periodic-target-picker]').innerText.includes({json.dumps(tenant['name'])})")
+    picker = browser.evaluate(f"(()=>{{const root=document.querySelector('[data-testid=periodic-target-picker]');return{{rows:root.querySelectorAll('.target-card').length,containsOther:root.innerText.includes({json.dumps(marker)}),hasError:!!document.querySelector('.el-alert--error'),viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyScrollWidth:document.body.scrollWidth}}}})()")
+    if picker['rows'] != 1 or picker['containsOther'] or picker['hasError'] or picker['scrollWidth'] > picker['viewport'] or picker['bodyScrollWidth'] > picker['viewport']:
+        raise RuntimeError(f'periodic target filtering or picker layout failed: {picker}')
+    folder = browser.output / 'P1-UI-02'
+    folder.mkdir(parents=True, exist_ok=True)
+    viewport = 'mobile390' if picker['viewport'] == 390 else 'desktop'
+    screenshot = folder / f'periodic-target-picker-{viewport}.png'
+    browser.screenshot(screenshot)
+    browser.click_visible(f'[data-target-id="{tenant["id"]}"] .target-select')
+    browser.wait(f"location.pathname==='/platform/periodic-budget' && new URLSearchParams(location.search).get('tenant')==={json.dumps(tenant['id'])} && document.body.innerText.includes('客户周期预算')")
+    browser.wait("!!document.querySelector('.periodic-budget-panel') && !document.querySelector('.el-alert--error')")
+    observation = browser.evaluate("(()=>({path:location.pathname,query:location.search,viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyScrollWidth:document.body.scrollWidth}))()")
+    if observation['scrollWidth'] > observation['viewport'] or observation['bodyScrollWidth'] > observation['viewport']:
+        raise RuntimeError(f'periodic target panel overflow: {observation}')
+    return {'name': '多目标夹具验证真实搜索、可见卡片按钮 CDP 点击及同 UUID 深链，选择器本身无横向溢出', 'picker': picker, 'observation': observation, 'screenshot': str(screenshot.relative_to(browser.output))}
+
+
 class Evidence:
     def __init__(self, output: pathlib.Path, commit: str, base_url: str, final: bool, runtime: dict | None = None):
         self.output = output
@@ -923,9 +963,10 @@ def run(args: argparse.Namespace) -> int:
             browser.viewport(width, height)
             admin_checks = [check_page(browser, path, expected) for path, expected in ADMIN_PAGES]
             if accounts:
+                admin_checks.append(check_periodic_target_picker(browser, account_payload['tenant']))
                 admin_checks.append(check_page(browser, "/platform/periodic-budget?tenant=" + account_payload["tenant"]["id"], "客户周期预算"))
             else:
-                admin_checks.append(check_expected_alert(browser, "/platform/periodic-budget", "预算目标无效"))
+                admin_checks.append(check_periodic_target_picker_empty(browser))
             if release_fixture:
                 admin_checks.append(check_release_dialog(browser, "/platform/channels", release_fixture["channel"], release_fixture))
                 close_release_dialog(browser)

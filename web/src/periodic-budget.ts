@@ -141,6 +141,9 @@ export async function newPeriodicCommand(target: PeriodicTarget, actor: string, 
   const pending = Object.freeze(parsePeriodicPending({ version: 1, operation_id: body.operation_id, kind, actor, identity_scope: target.identityScope, target: target.path, input_fingerprint: await periodicFingerprint(kind, actor, target.identityScope, target.path, body), state: 'pending' }))
   return Object.freeze({ pending, body })
 }
+export function periodicTargetSelectionNeeded(path: string, fullPath: string, hasTarget: boolean): boolean {
+  return path === '/platform/periodic-budget' && fullPath.split(/[?#]/, 1)[0] === path && !hasTarget && !fullPath.includes('?')
+}
 export function parsePeriodicTarget(path: string, rawQuery: string, tenant?: string): PeriodicTarget {
   if (rawQuery === '?') return bad()
   const query = rawQuery.startsWith('?') ? rawQuery.slice(1) : rawQuery

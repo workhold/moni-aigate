@@ -160,7 +160,7 @@ export async function readProcurementRows<T>(path: string, parse: (row: unknown)
   let cursor = ''
   do {
     if (!active()) throw new Error('采购编辑上下文已关闭。')
-    const response = await request<unknown>(`${path}${cursor ? `${path.includes('?') ? '&' : '?'}cursor=${encodeURIComponent(cursor)}` : ''}`), page = parseProcurementPage(response.data, response.next_cursor, parse)
+    const response = await request<unknown>(`${path}${cursor ? `${path.includes('?') ? '&' : '?'}cursor=${encodeURIComponent(cursor)}` : ''}`, 'GET', undefined, undefined, active), page = parseProcurementPage(response.data, response.next_cursor, parse)
     rows.push(...page.rows)
     if (rows.length > 10000) throw new Error('配置超过本次读取范围，请联系运营核查。')
     cursor = page.next

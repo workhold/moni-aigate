@@ -113,6 +113,10 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 首个内收切片固定一个 test-only OpenAI-compatible Chat profile，在 external New API channel 与 embedded direct channel 上运行同一工具/usage fixture。继续复用现有 provider 与统一商业链，只补 deterministic 双工具分片、Playground 终态展示和 admin-only route history/明确回退，不新增执行核心或资金事实。历史 revision 允许数值下降；激活仍由现有 CAS、live credential 和发布资格门禁裁决，未知结果只读核查且不自动重发。回退后的再次发布在同一模型锁下从历史 MAX+1 分配新号，CAS 仍比较 active，不复用不可变 revision。接口、安全差异与验收矩阵见[PR-3 切片合同](../../specs/038-new-api-capability-migration/openai-chat-profile.md)；mock 证据不授予真实供应商或生产资格。
 
+### 4.5 周期预算目标选择入口
+
+平台裸 `/platform/periodic-budget` 不再进入无目标错误页，而是读取现有客户与采购账户列表，让管理员明确选择后进入原规范深链。无效查询仍拒绝，不自动选择第一项，不改变预算权限、原操作 journal、资金状态或后端 API。具体状态与验收见[目标选择子规格](../../specs/038-new-api-capability-migration/periodic-target-selection.md)。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |
