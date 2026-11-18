@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-18T03:40:49Z",
-  "review_reason": "周期预算裸入口改为明确目标选择：复用现有只读列表与权限，新增响应式卡片、状态代际和真实双视口验收；无预算、支付、后端API或资金事实变化，已复核模块图、权限与源码链接",
-  "snapshot_sha256": "5a0ae8949d20a53dac02fb4d7958e39521026696bfe7eb10248b78edc758cbf4",
-  "architecture_sha256": "ea2bb615183bdfffb97b24b4931294ce86f400ca35cce0e7830a0c5909a9a9a7",
-  "history_sha256": "32fe01a69a566766d801a40ab6dbe0c4781c99a329a9dd23b87002c8bbc11b82",
+  "reviewed_at": "2026-11-18T04:47:04Z",
+  "review_reason": "039 同次验收 Go 证据复用：current-MVP逐项复用外层race精确PASS，绑定运行ID、时效、干净HEAD、专库和日志摘要，standalone行为不变；无产品、资金、API或测试覆盖变化，已复核架构与源码链接",
+  "snapshot_sha256": "e7f972cb864aee5096602b9575db5f3140605159f0181052ef91621a4d5423e7",
+  "architecture_sha256": "aca68a5ac1cb90207b0296ca7e0fc555befed0f42fa4b053f2c9509ea4dabda3",
+  "history_sha256": "273ed6d30400f984bd037149259122e6861d96dc1a21bb2eaaffac358fa989b5",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "04c8f7e07664cd31fdc15b9ebd25f308341071d8e3d6cd89567dc73525f9199d"
+      "sha256": "a70b33fc1fa443e2c3805512e3bc5bbfa5df485c680cd77c9bfb48c319c371ea"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "34b83076529f9e22ce3becffb1fcde3da53a7c81318ba0e9a49a1c13b3f3a26a"
+      "sha256": "a3e40f0f9653e03ca105928f13a0da00e2f0993940ff293ec573402f031f45fc"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -318,6 +318,10 @@
     {
       "path": "docs/verification/034-coin-units.md",
       "sha256": "1851504152a217b72e20812c276e72aa76adc282557d70b494474c4d6e165ed9"
+    },
+    {
+      "path": "docs/verification/acceptance-evidence-reuse.md",
+      "sha256": "98d36341f30e4447930c058e1af8684805c362d6284b56402f466e877c66e4c0"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -8032,6 +8036,10 @@
       "sha256": "8acc83b33ec53692ed0c2911569b68eb8652de8ce41946c1b608c0d58cca0579"
     },
     {
+      "path": "scripts/check-go-test-evidence.py",
+      "sha256": "4486099f34437d42b943a7acfcec6093dd47687def19533f4382c3fe6f84c13f"
+    },
+    {
       "path": "scripts/check-periodic-prefix-compatibility.py",
       "sha256": "7d7eb3fffddd85e59d612383c65f4b59ecc9a8cb0596e604f3b165686a0ce8ea"
     },
@@ -8066,6 +8074,10 @@
     {
       "path": "scripts/check-wallet-profile-roots.py",
       "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
+    },
+    {
+      "path": "scripts/check_go_test_evidence_test.py",
+      "sha256": "1ee0c4a18508d81cd696104e94a045ca028c1eceecedb5b8494655a7e3898cdb"
     },
     {
       "path": "scripts/current-runtime-path-audit.sh",
@@ -8233,7 +8245,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "582335803a0cb6d98df012ea66325589f6360a177657394374eaa816f0cd9560"
+      "sha256": "d9fe45be0010fa4c85171436f8585b7b6b16c48b47780c55abeab23550820c16"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -8265,7 +8277,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "f1493be79cbe6e9c71ec0e8cacbb8af3494decc7dee3ef2b4420ecf42ad9c300"
+      "sha256": "04a48c5a24f8efca78063a88a522249dc7d59c17e2477728ae41931d6b32bfb2"
     },
     {
       "path": "scripts/phase1_browser_qa.py",
@@ -8305,7 +8317,7 @@
     },
     {
       "path": "scripts/verify-current-mvp.sh",
-      "sha256": "7bc64842ec8d5105acb69b36d5e8128a91dde25534567927fd21ac94b499332b"
+      "sha256": "4e3d20065ec688f7428707033f4df13b090990549d3b43190dfb22df46bac94b"
     },
     {
       "path": "scripts/verify-native-sdk.py",
@@ -9430,6 +9442,10 @@
     {
       "path": "specs/038-new-api-capability-migration/spec.md",
       "sha256": "bc1a73d74b1376faf60857eedb3465be2a563adf417be3357587bd2e14c624a5"
+    },
+    {
+      "path": "specs/039-acceptance-evidence-reuse/spec.md",
+      "sha256": "9cec62413110ac3ddb9d47ef383fbad9968cfdc82f5e3070b22082d9da7fb74e"
     },
     {
       "path": "third_party/README.md",
