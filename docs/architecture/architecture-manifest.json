@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-18T08:46:37Z",
-  "review_reason": "039 修正验收输出误判：仅豁免备份恢复组生成的 backup-restore-local.json，其他工作树变更继续拒绝；复用覆盖与产品行为不变，已复核独立审查和源码链接",
-  "snapshot_sha256": "a92af8fddbad06d265273887e8c65e51ab34b4ca438f56bb1f2227300661577a",
-  "architecture_sha256": "aca68a5ac1cb90207b0296ca7e0fc555befed0f42fa4b053f2c9509ea4dabda3",
-  "history_sha256": "54a4163aa9ed45b8982f862dcdf0a2d6bc0560022f56832cac5b1a44495324b1",
+  "reviewed_at": "2026-11-18T12:24:15Z",
+  "review_reason": "040 仅新增多独立PostgreSQL验收并行化设计：CI 14逻辑分片、最多2 worker、独立cluster/netns与detached worktree、v2证据及整单重试边界；未实施运行变化，已复核模块、权限和源码链接",
+  "snapshot_sha256": "8251ce3b4efbd4a1c05352c897d15c16af6a5e20ed47e240e648877a12e0336b",
+  "architecture_sha256": "044b2ebe189e1b8230671121543a6b71debcd12f1409823cb3cc160aaaa4b67c",
+  "history_sha256": "cb87e4daa862776e67174f36f50a36d651716073bd388d89a956acac69a1886b",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "a70b33fc1fa443e2c3805512e3bc5bbfa5df485c680cd77c9bfb48c319c371ea"
+      "sha256": "eba99e8fabe34cea61ecbf3a34a0ccd1ee2f1fc256dc152eaf8deacc37cfd720"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "4dfef5e5b341599706e574b81adb219fab4586fc5956e7c19cc7db940ad4e9df"
+      "sha256": "87a85612fddc655cc8f31a3406ec8df7e947cccc4b60101688d9f18c76a7e5ff"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -9446,6 +9446,14 @@
     {
       "path": "specs/039-acceptance-evidence-reuse/spec.md",
       "sha256": "f30f96d9211089abb07343fa2fd1f4bcb65f650cf0e3fc061e69cc5e7b4601c3"
+    },
+    {
+      "path": "specs/040-acceptance-parallelism/plan.md",
+      "sha256": "0d2b7ee76cdf2b533e3d865d23e91d32de32490f4a00df0ad192ccdbe756c75d"
+    },
+    {
+      "path": "specs/040-acceptance-parallelism/spec.md",
+      "sha256": "73cf5de6b1891fd4d8bb44f6d393e133d4a9628ab3a40f5667308eba8398eb8c"
     },
     {
       "path": "third_party/README.md",

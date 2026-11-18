@@ -8149,3 +8149,18 @@ identity四分现收集失败状态，所有分区执行完后统一非零，避
 - modified `specs/039-acceptance-evidence-reuse/spec.md`
 
 </details>
+
+## 2026-11-18T12:24:15Z · 8251ce3b4efb
+
+040 仅新增多独立PostgreSQL验收并行化设计：CI 14逻辑分片、最多2 worker、独立cluster/netns与detached worktree、v2证据及整单重试边界；未实施运行变化，已复核模块、权限和源码链接
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2556 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `specs/040-acceptance-parallelism/plan.md`
+- added `specs/040-acceptance-parallelism/spec.md`
+
+</details>

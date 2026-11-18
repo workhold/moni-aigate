@@ -160,6 +160,10 @@ deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分�
 
 [039](../../specs/039-acceptance-evidence-reuse/spec.md)在 `phase1-acceptance.execute` 的 go-race 完成后生成 `go-race-evidence.json`，并在调用 current-MVP 前设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE`。`checked_go_race_test` 仅在该变量存在时进入复用分支，否则保留原 inventory 和 `go test` 路径。`scripts/check-go-test-evidence.py` 校验 manifest schema/run_id/创建时效/commit/database/log digest，要求匹配的 `PHASE1_ACCEPTANCE_RUN_ID`，并拒绝除备份恢复组生成证据 `docs/verification/backup-restore-local.json` 之外的工作树变更，随后以 `package:TestName` 检查精确顶层事件：每个必需测试一次 PASS、无重复、无缺失、无必需 SKIP，且日志中不允许任何 package/test FAIL。manifest 与日志必须在同一暂存目录，checker 每次重新计算摘要；只豁免 `run_logged` 的固定头尾，重复 JSON key 和其他非 JSON 内容失败。
 
+### 4.6 v2 并行验收证据（设计候选，未实施）
+
+[040](../../specs/040-acceptance-parallelism/spec.md)预期新增并行证据索引，而不是拼接单一 go-race.jsonl：每个逻辑分片拥有精确 argv、原始 JSONL 摘要、独立 pg_system_identifier 和清理证明。共享 CI 分片器负责包/顶层测试互斥穷尽，v2 合并器负责 77 个唯一测试到 82 个绑定的映射以及 current-MVP 100 个唯一测试的单次 PASS。server 包内 actual-main 及其恢复子进程必须留在本分片 netns/数据库边界；独立 identity/mail 套件仍串行。workers=1 只验证单分片工具链，workers=2 才验证双 cluster 的锁互不影响，每轮使用新的 detached git worktree、run_id 和 artifact，并保留 HEAD/tree/status 校验。任一 shard/merge/cleanup 失败都无可复用证据，操作者只能以新 run_id 完整重跑。具体字段、隔离拓扑和 rollout 以该规格为准。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水
