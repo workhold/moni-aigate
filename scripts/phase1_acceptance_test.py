@@ -3,6 +3,7 @@ import copy
 import importlib.util
 import json
 import pathlib
+import re
 import tempfile
 import unittest
 from unittest import mock
@@ -11,6 +12,9 @@ SCRIPT = pathlib.Path(__file__).with_name("phase1-acceptance.py")
 SPEC = importlib.util.spec_from_file_location("phase1_acceptance", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
+EVIDENCE_SPEC = importlib.util.spec_from_file_location("check_go_test_evidence", SCRIPT.with_name("check-go-test-evidence.py"))
+EVIDENCE = importlib.util.module_from_spec(EVIDENCE_SPEC)
+EVIDENCE_SPEC.loader.exec_module(EVIDENCE)
 
 
 class PhaseOneAcceptanceTest(unittest.TestCase):
@@ -127,6 +131,52 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
             self.assertTrue((final / "current-mvp" / "group.log").is_file())
             with self.assertRaisesRegex(ValueError, "already exists"):
                 MODULE.publish_artifacts(staging, final, suites)
+
+    def test_go_evidence_reuse_is_bound_to_fresh_manifest_and_opt_in(self):
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = pathlib.Path(directory)
+            (artifact / "go-race.jsonl").write_text('{"Action":"pass"}\n', encoding="utf-8")
+            manifest = MODULE.go_evidence_manifest(artifact, "a" * 40, "b" * 32)
+            value = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual("a" * 40, value["commit"])
+            self.assertEqual(MODULE.EXPECTED_DATABASE, value["database"])
+            self.assertEqual("go-race.jsonl", value["log"])
+            import hashlib
+            self.assertEqual(hashlib.sha256((artifact / "go-race.jsonl").read_bytes()).hexdigest(), value["log_sha256"])
+        runner = SCRIPT.read_text(encoding="utf-8")
+        self.assertLess(runner.index("go_evidence_manifest(artifact, commit, run_id)"), runner.index('add("current-mvp"'))
+        shell = SCRIPT.with_name("verify-current-mvp.sh").read_text(encoding="utf-8")
+        self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then', shell)
+        self.assertLess(shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then'), shell.index('inventory=$(go test -run'))
+        self.assertIn('inventory=$(go test -run', shell, "standalone mode retains the original inventory and test execution")
+
+    def test_run_logged_output_is_accepted_by_evidence_checker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = pathlib.Path(directory)
+            event = {"Action": "pass", "Package": "github.com/moni-ai/moni-aigate/internal/server", "Test": "TestOne"}
+            import sys
+            MODULE.run_logged([sys.executable, "-c", "import json; print(json.dumps(json.loads(" + repr(json.dumps(event)) + ")))"], artifact / "go-race.jsonl", MODULE.os.environ.copy())
+            manifest = MODULE.go_evidence_manifest(artifact, MODULE.git("rev-parse", "HEAD"), "c" * 32)
+            with mock.patch.dict(EVIDENCE.os.environ, {EVIDENCE.RUN_ID_ENV: "c" * 32}), mock.patch.object(EVIDENCE, "require_clean_source", lambda: None):
+                self.assertEqual(1, EVIDENCE.verify(manifest, ["./internal/server:TestOne"]))
+
+    def test_all_current_mvp_named_tests_can_be_proven_from_one_race_log(self):
+        shell = SCRIPT.with_name("verify-current-mvp.sh").read_text(encoding="utf-8")
+        specs = sorted(set(re.findall(r"\./[A-Za-z0-9_/]+:Test[A-Za-z0-9_]+", shell)))
+        self.assertEqual(100, len(specs), "the frozen current-MVP inventory changed; update evidence reuse coverage deliberately")
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            log = root / "go-race.jsonl"
+            events = []
+            for spec in specs:
+                package, test = spec[2:].split(":", 1)
+                events.append({"Action": "pass", "Package": "github.com/moni-ai/moni-aigate/" + package, "Test": test})
+            log.write_text("".join(json.dumps(event) + "\n" for event in events), encoding="utf-8")
+            import hashlib
+            manifest = {"schema_version": 1, "suite": "go-race", "run_id": "a" * 32, "created_at": MODULE.now(), "commit": MODULE.git("rev-parse", "HEAD"), "database": MODULE.EXPECTED_DATABASE, "log": "go-race.jsonl", "log_sha256": hashlib.sha256(log.read_bytes()).hexdigest()}
+            (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with mock.patch.dict(EVIDENCE.os.environ, {EVIDENCE.RUN_ID_ENV: "a" * 32}), mock.patch.object(EVIDENCE, "require_clean_source", lambda: None):
+                self.assertEqual(100, EVIDENCE.verify(root / "manifest.json", specs))
 
     def test_required_procurement_binding_receives_dedicated_database(self):
         source = SCRIPT.read_text(encoding="utf-8")

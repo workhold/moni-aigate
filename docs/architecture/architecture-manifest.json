@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-17T15:16:09Z",
-  "review_reason": "038 PR-3：复用统一Chat商业链，新增工具fixture与终态展示、admin只读路由历史及CAS回退；回退后发布从历史MAX+1分配不可变新号；无迁移、依赖、部署或真实供应商资格变化，已复核模块图、请求链、权限与源码链接",
-  "snapshot_sha256": "7437ffe3c29380339561a5ad15e289410d5c68e174a2801bd7bb51c2bdc7c384",
-  "architecture_sha256": "d1e1b3f4ec9e4bd98eace262fccd5fd9efeb32908a648e97cbd74a2440a3678e",
-  "history_sha256": "b39b6653a57d57c028307b4e226cb07813762b81370a85af2e92a77e2be6163a",
+  "reviewed_at": "2026-11-18T08:46:37Z",
+  "review_reason": "039 修正验收输出误判：仅豁免备份恢复组生成的 backup-restore-local.json，其他工作树变更继续拒绝；复用覆盖与产品行为不变，已复核独立审查和源码链接",
+  "snapshot_sha256": "a92af8fddbad06d265273887e8c65e51ab34b4ca438f56bb1f2227300661577a",
+  "architecture_sha256": "aca68a5ac1cb90207b0296ca7e0fc555befed0f42fa4b053f2c9509ea4dabda3",
+  "history_sha256": "54a4163aa9ed45b8982f862dcdf0a2d6bc0560022f56832cac5b1a44495324b1",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "b6f41a9f85fff0062c904fd89046478e029932e3c2e9360f5472a021713d1103"
+      "sha256": "a70b33fc1fa443e2c3805512e3bc5bbfa5df485c680cd77c9bfb48c319c371ea"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "acb9a729e6334af513745955f574649c44e363324b314aba8e65b8e122c8cb45"
+      "sha256": "4dfef5e5b341599706e574b81adb219fab4586fc5956e7c19cc7db940ad4e9df"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -318,6 +318,10 @@
     {
       "path": "docs/verification/034-coin-units.md",
       "sha256": "1851504152a217b72e20812c276e72aa76adc282557d70b494474c4d6e165ed9"
+    },
+    {
+      "path": "docs/verification/acceptance-evidence-reuse.md",
+      "sha256": "f55445793b3b739adeedd57723871c5633f4ba0a028c76f983f8f11ef9550ad1"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -8032,6 +8036,10 @@
       "sha256": "8acc83b33ec53692ed0c2911569b68eb8652de8ce41946c1b608c0d58cca0579"
     },
     {
+      "path": "scripts/check-go-test-evidence.py",
+      "sha256": "f0c3760d87382596499d5b10ff4607691f5b5acf4d3d0aefa6b7cc4a4034761f"
+    },
+    {
       "path": "scripts/check-periodic-prefix-compatibility.py",
       "sha256": "7d7eb3fffddd85e59d612383c65f4b59ecc9a8cb0596e604f3b165686a0ce8ea"
     },
@@ -8066,6 +8074,10 @@
     {
       "path": "scripts/check-wallet-profile-roots.py",
       "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
+    },
+    {
+      "path": "scripts/check_go_test_evidence_test.py",
+      "sha256": "143ab0dd03824da6b56f08cc25b767884b431eda2a08dbafe44641a6df4a8975"
     },
     {
       "path": "scripts/current-runtime-path-audit.sh",
@@ -8233,7 +8245,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "582335803a0cb6d98df012ea66325589f6360a177657394374eaa816f0cd9560"
+      "sha256": "d9fe45be0010fa4c85171436f8585b7b6b16c48b47780c55abeab23550820c16"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -8265,11 +8277,11 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "f1493be79cbe6e9c71ec0e8cacbb8af3494decc7dee3ef2b4420ecf42ad9c300"
+      "sha256": "04a48c5a24f8efca78063a88a522249dc7d59c17e2477728ae41931d6b32bfb2"
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "1cb68d1b84dc2196e1bfd2477ffd66c08f80088f9330bab154b9f0d208755606"
+      "sha256": "625b1d18182b0bdcc7743eaf43830e925f7b9cde7522cd5f4ef63c94a908ef5d"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
@@ -8305,7 +8317,7 @@
     },
     {
       "path": "scripts/verify-current-mvp.sh",
-      "sha256": "7bc64842ec8d5105acb69b36d5e8128a91dde25534567927fd21ac94b499332b"
+      "sha256": "4e3d20065ec688f7428707033f4df13b090990549d3b43190dfb22df46bac94b"
     },
     {
       "path": "scripts/verify-native-sdk.py",
@@ -9420,12 +9432,20 @@
       "sha256": "03691bfe294a7f96226ac91ca5052403b39412ba809b2a106560f18eb2f1d256"
     },
     {
+      "path": "specs/038-new-api-capability-migration/periodic-target-selection.md",
+      "sha256": "df98ee8dfe5a836ffdc883fea2556bedc84e327621671f16014f07f4680a40a3"
+    },
+    {
       "path": "specs/038-new-api-capability-migration/release-evidence-gate.md",
       "sha256": "d1f808220c8b92b12b4b049f49baad58d5fb4429ca98d14026609e0ea44de490"
     },
     {
       "path": "specs/038-new-api-capability-migration/spec.md",
       "sha256": "bc1a73d74b1376faf60857eedb3465be2a563adf417be3357587bd2e14c624a5"
+    },
+    {
+      "path": "specs/039-acceptance-evidence-reuse/spec.md",
+      "sha256": "f30f96d9211089abb07343fa2fd1f4bcb65f650cf0e3fc061e69cc5e7b4601c3"
     },
     {
       "path": "third_party/README.md",
@@ -9628,6 +9648,10 @@
       "sha256": "b62e43c849ee340a96ed691e26f52c04b5248e86ead36c5b5749d23825fc8827"
     },
     {
+      "path": "web/src/components/PeriodicTargetPicker.vue",
+      "sha256": "f791fa4f84408bbaa67d3bc05e390cc875a2d515422268213d90ad5c6580f2b3"
+    },
+    {
       "path": "web/src/components/PricingCommands.vue",
       "sha256": "cf3288e29237dd09babb994290ea9eb4f61a756a588482f4e8a1bc03fef40ec3"
     },
@@ -9793,7 +9817,15 @@
     },
     {
       "path": "web/src/periodic-budget.ts",
-      "sha256": "9ddc129e4f33e00d87639639ee705890022638dd47edf2b18b92d12c06d0100f"
+      "sha256": "08280fcf086b02833e9fb54be8136de6fe00d6c778664e5b82bac3c2d7bd011b"
+    },
+    {
+      "path": "web/src/periodic-target-state.ts",
+      "sha256": "9d4bd84d6b318f29c55c3d8f2047b438f267bab89b8b9909a87fa73f4c08edfc"
+    },
+    {
+      "path": "web/src/periodic-target.ts",
+      "sha256": "151d28eb972705171ed955fadfbd5498fe7a45ce99c96178ad7ea08064d27434"
     },
     {
       "path": "web/src/playground-state.ts",
@@ -9813,7 +9845,7 @@
     },
     {
       "path": "web/src/procurement.ts",
-      "sha256": "231f0fedc8ca5d50d385cc774c2501457db33ddacc142f3806553ce6afda4036"
+      "sha256": "654607605ef60a4a0499ddc7f4bdc6333f1990ccd9033e95fedd5d766322da9e"
     },
     {
       "path": "web/src/public-catalog-state.ts",
@@ -9897,7 +9929,7 @@
     },
     {
       "path": "web/src/views/PeriodicBudgetView.vue",
-      "sha256": "934f41807531db2e7a1a15576d975e1862a56c9111df374f7b4a63bb330a991a"
+      "sha256": "6f3e092af53977ea9f2148dbcb9a949af97a01f90fa0677a6198a8e092020aa0"
     },
     {
       "path": "web/src/views/PlatformView.vue",
@@ -10102,6 +10134,14 @@
     {
       "path": "web/tests/periodic-budget.test.mjs",
       "sha256": "bff4cc40255fc2ebe0e136f21e679327af113a17549fc19f08e86989a2012ee1"
+    },
+    {
+      "path": "web/tests/periodic-target-state.test.mjs",
+      "sha256": "e54fd8eae6d4f1f364b87fae0d19b4ec5caf42ee0ce7fdf3ddc74d093ca3b977"
+    },
+    {
+      "path": "web/tests/periodic-target.test.mjs",
+      "sha256": "6f30bd558ad76a644132f1f346626a4aec7e58ea671e3f4e55677f0e0103652d"
     },
     {
       "path": "web/tests/pricing-state.test.mjs",

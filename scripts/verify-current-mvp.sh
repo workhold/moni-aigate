@@ -113,6 +113,14 @@ checked_go_race_test() {
   [ "${#packages[@]}" -gt 0 ] || { echo 'checked_go_race_test requires at least one package' >&2; return 2; }
 
   local spec package test_name inventory
+  if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then
+    local -a evidence_args=(--manifest "$VERIFY_CURRENT_MVP_GO_EVIDENCE")
+    for spec in "${specs[@]}"; do
+      evidence_args+=(--spec "$spec")
+    done
+    python3 scripts/check-go-test-evidence.py "${evidence_args[@]}"
+    return
+  fi
   for spec in "${specs[@]}"; do
     case "$spec" in
       *:*) package=${spec%%:*}; test_name=${spec#*:} ;;

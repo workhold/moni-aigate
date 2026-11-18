@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import pathlib
@@ -21,6 +22,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+import uuid
 from collections import Counter
 
 EXPECTED_DATABASE = "postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable"
@@ -104,6 +106,14 @@ def run_logged(command: list[str], log: pathlib.Path, env: dict[str, str]) -> di
     status = "PASS" if result.returncode == 0 else "FAIL"
     print(f"END {log.stem}: {status} ({time.monotonic() - started:.1f}s), log={log}", flush=True)
     return {"command": printable, "status": status, "exit_status": result.returncode, "log": str(log), "seconds": round(time.monotonic() - started, 3)}
+
+
+def go_evidence_manifest(artifact: pathlib.Path, commit: str, run_id: str) -> pathlib.Path:
+    log = artifact / "go-race.jsonl"
+    value = {"schema_version": 1, "suite": "go-race", "run_id": run_id, "created_at": now(), "commit": commit, "database": EXPECTED_DATABASE, "log": log.name, "log_sha256": hashlib.sha256(log.read_bytes()).hexdigest()}
+    manifest = artifact / "go-race-evidence.json"
+    manifest.write_text(json.dumps(value, separators=(",", ":")) + "\n", encoding="utf-8")
+    return manifest
 
 
 def publish_artifacts(staging: pathlib.Path, final: pathlib.Path, suites: list[dict]) -> None:
@@ -358,6 +368,9 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     race_log = artifact / "go-race.jsonl"
     add("go-race", [run_logged(["go", "test", "-race", "-p", "1", "-count=1", "-timeout", "1200s", "-json", "./..."], race_log, env)])
     go_results = required_go_results(race_log, items)
+    run_id = uuid.uuid4().hex
+    env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
+    env["VERIFY_CURRENT_MVP_GO_EVIDENCE"] = str(go_evidence_manifest(artifact, commit, run_id))
     add("current-mvp", [preview_stop, run_logged(["./scripts/verify-current-mvp.sh"], artifact / "current-mvp.log", env)])
 
     for name, package, test, variable in (
