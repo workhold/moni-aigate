@@ -34,6 +34,9 @@ jobs:
       - run: npm ci && npm test && npm run build
         if: matrix.shard == 'other'
         working-directory: web
+      - name: Verify acceptance evidence mergers and frozen matrix
+        if: matrix.shard == 'other'
+        run: ./scripts/phase1-acceptance.test.sh
       # Each matrix job owns a disposable database. Host networking preserves
       # the server-side loopback endpoint required by the sandbox proof.
       # Trust matches the historical LOGIN fixtures; it is not a deployment

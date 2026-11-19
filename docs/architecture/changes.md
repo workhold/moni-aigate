@@ -8196,3 +8196,110 @@ PR-A 重复检测按class/package作用域，允许跨包同名测试并确保�
 - modified `scripts/acceptance-shard-plan/main_test.go`
 
 </details>
+
+## 2026-11-18T17:35:07Z · a87c92884147
+
+PR-B 新增 v2 验收证据合并、真实源码覆盖与显式 029/current-MVP 接入；仅测试编排，无业务数据面或运行时事实源变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2564 个源文件；本次 11 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-evidence-v2.md`
+- added `scripts/acceptance-skip-baseline.json`
+- added `scripts/check-acceptance-evidence-v2.py`
+- added `scripts/check_acceptance_evidence_v2_test.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/verify-current-mvp.sh`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-18T17:40:50Z · 304735927cad
+
+PR-B 将 v1/v2 证据与矩阵测试纳入 CI other 统一入口；只扩展验收编排，无业务运行时变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2564 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `.github/workflows/ci.yml`
+- modified `docs/design/HLD.md`
+- modified `docs/verification/acceptance-evidence-v2.md`
+- modified `scripts/phase1-acceptance.test.sh`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-18T17:45:34Z · 2daa30bba470
+
+记录 PR-B 本地验证结果与空 SKIP 基线边界；无实现结构变化，明确未运行完整 029 或多库验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2564 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-evidence-v2.md`
+
+</details>
+
+## 2026-11-18T17:49:14Z · 82b22f875248
+
+PR-B serial 029 清除遗留 v2 环境并受控处理非法 run_id；保持默认 v1 隔离，无业务运行时变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2564 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-18T18:17:56Z · 5110cc5a8c52
+
+修复 029 v2 合并前 run_id 顺序；以两轮真实同源码树 CI 固定 211 项非必需 SKIP 基线并验证真实事件兼容，无业务运行时变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2564 个源文件；本次 9 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-evidence-v2.md`
+- modified `scripts/acceptance-skip-baseline.json`
+- modified `scripts/check_acceptance_evidence_v2_test.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-18T18:21:02Z · b9ce7854c8ae
+
+复核 211 项真实 SKIP Output 为 26 类明确 opt-in/helper 原因且零必需交集；仅完善验收证据审查记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2564 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-evidence-v2.md`
+
+</details>
+
+## 2026-11-18T18:24:10Z · 758cf6249766
+
+记录 PR-B 独立聚焦复审无剩余阻断及其只读边界；实现与测试结论不变，未声明完整 029 或多库验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2564 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-evidence-v2.md`
+
+</details>

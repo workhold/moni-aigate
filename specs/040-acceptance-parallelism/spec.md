@@ -69,33 +69,38 @@
 
 ## 6. v2 证据模型
 
+PR-B 当前实现 `check-acceptance-evidence-v2.py`：支持 schema v2 的显式 opt-in，但尚未启动多库 runner。v1 和 standalone 行为保持原样；029 只有显式设置 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 才使用 v2 合并结果，未设置时仍执行原串行 go-race。
+
 新增 `schema_version=2` 的索引，保留每个分片不可变原始 JSONL，不把多个带框架的日志拼成伪单命令 `go-race.jsonl`。
 
 索引至少包含：
 
 - run_id、created_at、HEAD commit/tree、source_clean、scheduler_version、workers、镜像摘要；
-- 完整分片计划及其 digest、每片精确 argv、脱敏数据库身份、开始/结束、exit_status；
+- 完整分片计划及其 digest、每片精确 argv、脱敏数据库身份、原始日志开始/结束、exit_status；
 - 每片原始日志相对路径和 SHA-256、pg_system_identifier、资源终态和清理证明；
 - 039 的一小时新鲜度、未来五分钟和干净源码检查；backup 生成文件的精确豁免保持。
 
 合并器必须验证：
 
-1. 恰好 14 个预期分片；包全集精确覆盖、顶层发现集合精确覆盖、所有命令 exit_status=0。
-2. 缺失/额外/重复分配、package/test FAIL、panic、必需重复 PASS、损坏/截断、错误摘要/数据库身份、实例复用、OOM 或清理失败全部拒绝。
-3. 矩阵的 77 个唯一测试各执行一次，再让 82 个绑定解析到其 PASS；不同 ID 复用同一绑定不算重复执行。
-4. current-MVP 的 100 个唯一必需测试各有一个精确顶层 PASS，九个复用组仍输出 reused，总计 100/100。
-5. v1/v2、跨 run/commit/tree/attempt 证据不得混用；standalone 未传 manifest 的行为不变。
+1. 恰好 14 个预期分片；checker 在同一 HEAD 的干净 detached worktree 重新生成 PR-A 计划并逐字段比对，包全集精确覆盖、类级顶层发现到 part 的分配精确覆盖。other 以单次 `go test -json -race -count=1 -list .` 发现各包清单，所有命令 exit_status=0。
+2. 缺失/额外/重复分配、跨片或额外 PASS、package/test FAIL、panic、必需重复 PASS、损坏/截断、错误摘要/数据库身份、实例复用、OOM 或清理失败全部拒绝。每个发现测试必须恰有一个终态，每个 package 必须恰有一个 compile 终态；有发现测试的 package 必须 PASS，无测试文件包的 package-level SKIP 不计入测试 SKIP 基线。
+3. 原始日志按 `run_id/command/started_at → JSON events → completed_at/exit_status=0` 框架校验；command 必须等于计划 argv，run_id 必须属于本次 attempt，started/completed 必须处于本次新鲜度窗口，exit 后任何非空记录都拒绝。
+4. 矩阵的 77 个唯一测试各执行一次，再让 82 个绑定解析到其 PASS；不同 ID 复用同一绑定不算重复执行。
+5. current-MVP 的 100 个唯一必需测试各有一个精确顶层 PASS，九个复用组仍输出 reused，总计 100/100。
+6. v1/v2、跨 run/commit/tree/attempt 证据不得混用；standalone 未传 manifest 的行为不变。
 
 ### SKIP 基线
 
-“0 SKIP”始终指必需项零 SKIP，不代表全日志没有环境型 SKIP。建立版本化、经 SDD 审查的 `package:Test + Action + reason` multiset 基线；已有 SKIP 不算 PASS，新增或原因变化默认拒绝。推广、镜像/工具链变化或分片合同变化时再做同提交 serial/parallel 全量 SKIP 对照，避免每天先跑一次完整串行基线抵消优化。
+“0 SKIP”始终指必需项零 SKIP，不代表全日志没有环境型 SKIP。建立版本化、经 SDD 审查的 `scripts/acceptance-skip-baseline.json`，以排序唯一的 `package:Test` 多重集记录允许的非必需 SKIP；manifest 只能复制该仓库基线，不能自行批准新增项。每个基线测试必须恰有一个 SKIP 且没有 PASS，其他发现测试必须恰有一个 PASS；必需测试出现 SKIP 无论是否在基线中都拒绝。真实 `go test -json` 终态没有 `Reason` 字段，因此基线的 reason 固定为空，只证明 package:Test/数量一致，不宣称能检测跳过原因变化；需要审查原因时必须另行保存并复核 Output 证据。推广、镜像/工具链变化或分片合同变化时再做同提交 serial/parallel 全量 SKIP 对照，避免每天先跑一次完整串行基线抵消优化。
+
+当前基线对应 CI-compatible 的本地 029 环境：PR-C 必须像 CI 一样为对应分片显式提供独立的 `PROCUREMENT_IDENTITY_DATABASE_URL` 与 `PROCUREMENT_ATTEMPT_RULES_DATABASE_URL`，其他研究/诊断 opt-in 保持关闭。基线的 211 项来自同一源码树 `ef1ea0feac66506956f08348e49229c74a6d83db` 的两轮成功 CI 原始分片日志（PR head `a927404b9a887d3e98b5ef2afcfd968ca712de94`；run `44338064958` 的 pull_request merge checkout 与 run `44337906066` 的 push checkout）。每轮内 14 个分片计划一致，两轮均有 2298 个唯一顶层 PASS、211 个唯一顶层 SKIP、0 FAIL，SKIP 集合摘要一致。该基线不是生产或供应商资格，也不允许任何 100/77 必需项 SKIP。
 
 ## 7. 分阶段实施
 
 具体 PR 边界见[实施计划](plan.md)。
 
 1. **共享分片器**：抽取 CI/本地共用 CLI，先证明新 CI 14/14 与旧名单完全等价；补新包自动 other、父/子测试不拆和发现负例。
-2. **v2 合并器与合成测试**：不接并行，覆盖缺片、重复片、跨 attempt、错误 digest/数据库身份、非零退出、重复 JSON key、必需 FAIL/SKIP、截断和清理失败。
+2. **v2 合并器与合成测试**：不接并行，覆盖缺片、重复片、跨 attempt、错误 digest/数据库身份、非零退出、重复 JSON key、必需 FAIL/SKIP、截断和清理失败；`phase1-acceptance.test.sh` 在 CI other 任务中执行 v1/v2 与矩阵测试。
 3. **workers=1 canary**：验证真实 loopback、单分片工具链和零新增宿主监听；不要求单 cluster 完成互见证明。
 4. **workers=2 候选**：在两个活动 cluster 中完成同名角色/default ACL/advisory lock 互不影响证明。每轮必须使用新的 detached git worktree、run_id、artifact 目录和全套数据库/容器资源，禁止默认 artifact 路径或前一轮生成文档使下一轮 preflight 失败；每轮保存各自证据后才可进入下一轮。连续两轮完整 029 均须 41/41、0 FAIL、0 必需 SKIP、100/100 复用且无 OOM/超时/残留。
 5. **默认化**：独立复核后才将 029 默认切到 v2；保留 serial v1 作为下一场完整诊断/回退，而非当前运行内补片。拆 other 或 workers>=3 另立 SDD。
