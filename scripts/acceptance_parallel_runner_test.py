@@ -217,7 +217,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
              mock.patch.object(runner, "validate_raw_log"), \
              mock.patch.object(runner, "host_listeners", return_value=set()), \
              mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")):
-            entry, detail = runner.run_part(self.root, evidence, self.root / "worktrees" / "attempt-0", self.root / "common-git", "a" * 32, "attempt-0", part, image, self.root / "runner.env", "pg", "pg-id", {("example.com/mod/internal/attempt-0", "TestOne")}, set())
+            entry, detail = runner.run_part(self.root, evidence, self.root / "worktrees" / "attempt-0", self.root / "common-git", "a" * 32, "attempt-0", part, image, self.root / "runner.env", "pg", "pg-id", {("example.com/mod/internal/attempt-0", "TestOne")}, set(), container_worktree=self.root / "logical-source")
         argv = captured["args"]
         self.assertIn(f"moni-040-{'a' * 32}-attempt-0", argv)
         self.assertEqual(part["args"], argv[argv.index(image) + 1:])
@@ -232,6 +232,8 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertIn(f"type=bind,source={self.root / 'cache' / 'shared-build'},target={self.root / 'cache' / 'shared-build'}", mounts)
         self.assertIn(f"type=bind,source={self.root / 'cache' / 'shared-mod'},target={self.root / 'cache' / 'shared-mod'},readonly", mounts)
         self.assertIn(f"type=bind,source={self.root / 'cache' / 'attempt-0' / 'gopath'},target={self.root / 'cache' / 'attempt-0' / 'gopath'}", mounts)
+        self.assertIn(f"type=bind,source={self.root / 'worktrees' / 'attempt-0'},target={self.root / 'logical-source'}", mounts)
+        self.assertEqual(str(self.root / "logical-source"), docker_prefix[docker_prefix.index("--workdir") + 1])
         self.assertEqual([], detail["errors"])
         self.assertTrue(detail["runner_removed"])
         self.assertEqual(0, entry["exit_status"])
@@ -305,7 +307,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
                 lock_calls.append((container, sql))
                 return "t\nt"
             if "SELECT marker FROM" in sql:
-                return "1|1|t|B"
+                return "1|1|true|B"
             if "pg_default_acl" in sql:
                 return "1"
             if "count(*) FROM pg_roles" in sql:
@@ -494,7 +496,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
             part["packages"] = shard["packages"]
         calls = []
 
-        def fake_part(*args):
+        def fake_part(*args, **kwargs):
             part = args[6]
             calls.append(part["name"])
             entry = {"name": part["name"], "database": {"system_identifier": ""}, "cleanup": {}}
@@ -561,7 +563,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
             part["packages"] = shard["packages"]
         calls = []
 
-        def fake_part(*args):
+        def fake_part(*args, **kwargs):
             part = args[6]
             calls.append(part["name"])
             entry = {"name": part["name"], "database": {"system_identifier": ""}, "cleanup": {}}
