@@ -1,16 +1,12 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-19T05:06:56Z",
-  "review_reason": "记录 83eeb73 的 workers=1 attempt-0 真实 canary 与独立证据/清理核验；仅更新验证与实施状态，无产品架构或接口变化",
-  "snapshot_sha256": "02d692a63d9fb09160b081a878f8ff3a64b84fbd34fbcc99782dc2e0b272e71c",
-  "architecture_sha256": "b07fb1c6880dfa19e95890a9e5d7c67356593320088960759586b241182721f6",
-  "history_sha256": "60ef364f553bbcaaa67568854eba31a87872fddc5d2a9c4d68d0de5939fc5d6c",
+  "reviewed_at": "2026-11-19T05:20:04Z",
+  "review_reason": "修复 PR-C CI 干净检出兼容性：仅排除本地会话 .claude/settings.local.json，允许 reviewed refresh 删除 legacy 条目且只读检查仍失败关闭；项目级设置和既有源码覆盖不变",
+  "snapshot_sha256": "6bb0d487c71aa07152032a2ea97c5e1062317fa8a4600c7d25d091026d5bb64f",
+  "architecture_sha256": "508352457c7f84aad30f204861ef5d2ccac210faae12fb759a17aff538f96599",
+  "history_sha256": "9125db45874d904c92e6fa0b11b29d5e0052319b8773c30dafe83df55f6f4973",
   "files": [
-    {
-      "path": ".claude/settings.local.json",
-      "sha256": "348bff801333023014936ec35857a5ad46e96538dccffffd12711cd6c87bd7c8"
-    },
     {
       "path": ".dockerignore",
       "sha256": "8a7c0b449157489274056d76f17fa605c61cdf15d228bd96cf1529acdc8ad6df"
@@ -193,7 +189,7 @@
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "794827329ad6b1dc21708b13fd5957cfa1c637360037e0792fbf5798e9135e0f"
+      "sha256": "dad971f6fd78232ae01e0019d126619c7688bca718d7efaf684e4bdc3edd1dca"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -325,7 +321,7 @@
     },
     {
       "path": "docs/verification/acceptance-container-runner.md",
-      "sha256": "8208bb9ed29fd1ad93800b6ea89c7ff9f2eef0e1a7dc5046235cb475492c66d9"
+      "sha256": "9d35b8c40b08af1fb2f83c5a22e2a0212a4f65be6cc55281ebf73407b780f7bb"
     },
     {
       "path": "docs/verification/acceptance-evidence-reuse.md",
@@ -8081,11 +8077,11 @@
     },
     {
       "path": "scripts/check-architecture/main.go",
-      "sha256": "0f09e684bb522714eb6fb812b42a6865fba76ba932835e97313237961d222dfe"
+      "sha256": "3e1cc1bb13aabe5c8d1035c57f92aebeb89de7777ff349b0cb37204039d0f1b5"
     },
     {
       "path": "scripts/check-architecture/main_test.go",
-      "sha256": "8acc83b33ec53692ed0c2911569b68eb8652de8ce41946c1b608c0d58cca0579"
+      "sha256": "448a074aa1c7bfe74159c77b9e067208bb222e6030685a5f8daf4eda06b08be9"
     },
     {
       "path": "scripts/check-go-test-evidence.py",

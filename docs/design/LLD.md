@@ -176,7 +176,7 @@ v2 manifest 包含 run_id、created_at、commit/tree、source_clean、scheduler_
 
 `acceptance-parallel-runner.py --workers 1 --shard <name>` 执行单片 canary，重复 shard 或 `--all-shards` 只改变选择范围，不允许 workers=2。协调器先记录 source commit/tree/status、完整 PR-A plan、镜像 digest、Docker 资源和宿主监听基线；随后按 `detached worktree → module prefetch → PostgreSQL ready → 顺序 part → 原始日志校验 → 清理 → report` 执行，任何失败不产生可复用 manifest。单片标记 `workers_1_canary`，2–13 片为 `workers_1_partial`，只有 14 片/17 part 全成功才进入 PR-B 100/77 合并。
 
-PostgreSQL/runner 名称包含完整 run_id，cidfile 和 run/shard 标签确认创建所有权；运行轮询只把空/半写 cidfile 当 pending，退出后仍严格读取完整 64 位 ID。清理按所属完整 ID 执行，未创建本场 cidfile 的同名资源不删除。PostgreSQL `SandboxKey` 保存在私有运行状态，容器删除后以固定 Go 镜像的只读宿主 netns 挂载和 `os.path.lexists` 验证实际消失；daemon、volume、容器或路径错误都不是清理成功。runner report 保存脱敏数据库身份、精确 argv、日志摘要、资源采样、宿主监听前后摘要与清理状态，单片固定 `manifest=null/reusable=false/complete_029=false/workers_2_proven=false`。真实 canary 与独立复核见[PR-C 记录](../verification/acceptance-container-runner.md)。
+PostgreSQL/runner 名称包含完整 run_id，cidfile 和 run/shard 标签确认创建所有权；运行轮询只把空/半写 cidfile 当 pending，退出后仍严格读取完整 64 位 ID。清理按所属完整 ID 执行，未创建本场 cidfile 的同名资源不删除。PostgreSQL `SandboxKey` 保存在私有运行状态，容器删除后以固定 Go 镜像的只读宿主 netns 挂载和 `os.path.lexists` 验证实际消失；daemon、volume、容器或路径错误都不是清理成功。runner report 保存脱敏数据库身份、精确 argv、日志摘要、资源采样、宿主监听前后摘要与清理状态，单片固定 `manifest=null/reusable=false/complete_029=false/workers_2_proven=false`。真实 canary 与独立复核见[PR-C 记录](../verification/acceptance-container-runner.md)。架构 inventory 只把 `.claude/settings.local.json` 视为本地会话元数据，不排除整个 `.claude` 目录；项目级 `.claude/settings.json` 和其他源码/设计覆盖保持不变，避免本地 refresh 与干净 CI 检出互相产生 added/deleted。
 
 ## 5. 资金模型与计价
 

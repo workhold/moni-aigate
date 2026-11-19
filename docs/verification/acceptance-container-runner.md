@@ -33,6 +33,10 @@
 
 更早的两次 attempt 分别在 Git 元数据环境和宿主缺少 race C 编译器的预检阶段停止，没有启动测试；另一次真实测试 exit 0 因资源采样和 volume 清理证明缺陷被判 FAIL。它们均未与本次结果拼接，也未通过选择性 retry 生成可复用 manifest。
 
+## CI 干净检出兼容性修正
+
+PR 首次 push/pull_request 的 `contracts (other)` 在架构只读检查失败：本地 refresh 曾把 `.claude/settings.local.json` 纳入清单，干净 CI 检出将其报告为 deleted。该文件是本地会话元数据，不是源码或设计事实。`check-architecture` 现只精确排除这一路径，不排除整个 `.claude` 目录；新增回归同时证明项目级 `.claude/settings.json` 仍有覆盖，删除本地文件不会造成 added/deleted。没有手动删清单项、在 CI 自动 refresh 或缩小其他源码覆盖。该修正不改变 runner 实现或上述 canary 证据。
+
 ## 未执行与推广边界
 
 本次没有启动 workers=2，没有进行双 cluster 同名 role/default ACL/advisory lock 互见测试，没有运行 14 片完整 Go race、完整 029、浏览器、Compose、支付、独立 identity/mail 或串行尾部，也没有切换默认 runner。现有 macOS 55439 属于其他环境，因此未在其上运行 `make verify-mvp` 或完整商业验收。workers=2 与默认化仍属于后续独立阶段。

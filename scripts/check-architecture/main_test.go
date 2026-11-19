@@ -76,6 +76,75 @@ func TestRefreshAndReadOnlyCheck(t *testing.T) {
 	}
 }
 
+func TestLocalClaudeSettingsDoNotMoveArchitectureSnapshot(t *testing.T) {
+	root := fixture(t)
+	writeFixture(t, root, ".claude/settings.local.json", "{\"local\":true}\n")
+	writeFixture(t, root, ".claude/settings.json", "{\"project\":true}\n")
+	refreshFixture(t, root)
+	data, err := os.ReadFile(filepath.Join(root, manifestPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var current manifest
+	if err := json.Unmarshal(data, &current); err != nil {
+		t.Fatal(err)
+	}
+	projectCovered := false
+	for _, file := range current.Files {
+		if file.Path == ".claude/settings.local.json" {
+			t.Fatal("local session settings were recorded as architecture source")
+		}
+		projectCovered = projectCovered || file.Path == ".claude/settings.json"
+	}
+	if !projectCovered {
+		t.Fatal("project-level Claude settings lost architecture coverage")
+	}
+	if err := os.Remove(filepath.Join(root, ".claude/settings.local.json")); err != nil {
+		t.Fatal(err)
+	}
+	if err := run(root, false, false, "", fixedTime, new(bytes.Buffer)); err != nil {
+		t.Fatalf("a clean checkout without local session settings must match: %v", err)
+	}
+}
+
+func TestRefreshRemovesLegacyLocalClaudeSettings(t *testing.T) {
+	root := fixture(t)
+	refreshFixture(t, root)
+	data, err := os.ReadFile(filepath.Join(root, manifestPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var legacy manifest
+	if err := json.Unmarshal(data, &legacy); err != nil {
+		t.Fatal(err)
+	}
+	legacy.Files = append([]fileDigest{{Path: ".claude/settings.local.json", SHA256: hash([]byte("local"))}}, legacy.Files...)
+	legacy.SnapshotSHA256 = snapshotHash(legacy.Files)
+	data, err = json.MarshalIndent(legacy, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, manifestPath), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := run(root, false, false, "", fixedTime, new(bytes.Buffer)); err == nil {
+		t.Fatal("a legacy local settings entry must remain stale in read-only mode")
+	}
+	refreshFixture(t, root)
+	refreshed, err := readManifest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range refreshed.Files {
+		if file.Path == ".claude/settings.local.json" {
+			t.Fatal("reviewed refresh did not remove the legacy local entry")
+		}
+	}
+	if err := run(root, false, false, "", fixedTime, new(bytes.Buffer)); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDetectsContentAdditionsAndDeletionsWithoutGit(t *testing.T) {
 	root := fixture(t)
 	writeFixture(t, root, "web/src/delete.ts", "export const oldValue = 1\n")

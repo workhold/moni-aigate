@@ -176,7 +176,7 @@ func excluded(name string, dir bool) bool {
 	}
 	base := path.Base(name)
 	privateEnv := base == ".env" || (strings.HasPrefix(base, ".env.") && base != ".env.example")
-	return name == "web/dist" || strings.HasPrefix(name, "web/dist/") || strings.HasPrefix(name, "docs/architecture/.architecture-") || strings.HasSuffix(name, ".tsbuildinfo") || strings.HasSuffix(name, ".DS_Store") || strings.HasSuffix(name, ".pyc") || (!dir && privateEnv)
+	return name == ".claude/settings.local.json" || name == "web/dist" || strings.HasPrefix(name, "web/dist/") || strings.HasPrefix(name, "docs/architecture/.architecture-") || strings.HasSuffix(name, ".tsbuildinfo") || strings.HasSuffix(name, ".DS_Store") || strings.HasSuffix(name, ".pyc") || (!dir && privateEnv)
 }
 
 func covered(name string) bool {
@@ -250,7 +250,10 @@ func readManifest(root string) (manifest, error) {
 		return m, fmt.Errorf("invalid architecture review time")
 	}
 	for i, f := range m.Files {
-		if !validPath(f.Path) || !covered(f.Path) || !digestPattern.MatchString(f.SHA256) || (i > 0 && m.Files[i-1].Path >= f.Path) {
+		// Legacy local settings still produce a deletion in the read-only diff;
+		// accepting the old entry here lets reviewed refresh remove it.
+		legacyLocalSettings := f.Path == ".claude/settings.local.json"
+		if !validPath(f.Path) || (!covered(f.Path) && !legacyLocalSettings) || !digestPattern.MatchString(f.SHA256) || (i > 0 && m.Files[i-1].Path >= f.Path) {
 			return m, fmt.Errorf("invalid, uncovered or unsorted manifest entry %q", f.Path)
 		}
 	}

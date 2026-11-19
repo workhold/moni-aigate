@@ -8338,3 +8338,19 @@ PR-B serial 029 清除遗留 v2 环境并受控处理非法 run_id；保持默�
 - modified `specs/040-acceptance-parallelism/plan.md`
 
 </details>
+
+## 2026-11-19T05:20:04Z · 6bb0d487c71a
+
+修复 PR-C CI 干净检出兼容性：仅排除本地会话 .claude/settings.local.json，允许 reviewed refresh 删除 legacy 条目且只读检查仍失败关闭；项目级设置和既有源码覆盖不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2569 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- deleted `.claude/settings.local.json`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-container-runner.md`
+- modified `scripts/check-architecture/main.go`
+- modified `scripts/check-architecture/main_test.go`
+
+</details>
