@@ -45,6 +45,22 @@ declare -a result_statuses=()
 declare -a result_seconds=()
 failed=0
 skipped=0
+attested_validated=0
+if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED:-}" ]; then
+  if [ "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED" != "1" ] || [ -z "${VERIFY_CURRENT_MVP_RUNNER_REPORT:-}" ] || [ -z "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then
+    echo 'attested v2 reuse requires value 1, a runner report and a v2 manifest' >&2
+    exit 2
+  fi
+  attestation_args=(--report "$VERIFY_CURRENT_MVP_RUNNER_REPORT" --manifest "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2")
+  if [ -n "${VERIFY_CURRENT_MVP_ATTESTATION_OUTPUT:-}" ]; then
+    attestation_args+=(--output "$VERIFY_CURRENT_MVP_ATTESTATION_OUTPUT")
+  fi
+  if ! python3 scripts/verify_current_mvp_attested.py "${attestation_args[@]}"; then
+    echo 'strict batched v2 attestation failed; no Go group will be reused' >&2
+    exit 1
+  fi
+  attested_validated=1
+fi
 
 slugify() {
   printf '%s' "$1" | tr '[:upper:] ' '[:lower:]_' | tr -cs '[:alnum:]_-' '_'
@@ -114,13 +130,9 @@ checked_go_race_test() {
 
   local spec package test_name inventory
   if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED:-}" ]; then
-    if [ "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED" != "1" ] || [ -z "${VERIFY_CURRENT_MVP_RUNNER_REPORT:-}" ] || [ -z "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then
-      echo 'attested v2 reuse requires value 1, a runner report and a v2 manifest' >&2
-      return 2
-    fi
-    python3 scripts/verify_current_mvp_attested.py --report "$VERIFY_CURRENT_MVP_RUNNER_REPORT" --manifest "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"
-    printf 'reused: %s\n' "$spec"
-    return
+    [ "$attested_validated" = "1" ] || { echo 'strict batched v2 attestation is not complete' >&2; return 2; }
+    printf 'reused: %s required tests validated by strict v2 batch\n' "${#specs[@]}"
+    return 0
   fi
   if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then
     local -a evidence_args=(--manifest "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2")

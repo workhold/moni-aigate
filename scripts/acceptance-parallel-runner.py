@@ -885,13 +885,7 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
 
 
 def required_specs(source: pathlib.Path) -> list[str]:
-    shell = (source / "scripts" / "verify-current-mvp.sh").read_text(encoding="utf-8")
-    current = set(re.findall(r"\./[A-Za-z0-9_/]+:Test[A-Za-z0-9_]+", shell))
-    matrix = v2.common.strict_json((source / "scripts" / "phase1-acceptance-matrix.json").read_text(encoding="utf-8"))
-    matrix_specs = {"./" + test for item in matrix["items"] for test in item["tests"]}
-    if len(current) != 100 or len(matrix_specs) != 77:
-        raise RunnerError("current-MVP/matrix required inventory changed")
-    return sorted(current | matrix_specs)
+    return v2.required_specs(source)
 
 
 def build_manifest(plan: dict, evidence: pathlib.Path, run_id: str, created_at: str, images: dict[str, str], results: list[dict], workers: int = 1) -> dict:
@@ -929,14 +923,21 @@ def merge_complete_evidence(source: pathlib.Path, evidence: pathlib.Path, plan: 
     candidate = evidence / "go-race-evidence-v2.candidate.json"
     candidate.unlink(missing_ok=True)
     path.unlink(missing_ok=True)
-    write_json(candidate, manifest)
-    other = next(shard for shard in plan["shards"] if shard["class"] == "other")
-    other_tests = v2.parse_other_json_discovery((evidence / "other-discovery.jsonl").read_text(encoding="utf-8"), other["packages"])
-    env = os.environ.copy()
-    env[v2.common.RUN_ID_ENV] = run_id
-    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    missing = object()
+    previous_run_id = missing
     try:
-        v2.verify(candidate, required_specs(source), source_override=(plan, other_tests))
+        write_json(candidate, manifest)
+        other = next(shard for shard in plan["shards"] if shard["class"] == "other")
+        other_tests = v2.parse_other_json_discovery((evidence / "other-discovery.jsonl").read_text(encoding="utf-8"), other["packages"])
+        previous_run_id = os.environ.get(v2.common.RUN_ID_ENV, missing)
+        os.environ[v2.common.RUN_ID_ENV] = run_id
+        try:
+            v2.verify(candidate, required_specs(source), source_override=(plan, other_tests))
+        finally:
+            if previous_run_id is missing:
+                os.environ.pop(v2.common.RUN_ID_ENV, None)
+            else:
+                os.environ[v2.common.RUN_ID_ENV] = previous_run_id
         os.replace(candidate, path)
     except Exception:
         candidate.unlink(missing_ok=True)

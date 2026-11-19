@@ -656,6 +656,36 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertFalse((evidence / "go-race-evidence-v2.json").exists())
         self.assertFalse((evidence / "go-race-evidence-v2.candidate.json").exists())
 
+    def test_merge_binds_attempt_run_id_and_restores_environment(self):
+        evidence = self.root / "evidence"
+        evidence.mkdir()
+        (evidence / "other-discovery.jsonl").write_text("", encoding="utf-8")
+        seen = []
+        plan = {"shards": [{"class": "other", "packages": ["example.com/mod/internal/other"]}], "commit": "a" * 40, "tree": "b" * 40}
+        with mock.patch.dict(runner.os.environ, {runner.v2.common.RUN_ID_ENV: "stale"}, clear=False), \
+             mock.patch.object(runner, "build_manifest", return_value={"schema_version": 2}), \
+             mock.patch.object(runner, "required_specs", return_value=["./internal/x:TestX"]), \
+             mock.patch.object(runner.v2, "parse_other_json_discovery", return_value={}), \
+             mock.patch.object(runner.v2, "verify", side_effect=lambda *args, **kwargs: seen.append(runner.os.environ[runner.v2.common.RUN_ID_ENV])):
+            name = runner.merge_complete_evidence(self.root, evidence, plan, "a" * 32, {}, [])
+            self.assertEqual("stale", runner.os.environ[runner.v2.common.RUN_ID_ENV])
+        self.assertEqual(["a" * 32], seen)
+        self.assertEqual("go-race-evidence-v2.json", name)
+        self.assertTrue((evidence / name).is_file())
+        self.assertFalse((evidence / "go-race-evidence-v2.candidate.json").exists())
+
+    def test_discovery_failure_also_removes_candidate_manifest(self):
+        evidence = self.root / "evidence"
+        evidence.mkdir()
+        plan = {"shards": [{"class": "other", "packages": ["example.com/mod/internal/other"]}], "commit": "a" * 40, "tree": "b" * 40}
+        with mock.patch.object(runner, "build_manifest", return_value={"schema_version": 2}), \
+             mock.patch.object(runner.v2, "verify") as strict_verify:
+            with self.assertRaises(FileNotFoundError):
+                runner.merge_complete_evidence(self.root, evidence, plan, "a" * 32, {}, [])
+        strict_verify.assert_not_called()
+        self.assertFalse((evidence / "go-race-evidence-v2.json").exists())
+        self.assertFalse((evidence / "go-race-evidence-v2.candidate.json").exists())
+
     def test_proc_listener_parser_normalizes_loopback_and_filters_non_listeners(self):
         raw_v4 = "  sl  local_address rem_address   st\n   0: 0100007F:D88F 00000000:0000 0A\n   1: 0100007F:1F90 00000000:0000 01\n"
         self.assertEqual({"127.0.0.1:55439"}, runner.parse_proc_net_tcp(raw_v4, socket.AF_INET))

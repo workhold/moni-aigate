@@ -8448,3 +8448,72 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/040-acceptance-parallelism/spec.md`
 
 </details>
+
+## 2026-11-19T22:02:03Z · 3c815e7abf35
+
+修复独立复核发现的 attested 证据绕过与 runner run_id 合并缺陷；改为 current-MVP 单次严格 v2 批处理并绑定 phase1 矩阵输出，保留全部原始日志/freshness/spec 校验，同步 SDD、HLD/LLD、统一架构和失败记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 14 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `scripts/acceptance-parallel-runner.py`
+- modified `scripts/acceptance_parallel_runner_test.py`
+- modified `scripts/check-acceptance-evidence-v2.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/verify-current-mvp.sh`
+- modified `scripts/verify_current_mvp_attested.py`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-19T22:06:52Z · afaab09bf31e
+
+补充严格批处理 CLI 原子输出与 phase1 矩阵绑定的端到端单元合同；无模块、权限或数据关系变化，架构正文继续准确描述单次严格 v2 批处理
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-19T22:12:08Z · 3e6e97291d58
+
+复审收口 attested 报告与 CLI 边界：go-race 必须包含真实严格批处理 command/log，空命令列表不得 PASS；输入输出符号链接在解引用前拒绝，新增对应回归测试并同步设计
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/verify_current_mvp_attested.py`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-19T22:14:08Z · 3b3febbfdf75
+
+记录独立复审对严格批处理、非空 go-race suite 与 CLI 符号链接边界均无剩余阻断；仅验证状态变化，无新增结构或合同变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-workers-2-performance.md`
+
+</details>

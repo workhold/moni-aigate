@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-19T20:49:50Z",
-  "review_reason": "PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在有效 report/proof 下使用 runner-attested v2 复用，消除重复源码发现；standalone v2 和 serial v1 不变。去重前第一轮 41/41 已记录，优化后整单仍待验证",
-  "snapshot_sha256": "dc78282143b502d2f5dd8662da9902714b469a22509d563f2ac8169091587f94",
-  "architecture_sha256": "c8f2169864cc1a277d460d3da25a1aab9b150713e96970e33396bd1d6e023dff",
-  "history_sha256": "754343a41fe9e81f254963dcab171a2f09d68e1ef7eb7fd8949d10007b4c9fb0",
+  "reviewed_at": "2026-11-19T22:14:08Z",
+  "review_reason": "记录独立复审对严格批处理、非空 go-race suite 与 CLI 符号链接边界均无剩余阻断；仅验证状态变化，无新增结构或合同变化",
+  "snapshot_sha256": "3b3febbfdf759b8af85356e33790f2afccab6f17b55dd5577aeb0cefb4ac5c2d",
+  "architecture_sha256": "6c86df5b05b880808f773fed508870d05fb5ce52ce76c33ec202f1728d00b2b8",
+  "history_sha256": "5e1b2162ce531a4cc0aa5c261b630661921753a001331fcde2acd2170cc0a3aa",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "5cdcc69bcfec0f1031fb6789d193620b8d835275bf12f1c79997f275996d8ae6"
+      "sha256": "417187c83a24e1a91a99e70d81a227e4faddddd63479b08a711c3abb953ca77a"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "455aff9118cf92459cc090d843c61de2d0798a3c31f076ffc7e15611be594da0"
+      "sha256": "9c2fca23941693854a5b6ec24dde361ad35526eb08d3e1fc38a575aee08f194b"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -341,11 +341,11 @@
     },
     {
       "path": "docs/verification/acceptance-workers-2-performance.md",
-      "sha256": "e32d9509166c482bec55243476343b0077f405e69f1c3c5d233878cdda9c8d61"
+      "sha256": "78e8c48f45eb906c4724889a437795006fc23af3915b4eb740890b911180c679"
     },
     {
       "path": "docs/verification/acceptance-workers-2.md",
-      "sha256": "8d183077555840e7bc6c3096eabed66b8850a7102e72d77dc9d953602a56842e"
+      "sha256": "e4a75e0556c0666caee68d1bebf7a441274f608fd26e2afce376c27c0b54d927"
     },
     {
       "path": "docs/verification/architecture-basis-proof-v2.json",
@@ -7985,11 +7985,11 @@
     },
     {
       "path": "scripts/acceptance-parallel-runner.md",
-      "sha256": "4a5c4dd00c97d7ad35930378b38066eea5695bc0de111876734309849aa11a63"
+      "sha256": "e6c7c0b8ed26435e244d34ca17bd927a58c63def3ea6e2ca92c09627618b0fb3"
     },
     {
       "path": "scripts/acceptance-parallel-runner.py",
-      "sha256": "b091cfdc45a5d0fe5b8502a082089f01e24abfbcc75d290c84782ef6fca02af6"
+      "sha256": "e7bc75e672fb0d240eccfba7fe67be9b606c970c664bb8d0632413c694337196"
     },
     {
       "path": "scripts/acceptance-runner-images.json",
@@ -8021,7 +8021,7 @@
     },
     {
       "path": "scripts/acceptance_parallel_runner_test.py",
-      "sha256": "541168748a48de69f4610a037889be5be38997a302613cce289e166e8e9d0952"
+      "sha256": "7ff45c71fe907f6ccb3326a2181cabaa5a72dcaf8df3d0434d8e16ef1b3caeec"
     },
     {
       "path": "scripts/backup-restore-drill.go",
@@ -8093,7 +8093,7 @@
     },
     {
       "path": "scripts/check-acceptance-evidence-v2.py",
-      "sha256": "dc7e68d6bae0b91b064b2d08456af588573e170f0e88aff70c87103886b1969f"
+      "sha256": "77fbda7a08a8c161e1d83a8020330901e00c94bb300b8e6b73814799c612b832"
     },
     {
       "path": "scripts/check-architecture/main.go",
@@ -8317,7 +8317,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "3ee93c8603662a68c3d973caffe178f3847ef4f0ec949c6a4af38eababbee007"
+      "sha256": "6af001f91bdcbfde23202a5f67e9674705c8a8c24eb24888dee3a6b6457624b3"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -8349,7 +8349,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "a13a91a45512f0fffba65e1f3f1bb2bda003e4a9830b41923cef5e414fc4a2dd"
+      "sha256": "787b0370b3ba65a8b15f5168203093da21c107d1461967b1b591abd6423b4d80"
     },
     {
       "path": "scripts/phase1_browser_qa.py",
@@ -8389,7 +8389,7 @@
     },
     {
       "path": "scripts/verify-current-mvp.sh",
-      "sha256": "6b989a3a797408ee37c70c4169b5af91592d58af3817c7c9fe16d4989c8fa315"
+      "sha256": "44065a8fbd032cef3201e95c6fed89852f99073bb552d6cfe391255c138a7f72"
     },
     {
       "path": "scripts/verify-native-sdk.py",
@@ -8397,7 +8397,7 @@
     },
     {
       "path": "scripts/verify_current_mvp_attested.py",
-      "sha256": "45e2c3e38809cfaaf235a0d69656cdb08a698d9b08c553fd606b5ca69ae042da"
+      "sha256": "544820b78bcffd7eb556027b9e3f46ce1dde72ee745067123bdd404bad0d85df"
     },
     {
       "path": "specs/001-commercial-mvp/acceptance.md",
@@ -9525,11 +9525,11 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "21c2eb6ae492b4eb1079710c5331f4eb75248e6b839f604c019c93c45b5aa041"
+      "sha256": "f494950f501e8d8a5a798cd8e25a5cea9be8b72ccf4f3900e7b5f6c0a16e31a6"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",
-      "sha256": "9f5d1e7a8e08bbb21c3269a34f38521a731b553a428a9a862fa4de37fa86a1ef"
+      "sha256": "6965d329ffe725077cc993b535697f71af96e429c3db41dce60228f09c9bbc91"
     },
     {
       "path": "third_party/README.md",

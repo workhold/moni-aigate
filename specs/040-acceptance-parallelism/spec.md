@@ -75,7 +75,7 @@ PR-B 当前实现 `check-acceptance-evidence-v2.py`：支持 schema v2 的显式
 
 新增 `schema_version=2` 的索引，保留每个分片不可变原始 JSONL，不把多个带框架的日志拼成伪单命令 `go-race.jsonl`。PR-D 不改变该 schema；双库证明、逐片/合并墙钟和带时间戳的资源样本保存在同 attempt 的 runner report，029 集成路径核对 report 与最终 manifest 的 SHA-256。合并器先验证候选文件，再原子改名生成最终 manifest，崩溃留下的 candidate 不能冒充可复用证据。
 
-去重只减少重复发现，不降低证据强度：runner 的内部合并可显式接收预检生成的 `source_override=(plan,other_tests)`，要求其逐字段等于 evidence plan 并继续执行全部终态/身份/清理校验；standalone v2 仍重新发现源码。phase1 只有在 runner report 证明内部合并已完成时才进入 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1`，不再单独执行矩阵合并或九个 current-MVP 的重复源码发现；report/manifest/run_id/commit/tree/digest、双库证明和清理不符均失败关闭。serial v1 与未提供有效 runner report 的 v2 路径不变。
+去重只减少重复发现，不降低证据强度：runner 的内部合并可显式接收预检生成的 `source_override=(plan,other_tests)`，要求其逐字段等于 evidence plan 并继续执行全部终态/身份/清理校验；合并进程必须显式设置并恢复本次 `PHASE1_ACCEPTANCE_RUN_ID`，candidate 创建、discovery 解析或校验失败都删除候选文件。standalone v2 仍重新发现源码。phase1 只有在 runner report 证明内部合并已完成时才进入 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1`，不再单独执行矩阵合并；current-MVP 启动时由 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试的并集执行一次**完整严格 v2 verify**，包括 fresh source、干净 HEAD/tree、1 小时/未来 5 分钟新鲜度、全部原始 JSONL、SKIP、数据库身份、并发窗口和清理。只有该批处理成功后才允许本次 shell 内各组按实际 spec 数输出 reused，失败不得被 printf 或后续状态掩盖；phase1 再从原子发布且绑定 run_id/commit/计数的批处理输出展开矩阵结果，并向 `go-race` suite 追加真实批处理 command/log；外部 manifest 的空命令列表不得产生 vacuous PASS，CLI 输入/输出符号链接必须在解引用前拒绝。report 的 reusable/manifest digest/双库证明只是附加绑定，不能替代严格 v2 校验，也不存在可跨 attempt 或跨进程信任的 discovery 缓存。serial v1 与未提供有效 runner report 的 v2 路径不变。
 
 索引至少包含：
 

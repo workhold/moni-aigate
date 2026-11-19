@@ -66,4 +66,4 @@ scripts/phase1-acceptance.sh --execute \
 
 **去重前第一轮完整 029 已达到 41/41，但整单未达提速目标；默认 serial v1 和 standalone current-MVP 均未改变。**
 
-在有效 runner report/proof 下，phase1 使用 `verify_current_mvp_attested.py` 复用 runner 内部严格合并结果，不再单独执行矩阵合并或九个 current-MVP 的重复源码发现。attested 复用必须同时提供 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1` 和 `VERIFY_CURRENT_MVP_RUNNER_REPORT`，并校验 manifest SHA-256、run_id/commit/tree、双库证明与清理；其它 v2 和 serial v1 路径保持原检查。
+在有效 runner report/proof 下，phase1 不再单独执行矩阵合并；current-MVP 启动时由 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试执行一次完整严格 v2 校验和一次 fresh source，再允许同一 shell 内各组按实际 spec 数输出 reused。必须同时提供 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1` 和 `VERIFY_CURRENT_MVP_RUNNER_REPORT`；report/manifest SHA-256、run_id/commit/tree、双库证明与清理只是附加绑定，不能替代原始日志、freshness、干净源码和指定 spec 校验。phase1 从原子批处理输出绑定矩阵结果；其它 v2 和 serial v1 路径保持原检查。

@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
-"""Validate a runner-attested v2 manifest without rediscovering the source tree."""
+"""Strictly validate all current-MVP and matrix specs with one source discovery."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import pathlib
 import re
 import subprocess
 import sys
+import tempfile
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+V2_SPEC = importlib.util.spec_from_file_location("check_acceptance_evidence_v2", ROOT / "scripts" / "check-acceptance-evidence-v2.py")
+v2 = importlib.util.module_from_spec(V2_SPEC)
+V2_SPEC.loader.exec_module(v2)
 
 
 class AttestationError(ValueError):
@@ -18,14 +25,14 @@ class AttestationError(ValueError):
 
 
 def _git(*args: str) -> str:
-    return subprocess.run(["git", *args], text=True, capture_output=True, check=True).stdout.strip()
+    return subprocess.run(["git", "-C", str(ROOT), *args], text=True, capture_output=True, check=True).stdout.strip()
 
 
 def validate(report_path: pathlib.Path, manifest_path: pathlib.Path) -> dict:
     if report_path.is_symlink() or manifest_path.is_symlink() or not report_path.is_file() or not manifest_path.is_file():
         raise AttestationError("runner report and manifest must be regular non-symlink files")
-    report = json.loads(report_path.read_text(encoding="utf-8"))
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    report = v2.common.strict_json(report_path.read_text(encoding="utf-8"))
+    manifest = v2.common.strict_json(manifest_path.read_text(encoding="utf-8"))
     if report.get("schema_version") != 1 or report.get("suite") != "040-pr-d-parallel-runner":
         raise AttestationError("invalid runner report schema")
     if manifest.get("schema_version") != 2 or manifest.get("suite") != "go-race-parallel":
@@ -54,18 +61,41 @@ def validate(report_path: pathlib.Path, manifest_path: pathlib.Path) -> dict:
         raise AttestationError("dual-cluster proof is incomplete")
     if len(report.get("shards", [])) != 14 or len(manifest.get("shards", [])) != 17:
         raise AttestationError("attestation must contain all 14 shards and 17 parts")
-    return {"status": "PASS", "reused": "runner-attested", "run_id": run_id, "commit": commit}
+    specs = v2.required_specs(ROOT)
+    count = v2.verify(manifest_path, specs)
+    if count != len(specs):
+        raise AttestationError("strict v2 verification did not cover the complete required inventory")
+    return {
+        "status": "PASS", "reused": "strict-v2-batch", "run_id": run_id, "commit": commit,
+        "verified_specs": count, "current_mvp_reused": 100, "matrix_reused": 77,
+    }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", required=True)
     parser.add_argument("--manifest", required=True)
+    parser.add_argument("--output")
     args = parser.parse_args()
     try:
-        print(json.dumps(validate(pathlib.Path(args.report), pathlib.Path(args.manifest)), separators=(",", ":")))
+        result = validate(pathlib.Path(args.report).expanduser().absolute(), pathlib.Path(args.manifest).expanduser().absolute())
+        encoded = json.dumps(result, separators=(",", ":")) + "\n"
+        if args.output:
+            output = pathlib.Path(args.output).expanduser().absolute()
+            if output.is_symlink() or output.exists() or not output.parent.is_dir():
+                raise AttestationError("attestation output must be a new regular file in an existing directory")
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=output.parent, prefix=output.name + ".", delete=False) as stream:
+                    temporary = pathlib.Path(stream.name)
+                    stream.write(encoded)
+                os.replace(temporary, output)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
+        print(encoded, end="")
         return 0
-    except (AttestationError, OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
+    except (AttestationError, v2.EvidenceError, OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
 

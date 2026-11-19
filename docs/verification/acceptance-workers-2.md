@@ -16,7 +16,7 @@
 
 ## 专项测试
 
-最终代码的专项测试包括：v1 5 项、v2 17 项、runner 28 项、协调器 5 项、029 Python 16 项、浏览器 Python 12 项，以及 41 IDs/82 bindings 矩阵检查。另完成：
+最终代码的专项测试包括：v1 5 项、v2 18 项、runner 30 项、协调器 5 项、029 Python 22 项、浏览器 Python 12 项，以及 41 IDs/82 bindings 矩阵检查。另完成：
 
 - 真实空 part 双 cluster SQL 探针：`default_acl_independent=true`、`default_acl_restored=true`、`advisory_lock_independent=true`，临时 role/table/lock 清理成功。
 - 真实 nested-worktree 预检：`scripts/acceptance-shard-plan` 6 个顶层 PASS、0 FAIL。
@@ -38,6 +38,9 @@ serial 基线仍是同一 040 规格记录的 **2727.018 秒**（约 45 分 27 �
 | `ad38d2ebfc124cfabc7ff42e9a7676b3` | 恢复物理路径、干净探针 | 3287.923 | billing-1 与 other 失败；不是全绿或提速证据。 |
 | `ec96f3c1016545a8bcc170936f392326` | 同上，VM 时钟同步 | 2656.807 | 只有 billing-0 的 `TestPostgresCashRefundLifecycleAndReplay` 失败；虽比 serial 少 70.211 秒，仍无 manifest，**不能宣称提速**。 |
 | `b21ffe6f742e4c16bf89a46335fac502` | 最终候选 `e3b5600` | 3178.887 | server-0 `TestCostVectorApplicationQuoteChain` 与 other `TestPostgresAlertConcurrentCommandsAndWorkerSlots` 失败。 |
+| `077323dda96e41eb901866ccf5768399` | 去重候选 `220d5e3` | 902.330 | 旧 VM 磁盘耗尽，PostgreSQL SQLSTATE 53100/57P03；无 manifest，不作为业务或性能结果。 |
+
+`2d88fa9e569a43799510527e2e52209d` 在新隔离 VM 启动后，独立复核确认浅层 attested 可接受空日志、shell 可吞掉 checker 失败，以及 runner 内部合并漏传 run ID；该 attempt 立即中止并精确清理，不计入候选通过次数。严格批处理修复及其负例见[去重优化与整单墙钟](acceptance-workers-2-performance.md)。
 
 失败位置和类型在各轮间变化，包括 `cost_unknown`、钱包来源一致性、settlement/报价快照、任务提交竞争和告警并发。单片和双片诊断可以通过，但完整 workers=2 尚不可重复。VM 时钟同步也没有消除失败。没有删除测试、增加 SKIP、放宽业务/测试超时、关闭 fsync、提高 workers>=3 或拆 other。
 

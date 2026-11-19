@@ -269,6 +269,16 @@ def source_allocation(plan: dict) -> dict[str, set[tuple[str, str]]]:
     return allocation_from_plan(fresh_plan, other_tests)
 
 
+def required_specs(source: pathlib.Path) -> list[str]:
+    shell = (source / "scripts" / "verify-current-mvp.sh").read_text(encoding="utf-8")
+    current = set(re.findall(r"\./[A-Za-z0-9_/]+:Test[A-Za-z0-9_]+", shell))
+    matrix = common.strict_json((source / "scripts" / "phase1-acceptance-matrix.json").read_text(encoding="utf-8"))
+    matrix_specs = {"./" + test for item in matrix["items"] for test in item["tests"]}
+    if len(current) != 100 or len(matrix_specs) != 77:
+        raise EvidenceError("current-MVP/matrix required inventory changed")
+    return sorted(current | matrix_specs)
+
+
 def parse_events(path: pathlib.Path, part: dict, expected: set[tuple[str, str]], manifest: dict) -> tuple[dict, dict, dict]:
     passes: dict[tuple[str, str], int] = {}
     skips: dict[tuple[str, str], int] = {}
