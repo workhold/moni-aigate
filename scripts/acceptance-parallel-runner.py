@@ -611,8 +611,7 @@ def volume_absent(name: str) -> bool:
     return result.returncode != 0 and "no such volume" in result.stderr.lower()
 
 
-def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.Path, common_git: pathlib.Path, run_id: str, shard: str, part: dict, image: str, runner_env: pathlib.Path, postgres_name: str, postgres_id: str, expected: set[tuple[str, str]], baseline_listeners: set[str], container_worktree: pathlib.Path | None = None) -> tuple[dict, dict]:
-    logical_worktree = container_worktree or worktree
+def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.Path, common_git: pathlib.Path, run_id: str, shard: str, part: dict, image: str, runner_env: pathlib.Path, postgres_name: str, postgres_id: str, expected: set[tuple[str, str]], baseline_listeners: set[str]) -> tuple[dict, dict]:
     name = f"moni-040-{run_id}-{part['name']}"
     log = evidence / f"go-tests-{part['name']}.jsonl"
     stderr_path = evidence / f"go-tests-{part['name']}.stderr.log"
@@ -621,8 +620,7 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
         "docker", "run", "--cidfile", str(cidfile), "--name", name, "--network", f"container:{postgres_id}",
         "--env-file", str(runner_env), "--read-only", "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
-        "--mount", f"type=bind,source={worktree},target={logical_worktree}",
-        *(["--mount", f"type=bind,source={worktree},target={worktree}"] if logical_worktree != worktree else []),
+        "--mount", f"type=bind,source={worktree},target={worktree}",
         "--mount", f"type=bind,source={run_root / 'cache' / 'shared-build'},target={run_root / 'cache' / 'shared-build'}",
         "--mount", f"type=bind,source={run_root / 'cache' / 'shared-mod'},target={run_root / 'cache' / 'shared-mod'},readonly",
         "--mount", f"type=bind,source={run_root / 'cache' / shard / 'gopath'},target={run_root / 'cache' / shard / 'gopath'}",
@@ -630,7 +628,7 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
         "--mount", f"type=bind,source={run_root / 'tmp' / shard},target={run_root / 'tmp' / shard}",
         "--mount", f"type=bind,source={common_git},target={common_git}",
         "--label", f"{RUN_LABEL}={run_id}", "--label", f"{SHARD_LABEL}={shard}",
-        "--workdir", str(logical_worktree), image, *part["args"],
+        "--workdir", str(worktree), image, *part["args"],
     ]
     entry = {
         "name": part["name"], "args": part["args"], "log": log.name, "log_sha256": "",
@@ -842,7 +840,7 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
             expected = {(part["packages"][0], test) for test in part["tests"]} if shard["class"] != "other" else {(package, test) for package, tests in other_tests.items() for test in tests}
             try:
                 require_worktree_clean(worktree, shard["commit"], shard["tree"])
-                entry, detail = run_part(run_root, evidence, worktree, common_git, run_id, name, part, images["go_runner"], runner_env, postgres, inspected["Id"], expected, baseline_listeners, container_worktree=source)
+                entry, detail = run_part(run_root, evidence, worktree, common_git, run_id, name, part, images["go_runner"], runner_env, postgres, inspected["Id"], expected, baseline_listeners)
                 entry["database"]["system_identifier"] = identifier
                 result["entries"].append(entry)
                 result["parts"].append(detail)

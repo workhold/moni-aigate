@@ -217,7 +217,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
              mock.patch.object(runner, "validate_raw_log"), \
              mock.patch.object(runner, "host_listeners", return_value=set()), \
              mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")):
-            entry, detail = runner.run_part(self.root, evidence, self.root / "worktrees" / "attempt-0", self.root / "common-git", "a" * 32, "attempt-0", part, image, self.root / "runner.env", "pg", "pg-id", {("example.com/mod/internal/attempt-0", "TestOne")}, set(), container_worktree=self.root / "logical-source")
+            entry, detail = runner.run_part(self.root, evidence, self.root / "worktrees" / "attempt-0", self.root / "common-git", "a" * 32, "attempt-0", part, image, self.root / "runner.env", "pg", "pg-id", {("example.com/mod/internal/attempt-0", "TestOne")}, set())
         argv = captured["args"]
         self.assertIn(f"moni-040-{'a' * 32}-attempt-0", argv)
         self.assertEqual(part["args"], argv[argv.index(image) + 1:])
@@ -226,15 +226,14 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertNotIn("-p", docker_prefix)
         self.assertEqual("container:pg-id", docker_prefix[docker_prefix.index("--network") + 1])
         mounts = [arg for arg in docker_prefix if arg.startswith("type=bind,")]
-        self.assertEqual(8, len(mounts))
+        self.assertEqual(7, len(mounts))
         self.assertNotIn(f"type=bind,source={self.root},target={self.root}", mounts)
         self.assertFalse(any("/private" in arg or "/evidence" in arg for arg in mounts))
         self.assertIn(f"type=bind,source={self.root / 'cache' / 'shared-build'},target={self.root / 'cache' / 'shared-build'}", mounts)
         self.assertIn(f"type=bind,source={self.root / 'cache' / 'shared-mod'},target={self.root / 'cache' / 'shared-mod'},readonly", mounts)
         self.assertIn(f"type=bind,source={self.root / 'cache' / 'attempt-0' / 'gopath'},target={self.root / 'cache' / 'attempt-0' / 'gopath'}", mounts)
-        self.assertIn(f"type=bind,source={self.root / 'worktrees' / 'attempt-0'},target={self.root / 'logical-source'}", mounts)
         self.assertIn(f"type=bind,source={self.root / 'worktrees' / 'attempt-0'},target={self.root / 'worktrees' / 'attempt-0'}", mounts)
-        self.assertEqual(str(self.root / "logical-source"), docker_prefix[docker_prefix.index("--workdir") + 1])
+        self.assertEqual(str(self.root / "worktrees" / "attempt-0"), docker_prefix[docker_prefix.index("--workdir") + 1])
         self.assertEqual([], detail["errors"])
         self.assertTrue(detail["runner_removed"])
         self.assertEqual(0, entry["exit_status"])
