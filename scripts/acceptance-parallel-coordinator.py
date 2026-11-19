@@ -81,7 +81,7 @@ def coordinator_command(source: pathlib.Path, run_directory: pathlib.Path, run_i
         "--label", f"{COORDINATOR_LABEL}={run_id}",
         "--env", "DOCKER_HOST=unix:///var/run/docker.sock", "--env", f"DOCKER_CONTEXT={context}",
         "--env", "HOME=/tmp/home", "--env", "GOPATH=/tmp/gopath", "--env", "GOCACHE=/tmp/go-build",
-        "--env", "GOMODCACHE=/tmp/gopath/pkg/mod", "--env", "GOTMPDIR=/tmp/go-tmp",
+        "--env", "GOMODCACHE=/tmp/gopath/pkg/mod", "--env", "GOTMPDIR=/tmp",
         "--env", "GOMAXPROCS=2", "--env", "GOTOOLCHAIN=local", "--env", "PYTHONDONTWRITEBYTECODE=1",
         "--mount", mount(docker_binary, True), "--mount", mount(docker_socket),
         "--mount", mount(source), "--mount", mount(run_directory.parent),
