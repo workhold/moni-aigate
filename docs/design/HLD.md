@@ -143,6 +143,8 @@ PR-D 已实现最多两个 worker 的 14 片调度、双活动 cluster 的同名
 
 当前候选没有通过任何一次完整 14 片/17 part，因而没有可复用 manifest、完整 029 或连续两轮结果，也没有实测可宣称的整单提速。多轮失败分布于不同 billing/server/other 业务断言，最终记录见[workers=2 候选与未通过验收记录](../verification/acceptance-workers-2.md)。默认继续 serial v1，不能进入 `parallel_default`。
 
+后续 workers=1 完整控制也在 other 失败，而宿主两个 Go 版本的完整 other 均通过；直接采样证明 VM realtime 多次回拨约 1 秒，统一解释重试、审批、报价和告警的时间边界失败。该环境根因与 workers=2 调度分开记录，详见[VM 时钟分析](../verification/acceptance-workers-2-clock-analysis.md)。经明确授权已禁用重复 NTP 源，180 秒 545 个数据库样本 0 回拨且清理完成；仍需重新完成两轮完整 029 才可默认化。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |

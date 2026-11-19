@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-19T15:26:34Z",
-  "review_reason": "补充 PR-D 独立复核边界：仅确认无 false-PASS、manifest 或清理阻断，完整 workers=2 与两轮 029 仍未通过，默认不变",
-  "snapshot_sha256": "7b34cd86cb37e086dcc7ad87ccce4ad233f2026090e1edb28e79fe82642dbf66",
-  "architecture_sha256": "6f621f99947c022fa3ecf4f8d5e24e65378d5546c49301d1f1833ff198cc7767",
-  "history_sha256": "903019f5647dae765c59e490ef221f8bf819c9940cb8009027aab67b55cc4eac",
+  "reviewed_at": "2026-11-19T18:09:37Z",
+  "review_reason": "PR-D 根因分析与单一时钟源环境修复：workers=1 控制与宿主对照排除并发/Go/PG版本，直接采样证实VM时钟回拨；授权禁用重复NTP后545样本0回拨且清理完成，完整workers=2仍待验证，默认serial v1不变",
+  "snapshot_sha256": "d37f3fa075e642e18d36d308dad3185cb7905bf17fb4df18bb2dd70eab932ae7",
+  "architecture_sha256": "727c547e51e3de1655921e3f95063ce07197b84e54937f0255e97c38b8224bc3",
+  "history_sha256": "96525fc08ebc15ac4ba2bb59c6fd5df24a8c20a311db7751a043902aa37c7d55",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "12108aefd2a1cccf1fe585917a024927787b2e4a7f1209dd79f19492f97e654c"
+      "sha256": "d46cabbad1a51cc9fb8d5f6e0b0e8f90db78603d519c90bba4e8b4821f35f49c"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "63844a208f19ecab9e2490f188395c08c2dc6189af54977ede363fee65325e1c"
+      "sha256": "914b868f16046f9a52b0dd3248792e55bf0f49dffa6ed19835b2bbdb4cce3024"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -336,8 +336,12 @@
       "sha256": "dc6e679cf8211888d450b53746492bb7c06baad7337fac445513f871b98be855"
     },
     {
+      "path": "docs/verification/acceptance-workers-2-clock-analysis.md",
+      "sha256": "171770ac6ece80f1e96095955ce2055634a1bb87f8883670335d64ab03d27a34"
+    },
+    {
       "path": "docs/verification/acceptance-workers-2.md",
-      "sha256": "c202ebbfab849d51dcc972c07f62dcd08677b7731adc78df78212220829fa6f3"
+      "sha256": "21f40f4d9daadca9fbe98c5180c19c3b45cc72e3aa2686bdc2dc33f27f4a84ba"
     },
     {
       "path": "docs/verification/architecture-basis-proof-v2.json",
@@ -9513,7 +9517,7 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "9282bdb12071fc37cab7900b8c7e2f91b70d14bdd573de1efeca22933182306e"
+      "sha256": "7cd19acc906bfb32852db1ddd275b2e4310f045699b3f26794e093cdaa9d8615"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",

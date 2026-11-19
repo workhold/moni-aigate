@@ -8393,3 +8393,19 @@ PR-B serial 029 清除遗留 v2 环境并受控处理非法 run_id；保持默�
 - modified `docs/verification/acceptance-workers-2.md`
 
 </details>
+
+## 2026-11-19T18:09:37Z · d37f3fa075e6
+
+PR-D 根因分析与单一时钟源环境修复：workers=1 控制与宿主对照排除并发/Go/PG版本，直接采样证实VM时钟回拨；授权禁用重复NTP后545样本0回拨且清理完成，完整workers=2仍待验证，默认serial v1不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2573 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-workers-2-clock-analysis.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `specs/040-acceptance-parallelism/plan.md`
+
+</details>
