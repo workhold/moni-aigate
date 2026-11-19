@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-19T05:01:19Z",
-  "review_reason": "040 PR-C 新增 workers=1 隔离容器 runner 与单片 canary；仅测试编排和证据变化，产品模块、请求链路、数据关系、权限与业务事实源不变；workers=2 和完整 029 未实施",
-  "snapshot_sha256": "0cf3a7119f4ccde3c9ff25043e00bcfd7fc86adb4dffb8d00c492b2701b09d27",
+  "reviewed_at": "2026-11-19T05:06:56Z",
+  "review_reason": "记录 83eeb73 的 workers=1 attempt-0 真实 canary 与独立证据/清理核验；仅更新验证与实施状态，无产品架构或接口变化",
+  "snapshot_sha256": "02d692a63d9fb09160b081a878f8ff3a64b84fbd34fbcc99782dc2e0b272e71c",
   "architecture_sha256": "b07fb1c6880dfa19e95890a9e5d7c67356593320088960759586b241182721f6",
-  "history_sha256": "207c3881957e004fd922e14a2c0a33ed424de8df7692588c7d6fc3c56fc3957d",
+  "history_sha256": "60ef364f553bbcaaa67568854eba31a87872fddc5d2a9c4d68d0de5939fc5d6c",
   "files": [
     {
       "path": ".claude/settings.local.json",
@@ -325,7 +325,7 @@
     },
     {
       "path": "docs/verification/acceptance-container-runner.md",
-      "sha256": "8f6049583d622385b746b368dfd12fc317cf619b560e8e789b0467f53f5a07b3"
+      "sha256": "8208bb9ed29fd1ad93800b6ea89c7ff9f2eef0e1a7dc5046235cb475492c66d9"
     },
     {
       "path": "docs/verification/acceptance-evidence-reuse.md",
@@ -9505,7 +9505,7 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "612fc7448029137c17db54d644f6ad1983d3c9e70fe6c6345b4a7de5730e748a"
+      "sha256": "dd72e731ca239d3ad9cd0ff113ac090309294bb3df531888299b733825158f49"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",

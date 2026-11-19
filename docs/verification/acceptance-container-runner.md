@@ -20,13 +20,13 @@
 
 ## 最终真实 workers=1 canary
 
-- commit：`24bd633c57be98c84c0cdefa50a9da2407ccdc3e`；tree：`69c6a0fe9232f2b77539f181d239589a13913a81`。
-- run_id：`93bf3226da3045d3baa1a224c952a0e5`；唯一选择 `attempt-0`，workers=1。
-- 时间：2026-11-19T04:47:25.032035+00:00 至 04:48:26.418109+00:00，约 61.39 秒；这只是单片实测，不是完整 029 提速数据。
+- commit：`83eeb73d9aa3e00a707bd05116e96bbbb61b2f8f`；tree：`bbb7b227261f89bd72e1fac301cdd1e970c9fd8c`（实现代码来自已复审的 `80ed12d`，该 HEAD 只增加架构与验证文档）。
+- run_id：`8ae769e7aa9243229e48adbf9068d342`；唯一选择 `attempt-0`，workers=1。
+- 时间：2026-11-19T05:03:05.716142+00:00 至 05:03:57.484501+00:00，约 51.77 秒；这只是单片实测，不是完整 029 提速数据。
 - 环境：专用 `moni-acceptance` Colima VM。协调器使用固定 Go 1.26.11 镜像并观察 VM host netns；实际 PostgreSQL/Go 测试容器仍使用私有 none/container netns。既有 macOS 55439 PostgreSQL 和 VM 18084 预览均未停止、重启或修改。
-- 真实 loopback readiness 验证地址、端口、数据库、用户、时区、连接数和三项持久化设置；该 cluster 的 `pg_system_identifier` 为 `7709739737962594345`。
-- `go-tests-attempt-0.jsonl` SHA-256：`46fec2c35d00aa4fb0b2d63cfdfe930e3e717f1f9a219638f3f667ec535e7538`。独立重跑 PR-B parser 接受精确 argv、run_id、框架和终态：6 个顶层 PASS、12 个经审查基线允许的顶层 SKIP、0 FAIL。此片不承担 100/77 必需项合并，不能据此宣称完整必需清单通过。
-- 9 组资源采样均保留，PostgreSQL/runner 的 NetIO 均为 `0B / 0B`；OOMKilled=false，exit_status=0。
+- 真实 loopback readiness 验证地址、端口、数据库、用户、时区、连接数和三项持久化设置；该 cluster 的 `pg_system_identifier` 为 `7709743765049577512`。
+- `go-tests-attempt-0.jsonl` SHA-256：`ad381d99cd488e03e25271b32b18df680d2cd024527b76bab7b8b34883ef8046`。独立重跑 PR-B parser 接受精确 argv、run_id、框架和终态：6 个顶层 PASS、12 个经审查基线允许的顶层 SKIP、0 FAIL。此片不承担 100/77 必需项合并，不能据此宣称完整必需清单通过。
+- 8 组资源采样均保留，PostgreSQL/runner 的 NetIO 均为 `0B / 0B`；OOMKilled=false，exit_status=0。
 - VM host 监听前后均为 7 项，SHA-256 均为 `9a73a512a483366e01935541680ada3c6720ddb12a4c491566027fb586010a0d`，`zero_new=true`。
 - runner report 的 containers/volume/netns 清理均为 true。随后独立检查该 run_id 的容器 label、volume label、同名容器、协调器、detached worktree 和 private 目录均不存在，源码 HEAD/tree 不变且 status 为空。
 - `runner-report.json` 明确为 `scope=workers_1_canary`、`manifest=null`、`reusable=false`、`complete_029=false`、`workers_2_proven=false`。

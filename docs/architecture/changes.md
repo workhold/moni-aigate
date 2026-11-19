@@ -8325,3 +8325,16 @@ PR-B serial 029 清除遗留 v2 环境并受控处理非法 run_id；保持默�
 - modified `specs/040-acceptance-parallelism/spec.md`
 
 </details>
+
+## 2026-11-19T05:06:56Z · 02d692a63d9f
+
+记录 83eeb73 的 workers=1 attempt-0 真实 canary 与独立证据/清理核验；仅更新验证与实施状态，无产品架构或接口变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2570 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-container-runner.md`
+- modified `specs/040-acceptance-parallelism/plan.md`
+
+</details>
