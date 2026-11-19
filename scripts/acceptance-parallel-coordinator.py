@@ -77,7 +77,7 @@ def coordinator_command(source: pathlib.Path, run_directory: pathlib.Path, run_i
     args = [
         "docker", "run", "--rm", "--cidfile", str(cidfile), "--name", name,
         "--network", "host", "--init", "--read-only", "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges", "--tmpfs", "/tmp:rw,nosuid,nodev,size=4294967296",
+        "--security-opt", "no-new-privileges", "--tmpfs", "/tmp:rw,exec,nosuid,nodev,size=4294967296",
         "--label", f"{COORDINATOR_LABEL}={run_id}",
         "--env", "DOCKER_HOST=unix:///var/run/docker.sock", "--env", f"DOCKER_CONTEXT={context}",
         "--env", "HOME=/tmp/home", "--env", "GOPATH=/tmp/gopath", "--env", "GOCACHE=/tmp/go-build",
