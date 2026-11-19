@@ -40,6 +40,11 @@ class AcceptanceParallelCoordinatorTest(unittest.TestCase):
         self.assertEqual("host", args[args.index("--network") + 1])
         self.assertNotIn("--publish", args)
         self.assertIn("--read-only", args)
+        self.assertIn("DOCKER_CONTEXT=default", args)
+        self.assertIn("DOCKER_HOST=unix:///var/run/docker.sock", args)
+        self.assertIn(f"GOCACHE={self.run_directory.resolve()}/cache/shared-build", args)
+        self.assertIn(f"GOMODCACHE={self.run_directory.resolve()}/cache/shared-mod", args)
+        self.assertNotIn(f"DOCKER_CONTEXT={os.environ['DOCKER_CONTEXT']}", args)
         self.assertIn("golang@sha256:" + "1" * 64, args)
         mounts = [arg for arg in args if arg.startswith("type=bind,")]
         self.assertIn(coordinator.mount(self.source.resolve()), mounts)
@@ -61,6 +66,13 @@ class AcceptanceParallelCoordinatorTest(unittest.TestCase):
              mock.patch.object(coordinator, "execute") as execute:
             with self.assertRaises(coordinator.CoordinatorError):
                 coordinator.cleanup_coordinator(self.root / "missing.cid", "coordinator", "a" * 32)
+        self.assertEqual([], [call for call in execute.call_args_list if call.args and call.args[0][:2] == ["docker", "rm"]])
+
+    def test_completed_coordinator_requires_cidfile_even_when_name_is_absent(self):
+        with mock.patch.object(coordinator, "container_absent", return_value=True), \
+             mock.patch.object(coordinator, "execute") as execute:
+            with self.assertRaisesRegex(coordinator.CoordinatorError, "without a regular owned cidfile"):
+                coordinator.cleanup_coordinator(self.root / "missing.cid", "coordinator", "a" * 32, require_cidfile=True)
         self.assertEqual([], [call for call in execute.call_args_list if call.args and call.args[0][:2] == ["docker", "rm"]])
 
     def test_cleanup_uses_exact_owned_id_and_removes_cidfile(self):

@@ -192,12 +192,20 @@ def validate_parallel_report(path: pathlib.Path, manifest: pathlib.Path, run_id:
     proof = report.get("dual_cluster_proof")
     if not isinstance(proof, dict) or proof.get("status") != "PASS" or proof.get("simultaneous_running") is not True or proof.get("default_acl_independent") is not True or proof.get("advisory_lock_independent") is not True or proof.get("probe_objects_removed") is not True or proof.get("advisory_locks_remaining") != 0:
         raise ValueError("dual-cluster isolation proof is incomplete")
+    if json.loads((path.parent / "dual-cluster-proof.json").read_text(encoding="utf-8")) != proof:
+        raise ValueError("dual-cluster proof artifact differs from the runner report")
     if report.get("host_listeners", {}).get("zero_new") is not True:
         raise ValueError("parallel runner did not prove zero new host listeners")
     shards = report.get("shards")
     if not isinstance(shards, list) or len(shards) != 14 or report.get("errors") != []:
         raise ValueError("parallel runner report does not contain 14 clean shard results")
     sample_count = 0
+    part_count = 0
+    attempt_started = dt.datetime.fromisoformat(report["started_at"])
+    attempt_completed = dt.datetime.fromisoformat(report["completed_at"])
+    if attempt_started.tzinfo is None or attempt_completed.tzinfo is None or attempt_started > attempt_completed:
+        raise ValueError("parallel runner attempt timestamps are invalid")
+    sample_fields = ("Name", "CPUPerc", "MemUsage", "MemPerc", "NetIO", "BlockIO", "PIDs")
     for shard in shards:
         if shard.get("errors") != [] or not all(shard.get("cleanup", {}).get(key) is True for key in ("containers_removed", "volume_removed", "netns_removed")):
             raise ValueError(f"shard cleanup/errors are not clean: {shard.get('name')}")
@@ -207,12 +215,24 @@ def validate_parallel_report(path: pathlib.Path, manifest: pathlib.Path, run_id:
         if not isinstance(shard.get("wall_seconds"), (int, float)) or shard["wall_seconds"] < 0:
             raise ValueError("shard wall time is missing")
         for part in shard.get("parts", []):
+            part_count += 1
             if part.get("errors") != [] or part.get("runner_removed") is not True or part.get("oom_killed") is not False:
                 raise ValueError(f"Go runner terminal state is not clean: {part.get('name')}")
             for sample in part.get("resource_samples", []):
-                if not isinstance(sample.get("at"), str) or not isinstance(sample.get("containers"), list):
-                    raise ValueError("resource sample schema is invalid")
+                sampled_at = dt.datetime.fromisoformat(sample.get("at", ""))
+                if sampled_at.tzinfo is None or sampled_at < attempt_started or sampled_at > attempt_completed:
+                    raise ValueError("resource sample is outside this attempt")
+                containers = sample.get("containers")
+                expected_names = {f"moni-040-{run_id}-{shard['name']}-pg", f"moni-040-{run_id}-{part['name']}"}
+                if not isinstance(containers, list) or len(containers) != 2:
+                    raise ValueError("resource sample must contain exactly two containers")
+                if any(not isinstance(record, dict) or any(not isinstance(record.get(key), str) or not record.get(key) for key in sample_fields) for record in containers):
+                    raise ValueError("resource sample contains an incomplete container record")
+                if {record["Name"] for record in containers} != expected_names:
+                    raise ValueError("resource sample contains a foreign or missing container")
                 sample_count += 1
+    if part_count != 17:
+        raise ValueError("parallel runner report must contain all 17 part results")
     if sample_count == 0:
         raise ValueError("parallel runner has no timestamped resource curve")
     timings = report.get("timings", {})
@@ -222,6 +242,7 @@ def validate_parallel_report(path: pathlib.Path, manifest: pathlib.Path, run_id:
         "run_id": run_id, "workers": 2, "runner_report": "parallel-evidence/runner-report.json",
         "runner_report_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "parallel_shards_seconds": timings["parallel_shards_seconds"], "merge_seconds": timings["merge_seconds"],
+        "runner_wall_seconds": timings["wall_seconds"],
         "resource_samples": sample_count,
     }
 
@@ -502,6 +523,9 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
             run_id = ""
         if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", run_id):
             raise ValueError("external v2 manifest has an invalid run_id")
+        manifest_value = json.loads(v2_manifest.read_text(encoding="utf-8"))
+        if manifest_value.get("workers") == 2:
+            parallel_details = validate_parallel_report(parallel_artifact / "runner-report.json", v2_manifest, run_id, commit)
     else:
         go_mode = "serial-v1"
         env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)

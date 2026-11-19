@@ -45,7 +45,7 @@
 - workers=2 通过显式 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2` 接入 `phase1-acceptance.py`，与直接传入既有 manifest 的 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 互斥；未设置时仍是 serial v1。保留前端、独立 identity/mail real-main、支付、邮件、备份恢复、Compose、浏览器和 mock deployment 的原串行链；server 包内 actual-main 及其子进程只能使用本分片数据库/netns。
 - 首个并发对的两个 PostgreSQL 同时存活后、任何测试 part 启动前，完成同名 role/default ACL/advisory lock 互见证明。A 撤销默认权限并删除同名 role 不得改变 B；A 持锁期间 B 必须能取得并释放同值 advisory lock。证明失败不阻断其他安全分片的诊断执行，但整单和 manifest 失败关闭。
 - 协调器在专用 Linux Docker VM 的 host netns 内运行固定 Go 镜像，使用 VM 的 Docker CLI/socket；它只观察 VM 宿主监听，不能将 macOS 55439 的串行尾部专库误判为并行片资源，也不向测试容器暴露 Docker socket。协调器名称/cidfile 绑定新 run_id，`--rm` 和精确 ID 清理均须核验。
-- 每轮使用新的 detached git worktree、run_id、artifact 目录和全套资源，保留 HEAD/tree/status 校验。集成模式必须显式提供仓库外 `--artifacts` 与 `--output`，禁止默认 artifact 路径或前一轮生成文档阻断下一轮。两轮间不做选择性复用。
+- 每轮使用新的 detached git worktree、run_id、artifact 目录和全套资源，保留 HEAD/tree/status 校验。每片先复制无 alternates 的独立 Git common，支持 nested-worktree 测试而不写主仓或其他片。PR-A `-list` 已产生的同 attempt build/module cache 可以共享以减少重复冷编译，但模块缓存只读、`-count=1` 禁止测试结果复用。集成模式必须显式提供仓库外 `--artifacts` 与 `--output`，禁止默认 artifact 路径或前一轮生成文档阻断下一轮。两轮间不做选择性复用。
 - 同一干净候选连续两次完整 029，记录各片、双库证明、合并、串行尾部、整单墙钟和带时间戳的容器资源曲线。
 - 独立复核后才默认 v2；serial v1 只作为下一场完整诊断/回退。
 

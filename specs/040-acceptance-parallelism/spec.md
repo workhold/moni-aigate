@@ -1,6 +1,6 @@
 # 040：多独立 PostgreSQL 的验收并行化设计
 
-2026-11-18；状态：分阶段实施，PR-A/PR-B/PR-C 已实现，PR-D 未实施。本文只描述 029/039 测试回归与证据编排，不是 aigate 的业务多库、生产分片、读写分离或 HA 方案，不改变产品请求链路、迁移、钱包、结算、ACL、超时或恢复语义。
+2026-11-18；状态：分阶段实施，PR-A/PR-B/PR-C 已实现，PR-D 候选正在实施与完整验收，默认未切换。本文只描述 029/039 测试回归与证据编排，不是 aigate 的业务多库、生产分片、读写分离或 HA 方案，不改变产品请求链路、迁移、钱包、结算、ACL、超时或恢复语义。
 
 ## 1. 目标与基线
 
@@ -46,7 +46,7 @@
 - 片内两端仍看到 `127.0.0.1:55439/moni_test`，保留现有 DSN、loopback 和 `inet_server_addr` 断言；不发布新的宿主监听端口。
 - 每个分片都有独立 cluster、volume、postmaster、角色目录、默认 ACL、advisory lock、连接数和 `pg_system_identifier`；14 个 identifier 必须不同。只有 identity 的四个顺序进程可共享其所属片实例。
 - 每个 cluster 使用 test-only loopback trust、Asia/Shanghai、max_connections=200、fsync/synchronous_commit/full_page_writes=on；凭据只在私有运行目录，不进入仓库、日志或证据。
-- 每个 runner 使用相同 commit/tree 的**独立 detached git worktree**、独立临时目录和仓库外 artifact；固定 Go/PostgreSQL 镜像摘要和工具链。协调器先记录 source_commit/source_tree，再执行 `git worktree add --detach <path> <commit>`，逐轮验证 `rev-parse HEAD`、`rev-parse HEAD^{tree}` 和启动时 `status --porcelain` 为空，确保现有 029/039 的 Git 门禁可原样运行。actual-main 及其 worker/恢复子进程也必须留在该 runner 所属 netns 和数据库边界内，不能回落到宿主或其他分片实例。缓存可以复用构建材料，不能复用测试结果。
+- 每个 runner 使用相同 commit/tree 的**独立 detached git worktree**、独立临时目录和仓库外 artifact；固定 Go/PostgreSQL 镜像摘要和工具链。协调器先记录 source_commit/source_tree，为每片执行 `git clone --bare --no-hardlinks` 得到独立的 Git common 元数据/对象（禁止 alternates），再执行 `git worktree add --detach <path> <commit>`，逐轮验证 `rev-parse HEAD`、`rev-parse HEAD^{tree}` 和启动时 `status --porcelain` 为空，确保现有 029/039 的 Git 门禁及需要 nested worktree 的测试可原样运行。actual-main 及其 worker/恢复子进程也必须留在该 runner 所属 netns 和数据库边界内，不能回落到宿主或其他分片实例。PR-A 的 `-list` 发现已在同一 attempt 的 content-addressed GOCACHE/GOMODCACHE 中编译全部包；这些构建材料可由各片共享，模块缓存对测试容器只读，Go 的并发安全 build cache 可写，`-count=1` 继续禁止测试结果缓存。
 - 不接触原 029 数据库、其他预览、体验实例或跨 network namespace 路由。宿主端口冲突、镜像缺失、资源不足或 identity 重复都属于预检失败。
 
 最终串行阶段开始前，必须先完成分片证据合并和容器/volume/netns 清理证明。
@@ -59,7 +59,7 @@ PR-D 的协调器在专用 Linux Docker VM 的 host network namespace 中运行�
 
 - `preflight`：干净 HEAD、run ID、完整分区、镜像/资源/数据库身份和 SKIP 基线就绪；失败不得启动测试。
 - `workers_1_canary`：只验证单分片的容器工具链、真实 loopback、无新增宿主监听和清理，不承担需要两个活动 cluster 的并发互见证明，也不作为最终默认拓扑。
-- `workers_2_candidate`：首个并发对的两个 cluster 同时存活后、任何测试 part 启动前，分别创建同名 role/default ACL。A 撤销自己的默认权限并删除同名 role 后，B 的 role、默认 ACL 和既有表权限必须保持不变；A 持有 advisory lock 时验证 B 的同名锁可以独立取得并释放。两个 system identifier 必须不同，证明写入 runner report；失败会阻止可复用 manifest，但不妨碍其他安全分片完成诊断。每片 runner 只挂载自己的 worktree/cache/home/tmp 和只读 Git common dir，不能读取其他片的 evidence/private。identity 前一 runner 未证明删除时不得启动后一 part；其他安全分片仍继续。workers=2 manifest 的原始日志还必须通过最多两个活动 part、identity 四段不重叠和 14 个数据库身份检查。同一干净候选至少连续两次完整 029 全绿后才能推广。
+- `workers_2_candidate`：首个并发对的两个 cluster 同时存活后、任何测试 part 启动前，分别创建同名 role/default ACL。A 撤销自己的默认权限并删除同名 role 后，B 的 role、默认 ACL 和既有表权限必须保持不变；A 持有 advisory lock 时验证 B 的同名锁可以独立取得并释放。两个 system identifier 必须不同，证明写入 runner report；失败会阻止可复用 manifest，但不妨碍其他安全分片完成诊断。每片 runner 只挂载自己的 worktree/Git common/home/tmp/GOPATH、只读共享模块缓存和同一 attempt 的并发安全 build cache，不能读取其他片的 evidence/private 或 Git 元数据。identity 前一 runner 未证明删除时不得启动后一 part；其他安全分片仍继续。workers=2 manifest 的原始日志还必须通过最多两个活动 part、identity 四段不重叠和 14 个数据库身份检查。同一干净候选至少连续两次完整 029 全绿后才能推广。
 - `parallel_default`：只在两轮结果稳定、无 OOM/超时/残留后启用。
 
 失败规则：

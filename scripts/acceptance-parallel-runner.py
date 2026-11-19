@@ -183,7 +183,7 @@ def prepare_run_directory(source: pathlib.Path, requested, run_id: str) -> tuple
     os.chmod(path, 0o700)
     evidence = path / "evidence"
     private = path / "private"
-    for directory in (evidence, private, path / "worktrees", path / "cache", path / "tmp", path / "home"):
+    for directory in (evidence, private, path / "worktrees", path / "git", path / "cache", path / "tmp", path / "home"):
         directory.mkdir(mode=0o700)
         os.chmod(directory, 0o700)
     if shutil.disk_usage(path).free < 8 * 1024**3:
@@ -216,17 +216,24 @@ def generate_plan(source: pathlib.Path, evidence: pathlib.Path, commit: str, tre
     return plan
 
 
-def create_worktree(source: pathlib.Path, path: pathlib.Path, commit: str, tree: str) -> pathlib.Path:
-    execute(["git", "-C", str(source), "worktree", "add", "--detach", str(path), commit])
+def create_worktree(source: pathlib.Path, path: pathlib.Path, commit: str, tree: str, common: pathlib.Path) -> pathlib.Path:
+    if common.exists() or path.exists():
+        raise RunnerError("per-shard Git metadata and worktree paths must be new")
     try:
+        execute(["git", "clone", "--bare", "--no-hardlinks", str(source), str(common)])
+        execute(["git", "-C", str(common), "worktree", "add", "--detach", str(path), commit])
         if source_identity(path) != (commit, tree):
             raise RunnerError("detached shard worktree has the wrong source identity")
         if execute(["git", "-C", str(path), "status", "--porcelain"]).stdout.strip():
             raise RunnerError("detached shard worktree is not clean at startup")
-        common = execute(["git", "-C", str(path), "rev-parse", "--git-common-dir"]).stdout.strip()
-        return (path / common).resolve()
+        if (common / "objects" / "info" / "alternates").exists():
+            raise RunnerError("per-shard Git metadata must not use object alternates")
+        return common
     except Exception:
-        execute(["git", "-C", str(source), "worktree", "remove", "--force", str(path)], check=False)
+        if common.exists():
+            execute(["git", "-C", str(common), "worktree", "remove", "--force", str(path)], check=False)
+        shutil.rmtree(path, ignore_errors=True)
+        shutil.rmtree(common, ignore_errors=True)
         raise
 
 
@@ -237,15 +244,16 @@ def require_worktree_clean(worktree: pathlib.Path, commit: str, tree: str) -> No
 
 def module_environment(run_root: pathlib.Path, shard: str) -> dict:
     base = run_root / "cache" / shard
+    shared = run_root / "cache"
     home = run_root / "home" / shard
     temporary = run_root / "tmp" / shard
-    for directory in (base / "build", base / "mod", base / "gopath", home, temporary):
+    for directory in (base / "gopath", shared / "shared-build", shared / "shared-mod", home, temporary):
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     env = os.environ.copy()
     env.update({
         "HOME": str(home),
-        "GOCACHE": str(base / "build"),
-        "GOMODCACHE": str(base / "mod"),
+        "GOCACHE": str(shared / "shared-build"),
+        "GOMODCACHE": str(shared / "shared-mod"),
         "GOPATH": str(base / "gopath"),
         "GOTMPDIR": str(temporary),
         "TMPDIR": str(temporary),
@@ -441,10 +449,9 @@ def prove_dual_cluster_isolation(records: dict[str, dict]) -> dict:
         holder.stdin.write(f"SELECT 'acquired', pg_backend_pid(), pg_advisory_lock({PROBE_LOCK});\n")
         holder.stdin.flush()
         holder_pid = read_lock_acquisition(holder)
-        if probe_sql(records["B"]["postgres_id"], f"SELECT pg_try_advisory_lock({PROBE_LOCK})") != "t":
-            raise RunnerError("cluster B could not acquire the same advisory lock while cluster A held it")
-        if probe_sql(records["B"]["postgres_id"], f"SELECT pg_advisory_unlock({PROBE_LOCK})") != "t":
-            raise RunnerError("cluster B could not release its independent advisory lock")
+        lock_outcome = probe_sql(records["B"]["postgres_id"], f"SELECT pg_try_advisory_lock({PROBE_LOCK}); SELECT pg_advisory_unlock({PROBE_LOCK});")
+        if lock_outcome.splitlines() != ["t", "t"]:
+            raise RunnerError("cluster B could not acquire and release the same advisory lock in one session while cluster A held it")
         probe_sql(records["A"]["postgres_id"], f"""BEGIN;
           ALTER DEFAULT PRIVILEGES FOR ROLE moni_test REVOKE SELECT ON TABLES FROM {PROBE_ROLE};
           DROP TABLE {PROBE_TABLE};
@@ -497,13 +504,18 @@ def prove_dual_cluster_isolation(records: dict[str, dict]) -> dict:
 
 
 class DualClusterProof:
-    def __init__(self):
+    def __init__(self, evidence: pathlib.Path | None = None):
         self.barrier = threading.Barrier(2)
         self.records = {}
         self.mutex = threading.Lock()
         self.result = None
         self.error = None
         self.finished = False
+        self.path = evidence / "dual-cluster-proof.json" if evidence is not None else None
+
+    def record(self) -> None:
+        if self.path is not None and self.result is not None:
+            write_json(self.path, self.result)
 
     def verify(self, role: str, shard: str, postgres_id: str, system_identifier: str) -> None:
         with self.mutex:
@@ -517,10 +529,12 @@ class DualClusterProof:
         if role == "A":
             try:
                 self.result = prove_dual_cluster_isolation(self.records)
+                self.record()
             except Exception as error:
                 self.error = f"dual-cluster isolation proof failed: {error}"
                 self.result = {"schema_version": 1, "status": "FAIL", "error": self.error}
                 self.finished = True
+                self.record()
                 self.barrier.abort()
                 raise RunnerError(self.error) from error
             self.finished = True
@@ -537,17 +551,21 @@ class DualClusterProof:
                 self.error = f"dual-cluster isolation proof could not start: {error}"
                 self.result = {"schema_version": 1, "status": "FAIL", "error": self.error}
                 self.finished = True
+                self.record()
                 self.barrier.abort()
 
 
-def resource_sample(postgres: str, runner: str) -> list[dict]:
+def resource_sample(postgres: str, runner: str, runner_name: str) -> list[dict]:
     result = docker(["stats", "--no-stream", "--format", "{{json .}}", postgres, runner])
     samples = []
+    fields = ("Name", "CPUPerc", "MemUsage", "MemPerc", "NetIO", "BlockIO", "PIDs")
     for line in result.stdout.splitlines():
         value = v2.common.strict_json(line)
-        if not isinstance(value, dict):
-            raise RunnerError("container resource sample is invalid")
-        samples.append({key: value.get(key) for key in ("Name", "CPUPerc", "MemUsage", "MemPerc", "NetIO", "BlockIO", "PIDs")})
+        if not isinstance(value, dict) or any(not isinstance(value.get(key), str) or not value.get(key) for key in fields):
+            raise RunnerError("container resource sample is incomplete")
+        samples.append({key: value[key] for key in fields})
+    if len(samples) != 2 or {sample["Name"] for sample in samples} != {postgres, runner_name}:
+        raise RunnerError("container resource sample must contain exactly the owned PostgreSQL and Go runner")
     return samples
 
 
@@ -589,10 +607,12 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
         "--env-file", str(runner_env), "--read-only", "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
         "--mount", f"type=bind,source={worktree},target={worktree}",
-        "--mount", f"type=bind,source={run_root / 'cache' / shard},target={run_root / 'cache' / shard}",
+        "--mount", f"type=bind,source={run_root / 'cache' / 'shared-build'},target={run_root / 'cache' / 'shared-build'}",
+        "--mount", f"type=bind,source={run_root / 'cache' / 'shared-mod'},target={run_root / 'cache' / 'shared-mod'},readonly",
+        "--mount", f"type=bind,source={run_root / 'cache' / shard / 'gopath'},target={run_root / 'cache' / shard / 'gopath'}",
         "--mount", f"type=bind,source={run_root / 'home' / shard},target={run_root / 'home' / shard}",
         "--mount", f"type=bind,source={run_root / 'tmp' / shard},target={run_root / 'tmp' / shard}",
-        "--mount", f"type=bind,source={common_git},target={common_git},readonly",
+        "--mount", f"type=bind,source={common_git},target={common_git}",
         "--label", f"{RUN_LABEL}={run_id}", "--label", f"{SHARD_LABEL}={shard}",
         "--workdir", str(worktree), image, *part["args"],
     ]
@@ -620,7 +640,7 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
                             if not detail["container_id"]:
                                 detail["container_id"] = read_cidfile(cidfile, allow_pending=True)
                             if detail["container_id"]:
-                                samples = resource_sample(postgres_name, detail["container_id"])
+                                samples = resource_sample(postgres_name, detail["container_id"], name)
                                 detail["resource_samples"].append({"at": utc_now(), "containers": samples})
                         except Exception as error:
                             if "no such container" not in str(error).lower():
@@ -697,7 +717,7 @@ def netns_absent(sandbox_key: str, image: str, run_id: str, shard: str, private:
     name = f"moni-040-{run_id}-{shard}-netns-proof"
     cidfile = private / f"{shard}-netns-proof.cid"
     args = [
-        "run", "--cidfile", str(cidfile), "--name", name, "--network", "none",
+        "run", "--cidfile", str(cidfile), "--name", name, "--network", "host",
         "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--read-only",
         "--mount", f"type=bind,source={path.parent},target=/host-netns,readonly",
         "--label", f"{RUN_LABEL}={run_id}", "--label", f"{SHARD_LABEL}={shard}-netns-proof",
@@ -717,6 +737,8 @@ def netns_absent(sandbox_key: str, image: str, run_id: str, shard: str, private:
         labels = inspected.get("Config", {}).get("Labels") or {}
         if inspected.get("Id") != container_id or labels.get(RUN_LABEL) != run_id or labels.get(SHARD_LABEL) != shard + "-netns-proof":
             raise RunnerError("netns-proof container ownership does not match this shard")
+        if inspected.get("HostConfig", {}).get("NetworkMode") != "host":
+            raise RunnerError("netns-proof helper must use the host namespace without creating another sandbox")
         exit_code = inspected.get("State", {}).get("ExitCode")
         docker(["rm", "--force", container_id], check=False)
         removed = container_absent(container_id)
@@ -730,7 +752,7 @@ def netns_absent(sandbox_key: str, image: str, run_id: str, shard: str, private:
                 raise RunnerError("netns-proof container remains after owned-ID cleanup")
 
 
-def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, volume: str, resources: dict, runners_removed: bool, image: str, run_id: str, shard: str, private: pathlib.Path) -> tuple[dict, list[str]]:
+def cleanup_shard(common_git: pathlib.Path, worktree: pathlib.Path, postgres: str, volume: str, resources: dict, runners_removed: bool, image: str, run_id: str, shard: str, private: pathlib.Path) -> tuple[dict, list[str]]:
     errors = []
     postgres_id = resources.get("postgres_id", "")
     if postgres_id:
@@ -771,9 +793,10 @@ def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, v
     if resources.get("sandbox_key") and not netns_removed and not any("netns cleanup inspection failed" in error for error in errors):
         errors.append("Docker sandbox path still exists or cannot be proven absent")
     try:
-        execute(["git", "-C", str(source), "worktree", "remove", "--force", str(worktree)])
+        execute(["git", "-C", str(common_git), "worktree", "remove", "--force", str(worktree)])
+        shutil.rmtree(common_git)
     except Exception as error:
-        errors.append(f"detached worktree cleanup failed: {error}")
+        errors.append(f"detached worktree and per-shard Git cleanup failed: {error}")
     return cleanup, errors
 
 
@@ -789,7 +812,7 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
     resources = {"volume_created": False, "postgres_id": "", "sandbox_key": ""}
     runners_removed = True
     try:
-        common_git = create_worktree(source, worktree, shard["commit"], shard["tree"])
+        common_git = create_worktree(source, worktree, shard["commit"], shard["tree"], run_root / "git" / f"{name}.git")
         env = module_environment(run_root, name)
         prefetch_modules(worktree, env)
         postgres_env, runner_env = write_private_files(private, name, run_root, env)
@@ -836,7 +859,7 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
             dual_proof.abandon(error)
     finally:
         if common_git is not None:
-            cleanup, errors = cleanup_shard(source, worktree, postgres, volume, resources, runners_removed, images["go_runner"], run_id, name, private)
+            cleanup, errors = cleanup_shard(common_git, worktree, postgres, volume, resources, runners_removed, images["go_runner"], run_id, name, private)
             result["cleanup"] = cleanup
             result["postgres_terminal"] = resources.get("postgres_terminal", {"inspection": "unavailable"})
             result["errors"].extend(errors)
@@ -981,7 +1004,7 @@ def execute_attempt(args: argparse.Namespace) -> tuple[pathlib.Path, dict]:
     images = load_image_lock()
     for reference in images.values():
         verify_pinned_image(reference)
-    dual_proof = DualClusterProof() if args.workers == 2 else None
+    dual_proof = DualClusterProof(evidence) if args.workers == 2 else None
     dual_roles = {shards[0]["name"]: "A", shards[1]["name"]: "B"} if dual_proof is not None else {}
 
     def run_one(shard):

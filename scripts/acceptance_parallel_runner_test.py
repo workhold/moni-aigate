@@ -110,6 +110,28 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
             with self.assertRaises(runner.RunnerError):
                 runner.prepare_run_directory(source, str(source / "artifacts"), "b" * 32)
 
+    def test_worktree_uses_independent_copied_git_common_without_alternates(self):
+        source = self.root / "source"
+        worktree = self.root / "worktree"
+        common = self.root / "git" / "shard.git"
+        source.mkdir()
+        calls = []
+
+        def fake_execute(args, cwd=None, env=None, check=True):
+            calls.append(args)
+            if args[:2] == ["git", "clone"]:
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            if args[-1] == "HEAD":
+                return SimpleNamespace(returncode=0, stdout="a" * 40 + "\n", stderr="")
+            if args[-1] == "HEAD^{tree}":
+                return SimpleNamespace(returncode=0, stdout="b" * 40 + "\n", stderr="")
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        with mock.patch.object(runner, "execute", side_effect=fake_execute):
+            self.assertEqual(common, runner.create_worktree(source, worktree, "a" * 40, "b" * 40, common))
+        self.assertEqual(["git", "clone", "--bare", "--no-hardlinks", str(source), str(common)], calls[0])
+        self.assertEqual(["git", "-C", str(common), "worktree", "add", "--detach", str(worktree), "a" * 40], calls[1])
+
     def test_private_credentials_and_ci_opt_ins_are_scoped(self):
         run_root = self.root / "run"
         private = self.root / "private"
@@ -204,10 +226,12 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertNotIn("-p", docker_prefix)
         self.assertEqual("container:pg-id", docker_prefix[docker_prefix.index("--network") + 1])
         mounts = [arg for arg in docker_prefix if arg.startswith("type=bind,")]
-        self.assertEqual(5, len(mounts))
+        self.assertEqual(7, len(mounts))
         self.assertNotIn(f"type=bind,source={self.root},target={self.root}", mounts)
         self.assertFalse(any("/private" in arg or "/evidence" in arg for arg in mounts))
-        self.assertIn(f"type=bind,source={self.root / 'cache' / 'attempt-0'},target={self.root / 'cache' / 'attempt-0'}", mounts)
+        self.assertIn(f"type=bind,source={self.root / 'cache' / 'shared-build'},target={self.root / 'cache' / 'shared-build'}", mounts)
+        self.assertIn(f"type=bind,source={self.root / 'cache' / 'shared-mod'},target={self.root / 'cache' / 'shared-mod'},readonly", mounts)
+        self.assertIn(f"type=bind,source={self.root / 'cache' / 'attempt-0' / 'gopath'},target={self.root / 'cache' / 'attempt-0' / 'gopath'}", mounts)
         self.assertEqual([], detail["errors"])
         self.assertTrue(detail["runner_removed"])
         self.assertEqual(0, entry["exit_status"])
@@ -267,6 +291,57 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertFalse(detail["runner_removed"])
         self.assertTrue(any("cidfile" in error for error in detail["errors"]))
         self.assertEqual([], [call for call in docker_call.call_args_list if call.args and call.args[0] and call.args[0][0] == "rm"])
+
+    def test_dual_cluster_proof_acquires_and_releases_in_one_session(self):
+        records = {
+            "A": {"shard": "billing-0", "postgres_id": "pg-a", "system_identifier": "id-a"},
+            "B": {"shard": "billing-1", "postgres_id": "pg-b", "system_identifier": "id-b"},
+        }
+        dropped = set()
+        lock_calls = []
+
+        def fake_sql(container, sql):
+            if "pg_try_advisory_lock" in sql:
+                lock_calls.append((container, sql))
+                return "t\nt"
+            if "SELECT marker FROM" in sql:
+                return "1|1|t|B"
+            if "pg_default_acl" in sql:
+                return "1"
+            if "count(*) FROM pg_roles" in sql:
+                return "0" if container in dropped else "1"
+            if "has_table_privilege" in sql:
+                return "t"
+            if "pg_locks" in sql:
+                return "0"
+            if "DROP ROLE" in sql:
+                dropped.add(container)
+            return ""
+
+        with mock.patch.object(runner, "container_inspect", side_effect=lambda container: {"Id": container, "State": {"Running": True}}), \
+             mock.patch.object(runner, "probe_sql", side_effect=fake_sql), \
+             mock.patch.object(runner.subprocess, "Popen", return_value=mock.Mock()), \
+             mock.patch.object(runner, "read_lock_acquisition", return_value=123), \
+             mock.patch.object(runner, "release_lock_holder"):
+            proof = runner.prove_dual_cluster_isolation(records)
+        self.assertEqual("PASS", proof["status"])
+        self.assertTrue(proof["default_acl_independent"])
+        self.assertTrue(proof["advisory_lock_independent"])
+        self.assertEqual(1, len(lock_calls))
+        self.assertEqual(2, lock_calls[0][1].count("SELECT pg_"))
+
+    def test_resource_sample_requires_two_complete_owned_containers(self):
+        records = [
+            {"Name": name, "CPUPerc": "1.00%", "MemUsage": "1MiB / 8GiB", "MemPerc": "0.01%", "NetIO": "0B / 0B", "BlockIO": "0B / 0B", "PIDs": "2"}
+            for name in ("pg", "runner")
+        ]
+        with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="\n".join(json.dumps(record) for record in records), stderr="")):
+            self.assertEqual(2, len(runner.resource_sample("pg", "runner-id", "runner")))
+        with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")), self.assertRaises(runner.RunnerError):
+            runner.resource_sample("pg", "runner-id", "runner")
+        records[0]["MemUsage"] = None
+        with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="\n".join(json.dumps(record) for record in records), stderr="")), self.assertRaises(runner.RunnerError):
+            runner.resource_sample("pg", "runner-id", "runner")
 
     def test_resource_sampling_waits_through_container_registration_race(self):
         evidence = self.root / "evidence"
@@ -373,6 +448,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
              mock.patch.object(runner, "volume_absent", return_value=True), \
              mock.patch.object(runner, "container_inspect", return_value={"State": {"Running": True, "OOMKilled": False, "ExitCode": 0}}), \
              mock.patch.object(runner, "netns_absent", return_value=True), \
+             mock.patch.object(runner.shutil, "rmtree"), \
              mock.patch.object(runner, "execute"), \
              mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")) as docker_call:
             cleanup, errors = runner.cleanup_shard(self.root, self.root / "worktree", "pg-name", "volume-name", resources, True, "go-image", "a" * 32, "attempt-0", self.root)
@@ -511,6 +587,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         with mock.patch.object(runner, "container_inspect", return_value=inspected), \
              mock.patch.object(runner, "container_absent", return_value=True), \
              mock.patch.object(runner, "volume_absent", return_value=True), \
+             mock.patch.object(runner.shutil, "rmtree"), \
              mock.patch.object(runner, "execute"), \
              mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")):
             _, errors = runner.cleanup_shard(self.root, self.root / "worktree", "pg", "volume", resources, True, "go-image", "a" * 32, "attempt-0", self.root)
@@ -590,7 +667,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
                 write_cid(args)
             return SimpleNamespace(returncode=state["ExitCode"], stdout="", stderr="")
 
-        inspected = {"Id": "2" * 64, "Config": {"Labels": {runner.RUN_LABEL: "a" * 32, runner.SHARD_LABEL: "attempt-0-netns-proof"}}, "State": state}
+        inspected = {"Id": "2" * 64, "Config": {"Labels": {runner.RUN_LABEL: "a" * 32, runner.SHARD_LABEL: "attempt-0-netns-proof"}}, "HostConfig": {"NetworkMode": "host"}, "State": state}
         with mock.patch.object(runner, "docker", side_effect=fake_docker) as docker_call, \
              mock.patch.object(runner, "container_inspect", return_value=inspected), \
              mock.patch.object(runner, "container_absent", return_value=True):
@@ -599,6 +676,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertIn("type=bind,source=/var/run/docker/netns,target=/host-netns,readonly", args)
         self.assertIn("os.path.lexists", args[-2])
         self.assertNotIn("--rm", args)
+        self.assertEqual("host", args[args.index("--network") + 1])
         state["ExitCode"] = 1
         with mock.patch.object(runner, "docker", side_effect=fake_docker), \
              mock.patch.object(runner, "container_inspect", return_value=inspected), \

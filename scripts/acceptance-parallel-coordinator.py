@@ -79,9 +79,9 @@ def coordinator_command(source: pathlib.Path, run_directory: pathlib.Path, run_i
         "--network", "host", "--init", "--read-only", "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges", "--tmpfs", "/tmp:rw,exec,nosuid,nodev,size=4294967296",
         "--label", f"{COORDINATOR_LABEL}={run_id}",
-        "--env", "DOCKER_HOST=unix:///var/run/docker.sock", "--env", f"DOCKER_CONTEXT={context}",
-        "--env", "HOME=/tmp/home", "--env", "GOPATH=/tmp/gopath", "--env", "GOCACHE=/tmp/go-build",
-        "--env", "GOMODCACHE=/tmp/gopath/pkg/mod", "--env", "GOTMPDIR=/tmp",
+        "--env", "DOCKER_HOST=unix://" + docker_socket, "--env", "DOCKER_CONTEXT=default",
+        "--env", "HOME=/tmp/home", "--env", f"GOPATH={run_directory}/cache/shared-gopath", "--env", f"GOCACHE={run_directory}/cache/shared-build",
+        "--env", f"GOMODCACHE={run_directory}/cache/shared-mod", "--env", "GOTMPDIR=/tmp",
         "--env", "GOMAXPROCS=2", "--env", "GOTOOLCHAIN=local", "--env", "PYTHONDONTWRITEBYTECODE=1",
         "--mount", mount(docker_binary, True), "--mount", mount(docker_socket),
         "--mount", mount(source), "--mount", mount(run_directory.parent),
@@ -101,9 +101,11 @@ def coordinator_command(source: pathlib.Path, run_directory: pathlib.Path, run_i
     return args, cidfile, name
 
 
-def cleanup_coordinator(cidfile: pathlib.Path, name: str, run_id: str) -> None:
+def cleanup_coordinator(cidfile: pathlib.Path, name: str, run_id: str, require_cidfile: bool = False) -> None:
     container_id = ""
     try:
+        if require_cidfile and (not cidfile.is_file() or cidfile.is_symlink()):
+            raise CoordinatorError("coordinator completed without a regular owned cidfile")
         if cidfile.is_file():
             container_id = cidfile.read_text(encoding="ascii").strip()
             if not CONTAINER_ID.fullmatch(container_id):
@@ -141,6 +143,7 @@ def main() -> int:
     cidfile = None
     name = f"moni-040-coordinator-{args.run_id}"
     status = 1
+    attempted = False
     try:
         if run_directory.exists() or run_directory.is_symlink():
             raise CoordinatorError("the coordinator run directory must be new")
@@ -148,6 +151,7 @@ def main() -> int:
         command, cidfile, name = coordinator_command(pathlib.Path(args.source), run_directory, args.run_id, args.workers, selected)
         if cidfile.exists() or not container_absent(name):
             raise CoordinatorError("coordinator name/cidfile already exists; it will not be adopted or removed")
+        attempted = True
         status = subprocess.run(command).returncode
     except (CoordinatorError, OSError, KeyError, ValueError, UnicodeError, subprocess.CalledProcessError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
@@ -155,7 +159,7 @@ def main() -> int:
     finally:
         if cidfile is not None:
             try:
-                cleanup_coordinator(cidfile, name, args.run_id)
+                cleanup_coordinator(cidfile, name, args.run_id, require_cidfile=attempted)
             except (CoordinatorError, OSError, KeyError, ValueError, UnicodeError, subprocess.CalledProcessError) as error:
                 print(f"FAIL: coordinator cleanup: {error}", file=sys.stderr)
                 status = 1
