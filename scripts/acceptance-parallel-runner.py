@@ -299,10 +299,26 @@ def container_inspect(name: str) -> dict:
     return value[0]
 
 
-def start_postgres(run_id: str, shard: str, image: str, private_env: pathlib.Path, volume: str, name: str) -> tuple[dict, str]:
+def read_cidfile(path: pathlib.Path) -> str:
+    if not path.is_file():
+        return ""
+    value = path.read_text(encoding="ascii").strip()
+    if not re.fullmatch(r"[0-9a-f]{64}", value):
+        raise RunnerError(f"container cidfile {path} is invalid")
+    return value
+
+
+def start_postgres(run_id: str, shard: str, image: str, private_env: pathlib.Path, volume: str, name: str, resources: dict) -> tuple[dict, str]:
+    if not container_absent(name) or not volume_absent(volume):
+        raise RunnerError("PostgreSQL container or volume name already exists; it will not be adopted or removed")
     docker(["volume", "create", "--label", f"{RUN_LABEL}={run_id}", "--label", f"{SHARD_LABEL}={shard}", volume])
+    resources["volume_created"] = True
+    labels = v2.common.strict_json(docker(["volume", "inspect", volume, "--format", "{{json .Labels}}"]).stdout)
+    if not isinstance(labels, dict) or labels.get(RUN_LABEL) != run_id or labels.get(SHARD_LABEL) != shard:
+        raise RunnerError("new PostgreSQL volume does not carry the full attempt ownership labels")
+    cidfile = private_env.parent / f"{shard}-postgres.cid"
     args = [
-        "run", "--detach", "--name", name, "--network", "none",
+        "run", "--detach", "--cidfile", str(cidfile), "--name", name, "--network", "none",
         "--env-file", str(private_env),
         "--mount", f"type=volume,source={volume},target=/var/lib/postgresql/data",
         "--label", f"{RUN_LABEL}={run_id}", "--label", f"{SHARD_LABEL}={shard}",
@@ -311,13 +327,22 @@ def start_postgres(run_id: str, shard: str, image: str, private_env: pathlib.Pat
         "-c", "fsync=on", "-c", "synchronous_commit=on", "-c", "full_page_writes=on",
     ]
     docker(args)
-    inspected = container_inspect(name)
+    resources["postgres_id"] = read_cidfile(cidfile)
+    if not resources["postgres_id"]:
+        raise RunnerError("PostgreSQL did not create an owned cidfile")
+    inspected = container_inspect(resources["postgres_id"])
+    if inspected.get("Id") != resources["postgres_id"]:
+        raise RunnerError("PostgreSQL container identity differs from its cidfile")
+    container_labels = inspected.get("Config", {}).get("Labels") or {}
+    if container_labels.get(RUN_LABEL) != run_id or container_labels.get(SHARD_LABEL) != shard:
+        raise RunnerError("PostgreSQL container does not carry the full attempt ownership labels")
     host = inspected["HostConfig"]
     if host.get("NetworkMode") != "none" or host.get("PortBindings") or host.get("PublishAllPorts"):
         raise RunnerError("PostgreSQL must use an unpublished network namespace with no host port bindings")
     sandbox = inspected["NetworkSettings"].get("SandboxKey")
     if not isinstance(sandbox, str) or not sandbox:
         raise RunnerError("PostgreSQL network namespace identity is missing")
+    resources["sandbox_key"] = sandbox
     readiness = """SELECT CASE WHEN inet_server_addr() = '127.0.0.1'::inet
       AND inet_server_port() = 55439 AND current_database() = 'moni_test'
       AND current_user = 'moni_test' AND current_setting('TimeZone') = 'Asia/Shanghai'
@@ -325,9 +350,9 @@ def start_postgres(run_id: str, shard: str, image: str, private_env: pathlib.Pat
       AND current_setting('synchronous_commit') = 'on' AND current_setting('full_page_writes') = 'on'
       THEN 'ready' ELSE 'not_ready' END"""
     for _ in range(60):
-        result = docker(["exec", name, "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-h", "127.0.0.1", "-p", "55439", "-U", "moni_test", "-d", "moni_test", "-c", readiness], check=False)
+        result = docker(["exec", resources["postgres_id"], "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-h", "127.0.0.1", "-p", "55439", "-U", "moni_test", "-d", "moni_test", "-c", readiness], check=False)
         if result.returncode == 0 and result.stdout.strip() == "ready":
-            identifier = docker(["exec", name, "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-h", "127.0.0.1", "-p", "55439", "-U", "moni_test", "-d", "moni_test", "-c", "SELECT system_identifier FROM pg_control_system()"]).stdout.strip()
+            identifier = docker(["exec", resources["postgres_id"], "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-h", "127.0.0.1", "-p", "55439", "-U", "moni_test", "-d", "moni_test", "-c", "SELECT system_identifier FROM pg_control_system()"]).stdout.strip()
             if not re.fullmatch(r"[0-9]+", identifier):
                 raise RunnerError("PostgreSQL system identifier is invalid")
             return inspected, identifier
@@ -375,11 +400,12 @@ def volume_absent(name: str) -> bool:
 
 
 def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.Path, common_git: pathlib.Path, run_id: str, shard: str, part: dict, image: str, runner_env: pathlib.Path, postgres_name: str, postgres_id: str, expected: set[tuple[str, str]], baseline_listeners: set[str]) -> tuple[dict, dict]:
-    name = f"moni-040-{run_id[:12]}-{part['name']}"
+    name = f"moni-040-{run_id}-{part['name']}"
     log = evidence / f"go-tests-{part['name']}.jsonl"
     stderr_path = evidence / f"go-tests-{part['name']}.stderr.log"
+    cidfile = runner_env.parent / f"{part['name']}.cid"
     args = [
-        "docker", "run", "--name", name, "--network", f"container:{postgres_id}",
+        "docker", "run", "--cidfile", str(cidfile), "--name", name, "--network", f"container:{postgres_id}",
         "--env-file", str(runner_env), "--read-only", "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
         "--mount", f"type=bind,source={run_root},target={run_root}",
@@ -393,7 +419,7 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
         "database": {"url": DATABASE_URL, "system_identifier": ""},
         "cleanup": {"containers_removed": False, "volume_removed": False, "netns_removed": False},
     }
-    detail = {"name": part["name"], "resource_samples": [], "oom_killed": False, "stderr": stderr_path.name, "errors": []}
+    detail = {"name": part["name"], "container_id": "", "resource_samples": [], "oom_killed": False, "stderr": stderr_path.name, "errors": []}
     started = utc_now()
     status = 125
     try:
@@ -406,8 +432,11 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
                 while process.poll() is None:
                     if sampling:
                         try:
-                            samples = resource_sample(postgres_name, name)
-                            detail["resource_samples"].append({"at": utc_now(), "containers": samples})
+                            if not detail["container_id"]:
+                                detail["container_id"] = read_cidfile(cidfile)
+                            if detail["container_id"]:
+                                samples = resource_sample(postgres_name, detail["container_id"])
+                                detail["resource_samples"].append({"at": utc_now(), "containers": samples})
                         except Exception as error:
                             if "no such container" not in str(error).lower():
                                 detail["errors"].append(f"container resource sampling failed: {error}")
@@ -423,7 +452,16 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
         entry["exit_status"] = status
         entry["log_sha256"] = digest_bytes(log.read_bytes())
         try:
-            inspected = container_inspect(name)
+            if not detail["container_id"]:
+                detail["container_id"] = read_cidfile(cidfile)
+            if not detail["container_id"]:
+                raise RunnerError("Docker did not create an owned runner cidfile; no same-name container will be removed")
+            inspected = container_inspect(detail["container_id"])
+            if inspected.get("Id") != detail["container_id"]:
+                raise RunnerError("Go runner identity differs from its cidfile")
+            container_labels = inspected.get("Config", {}).get("Labels") or {}
+            if container_labels.get(RUN_LABEL) != run_id or container_labels.get(SHARD_LABEL) != shard:
+                raise RunnerError("Go runner does not carry the full attempt ownership labels")
             detail["oom_killed"] = bool(inspected["State"].get("OOMKilled"))
             if inspected["State"].get("ExitCode") != status:
                 raise RunnerError("Docker and coordinator exit statuses differ")
@@ -443,10 +481,18 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
             detail["errors"].append(str(error))
         return entry, detail
     finally:
-        docker(["rm", "--force", name], check=False)
-        detail["runner_removed"] = container_absent(name)
+        try:
+            if not detail["container_id"]:
+                detail["container_id"] = read_cidfile(cidfile)
+        except Exception as error:
+            detail["errors"].append(str(error))
+        if detail["container_id"]:
+            docker(["rm", "--force", detail["container_id"]], check=False)
+            detail["runner_removed"] = container_absent(detail["container_id"])
+        else:
+            detail["runner_removed"] = container_absent(name)
         if not detail["runner_removed"]:
-            detail["errors"].append("Go runner container cleanup failed")
+            detail["errors"].append("Go runner container cleanup failed or a same-name foreign container remains")
 
 
 def discover_other(worktree: pathlib.Path, packages: list[str], env: dict, evidence: pathlib.Path) -> dict[str, list[str]]:
@@ -457,19 +503,46 @@ def discover_other(worktree: pathlib.Path, packages: list[str], env: dict, evide
     return v2.parse_other_json_discovery(result.stdout, packages)
 
 
-def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, volume: str, sandbox_seen: bool, runners_removed: bool) -> tuple[dict, list[str]]:
+def netns_absent(sandbox_key: str, image: str) -> bool:
+    path = pathlib.PurePosixPath(sandbox_key)
+    if path.parent not in (pathlib.PurePosixPath("/var/run/docker/netns"), pathlib.PurePosixPath("/run/docker/netns")) or not re.fullmatch(r"[0-9a-f]{12,64}", path.name):
+        raise RunnerError("Docker sandbox identity is outside the expected netns directory")
+    result = docker([
+        "run", "--rm", "--network", "none", "--mount", f"type=bind,source={path.parent},target=/host-netns,readonly",
+        "--entrypoint", "python3", image, "-B", "-I", "-c",
+        "import os,sys; sys.exit(1 if os.path.lexists(sys.argv[1]) else 0)", f"/host-netns/{path.name}",
+    ], check=False)
+    return result.returncode == 0
+
+
+def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, volume: str, resources: dict, runners_removed: bool, image: str) -> tuple[dict, list[str]]:
     errors = []
-    pg_removed = (docker(["rm", "--force", postgres], check=False).returncode == 0 or container_absent(postgres)) and container_absent(postgres)
+    postgres_id = resources.get("postgres_id", "")
+    if postgres_id:
+        docker(["rm", "--force", postgres_id], check=False)
+        pg_removed = container_absent(postgres_id)
+    else:
+        pg_removed = container_absent(postgres)
     if not pg_removed:
-        errors.append("PostgreSQL container cleanup failed")
-    volume_removed = (docker(["volume", "rm", volume], check=False).returncode == 0 or volume_absent(volume)) and volume_absent(volume)
+        errors.append("PostgreSQL container cleanup failed or a foreign same-name container remains")
+    if resources.get("volume_created"):
+        docker(["volume", "rm", volume], check=False)
+    volume_removed = volume_absent(volume)
     if not volume_removed:
-        errors.append("PostgreSQL volume cleanup failed")
+        errors.append("PostgreSQL volume cleanup failed or a foreign same-name volume remains")
+    netns_removed = False
+    if resources.get("sandbox_key") and runners_removed and pg_removed:
+        try:
+            netns_removed = netns_absent(resources["sandbox_key"], image)
+        except Exception as error:
+            errors.append(f"netns cleanup inspection failed: {error}")
     cleanup = {
         "containers_removed": bool(runners_removed and pg_removed),
         "volume_removed": bool(volume_removed),
-        "netns_removed": bool(sandbox_seen and runners_removed and pg_removed),
+        "netns_removed": bool(netns_removed),
     }
+    if resources.get("sandbox_key") and not netns_removed and not any("netns cleanup inspection failed" in error for error in errors):
+        errors.append("Docker sandbox path still exists or cannot be proven absent")
     try:
         execute(["git", "-C", str(source), "worktree", "remove", "--force", str(worktree)])
     except Exception as error:
@@ -481,19 +554,18 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
     name = shard["name"]
     result = {"name": name, "database_identifier": "", "parts": [], "entries": [], "cleanup": {"containers_removed": False, "volume_removed": False, "netns_removed": False}, "errors": []}
     worktree = run_root / "worktrees" / name
-    postgres = f"moni-040-{run_id[:12]}-{name}-pg"
-    volume = f"moni-040-{run_id[:12]}-{name}-data"
+    postgres = f"moni-040-{run_id}-{name}-pg"
+    volume = f"moni-040-{run_id}-{name}-data"
     common_git = None
-    sandbox_seen = False
+    resources = {"volume_created": False, "postgres_id": "", "sandbox_key": ""}
     runners_removed = True
     try:
         common_git = create_worktree(source, worktree, shard["commit"], shard["tree"])
         env = module_environment(run_root, name)
         prefetch_modules(worktree, env)
         postgres_env, runner_env = write_private_files(private, name, run_root, env)
-        inspected, identifier = start_postgres(run_id, name, images["postgres"], postgres_env, volume, postgres)
+        inspected, identifier = start_postgres(run_id, name, images["postgres"], postgres_env, volume, postgres, resources)
         result["database_identifier"] = identifier
-        sandbox_seen = True
         other_tests = discover_other(worktree, shard["packages"], env, evidence) if shard["class"] == "other" else {}
         for part in shard["parts"]:
             expected = {(part["packages"][0], test) for test in part["tests"]} if shard["class"] != "other" else {(package, test) for package, tests in other_tests.items() for test in tests}
@@ -506,15 +578,20 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
                 runners_removed = runners_removed and detail.get("runner_removed", False)
                 result["errors"].extend(detail["errors"])
             except Exception as error:
-                orphan = f"moni-040-{run_id[:12]}-{part['name']}"
-                docker(["rm", "--force", orphan], check=False)
-                runners_removed = runners_removed and container_absent(orphan)
+                orphan = f"moni-040-{run_id}-{part['name']}"
+                cidfile = runner_env.parent / f"{part['name']}.cid"
+                container_id = read_cidfile(cidfile)
+                if container_id:
+                    docker(["rm", "--force", container_id], check=False)
+                    runners_removed = runners_removed and container_absent(container_id)
+                else:
+                    runners_removed = runners_removed and container_absent(orphan)
                 result["errors"].append(f"{part['name']}: {error}")
     except Exception as error:
         result["errors"].append(str(error))
     finally:
         if common_git is not None:
-            cleanup, errors = cleanup_shard(source, worktree, postgres, volume, sandbox_seen, runners_removed)
+            cleanup, errors = cleanup_shard(source, worktree, postgres, volume, resources, runners_removed, images["go_runner"])
             result["cleanup"] = cleanup
             result["errors"].extend(errors)
             for entry in result["entries"]:
@@ -605,6 +682,14 @@ def run_selected(shards: list[dict], run_one) -> list[dict]:
     return results
 
 
+def attempt_scope(shard_count: int) -> str:
+    if shard_count == 1:
+        return "workers_1_canary"
+    if shard_count == 14:
+        return "workers_1_full_go_race"
+    return "workers_1_partial"
+
+
 def execute_attempt(args: argparse.Namespace) -> tuple[pathlib.Path, dict]:
     if args.workers != 1:
         raise RunnerError("PR-C implements workers=1 only; workers=2 is not implemented or permitted")
@@ -653,7 +738,7 @@ def execute_attempt(args: argparse.Namespace) -> tuple[pathlib.Path, dict]:
             errors.append(f"v2 merge failed: {error}")
     report = {
         "schema_version": 1, "suite": "040-pr-c-container-runner",
-        "scope": "workers_1_canary" if len(shards) == 1 else "workers_1_full_go_race",
+        "scope": attempt_scope(len(shards)),
         "status": "PASS" if not errors else "FAIL", "reusable": bool(manifest),
         "run_id": args.run_id, "commit": commit, "tree": tree, "workers": 1,
         "fail_fast": False, "selected_shards": [shard["name"] for shard in shards],

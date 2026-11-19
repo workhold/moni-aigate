@@ -52,6 +52,11 @@ def successful_results(plan):
     return results
 
 
+def write_cid(args, value="2" * 64):
+    path = pathlib.Path(args[args.index("--cidfile") + 1])
+    path.write_text(value + "\n", encoding="ascii")
+
+
 class AcceptanceParallelRunnerTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -116,12 +121,23 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
             if args[0] == "exec":
                 output = "ready\n" if "CASE WHEN" in args[-1] else "123456789\n"
                 return SimpleNamespace(returncode=0, stdout=output, stderr="")
+            if args[0] == "run":
+                write_cid(args, "1" * 64)
+            if args[:2] == ["volume", "inspect"]:
+                return SimpleNamespace(returncode=0, stdout=json.dumps({runner.RUN_LABEL: "a" * 32, runner.SHARD_LABEL: "attempt-0"}), stderr="")
             return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-        inspected = {"Id": "pg-id", "HostConfig": {"NetworkMode": "none", "PortBindings": None, "PublishAllPorts": False}, "NetworkSettings": {"SandboxKey": "/netns/test"}}
-        with mock.patch.object(runner, "docker", side_effect=fake_docker), mock.patch.object(runner, "container_inspect", return_value=inspected):
-            _, identifier = runner.start_postgres("a" * 32, "attempt-0", "postgres@sha256:" + "1" * 64, self.root / "pg.env", "volume", "pg")
+        resources = {}
+        inspected = {"Id": "1" * 64, "Config": {"Labels": {runner.RUN_LABEL: "a" * 32, runner.SHARD_LABEL: "attempt-0"}}, "HostConfig": {"NetworkMode": "none", "PortBindings": None, "PublishAllPorts": False}, "NetworkSettings": {"SandboxKey": "/var/run/docker/netns/abcdef123456"}}
+        with mock.patch.object(runner, "docker", side_effect=fake_docker), \
+             mock.patch.object(runner, "container_absent", return_value=True), \
+             mock.patch.object(runner, "volume_absent", return_value=True), \
+             mock.patch.object(runner, "container_inspect", return_value=inspected):
+            _, identifier = runner.start_postgres("a" * 32, "attempt-0", "postgres@sha256:" + "1" * 64, self.root / "pg.env", "volume", "pg", resources)
         self.assertEqual("123456789", identifier)
+        self.assertTrue(resources["volume_created"])
+        self.assertEqual("1" * 64, resources["postgres_id"])
+        self.assertEqual("/var/run/docker/netns/abcdef123456", resources["sandbox_key"])
         run = next(args for args in calls if args[0] == "run")
         self.assertEqual("none", run[run.index("--network") + 1])
         self.assertNotIn("--publish", run)
@@ -145,6 +161,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
 
             def __init__(self, args, stdout, stderr):
                 captured["args"] = args
+                write_cid(args)
 
             def poll(self):
                 return self.returncode
@@ -153,7 +170,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
                 return self.returncode
 
         inspected = {
-            "Path": "go", "Args": part["args"][1:], "State": {"ExitCode": 0, "OOMKilled": False},
+            "Id": "2" * 64, "Config": {"Labels": {runner.RUN_LABEL: "a" * 32, runner.SHARD_LABEL: "attempt-0"}}, "Path": "go", "Args": part["args"][1:], "State": {"ExitCode": 0, "OOMKilled": False},
             "HostConfig": {"NetworkMode": "container:pg-id", "PortBindings": None, "PublishAllPorts": False},
         }
         with mock.patch.object(runner.subprocess, "Popen", Process), \
@@ -164,6 +181,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
              mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")):
             entry, detail = runner.run_part(self.root, evidence, self.root, self.root, "a" * 32, "attempt-0", part, image, self.root / "runner.env", "pg", "pg-id", {("example.com/mod/internal/attempt-0", "TestOne")}, set())
         argv = captured["args"]
+        self.assertIn(f"moni-040-{'a' * 32}-attempt-0", argv)
         self.assertEqual(part["args"], argv[argv.index(image) + 1:])
         docker_prefix = argv[:argv.index(image)]
         self.assertNotIn("--publish", docker_prefix)
@@ -182,7 +200,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
             returncode = 137
 
             def __init__(self, args, stdout, stderr):
-                pass
+                write_cid(args)
 
             def poll(self):
                 return self.returncode
@@ -191,7 +209,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
                 return self.returncode
 
         inspected = {
-            "Path": "go", "Args": part["args"][1:], "State": {"ExitCode": 137, "OOMKilled": True},
+            "Id": "2" * 64, "Config": {"Labels": {runner.RUN_LABEL: "a" * 32, runner.SHARD_LABEL: "attempt-0"}}, "Path": "go", "Args": part["args"][1:], "State": {"ExitCode": 137, "OOMKilled": True},
             "HostConfig": {"NetworkMode": "container:pg-id", "PortBindings": None, "PublishAllPorts": False},
         }
         with mock.patch.object(runner.subprocess, "Popen", Process), \
@@ -204,6 +222,31 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertTrue(detail["oom_killed"])
         self.assertTrue(any("137" in error for error in detail["errors"]))
 
+    def test_missing_cidfile_never_deletes_same_name_foreign_container(self):
+        evidence = self.root / "evidence"
+        evidence.mkdir()
+        part = make_part("attempt-0")
+
+        class Process:
+            returncode = 125
+
+            def __init__(self, args, stdout, stderr):
+                pass
+
+            def poll(self):
+                return self.returncode
+
+            def wait(self):
+                return self.returncode
+
+        with mock.patch.object(runner.subprocess, "Popen", Process), \
+             mock.patch.object(runner, "container_absent", return_value=False), \
+             mock.patch.object(runner, "docker") as docker_call:
+            _, detail = runner.run_part(self.root, evidence, self.root, self.root, "a" * 32, "attempt-0", part, "image", self.root / "runner.env", "pg", "pg-id", {("example.com/mod/internal/attempt-0", "TestOne")}, set())
+        self.assertFalse(detail["runner_removed"])
+        self.assertTrue(any("cidfile" in error for error in detail["errors"]))
+        self.assertEqual([], [call for call in docker_call.call_args_list if call.args and call.args[0] and call.args[0][0] == "rm"])
+
     def test_resource_sampling_waits_through_container_registration_race(self):
         evidence = self.root / "evidence"
         evidence.mkdir()
@@ -214,6 +257,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
 
             def __init__(self, args, stdout, stderr):
                 self.calls = 0
+                write_cid(args)
 
             def poll(self):
                 self.calls += 1
@@ -223,7 +267,7 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
                 return 0
 
         inspected = {
-            "Path": "go", "Args": part["args"][1:], "State": {"ExitCode": 0, "OOMKilled": False},
+            "Id": "2" * 64, "Config": {"Labels": {runner.RUN_LABEL: "a" * 32, runner.SHARD_LABEL: "attempt-0"}}, "Path": "go", "Args": part["args"][1:], "State": {"ExitCode": 0, "OOMKilled": False},
             "HostConfig": {"NetworkMode": "container:pg-id", "PortBindings": None, "PublishAllPorts": False},
         }
         samples = [runner.RunnerError("Error response from daemon: No such container: runner"), [{"Name": "runner"}]]
@@ -249,6 +293,27 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
             self.assertTrue(runner.volume_absent("volume"))
         with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=1, stdout="", stderr="Error response from daemon: get volume: no such volume")):
             self.assertTrue(runner.volume_absent("volume"))
+
+    def test_existing_postgres_names_are_not_adopted_or_removed(self):
+        with mock.patch.object(runner, "container_absent", return_value=False), \
+             mock.patch.object(runner, "volume_absent", return_value=True), \
+             mock.patch.object(runner, "docker") as docker_call:
+            with self.assertRaises(runner.RunnerError):
+                runner.start_postgres("a" * 32, "attempt-0", "image", self.root / "pg.env", "volume", "pg", {})
+        self.assertEqual([], docker_call.call_args_list)
+
+    def test_shard_cleanup_uses_owned_id_and_verifies_netns_absence(self):
+        resources = {"postgres_id": "1" * 64, "volume_created": True, "sandbox_key": "/var/run/docker/netns/abcdef123456"}
+        with mock.patch.object(runner, "container_absent", return_value=True), \
+             mock.patch.object(runner, "volume_absent", return_value=True), \
+             mock.patch.object(runner, "execute"), \
+             mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")) as docker_call:
+            cleanup, errors = runner.cleanup_shard(self.root, self.root / "worktree", "pg-name", "volume-name", resources, True, "go-image")
+        self.assertEqual({"containers_removed": True, "volume_removed": True, "netns_removed": True}, cleanup)
+        self.assertEqual([], errors)
+        removals = [call.args[0] for call in docker_call.call_args_list if call.args and call.args[0] and call.args[0][0] == "rm"]
+        self.assertEqual([["rm", "--force", "1" * 64]], removals)
+        self.assertNotIn("pg-name", str(docker_call.call_args_list))
 
     def test_raw_log_validation_reuses_v2_and_reviewed_skip_baseline(self):
         part = make_part("attempt-0")
@@ -368,6 +433,23 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertEqual({"127.0.0.1:55439"}, runner.parse_proc_net_tcp(raw_v4, socket.AF_INET))
         raw_v6 = "  sl  local_address rem_address   st\n   0: 00000000000000000000000001000000:1F90 00000000000000000000000000000000:0000 0A\n"
         self.assertEqual({"[::1]:8080"}, runner.parse_proc_net_tcp(raw_v6, socket.AF_INET6))
+
+    def test_netns_absence_uses_host_sandbox_path_and_fails_closed(self):
+        key = "/var/run/docker/netns/abcdef123456"
+        with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")) as docker_call:
+            self.assertTrue(runner.netns_absent(key, "go-image"))
+        args = docker_call.call_args.args[0]
+        self.assertIn("type=bind,source=/var/run/docker/netns,target=/host-netns,readonly", args)
+        self.assertIn("os.path.lexists", args[-2])
+        with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=1, stdout="", stderr="")):
+            self.assertFalse(runner.netns_absent(key, "go-image"))
+        with self.assertRaises(runner.RunnerError):
+            runner.netns_absent("/tmp/not-a-docker-sandbox", "go-image")
+
+    def test_attempt_scope_distinguishes_partial_from_full(self):
+        self.assertEqual("workers_1_canary", runner.attempt_scope(1))
+        self.assertEqual("workers_1_partial", runner.attempt_scope(2))
+        self.assertEqual("workers_1_full_go_race", runner.attempt_scope(14))
 
     def test_host_listener_change_and_existing_acceptance_port_fail(self):
         baseline = {"127.0.0.1:8080"}
