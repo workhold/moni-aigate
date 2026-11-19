@@ -98,3 +98,9 @@ scripts/phase1-acceptance.sh --execute \
 - `docs/verification/phase1/evidence/<提交>/`：原始测试与 harness 日志。
 
 只有 `summary.json` 的 `overall_status=PASS`、`counts={total:41,pass:41,fail:0,skip:0}` 才表示本地第一阶段清单通过。该结论仍不覆盖真实供应商、正式支付商、生产凭据、生产 SLA、多实例 HA 或第二阶段能力。
+
+## 040 workers=2 候选（默认关闭，当前未通过）
+
+040 PR-D 可显式设置 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2`，让本入口生成新 run_id、调用专用 VM 协调器执行 14 片/17 part，再进入相同的 current-MVP 与串行尾部。该变量与 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 互斥；未设置时仍执行上文的 serial v1。候选模式必须同时提供新的仓库外 `--artifacts` 和 `--output`，以便同一干净提交连续运行；外部 workers=2 manifest 也必须附同 attempt 的 runner report/proof。具体命令、隔离与缓存边界见[runner 手册](../../scripts/acceptance-parallel-runner.md)。
+
+当前多轮完整 workers=2 均出现业务断言失败，没有全绿 manifest，未进入本页完整 029 串行尾部，更没有连续两轮或默认化。失败与清理证据见[workers=2 候选与未通过验收记录](acceptance-workers-2.md)。不得把局部分片、canary 或失败但较快的运行写成本页 41/41 通过。

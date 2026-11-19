@@ -51,6 +51,8 @@
 
 **出口**：连续两轮 41/41、0 FAIL、0 必需 SKIP、100/100 复用，无 OOM/超时/残留；浏览器与独立生命周期证据齐全，CI 和架构检查全绿。
 
+**PR-D 当前实现与阻断**：双 worker 调度、真实双 cluster 互见证明、独立 Git common、同 attempt 构建材料复用、严格 v2 调度/资源/清理验证和 029 显式集成已实现，默认仍为 serial v1。真实 nested-worktree、空 part 双库探针和专项测试已通过；但多轮完整 workers=2 均出现不同业务断言失败，没有一次 14 片/17 part 全绿 manifest，也没有进入完整 029 串行尾部或连续两轮验收。最终 `e3b5600` 候选 run `b21ffe6f742e4c16bf89a46335fac502` 为 3178.887 秒且 server-0/other FAIL；另一次 2656.807 秒运行也有一项 billing FAIL，不能据此宣称提速。详见[候选与未通过验收记录](../../docs/verification/acceptance-workers-2.md)。PR-D 不得标为完成或默认化，后续仍需先解决可重复性，再完成两轮完整 029 和独立复核。
+
 ## 后续另行立项
 
 - workers>=3、拆 `other`、并行真实 main/支付/邮件/Compose、跨机器调度。

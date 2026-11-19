@@ -8354,3 +8354,42 @@ PR-B serial 029 清除遗留 v2 环境并受控处理非法 run_id；保持默�
 - modified `scripts/check-architecture/main_test.go`
 
 </details>
+
+## 2026-11-19T15:26:04Z · 84bb2dec0c17
+
+040 PR-D workers=2 候选：双 cluster 调度、独立 Git common、构建材料复用、v2/029 证据与清理合同已同步；多轮完整运行仍有业务断言失败，无全绿 manifest、连续两轮或提速结论，默认 serial v1 不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2572 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-workers-2.md`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- added `scripts/acceptance-parallel-coordinator.py`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `scripts/acceptance-parallel-runner.py`
+- added `scripts/acceptance_parallel_coordinator_test.py`
+- modified `scripts/acceptance_parallel_runner_test.py`
+- modified `scripts/check-acceptance-evidence-v2.py`
+- modified `scripts/check_acceptance_evidence_v2_test.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1-acceptance.test.sh`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-19T15:26:34Z · 7b34cd86cb37
+
+补充 PR-D 独立复核边界：仅确认无 false-PASS、manifest 或清理阻断，完整 workers=2 与两轮 029 仍未通过，默认不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2572 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-workers-2.md`
+
+</details>

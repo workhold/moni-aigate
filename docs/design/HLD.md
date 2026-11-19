@@ -137,6 +137,12 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 `acceptance-parallel-runner.py` 已在测试编排层实现每片一次性 PostgreSQL+Go runner、独立 cluster/volume/netns 和 detached worktree。PostgreSQL 使用 `--network none`，runner 加入其 container netns，片内保持 `127.0.0.1:55439/moni_test`，不发布宿主端口；镜像 digest、私有 env、GOMAXPROCS=2、PR-A 精确 argv、PR-B 原始日志/parser 和 211 项 SKIP 基线不变。完整 run_id/cidfile/label 限定资源所有权，清理还实际核验 SandboxKey 消失。workers 仅允许 1，单片或 partial 不生成可复用 manifest；完整 v2 仍要求 14 片/17 part、100/77 合并和全部清理成功。真实 `attempt-0` canary 已验证 loopback、原始证据、零新增宿主监听和资源清理，但不是完整 029、双 cluster 互见或默认化。详见[PR-C 验证记录](../verification/acceptance-container-runner.md)。
 
+### 4.11 PR-D workers=2 候选与未通过验收
+
+PR-D 已实现最多两个 worker 的 14 片调度、双活动 cluster 的同名 role/default ACL/advisory lock 隔离证明、独立 bare Git common 与 detached worktree、同 attempt 构建材料复用，以及资源/清理/时间窗口严格校验。测试容器保留物理 worktree 路径，避免 Git back-pointer 和业务 fixture 受到逻辑路径映射影响；共享仅限只读模块缓存和 Go 并发安全 build cache，`-count=1` 禁止测试结果复用。029 仅显式 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2` 启动本轮 runner，serial v1 和既有 manifest 诊断路径保留；完整串行尾部不变。
+
+当前候选没有通过任何一次完整 14 片/17 part，因而没有可复用 manifest、完整 029 或连续两轮结果，也没有实测可宣称的整单提速。多轮失败分布于不同 billing/server/other 业务断言，最终记录见[workers=2 候选与未通过验收记录](../verification/acceptance-workers-2.md)。默认继续 serial v1，不能进入 `parallel_default`。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |
