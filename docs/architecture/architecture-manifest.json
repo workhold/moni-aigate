@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-19T19:17:36Z",
-  "review_reason": "仅增强 029 密码修改失败诊断：记录不含秘密的错误文本、路径和 MFA 输入状态，不改认证断言、页面或业务行为；时钟修复后的完整 workers=2 已通过，完整 029 浏览器待重验",
-  "snapshot_sha256": "a2363b8927afbf7b0a07baa5d33f96c35e67c7d0d3feff9f5a3f9520b783ec6e",
-  "architecture_sha256": "727c547e51e3de1655921e3f95063ce07197b84e54937f0255e97c38b8224bc3",
-  "history_sha256": "64d08cfeb8caaf2ef206a4a88492dc41f807371fed9ba6e7a248c4b620a68f85",
+  "reviewed_at": "2026-11-19T20:49:50Z",
+  "review_reason": "PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在有效 report/proof 下使用 runner-attested v2 复用，消除重复源码发现；standalone v2 和 serial v1 不变。去重前第一轮 41/41 已记录，优化后整单仍待验证",
+  "snapshot_sha256": "dc78282143b502d2f5dd8662da9902714b469a22509d563f2ac8169091587f94",
+  "architecture_sha256": "c8f2169864cc1a277d460d3da25a1aab9b150713e96970e33396bd1d6e023dff",
+  "history_sha256": "754343a41fe9e81f254963dcab171a2f09d68e1ef7eb7fd8949d10007b4c9fb0",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "d46cabbad1a51cc9fb8d5f6e0b0e8f90db78603d519c90bba4e8b4821f35f49c"
+      "sha256": "5cdcc69bcfec0f1031fb6789d193620b8d835275bf12f1c79997f275996d8ae6"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "914b868f16046f9a52b0dd3248792e55bf0f49dffa6ed19835b2bbdb4cce3024"
+      "sha256": "455aff9118cf92459cc090d843c61de2d0798a3c31f076ffc7e15611be594da0"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -340,8 +340,12 @@
       "sha256": "171770ac6ece80f1e96095955ce2055634a1bb87f8883670335d64ab03d27a34"
     },
     {
+      "path": "docs/verification/acceptance-workers-2-performance.md",
+      "sha256": "e32d9509166c482bec55243476343b0077f405e69f1c3c5d233878cdda9c8d61"
+    },
+    {
       "path": "docs/verification/acceptance-workers-2.md",
-      "sha256": "21f40f4d9daadca9fbe98c5180c19c3b45cc72e3aa2686bdc2dc33f27f4a84ba"
+      "sha256": "8d183077555840e7bc6c3096eabed66b8850a7102e72d77dc9d953602a56842e"
     },
     {
       "path": "docs/verification/architecture-basis-proof-v2.json",
@@ -1657,7 +1661,7 @@
     },
     {
       "path": "docs/verification/phase1-acceptance-runner.md",
-      "sha256": "a22d7b4ae2dc59d453194a147857c7df58d7b10d6fdcd25993af235456af9de8"
+      "sha256": "00433d325372f3d0493e281af8bbfac64ba7d765f369932e15a8483127ceb11f"
     },
     {
       "path": "docs/verification/phase1-browser-preview.md",
@@ -7981,11 +7985,11 @@
     },
     {
       "path": "scripts/acceptance-parallel-runner.md",
-      "sha256": "11726067abba5bfd4273ce4044007b2d470eac270d12a336de7644dd25ae1048"
+      "sha256": "4a5c4dd00c97d7ad35930378b38066eea5695bc0de111876734309849aa11a63"
     },
     {
       "path": "scripts/acceptance-parallel-runner.py",
-      "sha256": "64b25a87fb0b0bb9ddfcf52b498f2438af23f30a2de483019fd7a493a2a0116d"
+      "sha256": "b091cfdc45a5d0fe5b8502a082089f01e24abfbcc75d290c84782ef6fca02af6"
     },
     {
       "path": "scripts/acceptance-runner-images.json",
@@ -8017,7 +8021,7 @@
     },
     {
       "path": "scripts/acceptance_parallel_runner_test.py",
-      "sha256": "853a0c21dc7d8f34ee134909dd295e6d18b4e739dc5ee914991365bfe993137a"
+      "sha256": "541168748a48de69f4610a037889be5be38997a302613cce289e166e8e9d0952"
     },
     {
       "path": "scripts/backup-restore-drill.go",
@@ -8089,7 +8093,7 @@
     },
     {
       "path": "scripts/check-acceptance-evidence-v2.py",
-      "sha256": "6a6fe5fbe8b1ae6c76c8cf82000710dfbdb64ed7720cee9d196b0d2a9ba70c2b"
+      "sha256": "dc7e68d6bae0b91b064b2d08456af588573e170f0e88aff70c87103886b1969f"
     },
     {
       "path": "scripts/check-architecture/main.go",
@@ -8141,7 +8145,7 @@
     },
     {
       "path": "scripts/check_acceptance_evidence_v2_test.py",
-      "sha256": "812074fa4adf7da192b3073025de7e4cfef0735972a9154676fefc127bdd49d7"
+      "sha256": "85eaffc426f28501f571103a4d18fcbafc286577fca3877290277ec53386290d"
     },
     {
       "path": "scripts/check_go_test_evidence_test.py",
@@ -8313,7 +8317,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "47d4278bf602e8b959070b038843ee9f45b46c8bdae6b9f9e83e015cfe55dc9e"
+      "sha256": "3ee93c8603662a68c3d973caffe178f3847ef4f0ec949c6a4af38eababbee007"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -8345,7 +8349,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "bf178764c22e9e5926e439ecca32a778c779cba7406f98cc0ffd56d2a34d99d0"
+      "sha256": "a13a91a45512f0fffba65e1f3f1bb2bda003e4a9830b41923cef5e414fc4a2dd"
     },
     {
       "path": "scripts/phase1_browser_qa.py",
@@ -8385,11 +8389,15 @@
     },
     {
       "path": "scripts/verify-current-mvp.sh",
-      "sha256": "4e0b304266948d24d842c0a31d7b03866d5631b259369bb1a557f6e2042a49f6"
+      "sha256": "6b989a3a797408ee37c70c4169b5af91592d58af3817c7c9fe16d4989c8fa315"
     },
     {
       "path": "scripts/verify-native-sdk.py",
       "sha256": "78fa5b270caf6c4ab9f6c22d1f15a67ea23e9318df26745f240f01dc5c1c33a9"
+    },
+    {
+      "path": "scripts/verify_current_mvp_attested.py",
+      "sha256": "45e2c3e38809cfaaf235a0d69656cdb08a698d9b08c553fd606b5ca69ae042da"
     },
     {
       "path": "specs/001-commercial-mvp/acceptance.md",
@@ -9517,11 +9525,11 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "7cd19acc906bfb32852db1ddd275b2e4310f045699b3f26794e093cdaa9d8615"
+      "sha256": "21c2eb6ae492b4eb1079710c5331f4eb75248e6b839f604c019c93c45b5aa041"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",
-      "sha256": "4fca73bfd3658633c505441080f62645c8dbe9d9531c8d435b064e59d841005b"
+      "sha256": "9f5d1e7a8e08bbb21c3269a34f38521a731b553a428a9a862fa4de37fa86a1ef"
     },
     {
       "path": "third_party/README.md",

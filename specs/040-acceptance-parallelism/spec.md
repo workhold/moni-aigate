@@ -1,6 +1,6 @@
 # 040：多独立 PostgreSQL 的验收并行化设计
 
-2026-11-18；状态：分阶段实施，PR-A/PR-B/PR-C 已实现，PR-D 已形成默认关闭的候选，但完整 workers=2 与两轮完整 029 尚未通过，默认未切换。本文只描述 029/039 测试回归与证据编排，不是 aigate 的业务多库、生产分片、读写分离或 HA 方案，不改变产品请求链路、迁移、钱包、结算、ACL、超时或恢复语义。
+2026-11-18；状态：分阶段实施，PR-A/PR-B/PR-C 已实现，PR-D 已形成默认关闭的候选，去重前第一轮完整 029 已 41/41，但优化后的下一轮和连续两轮完整 029 尚未通过，默认未切换。本文只描述 029/039 测试回归与证据编排，不是 aigate 的业务多库、生产分片、读写分离或 HA 方案，不改变产品请求链路、迁移、钱包、结算、ACL、超时或恢复语义。
 
 ## 1. 目标与基线
 
@@ -74,6 +74,8 @@ PR-D 的协调器在专用 Linux Docker VM 的 host network namespace 中运行�
 PR-B 当前实现 `check-acceptance-evidence-v2.py`：支持 schema v2 的显式 opt-in，但尚未启动多库 runner。v1 和 standalone 行为保持原样；029 只有显式设置 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 才使用 v2 合并结果，未设置时仍执行原串行 go-race。
 
 新增 `schema_version=2` 的索引，保留每个分片不可变原始 JSONL，不把多个带框架的日志拼成伪单命令 `go-race.jsonl`。PR-D 不改变该 schema；双库证明、逐片/合并墙钟和带时间戳的资源样本保存在同 attempt 的 runner report，029 集成路径核对 report 与最终 manifest 的 SHA-256。合并器先验证候选文件，再原子改名生成最终 manifest，崩溃留下的 candidate 不能冒充可复用证据。
+
+去重只减少重复发现，不降低证据强度：runner 的内部合并可显式接收预检生成的 `source_override=(plan,other_tests)`，要求其逐字段等于 evidence plan 并继续执行全部终态/身份/清理校验；standalone v2 仍重新发现源码。phase1 只有在 runner report 证明内部合并已完成时才进入 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1`，不再单独执行矩阵合并或九个 current-MVP 的重复源码发现；report/manifest/run_id/commit/tree/digest、双库证明和清理不符均失败关闭。serial v1 与未提供有效 runner report 的 v2 路径不变。
 
 索引至少包含：
 

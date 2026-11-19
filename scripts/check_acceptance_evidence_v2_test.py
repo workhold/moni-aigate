@@ -271,6 +271,15 @@ class EvidenceV2Test(unittest.TestCase):
         self.assertEqual(82, sum(len(bindings) for bindings in results.values()))
         self.assertTrue(all(status == "PASS" for bindings in results.values() for status in bindings.values()))
 
+    def test_runner_source_override_skips_only_duplicate_discovery(self):
+        with mock.patch.object(v2, "fresh_source", side_effect=AssertionError("duplicate discovery must not run")) as fresh:
+            self.assertEqual(2, v2.verify(self.manifest_path, self.specs(), source_override=(self.source_plan, self.source_other)))
+        fresh.assert_not_called()
+        wrong = copy.deepcopy(self.source_plan)
+        wrong["shards"][0]["parts"][0]["tests"][0] = "TestWrong"
+        with self.assertRaises(v2.EvidenceError):
+            v2.verify(self.manifest_path, self.specs(), source_override=(wrong, self.source_other))
+
     def test_manifest_and_run_identity_failures(self):
         for key, value in [("schema_version", True), ("run_id", "b" * 32), ("created_at", "2000-01-01T00:00:00+00:00"), ("source_clean", False), ("workers", 3), ("images", {}), ("commit", "0" * 40), ("tree", "0" * 40), ("plan_sha256", "0" * 64)]:
             with self.subTest(key=key):

@@ -384,11 +384,17 @@ def validate_schedule(workers: int, intervals: dict[str, tuple[dt.datetime, dt.d
         raise EvidenceError(f"v2 evidence does not demonstrate workers={workers} scheduling")
 
 
-def verify(manifest_path: pathlib.Path, specs: list[str]) -> int:
+def verify(manifest_path: pathlib.Path, specs: list[str], source_override: tuple[dict, dict[str, list[str]]] | None = None) -> int:
     common.require_clean_source()
     manifest, plan = load_manifest(manifest_path)
     parts = part_index(plan)
-    allocation = source_allocation(plan)
+    if source_override is None:
+        allocation = source_allocation(plan)
+    else:
+        fresh_plan, other_tests = source_override
+        if fresh_plan != plan:
+            raise EvidenceError("runner preflight plan differs from the evidence plan")
+        allocation = allocation_from_plan(fresh_plan, other_tests)
     required = [common.parse_spec(spec) for spec in specs]
     if not required or len(set(required)) != len(required):
         raise EvidenceError("v2 requires a nonempty unique test inventory")

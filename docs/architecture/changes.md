@@ -8421,3 +8421,30 @@ PR-D 根因分析与单一时钟源环境修复：workers=1 控制与宿主对�
 - modified `scripts/phase1_browser_qa.py`
 
 </details>
+
+## 2026-11-19T20:49:50Z · dc78282143b5
+
+PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在有效 report/proof 下使用 runner-attested v2 复用，消除重复源码发现；standalone v2 和 serial v1 不变。去重前第一轮 41/41 已记录，优化后整单仍待验证
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `scripts/acceptance-parallel-runner.py`
+- modified `scripts/acceptance_parallel_runner_test.py`
+- modified `scripts/check-acceptance-evidence-v2.py`
+- modified `scripts/check_acceptance_evidence_v2_test.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/verify-current-mvp.sh`
+- added `scripts/verify_current_mvp_attested.py`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>

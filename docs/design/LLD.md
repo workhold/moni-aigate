@@ -186,7 +186,9 @@ runner report 保存每片/part/合并/整段墙钟、双库证明、PostgreSQL 
 
 029 的 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2` 与外部 manifest 入口互斥，要求新仓库外 `--artifacts`/`--output` 和本轮 run_id；workers=2 的外部 manifest 也必须带 report/proof。`validate_parallel_report` 校验 17 part、manifest SHA-256、资源名称/时间、OOM、清理和零新增监听，summary 记录 run_id、并行/合并/串行尾部/整单墙钟。未设置并行变量时 serial v1 不变。
 
-当前实际状态是多轮完整 workers=2 均出现业务断言失败，未生成完整 manifest，未进入完整 029 串行尾部，也未达到连续两轮或默认化条件。详细失败与清理证据见[workers=2 候选记录](../verification/acceptance-workers-2.md)。workers=1 控制同样在 other 失败，排除了“仅 workers=2 导致”的解释；后续直接时钟采样证明 VM realtime 多次回拨，能够精确影响重试、批准顺序、价格生效和告警评估。该根因及未获授权的环境修复边界见[VM 时钟分析](../verification/acceptance-workers-2-clock-analysis.md)。经授权已禁用重复 NTP 源，180 秒 545 个数据库样本 0 回拨且清理完成；下一场完整 workers=2 与连续两轮 029 仍待验证。
+此前多轮完整 workers=2 均出现业务断言失败，未进入完整 029 串行尾部，也未达到连续两轮或默认化条件；去重前第一轮完整 029 已达到 41/41 并生成 manifest，但整单 3554.532 秒，优化后的下一轮仍待验证。历史失败与清理证据见[workers=2 候选记录](../verification/acceptance-workers-2.md)。workers=1 控制同样在 other 失败，排除了“仅 workers=2 导致”的解释；后续直接时钟采样证明 VM realtime 多次回拨，能够精确影响重试、批准顺序、价格生效和告警评估。该根因及未获授权的环境修复边界见[VM 时钟分析](../verification/acceptance-workers-2-clock-analysis.md)。经授权已禁用重复 NTP 源，180 秒 545 个数据库样本 0 回拨且清理完成；下一场完整 workers=2 与连续两轮 029 仍待验证。
+
+去重后的内部合并允许 `source_override=(plan,other_tests)` 复用预检计划，但不放宽 `verify` 的计划/清单/日志/身份/清理要求；外部 standalone v2 仍重新发现。phase1 在有效 runner report 下设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1` 和 `VERIFY_CURRENT_MVP_RUNNER_REPORT`，由 `verify_current_mvp_attested.py` 校验 manifest SHA-256、run_id/commit/tree、双库证明与清理后逐组输出 reused，不再单独执行矩阵合并。standalone 与 serial v1 路径不变。详见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
 
 ## 5. 资金模型与计价
 

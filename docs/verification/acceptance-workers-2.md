@@ -1,6 +1,6 @@
 # 040 PR-D workers=2 候选与未通过验收记录
 
-对应[040 设计](../../specs/040-acceptance-parallelism/spec.md)和[实施计划](../../specs/040-acceptance-parallelism/plan.md)。**当前只交付默认关闭的 workers=2 候选。没有任何一次完整 14 片/17 part 全绿并生成可复用 manifest，也没有完成两轮完整 029；不得把本页解释为 PR-D 验收完成、默认化或整单提速。**
+对应[040 设计](../../specs/040-acceptance-parallelism/spec.md)和[实施计划](../../specs/040-acceptance-parallelism/plan.md)。**当前只交付默认关闭的 workers=2 候选。此前多轮完整 14 片/17 part 未全绿；去重前第一轮完整 029 已达到 41/41 并生成可复用 manifest，但连续两轮和优化后的整单提速尚未完成，不得把本页解释为 PR-D 默认化或整单提速完成。**
 
 2026-11-20 后续控制分析：workers=1 完整 14 片控制也在 other 失败，宿主 Go1.26/1.27 的完整 other 均通过；Go/PG 版本和 workers=2 并发都不是统一根因。已直接证明 VM realtime 多次回拨约 1 秒，能解释重试未到期、审批顺序颠倒、报价和告警边界。详见[失败分析与 VM 时钟根因](acceptance-workers-2-clock-analysis.md)。经明确授权已禁用重复 NTP 源并保留 lima-guestagent，545 次采样 0 回拨且清理完成；下一场完整 workers=2 尚待执行，默认仍不变。
 

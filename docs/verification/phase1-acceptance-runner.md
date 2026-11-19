@@ -103,4 +103,6 @@ scripts/phase1-acceptance.sh --execute \
 
 040 PR-D 可显式设置 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2`，让本入口生成新 run_id、调用专用 VM 协调器执行 14 片/17 part，再进入相同的 current-MVP 与串行尾部。该变量与 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 互斥；未设置时仍执行上文的 serial v1。候选模式必须同时提供新的仓库外 `--artifacts` 和 `--output`，以便同一干净提交连续运行；外部 workers=2 manifest 也必须附同 attempt 的 runner report/proof。具体命令、隔离与缓存边界见[runner 手册](../../scripts/acceptance-parallel-runner.md)。
 
-当前多轮完整 workers=2 均出现业务断言失败，没有全绿 manifest，未进入本页完整 029 串行尾部，更没有连续两轮或默认化。失败与清理证据见[workers=2 候选与未通过验收记录](acceptance-workers-2.md)。不得把局部分片、canary 或失败但较快的运行写成本页 41/41 通过。
+去重前第一轮完整 029 已达到 41/41 PASS，但 `wall_seconds=3554.532`，未达整单提速目标；去重后的下一轮仍需实测。历史多轮 workers=2 失败及 workers=1 控制见[workers=2 候选与未通过验收记录](acceptance-workers-2.md)，不得把局部分片、canary 或失败但较快的运行写成本页 41/41 通过。
+
+去重后的 attested 路径在有效 runner report/proof 下通过 `verify_current_mvp_attested.py` 复用 runner 内部严格合并结果，不再单独执行矩阵合并和九个 current-MVP 的重复源码发现；standalone v2 和 serial v1 不变。第一轮完整 029 为 41/41 PASS 但 `wall_seconds=3554.532`，优化后的下一轮仍需实测，详见[去重优化与整单墙钟](acceptance-workers-2-performance.md)。

@@ -17,6 +17,9 @@ SPEC.loader.exec_module(MODULE)
 EVIDENCE_SPEC = importlib.util.spec_from_file_location("check_go_test_evidence", SCRIPT.with_name("check-go-test-evidence.py"))
 EVIDENCE = importlib.util.module_from_spec(EVIDENCE_SPEC)
 EVIDENCE_SPEC.loader.exec_module(EVIDENCE)
+ATTESTED_SPEC = importlib.util.spec_from_file_location("verify_current_mvp_attested", SCRIPT.with_name("verify_current_mvp_attested.py"))
+ATTESTED = importlib.util.module_from_spec(ATTESTED_SPEC)
+ATTESTED_SPEC.loader.exec_module(ATTESTED)
 
 
 class PhaseOneAcceptanceTest(unittest.TestCase):
@@ -149,10 +152,20 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
         self.assertLess(runner.index("go_evidence_manifest(artifact, commit, run_id)"), runner.index('add("current-mvp"'))
         shell = SCRIPT.with_name("verify-current-mvp.sh").read_text(encoding="utf-8")
         self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then', shell)
+        self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED:-}" ]; then', shell)
+        self.assertLess(shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED:-}" ]; then'), shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then'))
+        self.assertIn('verify_current_mvp_attested.py', shell)
+        self.assertIn('reused:', shell)
         self.assertLess(shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then'), shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then'))
         self.assertIn('check-acceptance-evidence-v2.py', shell)
         self.assertIn('os.environ.get("PHASE1_ACCEPTANCE_GO_EVIDENCE_V2")', runner)
         self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"]', runner)
+        self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED"] = "1"', runner)
+        self.assertIn('env["VERIFY_CURRENT_MVP_RUNNER_REPORT"]', runner)
+        self.assertIn('env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED", None)', runner)
+        self.assertIn('if parallel_details is not None:', runner)
+        self.assertIn('verify_current_mvp_attested.py', runner)
+        self.assertIn('env.pop("VERIFY_CURRENT_MVP_RUNNER_REPORT", None)', runner)
         self.assertIn('if manifest_value.get("workers") == 2:', runner)
         self.assertIn('validate_parallel_report(parallel_artifact / "runner-report.json"', runner)
         self.assertIn('env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)', runner)
@@ -229,7 +242,7 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
 
     def parallel_report_fixture(self, root, run_id, commit):
         manifest = root / "go-race-evidence-v2.json"
-        manifest.write_text(json.dumps({"run_id": run_id, "workers": 2, "commit": commit}), encoding="utf-8")
+        manifest.write_text(json.dumps({"schema_version": 2, "suite": "go-race-parallel", "run_id": run_id, "workers": 2, "commit": commit, "tree": "c" * 40, "source_clean": True, "shards": [{} for _ in range(17)]}), encoding="utf-8")
 
         def sample(shard, part):
             records = []
@@ -251,7 +264,7 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
             })
         proof = {"status": "PASS", "simultaneous_running": True, "default_acl_independent": True, "default_acl_restored": True, "advisory_lock_independent": True, "probe_objects_removed": True, "advisory_locks_remaining": 0}
         report = {
-            "schema_version": 1, "suite": "040-pr-d-parallel-runner", "run_id": run_id, "commit": commit,
+            "schema_version": 1, "suite": "040-pr-d-parallel-runner", "run_id": run_id, "commit": commit, "tree": "c" * 40,
             "workers": 2, "status": "PASS", "reusable": True, "manifest": manifest.name,
             "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
             "complete_029": False, "workers_2_proven": True, "fail_fast": False,
@@ -283,6 +296,20 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
             path.unlink()
             with self.assertRaises(FileNotFoundError):
                 MODULE.validate_parallel_report(path, manifest, "a" * 32, "b" * 40)
+
+    def test_runner_attested_manifest_binds_report_and_current_head(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            manifest, path, _ = self.parallel_report_fixture(root, "a" * 32, "b" * 40)
+            with mock.patch.object(ATTESTED, "_git", side_effect=lambda *args: "b" * 40 if args[-1] == "HEAD" else "c" * 40), \
+                 mock.patch.dict(ATTESTED.os.environ, {"PHASE1_ACCEPTANCE_RUN_ID": "a" * 32}):
+                self.assertEqual("PASS", ATTESTED.validate(path, manifest)["status"])
+                manifest.write_text(manifest.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+                with self.assertRaises(ATTESTED.AttestationError):
+                    ATTESTED.validate(path, manifest)
+            with mock.patch.dict(ATTESTED.os.environ, {"PHASE1_ACCEPTANCE_RUN_ID": "d" * 32}):
+                with self.assertRaises(ATTESTED.AttestationError):
+                    ATTESTED.validate(path, manifest)
 
     def test_failed_global_suite_never_generates_mvp_pass(self):
         items = MODULE.load_matrix()

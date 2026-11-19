@@ -45,6 +45,8 @@ DOCKER_CONTEXT=colima-moni-acceptance PYTHONDONTWRITEBYTECODE=1 python3 -B -I sc
 
 每次自动生成新的 32 位 run_id 和 `~/.cache/moni-aigate-acceptance/<run_id>/`，也可用 `--run-directory` 指定一个尚不存在且位于仓库外的目录。`evidence/runner-report.json` 保存 scope、逐片/part/合并/整段墙钟、双库证明、资源样本、宿主监听和清理。单片 workers=1 不生成 manifest；workers=2 只有全部 17 part、100/77 合并和清理成功才生成 `go-race-evidence-v2.json`，且仍不等于完整 029。
 
+内部合并可以复用预检生成的 `source_override=(plan,other_tests)`，但必须逐字段匹配 evidence plan；这避免重复 `fresh_source`，不放宽任何测试、SKIP、身份或清理检查。外部 standalone v2 仍重新发现源码。
+
 ## 029 显式候选路径
 
 完整 029 由 `phase1-acceptance.py` 生成本轮 run_id 并调用协调器。必须提供新的仓库外 artifact 和 summary 输出，防止前一轮生成文件阻断下一轮干净 HEAD：
@@ -62,4 +64,6 @@ scripts/phase1-acceptance.sh --execute \
 
 还需要按[029 执行手册](../docs/verification/phase1-acceptance-runner.md)提供隔离 preview、浏览器证据和部署环境。runner 失败会阻止使用旧 manifest 继续拼接串行尾部。workers=2 的外部 manifest 路径也必须包含同 attempt 的 `runner-report.json` 与 `dual-cluster-proof.json`；workers=1 的既有 v2 诊断行为保留。
 
-**当前没有任何一轮达到上述完整路径的出口。默认 serial v1 和 standalone current-MVP 均未改变。**
+**去重前第一轮完整 029 已达到 41/41，但整单未达提速目标；默认 serial v1 和 standalone current-MVP 均未改变。**
+
+在有效 runner report/proof 下，phase1 使用 `verify_current_mvp_attested.py` 复用 runner 内部严格合并结果，不再单独执行矩阵合并或九个 current-MVP 的重复源码发现。attested 复用必须同时提供 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1` 和 `VERIFY_CURRENT_MVP_RUNNER_REPORT`，并校验 manifest SHA-256、run_id/commit/tree、双库证明与清理；其它 v2 和 serial v1 路径保持原检查。

@@ -529,6 +529,8 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     else:
         go_mode = "serial-v1"
         env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)
+        env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED", None)
+        env.pop("VERIFY_CURRENT_MVP_RUNNER_REPORT", None)
         race_log = artifact / "go-race.jsonl"
         add("go-race", [run_logged(["go", "test", "-race", "-p", "1", "-count=1", "-timeout", "1200s", "-json", "./..."], race_log, env)])
         go_results = required_go_results(race_log, items)
@@ -537,10 +539,23 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         env["VERIFY_CURRENT_MVP_GO_EVIDENCE"] = str(go_evidence_manifest(artifact, commit, run_id))
     if parallel_workers is not None or v2_source:
         env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
-        merge = run_logged(v2_merge_command(v2_manifest, items), artifact / "go-race-v2-merge.log", env)
-        go_commands.append(merge)
-        add("go-race", go_commands)
-        go_results = matrix_go_results(items, "PASS" if merge["status"] == "PASS" else "MISSING")
+        if parallel_details is not None:
+            env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED"] = "1"
+            env["VERIFY_CURRENT_MVP_RUNNER_REPORT"] = str(v2_manifest.parent / "runner-report.json")
+            attest = run_logged([
+                sys.executable, "scripts/verify_current_mvp_attested.py",
+                "--report", env["VERIFY_CURRENT_MVP_RUNNER_REPORT"], "--manifest", str(v2_manifest),
+            ], artifact / "go-race-attestation.log", env)
+            go_commands.append(attest)
+            add("go-race", go_commands)
+            go_results = matrix_go_results(items, "PASS" if attest["status"] == "PASS" else "MISSING")
+        else:
+            env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED", None)
+            env.pop("VERIFY_CURRENT_MVP_RUNNER_REPORT", None)
+            merge = run_logged(v2_merge_command(v2_manifest, items), artifact / "go-race-v2-merge.log", env)
+            go_commands.append(merge)
+            add("go-race", go_commands)
+            go_results = matrix_go_results(items, "PASS" if merge["status"] == "PASS" else "MISSING")
         env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"] = str(v2_manifest)
         env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE", None)
     serial_tail_started = time.monotonic()
@@ -591,6 +606,7 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     shutil.rmtree(artifact)
     go_evidence = {"mode": go_mode, "run_id": run_id, "matrix_unique_tests": 77, "matrix_bindings": 82, "current_mvp_required_tests": 100}
     if parallel_details is not None:
+        go_evidence["attested_reuse"] = True
         go_evidence.update(parallel_details)
     summary = {
         "schema_version": 1, "spec": "029-phase1-acceptance", "run_id": run_id, "commit": commit,
@@ -599,7 +615,7 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
             "wall_seconds": round(time.monotonic() - started_monotonic, 3),
             "serial_tail_seconds": serial_tail_seconds,
             "parallel_runner_seconds": parallel_details.get("runner_wall_seconds") if parallel_details else None,
-            "v2_merge_seconds": next((command["seconds"] for command in go_commands if command["log"].endswith("go-race-v2-merge.log")), None),
+            "v2_merge_seconds": next((command["seconds"] for command in go_commands if command["log"].endswith(("go-race-v2-merge.log", "go-race-attestation.log"))), None),
         },
         "go_evidence": go_evidence, "required_go_results": go_results,
         "browser_evidence": str(browser_path.relative_to(ROOT)) if browser_path and browser_path.is_relative_to(ROOT) else str(browser_path),

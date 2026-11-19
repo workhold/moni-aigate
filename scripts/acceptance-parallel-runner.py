@@ -930,14 +930,13 @@ def merge_complete_evidence(source: pathlib.Path, evidence: pathlib.Path, plan: 
     candidate.unlink(missing_ok=True)
     path.unlink(missing_ok=True)
     write_json(candidate, manifest)
+    other = next(shard for shard in plan["shards"] if shard["class"] == "other")
+    other_tests = v2.parse_other_json_discovery((evidence / "other-discovery.jsonl").read_text(encoding="utf-8"), other["packages"])
     env = os.environ.copy()
     env[v2.common.RUN_ID_ENV] = run_id
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    command = [sys.executable, "-B", "-I", str(source / "scripts" / "check-acceptance-evidence-v2.py"), "--manifest", str(candidate)]
-    for spec in required_specs(source):
-        command.extend(["--spec", spec])
     try:
-        execute(command, cwd=source, env=env)
+        v2.verify(candidate, required_specs(source), source_override=(plan, other_tests))
         os.replace(candidate, path)
     except Exception:
         candidate.unlink(missing_ok=True)

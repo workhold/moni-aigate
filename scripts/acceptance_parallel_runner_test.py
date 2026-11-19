@@ -646,11 +646,13 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
     def test_failed_merge_removes_reusable_manifest(self):
         evidence = self.root / "evidence"
         evidence.mkdir()
+        (evidence / "other-discovery.jsonl").write_text("", encoding="utf-8")
         with mock.patch.object(runner, "build_manifest", return_value={"schema_version": 2}), \
              mock.patch.object(runner, "required_specs", return_value=["./internal/x:TestX"]), \
-             mock.patch.object(runner, "execute", side_effect=runner.RunnerError("merge failed")):
+             mock.patch.object(runner.v2, "parse_other_json_discovery", return_value={}), \
+             mock.patch.object(runner.v2, "verify", side_effect=runner.RunnerError("merge failed")):
             with self.assertRaises(runner.RunnerError):
-                runner.merge_complete_evidence(self.root, evidence, {}, "a" * 32, {}, [])
+                runner.merge_complete_evidence(self.root, evidence, {"shards": [{"class": "other", "packages": ["example.com/mod/internal/other"]}], "commit": "a" * 40, "tree": "b" * 40}, "a" * 32, {}, [])
         self.assertFalse((evidence / "go-race-evidence-v2.json").exists())
         self.assertFalse((evidence / "go-race-evidence-v2.candidate.json").exists())
 

@@ -51,7 +51,9 @@
 
 **出口**：连续两轮 41/41、0 FAIL、0 必需 SKIP、100/100 复用，无 OOM/超时/残留；浏览器与独立生命周期证据齐全，CI 和架构检查全绿。
 
-**PR-D 当前实现与阻断**：双 worker 调度、真实双 cluster 互见证明、独立 Git common、同 attempt 构建材料复用、严格 v2 调度/资源/清理验证和 029 显式集成已实现，默认仍为 serial v1。真实 nested-worktree、空 part 双库探针和专项测试已通过；但多轮完整 workers=2 均出现不同业务断言失败，没有一次 14 片/17 part 全绿 manifest，也没有进入完整 029 串行尾部或连续两轮验收。最终 `e3b5600` 候选 run `b21ffe6f742e4c16bf89a46335fac502` 为 3178.887 秒且 server-0/other FAIL；另一次 2656.807 秒运行也有一项 billing FAIL，不能据此宣称提速。详见[候选与未通过验收记录](../../docs/verification/acceptance-workers-2.md)。workers=1 完整控制同样在 other 失败；直接采样证明 VM realtime 多次回拨约 1 秒，是重试、审批、报价和告警失败的共同环境机制，详见[VM 时钟根因分析](../../docs/verification/acceptance-workers-2-clock-analysis.md)。经明确授权已禁用重复 NTP 源，545 个数据库样本 0 回拨且清理完成；在下一场完整 workers=2 和连续两轮完整 029 通过前，PR-D 不得标为完成或默认化。
+**PR-D 去重补充**：第一轮完整 029 已 41/41 PASS，但 `wall_seconds=3554.532`，慢于 serial 基线 827.514 秒。为消除重复源码发现，runner 内部合并允许只使用预检生成的 `source_override=(plan,other_tests)`，逐字段匹配而不重复 `fresh_source`；phase1 在有效 runner report/proof 下使用 `verify_current_mvp_attested.py` 复用内部合并结果，不再单独运行矩阵合并，current-MVP 逐组输出 reused。standalone v2、外部无 report 的 workers=1 manifest 与 serial v1 保持原检查。详见[去重优化与整单墙钟](../../docs/verification/acceptance-workers-2-performance.md)。优化后的下一轮完整 029 尚未执行，不能把第一轮结果当作优化后提速。
+
+**PR-D 当前实现与阻断**：双 worker 调度、真实双 cluster 互见证明、独立 Git common、同 attempt 构建材料复用、严格 v2 调度/资源/清理验证和 029 显式集成已实现，默认仍为 serial v1。真实 nested-worktree、空 part 双库探针和专项测试已通过；此前多轮完整 workers=2 出现不同业务断言失败，去重前第一轮完整 029 已达到 41/41 并生成 manifest，但整单 3554.532 秒，连续两轮和优化后的整单提速尚未完成。历史失败中，`e3b5600` 候选 run `b21ffe6f742e4c16bf89a46335fac502` 为 3178.887 秒且 server-0/other FAIL；另一次 2656.807 秒运行也有一项 billing FAIL，不能据此宣称提速。详见[候选与未通过验收记录](../../docs/verification/acceptance-workers-2.md)。workers=1 完整控制同样在 other 失败；直接采样证明 VM realtime 多次回拨约 1 秒，是重试、审批、报价和告警失败的共同环境机制，详见[VM 时钟根因分析](../../docs/verification/acceptance-workers-2-clock-analysis.md)。经明确授权已禁用重复 NTP 源，545 个数据库样本 0 回拨且清理完成；在下一场完整 workers=2 和连续两轮完整 029 通过前，PR-D 不得标为完成或默认化。
 
 ## 后续另行立项
 

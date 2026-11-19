@@ -113,6 +113,15 @@ checked_go_race_test() {
   [ "${#packages[@]}" -gt 0 ] || { echo 'checked_go_race_test requires at least one package' >&2; return 2; }
 
   local spec package test_name inventory
+  if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED:-}" ]; then
+    if [ "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED" != "1" ] || [ -z "${VERIFY_CURRENT_MVP_RUNNER_REPORT:-}" ] || [ -z "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then
+      echo 'attested v2 reuse requires value 1, a runner report and a v2 manifest' >&2
+      return 2
+    fi
+    python3 scripts/verify_current_mvp_attested.py --report "$VERIFY_CURRENT_MVP_RUNNER_REPORT" --manifest "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"
+    printf 'reused: %s\n' "$spec"
+    return
+  fi
   if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then
     local -a evidence_args=(--manifest "$VERIFY_CURRENT_MVP_GO_EVIDENCE_V2")
     for spec in "${specs[@]}"; do
