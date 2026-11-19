@@ -377,13 +377,16 @@ def start_postgres(run_id: str, shard: str, image: str, private_env: pathlib.Pat
 
 
 PROBE_ROLE = "moni_040_parallel_probe"
+PROBE_OWNER = "moni_040_parallel_owner"
 PROBE_TABLE = "public.moni_040_parallel_probe"
 PROBE_LOCK = 42040002
 PROBE_ACL_COUNT = """SELECT count(*) FROM pg_default_acl d
   CROSS JOIN LATERAL aclexplode(d.defaclacl) a
   JOIN pg_roles grantee ON grantee.oid = a.grantee
-  WHERE d.defaclrole = 'moni_test'::regrole AND d.defaclobjtype = 'r'
+  WHERE d.defaclrole = 'moni_040_parallel_owner'::regrole AND d.defaclobjtype = 'r'
   AND a.privilege_type = 'SELECT' AND grantee.rolname = 'moni_040_parallel_probe'"""
+MONI_DEFAULT_ACLS = """SELECT coalesce(string_agg(defaclacl::text, '|' ORDER BY defaclacl::text), '')
+  FROM pg_default_acl WHERE defaclrole = 'moni_test'::regrole"""
 
 
 def probe_sql(postgres_id: str, sql: str) -> str:
@@ -427,15 +430,20 @@ def prove_dual_cluster_isolation(records: dict[str, dict]) -> dict:
     holder = None
     holder_pid = None
     released = False
+    original_acls = {role: probe_sql(record["postgres_id"], MONI_DEFAULT_ACLS) for role, record in records.items()}
     try:
         for role, record in records.items():
             probe_sql(record["postgres_id"], f"""BEGIN;
+              CREATE ROLE {PROBE_OWNER} NOLOGIN;
               CREATE ROLE {PROBE_ROLE} NOLOGIN;
-              ALTER DEFAULT PRIVILEGES FOR ROLE moni_test GRANT SELECT ON TABLES TO {PROBE_ROLE};
+              ALTER DEFAULT PRIVILEGES FOR ROLE {PROBE_OWNER} GRANT SELECT ON TABLES TO {PROBE_ROLE};
+              GRANT CREATE ON SCHEMA public TO {PROBE_OWNER};
+              SET ROLE {PROBE_OWNER};
               CREATE TABLE {PROBE_TABLE}(marker text);
               INSERT INTO {PROBE_TABLE} VALUES ('{role}');
+              RESET ROLE;
               COMMIT;""")
-            if probe_sql(record["postgres_id"], f"SELECT count(*) FROM pg_roles WHERE rolname = '{PROBE_ROLE}'") != "1":
+            if probe_sql(record["postgres_id"], f"SELECT count(*) FROM pg_roles WHERE rolname IN ('{PROBE_OWNER}', '{PROBE_ROLE}')") != "2":
                 raise RunnerError("same-name role was not created in both clusters")
             if probe_sql(record["postgres_id"], PROBE_ACL_COUNT) != "1":
                 raise RunnerError("same-name default ACL was not created in both clusters")
@@ -453,35 +461,41 @@ def prove_dual_cluster_isolation(records: dict[str, dict]) -> dict:
         if lock_outcome.splitlines() != ["t", "t"]:
             raise RunnerError("cluster B could not acquire and release the same advisory lock in one session while cluster A held it")
         probe_sql(records["A"]["postgres_id"], f"""BEGIN;
-          ALTER DEFAULT PRIVILEGES FOR ROLE moni_test REVOKE SELECT ON TABLES FROM {PROBE_ROLE};
+          ALTER DEFAULT PRIVILEGES FOR ROLE {PROBE_OWNER} REVOKE SELECT ON TABLES FROM {PROBE_ROLE};
           DROP TABLE {PROBE_TABLE};
+          REVOKE CREATE ON SCHEMA public FROM {PROBE_OWNER};
           DROP ROLE {PROBE_ROLE};
+          DROP ROLE {PROBE_OWNER};
           COMMIT;""")
         remaining = probe_sql(records["B"]["postgres_id"], f"""SELECT
-          (SELECT count(*) FROM pg_roles WHERE rolname = '{PROBE_ROLE}') || '|' ||
+          (SELECT count(*) FROM pg_roles WHERE rolname IN ('{PROBE_OWNER}', '{PROBE_ROLE}')) || '|' ||
           ({PROBE_ACL_COUNT}) || '|' ||
           has_table_privilege('{PROBE_ROLE}', '{PROBE_TABLE}', 'SELECT') || '|' ||
           (SELECT marker FROM {PROBE_TABLE})""")
-        if remaining != "1|1|true|B":
+        if remaining != "2|1|true|B":
             raise RunnerError(f"cluster A role/default ACL mutation affected cluster B: remaining={remaining!r}")
         release_lock_holder(holder)
         released = True
         probe_sql(records["B"]["postgres_id"], f"""BEGIN;
-          ALTER DEFAULT PRIVILEGES FOR ROLE moni_test REVOKE SELECT ON TABLES FROM {PROBE_ROLE};
+          ALTER DEFAULT PRIVILEGES FOR ROLE {PROBE_OWNER} REVOKE SELECT ON TABLES FROM {PROBE_ROLE};
           DROP TABLE {PROBE_TABLE};
+          REVOKE CREATE ON SCHEMA public FROM {PROBE_OWNER};
           DROP ROLE {PROBE_ROLE};
+          DROP ROLE {PROBE_OWNER};
           COMMIT;""")
-        for record in records.values():
-            if probe_sql(record["postgres_id"], f"SELECT count(*) FROM pg_roles WHERE rolname = '{PROBE_ROLE}'") != "0":
+        for role, record in records.items():
+            if probe_sql(record["postgres_id"], f"SELECT count(*) FROM pg_roles WHERE rolname IN ('{PROBE_OWNER}', '{PROBE_ROLE}')") != "0":
                 raise RunnerError("dual-cluster probe role cleanup failed")
+            if probe_sql(record["postgres_id"], MONI_DEFAULT_ACLS) != original_acls[role]:
+                raise RunnerError("dual-cluster probe changed the moni_test default ACL state")
             if probe_sql(record["postgres_id"], "SELECT count(*) FROM pg_locks WHERE locktype = 'advisory'") != "0":
                 raise RunnerError("dual-cluster probe advisory lock cleanup failed")
         return {
             "schema_version": 1, "status": "PASS", "started_at": started, "completed_at": utc_now(),
             "wall_seconds": round(time.monotonic() - started_monotonic, 3),
             "clusters": {role: {"shard": record["shard"], "system_identifier": record["system_identifier"]} for role, record in records.items()},
-            "simultaneous_running": True, "same_role": PROBE_ROLE,
-            "default_acl_independent": True, "advisory_lock_independent": True,
+            "simultaneous_running": True, "same_role": [PROBE_OWNER, PROBE_ROLE],
+            "default_acl_independent": True, "default_acl_restored": True, "advisory_lock_independent": True,
             "probe_objects_removed": True, "advisory_locks_remaining": 0,
         }
     finally:

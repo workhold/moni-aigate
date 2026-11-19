@@ -190,7 +190,7 @@ def validate_parallel_report(path: pathlib.Path, manifest: pathlib.Path, run_id:
     if report.get("complete_029") is not False or report.get("workers_2_proven") is not True or report.get("fail_fast") is not False:
         raise ValueError("parallel runner attempt boundaries are invalid")
     proof = report.get("dual_cluster_proof")
-    if not isinstance(proof, dict) or proof.get("status") != "PASS" or proof.get("simultaneous_running") is not True or proof.get("default_acl_independent") is not True or proof.get("advisory_lock_independent") is not True or proof.get("probe_objects_removed") is not True or proof.get("advisory_locks_remaining") != 0:
+    if not isinstance(proof, dict) or proof.get("status") != "PASS" or proof.get("simultaneous_running") is not True or proof.get("default_acl_independent") is not True or proof.get("default_acl_restored") is not True or proof.get("advisory_lock_independent") is not True or proof.get("probe_objects_removed") is not True or proof.get("advisory_locks_remaining") != 0:
         raise ValueError("dual-cluster isolation proof is incomplete")
     if json.loads((path.parent / "dual-cluster-proof.json").read_text(encoding="utf-8")) != proof:
         raise ValueError("dual-cluster proof artifact differs from the runner report")

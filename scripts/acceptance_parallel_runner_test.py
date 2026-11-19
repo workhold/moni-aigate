@@ -308,11 +308,11 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
                 lock_calls.append((container, sql))
                 return "t\nt"
             if "SELECT marker FROM" in sql:
-                return "1|1|true|B"
+                return "2|1|true|B"
             if "pg_default_acl" in sql:
                 return "1"
             if "count(*) FROM pg_roles" in sql:
-                return "0" if container in dropped else "1"
+                return "0" if container in dropped else "2"
             if "has_table_privilege" in sql:
                 return "t"
             if "pg_locks" in sql:

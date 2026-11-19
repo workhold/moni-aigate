@@ -249,7 +249,7 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
                 "cleanup": {"containers_removed": True, "volume_removed": True, "netns_removed": True},
                 "postgres_terminal": {"running_before_cleanup": True, "oom_killed": False}, "parts": parts,
             })
-        proof = {"status": "PASS", "simultaneous_running": True, "default_acl_independent": True, "advisory_lock_independent": True, "probe_objects_removed": True, "advisory_locks_remaining": 0}
+        proof = {"status": "PASS", "simultaneous_running": True, "default_acl_independent": True, "default_acl_restored": True, "advisory_lock_independent": True, "probe_objects_removed": True, "advisory_locks_remaining": 0}
         report = {
             "schema_version": 1, "suite": "040-pr-d-parallel-runner", "run_id": run_id, "commit": commit,
             "workers": 2, "status": "PASS", "reusable": True, "manifest": manifest.name,

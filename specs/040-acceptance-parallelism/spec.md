@@ -59,7 +59,7 @@ PR-D 的协调器在专用 Linux Docker VM 的 host network namespace 中运行�
 
 - `preflight`：干净 HEAD、run ID、完整分区、镜像/资源/数据库身份和 SKIP 基线就绪；失败不得启动测试。
 - `workers_1_canary`：只验证单分片的容器工具链、真实 loopback、无新增宿主监听和清理，不承担需要两个活动 cluster 的并发互见证明，也不作为最终默认拓扑。
-- `workers_2_candidate`：首个并发对的两个 cluster 同时存活后、任何测试 part 启动前，分别创建同名 role/default ACL。A 撤销自己的默认权限并删除同名 role 后，B 的 role、默认 ACL 和既有表权限必须保持不变；A 持有 advisory lock 时验证 B 的同名锁可以独立取得并释放。两个 system identifier 必须不同，证明写入 runner report；失败会阻止可复用 manifest，但不妨碍其他安全分片完成诊断。每片 runner 只挂载自己的 worktree/Git common/home/tmp/GOPATH、只读共享模块缓存和同一 attempt 的并发安全 build cache，不能读取其他片的 evidence/private 或 Git 元数据。identity 前一 runner 未证明删除时不得启动后一 part；其他安全分片仍继续。workers=2 manifest 的原始日志还必须通过最多两个活动 part、identity 四段不重叠和 14 个数据库身份检查。同一干净候选至少连续两次完整 029 全绿后才能推广。
+- `workers_2_candidate`：首个并发对的两个 cluster 同时存活后、任何测试 part 启动前，分别创建同名的一次性 owner/grantee role 和 owner 的 default ACL。A 撤销自己的默认权限并删除同名 role 后，B 的 role、默认 ACL 和既有表权限必须保持不变；A 持有 advisory lock 时验证 B 的同名锁可以在同一个 B 会话中独立取得并释放。两个 system identifier 必须不同，证明写入 runner report；owner/grantee 随清理删除，且前后必须逐字比较 `moni_test` default ACL 原文，确保探针不改变业务测试初始状态。失败会阻止可复用 manifest，但不妨碍其他安全分片完成诊断。每片 runner 只挂载自己的 worktree/Git common/home/tmp/GOPATH、只读共享模块缓存和同一 attempt 的并发安全 build cache，不能读取其他片的 evidence/private 或 Git 元数据。identity 前一 runner 未证明删除时不得启动后一 part；其他安全分片仍继续。workers=2 manifest 的原始日志还必须通过最多两个活动 part、identity 四段不重叠和 14 个数据库身份检查。同一干净候选至少连续两次完整 029 全绿后才能推广。
 - `parallel_default`：只在两轮结果稳定、无 OOM/超时/残留后启用。
 
 失败规则：
