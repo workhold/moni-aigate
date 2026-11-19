@@ -608,6 +608,7 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
         "--env-file", str(runner_env), "--read-only", "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
         "--mount", f"type=bind,source={worktree},target={logical_worktree}",
+        *(["--mount", f"type=bind,source={worktree},target={worktree}"] if logical_worktree != worktree else []),
         "--mount", f"type=bind,source={run_root / 'cache' / 'shared-build'},target={run_root / 'cache' / 'shared-build'}",
         "--mount", f"type=bind,source={run_root / 'cache' / 'shared-mod'},target={run_root / 'cache' / 'shared-mod'},readonly",
         "--mount", f"type=bind,source={run_root / 'cache' / shard / 'gopath'},target={run_root / 'cache' / shard / 'gopath'}",
