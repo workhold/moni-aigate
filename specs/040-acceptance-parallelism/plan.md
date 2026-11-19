@@ -36,6 +36,8 @@
 
 **出口**：单分片工具链和清理成立；workers=2 再证明同名角色/default ACL/advisory lock 互不影响。数据库身份全部不同，进程/DB/日志/清理失败均无可复用证据。
 
+**PR-C 当前实现**：`acceptance-parallel-runner.py` 已提供固定 digest 的 PostgreSQL+Go 容器、每片独立 cluster/volume/netns 与 detached worktree、私有 env 文件、完整 run_id/cidfile/label 所有权、资源采样以及实际 SandboxKey 消失证明。PR-A 精确 argv、PR-B 原始日志/parser/211 项 SKIP 基线保持不变；workers 只接受 1，partial 不生成 manifest，完整 v2 manifest 仍受 14 片/17 part 与 100/77 合并门禁约束。`24bd633` 的 `attempt-0` 真实 canary 已通过：6 PASS、12 个基线内 SKIP、0 FAIL、零新增宿主监听，容器/volume/netns/worktree/private 清理均独立核验；单片不生成可复用 manifest。`80ed12d` 又封闭 cidfile 空/半写启动竞态，运行中允许 pending、退出后仍严格校验，最终复审无剩余阻断。详见[验证记录](../../docs/verification/acceptance-container-runner.md)。workers=2、双 cluster 互见、完整 029 与默认化仍未实施。
+
 ## PR-D：workers=2 完整 029 与默认化
 
 **范围**

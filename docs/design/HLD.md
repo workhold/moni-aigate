@@ -121,17 +121,21 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 完整 029 的外层全包 race 与 current-MVP 之间使用同一次运行的严格 JSON 证据，避免对同一 current-only 测试再次付费执行。外层生成绑定干净 HEAD、专用数据库和日志 SHA-256 的 manifest；current-MVP 逐项验证 100 个必需测试恰好一次顶层 PASS，任何失败、缺失、必需 SKIP、重复或陈旧证据都失败。standalone current-MVP 仍执行原测试，Compose、自然 lease、真实 main、前端和浏览器证据不复用。合同见[039](../../specs/039-acceptance-evidence-reuse/spec.md)。
 
-### 4.7 多独立 PostgreSQL 的验收并行化（设计候选，未实施）
+### 4.7 多独立 PostgreSQL 的验收并行化（分阶段实施，默认未切换）
 
 [040 设计](../../specs/040-acceptance-parallelism/spec.md)只优化测试编排：复用 CI 的 14 个逻辑分片，每片使用独立 cluster/volume/network namespace，本机默认最多两个 worker。v2 证据索引保留原始 JSONL，合并后继续满足 41 项、82 个绑定和 current-MVP 100 项复用。独立 identity/mail real-main、Compose、支付、邮件自然 lease、备份恢复和浏览器仍串行；server 包内 actual-main 仅在分片自有数据库、netns 和子进程边界内并行。workers=1 canary、workers=2 连续两轮全绿和分片器 CI 等价是默认化前置条件，每轮使用独立 detached git worktree 和 artifact，并保留 HEAD/tree/status 校验。
 
 ### 4.8 PR-A 共享分片器实现
 
-`scripts/acceptance-shard-plan` 已将 CI 的包/顶层测试发现提取为 CI/本地共用 CLI。它生成 14 个逻辑分片、原始 discovery、精确执行 argv 和 SHA-256 计划摘要，并继续输出 CI 使用的 legacy `ci-packages`/`ci-tests` artifact。大包仍按 C 序轮转，identity 保留同一逻辑片中的四个顺序进程，其他包自动进入 `other`。发现只读取 stdout，要求干净 detached worktree、完整包/测试覆盖、合法标识符和精确 part/package 一致性。CI 的真实执行环境、`-p 1`、`-count=1`、原超时和 artifact 名称不变；workers=2 及多库 runner 仍未实施。
+`scripts/acceptance-shard-plan` 已将 CI 的包/顶层测试发现提取为 CI/本地共用 CLI。它生成 14 个逻辑分片、原始 discovery、精确执行 argv 和 SHA-256 计划摘要，并继续输出 CI 使用的 legacy `ci-packages`/`ci-tests` artifact。大包仍按 C 序轮转，identity 保留同一逻辑片中的四个顺序进程，其他包自动进入 `other`。发现只读取 stdout，要求干净 detached worktree、完整包/测试覆盖、合法标识符和精确 part/package 一致性。CI 的真实执行环境、`-p 1`、`-count=1`、原超时和 artifact 名称不变；PR-A 本身不启动 worker 或多库 runner。
 
 ### 4.9 PR-B v2 证据合并器实现
 
-`check-acceptance-evidence-v2.py` 新增 schema v2 合并器，保留 14 个逻辑 shard 和 17 个执行 part 的区分，逐项验证 run/source/image 身份、当前 HEAD 的完整计划重新发现、日志摘要与终态框架、精确 argv、数据库 system identifier、清理证明和版本化 SKIP 基线（当前为两个同提交真实 CI run 共同确认的 211 个非必需项）。identity 的四个顺序进程允许共享所属 cluster，其他分片数据库身份不得复用；跨类碰撞与清单顺序无关。v1 与 standalone 路径不变；029 只有显式 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 才走 77 个唯一测试到 82 个绑定的 v2 合并，current-MVP 只有显式 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2` 才进入 v2，100 个必需测试仍逐项恰好一次顶层 PASS。多库 runner 仍未实施。`phase1-acceptance.test.sh` 统一运行 v1/v2/矩阵测试，CI other 任务调用同一入口。
+`check-acceptance-evidence-v2.py` 新增 schema v2 合并器，保留 14 个逻辑 shard 和 17 个执行 part 的区分，逐项验证 run/source/image 身份、当前 HEAD 的完整计划重新发现、日志摘要与终态框架、精确 argv、数据库 system identifier、清理证明和版本化 SKIP 基线（当前为两个同提交真实 CI run 共同确认的 211 个非必需项）。identity 的四个顺序进程允许共享所属 cluster，其他分片数据库身份不得复用；跨类碰撞与清单顺序无关。v1 与 standalone 路径不变；029 只有显式 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 才走 77 个唯一测试到 82 个绑定的 v2 合并，current-MVP 只有显式 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2` 才进入 v2，100 个必需测试仍逐项恰好一次顶层 PASS。PR-B 本身不接多库 runner。`phase1-acceptance.test.sh` 统一运行 v1/v2/矩阵测试，CI other 任务调用同一入口。
+
+### 4.10 PR-C 隔离容器 runner 与 workers=1 canary
+
+`acceptance-parallel-runner.py` 已在测试编排层实现每片一次性 PostgreSQL+Go runner、独立 cluster/volume/netns 和 detached worktree。PostgreSQL 使用 `--network none`，runner 加入其 container netns，片内保持 `127.0.0.1:55439/moni_test`，不发布宿主端口；镜像 digest、私有 env、GOMAXPROCS=2、PR-A 精确 argv、PR-B 原始日志/parser 和 211 项 SKIP 基线不变。完整 run_id/cidfile/label 限定资源所有权，清理还实际核验 SandboxKey 消失。workers 仅允许 1，单片或 partial 不生成可复用 manifest；完整 v2 仍要求 14 片/17 part、100/77 合并和全部清理成功。真实 `attempt-0` canary 已验证 loopback、原始证据、零新增宿主监听和资源清理，但不是完整 029、双 cluster 互见或默认化。详见[PR-C 验证记录](../verification/acceptance-container-runner.md)。
 
 ## 5. 技术选型与理由
 

@@ -160,7 +160,7 @@ deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分�
 
 [039](../../specs/039-acceptance-evidence-reuse/spec.md)在 `phase1-acceptance.execute` 的 go-race 完成后生成 `go-race-evidence.json`，并在调用 current-MVP 前设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE`。`checked_go_race_test` 仅在该变量存在时进入复用分支，否则保留原 inventory 和 `go test` 路径。`scripts/check-go-test-evidence.py` 校验 manifest schema/run_id/创建时效/commit/database/log digest，要求匹配的 `PHASE1_ACCEPTANCE_RUN_ID`，并拒绝除备份恢复组生成证据 `docs/verification/backup-restore-local.json` 之外的工作树变更，随后以 `package:TestName` 检查精确顶层事件：每个必需测试一次 PASS、无重复、无缺失、无必需 SKIP，且日志中不允许任何 package/test FAIL。manifest 与日志必须在同一暂存目录，checker 每次重新计算摘要；只豁免 `run_logged` 的固定头尾，重复 JSON key 和其他非 JSON 内容失败。
 
-### 4.6 v2 并行验收证据（设计候选，未实施）
+### 4.6 v2 并行验收证据（分阶段实施，默认未切换）
 
 [040](../../specs/040-acceptance-parallelism/spec.md)预期新增并行证据索引，而不是拼接单一 go-race.jsonl：每个逻辑分片拥有精确 argv、原始 JSONL 摘要、独立 pg_system_identifier 和清理证明。共享 CI 分片器负责包/顶层测试互斥穷尽，v2 合并器负责 77 个唯一测试到 82 个绑定的映射以及 current-MVP 100 个唯一测试的单次 PASS。server 包内 actual-main 及其恢复子进程必须留在本分片 netns/数据库边界；独立 identity/mail 套件仍串行。workers=1 只验证单分片工具链，workers=2 才验证双 cluster 的锁互不影响，每轮使用新的 detached git worktree、run_id 和 artifact，并保留 HEAD/tree/status 校验。任一 shard/merge/cleanup 失败都无可复用证据，操作者只能以新 run_id 完整重跑。具体字段、隔离拓扑和 rollout 以该规格为准。
 
@@ -171,6 +171,12 @@ deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分�
 ### 4.8 PR-B v2 证据索引与合并器
 
 v2 manifest 包含 run_id、created_at、commit/tree、source_clean、scheduler_version、workers、go_runner/postgres 镜像 digest、plan/plan_sha256、skip_baseline 和 shards；每个 shard entry 包含 name、args、log、log_sha256、exit_status、database{url,system_identifier} 和 cleanup{containers_removed,volume_removed,netns_removed}。`part_index` 按 14 个逻辑 shard 建立 17 个 part 映射，按类聚合 discovery 并校验精确 argv。`fresh_source` 在同一 HEAD 的 detached worktree 重跑 PR-A 计划，并以单次 JSON list 发现 other 各包测试；证据计划必须与当前源码完全一致。原始日志依次包含匹配的 run_id、精确 command、started_at、JSON events、completed_at 和最后的 exit_status=0，时间与本次 attempt 绑定。每个发现测试恰有一个终态，每个 package 恰有一个 compile 终态；有发现测试的 package 必须 PASS，无测试文件包的 package-level SKIP 不算测试 SKIP。必需 SKIP 永远拒绝，非必需 SKIP 必须精确匹配版本化 `acceptance-skip-baseline.json`；当前 211 项基线来自两个同提交、0 FAIL 的真实 CI run，且与 100/77 必需清单零交集。identity 的四个 part 可共享 system_identifier，其他任何 class 组合不得复用且与 entry 顺序无关。`phase1-acceptance.py` 的显式 v2 分支校验 77 个唯一矩阵测试并展开 82 个绑定，current-MVP 100 项继续逐组复用；v1/standalone 默认路径不变。
+
+### 4.9 PR-C 容器生命周期与 canary 接口
+
+`acceptance-parallel-runner.py --workers 1 --shard <name>` 执行单片 canary，重复 shard 或 `--all-shards` 只改变选择范围，不允许 workers=2。协调器先记录 source commit/tree/status、完整 PR-A plan、镜像 digest、Docker 资源和宿主监听基线；随后按 `detached worktree → module prefetch → PostgreSQL ready → 顺序 part → 原始日志校验 → 清理 → report` 执行，任何失败不产生可复用 manifest。单片标记 `workers_1_canary`，2–13 片为 `workers_1_partial`，只有 14 片/17 part 全成功才进入 PR-B 100/77 合并。
+
+PostgreSQL/runner 名称包含完整 run_id，cidfile 和 run/shard 标签确认创建所有权；运行轮询只把空/半写 cidfile 当 pending，退出后仍严格读取完整 64 位 ID。清理按所属完整 ID 执行，未创建本场 cidfile 的同名资源不删除。PostgreSQL `SandboxKey` 保存在私有运行状态，容器删除后以固定 Go 镜像的只读宿主 netns 挂载和 `os.path.lexists` 验证实际消失；daemon、volume、容器或路径错误都不是清理成功。runner report 保存脱敏数据库身份、精确 argv、日志摘要、资源采样、宿主监听前后摘要与清理状态，单片固定 `manifest=null/reusable=false/complete_029=false/workers_2_proven=false`。真实 canary 与独立复核见[PR-C 记录](../verification/acceptance-container-runner.md)。
 
 ## 5. 资金模型与计价
 

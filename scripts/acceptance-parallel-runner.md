@@ -12,7 +12,7 @@
 - 私有随机密码只写入运行目录的 `private/`（0700，env 文件 0600），通过 Docker `--env-file` 读取；密码不进入测试 DSN、原始日志、runner report 或 v2 manifest，并在 attempt 结束时删除。
 - 原始 `go-tests-<part>.jsonl` 使用 PR-B 的 run_id/command/started_at/events/completed_at/exit_status 框架，并由同一个 PR-B parser 校验终态和经审查的 SKIP 基线。runner report 另行保存脱敏数据库身份、资源采样和清理证明。
 - 任何分片、合并或清理失败都不会生成可复用 manifest。`fail-fast=false` 只用于继续可安全执行的后续片/identity part，不重试测试或拼接旧 PASS。
-- 清理只针对本 run_id 创建的精确容器、volume 和 worktree，不执行 prune，不触碰既有环境。资源名包含完整 run_id；Docker cidfile 和完整 run/shard 标签共同证明所有权，无本场 cidfile 的同名容器绝不删除。只有容器确为 `No such` 才算消失，Docker daemon 错误不能冒充清理成功。
+- 清理只针对本 run_id 创建的精确容器、volume 和 worktree，不执行 prune，不触碰既有环境。资源名包含完整 run_id；Docker cidfile 和完整 run/shard 标签共同证明所有权，无本场 cidfile 的同名容器绝不删除。运行轮询仅把空/半写 cidfile 视为 pending，进程退出后仍严格要求完整 64 位 ID。只有容器确为 `No such` 才算消失，Docker daemon 错误不能冒充清理成功。
 - `netns_removed` 不由容器退出推断：runner 保存 PostgreSQL `SandboxKey`，删除容器后用固定 Go 镜像的只读宿主 netns 挂载和 `os.path.lexists` 验证该路径实际消失。路径格式不符、仍存在或检查失败都无可复用证据。
 
 镜像固定在 `acceptance-runner-images.json` 的 repository digest。runner 不自动拉取或改写镜像引用；镜像缺失是预检失败。

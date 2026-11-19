@@ -8303,3 +8303,25 @@ PR-B serial 029 清除遗留 v2 环境并受控处理非法 run_id；保持默�
 - modified `docs/verification/acceptance-evidence-v2.md`
 
 </details>
+
+## 2026-11-19T05:01:19Z · 0cf3a7119f4c
+
+040 PR-C 新增 workers=1 隔离容器 runner 与单片 canary；仅测试编排和证据变化，产品模块、请求链路、数据关系、权限与业务事实源不变；workers=2 和完整 029 未实施
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2570 个源文件；本次 11 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- added `.claude/settings.local.json`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-container-runner.md`
+- added `scripts/acceptance-parallel-runner.md`
+- added `scripts/acceptance-parallel-runner.py`
+- added `scripts/acceptance-runner-images.json`
+- added `scripts/acceptance_parallel_runner_test.py`
+- modified `scripts/phase1-acceptance.test.sh`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>

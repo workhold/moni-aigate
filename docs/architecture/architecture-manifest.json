@@ -1,12 +1,16 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-18T18:24:10Z",
-  "review_reason": "记录 PR-B 独立聚焦复审无剩余阻断及其只读边界；实现与测试结论不变，未声明完整 029 或多库验收",
-  "snapshot_sha256": "758cf6249766598a90e9785b9677439b4c2696503b085fa5c2feb6217f06067a",
-  "architecture_sha256": "4709e7aefbb0a65087005dda786c98fd5ac6c8e3642e7585c0e4cc4ff188ba1a",
-  "history_sha256": "e604ad56bd87f8ed420ce2ff28d528cdae7f3c6194ca91646a14030bbdcf09e9",
+  "reviewed_at": "2026-11-19T05:01:19Z",
+  "review_reason": "040 PR-C 新增 workers=1 隔离容器 runner 与单片 canary；仅测试编排和证据变化，产品模块、请求链路、数据关系、权限与业务事实源不变；workers=2 和完整 029 未实施",
+  "snapshot_sha256": "0cf3a7119f4ccde3c9ff25043e00bcfd7fc86adb4dffb8d00c492b2701b09d27",
+  "architecture_sha256": "b07fb1c6880dfa19e95890a9e5d7c67356593320088960759586b241182721f6",
+  "history_sha256": "207c3881957e004fd922e14a2c0a33ed424de8df7692588c7d6fc3c56fc3957d",
   "files": [
+    {
+      "path": ".claude/settings.local.json",
+      "sha256": "348bff801333023014936ec35857a5ad46e96538dccffffd12711cd6c87bd7c8"
+    },
     {
       "path": ".dockerignore",
       "sha256": "8a7c0b449157489274056d76f17fa605c61cdf15d228bd96cf1529acdc8ad6df"
@@ -185,11 +189,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "c8191ab044e3ca4c48c23d71e0600be91e9cd790ce567db89917c478c6384dab"
+      "sha256": "6dd91914161c18ad06f8ff481f13e83a4ddfbe27f97a1f67b5cfee8298e491c0"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "346b9f3b9e6252bdf2f4ed838a45b0b3c6dd72aa3a410f7e9a91f89d20ca51ac"
+      "sha256": "794827329ad6b1dc21708b13fd5957cfa1c637360037e0792fbf5798e9135e0f"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -318,6 +322,10 @@
     {
       "path": "docs/verification/034-coin-units.md",
       "sha256": "1851504152a217b72e20812c276e72aa76adc282557d70b494474c4d6e165ed9"
+    },
+    {
+      "path": "docs/verification/acceptance-container-runner.md",
+      "sha256": "8f6049583d622385b746b368dfd12fc317cf619b560e8e789b0467f53f5a07b3"
     },
     {
       "path": "docs/verification/acceptance-evidence-reuse.md",
@@ -7964,6 +7972,18 @@
       "sha256": "ab52b642f74491ad4f1ba4155ecaaf412488b651aa62d9a5e6ba793d7e51135d"
     },
     {
+      "path": "scripts/acceptance-parallel-runner.md",
+      "sha256": "5c88c0c959a1af10e8994913ec11461c79cbdab04f5c8906cbceaa54b50c7987"
+    },
+    {
+      "path": "scripts/acceptance-parallel-runner.py",
+      "sha256": "d9490281e99be8056f2212c382fb79330614c30fd268e6357795aa7e6feebe14"
+    },
+    {
+      "path": "scripts/acceptance-runner-images.json",
+      "sha256": "656ce5e0315fd10daef6ef0d903950d37765010eefebdc1e78833c738dc9fe13"
+    },
+    {
       "path": "scripts/acceptance-shard-plan/README.md",
       "sha256": "ca9526268379c2f4488d511ad6d3b794069312e22e77cec856c9cba854cf1872"
     },
@@ -7982,6 +8002,10 @@
     {
       "path": "scripts/acceptance-skip-baseline.json",
       "sha256": "99b4f1d19ac2324958bd0a54362f229b3651b35121895b03137680e7123fb3cd"
+    },
+    {
+      "path": "scripts/acceptance_parallel_runner_test.py",
+      "sha256": "0dc4ca69e6deec515ebb6c0c4a5a777651bb2d83f51b8eb1d483a9e67003dbd8"
     },
     {
       "path": "scripts/backup-restore-drill.go",
@@ -8285,7 +8309,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.test.sh",
-      "sha256": "c8b2d9fb83265973a26f0ad00cdc6f85c9acc6c4557ef04fb412397e019a8769"
+      "sha256": "8f4ade3d84c0e7575a25eb44c0d3ee89a0d6e147a991ab26b7fb7c1bbb54edd4"
     },
     {
       "path": "scripts/phase1-browser-preview.sh",
@@ -9481,11 +9505,11 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "16d0232caf0350caad6917bc554ddedd95e24e92a608f163569626ddb6e24927"
+      "sha256": "612fc7448029137c17db54d644f6ad1983d3c9e70fe6c6345b4a7de5730e748a"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",
-      "sha256": "ff5871e24422e948d939d3b2fd6a62b9500148167e1c3e66817870d317f2bf5f"
+      "sha256": "86963a6d4e6db6bcf1a1a114b506be067466b1934fde7a4cc577611f22cae602"
     },
     {
       "path": "third_party/README.md",
