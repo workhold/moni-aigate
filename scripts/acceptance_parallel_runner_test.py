@@ -204,6 +204,41 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         self.assertTrue(detail["oom_killed"])
         self.assertTrue(any("137" in error for error in detail["errors"]))
 
+    def test_resource_sampling_waits_through_container_registration_race(self):
+        evidence = self.root / "evidence"
+        evidence.mkdir()
+        part = make_part("attempt-0")
+
+        class Process:
+            returncode = 0
+
+            def __init__(self, args, stdout, stderr):
+                self.calls = 0
+
+            def poll(self):
+                self.calls += 1
+                return None if self.calls <= 3 else 0
+
+            def wait(self):
+                return 0
+
+        inspected = {
+            "Path": "go", "Args": part["args"][1:], "State": {"ExitCode": 0, "OOMKilled": False},
+            "HostConfig": {"NetworkMode": "container:pg-id", "PortBindings": None, "PublishAllPorts": False},
+        }
+        samples = [runner.RunnerError("Error response from daemon: No such container: runner"), [{"Name": "runner"}]]
+        with mock.patch.object(runner.subprocess, "Popen", Process), \
+             mock.patch.object(runner, "resource_sample", side_effect=samples), \
+             mock.patch.object(runner.time, "sleep"), \
+             mock.patch.object(runner, "container_inspect", return_value=inspected), \
+             mock.patch.object(runner, "container_absent", return_value=True), \
+             mock.patch.object(runner, "validate_raw_log"), \
+             mock.patch.object(runner, "host_listeners", return_value=set()), \
+             mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=0, stdout="", stderr="")):
+            _, detail = runner.run_part(self.root, evidence, self.root, self.root, "a" * 32, "attempt-0", part, "image", self.root / "runner.env", "pg", "pg-id", {("example.com/mod/internal/attempt-0", "TestOne")}, set())
+        self.assertEqual([], detail["errors"])
+        self.assertEqual(1, len(detail["resource_samples"]))
+
     def test_cleanup_requires_explicit_not_found(self):
         with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=1, stdout="", stderr="Cannot connect to the Docker daemon")):
             self.assertFalse(runner.container_absent("pg"))
@@ -211,6 +246,8 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=1, stdout="", stderr="Error: No such object: pg")):
             self.assertTrue(runner.container_absent("pg"))
         with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=1, stdout="", stderr="Error: No such volume: volume")):
+            self.assertTrue(runner.volume_absent("volume"))
+        with mock.patch.object(runner, "docker", return_value=SimpleNamespace(returncode=1, stdout="", stderr="Error response from daemon: get volume: no such volume")):
             self.assertTrue(runner.volume_absent("volume"))
 
     def test_raw_log_validation_reuses_v2_and_reviewed_skip_baseline(self):

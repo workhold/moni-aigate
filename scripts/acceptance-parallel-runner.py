@@ -365,12 +365,13 @@ def validate_raw_log(log: pathlib.Path, part: dict, expected: set[tuple[str, str
 
 def container_absent(name: str) -> bool:
     result = docker(["container", "inspect", name], check=False)
-    return result.returncode != 0 and ("No such object" in result.stderr or "No such container" in result.stderr)
+    detail = result.stderr.lower()
+    return result.returncode != 0 and ("no such object" in detail or "no such container" in detail)
 
 
 def volume_absent(name: str) -> bool:
     result = docker(["volume", "inspect", name], check=False)
-    return result.returncode != 0 and "No such volume" in result.stderr
+    return result.returncode != 0 and "no such volume" in result.stderr.lower()
 
 
 def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.Path, common_git: pathlib.Path, run_id: str, shard: str, part: dict, image: str, runner_env: pathlib.Path, postgres_name: str, postgres_id: str, expected: set[tuple[str, str]], baseline_listeners: set[str]) -> tuple[dict, dict]:
@@ -408,8 +409,9 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
                             samples = resource_sample(postgres_name, name)
                             detail["resource_samples"].append({"at": utc_now(), "containers": samples})
                         except Exception as error:
-                            detail["errors"].append(f"container resource sampling failed: {error}")
-                            sampling = False
+                            if "no such container" not in str(error).lower():
+                                detail["errors"].append(f"container resource sampling failed: {error}")
+                                sampling = False
                     if process.poll() is None:
                         time.sleep(2)
                 status = process.wait()
