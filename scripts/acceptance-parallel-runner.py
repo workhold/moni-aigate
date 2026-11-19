@@ -299,11 +299,13 @@ def container_inspect(name: str) -> dict:
     return value[0]
 
 
-def read_cidfile(path: pathlib.Path) -> str:
+def read_cidfile(path: pathlib.Path, allow_pending: bool = False) -> str:
     if not path.is_file():
         return ""
     value = path.read_text(encoding="ascii").strip()
     if not re.fullmatch(r"[0-9a-f]{64}", value):
+        if allow_pending:
+            return ""
         raise RunnerError(f"container cidfile {path} is invalid")
     return value
 
@@ -433,7 +435,7 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
                     if sampling:
                         try:
                             if not detail["container_id"]:
-                                detail["container_id"] = read_cidfile(cidfile)
+                                detail["container_id"] = read_cidfile(cidfile, allow_pending=True)
                             if detail["container_id"]:
                                 samples = resource_sample(postgres_name, detail["container_id"])
                                 detail["resource_samples"].append({"at": utc_now(), "containers": samples})
