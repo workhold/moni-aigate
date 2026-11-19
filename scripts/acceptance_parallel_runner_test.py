@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import socket
 import stat
 import subprocess
 import tempfile
@@ -324,6 +325,12 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
             with self.assertRaises(runner.RunnerError):
                 runner.merge_complete_evidence(self.root, evidence, {}, "a" * 32, {}, [])
         self.assertFalse((evidence / "go-race-evidence-v2.json").exists())
+
+    def test_proc_listener_parser_normalizes_loopback_and_filters_non_listeners(self):
+        raw_v4 = "  sl  local_address rem_address   st\n   0: 0100007F:D88F 00000000:0000 0A\n   1: 0100007F:1F90 00000000:0000 01\n"
+        self.assertEqual({"127.0.0.1:55439"}, runner.parse_proc_net_tcp(raw_v4, socket.AF_INET))
+        raw_v6 = "  sl  local_address rem_address   st\n   0: 00000000000000000000000001000000:1F90 00000000000000000000000000000000:0000 0A\n"
+        self.assertEqual({"[::1]:8080"}, runner.parse_proc_net_tcp(raw_v6, socket.AF_INET6))
 
     def test_host_listener_change_and_existing_acceptance_port_fail(self):
         baseline = {"127.0.0.1:8080"}

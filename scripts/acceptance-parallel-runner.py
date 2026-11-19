@@ -12,6 +12,7 @@ import os
 import pathlib
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -97,6 +98,36 @@ def preflight_docker() -> None:
         raise RunnerError("acceptance containers require a Linux Docker server")
 
 
+def parse_proc_net_tcp(raw: str, family: int) -> set[str]:
+    listeners = set()
+    for line in raw.splitlines()[1:]:
+        fields = line.split()
+        if len(fields) < 4 or fields[3] != "0A":
+            continue
+        address, port = fields[1].rsplit(":", 1)
+        if family == socket.AF_INET:
+            packed = bytes.fromhex(address)[::-1]
+            ip = socket.inet_ntop(family, packed)
+        else:
+            packed = b"".join(bytes.fromhex(address[index:index + 8])[::-1] for index in range(0, 32, 8))
+            ip = "[" + socket.inet_ntop(family, packed) + "]"
+        listeners.add(f"{ip}:{int(port, 16)}")
+    return listeners
+
+
+def proc_host_listeners() -> set[str]:
+    listeners = set()
+    found = False
+    for name, family in (("tcp", socket.AF_INET), ("tcp6", socket.AF_INET6)):
+        path = pathlib.Path("/proc/net") / name
+        if path.is_file():
+            found = True
+            listeners.update(parse_proc_net_tcp(path.read_text(encoding="ascii"), family))
+    if not found:
+        raise RunnerError("cannot read Linux TCP listener tables")
+    return listeners
+
+
 def host_listeners() -> set[str]:
     if shutil.which("lsof"):
         result = execute(["lsof", "-nP", "-iTCP", "-sTCP:LISTEN", "-F", "n"], check=False)
@@ -111,7 +142,9 @@ def host_listeners() -> set[str]:
             if len(fields) >= 4:
                 listeners.add(fields[3])
         return listeners
-    raise RunnerError("lsof or ss is required to prove zero new host listeners")
+    if pathlib.Path("/proc/net/tcp").is_file() or pathlib.Path("/proc/net/tcp6").is_file():
+        return proc_host_listeners()
+    raise RunnerError("lsof, ss, or Linux /proc/net/tcp is required to prove zero new host listeners")
 
 
 def listener_snapshot(listeners: set[str]) -> dict:
