@@ -146,6 +146,16 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
         runner = SCRIPT.read_text(encoding="utf-8")
         self.assertLess(runner.index("go_evidence_manifest(artifact, commit, run_id)"), runner.index('add("current-mvp"'))
         shell = SCRIPT.with_name("verify-current-mvp.sh").read_text(encoding="utf-8")
+        self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then', shell)
+        self.assertLess(shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then'), shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then'))
+        self.assertIn('check-acceptance-evidence-v2.py', shell)
+        self.assertIn('os.environ.get("PHASE1_ACCEPTANCE_GO_EVIDENCE_V2")', runner)
+        self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"]', runner)
+        self.assertIn('env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)', runner)
+        self.assertIn('if not isinstance(run_id, str):', runner)
+        v2_branch = runner[runner.index("    if v2_source:"):runner.index("    else:", runner.index("    if v2_source:"))]
+        self.assertLess(v2_branch.index('env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id'), v2_branch.index("merge = run_logged"))
+        self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE"]', runner)
         self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then', shell)
         self.assertLess(shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then'), shell.index('inventory=$(go test -run'))
         self.assertIn('inventory=$(go test -run', shell, "standalone mode retains the original inventory and test execution")
@@ -177,6 +187,18 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
             (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
             with mock.patch.dict(EVIDENCE.os.environ, {EVIDENCE.RUN_ID_ENV: "a" * 32}), mock.patch.object(EVIDENCE, "require_clean_source", lambda: None):
                 self.assertEqual(100, EVIDENCE.verify(root / "manifest.json", specs))
+
+    def test_v2_matrix_verifies_77_unique_tests_and_expands_82_bindings(self):
+        items = MODULE.load_matrix()
+        self.assertEqual(77, len(MODULE.matrix_go_specs(items)))
+        with mock.patch.object(MODULE.EVIDENCE_V2, "verify", return_value=77) as verify:
+            results = MODULE.required_go_results_v2(pathlib.Path("manifest.json"), items)
+        self.assertEqual(82, sum(len(bindings) for bindings in results.values()))
+        self.assertTrue(all(status == "PASS" for bindings in results.values() for status in bindings.values()))
+        specs = verify.call_args.args[1]
+        self.assertEqual(MODULE.matrix_go_specs(items), specs)
+        command = MODULE.v2_merge_command(pathlib.Path("manifest.json"), items)
+        self.assertEqual(77, command.count("--spec"))
 
     def test_required_procurement_binding_receives_dedicated_database(self):
         source = SCRIPT.read_text(encoding="utf-8")

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import importlib.util
 import json
 import os
 import pathlib
@@ -39,6 +40,9 @@ EXPECTED_IDS = {
 }
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MATRIX_PATH = ROOT / "scripts" / "phase1-acceptance-matrix.json"
+V2_SPEC = importlib.util.spec_from_file_location("acceptance_evidence_v2", ROOT / "scripts" / "check-acceptance-evidence-v2.py")
+EVIDENCE_V2 = importlib.util.module_from_spec(V2_SPEC)
+V2_SPEC.loader.exec_module(EVIDENCE_V2)
 
 
 def now() -> str:
@@ -129,6 +133,26 @@ def publish_artifacts(staging: pathlib.Path, final: pathlib.Path, suites: list[d
             published = final / pathlib.Path(command["log"]).relative_to(staging)
             command["log"] = str(published.relative_to(ROOT)) if published.is_relative_to(ROOT) else str(published)
             suite["logs"].append(command["log"])
+
+
+def matrix_go_specs(items: list[dict]) -> list[str]:
+    return sorted({"./" + test for item in items for test in item["tests"]})
+
+
+def matrix_go_results(items: list[dict], status: str) -> dict[str, dict[str, str]]:
+    return {item["id"]: {test: status for test in item["tests"]} for item in items}
+
+
+def required_go_results_v2(manifest: pathlib.Path, items: list[dict]) -> dict[str, dict[str, str]]:
+    EVIDENCE_V2.verify(manifest, matrix_go_specs(items))
+    return matrix_go_results(items, "PASS")
+
+
+def v2_merge_command(manifest: pathlib.Path, items: list[dict]) -> list[str]:
+    command = ["python3", "scripts/check-acceptance-evidence-v2.py", "--manifest", str(manifest)]
+    for spec in matrix_go_specs(items):
+        command += ["--spec", spec]
+    return command
 
 
 def required_go_results(log: pathlib.Path, items: list[dict]) -> dict[str, dict[str, str]]:
@@ -365,12 +389,37 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     ]
     add("static-build", static)
     add("frontend", [run_logged(["npm", "--prefix", "web", "test"], artifact / "frontend-test.log", env), run_logged(["npm", "--prefix", "web", "run", "build"], artifact / "frontend-build.log", env)])
-    race_log = artifact / "go-race.jsonl"
-    add("go-race", [run_logged(["go", "test", "-race", "-p", "1", "-count=1", "-timeout", "1200s", "-json", "./..."], race_log, env)])
-    go_results = required_go_results(race_log, items)
-    run_id = uuid.uuid4().hex
-    env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
-    env["VERIFY_CURRENT_MVP_GO_EVIDENCE"] = str(go_evidence_manifest(artifact, commit, run_id))
+    v2_source = os.environ.get("PHASE1_ACCEPTANCE_GO_EVIDENCE_V2")
+    if v2_source:
+        source_manifest = pathlib.Path(v2_source).resolve()
+        if source_manifest.parent == ROOT or source_manifest.parent in ROOT.parents:
+            raise ValueError("v2 evidence must come from its own artifact directory")
+        parallel_artifact = artifact / "parallel-evidence"
+        try:
+            shutil.copytree(source_manifest.parent, parallel_artifact, symlinks=True)
+        except (OSError, shutil.Error) as error:
+            raise ValueError(f"cannot stage the v2 evidence artifact: {error}") from error
+        v2_manifest = parallel_artifact / source_manifest.name
+        try:
+            run_id = json.loads(v2_manifest.read_text(encoding="utf-8")).get("run_id", "")
+        except (OSError, ValueError, AttributeError):
+            run_id = ""
+        if not isinstance(run_id, str):
+            run_id = ""
+        env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
+        merge = run_logged(v2_merge_command(v2_manifest, items), artifact / "go-race-v2-merge.log", env)
+        add("go-race", [merge])
+        go_results = matrix_go_results(items, "PASS" if merge["status"] == "PASS" else "MISSING")
+        env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"] = str(v2_manifest)
+        env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE", None)
+    else:
+        env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)
+        race_log = artifact / "go-race.jsonl"
+        add("go-race", [run_logged(["go", "test", "-race", "-p", "1", "-count=1", "-timeout", "1200s", "-json", "./..."], race_log, env)])
+        go_results = required_go_results(race_log, items)
+        run_id = uuid.uuid4().hex
+        env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
+        env["VERIFY_CURRENT_MVP_GO_EVIDENCE"] = str(go_evidence_manifest(artifact, commit, run_id))
     add("current-mvp", [preview_stop, run_logged(["./scripts/verify-current-mvp.sh"], artifact / "current-mvp.log", env)])
 
     for name, package, test, variable in (

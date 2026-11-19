@@ -129,6 +129,10 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 `scripts/acceptance-shard-plan` 已将 CI 的包/顶层测试发现提取为 CI/本地共用 CLI。它生成 14 个逻辑分片、原始 discovery、精确执行 argv 和 SHA-256 计划摘要，并继续输出 CI 使用的 legacy `ci-packages`/`ci-tests` artifact。大包仍按 C 序轮转，identity 保留同一逻辑片中的四个顺序进程，其他包自动进入 `other`。发现只读取 stdout，要求干净 detached worktree、完整包/测试覆盖、合法标识符和精确 part/package 一致性。CI 的真实执行环境、`-p 1`、`-count=1`、原超时和 artifact 名称不变；workers=2 及多库 runner 仍未实施。
 
+### 4.9 PR-B v2 证据合并器实现
+
+`check-acceptance-evidence-v2.py` 新增 schema v2 合并器，保留 14 个逻辑 shard 和 17 个执行 part 的区分，逐项验证 run/source/image 身份、当前 HEAD 的完整计划重新发现、日志摘要与终态框架、精确 argv、数据库 system identifier、清理证明和版本化 SKIP 基线（当前为两个同提交真实 CI run 共同确认的 211 个非必需项）。identity 的四个顺序进程允许共享所属 cluster，其他分片数据库身份不得复用；跨类碰撞与清单顺序无关。v1 与 standalone 路径不变；029 只有显式 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 才走 77 个唯一测试到 82 个绑定的 v2 合并，current-MVP 只有显式 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2` 才进入 v2，100 个必需测试仍逐项恰好一次顶层 PASS。多库 runner 仍未实施。`phase1-acceptance.test.sh` 统一运行 v1/v2/矩阵测试，CI other 任务调用同一入口。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |

@@ -168,6 +168,10 @@ deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分�
 
 `Plan{schema_version,commit,tree,module,shards,digest}` 中每个 shard 包含 class/packages/discovery/parts；part 包含 name/packages/tests/run_filter/args。`buildPlanAt` 在 detached worktree 中执行 `go list -m`、`go list ./...` 和 `go test -race -count=1 -list .`，只使用 stdout。`validatePlan` 检查 14 个矩阵项、part 名称与包一致性、测试唯一性、精确 `-run`、`-count=1`、`-timeout=10m` 和 digest；`emitLegacy` 保留原始 discovery 与排序后 all/actual 文件，避免重复包或重复 discovery。
 
+### 4.8 PR-B v2 证据索引与合并器
+
+v2 manifest 包含 run_id、created_at、commit/tree、source_clean、scheduler_version、workers、go_runner/postgres 镜像 digest、plan/plan_sha256、skip_baseline 和 shards；每个 shard entry 包含 name、args、log、log_sha256、exit_status、database{url,system_identifier} 和 cleanup{containers_removed,volume_removed,netns_removed}。`part_index` 按 14 个逻辑 shard 建立 17 个 part 映射，按类聚合 discovery 并校验精确 argv。`fresh_source` 在同一 HEAD 的 detached worktree 重跑 PR-A 计划，并以单次 JSON list 发现 other 各包测试；证据计划必须与当前源码完全一致。原始日志依次包含匹配的 run_id、精确 command、started_at、JSON events、completed_at 和最后的 exit_status=0，时间与本次 attempt 绑定。每个发现测试恰有一个终态，每个 package 恰有一个 compile 终态；有发现测试的 package 必须 PASS，无测试文件包的 package-level SKIP 不算测试 SKIP。必需 SKIP 永远拒绝，非必需 SKIP 必须精确匹配版本化 `acceptance-skip-baseline.json`；当前 211 项基线来自两个同提交、0 FAIL 的真实 CI run，且与 100/77 必需清单零交集。identity 的四个 part 可共享 system_identifier，其他任何 class 组合不得复用且与 entry 顺序无关。`phase1-acceptance.py` 的显式 v2 分支校验 77 个唯一矩阵测试并展开 82 个绑定，current-MVP 100 项继续逐组复用；v1/standalone 默认路径不变。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水
