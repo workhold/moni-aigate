@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import copy
+import hashlib
 import importlib.util
 import json
 import pathlib
 import re
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 SCRIPT = pathlib.Path(__file__).with_name("phase1-acceptance.py")
@@ -152,8 +154,8 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
         self.assertIn('os.environ.get("PHASE1_ACCEPTANCE_GO_EVIDENCE_V2")', runner)
         self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"]', runner)
         self.assertIn('env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)', runner)
-        self.assertIn('if not isinstance(run_id, str):', runner)
-        v2_branch = runner[runner.index("    if v2_source:"):runner.index("    else:", runner.index("    if v2_source:"))]
+        self.assertIn('if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", run_id):', runner)
+        v2_branch = runner[runner.index("    if parallel_workers is not None or v2_source:"):runner.index("    serial_tail_started", runner.index("    if parallel_workers is not None or v2_source:"))]
         self.assertLess(v2_branch.index('env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id'), v2_branch.index("merge = run_logged"))
         self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE"]', runner)
         self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then', shell)
@@ -203,6 +205,61 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
     def test_required_procurement_binding_receives_dedicated_database(self):
         source = SCRIPT.read_text(encoding="utf-8")
         self.assertIn('"PROCUREMENT_ATTEMPT_RULES_DATABASE_URL": os.environ["TEST_DATABASE_URL"]', source)
+
+    def test_parallel_mode_requires_fresh_external_output_directories(self):
+        with mock.patch.object(MODULE, "clean_commit", return_value="a" * 40), \
+             mock.patch.dict(MODULE.os.environ, {"PHASE1_ACCEPTANCE_PARALLEL_WORKERS": "2"}, clear=False), \
+             self.assertRaisesRegex(ValueError, "--artifacts"):
+            MODULE.execute([], SimpleNamespace(artifacts=None, output=None))
+
+    def test_v2_staging_copies_regular_files_and_rejects_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            source = root / "source"
+            source.mkdir()
+            manifest = source / "manifest.json"
+            manifest.write_text("{}\n", encoding="utf-8")
+            staged = MODULE.stage_v2_evidence(manifest, root / "staged")
+            self.assertEqual("{}\n", staged.read_text(encoding="utf-8"))
+            (source / "linked").symlink_to(manifest)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                MODULE.stage_v2_evidence(manifest, root / "staged-2")
+
+    def parallel_report_fixture(self, root, run_id, commit):
+        manifest = root / "go-race-evidence-v2.json"
+        manifest.write_text(json.dumps({"run_id": run_id, "workers": 2, "commit": commit}), encoding="utf-8")
+        shards = []
+        for index in range(14):
+            shards.append({
+                "name": f"shard-{index}", "errors": [], "wall_seconds": 1.0,
+                "cleanup": {"containers_removed": True, "volume_removed": True, "netns_removed": True},
+                "postgres_terminal": {"running_before_cleanup": True, "oom_killed": False},
+                "parts": [{"name": f"part-{index}", "errors": [], "runner_removed": True, "oom_killed": False, "resource_samples": [{"at": MODULE.now(), "containers": []}]}],
+            })
+        report = {
+            "schema_version": 1, "suite": "040-pr-d-parallel-runner", "run_id": run_id, "commit": commit,
+            "workers": 2, "status": "PASS", "reusable": True, "manifest": manifest.name,
+            "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+            "complete_029": False, "workers_2_proven": True, "fail_fast": False,
+            "dual_cluster_proof": {"status": "PASS", "simultaneous_running": True, "default_acl_independent": True, "advisory_lock_independent": True, "probe_objects_removed": True, "advisory_locks_remaining": 0},
+            "host_listeners": {"zero_new": True}, "shards": shards, "errors": [],
+            "timings": {"wall_seconds": 10.0, "parallel_shards_seconds": 8.0, "merge_seconds": 2.0},
+        }
+        path = root / "runner-report.json"
+        path.write_text(json.dumps(report), encoding="utf-8")
+        return manifest, path, report
+
+    def test_parallel_report_binds_manifest_resources_and_dual_cluster_proof(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            manifest, path, report = self.parallel_report_fixture(root, "a" * 32, "b" * 40)
+            details = MODULE.validate_parallel_report(path, manifest, "a" * 32, "b" * 40)
+            self.assertEqual(14, details["resource_samples"])
+            self.assertEqual(8.0, details["parallel_shards_seconds"])
+            report["shards"][0]["postgres_terminal"]["oom_killed"] = True
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "PostgreSQL"):
+                MODULE.validate_parallel_report(path, manifest, "a" * 32, "b" * 40)
 
     def test_failed_global_suite_never_generates_mvp_pass(self):
         items = MODULE.load_matrix()

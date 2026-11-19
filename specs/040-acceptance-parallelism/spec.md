@@ -36,7 +36,7 @@
 - CI 与本地必须调用同一个分片实现；`go list ./...` 互斥、穷尽、无重复，新包自动进入 `other`。
 - 分片发现使用同一 race 配置，父测试及全部子测试不拆；锚定 `-run` 表达式不允许无效匹配。
 - 无测试 package 的 compile 终态与有测试 package 的顶层覆盖分别核验，不能用“没有测试”掩盖漏跑。
-- 14 是逻辑分片数，不是并发数。本机默认 `workers=2`，最多两个 Go race 进程、两个 PostgreSQL 和四个活动容器；GOMAXPROCS=2。
+- 14 是逻辑分片数，不是并发数。`workers=2` 候选每个 attempt 最多两个 Go race 进程、两个 PostgreSQL 和四个活动测试容器；GOMAXPROCS=2。只有独立复核后才允许把 029 默认切到该拓扑。
 - `workers>=3` 只能在后续独立资源评估后开启；不照搬 14 个并发 runner。
 
 ## 4. 物理隔离拓扑
@@ -51,13 +51,15 @@
 
 最终串行阶段开始前，必须先完成分片证据合并和容器/volume/netns 清理证明。
 
+PR-D 的协调器在专用 Linux Docker VM 的 host network namespace 中运行固定 Go 镜像，挂载 VM 的 Docker CLI 与 socket、当前源码及其实际 Git common dir、每轮新的运行目录父目录。这样宿主监听基线和 SandboxKey 都指向真实 Docker VM，串行尾部继续使用的 macOS 55439 专库不会被误作并行片资源或停止。Docker socket 只存在协调器，PostgreSQL/Go 测试容器仍无宿主端口、无 Docker socket、无跨片网络。协调器使用包含 run_id 的唯一名称和独立 cidfile；退出按 `--rm` 及精确完整 ID 核验清理，缺失 cidfile 时绝不删除同名资源。
+
 ## 5. 运行状态机
 
 `draft → preflight → workers_1_canary → workers_2_candidate → parallel_default`
 
 - `preflight`：干净 HEAD、run ID、完整分区、镜像/资源/数据库身份和 SKIP 基线就绪；失败不得启动测试。
 - `workers_1_canary`：只验证单分片的容器工具链、真实 loopback、无新增宿主监听和清理，不承担需要两个活动 cluster 的并发互见证明，也不作为最终默认拓扑。
-- `workers_2_candidate`：在两个活动 cluster 中分别创建同名 role/default ACL，并在 A 持有 advisory lock 时验证 B 的同名锁可以独立取得，证明互不影响；同一干净候选至少连续两次完整 029 全绿后才能推广。
+- `workers_2_candidate`：首个并发对的两个 cluster 同时存活后、任何测试 part 启动前，分别创建同名 role/default ACL。A 撤销自己的默认权限并删除同名 role 后，B 的 role、默认 ACL 和既有表权限必须保持不变；A 持有 advisory lock 时验证 B 的同名锁可以独立取得并释放。两个 system identifier 必须不同，证明写入 runner report；失败会阻止可复用 manifest，但不妨碍其他安全分片完成诊断。每片 runner 只挂载自己的 worktree/cache/home/tmp 和只读 Git common dir，不能读取其他片的 evidence/private。identity 前一 runner 未证明删除时不得启动后一 part；其他安全分片仍继续。workers=2 manifest 的原始日志还必须通过最多两个活动 part、identity 四段不重叠和 14 个数据库身份检查。同一干净候选至少连续两次完整 029 全绿后才能推广。
 - `parallel_default`：只在两轮结果稳定、无 OOM/超时/残留后启用。
 
 失败规则：
@@ -71,7 +73,7 @@
 
 PR-B 当前实现 `check-acceptance-evidence-v2.py`：支持 schema v2 的显式 opt-in，但尚未启动多库 runner。v1 和 standalone 行为保持原样；029 只有显式设置 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 才使用 v2 合并结果，未设置时仍执行原串行 go-race。
 
-新增 `schema_version=2` 的索引，保留每个分片不可变原始 JSONL，不把多个带框架的日志拼成伪单命令 `go-race.jsonl`。
+新增 `schema_version=2` 的索引，保留每个分片不可变原始 JSONL，不把多个带框架的日志拼成伪单命令 `go-race.jsonl`。PR-D 不改变该 schema；双库证明、逐片/合并墙钟和带时间戳的资源样本保存在同 attempt 的 runner report，029 集成路径核对 report 与最终 manifest 的 SHA-256。合并器先验证候选文件，再原子改名生成最终 manifest，崩溃留下的 candidate 不能冒充可复用证据。
 
 索引至少包含：
 

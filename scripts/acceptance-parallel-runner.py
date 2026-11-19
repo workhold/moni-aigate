@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import datetime as dt
 import hashlib
 import importlib.util
@@ -11,10 +12,12 @@ import json
 import os
 import pathlib
 import re
+import select
 import shutil
 import socket
 import subprocess
 import sys
+import threading
 import time
 import uuid
 
@@ -85,14 +88,16 @@ def verify_pinned_image(reference: str) -> str:
     return expected
 
 
-def preflight_docker() -> None:
+def preflight_docker(workers: int) -> None:
     if not os.environ.get("DOCKER_CONTEXT"):
         raise RunnerError("DOCKER_CONTEXT must explicitly select the dedicated acceptance Docker environment")
     info = docker(["info", "--format", "{{.NCPU}} {{.MemTotal}}"]).stdout.split()
     if len(info) != 2:
         raise RunnerError("cannot read Docker resource capacity")
-    if int(info[0]) < 2 or int(info[1]) < 4 * 1024**3:
-        raise RunnerError("workers=1 requires at least two CPUs and 4 GiB of Docker memory")
+    minimum_cpus = 4 if workers == 2 else 2
+    minimum_memory = 8 if workers == 2 else 4
+    if int(info[0]) < minimum_cpus or int(info[1]) < minimum_memory * 1024**3:
+        raise RunnerError(f"workers={workers} requires at least {minimum_cpus} CPUs and {minimum_memory} GiB of Docker memory")
     server = docker(["version", "--format", "{{.Server.Os}}"]).stdout.strip()
     if server != "linux":
         raise RunnerError("acceptance containers require a Linux Docker server")
@@ -362,6 +367,178 @@ def start_postgres(run_id: str, shard: str, image: str, private_env: pathlib.Pat
     raise RunnerError("PostgreSQL did not become ready on the shard loopback endpoint")
 
 
+PROBE_ROLE = "moni_040_parallel_probe"
+PROBE_TABLE = "public.moni_040_parallel_probe"
+PROBE_LOCK = 42040002
+PROBE_ACL_COUNT = """SELECT count(*) FROM pg_default_acl d
+  CROSS JOIN LATERAL aclexplode(d.defaclacl) a
+  JOIN pg_roles grantee ON grantee.oid = a.grantee
+  WHERE d.defaclrole = 'moni_test'::regrole AND d.defaclobjtype = 'r'
+  AND a.privilege_type = 'SELECT' AND grantee.rolname = 'moni_040_parallel_probe'"""
+
+
+def probe_sql(postgres_id: str, sql: str) -> str:
+    return docker([
+        "exec", postgres_id, "psql", "-X", "-qAt", "--no-psqlrc", "-v", "ON_ERROR_STOP=1",
+        "-h", "127.0.0.1", "-p", "55439", "-U", "moni_test", "-d", "moni_test", "-c", sql,
+    ]).stdout.strip()
+
+
+def read_lock_acquisition(process: subprocess.Popen) -> int:
+    ready, _, _ = select.select([process.stdout], [], [], 30)
+    if not ready:
+        raise RunnerError("timed out waiting for the dual-cluster advisory-lock holder")
+    line = process.stdout.readline().strip()
+    fields = line.split("|")
+    if len(fields) != 3 or fields[0] != "acquired" or not fields[1].isdigit():
+        raise RunnerError(f"dual-cluster advisory-lock holder failed: {line[-500:]}")
+    return int(fields[1])
+
+
+def release_lock_holder(process: subprocess.Popen) -> None:
+    process.stdin.write(f"SELECT pg_advisory_unlock({PROBE_LOCK});\n\\q\n")
+    process.stdin.flush()
+    process.stdin.close()
+    status = process.wait(timeout=10)
+    if status != 0 or process.stdout.read().strip() != "t":
+        raise RunnerError("dual-cluster advisory-lock holder did not release cleanly")
+
+
+def prove_dual_cluster_isolation(records: dict[str, dict]) -> dict:
+    started = utc_now()
+    started_monotonic = time.monotonic()
+    if set(records) != {"A", "B"}:
+        raise RunnerError("dual-cluster proof requires exactly two active clusters")
+    if records["A"]["system_identifier"] == records["B"]["system_identifier"]:
+        raise RunnerError("dual-cluster proof requires distinct PostgreSQL system identifiers")
+    for record in records.values():
+        inspected = container_inspect(record["postgres_id"])
+        if inspected.get("Id") != record["postgres_id"] or inspected.get("State", {}).get("Running") is not True:
+            raise RunnerError("both PostgreSQL clusters must be running during the isolation proof")
+    holder = None
+    holder_pid = None
+    released = False
+    try:
+        for role, record in records.items():
+            probe_sql(record["postgres_id"], f"""BEGIN;
+              CREATE ROLE {PROBE_ROLE} NOLOGIN;
+              ALTER DEFAULT PRIVILEGES FOR ROLE moni_test GRANT SELECT ON TABLES TO {PROBE_ROLE};
+              CREATE TABLE {PROBE_TABLE}(marker text);
+              INSERT INTO {PROBE_TABLE} VALUES ('{role}');
+              COMMIT;""")
+            if probe_sql(record["postgres_id"], f"SELECT count(*) FROM pg_roles WHERE rolname = '{PROBE_ROLE}'") != "1":
+                raise RunnerError("same-name role was not created in both clusters")
+            if probe_sql(record["postgres_id"], PROBE_ACL_COUNT) != "1":
+                raise RunnerError("same-name default ACL was not created in both clusters")
+            if probe_sql(record["postgres_id"], f"SELECT has_table_privilege('{PROBE_ROLE}', '{PROBE_TABLE}', 'SELECT')") != "t":
+                raise RunnerError("default ACL did not apply to the probe table")
+        args = [
+            "docker", "exec", "-i", records["A"]["postgres_id"], "psql", "-X", "-qAt", "--no-psqlrc",
+            "-v", "ON_ERROR_STOP=1", "-h", "127.0.0.1", "-p", "55439", "-U", "moni_test", "-d", "moni_test",
+        ]
+        holder = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", bufsize=1)
+        holder.stdin.write(f"SELECT 'acquired', pg_backend_pid(), pg_advisory_lock({PROBE_LOCK});\n")
+        holder.stdin.flush()
+        holder_pid = read_lock_acquisition(holder)
+        if probe_sql(records["B"]["postgres_id"], f"SELECT pg_try_advisory_lock({PROBE_LOCK})") != "t":
+            raise RunnerError("cluster B could not acquire the same advisory lock while cluster A held it")
+        if probe_sql(records["B"]["postgres_id"], f"SELECT pg_advisory_unlock({PROBE_LOCK})") != "t":
+            raise RunnerError("cluster B could not release its independent advisory lock")
+        probe_sql(records["A"]["postgres_id"], f"""BEGIN;
+          ALTER DEFAULT PRIVILEGES FOR ROLE moni_test REVOKE SELECT ON TABLES FROM {PROBE_ROLE};
+          DROP TABLE {PROBE_TABLE};
+          DROP ROLE {PROBE_ROLE};
+          COMMIT;""")
+        remaining = probe_sql(records["B"]["postgres_id"], f"""SELECT
+          (SELECT count(*) FROM pg_roles WHERE rolname = '{PROBE_ROLE}') || '|' ||
+          ({PROBE_ACL_COUNT}) || '|' ||
+          has_table_privilege('{PROBE_ROLE}', '{PROBE_TABLE}', 'SELECT') || '|' ||
+          (SELECT marker FROM {PROBE_TABLE})""")
+        if remaining != "1|1|t|B":
+            raise RunnerError("cluster A role/default ACL mutation affected cluster B")
+        release_lock_holder(holder)
+        released = True
+        probe_sql(records["B"]["postgres_id"], f"""BEGIN;
+          ALTER DEFAULT PRIVILEGES FOR ROLE moni_test REVOKE SELECT ON TABLES FROM {PROBE_ROLE};
+          DROP TABLE {PROBE_TABLE};
+          DROP ROLE {PROBE_ROLE};
+          COMMIT;""")
+        for record in records.values():
+            if probe_sql(record["postgres_id"], f"SELECT count(*) FROM pg_roles WHERE rolname = '{PROBE_ROLE}'") != "0":
+                raise RunnerError("dual-cluster probe role cleanup failed")
+            if probe_sql(record["postgres_id"], "SELECT count(*) FROM pg_locks WHERE locktype = 'advisory'") != "0":
+                raise RunnerError("dual-cluster probe advisory lock cleanup failed")
+        return {
+            "schema_version": 1, "status": "PASS", "started_at": started, "completed_at": utc_now(),
+            "wall_seconds": round(time.monotonic() - started_monotonic, 3),
+            "clusters": {role: {"shard": record["shard"], "system_identifier": record["system_identifier"]} for role, record in records.items()},
+            "simultaneous_running": True, "same_role": PROBE_ROLE,
+            "default_acl_independent": True, "advisory_lock_independent": True,
+            "probe_objects_removed": True, "advisory_locks_remaining": 0,
+        }
+    finally:
+        if holder is not None and not released:
+            if holder_pid is not None:
+                try:
+                    probe_sql(records["A"]["postgres_id"], f"SELECT pg_terminate_backend({holder_pid})")
+                except Exception:
+                    pass
+            if holder.stdin and not holder.stdin.closed:
+                try:
+                    holder.stdin.close()
+                except Exception:
+                    pass
+            try:
+                holder.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                holder.kill()
+                holder.wait(timeout=5)
+
+
+class DualClusterProof:
+    def __init__(self):
+        self.barrier = threading.Barrier(2)
+        self.records = {}
+        self.mutex = threading.Lock()
+        self.result = None
+        self.error = None
+        self.finished = False
+
+    def verify(self, role: str, shard: str, postgres_id: str, system_identifier: str) -> None:
+        with self.mutex:
+            if self.error is not None:
+                raise RunnerError(self.error)
+            self.records[role] = {"shard": shard, "postgres_id": postgres_id, "system_identifier": system_identifier}
+        try:
+            self.barrier.wait(timeout=120)
+        except threading.BrokenBarrierError as error:
+            raise RunnerError(self.error or "the first two PostgreSQL clusters did not become ready together") from error
+        if role == "A":
+            try:
+                self.result = prove_dual_cluster_isolation(self.records)
+            except Exception as error:
+                self.error = f"dual-cluster isolation proof failed: {error}"
+                self.result = {"schema_version": 1, "status": "FAIL", "error": self.error}
+                self.finished = True
+                self.barrier.abort()
+                raise RunnerError(self.error) from error
+            self.finished = True
+        try:
+            self.barrier.wait(timeout=120)
+        except threading.BrokenBarrierError as error:
+            raise RunnerError(self.error or "dual-cluster isolation proof was interrupted") from error
+        if self.error is not None:
+            raise RunnerError(self.error)
+
+    def abandon(self, error: Exception) -> None:
+        with self.mutex:
+            if not self.finished:
+                self.error = f"dual-cluster isolation proof could not start: {error}"
+                self.result = {"schema_version": 1, "status": "FAIL", "error": self.error}
+                self.finished = True
+                self.barrier.abort()
+
+
 def resource_sample(postgres: str, runner: str) -> list[dict]:
     result = docker(["stats", "--no-stream", "--format", "{{json .}}", postgres, runner])
     samples = []
@@ -410,7 +587,10 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
         "docker", "run", "--cidfile", str(cidfile), "--name", name, "--network", f"container:{postgres_id}",
         "--env-file", str(runner_env), "--read-only", "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
-        "--mount", f"type=bind,source={run_root},target={run_root}",
+        "--mount", f"type=bind,source={worktree},target={worktree}",
+        "--mount", f"type=bind,source={run_root / 'cache' / shard},target={run_root / 'cache' / shard}",
+        "--mount", f"type=bind,source={run_root / 'home' / shard},target={run_root / 'home' / shard}",
+        "--mount", f"type=bind,source={run_root / 'tmp' / shard},target={run_root / 'tmp' / shard}",
         "--mount", f"type=bind,source={common_git},target={common_git},readonly",
         "--label", f"{RUN_LABEL}={run_id}", "--label", f"{SHARD_LABEL}={shard}",
         "--workdir", str(worktree), image, *part["args"],
@@ -423,6 +603,8 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
     }
     detail = {"name": part["name"], "container_id": "", "resource_samples": [], "oom_killed": False, "stderr": stderr_path.name, "errors": []}
     started = utc_now()
+    started_monotonic = time.monotonic()
+    detail["started_at"] = started
     status = 125
     try:
         with log.open("x", encoding="utf-8") as output, stderr_path.open("x", encoding="utf-8") as errors:
@@ -495,6 +677,8 @@ def run_part(run_root: pathlib.Path, evidence: pathlib.Path, worktree: pathlib.P
             detail["runner_removed"] = container_absent(name)
         if not detail["runner_removed"]:
             detail["errors"].append("Go runner container cleanup failed or a same-name foreign container remains")
+        detail["completed_at"] = utc_now()
+        detail["wall_seconds"] = round(time.monotonic() - started_monotonic, 3)
 
 
 def discover_other(worktree: pathlib.Path, packages: list[str], env: dict, evidence: pathlib.Path) -> dict[str, list[str]]:
@@ -505,22 +689,62 @@ def discover_other(worktree: pathlib.Path, packages: list[str], env: dict, evide
     return v2.parse_other_json_discovery(result.stdout, packages)
 
 
-def netns_absent(sandbox_key: str, image: str) -> bool:
+def netns_absent(sandbox_key: str, image: str, run_id: str, shard: str, private: pathlib.Path) -> bool:
     path = pathlib.PurePosixPath(sandbox_key)
     if path.parent not in (pathlib.PurePosixPath("/var/run/docker/netns"), pathlib.PurePosixPath("/run/docker/netns")) or not re.fullmatch(r"[0-9a-f]{12,64}", path.name):
         raise RunnerError("Docker sandbox identity is outside the expected netns directory")
-    result = docker([
-        "run", "--rm", "--network", "none", "--mount", f"type=bind,source={path.parent},target=/host-netns,readonly",
+    name = f"moni-040-{run_id}-{shard}-netns-proof"
+    cidfile = private / f"{shard}-netns-proof.cid"
+    args = [
+        "run", "--cidfile", str(cidfile), "--name", name, "--network", "none",
+        "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--read-only",
+        "--mount", f"type=bind,source={path.parent},target=/host-netns,readonly",
+        "--label", f"{RUN_LABEL}={run_id}", "--label", f"{SHARD_LABEL}={shard}-netns-proof",
         "--entrypoint", "python3", image, "-B", "-I", "-c",
         "import os,sys; sys.exit(1 if os.path.lexists(sys.argv[1]) else 0)", f"/host-netns/{path.name}",
-    ], check=False)
-    return result.returncode == 0
+    ]
+    result = docker(args, check=False)
+    container_id = ""
+    removed = False
+    try:
+        container_id = read_cidfile(cidfile)
+        if not container_id:
+            if not container_absent(name):
+                raise RunnerError("netns-proof container has no owned cidfile; its same-name resource will not be removed")
+            raise RunnerError("netns-proof container did not create an owned cidfile")
+        inspected = container_inspect(container_id)
+        labels = inspected.get("Config", {}).get("Labels") or {}
+        if inspected.get("Id") != container_id or labels.get(RUN_LABEL) != run_id or labels.get(SHARD_LABEL) != shard + "-netns-proof":
+            raise RunnerError("netns-proof container ownership does not match this shard")
+        exit_code = inspected.get("State", {}).get("ExitCode")
+        docker(["rm", "--force", container_id], check=False)
+        removed = container_absent(container_id)
+        if not removed:
+            raise RunnerError("netns-proof container cleanup failed")
+        return result.returncode == 0 and exit_code == 0
+    finally:
+        if container_id and not removed:
+            docker(["rm", "--force", container_id], check=False)
+            if not container_absent(container_id):
+                raise RunnerError("netns-proof container remains after owned-ID cleanup")
 
 
-def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, volume: str, resources: dict, runners_removed: bool, image: str) -> tuple[dict, list[str]]:
+def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, volume: str, resources: dict, runners_removed: bool, image: str, run_id: str, shard: str, private: pathlib.Path) -> tuple[dict, list[str]]:
     errors = []
     postgres_id = resources.get("postgres_id", "")
     if postgres_id:
+        try:
+            inspected = container_inspect(postgres_id)
+            state = inspected.get("State", {})
+            resources["postgres_terminal"] = {
+                "running_before_cleanup": state.get("Running") is True,
+                "oom_killed": state.get("OOMKilled") is True,
+                "exit_code_before_cleanup": state.get("ExitCode"),
+            }
+            if state.get("OOMKilled") is True or state.get("Running") is not True:
+                errors.append(f"PostgreSQL terminal state is not healthy: {resources['postgres_terminal']}")
+        except Exception as error:
+            errors.append(f"PostgreSQL terminal-state inspection failed: {error}")
         docker(["rm", "--force", postgres_id], check=False)
         pg_removed = container_absent(postgres_id)
     else:
@@ -535,7 +759,7 @@ def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, v
     netns_removed = False
     if resources.get("sandbox_key") and runners_removed and pg_removed:
         try:
-            netns_removed = netns_absent(resources["sandbox_key"], image)
+            netns_removed = netns_absent(resources["sandbox_key"], image, run_id, shard, private)
         except Exception as error:
             errors.append(f"netns cleanup inspection failed: {error}")
     cleanup = {
@@ -552,9 +776,11 @@ def cleanup_shard(source: pathlib.Path, worktree: pathlib.Path, postgres: str, v
     return cleanup, errors
 
 
-def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Path, private: pathlib.Path, shard: dict, run_id: str, images: dict[str, str], baseline_listeners: set[str]) -> dict:
+def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Path, private: pathlib.Path, shard: dict, run_id: str, images: dict[str, str], baseline_listeners: set[str], dual_proof: DualClusterProof | None = None, dual_role: str | None = None) -> dict:
+    started = utc_now()
+    started_monotonic = time.monotonic()
     name = shard["name"]
-    result = {"name": name, "database_identifier": "", "parts": [], "entries": [], "cleanup": {"containers_removed": False, "volume_removed": False, "netns_removed": False}, "errors": []}
+    result = {"name": name, "database_identifier": "", "started_at": started, "parts": [], "entries": [], "cleanup": {"containers_removed": False, "volume_removed": False, "netns_removed": False}, "errors": []}
     worktree = run_root / "worktrees" / name
     postgres = f"moni-040-{run_id}-{name}-pg"
     volume = f"moni-040-{run_id}-{name}-data"
@@ -568,6 +794,9 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
         postgres_env, runner_env = write_private_files(private, name, run_root, env)
         inspected, identifier = start_postgres(run_id, name, images["postgres"], postgres_env, volume, postgres, resources)
         result["database_identifier"] = identifier
+        if dual_proof is not None:
+            dual_proof.verify(dual_role, name, inspected["Id"], identifier)
+            result["dual_cluster_role"] = dual_role
         other_tests = discover_other(worktree, shard["packages"], env, evidence) if shard["class"] == "other" else {}
         for part in shard["parts"]:
             expected = {(part["packages"][0], test) for test in part["tests"]} if shard["class"] != "other" else {(package, test) for package, tests in other_tests.items() for test in tests}
@@ -579,25 +808,41 @@ def run_shard(source: pathlib.Path, run_root: pathlib.Path, evidence: pathlib.Pa
                 result["parts"].append(detail)
                 runners_removed = runners_removed and detail.get("runner_removed", False)
                 result["errors"].extend(detail["errors"])
+                if not detail.get("runner_removed", False):
+                    result["errors"].append(f"{part['name']}: runner removal is unproven; later parts in this shard are unsafe and will not start")
+                    break
             except Exception as error:
                 orphan = f"moni-040-{run_id}-{part['name']}"
                 cidfile = runner_env.parent / f"{part['name']}.cid"
-                container_id = read_cidfile(cidfile)
+                try:
+                    container_id = read_cidfile(cidfile)
+                except Exception as cid_error:
+                    container_id = ""
+                    runners_removed = False
+                    result["errors"].append(f"{part['name']}: runner ownership is unreadable: {cid_error}")
                 if container_id:
                     docker(["rm", "--force", container_id], check=False)
                     runners_removed = runners_removed and container_absent(container_id)
                 else:
                     runners_removed = runners_removed and container_absent(orphan)
                 result["errors"].append(f"{part['name']}: {error}")
+                if not runners_removed:
+                    result["errors"].append(f"{part['name']}: runner removal is unproven; later parts in this shard are unsafe and will not start")
+                    break
     except Exception as error:
         result["errors"].append(str(error))
+        if dual_proof is not None:
+            dual_proof.abandon(error)
     finally:
         if common_git is not None:
-            cleanup, errors = cleanup_shard(source, worktree, postgres, volume, resources, runners_removed, images["go_runner"])
+            cleanup, errors = cleanup_shard(source, worktree, postgres, volume, resources, runners_removed, images["go_runner"], run_id, name, private)
             result["cleanup"] = cleanup
+            result["postgres_terminal"] = resources.get("postgres_terminal", {"inspection": "unavailable"})
             result["errors"].extend(errors)
             for entry in result["entries"]:
                 entry["cleanup"] = cleanup.copy()
+        result["completed_at"] = utc_now()
+        result["wall_seconds"] = round(time.monotonic() - started_monotonic, 3)
     return result
 
 
@@ -611,7 +856,9 @@ def required_specs(source: pathlib.Path) -> list[str]:
     return sorted(current | matrix_specs)
 
 
-def build_manifest(plan: dict, evidence: pathlib.Path, run_id: str, created_at: str, images: dict[str, str], results: list[dict]) -> dict:
+def build_manifest(plan: dict, evidence: pathlib.Path, run_id: str, created_at: str, images: dict[str, str], results: list[dict], workers: int = 1) -> dict:
+    if workers not in (1, 2):
+        raise RunnerError("v2 workers must be one or two")
     expected_parts = [part["name"] for shard in plan["shards"] for part in shard["parts"]]
     if len(results) != 14 or any(result["errors"] for result in results):
         raise RunnerError("v2 evidence requires all 14 successful logical shards")
@@ -626,29 +873,36 @@ def build_manifest(plan: dict, evidence: pathlib.Path, run_id: str, created_at: 
         if previous is not None and (previous != "identity" or shard_class != "identity"):
             raise RunnerError("database system identifier was reused across shards")
         identifiers[identifier] = shard_class
+    if len(identifiers) != 14:
+        raise RunnerError("v2 evidence requires exactly 14 distinct clusters, with only identity parts sharing")
     return {
         "schema_version": 2, "suite": "go-race-parallel", "run_id": run_id,
         "created_at": created_at, "commit": plan["commit"], "tree": plan["tree"],
-        "source_clean": True, "scheduler_version": 1, "workers": 1,
+        "source_clean": True, "scheduler_version": 1, "workers": workers,
         "images": {key: value.rsplit("@", 1)[1] for key, value in images.items()},
         "plan": "shard-plan.json", "plan_sha256": digest_bytes((evidence / "shard-plan.json").read_bytes()),
         "skip_baseline": v2.reviewed_baseline(), "shards": entries,
     }
 
 
-def merge_complete_evidence(source: pathlib.Path, evidence: pathlib.Path, plan: dict, run_id: str, images: dict[str, str], results: list[dict]) -> str:
-    manifest = build_manifest(plan, evidence, run_id, utc_now(), images, results)
+def merge_complete_evidence(source: pathlib.Path, evidence: pathlib.Path, plan: dict, run_id: str, images: dict[str, str], results: list[dict], workers: int = 1) -> str:
+    manifest = build_manifest(plan, evidence, run_id, utc_now(), images, results, workers)
     path = evidence / "go-race-evidence-v2.json"
-    write_json(path, manifest)
+    candidate = evidence / "go-race-evidence-v2.candidate.json"
+    candidate.unlink(missing_ok=True)
+    path.unlink(missing_ok=True)
+    write_json(candidate, manifest)
     env = os.environ.copy()
     env[v2.common.RUN_ID_ENV] = run_id
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    command = [sys.executable, "-B", "-I", str(source / "scripts" / "check-acceptance-evidence-v2.py"), "--manifest", str(path)]
+    command = [sys.executable, "-B", "-I", str(source / "scripts" / "check-acceptance-evidence-v2.py"), "--manifest", str(candidate)]
     for spec in required_specs(source):
         command.extend(["--spec", spec])
     try:
         execute(command, cwd=source, env=env)
+        os.replace(candidate, path)
     except Exception:
+        candidate.unlink(missing_ok=True)
         path.unlink(missing_ok=True)
         raise
     return path.name
@@ -674,17 +928,31 @@ def failed_shard_result(name: str, error: Exception) -> dict:
     return {"name": name, "database_identifier": "", "parts": [], "entries": [], "cleanup": {"containers_removed": False, "volume_removed": False, "netns_removed": False}, "errors": [str(error)]}
 
 
-def run_selected(shards: list[dict], run_one) -> list[dict]:
+def run_selected(shards: list[dict], run_one, workers: int = 1) -> list[dict]:
+    if workers == 1:
+        results = []
+        for shard in shards:
+            try:
+                results.append(run_one(shard))
+            except Exception as error:
+                results.append(failed_shard_result(shard["name"], error))
+        return results
+    if workers != 2:
+        raise RunnerError("only workers=1 and workers=2 are implemented")
     results = []
-    for shard in shards:
-        try:
-            results.append(run_one(shard))
-        except Exception as error:
-            results.append(failed_shard_result(shard["name"], error))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="acceptance-shard") as executor:
+        futures = [executor.submit(run_one, shard) for shard in shards]
+        for shard, future in zip(shards, futures):
+            try:
+                results.append(future.result())
+            except Exception as error:
+                results.append(failed_shard_result(shard["name"], error))
     return results
 
 
-def attempt_scope(shard_count: int) -> str:
+def attempt_scope(shard_count: int, workers: int = 1) -> str:
+    if workers == 2:
+        return "workers_2_full_go_race" if shard_count == 14 else "workers_2_partial"
     if shard_count == 1:
         return "workers_1_canary"
     if shard_count == 14:
@@ -693,12 +961,16 @@ def attempt_scope(shard_count: int) -> str:
 
 
 def execute_attempt(args: argparse.Namespace) -> tuple[pathlib.Path, dict]:
-    if args.workers != 1:
-        raise RunnerError("PR-C implements workers=1 only; workers=2 is not implemented or permitted")
+    if args.workers not in (1, 2):
+        raise RunnerError("only workers=1 and workers=2 are implemented; workers>=3 is forbidden")
+    if args.workers == 2 and args.shard is not None:
+        raise RunnerError("workers=2 requires --all-shards so the complete 14-shard attempt cannot be stitched")
     if not RUN_ID.fullmatch(args.run_id):
         raise RunnerError("run_id must be 32 lowercase hexadecimal characters")
+    started = utc_now()
+    started_monotonic = time.monotonic()
     source = pathlib.Path(args.source).resolve()
-    preflight_docker()
+    preflight_docker(args.workers)
     listeners = host_listeners()
     require_no_acceptance_host_port(listeners)
     run_root, evidence, private = prepare_run_directory(source, args.run_directory, args.run_id)
@@ -708,9 +980,19 @@ def execute_attempt(args: argparse.Namespace) -> tuple[pathlib.Path, dict]:
     images = load_image_lock()
     for reference in images.values():
         verify_pinned_image(reference)
-    started = utc_now()
-    results = run_selected(shards, lambda shard: run_shard(source, run_root, evidence, private, shard, args.run_id, images, listeners))
+    dual_proof = DualClusterProof() if args.workers == 2 else None
+    dual_roles = {shards[0]["name"]: "A", shards[1]["name"]: "B"} if dual_proof is not None else {}
+
+    def run_one(shard):
+        role = dual_roles.get(shard["name"])
+        return run_shard(source, run_root, evidence, private, shard, args.run_id, images, listeners, dual_proof if role else None, role)
+
+    parallel_started = time.monotonic()
+    results = run_selected(shards, run_one, args.workers)
+    parallel_seconds = round(time.monotonic() - parallel_started, 3)
     errors = [error for result in results for error in result["errors"]]
+    if dual_proof is not None and (not dual_proof.result or dual_proof.result.get("status") != "PASS"):
+        errors.append("workers=2 did not complete the simultaneous dual-cluster isolation proof")
     final_listeners = None
     try:
         final_listeners = host_listeners()
@@ -733,27 +1015,43 @@ def execute_attempt(args: argparse.Namespace) -> tuple[pathlib.Path, dict]:
     except Exception as error:
         errors.append(f"private credential cleanup failed: {error}")
     manifest = None
+    merge_seconds = 0.0
     if len(shards) == 14 and not errors:
+        merge_started = time.monotonic()
         try:
-            manifest = merge_complete_evidence(source, evidence, plan, args.run_id, images, results)
+            manifest = merge_complete_evidence(source, evidence, plan, args.run_id, images, results, args.workers)
         except Exception as error:
             errors.append(f"v2 merge failed: {error}")
+        merge_seconds = round(time.monotonic() - merge_started, 3)
+    proof_result = dual_proof.result if dual_proof is not None else None
     report = {
-        "schema_version": 1, "suite": "040-pr-c-container-runner",
-        "scope": attempt_scope(len(shards)),
+        "schema_version": 1, "suite": "040-pr-d-parallel-runner" if args.workers == 2 else "040-pr-c-container-runner",
+        "scope": attempt_scope(len(shards), args.workers),
         "status": "PASS" if not errors else "FAIL", "reusable": bool(manifest),
-        "run_id": args.run_id, "commit": commit, "tree": tree, "workers": 1,
+        "run_id": args.run_id, "commit": commit, "tree": tree, "workers": args.workers,
         "fail_fast": False, "selected_shards": [shard["name"] for shard in shards],
         "started_at": started, "completed_at": utc_now(),
+        "timings": {
+            "wall_seconds": round(time.monotonic() - started_monotonic, 3),
+            "parallel_shards_seconds": parallel_seconds,
+            "merge_seconds": merge_seconds,
+        },
         "host_listeners": {
             "before": listener_snapshot(listeners),
             "after": listener_snapshot(final_listeners) if final_listeners is not None else {"unavailable": True},
             "zero_new": final_listeners == listeners,
         },
+        "dual_cluster_proof": proof_result,
         "shards": results, "errors": errors, "manifest": manifest,
-        "complete_029": False, "workers_2_proven": False,
+        "manifest_sha256": digest_bytes((evidence / manifest).read_bytes()) if manifest else None,
+        "complete_029": False, "workers_2_proven": bool(proof_result and proof_result.get("status") == "PASS"),
     }
-    write_json(evidence / "runner-report.json", report)
+    try:
+        write_json(evidence / "runner-report.json", report)
+    except Exception:
+        if manifest:
+            (evidence / manifest).unlink(missing_ok=True)
+        raise
     if errors:
         raise RunnerError(f"acceptance runner failed; see {evidence / 'runner-report.json'}")
     return evidence, report

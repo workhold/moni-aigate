@@ -99,13 +99,17 @@ class EvidenceV2Test(unittest.TestCase):
 
     def make_manifest(self):
         created = dt.datetime.now(dt.timezone.utc)
-        started = created - dt.timedelta(seconds=2)
-        completed = created - dt.timedelta(seconds=1)
         shards = []
         allocation = v2.allocation_from_plan(self.plan, self.source_other)
         baseline_tests = {(entry["package"], entry["test"]) for entry in self.approved_skips}
         for shard in self.plan["shards"]:
             for part in shard["parts"]:
+                position = len(shards)
+                pair = position // 2
+                if position >= 13:
+                    pair = position - 6
+                started = created - dt.timedelta(seconds=(11 - pair) * 2)
+                completed = started + dt.timedelta(seconds=1)
                 events = []
                 for package in part["packages"]:
                     package_tests = [{"Action": "skip" if (package, test) in baseline_tests else "pass", "Package": package, "Test": test} for pkg, test in sorted(allocation[part["name"]]) if pkg == package]
@@ -185,6 +189,39 @@ class EvidenceV2Test(unittest.TestCase):
 
     def test_valid_parallel_evidence_identity_sharing_and_unfiltered_other(self):
         self.assertEqual(v2.verify(self.manifest_path, self.specs()), 2)
+
+    def copy_interval(self, source, target):
+        source_text = (self.root / f"go-tests-{source}.jsonl").read_text(encoding="utf-8")
+        started = re.search(r"^started_at: (.+)$", source_text, re.MULTILINE).group(1)
+        completed = re.search(r"^completed_at: (.+)$", source_text, re.MULTILINE).group(1)
+        path = self.root / f"go-tests-{target}.jsonl"
+        text = re.sub(r"^started_at: .*$", "started_at: " + started, path.read_text(encoding="utf-8"), flags=re.MULTILINE)
+        text = re.sub(r"^completed_at: .*$", "completed_at: " + completed, text, flags=re.MULTILINE)
+        path.write_text(text, encoding="utf-8")
+        self.refresh_digest(target)
+
+    def test_schedule_rejects_identity_overlap_and_more_than_two_parts(self):
+        self.copy_interval("identity-0", "identity-1")
+        self.assert_rejected()
+        self.make_manifest()
+        self.copy_interval("billing-0", "billing-2")
+        self.assert_rejected()
+
+    def test_schedule_requires_actual_two_worker_overlap(self):
+        created = common.timestamp(self.manifest["created_at"])
+        position = 0
+        for shard in self.plan["shards"]:
+            for part in shard["parts"]:
+                path = self.root / f"go-tests-{part['name']}.jsonl"
+                started = created - dt.timedelta(seconds=(17 - position) * 2)
+                position += 1
+                completed = started + dt.timedelta(seconds=1)
+                text = re.sub(r"^started_at: .*$", "started_at: " + started.isoformat(), path.read_text(encoding="utf-8"), flags=re.MULTILINE)
+                text = re.sub(r"^completed_at: .*$", "completed_at: " + completed.isoformat(), text, flags=re.MULTILINE)
+                path.write_text(text, encoding="utf-8")
+                self.entry(part["name"])["log_sha256"] = v2.digest_file(path)
+        self.write_manifest()
+        self.assert_rejected()
 
     def test_cross_package_same_name_is_allowed(self):
         for index, class_name, previous in ((0, "billing", "TestBilling0"), (4, "server", "TestServer0")):

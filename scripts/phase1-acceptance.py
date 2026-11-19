@@ -155,6 +155,77 @@ def v2_merge_command(manifest: pathlib.Path, items: list[dict]) -> list[str]:
     return command
 
 
+def stage_v2_evidence(source_manifest: pathlib.Path, destination: pathlib.Path) -> pathlib.Path:
+    source_manifest = source_manifest.expanduser().absolute()
+    if source_manifest.is_symlink() or not source_manifest.is_file():
+        raise ValueError("v2 manifest must be a regular non-symlink file")
+    source_directory = source_manifest.parent.resolve()
+    source_manifest = source_directory / source_manifest.name
+    if source_directory.is_relative_to(ROOT) or source_directory == ROOT or source_directory in ROOT.parents:
+        raise ValueError("v2 evidence must come from its own artifact directory outside the source repository")
+    if destination.exists():
+        raise ValueError("v2 staging directory already exists")
+    destination.mkdir(parents=True)
+    for source in source_directory.iterdir():
+        if source.is_symlink() or not source.is_file():
+            raise ValueError(f"v2 artifact contains a non-regular or symlink entry: {source.name}")
+        target = destination / source.name
+        shutil.copyfile(source, target)
+        if hashlib.sha256(source.read_bytes()).digest() != hashlib.sha256(target.read_bytes()).digest():
+            raise ValueError(f"v2 artifact digest changed while staging: {source.name}")
+    return destination / source_manifest.name
+
+
+def validate_parallel_report(path: pathlib.Path, manifest: pathlib.Path, run_id: str, commit: str) -> dict:
+    report = json.loads(path.read_text(encoding="utf-8"))
+    value = json.loads(manifest.read_text(encoding="utf-8"))
+    if report.get("schema_version") != 1 or report.get("suite") != "040-pr-d-parallel-runner":
+        raise ValueError("parallel runner report schema is invalid")
+    if report.get("run_id") != run_id or value.get("run_id") != run_id or report.get("commit") != commit or value.get("commit") != commit:
+        raise ValueError("parallel manifest/report are not bound to this attempt and commit")
+    if report.get("workers") != 2 or value.get("workers") != 2 or report.get("status") != "PASS" or report.get("reusable") is not True:
+        raise ValueError("workers=2 runner did not complete successfully")
+    if report.get("manifest") != manifest.name or report.get("manifest_sha256") != hashlib.sha256(manifest.read_bytes()).hexdigest():
+        raise ValueError("parallel runner report is not bound to the final manifest digest")
+    if report.get("complete_029") is not False or report.get("workers_2_proven") is not True or report.get("fail_fast") is not False:
+        raise ValueError("parallel runner attempt boundaries are invalid")
+    proof = report.get("dual_cluster_proof")
+    if not isinstance(proof, dict) or proof.get("status") != "PASS" or proof.get("simultaneous_running") is not True or proof.get("default_acl_independent") is not True or proof.get("advisory_lock_independent") is not True or proof.get("probe_objects_removed") is not True or proof.get("advisory_locks_remaining") != 0:
+        raise ValueError("dual-cluster isolation proof is incomplete")
+    if report.get("host_listeners", {}).get("zero_new") is not True:
+        raise ValueError("parallel runner did not prove zero new host listeners")
+    shards = report.get("shards")
+    if not isinstance(shards, list) or len(shards) != 14 or report.get("errors") != []:
+        raise ValueError("parallel runner report does not contain 14 clean shard results")
+    sample_count = 0
+    for shard in shards:
+        if shard.get("errors") != [] or not all(shard.get("cleanup", {}).get(key) is True for key in ("containers_removed", "volume_removed", "netns_removed")):
+            raise ValueError(f"shard cleanup/errors are not clean: {shard.get('name')}")
+        terminal = shard.get("postgres_terminal", {})
+        if terminal.get("running_before_cleanup") is not True or terminal.get("oom_killed") is not False:
+            raise ValueError(f"PostgreSQL terminal state is not healthy: {shard.get('name')}")
+        if not isinstance(shard.get("wall_seconds"), (int, float)) or shard["wall_seconds"] < 0:
+            raise ValueError("shard wall time is missing")
+        for part in shard.get("parts", []):
+            if part.get("errors") != [] or part.get("runner_removed") is not True or part.get("oom_killed") is not False:
+                raise ValueError(f"Go runner terminal state is not clean: {part.get('name')}")
+            for sample in part.get("resource_samples", []):
+                if not isinstance(sample.get("at"), str) or not isinstance(sample.get("containers"), list):
+                    raise ValueError("resource sample schema is invalid")
+                sample_count += 1
+    if sample_count == 0:
+        raise ValueError("parallel runner has no timestamped resource curve")
+    timings = report.get("timings", {})
+    if any(not isinstance(timings.get(key), (int, float)) or timings[key] < 0 for key in ("wall_seconds", "parallel_shards_seconds", "merge_seconds")):
+        raise ValueError("parallel runner timing evidence is incomplete")
+    return {
+        "run_id": run_id, "workers": 2, "runner_report": "parallel-evidence/runner-report.json",
+        "runner_report_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "parallel_shards_seconds": timings["parallel_shards_seconds"], "merge_seconds": timings["merge_seconds"],
+        "resource_samples": sample_count,
+    }
+
+
 def required_go_results(log: pathlib.Path, items: list[dict]) -> dict[str, dict[str, str]]:
     wanted = {(test.split(":", 1)[0], test.split(":", 1)[1]) for item in items for test in item["tests"]}
     found: dict[tuple[str, str], str] = {}
@@ -342,7 +413,17 @@ def wait_for_ready() -> None:
 
 def execute(items: list[dict], args: argparse.Namespace) -> int:
     started_at = now()
+    started_monotonic = time.monotonic()
     commit = clean_commit()
+    parallel_workers = os.environ.get("PHASE1_ACCEPTANCE_PARALLEL_WORKERS")
+    v2_source = os.environ.get("PHASE1_ACCEPTANCE_GO_EVIDENCE_V2")
+    if parallel_workers is not None:
+        if parallel_workers != "2":
+            raise ValueError("PHASE1_ACCEPTANCE_PARALLEL_WORKERS only permits the reviewed workers=2 candidate")
+        if v2_source:
+            raise ValueError("parallel runner and external v2 manifest options are mutually exclusive")
+        if not args.artifacts or not args.output:
+            raise ValueError("workers=2 requires new repository-external --artifacts and --output paths")
     if os.environ.get("TEST_DATABASE_URL") != EXPECTED_DATABASE:
         raise ValueError(f"TEST_DATABASE_URL must be exactly {EXPECTED_DATABASE}")
     browser_path = pathlib.Path(args.browser_evidence).resolve() if args.browser_evidence else None
@@ -358,10 +439,13 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     compose = subprocess.run(["docker", "compose", "version"], cwd=ROOT, capture_output=True)
     if compose.returncode:
         subprocess.run(["docker-compose", "version"], cwd=ROOT, check=True, capture_output=True)
-    output = ROOT / "docs" / "verification" / "phase1"
+    output = pathlib.Path(args.output).resolve() if args.output else ROOT / "docs" / "verification" / "phase1"
     published_artifact = pathlib.Path(args.artifacts).resolve() if args.artifacts else output / "evidence" / commit
     if published_artifact.exists():
         raise ValueError(f"artifact directory already exists: {published_artifact}")
+    if parallel_workers is not None:
+        if output.exists() or output.is_relative_to(ROOT) or published_artifact.is_relative_to(ROOT):
+            raise ValueError("workers=2 summary/output and raw artifacts must be new paths outside the source repository")
     # Keep raw logs outside the source tree until every read-only architecture
     # check has finished; only their final published copies enter the repository.
     artifact = pathlib.Path(tempfile.mkdtemp(prefix="phase1-acceptance-"))
@@ -389,30 +473,37 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
     ]
     add("static-build", static)
     add("frontend", [run_logged(["npm", "--prefix", "web", "test"], artifact / "frontend-test.log", env), run_logged(["npm", "--prefix", "web", "run", "build"], artifact / "frontend-build.log", env)])
-    v2_source = os.environ.get("PHASE1_ACCEPTANCE_GO_EVIDENCE_V2")
-    if v2_source:
-        source_manifest = pathlib.Path(v2_source).resolve()
-        if source_manifest.parent == ROOT or source_manifest.parent in ROOT.parents:
-            raise ValueError("v2 evidence must come from its own artifact directory")
+    parallel_details = None
+    go_commands = []
+    if parallel_workers is not None:
+        go_mode = "parallel-v2"
+        run_id = uuid.uuid4().hex
+        run_directory = pathlib.Path(os.environ.get("PHASE1_ACCEPTANCE_PARALLEL_RUN_DIRECTORY", str(pathlib.Path.home() / ".cache" / "moni-aigate-acceptance" / run_id))).expanduser().absolute()
+        parallel_run = run_logged([
+            sys.executable, "-B", "-I", str(ROOT / "scripts" / "acceptance-parallel-coordinator.py"),
+            "--workers", "2", "--all-shards", "--run-id", run_id, "--run-directory", str(run_directory), "--source", str(ROOT),
+        ], artifact / "parallel-runner.log", env)
+        go_commands.append(parallel_run)
+        if parallel_run["status"] != "PASS":
+            raise ValueError(f"workers=2 parallel runner failed; see {parallel_run['log']}")
+        source_manifest = run_directory / "evidence" / "go-race-evidence-v2.json"
         parallel_artifact = artifact / "parallel-evidence"
-        try:
-            shutil.copytree(source_manifest.parent, parallel_artifact, symlinks=True)
-        except (OSError, shutil.Error) as error:
-            raise ValueError(f"cannot stage the v2 evidence artifact: {error}") from error
-        v2_manifest = parallel_artifact / source_manifest.name
+        v2_manifest = stage_v2_evidence(source_manifest, parallel_artifact)
+        parallel_details = validate_parallel_report(parallel_artifact / "runner-report.json", v2_manifest, run_id, commit)
+        parallel_details["runner_wall_seconds"] = parallel_run["seconds"]
+    elif v2_source:
+        go_mode = "manifest-v2"
+        source_manifest = pathlib.Path(v2_source).expanduser().absolute()
+        parallel_artifact = artifact / "parallel-evidence"
+        v2_manifest = stage_v2_evidence(source_manifest, parallel_artifact)
         try:
             run_id = json.loads(v2_manifest.read_text(encoding="utf-8")).get("run_id", "")
         except (OSError, ValueError, AttributeError):
             run_id = ""
-        if not isinstance(run_id, str):
-            run_id = ""
-        env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
-        merge = run_logged(v2_merge_command(v2_manifest, items), artifact / "go-race-v2-merge.log", env)
-        add("go-race", [merge])
-        go_results = matrix_go_results(items, "PASS" if merge["status"] == "PASS" else "MISSING")
-        env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"] = str(v2_manifest)
-        env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE", None)
+        if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", run_id):
+            raise ValueError("external v2 manifest has an invalid run_id")
     else:
+        go_mode = "serial-v1"
         env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)
         race_log = artifact / "go-race.jsonl"
         add("go-race", [run_logged(["go", "test", "-race", "-p", "1", "-count=1", "-timeout", "1200s", "-json", "./..."], race_log, env)])
@@ -420,6 +511,15 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         run_id = uuid.uuid4().hex
         env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
         env["VERIFY_CURRENT_MVP_GO_EVIDENCE"] = str(go_evidence_manifest(artifact, commit, run_id))
+    if parallel_workers is not None or v2_source:
+        env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id
+        merge = run_logged(v2_merge_command(v2_manifest, items), artifact / "go-race-v2-merge.log", env)
+        go_commands.append(merge)
+        add("go-race", go_commands)
+        go_results = matrix_go_results(items, "PASS" if merge["status"] == "PASS" else "MISSING")
+        env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"] = str(v2_manifest)
+        env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE", None)
+    serial_tail_started = time.monotonic()
     add("current-mvp", [preview_stop, run_logged(["./scripts/verify-current-mvp.sh"], artifact / "current-mvp.log", env)])
 
     for name, package, test, variable in (
@@ -462,9 +562,26 @@ def execute(items: list[dict], args: argparse.Namespace) -> int:
         if '"status":"passed"' not in text and '"status": "passed"' not in text:
             suites[-1]["status"] = "FAIL"
 
+    serial_tail_seconds = round(time.monotonic() - serial_tail_started, 3)
     publish_artifacts(artifact, published_artifact, suites)
     shutil.rmtree(artifact)
-    summary = {"schema_version": 1, "spec": "029-phase1-acceptance", "commit": commit, "database": "127.0.0.1:55439/moni_test", "started_at": started_at, "suites": suites, "required_go_results": go_results, "browser_evidence": str(browser_path.relative_to(ROOT)) if browser_path and browser_path.is_relative_to(ROOT) else str(browser_path), "browser_runtime": (browser or {}).get("runtime", {}), "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项"}
+    go_evidence = {"mode": go_mode, "run_id": run_id, "matrix_unique_tests": 77, "matrix_bindings": 82, "current_mvp_required_tests": 100}
+    if parallel_details is not None:
+        go_evidence.update(parallel_details)
+    summary = {
+        "schema_version": 1, "spec": "029-phase1-acceptance", "run_id": run_id, "commit": commit,
+        "database": "127.0.0.1:55439/moni_test", "started_at": started_at, "suites": suites,
+        "timing": {
+            "wall_seconds": round(time.monotonic() - started_monotonic, 3),
+            "serial_tail_seconds": serial_tail_seconds,
+            "parallel_runner_seconds": parallel_details.get("runner_wall_seconds") if parallel_details else None,
+            "v2_merge_seconds": next((command["seconds"] for command in go_commands if command["log"].endswith("go-race-v2-merge.log")), None),
+        },
+        "go_evidence": go_evidence, "required_go_results": go_results,
+        "browser_evidence": str(browser_path.relative_to(ROOT)) if browser_path and browser_path.is_relative_to(ROOT) else str(browser_path),
+        "browser_runtime": (browser or {}).get("runtime", {}),
+        "rerun_policy": "任何 FAIL、MISSING 或必需 SKIP 后必须修复并在同一干净提交整单重跑全部 41 项",
+    }
     write_evidence(output, items, summary, go_results, browser)
     print(json.dumps({"overall_status": summary["overall_status"], "counts": summary["counts"], "summary": str(output / "summary.json")}, ensure_ascii=False))
     return 0 if summary["overall_status"] == "PASS" else 1
@@ -476,6 +593,7 @@ def main() -> int:
     parser.add_argument("--execute", action="store_true", help="execute the complete same-commit acceptance run")
     parser.add_argument("--browser-evidence", help="same-commit isolated desktop+390px browser JSON")
     parser.add_argument("--artifacts", help="new final directory for raw logs; staged outside the repository and published at completion")
+    parser.add_argument("--output", help="new directory for summary.json and the 41 item records; required outside the repository for workers=2")
     args = parser.parse_args()
     if args.check == args.execute:
         parser.error("choose exactly one of --check or --execute")
