@@ -8409,3 +8409,15 @@ PR-D 根因分析与单一时钟源环境修复：workers=1 控制与宿主对�
 - modified `specs/040-acceptance-parallelism/plan.md`
 
 </details>
+
+## 2026-11-19T19:17:36Z · a2363b8927af
+
+仅增强 029 密码修改失败诊断：记录不含秘密的错误文本、路径和 MFA 输入状态，不改认证断言、页面或业务行为；时钟修复后的完整 workers=2 已通过，完整 029 浏览器待重验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2573 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+
+</details>

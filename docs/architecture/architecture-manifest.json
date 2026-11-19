@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-19T18:09:37Z",
-  "review_reason": "PR-D 根因分析与单一时钟源环境修复：workers=1 控制与宿主对照排除并发/Go/PG版本，直接采样证实VM时钟回拨；授权禁用重复NTP后545样本0回拨且清理完成，完整workers=2仍待验证，默认serial v1不变",
-  "snapshot_sha256": "d37f3fa075e642e18d36d308dad3185cb7905bf17fb4df18bb2dd70eab932ae7",
+  "reviewed_at": "2026-11-19T19:17:36Z",
+  "review_reason": "仅增强 029 密码修改失败诊断：记录不含秘密的错误文本、路径和 MFA 输入状态，不改认证断言、页面或业务行为；时钟修复后的完整 workers=2 已通过，完整 029 浏览器待重验",
+  "snapshot_sha256": "a2363b8927afbf7b0a07baa5d33f96c35e67c7d0d3feff9f5a3f9520b783ec6e",
   "architecture_sha256": "727c547e51e3de1655921e3f95063ce07197b84e54937f0255e97c38b8224bc3",
-  "history_sha256": "96525fc08ebc15ac4ba2bb59c6fd5df24a8c20a311db7751a043902aa37c7d55",
+  "history_sha256": "64d08cfeb8caaf2ef206a4a88492dc41f807371fed9ba6e7a248c4b620a68f85",
   "files": [
     {
       "path": ".dockerignore",
@@ -8349,7 +8349,7 @@
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "625b1d18182b0bdcc7743eaf43830e925f7b9cde7522cd5f4ef63c94a908ef5d"
+      "sha256": "fd004ae26813107d90c366464605391c495d17289a0dbfbf8434ea30191cc799"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",

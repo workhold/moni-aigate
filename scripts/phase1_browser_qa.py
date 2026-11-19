@@ -328,6 +328,10 @@ class Browser:
         self.cdp.call("Input.insertText", {"text": new})
         self.fill('input[autocomplete="one-time-code"]', self.fresh_totp(secret))
         self.click_text("更改密码并重新登录")
+        self.wait("location.pathname === '/login' || !!document.querySelector('.el-alert--error')")
+        if self.evaluate("location.pathname !== '/login'"):
+            detail = self.evaluate("(()=>({path:location.pathname,error:document.querySelector('.el-alert--error')?.textContent||'',code_inputs:[...document.querySelectorAll('input[autocomplete=one-time-code]')].map(e=>({filled:e.value.length>0,disabled:e.disabled,display:getComputedStyle(e).display}))}))()")
+            raise RuntimeError(f"password change rejected: {detail}")
         self.wait("location.pathname === '/login'")
 
     def check_chat_tool_response(self, viewport: str) -> dict:
