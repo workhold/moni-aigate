@@ -49,11 +49,16 @@ def git_common_dir(source: pathlib.Path) -> pathlib.Path:
     return (source / value).resolve() if not os.path.isabs(value) else pathlib.Path(value).resolve()
 
 
-def mount(source: pathlib.Path | str, readonly: bool = False) -> str:
-    text = str(source)
-    if not os.path.isabs(text) or any(character in text for character in (",", "\n", "\r")):
+def mount_to(source: pathlib.Path | str, target: pathlib.Path | str, readonly: bool = False) -> str:
+    source_text = str(source)
+    target_text = str(target)
+    if any(not os.path.isabs(text) or any(character in text for character in (",", "\n", "\r")) for text in (source_text, target_text)):
         raise CoordinatorError("coordinator mount paths must be absolute and free of CSV control characters")
-    return f"type=bind,source={text},target={text}" + (",readonly" if readonly else "")
+    return f"type=bind,source={source_text},target={target_text}" + (",readonly" if readonly else "")
+
+
+def mount(source: pathlib.Path | str, readonly: bool = False) -> str:
+    return mount_to(source, source, readonly)
 
 
 def coordinator_command(source: pathlib.Path, run_directory: pathlib.Path, run_id: str, workers: int, selection: list[str]) -> tuple[list[str], pathlib.Path, str]:
@@ -83,6 +88,10 @@ def coordinator_command(source: pathlib.Path, run_directory: pathlib.Path, run_i
     ]
     if common != source and source not in common.parents:
         args += ["--mount", mount(common)]
+    xdg_root = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", str(pathlib.Path.home() / ".config")))
+    git_ignore = xdg_root / "git" / "ignore"
+    if git_ignore.is_file():
+        args += ["--env", "XDG_CONFIG_HOME=/tmp/acceptance-gitconfig", "--mount", mount_to(git_ignore, "/tmp/acceptance-gitconfig/git/ignore", True)]
     args += [
         "--workdir", str(source), go_image(), "python3", "-B", "-I",
         str(source / "scripts" / "acceptance-parallel-runner.py"),
