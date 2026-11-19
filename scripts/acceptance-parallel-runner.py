@@ -96,8 +96,9 @@ def preflight_docker(workers: int) -> None:
         raise RunnerError("cannot read Docker resource capacity")
     minimum_cpus = 4 if workers == 2 else 2
     minimum_memory = 8 if workers == 2 else 4
-    if int(info[0]) < minimum_cpus or int(info[1]) < minimum_memory * 1024**3:
-        raise RunnerError(f"workers={workers} requires at least {minimum_cpus} CPUs and {minimum_memory} GiB of Docker memory")
+    visible_memory = 7.5 if workers == 2 else 4
+    if int(info[0]) < minimum_cpus or int(info[1]) < int(visible_memory * 1024**3):
+        raise RunnerError(f"workers={workers} requires at least {minimum_cpus} CPUs and an {minimum_memory} GiB VM ({visible_memory} GiB visible to Docker)")
     server = docker(["version", "--format", "{{.Server.Os}}"]).stdout.strip()
     if server != "linux":
         raise RunnerError("acceptance containers require a Linux Docker server")

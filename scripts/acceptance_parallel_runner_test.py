@@ -80,6 +80,20 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         with self.assertRaises(runner.RunnerError):
             runner.load_image_lock(invalid)
 
+    def test_workers_two_accepts_eight_gib_vm_with_os_overhead_only(self):
+        memory = 8307109888
+
+        def fake_docker(args, check=True):
+            if args[0] == "info":
+                return SimpleNamespace(returncode=0, stdout=f"4 {memory}\n", stderr="")
+            return SimpleNamespace(returncode=0, stdout="linux\n", stderr="")
+
+        with mock.patch.dict(runner.os.environ, {"DOCKER_CONTEXT": "colima-moni-acceptance"}), mock.patch.object(runner, "docker", side_effect=fake_docker):
+            runner.preflight_docker(2)
+            memory = 4 * 1024**3
+            with self.assertRaises(runner.RunnerError):
+                runner.preflight_docker(2)
+
     def test_run_directory_is_new_private_and_outside_source(self):
         source = self.root / "source"
         source.mkdir()
