@@ -121,6 +121,10 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 完整 029 的外层全包 race 与 current-MVP 之间使用同一次运行的严格 JSON 证据，避免对同一 current-only 测试再次付费执行。外层生成绑定干净 HEAD、专用数据库和日志 SHA-256 的 manifest；current-MVP 逐项验证 100 个必需测试恰好一次顶层 PASS，任何失败、缺失、必需 SKIP、重复或陈旧证据都失败。standalone current-MVP 仍执行原测试，Compose、自然 lease、真实 main、前端和浏览器证据不复用。合同见[039](../../specs/039-acceptance-evidence-reuse/spec.md)。
 
+### 4.7 多独立 PostgreSQL 的验收并行化（设计候选，未实施）
+
+[040 设计](../../specs/040-acceptance-parallelism/spec.md)只优化测试编排：复用 CI 的 14 个逻辑分片，每片使用独立 cluster/volume/network namespace，本机默认最多两个 worker。v2 证据索引保留原始 JSONL，合并后继续满足 41 项、82 个绑定和 current-MVP 100 项复用。独立 identity/mail real-main、Compose、支付、邮件自然 lease、备份恢复和浏览器仍串行；server 包内 actual-main 仅在分片自有数据库、netns 和子进程边界内并行。workers=1 canary、workers=2 连续两轮全绿和分片器 CI 等价是默认化前置条件，每轮使用独立 detached git worktree 和 artifact，并保留 HEAD/tree/status 校验。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |
