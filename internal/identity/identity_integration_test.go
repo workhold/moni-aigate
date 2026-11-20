@@ -55,7 +55,7 @@ func newIdentityFixture(t *testing.T) *identityFixture {
 		_, _ = admin.Exec(ctx, "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE")
 		admin.Close()
 	})
-	if e = migrations.Apply(ctx, pool); e != nil {
+	if e = migrations.ApplyCurrent(ctx, pool); e != nil {
 		t.Fatal(e)
 	}
 	sec := &security.Secrets{Keys: map[string][]byte{"test": []byte(strings.Repeat("e", 32))}, Active: "test", Pepper: []byte(strings.Repeat("a", 32))}

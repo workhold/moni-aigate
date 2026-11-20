@@ -53,7 +53,7 @@ func newSelfServiceEmptyFixture(t *testing.T) *identityFixture {
 		_, _ = admin.Exec(ctx, "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE")
 		admin.Close()
 	})
-	if err = migrations.Apply(ctx, pool); err != nil {
+	if err = migrations.ApplyCurrent(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
 	secrets := &security.Secrets{Keys: map[string][]byte{"test": []byte(strings.Repeat("e", 32))}, Active: "test", Pepper: []byte(strings.Repeat("a", 32))}

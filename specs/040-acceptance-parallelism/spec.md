@@ -117,7 +117,11 @@ PR-B 当前实现 `check-acceptance-evidence-v2.py`：支持 schema v2 的显式
 - 每次记录实测墙钟，不把调度估算当提速承诺；出现锁/资源型超时即停止推广。
 - 同步 HLD/LLD、统一架构正文、changes 和 manifest；架构 reviewed refresh/check、make check、CI 和最终完整 029 均通过。
 
-## 9. 不采用的替代方案
+## 9. serial-v1 identity current baseline 小优化
+
+精确 main 的同 VM 对照显示 serial-v1 整单 2873.930 秒、workers=2 为 3706.895 秒，因此默认继续 serial-v1。后续只把 identity 两个隔离测试夹具的历史 `Apply` 改为现行 `ApplyCurrent`，保留全部测试、权限与故障边界；状态机、定向数据和完整 029 验收条件见[子规格](serial-v1-current-fixture.md)。该变更不切换并行默认值，也不处理 workers=2 的 other discovery 或串行尾部。
+
+## 10. 不采用的替代方案
 
 - 同库直接 `-p 4`：默认 ACL、角色和锁边界不允许。
 - 四 lane 手工 pure 白名单：维护成本和本机资源压力较高，新包容易漏分或误分。

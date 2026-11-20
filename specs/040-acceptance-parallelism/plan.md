@@ -55,6 +55,12 @@
 
 **PR-D 当前实现与推广边界**：双 worker 调度、真实双 cluster 互见证明、独立 Git common、同 attempt 构建材料复用、严格 v2 调度/资源/清理验证和 029 显式集成已实现，默认仍为 serial v1。严格候选 `d9b55f0025bcfe806e5e420128858975cfaa3be6` 的 run `703d1b8ac30142b5b9c01d08a627ada1` 与 `0fd4416271584b3b8829a91c57f50902` 连续两轮完整 029 均为 41/41、0 FAIL、0 必需 SKIP、100/100 current-MVP 复用，浏览器与独立生命周期证据齐全，整单 2668.525/2636.994 秒，无 OOM、超时或残留。历史失败、VM 时钟根因、磁盘耗尽和已中止的浅层 attested attempt 均保留在[候选记录](../../docs/verification/acceptance-workers-2.md)、[VM 时钟分析](../../docs/verification/acceptance-workers-2-clock-analysis.md)与[去重性能记录](../../docs/verification/acceptance-workers-2-performance.md)，不得与成功轮次拼接。两轮成功只满足 workers=2 候选出口；默认化仍需独立复核真实证据与推广决策，serial v1 保留为下一场完整诊断/回退。
 
+## PR-E：serial-v1 identity current baseline 小优化
+
+- 只将 `newIdentityFixture` 与 `newSelfServiceEmptyFixture` 的 `migrations.Apply` 替换为 `migrations.ApplyCurrent`，不改测试清单、断言、超时、SKIP 或默认调度。
+- 每个测试仍使用独立随机 schema、完整 current-only 安装、原连接池和 owned cleanup；安装失败不得进入身份断言。
+- 先完成[状态机、接口与故障边界](serial-v1-current-fixture.md)，再做定向 race、完整 identity、静态检查及干净提交上的完整 serial-v1 029。只按同 VM 实测记录收益。
+
 ## 后续另行立项
 
 - workers>=3、拆 `other`、并行真实 main/支付/邮件/Compose、跨机器调度。

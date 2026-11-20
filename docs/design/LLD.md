@@ -190,6 +190,10 @@ runner report 保存每片/part/合并/整段墙钟、双库证明、PostgreSQL 
 
 去重后的内部合并允许 `source_override=(plan,other_tests)` 复用预检时的内存计划，并在合并进程显式设置/恢复本次 run ID，不放宽 `verify` 的计划/清单/日志/身份/清理要求；外部 standalone v2 仍重新发现。phase1 在有效 runner report 下设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1`、`VERIFY_CURRENT_MVP_RUNNER_REPORT` 和原子输出路径，不再单独执行矩阵合并。`verify-current-mvp.sh` 启动时调用 `verify_current_mvp_attested.py`，对 100 个 current-MVP 与 77 个矩阵唯一测试的并集执行一次完整严格 v2 `verify` 和一次 fresh source；report/manifest digest、双库证明只是附加绑定。批处理成功前禁止 reused，失败后不得由 shell printf/return 掩盖；成功后同一 shell 内各组按实际 spec 数复用，phase1 校验原子输出的 run_id/commit/完整计数后展开矩阵，并向 `go-race` suite 追加批处理 command/log，空命令列表不得显示 PASS；CLI 输入/输出符号链接在解引用前拒绝。standalone 与 serial v1 路径不变。详见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
 
+### 4.11 serial-v1 identity 夹具安装接口
+
+[040 后续子规格](../../specs/040-acceptance-parallelism/serial-v1-current-fixture.md)冻结两个身份测试夹具的状态序列：`empty isolated schema → ApplyCurrent → unchanged fixture/assertions → owned schema cleanup`。`newIdentityFixture` 与 `newSelfServiceEmptyFixture` 的签名、随机 schema、连接池和清理责任不变；current installer 的 advisory lock、空库/合法 history 门禁、checksum 和失败关闭保持原实现。安装失败直接使测试失败，不能转为 SKIP；历史迁移入口及负控继续由 migrations 与 legacy 专项覆盖。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水

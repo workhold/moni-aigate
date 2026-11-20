@@ -147,6 +147,10 @@ PR-D 已实现最多两个 worker 的 14 片调度、双活动 cluster 的同名
 
 为消除实测中的重复源码发现，runner 内部合并允许仅使用预检生成的内存 `source_override=(plan,other_tests)`，逐字段匹配后继续全部证据校验并显式绑定本次 run ID。phase1 不再单独执行矩阵合并；current-MVP 启动时通过 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试执行一次完整严格 v2 校验和一次 fresh source，成功后才允许同一 shell 内各组按实际 spec 数复用。phase1 从绑定 run_id/commit/完整计数的原子批处理输出展开矩阵结果；可变 report/proof 不能替代原始日志、freshness、干净源码或指定 spec 校验，也不存在跨 attempt 的可信 discovery 缓存。standalone v2、外部无 report 的 workers=1 manifest 与 serial v1 保持原检查。去重前完整 029 为 41/41 PASS 但 3554.532 秒；严格候选连续两轮已降为 2668.525/2636.994 秒，实测口径与原始证据见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
 
+### 4.12 serial-v1 identity current baseline 小优化
+
+[040 后续子规格](../../specs/040-acceptance-parallelism/serial-v1-current-fixture.md)只优化默认回归的身份夹具初始化：每个独立随机 schema 由 `migrations.ApplyCurrent` 安装 current baseline 和全部追加迁移，再执行原有身份、权限、MFA、邮件与 Key 断言。历史 `Apply`/`ApplyThrough` 及其专门迁移矩阵保留；产品启动、公开接口、超时和默认 serial-v1 均不变。整单收益只能在干净提交的完整 029 同环境对照后记录。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |

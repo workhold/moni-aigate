@@ -8547,3 +8547,22 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `scripts/phase1_acceptance_test.py`
 
 </details>
+
+## 2026-11-20T09:17:59Z · 59d6daa46efd
+
+serial-v1 仅将两个 identity 隔离测试夹具改为 current-only ApplyCurrent；模块图、请求链、数据关系、权限、运行时部署和默认 workers=1 均不变，同步耗时剖析与验收边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2577 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-serial-v1-profile.md`
+- modified `internal/identity/identity_integration_test.go`
+- modified `internal/identity/self_service_integration_test.go`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- added `specs/040-acceptance-parallelism/serial-v1-current-fixture.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
