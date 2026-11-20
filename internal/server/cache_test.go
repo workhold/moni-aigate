@@ -20,6 +20,17 @@ func cacheTestRequest(t *testing.T, raw string, stream bool) *provider.Request {
 	return request
 }
 
+func TestCachedResponseUsesCurrentRequestedAlias(t *testing.T) {
+	body, err := rewriteCachedResponseModel([]byte(`{"model":"alias-a","choices":[]}`), provider.ProtocolChat, "alias-b")
+	if err != nil || !bytes.Contains(body, []byte(`"model":"alias-b"`)) || bytes.Contains(body, []byte("alias-a")) {
+		t.Fatalf("cached response retained original alias: %s %v", body, err)
+	}
+	gemini, err := rewriteCachedResponseModel([]byte(`{"modelVersion":"upstream"}`), provider.ProtocolGemini, "alias-b")
+	if err != nil || !bytes.Contains(gemini, []byte("upstream")) {
+		t.Fatalf("Gemini native model version was rewritten: %s %v", gemini, err)
+	}
+}
+
 func TestTextCacheDigestNormalizesAndSeparatesScope(t *testing.T) {
 	first := cacheTestRequest(t, `{"model":"alias","messages":[{"role":"user","content":"hello"}],"max_tokens":20}`, false)
 	second := cacheTestRequest(t, `{ "messages" : [ { "content" : "hello", "role" : "user" } ], "model" : "alias", "max_tokens" : 20 }`, false)

@@ -10,9 +10,17 @@ import (
 func protocolError(code string) error { return failure(code, 502, ClassProtocol, ConsumptionUnknown) }
 
 func (r *Response) streamError(m map[string]json.RawMessage) error {
+	if r.firstSeen {
+		return protocolError("upstream_stream_error")
+	}
 	var detail map[string]json.RawMessage
 	if raw, ok := m["error"]; ok {
 		_ = json.Unmarshal(raw, &detail)
+	} else if raw, ok := m["response"]; ok {
+		var response map[string]json.RawMessage
+		if json.Unmarshal(raw, &response) == nil {
+			_ = json.Unmarshal(response["error"], &detail)
+		}
 	}
 	for _, key := range []string{"code", "type"} {
 		var code string

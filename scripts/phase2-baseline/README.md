@@ -40,8 +40,11 @@ component. Each row is:
 ```
 
 `cpu_seconds` is cumulative process/container CPU time. At least two monotonic
-samples per component are required for the CPU/RSS acceptance gate. Example
-rows in `resource-samples.example.jsonl` are format examples, not observations.
+samples per component are required for the CPU/RSS acceptance gate. Mean CPU is
+`100 × (last cumulative CPU - first cumulative CPU) / (last timestamp - first
+timestamp)`; unequal sample intervals are not averaged as unweighted
+percentages. Example rows in `resource-samples.example.jsonl` are format
+examples, not observations.
 
 The mock measures receive-to-first-event/content as integer microseconds inside
 its own process, preserving monotonic-clock semantics across JSON transport. The
@@ -52,18 +55,24 @@ joins require unique request identity.
 ## PostgreSQL correctness evidence
 
 `correctness.evidence_path` points to a separate JSON file generated from the
-dedicated PostgreSQL/database and application checks after the run. Its schema
-is shown in `correctness.example.json`. A passing file must cover every warmup
-and sampled request and demonstrate:
+dedicated PostgreSQL/database and application checks after measurement. Choose
+this path before `-execute`; `-finalize` requires the unchanged configuration.
+Its schema is shown in `correctness.example.json`. It must bind the exact `run_id`,
+source commit/tree, SHA-256 of the redacted `input.json`, SHA-256 of the
+immutable `measurement.json`, and the ordered `(sequence,nonce,request_id)`
+identity of every warmup and sampled request. A passing file must demonstrate:
 
 - no excess charge, balanced ledger and unique expected settlement;
 - no residual holds or runtime/admission permits;
 - no unauthorized dispatch or implicit/unknown-consumption replay.
 
 The runner does not turn an example or self-declared file into database proof.
-Missing evidence, a request-count mismatch, or any failed gate makes the report
-`not_accepted`. Existing phase-1 PostgreSQL assertions can be reused by the
-acceptance operator, but no such acceptance is run by the local unit tests.
+Missing evidence or any failed financial gate makes the report `not_accepted`.
+A stale/wrong run, changed source, changed redacted input, changed measurement
+report, wrong request count, or missing/unknown/reordered request identity is
+rejected without creating `report.json`. Existing phase-1 PostgreSQL assertions
+can be reused by the acceptance operator, but no such acceptance is run by the
+local unit tests.
 
 ## Run
 
@@ -74,17 +83,28 @@ go run ./scripts/phase2-baseline -config /path/to/phase2-baseline.json
 PHASE2_BASELINE_API_KEY='...' go run ./scripts/phase2-baseline \
   -config /path/to/phase2-baseline.json \
   -output /path/to/new-report-directory -execute
+# Generate the bound correctness JSON from real PostgreSQL/application checks.
+go run ./scripts/phase2-baseline \
+  -config /path/to/phase2-baseline.json \
+  -output /path/to/new-report-directory -finalize
 ```
 
-The output directory must not exist. The runner exclusively creates:
+The output directory must not exist for `-execute`. The runner exclusively
+creates:
 
 - `input.json`: redacted structured configuration (environment variable name,
   never its secret value);
 - `samples.jsonl`: every warmup and sampled request, including failures,
   client timings, receipt join and per-request extra-latency fields;
-- `report.json`: `measurement_version=2`, `phase2_baseline_version=1`, source,
-  build, quotas, mock summary, connections, repeats, active-stream peaks,
-  percentiles, goodput, CPU/RSS, correctness evidence and raw-sample SHA-256.
+- `measurement.json`: immutable measurement report to which the correctness
+  file's `report_sha256` must refer.
+
+After real correctness evidence exists, `-finalize` rereads the same unchanged
+config, verifies all artifact digests and request identities, and exclusively
+creates `report.json`. Finalization performs no network load. The report uses
+`measurement_version=2` and `phase2_baseline_version=1`, with source, build,
+quotas, mock summary, connections, repeats, active-stream peaks, percentiles,
+goodput, CPU/RSS, correctness evidence and raw-sample SHA-256.
 
 No historical report is overwritten. The runner does not adjudicate the 50 ms
 threshold or competitor parity; even complete evidence is labelled

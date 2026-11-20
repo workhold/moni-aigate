@@ -8632,3 +8632,37 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `web/tests/request-wire.test.mjs`
 
 </details>
+
+## 2026-11-20T11:21:25Z · ffdd87b349ba
+
+032 审查修复：首事件白名单仅限首事件、缓存恢复/miss/别名与函数路径、测量证据绑定和 CPU 汇总；current_014 保留普通 finalization 交付投影并仅对 cache 唯一
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2612 个源文件；本次 23 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase2/032-baseline.md`
+- modified `internal/billing/cache.go`
+- modified `internal/billing/cache_integration_test.go`
+- added `internal/billing/cache_paths_integration_test.go`
+- modified `internal/billing/store_test.go`
+- added `internal/provider/first_event_boundary_test.go`
+- modified `internal/provider/request.go`
+- modified `internal/provider/response.go`
+- modified `internal/server/cache.go`
+- modified `internal/server/cache_test.go`
+- modified `internal/server/gateway.go`
+- modified `internal/testsupport/mockupstream/server.go`
+- modified `internal/testsupport/mockupstream/timing_test.go`
+- added `migrations/current_014_phase2_function_paths.sql`
+- modified `migrations/unified_text_metering_guard_matrix_postgres_test.go`
+- modified `scripts/phase2-baseline/README.md`
+- modified `scripts/phase2-baseline/aggregate.go`
+- modified `scripts/phase2-baseline/correctness.example.json`
+- modified `scripts/phase2-baseline/main.go`
+- modified `scripts/phase2-baseline/report.go`
+- modified `scripts/phase2-baseline/runner_test.go`
+- modified `scripts/phase2-baseline/types.go`
+- modified `specs/032-phase2-text-data-plane/design.md`
+
+</details>

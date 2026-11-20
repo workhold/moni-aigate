@@ -62,7 +62,7 @@ prepared → sending → reading_first_event → first_event_validated → commi
                               └─失败：未写下游字节       └─首个合法完整事件写出后禁止切换
 ```
 
-在 `reading_first_event` 中必须读到完整、可解析的上游事件；TCP 分片、注释或不完整 SSE 不算。首事件是上游/协议错误时，记录原 finalization 和 Consumption，只有 `SafeToRetry=true` 且路由仍允许时才换渠道。普通 SSE error 仍为 unknown；只有不可变 provider profile 显式登记的 `no_consumption_event_codes` 才能把该机器错误码标记为 `rejected_no_consumption`，默认空集，状态码或人类消息不产生此资格。headers、心跳、role-only 或任意 body 字节实际写出即 `committed`，之后不得切换。首事件等待同时受 `PROVIDER_FIRST_EVENT_TIMEOUT` 和原请求总 deadline 限制，不因最后一个 attempt 取消截止。
+在 `reading_first_event` 中必须读到完整、可解析的上游事件；TCP 分片、注释或不完整 SSE 不算。首事件是上游/协议错误时，记录原 finalization 和 Consumption，只有 `SafeToRetry=true` 且路由仍允许时才换渠道。普通 SSE error 仍为 unknown；只有不可变 provider profile 显式登记的 `no_consumption_event_codes` 才能把**首个协议事件**的机器错误码标记为 `rejected_no_consumption`，默认空集，状态码或人类消息不产生此资格。任何先前协议/内容事件之后，即使错误码相同也恢复 unknown； Responses 的 `response.error` 嵌套错误同样必须命中白名单。headers、心跳、role-only 或任意 body 字节实际写出即 `committed`，之后不得切换。首事件等待同时受 `PROVIDER_FIRST_EVENT_TIMEOUT` 和原请求总 deadline 限制，不因最后一个 attempt 取消截止。
 
 ## 4. 2.3 客户周期预算与可见性
 
@@ -126,9 +126,9 @@ hit:  授权/Plan → Reserve → 读取有效缓存 → CacheFinalization → S
 ### 5.4 并发、TTL 与失败边界
 
 - 相同键并发 miss 可以各自执行一个正常上游请求；缓存 INSERT 冲突保留先提交的有效行，不覆盖正文或延长 TTL。
-- 命中读取后即使清理并发删除缓存行，也可凭不可变原 finalization 完成本次已开始的命中；新读取在过期后一律 miss。
+- 命中读取后若清理/TTL 在 finalization 前删除或过期该行，明确转为普通 miss，丢弃已读正文且不写 cache finalization；恢复重放按 source identity 返回原 finalization，即使本地新 UUID 尚未取得首次提交结果。若命中 finalization 已提交，后续结算不再依赖缓存行。
 - 缓存写入发生在原唯一结算提交之后；写入失败只损失后续命中机会，不改写原响应或账务，不重发上游。
-- 缓存命中结算提交后，本地响应写失败沿用现有“已结算后交付失败”政策；不自动退款或重新生成。
+- 缓存命中结算提交后，本地响应写失败沿用现有“已结算后交付失败”政策；不自动退款或重新生成。别名共享时只重写响应公开 `model` 为本次请求名，不改变用量或缓存原字节。
 - 过期清理、缓存读取和缓存写入均无模型生成权限的隐式副作用。
 
 ## 6. 验收切片与证据边界

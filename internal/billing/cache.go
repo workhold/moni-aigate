@@ -45,6 +45,11 @@ func (s *Store) ReserveWithCache(ctx context.Context, in ReserveInput, requestDi
 
 func validCacheDigest(digest []byte) bool { return len(digest) == 32 }
 
+func IsCacheMiss(err error) bool {
+	var public *Error
+	return errors.As(err, &public) && public.Code == "cache_miss"
+}
+
 func (s *Store) LookupCache(ctx context.Context, in CacheLookupInput) (CacheHit, bool, error) {
 	if !validID(in.TenantID) || !validID(in.RequestID) || !validID(in.ModelID) || in.RouteRevision <= 0 || !validCacheDigest(in.RequestDigest) || !boundedString(in.Protocol, 80) || in.Protocol == "" {
 		return CacheHit{}, false, fail("invalid_cache", "invalid cache lookup input")
@@ -95,16 +100,19 @@ func cacheFinalizationReplay(ctx context.Context, tx pgx.Tx, in CacheFinalizatio
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return Finalization{}, false, err
 	}
-	err = tx.QueryRow(ctx, "SELECT id,input_digest FROM finalization_records WHERE tenant_id=$1 AND source='cache' AND source_event_id=$2", in.TenantID, in.SourceEventID).Scan(&id, &storedDigest)
+	var requestID, cacheID string
+	err = tx.QueryRow(ctx, "SELECT id,request_id,cache_id FROM finalization_records WHERE tenant_id=$1 AND source='cache' AND source_event_id=$2", in.TenantID, in.SourceEventID).Scan(&id, &requestID, &cacheID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Finalization{}, false, nil
 	}
 	if err != nil {
 		return Finalization{}, false, err
 	}
-	if id != in.ID || storedDigest != inputDigest {
+	if requestID != in.RequestID || cacheID != in.CacheID {
 		return Finalization{}, false, fail("idempotency_conflict", "cache source event already used")
 	}
+	// A retry after a successful finalization COMMIT may have generated a new
+	// local UUID before observing the result. Source identity owns replay.
 	prior, err := finalizationRow(ctx, tx, id)
 	return prior, true, err
 }
@@ -155,7 +163,7 @@ func (s *Store) RecordCacheFinalization(ctx context.Context, in CacheFinalizatio
  WHERE c.tenant_id=$1 AND c.id=$3 AND c.expires_at>clock_timestamp()
  FOR SHARE OF c`, in.TenantID, in.RequestID, in.CacheID).Scan(&originalID, &finishReason); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return fail("cache_unavailable", "cache entry is no longer eligible")
+				return fail("cache_miss", "cache entry is no longer eligible")
 			}
 			return err
 		}

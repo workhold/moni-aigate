@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-20T10:35:23Z",
-  "review_reason": "032 分片实现：新增部署测量入口、版本化熔断/首事件、预算拒绝可见性、同租户缓存及 cache-hit 唯一结算；真实 PG 专项通过，固定资源性能与完整 029 尚未验收",
-  "snapshot_sha256": "1d8dcaf5504e0a84f1471c33ca3dce175c6f88321d813e67afb349d57ece795b",
-  "architecture_sha256": "d19e178cf4f9bd724a10f4e43db4f5b9871c36cacb90ef74120b7fac19f2cab1",
-  "history_sha256": "3838738fb5df8093f5bcecc4e5701634d8514db541b468114353f13fd89ab880",
+  "reviewed_at": "2026-11-20T11:21:25Z",
+  "review_reason": "032 审查修复：首事件白名单仅限首事件、缓存恢复/miss/别名与函数路径、测量证据绑定和 CPU 汇总；current_014 保留普通 finalization 交付投影并仅对 cache 唯一",
+  "snapshot_sha256": "ffdd87b349ba7db5fadda1eca1997b19e6c71d7db0ea73fa8a74bb3177299957",
+  "architecture_sha256": "3a20cf8ad719cf12f4a4a4ca5dff4c1096b1bb3e18b1c5464d0b29e49e26af56",
+  "history_sha256": "fd7c91ebbb182e8b8e3a6356daf775a4e19997bde37fa84e37cafb8742b55bf9",
   "files": [
     {
       "path": ".dockerignore",
@@ -2633,7 +2633,7 @@
     },
     {
       "path": "docs/verification/phase2/032-baseline.md",
-      "sha256": "7d7c12a016321e164cdfa16ec6df079d9c4e54fa27285491fba94b5d7c678535"
+      "sha256": "143fa9aed24fb444d16c9f0746e52f928e30022df7615e58c7e803667385d8cb"
     },
     {
       "path": "docs/verification/phase2/032-implementation.md",
@@ -3037,11 +3037,15 @@
     },
     {
       "path": "internal/billing/cache.go",
-      "sha256": "12c6ade14cb05468d282ab75689ea10f6229d4b1c207d8e11233e314b1c6b9bd"
+      "sha256": "f6667ee74b72f7693f6baa0443ac77b3131f96f732f4c08052f634ba547d9d9b"
     },
     {
       "path": "internal/billing/cache_integration_test.go",
-      "sha256": "816bd06640606c3d9a25a7f4255d5bcf38de94322272a34de3e142f59e030851"
+      "sha256": "5b88fbc3e770c0fe505a6f290d1e18c701915527a8549efbb7cb4af490265e7d"
+    },
+    {
+      "path": "internal/billing/cache_paths_integration_test.go",
+      "sha256": "5843d09712cadc965dffcf690db6e26c5462d9651eaa71934aa6826682783cd4"
     },
     {
       "path": "internal/billing/cash_refund.go",
@@ -3405,7 +3409,7 @@
     },
     {
       "path": "internal/billing/store_test.go",
-      "sha256": "e23459185a2a120ed7c9522db6ff0868180d6d0d4991f5c5de18a3269f061451"
+      "sha256": "2567bcf778e4a2f780b99d0d60b1bf6b8cbde8338735d2fa101ffedab9a31004"
     },
     {
       "path": "internal/billing/tenant_pricing_concurrency_integration_test.go",
@@ -6844,6 +6848,10 @@
       "sha256": "3811df6c0f2d6a10095d8324e6bacd6bd2ae250b0d738e216db0916a67d8b151"
     },
     {
+      "path": "internal/provider/first_event_boundary_test.go",
+      "sha256": "98d4d30e70d609ee7cc0d570e77f1136df9477c483d233da9c926ac1e9d8ea61"
+    },
+    {
       "path": "internal/provider/first_event_test.go",
       "sha256": "c16bf1f8169ff4be9343dc029915c8251fc5638dd53df60116c3b0d51e7993f0"
     },
@@ -6917,7 +6925,7 @@
     },
     {
       "path": "internal/provider/request.go",
-      "sha256": "7843a3fcf369eb96436d156ea2cddf9fd5e1dea6955d56d04a68f2df74d7c684"
+      "sha256": "bd85f6cdfab3bab83c67d9748d8949b208beefb25ac2098f6efc9017b2397236"
     },
     {
       "path": "internal/provider/request_test.go",
@@ -6925,7 +6933,7 @@
     },
     {
       "path": "internal/provider/response.go",
-      "sha256": "0824eee104ba28e079a4e05b34fa3c5ad832416a8aead46229ec38dcf62609db"
+      "sha256": "061a85e7d657d99b6173798ac441b2137fc07e7f09aa136b4b5f023d180cf5e9"
     },
     {
       "path": "internal/provider/response_test.go",
@@ -7157,11 +7165,11 @@
     },
     {
       "path": "internal/server/cache.go",
-      "sha256": "4681594bcd59b80de83d835f7fa29c71ad2ead90833109fab096dc05675391c6"
+      "sha256": "6f442bd5a88829664a6cd052684a6dbdd506fafb188de072090b0afa863d4255"
     },
     {
       "path": "internal/server/cache_test.go",
-      "sha256": "9460bfee490872d1c8ca0350839a92e30321ba8ce2a501e0403c76a7612c0e81"
+      "sha256": "769fc65edf0326124397265017bce5689dbebf5614241e9f9f010039604661de"
     },
     {
       "path": "internal/server/capacity_profile_test.go",
@@ -7277,7 +7285,7 @@
     },
     {
       "path": "internal/server/gateway.go",
-      "sha256": "566b29eadca01272c38d8738a240dfec592d1ea66cf6dbc4167ef23d42f7de35"
+      "sha256": "e8b4290a3cf9c0dca20aaa226ac847aa20327b498ff6a962cdad6f51bc4917e7"
     },
     {
       "path": "internal/server/gateway_cache_integration_test.go",
@@ -7781,7 +7789,7 @@
     },
     {
       "path": "internal/testsupport/mockupstream/server.go",
-      "sha256": "34f55bcada7e10a59dc172e0186d4536c128873a2ffd7eb8247e6969d39bef04"
+      "sha256": "e03241a505b73ae5819c411f90f0b14e0c5a7d6da51e247e9505457870c6f99b"
     },
     {
       "path": "internal/testsupport/mockupstream/server_test.go",
@@ -7789,7 +7797,7 @@
     },
     {
       "path": "internal/testsupport/mockupstream/timing_test.go",
-      "sha256": "7553d2780bbfa9ab78700dbdba77b0727feac6ed4fa2140e43b56bb97ff4f206"
+      "sha256": "73cfc5bd2e937e2de9454fad957b0dcec3491138bfb4caa72506aa19474b313c"
     },
     {
       "path": "internal/testsupport/periodicprefix/install.go",
@@ -7964,6 +7972,10 @@
       "sha256": "65cc7907be0239fa6b2d1dbcba3375b1b3ffb4ece4ae126b90db4922112945a9"
     },
     {
+      "path": "migrations/current_014_phase2_function_paths.sql",
+      "sha256": "a350593592f5ce68fc24e5c2522412343468f0e28cc04826bf5d874512396ca5"
+    },
+    {
       "path": "migrations/current_mvp.sql",
       "sha256": "c3aba37f5fa194bf6f66018e25d1124fe3fd2ab886969d4349d440e85d35381e"
     },
@@ -8013,7 +8025,7 @@
     },
     {
       "path": "migrations/unified_text_metering_guard_matrix_postgres_test.go",
-      "sha256": "fac95a5bbeeb697d32fdce5072fcb1332bd60eda04ce2117732318811c1bde8e"
+      "sha256": "c30f1bfee96ee1bf99df458f8febef0c06104b663354ae71fe559905ba24d066"
     },
     {
       "path": "migrations/unified_text_metering_postgres_test.go",
@@ -8437,11 +8449,11 @@
     },
     {
       "path": "scripts/phase2-baseline/README.md",
-      "sha256": "216a5e754c19c6d910992ec0088c8ac3f59ee18aee86bb4f10d42c0cc0e4dc57"
+      "sha256": "9f212fdee971ebe07f5a10da623c8a0211a4467579524ea2bb48d8d46df696b3"
     },
     {
       "path": "scripts/phase2-baseline/aggregate.go",
-      "sha256": "10ef7c25734b90bb6d2d1c6c98595b627e3d600d4789e4f2b89ff3b1ad3eb53e"
+      "sha256": "99a2d55320c4802118c5c6b2ac8fb3096f06143cdb28c348381116f23a98314f"
     },
     {
       "path": "scripts/phase2-baseline/config.example.json",
@@ -8453,11 +8465,11 @@
     },
     {
       "path": "scripts/phase2-baseline/correctness.example.json",
-      "sha256": "d0b26aed3ad56c4709aadfa3432cab2877fe5db3f7a6cd85c3351bcb6feea213"
+      "sha256": "5eb72be8a1ea1dbef47c3bf74971c4f7c46563973a1214e326cb02bab12d915d"
     },
     {
       "path": "scripts/phase2-baseline/main.go",
-      "sha256": "9a8ad3cd45d01ba1213af6ee791d9093501c5b8bac5ccb2e5236684cb8221885"
+      "sha256": "c6cdf9d9c07c0602fc90d37a7bcee404ba7f517836f26703d61f23236d1c7805"
     },
     {
       "path": "scripts/phase2-baseline/mock.example.json",
@@ -8465,7 +8477,7 @@
     },
     {
       "path": "scripts/phase2-baseline/report.go",
-      "sha256": "a27e7d196613ed3f37b5478fe1757a46b50a6552d16d161a7b51989573a4957d"
+      "sha256": "01e4d404065d050391b2184f5f1cbd449cfecb0273e754f7636d3fba6eac53f7"
     },
     {
       "path": "scripts/phase2-baseline/resource-samples.example.jsonl",
@@ -8477,7 +8489,7 @@
     },
     {
       "path": "scripts/phase2-baseline/runner_test.go",
-      "sha256": "976a4bd1203f9f498fa46b7d3954ae6cad6c5aca441aac846b20bb25329b3734"
+      "sha256": "bd381ab0459bf8d15a60d3ef8731af4ef8f10930b990836f04933f0afb30a5f1"
     },
     {
       "path": "scripts/phase2-baseline/stream.go",
@@ -8485,7 +8497,7 @@
     },
     {
       "path": "scripts/phase2-baseline/types.go",
-      "sha256": "a8c4d5cb92085f3a1741968c9a5ee740f57f8049e36d1abb5a05254e5428a2a1"
+      "sha256": "4995d16494932bcabaf8ad83663b500aa8faba036c4b8614fb37cf3e9937d48e"
     },
     {
       "path": "scripts/provider-qualification/README.md",
@@ -9593,7 +9605,7 @@
     },
     {
       "path": "specs/032-phase2-text-data-plane/design.md",
-      "sha256": "d9953764bd61231d3bcb55c537e975fc5659d8fb0d9c349cba9b7fbc20a75327"
+      "sha256": "8c27cf5ce381b733bb8bf793c623fa2293d41b36e0027e9eeb2f370897f2de34"
     },
     {
       "path": "specs/032-phase2-text-data-plane/implementation-freeze.md",

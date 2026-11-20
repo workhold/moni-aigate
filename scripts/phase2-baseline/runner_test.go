@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -159,17 +160,63 @@ func TestExecuteOneRecordsClientTimingWithoutAcceptanceClaim(t *testing.T) {
 	}
 }
 
-func TestWriteReportIsExclusiveAndNotAcceptedWithoutEvidence(t *testing.T) {
+func measurementFixture(t *testing.T, withEvidence bool) (string, Config) {
+	t.Helper()
 	root := t.TempDir()
 	output := filepath.Join(root, "new-report")
 	cfg := validConfig()
+	if withEvidence {
+		cfg.Correctness.EvidencePath = filepath.Join(root, "correctness.json")
+	}
 	start := time.Unix(1700000000, 0)
 	timings := []RepeatTiming{{Repeat: 1, Target: "moni", WarmupWallSeconds: 60, SampleWallSeconds: 300}, {Repeat: 2, Target: "moni", WarmupWallSeconds: 60, SampleWallSeconds: 300}, {Repeat: 3, Target: "moni", WarmupWallSeconds: 60, SampleWallSeconds: 300}}
 	var samples []Sample
 	for repeat := 1; repeat <= 3; repeat++ {
-		samples = append(samples, Sample{Repeat: repeat, Phase: "sample", Nonce: fmt.Sprintf("n-%d", repeat), StartedAt: start, EndedAt: start.Add(time.Second), HTTPStatus: 200, HTTPVersion: "HTTP/1.1", RequestID: fmt.Sprintf("r-%d", repeat), Done: true})
+		samples = append(samples, Sample{Repeat: repeat, Phase: "sample", Sequence: int64(repeat), Nonce: fmt.Sprintf("n-%d", repeat), StartedAt: start, EndedAt: start.Add(time.Second), HTTPStatus: 200, HTTPVersion: "HTTP/1.1", RequestID: fmt.Sprintf("r-%d", repeat), Done: true})
 	}
-	if err := WriteReport(output, cfg, validMockConfig(), samples, timings, nil); err != nil {
+	if err := WriteMeasurement(output, cfg, validMockConfig(), samples, timings, nil); err != nil {
+		t.Fatal(err)
+	}
+	return output, cfg
+}
+
+func boundCorrectnessEvidence(t *testing.T, output string, cfg Config) CorrectnessEvidence {
+	t.Helper()
+	input, err := os.ReadFile(filepath.Join(output, "input.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	measurement, err := os.ReadFile(filepath.Join(output, "measurement.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	samplesRaw, err := os.ReadFile(filepath.Join(output, "samples.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	samples, err := decodeSamples(samplesRaw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requests := requestIdentities(samples)
+	return CorrectnessEvidence{
+		Status: "passed", RunID: cfg.RunID, SourceCommitSHA: cfg.Source.CommitSHA, SourceTreeSHA256: cfg.Source.TreeSHA256,
+		InputSHA256: sha256Hex(input), ReportSHA256: sha256Hex(measurement), Requests: requests,
+		RequestsChecked: len(requests), LedgerBalanced: true,
+	}
+}
+
+func TestMeasurementFinalizationBindsExactEvidence(t *testing.T) {
+	output, cfg := measurementFixture(t, true)
+	if _, err := os.Stat(filepath.Join(output, "report.json")); !os.IsNotExist(err) {
+		t.Fatal("final report existed before correctness evidence")
+	}
+	evidence := boundCorrectnessEvidence(t, output, cfg)
+	raw, _ := json.Marshal(evidence)
+	if err := os.WriteFile(cfg.Correctness.EvidencePath, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := FinalizeReport(output, cfg); err != nil {
 		t.Fatal(err)
 	}
 	raw, err := os.ReadFile(filepath.Join(output, "report.json"))
@@ -180,28 +227,73 @@ func TestWriteReportIsExclusiveAndNotAcceptedWithoutEvidence(t *testing.T) {
 	if json.Unmarshal(raw, &report) != nil || report["acceptance_status"] != "not_accepted" || report["competitor_comparison"] != "not_compared" || report["measurement_version"] != float64(2) || report["phase2_baseline_version"] != float64(1) {
 		t.Fatalf("unexpected report: %s", raw)
 	}
+	gates := report["acceptance_gates"].(map[string]any)
+	if gates["commercial_correctness_evidence"] != true {
+		t.Fatal("exactly bound correctness evidence was not accepted")
+	}
 	samplesRaw, err := os.ReadFile(filepath.Join(output, "samples.jsonl"))
 	if err != nil || !strings.Contains(string(samplesRaw), "n-1") || strings.Contains(string(samplesRaw), "not-reported") {
 		t.Fatalf("raw samples missing or leaked mock secret: %s", samplesRaw)
 	}
-	if err := WriteReport(output, cfg, validMockConfig(), samples, timings, nil); err == nil {
-		t.Fatal("historical report directory was overwritten")
+	if err := WriteMeasurement(output, cfg, validMockConfig(), nil, nil, nil); err == nil {
+		t.Fatal("historical measurement directory was overwritten")
 	}
 }
 
-func TestResourceSummaryAndCorrectnessEvidence(t *testing.T) {
+func TestFinalizationRejectsStaleWrongRunAndUnknownRequests(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		mutate func(*CorrectnessEvidence)
+	}{
+		{"stale report digest", func(e *CorrectnessEvidence) { e.ReportSHA256 = strings.Repeat("0", 64) }},
+		{"wrong run", func(e *CorrectnessEvidence) { e.RunID = "other-run" }},
+		{"unknown request", func(e *CorrectnessEvidence) {
+			e.Requests = append(e.Requests, RequestIdentity{Sequence: 999, Nonce: "unknown", RequestID: "unknown"})
+			e.RequestsChecked++
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			output, cfg := measurementFixture(t, true)
+			evidence := boundCorrectnessEvidence(t, output, cfg)
+			tc.mutate(&evidence)
+			raw, _ := json.Marshal(evidence)
+			if err := os.WriteFile(cfg.Correctness.EvidencePath, raw, 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := FinalizeReport(output, cfg); err == nil {
+				t.Fatal("invalid correctness binding was accepted")
+			}
+			if _, err := os.Stat(filepath.Join(output, "report.json")); !os.IsNotExist(err) {
+				t.Fatal("rejected evidence created a final report")
+			}
+		})
+	}
+}
+
+func TestNegativeExtraLatencyIsAJoinError(t *testing.T) {
+	ttfb, ttfc := 5.0, 5.0
+	first, content := int64(10000), int64(10000)
+	samples := []Sample{{Nonce: "negative", TTFBMS: &ttfb, TTFCMS: &ttfc}}
+	joinReceipts(samples, []mockupstream.Receipt{{Nonce: "negative", FirstEventAfterUS: &first, FirstContentAfterUS: &content}})
+	if samples[0].JoinError != "negative_extra_ttfc" || samples[0].ExtraTTFBMS != nil || samples[0].ExtraTTFCMS != nil {
+		t.Fatalf("negative extra latency was not rejected: %+v", samples[0])
+	}
+	summary := summarize(samples, 1)
+	if summary["receipt_join_errors"] != 1 || summary["latency_extra_ttfb"].(Distribution).SampleCount != 0 || summary["latency_extra_ttfc"].(Distribution).SampleCount != 0 {
+		t.Fatalf("negative latency entered report distributions: %v", summary)
+	}
+}
+
+func TestResourceSummaryUsesTotalCPUDeltaOverTotalElapsed(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "resources.jsonl")
 	start := time.Unix(1700000000, 0)
-	raw := fmt.Sprintf("{\"sampled_at\":%q,\"cpu_seconds\":1,\"rss_bytes\":100}\n{\"sampled_at\":%q,\"cpu_seconds\":3,\"rss_bytes\":200}\n", start.Format(time.RFC3339Nano), start.Add(2*time.Second).Format(time.RFC3339Nano))
+	raw := fmt.Sprintf("{\"sampled_at\":%q,\"cpu_seconds\":0,\"rss_bytes\":100}\n{\"sampled_at\":%q,\"cpu_seconds\":1,\"rss_bytes\":200}\n{\"sampled_at\":%q,\"cpu_seconds\":2,\"rss_bytes\":150}\n", start.Format(time.RFC3339Nano), start.Add(time.Second).Format(time.RFC3339Nano), start.Add(3*time.Second).Format(time.RFC3339Nano))
 	if err := os.WriteFile(path, []byte(raw), 0600); err != nil {
 		t.Fatal(err)
 	}
 	summary, err := resourceSummary(path)
-	if err != nil || summary["status"] != "collected" || summary["mean_cpu_percent"] != 100.0 || summary["peak_rss_bytes"] != uint64(200) {
+	mean := summary["mean_cpu_percent"].(float64)
+	if err != nil || summary["status"] != "collected" || math.Abs(mean-200.0/3.0) > 1e-9 || summary["peak_cpu_percent"] != 100.0 || summary["peak_rss_bytes"] != uint64(200) {
 		t.Fatalf("resource summary=%v err=%v", summary, err)
-	}
-	evidence := CorrectnessEvidence{Status: "passed", RequestsChecked: 2, LedgerBalanced: true}
-	if !evidence.Passed(2) || evidence.Passed(1) {
-		t.Fatal("correctness evidence request scope was not enforced")
 	}
 }

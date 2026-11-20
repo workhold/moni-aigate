@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"sort"
 	"time"
 
 	"github.com/moni-ai/moni-aigate/internal/testsupport/mockupstream"
@@ -137,17 +139,69 @@ func (s Sample) Successful() bool {
 	return s.HTTPStatus == 200 && s.Done && s.Error == ""
 }
 
-type CorrectnessEvidence struct {
-	Status                    string `json:"status"`
-	RequestsChecked           int    `json:"requests_checked"`
-	OverchargeDetected        bool   `json:"overcharge_detected"`
-	ResidualHolds             int64  `json:"residual_holds"`
-	ResidualPermits           int64  `json:"residual_permits"`
-	UnauthorizedDispatches    int64  `json:"unauthorized_dispatches"`
-	UnknownConsumptionReplays int64  `json:"unknown_consumption_replays"`
-	LedgerBalanced            bool   `json:"ledger_balanced"`
+type RequestIdentity struct {
+	Sequence  int64  `json:"sequence"`
+	Nonce     string `json:"nonce"`
+	RequestID string `json:"request_id"`
 }
 
-func (e CorrectnessEvidence) Passed(requests int) bool {
-	return e.Status == "passed" && e.RequestsChecked == requests && !e.OverchargeDetected && e.ResidualHolds == 0 && e.ResidualPermits == 0 && e.UnauthorizedDispatches == 0 && e.UnknownConsumptionReplays == 0 && e.LedgerBalanced
+type CorrectnessEvidence struct {
+	Status                    string            `json:"status"`
+	RunID                     string            `json:"run_id"`
+	SourceCommitSHA           string            `json:"source_commit_sha"`
+	SourceTreeSHA256          string            `json:"source_tree_sha256"`
+	InputSHA256               string            `json:"input_sha256"`
+	ReportSHA256              string            `json:"report_sha256"`
+	Requests                  []RequestIdentity `json:"requests"`
+	RequestsChecked           int               `json:"requests_checked"`
+	OverchargeDetected        bool              `json:"overcharge_detected"`
+	ResidualHolds             int64             `json:"residual_holds"`
+	ResidualPermits           int64             `json:"residual_permits"`
+	UnauthorizedDispatches    int64             `json:"unauthorized_dispatches"`
+	UnknownConsumptionReplays int64             `json:"unknown_consumption_replays"`
+	LedgerBalanced            bool              `json:"ledger_balanced"`
+}
+
+func (e CorrectnessEvidence) ValidateBinding(cfg Config, inputSHA, reportSHA string, requests []RequestIdentity) error {
+	if e.RunID != cfg.RunID {
+		return fmt.Errorf("correctness evidence run_id mismatch")
+	}
+	if e.SourceCommitSHA != cfg.Source.CommitSHA || e.SourceTreeSHA256 != cfg.Source.TreeSHA256 {
+		return fmt.Errorf("correctness evidence source identity mismatch")
+	}
+	if e.InputSHA256 != inputSHA {
+		return fmt.Errorf("correctness evidence redacted input digest mismatch")
+	}
+	if e.ReportSHA256 != reportSHA {
+		return fmt.Errorf("correctness evidence measurement report digest mismatch")
+	}
+	if e.RequestsChecked != len(requests) || !exactRequestIdentities(e.Requests, requests) {
+		return fmt.Errorf("correctness evidence exact request identities mismatch")
+	}
+	return nil
+}
+
+func (e CorrectnessEvidence) Passed(cfg Config, inputSHA, reportSHA string, requests []RequestIdentity) bool {
+	return e.ValidateBinding(cfg, inputSHA, reportSHA, requests) == nil && e.Status == "passed" && !e.OverchargeDetected && e.ResidualHolds == 0 && e.ResidualPermits == 0 && e.UnauthorizedDispatches == 0 && e.UnknownConsumptionReplays == 0 && e.LedgerBalanced
+}
+
+func requestIdentities(samples []Sample) []RequestIdentity {
+	requests := make([]RequestIdentity, 0, len(samples))
+	for _, sample := range samples {
+		requests = append(requests, RequestIdentity{Sequence: sample.Sequence, Nonce: sample.Nonce, RequestID: sample.RequestID})
+	}
+	sort.Slice(requests, func(i, j int) bool { return requests[i].Sequence < requests[j].Sequence })
+	return requests
+}
+
+func exactRequestIdentities(got, want []RequestIdentity) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
 }

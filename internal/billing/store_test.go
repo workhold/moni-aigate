@@ -596,6 +596,7 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer tx.Rollback(f.ctx)
 	if _, err = tx.Exec(f.ctx, `UPDATE upstream_attempts SET cost_amount=cost_amount+1 WHERE id=$1`, a.ID); err == nil {
 		err = tx.Commit(f.ctx)
 	}
@@ -607,8 +608,9 @@ func TestPostgresEvidenceAndReconciliation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(f.ctx, `INSERT INTO finalization_records(id,tenant_id,request_id,event_id,input_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,policy_version,attempt_id,retail_usage_state,supplier_usage_state,retail_quantities_canonical,retail_quantities_digest,supplier_quantities_canonical,supplier_quantities_digest)
- SELECT $1,e.tenant_id,e.request_id,e.id,'bad','completed','done','content',true,'stop','r3',e.attempt_id,'confirmed_final','confirmed_final',convert_to('{}','UTF8'),decode(repeat('ab',32),'hex'),convert_to('{}','UTF8'),decode(repeat('cd',32),'hex')
+	defer tx.Rollback(f.ctx)
+	if _, err = tx.Exec(f.ctx, `INSERT INTO finalization_records(id,tenant_id,request_id,event_id,input_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,policy_version,attempt_id,retail_usage_state,supplier_usage_state,retail_quantities_canonical,retail_quantities_digest,supplier_quantities_canonical,supplier_quantities_digest,source,source_event_id)
+ SELECT $1,e.tenant_id,e.request_id,e.id,'bad','completed','done','content',true,'stop','r3',e.attempt_id,'confirmed_final','confirmed_final',convert_to('{}','UTF8'),decode(repeat('ab',32),'hex'),convert_to('{}','UTF8'),decode(repeat('cd',32),'hex'),e.source,e.source_event_id||':bad'
  FROM metering_events e WHERE e.id=(SELECT event_id FROM finalization_records WHERE id=$2)`, uuid.NewString(), input.ID); err == nil {
 		err = tx.Commit(f.ctx)
 	}

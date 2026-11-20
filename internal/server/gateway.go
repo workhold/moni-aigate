@@ -211,10 +211,15 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 			var result billing.Settlement
 			result, cacheErr = s.settleCacheHit(p.KeyID, billing.CacheFinalizationInput{TenantID: p.TenantID, RequestID: reservation.RequestID, CacheID: hit.ID, SourceEventID: "cache:" + reservation.RequestID})
 			if cacheErr == nil && result.Status == "settled" {
+				responseBody, bodyErr := rewriteCachedResponseModel(hit.Body, protocol, model.RequestedName)
+				if bodyErr != nil {
+					s.fail(c, 500, "invalid_cached_response", "缓存响应格式无效")
+					return
+				}
 				c.Header("Content-Type", "application/json")
-				n, writeErr := c.Writer.Write(hit.Body)
+				n, writeErr := c.Writer.Write(responseBody)
 				stage := "complete_local_write"
-				if writeErr != nil || n != len(hit.Body) {
+				if writeErr != nil || n != len(responseBody) {
 					stage = "write_failed"
 				}
 				s.observeDelivery(p.TenantID, reservation.RequestID, stage)
@@ -224,6 +229,11 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 				s.fail(c, 503, "billing_pending", "最终用量或收费待核对")
 				return
 			}
+		}
+		if billing.IsCacheMiss(cacheErr) {
+			// Expiry/cleanup between lookup and finalization is a defined miss;
+			// discard the body and use the ordinary attempt path exactly once.
+			cacheErr = nil
 		}
 		if cacheErr != nil {
 			ctx, cancel := cleanupContext()

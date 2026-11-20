@@ -1,6 +1,7 @@
 package mockupstream
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -65,6 +66,44 @@ func TestDirectiveTimingUsesConfiguredWaitsAndRecordsEmission(t *testing.T) {
 	}
 	if got := *receipt.FirstContentAfterUS; got != 1000 {
 		t.Fatalf("first content monotonic duration=%dus", got)
+	}
+}
+
+type emissionObservingWriter struct {
+	header   http.Header
+	service  *Server
+	t        *testing.T
+	observed bool
+}
+
+func (w *emissionObservingWriter) Header() http.Header { return w.header }
+func (w *emissionObservingWriter) WriteHeader(int)     {}
+func (w *emissionObservingWriter) Flush()              {}
+func (w *emissionObservingWriter) Write(p []byte) (int, error) {
+	if bytes.Contains(p, []byte("data:")) {
+		w.observed = true
+		receipts := w.service.Receipts(0)
+		if len(receipts) != 1 || receipts[0].FirstEventAt == nil {
+			w.t.Error("observable event write preceded its emission timestamp")
+		}
+	}
+	return len(p), nil
+}
+
+func TestEmissionIsMarkedBeforeObservableWrite(t *testing.T) {
+	service, err := New(Config{Candidates: map[string]Candidate{
+		"a": {Secret: "a-secret", Models: []string{"qa-text"}, OutputTokens: 2},
+	}}, Options{AllowDirectives: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := `{"model":"qa-text","stream":true,"messages":[{"role":"user","content":"hello [[mock:nonce=boundary]]"}]}`
+	request := httptest.NewRequest(http.MethodPost, "/c/a/v1/chat/completions", strings.NewReader(body))
+	request.Header.Set("Authorization", "Bearer a-secret")
+	writer := &emissionObservingWriter{header: http.Header{}, service: service, t: t}
+	service.Handler().ServeHTTP(writer, request)
+	if !writer.observed {
+		t.Fatal("no stream event was observed")
 	}
 }
 

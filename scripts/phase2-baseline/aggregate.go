@@ -55,7 +55,11 @@ func joinReceipts(samples []Sample, receipts []mockupstream.Receipt) {
 			wait := float64(*receipt.FirstEventAfterUS) / 1000
 			extra := *samples[i].TTFBMS - wait
 			samples[i].MockWaitToFirstEventMS = &wait
-			samples[i].ExtraTTFBMS = &extra
+			if extra < 0 {
+				samples[i].JoinError = "negative_extra_ttfb"
+			} else {
+				samples[i].ExtraTTFBMS = &extra
+			}
 		} else if samples[i].FirstByteAt != nil {
 			samples[i].JoinError = "mock_first_event_duration_missing"
 		}
@@ -63,7 +67,11 @@ func joinReceipts(samples []Sample, receipts []mockupstream.Receipt) {
 			wait := float64(*receipt.FirstContentAfterUS) / 1000
 			extra := *samples[i].TTFCMS - wait
 			samples[i].MockWaitToContentMS = &wait
-			samples[i].ExtraTTFCMS = &extra
+			if extra < 0 {
+				samples[i].JoinError = "negative_extra_ttfc"
+			} else {
+				samples[i].ExtraTTFCMS = &extra
+			}
 		} else if samples[i].FirstContentAt != nil {
 			samples[i].JoinError = "mock_first_content_duration_missing"
 		}
@@ -187,7 +195,7 @@ func resourceSummary(path string) (map[string]any, error) {
 	}
 	result["status"] = "collected"
 	result["peak_rss_bytes"] = samples[0].RSSBytes
-	var cpuTotal float64
+	var peakCPU float64
 	cpuIntervals := 0
 	for i, sample := range samples {
 		if sample.RSSBytes > result["peak_rss_bytes"].(uint64) {
@@ -200,15 +208,17 @@ func resourceSummary(path string) (map[string]any, error) {
 				return nil, fmt.Errorf("non-monotonic resource samples in %s", path)
 			}
 			percentage := 100 * cpu / elapsed
-			cpuTotal += percentage
 			cpuIntervals++
-			if current, ok := result["peak_cpu_percent"].(float64); !ok || percentage > current {
-				result["peak_cpu_percent"] = percentage
+			if i == 1 || percentage > peakCPU {
+				peakCPU = percentage
 			}
 		}
 	}
 	if cpuIntervals > 0 {
-		result["mean_cpu_percent"] = cpuTotal / float64(cpuIntervals)
+		result["peak_cpu_percent"] = peakCPU
+		totalCPU := samples[len(samples)-1].CPUSeconds - samples[0].CPUSeconds
+		totalElapsed := samples[len(samples)-1].SampledAt.Sub(samples[0].SampledAt).Seconds()
+		result["mean_cpu_percent"] = 100 * totalCPU / totalElapsed
 	}
 	return result, nil
 }

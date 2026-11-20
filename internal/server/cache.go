@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
@@ -50,6 +51,24 @@ func newTextCacheDescriptor(request *provider.Request, protocol, tenantID, model
 		_, _ = h.Write(frame)
 	}
 	return &textCacheDescriptor{protocol: protocol, tenantID: tenantID, modelID: modelID, routeRevision: routeRevision, requestDigest: h.Sum(nil)}, nil
+}
+
+func rewriteCachedResponseModel(body []byte, protocol, requestedName string) ([]byte, error) {
+	if protocol == provider.ProtocolGemini {
+		return bytes.Clone(body), nil
+	}
+	value, err := strictjson.Parse(body, provider.MaxResponseBytes)
+	if err != nil {
+		return nil, err
+	}
+	object, ok := value.(map[string]any)
+	if !ok {
+		return nil, strictjson.ErrInvalidJSON
+	}
+	if _, exists := object["model"]; exists {
+		object["model"] = requestedName
+	}
+	return json.Marshal(object)
 }
 
 func cacheableResponseBody(body []byte) bool {

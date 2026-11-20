@@ -229,9 +229,11 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	beginJSON(w)
+	// Record the boundary before Write can release a buffered response to the
+	// client. Failed/incomplete responses never become completed evidence.
+	s.markEmission(seq, true)
 	_, err = w.Write(value)
 	if err == nil {
-		s.markEmission(seq, true)
 		s.complete(seq)
 	}
 }
@@ -602,10 +604,12 @@ func writeSSE(w http.ResponseWriter, event string, value any) error {
 
 func (s *Server) streamResponse(ctx context.Context, w http.ResponseWriter, seq uint64, protocol, model, text string, input, output int64, fault parsedFault, intervalMS int) error {
 	write := func(event string, value any) error {
+		// Mark immediately before Write/Flush can make the event observable. A
+		// later transport error leaves the receipt incomplete and fails acceptance.
+		s.markEmission(seq, mockEventContent(protocol, event, value))
 		if err := writeSSE(w, event, value); err != nil {
 			return err
 		}
-		s.markEmission(seq, mockEventContent(protocol, event, value))
 		if intervalMS > 0 {
 			if err := s.wait(ctx, time.Duration(intervalMS)*time.Millisecond); err != nil {
 				return err

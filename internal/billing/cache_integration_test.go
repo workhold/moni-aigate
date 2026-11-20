@@ -115,6 +115,12 @@ func TestPostgresCacheHitSameChargeIsolationReplayAndCleanup(t *testing.T) {
 	if err != nil || replayedFinal.ID != hitFinal.ID {
 		t.Fatal("cache finalization replay created or changed facts", replayedFinal, err)
 	}
+	newIDReplay := finalInput
+	newIDReplay.ID = uuid.NewString()
+	replayedFinal, err = f.store.RecordCacheFinalization(f.ctx, newIDReplay)
+	if err != nil || replayedFinal.ID != hitFinal.ID {
+		t.Fatal("source-event recovery replay rejected a new local finalization UUID", replayedFinal, err)
+	}
 	replayedSettlement, err := f.store.Settle(f.ctx, SettleInput{TenantID: f.tenant, RequestID: hit.RequestID, Mode: "recovery"})
 	if err != nil || replayedSettlement.ID != hitSettlement.ID {
 		t.Fatal("cache recovery duplicated settlement", replayedSettlement, err)
