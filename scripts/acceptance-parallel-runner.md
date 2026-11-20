@@ -64,6 +64,6 @@ scripts/phase1-acceptance.sh --execute \
 
 还需要按[029 执行手册](../docs/verification/phase1-acceptance-runner.md)提供隔离 preview、浏览器证据和部署环境。runner 失败会阻止使用旧 manifest 继续拼接串行尾部。workers=2 的外部 manifest 路径也必须包含同 attempt 的 `runner-report.json` 与 `dual-cluster-proof.json`；workers=1 的既有 v2 诊断行为保留。
 
-**去重前第一轮完整 029 已达到 41/41，但整单未达提速目标；默认 serial v1 和 standalone current-MVP 均未改变。**
+**严格候选 `d9b55f0` 已连续两轮完整 029 达到 41/41，整单 2668.525/2636.994 秒，均低于 2727.018 秒 serial 基线；默认 serial v1 和 standalone current-MVP 均未改变，默认化仍需独立复核真实证据与推广决策。**
 
 在有效 runner report/proof 下，phase1 不再单独执行矩阵合并；current-MVP 启动时由 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试执行一次完整严格 v2 校验和一次 fresh source，再允许同一 shell 内各组按实际 spec 数输出 reused。必须同时提供 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1` 和 `VERIFY_CURRENT_MVP_RUNNER_REPORT`；report/manifest SHA-256、run_id/commit/tree、双库证明与清理只是附加绑定，不能替代原始日志、freshness、干净源码和指定 spec 校验。phase1 从原子批处理输出绑定矩阵结果；其它 v2 和 serial v1 路径保持原检查。

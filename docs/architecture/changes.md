@@ -8517,3 +8517,21 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `docs/verification/acceptance-workers-2-performance.md`
 
 </details>
+
+## 2026-11-20T00:07:48Z · 00c174ec987f
+
+严格候选 d9b55f0 连续两轮完整 029 均 41/41、100/100 严格复用且清理完成；整单 2668.525/2636.994 秒均低于 serial 基线，同步逐片资源曲线、严格批处理证据和默认仍 opt-in 的推广边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>

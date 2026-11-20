@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-19T22:14:08Z",
-  "review_reason": "记录独立复审对严格批处理、非空 go-race suite 与 CLI 符号链接边界均无剩余阻断；仅验证状态变化，无新增结构或合同变化",
-  "snapshot_sha256": "3b3febbfdf759b8af85356e33790f2afccab6f17b55dd5577aeb0cefb4ac5c2d",
-  "architecture_sha256": "6c86df5b05b880808f773fed508870d05fb5ce52ce76c33ec202f1728d00b2b8",
-  "history_sha256": "5e1b2162ce531a4cc0aa5c261b630661921753a001331fcde2acd2170cc0a3aa",
+  "reviewed_at": "2026-11-20T00:07:48Z",
+  "review_reason": "严格候选 d9b55f0 连续两轮完整 029 均 41/41、100/100 严格复用且清理完成；整单 2668.525/2636.994 秒均低于 serial 基线，同步逐片资源曲线、严格批处理证据和默认仍 opt-in 的推广边界",
+  "snapshot_sha256": "00c174ec987f11710d41be2615d66541bc277f3511de2ae917796052513af021",
+  "architecture_sha256": "6a12190d98d67449251240f4cff9511e05c68aff83258002697e9bed0082e15a",
+  "history_sha256": "608a836a9cdd0da149f939421ddb0cd096ad7b8c2c95649420262402fc23dfae",
   "files": [
     {
       "path": ".dockerignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "417187c83a24e1a91a99e70d81a227e4faddddd63479b08a711c3abb953ca77a"
+      "sha256": "3c345a54a2d706bd7c8ee12308e70c290ce037d7df5a0552170519a4419c809e"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "9c2fca23941693854a5b6ec24dde361ad35526eb08d3e1fc38a575aee08f194b"
+      "sha256": "b46b998fea132bb1b1a80a373bb532a15b5f4bf8d2240ff94c33b97692be4e03"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -341,11 +341,11 @@
     },
     {
       "path": "docs/verification/acceptance-workers-2-performance.md",
-      "sha256": "78e8c48f45eb906c4724889a437795006fc23af3915b4eb740890b911180c679"
+      "sha256": "84d1ccb2c510c1f8bebf1d9e3b22f4c90980e96ccd05a52b7cb5dda3af980aec"
     },
     {
       "path": "docs/verification/acceptance-workers-2.md",
-      "sha256": "e4a75e0556c0666caee68d1bebf7a441274f608fd26e2afce376c27c0b54d927"
+      "sha256": "27c6daac22bd97f664f239843d1f6b1e42d673fa104d21c05c31eb623f13ac9e"
     },
     {
       "path": "docs/verification/architecture-basis-proof-v2.json",
@@ -7985,7 +7985,7 @@
     },
     {
       "path": "scripts/acceptance-parallel-runner.md",
-      "sha256": "e6c7c0b8ed26435e244d34ca17bd927a58c63def3ea6e2ca92c09627618b0fb3"
+      "sha256": "fee61b5c562ca63786430b100f61a338aca2b02cd53cb411cabc05a5aef4754a"
     },
     {
       "path": "scripts/acceptance-parallel-runner.py",
@@ -9525,11 +9525,11 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "f494950f501e8d8a5a798cd8e25a5cea9be8b72ccf4f3900e7b5f6c0a16e31a6"
+      "sha256": "43ea0aed6c607521b89093ddfed3640c09864213e25f21651c9a30599b628d31"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",
-      "sha256": "6965d329ffe725077cc993b535697f71af96e429c3db41dce60228f09c9bbc91"
+      "sha256": "0cfd80f66e45cb2ca0dceea9a429ef1e11ee30724db54a8e5e85993accc14019"
     },
     {
       "path": "third_party/README.md",

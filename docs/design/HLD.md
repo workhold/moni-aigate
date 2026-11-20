@@ -141,11 +141,11 @@ OpenRouter 是商业托管产品，本项目只参考其公开文档描述的产
 
 PR-D 已实现最多两个 worker 的 14 片调度、双活动 cluster 的同名 role/default ACL/advisory lock 隔离证明、独立 bare Git common 与 detached worktree、同 attempt 构建材料复用，以及资源/清理/时间窗口严格校验。测试容器保留物理 worktree 路径，避免 Git back-pointer 和业务 fixture 受到逻辑路径映射影响；共享仅限只读模块缓存和 Go 并发安全 build cache，`-count=1` 禁止测试结果复用。029 仅显式 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2` 启动本轮 runner，serial v1 和既有 manifest 诊断路径保留；完整串行尾部不变。
 
-此前多轮候选未通过完整 14 片/17 part；去重前第一轮完整 029 已达到 41/41 并生成 manifest，但整单 3554.532 秒，连续两轮和优化后的整单提速仍未完成。历史失败分布见[workers=2 候选与未通过验收记录](../verification/acceptance-workers-2.md)，去重前实测与去重合同见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。默认继续 serial v1，不能进入 `parallel_default`。
+严格候选 `d9b55f0025bcfe806e5e420128858975cfaa3be6` 已连续两轮完整 029 达到 41/41、0 FAIL、0 必需 SKIP、100/100 current-MVP 复用，整单分别为 2668.525/2636.994 秒，均低于 2727.018 秒 serial 基线，浏览器、独立生命周期与清理证据齐全。历史失败分布见[workers=2 候选与未通过验收记录](../verification/acceptance-workers-2.md)，逐片、合并、串行尾部、整单墙钟和资源曲线见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。默认继续 serial v1，默认化仍需独立复核真实证据与推广决策，不能仅凭两轮通过直接进入 `parallel_default`。
 
 后续 workers=1 完整控制也在 other 失败，而宿主两个 Go 版本的完整 other 均通过；直接采样证明 VM realtime 多次回拨约 1 秒，统一解释重试、审批、报价和告警的时间边界失败。该环境根因与 workers=2 调度分开记录，详见[VM 时钟分析](../verification/acceptance-workers-2-clock-analysis.md)。经明确授权已禁用重复 NTP 源，180 秒 545 个数据库样本 0 回拨且清理完成；仍需重新完成两轮完整 029 才可默认化。
 
-为消除实测中的重复源码发现，runner 内部合并允许仅使用预检生成的内存 `source_override=(plan,other_tests)`，逐字段匹配后继续全部证据校验并显式绑定本次 run ID。phase1 不再单独执行矩阵合并；current-MVP 启动时通过 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试执行一次完整严格 v2 校验和一次 fresh source，成功后才允许同一 shell 内各组按实际 spec 数复用。phase1 从绑定 run_id/commit/完整计数的原子批处理输出展开矩阵结果；可变 report/proof 不能替代原始日志、freshness、干净源码或指定 spec 校验，也不存在跨 attempt 的可信 discovery 缓存。standalone v2、外部无 report 的 workers=1 manifest 与 serial v1 保持原检查。第一轮完整 029 为 41/41 PASS 但 3554.532 秒，严格去重后的下一轮完整 029 仍需实测，详见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
+为消除实测中的重复源码发现，runner 内部合并允许仅使用预检生成的内存 `source_override=(plan,other_tests)`，逐字段匹配后继续全部证据校验并显式绑定本次 run ID。phase1 不再单独执行矩阵合并；current-MVP 启动时通过 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试执行一次完整严格 v2 校验和一次 fresh source，成功后才允许同一 shell 内各组按实际 spec 数复用。phase1 从绑定 run_id/commit/完整计数的原子批处理输出展开矩阵结果；可变 report/proof 不能替代原始日志、freshness、干净源码或指定 spec 校验，也不存在跨 attempt 的可信 discovery 缓存。standalone v2、外部无 report 的 workers=1 manifest 与 serial v1 保持原检查。去重前完整 029 为 41/41 PASS 但 3554.532 秒；严格候选连续两轮已降为 2668.525/2636.994 秒，实测口径与原始证据见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
 
 ## 5. 技术选型与理由
 
