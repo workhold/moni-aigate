@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-20T00:07:48Z",
-  "review_reason": "严格候选 d9b55f0 连续两轮完整 029 均 41/41、100/100 严格复用且清理完成；整单 2668.525/2636.994 秒均低于 serial 基线，同步逐片资源曲线、严格批处理证据和默认仍 opt-in 的推广边界",
-  "snapshot_sha256": "00c174ec987f11710d41be2615d66541bc277f3511de2ae917796052513af021",
+  "reviewed_at": "2026-11-20T00:23:09Z",
+  "review_reason": "修复 CI other 中 attested shell 负例继承外部 TEST_DATABASE_URL 而在专库门禁提前失败的问题；仅固定单元测试子进程环境，无产品、验收合同、模块图或权限边界变化",
+  "snapshot_sha256": "115a6cb4e9bdf8a955d97d3873a19be2d11ad7b9689ce5123fac80195e6f0ada",
   "architecture_sha256": "6a12190d98d67449251240f4cff9511e05c68aff83258002697e9bed0082e15a",
-  "history_sha256": "608a836a9cdd0da149f939421ddb0cd096ad7b8c2c95649420262402fc23dfae",
+  "history_sha256": "90520dddfa649411c368cdd348b83a7387f39cdc47f215b2a09e20866353f4f1",
   "files": [
     {
       "path": ".dockerignore",
@@ -8349,7 +8349,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "787b0370b3ba65a8b15f5168203093da21c107d1461967b1b591abd6423b4d80"
+      "sha256": "6917388d492f203ddc42d4f208a02a96edc593c8b0ebaa1797fe3d58d864d259"
     },
     {
       "path": "scripts/phase1_browser_qa.py",

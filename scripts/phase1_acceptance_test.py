@@ -407,6 +407,7 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
             root = pathlib.Path(directory)
             env = MODULE.os.environ.copy()
             env.update({
+                "TEST_DATABASE_URL": MODULE.EXPECTED_DATABASE,
                 "VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED": "1",
                 "VERIFY_CURRENT_MVP_RUNNER_REPORT": str(root / "missing-report.json"),
                 "VERIFY_CURRENT_MVP_GO_EVIDENCE_V2": str(root / "missing-manifest.json"),

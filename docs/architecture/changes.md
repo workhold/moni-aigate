@@ -8535,3 +8535,15 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/040-acceptance-parallelism/spec.md`
 
 </details>
+
+## 2026-11-20T00:23:09Z · 115a6cb4e9bd
+
+修复 CI other 中 attested shell 负例继承外部 TEST_DATABASE_URL 而在专库门禁提前失败的问题；仅固定单元测试子进程环境，无产品、验收合同、模块图或权限边界变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
