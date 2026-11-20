@@ -1,0 +1,20 @@
+{
+  "candidates": {
+    "a": {
+      "secret": "replace-with-business-qa-secret-a",
+      "models": ["qa-text"],
+      "ttfb_ms": 5,
+      "event_interval_ms": 25,
+      "output_tokens": 2,
+      "default_fault": ""
+    },
+    "b": {
+      "secret": "replace-with-business-qa-secret-b",
+      "models": ["qa-text"],
+      "ttfb_ms": 5,
+      "event_interval_ms": 25,
+      "output_tokens": 2,
+      "default_fault": ""
+    }
+  }
+}

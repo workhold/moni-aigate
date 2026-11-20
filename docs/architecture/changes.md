@@ -8547,3 +8547,88 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `scripts/phase1_acceptance_test.py`
 
 </details>
+
+## 2026-11-20T10:35:23Z · 1d8dcaf5504e
+
+032 分片实现：新增部署测量入口、版本化熔断/首事件、预算拒绝可见性、同租户缓存及 cache-hit 唯一结算；真实 PG 专项通过，固定资源性能与完整 029 尚未验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2609 个源文件；本次 74 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/phase2/032-baseline.md`
+- added `docs/verification/phase2/032-implementation.md`
+- added `internal/billing/cache.go`
+- added `internal/billing/cache_integration_test.go`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/periodic_budget.go`
+- added `internal/billing/periodic_budget_rejection_test.go`
+- modified `internal/billing/query.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/settle.go`
+- modified `internal/catalog/cost_policy.go`
+- added `internal/catalog/route_health_test.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- modified `internal/provider/classification.go`
+- modified `internal/provider/classification_test.go`
+- added `internal/provider/first_event_test.go`
+- modified `internal/provider/gemini_response.go`
+- modified `internal/provider/native_response.go`
+- modified `internal/provider/response.go`
+- modified `internal/provider/types.go`
+- modified `internal/reporting/read.go`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report.go`
+- modified `internal/reporting/report_test.go`
+- added `internal/routing/breaker_config_test.go`
+- modified `internal/routing/decisions_test.go`
+- modified `internal/routing/routing.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/binding_isolation_integration_test.go`
+- added `internal/server/cache.go`
+- added `internal/server/cache_test.go`
+- modified `internal/server/catalog_handlers.go`
+- modified `internal/server/gateway.go`
+- added `internal/server/gateway_cache_integration_test.go`
+- added `internal/server/gateway_first_event_integration_test.go`
+- modified `internal/server/gateway_integration_test.go`
+- added `internal/server/gateway_quota_integration_test.go`
+- added `internal/server/periodic_budget_rejection_test.go`
+- modified `internal/server/queries.go`
+- added `internal/server/route_data_plane_integration_test.go`
+- modified `internal/testsupport/mockupstream/server.go`
+- added `internal/testsupport/mockupstream/timing_test.go`
+- added `migrations/current_012_phase2_route_health.sql`
+- added `migrations/current_013_phase2_text_cache.sql`
+- added `scripts/phase2-baseline/README.md`
+- added `scripts/phase2-baseline/aggregate.go`
+- added `scripts/phase2-baseline/config.example.json`
+- added `scripts/phase2-baseline/config.go`
+- added `scripts/phase2-baseline/correctness.example.json`
+- added `scripts/phase2-baseline/main.go`
+- added `scripts/phase2-baseline/mock.example.json`
+- added `scripts/phase2-baseline/report.go`
+- added `scripts/phase2-baseline/resource-samples.example.jsonl`
+- added `scripts/phase2-baseline/run.go`
+- added `scripts/phase2-baseline/runner_test.go`
+- added `scripts/phase2-baseline/stream.go`
+- added `scripts/phase2-baseline/types.go`
+- modified `specs/028-unified-metering-media/spec.md`
+- modified `specs/028-unified-metering-media/u-domain-contract.md`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+- modified `specs/031-deterministic-mock-upstream/spec.md`
+- added `specs/032-phase2-text-data-plane/design.md`
+- modified `specs/032-phase2-text-data-plane/spec.md`
+- added `specs/032-phase2-text-data-plane/tasks.md`
+- modified `web/src/inference.ts`
+- modified `web/src/request-wire.ts`
+- modified `web/src/views/PlaygroundView.vue`
+- modified `web/src/views/RequestsView.vue`
+- added `web/tests/periodic-budget-rejection.test.mjs`
+- modified `web/tests/request-wire.test.mjs`
+
+</details>

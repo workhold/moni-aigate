@@ -116,6 +116,15 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 			return e
 		}
 	}
+	var textCache bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='text_response_cache')`, schema).Scan(&textCache); e != nil {
+		return e
+	}
+	if textCache {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE ON %s FROM %s; REVOKE ALL ON %s FROM %s;`, table("text_response_cache"), qa, table("text_response_cache"), qp)); e != nil {
+			return e
+		}
+	}
 	// Revoke table-level UPDATE before granting the pricing/lifecycle columns.
 	// Repeated provisioning must not restore broad writes from the initial grant.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s,%s FROM %s;

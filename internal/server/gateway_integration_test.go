@@ -49,6 +49,10 @@ func newGatewayFixtureWithPool(t *testing.T, handlers []http.HandlerFunc, noCons
 }
 
 func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noConsumption []int, maxConnections int32, protocol string) *gatewayFixture {
+	return newGatewayFixtureProfileConfigured(t, handlers, noConsumption, maxConnections, protocol, nil)
+}
+
+func newGatewayFixtureProfileConfigured(t *testing.T, handlers []http.HandlerFunc, noConsumption []int, maxConnections int32, protocol string, configureProfile func(*provider.Profile)) *gatewayFixture {
 	t.Helper()
 	databaseURL := os.Getenv("TEST_DATABASE_URL")
 	if databaseURL == "" {
@@ -104,6 +108,9 @@ func newGatewayFixtureConfigured(t *testing.T, handlers []http.HandlerFunc, noCo
 	}
 	exec("INSERT INTO memberships(tenant_id,user_id,role,allow_all_models) VALUES($1,$2,'owner',true)", f.tenant, user)
 	profile := &provider.Profile{Model: "retail-model", Protocol: protocol, InputTokenUpperBound: 100, ContextLimit: 120, OutputLimit: 20, DefaultOutputLimit: 20, NoConsumptionStatuses: noConsumption, UsageSemantics: "final"}
+	if configureProfile != nil {
+		configureProfile(profile)
+	}
 	outputRateValue := int64(2000000)
 	if protocol == provider.ProtocolGemini {
 		profile.UsageSemantics = "cumulative"

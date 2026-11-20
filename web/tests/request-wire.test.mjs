@@ -24,3 +24,12 @@ test('request rows reject old usage, scalar rates and unknown response fields be
   }
   assert.throws(() => parseRequestRows([{ ...base, retail_rates: { ...base.retail_rates, rates: [{ ...base.retail_rates.rates[0], numerator: '01' }, base.retail_rates.rates[1]] } }]))
 })
+
+test('cache request details expose only source metadata, never a cached body', () => {
+  const [row] = parseRequestRows([{ ...base, cache_hit: true, finalization_source: 'cache' }])
+  assert.equal(row.cache_hit, true)
+  assert.equal(row.finalization_source, 'cache')
+  assert.throws(() => parseRequestRows([{ ...base, cache_hit: true, finalization_source: 'adapter' }]))
+  assert.throws(() => parseRequestRows([{ ...base, cache_hit: true, finalization_source: 'cache', response_body: '{"private":true}' }]))
+  assert.equal(parseRequestRows([{ ...base, cache_hit: false, finalization_source: null }])[0].finalization_source, null)
+})

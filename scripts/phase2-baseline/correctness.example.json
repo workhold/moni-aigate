@@ -1,0 +1,10 @@
+{
+  "status": "not_run",
+  "requests_checked": 0,
+  "overcharge_detected": false,
+  "residual_holds": 0,
+  "residual_permits": 0,
+  "unauthorized_dispatches": 0,
+  "unknown_consumption_replays": 0,
+  "ledger_balanced": false
+}

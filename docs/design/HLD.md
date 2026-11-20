@@ -772,7 +772,7 @@ flowchart LR
 
 - **统一执行核心不在前三阶段。** 文本动态路由要改两条现有规则：“同一路由池内 channel 只出现一次”（实际在 `catalog.PublishWithCostPolicy` 的 Go 校验里，SQL 唯一键已允许同 channel 不同 `upstream_model`，所以改的是去重键，不是 SQL 约束）；以及 attempt 的供应商侧界从“路由版本唯一 profile”改为“所选物理模型的能力”（这是对 028 attempt 快照 guard 的受控修订）。路由版本的 profile 仍由 `meter_route_profile` 强制等于逻辑模型的 profile，客户预占界仍由该 profile 决定，不随路由结果变化。033 §2.3.1 列出每一项并把 028 guard 修订作为 3.1 的前置。
 - **auto 只用一个售价。** 按选中档位分别定价需要放宽 `price_versions` 只允许 `variant_key='default'` 的约束，属于计价扩展；第三阶段用单一 auto 售价加最低毛利硬过滤保护经营者（033 D-033-1）。
-- **缓存先定语义。** 命中没有 attempt，如何收费会影响账务路径；032 D-032-1 建议与未命中同价，并为此增加一个受控的“cache-hit finalization”合同，仍是一个 request、一份 reservation、一份 settlement。
+- **缓存语义与结算已冻结。** 032 D-032-1 采用命中与未命中同价，D-032-2 允许同租户跨 Key 在完整授权后共享；cache-hit 复用唯一 request/reservation/finalization/settlement，不创建 attempt，供应商量与成本为已知零。精确键、TTL、隐私、无 attempt guard、清理与故障边界见 [032 实施设计](../../specs/032-phase2-text-data-plane/design.md) 和 [028-U cache-hit 扩展](../../specs/028-unified-metering-media/u-storage-contract.md)。这些是实施合同，不代表缓存或固定资源性能已经验收。
 - **路由决策记录取代现有 `upstream_attempts.route_decisions`。** 按 ADR-005 一次性替换，不保留双格式；每次决策一行，候选集合放在有界 JSONB（沿用现有数组的 1000 项、256KiB 上限），包括被硬约束排除的候选，从而补上“完整失败池解释”；每请求一次 INSERT，不随候选数增长，避免与第二阶段延迟目标冲突。
 - **回放只读。** 重放使用持久化的输入，不重新读取当前配置或统计，不写决策、不派发、不触碰资金。
 

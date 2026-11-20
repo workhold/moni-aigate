@@ -18,7 +18,12 @@ import (
 )
 
 func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, error) {
+	return s.reserve(ctx, in, nil)
+}
+
+func (s *Store) reserve(ctx context.Context, in ReserveInput, cacheDigest []byte) (Reservation, error) {
 	var result Reservation
+	var attempted Money
 	if in.RequestID == "" {
 		in.RequestID = uuid.NewString()
 	}
@@ -64,6 +69,17 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		}
 		if in.ProfileVersion != "" && in.ProfileVersion != auth.ProfileVersion {
 			return fail("profile_changed", "model profile changed before reservation")
+		}
+		var cacheTTL int
+		if err = tx.QueryRow(ctx, "SELECT cache_ttl_seconds FROM route_policy_versions WHERE model_id=$1 AND revision=$2 AND profile_version=$3", in.ModelID, in.RouteRevision, auth.ProfileVersion).Scan(&cacheTTL); err != nil {
+			return err
+		}
+		if len(cacheDigest) != 0 && !validCacheDigest(cacheDigest) || cacheTTL == 0 && len(cacheDigest) != 0 {
+			return fail("invalid_cache", "cache request digest does not match the route revision")
+		}
+		var storedCacheDigest any
+		if cacheTTL > 0 && len(cacheDigest) == 32 {
+			storedCacheDigest = bytes.Clone(cacheDigest)
 		}
 		var profile struct {
 			Protocol      string `json:"protocol"`
@@ -145,6 +161,7 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 			return err
 		}
 		amount := Money(reserved)
+		attempted = amount
 		spentHeld := new(big.Int).Add(big.NewInt(auth.Spent), big.NewInt(auth.Held))
 		spentHeld.Add(spentHeld, big.NewInt(int64(amount)))
 		if !spentHeld.IsInt64() {
@@ -178,7 +195,7 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 		}
 		result = Reservation{ID: uuid.NewString(), RequestID: in.RequestID, TenantID: in.Principal.TenantID, Amount: amount, Status: "reserved", Deadline: now.Add(24 * time.Hour), PriceVersionID: price, PricingGroupID: auth.PriceGroupID, TenantPricingRevision: auth.PricingRevision, RetailPricedAt: pricedAt}
 		create := &pgx.Batch{}
-		create.Queue("INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,requested_model_name,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision,client_ip) VALUES($1,$2,$3,$4,$5,NULLIF($6,''),$7,$8,'synchronous',$9,$10,$11,$12,$13,$14,$15,NULLIF($16,'')::inet)", in.RequestID, in.Principal.TenantID, in.Principal.KeyID, in.Principal.UserID, in.ModelID, in.RequestedModelName, auth.ProfileVersion, protocol, resultKind, in.PolicyVersion, in.RequestHMAC, in.RequestDeadline, s.instanceID, in.Streaming, in.RouteRevision, clientIP)
+		create.Queue("INSERT INTO request_records(id,tenant_id,key_id,owner_id,model_id,requested_model_name,profile_version,protocol,execution_kind,result_kind,policy_version,request_hmac,request_deadline,instance_id,streaming,route_revision,client_ip,cache_request_digest) VALUES($1,$2,$3,$4,$5,NULLIF($6,''),$7,$8,'synchronous',$9,$10,$11,$12,$13,$14,$15,NULLIF($16,'')::inet,$17)", in.RequestID, in.Principal.TenantID, in.Principal.KeyID, in.Principal.UserID, in.ModelID, in.RequestedModelName, auth.ProfileVersion, protocol, resultKind, in.PolicyVersion, in.RequestHMAC, in.RequestDeadline, s.instanceID, in.Streaming, in.RouteRevision, clientIP, storedCacheDigest)
 		create.Queue(`INSERT INTO request_meter_snapshots(tenant_id,request_id,model_id,profile_version,schema_id,schema_digest,variant_key,price_version_id,pricing_group_id,tenant_pricing_revision,retail_priced_at,input_bound,output_bound,plan_canonical,plan_digest,retail_quote_canonical,retail_quote_digest)
  VALUES($1,$2,$3,$4,$5,$6,'default',$7,$8,$9,$10,$11,$12,
   CASE WHEN meter_plan_ready($4,$13) THEN meter_request_plan_canonical($4,$3,$5,$6,$12,$14,$13) END,
@@ -233,6 +250,7 @@ func (s *Store) Reserve(ctx context.Context, in ReserveInput) (Reservation, erro
 	})
 	if err != nil {
 		s.active.Delete(in.RequestID)
+		err = s.addBudgetRejection(ctx, err, in.Principal.TenantID, in.Principal.KeyID, attempted)
 		return Reservation{}, err
 	}
 	return result, nil

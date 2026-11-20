@@ -108,9 +108,14 @@ type FinalizationInput struct {
     ID, TenantID, RequestID, AttemptID string
     Observation inference.Observation
 }
+// 032 cache-hit 的唯一受控无 attempt 入口；Store 在事务内重读缓存行、
+// 原 finalization 与命中 request，调用方不能提交金额或自报用量。
+type CacheFinalizationInput struct {
+    ID, TenantID, RequestID, CacheID, SourceEventID string
+}
 ```
 
-账务从DB重读已发布profile、原schema/variant、完整界和当前价，验证 Plan绑定；自己计算 R/U，不接受调用方金额。`RequestHMAC`绑定协议、执行种类、公开模型、严格有效输入/媒体摘要和参数；不保存正文。SQL与Go均检查 request/attempt的租户和profile/schema/variant相等。Reserve/RecordAttempt返回只在确认COMMIT后可用于下一步；未知提交返回原身份可查询信息，不发行派发许可。
+账务从DB重读已发布profile、原schema/variant、完整界和当前价，验证 Plan绑定；自己计算 R/U，不接受调用方金额。`RequestHMAC`绑定协议、执行种类、公开模型、严格有效输入/媒体摘要和参数；不保存正文。SQL与Go均检查 request/attempt的租户和profile/schema/variant相等。Reserve/RecordAttempt返回只在确认COMMIT后可用于下一步；未知提交返回原身份可查询信息，不发行派发许可。032 cache-hit 只在同一 Store 内新增 `CacheFinalizationInput`，仍以原 request/reservation、唯一 settlement 和恢复约束收尾；它没有 Observation/attempt，零售量来自受审缓存原 finalization，供应商量与成本为已知零，详见 [U 存储合同 §6.2.2](u-storage-contract.md)。
 
 ## 5. 单一数据库模型、迁移和权限
 

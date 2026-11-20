@@ -31,6 +31,7 @@ type Candidate struct {
 	Model                 string
 	Region                string
 	HealthKey             string
+	Breaker               BreakerConfig
 	Priority              int
 	Weight                uint64
 	MaxInflight           int
@@ -115,7 +116,10 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 				return nil, ErrInvalidPolicy
 			}
 		}
-		if len(p.candidates) > 0 && (c.CostPolicy != p.candidates[0].CostPolicy || c.InputUpperBound != p.candidates[0].InputUpperBound || c.OutputLimit != p.candidates[0].OutputLimit) {
+		if len(p.candidates) > 0 && (c.CostPolicy != p.candidates[0].CostPolicy || c.InputUpperBound != p.candidates[0].InputUpperBound || c.OutputLimit != p.candidates[0].OutputLimit || normalizeBreaker(c.Breaker) != normalizeBreaker(p.candidates[0].Breaker)) {
+			return nil, ErrInvalidPolicy
+		}
+		if c.Breaker != (BreakerConfig{}) && ValidateBreakerConfig(c.Breaker) != nil {
 			return nil, ErrInvalidPolicy
 		}
 		if c.ChannelID == "" || c.VersionID == "" || c.CredentialID == "" || c.Model == "" || c.Weight == 0 || c.MaxInflight <= 0 || c.CredentialMaxInflight < 0 {
@@ -133,7 +137,7 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 			seen[c.ChannelID] = group
 		} else {
 			previous := group.candidate
-			if c.CredentialID == "" || previous.CredentialID == "" || c.VersionID != previous.VersionID || c.Model != previous.Model || c.Region != previous.Region || c.Priority != previous.Priority || c.Weight != previous.Weight || c.MaxInflight != previous.MaxInflight || !c.CostQuote.Equal(previous.CostQuote) || !c.CostLimits.Equal(previous.CostLimits) {
+			if c.CredentialID == "" || previous.CredentialID == "" || c.VersionID != previous.VersionID || c.Model != previous.Model || c.Region != previous.Region || c.Priority != previous.Priority || c.Weight != previous.Weight || c.MaxInflight != previous.MaxInflight || normalizeBreaker(c.Breaker) != normalizeBreaker(previous.Breaker) || !c.CostQuote.Equal(previous.CostQuote) || !c.CostLimits.Equal(previous.CostLimits) {
 				return nil, ErrInvalidPolicy
 			}
 		}
@@ -219,9 +223,34 @@ const (
 	Quarantine Outcome = "quarantine"
 )
 
+type BreakerConfig struct {
+	FailureThreshold int
+	OpenDuration     time.Duration
+	HalfOpenTokens   int
+}
+
+func DefaultBreakerConfig() BreakerConfig {
+	return BreakerConfig{FailureThreshold: 3, OpenDuration: 30 * time.Second, HalfOpenTokens: 1}
+}
+
+func normalizeBreaker(c BreakerConfig) BreakerConfig {
+	if c == (BreakerConfig{}) {
+		return DefaultBreakerConfig()
+	}
+	return c
+}
+
+func ValidateBreakerConfig(c BreakerConfig) error {
+	if c.FailureThreshold < 2 || c.FailureThreshold > 20 || c.OpenDuration < time.Second || c.OpenDuration > 10*time.Minute || c.OpenDuration%time.Millisecond != 0 || c.HalfOpenTokens < 1 || c.HalfOpenTokens > 4 {
+		return ErrInvalidPolicy
+	}
+	return nil
+}
+
 type Config struct {
 	FailureThreshold int
 	OpenDuration     time.Duration
+	HalfOpenTokens   int
 	Now              func() time.Time
 	RandN            func(uint64) uint64
 }
@@ -229,7 +258,7 @@ type health struct {
 	state      State
 	failures   int
 	until      time.Time
-	probe      bool
+	probes     int
 	generation uint64
 }
 type Engine struct {
@@ -277,6 +306,9 @@ func NewEngine(c Config) *Engine {
 	if c.OpenDuration <= 0 {
 		c.OpenDuration = 30 * time.Second
 	}
+	if c.HalfOpenTokens <= 0 {
+		c.HalfOpenTokens = 1
+	}
 	if c.Now == nil {
 		c.Now = time.Now
 	}
@@ -290,6 +322,12 @@ func key(c Candidate) string {
 		return c.HealthKey
 	}
 	return c.ChannelID
+}
+func (e *Engine) breaker(c Candidate) BreakerConfig {
+	if c.Breaker != (BreakerConfig{}) {
+		return c.Breaker
+	}
+	return BreakerConfig{FailureThreshold: e.config.FailureThreshold, OpenDuration: e.config.OpenDuration, HalfOpenTokens: e.config.HalfOpenTokens}
 }
 func (e *Engine) get(k string) *health {
 	h := e.health[k]
@@ -357,10 +395,10 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 				default:
 					if h.state == Open {
 						h.state = HalfOpen
-						h.probe = false
+						h.probes = 0
 						h.generation++
 					}
-					if h.state == HalfOpen && h.probe {
+					if h.state == HalfOpen && h.probes >= e.breaker(candidate).HalfOpenTokens {
 						reason = "half_open_busy"
 					}
 				}
@@ -480,7 +518,7 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 			e.credentialInflight[credentialKey(c)]++
 			h := e.get(key(c))
 			if h.state == HalfOpen {
-				h.probe = true
+				h.probes++
 			}
 			decisions[i].Reason = "selected"
 			c.Decisions = decisions
@@ -531,21 +569,30 @@ func (a *Attempt) Finish(outcome Outcome) {
 			return
 		}
 		half := h.state == HalfOpen
-		h.probe = false
+		if half && h.probes > 0 {
+			h.probes--
+		}
+		breaker := e.breaker(a.candidate)
 		switch outcome {
 		case Success:
 			h.state = Closed
 			h.failures = 0
 			h.until = time.Time{}
+			if half {
+				h.probes = 0
+				h.generation++
+			}
 		case Failure:
 			h.failures++
-			if half || h.failures >= e.config.FailureThreshold {
+			if half || h.failures >= breaker.FailureThreshold {
 				h.state = Open
-				h.until = e.config.Now().Add(e.config.OpenDuration)
+				h.until = e.config.Now().Add(breaker.OpenDuration)
+				h.probes = 0
 				h.generation++
 			}
 		case Quarantine:
 			h.state = Quarantined
+			h.probes = 0
 			h.generation++
 		case Neutral: // In particular, a cancelled half-open customer request
 			// releases its token without falsely proving success or failure.
@@ -560,7 +607,7 @@ func (e *Engine) SetQuarantined(healthKey string, enabled bool) {
 	defer e.mu.Unlock()
 	h := e.get(healthKey)
 	h.generation++
-	h.probe = false
+	h.probes = 0
 	if enabled {
 		h.state = Quarantined
 	} else {
@@ -576,7 +623,7 @@ func (e *Engine) Cooldown(healthKey string, d time.Duration) {
 	if h.state != Quarantined {
 		h.state = Open
 		h.until = e.config.Now().Add(d)
-		h.probe = false
+		h.probes = 0
 		h.generation++
 	}
 }
@@ -584,7 +631,7 @@ func (e *Engine) Snapshot(healthKey, channelID string) HealthSnapshot {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	h := e.get(healthKey)
-	return HealthSnapshot{State: h.state, ConsecutiveFailures: h.failures, OpenUntil: h.until, ProbeInFlight: h.probe, Inflight: e.inflight[channelID]}
+	return HealthSnapshot{State: h.state, ConsecutiveFailures: h.failures, OpenUntil: h.until, ProbeInFlight: h.probes > 0, Inflight: e.inflight[channelID]}
 }
 
 // CredentialInflight returns shared capacity in use by a real credential across

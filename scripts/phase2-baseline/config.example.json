@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "run_id": "replace-run-id",
+  "source": {
+    "commit_sha": "0000000000000000000000000000000000000000",
+    "tree_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "tree_clean": false,
+    "build_command": "docker",
+    "build_args": ["build", "--file", "Dockerfile", "--tag", "moni-aigate:phase2-baseline", "."]
+  },
+  "gateway": {
+    "base_url": "http://app:8080",
+    "api_key_env": "PHASE2_BASELINE_API_KEY",
+    "path": "/v1/chat/completions",
+    "body": {
+      "model": "qa-text",
+      "stream": true,
+      "max_tokens": 2,
+      "messages": [{"role": "user", "content": "phase2 baseline {{nonce}}"}]
+    }
+  },
+  "mock": {
+    "receipts_url": "http://mock-upstream:8090/__mock/receipts",
+    "config_path": "scripts/phase2-baseline/mock.example.json"
+  },
+  "resources": {
+    "application": {"cpu": "4", "memory": "8GiB", "connection_limit": 100, "verified": false, "samples_jsonl": ""},
+    "postgresql": {"cpu": "2", "memory": "4GiB", "connection_limit": 100, "verified": false, "samples_jsonl": ""},
+    "load_generator": {"cpu": "2", "memory": "2GiB", "verified": false, "samples_jsonl": ""},
+    "mock": {"cpu": "1", "memory": "1GiB", "connection_limit": 1000, "verified": false, "samples_jsonl": ""}
+  },
+  "load": {
+    "concurrent_clients": 100,
+    "expected_active_streams": 100,
+    "warmup_seconds": 60,
+    "sample_seconds": 300,
+    "repeats": 3,
+    "rotation_order": ["moni", "moni", "moni"],
+    "request_timeout_seconds": 30,
+    "upstream_fault": "slow_ttfb:25"
+  },
+  "connection": {
+    "tls": false,
+    "http_version": "HTTP/1.1",
+    "disable_keep_alives": false,
+    "max_idle_connections": 100,
+    "max_conns_per_host": 100,
+    "provider_retries": 2,
+    "plugins": "none",
+    "cache": "disabled"
+  },
+  "timing": {"clock_source": "replace-with-single-host-utc-source", "skew_verified": false},
+  "commercial_chain": {
+    "normal_release_main": true,
+    "authentication": true,
+    "wallet_hard_reservation": true,
+    "key_limits": true,
+    "persistent_attempts": true,
+    "final_evidence": true,
+    "unique_settlement": true,
+    "audit": true
+  },
+  "correctness": {"evidence_path": ""}
+}

@@ -23,7 +23,7 @@ func TestProviderFailureAttributionUsesCodesNotBare403(t *testing.T) {
 		{"model_404", 404, `{"error":{"code":"model_not_found"}}`, ClassModel, true},
 		{"model_403", 403, `{"error":{"code":"model_not_found"}}`, ClassModel, true},
 		{"unsupported_model", 400, `{"error":{"code":"unsupported_model"}}`, ClassModel, true},
-		{"context_length_exceeded", 400, `{"error":{"code":"context_length_exceeded"}}`, ClassModel, false},
+		{"context_length_exceeded", 400, `{"error":{"code":"context_length_exceeded"}}`, ClassModel, true},
 		{"credential_403", 403, `{"error":{"code":"invalid_api_key"}}`, ClassCredential, false},
 		{"quota_429", 429, `{"error":{"type":"insufficient_quota"}}`, ClassQuota, false},
 		{"rate_429", 429, `{"error":{"code":"rate_limit_exceeded"}}`, ClassRateLimit, false},

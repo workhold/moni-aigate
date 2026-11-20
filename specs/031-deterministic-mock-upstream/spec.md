@@ -92,7 +92,7 @@ http://mock-upstream:8090/c/{candidate}/v1beta/models/{model}:streamGenerateCont
 GET /__mock/receipts?since=<seq>
 ```
 
-返回自 `since` 之后的接收记录：`seq`、`candidate`、`protocol`、`model`、`stream`、`body_sha256`、`nonce`、`fault`、`received_at`、`completed`。`nonce` 取自正文中的 `[[mock:nonce=<value>]]`，测试用它把网关请求和上游接收对应起来。
+返回自 `since` 之后的接收记录：`seq`、`candidate`、`protocol`、`model`、`stream`、`body_sha256`、`nonce`、`fault`、`received_at`、`completed`。`nonce` 取自正文中的 `[[mock:nonce=<value>]]`，测试用它把网关请求和上游接收对应起来。032 测量另增加 `first_event_at`、`first_content_at`、`completed_at` 诊断时间，以及 `first_event_after_us`、`first_content_after_us` 数值间隔；后两者在 mock 进程内由单调时钟计算，调用方不得对反序列化的跨进程 wall-clock 时间戳做差来代替它们。
 
 该接口只在 `--allow-directives` 下开放，只监听容器内网，不暴露到宿主机端口。
 

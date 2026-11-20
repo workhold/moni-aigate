@@ -15,6 +15,7 @@ type requestFact struct {
 	charged, refunded *string
 	key               string
 	source            factSource
+	cache             bool
 }
 
 type attemptFact struct {
@@ -136,8 +137,10 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 	report := Report{From: filter.From.UTC(), To: filter.To.UTC(), AsOf: asOf.UTC(), Currency: "COIN", AmountUnit: "micro_coin", Scope: "request_created_window",
 		Models: []ModelReport{}, Channels: []ChannelReport{}, Requests: []RequestRow{}}
 	type requestTotal struct {
-		row RequestRow
-		sum totals
+		row    RequestRow
+		sum    totals
+		source factSource
+		cache  bool
 	}
 	requests := make(map[string]*requestTotal, len(facts))
 	for _, fact := range facts {
@@ -148,7 +151,7 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 		if _, duplicate := requests[key]; duplicate {
 			return Report{}, errUnavailable
 		}
-		entry := &requestTotal{row: fact.row, sum: newTotals()}
+		entry := &requestTotal{row: fact.row, sum: newTotals(), source: fact.source, cache: fact.cache}
 		entry.row.CreatedAt = entry.row.CreatedAt.UTC()
 		entry.sum.requests = 1
 		if fact.charged == nil && fact.refunded == nil {
@@ -205,6 +208,13 @@ func aggregate(filter Filter, asOf time.Time, facts []requestFact, attempts []at
 		}
 		request.sum.cost.Add(&request.sum.cost, cost)
 		channel.cost.Add(&channel.cost, cost)
+	}
+	for _, request := range requests {
+		// Only an explicit cache finalization proves known-zero supplier cost.
+		// Other settled no-attempt text requests remain unknown and suppress margin.
+		if request.source != mediaFactSource && request.row.BillingStatus == "settled" && request.sum.attempts == 0 && !request.cache {
+			request.sum.unknown++
+		}
 	}
 	allocatedByRequest := map[string]*big.Int{}
 	seenAllocations := map[string]bool{}

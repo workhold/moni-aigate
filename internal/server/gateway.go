@@ -146,7 +146,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		if reason == "" {
 			eligible++
 		}
-		candidates = append(candidates, routing.Candidate{ChannelID: v.ChannelID, VersionID: v.VersionID, CredentialID: v.CredentialID, CredentialWeight: uint64(v.CredentialWeight), CredentialMaxInflight: v.CredentialMaxInflight, Model: v.UpstreamModel, Region: v.Region, HealthKey: v.CredentialID + ":" + model.ID, Priority: v.Priority, Weight: uint64(v.Weight), MaxInflight: v.MaxInflight, CostPolicy: v.CostPolicy, CostQuote: v.CostQuote, CostLimits: v.CostLimits, InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, ProcurementManaged: v.ProcurementManaged, ProcurementState: v.ProcurementState, ProcurementAvailable: v.ProcurementAvailable, Enabled: reason == "", ExclusionReason: reason, Endpoint: provider.Endpoint{URL: v.URL + suffix, APIKey: v.Secret, Model: v.UpstreamModel, Network: networkPolicy(v.URL, v.AllowedCIDRs)}})
+		candidates = append(candidates, routing.Candidate{ChannelID: v.ChannelID, VersionID: v.VersionID, CredentialID: v.CredentialID, CredentialWeight: uint64(v.CredentialWeight), CredentialMaxInflight: v.CredentialMaxInflight, Model: v.UpstreamModel, Region: v.Region, HealthKey: v.ChannelID + ":" + v.UpstreamModel, Breaker: v.Breaker, Priority: v.Priority, Weight: uint64(v.Weight), MaxInflight: v.MaxInflight, CostPolicy: v.CostPolicy, CostQuote: v.CostQuote, CostLimits: v.CostLimits, InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, ProcurementManaged: v.ProcurementManaged, ProcurementState: v.ProcurementState, ProcurementAvailable: v.ProcurementAvailable, Enabled: reason == "", ExclusionReason: reason, Endpoint: provider.Endpoint{URL: v.URL + suffix, APIKey: v.Secret, Model: v.UpstreamModel, Network: networkPolicy(v.URL, v.AllowedCIDRs)}})
 	}
 	if eligible == 0 {
 		s.fail(c, 503, "no_available_channel", "没有符合条件的可用渠道")
@@ -182,7 +182,18 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 	if protocol == provider.ProtocolGemini {
 		identityBody = protocol + "\x00" + pathModel + "\x00" + fmt.Sprint(stream) + "\x00" + identityBody
 	}
-	reservation, e := s.Billing.Reserve(c.Request.Context(), billing.ReserveInput{Principal: billing.Principal{TenantID: p.TenantID, UserID: p.UserID, KeyID: p.KeyID, ClientIP: p.ClientIP}, RequestID: c.GetString("request_id"), ModelID: model.ID, RequestedModelName: model.RequestedName, IdempotencyKey: c.GetHeader("Idempotency-Key"), RequestHMAC: s.Config.Secrets.Digest(identityBody), ProfileVersion: model.ProfileVersion, RouteRevision: model.Revision, PolicyVersion: "retail-r3", InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, RequestDeadline: deadline, Streaming: request.Stream})
+	cacheDescriptor, e := newTextCacheDescriptor(request, protocol, p.TenantID, model.ID, model.Revision, model.CacheTTLSeconds)
+	if e != nil {
+		releaseAdmission()
+		releaseAdmission = nil
+		s.error(c, e)
+		return
+	}
+	var cacheDigest []byte
+	if cacheDescriptor != nil {
+		cacheDigest = cacheDescriptor.requestDigest
+	}
+	reservation, e := s.Billing.ReserveWithCache(c.Request.Context(), billing.ReserveInput{Principal: billing.Principal{TenantID: p.TenantID, UserID: p.UserID, KeyID: p.KeyID, ClientIP: p.ClientIP}, RequestID: c.GetString("request_id"), ModelID: model.ID, RequestedModelName: model.RequestedName, IdempotencyKey: c.GetHeader("Idempotency-Key"), RequestHMAC: s.Config.Secrets.Digest(identityBody), ProfileVersion: model.ProfileVersion, RouteRevision: model.Revision, PolicyVersion: "retail-r3", InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, RequestDeadline: deadline, Streaming: request.Stream}, cacheDigest)
 	if e != nil {
 		releaseAdmission()
 		releaseAdmission = nil
@@ -190,6 +201,38 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		return
 	}
 	defer s.Billing.EndRequest(reservation.RequestID)
+	if cacheDescriptor != nil {
+		// Cache operations use the same short-stage admission scheduling as the
+		// ordinary completion path; no provider call occurs while holding a ticket.
+		releaseAdmission()
+		releaseAdmission = nil
+		hit, found, cacheErr := s.Billing.LookupCache(c.Request.Context(), billing.CacheLookupInput{TenantID: p.TenantID, RequestID: reservation.RequestID, Protocol: protocol, ModelID: model.ID, RouteRevision: model.Revision, RequestDigest: cacheDigest})
+		if cacheErr == nil && found {
+			var result billing.Settlement
+			result, cacheErr = s.settleCacheHit(p.KeyID, billing.CacheFinalizationInput{TenantID: p.TenantID, RequestID: reservation.RequestID, CacheID: hit.ID, SourceEventID: "cache:" + reservation.RequestID})
+			if cacheErr == nil && result.Status == "settled" {
+				c.Header("Content-Type", "application/json")
+				n, writeErr := c.Writer.Write(hit.Body)
+				stage := "complete_local_write"
+				if writeErr != nil || n != len(hit.Body) {
+					stage = "write_failed"
+				}
+				s.observeDelivery(p.TenantID, reservation.RequestID, stage)
+				return
+			}
+			if cacheErr == nil {
+				s.fail(c, 503, "billing_pending", "最终用量或收费待核对")
+				return
+			}
+		}
+		if cacheErr != nil {
+			ctx, cancel := cleanupContext()
+			_, _ = s.Billing.Release(ctx, billing.ReleaseInput{TenantID: p.TenantID, RequestID: reservation.RequestID, Reason: "platform_failure"})
+			cancel()
+			s.fail(c, 503, "cache_unavailable", "缓存响应当前不可用，请凭 request_id 查询状态")
+			return
+		}
+	}
 	var attemptID string
 	for {
 		if releaseAdmission == nil {
@@ -245,7 +288,18 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 			return
 		}
 		response, err := s.Provider.Do(c.Request.Context(), attempt.Candidate.Endpoint, request)
+		var firstEvent *provider.Event
+		if err == nil && request.Stream {
+			var event *provider.Event
+			event, err = response.ReadEvent()
+			if err == nil {
+				firstEvent = event
+			}
+		}
 		if err != nil {
+			if response != nil {
+				_ = response.Close()
+			}
 			s.applyProviderHealth(attempt.Candidate, err)
 			reason := transportReason(c.Request.Context(), err)
 			f := billing.FinalizationInput{ID: uuid.NewString(), TenantID: p.TenantID, RequestID: reservation.RequestID, AttemptID: attemptID, Source: "adapter", SourceEventID: attemptID + ":final", Usage: billing.Usage{Status: "missing"}, ProtocolOutcome: "failed", TransportEndReason: reason, DeliveryStage: "none"}
@@ -276,10 +330,10 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		healthOverride := routing.Outcome("")
 		if request.Stream {
 			s.Streams.Add(1)
-			healthOverride = s.stream(c, p, reservation.RequestID, attemptID, request, response, plan)
+			healthOverride = s.stream(c, p, reservation.RequestID, attemptID, request, response, plan, firstEvent)
 			s.Streams.Add(-1)
 		} else {
-			s.nonStream(c, p, reservation.RequestID, attemptID, response)
+			s.nonStream(c, p, reservation.RequestID, attemptID, response, cacheDescriptor)
 		}
 		_ = response.Close()
 		if healthOverride != "" {
@@ -345,6 +399,19 @@ func (s *Server) settle(key, tenant, request string) (billing.Settlement, error)
 	defer release()
 	return s.Billing.Settle(ctx, billing.SettleInput{TenantID: tenant, RequestID: request, Mode: "live"})
 }
+func (s *Server) settleCacheHit(key string, input billing.CacheFinalizationInput) (billing.Settlement, error) {
+	ctx, cancel := cleanupContext()
+	defer cancel()
+	release, err := s.admission.acquire(ctx, key)
+	if err != nil {
+		return billing.Settlement{}, err
+	}
+	defer release()
+	if _, err = s.Billing.RecordCacheFinalization(ctx, input); err != nil {
+		return billing.Settlement{}, err
+	}
+	return s.Billing.Settle(ctx, billing.SettleInput{TenantID: input.TenantID, RequestID: input.RequestID, Mode: "live"})
+}
 func billingUsage(u provider.Usage) billing.Usage {
 	return billing.Usage{Status: string(u.Status), InputTokens: u.InputTokens, OutputTokens: u.OutputTokens, TotalTokens: u.TotalTokens, CachedTokens: u.CachedTokens, ReasoningTokens: u.ReasoningTokens}
 }
@@ -397,7 +464,7 @@ func (s *Server) providerError(c *gin.Context, e error) {
 	}
 	s.fail(c, 502, "upstream_error", "上游请求未能完成")
 }
-func (s *Server) nonStream(c *gin.Context, p identity.Principal, requestID, attemptID string, r *provider.Response) {
+func (s *Server) nonStream(c *gin.Context, p identity.Principal, requestID, attemptID string, r *provider.Response, cache *textCacheDescriptor) {
 	body, e := r.DecodeJSON()
 	reason := "done"
 	if e != nil {
@@ -423,6 +490,11 @@ func (s *Server) nonStream(c *gin.Context, p identity.Principal, requestID, atte
 		s.fail(c, 503, "billing_pending", "最终用量未确认，请查询账单状态")
 		return
 	}
+	if cache != nil && cacheableResponseBody(body) {
+		ctx, cancel := cleanupContext()
+		_, _ = s.Billing.PutCache(ctx, billing.CachePutInput{TenantID: p.TenantID, OriginalRequestID: requestID, ResponseBody: body})
+		cancel()
+	}
 	c.Header("Content-Type", "application/json")
 	n, writeErr := c.Writer.Write(body)
 	stage := "complete_local_write"
@@ -431,17 +503,24 @@ func (s *Server) nonStream(c *gin.Context, p identity.Principal, requestID, atte
 	}
 	s.observeDelivery(p.TenantID, requestID, stage)
 }
-func (s *Server) stream(c *gin.Context, p identity.Principal, requestID, attemptID string, req *provider.Request, r *provider.Response, plan *routing.Plan) routing.Outcome {
+func (s *Server) stream(c *gin.Context, p identity.Principal, requestID, attemptID string, req *provider.Request, r *provider.Response, plan *routing.Plan, firstEvent *provider.Event) routing.Outcome {
 	content := false
 	downstreamFailure := false
 	stage := "none"
 	var streamErr error
 	var terminal provider.Event
 	for {
-		event, e := r.ReadEvent()
-		if e != nil {
-			streamErr = e
-			break
+		var event *provider.Event
+		if firstEvent != nil {
+			event = firstEvent
+			firstEvent = nil
+		} else {
+			var e error
+			event, e = r.ReadEvent()
+			if e != nil {
+				streamErr = e
+				break
+			}
 		}
 		if event.Kind == "heartbeat" || event.Kind == "usage" {
 			continue
@@ -643,7 +722,7 @@ func (s *Server) applyProviderHealth(candidate routing.Candidate, err error) {
 		s.Routing.Cooldown(candidate.HealthKey, duration)
 		return
 	}
-	if e.Class != provider.ClassCredential {
+	if e.Class != provider.ClassCredential && e.Class != provider.ClassQuota {
 		return
 	}
 	ctx, cancel := cleanupContext()
@@ -656,11 +735,15 @@ func (s *Server) applyProviderHealth(candidate routing.Candidate, err error) {
 	if _, x = tx.Exec(ctx, "UPDATE channel_credentials SET revoked_at=COALESCE(revoked_at,clock_timestamp()) WHERE id=$1", candidate.CredentialID); x != nil {
 		return
 	}
-	if _, x = tx.Exec(ctx, "INSERT INTO audit_events(actor,action,target) VALUES('system','credential.quarantined',$1)", candidate.CredentialID); x != nil {
+	action := "credential.quarantined"
+	if e.Class == provider.ClassQuota {
+		action = "credential.quota_isolated"
+	}
+	if _, x = tx.Exec(ctx, "INSERT INTO audit_events(actor,action,target) VALUES('system',$1,$2)", action, candidate.CredentialID); x != nil {
 		return
 	}
-	if x = tx.Commit(ctx); x == nil {
-		s.Routing.SetQuarantined(candidate.HealthKey, true)
+	if x = tx.Commit(ctx); x != nil {
+		return
 	}
 }
 

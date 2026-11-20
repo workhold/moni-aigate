@@ -182,7 +182,8 @@ func (s *Server) platformModels(c *gin.Context) {
 		}
 		m["bindings"] = bindings
 		var mode, unknown string
-		e = s.Pool.QueryRow(c.Request.Context(), `SELECT cost_mode,unknown_cost_policy FROM route_policy_versions WHERE model_id=$1 AND revision=$2`, m["id"], revision).Scan(&mode, &unknown)
+		var failureThreshold, openMS, halfOpenTokens, cacheTTL int
+		e = s.Pool.QueryRow(c.Request.Context(), `SELECT cost_mode,unknown_cost_policy,failure_threshold,open_ms,half_open_tokens,cache_ttl_seconds FROM route_policy_versions WHERE model_id=$1 AND revision=$2`, m["id"], revision).Scan(&mode, &unknown, &failureThreshold, &openMS, &halfOpenTokens, &cacheTTL)
 		if errors.Is(e, pgx.ErrNoRows) {
 			mode, unknown = "manual", "allow"
 		} else if e != nil {
@@ -190,6 +191,10 @@ func (s *Server) platformModels(c *gin.Context) {
 			return
 		}
 		m["cost_policy"] = gin.H{"mode": mode, "unknown_cost_policy": unknown}
+		m["failure_threshold"] = failureThreshold
+		m["open_ms"] = openMS
+		m["half_open_tokens"] = halfOpenTokens
+		m["cache_ttl_seconds"] = cacheTTL
 	}
 	s.ok(c, v)
 }

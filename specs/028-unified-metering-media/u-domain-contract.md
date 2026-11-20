@@ -179,6 +179,8 @@ quantities 必须按 schema 的完整 dimensions ASCII 顺序提供每个维度�
 
 客户已唯一结算或24小时释放后，迟到观察只可核采购/异常，不能改写已结算客户原价、补扣、重预占、改027分配或重发生成。采购unknown保持独立，不能随客户释放变成0；这些是后续SQL/账务验收，不由纯对象声称完成。
 
+032 的 cache-hit 不构造 `inference.Observation`：它没有真实 attempt，不扩展本节 source 闭集，也不把缓存正文或命中 request ID 塞入伪造观察。持久层只在 [028-U 存储合同 §6.2.2](u-storage-contract.md) 的独立 cache finalization 分支复制已受审的 retail `FinalQuantities`，并按命中 schema 构造完整 supplier 已知零向量；纯观察与人工核对规则不变。
+
 ## 6. 所有权、canonical、摘要与错误
 
 所有工厂在返回前同步消费并复制 caller 的 bytes/slices。Profile 所持 metering.Schema 是只读 opaque 值，复制只共享不可变私有存储；输入候选 slice、输出 canonical、mask/维度描述均不共享可写内存。`Quantities/Bounds/Rates/Schema` getter 返回纯核 opaque value；修改 canonical 返回 bytes 不影响原对象。输入 HMAC/各 digest 按数组值传递，不保存可变 byte 指针。观察/报价 raw 不得指向 Gin body 或异步复用缓冲。

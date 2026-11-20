@@ -5,13 +5,14 @@ import { Connection, Delete, Refresh, VideoPause, VideoPlay } from '@element-plu
 import PageHeader from '../components/PageHeader.vue'
 import ErrorNotice from '../components/ErrorNotice.vue'
 import { errorText, request } from '../api'
-import { embeddingsRequest, geminiRequest, inferenceHTTP, inputLines, protocolInfo, rerankRequest, runInference, textRequest } from '../inference'
+import { embeddingsRequest, geminiRequest, inferenceBudgetRejection, inferenceHTTP, inputLines, protocolInfo, rerankRequest, runInference, textRequest } from '../inference'
 import type { Protocol } from '../inference'
+import type { BudgetRejection } from '../request-wire'
 import { resetResponseForModelChange } from '../playground-state'
 import type { PlaygroundResponseState } from '../playground-state'
 import { ChatToolCallAssembler } from '../chat-tools'
 import type { ChatFinishReason } from '../chat-tools'
-import { integer } from '../format'
+import { coin, integer, time } from '../format'
 import { isAdmin, session } from '../session'
 
 interface Model { id: string; public_name: string; protocol?: string; output_limit?: number; default_output_limit?: number; profile?: Record<string, unknown> }
@@ -22,6 +23,7 @@ const systemInstruction = ref('')
 const embeddingBatch = ref(false); const encodingFormat = ref<'float' | 'base64'>('float'); const dimensions = ref<number | undefined>()
 const query = ref('什么是 AI 网关？'); const documents = ref('AI 网关统一管理模型接口、密钥和用量。\n向量数据库用于相似度检索。'); const topN = ref<number | undefined>(); const returnDocuments = ref(false)
 const busy = ref(false)
+const budgetRejection = ref<BudgetRejection | null>(null)
 const responseState = reactive<PlaygroundResponseState>({ output: '', toolCalls: [], finishReason: '', usage: {}, requestId: '', metrics: null, error: '', status: '' })
 const { status, error, output, toolCalls, finishReason, usage, requestId, metrics } = toRefs(responseState)
 let controller: AbortController | undefined
@@ -75,10 +77,11 @@ watch(selected, (model, previous) => {
   outputLimit.value = Math.min(Number.isSafeInteger(n) && n > 0 ? n : 128, maximum.value)
   resetResponseForModelChange(responseState, previous?.id, model?.id)
 })
-function clear() { key.value = ''; output.value = ''; toolCalls.value = []; finishReason.value = ''; usage.value = {}; requestId.value = ''; metrics.value = null; error.value = ''; status.value = ''; toolAssembler = new ChatToolCallAssembler() }
+function clear() { key.value = ''; output.value = ''; toolCalls.value = []; finishReason.value = ''; usage.value = {}; requestId.value = ''; metrics.value = null; error.value = ''; status.value = ''; budgetRejection.value = null; toolAssembler = new ChatToolCallAssembler() }
 async function run() {
   if (busy.value) return
   error.value = ''
+  budgetRejection.value = null
   if (!payload.value || !info.value || !key.value.trim()) { error.value = requestDraft.value.error || '请选择模型并填写 API 密钥和测试输入。'; return }
   if (!inputOnly.value && outputLimit.value > maximum.value) { error.value = `输出上限不能超过模型允许的 ${maximum.value} Tokens。`; return }
   const protocol: Protocol = info.value.id
@@ -96,7 +99,7 @@ async function run() {
     status.value = '响应接收完成'
   } catch (e) {
     if (controller.signal.aborted) { status.value = '已停止接收'; error.value = '已取消本次调用。供应商可能已产生用量，请凭请求 ID 查询最终账单。' }
-    else { status.value = '调用未完成'; error.value = errorText(e) }
+    else { status.value = '调用未完成'; error.value = errorText(e); budgetRejection.value = inferenceBudgetRejection(e) }
   } finally { busy.value = false; controller = undefined }
 }
 onMounted(load)
@@ -133,7 +136,8 @@ onBeforeUnmount(() => { controller?.abort(); key.value = ''; prompt.value = ''; 
     </div></section>
     <section class="panel playground-output"><div class="panel-header"><div><div class="panel-title">模型响应</div><p class="panel-subtitle">{{ status || '发送请求后，在这里查看实际结果。' }}</p></div><el-tag v-if="busy" type="warning">接收中</el-tag><el-tag v-else-if="metrics" type="success">接收完成</el-tag></div><div class="panel-body">
       <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-bottom:18px" />
-      <div v-if="requestId" class="playground-request"><span>请求 ID</span><code class="mono">{{ requestId }}</code><router-link :to="{ path: '/requests', query: { request_id: requestId } }" class="text-success">查询调用与结算记录</router-link></div>
+      <section v-if="budgetRejection" class="budget-rejection" aria-label="周期预算拒绝详情"><el-alert title="周期预算准入拒绝" description="未创建已接受请求、预占、上游 attempt 或结算。" type="warning" :closable="false" show-icon /><dl class="detail-list"><dt>预算范围</dt><dd>{{ budgetRejection.scope === 'tenant' ? '租户' : 'API Key' }}</dd><dt>拒绝原因</dt><dd>当前窗口已用加本次完整预占超过上限</dd><dt>当前窗口已用</dt><dd>{{ coin(budgetRejection.window_used) }}</dd><dt>金额上限</dt><dd>{{ coin(budgetRejection.limit_amount) }}</dd><dt>窗口重置时间</dt><dd>{{ time(budgetRejection.window_reset_at) }}</dd></dl></section>
+      <div v-if="requestId && !budgetRejection" class="playground-request"><span>请求 ID</span><code class="mono">{{ requestId }}</code><router-link :to="{ path: '/requests', query: { request_id: requestId } }" class="text-success">查询调用与结算记录</router-link></div>
       <el-alert v-if="finishReason" :title="`模型终态：${finishReason} · ${finishText}`" :type="finishReason === 'stop' ? 'success' : 'info'" :closable="false" show-icon class="playground-finish" />
       <pre v-if="output" class="playground-response">{{ output }}</pre><div v-else-if="!toolCalls.length" class="playground-placeholder"><el-icon><Connection /></el-icon><span>{{ busy ? '等待有效内容…' : '暂无响应' }}</span></div>
       <section v-if="toolCalls.length" class="playground-tools" aria-label="函数工具调用"><div class="playground-tools-heading"><h3>函数工具调用</h3><el-tag type="info">仅展示 · 未执行</el-tag></div><article v-for="call in toolCalls" :key="call.index" class="playground-tool" :data-tool-index="call.index"><div><strong>{{ call.name || '函数名尚未到达' }}</strong><code class="mono">{{ call.id || `index ${call.index}` }}</code></div><pre>{{ call.arguments || '（空参数）' }}</pre></article><p class="field-hint">参数按 tool index 重组；页面不会执行函数、访问 URL 或自动发起下一轮。</p></section>

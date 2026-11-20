@@ -57,6 +57,7 @@ type Profile struct {
 	SupportsParallelToolCalls bool     `json:"supports_parallel_tool_calls"`
 	AllowedParameters         []string `json:"allowed_parameters,omitempty"`
 	NoConsumptionStatuses     []int    `json:"no_consumption_statuses,omitempty"`
+	NoConsumptionEventCodes   []string `json:"no_consumption_event_codes,omitempty"`
 	UsageSemantics            string   `json:"usage_semantics,omitempty"`
 	// ReasoningOutput is intentionally limited to none until the Responses
 	// reasoning event set has its own normalized protocol and billing contract.
@@ -141,7 +142,30 @@ func (p Profile) Validate() error {
 			return failure("invalid_profile", 503, ClassConfiguration, ConsumptionUnknown)
 		}
 	}
+	if len(p.NoConsumptionEventCodes) > 32 {
+		return failure("invalid_profile", 503, ClassConfiguration, ConsumptionUnknown)
+	}
+	seenEvents := map[string]bool{}
+	for _, code := range p.NoConsumptionEventCodes {
+		if !validNoConsumptionEventCode(code) || seenEvents[code] {
+			return failure("invalid_profile", 503, ClassConfiguration, ConsumptionUnknown)
+		}
+		seenEvents[code] = true
+	}
 	return nil
+}
+
+func validNoConsumptionEventCode(code string) bool {
+	if len(code) < 1 || len(code) > 80 || code[0] < 'a' || code[0] > 'z' {
+		return false
+	}
+	for i := 1; i < len(code); i++ {
+		c := code[i]
+		if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '_' && c != '.' && c != ':' && c != '-' {
+			return false
+		}
+	}
+	return true
 }
 
 type UsageStatus string
@@ -194,9 +218,9 @@ type Error struct {
 	HTTPStatus  int          `json:"status"`
 	Class       FailureClass `json:"class"`
 	Consumption Consumption  `json:"consumption"`
-	// BindingIsolation is set only when the provider returned an explicit
-	// binding-level model error. Request-specific model failures, such as
-	// context_length_exceeded, must never quarantine a route binding.
+	// BindingIsolation is set only for explicit binding-level model errors,
+	// including the 032 model/context isolation contract. Bare status codes or
+	// human-readable messages never set it.
 	BindingIsolation bool          `json:"-"`
 	RetryAfter       time.Duration `json:"-"`
 	UpstreamStatus   int           `json:"-"`

@@ -9,6 +9,25 @@ import (
 
 func protocolError(code string) error { return failure(code, 502, ClassProtocol, ConsumptionUnknown) }
 
+func (r *Response) streamError(m map[string]json.RawMessage) error {
+	var detail map[string]json.RawMessage
+	if raw, ok := m["error"]; ok {
+		_ = json.Unmarshal(raw, &detail)
+	}
+	for _, key := range []string{"code", "type"} {
+		var code string
+		if json.Unmarshal(detail[key], &code) != nil {
+			continue
+		}
+		for _, allowed := range r.profile.NoConsumptionEventCodes {
+			if code == allowed {
+				return failure("upstream_stream_error", 502, ClassRejected, ConsumptionRejected)
+			}
+		}
+	}
+	return protocolError("upstream_stream_error")
+}
+
 func (r *Response) DecodeJSON() ([]byte, error) {
 	if r.profile.ProtocolName() == ProtocolGemini {
 		return r.decodeGeminiJSON()
@@ -111,7 +130,7 @@ func (r *Response) ReadEvent() (*Event, error) {
 		return nil, err
 	}
 	if _, ok := m["error"]; ok || typ == "error" {
-		err = r.readFailure(protocolError("upstream_stream_error"))
+		err = r.readFailure(r.streamError(m))
 		_ = r.Close()
 		return nil, err
 	}

@@ -1,4 +1,6 @@
 import type { ChatFinishReason, ChatToolCallDelta } from './chat-tools'
+import { tryBudgetRejection } from './request-wire.ts'
+import type { BudgetRejection } from './request-wire.ts'
 
 export type Protocol = 'openai_chat' | 'openai_responses' | 'anthropic_messages' | 'openai_embeddings' | 'jina_rerank' | 'gemini_generate_content'
 export interface ProtocolInfo { id: Protocol; title: string; endpoint: string; outputField: string; scope: string; inputOnly?: boolean }
@@ -110,6 +112,18 @@ function record(value: unknown): Value { return value && typeof value === 'objec
 function list(value: unknown): unknown[] { return Array.isArray(value) ? value : [] }
 function text(value: unknown): string { return typeof value === 'string' ? value : '' }
 function safeCode(value: unknown): string { const code = text(value); return /^[a-zA-Z0-9_]{1,64}$/.test(code) ? code : 'inference_failed' }
+export interface InferenceRequestError extends Error { budget?: BudgetRejection }
+export function inferenceRequestError(message: string, response: unknown): InferenceRequestError {
+  const error = new Error(message) as InferenceRequestError
+  const budget = tryBudgetRejection(response)
+  if (budget) error.budget = budget
+  return error
+}
+export function inferenceBudgetRejection(error: unknown): BudgetRejection | null {
+  if (!error || typeof error !== 'object' || !('budget' in error)) return null
+  const budget = (error as InferenceRequestError).budget
+  return budget ? tryBudgetRejection({ code: 'budget_exceeded', ...budget }) : null
+}
 function chatFinish(value: unknown): ChatFinishReason | undefined {
   const finish = text(value)
   if (!finish) return undefined
@@ -300,7 +314,7 @@ export async function runInference(protocol: Protocol, key: string, body: Record
       for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }
       let value: unknown
       try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) } catch { throw new Error(`服务响应无法解析（HTTP ${response.status}），请凭请求 ID 查询结果。`) }
-      if (!response.ok) throw new Error(`调用未完成（HTTP ${response.status} · ${safeCode(record(record(value).error).code)}），请查询账单状态。`)
+      if (!response.ok) throw inferenceRequestError(`调用未完成（HTTP ${response.status} · ${safeCode(record(record(value).error).code)}），请查询账单状态。`, value)
       update(jsonUpdate(protocol, value))
     }
   } finally { await reader.cancel().catch(() => undefined); reader.releaseLock() }
