@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-20T11:21:25Z",
-  "review_reason": "032 审查修复：首事件白名单仅限首事件、缓存恢复/miss/别名与函数路径、测量证据绑定和 CPU 汇总；current_014 保留普通 finalization 交付投影并仅对 cache 唯一",
-  "snapshot_sha256": "ffdd87b349ba7db5fadda1eca1997b19e6c71d7db0ea73fa8a74bb3177299957",
+  "reviewed_at": "2026-11-20T12:57:44Z",
+  "review_reason": "032 完整诊断后的测试合同修正：健康冷却使用 channel+上游模型；凭据池通过持久撤销选择成员，不用渠道冷却伪装 Key 轮换",
+  "snapshot_sha256": "b6dab4073afe76e5117f37f4c0a424c5544c0c4343c7d560a309f9353332af77",
   "architecture_sha256": "3a20cf8ad719cf12f4a4a4ca5dff4c1096b1bb3e18b1c5464d0b29e49e26af56",
-  "history_sha256": "fd7c91ebbb182e8b8e3a6356daf775a4e19997bde37fa84e37cafb8742b55bf9",
+  "history_sha256": "9562b1d7e9f4eb56c0a9647931ed6ed162c597f47191f297f9c838e3bd28dd84",
   "files": [
     {
       "path": ".dockerignore",
@@ -817,7 +817,7 @@
     },
     {
       "path": "docs/verification/backup-restore-local.json",
-      "sha256": "9648fcd62c09758c21ab20ddc03ab90c360885f18c4f1d2878ffccfd2bd7949b"
+      "sha256": "be6e930143fd1553754b858663ce0a63025b444148904687f351aea09015bbcc"
     },
     {
       "path": "docs/verification/backup-restore.md",
@@ -7265,7 +7265,7 @@
     },
     {
       "path": "internal/server/credential_pool_integration_test.go",
-      "sha256": "8b34934800f60fd4f01ef0deede4f70c921054984f83d9e22c6cdf15d5d02caf"
+      "sha256": "3310b98b7a9d1aaa9f54034a936333b97f300c0675566ed762c369668fa64380"
     },
     {
       "path": "internal/server/discovery.go",
@@ -7605,7 +7605,7 @@
     },
     {
       "path": "internal/server/route_decisions_integration_test.go",
-      "sha256": "402969c427006fef194ddae3631404f00b56ada906c5a75e48f3e17919ffb914"
+      "sha256": "cf38848e754478a279667d933c72833e2ca208f6f8d3a1bc0ef293fb2d0da5e9"
     },
     {
       "path": "internal/server/route_revisions_integration_test.go",

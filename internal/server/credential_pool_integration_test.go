@@ -11,7 +11,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
@@ -236,11 +235,10 @@ func TestCredentialPoolGatewayFrozenPublicationActualIdentityAndRevocation(t *te
 	}
 	request(old.CurrentVersion, old.Members[0].CredentialID, "Bearer local-fixture-secret", 1)
 	f.publish(t, nil)
-	f.server.Routing.Cooldown(v.Members[0].CredentialID+":"+f.model, time.Minute)
-	request(v.CurrentVersion, v.Members[1].CredentialID, "Bearer pool-secondary-secret", 2)
 	if err := f.server.Catalog.RevokeCredential(context.Background(), f.actor, f.channel, v.Members[0].CredentialID); err != nil {
 		t.Fatal(err)
 	}
+	request(v.CurrentVersion, v.Members[1].CredentialID, "Bearer pool-secondary-secret", 2)
 	request(v.CurrentVersion, v.Members[1].CredentialID, "Bearer pool-secondary-secret", 3)
 	if err := f.server.Catalog.RevokeCredential(context.Background(), f.actor, f.channel, v.Members[1].CredentialID); err != nil {
 		t.Fatal(err)

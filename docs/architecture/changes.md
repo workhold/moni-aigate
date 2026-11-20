@@ -8666,3 +8666,17 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/032-phase2-text-data-plane/design.md`
 
 </details>
+
+## 2026-11-20T12:57:44Z · b6dab4073afe
+
+032 完整诊断后的测试合同修正：健康冷却使用 channel+上游模型；凭据池通过持久撤销选择成员，不用渠道冷却伪装 Key 轮换
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2612 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/backup-restore-local.json`
+- modified `internal/server/credential_pool_integration_test.go`
+- modified `internal/server/route_decisions_integration_test.go`
+
+</details>
