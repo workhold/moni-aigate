@@ -1,0 +1,1060 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/billing",
+      "test": "TestMVPBillingCrashHelperProcess",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotbasis",
+      "test": "TestIndependentPostgresBasis",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotbasis",
+      "test": "TestIndependentPostgresPrefixBasis",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogCanceledAbortedAndDisconnectedTransactions",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogDependencySemijoinsPreserveRowsAndPlan",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogInstallationEmptinessIsAnIssueFact",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryDatabasePrivilegeElevationRejected",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogOrdinaryRuntimeOwnerOutsideProtectedSchemaRejected",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerBaselineAndActualLogins",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerCaptureReviewMetadata",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerPublicAPIRejectsSameRRPeerDrift",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerPublicAPIs",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerReadTimings",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPeerRejectsForeignPrivilegesMembershipAndOwnership",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogPrivilegeArraysPreserveFullPeerVectors",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogRawPreflightRejectsBeforeDeparse",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogRejectsSameTransactionDriftWithoutCommitting",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogRejectsWrongPinsAndAuthentication",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestCatalogSandboxDatabasePrivilegeElevationRejected",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestExpectedRawJSONLargeBounds",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantCandidateReproducibility",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestOrdinaryVariantLegacyProjection",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotcatalog",
+      "test": "TestPeriodicPrefixCatalogTimingDiagnostic",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresCompleteSourceReader",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresLegacySeedProjection",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresPrefixSourceWalletReader",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/fundinglotscan",
+      "test": "TestPostgresSourceWalletReaderNonemptyC0",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresAllAccountLocksAndPlanNoLocks",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresBusyCancellationAndExitRuntime",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresFreshRuntimeSampling",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresHistoryGuardAndSameSnapshot",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresNOLOGINOwnerAndSetRoleRejected",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresOrdinaryImageProfile",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresOrdinaryPlanInitAndTerminalRevocation",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthorityPostgresPredecessorCPUBudgetClosesOriginalSocket",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthoritySandboxPostgresFiveFreshRuntimeRoles",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthoritySandboxPostgresPlanInitAndOriginalV1",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestAuthoritySandboxPostgresPredecessorContentRefusals",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestCompleteSourceReadLeasePostgresOrdinaryPlanInitModeAndProof",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresBusyCancellationAndCleanup",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresLiveRuntimeAndHistory",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresMixedNumericHistory",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresOperatingGraphKeepsHistoricalBasis",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresSandbox",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresUninitializedAndMatched",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsObservationPostgresUnknownAndRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresCancellationDuringWriterRetainsBusy",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresExpectedDriftAndFailureCannotCommit",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresFundedLegacyTextTenants",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresGenuineSandboxPreservesV1AndFunds",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsPhasePostgresMixedOriginalBusinessAndNumeric",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresActiveProcurementCost",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresActualTransportBounds",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresAllOrdinaryDomainsRejectCorruption",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresGenuineSandboxProfiles",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresIdentityAndHistoryRefusals",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresOperatingBasisAndPagination",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresPermissionDriftAndLockedSQL",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresPublicProfiles",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestFundingLotsRuntimePostgresRealRowsCancelAndFreshCleanup",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresAcquireAndReverseClose",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresCleanupUsesIndependentFiveSecondBudget",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresConcurrentCloseRejectsWithoutSQL",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresOrdinaryDNSAndNonOwnerAreOnlyPreflight",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresPublicEffectiveOwnerTargetBinding",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresThirtySecondEntranceBudget",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresUnknownLockReplyPhysicallyCloses",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresUnknownUnlockReplyPhysicallyCloses",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestGatePostgresWaitsForSecondLock",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresAbsoluteCostCorrectionRemainsUnproven",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresBusinessCrossWindowAndConcurrentObservation",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresGenuineSandboxActualApplication",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresInstallationSelectionConsumesOnce",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresNonemptyActualApplication",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPeriodicPrefixMaintenancePostgresSourceBudgetAbandonsInit",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateOrdinaryAllHistoryAndBypasses",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateOrdinaryForeignKeyAndPolicy",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateOriginalMockSafeProjectionAndFinite",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestPredecessorPostgresPrivateSentinelsEOFAndResources",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresBusyOwnershipAndOmissions",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresCancellationAndExitRuntime",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresPlanInitRowsAndProof",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestReadLeasePostgresRejectsRawConnectionCallbacks",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresAllTablesStopWritesButPermitSelect",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCallerCancellationCannotBeIgnored",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCloseOpenSnapshotAbandonsWithoutRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitCallerAlreadyCancelledSendsNothing",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitConfirmedAndDeferredRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitLostReplyIsUnknownWithoutRetry",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresCommitReplyCancellationRetainsUnknown",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresDefaultThirtySecondIdleDeadline",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresEarlierDeadlineAndShortBudgetReject",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresEvidenceBusyRejectsWithoutSQL",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresMissingLateTableClosesPartialBegin",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresOptionsFixedOrderAndOriginalProof",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresRollbackIndependentFiveSecondBudget",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresRollbackLostReplyAbandons",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/maintenancetrust",
+      "test": "TestSnapshotPostgresWriterBarrierCreatesSnapshotAfterLockWait",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestCommanderPGOriginalReceiptSurvivesTrafficAndClockRegression",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixCandidateACLRejectsPrivilegeAndFunctionDrift",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixCandidateACLRejectsReachableElevatedRoleWithoutObjectGrantDrift",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixInstallCallerOwnsVisibilityRollbackAndCommit",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixInstallExplicitPathIgnoresTemporaryHistoryAndSourceNames",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixInstallRejectsEveryPartialCandidateSurface",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixInstallRejectsInheritedDefaultAndSetAdminPrivileges",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixInstallRejectsModesPinsAndOwnHistoryDrift",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixInstallSavepointRollsBackDDLACLAndCancellation",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixInstallUncertainSavepointRequiresWholeCallerRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGCTECommandThenWindowAtSameCut",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGCrossDayCarryKeepsOriginalCustomerAndSupplierWindows",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGFaultDisconnectDuringCommitReturnsUnknown",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGLegacyControlRemainsUncovered",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGOriginalProjectionProfileRemainsDenied",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGPrecreatedOriginCannotEnrollControl",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGRealCustomerSupplierEffectsAndCommands",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGRestrictedImmutabilityAndForgery",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGSavepointAndFullRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestPBPrefixPGSourceInsertOverridesCallerWitness",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestReaderPGFixedPagesCOrderAndCursorBinding",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxCustomerAdmissionTamperingRollsBackWholeSource",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxCustomerAmountZeroTokenAndCapFailure",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxCustomerDoubleScopeSingleWallet",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxCustomerNoControlAndLegacyFinish",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxCustomerTransactionIdentityAndClosedSource",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxPermitDispatchRequiresActualPreparedFullScopeFact",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxPermitExplicitNoProcurementRequiresNoBindingOrSource",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxSupplierCapAndSourceProofFailuresRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxSupplierFullUpperOriginalWindowAndIdempotency",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/periodicbudget",
+      "test": "TestTxSupplierZeroUpperAndLegacyCatchup",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2AccountWaitRechecksQuoteAndRollsBack",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2ActualBirthEveryDMLBoundaryRollsBack",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2AttemptInputAndIgnoredExpectedUnion",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2AttemptReplayChecksMatchOriginalErrors",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2AttemptWideRouteAndReplayFields",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2BudgetExhaustionHasNoPartialBirth",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2CatalogCommitted",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2CommandRequestManagedAndUnmanaged",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2ConcurrentAccountBudgetHasOneWinner",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantAPPDeferredCoreReads",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantAPPDeferredPBReads",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantLockOnlyNoopGuards",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantManagedWrites",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantOrdinaryWExecute",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantPublicRoots",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantUnconfiguredScopeExecute",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantWCoreReads",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2GrantWPBAndParentReads",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2NoPrivateOrRawAPPBypass",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatActualReserveInternalDMLFailuresRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatBudgetBusinessEffectFailuresRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatBudgetPriceGroupSnapshotAndNoFallback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatBudgetRecoveryWithoutAttemptReleases",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatEarlyConstraintsRollbackAndClosedGraph",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatLegacyReleaseNeverBackfills",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatPendingReasonPriorityAndTerminalReplay",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatProtectedRawWritesAndRolesRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatRawDerivedInsertGuardsAndSameXIDLegacy",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatRawEquivalentBirthAnd020Boundary",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatRawFrozenValueMutationsAndRevert",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatRawIsolationBoundary",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA2RequestCompatRealReserveIPAndIdempotencyPriority",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA4AccountWaitRechecksCommittedPause",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA4AttemptBeforeBindingKeepsUnmanagedHistory",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA4BindingBeforeAttemptWaitsAndClassifiesManaged",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA4BirthBeforeSupplierFirstConfiguration",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA4SingleRootStatementTimeoutAccumulatesTwoActualWaits",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA4SupplierFirstConfigurationBeforeBirth",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresA4TwoTenantsCompeteForSharedProcurementAccount",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresExecutorAccountRootsPublishOnlyCommittedReceipts",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresExecutorAttemptRootsPreserveIgnoredBytesAndReplay",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresExecutorDeferredPermissionFailurePublishesNoReceipt",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresExecutorOuterCommit23514IsNotBusinessOrUnknown",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresObserverAccountCommittedUnknownBranchesAndReplay",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresObserverInvalidIssuerRejectsBeforeAcquire",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementattemptbirth",
+      "test": "TestPostgresObserverLegacyCannotIssueHandle",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1ActualReserveInternalDMLFailuresRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1BudgetBusinessEffectFailuresRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1BudgetPriceGroupSnapshotAndNoFallback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1BudgetRecoveryWithoutAttemptReleases",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1CatalogExactObjectsAndAllGrantees",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1CatalogRejectsTransactionalDrift",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1CommitUnknownKeepsUniqueBirthAndFunds",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1EarlyImmediateConstraintsRejectPartialBirth",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1NecessaryGrantFaultMatrix",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1PBExecuteGrantControls",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1ProtectedRawWritesAndRolesRollback",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1RawDerivedInsertGuardsAndSameXIDLegacy",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1RawEquivalentBirthAnd020Boundary",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1RawExactLinkFaultsInsideRealBirth",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1RawFrozenValueMutationsAndRevert",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1RawIsolationBoundary",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1RawSourceDMLGuardsAfterMisgrant",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1RealReserveAndLegacy",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1UnusedAllocationReadGrantControls",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/procurementrequestbirth",
+      "test": "TestPostgresA1WalletWaitPreservesSelectedRetailQuote",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateLegacyRefundCumulative",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateOldZeroOpening",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidatePermissions",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateSavepointTopXID",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/qa/c0candidate",
+      "test": "TestCandidateWalletGraph",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/server",
+      "test": "TestCapacityConcurrentStreams",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+      "test": "TestPostgresHistoricalFundingActualAPPReadOnlyAndPeriodicPrototype",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+      "test": "TestPostgresHistoricalFundingNumericLedgerAndCorruptionDetection",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/internal/testsupport/funding019",
+      "test": "TestPostgresHistoricalFundingRejectsNon019OrPartiallyUpgradedBaseline",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestBrowserQAFailedBootstrapCleansOwnedResources",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestBrowserQAHTTPSecuritySmoke",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestBrowserQARealMainLifecycle",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestMailLifecycleRealMainRecovery",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/browser-qa",
+      "test": "TestModelLifecycleRealMainRecovery",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+      "test": "TestRealDescriptorReproducibility",
+      "reason": ""
+    },
+    {
+      "package": "github.com/moni-ai/moni-aigate/scripts/funding-lot-descriptor",
+      "test": "TestRealFailureCleanup",
+      "reason": ""
+    }
+  ]
+}

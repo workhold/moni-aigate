@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-18T12:24:15Z",
-  "review_reason": "040 仅新增多独立PostgreSQL验收并行化设计：CI 14逻辑分片、最多2 worker、独立cluster/netns与detached worktree、v2证据及整单重试边界；未实施运行变化，已复核模块、权限和源码链接",
-  "snapshot_sha256": "8251ce3b4efbd4a1c05352c897d15c16af6a5e20ed47e240e648877a12e0336b",
-  "architecture_sha256": "044b2ebe189e1b8230671121543a6b71debcd12f1409823cb3cc160aaaa4b67c",
-  "history_sha256": "cb87e4daa862776e67174f36f50a36d651716073bd388d89a956acac69a1886b",
+  "reviewed_at": "2026-11-18T18:24:10Z",
+  "review_reason": "记录 PR-B 独立聚焦复审无剩余阻断及其只读边界；实现与测试结论不变，未声明完整 029 或多库验收",
+  "snapshot_sha256": "758cf6249766598a90e9785b9677439b4c2696503b085fa5c2feb6217f06067a",
+  "architecture_sha256": "4709e7aefbb0a65087005dda786c98fd5ac6c8e3642e7585c0e4cc4ff188ba1a",
+  "history_sha256": "e604ad56bd87f8ed420ce2ff28d528cdae7f3c6194ca91646a14030bbdcf09e9",
   "files": [
     {
       "path": ".dockerignore",
@@ -29,7 +29,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "19e36bfd21024e2e72aa8774fa8ee1cc7f3654c716170fc8f0537b043387fe5c"
+      "sha256": "5db931c4e9c8235983bf506d7d590755829edf943bb31837544f3c76e05d7c30"
     },
     {
       "path": ".gitignore",
@@ -185,11 +185,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "eba99e8fabe34cea61ecbf3a34a0ccd1ee2f1fc256dc152eaf8deacc37cfd720"
+      "sha256": "c8191ab044e3ca4c48c23d71e0600be91e9cd790ce567db89917c478c6384dab"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "87a85612fddc655cc8f31a3406ec8df7e947cccc4b60101688d9f18c76a7e5ff"
+      "sha256": "346b9f3b9e6252bdf2f4ed838a45b0b3c6dd72aa3a410f7e9a91f89d20ca51ac"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -322,6 +322,10 @@
     {
       "path": "docs/verification/acceptance-evidence-reuse.md",
       "sha256": "f55445793b3b739adeedd57723871c5633f4ba0a028c76f983f8f11ef9550ad1"
+    },
+    {
+      "path": "docs/verification/acceptance-evidence-v2.md",
+      "sha256": "64521320767e98e380b58e5a559521655a27cc2ffe074ae84029348ae57e330f"
     },
     {
       "path": "docs/verification/acceptance-execution.md",
@@ -7960,6 +7964,26 @@
       "sha256": "ab52b642f74491ad4f1ba4155ecaaf412488b651aa62d9a5e6ba793d7e51135d"
     },
     {
+      "path": "scripts/acceptance-shard-plan/README.md",
+      "sha256": "ca9526268379c2f4488d511ad6d3b794069312e22e77cec856c9cba854cf1872"
+    },
+    {
+      "path": "scripts/acceptance-shard-plan/ci_workflow_test.go",
+      "sha256": "a453da3b4e84e7e5a1192d421ea82ef463cedd570b9a245e4b97f1449fd7e4ff"
+    },
+    {
+      "path": "scripts/acceptance-shard-plan/main.go",
+      "sha256": "fbbd428c725fd342e2079d14a15b24c7e3a451dd4479401610add511ad69f91b"
+    },
+    {
+      "path": "scripts/acceptance-shard-plan/main_test.go",
+      "sha256": "211dc2c70747a1a8cbda67c74f06b6dbd3deecb23520d79adac42917840ae7f8"
+    },
+    {
+      "path": "scripts/acceptance-skip-baseline.json",
+      "sha256": "99b4f1d19ac2324958bd0a54362f229b3651b35121895b03137680e7123fb3cd"
+    },
+    {
       "path": "scripts/backup-restore-drill.go",
       "sha256": "891a25901d41acc74471c1b8c3eba007d36cfea50d10a5e6b640247c602025e8"
     },
@@ -8028,6 +8052,10 @@
       "sha256": "09c95db67616264a039a38faae5205029c67e958b2178e20f326a2fae5e2b10d"
     },
     {
+      "path": "scripts/check-acceptance-evidence-v2.py",
+      "sha256": "b34b02b992987341319263e3982fa0fef82621c0af444bd76e07da73f92fc861"
+    },
+    {
       "path": "scripts/check-architecture/main.go",
       "sha256": "0f09e684bb522714eb6fb812b42a6865fba76ba932835e97313237961d222dfe"
     },
@@ -8074,6 +8102,10 @@
     {
       "path": "scripts/check-wallet-profile-roots.py",
       "sha256": "adcb8e0a9f5b80690b7c39ae53b6adb81d998529c79ac033336075c9fb7f034a"
+    },
+    {
+      "path": "scripts/check_acceptance_evidence_v2_test.py",
+      "sha256": "74c5ab4c1b89166817e2f572b29adb8e7e8dfeba60f0c7d70f7ea1f41f17c5df"
     },
     {
       "path": "scripts/check_go_test_evidence_test.py",
@@ -8245,7 +8277,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.py",
-      "sha256": "d9fe45be0010fa4c85171436f8585b7b6b16c48b47780c55abeab23550820c16"
+      "sha256": "bc118ff12e98445d20d337b1ab0ee23e2c96e7e970b61bcda46b03835a6d835a"
     },
     {
       "path": "scripts/phase1-acceptance.sh",
@@ -8253,7 +8285,7 @@
     },
     {
       "path": "scripts/phase1-acceptance.test.sh",
-      "sha256": "abbf8aabaca2fc87de3a030e7e1f0f04c0ed6cc6220bf2e8ddea9d5bdbe8c63e"
+      "sha256": "c8b2d9fb83265973a26f0ad00cdc6f85c9acc6c4557ef04fb412397e019a8769"
     },
     {
       "path": "scripts/phase1-browser-preview.sh",
@@ -8277,7 +8309,7 @@
     },
     {
       "path": "scripts/phase1_acceptance_test.py",
-      "sha256": "04a48c5a24f8efca78063a88a522249dc7d59c17e2477728ae41931d6b32bfb2"
+      "sha256": "55fc7896cefdcb4c0acfcc74561fe5a06affc4cf7959adf74a3655c2a1dc74a7"
     },
     {
       "path": "scripts/phase1_browser_qa.py",
@@ -8317,7 +8349,7 @@
     },
     {
       "path": "scripts/verify-current-mvp.sh",
-      "sha256": "4e3d20065ec688f7428707033f4df13b090990549d3b43190dfb22df46bac94b"
+      "sha256": "4e0b304266948d24d842c0a31d7b03866d5631b259369bb1a557f6e2042a49f6"
     },
     {
       "path": "scripts/verify-native-sdk.py",
@@ -9449,11 +9481,11 @@
     },
     {
       "path": "specs/040-acceptance-parallelism/plan.md",
-      "sha256": "0d2b7ee76cdf2b533e3d865d23e91d32de32490f4a00df0ad192ccdbe756c75d"
+      "sha256": "16d0232caf0350caad6917bc554ddedd95e24e92a608f163569626ddb6e24927"
     },
     {
       "path": "specs/040-acceptance-parallelism/spec.md",
-      "sha256": "73cf5de6b1891fd4d8bb44f6d393e133d4a9628ab3a40f5667308eba8398eb8c"
+      "sha256": "ff5871e24422e948d939d3b2fd6a62b9500148167e1c3e66817870d317f2bf5f"
     },
     {
       "path": "third_party/README.md",

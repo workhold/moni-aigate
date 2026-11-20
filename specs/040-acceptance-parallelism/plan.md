@@ -12,6 +12,8 @@
 
 **出口**：新 CI 14/14 与旧名单完全等价；缺包、重复包、重复测试、无效标识和无效 `-run` 负例通过。
 
+**PR-A 当前实现**：`scripts/acceptance-shard-plan` 已提供共享 CLI、精确 argv/digest、原始 discovery 和 legacy artifact；`.github/workflows/ci.yml` 已改为调用该 CLI。独立 detached-worktree 等价测试、真实 attempt-0/identity-0 分片执行和静态检查已通过。PR-B/C/D 仍未实施。
+
 ## PR-B：v2 证据合并器
 
 **范围**
@@ -21,6 +23,8 @@
 - 不接并行 runner；使用合成证据和只读测试验证 `verify-current-mvp.sh` 的 opt-in 兼容。
 
 **出口**：缺片、跨 attempt、错误 digest/数据库身份、FAIL/SKIP、重复 PASS、损坏日志、错误清理和 v1/v2 混用全部失败关闭；039 standalone 行为不变。
+
+**PR-B 当前实现**：`check-acceptance-evidence-v2.py` 提供 v2 manifest/plan/日志/cleanup 严格合并器，重新发现当前 HEAD 的计划和 other 测试，支持 identity 共享 cluster、跨包同名、完整终态与两轮真实 CI 共同确认的 211 项版本化 SKIP 基线；`phase1-acceptance.py` 提供显式 v2 的 77→82 矩阵路径，`verify-current-mvp.sh` 提供 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2` opt-in，v1 和 standalone 不变。真实源码合成证据覆盖 100 个 current-MVP 与 77→82 矩阵，但实际多库 runner 仍未实施，合成证据不代表并行验收通过。
 
 ## PR-C：容器 runner 与 workers=1 canary
 

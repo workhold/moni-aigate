@@ -164,6 +164,14 @@ deterministic Chat fixture 增加两个 function call 的 JSON 与按 index 分�
 
 [040](../../specs/040-acceptance-parallelism/spec.md)预期新增并行证据索引，而不是拼接单一 go-race.jsonl：每个逻辑分片拥有精确 argv、原始 JSONL 摘要、独立 pg_system_identifier 和清理证明。共享 CI 分片器负责包/顶层测试互斥穷尽，v2 合并器负责 77 个唯一测试到 82 个绑定的映射以及 current-MVP 100 个唯一测试的单次 PASS。server 包内 actual-main 及其恢复子进程必须留在本分片 netns/数据库边界；独立 identity/mail 套件仍串行。workers=1 只验证单分片工具链，workers=2 才验证双 cluster 的锁互不影响，每轮使用新的 detached git worktree、run_id 和 artifact，并保留 HEAD/tree/status 校验。任一 shard/merge/cleanup 失败都无可复用证据，操作者只能以新 run_id 完整重跑。具体字段、隔离拓扑和 rollout 以该规格为准。
 
+### 4.7 PR-A 分片计划接口
+
+`Plan{schema_version,commit,tree,module,shards,digest}` 中每个 shard 包含 class/packages/discovery/parts；part 包含 name/packages/tests/run_filter/args。`buildPlanAt` 在 detached worktree 中执行 `go list -m`、`go list ./...` 和 `go test -race -count=1 -list .`，只使用 stdout。`validatePlan` 检查 14 个矩阵项、part 名称与包一致性、测试唯一性、精确 `-run`、`-count=1`、`-timeout=10m` 和 digest；`emitLegacy` 保留原始 discovery 与排序后 all/actual 文件，避免重复包或重复 discovery。
+
+### 4.8 PR-B v2 证据索引与合并器
+
+v2 manifest 包含 run_id、created_at、commit/tree、source_clean、scheduler_version、workers、go_runner/postgres 镜像 digest、plan/plan_sha256、skip_baseline 和 shards；每个 shard entry 包含 name、args、log、log_sha256、exit_status、database{url,system_identifier} 和 cleanup{containers_removed,volume_removed,netns_removed}。`part_index` 按 14 个逻辑 shard 建立 17 个 part 映射，按类聚合 discovery 并校验精确 argv。`fresh_source` 在同一 HEAD 的 detached worktree 重跑 PR-A 计划，并以单次 JSON list 发现 other 各包测试；证据计划必须与当前源码完全一致。原始日志依次包含匹配的 run_id、精确 command、started_at、JSON events、completed_at 和最后的 exit_status=0，时间与本次 attempt 绑定。每个发现测试恰有一个终态，每个 package 恰有一个 compile 终态；有发现测试的 package 必须 PASS，无测试文件包的 package-level SKIP 不算测试 SKIP。必需 SKIP 永远拒绝，非必需 SKIP 必须精确匹配版本化 `acceptance-skip-baseline.json`；当前 211 项基线来自两个同提交、0 FAIL 的真实 CI run，且与 100/77 必需清单零交集。identity 的四个 part 可共享 system_identifier，其他任何 class 组合不得复用且与 entry 顺序无关。`phase1-acceptance.py` 的显式 v2 分支校验 77 个唯一矩阵测试并展开 82 个绑定，current-MVP 100 项继续逐组复用；v1/standalone 默认路径不变。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水
