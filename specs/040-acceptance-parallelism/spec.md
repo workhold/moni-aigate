@@ -1,6 +1,6 @@
 # 040：多独立 PostgreSQL 的验收并行化设计
 
-2026-11-18；状态：分阶段实施，PR-A/PR-B/PR-C 已实现，PR-D 未实施。本文只描述 029/039 测试回归与证据编排，不是 aigate 的业务多库、生产分片、读写分离或 HA 方案，不改变产品请求链路、迁移、钱包、结算、ACL、超时或恢复语义。
+2026-11-20；状态：分阶段实施，PR-A/PR-B/PR-C 已实现，PR-D 的默认关闭 workers=2 候选已在提交 `d9b55f0025bcfe806e5e420128858975cfaa3be6` 连续两轮完整 029 达到 41/41，整单分别为 2668.525/2636.994 秒，均低于 2727.018 秒 serial 基线；默认仍未切换，推广需独立复核真实证据与默认化决策。本文只描述 029/039 测试回归与证据编排，不是 aigate 的业务多库、生产分片、读写分离或 HA 方案，不改变产品请求链路、迁移、钱包、结算、ACL、超时或恢复语义。
 
 ## 1. 目标与基线
 
@@ -36,7 +36,7 @@
 - CI 与本地必须调用同一个分片实现；`go list ./...` 互斥、穷尽、无重复，新包自动进入 `other`。
 - 分片发现使用同一 race 配置，父测试及全部子测试不拆；锚定 `-run` 表达式不允许无效匹配。
 - 无测试 package 的 compile 终态与有测试 package 的顶层覆盖分别核验，不能用“没有测试”掩盖漏跑。
-- 14 是逻辑分片数，不是并发数。本机默认 `workers=2`，最多两个 Go race 进程、两个 PostgreSQL 和四个活动容器；GOMAXPROCS=2。
+- 14 是逻辑分片数，不是并发数。`workers=2` 候选每个 attempt 最多两个 Go race 进程、两个 PostgreSQL 和四个活动测试容器；GOMAXPROCS=2。只有独立复核后才允许把 029 默认切到该拓扑。
 - `workers>=3` 只能在后续独立资源评估后开启；不照搬 14 个并发 runner。
 
 ## 4. 物理隔离拓扑
@@ -46,10 +46,12 @@
 - 片内两端仍看到 `127.0.0.1:55439/moni_test`，保留现有 DSN、loopback 和 `inet_server_addr` 断言；不发布新的宿主监听端口。
 - 每个分片都有独立 cluster、volume、postmaster、角色目录、默认 ACL、advisory lock、连接数和 `pg_system_identifier`；14 个 identifier 必须不同。只有 identity 的四个顺序进程可共享其所属片实例。
 - 每个 cluster 使用 test-only loopback trust、Asia/Shanghai、max_connections=200、fsync/synchronous_commit/full_page_writes=on；凭据只在私有运行目录，不进入仓库、日志或证据。
-- 每个 runner 使用相同 commit/tree 的**独立 detached git worktree**、独立临时目录和仓库外 artifact；固定 Go/PostgreSQL 镜像摘要和工具链。协调器先记录 source_commit/source_tree，再执行 `git worktree add --detach <path> <commit>`，逐轮验证 `rev-parse HEAD`、`rev-parse HEAD^{tree}` 和启动时 `status --porcelain` 为空，确保现有 029/039 的 Git 门禁可原样运行。actual-main 及其 worker/恢复子进程也必须留在该 runner 所属 netns 和数据库边界内，不能回落到宿主或其他分片实例。缓存可以复用构建材料，不能复用测试结果。
+- 每个 runner 使用相同 commit/tree 的**独立 detached git worktree**、独立临时目录和仓库外 artifact；固定 Go/PostgreSQL 镜像摘要和工具链。协调器先记录 source_commit/source_tree，为每片执行 `git clone --bare --no-hardlinks` 得到独立的 Git common 元数据/对象（禁止 alternates），再执行 `git worktree add --detach <path> <commit>`，逐轮验证 `rev-parse HEAD`、`rev-parse HEAD^{tree}` 和启动时 `status --porcelain` 为空，确保现有 029/039 的 Git 门禁及需要 nested worktree 的测试可原样运行。actual-main 及其 worker/恢复子进程也必须留在该 runner 所属 netns 和数据库边界内，不能回落到宿主或其他分片实例。PR-A 的 `-list` 发现已在同一 attempt 的 content-addressed GOCACHE/GOMODCACHE 中编译全部包；这些构建材料可由各片共享，模块缓存对测试容器只读，Go 的并发安全 build cache 可写，`-count=1` 继续禁止测试结果缓存。每片使用自己的物理 worktree 路径和 Git back-pointer，避免逻辑路径映射影响需要真实 Git/源码路径的测试。
 - 不接触原 029 数据库、其他预览、体验实例或跨 network namespace 路由。宿主端口冲突、镜像缺失、资源不足或 identity 重复都属于预检失败。
 
 最终串行阶段开始前，必须先完成分片证据合并和容器/volume/netns 清理证明。
+
+PR-D 的协调器在专用 Linux Docker VM 的 host network namespace 中运行固定 Go 镜像，挂载 VM 的 Docker CLI 与 socket、当前源码及其实际 Git common dir、每轮新的运行目录父目录。这样宿主监听基线和 SandboxKey 都指向真实 Docker VM，串行尾部继续使用的 macOS 55439 专库不会被误作并行片资源或停止。Docker socket 只存在协调器，PostgreSQL/Go 测试容器仍无宿主端口、无 Docker socket、无跨片网络。协调器使用包含 run_id 的唯一名称和独立 cidfile；退出按 `--rm` 及精确完整 ID 核验清理，缺失 cidfile 时绝不删除同名资源。
 
 ## 5. 运行状态机
 
@@ -57,7 +59,7 @@
 
 - `preflight`：干净 HEAD、run ID、完整分区、镜像/资源/数据库身份和 SKIP 基线就绪；失败不得启动测试。
 - `workers_1_canary`：只验证单分片的容器工具链、真实 loopback、无新增宿主监听和清理，不承担需要两个活动 cluster 的并发互见证明，也不作为最终默认拓扑。
-- `workers_2_candidate`：在两个活动 cluster 中分别创建同名 role/default ACL，并在 A 持有 advisory lock 时验证 B 的同名锁可以独立取得，证明互不影响；同一干净候选至少连续两次完整 029 全绿后才能推广。
+- `workers_2_candidate`：首个并发对的两个 cluster 同时存活后、任何测试 part 启动前，分别创建同名的一次性 owner/grantee role 和 owner 的 default ACL。A 撤销自己的默认权限并删除同名 role 后，B 的 role、默认 ACL 和既有表权限必须保持不变；A 持有 advisory lock 时验证 B 的同名锁可以在同一个 B 会话中独立取得并释放。两个 system identifier 必须不同，证明写入 runner report；owner/grantee 随清理删除，且前后必须逐字比较 `moni_test` default ACL 原文，确保探针不改变业务测试初始状态。失败会阻止可复用 manifest，但不妨碍其他安全分片完成诊断。每片 runner 只挂载自己的 worktree/Git common/home/tmp/GOPATH、只读共享模块缓存和同一 attempt 的并发安全 build cache，不能读取其他片的 evidence/private 或 Git 元数据。identity 前一 runner 未证明删除时不得启动后一 part；其他安全分片仍继续。workers=2 manifest 的原始日志还必须通过最多两个活动 part、identity 四段不重叠和 14 个数据库身份检查。同一干净候选至少连续两次完整 029 全绿后才能推广。
 - `parallel_default`：只在两轮结果稳定、无 OOM/超时/残留后启用。
 
 失败规则：
@@ -71,7 +73,9 @@
 
 PR-B 当前实现 `check-acceptance-evidence-v2.py`：支持 schema v2 的显式 opt-in，但尚未启动多库 runner。v1 和 standalone 行为保持原样；029 只有显式设置 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 才使用 v2 合并结果，未设置时仍执行原串行 go-race。
 
-新增 `schema_version=2` 的索引，保留每个分片不可变原始 JSONL，不把多个带框架的日志拼成伪单命令 `go-race.jsonl`。
+新增 `schema_version=2` 的索引，保留每个分片不可变原始 JSONL，不把多个带框架的日志拼成伪单命令 `go-race.jsonl`。PR-D 不改变该 schema；双库证明、逐片/合并墙钟和带时间戳的资源样本保存在同 attempt 的 runner report，029 集成路径核对 report 与最终 manifest 的 SHA-256。合并器先验证候选文件，再原子改名生成最终 manifest，崩溃留下的 candidate 不能冒充可复用证据。
+
+去重只减少重复发现，不降低证据强度：runner 的内部合并可显式接收预检生成的 `source_override=(plan,other_tests)`，要求其逐字段等于 evidence plan 并继续执行全部终态/身份/清理校验；合并进程必须显式设置并恢复本次 `PHASE1_ACCEPTANCE_RUN_ID`，candidate 创建、discovery 解析或校验失败都删除候选文件。standalone v2 仍重新发现源码。phase1 只有在 runner report 证明内部合并已完成时才进入 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1`，不再单独执行矩阵合并；current-MVP 启动时由 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试的并集执行一次**完整严格 v2 verify**，包括 fresh source、干净 HEAD/tree、1 小时/未来 5 分钟新鲜度、全部原始 JSONL、SKIP、数据库身份、并发窗口和清理。只有该批处理成功后才允许本次 shell 内各组按实际 spec 数输出 reused，失败不得被 printf 或后续状态掩盖；phase1 再从原子发布且绑定 run_id/commit/计数的批处理输出展开矩阵结果，并向 `go-race` suite 追加真实批处理 command/log；外部 manifest 的空命令列表不得产生 vacuous PASS，CLI 输入/输出符号链接必须在解引用前拒绝。report 的 reusable/manifest digest/双库证明只是附加绑定，不能替代严格 v2 校验，也不存在可跨 attempt 或跨进程信任的 discovery 缓存。serial v1 与未提供有效 runner report 的 v2 路径不变。
 
 索引至少包含：
 

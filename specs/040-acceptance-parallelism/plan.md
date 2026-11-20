@@ -42,12 +42,18 @@
 
 **范围**
 
-- workers=2 接入 `phase1-acceptance.py`，保留前端、独立 identity/mail real-main、支付、邮件、备份恢复、Compose、浏览器和 mock deployment 的原串行链；server 包内 actual-main 及其子进程只能使用本分片数据库/netns。
-- 每轮使用新的 detached git worktree、run_id、artifact 目录和全套资源，保留 HEAD/tree/status 校验，禁止默认 artifact 路径或前一轮生成文档阻断下一轮。两轮间不做选择性复用。
-- 同一干净候选连续两次完整 029，记录各片、合并、串行尾部、整单墙钟和资源曲线。
+- workers=2 通过显式 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2` 接入 `phase1-acceptance.py`，与直接传入既有 manifest 的 `PHASE1_ACCEPTANCE_GO_EVIDENCE_V2` 互斥；未设置时仍是 serial v1。保留前端、独立 identity/mail real-main、支付、邮件、备份恢复、Compose、浏览器和 mock deployment 的原串行链；server 包内 actual-main 及其子进程只能使用本分片数据库/netns。
+- 首个并发对的两个 PostgreSQL 同时存活后、任何测试 part 启动前，完成同名 role/default ACL/advisory lock 互见证明。A 撤销默认权限并删除同名 role 不得改变 B；A 持锁期间 B 必须能取得并释放同值 advisory lock。证明失败不阻断其他安全分片的诊断执行，但整单和 manifest 失败关闭。
+- 协调器在专用 Linux Docker VM 的 host netns 内运行固定 Go 镜像，使用 VM 的 Docker CLI/socket；它只观察 VM 宿主监听，不能将 macOS 55439 的串行尾部专库误判为并行片资源，也不向测试容器暴露 Docker socket。协调器名称/cidfile 绑定新 run_id，`--rm` 和精确 ID 清理均须核验。
+- 每轮使用新的 detached git worktree、run_id、artifact 目录和全套资源，保留 HEAD/tree/status 校验。每片先复制无 alternates 的独立 Git common，支持 nested-worktree 测试而不写主仓或其他片。PR-A `-list` 已产生的同 attempt build/module cache 可以共享以减少重复冷编译，但模块缓存只读、`-count=1` 禁止测试结果复用。集成模式必须显式提供仓库外 `--artifacts` 与 `--output`，禁止默认 artifact 路径或前一轮生成文档阻断下一轮。两轮间不做选择性复用。
+- 同一干净候选连续两次完整 029，记录各片、双库证明、合并、串行尾部、整单墙钟和带时间戳的容器资源曲线。
 - 独立复核后才默认 v2；serial v1 只作为下一场完整诊断/回退。
 
 **出口**：连续两轮 41/41、0 FAIL、0 必需 SKIP、100/100 复用，无 OOM/超时/残留；浏览器与独立生命周期证据齐全，CI 和架构检查全绿。
+
+**PR-D 去重补充**：第一轮完整 029 已 41/41 PASS，但 `wall_seconds=3554.532`，慢于 serial 基线 827.514 秒。runner 内部合并只使用预检生成的内存 `source_override=(plan,other_tests)`，逐字段匹配而不重复 `fresh_source`，并显式绑定本次 run ID。独立复核否定了仅以可变 report 证明测试已执行的浅层 attested 方案；修正后，phase1 不再单独运行矩阵合并，current-MVP 启动时对 100+77 必需唯一测试执行一次完整严格 v2 校验和一次 fresh source，随后同一 shell 内各组才可复用并报告实际 spec 数。phase1 只从绑定 run_id/commit/完整计数的原子批处理输出展开矩阵结果；report/proof 不能替代原始日志、freshness、干净源码或指定 spec 校验。standalone v2、外部无 report 的 workers=1 manifest 与 serial v1 保持原检查。详见[去重优化与整单墙钟](../../docs/verification/acceptance-workers-2-performance.md)。严格候选 `d9b55f0` 已连续两轮完整 029 达到 41/41，整单 2668.525/2636.994 秒，均低于 serial 基线；默认仍未改变。
+
+**PR-D 当前实现与推广边界**：双 worker 调度、真实双 cluster 互见证明、独立 Git common、同 attempt 构建材料复用、严格 v2 调度/资源/清理验证和 029 显式集成已实现，默认仍为 serial v1。严格候选 `d9b55f0025bcfe806e5e420128858975cfaa3be6` 的 run `703d1b8ac30142b5b9c01d08a627ada1` 与 `0fd4416271584b3b8829a91c57f50902` 连续两轮完整 029 均为 41/41、0 FAIL、0 必需 SKIP、100/100 current-MVP 复用，浏览器与独立生命周期证据齐全，整单 2668.525/2636.994 秒，无 OOM、超时或残留。历史失败、VM 时钟根因、磁盘耗尽和已中止的浅层 attested attempt 均保留在[候选记录](../../docs/verification/acceptance-workers-2.md)、[VM 时钟分析](../../docs/verification/acceptance-workers-2-clock-analysis.md)与[去重性能记录](../../docs/verification/acceptance-workers-2-performance.md)，不得与成功轮次拼接。两轮成功只满足 workers=2 候选出口；默认化仍需独立复核真实证据与推广决策，serial v1 保留为下一场完整诊断/回退。
 
 ## 后续另行立项
 

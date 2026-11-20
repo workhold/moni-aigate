@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import copy
+import hashlib
 import importlib.util
+import io
 import json
 import pathlib
 import re
+import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 SCRIPT = pathlib.Path(__file__).with_name("phase1-acceptance.py")
@@ -15,6 +19,9 @@ SPEC.loader.exec_module(MODULE)
 EVIDENCE_SPEC = importlib.util.spec_from_file_location("check_go_test_evidence", SCRIPT.with_name("check-go-test-evidence.py"))
 EVIDENCE = importlib.util.module_from_spec(EVIDENCE_SPEC)
 EVIDENCE_SPEC.loader.exec_module(EVIDENCE)
+ATTESTED_SPEC = importlib.util.spec_from_file_location("verify_current_mvp_attested", SCRIPT.with_name("verify_current_mvp_attested.py"))
+ATTESTED = importlib.util.module_from_spec(ATTESTED_SPEC)
+ATTESTED_SPEC.loader.exec_module(ATTESTED)
 
 
 class PhaseOneAcceptanceTest(unittest.TestCase):
@@ -147,13 +154,31 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
         self.assertLess(runner.index("go_evidence_manifest(artifact, commit, run_id)"), runner.index('add("current-mvp"'))
         shell = SCRIPT.with_name("verify-current-mvp.sh").read_text(encoding="utf-8")
         self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then', shell)
+        self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED:-}" ]; then', shell)
+        self.assertLess(shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED:-}" ]; then'), shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then'))
+        self.assertIn('verify_current_mvp_attested.py', shell)
+        self.assertIn('strict v2 batch', shell)
+        self.assertIn('attested_validated=1', shell)
+        self.assertIn('if ! python3 scripts/verify_current_mvp_attested.py', shell)
+        self.assertIn('VERIFY_CURRENT_MVP_ATTESTATION_OUTPUT', shell)
+        self.assertLess(shell.index('if ! python3 scripts/verify_current_mvp_attested.py'), shell.index("run_group 'static current architecture checks'"))
+        self.assertIn('reused:', shell)
         self.assertLess(shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE_V2:-}" ]; then'), shell.index('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then'))
         self.assertIn('check-acceptance-evidence-v2.py', shell)
         self.assertIn('os.environ.get("PHASE1_ACCEPTANCE_GO_EVIDENCE_V2")', runner)
         self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2"]', runner)
+        self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED"] = "1"', runner)
+        self.assertIn('env["VERIFY_CURRENT_MVP_RUNNER_REPORT"]', runner)
+        self.assertIn('env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED", None)', runner)
+        self.assertIn('if parallel_details is not None:', runner)
+        self.assertIn('VERIFY_CURRENT_MVP_ATTESTATION_OUTPUT', runner)
+        self.assertIn('attested_matrix_results(', runner)
+        self.assertIn('env.pop("VERIFY_CURRENT_MVP_RUNNER_REPORT", None)', runner)
+        self.assertIn('if manifest_value.get("workers") == 2:', runner)
+        self.assertIn('validate_parallel_report(parallel_artifact / "runner-report.json"', runner)
         self.assertIn('env.pop("VERIFY_CURRENT_MVP_GO_EVIDENCE_V2", None)', runner)
-        self.assertIn('if not isinstance(run_id, str):', runner)
-        v2_branch = runner[runner.index("    if v2_source:"):runner.index("    else:", runner.index("    if v2_source:"))]
+        self.assertIn('if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", run_id):', runner)
+        v2_branch = runner[runner.index("    if parallel_workers is not None or v2_source:"):runner.index("    serial_tail_started", runner.index("    if parallel_workers is not None or v2_source:"))]
         self.assertLess(v2_branch.index('env["PHASE1_ACCEPTANCE_RUN_ID"] = run_id'), v2_branch.index("merge = run_logged"))
         self.assertIn('env["VERIFY_CURRENT_MVP_GO_EVIDENCE"]', runner)
         self.assertIn('if [ -n "${VERIFY_CURRENT_MVP_GO_EVIDENCE:-}" ]; then', shell)
@@ -203,6 +228,197 @@ class PhaseOneAcceptanceTest(unittest.TestCase):
     def test_required_procurement_binding_receives_dedicated_database(self):
         source = SCRIPT.read_text(encoding="utf-8")
         self.assertIn('"PROCUREMENT_ATTEMPT_RULES_DATABASE_URL": os.environ["TEST_DATABASE_URL"]', source)
+
+    def test_parallel_mode_requires_fresh_external_output_directories(self):
+        with mock.patch.object(MODULE, "clean_commit", return_value="a" * 40), \
+             mock.patch.dict(MODULE.os.environ, {"PHASE1_ACCEPTANCE_PARALLEL_WORKERS": "2"}, clear=False), \
+             self.assertRaisesRegex(ValueError, "--artifacts"):
+            MODULE.execute([], SimpleNamespace(artifacts=None, output=None))
+
+    def test_v2_staging_copies_regular_files_and_rejects_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            source = root / "source"
+            source.mkdir()
+            manifest = source / "manifest.json"
+            manifest.write_text("{}\n", encoding="utf-8")
+            staged = MODULE.stage_v2_evidence(manifest, root / "staged")
+            self.assertEqual("{}\n", staged.read_text(encoding="utf-8"))
+            (source / "linked").symlink_to(manifest)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                MODULE.stage_v2_evidence(manifest, root / "staged-2")
+
+    def parallel_report_fixture(self, root, run_id, commit):
+        manifest = root / "go-race-evidence-v2.json"
+        manifest.write_text(json.dumps({"schema_version": 2, "suite": "go-race-parallel", "run_id": run_id, "workers": 2, "commit": commit, "tree": "c" * 40, "source_clean": True, "shards": [{} for _ in range(17)]}), encoding="utf-8")
+
+        def sample(shard, part):
+            records = []
+            for name in (f"moni-040-{run_id}-{shard}-pg", f"moni-040-{run_id}-{part}"):
+                records.append({"Name": name, "CPUPerc": "1.00%", "MemUsage": "1MiB / 8GiB", "MemPerc": "0.01%", "NetIO": "0B / 0B", "BlockIO": "0B / 0B", "PIDs": "2"})
+            return {"at": "2026-01-01T00:00:01+00:00", "containers": records}
+
+        shards = []
+        for index in range(14):
+            shard_name = f"shard-{index}"
+            parts = []
+            for part_index in range(4 if index == 0 else 1):
+                part_name = f"part-{index}-{part_index}"
+                parts.append({"name": part_name, "errors": [], "runner_removed": True, "oom_killed": False, "resource_samples": [sample(shard_name, part_name)]})
+            shards.append({
+                "name": shard_name, "errors": [], "wall_seconds": 1.0,
+                "cleanup": {"containers_removed": True, "volume_removed": True, "netns_removed": True},
+                "postgres_terminal": {"running_before_cleanup": True, "oom_killed": False}, "parts": parts,
+            })
+        proof = {"status": "PASS", "simultaneous_running": True, "default_acl_independent": True, "default_acl_restored": True, "advisory_lock_independent": True, "probe_objects_removed": True, "advisory_locks_remaining": 0}
+        report = {
+            "schema_version": 1, "suite": "040-pr-d-parallel-runner", "run_id": run_id, "commit": commit, "tree": "c" * 40,
+            "workers": 2, "status": "PASS", "reusable": True, "manifest": manifest.name,
+            "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+            "complete_029": False, "workers_2_proven": True, "fail_fast": False,
+            "dual_cluster_proof": proof, "host_listeners": {"zero_new": True}, "shards": shards, "errors": [],
+            "started_at": "2026-01-01T00:00:00+00:00", "completed_at": "2026-01-01T00:00:02+00:00",
+            "timings": {"wall_seconds": 10.0, "parallel_shards_seconds": 8.0, "merge_seconds": 2.0},
+        }
+        path = root / "runner-report.json"
+        path.write_text(json.dumps(report), encoding="utf-8")
+        (root / "dual-cluster-proof.json").write_text(json.dumps(proof), encoding="utf-8")
+        return manifest, path, report
+
+    def test_parallel_report_binds_manifest_resources_and_dual_cluster_proof(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            manifest, path, report = self.parallel_report_fixture(root, "a" * 32, "b" * 40)
+            details = MODULE.validate_parallel_report(path, manifest, "a" * 32, "b" * 40)
+            self.assertEqual(17, details["resource_samples"])
+            self.assertEqual(8.0, details["parallel_shards_seconds"])
+            report["shards"][0]["postgres_terminal"]["oom_killed"] = True
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "PostgreSQL"):
+                MODULE.validate_parallel_report(path, manifest, "a" * 32, "b" * 40)
+            report["shards"][0]["postgres_terminal"]["oom_killed"] = False
+            report["shards"][0]["parts"][0]["resource_samples"][0]["containers"] = []
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "exactly two containers"):
+                MODULE.validate_parallel_report(path, manifest, "a" * 32, "b" * 40)
+            path.unlink()
+            with self.assertRaises(FileNotFoundError):
+                MODULE.validate_parallel_report(path, manifest, "a" * 32, "b" * 40)
+
+    def test_runner_attested_manifest_binds_report_and_requires_strict_v2(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            manifest, path, _ = self.parallel_report_fixture(root, "a" * 32, "b" * 40)
+            with mock.patch.object(ATTESTED, "_git", side_effect=lambda *args: "b" * 40 if args[-1] == "HEAD" else "c" * 40), \
+                 mock.patch.object(ATTESTED.v2, "required_specs", return_value=["./internal/x:TestOne", "./internal/x:TestTwo"]), \
+                 mock.patch.object(ATTESTED.v2, "verify", return_value=2) as strict_verify, \
+                 mock.patch.dict(ATTESTED.os.environ, {"PHASE1_ACCEPTANCE_RUN_ID": "a" * 32}):
+                result = ATTESTED.validate(path, manifest)
+                self.assertEqual("PASS", result["status"])
+                self.assertEqual(100, result["current_mvp_reused"])
+                self.assertEqual(77, result["matrix_reused"])
+                self.assertEqual(["./internal/x:TestOne", "./internal/x:TestTwo"], strict_verify.call_args.args[1])
+                with mock.patch.object(ATTESTED.v2, "verify", side_effect=ATTESTED.v2.EvidenceError("empty shard evidence")):
+                    with self.assertRaisesRegex(ATTESTED.v2.EvidenceError, "empty shard"):
+                        ATTESTED.validate(path, manifest)
+                manifest.write_text(manifest.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+                with self.assertRaises(ATTESTED.AttestationError):
+                    ATTESTED.validate(path, manifest)
+            with mock.patch.dict(ATTESTED.os.environ, {"PHASE1_ACCEPTANCE_RUN_ID": "d" * 32}):
+                with self.assertRaises(ATTESTED.AttestationError):
+                    ATTESTED.validate(path, manifest)
+
+    def test_phase1_requires_complete_strict_attestation_output(self):
+        items = MODULE.load_matrix()
+        expected = len(MODULE.EVIDENCE_V2.required_specs(MODULE.ROOT))
+        value = {"status": "PASS", "reused": "strict-v2-batch", "run_id": "a" * 32, "commit": "b" * 40, "verified_specs": expected, "current_mvp_reused": 100, "matrix_reused": 77}
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "attestation.json"
+            path.write_text(json.dumps(value), encoding="utf-8")
+            results, valid = MODULE.attested_matrix_results(path, items, "a" * 32, "b" * 40)
+            self.assertTrue(valid)
+            self.assertEqual(82, sum(status == "PASS" for bindings in results.values() for status in bindings.values()))
+            value["verified_specs"] = 0
+            path.write_text(json.dumps(value), encoding="utf-8")
+            results, valid = MODULE.attested_matrix_results(path, items, "a" * 32, "b" * 40)
+            self.assertFalse(valid)
+            self.assertTrue(all(status == "MISSING" for bindings in results.values() for status in bindings.values()))
+
+    def test_attestation_cli_publishes_phase1_compatible_output(self):
+        items = MODULE.load_matrix()
+        value = {"status": "PASS", "reused": "strict-v2-batch", "run_id": "a" * 32, "commit": "b" * 40, "verified_specs": len(MODULE.EVIDENCE_V2.required_specs(MODULE.ROOT)), "current_mvp_reused": 100, "matrix_reused": 77}
+        with tempfile.TemporaryDirectory() as directory:
+            output = pathlib.Path(directory) / "attestation.json"
+            argv = ["verify_current_mvp_attested.py", "--report", "report.json", "--manifest", "manifest.json", "--output", str(output)]
+            with mock.patch.object(ATTESTED, "validate", return_value=value), \
+                 mock.patch.object(ATTESTED.sys, "argv", argv), \
+                 mock.patch.object(ATTESTED.sys, "stdout", io.StringIO()):
+                self.assertEqual(0, ATTESTED.main())
+            _, valid = MODULE.attested_matrix_results(output, items, "a" * 32, "b" * 40)
+            self.assertTrue(valid)
+            with mock.patch.object(ATTESTED, "validate", return_value=value), \
+                 mock.patch.object(ATTESTED.sys, "argv", argv), \
+                 mock.patch.object(ATTESTED.sys, "stdout", io.StringIO()), \
+                 mock.patch.object(ATTESTED.sys, "stderr", io.StringIO()):
+                self.assertEqual(1, ATTESTED.main())
+
+    def test_attested_go_suite_is_never_vacuously_pass(self):
+        current = {"log": "current-mvp.log", "seconds": 1.25}
+        for valid, expected in ((False, "FAIL"), (True, "PASS")):
+            commands = []
+            suites = [{"name": "go-race", "status": "PASS", "commands": commands, "logs": []}]
+            MODULE.update_attested_go_suite(suites, 0, commands, current, valid)
+            self.assertEqual(expected, suites[0]["status"])
+            self.assertEqual(1, len(commands))
+            self.assertEqual(["current-mvp.log"], suites[0]["logs"])
+            self.assertIn("strict batched v2", commands[0]["command"])
+
+    def test_attestation_cli_rejects_symlink_inputs_and_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            manifest, report, _ = self.parallel_report_fixture(root, "a" * 32, "b" * 40)
+            links = root / "links"
+            links.mkdir()
+            linked_report = links / report.name
+            linked_manifest = links / manifest.name
+            linked_report.symlink_to(report)
+            linked_manifest.symlink_to(manifest)
+            argv = ["verify_current_mvp_attested.py", "--report", str(linked_report), "--manifest", str(linked_manifest)]
+            with mock.patch.object(ATTESTED.v2, "verify", return_value=2) as strict_verify, \
+                 mock.patch.object(ATTESTED.sys, "argv", argv), \
+                 mock.patch.object(ATTESTED.sys, "stdout", io.StringIO()), \
+                 mock.patch.object(ATTESTED.sys, "stderr", io.StringIO()):
+                self.assertEqual(1, ATTESTED.main())
+            strict_verify.assert_not_called()
+            output = root / "attestation.json"
+            output.symlink_to(root / "target.json")
+            argv = ["verify_current_mvp_attested.py", "--report", str(report), "--manifest", str(manifest), "--output", str(output)]
+            with mock.patch.object(ATTESTED, "_git", side_effect=lambda *args: "b" * 40 if args[-1] == "HEAD" else "c" * 40), \
+                 mock.patch.object(ATTESTED.v2, "required_specs", return_value=["./internal/x:TestOne", "./internal/x:TestTwo"]), \
+                 mock.patch.object(ATTESTED.v2, "verify", return_value=2), \
+                 mock.patch.dict(ATTESTED.os.environ, {"PHASE1_ACCEPTANCE_RUN_ID": "a" * 32}), \
+                 mock.patch.object(ATTESTED.sys, "argv", argv), \
+                 mock.patch.object(ATTESTED.sys, "stdout", io.StringIO()), \
+                 mock.patch.object(ATTESTED.sys, "stderr", io.StringIO()):
+                self.assertEqual(1, ATTESTED.main())
+
+    def test_attested_shell_stops_before_reuse_when_strict_validation_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            env = MODULE.os.environ.copy()
+            env.update({
+                "TEST_DATABASE_URL": MODULE.EXPECTED_DATABASE,
+                "VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED": "1",
+                "VERIFY_CURRENT_MVP_RUNNER_REPORT": str(root / "missing-report.json"),
+                "VERIFY_CURRENT_MVP_GO_EVIDENCE_V2": str(root / "missing-manifest.json"),
+                "VERIFY_CURRENT_MVP_LOG_DIR": str(root),
+                "GOCACHE": str(root / "gocache"),
+            })
+            result = subprocess.run(["bash", str(SCRIPT.with_name("verify-current-mvp.sh"))], cwd=MODULE.ROOT, env=env, text=True, capture_output=True, timeout=30)
+            self.assertNotEqual(0, result.returncode)
+            self.assertNotIn("reused:", result.stdout)
+            self.assertNotIn("current MVP verification summary", result.stdout)
+            self.assertIn("strict batched v2 attestation failed", result.stderr)
 
     def test_failed_global_suite_never_generates_mvp_pass(self):
         items = MODULE.load_matrix()

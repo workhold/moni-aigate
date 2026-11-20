@@ -8354,3 +8354,196 @@ PR-B serial 029 清除遗留 v2 环境并受控处理非法 run_id；保持默�
 - modified `scripts/check-architecture/main_test.go`
 
 </details>
+
+## 2026-11-19T15:26:04Z · 84bb2dec0c17
+
+040 PR-D workers=2 候选：双 cluster 调度、独立 Git common、构建材料复用、v2/029 证据与清理合同已同步；多轮完整运行仍有业务断言失败，无全绿 manifest、连续两轮或提速结论，默认 serial v1 不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2572 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-workers-2.md`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- added `scripts/acceptance-parallel-coordinator.py`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `scripts/acceptance-parallel-runner.py`
+- added `scripts/acceptance_parallel_coordinator_test.py`
+- modified `scripts/acceptance_parallel_runner_test.py`
+- modified `scripts/check-acceptance-evidence-v2.py`
+- modified `scripts/check_acceptance_evidence_v2_test.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1-acceptance.test.sh`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-19T15:26:34Z · 7b34cd86cb37
+
+补充 PR-D 独立复核边界：仅确认无 false-PASS、manifest 或清理阻断，完整 workers=2 与两轮 029 仍未通过，默认不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2572 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-workers-2.md`
+
+</details>
+
+## 2026-11-19T18:09:37Z · d37f3fa075e6
+
+PR-D 根因分析与单一时钟源环境修复：workers=1 控制与宿主对照排除并发/Go/PG版本，直接采样证实VM时钟回拨；授权禁用重复NTP后545样本0回拨且清理完成，完整workers=2仍待验证，默认serial v1不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2573 个源文件；本次 5 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-workers-2-clock-analysis.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `specs/040-acceptance-parallelism/plan.md`
+
+</details>
+
+## 2026-11-19T19:17:36Z · a2363b8927af
+
+仅增强 029 密码修改失败诊断：记录不含秘密的错误文本、路径和 MFA 输入状态，不改认证断言、页面或业务行为；时钟修复后的完整 workers=2 已通过，完整 029 浏览器待重验
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2573 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+
+</details>
+
+## 2026-11-19T20:49:50Z · dc78282143b5
+
+PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在有效 report/proof 下使用 runner-attested v2 复用，消除重复源码发现；standalone v2 和 serial v1 不变。去重前第一轮 41/41 已记录，优化后整单仍待验证
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 16 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `docs/verification/phase1-acceptance-runner.md`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `scripts/acceptance-parallel-runner.py`
+- modified `scripts/acceptance_parallel_runner_test.py`
+- modified `scripts/check-acceptance-evidence-v2.py`
+- modified `scripts/check_acceptance_evidence_v2_test.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/verify-current-mvp.sh`
+- added `scripts/verify_current_mvp_attested.py`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-19T22:02:03Z · 3c815e7abf35
+
+修复独立复核发现的 attested 证据绕过与 runner run_id 合并缺陷；改为 current-MVP 单次严格 v2 批处理并绑定 phase1 矩阵输出，保留全部原始日志/freshness/spec 校验，同步 SDD、HLD/LLD、统一架构和失败记录
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 14 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `scripts/acceptance-parallel-runner.py`
+- modified `scripts/acceptance_parallel_runner_test.py`
+- modified `scripts/check-acceptance-evidence-v2.py`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/verify-current-mvp.sh`
+- modified `scripts/verify_current_mvp_attested.py`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-19T22:06:52Z · afaab09bf31e
+
+补充严格批处理 CLI 原子输出与 phase1 矩阵绑定的端到端单元合同；无模块、权限或数据关系变化，架构正文继续准确描述单次严格 v2 批处理
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>
+
+## 2026-11-19T22:12:08Z · 3e6e97291d58
+
+复审收口 attested 报告与 CLI 边界：go-race 必须包含真实严格批处理 command/log，空命令列表不得 PASS；输入输出符号链接在解引用前拒绝，新增对应回归测试并同步设计
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/phase1-acceptance.py`
+- modified `scripts/phase1_acceptance_test.py`
+- modified `scripts/verify_current_mvp_attested.py`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-19T22:14:08Z · 3b3febbfdf75
+
+记录独立复审对严格批处理、非空 go-race suite 与 CLI 符号链接边界均无剩余阻断；仅验证状态变化，无新增结构或合同变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/acceptance-workers-2-performance.md`
+
+</details>
+
+## 2026-11-20T00:07:48Z · 00c174ec987f
+
+严格候选 d9b55f0 连续两轮完整 029 均 41/41、100/100 严格复用且清理完成；整单 2668.525/2636.994 秒均低于 serial 基线，同步逐片资源曲线、严格批处理证据和默认仍 opt-in 的推广边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 7 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/acceptance-workers-2-performance.md`
+- modified `docs/verification/acceptance-workers-2.md`
+- modified `scripts/acceptance-parallel-runner.md`
+- modified `specs/040-acceptance-parallelism/plan.md`
+- modified `specs/040-acceptance-parallelism/spec.md`
+
+</details>
+
+## 2026-11-20T00:23:09Z · 115a6cb4e9bd
+
+修复 CI other 中 attested shell 负例继承外部 TEST_DATABASE_URL 而在专库门禁提前失败的问题；仅固定单元测试子进程环境，无产品、验收合同、模块图或权限边界变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2575 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_acceptance_test.py`
+
+</details>

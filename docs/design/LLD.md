@@ -178,6 +178,18 @@ v2 manifest 包含 run_id、created_at、commit/tree、source_clean、scheduler_
 
 PostgreSQL/runner 名称包含完整 run_id，cidfile 和 run/shard 标签确认创建所有权；运行轮询只把空/半写 cidfile 当 pending，退出后仍严格读取完整 64 位 ID。清理按所属完整 ID 执行，未创建本场 cidfile 的同名资源不删除。PostgreSQL `SandboxKey` 保存在私有运行状态，容器删除后以固定 Go 镜像的只读宿主 netns 挂载和 `os.path.lexists` 验证实际消失；daemon、volume、容器或路径错误都不是清理成功。runner report 保存脱敏数据库身份、精确 argv、日志摘要、资源采样、宿主监听前后摘要与清理状态，单片固定 `manifest=null/reusable=false/complete_029=false/workers_2_proven=false`。真实 canary 与独立复核见[PR-C 记录](../verification/acceptance-container-runner.md)。架构 inventory 只把 `.claude/settings.local.json` 视为本地会话元数据，不排除整个 `.claude` 目录；项目级 `.claude/settings.json` 和其他源码/设计覆盖保持不变，避免本地 refresh 与干净 CI 检出互相产生 added/deleted。
 
+### 4.10 PR-D 双 worker、双库证明与整单接口
+
+`acceptance-parallel-runner.py --workers 2 --all-shards` 使用两个线程提交 14 个逻辑片，结果恢复 PR-A 计划顺序；workers=2 不接受 partial。首对 cluster 通过 barrier 后，在任何 part 前执行同名一次性 owner/grantee/default ACL 和同值 advisory lock 互见检查，B 的 acquire/unlock 必须在同一 psql 会话。探针前后比较 `moni_test` default ACL 原文，owner/grantee/table/lock 全部清理；report 与独立 `dual-cluster-proof.json` 必须一致。每片先 `git clone --bare --no-hardlinks` 得到无 alternates 的独立 Git common，再创建 detached worktree，nested-worktree 测试只能写本片副本。模块缓存只读共享，GOCACHE 仅复用同 attempt 构建材料，测试 `-count=1` 不变。
+
+runner report 保存每片/part/合并/整段墙钟、双库证明、PostgreSQL OOM/运行终态和带时间戳的两容器资源样本。v2 保持原 schema，额外拒绝超过两个活动 part、无真实双 part 重叠、identity 重叠和数据库身份复用；候选 manifest 合并成功后才原子改名。协调器在专用 VM host netns 中使用固定 Go 镜像和挂载的 Docker CLI/socket，内层 `DOCKER_CONTEXT=default`，退出必须读取完整 cidfile 并核验精确 ID 清理。netns-proof helper 使用 host netns，不再创建未核验的 none sandbox。
+
+029 的 `PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2` 与外部 manifest 入口互斥，要求新仓库外 `--artifacts`/`--output` 和本轮 run_id；workers=2 的外部 manifest 也必须带 report/proof。`validate_parallel_report` 校验 17 part、manifest SHA-256、资源名称/时间、OOM、清理和零新增监听，summary 记录 run_id、并行/合并/串行尾部/整单墙钟。未设置并行变量时 serial v1 不变。
+
+历史多轮完整 workers=2 的失败与清理证据见[workers=2 候选记录](../verification/acceptance-workers-2.md)；workers=1 控制同样在 other 失败，直接时钟采样证明 VM realtime 多次回拨，能够影响重试、批准顺序、价格生效和告警评估，详见[VM 时钟分析](../verification/acceptance-workers-2-clock-analysis.md)。经授权已禁用重复 NTP 源；严格候选 `d9b55f0025bcfe806e5e420128858975cfaa3be6` 后续连续两轮完整 029 均为 41/41、0 FAIL、0 必需 SKIP、100/100 current-MVP 复用，整单 2668.525/2636.994 秒，无 OOM、超时或残留。默认仍保持 serial v1，默认化需独立复核真实证据与推广决策。
+
+去重后的内部合并允许 `source_override=(plan,other_tests)` 复用预检时的内存计划，并在合并进程显式设置/恢复本次 run ID，不放宽 `verify` 的计划/清单/日志/身份/清理要求；外部 standalone v2 仍重新发现。phase1 在有效 runner report 下设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1`、`VERIFY_CURRENT_MVP_RUNNER_REPORT` 和原子输出路径，不再单独执行矩阵合并。`verify-current-mvp.sh` 启动时调用 `verify_current_mvp_attested.py`，对 100 个 current-MVP 与 77 个矩阵唯一测试的并集执行一次完整严格 v2 `verify` 和一次 fresh source；report/manifest digest、双库证明只是附加绑定。批处理成功前禁止 reused，失败后不得由 shell printf/return 掩盖；成功后同一 shell 内各组按实际 spec 数复用，phase1 校验原子输出的 run_id/commit/完整计数后展开矩阵，并向 `go-race` suite 追加批处理 command/log，空命令列表不得显示 PASS；CLI 输入/输出符号链接在解引用前拒绝。standalone 与 serial v1 路径不变。详见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水

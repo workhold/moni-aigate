@@ -269,6 +269,16 @@ def source_allocation(plan: dict) -> dict[str, set[tuple[str, str]]]:
     return allocation_from_plan(fresh_plan, other_tests)
 
 
+def required_specs(source: pathlib.Path) -> list[str]:
+    shell = (source / "scripts" / "verify-current-mvp.sh").read_text(encoding="utf-8")
+    current = set(re.findall(r"\./[A-Za-z0-9_/]+:Test[A-Za-z0-9_]+", shell))
+    matrix = common.strict_json((source / "scripts" / "phase1-acceptance-matrix.json").read_text(encoding="utf-8"))
+    matrix_specs = {"./" + test for item in matrix["items"] for test in item["tests"]}
+    if len(current) != 100 or len(matrix_specs) != 77:
+        raise EvidenceError("current-MVP/matrix required inventory changed")
+    return sorted(current | matrix_specs)
+
+
 def parse_events(path: pathlib.Path, part: dict, expected: set[tuple[str, str]], manifest: dict) -> tuple[dict, dict, dict]:
     passes: dict[tuple[str, str], int] = {}
     skips: dict[tuple[str, str], int] = {}
@@ -347,11 +357,54 @@ def parse_events(path: pathlib.Path, part: dict, expected: set[tuple[str, str]],
     return passes, skips, package_terminals
 
 
-def verify(manifest_path: pathlib.Path, specs: list[str]) -> int:
+def raw_log_interval(path: pathlib.Path) -> tuple[dt.datetime, dt.datetime]:
+    started = None
+    completed = None
+    with path.open(encoding="utf-8") as source:
+        for line in source:
+            if line.startswith("started_at: "):
+                started = common.timestamp(line.split(": ", 1)[1].strip())
+            elif line.startswith("completed_at: "):
+                completed = common.timestamp(line.split(": ", 1)[1].strip())
+    if started is None or completed is None or started >= completed:
+        raise EvidenceError("raw shard has an invalid execution interval")
+    return started, completed
+
+
+def validate_schedule(workers: int, intervals: dict[str, tuple[dt.datetime, dt.datetime]]) -> None:
+    identity = sorted(name for name in intervals if name.startswith("identity-"))
+    if len(identity) != 4:
+        raise EvidenceError("v2 identity execution intervals are incomplete")
+    for previous, current in zip(identity, identity[1:]):
+        if intervals[current][0] < intervals[previous][1]:
+            raise EvidenceError("identity execution parts must not overlap")
+    transitions = []
+    for name, (started, completed) in intervals.items():
+        transitions.append((started, 1, name))
+        transitions.append((completed, -1, name))
+    transitions.sort(key=lambda item: (item[0], item[1]))
+    active = 0
+    maximum = 0
+    for _, change, _ in transitions:
+        active += change
+        maximum = max(maximum, active)
+        if active > workers:
+            raise EvidenceError(f"v2 evidence exceeds workers={workers} concurrent Go parts")
+    if maximum != workers:
+        raise EvidenceError(f"v2 evidence does not demonstrate workers={workers} scheduling")
+
+
+def verify(manifest_path: pathlib.Path, specs: list[str], source_override: tuple[dict, dict[str, list[str]]] | None = None) -> int:
     common.require_clean_source()
     manifest, plan = load_manifest(manifest_path)
     parts = part_index(plan)
-    allocation = source_allocation(plan)
+    if source_override is None:
+        allocation = source_allocation(plan)
+    else:
+        fresh_plan, other_tests = source_override
+        if fresh_plan != plan:
+            raise EvidenceError("runner preflight plan differs from the evidence plan")
+        allocation = allocation_from_plan(fresh_plan, other_tests)
     required = [common.parse_spec(spec) for spec in specs]
     if not required or len(set(required)) != len(required):
         raise EvidenceError("v2 requires a nonempty unique test inventory")
@@ -361,6 +414,7 @@ def verify(manifest_path: pathlib.Path, specs: list[str]) -> int:
     all_skips = []
     seen_databases: dict[str, str] = {}
     seen_shards = set()
+    intervals = {}
     part_classes = {part["name"]: shard["class"] for shard in plan["shards"] for part in shard["parts"]}
     for entry in manifest["shards"]:
         if not isinstance(entry, dict) or set(entry) != {"name", "args", "log", "log_sha256", "exit_status", "database", "cleanup"}:
@@ -395,6 +449,7 @@ def verify(manifest_path: pathlib.Path, specs: list[str]) -> int:
             raise EvidenceError(f"v2 log digest is invalid for {name}")
         expected = allocation[name]
         passes, skips, package_terminals = parse_events(log, part, expected, manifest)
+        intervals[name] = raw_log_interval(log)
         for package in part["packages"]:
             terminals = package_terminals.get(package, [])
             if len(terminals) != 1:
@@ -411,6 +466,9 @@ def verify(manifest_path: pathlib.Path, specs: list[str]) -> int:
         all_skips.extend(key for key, count in skips.items() for _ in range(count))
     if seen_shards != set(parts):
         raise EvidenceError("v2 shard set is incomplete")
+    if len(seen_databases) != 14:
+        raise EvidenceError("v2 requires 14 distinct clusters, with only identity parts sharing")
+    validate_schedule(manifest["workers"], intervals)
     if sorted(all_skips) != sorted(baseline_set):
         raise EvidenceError("v2 skip events differ from the reviewed repository baseline")
     skipped_required = required_set & set(all_skips)

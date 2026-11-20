@@ -1,25 +1,27 @@
-# 040 PR-C 隔离容器 runner
+# 040 隔离容器 runner 与 workers=2 候选
 
 `acceptance-parallel-runner.py` 复用 PR-A 的完整分片计划和精确 argv，在每片独立 detached worktree 中执行 Go race 测试。每个逻辑片使用一个新的 PostgreSQL 16 cluster、named volume 和 network namespace；identity 的四个测试进程在同一所属片内顺序执行，其他片不共享数据库。
 
-本阶段只允许 `workers=1`。`--workers 2` 会在预检前拒绝，不能用于双 cluster 互见证明或并行验收。单片 canary 不是完整 029，也不生成可复用 v2 manifest。
+**workers=2 当前是默认关闭的候选，不是已验收能力。** 多轮完整运行均出现业务断言失败，没有全绿 manifest 或连续两轮完整 029。实际失败和墙钟见[候选与未通过验收记录](../docs/verification/acceptance-workers-2.md)。未显式选择并行变量时，029 继续使用 serial v1。
 
 ## 隔离与证据边界
 
 - PostgreSQL 以 `--network none` 和 `127.0.0.1:55439/moni_test` 启动，不发布宿主端口；Go runner 以 `--network container:<postgres-id>` 加入同一 netns，actual-main 及其子进程因此留在该片边界内。
-- runner 直接执行 PR-A `part.args`，保留 `-json -race -p 1 -count=1 -timeout=10m` 和原 `-run`；`GOMAXPROCS=2`，测试时 `GOPROXY=off`。模块只预取到该片独立缓存，`-count=1` 禁止复用测试结果。
+- runner 直接执行 PR-A `part.args`，保留 `-json -race -p 1 -count=1 -timeout=10m` 和原 `-run`；`GOMAXPROCS=2`，测试时 `GOPROXY=off`。`-count=1` 禁止复用测试结果。
+- 每片先以 `git clone --bare --no-hardlinks` 创建无 alternates 的独立 Git common，再执行 `git worktree add --detach`。nested-worktree 测试只能写本片副本；主仓和其他片的 Git 元数据不可见。
+- PR-A `-list` 发现阶段已编译全部包。模块缓存和 Go content-addressed build cache 在同一 attempt 内共享，模块缓存对测试容器只读；worktree、Git common、HOME、GOPATH、临时目录、数据库和证据仍按片隔离。只复用构建材料，不复用测试终态。
 - PostgreSQL 保持 test-only loopback trust、Asia/Shanghai、200 连接以及 fsync/synchronous_commit/full_page_writes=on。other 和 billing 分别获得规格要求的独立 DSN opt-in，其他研究/诊断开关不从宿主继承。
-- 私有随机密码只写入运行目录的 `private/`（0700，env 文件 0600），通过 Docker `--env-file` 读取；密码不进入测试 DSN、原始日志、runner report 或 v2 manifest，并在 attempt 结束时删除。
-- 原始 `go-tests-<part>.jsonl` 使用 PR-B 的 run_id/command/started_at/events/completed_at/exit_status 框架，并由同一个 PR-B parser 校验终态和经审查的 SKIP 基线。runner report 另行保存脱敏数据库身份、资源采样和清理证明。
-- 任何分片、合并或清理失败都不会生成可复用 manifest。`fail-fast=false` 只用于继续可安全执行的后续片/identity part，不重试测试或拼接旧 PASS。
-- 清理只针对本 run_id 创建的精确容器、volume 和 worktree，不执行 prune，不触碰既有环境。资源名包含完整 run_id；Docker cidfile 和完整 run/shard 标签共同证明所有权，无本场 cidfile 的同名容器绝不删除。运行轮询仅把空/半写 cidfile 视为 pending，进程退出后仍严格要求完整 64 位 ID。只有容器确为 `No such` 才算消失，Docker daemon 错误不能冒充清理成功。
-- `netns_removed` 不由容器退出推断：runner 保存 PostgreSQL `SandboxKey`，删除容器后用固定 Go 镜像的只读宿主 netns 挂载和 `os.path.lexists` 验证该路径实际消失。路径格式不符、仍存在或检查失败都无可复用证据。
+- 首个 workers=2 并发对先完成双活动 cluster 证明：不同 system identifier、同名一次性 owner/grantee/default ACL 互不影响、A 持锁时 B 在同一会话取得并释放同值锁。探针前后逐字比较 `moni_test` default ACL，临时 role/table/lock 全部清理。
+- 原始 `go-tests-<part>.jsonl` 使用 PR-B 的 run_id/command/started_at/events/completed_at/exit_status 框架。v2 另校验真实双 part 重叠、最多两个活动 part、identity 不重叠和 14 个数据库身份。
+- 任何分片、合并或清理失败都不生成可复用 manifest。`fail-fast=false` 只用于继续可安全执行的后续片/identity part，不重试测试或拼接旧 PASS；identity 前一 runner 清理不明时停止本片后续 part。
+- 清理只针对本 run_id 创建的精确容器、volume、Git common 和 worktree，不执行 prune。cidfile 和完整 run/shard 标签共同证明所有权，无本场 cidfile 的同名容器绝不删除。PostgreSQL 终态/OOM、两端资源样本和协调器 cidfile 也失败关闭。
+- `netns_removed` 通过固定 Go 镜像的 host-netns helper、只读宿主 netns 挂载和 `os.path.lexists` 验证；helper 自身使用 host netns，不再创建未核验的 none sandbox。
 
-镜像固定在 `acceptance-runner-images.json` 的 repository digest。runner 不自动拉取或改写镜像引用；镜像缺失是预检失败。
+镜像固定在 `acceptance-runner-images.json` 的 repository digest。runner 不自动拉取或改写镜像引用；镜像缺失是预检失败。workers=2 要求至少 4 vCPU 和 8 GiB VM（至少 7.5 GiB 内存对 Docker 可见），workers>=3 一律拒绝。
 
-## 单片 canary
+## VM 协调器
 
-以下命令显式选择专用验收 Docker context。先确认宿主 55439 未被其他环境占用，再拉取两个精确引用：
+`acceptance-parallel-coordinator.py` 在固定 Go 镜像中运行 runner，使用专用 Linux Docker VM 的 host netns、VM Docker CLI/socket 和真实宿主监听表。外层 `DOCKER_CONTEXT` 选择专用 VM；内层固定 `default` 并绑定挂载 socket，不依赖容器内 context 配置。协调器以唯一 run_id 命名，`--rm` 后仍要求完整 cidfile 并按精确 ID 核验清理。
 
 ```bash
 DOCKER_CONTEXT=colima-moni-acceptance docker pull docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
@@ -29,12 +31,39 @@ DOCKER_CONTEXT=colima-moni-acceptance docker pull docker.io/library/golang:1.26-
 DOCKER_CONTEXT=colima-moni-acceptance docker pull docker.io/library/postgres:16-alpine@sha256:1d5b02d3a9941fbd52437db4107f8c52d6297dac553ca1e5c299ebb3756b4857
 ```
 
-在干净 HEAD 上执行一个分片：
+workers=1 单片 canary：
 
 ```bash
-DOCKER_CONTEXT=colima-moni-acceptance PYTHONDONTWRITEBYTECODE=1 python3 -B -I scripts/acceptance-parallel-runner.py --workers 1 --shard attempt-0
+DOCKER_CONTEXT=colima-moni-acceptance PYTHONDONTWRITEBYTECODE=1 python3 -B -I scripts/acceptance-parallel-coordinator.py --workers 1 --shard attempt-0
 ```
 
-每次自动生成新的 32 位 run_id 和 `~/.cache/moni-aigate-acceptance/<run_id>/`，也可用 `--run-directory` 指定一个尚不存在且位于仓库外的目录。成功输出位于 `evidence/runner-report.json`；`scope=workers_1_canary`、`reusable=false`、`complete_029=false`、`workers_2_proven=false` 是固定边界。报告同时给出宿主监听前后摘要、真实 loopback 数据库身份、精确退出状态、资源样本以及容器/volume/netns 清理结果。
+workers=2 必须一次执行全部 14 片，不能选择 partial：
 
-重复 `--shard` 可选择多个片；2–13 片只标记为 `workers_1_partial`，不会冒充 full Go race。`--all-shards` 仅表示 workers=1 顺序执行全部 14 个逻辑片。只有 17 个 part 全部成功、清理完成且 PR-B 对 100 个 current-MVP 与 77 个矩阵唯一测试的合并检查通过时，才生成 `go-race-evidence-v2.json`；即使成功，也仍不是包含串行尾部、浏览器和独立生命周期套件的完整 029。PR-C 的实际 canary 不以此完整路径代替单片验证。
+```bash
+DOCKER_CONTEXT=colima-moni-acceptance PYTHONDONTWRITEBYTECODE=1 python3 -B -I scripts/acceptance-parallel-coordinator.py --workers 2 --all-shards
+```
+
+每次自动生成新的 32 位 run_id 和 `~/.cache/moni-aigate-acceptance/<run_id>/`，也可用 `--run-directory` 指定一个尚不存在且位于仓库外的目录。`evidence/runner-report.json` 保存 scope、逐片/part/合并/整段墙钟、双库证明、资源样本、宿主监听和清理。单片 workers=1 不生成 manifest；workers=2 只有全部 17 part、100/77 合并和清理成功才生成 `go-race-evidence-v2.json`，且仍不等于完整 029。
+
+内部合并可以复用预检生成的 `source_override=(plan,other_tests)`，但必须逐字段匹配 evidence plan；这避免重复 `fresh_source`，不放宽任何测试、SKIP、身份或清理检查。外部 standalone v2 仍重新发现源码。
+
+## 029 显式候选路径
+
+完整 029 由 `phase1-acceptance.py` 生成本轮 run_id 并调用协调器。必须提供新的仓库外 artifact 和 summary 输出，防止前一轮生成文件阻断下一轮干净 HEAD：
+
+```bash
+TEST_DATABASE_URL='postgres://moni_test@127.0.0.1:55439/moni_test?sslmode=disable' \
+DOCKER_CONTEXT=colima-moni-acceptance \
+PHASE1_ACCEPTANCE_PARALLEL_WORKERS=2 \
+PHASE1_ACCEPTANCE_PARALLEL_RUN_DIRECTORY='/Users/vchive/.cache/moni-aigate-acceptance/<new-run>/parallel' \
+scripts/phase1-acceptance.sh --execute \
+  --browser-evidence '<same-commit-browser-evidence.json>' \
+  --artifacts '/Users/vchive/.cache/moni-aigate-acceptance/<new-run>/raw' \
+  --output '/Users/vchive/.cache/moni-aigate-acceptance/<new-run>/summary'
+```
+
+还需要按[029 执行手册](../docs/verification/phase1-acceptance-runner.md)提供隔离 preview、浏览器证据和部署环境。runner 失败会阻止使用旧 manifest 继续拼接串行尾部。workers=2 的外部 manifest 路径也必须包含同 attempt 的 `runner-report.json` 与 `dual-cluster-proof.json`；workers=1 的既有 v2 诊断行为保留。
+
+**严格候选 `d9b55f0` 已连续两轮完整 029 达到 41/41，整单 2668.525/2636.994 秒，均低于 2727.018 秒 serial 基线；默认 serial v1 和 standalone current-MVP 均未改变，默认化仍需独立复核真实证据与推广决策。**
+
+在有效 runner report/proof 下，phase1 不再单独执行矩阵合并；current-MVP 启动时由 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试执行一次完整严格 v2 校验和一次 fresh source，再允许同一 shell 内各组按实际 spec 数输出 reused。必须同时提供 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1` 和 `VERIFY_CURRENT_MVP_RUNNER_REPORT`；report/manifest SHA-256、run_id/commit/tree、双库证明与清理只是附加绑定，不能替代原始日志、freshness、干净源码和指定 spec 校验。phase1 从原子批处理输出绑定矩阵结果；其它 v2 和 serial v1 路径保持原检查。
