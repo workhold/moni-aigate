@@ -263,7 +263,7 @@ def module_environment(run_root: pathlib.Path, shard: str) -> dict:
         "GOPRIVATE": "",
         "GONOPROXY": "",
         "GONOSUMDB": "",
-        "GOPROXY": "https://proxy.golang.org,direct",
+        "GOPROXY": os.environ.get("PHASE1_ACCEPTANCE_GOPROXY", "https://proxy.golang.org,direct"),
         "GOSUMDB": "sum.golang.org",
         "LC_ALL": "C",
         "PYTHONDONTWRITEBYTECODE": "1",

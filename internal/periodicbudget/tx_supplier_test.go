@@ -44,7 +44,7 @@ func pbTxSupplierAttempt(t *testing.T, f *pbTxFixture, tx pgx.Tx, request string
 		t.Fatal("unsupported fixture supplier upper amount", upper)
 	}
 	attempt := uuid.NewString()
-	f.exec(t, tx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, attempt, f.tenant, request, f.channel, f.version, f.credential)
+	insertPBAttempt(t, tx, f.tenant, request, attempt, f.channel, f.version, f.credential)
 	f.exec(t, tx, `SELECT meter_insert_attempt_snapshot($1,$2,$3,$4,'contract')`, f.tenant, attempt, request, cost)
 	return attempt
 }
@@ -321,7 +321,7 @@ func TestTxPermitExplicitNoProcurementRequiresNoBindingOrSource(t *testing.T) {
 	cl := pbTxCustomerLocks(t, f, tx, "")
 	request, _ := f.newCustomer(t, tx, cl)
 	attempt := uuid.NewString()
-	f.exec(t, tx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, attempt, f.tenant, request, f.channel, f.version, f.credential)
+	insertPBAttempt(t, tx, f.tenant, request, attempt, f.channel, f.version, f.credential)
 	none, err := LockSupplierTx(f.ctx, tx, "")
 	pbTxMust(t, "construct explicit no-procurement token", err)
 	_, err = PermitDispatchTx(f.ctx, tx, cl, none, request, attempt)
@@ -335,7 +335,7 @@ func TestTxPermitExplicitNoProcurementRequiresNoBindingOrSource(t *testing.T) {
 	f.exec(t, unmanaged, `INSERT INTO channel_credentials(id,channel_id,secret_ciphertext) VALUES($1,$2,'unmanaged-fixture')`, credential, f.channel)
 	f.exec(t, unmanaged, `INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, version, f.channel, credential)
 	f.exec(t, unmanaged, `INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'unmanaged',1,10)`, version, f.channel, credential)
-	f.exec(t, unmanaged, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, attempt, f.tenant, request, f.channel, version, credential)
+	insertPBAttempt(t, unmanaged, f.tenant, request, attempt, f.channel, version, credential)
 	none, err = LockSupplierTx(f.ctx, unmanaged, "")
 	pbTxMust(t, "explicit unmanaged supplier token", err)
 	at, err := PermitDispatchTx(f.ctx, unmanaged, cl, none, request, attempt)

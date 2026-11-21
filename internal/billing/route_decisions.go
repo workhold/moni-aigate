@@ -5,11 +5,8 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/routing"
 )
 
-// Route explanations are typed, bounded metadata. No URL, credential, model
-// payload or arbitrary diagnostic text may cross this persistence boundary.
-func validatedRouteDecisions(in AttemptInput) ([]byte, error) {
-	return validateRouteDecisions(in.ChannelID, in.ChannelVersionID, in.RouteDecisions)
-}
+// validateRouteDecisions is retained only for the explicitly isolated
+// historical ProspectiveStore ABI. Current attempts use route_decision_store.go.
 
 func validateRouteDecisions(channel, version string, decisions []routing.Decision) ([]byte, error) {
 	if len(decisions) > 1000 {

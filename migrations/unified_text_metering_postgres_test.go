@@ -19,6 +19,20 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/testsupport/meterquote"
 )
 
+func insertUnifiedBinding(t *testing.T, tx pgx.Tx, policy, channel, version, upstream string) string {
+	t.Helper()
+	_, err := tx.Exec(context.Background(), `INSERT INTO physical_models(logical_model_id,upstream_model,capability) SELECT p.model_id,$2,jsonb_build_object('context_limit',c.profile->'context_limit','input_upper_bound',c.profile->'input_token_upper_bound','output_limit',c.profile->'output_limit','supports_tools',coalesce(c.profile->'supports_tools','false'::jsonb),'supports_parallel_tool_calls',coalesce(c.profile->'supports_parallel_tool_calls','false'::jsonb),'usage_semantics',coalesce(c.profile->>'usage_semantics','final'),'modalities',jsonb_build_array('text'),'quality_tier','standard','quality_score',NULL,'max_concurrency',10,'supported_parameters',coalesce(c.profile->'allowed_parameters','[]'::jsonb)) FROM route_policy_versions p JOIN model_capability_versions c ON c.id=p.profile_version AND c.model_id=p.model_id WHERE p.id=$1 ON CONFLICT(logical_model_id,upstream_model) DO NOTHING`, policy, upstream)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var bindingID string
+	err = tx.QueryRow(context.Background(), `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key) SELECT $1,$2,$3,$4,id,0,1,10,'default' FROM physical_models WHERE logical_model_id=(SELECT model_id FROM route_policy_versions WHERE id=$1) AND upstream_model=$4 RETURNING id`, policy, channel, version, upstream).Scan(&bindingID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bindingID
+}
+
 func TestUnifiedTextMeteringCanonical(t *testing.T) {
 	url := os.Getenv("TEST_DATABASE_URL")
 	if url == "" {
@@ -361,9 +375,7 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,1,'manual','allow')`, policy, model); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, policy, channel, version); err != nil {
-		t.Fatal(err)
-	}
+	insertUnifiedBinding(t, tx, policy, channel, version, "upstream")
 	if _, err = tx.Exec(ctx, `UPDATE models SET active_revision=1 WHERE id=$1`, model); err != nil {
 		t.Fatal(err)
 	}
@@ -373,7 +385,7 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 	// A binding may omit a supplier cap, but a published cap is one complete
 	// two-dimensional vector.  A half-written cap must roll back the entire
 	// route publication, including the active model pointer.
-	partialRoute, partialBinding := uuid.NewString(), uuid.NewString()
+	partialRoute := uuid.NewString()
 	tx, err = pool.Begin(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -381,9 +393,7 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,2,'manual','allow')`, partialRoute, model); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO model_bindings(id,route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,'upstream',0,1,10,'default')`, partialBinding, partialRoute, channel, version); err != nil {
-		t.Fatal(err)
-	}
+	partialBinding := insertUnifiedBinding(t, tx, partialRoute, channel, version, "upstream")
 	if _, err = tx.Exec(ctx, `INSERT INTO binding_cost_rate_limits(binding_id,dimension,unit,numerator,denominator) VALUES($1,'text_input_token','token',2,1)`, partialBinding); err != nil {
 		t.Fatal(err)
 	}
@@ -402,7 +412,7 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 	if err = pool.QueryRow(ctx, `SELECT count(*) FROM model_bindings WHERE id=$1`, partialBinding).Scan(&partialBindings); err != nil || partialBindings != 0 {
 		t.Fatalf("partial route left binding=%d err=%v", partialBindings, err)
 	}
-	completeRoute, completeBinding := uuid.NewString(), uuid.NewString()
+	completeRoute := uuid.NewString()
 	tx, err = pool.Begin(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -410,9 +420,7 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 	if _, err = tx.Exec(ctx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,2,'manual','allow')`, completeRoute, model); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO model_bindings(id,route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,'upstream',0,1,10,'default')`, completeBinding, completeRoute, channel, version); err != nil {
-		t.Fatal(err)
-	}
+	completeBinding := insertUnifiedBinding(t, tx, completeRoute, channel, version, "upstream")
 	for _, cap := range []struct {
 		dimension string
 		numerator int64
@@ -448,9 +456,7 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 		{id: crossBindingA, upstream: "upstream-a", dimension: "text_input_token", numerator: 2},
 		{id: crossBindingB, upstream: "upstream-b", dimension: "text_output_token", numerator: 3},
 	} {
-		if _, err = tx.Exec(ctx, `INSERT INTO model_bindings(id,route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,$5,0,1,10,'default')`, binding.id, crossRoute, channel, version, binding.upstream); err != nil {
-			t.Fatal(err)
-		}
+		binding.id = insertUnifiedBinding(t, tx, crossRoute, channel, version, binding.upstream)
 		if _, err = tx.Exec(ctx, `INSERT INTO binding_cost_rate_limits(binding_id,dimension,unit,numerator,denominator) VALUES($1,$2,'token',$3,1)`, binding.id, binding.dimension, binding.numerator); err != nil {
 			t.Fatal(err)
 		}
@@ -491,13 +497,13 @@ func TestMeterCompletenessRejectsGaps(t *testing.T) {
 		{`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, []any{wrongVersion, wrongChannel, wrongCredential}},
 		{`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,1000)`, []any{wrongVersion, wrongChannel, wrongCredential}},
 		{`INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,3,'manual','allow')`, []any{wrongRoute, model}},
-		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, []any{wrongRoute, channel, wrongVersion}},
 	} {
 		if _, err = tx.Exec(ctx, statement.sql, statement.args...); err != nil {
 			_ = tx.Rollback(ctx)
 			t.Fatal(err)
 		}
 	}
+	insertUnifiedBinding(t, tx, wrongRoute, channel, wrongVersion, "upstream")
 	if err = tx.Commit(ctx); err == nil || !strings.Contains(err.Error(), "route binding supplier contract is incomplete") {
 		t.Fatal("detached route binding committed", err)
 	}

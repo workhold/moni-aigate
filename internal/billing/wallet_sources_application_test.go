@@ -181,14 +181,14 @@ func TestPostgresWalletSourcesApplicationFinancialLifecycle(t *testing.T) {
 		{`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, []any{retryVersion, retryChannel, retryCredential}},
 		{`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,10)`, []any{retryVersion, retryChannel, retryCredential}},
 		{`INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,1)`, []any{route, f.model}},
-		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)`, []any{route, f.channel, f.version}},
-		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)`, []any{route, retryChannel, retryVersion}},
 		{`UPDATE models SET active_revision=1 WHERE id=$1`, []any{f.model}},
 	} {
 		if _, err = tx.Exec(f.ctx, statement.sql, statement.args...); err != nil {
 			t.Fatal(err)
 		}
 	}
+	insertFixtureBinding(t, tx, route, f.channel, f.version, "upstream")
+	insertFixtureBinding(t, tx, route, retryChannel, retryVersion, "upstream")
 	meterquote.PublishCost(t, f.ctx, tx, meterquote.CostPrice{ChannelID: retryChannel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.admin, Basis: "contract", InputRate: billingRate(2000000), OutputRate: billingRate(2000000)})
 	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)

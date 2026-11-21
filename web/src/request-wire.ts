@@ -18,6 +18,8 @@ export interface RequestRow {
   profile_version?: string
   reservation_id?: string
   attempt_id?: string
+  service_tier?: 'economy' | 'standard' | 'premium'
+  physical_model_id?: string
   status: string
   billing_status: string
   charged_amount?: string
@@ -49,7 +51,7 @@ export interface RequestRow {
 }
 
 const requestFields = new Set([
-  'id', 'model_name', 'model_id', 'profile_version', 'reservation_id', 'attempt_id', 'status', 'billing_status',
+  'id', 'model_name', 'model_id', 'profile_version', 'reservation_id', 'attempt_id', 'service_tier', 'physical_model_id', 'status', 'billing_status',
   'charged_amount', 'reserved_amount', 'reservation_amount', 'created_at', 'accepted_at', 'settlement_id',
   'protocol_outcome', 'transport_end_reason', 'delivery_stage', 'final_local_delivery', 'finish_reason',
   'usage_status', 'schema_id', 'schema_digest', 'variant_key', 'retail_rates', 'retail_bounds', 'retail_quantities',
@@ -93,6 +95,8 @@ export function parseRequestRows(value: unknown): RequestRow[] {
     const row = record(raw)
     if (Object.keys(row).some(key => !requestFields.has(key))) return invalid()
     if (typeof row.id !== 'string' || !row.id || typeof row.model_id !== 'string' || !row.model_id || typeof row.status !== 'string' || typeof row.billing_status !== 'string') return invalid()
+    if (row.service_tier != null && row.service_tier !== 'economy' && row.service_tier !== 'standard' && row.service_tier !== 'premium') return invalid()
+    if (row.physical_model_id != null && (typeof row.physical_model_id !== 'string' || !row.physical_model_id)) return invalid()
     const snapshot = parseMeterSnapshotProjection({ schema_id: row.schema_id, schema_digest: row.schema_digest, variant_key: row.variant_key, retail_rates: row.retail_rates, retail_bounds: row.retail_bounds, usage_status: row.usage_status, retail_quantities: row.retail_quantities })
     parseBudgetRejection(row)
     if (row.cache_hit !== undefined && typeof row.cache_hit !== 'boolean') return invalid()

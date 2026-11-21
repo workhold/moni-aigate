@@ -57,6 +57,12 @@ class AcceptanceParallelCoordinatorTest(unittest.TestCase):
         self.assertEqual("2", runner[runner.index("--workers") + 1])
         self.assertIn("--all-shards", runner)
 
+    def test_optional_goproxy_is_forwarded_when_explicitly_selected(self):
+        with mock.patch.dict(os.environ, {"PHASE1_ACCEPTANCE_GOPROXY": "https://goproxy.cn,direct"}):
+            args, _, _ = self.command()
+        self.assertIn("GOPROXY=https://goproxy.cn,direct", args)
+        self.assertIn("PHASE1_ACCEPTANCE_GOPROXY=https://goproxy.cn,direct", args)
+
     def test_workers_three_is_rejected_before_docker(self):
         with self.assertRaises(coordinator.CoordinatorError):
             self.command(3)

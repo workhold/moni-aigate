@@ -124,7 +124,7 @@ func TestChannelOperationsHTTPPreviewAtomicLiveGateAndPermanentReceipts(t *testi
 	if r.StatusCode != 503 || f.posts.Load() != 0 {
 		t.Fatal("disabled channel reached provider", r.StatusCode, f.posts.Load())
 	}
-	probeAssertWalletUntouched(t, f.gatewayFixture)
+	probeAssertWalletBalanceUntouched(t, f.gatewayFixture)
 	in.Targets[0], in.Targets[1] = in.Targets[1], in.Targets[0]
 	replayed := f.apply(t, id, in)
 	if !reflect.DeepEqual(disabled, replayed) {

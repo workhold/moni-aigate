@@ -27,6 +27,11 @@ import (
 )
 
 // Frozen 022 differential value; deliberately independent of current routecost.
+type originalAttemptInput struct {
+	ChannelID, ChannelVersionID string
+	RouteDecisions              []routing.Decision
+}
+
 type originalRuleQuote struct {
 	VersionID             string
 	InputRate, OutputRate *int64
@@ -235,10 +240,10 @@ func TestPostgresProcurementAttemptOriginalRules(t *testing.T) {
 			t.Fatal("NULL UUID accepted")
 		}
 	})
-	seed := AttemptInput{ChannelID: baseID, ChannelVersionID: versionID, RouteDecisions: []routing.Decision{{ChannelID: baseID, VersionID: versionID, Priority: -7, Weight: 9, Reason: "selected"}}}
-	verifyRoute := func(t *testing.T, in AttemptInput) {
+	seed := originalAttemptInput{ChannelID: baseID, ChannelVersionID: versionID, RouteDecisions: []routing.Decision{{ChannelID: baseID, VersionID: versionID, Priority: -7, Weight: 9, Reason: "selected"}}}
+	verifyRoute := func(t *testing.T, in originalAttemptInput) {
 		t.Helper()
-		want, wantErr := validatedRouteDecisions(in)
+		want, wantErr := validateRouteDecisions(in.ChannelID, in.ChannelVersionID, in.RouteDecisions)
 		raw, err := json.Marshal(in.RouteDecisions)
 		attemptRuleMust(t, "marshal original typed routing.Decision", err)
 		if len(in.RouteDecisions) == 0 {
@@ -261,7 +266,7 @@ func TestPostgresProcurementAttemptOriginalRules(t *testing.T) {
 	}
 	t.Run("typed_routes_original_bytes_and_errors", func(t *testing.T) {
 		verifyRoute(t, seed)
-		verifyRoute(t, AttemptInput{})
+		verifyRoute(t, originalAttemptInput{})
 		for _, priority := range []int{math.MinInt64, -1, 0, 1, math.MaxInt64} {
 			for _, weight := range []uint64{0, 1, math.MaxInt64, 1 << 63, math.MaxUint64} {
 				in := seed

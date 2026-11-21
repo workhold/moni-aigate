@@ -46,9 +46,7 @@ func vectorProcurementRaw(t *testing.T, f *fixture, r Reservation, cost *string,
 		t.Fatal(err)
 	}
 	a := uuid.NewString()
-	if _, err = tx.Exec(f.ctx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, a, f.tenant, r.RequestID, f.channel, f.version, f.credential); err != nil {
-		t.Fatal(err)
-	}
+	insertRawAttempt(t, tx, f.tenant, r.RequestID, a, f.channel, f.version, f.credential, "upstream")
 	if len(birth) != 0 {
 		if err = birth[0](tx, a); err != nil {
 			t.Fatal(err)
@@ -395,9 +393,7 @@ func TestPostgresVectorProcurementBoundShapeRejectsInvalidRows(t *testing.T) {
 				t.Fatal(err)
 			}
 			attempt := uuid.NewString()
-			if _, err = tx.Exec(f.ctx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, attempt, f.tenant, r.RequestID, f.channel, f.version, f.credential); err != nil {
-				t.Fatal(err)
-			}
+			insertRawAttempt(t, tx, f.tenant, r.RequestID, attempt, f.channel, f.version, f.credential, "upstream")
 			// These rows are rejected before any deferred U guard can run.
 			// Keep the original CHECKs enabled and prove the exact boundary.
 			_, err = tx.Exec(f.ctx, `INSERT INTO attempt_meter_bound_lines(tenant_id,attempt_id,side,dimension,unit,quantity) VALUES($1,$2,'supplier',$3,$4,0)`, f.tenant, attempt, tc.dimension, tc.unit)

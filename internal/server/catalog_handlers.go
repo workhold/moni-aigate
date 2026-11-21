@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/moni-ai/moni-aigate/internal/catalog"
 	"github.com/moni-ai/moni-aigate/internal/provider"
-	"github.com/moni-ai/moni-aigate/internal/routing"
 )
 
 func (s *Server) createModel(c *gin.Context) {
@@ -136,13 +135,9 @@ func (s *Server) publishBindings(c *gin.Context) {
 		return
 	}
 	var in catalog.RoutePublishInput
-	if !decodeCanonicalJSON(c.Request.Body, &in, 1048576, "expected_revision", "bindings", "cost_policy", "mode", "unknown_cost_policy", "channel_id", "upstream_model", "priority", "weight", "max_inflight", "max_input_cost_rate", "max_output_cost_rate", "release_intent", "release_evidence_id", "failure_threshold", "open_ms", "half_open_tokens", "cache_ttl_seconds") {
+	if !decodeCanonicalJSON(c.Request.Body, &in, 1048576, "expected_revision", "bindings", "cost_policy", "mode", "unknown_cost_policy", "channel_id", "physical_model_id", "capability", "expose_to_customer", "upstream_model", "priority", "weight", "max_inflight", "max_input_cost_rate", "max_output_cost_rate", "release_intent", "release_evidence_id", "scoring", "auto", "allow_degradation", "quality_floor", "min_margin_rate", "stickiness", "enabled", "max_age_s", "break_on", "context_limit", "input_upper_bound", "output_limit", "supports_tools", "supports_parallel_tool_calls", "usage_semantics", "modalities", "quality_tier", "quality_score", "max_concurrency", "supported_parameters", "failure_threshold", "open_ms", "half_open_tokens", "cache_ttl_seconds") {
 		s.fail(c, 400, "invalid_request", "路由发布参数无效")
 		return
-	}
-	policy := routing.DefaultCostPolicy()
-	if in.CostPolicy != nil {
-		policy = *in.CostPolicy
 	}
 	var revision int64
 	breaker, e := in.BreakerConfig()
@@ -151,9 +146,9 @@ func (s *Server) publishBindings(c *gin.Context) {
 		return
 	}
 	if in.ReleaseIntent == catalog.ReleaseCommercial {
-		revision, e = s.Catalog.PublishCommercialWithDataPlanePolicy(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, in.Bindings, policy, breaker, in.CacheTTL())
+		revision, e = s.Catalog.PublishDynamicWithDataPlanePolicy(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, in.Bindings, in.DynamicPolicy(), catalog.ReleaseCommercial, breaker, in.CacheTTL())
 	} else {
-		revision, e = s.Catalog.PublishWithDataPlanePolicy(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, in.Bindings, policy, breaker, in.CacheTTL())
+		revision, e = s.Catalog.PublishDynamicWithDataPlanePolicy(c.Request.Context(), sessionOf(c).User.ID, c.Param("id"), in.Expected, in.Bindings, in.DynamicPolicy(), catalog.ReleaseTestOnly, breaker, in.CacheTTL())
 	}
 	if e != nil {
 		s.error(c, e)

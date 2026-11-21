@@ -294,9 +294,7 @@ func TestPostgresKeyConfigurationSafeRetryKeepsSingleFrozenBudget(t *testing.T) 
 		t.Fatal(err)
 	}
 	for _, binding := range []struct{ channel, version string }{{f.channel, f.version}, {retryChannel, retryVersion}} {
-		if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", policy, binding.channel, binding.version); err != nil {
-			t.Fatal(err)
-		}
+		insertFixtureBinding(t, tx, policy, binding.channel, binding.version, "upstream")
 	}
 	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=100 WHERE id=$1", f.model); err != nil {
 		t.Fatal(err)

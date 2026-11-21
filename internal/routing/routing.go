@@ -25,6 +25,9 @@ var (
 )
 
 type Candidate struct {
+	BindingID             string
+	PhysicalModelID       string
+	PolicyVersionID       string
 	ChannelID             string
 	VersionID             string
 	CredentialID          string
@@ -40,12 +43,16 @@ type Candidate struct {
 	Enabled               bool
 	ExclusionReason       string
 	Decisions             []Decision
+	RouteDecision         *RouteDecision
 	Endpoint              provider.Endpoint
 	CostPolicy            CostPolicy
 	CostQuote             routecost.Quote
 	CostLimits            routecost.Limits
 	InputUpperBound       int64
 	OutputLimit           int64
+	RetailAmount          int64
+	Physical              PhysicalCapability
+	Stats                 StatsSnapshot
 	ProcurementManaged    bool
 	ProcurementState      string
 	ProcurementAvailable  string
@@ -65,12 +72,22 @@ func clone(c Candidate) Candidate {
 	c.Endpoint.Network.AllowedCIDRs = append([]string(nil), c.Endpoint.Network.AllowedCIDRs...)
 	c.Endpoint.Network.AllowedPorts = append([]uint16(nil), c.Endpoint.Network.AllowedPorts...)
 	c.Decisions = append([]Decision(nil), c.Decisions...)
+	c.RouteDecision = cloneDecision(c.RouteDecision)
+	c.Physical.Modalities = append([]string(nil), c.Physical.Modalities...)
+	c.Physical.SupportedParameters = append([]string(nil), c.Physical.SupportedParameters...)
 	return c
+}
+
+func candidateKey(c Candidate) string {
+	if c.BindingID != "" {
+		return c.BindingID
+	}
+	return c.ChannelID
 }
 
 func exclusionReason(c Candidate) string {
 	switch c.ExclusionReason {
-	case "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden":
+	case "not_authorized", "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden", "capability_missing", "quality_below_floor", "context_too_small", "tools_unsupported", "output_limit_too_small", "capacity_full", "circuit_open", "half_open_busy", "quarantined", "cost_unknown", "cost_limit_exceeded", "margin_below_floor", "procurement_paused", "procurement_budget_exceeded", "procurement_bound_invalid", "procurement_budget_unavailable", "already_tried":
 		return c.ExclusionReason
 	default:
 		return "disabled"
@@ -85,13 +102,29 @@ type Plan struct {
 	tried         map[string]bool
 	committed     bool
 	active        bool
+	policy        DynamicPolicy
+	request       RequestShape
+	lastDecision  *RouteDecision
 }
 
 func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
-	if maxAttempts < 1 || maxAttempts > 2 || len(candidates) == 0 {
+	request := RequestShape{Preference: RoutePreference{AllowFallbacks: true}}
+	if len(candidates) > 0 {
+		request.InputUpperBound = candidates[0].InputUpperBound
+		request.OutputLimit = candidates[0].OutputLimit
+	}
+	return newPlan(candidates, maxAttempts, DefaultDynamicPolicy(), normalizeRequestShape(request))
+}
+
+func NewDynamicPlan(candidates []Candidate, maxAttempts int, policy DynamicPolicy, request RequestShape) (*Plan, error) {
+	return newPlan(candidates, maxAttempts, policy, normalizeRequestShape(request))
+}
+
+func newPlan(candidates []Candidate, maxAttempts int, policy DynamicPolicy, request RequestShape) (*Plan, error) {
+	if maxAttempts < 1 || maxAttempts > 2 || len(candidates) == 0 || policy.Validate() != nil || request.Validate() != nil {
 		return nil, ErrInvalidPolicy
 	}
-	p := &Plan{max: maxAttempts, tried: map[string]bool{}}
+	p := &Plan{max: maxAttempts, tried: map[string]bool{}, policy: policy, request: request}
 	type channelPolicy struct {
 		candidate   Candidate
 		credentials map[string]bool
@@ -106,7 +139,10 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 		if ValidateCostPolicy(c.CostPolicy) != nil || c.InputUpperBound < 0 || c.OutputLimit < 0 || c.CostPolicy.Mode == "cost_first" && c.InputUpperBound == 0 || !c.CostQuote.Matches(c.ChannelID, c.Model) || !c.CostLimits.ValidFor(c.CostQuote) {
 			return nil, ErrInvalidPolicy
 		}
-		if _, err := metering.ManagementTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit); err != nil {
+		if _, err := metering.ManagementTokenBounds(c.CostQuote.Schema(), metering.Supplier, supplierInputBound(c), c.OutputLimit); err != nil {
+			return nil, ErrInvalidPolicy
+		}
+		if c.PhysicalModelID != "" && (c.BindingID == "" || c.Physical.Validate() != nil) {
 			return nil, ErrInvalidPolicy
 		}
 		if len(p.candidates) > 0 {
@@ -116,7 +152,7 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 				return nil, ErrInvalidPolicy
 			}
 		}
-		if len(p.candidates) > 0 && (c.CostPolicy != p.candidates[0].CostPolicy || c.InputUpperBound != p.candidates[0].InputUpperBound || c.OutputLimit != p.candidates[0].OutputLimit || normalizeBreaker(c.Breaker) != normalizeBreaker(p.candidates[0].Breaker)) {
+		if len(p.candidates) > 0 && (c.CostPolicy != p.candidates[0].CostPolicy || c.OutputLimit != p.candidates[0].OutputLimit || c.RetailAmount != p.candidates[0].RetailAmount || normalizeBreaker(c.Breaker) != normalizeBreaker(p.candidates[0].Breaker)) {
 			return nil, ErrInvalidPolicy
 		}
 		if c.Breaker != (BreakerConfig{}) && ValidateBreakerConfig(c.Breaker) != nil {
@@ -127,14 +163,14 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 		}
 		c.CredentialWeight = credentialWeight(c)
 		c.CredentialMaxInflight = credentialCapacity(c)
-		group := seen[c.ChannelID]
+		group := seen[candidateKey(c)]
 		if group == nil {
 			if len(seen) >= 1000 || math.MaxUint64-total < c.Weight {
 				return nil, ErrInvalidPolicy
 			}
 			total += c.Weight
 			group = &channelPolicy{candidate: c, credentials: map[string]bool{}}
-			seen[c.ChannelID] = group
+			seen[candidateKey(c)] = group
 		} else {
 			previous := group.candidate
 			if c.CredentialID == "" || previous.CredentialID == "" || c.VersionID != previous.VersionID || c.Model != previous.Model || c.Region != previous.Region || c.Priority != previous.Priority || c.Weight != previous.Weight || c.MaxInflight != previous.MaxInflight || normalizeBreaker(c.Breaker) != normalizeBreaker(previous.Breaker) || !c.CostQuote.Equal(previous.CostQuote) || !c.CostLimits.Equal(previous.CostLimits) {
@@ -152,6 +188,11 @@ func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
 }
 func (p *Plan) Attempts() int     { p.mu.Lock(); defer p.mu.Unlock(); return p.attempts }
 func (p *Plan) CommitDownstream() { p.mu.Lock(); defer p.mu.Unlock(); p.committed = true }
+func (p *Plan) LastDecision() *RouteDecision {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return cloneDecision(p.lastDecision)
+}
 func (p *Plan) CanRetry(ctx context.Context, err error) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -178,7 +219,8 @@ func (p *Plan) Start(ctx context.Context, engine *Engine, admit AdmitFunc) (*Att
 	if engine == nil || admit == nil {
 		return nil, ErrInvalidPolicy
 	}
-	c, generation, err := engine.acquire(p.candidates, p.tried)
+	c, generation, decision, err := engine.acquirePlan(p, p.attempts+1)
+	p.lastDecision = cloneDecision(decision)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +241,7 @@ func (p *Plan) Start(ctx context.Context, engine *Engine, admit AdmitFunc) (*Att
 		return nil, err
 	}
 	p.attempts++
-	p.tried[c.ChannelID] = true
+	p.tried[candidateKey(c)] = true
 	p.active = true
 	a.plan = p
 	return a, nil
@@ -339,194 +381,14 @@ func (e *Engine) get(k string) *health {
 }
 
 func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candidate, uint64, error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	now := e.config.Now()
-	type channelPool struct {
-		candidate Candidate
-		members   []int
-		weight    uint64
+	request := normalizeRequestShape(RequestShape{Preference: RoutePreference{AllowFallbacks: true}})
+	if len(candidates) > 0 {
+		request.InputUpperBound = candidates[0].InputUpperBound
+		request.OutputLimit = candidates[0].OutputLimit
 	}
-	channels := []channelPool{}
-	channelIndexes := map[string]int{}
-	for i, c := range candidates {
-		channelIndex, exists := channelIndexes[c.ChannelID]
-		if !exists {
-			channelIndex = len(channels)
-			channelIndexes[c.ChannelID] = channelIndex
-			channels = append(channels, channelPool{candidate: c})
-		}
-		channels[channelIndex].members = append(channels[channelIndex].members, i)
-	}
-	pool := []int{}
-	decisions := make([]Decision, len(channels))
-	highest := math.MinInt
-	var weight uint64
-	for i := range channels {
-		group := &channels[i]
-		c := group.candidate
-		decisions[i] = Decision{ChannelID: c.ChannelID, VersionID: c.VersionID, Priority: c.Priority, Weight: c.Weight}
-		eligible := group.members[:0]
-		for _, member := range group.members {
-			candidate := candidates[member]
-			costReason, err := CostExclusion(candidate.CostPolicy, candidate.CostQuote, candidate.CostLimits)
-			if err != nil {
-				return Candidate{}, 0, err
-			}
-			reason := ""
-			switch {
-			case !candidate.Enabled:
-				reason = exclusionReason(candidate)
-			case tried[candidate.ChannelID]:
-				reason = "already_tried"
-			case costReason != "":
-				reason = costReason
-			case ProcurementExclusion(candidate) != "":
-				reason = ProcurementExclusion(candidate)
-			case e.inflight[candidate.ChannelID] >= candidate.MaxInflight || e.credentialInflight[credentialKey(candidate)] >= credentialCapacity(candidate):
-				reason = "capacity_full"
-			default:
-				h := e.get(key(candidate))
-				switch {
-				case h.state == Quarantined:
-					reason = "quarantined"
-				case h.state == Open && now.Before(h.until):
-					reason = "circuit_open"
-				default:
-					if h.state == Open {
-						h.state = HalfOpen
-						h.probes = 0
-						h.generation++
-					}
-					if h.state == HalfOpen && h.probes >= e.breaker(candidate).HalfOpenTokens {
-						reason = "half_open_busy"
-					}
-				}
-			}
-			if reason != "" {
-				// An unavailable channel reports its first member's exclusion.
-				// Frozen candidate order makes mixed member failures stable while
-				// retaining the existing safe decision vocabulary.
-				if decisions[i].Reason == "" {
-					decisions[i].Reason = reason
-				}
-				continue
-			}
-			memberWeight := credentialWeight(candidate)
-			if math.MaxUint64-group.weight < memberWeight {
-				return Candidate{}, 0, ErrInvalidPolicy
-			}
-			group.weight += memberWeight
-			eligible = append(eligible, member)
-		}
-		group.members = eligible
-		if len(eligible) == 0 {
-			continue
-		}
-		decisions[i].Reason = "lower_priority"
-		if c.Priority > highest {
-			highest = c.Priority
-			pool = pool[:0]
-			weight = 0
-		}
-		if c.Priority == highest {
-			if math.MaxUint64-weight < c.Weight {
-				return Candidate{}, 0, ErrInvalidPolicy
-			}
-			pool = append(pool, i)
-			weight += c.Weight
-		}
-	}
-	if len(pool) == 0 {
-		return Candidate{}, 0, ErrUnavailable
-	}
-	if channels[pool[0]].candidate.CostPolicy.Mode == "cost_first" {
-		var lowest *Candidate
-		cheapest := make([]int, 0, len(pool))
-		for _, i := range pool {
-			c := channels[i].candidate
-			bounds, err := metering.ManagementTokenBounds(c.CostQuote.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
-			if err != nil {
-				return Candidate{}, 0, err
-			}
-			rates, err := c.CostQuote.Rates()
-			if err != nil {
-				return Candidate{}, 0, err
-			}
-			comparison := -1
-			if lowest != nil {
-				other, err := metering.ManagementTokenBounds(lowest.CostQuote.Schema(), metering.Supplier, lowest.InputUpperBound, lowest.OutputLimit)
-				if err != nil {
-					return Candidate{}, 0, err
-				}
-				otherRates, err := lowest.CostQuote.Rates()
-				if err != nil {
-					return Candidate{}, 0, err
-				}
-				comparison, err = metering.CompareExactCost(bounds, rates, other, otherRates)
-				if err != nil {
-					return Candidate{}, 0, err
-				}
-			}
-			if lowest == nil || comparison < 0 {
-				lowest = &channels[i].candidate
-				cheapest = cheapest[:0]
-			}
-			if comparison <= 0 {
-				cheapest = append(cheapest, i)
-			}
-		}
-		for _, i := range pool {
-			decisions[i].Reason = "higher_cost"
-		}
-		pool = cheapest
-		weight = 0
-		for _, i := range pool {
-			if math.MaxUint64-weight < channels[i].candidate.Weight {
-				return Candidate{}, 0, ErrInvalidPolicy
-			}
-			weight += channels[i].candidate.Weight
-		}
-	}
-	for _, i := range pool {
-		decisions[i].Reason = "weighted_not_selected"
-	}
-	roll := e.config.RandN(weight)
-	if roll >= weight {
-		return Candidate{}, 0, ErrInvalidPolicy
-	}
-	for _, i := range pool {
-		group := channels[i]
-		if roll < group.candidate.Weight {
-			selected := group.members[0]
-			if len(group.members) > 1 {
-				memberRoll := e.config.RandN(group.weight)
-				if memberRoll >= group.weight {
-					return Candidate{}, 0, ErrInvalidPolicy
-				}
-				for _, member := range group.members {
-					memberWeight := credentialWeight(candidates[member])
-					if memberRoll < memberWeight {
-						selected = member
-						break
-					}
-					memberRoll -= memberWeight
-				}
-			}
-			c := candidates[selected]
-			e.inflight[c.ChannelID]++
-			e.credentialInflight[credentialKey(c)]++
-			h := e.get(key(c))
-			if h.state == HalfOpen {
-				h.probes++
-			}
-			decisions[i].Reason = "selected"
-			c.Decisions = decisions
-			return c, h.generation, nil
-		}
-		roll -= group.candidate.Weight
-	}
-	return Candidate{}, 0, ErrUnavailable
+	plan := &Plan{candidates: candidates, tried: tried, policy: DefaultDynamicPolicy(), request: request}
+	candidate, generation, _, err := e.acquirePlan(plan, 1)
+	return candidate, generation, err
 }
 
 type Attempt struct {

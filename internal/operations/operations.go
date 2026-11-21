@@ -68,6 +68,17 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 			return e
 		}
 	}
+	var dynamicRouting bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='route_decisions')`, schema).Scan(&dynamicRouting); e != nil {
+		return e
+	}
+	if dynamicRouting {
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s,%s FROM %s;
+ GRANT UPDATE(state) ON %s TO %s;
+ REVOKE ALL ON %s,%s,%s,%s FROM %s,PUBLIC;`, table("physical_models"), table("route_decisions"), qa, table("physical_models"), qa, table("physical_models"), table("route_sessions"), table("route_stats_windows"), table("route_decisions"), qp)); e != nil {
+			return e
+		}
+	}
 	// Customer money changes only the balance, never account ownership or kind.
 	// The current payment/wallet ACL pass below also clears any old column grants.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;

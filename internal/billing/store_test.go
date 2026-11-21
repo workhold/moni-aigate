@@ -126,7 +126,7 @@ func integration(t *testing.T) *fixture {
 	policy := uuid.NewString()
 	exec("INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,$3,'manual','allow')", policy, f.model, fixtureRouteRevision)
 	for _, upstream := range []string{"upstream", "unknown", "missing", "unpriced-upstream", "unpriced"} {
-		exec("INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,$4,0,1,10,'default')", policy, f.channel, f.version, upstream)
+		insertFixtureBinding(t, tx, policy, f.channel, f.version, upstream)
 	}
 	exec("UPDATE models SET active_revision=$2 WHERE id=$1", f.model, fixtureRouteRevision)
 	meterquote.PublishCost(t, ctx, tx, meterquote.CostPrice{ChannelID: f.channel, UpstreamModel: "upstream", ModelID: f.model, Actor: f.admin, Basis: "contract", InputRate: billingRate(2000000), OutputRate: billingRate(2000000)})
@@ -181,6 +181,29 @@ type fixtureRouteBinding struct {
 	channel, version, upstream string
 }
 
+func insertRawAttempt(t *testing.T, tx pgx.Tx, tenant, request, attempt, channel, version, credential, upstream string) {
+	t.Helper()
+	_, err := tx.Exec(context.Background(), `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,$7)`, attempt, tenant, request, channel, version, credential, upstream)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func insertFixtureBinding(t *testing.T, tx pgx.Tx, policy, channel, version, upstream string) {
+	t.Helper()
+	_, err := tx.Exec(context.Background(), `INSERT INTO physical_models(logical_model_id,upstream_model,capability)
+ SELECT p.model_id,$2,jsonb_build_object('context_limit',c.profile->'context_limit','input_upper_bound',c.profile->'input_token_upper_bound','output_limit',c.profile->'output_limit','supports_tools',coalesce(c.profile->'supports_tools','false'::jsonb),'supports_parallel_tool_calls',coalesce(c.profile->'supports_parallel_tool_calls','false'::jsonb),'usage_semantics',coalesce(c.profile->>'usage_semantics','final'),'modalities',jsonb_build_array('text'),'quality_tier','standard','quality_score',NULL,'max_concurrency',10,'supported_parameters',coalesce(c.profile->'allowed_parameters','[]'::jsonb))
+ FROM route_policy_versions p JOIN model_capability_versions c ON c.id=p.profile_version AND c.model_id=p.model_id WHERE p.id=$1
+ ON CONFLICT(logical_model_id,upstream_model) DO NOTHING`, policy, upstream)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = tx.Exec(context.Background(), `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,weight,max_inflight) SELECT $1,$2,$3,$4,id,1,10 FROM physical_models WHERE logical_model_id=(SELECT model_id FROM route_policy_versions WHERE id=$1) AND upstream_model=$4`, policy, channel, version, upstream)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func publishFixtureRouteWithBindings(t *testing.T, f *fixture, revision int64, bindings ...fixtureRouteBinding) string {
 	t.Helper()
 	tx, err := f.pool.Begin(f.ctx)
@@ -193,9 +216,7 @@ func publishFixtureRouteWithBindings(t *testing.T, f *fixture, revision int64, b
 		t.Fatal(err)
 	}
 	for _, binding := range bindings {
-		if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,$4,1,10)", policy, binding.channel, binding.version, binding.upstream); err != nil {
-			t.Fatal(err)
-		}
+		insertFixtureBinding(t, tx, policy, binding.channel, binding.version, binding.upstream)
 	}
 	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", f.model, revision); err != nil {
 		t.Fatal(err)
@@ -1211,10 +1232,7 @@ func TestPostgresPublishedRouteSnapshot(t *testing.T) {
 		_ = tx.Rollback(f.ctx)
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", policy2, f.channel, f.version); err != nil {
-		_ = tx.Rollback(f.ctx)
-		t.Fatal(err)
-	}
+	insertFixtureBinding(t, tx, policy2, f.channel, f.version, "upstream")
 	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=2 WHERE id=$1", f.model); err != nil {
 		_ = tx.Rollback(f.ctx)
 		t.Fatal(err)
@@ -1348,9 +1366,7 @@ func TestPostgresPreciseBindingIsolationAdmission(t *testing.T) {
 	if _, err = tx.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,2)", newPolicy, f.model); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", newPolicy, f.channel, newVersion); err != nil {
-		t.Fatal(err)
-	}
+	insertFixtureBinding(t, tx, newPolicy, f.channel, newVersion, "upstream")
 	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=2 WHERE id=$1", f.model); err != nil {
 		t.Fatal(err)
 	}

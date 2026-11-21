@@ -265,6 +265,7 @@ func (s *Server) Engine() *gin.Engine {
 	p.GET("/procurement-cost-proposals/:id", s.procurementCostProposal)
 	p.POST("/procurement-cost-proposals/:id/approve", s.approveProcurementCost)
 	p.GET("/requests/:id/attempts", s.attempts)
+	p.GET("/requests/:id/route-decisions", s.requestRouteDecisions)
 	v := r.Group("/v1")
 	v.Use(s.apiKey())
 	v.GET("/models", s.inferenceModels)

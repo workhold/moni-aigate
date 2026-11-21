@@ -218,7 +218,7 @@ func TestCredentialPoolGatewayFrozenPublicationActualIdentityAndRevocation(t *te
 		}
 		var version, credential string
 		var decisions int
-		if err := f.pool.QueryRow(context.Background(), "SELECT channel_version_id,credential_id,jsonb_array_length(route_decisions) FROM upstream_attempts WHERE request_id=$1", r.Header.Get("X-Request-ID")).Scan(&version, &credential, &decisions); err != nil || version != wantVersion || credential != wantCredential || decisions != 1 {
+		if err := f.pool.QueryRow(context.Background(), "SELECT a.channel_version_id,a.credential_id,jsonb_array_length(d.candidates) FROM upstream_attempts a JOIN route_decisions d ON d.attempt_id=a.id WHERE a.request_id=$1", r.Header.Get("X-Request-ID")).Scan(&version, &credential, &decisions); err != nil || version != wantVersion || credential != wantCredential || decisions != 1 {
 			t.Fatal("actual pool identity/decision mismatch", version, credential, decisions, err)
 		}
 		if header := <-observed; header != wantHeader {
@@ -248,7 +248,7 @@ func TestCredentialPoolGatewayFrozenPublicationActualIdentityAndRevocation(t *te
 		t.Fatal("all-revoked pool dispatched", r.StatusCode, f.posts.Load())
 	}
 	var records, settlements int
-	if err := f.pool.QueryRow(context.Background(), "SELECT (SELECT count(*) FROM request_records),(SELECT count(*) FROM settlements)").Scan(&records, &settlements); err != nil || records != 3 || settlements != 3 {
+	if err := f.pool.QueryRow(context.Background(), "SELECT (SELECT count(*) FROM request_records),(SELECT count(*) FROM settlements)").Scan(&records, &settlements); err != nil || records != 4 || settlements != 4 {
 		t.Fatal("all-revoked admission affected funds", records, settlements, err)
 	}
 }
