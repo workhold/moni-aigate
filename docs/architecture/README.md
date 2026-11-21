@@ -187,6 +187,8 @@ flowchart TD
     Server --> Billing[唯一账务事务 / 客户与采购]
     Billing --> Pricing[分组售价 / 原报价快照]
     Billing --> PB[客户与采购周期预算]
+    Billing --> TextCache[032 同租户精确响应缓存\nTTL 正文与 cache-hit finalization]
+    TextCache --> DB
     Billing --> Sources[027 来源 / FIFO / 结算与逆序退款]
     Server --> Report[026 经营报表 / 对账 CSV]
     Server --> Display[034.6 展示配置]
@@ -668,9 +670,11 @@ sequenceDiagram
 
 `Reserve`、`RecordAttempt` 和 `PrepareDispatch` 是数据库内的最新准入检查点；撤权、来源策略、Key 范围/期限、渠道启停与凭据撤销不能只依赖请求开始时的缓存。`PrepareDispatch` 提交 `sending` 是允许发送的边界，之后的限制不能追溯撤回已在途请求，也不能阻止其财务收尾。[短阶段调度](../../internal/server/admission_queue.go)和[派发读取批次](../verification/dispatch-read-batches.md)优化只减少往返，不省略这些锁和新快照。
 
+032 在 Reserve 后增加可选的精确缓存分支：仅不可变路由版本显式开启、非流式、无工具且规范请求摘要匹配时读取同租户缓存。命中通过 [`RecordCacheFinalization`](../../internal/billing/cache.go) 和原 `Settle` 完成同价唯一结算，没有 attempt/event/采购预占；未命中才进入原 attempt 循环。命中响应的本地写失败沿既有交付事实处理，后台清理只删除过期缓存行。
+
 默认 `manual/allow` 且没有采购单价上限的路由，按渠道优先级/权重与健康/容量选择渠道。018 增加可选采购比价与硬单价门禁，详细规则见下文。然后在渠道的不可变凭据池中按成员权重/容量选择凭据；增加池成员不会额外扩大渠道的业务权重。已选择的渠道版本、池 revision、凭据、精确上游模型与采购报价写入 attempt。最多两个生成 attempt；仅在已证明无消费且满足策略时换渠道，未知消费、已经输出或同渠道换 Key 都不能触发重放。
 
-上游错误按显式机器码区分请求级与 binding 级影响。`model_not_found`、`model_not_available` 和 `unsupported_model` 才能写入 `route_binding_isolations`，而 `context_length_exceeded` 保留为当前请求错误，不持久化隔离共享 binding。裸状态码或人类可读消息不能触发 binding 隔离；相关分类与跨租户回归见 [`internal/provider/classification.go`](../../internal/provider/classification.go)、[`internal/server/gateway.go`](../../internal/server/gateway.go) 和 [`binding_isolation_integration_test.go`](../../internal/server/binding_isolation_integration_test.go)。
+上游错误按显式机器码区分请求级与 binding 级影响。032 起，`model_not_found`、`model_not_available`、`unsupported_model` 与 `context_length_exceeded` 都可写入 `route_binding_isolations`；上下文超限不计内存渠道故障，但按冻结矩阵持久隔离对应 binding。裸状态码或人类可读消息仍不能触发 binding 隔离；相关分类与跨租户回归见 [`internal/provider/classification.go`](../../internal/provider/classification.go)、[`internal/server/gateway.go`](../../internal/server/gateway.go) 和 [`binding_isolation_integration_test.go`](../../internal/server/binding_isolation_integration_test.go)。
 
 请求幂等和财务幂等各自持久化。提交结果未知时不得以“没收到响应”为由重试网络请求。客户取消、连接中断和 SSE 尾包丢失必须保留消费可能性，不能直接当成免费成功或零成本。
 
@@ -753,6 +757,17 @@ sequenceDiagram
 ### 029/031 验收合同冻结与计数
 
 [029](../../specs/029-phase1-acceptance/spec.md) 与 [031](../../specs/031-deterministic-mock-upstream/spec.md) 已于 2026-11-15 评审冻结，技术内容不变，见[冻结评审记录](../design/freeze-review-029-031-2026-11-15.md)。当前清单为 41 个唯一验收 ID，后续终验必须在同一提交上覆盖专用 PostgreSQL、deterministic mock 和隔离浏览器（桌面+390px），逐项写 `docs/verification/phase1/<ID>.md` 与 `summary.json`。2026-11-16 已在提交 `2634329bb3befd52749a2c8afb08b3260b6180d1` 上完成 41/41 整单通过，第一阶段本地 MVP 正式验收完成并具备内测条件；真实供应商、正式支付商、生产 SLA、HA 和 032 仍不在本次认证范围。
+
+### 032 第二阶段文本数据面（分片实施）
+
+032 按 2.1–2.5 分片实施，当前代码与专项证据不等于阶段收口。[规格](../../specs/032-phase2-text-data-plane/spec.md)、[实施设计](../../specs/032-phase2-text-data-plane/design.md)和[任务状态](../../specs/032-phase2-text-data-plane/tasks.md)保留完整边界。
+
+- **2.1 测量**：[`scripts/phase2-baseline`](../../scripts/phase2-baseline/README.md) 使用正常部署态完整商业链路和 031 mock，保存三轮配置、逐请求原始样本、活动流、资源与正确性证据。mock 直接输出进程内单调时钟微秒间隔，runner 不对反序列化 wall-clock 时间戳做差。当前仅实现 Chat 短 SSE 入口；固定 4 vCPU/8GB、100 活动流三轮和 Bifrost/Rust LiteLLM 对照未执行，见[基线状态](../verification/phase2/032-baseline.md)。
+- **2.2 健康与首事件**：[`current_012`](../../migrations/current_012_phase2_route_health.sql) 为不可变路由版本追加 `failure_threshold/open_ms/half_open_tokens`，Candidate/Attempt 使用同一路由快照，内存健康键为 channel+上游模型，半开令牌为 1..4。credential/quota 只持久隔离对应 credential，032 的 model/context 错误沿 binding isolation；rate_limit 与网络/服务/协议故障不授予重试。网关在写下游前预读首个完整事件，可信无消费错误才可换渠道，committed 后绝不切换。
+- **2.3 客户周期预算**：继续复用 023-B tenant/Key UTC control 与 Reserve 同事务完整 R 准入，不新增余额。推理 402 对外为 `budget_exceeded`，安全字段只有 scope/reason/window_used/limit_amount/window_reset_at；Playground 展示拒绝详情，拒绝事务不产生已接受 request、reservation、attempt 或上游接收。
+- **2.4/2.5 缓存**：D-032-1=A、D-032-2=同租户授权后跨 Key 共享。[`current_013`](../../migrations/current_013_phase2_text_cache.sql) 新增默认关闭的 `cache_ttl_seconds`、请求规范摘要、TTL 缓存表及 `source='cache'` 的无 event/attempt finalization 分支；[`current_014`](../../migrations/current_014_phase2_function_paths.sql) 为新增/替换 validator 固定部署 schema/`pg_catalog`/`pg_temp` 路径。[Store](../../internal/billing/cache.go) 事务内重读并锁定缓存行，数据库 guard 证明原请求已唯一结算且双侧 usage confirmed_final；命中复制 retail 最终量、写完整 supplier 零向量，再沿原钱包/资金来源/唯一 settlement 收尾。正文不进入日志、trace、报表或请求详情；projection 无缓存表权限，后台清理不生成模型请求。
+
+上述实现的专项范围与未验收项必须随 [032 任务](../../specs/032-phase2-text-data-plane/tasks.md) 和 [专项验证记录](../verification/phase2/032-implementation.md) 一起阅读；真实供应商、生产资格和完整 029 最终回归不由局部测试替代。
 
 ### 018 采购单价门禁与成本感知路由
 

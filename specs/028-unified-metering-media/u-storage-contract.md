@@ -392,6 +392,18 @@ known 全零费率仍返回真实 0 actual；`basis_unknown/version_missing` 无
 
 本片只替换实际结算的内部数值读端；准入的 pricing/routing DTO、预占入口及 HTTP/UI 发布指纹仍在后续切片，不将它们写成已完成。不改冻结研究/原型的宽标量 ABI，不新增金额公式、表、角色或报价身份。验收需包括 ready/unready、原价冻结、known 零价/unknown、完整双方量、单次 ceil、actual 超界和人工客户核对；在隔离当前 fixture 中令两种 scalar 反算函数拒绝调用后，上述结算仍须通过。
 
+#### 6.2.2 032 cache-hit finalization 受控扩展
+
+032 D-032-1=A 冻结后，`finalization_records` 追加不可变 `source`、`source_event_id` 与 `original_finalization_id`。普通 finalization 的 source 从其真实 event 回填，`original_finalization_id=NULL`，§6.1–6.2 的真实 event+attempt 约束全部保留。只有 `source='cache'` 使用以下闭合例外：
+
+1. `event_id=NULL`、`attempt_id=NULL`，不得伪造 metering event、upstream attempt 或采购 reservation；`(tenant_id,source,source_event_id)` 唯一，重复终结仍只读原结果。
+2. `original_finalization_id` 必须引用同租户、非 cache 的不可变原 finalization；原 request 已存在唯一 `status='settled'` 结算，原 retail/supplier usage 均 `confirmed_final`。原响应必须满足 032 的非流式、无工具、未过期缓存资格。
+3. 命中 request、原 finalization 与缓存读取共同绑定 tenant、协议、逻辑模型、route revision、profile/schema/variant 和规范请求摘要。命中 retail canonical/digest 逐字节等于原 retail 最终量；supplier canonical 是命中 request schema 的完整已知零向量，digest 仍使用 `inference.final.v1` 外层摘要。
+4. cache finalization 沿命中 request 自己的 `latest_finalization_id` 和唯一 `settlements` 入口结算；`charged_usage` 继续使用命中请求冻结的 retail rates 与 R，不能沿用原请求金额或创建零金额旁路账单。
+5. 无 attempt 的 cache-hit 供应商用量和成本是已知零，由 `source='cache'` 明确标识；不得计入原 attempt 成本，也不得把其他无 attempt 请求默认为 known zero。恢复只重读该 finalization/settlement，不重新生成响应或写缓存正文。
+
+缓存正文位于独立 TTL 表，不是计量/财务事实。命中 finalization 引用原 finalization 而不是缓存行，后台到期删除不被财务历史阻塞。具体键、隐私、清理和失败边界见 [032 实施设计](../032-phase2-text-data-plane/design.md)。
+
 ### 6.3 人工核对与平台 probe 的必要接线
 
 `reconciliation_cases.proposed_usage`替换为`proposed_observation_canonical BYTEA NULL`与`proposed_observation_digest BYTEA NULL`，与state/requester/evidence等组成精确NULL联合。当前U片这两个proposal列保存绑定原request的完整retail `QuantitiesWire` 原件及 `moni-aigate.metering.quantities.v1` 摘要；它不是已经发生的inference Observation，审批时才由原attempt/profile/schema/variant/Plan和proposal向量生成source=approved_reconciliation的普通event/finalization。proposal不能伪造attempt或因人工共享量而确认supplier成本。审批仍双人，supplier永远不可Confirmed；24h后不再收费。审批快照不按今天价重算。

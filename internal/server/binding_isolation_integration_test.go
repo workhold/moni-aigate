@@ -160,7 +160,7 @@ func TestPostgresBare404DoesNotPersistModelIsolation(t *testing.T) {
 	}
 }
 
-func TestPostgresContextLengthExceededDoesNotIsolateBindingAcrossTenants(t *testing.T) {
+func TestPostgresContextLengthExceededIsolatesBindingAcrossTenants(t *testing.T) {
 	f := newGatewayFixture(t, []http.HandlerFunc{func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		w.Header().Set("Content-Type", "application/json")
@@ -181,8 +181,8 @@ func TestPostgresContextLengthExceededDoesNotIsolateBindingAcrossTenants(t *test
 		t.Fatalf("context length failure status=%d posts=%d", status, f.posts.Load())
 	}
 	var isolated int
-	if err := f.pool.QueryRow(context.Background(), "SELECT count(*) FROM route_binding_isolations").Scan(&isolated); err != nil || isolated != 0 {
-		t.Fatalf("context length failure persisted binding isolation: count=%d err=%v", isolated, err)
+	if err := f.pool.QueryRow(context.Background(), "SELECT count(*) FROM route_binding_isolations").Scan(&isolated); err != nil || isolated != 1 {
+		t.Fatalf("032 context length failure did not persist binding isolation: count=%d err=%v", isolated, err)
 	}
 
 	ctx := context.Background()
@@ -222,10 +222,10 @@ func TestPostgresContextLengthExceededDoesNotIsolateBindingAcrossTenants(t *test
 		"messages":   []map[string]string{{"role": "user", "content": "normal"}},
 		"max_tokens": 20,
 	}
-	if status, _ := isolationRequestBody(t, f, otherToken, valid); status != http.StatusOK || f.posts.Load() != 2 {
-		t.Fatalf("other tenant lost shared binding after context length error: status=%d posts=%d", status, f.posts.Load())
+	if status, _ := isolationRequestBody(t, f, otherToken, valid); status != http.StatusServiceUnavailable || f.posts.Load() != 1 {
+		t.Fatalf("other tenant bypassed 032 binding isolation: status=%d posts=%d", status, f.posts.Load())
 	}
-	if err := f.pool.QueryRow(ctx, "SELECT count(*) FROM route_binding_isolations").Scan(&isolated); err != nil || isolated != 0 {
-		t.Fatalf("other tenant request changed binding isolation state: count=%d err=%v", isolated, err)
+	if err := f.pool.QueryRow(ctx, "SELECT count(*) FROM route_binding_isolations").Scan(&isolated); err != nil || isolated != 1 {
+		t.Fatalf("032 binding isolation state changed unexpectedly: count=%d err=%v", isolated, err)
 	}
 }

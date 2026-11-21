@@ -90,6 +90,9 @@ func (r *Response) readGeminiEvent() (*Event, error) {
 	if err != nil {
 		return fail(protocolError("upstream_invalid_json"))
 	}
+	if _, exists := m["error"]; exists {
+		return fail(r.streamError(m))
+	}
 	clean, finish, visible, hasParts, err := r.normalizeGemini(m, true)
 	if err != nil {
 		return fail(err)

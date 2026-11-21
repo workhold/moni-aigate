@@ -34,7 +34,7 @@ func TestAcquisitionDecisionsCoverEveryCandidate(t *testing.T) {
 	engine.inflight["full"] = 1
 	engine.health["quarantined"] = &health{state: Quarantined}
 	engine.health["open"] = &health{state: Open, until: now.Add(time.Minute)}
-	engine.health["probe"] = &health{state: HalfOpen, probe: true}
+	engine.health["probe"] = &health{state: HalfOpen, probes: 1}
 	for i := range candidates {
 		candidates[i].Endpoint.URL = "https://sensitive.invalid"
 		candidates[i].Endpoint.APIKey = "sensitive-secret"

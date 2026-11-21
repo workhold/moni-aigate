@@ -447,6 +447,12 @@ func run() error {
 						log.Write(telemetry.Record{Stage: "procurement_recovery", Code: "worker_failed"})
 					}
 					job, done = context.WithTimeout(ctx, 5*time.Second)
+					_, err = app.Billing.CleanupCache(job, 1000)
+					done()
+					if err != nil {
+						log.Write(telemetry.Record{Stage: "cache_cleanup", Code: "worker_failed"})
+					}
+					job, done = context.WithTimeout(ctx, 5*time.Second)
 					// Drain a bounded backlog; a single 100-event batch per 10s
 					// would make reports fall permanently behind modest traffic.
 					for batch := 0; batch < 50; batch++ {

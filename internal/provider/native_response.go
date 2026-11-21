@@ -98,7 +98,7 @@ func (r *Response) readNativeEvent() (*Event, error) {
 	}
 	typ = declared
 	if typ == "error" || typ == "response.failed" || (m["error"] != nil && !isNull(m["error"])) {
-		return fail(protocolError("upstream_stream_error"))
+		return fail(r.streamError(m))
 	}
 	var event *Event
 	if r.profile.ProtocolName() == ProtocolResponses {

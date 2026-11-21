@@ -228,6 +228,7 @@ func (r *Request) Profile() Profile { return cloneProfile(r.profile) }
 func cloneProfile(p Profile) Profile {
 	p.AllowedParameters = append([]string(nil), p.AllowedParameters...)
 	p.NoConsumptionStatuses = append([]int(nil), p.NoConsumptionStatuses...)
+	p.NoConsumptionEventCodes = append([]string(nil), p.NoConsumptionEventCodes...)
 	return p
 }
 func badRequest() error { return failure("invalid_request", 400, ClassCaller, ConsumptionNotSent) }

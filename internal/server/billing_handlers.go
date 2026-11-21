@@ -39,8 +39,43 @@ func billingError(c *gin.Context, s *Server, e error) bool {
 	if be.ResourceID != "" {
 		c.Header("X-Original-Request-ID", be.ResourceID)
 	}
+	if be.Code == "periodic_budget_exceeded" && inferencePath(c.Request.URL.Path) {
+		budgetExceeded(c, status, e)
+		return true
+	}
 	s.fail(c, status, be.Code, "操作未完成，请检查权限、余额、状态及 request_id")
 	return true
+}
+
+type budgetRejectionCarrier interface {
+	BudgetRejection() (billing.BudgetRejection, bool)
+}
+
+func budgetExceeded(c *gin.Context, status int, err error) {
+	const message = "操作未完成，请检查权限、余额、状态及 request_id"
+	detail := gin.H{"code": "budget_exceeded", "message": message}
+	var carrier budgetRejectionCarrier
+	if errors.As(err, &carrier) {
+		if rejection, ok := carrier.BudgetRejection(); ok && rejection.Valid() {
+			detail["scope"] = rejection.Scope
+			detail["reason"] = rejection.Reason
+			detail["window_used"] = rejection.WindowUsed
+			detail["limit_amount"] = rejection.LimitAmount
+			detail["window_reset_at"] = rejection.WindowResetAt
+		}
+	}
+	switch path := c.Request.URL.Path; {
+	case path == "/v1/messages":
+		detail["type"] = nativeErrorType(status)
+		c.AbortWithStatusJSON(status, gin.H{"type": "error", "error": detail, "request_id": c.GetString("request_id")})
+	case strings.HasPrefix(path, "/v1beta/"):
+		detail["status"] = status
+		c.AbortWithStatusJSON(status, gin.H{"error": detail, "request_id": c.GetString("request_id")})
+	default:
+		detail["type"] = "gateway_error"
+		detail["param"] = nil
+		c.AbortWithStatusJSON(status, gin.H{"error": detail})
+	}
 }
 func (s *Server) financialKey(c *gin.Context) bool {
 	key := c.GetHeader("Idempotency-Key")
@@ -123,7 +158,7 @@ func (s *Server) journals(c *gin.Context) {
 	s.page(c, `SELECT j.id,j.kind,j.reference,j.created_at,CASE WHEN j.kind='settled' THEN coalesce((SELECT sum(l.signed_delta)::text FROM journal_lines l JOIN ledger_accounts a ON a.id=l.account_id WHERE l.journal_id=j.id AND a.kind='REVENUE'),'0') ELSE coalesce((SELECT max(abs(l.signed_delta::numeric))::text FROM journal_lines l WHERE l.journal_id=j.id),'0') END AS amount FROM journals j WHERE j.tenant_id=$1`, tid)
 }
 func requestSQL() string {
-	return `SELECT r.id,r.model_id,r.profile_version,v.id AS reservation_id,(SELECT a.id FROM upstream_attempts a WHERE a.tenant_id=r.tenant_id AND a.request_id=r.id ORDER BY a.sequence,a.id COLLATE "C" LIMIT 1) AS attempt_id,schema.schema_id,encode(schema.schema_digest,'hex') AS schema_digest,schema.variant_key,convert_from(schema.retail_rates_canonical,'UTF8')::jsonb AS retail_rates,convert_from(schema.retail_bounds_canonical,'UTF8')::jsonb AS retail_bounds,m.public_name AS model_name,r.status,r.billing_status,r.created_at,settlement.id AS settlement_id,settlement.charged_amount,v.amount AS reserved_amount,f.protocol_outcome,f.transport_end_reason,f.delivery_stage,f.finish_reason,d.stage AS final_local_delivery,CASE WHEN f.id IS NULL THEN NULL ELSE f.retail_usage_state END AS usage_status,CASE WHEN f.retail_usage_state='confirmed_final' THEN (SELECT jsonb_agg(jsonb_set(q.value,'{status}',to_jsonb(f.retail_usage_state)) ORDER BY q.ord) FROM jsonb_array_elements(convert_from(f.retail_quantities_canonical,'UTF8')::jsonb->'quantities') WITH ORDINALITY AS q(value,ord)) ELSE NULL END AS retail_quantities FROM request_records r JOIN models m ON m.id=r.model_id JOIN request_meter_snapshots schema ON schema.tenant_id=r.tenant_id AND schema.request_id=r.id JOIN reservations v ON v.request_id=r.id LEFT JOIN settlements settlement ON settlement.request_id=r.id LEFT JOIN finalization_records f ON f.id=r.latest_finalization_id LEFT JOIN LATERAL(SELECT stage FROM delivery_observations WHERE request_id=r.id ORDER BY created_at DESC LIMIT 1)d ON true`
+	return `SELECT r.id,r.model_id,r.profile_version,v.id AS reservation_id,(SELECT a.id FROM upstream_attempts a WHERE a.tenant_id=r.tenant_id AND a.request_id=r.id ORDER BY a.sequence,a.id COLLATE "C" LIMIT 1) AS attempt_id,schema.schema_id,encode(schema.schema_digest,'hex') AS schema_digest,schema.variant_key,convert_from(schema.retail_rates_canonical,'UTF8')::jsonb AS retail_rates,convert_from(schema.retail_bounds_canonical,'UTF8')::jsonb AS retail_bounds,m.public_name AS model_name,r.status,r.billing_status,r.created_at,settlement.id AS settlement_id,settlement.charged_amount,v.amount AS reserved_amount,f.protocol_outcome,f.transport_end_reason,f.delivery_stage,f.finish_reason,coalesce(f.source='cache',false) AS cache_hit,f.source AS finalization_source,d.stage AS final_local_delivery,CASE WHEN f.id IS NULL THEN NULL ELSE f.retail_usage_state END AS usage_status,CASE WHEN f.retail_usage_state='confirmed_final' THEN (SELECT jsonb_agg(jsonb_set(q.value,'{status}',to_jsonb(f.retail_usage_state)) ORDER BY q.ord) FROM jsonb_array_elements(convert_from(f.retail_quantities_canonical,'UTF8')::jsonb->'quantities') WITH ORDINALITY AS q(value,ord)) ELSE NULL END AS retail_quantities FROM request_records r JOIN models m ON m.id=r.model_id JOIN request_meter_snapshots schema ON schema.tenant_id=r.tenant_id AND schema.request_id=r.id JOIN reservations v ON v.request_id=r.id LEFT JOIN settlements settlement ON settlement.request_id=r.id LEFT JOIN finalization_records f ON f.id=r.latest_finalization_id LEFT JOIN LATERAL(SELECT stage FROM delivery_observations WHERE request_id=r.id ORDER BY created_at DESC LIMIT 1)d ON true`
 }
 func (s *Server) requests(c *gin.Context) {
 	tid, ok := s.tenant(c)

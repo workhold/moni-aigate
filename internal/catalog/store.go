@@ -325,18 +325,34 @@ func (s *Store) Publish(ctx context.Context, actor, model string, expected int64
 }
 
 func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly)
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly, routing.DefaultBreakerConfig(), 0)
+}
+
+func (s *Store) PublishWithRoutePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig) (int64, error) {
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly, breaker, 0)
+}
+
+func (s *Store) PublishWithDataPlanePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly, breaker, cacheTTL)
 }
 
 func (s *Store) PublishCommercialWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial)
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial, routing.DefaultBreakerConfig(), 0)
 }
 
-func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, releaseIntent string) (int64, error) {
+func (s *Store) PublishCommercialWithRoutePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig) (int64, error) {
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial, breaker, 0)
+}
+
+func (s *Store) PublishCommercialWithDataPlanePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
+	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial, breaker, cacheTTL)
+}
+
+func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, releaseIntent string, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
 	if releaseIntent != ReleaseTestOnly && releaseIntent != ReleaseCommercial {
 		return 0, ErrInvalid
 	}
-	if routing.ValidateCostPolicy(costPolicy) != nil {
+	if routing.ValidateCostPolicy(costPolicy) != nil || routing.ValidateBreakerConfig(breaker) != nil || cacheTTL != 0 && (cacheTTL < 60 || cacheTTL > 86400) {
 		return 0, ErrInvalid
 	}
 	if len(bindings) == 0 || len(bindings) > 1000 {
@@ -369,7 +385,7 @@ func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, 
 		return 0, e
 	}
 	policy := uuid.NewString()
-	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy,release_intent) VALUES($1,$2,$3,$4,$5,$6)", policy, model, nextRevision, costPolicy.Mode, costPolicy.UnknownCostPolicy, releaseIntent); e != nil {
+	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy,release_intent,failure_threshold,open_ms,half_open_tokens,cache_ttl_seconds) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)", policy, model, nextRevision, costPolicy.Mode, costPolicy.UnknownCostPolicy, releaseIntent, breaker.FailureThreshold, breaker.OpenDuration.Milliseconds(), breaker.HalfOpenTokens, cacheTTL); e != nil {
 		return 0, e
 	}
 	for _, b := range bindings {
@@ -462,10 +478,11 @@ type Model struct {
 	ID, Name, ProfileVersion string
 	RequestedName            string
 	Revision                 int64
+	CacheTTLSeconds          int
 	Profile                  provider.Profile
 }
 
-const authorizedModelSQL = `SELECT m.id,m.public_name,m.profile_version,m.active_revision,meter_model_profile(m.id)
+const authorizedModelSQL = `SELECT m.id,m.public_name,m.profile_version,m.active_revision,meter_model_profile(m.id),coalesce((SELECT p.cache_ttl_seconds FROM route_policy_versions p WHERE p.model_id=m.id AND p.revision=m.active_revision),0)
 FROM models m
 LEFT JOIN model_aliases a ON a.model_id=m.id AND a.alias=$4 AND a.state='active'
 JOIN tenant_model_grants g ON g.model_id=m.id AND g.tenant_id=$1
@@ -481,7 +498,7 @@ LIMIT 1`
 func (s *Store) AuthorizedModel(ctx context.Context, tenant, user, key, name string) (Model, error) {
 	m := Model{}
 	var raw []byte
-	e := s.Pool.QueryRow(ctx, authorizedModelSQL, tenant, user, key, name).Scan(&m.ID, &m.Name, &m.ProfileVersion, &m.Revision, &raw)
+	e := s.Pool.QueryRow(ctx, authorizedModelSQL, tenant, user, key, name).Scan(&m.ID, &m.Name, &m.ProfileVersion, &m.Revision, &raw, &m.CacheTTLSeconds)
 	if e == nil {
 		m.RequestedName = name
 		e = json.Unmarshal(raw, &m.Profile)
@@ -497,6 +514,7 @@ type Candidate struct {
 	Priority, Weight, MaxInflight                                                     int
 	CredentialWeight, CredentialMaxInflight                                           int
 	CostPolicy                                                                        routing.CostPolicy
+	Breaker                                                                           routing.BreakerConfig
 	CostQuote                                                                         routecost.Quote
 	CostLimits                                                                        routecost.Limits
 	ProcurementManaged                                                                bool
@@ -520,7 +538,7 @@ func (s *Store) Candidates(ctx context.Context, model string, revision int64) ([
 // CandidateSnapshot preserves exclusion metadata for explaining an admitted
 // choice. Unavailable credentials are never decrypted or made dispatchable.
 func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision int64) ([]Candidate, error) {
-	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,v.base_url,v.region,v.allowed_cidrs,v.channel_kind,v.integration_mode,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,COALESCE((SELECT jsonb_agg(jsonb_build_object('dimension',l.dimension,'unit',l.unit,'numerator',l.numerator::text,'denominator',l.denominator::text) ORDER BY l.dimension COLLATE "C") FROM binding_cost_rate_limits l WHERE l.binding_id=b.id),'[]'::jsonb),ms.canonical,ms.schema_digest,b.variant_key,coalesce(q.id,''),coalesce(q.basis,'unknown'),q.rates_canonical,q.rates_digest,(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_capability_versions profile ON profile.id=p.profile_version AND profile.model_id=p.model_id JOIN meter_schemas ms ON ms.id=profile.schema_id AND ms.schema_digest=profile.schema_digest JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.schema_id=profile.schema_id AND cv.schema_digest=profile.schema_digest AND cv.variant_key=b.variant_key AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
+	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,v.base_url,v.region,v.allowed_cidrs,v.channel_kind,v.integration_mode,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,p.failure_threshold,p.open_ms,p.half_open_tokens,COALESCE((SELECT jsonb_agg(jsonb_build_object('dimension',l.dimension,'unit',l.unit,'numerator',l.numerator::text,'denominator',l.denominator::text) ORDER BY l.dimension COLLATE "C") FROM binding_cost_rate_limits l WHERE l.binding_id=b.id),'[]'::jsonb),ms.canonical,ms.schema_digest,b.variant_key,coalesce(q.id,''),coalesce(q.basis,'unknown'),q.rates_canonical,q.rates_digest,(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_capability_versions profile ON profile.id=p.profile_version AND profile.model_id=p.model_id JOIN meter_schemas ms ON ms.id=profile.schema_id AND ms.schema_digest=profile.schema_digest JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.schema_id=profile.schema_id AND cv.schema_digest=profile.schema_digest AND cv.variant_key=b.variant_key AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
 	if e != nil {
 		return nil, e
 	}
@@ -530,10 +548,12 @@ func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision in
 		v := Candidate{}
 		var ciphertext string
 		var caps []byte
+		var openMS int
 		quote := routecost.StoredInput{}
-		if e = rows.Scan(&v.BindingID, &v.ChannelID, &v.VersionID, &v.CredentialID, &v.UpstreamModel, &v.URL, &v.Region, &v.AllowedCIDRs, &v.ChannelKind, &v.IntegrationMode, &v.Priority, &v.Weight, &v.MaxInflight, &v.CredentialWeight, &v.CredentialMaxInflight, &ciphertext, &v.ExclusionReason, &v.CostPolicy.Mode, &v.CostPolicy.UnknownCostPolicy, &caps, &quote.SchemaCanonical, &quote.SchemaDigest, &quote.VariantKey, &quote.VersionID, &quote.Basis, &quote.RatesCanonical, &quote.RatesDigest, &v.ProcurementManaged, &v.ProcurementState, &v.ProcurementAvailable); e != nil {
+		if e = rows.Scan(&v.BindingID, &v.ChannelID, &v.VersionID, &v.CredentialID, &v.UpstreamModel, &v.URL, &v.Region, &v.AllowedCIDRs, &v.ChannelKind, &v.IntegrationMode, &v.Priority, &v.Weight, &v.MaxInflight, &v.CredentialWeight, &v.CredentialMaxInflight, &ciphertext, &v.ExclusionReason, &v.CostPolicy.Mode, &v.CostPolicy.UnknownCostPolicy, &v.Breaker.FailureThreshold, &openMS, &v.Breaker.HalfOpenTokens, &caps, &quote.SchemaCanonical, &quote.SchemaDigest, &quote.VariantKey, &quote.VersionID, &quote.Basis, &quote.RatesCanonical, &quote.RatesDigest, &v.ProcurementManaged, &v.ProcurementState, &v.ProcurementAvailable); e != nil {
 			return nil, e
 		}
+		v.Breaker.OpenDuration = time.Duration(openMS) * time.Millisecond
 		quote.ChannelID, quote.UpstreamModel = v.ChannelID, v.UpstreamModel
 		v.CostQuote, e = routecost.ParseStoredQuote(quote)
 		if e != nil {

@@ -89,7 +89,10 @@ func (s *Store) Report(ctx context.Context, q Query) (Report, error) {
  coalesce((SELECT released FROM report_totals WHERE tenant_id=$1 AND consumer=(SELECT consumer FROM active_report_projection WHERE singleton)),0)::text,
  coalesce((SELECT requests FROM report_totals WHERE tenant_id=$1 AND consumer=(SELECT consumer FROM active_report_projection WHERE singleton)),0),
  coalesce((SELECT sum(cost_amount) FROM upstream_attempts WHERE tenant_id=$1 AND cost_status<>'unknown'),0)::text,
- (SELECT count(*) FROM upstream_attempts WHERE tenant_id=$1 AND cost_status='unknown')`, q.TenantID).Scan(&r.Credited, &r.Charged, &r.Refunded, &r.Released, &r.Requests, &r.KnownProviderCost, &r.UnknownProviderCosts)
+ (SELECT count(*) FROM upstream_attempts WHERE tenant_id=$1 AND cost_status='unknown')
+ +(SELECT count(*) FROM settlements st WHERE st.tenant_id=$1 AND st.status='settled'
+   AND NOT EXISTS(SELECT 1 FROM upstream_attempts a WHERE a.tenant_id=st.tenant_id AND a.request_id=st.request_id)
+   AND NOT EXISTS(SELECT 1 FROM request_records r JOIN finalization_records f ON f.tenant_id=r.tenant_id AND f.request_id=r.id AND f.id=r.latest_finalization_id WHERE r.tenant_id=st.tenant_id AND r.id=st.request_id AND f.source='cache'))`, q.TenantID).Scan(&r.Credited, &r.Charged, &r.Refunded, &r.Released, &r.Requests, &r.KnownProviderCost, &r.UnknownProviderCosts)
 	return r, err
 }
 

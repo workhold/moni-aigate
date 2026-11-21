@@ -21,29 +21,38 @@ import (
 type Options struct {
 	AllowDirectives bool
 	Now             func() time.Time
+	// Wait is a deterministic test hook. Production uses a context-aware timer.
+	Wait func(context.Context, time.Duration) error
 }
 
 type Receipt struct {
-	Seq        uint64    `json:"seq"`
-	Candidate  string    `json:"candidate"`
-	Protocol   string    `json:"protocol"`
-	Model      string    `json:"model"`
-	Stream     bool      `json:"stream"`
-	BodySHA256 string    `json:"body_sha256"`
-	Nonce      string    `json:"nonce,omitempty"`
-	Fault      string    `json:"fault,omitempty"`
-	ReceivedAt time.Time `json:"received_at"`
-	Completed  bool      `json:"completed"`
+	Seq                 uint64     `json:"seq"`
+	Candidate           string     `json:"candidate"`
+	Protocol            string     `json:"protocol"`
+	Model               string     `json:"model"`
+	Stream              bool       `json:"stream"`
+	BodySHA256          string     `json:"body_sha256"`
+	Nonce               string     `json:"nonce,omitempty"`
+	Fault               string     `json:"fault,omitempty"`
+	ReceivedAt          time.Time  `json:"received_at"`
+	FirstEventAt        *time.Time `json:"first_event_at,omitempty"`
+	FirstContentAt      *time.Time `json:"first_content_at,omitempty"`
+	FirstEventAfterUS   *int64     `json:"first_event_after_us,omitempty"`
+	FirstContentAfterUS *int64     `json:"first_content_after_us,omitempty"`
+	CompletedAt         *time.Time `json:"completed_at,omitempty"`
+	Completed           bool       `json:"completed"`
 }
 
 type Server struct {
 	cfg             Config
 	allowDirectives bool
 	now             func() time.Time
+	wait            func(context.Context, time.Duration) error
 	nextSeq         atomic.Uint64
 	mu              sync.RWMutex
 	receipts        []Receipt
 	completion      map[uint64]int
+	receivedClock   map[uint64]time.Time
 }
 
 func New(cfg Config, opts Options) (*Server, error) {
@@ -53,11 +62,16 @@ func New(cfg Config, opts Options) (*Server, error) {
 	if opts.Now == nil {
 		opts.Now = time.Now
 	}
+	if opts.Wait == nil {
+		opts.Wait = waitForDuration
+	}
 	return &Server{
 		cfg:             cfg,
 		allowDirectives: opts.AllowDirectives,
 		now:             opts.Now,
+		wait:            opts.Wait,
 		completion:      make(map[uint64]int),
+		receivedClock:   make(map[uint64]time.Time),
 	}, nil
 }
 
@@ -155,8 +169,7 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		BodySHA256: sha256Hex(body),
 		Nonce:      directives.nonce,
 		Fault:      faultName,
-		ReceivedAt: s.now().UTC(),
-	})
+	}, s.now())
 
 	if fault.kind == "reject_429" || fault.kind == "reject_429_unlisted" {
 		// Make the deterministic rate-limit evidence explicit. The gateway
@@ -216,6 +229,9 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	beginJSON(w)
+	// Record the boundary before Write can release a buffered response to the
+	// client. Failed/incomplete responses never become completed evidence.
+	s.markEmission(seq, true)
 	_, err = w.Write(value)
 	if err == nil {
 		s.complete(seq)
@@ -239,11 +255,13 @@ func (s *Server) serveReceipts(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.Receipts(since))
 }
 
-func (s *Server) recordReceipt(receipt Receipt) uint64 {
+func (s *Server) recordReceipt(receipt Receipt, received time.Time) uint64 {
 	receipt.Seq = s.nextSeq.Add(1)
+	receipt.ReceivedAt = received.UTC()
 	s.mu.Lock()
 	s.receipts = append(s.receipts, receipt)
 	s.completion[receipt.Seq] = len(s.receipts) - 1
+	s.receivedClock[receipt.Seq] = received
 	s.mu.Unlock()
 	return receipt.Seq
 }
@@ -252,7 +270,40 @@ func (s *Server) complete(seq uint64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if index, ok := s.completion[seq]; ok {
+		now := s.now().UTC()
 		s.receipts[index].Completed = true
+		s.receipts[index].CompletedAt = &now
+	}
+}
+
+func (s *Server) markEmission(seq uint64, content bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	index, ok := s.completion[seq]
+	if !ok {
+		return
+	}
+	now := s.now()
+	elapsed := now.Sub(s.receivedClock[seq]).Microseconds()
+	now = now.UTC()
+	if s.receipts[index].FirstEventAt == nil {
+		s.receipts[index].FirstEventAt = &now
+		s.receipts[index].FirstEventAfterUS = &elapsed
+	}
+	if content && s.receipts[index].FirstContentAt == nil {
+		s.receipts[index].FirstContentAt = &now
+		s.receipts[index].FirstContentAfterUS = &elapsed
+	}
+}
+
+func waitForDuration(ctx context.Context, duration time.Duration) error {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
@@ -264,14 +315,7 @@ func (s *Server) delay(ctx context.Context, baseMS int, fault parsedFault) bool 
 	if ms <= 0 {
 		return true
 	}
-	timer := time.NewTimer(time.Duration(ms) * time.Millisecond)
-	defer timer.Stop()
-	select {
-	case <-timer.C:
-		return true
-	case <-ctx.Done():
-		return false
-	}
+	return s.wait(ctx, time.Duration(ms)*time.Millisecond) == nil
 }
 
 func waitForCancel(ctx context.Context) error {
@@ -560,16 +604,15 @@ func writeSSE(w http.ResponseWriter, event string, value any) error {
 
 func (s *Server) streamResponse(ctx context.Context, w http.ResponseWriter, seq uint64, protocol, model, text string, input, output int64, fault parsedFault, intervalMS int) error {
 	write := func(event string, value any) error {
+		// Mark immediately before Write/Flush can make the event observable. A
+		// later transport error leaves the receipt incomplete and fails acceptance.
+		s.markEmission(seq, mockEventContent(protocol, event, value))
 		if err := writeSSE(w, event, value); err != nil {
 			return err
 		}
 		if intervalMS > 0 {
-			timer := time.NewTimer(time.Duration(intervalMS) * time.Millisecond)
-			defer timer.Stop()
-			select {
-			case <-timer.C:
-			case <-ctx.Done():
-				return ctx.Err()
+			if err := s.wait(ctx, time.Duration(intervalMS)*time.Millisecond); err != nil {
+				return err
 			}
 		}
 		return nil
@@ -605,6 +648,72 @@ func (s *Server) streamResponse(ctx context.Context, w http.ResponseWriter, seq 
 		return nil
 	}
 	return nil
+}
+
+func mockEventContent(protocol, event string, value any) bool {
+	object, ok := value.(map[string]any)
+	if !ok {
+		return false
+	}
+	nonempty := func(v any) bool {
+		text, ok := v.(string)
+		return ok && text != ""
+	}
+	switch protocol {
+	case "chat":
+		choices, _ := object["choices"].([]any)
+		for _, raw := range choices {
+			choice, _ := raw.(map[string]any)
+			delta, _ := choice["delta"].(map[string]any)
+			if nonempty(delta["content"]) || nonempty(delta["refusal"]) {
+				return true
+			}
+			calls, _ := delta["tool_calls"].([]any)
+			for _, raw := range calls {
+				call, _ := raw.(map[string]any)
+				function, _ := call["function"].(map[string]any)
+				if nonempty(function["name"]) || nonempty(function["arguments"]) {
+					return true
+				}
+			}
+		}
+	case "responses":
+		if event == "response.output_text.delta" || event == "response.refusal.delta" || event == "response.function_call_arguments.delta" {
+			return nonempty(object["delta"])
+		}
+		if event == "response.output_item.added" {
+			item, _ := object["item"].(map[string]any)
+			return item["type"] == "function_call" && nonempty(item["name"])
+		}
+	case "messages":
+		if event == "content_block_delta" {
+			delta, _ := object["delta"].(map[string]any)
+			return nonempty(delta["text"]) || nonempty(delta["partial_json"])
+		}
+		if event == "content_block_start" {
+			block, _ := object["content_block"].(map[string]any)
+			return block["type"] == "tool_use" && nonempty(block["name"])
+		}
+	case "gemini":
+		candidates, _ := object["candidates"].([]any)
+		for _, raw := range candidates {
+			candidate, _ := raw.(map[string]any)
+			content, _ := candidate["content"].(map[string]any)
+			parts, _ := content["parts"].([]any)
+			for _, raw := range parts {
+				part, _ := raw.(map[string]any)
+				if nonempty(part["text"]) {
+					return true
+				}
+				call, _ := part["functionCall"].(map[string]any)
+				args, _ := call["args"].(map[string]any)
+				if nonempty(call["name"]) || len(args) > 0 {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func chatToolCallDeltas() []any {

@@ -47,7 +47,7 @@ func classifyUpstream(status int, raw []byte) (FailureClass, bool) {
 		case "model_not_found", "model_not_available", "unsupported_model":
 			return ClassModel, true
 		case "context_length_exceeded":
-			return ClassModel, false
+			return ClassModel, true
 		case "content_filter", "content_policy_violation", "policy_violation":
 			return ClassPolicy, false
 		}

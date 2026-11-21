@@ -506,13 +506,14 @@ SELECT $1,$2,$3,$4,$5,$6,$7,COALESCE(a.profile_version,q.profile_version),COALES
 	if f.ID == "" {
 		f.ID = uuid.NewString()
 	}
-	tag, err = tx.Exec(ctx, `INSERT INTO finalization_records(id,tenant_id,request_id,event_id,input_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,policy_version,attempt_id,retail_usage_state,supplier_usage_state,retail_quantities_canonical,retail_quantities_digest,supplier_quantities_canonical,supplier_quantities_digest)
+	tag, err = tx.Exec(ctx, `INSERT INTO finalization_records(id,tenant_id,request_id,event_id,input_digest,protocol_outcome,transport_end_reason,delivery_stage,content_written,finish_reason,policy_version,attempt_id,retail_usage_state,supplier_usage_state,retail_quantities_canonical,retail_quantities_digest,supplier_quantities_canonical,supplier_quantities_digest,source,source_event_id,original_finalization_id,cache_id)
 SELECT $1,$2,$3,e.id,$4,$5,$6,$7,$8,$9,$10,e.attempt_id,e.retail_usage_state,
  CASE WHEN e.source='approved_reconciliation' AND e.supplier_usage_state<>'conflicting' THEN 'missing' ELSE e.supplier_usage_state END,
  CASE WHEN e.retail_usage_state='confirmed_final' THEN meter_side_quantity_canonical(e.schema_id,'retail',qi.quantity,qo.quantity) END,
  CASE WHEN e.retail_usage_state='confirmed_final' THEN meter_final_digest(e.schema_digest,'retail',meter_side_quantity_canonical(e.schema_id,'retail',qi.quantity,qo.quantity)) END,
  CASE WHEN e.supplier_usage_state='confirmed_final' AND e.source<>'approved_reconciliation' THEN meter_side_quantity_canonical(e.schema_id,'supplier',qi.quantity,qo.quantity) END,
- CASE WHEN e.supplier_usage_state='confirmed_final' AND e.source<>'approved_reconciliation' THEN meter_final_digest(e.schema_digest,'supplier',meter_side_quantity_canonical(e.schema_id,'supplier',qi.quantity,qo.quantity)) END
+ CASE WHEN e.supplier_usage_state='confirmed_final' AND e.source<>'approved_reconciliation' THEN meter_final_digest(e.schema_digest,'supplier',meter_side_quantity_canonical(e.schema_id,'supplier',qi.quantity,qo.quantity)) END,
+ e.source,e.source_event_id,NULL,NULL
 FROM metering_events e
 JOIN meter_event_quantities qi ON qi.event_id=e.id AND qi.dimension='text_input_token'
 JOIN meter_event_quantities qo ON qo.event_id=e.id AND qo.dimension='text_output_token'

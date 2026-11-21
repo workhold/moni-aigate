@@ -21,7 +21,7 @@ func TestRouteDecisionSnapshotsAreSafeImmutableAndPlatformOnly(t *testing.T) {
 	if err := f.pool.QueryRow(ctx, "SELECT credential_id FROM channel_versions WHERE channel_id=$1", channels[1]).Scan(&credential); err != nil {
 		t.Fatal(err)
 	}
-	f.server.Routing.Cooldown(credential+":"+f.model, time.Minute)
+	f.server.Routing.Cooldown(channels[1]+":provider-model", time.Minute)
 	response := f.request(t, ctx, false, false)
 	body, _ := io.ReadAll(response.Body)
 	if response.StatusCode != 200 {

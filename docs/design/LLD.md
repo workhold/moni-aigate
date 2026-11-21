@@ -479,6 +479,17 @@ sequenceDiagram
 
 **验收测试（第三阶段）**：同一快照回放一致；硬约束失败者不因评分高而复活；可能已发送的请求不被重放；跨模型切换后售价快照、采购成本快照与唯一结算一致；成本未知时毛利保护不按 0 处理；deterministic mock fixture 覆盖三类切换（同逻辑模型多供应商、同档位多物理模型、跨档位 auto）。
 
+### 9.3 第二阶段文本数据面实施合同（032）
+
+032 的具体接口、状态机与追加迁移以 [实施设计](../../specs/032-phase2-text-data-plane/design.md) 为准。本节只补当前链路的衔接，不重复定义资金算法：
+
+- `route_policy_versions` 携带不可变 `failure_threshold/open_ms/half_open_tokens` 与默认关闭的 `cache_ttl_seconds`；一次请求只读取一个完整 revision，健康/cooldown 仍是进程内可变状态，持久 credential/binding/quota 隔离不随重启解除。
+- 流式在首个完整上游事件通过协议校验前不得写 headers、心跳或 body；首个字节实际写出后 committed，任何后续失败都不换渠道。首事件失败仍只凭 Consumption 判断重试。
+- 客户 tenant/Key 周期预算继续使用 023-B 的 Reserve 同事务控制与 UTC 窗口；032 只补 402 安全拒绝详情和控制台呈现，不新增余额或请求级资金表。
+- 精确缓存仅在 Reserve 与幂等准入后读取。命中以 `source='cache'` 的无 event/attempt finalization 引用已结算、双侧 confirmed_final 的原 finalization，沿原 Settle 收费；普通观察的真实 attempt 规则不变。缓存正文只存 TTL 内，后台清理不触碰资金或模型生成。
+
+上述合同的分片完成状态见 [032 任务](../../specs/032-phase2-text-data-plane/tasks.md)。mock 专项不能认证真实供应商，测量入口不能替代固定资源三轮报告，局部回归不能替代最终完整 029。
+
 ## 10. 密钥、权限与出口安全
 
 网关 Key 采用至少 256bit 随机熵，形如 `mg_live_<id>_<secret>`；数据库存 SHA-256 摘要和非敏感 prefix，恒定时间比较。因随机秘密足够强，摘要不作为人类密码算法替代；用户密码采用 Argon2id 或合适参数的 bcrypt。Key 仅创建响应展示一次；重置即新建并撤销旧 Key。

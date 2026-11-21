@@ -309,12 +309,33 @@ type failingWriter struct{ err error }
 
 func (w failingWriter) Write([]byte) (int, error) { return 0, w.err }
 
+func TestOperatingReportCacheZeroAndOtherNoAttemptUnknown(t *testing.T) {
+	f := testFilter()
+	for _, tc := range []struct {
+		name        string
+		cache       bool
+		wantUnknown int64
+		wantMargin  bool
+	}{{"explicit cache", true, 0, true}, {"other no-attempt", false, 1, false}} {
+		t.Run(tc.name, func(t *testing.T) {
+			facts := []requestFact{{
+				row:     RequestRow{RequestID: "r", ModelID: "m", BillingStatus: "settled", CreatedAt: f.From},
+				charged: text("0"), refunded: text("0"), cache: tc.cache,
+			}}
+			report, err := aggregate(f, f.From, facts, nil, nil, nil)
+			if err != nil || report.Summary.UnknownProviderCosts != tc.wantUnknown || report.Summary.KnownProviderCost != "0" || (report.Summary.GrossMargin != nil) != tc.wantMargin {
+				t.Fatalf("no-attempt supplier cost classification changed: %+v, err=%v", report.Summary, err)
+			}
+		})
+	}
+}
+
 func TestReadSQLHasBoundedCurrentFactsOnly(t *testing.T) {
 	if !strings.Contains(requestsSQL, "LIMIT 5001") || !strings.Contains(requestsSQL, "r.created_at >= $1 AND r.created_at < $2") || !strings.Contains(attemptsSQL, "ANY($1::pg_catalog.text[])") || !strings.Contains(mediaRequestsSQL, "q.created_at >= $1 AND q.created_at < $2") || !strings.Contains(mediaAttemptsSQL, "ANY($1::pg_catalog.text[])") {
 		t.Fatal("cohort bound or exact interval removed")
 	}
 	for _, sql := range []string{requestsSQL, attemptsSQL, mediaRequestsSQL, mediaAttemptsSQL} {
-		for _, forbidden := range []string{"FOR UPDATE", "FOR SHARE", "INSERT ", "UPDATE ", "DELETE ", "report_totals", "platform_probe", "pp_", "funding_lot"} {
+		for _, forbidden := range []string{"FOR UPDATE", "FOR SHARE", "INSERT ", "UPDATE ", "DELETE ", "report_totals", "platform_probe", "pp_", "funding_lot", "text_response_cache", "response_body"} {
 			if strings.Contains(sql, forbidden) {
 				t.Fatalf("operating report now depends on %q", forbidden)
 			}

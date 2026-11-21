@@ -12,10 +12,11 @@ import (
 
 const requestsSQL = `SELECT r.id,r.tenant_id,t.name,r.model_id,m.public_name,r.status,r.billing_status,r.created_at,
  coalesce(r.protocol,''),coalesce(r.execution_kind,''),coalesce(ms.profile_version,''),coalesce(ms.schema_id,''),coalesce(encode(ms.schema_digest,'hex'),''),coalesce(ms.variant_key,''),
- s.charged_amount::pg_catalog.text,s.refunded_amount::pg_catalog.text
+ s.charged_amount::pg_catalog.text,s.refunded_amount::pg_catalog.text,coalesce(fz.source='cache',false)
  FROM request_records r JOIN tenants t ON t.id=r.tenant_id JOIN models m ON m.id=r.model_id
  LEFT JOIN request_meter_snapshots ms ON ms.tenant_id=r.tenant_id AND ms.request_id=r.id
  LEFT JOIN settlements s ON s.request_id=r.id AND s.tenant_id=r.tenant_id
+ LEFT JOIN finalization_records fz ON fz.tenant_id=r.tenant_id AND fz.request_id=r.id AND fz.id=r.latest_finalization_id
  WHERE r.created_at >= $1 AND r.created_at < $2 AND ($3='' OR r.tenant_id=$3) AND ($4='' OR r.model_id=$4)
  AND ($5='' OR r.protocol=$5) AND ($6='' OR r.execution_kind=$6)
  ORDER BY r.created_at DESC,r.id COLLATE "C" DESC LIMIT 5001`
@@ -28,7 +29,7 @@ const mediaRequestsSQL = `SELECT q.id,q.tenant_id,t.name,q.model_key,q.model_key
  CASE WHEN s.id IS NULL THEN q.state ELSE s.status END,q.created_at,q.operation,
  CASE WHEN q.operation='video_generation' THEN 'asynchronous' ELSE 'synchronous' END,
  q.profile_version,'','', '',s.charged_amount::pg_catalog.text,
- CASE WHEN s.id IS NULL THEN NULL ELSE '0' END
+ CASE WHEN s.id IS NULL THEN NULL ELSE '0' END,false
  FROM media_requests q JOIN tenants t ON t.id=q.tenant_id
  LEFT JOIN media_settlements s ON s.tenant_id=q.tenant_id AND s.request_id=q.id
  WHERE q.created_at >= $1 AND q.created_at < $2 AND ($3='' OR q.tenant_id=$3)
@@ -168,7 +169,7 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 	for rows.Next() {
 		var fact requestFact
 		r := &fact.row
-		if err = rows.Scan(&r.RequestID, &r.TenantID, &r.TenantName, &r.ModelID, &r.ModelName, &r.Status, &r.BillingStatus, &r.CreatedAt, &r.Protocol, &r.ExecutionKind, &r.ProfileVersion, &r.SchemaID, &r.SchemaDigest, &r.VariantKey, &fact.charged, &fact.refunded); err != nil {
+		if err = rows.Scan(&r.RequestID, &r.TenantID, &r.TenantName, &r.ModelID, &r.ModelName, &r.Status, &r.BillingStatus, &r.CreatedAt, &r.Protocol, &r.ExecutionKind, &r.ProfileVersion, &r.SchemaID, &r.SchemaDigest, &r.VariantKey, &fact.charged, &fact.refunded, &fact.cache); err != nil {
 			rows.Close()
 			return Report{}, err
 		}
@@ -189,7 +190,7 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 	for rows.Next() {
 		var fact requestFact
 		r := &fact.row
-		if err = rows.Scan(&r.RequestID, &r.TenantID, &r.TenantName, &r.ModelID, &r.ModelName, &r.Status, &r.BillingStatus, &r.CreatedAt, &r.Protocol, &r.ExecutionKind, &r.ProfileVersion, &r.SchemaID, &r.SchemaDigest, &r.VariantKey, &fact.charged, &fact.refunded); err != nil {
+		if err = rows.Scan(&r.RequestID, &r.TenantID, &r.TenantName, &r.ModelID, &r.ModelName, &r.Status, &r.BillingStatus, &r.CreatedAt, &r.Protocol, &r.ExecutionKind, &r.ProfileVersion, &r.SchemaID, &r.SchemaDigest, &r.VariantKey, &fact.charged, &fact.refunded, &fact.cache); err != nil {
 			rows.Close()
 			return Report{}, err
 		}

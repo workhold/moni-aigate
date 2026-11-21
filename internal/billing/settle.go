@@ -22,7 +22,11 @@ func settlementRow(ctx context.Context, tx pgx.Tx, tenant, request string) (Sett
 func finalizationRow(ctx context.Context, tx pgx.Tx, id string) (Finalization, error) {
 	var f Finalization
 	var input, output *int64
-	err := tx.QueryRow(ctx, `SELECT f.id,f.event_id,f.request_id,e.retail_usage_state,meter_event_quantity(e.id,'text_input_token'),meter_event_quantity(e.id,'text_output_token'),f.protocol_outcome,f.transport_end_reason,f.delivery_stage,f.content_written,f.finish_reason FROM finalization_records f JOIN metering_events e ON e.id=f.event_id WHERE f.id=$1`, id).Scan(&f.ID, &f.EventID, &f.RequestID, &f.Usage.Status, &input, &output, &f.ProtocolOutcome, &f.TransportEndReason, &f.DeliveryStage, &f.ContentWritten, &f.FinishReason)
+	err := tx.QueryRow(ctx, `SELECT f.id,coalesce(f.event_id,''),f.request_id,f.retail_usage_state,
+ CASE WHEN f.source='cache' THEN (convert_from(f.retail_quantities_canonical,'UTF8')::jsonb->'quantities'->0->>'quantity')::bigint ELSE meter_event_quantity(e.id,'text_input_token') END,
+ CASE WHEN f.source='cache' THEN (convert_from(f.retail_quantities_canonical,'UTF8')::jsonb->'quantities'->1->>'quantity')::bigint ELSE meter_event_quantity(e.id,'text_output_token') END,
+ f.protocol_outcome,f.transport_end_reason,f.delivery_stage,f.content_written,f.finish_reason
+ FROM finalization_records f LEFT JOIN metering_events e ON e.id=f.event_id WHERE f.id=$1`, id).Scan(&f.ID, &f.EventID, &f.RequestID, &f.Usage.Status, &input, &output, &f.ProtocolOutcome, &f.TransportEndReason, &f.DeliveryStage, &f.ContentWritten, &f.FinishReason)
 	if err == nil {
 		if input != nil {
 			f.Usage.InputTokens = *input
