@@ -8890,3 +8890,16 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `internal/tasks/service_test.go`
 
 </details>
+
+## 2026-11-21T20:05:11Z · 5bea3b748392
+
+修复 GNU/Linux 下 deployment QA 将 provisioning stdout 重定向到同一 business.env 输入的自读写失败；分离受保护 stdout 文件，不改变部署模块、权限、数据合同或业务断言
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/deployment-business-qa.test.sh`
+- modified `scripts/deployment-qa.sh`
+
+</details>

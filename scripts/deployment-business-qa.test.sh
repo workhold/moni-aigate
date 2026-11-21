@@ -5,6 +5,14 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 runner="$root/scripts/deployment-business-qa.sh"
 ws_client="$root/scripts/deployment-business-qa-ws.py"
 provision="$root/scripts/deployment-business-provision.sh"
+deployment_qa="$root/scripts/deployment-qa.sh"
+
+bash -n "$deployment_qa"
+grep -qF '"$repo_dir/scripts/deployment-business-provision.sh" >"$work_dir/business-provision.stdout"' "$deployment_qa"
+if grep -qF '"$repo_dir/scripts/deployment-business-provision.sh" >"$work_dir/business.env"' "$deployment_qa"; then
+  echo "deployment QA must not redirect provision stdout onto its own business.env input" >&2
+  exit 1
+fi
 
 bash -n "$runner"
 bash -n "$provision"

@@ -180,7 +180,7 @@ if [ "$business" = true ]; then
   BUSINESS_QA_BASE_URL="http://127.0.0.1:${port}" \
   BUSINESS_QA_ADMIN_PASSWORD="$(cat "$password_file")" \
   BUSINESS_QA_OUTPUT_DIR="$work_dir" \
-    "$repo_dir/scripts/deployment-business-provision.sh" >"$work_dir/business.env"
+    "$repo_dir/scripts/deployment-business-provision.sh" >"$work_dir/business-provision.stdout"
   # The provisioning output contains only the disposable model, tenant and
   # customer API key. It is consumed in-process and removed by cleanup.
   set -a

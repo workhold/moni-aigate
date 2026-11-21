@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-21T15:13:57Z",
-  "review_reason": "修复任务提交快照与事务之间的竞态：失败方重读当前任务并证明原幂等身份后返回原任务，不新增模块或数据源，不改变资金、权限、请求链路结构及唯一提交边界",
-  "snapshot_sha256": "82d6e8100c78e71f8daf9acbe5d4dbb6944bf5484dc9f81f4df69b5593f6fb0c",
+  "reviewed_at": "2026-11-21T20:05:11Z",
+  "review_reason": "修复 GNU/Linux 下 deployment QA 将 provisioning stdout 重定向到同一 business.env 输入的自读写失败；分离受保护 stdout 文件，不改变部署模块、权限、数据合同或业务断言",
+  "snapshot_sha256": "5bea3b748392d221ba34b51233129cf475497c126b3bd2339919fc5356c2b65e",
   "architecture_sha256": "f758d5a1391917d3027b5dcdc5adc7915ac9dd9b5dac35e342e16548f9344b6e",
-  "history_sha256": "96e08402bd6c74b730abf911b364af231c1dedb15adac8f5cb2acc7e39fdd1cc",
+  "history_sha256": "8ee7fbeaeafbe68fac25e8022b1a0051b0b0e8270fcc9ef6ca12709368fae660",
   "files": [
     {
       "path": ".dockerignore",
@@ -8313,11 +8313,11 @@
     },
     {
       "path": "scripts/deployment-business-qa.test.sh",
-      "sha256": "e1363f5aa21544cd91b094af3bf25fe084f9df9f8fd1e6cebc7e4bacd17012fe"
+      "sha256": "c26cab34e0371d610ecfc196054233e04ed3aa02d8d876e24e18177f7a75f32c"
     },
     {
       "path": "scripts/deployment-qa.sh",
-      "sha256": "1762071d852df2073404538bef2ffa61611780d5c9529e7b2af1bd3feaada41a"
+      "sha256": "e77405f2a80f8128a055e8f16aa64b4b3a5dffca7d5fac60a43f2156606a5f52"
     },
     {
       "path": "scripts/export-native-sdk-fixtures/main.go",
