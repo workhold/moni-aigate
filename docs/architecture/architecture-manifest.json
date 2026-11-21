@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-21T20:05:11Z",
-  "review_reason": "修复 GNU/Linux 下 deployment QA 将 provisioning stdout 重定向到同一 business.env 输入的自读写失败；分离受保护 stdout 文件，不改变部署模块、权限、数据合同或业务断言",
-  "snapshot_sha256": "5bea3b748392d221ba34b51233129cf475497c126b3bd2339919fc5356c2b65e",
+  "reviewed_at": "2026-11-21T21:20:41Z",
+  "review_reason": "最终验证记录与033任务台账同步r21完整029、浏览器、PR及未认证边界；仅文档和架构清单变化，无模块、请求链路、数据关系或权限结构变化",
+  "snapshot_sha256": "ece7d41212bbc88f823fad997255e3df2fee0fc51f2e8d73b5d6c233b0155289",
   "architecture_sha256": "f758d5a1391917d3027b5dcdc5adc7915ac9dd9b5dac35e342e16548f9344b6e",
-  "history_sha256": "8ee7fbeaeafbe68fac25e8022b1a0051b0b0e8270fcc9ef6ca12709368fae660",
+  "history_sha256": "2180a0e4974fe3d67856e07c9562b3bec3a9b593cccfbcabe1c12d488207c1ed",
   "files": [
     {
       "path": ".dockerignore",
@@ -2645,7 +2645,7 @@
     },
     {
       "path": "docs/verification/phase3-dynamic-routing.md",
-      "sha256": "48c1e10d5c23729a312057d6e927f8dfc75dbfa92265f1d4a2bf02bca2fe2d9d"
+      "sha256": "2fd6023090eeffcfa69b5de3e2062f6e1e7fc2bbf75b9d25d0262aea6db48bf6"
     },
     {
       "path": "docs/verification/post-binding-isolation-guard-pool32-concurrency100.json",
@@ -9693,7 +9693,7 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/tasks.md",
-      "sha256": "3af7d0ad444b8995fd6ded2b1dac52e9266e65befb71fd4c80a2460aabf5459a"
+      "sha256": "4a545f6d53ce2cc4d8824e4e746aaf5ad18535c063f1e19352b65ae20e718f9c"
     },
     {
       "path": "specs/034-virtual-coin/implementation-freeze.md",
