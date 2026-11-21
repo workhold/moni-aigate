@@ -88,6 +88,8 @@ def coordinator_command(source: pathlib.Path, run_directory: pathlib.Path, run_i
     ]
     if common != source and source not in common.parents:
         args += ["--mount", mount(common)]
+    if proxy := os.environ.get("PHASE1_ACCEPTANCE_GOPROXY"):
+        args += ["--env", "GOPROXY=" + proxy, "--env", "PHASE1_ACCEPTANCE_GOPROXY=" + proxy]
     xdg_root = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", str(pathlib.Path.home() / ".config")))
     git_ignore = xdg_root / "git" / "ignore"
     if git_ignore.is_file():

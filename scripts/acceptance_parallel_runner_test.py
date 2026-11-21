@@ -151,6 +151,14 @@ class AcceptanceParallelRunnerTest(unittest.TestCase):
         _, billing = runner.write_private_files(private, "billing-0", run_root, env)
         self.assertIn("PROCUREMENT_ATTEMPT_RULES_DATABASE_URL=" + runner.DATABASE_URL, billing.read_text(encoding="utf-8"))
 
+    def test_optional_goproxy_preserves_default_and_allows_override(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            env = runner.module_environment(self.root / "default", "other")
+            self.assertEqual("https://proxy.golang.org,direct", env["GOPROXY"])
+        with mock.patch.dict(os.environ, {"PHASE1_ACCEPTANCE_GOPROXY": "https://goproxy.cn,direct"}, clear=True):
+            env = runner.module_environment(self.root / "override", "other")
+            self.assertEqual("https://goproxy.cn,direct", env["GOPROXY"])
+
     def test_postgres_uses_none_network_and_exact_loopback_settings(self):
         calls = []
 

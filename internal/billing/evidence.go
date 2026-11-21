@@ -76,11 +76,7 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 	if in.Sequence < 1 || in.Sequence > 2 || !boundedString(in.UpstreamModel, 200) {
 		return result, fail("invalid_attempt", "invalid attempt input")
 	}
-	decisions, err := validatedRouteDecisions(in)
-	if err != nil {
-		return result, err
-	}
-	err = s.transaction(ctx, func(tx pgx.Tx) error {
+	err := s.transaction(ctx, func(tx pgx.Tx) error {
 		r, err := lockRequestWithChannel(ctx, tx, in.TenantID, in.RequestID, in.ChannelID)
 		if err != nil {
 			return err
@@ -89,10 +85,17 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 		if err != nil {
 			return err
 		}
+		binding, err := attemptBindingIdentity(ctx, tx, r, in)
+		if err != nil {
+			return err
+		}
+		if err != nil {
+			return err
+		}
 		if err = checkAttemptCostQuote(ctx, tx, r, in, cost); err != nil {
 			return err
 		}
-		err = tx.QueryRow(ctx, "INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model,route_decisions) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(request_id,sequence) DO NOTHING RETURNING id,request_id,sequence,delivery_state,cost_status", uuid.NewString(), in.TenantID, in.RequestID, in.Sequence, in.ChannelID, in.ChannelVersionID, in.CredentialID, in.UpstreamModel, decisions).Scan(&result.ID, &result.RequestID, &result.Sequence, &result.DeliveryState, &result.CostStatus)
+		err = tx.QueryRow(ctx, "INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(request_id,sequence) DO NOTHING RETURNING id,request_id,sequence,delivery_state,cost_status", uuid.NewString(), in.TenantID, in.RequestID, in.Sequence, in.ChannelID, in.ChannelVersionID, in.CredentialID, in.UpstreamModel).Scan(&result.ID, &result.RequestID, &result.Sequence, &result.DeliveryState, &result.CostStatus)
 		created := err == nil
 		if errors.Is(err, pgx.ErrNoRows) {
 			var channel, version, credential, model string
@@ -108,7 +111,21 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 			if _, err = tx.Exec(ctx, `SELECT meter_insert_attempt_snapshot($1,$2,$3,$4,$5)`, in.TenantID, result.ID, in.RequestID, nullableCostVersion(cost), cost.Basis()); err != nil {
 				return err
 			}
-			return recordProcurementAttempt(ctx, tx, r, in, result.ID, cost)
+			if err = recordProcurementAttempt(ctx, tx, r, in, result.ID, cost); err != nil {
+				return err
+			}
+			decision := in.RouteDecision
+			if decision == nil {
+				decision = fallbackRouteDecision(in, binding)
+			} else {
+				copy := *decision
+				decision = &copy
+				decision.TenantID = in.TenantID
+				decision.RequestID = in.RequestID
+				decision.Sequence = in.Sequence
+				decision.PolicyVersionID = binding.policyID
+			}
+			return writeRouteDecision(ctx, tx, decision, result.ID)
 		}
 		return err
 	})
@@ -543,7 +560,7 @@ ON CONFLICT(id) DO NOTHING`, f.ID, r.TenantID, r.ID, inputDigest, f.ProtocolOutc
 		} else if f.ProtocolOutcome == "failed" {
 			state = "failed"
 		}
-		if _, err = tx.Exec(ctx, "UPDATE upstream_attempts SET delivery_state=$2 WHERE id=$1", in.AttemptID, state); err != nil {
+		if _, err = tx.Exec(ctx, "UPDATE upstream_attempts SET delivery_state=$2,completed_at=clock_timestamp(),first_content_at=COALESCE($3::timestamptz,CASE WHEN $4 OR ($5='completed' AND $6='none') THEN clock_timestamp() END,first_content_at) WHERE id=$1", in.AttemptID, state, in.FirstContentAt, f.ContentWritten, f.ProtocolOutcome, f.DeliveryStage); err != nil {
 			return f, nil, err
 		}
 		if err = recordAttemptCost(ctx, tx, r, in.AttemptID, f.ID, in.TransportEndReason); err != nil {

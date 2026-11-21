@@ -57,6 +57,46 @@ func serviceFixture(t *testing.T, adapter provider.TaskAdapter) (*Service, *Memo
 	return service, store, input, refs, Actor{TenantID: testID(2), SubjectID: testID(3), Permission: PermissionTaskRead | PermissionTaskObserve | PermissionTaskCancel | PermissionResultDownload}
 }
 
+type beforeWithTaskStore struct {
+	Store
+	before func() error
+}
+
+func (s *beforeWithTaskStore) WithTask(ctx context.Context, id ID, fn func(TaskTx) error) error {
+	if err := s.before(); err != nil {
+		return err
+	}
+	return s.Store.WithTask(ctx, id, fn)
+}
+
+func TestServiceSubmitReplaysIdentityWhenCompetitorWinsClaimWindow(t *testing.T) {
+	adapter := &fakeTaskAdapter{}
+	service, store, input, refs, _ := serviceFixture(t, adapter)
+	if _, err := service.Create(context.Background(), input, refs); err != nil {
+		t.Fatal(err)
+	}
+	competingStore := &beforeWithTaskStore{Store: store}
+	competingStore.before = func() error {
+		_, err := service.Submit(context.Background(), input.TaskID, testBase.Add(time.Second))
+		return err
+	}
+	raced, err := NewService(ServiceOptions{Store: competingStore, Adapter: adapter, NewID: func() ID { return testID(102) }, Worker: Actor{TenantID: testID(2), SubjectID: testID(4), Permission: PermissionTaskObserve}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	task, err := raced.Submit(context.Background(), input.TaskID, testBase.Add(2*time.Second))
+	if err != nil {
+		t.Fatalf("competing same-identity submit became an outage: %v", err)
+	}
+	stored, storedRefs, err := store.Snapshot(context.Background(), input.TaskID)
+	if err != nil || storedRefs != refs {
+		t.Fatal(storedRefs, err)
+	}
+	if task.ID() != stored.ID() || adapter.submitN.Load() != 1 {
+		t.Fatalf("competing submit changed identity or regenerated: calls=%d", adapter.submitN.Load())
+	}
+}
+
 func TestServiceUnknownSubmitIsPersistedAndNeverResubmitted(t *testing.T) {
 	adapter := &fakeTaskAdapter{err: errors.New("connection lost")}
 	service, store, input, refs, owner := serviceFixture(t, adapter)

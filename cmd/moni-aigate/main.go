@@ -116,6 +116,9 @@ func run() error {
 	if e = migrations.VerifyCurrent(ctx, pool); e != nil {
 		return e
 	}
+	if command == "route-replay" {
+		return runRouteReplay(ctx, pool, os.Args[2:], os.Stdout)
+	}
 	if command == "worker" {
 		return runTaskWorker(ctx, pool, c)
 	}
@@ -417,6 +420,7 @@ func run() error {
 		}
 	}()
 	drained := make(chan struct{})
+	statsTicks := 0
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -465,6 +469,14 @@ func run() error {
 					done()
 					if err != nil {
 						log.Write(telemetry.Record{Stage: "projection", Code: "worker_failed"})
+					}
+					statsTicks++
+					if statsTicks%6 == 0 {
+						stats, stopStats := context.WithTimeout(ctx, 5*time.Second)
+						if err = app.Catalog.RefreshRouteStats(stats); err != nil {
+							log.Write(telemetry.Record{Stage: "route_stats", Code: "refresh_failed"})
+						}
+						stopStats()
 					}
 				}
 			}

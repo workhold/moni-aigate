@@ -19,9 +19,7 @@ func cacheTestRoute(t *testing.T, f *fixture, revision int64, ttl int) {
 	if _, err = tx.Exec(f.ctx, `INSERT INTO route_policy_versions(id,model_id,revision,profile_version,cache_ttl_seconds) VALUES($1,$2,$3,$4,$5)`, policy, f.model, revision, fixtureProfileVersion, ttl); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, policy, f.channel, f.version); err != nil {
-		t.Fatal(err)
-	}
+	insertFixtureBinding(t, tx, policy, f.channel, f.version, "upstream")
 	if _, err = tx.Exec(f.ctx, `UPDATE models SET active_revision=$2 WHERE id=$1`, f.model, revision); err != nil {
 		t.Fatal(err)
 	}

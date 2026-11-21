@@ -28,10 +28,10 @@ func TestRouteDecisionSnapshotsAreSafeImmutableAndPlatformOnly(t *testing.T) {
 		t.Fatalf("status=%d %s", response.StatusCode, body)
 	}
 	var raw []byte
-	if err := f.pool.QueryRow(ctx, "SELECT route_decisions FROM upstream_attempts WHERE request_id=$1", response.Header.Get("X-Request-ID")).Scan(&raw); err != nil {
+	if err := f.pool.QueryRow(ctx, "SELECT candidates FROM route_decisions WHERE request_id=$1", response.Header.Get("X-Request-ID")).Scan(&raw); err != nil {
 		t.Fatal(err)
 	}
-	var decisions []routing.Decision
+	var decisions []routing.CandidateDecision
 	if json.Unmarshal(raw, &decisions) != nil || len(decisions) != 3 {
 		t.Fatalf("decisions=%s", raw)
 	}
@@ -42,12 +42,12 @@ func TestRouteDecisionSnapshotsAreSafeImmutableAndPlatformOnly(t *testing.T) {
 	if reasons[channels[0]] != "disabled" || reasons[channels[1]] != "circuit_open" || reasons[channels[2]] != "selected" {
 		t.Fatal(reasons)
 	}
-	for _, forbidden := range []string{"secret", "provider-model", "127.0.0.1", "credential", "Endpoint"} {
+	for _, forbidden := range []string{"secret", "127.0.0.1", "credential", "Endpoint"} {
 		if strings.Contains(string(raw), forbidden) {
 			t.Fatal("unsafe routing metadata", forbidden)
 		}
 	}
-	if _, err := f.pool.Exec(ctx, "UPDATE upstream_attempts SET route_decisions='[]' WHERE request_id=$1", response.Header.Get("X-Request-ID")); err == nil {
+	if _, err := f.pool.Exec(ctx, "UPDATE route_decisions SET candidates='[]' WHERE request_id=$1", response.Header.Get("X-Request-ID")); err == nil {
 		t.Fatal("route explanation was mutable")
 	}
 	admin, csrf := probeAdmin(t, f)

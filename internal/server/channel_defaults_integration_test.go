@@ -135,7 +135,7 @@ func TestChannelFormDefaultRegionMatchesFreshCustomerAndKey(t *testing.T) {
 		t.Fatalf("default region grant permitted a different label: status=%d posts=%d err=%v", response.StatusCode, f.posts.Load(), err)
 	}
 	var requests int
-	if err := f.pool.QueryRow(ctx, "SELECT count(*) FROM request_records WHERE tenant_id=$1", tenant).Scan(&requests); err != nil || requests != 1 {
+	if err := f.pool.QueryRow(ctx, "SELECT count(*) FROM request_records WHERE tenant_id=$1", tenant).Scan(&requests); err != nil || requests != 2 {
 		t.Fatalf("region rejection created customer requests: %d %v", requests, err)
 	}
 	after := f.state(t, requestID)

@@ -80,6 +80,18 @@ func probeSetCapacity(t *testing.T, f *gatewayFixture, channel string, capacity 
 	}
 }
 
+func probeAssertWalletBalanceUntouched(t *testing.T, f *gatewayFixture) {
+	t.Helper()
+	w, err := f.server.Billing.Wallet(context.Background(), billing.Query{TenantID: f.tenant})
+	if err != nil || w.Available != 1000 || w.Held != 0 {
+		t.Fatalf("request changed wallet balance: %+v %v", w, err)
+	}
+	var spent, held int64
+	if err = f.pool.QueryRow(context.Background(), "SELECT spent,held FROM api_keys WHERE id=$1", f.key).Scan(&spent, &held); err != nil || spent != 0 || held != 0 {
+		t.Fatalf("released no-candidate request changed Key funds: spent=%d held=%d err=%v", spent, held, err)
+	}
+}
+
 func probeAssertWalletUntouched(t *testing.T, f *gatewayFixture) {
 	t.Helper()
 	w, err := f.server.Billing.Wallet(context.Background(), billing.Query{TenantID: f.tenant})

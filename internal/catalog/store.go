@@ -310,14 +310,17 @@ func (s *Store) SaveChannel(ctx context.Context, actor, id string, in ChannelInp
 }
 
 type BindingInput struct {
-	ChannelID         string  `json:"channel_id"`
-	UpstreamModel     string  `json:"upstream_model"`
-	Priority          int     `json:"priority"`
-	Weight            int     `json:"weight"`
-	MaxInflight       int     `json:"max_inflight"`
-	MaxInputCostRate  *string `json:"max_input_cost_rate"`
-	MaxOutputCostRate *string `json:"max_output_cost_rate"`
-	ReleaseEvidenceID string  `json:"release_evidence_id,omitempty"`
+	ChannelID         string                      `json:"channel_id"`
+	PhysicalModelID   string                      `json:"physical_model_id,omitempty"`
+	Capability        *routing.PhysicalCapability `json:"capability,omitempty"`
+	ExposeToCustomer  *bool                       `json:"expose_to_customer,omitempty"`
+	UpstreamModel     string                      `json:"upstream_model"`
+	Priority          int                         `json:"priority"`
+	Weight            int                         `json:"weight"`
+	MaxInflight       int                         `json:"max_inflight"`
+	MaxInputCostRate  *string                     `json:"max_input_cost_rate"`
+	MaxOutputCostRate *string                     `json:"max_output_cost_rate"`
+	ReleaseEvidenceID string                      `json:"release_evidence_id,omitempty"`
 }
 
 func (s *Store) Publish(ctx context.Context, actor, model string, expected int64, bindings []BindingInput) (int64, error) {
@@ -325,34 +328,42 @@ func (s *Store) Publish(ctx context.Context, actor, model string, expected int64
 }
 
 func (s *Store) PublishWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly, routing.DefaultBreakerConfig(), 0)
+	return s.publishDynamic(ctx, actor, model, expected, bindings, routing.DynamicPolicy{CostPolicy: costPolicy}, ReleaseTestOnly, routing.DefaultBreakerConfig(), 0)
 }
 
 func (s *Store) PublishWithRoutePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly, breaker, 0)
+	return s.publishDynamic(ctx, actor, model, expected, bindings, routing.DynamicPolicy{CostPolicy: costPolicy}, ReleaseTestOnly, breaker, 0)
 }
 
 func (s *Store) PublishWithDataPlanePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseTestOnly, breaker, cacheTTL)
+	return s.publishDynamic(ctx, actor, model, expected, bindings, routing.DynamicPolicy{CostPolicy: costPolicy}, ReleaseTestOnly, breaker, cacheTTL)
 }
 
 func (s *Store) PublishCommercialWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial, routing.DefaultBreakerConfig(), 0)
+	return s.publishDynamic(ctx, actor, model, expected, bindings, routing.DynamicPolicy{CostPolicy: costPolicy}, ReleaseCommercial, routing.DefaultBreakerConfig(), 0)
 }
 
 func (s *Store) PublishCommercialWithRoutePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial, breaker, 0)
+	return s.publishDynamic(ctx, actor, model, expected, bindings, routing.DynamicPolicy{CostPolicy: costPolicy}, ReleaseCommercial, breaker, 0)
 }
 
 func (s *Store) PublishCommercialWithDataPlanePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
-	return s.publishWithCostPolicy(ctx, actor, model, expected, bindings, costPolicy, ReleaseCommercial, breaker, cacheTTL)
+	return s.publishDynamic(ctx, actor, model, expected, bindings, routing.DynamicPolicy{CostPolicy: costPolicy}, ReleaseCommercial, breaker, cacheTTL)
 }
 
-func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, costPolicy routing.CostPolicy, releaseIntent string, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
+func (s *Store) PublishDynamic(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, policy routing.DynamicPolicy, releaseIntent string) (int64, error) {
+	return s.publishDynamic(ctx, actor, model, expected, bindings, policy, releaseIntent, routing.DefaultBreakerConfig(), 0)
+}
+
+func (s *Store) PublishDynamicWithDataPlanePolicy(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, policy routing.DynamicPolicy, releaseIntent string, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
+	return s.publishDynamic(ctx, actor, model, expected, bindings, policy, releaseIntent, breaker, cacheTTL)
+}
+
+func (s *Store) publishDynamic(ctx context.Context, actor, model string, expected int64, bindings []BindingInput, policy routing.DynamicPolicy, releaseIntent string, breaker routing.BreakerConfig, cacheTTL int) (int64, error) {
 	if releaseIntent != ReleaseTestOnly && releaseIntent != ReleaseCommercial {
 		return 0, ErrInvalid
 	}
-	if routing.ValidateCostPolicy(costPolicy) != nil || routing.ValidateBreakerConfig(breaker) != nil || cacheTTL != 0 && (cacheTTL < 60 || cacheTTL > 86400) {
+	if policy.Validate() != nil || routing.ValidateBreakerConfig(breaker) != nil || cacheTTL != 0 && (cacheTTL < 60 || cacheTTL > 86400) {
 		return 0, ErrInvalid
 	}
 	if len(bindings) == 0 || len(bindings) > 1000 {
@@ -360,6 +371,7 @@ func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, 
 	}
 	sort.Slice(bindings, func(i, j int) bool { return bindings[i].ChannelID < bindings[j].ChannelID })
 	seen := map[string]bool{}
+	qualityTier := ""
 	tx, e := s.Pool.Begin(ctx)
 	if e != nil {
 		return 0, e
@@ -384,8 +396,21 @@ func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, 
 	if e = tx.QueryRow(ctx, "SELECT COALESCE(MAX(revision),0)+1 FROM route_policy_versions WHERE model_id=$1", model).Scan(&nextRevision); e != nil {
 		return 0, e
 	}
-	policy := uuid.NewString()
-	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy,release_intent,failure_threshold,open_ms,half_open_tokens,cache_ttl_seconds) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)", policy, model, nextRevision, costPolicy.Mode, costPolicy.UnknownCostPolicy, releaseIntent, breaker.FailureThreshold, breaker.OpenDuration.Milliseconds(), breaker.HalfOpenTokens, cacheTTL); e != nil {
+	policyID := uuid.NewString()
+	scoringJSON, _ := json.Marshal(policy.Scoring)
+	var stickiness any
+	if policy.Stickiness != nil {
+		stickiness, _ = json.Marshal(policy.Stickiness)
+	}
+	var qualityFloor any
+	if policy.QualityFloor != "" {
+		qualityFloor = policy.QualityFloor
+	}
+	var minMargin any
+	if policy.MinMarginRate != nil {
+		minMargin = *policy.MinMarginRate
+	}
+	if _, e = tx.Exec(ctx, "INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy,release_intent,scoring,quality_floor,min_margin_rate,stickiness,failure_threshold,open_ms,half_open_tokens,cache_ttl_seconds) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)", policyID, model, nextRevision, policy.Mode, policy.UnknownCostPolicy, releaseIntent, scoringJSON, qualityFloor, minMargin, stickiness, breaker.FailureThreshold, breaker.OpenDuration.Milliseconds(), breaker.HalfOpenTokens, cacheTTL); e != nil {
 		return 0, e
 	}
 	for _, b := range bindings {
@@ -397,7 +422,18 @@ func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, 
 		if err != nil {
 			return 0, err
 		}
-		key := b.ChannelID
+		physicalID, capability, err := ensurePhysicalModel(ctx, tx, model, profile, b)
+		if err != nil {
+			return 0, err
+		}
+		if !policy.Scoring.Auto {
+			if qualityTier == "" {
+				qualityTier = capability.QualityTier
+			} else if qualityTier != capability.QualityTier {
+				return 0, ErrInvalid
+			}
+		}
+		key := b.ChannelID + "\x00" + physicalID
 		if seen[key] || b.Weight <= 0 || b.Weight > 1_000_000 || b.MaxInflight <= 0 || b.MaxInflight > 1000 || b.UpstreamModel == "" {
 			return 0, ErrInvalid
 		}
@@ -451,7 +487,7 @@ func (s *Store) publishWithCostPolicy(ctx context.Context, actor, model string, 
 			return 0, ErrInvalid
 		}
 		var bindingID string
-		if e = tx.QueryRow(ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key,release_evidence_id) VALUES($1,$2,$3,$4,$5,$6,$7,'default',$8) RETURNING id`, policy, b.ChannelID, ver, b.UpstreamModel, b.Priority, b.Weight, b.MaxInflight, releaseEvidence).Scan(&bindingID); e != nil {
+		if e = tx.QueryRow(ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key,release_evidence_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,'default',$9) RETURNING id`, policyID, b.ChannelID, ver, b.UpstreamModel, physicalID, b.Priority, b.Weight, b.MaxInflight, releaseEvidence).Scan(&bindingID); e != nil {
 			return 0, e
 		}
 		if maxInput != nil {
@@ -509,11 +545,15 @@ func (s *Store) AuthorizedModel(ctx context.Context, tenant, user, key, name str
 type Candidate struct {
 	BindingID, ChannelID, VersionID, CredentialID, UpstreamModel, URL, Region, Secret string
 	ChannelKind, IntegrationMode                                                      string
+	PolicyVersionID, PhysicalModelID                                                  string
 	ExclusionReason                                                                   string
 	AllowedCIDRs                                                                      []string
 	Priority, Weight, MaxInflight                                                     int
 	CredentialWeight, CredentialMaxInflight                                           int
 	CostPolicy                                                                        routing.CostPolicy
+	DynamicPolicy                                                                     routing.DynamicPolicy
+	Physical                                                                          routing.PhysicalCapability
+	Stats                                                                             routing.StatsSnapshot
 	Breaker                                                                           routing.BreakerConfig
 	CostQuote                                                                         routecost.Quote
 	CostLimits                                                                        routecost.Limits
@@ -538,7 +578,7 @@ func (s *Store) Candidates(ctx context.Context, model string, revision int64) ([
 // CandidateSnapshot preserves exclusion metadata for explaining an admitted
 // choice. Unavailable credentials are never decrypted or made dispatchable.
 func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision int64) ([]Candidate, error) {
-	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,v.base_url,v.region,v.allowed_cidrs,v.channel_kind,v.integration_mode,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,p.failure_threshold,p.open_ms,p.half_open_tokens,COALESCE((SELECT jsonb_agg(jsonb_build_object('dimension',l.dimension,'unit',l.unit,'numerator',l.numerator::text,'denominator',l.denominator::text) ORDER BY l.dimension COLLATE "C") FROM binding_cost_rate_limits l WHERE l.binding_id=b.id),'[]'::jsonb),ms.canonical,ms.schema_digest,b.variant_key,coalesce(q.id,''),coalesce(q.basis,'unknown'),q.rates_canonical,q.rates_digest,(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_capability_versions profile ON profile.id=p.profile_version AND profile.model_id=p.model_id JOIN meter_schemas ms ON ms.id=profile.schema_id AND ms.schema_digest=profile.schema_digest JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.schema_id=profile.schema_id AND cv.schema_digest=profile.schema_digest AND cv.variant_key=b.variant_key AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
+	rows, e := s.Pool.Query(ctx, `WITH quote_clock AS MATERIALIZED (SELECT clock_timestamp() AS at) SELECT p.id,b.id,b.channel_id,b.channel_version_id,cp.credential_id,b.upstream_model,b.physical_model_id,pm.capability,pm.state,v.base_url,v.region,v.allowed_cidrs,v.channel_kind,v.integration_mode,b.priority,b.weight,b.max_inflight,cp.weight,cp.max_inflight,k.secret_ciphertext,CASE WHEN NOT c.enabled THEN 'disabled' WHEN c.quarantined THEN 'channel_quarantined' WHEN k.revoked_at IS NOT NULL THEN 'credential_revoked' WHEN EXISTS(SELECT 1 FROM route_binding_isolations i WHERE i.channel_version_id=b.channel_version_id AND i.upstream_model=b.upstream_model) THEN 'binding_isolated' ELSE '' END,p.cost_mode,p.unknown_cost_policy,p.failure_threshold,p.open_ms,p.half_open_tokens,p.scoring,p.quality_floor,p.min_margin_rate,p.stickiness,COALESCE((SELECT jsonb_agg(jsonb_build_object('dimension',l.dimension,'unit',l.unit,'numerator',l.numerator::text,'denominator',l.denominator::text) ORDER BY l.dimension COLLATE "C") FROM binding_cost_rate_limits l WHERE l.binding_id=b.id),'[]'::jsonb),ms.canonical,ms.schema_digest,b.variant_key,coalesce(q.id,''),coalesce(q.basis,'unknown'),q.rates_canonical,q.rates_digest,(pb.id IS NOT NULL),CASE WHEN EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.account_id=pa.id AND pr.anomaly AND pr.state IN ('unknown','disputed')) THEN 'paused' ELSE coalesce(pa.state,'') END,coalesce((pa.limit_amount::numeric-pa.spent_amount-pa.held_amount)::text,'') FROM route_policy_versions p JOIN model_capability_versions profile ON profile.id=p.profile_version AND profile.model_id=p.model_id JOIN meter_schemas ms ON ms.id=profile.schema_id AND ms.schema_digest=profile.schema_digest JOIN model_bindings b ON b.route_policy_version_id=p.id JOIN physical_models pm ON pm.id=b.physical_model_id AND pm.logical_model_id=p.model_id AND pm.upstream_model=b.upstream_model JOIN channels c ON c.id=b.channel_id JOIN channel_versions v ON v.id=b.channel_version_id JOIN channel_version_credentials cp ON cp.channel_version_id=v.id JOIN channel_credentials k ON k.id=cp.credential_id LEFT JOIN credential_procurement_bindings pb ON pb.credential_id=k.id LEFT JOIN procurement_accounts pa ON pa.id=pb.account_id CROSS JOIN quote_clock clock LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv WHERE cv.channel_id=b.channel_id AND cv.upstream_model=b.upstream_model AND cv.schema_id=profile.schema_id AND cv.schema_digest=profile.schema_digest AND cv.variant_key=b.variant_key AND cv.effective_at<=clock.at ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) q ON true WHERE p.model_id=$1 AND p.revision=$2 ORDER BY b.channel_id,b.id,cp.position`, model, revision)
 	if e != nil {
 		return nil, e
 	}
@@ -547,11 +587,26 @@ func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision in
 	for rows.Next() {
 		v := Candidate{}
 		var ciphertext string
-		var caps []byte
+		var caps, scoring, stickiness, physicalRaw []byte
+		var physicalState string
+		var qualityFloor *string
 		var openMS int
 		quote := routecost.StoredInput{}
-		if e = rows.Scan(&v.BindingID, &v.ChannelID, &v.VersionID, &v.CredentialID, &v.UpstreamModel, &v.URL, &v.Region, &v.AllowedCIDRs, &v.ChannelKind, &v.IntegrationMode, &v.Priority, &v.Weight, &v.MaxInflight, &v.CredentialWeight, &v.CredentialMaxInflight, &ciphertext, &v.ExclusionReason, &v.CostPolicy.Mode, &v.CostPolicy.UnknownCostPolicy, &v.Breaker.FailureThreshold, &openMS, &v.Breaker.HalfOpenTokens, &caps, &quote.SchemaCanonical, &quote.SchemaDigest, &quote.VariantKey, &quote.VersionID, &quote.Basis, &quote.RatesCanonical, &quote.RatesDigest, &v.ProcurementManaged, &v.ProcurementState, &v.ProcurementAvailable); e != nil {
+		if e = rows.Scan(&v.PolicyVersionID, &v.BindingID, &v.ChannelID, &v.VersionID, &v.CredentialID, &v.UpstreamModel, &v.PhysicalModelID, &physicalRaw, &physicalState, &v.URL, &v.Region, &v.AllowedCIDRs, &v.ChannelKind, &v.IntegrationMode, &v.Priority, &v.Weight, &v.MaxInflight, &v.CredentialWeight, &v.CredentialMaxInflight, &ciphertext, &v.ExclusionReason, &v.CostPolicy.Mode, &v.CostPolicy.UnknownCostPolicy, &v.Breaker.FailureThreshold, &openMS, &v.Breaker.HalfOpenTokens, &scoring, &qualityFloor, &v.DynamicPolicy.MinMarginRate, &stickiness, &caps, &quote.SchemaCanonical, &quote.SchemaDigest, &quote.VariantKey, &quote.VersionID, &quote.Basis, &quote.RatesCanonical, &quote.RatesDigest, &v.ProcurementManaged, &v.ProcurementState, &v.ProcurementAvailable); e != nil {
 			return nil, e
+		}
+		if json.Unmarshal(physicalRaw, &v.Physical) != nil || v.Physical.Validate() != nil || len(scoring) > 0 && json.Unmarshal(scoring, &v.DynamicPolicy.Scoring) != nil || len(stickiness) > 0 && json.Unmarshal(stickiness, &v.DynamicPolicy.Stickiness) != nil {
+			return nil, ErrInvalid
+		}
+		v.DynamicPolicy.CostPolicy = v.CostPolicy
+		if qualityFloor != nil {
+			v.DynamicPolicy.QualityFloor = *qualityFloor
+		}
+		if v.DynamicPolicy.Validate() != nil {
+			return nil, ErrInvalid
+		}
+		if physicalState == "retired" && v.ExclusionReason == "" {
+			v.ExclusionReason = "disabled"
 		}
 		v.Breaker.OpenDuration = time.Duration(openMS) * time.Millisecond
 		quote.ChannelID, quote.UpstreamModel = v.ChannelID, v.UpstreamModel
@@ -571,7 +626,14 @@ func (s *Store) CandidateSnapshot(ctx context.Context, model string, revision in
 		}
 		all = append(all, v)
 	}
-	return all, rows.Err()
+	if e = rows.Err(); e != nil {
+		return nil, e
+	}
+	rows.Close()
+	if e = s.attachRouteStats(ctx, model, all); e != nil {
+		return nil, e
+	}
+	return all, nil
 }
 
 func NetworkPolicy(raw string, cidrs []string) provider.NetworkPolicy {

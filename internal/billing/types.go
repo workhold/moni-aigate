@@ -117,8 +117,9 @@ type CreditOrder struct {
 }
 type AttemptInput struct {
 	TenantID, RequestID, ChannelID, ChannelVersionID, CredentialID, UpstreamModel string
+	BindingID, PhysicalModelID, PolicyVersionID                                   string
 	Sequence                                                                      int
-	RouteDecisions                                                                []routing.Decision
+	RouteDecision                                                                 *routing.RouteDecision
 	CostQuote                                                                     *routecost.Quote
 }
 type Attempt struct {
@@ -144,6 +145,7 @@ type FinalizationInput struct {
 	ProtocolOutcome, TransportEndReason, DeliveryStage, FinishReason string
 	ContentWritten                                                   bool
 	ObservedAt                                                       time.Time
+	FirstContentAt                                                   *time.Time `json:"-"`
 }
 type Finalization struct {
 	ID                 string `json:"id"`
@@ -157,7 +159,10 @@ type Finalization struct {
 	FinishReason       string `json:"finish_reason"`
 }
 type SettleInput struct{ TenantID, RequestID, Mode string }
-type ReleaseInput struct{ TenantID, RequestID, Reason string }
+type ReleaseInput struct {
+	TenantID, RequestID, Reason string
+	RouteDecision               *routing.RouteDecision
+}
 type PendingInput struct{ TenantID, RequestID, Reason string }
 type Settlement struct {
 	ID                 string `json:"id"`

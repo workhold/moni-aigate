@@ -98,7 +98,12 @@ func (s *Server) costVersions(c *gin.Context) {
 }
 func (s *Server) attempts(c *gin.Context) {
 	// Platform only: no credential value, endpoint, prompt, or output is returned.
-	s.page(c, `SELECT a.id,a.request_id,a.tenant_id,a.sequence,a.channel_id,a.channel_version_id,a.credential_id,a.upstream_model,a.delivery_state,a.cost_status,a.cost_amount::text AS cost_amount,a.created_at,a.route_decisions,r.route_revision,b.priority,b.weight,(i.channel_version_id IS NOT NULL) AS binding_isolated,i.reason AS isolation_reason,i.created_at AS isolated_at FROM upstream_attempts a JOIN request_records r ON r.id=a.request_id LEFT JOIN route_policy_versions p ON p.model_id=r.model_id AND p.revision=r.route_revision LEFT JOIN model_bindings b ON b.route_policy_version_id=p.id AND b.channel_id=a.channel_id AND b.channel_version_id=a.channel_version_id AND b.upstream_model=a.upstream_model LEFT JOIN route_binding_isolations i ON i.channel_version_id=a.channel_version_id AND i.upstream_model=a.upstream_model WHERE a.request_id=$1`, c.Param("id"))
+	s.page(c, `SELECT a.id,a.request_id,a.tenant_id,a.sequence,a.channel_id,a.channel_version_id,a.credential_id,a.upstream_model,d.selected_physical_model_id AS physical_model_id,a.delivery_state,a.cost_status,a.cost_amount::text AS cost_amount,a.created_at,d.candidates AS route_decisions,d.draw::text AS route_draw,d.sticky,d.degradation,d.algorithm_version,r.route_revision,b.priority,b.weight,(i.channel_version_id IS NOT NULL) AS binding_isolated,i.reason AS isolation_reason,i.created_at AS isolated_at FROM upstream_attempts a JOIN request_records r ON r.id=a.request_id LEFT JOIN route_decisions d ON d.attempt_id=a.id LEFT JOIN model_bindings b ON b.id=d.selected_binding_id LEFT JOIN route_binding_isolations i ON i.channel_version_id=a.channel_version_id AND i.upstream_model=a.upstream_model WHERE a.request_id=$1`, c.Param("id"))
+}
+
+func (s *Server) requestRouteDecisions(c *gin.Context) {
+	// Platform only. Includes the persisted no-candidate pool whose attempt is NULL.
+	s.page(c, `SELECT id,request_id,attempt_id,sequence,policy_version_id,selected_binding_id,selected_physical_model_id,draw::text AS draw,sticky,degradation,algorithm_version,candidates,created_at FROM route_decisions WHERE request_id=$1 ORDER BY sequence`, c.Param("id"))
 }
 
 func (s *Server) probesList(c *gin.Context) {

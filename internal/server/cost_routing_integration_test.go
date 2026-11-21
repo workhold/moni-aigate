@@ -48,7 +48,7 @@ func TestCostRoutingSelectsLowerCostAndKeepsRetailPrice(t *testing.T) {
 	}
 	var selected, cost, basis string
 	var decisions []byte
-	if err := f.pool.QueryRow(context.Background(), `SELECT a.channel_id,a.cost_amount::text,s.cost_basis,a.route_decisions FROM upstream_attempts a JOIN attempt_meter_snapshots s ON s.attempt_id=a.id WHERE a.request_id=$1`, response.Header.Get("X-Request-ID")).Scan(&selected, &cost, &basis, &decisions); err != nil || selected != channels[1] || cost != "15" || basis != "contract" {
+	if err := f.pool.QueryRow(context.Background(), `SELECT a.channel_id,a.cost_amount::text,s.cost_basis,d.candidates FROM upstream_attempts a JOIN attempt_meter_snapshots s ON s.attempt_id=a.id JOIN route_decisions d ON d.attempt_id=a.id WHERE a.request_id=$1`, response.Header.Get("X-Request-ID")).Scan(&selected, &cost, &basis, &decisions); err != nil || selected != channels[1] || cost != "15" || basis != "contract" {
 		t.Fatal("cheaper procurement channel not used", selected, cost, basis, err)
 	}
 	var ds []routing.Decision

@@ -24,13 +24,13 @@ func managedCostRequest(t *testing.T, f *fixture) (Reservation, AttemptInput) {
 		args []any
 	}{
 		{`INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,1,'cost_first','deny')`, []any{policy, f.model}},
-		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,4)`, []any{policy, f.channel, f.version}},
 		{`UPDATE models SET active_revision=1 WHERE id=$1`, []any{f.model}},
 	} {
 		if _, err := tx.Exec(f.ctx, q.sql, q.args...); err != nil {
 			t.Fatal(err)
 		}
 	}
+	insertFixtureBinding(t, tx, policy, f.channel, f.version, "upstream")
 	if err = tx.Commit(f.ctx); err != nil {
 		t.Fatal(err)
 	}

@@ -150,6 +150,7 @@ func TestReleaseEvidenceDatabaseGuardAndReadPagination(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer tx.Rollback(f.ctx)
 	policy := uuid.NewString()
 	var profile, oldPolicy string
 	if err = tx.QueryRow(f.ctx, `SELECT profile_version,(SELECT route_policy_version_id FROM model_bindings WHERE release_evidence_id=$2) FROM models WHERE id=$1`, f.model, qualified.ID).Scan(&profile, &oldPolicy); err != nil {
@@ -158,7 +159,7 @@ func TestReleaseEvidenceDatabaseGuardAndReadPagination(t *testing.T) {
 	if _, err = tx.Exec(f.ctx, `INSERT INTO route_policy_versions(id,model_id,revision,profile_version,release_intent) VALUES($1,$2,9,$3,'commercial')`, policy, f.model, profile); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key,release_evidence_id) SELECT $1,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key,$2 FROM model_bindings WHERE route_policy_version_id=$3`, policy, mockEvidence.ID, oldPolicy); err != nil {
+	if _, err = tx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key,release_evidence_id) SELECT $1,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key,$2 FROM model_bindings WHERE route_policy_version_id=$3`, policy, mockEvidence.ID, oldPolicy); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = tx.Exec(f.ctx, `UPDATE models SET active_revision=9 WHERE id=$1`, f.model); err != nil {
@@ -176,6 +177,7 @@ func TestReleaseEvidenceDatabaseGuardAndReadPagination(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer insertTx.Rollback(f.ctx)
 	newModel, newProfile, newPolicy := uuid.NewString(), uuid.NewString(), uuid.NewString()
 	if _, err = insertTx.Exec(f.ctx, `INSERT INTO models(id,public_name,profile_version,active_revision) VALUES($1,$2,$3,1)`, newModel, "release-insert-guard", newProfile); err != nil {
 		t.Fatal(err)
@@ -192,7 +194,10 @@ func TestReleaseEvidenceDatabaseGuardAndReadPagination(t *testing.T) {
 	if _, err = insertTx.Exec(f.ctx, `INSERT INTO route_policy_versions(id,model_id,revision,profile_version,release_intent) VALUES($1,$2,1,$3,'commercial')`, newPolicy, newModel, newProfile); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = insertTx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key,release_evidence_id) SELECT $1,c.id,v.id,'upstream',1,1,1,'default',$2 FROM channels c JOIN channel_versions v ON v.id=c.current_version WHERE c.id=$3`, newPolicy, mockEvidence.ID, f.channel); err != nil {
+	if _, err = insertTx.Exec(f.ctx, `INSERT INTO physical_models(logical_model_id,upstream_model,capability) SELECT $1,'upstream',capability FROM physical_models WHERE logical_model_id=$2 AND upstream_model='upstream' LIMIT 1`, newModel, f.model); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = insertTx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key,release_evidence_id) SELECT $1,c.id,v.id,'upstream',pm.id,1,1,1,'default',$2 FROM channels c JOIN channel_versions v ON v.id=c.current_version JOIN physical_models pm ON pm.logical_model_id=$4 AND pm.upstream_model='upstream' WHERE c.id=$3`, newPolicy, mockEvidence.ID, f.channel, newModel); err != nil {
 		t.Fatal(err)
 	}
 	if err = insertTx.Commit(f.ctx); err == nil || !strings.Contains(err.Error(), "commercial route has unqualified") {

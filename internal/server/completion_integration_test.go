@@ -136,10 +136,14 @@ func TestReportsAndCostCorrectionsKeepCustomerPrice(t *testing.T) {
 	requireAuthStatus(t, authHTTP(t, f.server, "POST", "/api/platform/cost-corrections", other, oc, f.server.Config.Origin, body), 403)
 }
 
-// A published policy must satisfy the runtime's one-attempt-per-channel rule.
-// Reject duplicate channels even when their upstream model strings differ.
-func TestRoutePublishRejectsRepeatedChannelWithoutReplacingLiveRevision(t *testing.T) {
-	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t)}, nil)
+// A route may switch physical models within one channel, but the same
+// channel+physical binding cannot be duplicated within one immutable revision.
+func TestRoutePublishAllowsDistinctPhysicalButRejectsSameBinding(t *testing.T) {
+	f := newGatewayFixture(t, []http.HandlerFunc{func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, gatewayJSON)
+	}}, nil)
 	ctx := context.Background()
 	var actor, channel string
 	if err := f.pool.QueryRow(ctx, "SELECT id FROM users WHERE platform_role='finance_operator'").Scan(&actor); err != nil {
@@ -148,11 +152,14 @@ func TestRoutePublishRejectsRepeatedChannelWithoutReplacingLiveRevision(t *testi
 	if err := f.pool.QueryRow(ctx, "SELECT channel_id FROM model_bindings LIMIT 1").Scan(&channel); err != nil {
 		t.Fatal(err)
 	}
-	_, err := f.server.Catalog.Publish(ctx, actor, f.model, 1, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "a", Weight: 1, MaxInflight: 4}, {ChannelID: channel, UpstreamModel: "b", Weight: 1, MaxInflight: 4}})
-	if !errors.Is(err, catalog.ErrInvalid) {
-		t.Fatalf("duplicate-channel route published: %v", err)
+	revision, err := f.server.Catalog.Publish(ctx, actor, f.model, 1, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "a", Weight: 1, MaxInflight: 4}, {ChannelID: channel, UpstreamModel: "b", Weight: 1, MaxInflight: 4}})
+	if err != nil || revision != 2 {
+		t.Fatalf("distinct physical route rejected: revision=%d err=%v", revision, err)
 	}
-	var revision int64
+	_, err = f.server.Catalog.Publish(ctx, actor, f.model, 2, []catalog.BindingInput{{ChannelID: channel, UpstreamModel: "a", Weight: 1, MaxInflight: 4}, {ChannelID: channel, UpstreamModel: "a", Weight: 1, MaxInflight: 4}})
+	if !errors.Is(err, catalog.ErrInvalid) {
+		t.Fatalf("duplicate physical binding published: %v", err)
+	}
 	var policies int
 	if err = f.pool.QueryRow(ctx, "SELECT active_revision FROM models WHERE id=$1", f.model).Scan(&revision); err != nil {
 		t.Fatal(err)
@@ -160,13 +167,13 @@ func TestRoutePublishRejectsRepeatedChannelWithoutReplacingLiveRevision(t *testi
 	if err = f.pool.QueryRow(ctx, "SELECT count(*) FROM route_policy_versions WHERE model_id=$1", f.model).Scan(&policies); err != nil {
 		t.Fatal(err)
 	}
-	if revision != 1 || policies != 1 {
+	if revision != 2 || policies != 2 {
 		t.Fatal("failed publish left partial policy", revision, policies)
 	}
 	res := f.request(t, ctx, false, false)
 	_, _ = io.Copy(io.Discard, res.Body)
 	res.Body.Close()
 	if res.StatusCode != 200 {
-		t.Fatal("old policy stopped serving", res.StatusCode)
+		t.Fatal("published policy stopped serving", res.StatusCode)
 	}
 }

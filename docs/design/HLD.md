@@ -776,7 +776,9 @@ flowchart LR
 - **路由决策记录取代现有 `upstream_attempts.route_decisions`。** 按 ADR-005 一次性替换，不保留双格式；每次决策一行，候选集合放在有界 JSONB（沿用现有数组的 1000 项、256KiB 上限），包括被硬约束排除的候选，从而补上“完整失败池解释”；每请求一次 INSERT，不随候选数增长，避免与第二阶段延迟目标冲突。
 - **回放只读。** 重放使用持久化的输入，不重新读取当前配置或统计，不写决策、不派发、不触碰资金。
 
-这些规格列出的决策点（D-031-1、D-031-2、D-032-1、D-032-2、D-033-0…3）需要开发者逐一裁决后冻结。
+**2026-11-20 033 实施接缝**：`current_015_phase3_dynamic_routing.sql` 追加不可变物理能力、route session/stats 和每次选择一行的决策表；`internal/routing` 的同一 `Plan/Engine` 先执行授权、能力、质量、状态、采购和价格/毛利硬过滤，再在剩余 binding 中执行粘性、priority、order/cost/sort 与可回放抽签。`internal/catalog` 的完整版本 CAS 发布同时写入物理 binding 与策略；`internal/billing` 将决策与 attempt 或 no-candidate Release 放在原事务。Chat `route` 只在 `POST /v1/chat/completions` 剥离，其他协议信封不变。attempt 供应商界使用原物理能力，零售 profile、预占和唯一结算不变。032 的熔断/cache 字段与 033 策略已合并到同一不可变发布；cache hit 不创建动态路由决策。032 的测量报告、完整组合回归、真实供应商和生产资格仍需独立验收。实施细节见[033 设计](../../specs/033-text-dynamic-routing/design.md)。
+
+这些规格的决策点以各自实施冻结记录为准；合同冻结与局部实现均不等于对应阶段已完成验收。
 
 ## 030-A 模型别名外围实现（2026-11-10）
 
