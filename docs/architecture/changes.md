@@ -8877,3 +8877,16 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `scripts/phase1_browser_qa_test.py`
 
 </details>
+
+## 2026-11-21T15:13:57Z · 82d6e8100c78
+
+修复任务提交快照与事务之间的竞态：失败方重读当前任务并证明原幂等身份后返回原任务，不新增模块或数据源，不改变资金、权限、请求链路结构及唯一提交边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+
+</details>

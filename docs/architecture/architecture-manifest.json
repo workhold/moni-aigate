@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-21T07:40:42Z",
-  "review_reason": "仅修复隔离浏览器驱动等待表格行渲染的竞态并增加单元回归；不改变系统模块、请求链路、数据关系、权限边界或能力状态",
-  "snapshot_sha256": "4531d99e56d597db64f450d8216de85ae8e5c6f1bad576bfd6190f3d76731f52",
+  "reviewed_at": "2026-11-21T15:13:57Z",
+  "review_reason": "修复任务提交快照与事务之间的竞态：失败方重读当前任务并证明原幂等身份后返回原任务，不新增模块或数据源，不改变资金、权限、请求链路结构及唯一提交边界",
+  "snapshot_sha256": "82d6e8100c78e71f8daf9acbe5d4dbb6944bf5484dc9f81f4df69b5593f6fb0c",
   "architecture_sha256": "f758d5a1391917d3027b5dcdc5adc7915ac9dd9b5dac35e342e16548f9344b6e",
-  "history_sha256": "e2873611d06a60816fdece32ee80073f3d1d80936bbfa059cc231a9ab7b80242",
+  "history_sha256": "96e08402bd6c74b730abf911b364af231c1dedb15adac8f5cb2acc7e39fdd1cc",
   "files": [
     {
       "path": ".dockerignore",
@@ -7753,11 +7753,11 @@
     },
     {
       "path": "internal/tasks/service.go",
-      "sha256": "5e51fcf7178035a2ae37afcd0adb7e16a416d701c56e3cb3d1738683641af4e4"
+      "sha256": "4ea831f95b2e1388c5a181afd02e05cf195a38c1481390031cc5611181ef83d4"
     },
     {
       "path": "internal/tasks/service_test.go",
-      "sha256": "0832f65eb6719b545cf70e9d18ed2e2c639d614767e98dc247f99b5bdd2addd6"
+      "sha256": "b86993d33518f846de8a798e450f26e86315777b267d8867cfe33aa1380e0d19"
     },
     {
       "path": "internal/tasks/state.go",

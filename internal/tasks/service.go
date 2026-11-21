@@ -89,6 +89,17 @@ func (s *Service) Submit(ctx context.Context, id ID, now time.Time) (Task, error
 		return tx.SaveTask(started)
 	})
 	if err != nil {
+		if errors.Is(err, ErrNoResubmit) {
+			current, _, snapshotErr := s.store.Snapshot(ctx, id)
+			if snapshotErr != nil {
+				return Task{}, snapshotErr
+			}
+			replayed, replayErr := current.ReplaySubmit(task.idempotencyKey, task.requestDigest)
+			if replayErr != nil {
+				return Task{}, replayErr
+			}
+			return replayed, nil
+		}
 		return Task{}, err
 	}
 
