@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-20T17:44:00Z",
-  "review_reason": "033 验收夹具最终修正：cache 路由补物理 binding；task race 仅增强错误输出，原 procurement identity 与动态路由逻辑保持",
-  "snapshot_sha256": "d725fcf8fbaa9cfa4fffcc53ec3ea96064ede5a29c0df3cf7a9e3c9550012fd3",
+  "reviewed_at": "2026-11-21T07:40:42Z",
+  "review_reason": "仅修复隔离浏览器驱动等待表格行渲染的竞态并增加单元回归；不改变系统模块、请求链路、数据关系、权限边界或能力状态",
+  "snapshot_sha256": "4531d99e56d597db64f450d8216de85ae8e5c6f1bad576bfd6190f3d76731f52",
   "architecture_sha256": "f758d5a1391917d3027b5dcdc5adc7915ac9dd9b5dac35e342e16548f9344b6e",
-  "history_sha256": "96e8287caf255fcf26c5b53c99fc0ace9ff8a87ecef624b2ca13068e896cdec9",
+  "history_sha256": "e2873611d06a60816fdece32ee80073f3d1d80936bbfa059cc231a9ab7b80242",
   "files": [
     {
       "path": ".dockerignore",
@@ -8497,11 +8497,11 @@
     },
     {
       "path": "scripts/phase1_browser_qa.py",
-      "sha256": "fd004ae26813107d90c366464605391c495d17289a0dbfbf8434ea30191cc799"
+      "sha256": "818cb1005ae7d3bbb407cb9a42187d4e0c487bef1e78fd50035204042a0406a6"
     },
     {
       "path": "scripts/phase1_browser_qa_test.py",
-      "sha256": "94475a5989caf0821692b8f76e0ce8441987cb96ef761e43a038e686119b6d94"
+      "sha256": "bc936409d342ff68f19218d545c614b65bc443dc0635d416ebe1fd7c50aa6d14"
     },
     {
       "path": "scripts/phase1_mock_acceptance_test.py",

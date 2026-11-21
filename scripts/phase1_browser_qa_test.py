@@ -20,6 +20,14 @@ class BrowserProtocolTest(unittest.TestCase):
             secret = base64.b32encode(b"12345678901234567890").decode()
             self.assertEqual("287082", MODULE.totp_code(secret))
 
+    def test_row_action_waits_for_visible_table_rendering(self):
+        browser = MODULE.Browser.__new__(MODULE.Browser)
+        browser.evaluate = mock.Mock(side_effect=[False, True])
+        browser.wait = lambda expression: MODULE.Browser.wait(browser, expression)
+        with mock.patch.object(MODULE.time, "sleep"):
+            browser.click_row_action("model", "公开设置")
+        self.assertEqual(2, browser.evaluate.call_count)
+
     def test_public_model_is_not_toggled_off_when_already_public(self):
         class FakeBrowser:
             def __init__(self):

@@ -8864,3 +8864,16 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `internal/server/task_submit_race_integration_test.go`
 
 </details>
+
+## 2026-11-21T07:40:42Z · 4531d99e56d5
+
+仅修复隔离浏览器驱动等待表格行渲染的竞态并增加单元回归；不改变系统模块、请求链路、数据关系、权限边界或能力状态
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+- modified `scripts/phase1_browser_qa_test.py`
+
+</details>
