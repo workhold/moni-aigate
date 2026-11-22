@@ -1,6 +1,6 @@
 # New API 与 Sub2API 上游接入路线
 
-状态：2026-11-12 修订。本文把 New API 与 Sub2API 定义为可统一部署、可逐步内收的上游渠道；它不宣称已经覆盖两个项目的全部能力，也不把外部探测结果写成正式供应商认证。
+状态：2026-11-23 修订。本文把 New API 与 Sub2API 定义为可统一部署、按 profile 选择性内收的**内部叶子执行器**；允许永久混合，不以全部能力内收或整体退役为目标。商品、质量、利润和统一控制台目标见[041 R0](../../specs/041-profit-hybrid-platform/spec.md)。本文不宣称已经覆盖两个项目的全部能力，也不把外部探测结果写成正式供应商认证。
 
 ## 1. 目标架构
 
@@ -12,16 +12,16 @@ moni-aigate（唯一公网入口）
     ├─ 直接供应商渠道
     ├─ New API 渠道（内部网络）
     └─ Sub2API 渠道（内部网络）
-          └─ 各自的账号池、供应商适配器和下游重试
+          └─ 各自的账号池和供应商适配器（商业 inner generation retry 默认关闭）
 ```
 
-三套服务可以用同一个 Compose 编排（或等效部署脚本）部署，1Panel 等面板可选导入同一编排，但保持三个运行时边界：
+三套服务可以用同一个 Compose 编排（或等效部署脚本）部署，1Panel 等面板可选导入同一编排，但保持三个运行时边界。direct、New API、Sub2API 均为叶子，最多一层 external relay，禁止三者互连成链；这一目标不改变当前 external commercial 的拒绝状态。
 
 | 组件 | 负责 | 不负责 |
 | --- | --- | --- |
 | moni-aigate | 客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算、审计和恢复 | 下游账号池的具体轮换、下游后台和下游私有账单 |
-| New API | 自己的渠道/账号池、供应商协议适配、下游局部重试和管理后台 | moni 客户的最终收费、公开客户 Key、平台总路由 |
-| Sub2API | 自己的渠道/账号池、供应商协议适配、下游局部重试和管理后台 | moni 客户的最终收费、公开客户 Key、平台总路由 |
+| New API | 自己的渠道/账号池、供应商协议适配和私网管理后台；商业 inner generation retry 默认关闭 | moni 客户的最终收费、公开客户 Key、平台总路由 |
+| Sub2API | 授权订阅账号/OAuth/session、账号池与专用协议适配；商业 inner generation retry 默认关闭 | moni 客户的最终收费、公开客户 Key、平台总路由 |
 
 公网只暴露 aigate。New API、Sub2API、各自数据库和管理端口只放在内部网络，凭据不在三个系统之间共享数据库或双写。aigate 把它们当作 `channel`，而不是把它们的客户/钱包/账单模型拼成第四套事实源。
 
@@ -43,7 +43,7 @@ moni-aigate（唯一公网入口）
 必须先确定重试责任：
 
 - aigate 只对自己能证明“尚未发送或明确无消费”的失败执行跨 channel 重试；
-- 下游网关可以在自己的 channel 内做局部账号重试，但必须返回最终 attempt 摘要、usage 状态和是否可能已消费；
+- 下游网关只允许在固定均质池内选择账号；inner generation retry 默认关闭。未来逐 profile 开放前必须提供逐 child 可信无消费、usage/成本、次数和累计成本证据，不能只返回最终 attempt 摘要；
 - `sending`、`unknown` 或缺少可靠 usage 时，aigate 不因为下游返回 5xx 就再次生成；
 - 任意层的重试都不能新建第二个客户 reservation、settlement 或钱包。
 
@@ -57,7 +57,7 @@ moni-aigate（唯一公网入口）
 - `integration_mode`: `external_relay`、`embedded_adapter` 或 `migrated_capability`；
 - 内部 endpoint、网络和地域证据、认证凭据版本；
 - 支持的协议、模型映射、上下文/输出边界和 usage 语义；
-- 下游重试能力、错误分类和 `safe_to_retry` 证据；
+- 下游重试能力和默认关闭状态、错误分类和 `safe_to_retry` 证据；
 - 采购成本版本、成本未知时的处理和资格状态；
 - 来源项目、源码提交、许可证/NOTICE 路径和本地修改记录（存在源码复用时）。
 
@@ -95,7 +95,7 @@ moni-aigate（唯一公网入口）
 - aigate 公开入口可把已发布逻辑模型路由到 direct/new_api/sub2api channel；
 - channel probe 能区分模型发现、协议成功、可靠 usage、成本证据和未知消费；
 - aigate 的客户售价、预占、settlement、采购成本和审计保持唯一；
-- downstream 的内部重试不能绕过 aigate 的 `SafeToRetry`、预算或结算；
+- downstream 的 inner generation retry 默认关闭；未来逐 child 证据合同不得绕过 aigate 的 `SafeToRetry`、全局生成次数、累计成本预算或结算；
 - 至少有一条从外部 channel 到内置 adapter 的迁移切片，并能通过 route revision 回退。
 
 真实供应商、生产支付、HA、全媒体动态路由和下游全部能力迁移仍按各自资格门禁推进。

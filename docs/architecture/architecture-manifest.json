@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-21T21:20:41Z",
-  "review_reason": "最终验证记录与033任务台账同步r21完整029、浏览器、PR及未认证边界；仅文档和架构清单变化，无模块、请求链路、数据关系或权限结构变化",
-  "snapshot_sha256": "ece7d41212bbc88f823fad997255e3df2fee0fc51f2e8d73b5d6c233b0155289",
-  "architecture_sha256": "f758d5a1391917d3027b5dcdc5adc7915ac9dd9b5dac35e342e16548f9344b6e",
-  "history_sha256": "2180a0e4974fe3d67856e07c9562b3bec3a9b593cccfbcabe1c12d488207c1ed",
+  "reviewed_at": "2026-11-22T17:31:43Z",
+  "review_reason": "记录041 R0独立复核、USD/CNY商业首发边界及make check完成；仅设计台账状态变化，无运行实现",
+  "snapshot_sha256": "206f7f90d119f9ff41f9be7a40a9e5b352815e250aebddcfee3abacf7194a8db",
+  "architecture_sha256": "59105d8164e99bb74bdc8a1ff13ad4fc386d400703edea95ba2fce9150272758",
+  "history_sha256": "b05f578691fe148df78ba465771d67ac059a145e6f969d94bbf8a5631064bc17",
   "files": [
     {
       "path": ".dockerignore",
@@ -189,15 +189,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "a64f70100265bbb0e3a25a040084a49baee5162ae27e3271922cba8f5e0d86da"
+      "sha256": "539bac89f70ea9de59f6c72a3c07477ef4e745dfd64466c8970a6521158dc3aa"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "a2ae9a61306887c9f2d93b01ac6117f43a62ef51a756d781274d31738629de90"
+      "sha256": "aefb024cb142a7ff1a32fb66b1b98c1d2eed683517d4375cbdab9bde7a4ebafb"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "7457119b004d06caaf8292c29d944f418c4cd0066e12bda296f590064f90328c"
+      "sha256": "5f41222d1356e54fec9ccddc8d417175d38a39753a8744087bf3589fc04b48ce"
     },
     {
       "path": "docs/design/direction-review-2026-11-14.md",
@@ -225,7 +225,7 @@
     },
     {
       "path": "docs/design/new-api-roadmap.md",
-      "sha256": "7287c42d704c202329dab133f8cb13f260f38770aaa9f0ff0ed96528e0acc483"
+      "sha256": "f13771386cc411ed4643c63127f1ac0568988166f7bc74e28397944a5be5c642"
     },
     {
       "path": "docs/design/overview.md",
@@ -237,7 +237,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "2cdddd50b29946acfd6f5a0cad109f4468a0abcb73f960f8010ba7567f24f5a2"
+      "sha256": "31ee5401ebc282d4d0ed70928c658afb5436a1f2360befe9b3faa692bffb7da9"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -245,7 +245,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "8149d346653266b0be59ea9d7af733be2892587134d1a1f100718cf93fa9703b"
+      "sha256": "255db193e4807b8159f9165e0cd23c71371cab1bffe2f0c99af27196c719c867"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -261,7 +261,7 @@
     },
     {
       "path": "docs/design/upstream-integration-plan.md",
-      "sha256": "5ad85057c276a38f4a31bb7fe9e39cebaec03cb9093629e2b4581b4c0b03e1d7"
+      "sha256": "f91a1f12ffb79795534d0ef152bd59c7e97b31591b2129a844d829c8f5abe994"
     },
     {
       "path": "docs/research/dependency-provenance.md",
@@ -9677,7 +9677,7 @@
     },
     {
       "path": "specs/032-phase2-text-data-plane/tasks.md",
-      "sha256": "39f8d5301e350b5d25f85918e2c094912ad5ddab59ff6647a392f195ca965cb3"
+      "sha256": "ff83ba0bf60414657cf6ba25ae4812001dfc63f768a8dfe4d2fcc1c8d3e95972"
     },
     {
       "path": "specs/033-text-dynamic-routing/design.md",
@@ -9693,7 +9693,7 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/tasks.md",
-      "sha256": "4a545f6d53ce2cc4d8824e4e746aaf5ad18535c063f1e19352b65ae20e718f9c"
+      "sha256": "27f89915dc5e13166b6f7cac4e81545b8c4f9a425cedf91d8188a2bf3d454aab"
     },
     {
       "path": "specs/034-virtual-coin/implementation-freeze.md",
@@ -9705,11 +9705,11 @@
     },
     {
       "path": "specs/035-external-upstream-integration/spec.md",
-      "sha256": "3505ffd70e7504d128db31ccc2ca5617b70f50e2e880bb1283601ba8b6746c4a"
+      "sha256": "0e7708c26e90dc7997c3dc1adcdf0fdddddd81c30eec631502cef30199a517dd"
     },
     {
       "path": "specs/038-new-api-capability-migration/capability-matrix.md",
-      "sha256": "a7859f2826b9f5be449a0bbe8fcfcbde154d01164715443e2a34c2eea4c87c3c"
+      "sha256": "4f0436aded417f87340d153a0e13d71fa8e7f9c738f638b62e32075aca533e51"
     },
     {
       "path": "specs/038-new-api-capability-migration/navigation-refinement.md",
@@ -9729,7 +9729,7 @@
     },
     {
       "path": "specs/038-new-api-capability-migration/spec.md",
-      "sha256": "bc1a73d74b1376faf60857eedb3465be2a563adf417be3357587bd2e14c624a5"
+      "sha256": "d05ba561b84e6eca0c931720201088127151812041a93b512e38997f801f8383"
     },
     {
       "path": "specs/039-acceptance-evidence-reuse/spec.md",
@@ -9742,6 +9742,18 @@
     {
       "path": "specs/040-acceptance-parallelism/spec.md",
       "sha256": "0cfd80f66e45cb2ca0dceea9a429ef1e11ee30724db54a8e5e85993accc14019"
+    },
+    {
+      "path": "specs/041-profit-hybrid-platform/design.md",
+      "sha256": "cf8673d007a929d74f1d0e7da45d0d25454e9b95e9e2be07c3fe96ed2c45f32e"
+    },
+    {
+      "path": "specs/041-profit-hybrid-platform/spec.md",
+      "sha256": "42669433c63a2679f5a81c40173e8fe026e45853cfe731d289b220d61e4669d3"
+    },
+    {
+      "path": "specs/041-profit-hybrid-platform/tasks.md",
+      "sha256": "f0c18d2223a154383184f24faf1a44142e59903e67306afd49ef3ba5531d937c"
     },
     {
       "path": "third_party/README.md",

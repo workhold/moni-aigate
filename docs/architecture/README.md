@@ -93,7 +93,7 @@ Realtime turn 的当前数据库绑定还通过来源类型闭合检查。文本
 <!-- architecture:context -->
 ## 当前上游接入边界（2026-11-12）
 
-New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration-plan.md)登记为可统一部署的外部 channel。aigate 是唯一公网入口，负责客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算和审计；下游网关保留自己的供应商账号池、协议适配和局部重试。三个服务可以放在同一 Compose 编排（或等效部署脚本）中，1Panel 等面板可选导入同一编排，但数据库、管理端口和客户账单事实保持独立。动态路由在 `internal/routing` 选择 channel，下游账号选择不改变 aigate 的 route revision 或结算身份。外部模型列表、单次 HTTP 200 和连通性 probe 不能替代逐 profile 资格认证。
+New API 与 Sub2API 现在按[上游接入路线](../design/upstream-integration-plan.md)登记为可统一部署的外部 channel。aigate 是唯一公网入口，负责客户身份、模型目录、公开售价、最终路由、钱包预占、客户结算和审计；下游网关保留自己的供应商账号池和协议适配，只做固定池内账号选择。按 041 目标，inner generation retry 默认关闭，现有 outer receipt 计数不能证明内部每次生成安全；未来开放须另冻逐 child 无消费、usage/成本、次数和累计成本合同。三个服务可以放在同一 Compose 编排（或等效部署脚本）中，1Panel 等面板可选导入同一编排，但数据库、管理端口和客户账单事实保持独立。动态路由在 `internal/routing` 选择 channel，下游账号选择不改变 aigate 的 route revision 或结算身份。外部模型列表、单次 HTTP 200 和连通性 probe 不能替代逐 profile 资格认证。
 
 0 阶段验收合同见[035](../../specs/035-external-upstream-integration/spec.md)，七项本地验收已逐项勾选并附证据路径。当前 New API/Sub2API 仍以外部 relay 运行，未 vendor 修改版源码；`third_party/` 保存固定提交的 LICENSE/NOTICE 与 SOURCE 记录，`upstream-provenance-check` 在 `make check` 和 `make verify-mvp` 中校验来源、许可证、修改记录和固定镜像，详见[来源验收](../verification/phase0-upstream-provenance.md)。真实生产部署、供应商认证和完整发布 SBOM 仍需独立验收。
 
@@ -108,6 +108,8 @@ PR-2 侧栏收口按[导航子规格](../../specs/038-new-api-capability-migrati
 029 运行时还修正了任务 HTTP/worker 同身份提交竞争：`tasks.Service.Submit` 对已非 prepared 的任务使用原持久化幂等身份返回同一任务，不新增 adapter 调用、attempt 或生成请求；真实 PostgreSQL 竞争测试验证唯一 submission_accepted/attempt。支付主进程的初始化失败仅附加 `payments.SafeErrorCode` 封闭分类，原始错误、DSN、凭据和供应商正文不进入日志；context、SQLSTATE 与网络错误也只映射为固定诊断类别。详细合同见[038 运行时修正](../../specs/038-new-api-capability-migration/release-evidence-gate.md#10-029-发现的运行时修正)。
 
 2026-11-20 第三阶段文本动态路由已进入当前代码路径：[`current_015_phase3_dynamic_routing.sql`](../../migrations/current_015_phase3_dynamic_routing.sql) 追加物理模型、不可变策略扩展、route session、可重建统计窗口和每次选择一行的不可变决策；旧 attempt 五字段数组回填后删除。[`internal/routing`](../../internal/routing) 使用同一 Plan/Engine 完成硬过滤、sticky/priority/order/成本/延迟/吞吐排序和可记录抽签；[`internal/catalog`](../../internal/catalog) 保持完整版本 CAS，[`internal/billing`](../../internal/billing) 保持原预占、采购报价和唯一结算事务。仅 `POST /v1/chat/completions` 接受严格 `route` 偏好，其他文本协议只使用已发布默认值，媒体/任务/Realtime 不参与。[`route-replay`](../../cmd/moni-aigate/route_replay.go) 以只读事务回放固化快照。032 的熔断/cache 字段与 033 策略已合并到同一不可变发布，cache hit 不创建动态路由决策；032 的性能基线、完整 029、真实供应商或生产验收不因本段而完成，具体证据与失败边界见[033 验证记录](../verification/phase3-dynamic-routing.md)。
+
+2026-11-23 [041 盈利商品与混合执行平台 R0](../../specs/041-profit-hybrid-platform/spec.md)为**设计候选，未实施**：后续目标从 New API 全量内收改为核心自研、长尾复用、选择性内收和永久混合。aigate 计划独占商品、质量、现金经济、最终路由与商业事实，direct/New API/Sub2API 为最多一层 relay 的叶子执行器；一个 aigate SPA 计划统一供应与执行、商品与路由、请求与利润管理，下游原生后台仅私网 break-glass。当前 COIN/CNY 最低毛利不能称现金利润，场景质量证据和请求级累计成本仍缺失；首片目标为 direct-only、coding_non_reasoning、单 attempt 的 K3-Dynamic test-only。New API/Sub2API external commercial 继续由现有门禁拒绝，本节不改变运行代码、SQL、API、部署或真实资格。
 
 ```mermaid
 flowchart LR
@@ -1336,7 +1338,7 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 经营报表与CSV | 026已接平台HTTP/控制台，限定专项验收见记录 | 最长31天/5000请求；消费收入一次、全部尝试成本、退款净额，未知成本或未结算时毛利待核对；独立于累计钱包异步投影，[架构](operating-reports.md)、[验证](../verification/operating-reports.md) |
 | 资金来源与钱包开账 | 027已实现现行四写入口、正式023、CLI、HTTP与控制台，专项验收见记录 | 六表来源与开账原件，非现金opening、FIFO和逆序消费退款；新库策略，无历史无损升级或真实原路现金退款；[架构](wallet-sources.md)、[验证](../verification/wallet-sources.md) |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
-| 文本动态路由 | 第三阶段，设计草案，未实现 | 物理模型、质量档位、评分、最低毛利、会话粘性与路由回放的合同草案见[033](../../specs/033-text-dynamic-routing/spec.md)，要点见[LLD §9.2](../design/LLD.md#92-第三阶段文本动态路由的合同缺口)；现有路由只覆盖同一逻辑模型下的文本渠道选择 |
+| 文本动态路由 | 033 已实现并完成本地完整 029；真实供应商、生产与场景质量/现金利润仍独立 | `current_015_phase3_dynamic_routing.sql`、物理模型、完整候选决策、auto、统计排序、粘性、毛利字段和只读回放已进入当前代码；仅 Chat 接受 route 偏好，媒体/任务/Realtime 不参与。见[规格](../../specs/033-text-dynamic-routing/spec.md)与[验证](../verification/phase3-dynamic-routing.md)；041 动态商品/场景质量/现金毛利为后续设计候选 |
 | 媒体/任务/Realtime 路由 | 不参与路由（前三阶段） | 单 profile、单 adapter；`media_*` 表无 channel/binding；与文本共享钱包与账务；媒体动态路由需另立 SDD，见[HLD 结构边界](../design/HLD.md#文本与媒体的结构边界和路由范围2026-11-10) |
 | 共享采购账户/预算 | 019已实现，限定本地验收通过 | [冻结合同](../../specs/019-procurement-accounts/contract.md)；跨渠道/Key/租户共享累计预算、逐attempt预占、未知占用和双人更正；周期硬预算已由023-B扩展；余额仅人工证据，供应商余额/账单自动同步待后续 |
 | 公开模型目录 | 020已实现，限定本地验收通过 | 默认私有、安全DTO、当前价、筛选/分页、独立准入与admin公开CAS；[020验证](../verification/public-catalog.md) |

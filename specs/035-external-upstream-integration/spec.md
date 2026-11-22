@@ -4,14 +4,15 @@
 
 ## 目标
 
-把 New API 与 Sub2API 作为 aigate 的内部上游 channel 接入，并保留逐步把能力迁入 `internal/provider`、`internal/routing` 和统一账务的路径。
+把 New API 与 Sub2API 作为 aigate 的内部**叶子执行器**接入，并按 profile 选择性内收；允许核心 direct 与长尾 external 永久混合，不再以全部能力内收或下游整体退役为目标。总体商品、利润、质量与统一管理合同见[041 R0](../041-profit-hybrid-platform/spec.md)。
 
 ## 拓扑与数据所有权
 
 - Compose/部署脚本可启动 `aigate`、`new-api`、`sub2api`、三个独立数据库和必要 worker；1Panel 等面板可选导入同一编排，非验收前提。
 - 公网只暴露 aigate；下游管理端口、数据库和凭据不暴露给客户。
 - aigate 是客户身份、模型目录、公开售价、RouteSelector、钱包预占、settlement、采购成本和审计的唯一权威。
-- 下游只负责自己的供应商凭据、账号池、协议适配和局部重试；不写 aigate 的钱包/settlement，不共享数据库。
+- 下游只负责自己的供应商凭据、账号池、协议适配和局部账号选择；不写 aigate 的钱包/settlement，不共享数据库。
+- direct/New API/Sub2API 都是叶子，最多一层 external relay；禁止 aigate、New API、Sub2API 互连成链。New API 做通用长尾执行，Sub2API 仅在授权订阅账号、OAuth/session 或账号亲和具有增量价值时启用。
 
 ## Channel 合同
 
@@ -22,14 +23,15 @@
 - endpoint、credential version、network/data-region evidence；
 - protocol/model mapping、capability and usage profile；
 - cost version、qualification status、safe-to-retry evidence；
-- 若复用源码，source repository、commit、LICENSE/NOTICE 路径和本地修改摘要。
+- 若复用源码，source repository、commit、LICENSE/NOTICE 路径和本地修改摘要；
+- 041 目标新增不可变 inner pool version/digest、最终账号安全伪名和逐 inner dispatch 证据；当前 thin relay 尚不具备这些事实，未补齐前保持 test-only/不可证明。
 
 下游模型目录或 HTTP 200 只能作为发现/连通性证据，不能直接发布为可售模型。
 
 ## 路由与重试
 
 1. aigate 先做授权、能力、地域、健康、并发、采购预算和毛利过滤，再由 `RouteSelector` 选择一个 channel。
-2. New API/Sub2API 内部可以选择账号，但必须返回最终协议终态、usage 状态、成本状态和可能已消费标志。
+2. New API/Sub2API 内部只可在固定均质池内选择账号，且必须返回最终协议终态、usage 状态、成本状态和可能已消费标志。商业目标的 inner generation retry 默认关闭；未来开放必须另冻逐 child 无消费、次数和累计成本合同。
 3. aigate 只在明确未发送或明确无消费时跨 channel 重试；`sending`、`unknown` 或缺可靠 usage 时不得重放。
 4. 任意下游重试不会新建客户 reservation、settlement 或钱包事实。
 
@@ -38,7 +40,7 @@
 - [x] 三服务和三个数据库可在同一 Compose 编排（或等效部署脚本）中启动，服务之间使用内部网络；1Panel 等面板导入为可选等价方式。（证据：`deploy/external-upstreams.compose.yaml`、[0 阶段真实三服务三库记录](../../docs/verification/phase0-external-upstream.md)。）
 - [x] aigate 可以把一个已发布逻辑模型路由到 direct、new_api、sub2api 三类 channel 中至少两类。（证据：同一记录的真实运行结果 `direct=true,new_api=true,sub2api=true`。）
 - [x] Chat、SSE、usage、错误分类和成本未知状态都有真实或 deterministic fixture 证据。（证据：`internal/server/external_relay_integration_test.go`、`scripts/external-upstream-qa.py`、[0 阶段记录](../../docs/verification/phase0-external-upstream.md) 与 [031 harness](../../docs/verification/phase1/031-mock-harness.md)。）
-- [x] 下游局部重试、aigate 跨 channel 重试和未知消费均有不重放负向测试。（证据：0 阶段专用 PG 用例 3–4、真实 Compose 单 receipt 断言及 [031 harness](../../docs/verification/phase1/031-mock-harness.md)。）
+- [x] **仅就已观察边界**，aigate 跨 channel 重试和 unknown consumption 有 outer no-replay 负向测试。（证据：0 阶段专用 PG 用例 3–4、真实 Compose 单 receipt 断言及 [031 harness](../../docs/verification/phase1/031-mock-harness.md)。）这些计数不能观察 New API/Sub2API 内部每次供应商生成，故不证明 inner retry 安全；inner pool/dispatch 证据和默认关闭由 041 后续验收，不能复用本勾选授资格。
 - [x] 客户售价、预占、唯一 settlement、采购成本和审计只在 aigate 生成。（证据：[0 阶段记录](../../docs/verification/phase0-external-upstream.md) 的拓扑、专用 PG 与真实三服务三库结果；下游不写 aigate 钱包/settlement。）
 - [x] 至少一个能力完成 `external_relay → embedded_adapter` 的切片，并能按 route revision 回退。（证据：0 阶段专用 PG 用例 5 与真实运行 `rollback_revision=2`。）
 - [x] 源码复用的组件携带 LICENSE/NOTICE、来源提交和修改记录；许可证义务进入发布检查。（证据：[上游来源与许可证验收](../../docs/verification/phase0-upstream-provenance.md)、`third_party/*/SOURCE.md` 与 `make upstream-provenance-check`。）

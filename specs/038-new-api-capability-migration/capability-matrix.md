@@ -1,6 +1,6 @@
 # 038 能力台账：New API 固定基线对照
 
-本台账是[038 总合同](spec.md)的逐项索引。`当前状态`只描述本仓库现有正式路径与已有证据；除明确写有真实 profile 证据的条目外，均不代表真实供应商、正式支付商或生产认证。`目标/下一片`是规划，不得反向写成已实现。
+本台账是[038 总合同](spec.md)的逐项索引。2026-11-23 起总体目标按[041 R0](../041-profit-hybrid-platform/spec.md)修订为选择性内收和永久混合，不再追求全量替代。`当前状态`只描述本仓库现有正式路径与已有证据；除明确写有真实 profile 证据的条目外，均不代表真实供应商、正式支付商或生产认证。`目标/下一片`是规划，不得反向写成已实现。
 
 ## 1. 阅读与更新规则
 
@@ -9,6 +9,7 @@
 - `already_internal`、`embedded_adapter`、`external_relay` 描述实现位置；`mock_verified`、`external_flow_verified`、`supplier_profile_qualified` 描述证据，二者不得混用。
 - 每次实现切片更新对应行的源码、UI、规格、证据和未关闭问题；增加供应商/模型时另建 profile 子台账，不能用 NA 行的总体状态替代逐 profile 资格。
 - 完整历史证据以[029 验收清单](../029-phase1-acceptance/spec.md)和[MVP 状态](../../docs/verification/mvp-status.md)为入口；旧证据不自动覆盖后续提交。
+- **2026-11-23 基线修正**：032 的精确缓存/同价无 attempt 结算和 033 的物理模型、完整候选决策、auto、统计排序、粘性、毛利字段与只读回放已进入 main `d51bd24`。NA-05 的“完整候选池快照、抽签和回放未实现”及 NA-08 的“缓存命中计费未完成”是原始快照，不能继续作为实施缺口；032 固定资源性能、场景质量证据、现金付款基准和真实/生产资格仍是独立缺口。后续实施以[041](../../specs/041-profit-hybrid-platform/spec.md)和当前验证记录为准。
 
 ## 2. 协议、供应商与路由
 
@@ -18,7 +19,7 @@
 | NA-02 | Responses、Anthropic Messages、Gemini 原生文本；参考 `relay/channel`、`router/relay-router.go` | `already_internal + mock_verified`：003/010 已覆盖受限文本/基础工具范围；Gemini 工具/多模态未覆盖。[原生协议](../../specs/003-native-protocols/spec.md)、[Gemini](../../docs/verification/gemini-native.md) | **M1/P0**：按供应商+协议逐片完成内置适配与 mock 验收，不因 Chat 兼容继承 Responses/Messages/Gemini 资格。UI 继续显示协议能力、限制和 request ID；真实供应商认证留第四阶段 |
 | NA-03 | Embeddings、Rerank；参考 `relay/channel`、`router/relay-router.go` | `already_internal + mock_verified`：009 已有 OpenAI Embeddings 与 Jina token 计量 Rerank。[验收](../../docs/verification/retrieval-protocols.md) | **M1/P0**：逐家补内置 profile 的聚合输入硬界、最终 usage、零输出和成本 fixture；真实请求/账单认证留第四阶段。Cohere `search_units` 等额外量纲另立规格 |
 | NA-04 | 多供应商、模型映射与能力配置；参考 `relay/channel/*`、`model/channel.go` | 通用 direct adapter、不可变 binding、external New API/Sub2API 已存在；035 有 `external_relay → embedded_adapter` 和 revision 回退。真实 profile 资格未完成。[035](../035-external-upstream-integration/spec.md)、[供应商计划](../../docs/design/provider-qualification-plan.md) | **M1/P0**：扩展现有 provider，不复制整个 relay；每个供应商/模型单独记录证据，真实资格在第四阶段授予。Azure/Bedrock/Vertex 等签名与部署差异独立切片 |
-| NA-05 | 多渠道优先级/权重、健康、限流、故障切换；参考 `model/channel_cache.go`、`service/relay_error.go` | `already_internal`：018 已有硬过滤、优先级/权重/健康/容量/成本优先和最多两次安全 attempt（即最多一次跨渠道切换）；完整候选池快照、抽签和回放未实现。[018](../../docs/verification/cost-aware-routing.md) | **M3/P1 → M4/P2**：失败分类/熔断归 032；物理模型、评分、完整失败池、粘性与回放归 033。不得用上游可重试集合放宽 consumption 判定 |
+| NA-05 | 多渠道优先级/权重、健康、限流、故障切换；参考 `model/channel_cache.go`、`service/relay_error.go` | `already_internal + mock_verified`：018 的硬过滤、优先级/权重/健康/容量/成本优先，与 032 的版本化熔断/首事件及 033 的物理模型、完整候选决策、可记录抽签、auto、统计排序、粘性和只读回放已合入；本地完整 029 见[033 记录](../../docs/verification/phase3-dynamic-routing.md)。固定资源性能、场景质量证据、现金付款基准和真实/生产资格未完成 | **041 P0/P1**：补 033 原因/权限/粘性组合矩阵、固定资源性能及 041 质量/现金利润；不得用上游可重试集合放宽 consumption 判定。通用 Auto 和真实多供应商路由资格后置 |
 
 ## 3. 渠道、身份、计价与资金
 
@@ -26,7 +27,7 @@
 | --- | --- | --- | --- |
 | NA-06 | 多密钥池、批量运营、标签、模型发现/同步、渠道余额；参考 `model/channel.go`、`router/channel-router.go` | 011/012/013 已有三格式发现与差异、1..32 不可变凭据池、批量启停和幂等回执；019 有采购账户/预算。自动同步、标签和供应商余额查询未实现。[发现](../../docs/verification/model-discovery.md)、[凭据池](../../docs/verification/credential-pools.md)、[批量运营](../../docs/verification/channel-operations.md) | **M2/P0/P1**：同步只产生差异草稿，管理员 CAS 发布；余额是带来源/时刻的只读观察，不是硬预算。复用 `ChannelDiscovery.vue`、`CredentialPool.vue`、`ChannelOperations.vue` |
 | NA-07 | 用户/分组、Key 模型/IP/预算/速率限制；参考 `model/token.go`、`middleware/model-rate-limit.go` | `already_internal`：租户/成员/角色、Key 模型/地域/IP/CIDR/RPM/burst/concurrency/lifetime/期限和 CAS 已验收；分组倍率编译为绝对价格。分布式限流未承诺。[Key 配置](../../docs/verification/key-configuration.md)、[访问策略](../../docs/verification/key-access-policy.md)、[运行限额](../../docs/verification/key-runtime-limits.md) | **保持并补缺口**：不复制 Token 明文或 Redis quota；Key 换发、动态平台/租户限额和分布式限流须另有产品/HA 合同。`KeysView.vue` 保留冲突与未知核查 |
-| NA-08 | 计量/定价、缓存读写折扣、阶梯与分组价格；参考 `service/billing.go`、`service/text_quota.go` | 硬预占、唯一结算、完整量纲、价格组/倍率编译、采购成本与周期预算已有；缓存命中计费、阶梯价和供应商汇率未完成。[统一计量](../../docs/verification/unified-metering.md)、[租户定价](../../docs/verification/tenant-pricing.md) | **M3/P1；阶梯/汇率另立规格**：缓存遵守 032 并先裁决 D-032-1/D-032-2；不得引入估算扣费、第二价格事实源或可变运行时倍率 |
+| NA-08 | 计量/定价、缓存读写折扣、阶梯与分组价格；参考 `service/billing.go`、`service/text_quota.go` | 硬预占、唯一结算、完整量纲、价格组/倍率编译、采购成本与周期预算已有；032 的同租户精确缓存、同价 cache-hit finalization、已知零供应商成本与 TTL 已合入。供应商缓存读/写分维折扣、阶梯价和供应商汇率未完成。[统一计量](../../docs/verification/unified-metering.md)、[租户定价](../../docs/verification/tenant-pricing.md) | **041/后续规格**：缓存分维计价按 profile 另冻量纲；阶梯/汇率独立扩展。不得引入估算扣费、第二价格事实源或可变运行时倍率；当前 COIN/CNY 数值毛利不得称现金利润 |
 | NA-09 | 开放注册、邮箱验证/找回、自助开户；参考 `router/api-router.go`、`controller` | `already_internal`：021 默认关闭注册/邮件，本地 SMTP、最小权限开户、MFA 和会话撤销已验收；正式收件域名未认证。[验收](../../docs/verification/self-service-identity.md) | **保持**；真实 SMTP/收件在部署资格中独验。复用 `IdentityRequestView.vue`、`IdentityCompleteView.vue`、`SecurityView.vue`，不为对齐而默认开放注册 |
 | NA-10 | 在线充值、支付订单、兑换码；参考 `controller/topup*.go`、`model/topup.go`、`model/redemption.go` | 人工核款、双审兑换券和本地支付沙箱已有；沙箱不是实际收款，真实原路退款/拒付未完成。[兑换券](../../docs/verification/funding-vouchers.md)、[支付应用](../../docs/verification/payment-application.md) | **M5/P3/第四阶段**：选定支付商后冻结验签、持久事件、查单/对账和退款。复用支付 journal/UI，不先做无真实后端的充值按钮 |
 | NA-11 | 套餐、订阅、额度周期与混合扣费；参考 `service/funding_source.go`、`router/api-router.go` | `postponed`：现有 `internal/productvalue` 仅纯算法，未接线；周期预算不是订阅商品。[路线 §4.5](../../docs/design/phase-roadmap.md#45-订阅与套餐) | **M5/P3**：只有新产品合同获批才实施；必须成为 027 来源/funding lot，先冻结周期、FIFO、到期、取消和退款，不建权益钱包 |
