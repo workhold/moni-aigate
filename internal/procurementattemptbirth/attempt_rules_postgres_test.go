@@ -225,7 +225,7 @@ func TestPostgresA2AttemptReplayChecksMatchOriginalErrors(t *testing.T) {
 				call.credential = original.CredentialID
 			}
 			before := f.snapshot(t)
-			_, oldErr := frozenattempt.Reject(f.ctx, billing.New(f.owner), frozenattempt.Input{TenantID: original.TenantID, RequestID: original.RequestID, ChannelID: original.ChannelID, ChannelVersionID: original.ChannelVersionID, CredentialID: original.CredentialID, UpstreamModel: original.UpstreamModel, Sequence: original.Sequence, RouteDecisions: original.RouteDecisions})
+			_, oldErr := frozenattempt.Reject(f.ctx, billing.New(f.owner), frozenattempt.Input{TenantID: original.TenantID, RequestID: original.RequestID, ChannelID: original.ChannelID, ChannelVersionID: original.ChannelVersionID, CredentialID: original.CredentialID, UpstreamModel: original.UpstreamModel, Sequence: original.Sequence, RouteDecisions: nil})
 			var business *billing.Error
 			if !errors.As(oldErr, &business) {
 				t.Fatalf("original error oracle reached an unexpected path: %v", oldErr)

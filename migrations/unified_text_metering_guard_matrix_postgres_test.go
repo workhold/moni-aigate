@@ -195,7 +195,10 @@ func (f *guardFixture) seed() {
 	if _, err = tx.Exec(f.ctx, `INSERT INTO route_policy_versions(id,model_id,revision,profile_version,cost_mode,unknown_cost_policy) VALUES($1,$2,$3,$4,'manual','allow')`, policy, f.model, guardRouteRevision, f.profile); err != nil {
 		f.Fatal(err)
 	}
-	if _, err = tx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'guard-upstream',0,1,10,'default')`, policy, f.channel, f.version); err != nil {
+	if _, err = tx.Exec(f.ctx, `INSERT INTO physical_models(logical_model_id,upstream_model,capability) SELECT p.model_id,'guard-upstream',jsonb_build_object('context_limit',c.profile->'context_limit','input_upper_bound',c.profile->'input_token_upper_bound','output_limit',c.profile->'output_limit','supports_tools',coalesce(c.profile->'supports_tools','false'::jsonb),'supports_parallel_tool_calls',coalesce(c.profile->'supports_parallel_tool_calls','false'::jsonb),'usage_semantics',coalesce(c.profile->>'usage_semantics','final'),'modalities',jsonb_build_array('text'),'quality_tier','standard','quality_score',NULL,'max_concurrency',10,'supported_parameters',coalesce(c.profile->'allowed_parameters','[]'::jsonb)) FROM route_policy_versions p JOIN model_capability_versions c ON c.id=p.profile_version AND c.model_id=p.model_id WHERE p.id=$1`, policy); err != nil {
+		f.Fatal(err)
+	}
+	if _, err = tx.Exec(f.ctx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key) SELECT $1,$2,$3,'guard-upstream',id,0,1,10,'default' FROM physical_models WHERE logical_model_id=(SELECT model_id FROM route_policy_versions WHERE id=$1) AND upstream_model='guard-upstream'`, policy, f.channel, f.version); err != nil {
 		f.Fatal(err)
 	}
 	if _, err = tx.Exec(f.ctx, `UPDATE models SET active_revision=$2 WHERE id=$1`, f.model, guardRouteRevision); err != nil {

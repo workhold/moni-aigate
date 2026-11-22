@@ -139,7 +139,8 @@ func newPeriodicHTTPFixture(t *testing.T) *periodicHTTPFixture {
 		{`INSERT INTO channel_versions(id,channel_id,base_url,credential_id) VALUES($1,$2,'https://provider.invalid',$3)`, []any{version, channel, credential}},
 		{`INSERT INTO channel_version_credentials(channel_version_id,channel_id,credential_id,position,label,weight,max_inflight) VALUES($1,$2,$3,1,'primary',1,1000)`, []any{version, channel, credential}},
 		{`INSERT INTO route_policy_versions(id,model_id,revision,profile_version) VALUES($1,$2,1,$3)`, []any{policy, f.model, profileVersion}},
-		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, []any{policy, channel, version}},
+		{`INSERT INTO physical_models(logical_model_id,upstream_model,capability) VALUES($1,'upstream',jsonb_build_object('context_limit',120,'input_upper_bound',100,'output_limit',20,'supports_tools',false,'supports_parallel_tool_calls',false,'usage_semantics','final','modalities',jsonb_build_array('text'),'quality_tier','standard','quality_score',NULL,'max_concurrency',10,'supported_parameters','[]'::jsonb))`, []any{f.model}},
+		{`INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key) SELECT $1,$2,$3,'upstream',id,0,1,10,'default' FROM physical_models WHERE logical_model_id=$4 AND upstream_model='upstream'`, []any{policy, channel, version, f.model}},
 		{`UPDATE models SET active_revision=1 WHERE id=$1`, []any{f.model}},
 	} {
 		if _, err = tx.Exec(f.ctx, query.sql, query.args...); err != nil {

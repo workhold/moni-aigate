@@ -8680,3 +8680,239 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `internal/server/route_decisions_integration_test.go`
 
 </details>
+
+## 2026-11-20T14:41:30Z · 3a9db034d679
+
+合并 032 数据面与 033 动态路由：保留 cache/首事件/版本化熔断，统一物理候选、回放、统计和 current_015 迁移；重新验证组合架构
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 68 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `cmd/moni-aigate/main.go`
+- added `cmd/moni-aigate/route_replay.go`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- added `docs/verification/phase3-dynamic-routing.md`
+- modified `internal/billing/cost_domain_integration_test.go`
+- modified `internal/billing/cost_policy_integration_test.go`
+- modified `internal/billing/credential_pool_integration_test.go`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/gemini_integration_test.go`
+- modified `internal/billing/key_configuration_integration_test.go`
+- modified `internal/billing/procurement_attempt_rules_postgres_test.go`
+- modified `internal/billing/retrieval_integration_test.go`
+- added `internal/billing/route_decision_store.go`
+- added `internal/billing/route_decision_store_integration_test.go`
+- modified `internal/billing/route_decisions.go`
+- modified `internal/billing/settle.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/billing/vector_procurement_integration_test.go`
+- modified `internal/billing/wallet_sources_application_test.go`
+- modified `internal/catalog/cost_policy.go`
+- added `internal/catalog/dynamic_routing_integration_test.go`
+- added `internal/catalog/physical.go`
+- modified `internal/catalog/release_evidence_integration_test.go`
+- modified `internal/catalog/store.go`
+- modified `internal/operations/operations.go`
+- modified `internal/operations/procurement_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/periodicbudget/tx_supplier_test.go`
+- modified `internal/procurementattemptbirth/attempt_rules_postgres_test.go`
+- modified `internal/provider/request.go`
+- added `internal/routing/dynamic.go`
+- added `internal/routing/dynamic_test.go`
+- modified `internal/routing/procurement.go`
+- added `internal/routing/replay.go`
+- modified `internal/routing/routing.go`
+- added `internal/routing/selection.go`
+- modified `internal/server/billing_handlers.go`
+- modified `internal/server/catalog_handlers.go`
+- modified `internal/server/channel_defaults_integration_test.go`
+- modified `internal/server/channel_operations_integration_test.go`
+- modified `internal/server/completion_integration_test.go`
+- modified `internal/server/cost_routing_integration_test.go`
+- modified `internal/server/credential_pool_integration_test.go`
+- added `internal/server/dynamic_routing_integration_test.go`
+- modified `internal/server/gateway.go`
+- modified `internal/server/periodic_budget_integration_test.go`
+- modified `internal/server/probe_integration_test.go`
+- modified `internal/server/procurement_meter_integration_test.go`
+- modified `internal/server/realtime_binding_guard_integration_test.go`
+- modified `internal/server/realtime_persistence_test.go`
+- modified `internal/server/reports.go`
+- modified `internal/server/route_decisions_integration_test.go`
+- added `internal/server/route_preference.go`
+- added `internal/server/route_preference_test.go`
+- modified `internal/server/server.go`
+- added `migrations/current_015_phase3_dynamic_routing.sql`
+- added `migrations/phase3_dynamic_routing_postgres_test.go`
+- modified `migrations/unified_text_metering_guard_gaps_postgres_test.go`
+- modified `migrations/unified_text_metering_guard_matrix_postgres_test.go`
+- modified `migrations/unified_text_metering_postgres_test.go`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+- added `specs/033-text-dynamic-routing/design.md`
+- added `specs/033-text-dynamic-routing/tasks.md`
+- modified `web/src/components/RouteAttempts.vue`
+- modified `web/src/request-wire.ts`
+- modified `web/src/views/RequestsView.vue`
+
+</details>
+
+## 2026-11-20T14:46:37Z · a6066358cfce
+
+032+033 合并验收修正：cache hit 先于动态计划、health key 与 032 一致、扫描恢复 open_ms，033 current_015；同步组合证据与未完成范围
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/verification/phase3-dynamic-routing.md`
+- modified `internal/catalog/store.go`
+- modified `specs/033-text-dynamic-routing/design.md`
+
+</details>
+
+## 2026-11-20T14:51:19Z · f02411b1311d
+
+确认最终 032 base 312fa5f 与 current_015 组合验收边界；准备干净 HEAD 隔离验收
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase3-dynamic-routing.md`
+- modified `specs/033-text-dynamic-routing/design.md`
+
+</details>
+
+## 2026-11-20T15:18:09Z · 10fcd2f8ce6f
+
+隔离验收环境可选 GOPROXY 镜像，默认与 workers=2 配置不变；033 current_015 和组合商业验收继续
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/acceptance-parallel-runner.py`
+- modified `scripts/acceptance_parallel_runner_test.py`
+
+</details>
+
+## 2026-11-20T15:33:53Z · 8c9ead18a84a
+
+修正可选 GOPROXY 向隔离协调器传递，默认与 workers=2 不变；不拼接失败的依赖发现运行
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/acceptance-parallel-coordinator.py`
+- modified `scripts/acceptance_parallel_coordinator_test.py`
+
+</details>
+
+## 2026-11-20T15:55:53Z · c9df6310fa1d
+
+完整规划阶段也需显式 GOPROXY 镜像，两个变量均仅显式启用；保持默认 runners 与业务验收不变
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/acceptance-parallel-coordinator.py`
+- modified `scripts/acceptance_parallel_coordinator_test.py`
+
+</details>
+
+## 2026-11-20T16:53:42Z · 7dad58d0233c
+
+修复 033 ABI：attempt 不冗余 physical/binding，身份由原 route binding 派生；first_content_at 排除 finalization identity JSON；统计关联 route_decisions，修正凭据撤销 fixture
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 14 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/store_test.go`
+- modified `internal/billing/types.go`
+- modified `internal/catalog/physical.go`
+- modified `internal/operations/procurement_integration_test.go`
+- modified `internal/periodicbudget/tx_fixture_test.go`
+- modified `internal/server/credential_pool_integration_test.go`
+- modified `internal/server/procurement_meter_integration_test.go`
+- modified `internal/server/reports.go`
+- modified `migrations/current_015_phase3_dynamic_routing.sql`
+- modified `migrations/unified_text_metering_guard_gaps_postgres_test.go`
+- modified `migrations/unified_text_metering_guard_matrix_postgres_test.go`
+- modified `specs/028-unified-metering-media/u-storage-contract.md`
+- modified `specs/033-text-dynamic-routing/design.md`
+
+</details>
+
+## 2026-11-20T17:44:00Z · d725fcf8fbaa
+
+033 验收夹具最终修正：cache 路由补物理 binding；task race 仅增强错误输出，原 procurement identity 与动态路由逻辑保持
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/billing/cache_integration_test.go`
+- modified `internal/server/task_submit_race_integration_test.go`
+
+</details>
+
+## 2026-11-21T07:40:42Z · 4531d99e56d5
+
+仅修复隔离浏览器驱动等待表格行渲染的竞态并增加单元回归；不改变系统模块、请求链路、数据关系、权限边界或能力状态
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/phase1_browser_qa.py`
+- modified `scripts/phase1_browser_qa_test.py`
+
+</details>
+
+## 2026-11-21T15:13:57Z · 82d6e8100c78
+
+修复任务提交快照与事务之间的竞态：失败方重读当前任务并证明原幂等身份后返回原任务，不新增模块或数据源，不改变资金、权限、请求链路结构及唯一提交边界
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+
+</details>
+
+## 2026-11-21T20:05:11Z · 5bea3b748392
+
+修复 GNU/Linux 下 deployment QA 将 provisioning stdout 重定向到同一 business.env 输入的自读写失败；分离受保护 stdout 文件，不改变部署模块、权限、数据合同或业务断言
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `scripts/deployment-business-qa.test.sh`
+- modified `scripts/deployment-qa.sh`
+
+</details>
+
+## 2026-11-21T21:20:41Z · ece7d41212bb
+
+最终验证记录与033任务台账同步r21完整029、浏览器、PR及未认证边界；仅文档和架构清单变化，无模块、请求链路、数据关系或权限结构变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2629 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/phase3-dynamic-routing.md`
+- modified `specs/033-text-dynamic-routing/tasks.md`
+
+</details>

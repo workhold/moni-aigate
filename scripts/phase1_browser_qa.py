@@ -289,8 +289,7 @@ class Browser:
 
     def click_row_action(self, row_text: str, action: str):
         expression = f"(()=>{{const row=[...document.querySelectorAll('.el-table__row')].find(x=>x.innerText.includes({json.dumps(row_text)})&&x.getClientRects().length);const e=row&&[...row.querySelectorAll('button')].find(x=>x.innerText.includes({json.dumps(action)})&&!x.disabled&&x.getClientRects().length);if(!e)return false;e.click();return true}})()"
-        if not self.evaluate(expression):
-            raise RuntimeError(f"row action not found: {action}")
+        self.wait(expression)
 
     def enable_mfa(self) -> str:
         self.navigate("/security", "账号安全")

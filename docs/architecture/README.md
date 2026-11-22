@@ -107,6 +107,8 @@ PR-2 侧栏收口按[导航子规格](../../specs/038-new-api-capability-migrati
 
 029 运行时还修正了任务 HTTP/worker 同身份提交竞争：`tasks.Service.Submit` 对已非 prepared 的任务使用原持久化幂等身份返回同一任务，不新增 adapter 调用、attempt 或生成请求；真实 PostgreSQL 竞争测试验证唯一 submission_accepted/attempt。支付主进程的初始化失败仅附加 `payments.SafeErrorCode` 封闭分类，原始错误、DSN、凭据和供应商正文不进入日志；context、SQLSTATE 与网络错误也只映射为固定诊断类别。详细合同见[038 运行时修正](../../specs/038-new-api-capability-migration/release-evidence-gate.md#10-029-发现的运行时修正)。
 
+2026-11-20 第三阶段文本动态路由已进入当前代码路径：[`current_015_phase3_dynamic_routing.sql`](../../migrations/current_015_phase3_dynamic_routing.sql) 追加物理模型、不可变策略扩展、route session、可重建统计窗口和每次选择一行的不可变决策；旧 attempt 五字段数组回填后删除。[`internal/routing`](../../internal/routing) 使用同一 Plan/Engine 完成硬过滤、sticky/priority/order/成本/延迟/吞吐排序和可记录抽签；[`internal/catalog`](../../internal/catalog) 保持完整版本 CAS，[`internal/billing`](../../internal/billing) 保持原预占、采购报价和唯一结算事务。仅 `POST /v1/chat/completions` 接受严格 `route` 偏好，其他文本协议只使用已发布默认值，媒体/任务/Realtime 不参与。[`route-replay`](../../cmd/moni-aigate/route_replay.go) 以只读事务回放固化快照。032 的熔断/cache 字段与 033 策略已合并到同一不可变发布，cache hit 不创建动态路由决策；032 的性能基线、完整 029、真实供应商或生产验收不因本段而完成，具体证据与失败边界见[033 验证记录](../verification/phase3-dynamic-routing.md)。
+
 ```mermaid
 flowchart LR
     Customer[客户应用] --> Gateway[moni-aigate\n唯一公网入口]

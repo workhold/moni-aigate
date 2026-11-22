@@ -272,6 +272,15 @@ func (s *Store) Release(ctx context.Context, in ReleaseInput) (Settlement, error
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return err
 		}
+		if in.RouteDecision != nil {
+			decision := *in.RouteDecision
+			decision.TenantID = in.TenantID
+			decision.RequestID = in.RequestID
+			decision.AttemptID = ""
+			if err = writeRouteDecision(ctx, tx, &decision, ""); err != nil {
+				return err
+			}
+		}
 		result, err = finish(ctx, tx, r, 0, big.NewInt(0), "released_"+in.Reason)
 		return err
 	})

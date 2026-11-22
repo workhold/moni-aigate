@@ -225,6 +225,31 @@ func (r *Request) EndpointSuffix() string {
 	}
 }
 func (r *Request) Profile() Profile { return cloneProfile(r.profile) }
+
+// RoutingParameters exposes only the validated field names needed for physical
+// capability filtering. Values and customer content never enter route records.
+func (r *Request) RoutingParameters() []string {
+	base := map[string]bool{"model": true, "messages": true, "input": true, "stream": true, "stream_options": true, "n": true, "max_tokens": true, "max_completion_tokens": true, "max_output_tokens": true}
+	parameters := []string{}
+	for key := range r.fields {
+		if !base[key] {
+			parameters = append(parameters, key)
+		}
+	}
+	return parameters
+}
+
+func (r *Request) ToolRequirements() (tools, parallel bool) {
+	_, tools = r.fields["tools"]
+	if _, choice := r.fields["tool_choice"]; choice {
+		tools = true
+	}
+	if raw, ok := r.fields["parallel_tool_calls"]; ok {
+		_ = json.Unmarshal(raw, &parallel)
+	}
+	return tools, parallel
+}
+
 func cloneProfile(p Profile) Profile {
 	p.AllowedParameters = append([]string(nil), p.AllowedParameters...)
 	p.NoConsumptionStatuses = append([]int(nil), p.NoConsumptionStatuses...)

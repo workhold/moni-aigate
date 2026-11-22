@@ -52,9 +52,7 @@ func billingPoolPublish(t *testing.T, f *fixture, version string, revision int64
 	if _, err = tx.Exec(f.ctx, "INSERT INTO route_policy_versions(id,model_id,revision) VALUES($1,$2,$3)", policy, f.model, revision); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.Exec(f.ctx, "INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,weight,max_inflight) VALUES($1,$2,$3,'upstream',1,10)", policy, f.channel, version); err != nil {
-		t.Fatal(err)
-	}
+	insertFixtureBinding(t, tx, policy, f.channel, version, "upstream")
 	if _, err = tx.Exec(f.ctx, "UPDATE models SET active_revision=$2 WHERE id=$1", f.model, revision); err != nil {
 		t.Fatal(err)
 	}

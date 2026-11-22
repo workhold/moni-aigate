@@ -11,14 +11,28 @@ import (
 )
 
 type RoutePublishInput struct {
-	Expected         int64               `json:"expected_revision"`
-	Bindings         []BindingInput      `json:"bindings"`
-	CostPolicy       *routing.CostPolicy `json:"cost_policy"`
-	ReleaseIntent    string              `json:"release_intent,omitempty"`
-	FailureThreshold *int                `json:"failure_threshold,omitempty"`
-	OpenMS           *int                `json:"open_ms,omitempty"`
-	HalfOpenTokens   *int                `json:"half_open_tokens,omitempty"`
-	CacheTTLSeconds  *int                `json:"cache_ttl_seconds,omitempty"`
+	Expected         int64                     `json:"expected_revision"`
+	Bindings         []BindingInput            `json:"bindings"`
+	CostPolicy       *routing.CostPolicy       `json:"cost_policy"`
+	ReleaseIntent    string                    `json:"release_intent,omitempty"`
+	Scoring          routing.ScoringPolicy     `json:"scoring"`
+	QualityFloor     string                    `json:"quality_floor,omitempty"`
+	MinMarginRate    *int64                    `json:"min_margin_rate,omitempty"`
+	Stickiness       *routing.StickinessPolicy `json:"stickiness,omitempty"`
+	FailureThreshold *int                      `json:"failure_threshold,omitempty"`
+	OpenMS           *int                      `json:"open_ms,omitempty"`
+	HalfOpenTokens   *int                      `json:"half_open_tokens,omitempty"`
+	CacheTTLSeconds  *int                      `json:"cache_ttl_seconds,omitempty"`
+}
+
+func (in RoutePublishInput) DynamicPolicy() routing.DynamicPolicy {
+	policy := routing.DynamicPolicy{Scoring: in.Scoring, QualityFloor: in.QualityFloor, MinMarginRate: in.MinMarginRate, Stickiness: in.Stickiness}
+	if in.CostPolicy != nil {
+		policy.CostPolicy = *in.CostPolicy
+	} else {
+		policy.CostPolicy = routing.DefaultCostPolicy()
+	}
+	return policy
 }
 
 func (in *RoutePublishInput) UnmarshalJSON(data []byte) error {
@@ -41,7 +55,7 @@ func (in *RoutePublishInput) UnmarshalJSON(data []byte) error {
 	if decoder.Decode(&value) != nil || decoder.Decode(new(any)) != io.EOF {
 		return ErrInvalid
 	}
-	if value.CostPolicy != nil && routing.ValidateCostPolicy(*value.CostPolicy) != nil {
+	if value.CostPolicy != nil && routing.ValidateCostPolicy(*value.CostPolicy) != nil || RoutePublishInput(value).DynamicPolicy().Validate() != nil {
 		return ErrInvalid
 	}
 	if value.ReleaseIntent == "" {

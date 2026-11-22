@@ -1304,6 +1304,8 @@ MVP尚未发布，不实现旧内部金融历史自动转换：023遇既有金�
 
 纯函数 `routing.Select(inputs) -> []Decision` 不做 I/O，同一输入同一输出；抽签值、统计快照和候选事实全部在输入里，回放因此可重复。
 
+**033 当前实现接口（2026-11-20）**：`routing.NewDynamicPlan` 扩展同一 `Plan`，`Engine.acquirePlan` 以 binding 为候选、credential 为组内成员；`RouteDecision` 固化 `dynamic-v1` 的 policy/request/candidate/stats/draw，`ReplayRoute` 不接收 DB 或 provider。`catalog.PublishDynamic` 在原 model 锁与 expected revision CAS 内写 `physical_models/model_bindings/route_policy_versions`；`CandidateSnapshot` 读取冻结能力和真实15分钟统计。`billing.RecordAttempt` 在原事务写 attempt、物理供应商快照、采购预占和一行决策；`Release` 可在原事务写 `attempt_id=NULL` 的失败池。`server.parseChatRoute` 只剥离 Chat 的 `route`，`X-Moni-Session` 只进入 `(tenant_id,session_id)` 的 route session。`cmd/moni-aigate route-replay` 使用 PostgreSQL READ ONLY 事务逐行输出回放。旧 `upstream_attempts.route_decisions` 在 current 012 一次性回填后删除；历史 ProspectiveStore 的五字段 ABI 仍只在 `historical` 构建标签内，不是当前运行路径。媒体、任务和 Realtime 不调用这些接口。
+
 ## 030-A 外围接缝（2026-11-10）
 
 `internal/catalog/model_alias.go` 保留别名值域、状态终态和 `ResolveModelName` 纯函数；`AuthorizedModel` 的 SQL 在授权 join 内增加 active alias 分支，并将客户原始名放入 `Model.RequestedName`。`internal/server/gateway.go` 只在 provider parser 前临时把 profile 的请求名切换为 `RequestedName`，所以 `Model.ID`、profile version、route revision、Reserve 和 attempt identity 不变，响应回显客户提交名。

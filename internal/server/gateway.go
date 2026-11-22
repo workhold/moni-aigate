@@ -95,6 +95,15 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		s.fail(c, 413, "request_too_large", "请求体超过上限")
 		return
 	}
+	providerRaw := raw
+	routeShape := routing.RequestShape{Preference: routing.RoutePreference{AllowFallbacks: true}, StatsWindowS: 900, StatsMinSamples: 50}
+	if protocol == provider.ProtocolChat {
+		providerRaw, routeShape, e = parseChatRoute(raw)
+		if e != nil {
+			s.fail(c, 400, "invalid_route", "路由偏好无效")
+			return
+		}
+	}
 	var head struct {
 		Model string `json:"model"`
 	}
@@ -120,7 +129,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 	if protocol == provider.ProtocolGemini {
 		request, e = provider.ParseGemini(raw, model.Profile, stream)
 	} else {
-		request, e = provider.Parse(protocol, raw, model.Profile)
+		request, e = provider.Parse(protocol, providerRaw, model.Profile)
 	}
 	if e != nil {
 		s.providerError(c, e)
@@ -132,7 +141,6 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		return
 	}
 	candidates := make([]routing.Candidate, 0, len(available))
-	eligible := 0
 	for _, v := range available {
 		suffix, err := request.EndpointSuffixForModel(v.UpstreamModel)
 		if err != nil {
@@ -143,19 +151,42 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		if reason == "" && !contains(p.AllowedRegions, v.Region) {
 			reason = "region_forbidden"
 		}
-		if reason == "" {
-			eligible++
+		maxInflight := v.MaxInflight
+		if v.Physical.MaxConcurrency < maxInflight {
+			maxInflight = v.Physical.MaxConcurrency
 		}
-		candidates = append(candidates, routing.Candidate{ChannelID: v.ChannelID, VersionID: v.VersionID, CredentialID: v.CredentialID, CredentialWeight: uint64(v.CredentialWeight), CredentialMaxInflight: v.CredentialMaxInflight, Model: v.UpstreamModel, Region: v.Region, HealthKey: v.ChannelID + ":" + v.UpstreamModel, Breaker: v.Breaker, Priority: v.Priority, Weight: uint64(v.Weight), MaxInflight: v.MaxInflight, CostPolicy: v.CostPolicy, CostQuote: v.CostQuote, CostLimits: v.CostLimits, InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, ProcurementManaged: v.ProcurementManaged, ProcurementState: v.ProcurementState, ProcurementAvailable: v.ProcurementAvailable, Enabled: reason == "", ExclusionReason: reason, Endpoint: provider.Endpoint{URL: v.URL + suffix, APIKey: v.Secret, Model: v.UpstreamModel, Network: networkPolicy(v.URL, v.AllowedCIDRs)}})
+		candidates = append(candidates, routing.Candidate{BindingID: v.BindingID, PhysicalModelID: v.PhysicalModelID, PolicyVersionID: v.PolicyVersionID, ChannelID: v.ChannelID, VersionID: v.VersionID, CredentialID: v.CredentialID, CredentialWeight: uint64(v.CredentialWeight), CredentialMaxInflight: v.CredentialMaxInflight, Model: v.UpstreamModel, Region: v.Region, HealthKey: v.ChannelID + ":" + v.UpstreamModel, Breaker: v.Breaker, Priority: v.Priority, Weight: uint64(v.Weight), MaxInflight: maxInflight, CostPolicy: v.CostPolicy, CostQuote: v.CostQuote, CostLimits: v.CostLimits, InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, Physical: v.Physical, Stats: v.Stats, ProcurementManaged: v.ProcurementManaged, ProcurementState: v.ProcurementState, ProcurementAvailable: v.ProcurementAvailable, Enabled: reason == "", ExclusionReason: reason, Endpoint: provider.Endpoint{URL: v.URL + suffix, APIKey: v.Secret, Model: v.UpstreamModel, Network: networkPolicy(v.URL, v.AllowedCIDRs)}})
 	}
-	if eligible == 0 {
+	if len(candidates) == 0 {
 		s.fail(c, 503, "no_available_channel", "没有符合条件的可用渠道")
 		return
 	}
-	plan, e := routing.NewPlan(candidates, 2)
-	if e != nil {
-		s.fail(c, 503, "invalid_route_policy", "渠道配置不可用")
+	if e = validateRouteSelectors(candidates, routeShape.Preference); e != nil {
+		s.fail(c, 400, "invalid_route", "路由候选选择器无效")
 		return
+	}
+	policy := available[0].DynamicPolicy
+	routeShape.InputUpperBound = request.InputUpperBound
+	routeShape.OutputLimit = request.MaxOutputTokens
+	routeShape.UsageSemantics = request.Profile().UsageSemantics
+	if routeShape.UsageSemantics == "" {
+		routeShape.UsageSemantics = "final"
+	}
+	routeShape.Tools, routeShape.ParallelTools = request.ToolRequirements()
+	routeShape.Parameters = request.RoutingParameters()
+	if session := c.GetHeader("X-Moni-Session"); session != "" {
+		if !routing.ValidSessionID(session) {
+			s.fail(c, 400, "invalid_route_session", "路由会话标识无效")
+			return
+		}
+		routeShape.SessionID = session
+		if policy.Stickiness != nil && policy.Stickiness.Enabled {
+			routeShape.Sticky, e = s.Catalog.RouteSession(c.Request.Context(), p.TenantID, session)
+			if e != nil {
+				s.error(c, e)
+				return
+			}
+		}
 	}
 	releaseRuntime, e := s.acquireKeyRuntime(c.Request.Context(), p)
 	if e != nil {
@@ -243,6 +274,21 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 			return
 		}
 	}
+	routeShape.RetailAmount = int64(reservation.Amount)
+	for i := range candidates {
+		candidates[i].RetailAmount = routeShape.RetailAmount
+	}
+	maxAttempts := 2
+	if !routeShape.Preference.AllowFallbacks {
+		maxAttempts = 1
+	}
+	plan, e := routing.NewDynamicPlan(candidates, maxAttempts, policy, routeShape)
+	if e != nil {
+		_, _ = s.Billing.Release(c.Request.Context(), billing.ReleaseInput{TenantID: p.TenantID, RequestID: reservation.RequestID, Reason: "platform_failure"})
+		s.fail(c, 503, "invalid_route_policy", "渠道配置不可用")
+		return
+	}
+	lastRecordedDecision := 0
 	var attemptID string
 	for {
 		if releaseAdmission == nil {
@@ -254,12 +300,13 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		var admittedAttemptID string
 		if e == nil {
 			attempt, e = plan.Start(c.Request.Context(), s.Routing, func(ctx context.Context, candidate routing.Candidate, sequence int) error {
-				a, err := s.Billing.RecordAttempt(ctx, billing.AttemptInput{TenantID: p.TenantID, RequestID: reservation.RequestID, ChannelID: candidate.ChannelID, ChannelVersionID: candidate.VersionID, CredentialID: candidate.CredentialID, UpstreamModel: candidate.Model, Sequence: sequence, RouteDecisions: candidate.Decisions, CostQuote: &candidate.CostQuote})
+				a, err := s.Billing.RecordAttempt(ctx, billing.AttemptInput{TenantID: p.TenantID, RequestID: reservation.RequestID, ChannelID: candidate.ChannelID, ChannelVersionID: candidate.VersionID, CredentialID: candidate.CredentialID, UpstreamModel: candidate.Model, BindingID: candidate.BindingID, PhysicalModelID: candidate.PhysicalModelID, PolicyVersionID: candidate.PolicyVersionID, Sequence: sequence, RouteDecision: candidate.RouteDecision, CostQuote: &candidate.CostQuote})
 				if err != nil {
 					return err
 				}
 				attemptID = a.ID
 				admittedAttemptID = a.ID
+				lastRecordedDecision = sequence
 				if err = s.Billing.PrepareDispatch(ctx, billing.DispatchInput{TenantID: p.TenantID, AttemptID: a.ID}); err != nil {
 					return err
 				}
@@ -288,7 +335,11 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 			} else if !s.ready.Load() {
 				reason = "platform_failure"
 			}
-			_, _ = s.Billing.Release(ctx, billing.ReleaseInput{TenantID: p.TenantID, RequestID: reservation.RequestID, Reason: reason})
+			release := billing.ReleaseInput{TenantID: p.TenantID, RequestID: reservation.RequestID, Reason: reason}
+			if decision := plan.LastDecision(); decision != nil && decision.Sequence > lastRecordedDecision {
+				release.RouteDecision = decision
+			}
+			_, _ = s.Billing.Release(ctx, release)
 			cancel()
 			if errors.Is(e, routing.ErrUnavailable) || errors.Is(e, routing.ErrAttemptBudget) {
 				s.fail(c, 503, "no_available_channel", "当前没有可用渠道")
@@ -515,6 +566,7 @@ func (s *Server) nonStream(c *gin.Context, p identity.Principal, requestID, atte
 }
 func (s *Server) stream(c *gin.Context, p identity.Principal, requestID, attemptID string, req *provider.Request, r *provider.Response, plan *routing.Plan, firstEvent *provider.Event) routing.Outcome {
 	content := false
+	var firstContentAt *time.Time
 	downstreamFailure := false
 	stage := "none"
 	var streamErr error
@@ -549,6 +601,10 @@ func (s *Server) stream(c *gin.Context, p identity.Principal, requestID, attempt
 				stage = "committed"
 			}
 			if event.Content && n > 0 && e == nil {
+				if firstContentAt == nil {
+					now := time.Now().UTC()
+					firstContentAt = &now
+				}
 				content = true
 				stage = "content"
 			}
@@ -573,7 +629,7 @@ func (s *Server) stream(c *gin.Context, p identity.Principal, requestID, attempt
 	if c.Request.Context().Err() != nil {
 		reason = transportReason(c.Request.Context(), c.Request.Context().Err())
 	}
-	f := billing.FinalizationInput{ID: uuid.NewString(), TenantID: p.TenantID, RequestID: requestID, AttemptID: attemptID, Source: "adapter", SourceEventID: attemptID + ":final", Usage: billingUsage(r.Usage), ProtocolOutcome: r.ProtocolOutcome, TransportEndReason: reason, DeliveryStage: stage, ContentWritten: content, FinishReason: r.FinishReason}
+	f := billing.FinalizationInput{ID: uuid.NewString(), TenantID: p.TenantID, RequestID: requestID, AttemptID: attemptID, Source: "adapter", SourceEventID: attemptID + ":final", Usage: billingUsage(r.Usage), ProtocolOutcome: r.ProtocolOutcome, TransportEndReason: reason, DeliveryStage: stage, ContentWritten: content, FinishReason: r.FinishReason, FirstContentAt: firstContentAt}
 	result, e := s.finalize(p.KeyID, f, true)
 	if streamErr != nil {
 		if c.Writer.Written() {

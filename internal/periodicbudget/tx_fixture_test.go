@@ -55,6 +55,12 @@ func pbTxMust(t *testing.T, step string, err error) {
 	t.Fatalf("%s failed (%T)", step, err)
 }
 
+func insertPBAttempt(t *testing.T, tx pgx.Tx, tenant, request, attempt, channel, version, credential string) {
+	t.Helper()
+	_, err := tx.Exec(context.Background(), `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, attempt, tenant, request, channel, version, credential)
+	pbTxMust(t, "insert physical supplier attempt", err)
+}
+
 // newPBTxFixture runs the production migration set with the owner-controlled
 // periodic clock pinned, so helper-level tests exercise the shipped 020 SQL.
 func newPBTxFixture(t *testing.T) *pbTxFixture {
@@ -291,7 +297,8 @@ func (f *pbTxFixture) seedCatalog(t *testing.T) {
 	if f.currentSchema {
 		policy := uuid.NewString()
 		f.exec(t, tx, `INSERT INTO route_policy_versions(id,model_id,revision,cost_mode,unknown_cost_policy) VALUES($1,$2,1,'manual','allow')`, policy, f.model)
-		f.exec(t, tx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,priority,weight,max_inflight,variant_key) VALUES($1,$2,$3,'upstream',0,1,10,'default')`, policy, f.channel, f.version)
+		f.exec(t, tx, `INSERT INTO physical_models(logical_model_id,upstream_model,capability) SELECT p.model_id,'upstream',jsonb_build_object('context_limit',c.profile->'context_limit','input_upper_bound',c.profile->'input_token_upper_bound','output_limit',c.profile->'output_limit','supports_tools',coalesce(c.profile->'supports_tools','false'::jsonb),'supports_parallel_tool_calls',coalesce(c.profile->'supports_parallel_tool_calls','false'::jsonb),'usage_semantics',coalesce(c.profile->>'usage_semantics','final'),'modalities',jsonb_build_array('text'),'quality_tier','standard','quality_score',NULL,'max_concurrency',10,'supported_parameters',coalesce(c.profile->'allowed_parameters','[]'::jsonb)) FROM route_policy_versions p JOIN model_capability_versions c ON c.id=p.profile_version AND c.model_id=p.model_id WHERE p.id=$1`, policy)
+		f.exec(t, tx, `INSERT INTO model_bindings(route_policy_version_id,channel_id,channel_version_id,upstream_model,physical_model_id,priority,weight,max_inflight,variant_key) SELECT $1,$2,$3,'upstream',id,0,1,10,'default' FROM physical_models WHERE logical_model_id=(SELECT model_id FROM route_policy_versions WHERE id=$1) AND upstream_model='upstream'`, policy, f.channel, f.version)
 		f.exec(t, tx, `UPDATE models SET active_revision=1 WHERE id=$1`, f.model)
 		// Publish the current-schema cost after the catalog roots are committed. Its
 		// pricing operation is deferred-validated at the top-level transaction; a

@@ -19,14 +19,14 @@ func ProcurementExclusion(c Candidate) string {
 	if !q.Known() {
 		return "cost_unknown"
 	}
-	if c.InputUpperBound <= 0 || c.OutputLimit < 0 {
+	if supplierInputBound(c) <= 0 || c.OutputLimit < 0 {
 		return "procurement_bound_invalid"
 	}
 	available, ok := new(big.Int).SetString(c.ProcurementAvailable, 10)
 	if !ok {
 		return "procurement_budget_unavailable"
 	}
-	bounds, err := metering.ManagementTokenBounds(q.Schema(), metering.Supplier, c.InputUpperBound, c.OutputLimit)
+	bounds, err := metering.ManagementTokenBounds(q.Schema(), metering.Supplier, supplierInputBound(c), c.OutputLimit)
 	if err != nil {
 		return "procurement_bound_invalid"
 	}

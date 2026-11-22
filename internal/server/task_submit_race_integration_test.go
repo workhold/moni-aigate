@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"sync"
@@ -49,7 +50,9 @@ func TestVideoTaskWorkerAndHTTPSubmitRaceAreIdempotent(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusAccepted {
-		t.Fatalf("losing HTTP submit returned %d", response.StatusCode)
+		var body map[string]any
+		_ = json.NewDecoder(response.Body).Decode(&body)
+		t.Fatalf("losing HTTP submit returned %d: %+v", response.StatusCode, body)
 	}
 	if workerErr != nil && !errors.Is(workerErr, tasks.ErrNoWork) {
 		t.Fatalf("worker submit failed: %v", workerErr)

@@ -13,7 +13,6 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/provider"
 	"github.com/moni-ai/moni-aigate/internal/realtime"
-	"github.com/moni-ai/moni-aigate/internal/routing"
 )
 
 func TestPostgresRealtimePersistenceLifecycleAndTenantIsolation(t *testing.T) {
@@ -56,7 +55,6 @@ func TestPostgresRealtimePersistenceLifecycleAndTenantIsolation(t *testing.T) {
 		TenantID: f.tenant, RequestID: requestID, ChannelID: candidate.ChannelID,
 		ChannelVersionID: candidate.VersionID, CredentialID: candidate.CredentialID,
 		UpstreamModel: candidate.UpstreamModel, Sequence: 1,
-		RouteDecisions: []routing.Decision{{ChannelID: candidate.ChannelID, VersionID: candidate.VersionID, Priority: candidate.Priority, Weight: uint64(candidate.Weight), Reason: "selected"}},
 	})
 	if err != nil {
 		t.Fatal(err)

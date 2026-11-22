@@ -54,9 +54,7 @@ func TestPostgresCostQuoteDomainIsolation(t *testing.T) {
 					}
 					defer tx.Rollback(f.ctx)
 					attempt := uuid.NewString()
-					if _, err = tx.Exec(f.ctx, `INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,1,$4,$5,$6,'upstream')`, attempt, f.tenant, r.RequestID, f.channel, f.version, f.credential); err != nil {
-						t.Fatal(err)
-					}
+					insertRawAttempt(t, tx, f.tenant, r.RequestID, attempt, f.channel, f.version, f.credential, "upstream")
 					if _, err = tx.Exec(f.ctx, `SELECT meter_insert_attempt_snapshot($1,$2,$3,$4,$5)`, f.tenant, attempt, r.RequestID, cost, tc.basis); err != nil {
 						t.Fatal(err)
 					}
