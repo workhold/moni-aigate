@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-22T17:31:43Z",
-  "review_reason": "记录041 R0独立复核、USD/CNY商业首发边界及make check完成；仅设计台账状态变化，无运行实现",
-  "snapshot_sha256": "206f7f90d119f9ff41f9be7a40a9e5b352815e250aebddcfee3abacf7194a8db",
+  "reviewed_at": "2026-11-23T01:18:39Z",
+  "review_reason": "推送前复核修正微法币scale、USD/CNY资格范围及第二阶段性能未完成状态；仅文档设计，无运行变化",
+  "snapshot_sha256": "719673289ac1aa1f29b873cf7dd080309e9e4c45b402dd32d77fca7ea57a51fc",
   "architecture_sha256": "59105d8164e99bb74bdc8a1ff13ad4fc386d400703edea95ba2fce9150272758",
-  "history_sha256": "b05f578691fe148df78ba465771d67ac059a145e6f969d94bbf8a5631064bc17",
+  "history_sha256": "bb915adafa49b7cca40d22fd69ac5bf658e8a98aae631040db55f3b419b3c66a",
   "files": [
     {
       "path": ".dockerignore",
@@ -237,7 +237,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "31ee5401ebc282d4d0ed70928c658afb5436a1f2360befe9b3faa692bffb7da9"
+      "sha256": "61e04ba1db06e04c8ee59db1368b3f05bcf58025f790abd415691940acc74f2d"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -245,7 +245,7 @@
     },
     {
       "path": "docs/design/provider-qualification-plan.md",
-      "sha256": "255db193e4807b8159f9165e0cd23c71371cab1bffe2f0c99af27196c719c867"
+      "sha256": "c85ad9b154e463b4549229a3fdf17bbb043108d7788a9e1a5c76871526dd7de8"
     },
     {
       "path": "docs/design/public-catalog.md",
@@ -9745,7 +9745,7 @@
     },
     {
       "path": "specs/041-profit-hybrid-platform/design.md",
-      "sha256": "cf8673d007a929d74f1d0e7da45d0d25454e9b95e9e2be07c3fe96ed2c45f32e"
+      "sha256": "dbdbdcddd37e5b8f7bc9ff735cd9c750e82c27bff5c492b10ae9f535ffc3b156"
     },
     {
       "path": "specs/041-profit-hybrid-platform/spec.md",

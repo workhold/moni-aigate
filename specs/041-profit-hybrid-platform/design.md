@@ -80,7 +80,7 @@ QualityPolicy 冻结允许 suite/metric、分数方向、公开阈值、最小�
 
 首片 test-only 采用 `fixed_full_reservation`：固定请求价，最终全额消费原 reservation；工程夹具先使用完整单 CNY 已付基准以收窄验证范围。**USD/CNY 是商业首发必需能力，不是最终产品只收 CNY。**后续部分 usage 必须另冻所有允许 charged 前缀及付费/赠送 lot 组合下的付款基准下界、取整和余数，不能把全额预占基准错误当作保守下界。
 
-USD/CNY 合同统一使用 `Money{currency, minor_amount}` 和原币付款基准/成本向量：客户实际付款按 funding lot 原币分配，供应商成本保留原币和 contract/invoice 状态，退款先按原币净额计算，禁止直接跨币种相减。商业发布前必须支持 USD 与 CNY 付款基准、USD/CNY 供应商成本及二者交叉组合。
+USD/CNY 合同统一使用 `Money{currency, amount_micro}`：内部数值固定为对应法币的 **10^-6 微法币整数**，与现有 034/034.5 `internal/billing/fiat.go` 的微法币事实无损一致；这里的 micro 不是分/cent，也不使用各货币通常两位小数的 minor unit。外部十进制解析必须显式指定 scale，超过六位不得静默丢失：收入保守侧向下、成本保守侧向上，所有取整/余数进入经济版本和证据。USD/CNY 报表同时保留原币净收入/成本向量，禁止直接跨币种相减。商业发布前必须支持 USD 与 CNY 付款基准、USD/CNY 供应商成本及二者交叉组合。
 
 需要共同币种比较时使用不可变 FxPolicyVersion：base currency、来源、报价时刻/有效期、买卖方向、保守侧、取整和费用缓冲。准入门禁采用收入保守下界与全部 attempt 成本上界，缺失/陈旧/不覆盖所需货币对则失败关闭。报表同时保留原币净收入/成本向量和折算值：使用 FX 快照的结果标为“折算贡献毛利”，只有实际换汇及费用事实齐备时才称实收现金毛利；FX 不回写历史钱包或会计价格。
 

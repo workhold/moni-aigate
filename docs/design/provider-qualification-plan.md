@@ -17,7 +17,7 @@
 
 一个对外模型可以绑定不同渠道的明确上游模型名。每个绑定单独关联不可变能力profile、采购报价、生效版本和采购账户；相同对外名称不合并供应商身份或收费语义。运行时先做权限、协议能力、地域、状态、采购预算和报价上限过滤，再在最高优先级内按既有成本策略调度；New API/Sub2API 的内部账号池是下游局部选择，不能改变 aigate 的 route revision、客户售价或结算身份。不跨协议静默转换，也不因渠道返回错误就重放可能已消费的请求。[018成本选路](../../specs/018-cost-aware-routing/spec.md)、[019共享采购预算](../../specs/019-procurement-accounts/contract.md)和[035接入合同](../../specs/035-external-upstream-integration/spec.md)已提供这些接缝。
 
-每个具体profile按同一顺序交付：来源/许可证与服务边界登记 → 官方或下游合同取证 → 精确请求/响应/计量与失败合同 → 本地协议和商业fixture → 隔离凭据下的真实请求/取消/断流及供应商用量对账 → 冻结可售配置。New API/Sub2API 的 external relay 还要记录 inner retry 默认关闭状态；未来开放必须逐 child 证明可信无消费、usage/成本、次数和累计成本，不能只登记未知消费映射。进入 `embedded_adapter` 或 `migrated_capability` 时保留相同证据。缓存、reasoning、工具、媒体等只要存在额外非零收费维度，就须进入完整客户/采购计量合同；不能以“兼容OpenAI”把未知费用算成0。所有报价使用平台已登记的CNY采购合同，网页外币标价不自动汇率换算。
+每个具体profile按同一顺序交付：来源/许可证与服务边界登记 → 官方或下游合同取证 → 精确请求/响应/计量与失败合同 → 本地协议和商业fixture → 隔离凭据下的真实请求/取消/断流及供应商用量对账 → 冻结可售配置。New API/Sub2API 的 external relay 还要记录 inner retry 默认关闭状态；未来开放必须逐 child 证明可信无消费、usage/成本、次数和累计成本，不能只登记未知消费映射。进入 `embedded_adapter` 或 `migrated_capability` 时保留相同证据。缓存、reasoning、工具、媒体等只要存在额外非零收费维度，就须进入完整客户/采购计量合同；不能以“兼容OpenAI”把未知费用算成0。**现行 pre-041 实现只接受平台已登记的 CNY 采购合同，网页外币标价不自动汇率换算；041 商业首发则必须按新 SDD 支持 USD/CNY 原币成本、付款基准及保守 FX 交叉组合，不能用本句阻止原生 USD 报价或丢失原币账单。**
 
 本次通过Chrome实际读取[OpenAI官方Code generation指南](https://developers.openai.com/api/docs/guides/code-generation)，该页将Codex编码agent与在应用中通过Responses API使用编码模型分别说明。因此接入目标以账号实际可用的官方API模型为准；完整Codex agent会话、执行环境与工具生命周期需要单独合同，不能从现有文本Responses转发推导已支持。本文不固化易变的“最新模型”或默认价格，不用文档读取代替真实账号/费用认证。
 

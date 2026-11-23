@@ -8954,3 +8954,17 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/041-profit-hybrid-platform/tasks.md`
 
 </details>
+
+## 2026-11-23T01:18:39Z · 719673289ac1
+
+推送前复核修正微法币scale、USD/CNY资格范围及第二阶段性能未完成状态；仅文档设计，无运行变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2632 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/provider-qualification-plan.md`
+- modified `specs/041-profit-hybrid-platform/design.md`
+
+</details>
