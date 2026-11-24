@@ -79,6 +79,19 @@ func ProvisionFor(ctx context.Context, p *pgxpool.Pool, schema, appRole, project
 			return e
 		}
 	}
+	var profitEconomics bool
+	if e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND c.relname='request_economics_snapshots')`, schema).Scan(&profitEconomics); e != nil {
+		return e
+	}
+	if profitEconomics {
+		profitTables := []string{"fx_policy_versions", "fx_policy_rates", "task_policy_versions", "quality_policy_versions", "quality_evidence", "quality_evidence_withdrawals", "execution_policy_versions", "economics_policy_versions", "service_offer_documents", "service_offer_versions", "service_offer_states", "service_offer_lifecycle_events", "request_economics_snapshots", "attempt_cost_components"}
+		for i := range profitTables {
+			profitTables[i] = table(profitTables[i])
+		}
+		if _, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s; REVOKE ALL ON %s FROM %s,PUBLIC; GRANT UPDATE(state,revision,updated_by,updated_at) ON %s TO %s;`, strings.Join(profitTables, ","), qa, strings.Join(profitTables, ","), qp, table("service_offer_states"), qa)); e != nil {
+			return e
+		}
+	}
 	// Customer money changes only the balance, never account ownership or kind.
 	// The current payment/wallet ACL pass below also clears any old column grants.
 	_, e = tx.Exec(ctx, fmt.Sprintf(`REVOKE UPDATE,DELETE ON %s FROM %s;

@@ -19,9 +19,9 @@ type DefaultPrice struct {
 	EffectiveAt           time.Time
 }
 type CostPrice struct {
-	ID, ChannelID, UpstreamModel, ModelID, SchemaID, Actor, Basis string
-	InputRate, OutputRate                                         *int64
-	EffectiveAt                                                   time.Time
+	ID, ChannelID, UpstreamModel, ModelID, SchemaID, Actor, Basis, Currency string
+	InputRate, OutputRate                                                   *int64
+	EffectiveAt                                                             time.Time
 }
 type Beginner interface {
 	Begin(context.Context) (pgx.Tx, error)
@@ -119,6 +119,9 @@ func tryCost(ctx context.Context, db Beginner, p CostPrice) (string, error) {
 			return "", e
 		}
 	}
+	if p.Currency == "" {
+		p.Currency = "CNY"
+	}
 	var canonical, digest []byte
 	var schemaRaw []byte
 	if e = tx.QueryRow(ctx, `SELECT canonical,schema_digest FROM meter_schemas WHERE id=$1`, p.SchemaID).Scan(&schemaRaw, &digest); e != nil {
@@ -145,8 +148,8 @@ func tryCost(ctx context.Context, db Beginner, p CostPrice) (string, error) {
 	}
 	at = at.UTC().Truncate(time.Microsecond)
 	sd := hex.EncodeToString(digest)
-	safe := map[string]any{"channel_id": p.ChannelID, "upstream_model": p.UpstreamModel, "schema_id": p.SchemaID, "schema_digest": sd, "variant_key": "default", "currency": "CNY", "basis": p.Basis, "rates": rates, "effective_at": at.Format("2006-01-02T15:04:05.000000Z"), "expected_channel_revision": uintString(rev)}
-	result := map[string]any{"id": p.ID, "channel_id": p.ChannelID, "upstream_model": p.UpstreamModel, "schema_id": p.SchemaID, "schema_digest": sd, "variant_key": "default", "currency": "CNY", "basis": p.Basis, "rates": rates, "effective_at": at.Format("2006-01-02T15:04:05.000000Z"), "created_at": "", "expected_channel_revision": uintString(rev), "channel_revision": uintString(rev + 1)}
+	safe := map[string]any{"channel_id": p.ChannelID, "upstream_model": p.UpstreamModel, "schema_id": p.SchemaID, "schema_digest": sd, "variant_key": "default", "currency": p.Currency, "basis": p.Basis, "rates": rates, "effective_at": at.Format("2006-01-02T15:04:05.000000Z"), "expected_channel_revision": uintString(rev)}
+	result := map[string]any{"id": p.ID, "channel_id": p.ChannelID, "upstream_model": p.UpstreamModel, "schema_id": p.SchemaID, "schema_digest": sd, "variant_key": "default", "currency": p.Currency, "basis": p.Basis, "rates": rates, "effective_at": at.Format("2006-01-02T15:04:05.000000Z"), "created_at": "", "expected_channel_revision": uintString(rev), "channel_revision": uintString(rev + 1)}
 	in, _ := json.Marshal(safe)
 	out, _ := json.Marshal(result)
 	op := uuid.NewString()

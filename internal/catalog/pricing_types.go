@@ -49,10 +49,10 @@ type DefaultPriceCommand struct {
 	EffectiveAt                                              time.Time
 }
 type CostPriceCommand struct {
-	OperationID, ChannelID, UpstreamModel, SchemaID, SchemaDigest, VariantKey, Basis string
-	InputRate, OutputRate                                                            *int64
-	EffectiveAt                                                                      time.Time
-	ExpectedChannelRevision                                                          int64
+	OperationID, ChannelID, UpstreamModel, SchemaID, SchemaDigest, VariantKey, Basis, Currency string
+	InputRate, OutputRate                                                                      *int64
+	EffectiveAt                                                                                time.Time
+	ExpectedChannelRevision                                                                    int64
 }
 type TenantPricingCommand struct {
 	OperationID, TenantID string
@@ -329,7 +329,7 @@ func validPricingResult(value any, raw []byte) bool {
 		valid = pricingID(v.ID) && pricingID(v.ModelID) && v.PriceGroupID == nil && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "COIN" && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
 	case *CostPriceView:
 		keys = []string{"id", "channel_id", "upstream_model", "schema_id", "schema_digest", "variant_key", "currency", "basis", "rates", "effective_at", "created_at", "expected_channel_revision", "channel_revision"}
-		valid = pricingID(v.ID) && pricingID(v.ChannelID) && validUpstreamModel(v.UpstreamModel) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && v.Currency == "CNY" && (v.Basis == "contract" || v.Basis == "invoice" || v.Basis == "unknown") && pricingDecimal(v.ExpectedChannelRevision, true) && pricingDecimal(v.ChannelRevision, true) && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
+		valid = pricingID(v.ID) && pricingID(v.ChannelID) && validUpstreamModel(v.UpstreamModel) && pricingID(v.SchemaID) && pricingDigest(v.SchemaDigest) && v.VariantKey == "default" && (v.Currency == "CNY" || v.Currency == "USD") && (v.Basis == "contract" || v.Basis == "invoice" || v.Basis == "unknown") && pricingDecimal(v.ExpectedChannelRevision, true) && pricingDecimal(v.ChannelRevision, true) && pricingWireTime(v.EffectiveAt) && pricingWireTime(v.CreatedAt)
 	case *AssignmentView:
 		keys = []string{"tenant_id", "price_group_id", "pricing_revision"}
 		valid = pricingID(v.TenantID) && (v.PriceGroupID == nil || pricingID(*v.PriceGroupID)) && pricingDecimal(v.PricingRevision, true)

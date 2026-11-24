@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
+	"github.com/moni-ai/moni-aigate/internal/economics"
 	"github.com/moni-ai/moni-aigate/internal/metering"
 )
 
@@ -27,10 +29,11 @@ type StickinessPolicy struct {
 
 type DynamicPolicy struct {
 	CostPolicy
-	QualityFloor  string            `json:"quality_floor,omitempty"`
-	MinMarginRate *int64            `json:"min_margin_rate,omitempty"`
-	Scoring       ScoringPolicy     `json:"scoring"`
-	Stickiness    *StickinessPolicy `json:"stickiness,omitempty"`
+	QualityFloor  string                     `json:"quality_floor,omitempty"`
+	MinMarginRate *int64                     `json:"min_margin_rate,omitempty"`
+	Scoring       ScoringPolicy              `json:"scoring"`
+	Stickiness    *StickinessPolicy          `json:"stickiness,omitempty"`
+	Execution     *economics.ExecutionPolicy `json:"execution_policy,omitempty"`
 }
 
 func DefaultDynamicPolicy() DynamicPolicy { return DynamicPolicy{CostPolicy: DefaultCostPolicy()} }
@@ -56,6 +59,9 @@ func (p DynamicPolicy) Validate() error {
 			}
 			seen[reason] = true
 		}
+	}
+	if p.Execution != nil && p.Execution.Validate() != nil {
+		return ErrInvalidPolicy
 	}
 	return nil
 }
@@ -123,18 +129,25 @@ type StickyTarget struct {
 }
 
 type RequestShape struct {
-	InputUpperBound int64           `json:"input_upper_bound"`
-	OutputLimit     int64           `json:"output_limit"`
-	RetailAmount    int64           `json:"retail_amount"`
-	UsageSemantics  string          `json:"usage_semantics,omitempty"`
-	Tools           bool            `json:"tools"`
-	ParallelTools   bool            `json:"parallel_tools"`
-	Parameters      []string        `json:"parameters"`
-	Preference      RoutePreference `json:"preference"`
-	SessionID       string          `json:"session_id,omitempty"`
-	Sticky          *StickyTarget   `json:"sticky,omitempty"`
-	StatsWindowS    int64           `json:"stats_window_s"`
-	StatsMinSamples int64           `json:"stats_min_samples"`
+	InputUpperBound int64                        `json:"input_upper_bound"`
+	OutputLimit     int64                        `json:"output_limit"`
+	RetailAmount    int64                        `json:"retail_amount"`
+	UsageSemantics  string                       `json:"usage_semantics,omitempty"`
+	Tools           bool                         `json:"tools"`
+	ParallelTools   bool                         `json:"parallel_tools"`
+	Parameters      []string                     `json:"parameters"`
+	Preference      RoutePreference              `json:"preference"`
+	SessionID       string                       `json:"session_id,omitempty"`
+	Sticky          *StickyTarget                `json:"sticky,omitempty"`
+	TaskClass       string                       `json:"task_class,omitempty"`
+	TaskHint        string                       `json:"task_hint,omitempty"`
+	TaskCandidates  []string                     `json:"task_candidates"`
+	Reasoning       bool                         `json:"reasoning"`
+	Economics       *economics.EconomicsSnapshot `json:"economics,omitempty"`
+	RequestID       string                       `json:"request_id,omitempty"`
+	PriorCost       economics.CostBasis          `json:"prior_cost"`
+	StatsWindowS    int64                        `json:"stats_window_s"`
+	StatsMinSamples int64                        `json:"stats_min_samples"`
 }
 
 func (r RequestShape) Validate() error {
@@ -169,6 +182,25 @@ func (r RequestShape) Validate() error {
 	if r.SessionID != "" && !ValidSessionID(r.SessionID) {
 		return ErrInvalidPolicy
 	}
+	if r.RequestID != "" {
+		id, err := uuid.Parse(r.RequestID)
+		if err != nil || id.String() != r.RequestID {
+			return ErrInvalidPolicy
+		}
+	}
+	if r.TaskClass != "" && !validTaskClass(r.TaskClass) || r.TaskHint != "" && !validTaskClass(r.TaskHint) {
+		return ErrInvalidPolicy
+	}
+	if r.Economics != nil {
+		if _, err := r.Economics.CanonicalJSON(); err != nil || r.PriorCost.Vector == nil || r.PriorCost.Vector.Validate() != nil {
+			return ErrInvalidPolicy
+		}
+	}
+	for i, id := range r.TaskCandidates {
+		if id == "" || i > 0 && r.TaskCandidates[i-1] >= id {
+			return ErrInvalidPolicy
+		}
+	}
 	seen := map[string]bool{}
 	for _, parameter := range r.Parameters {
 		if parameter == "" || seen[parameter] {
@@ -177,6 +209,15 @@ func (r RequestShape) Validate() error {
 		seen[parameter] = true
 	}
 	return nil
+}
+
+func validTaskClass(value string) bool {
+	switch value {
+	case "coding_non_reasoning", "coding_reasoning", "reasoning", "tool_use", "extraction", "summarization", "translation", "general_chat", "unknown":
+		return true
+	default:
+		return false
+	}
 }
 
 func ValidSessionID(value string) bool {
@@ -215,9 +256,19 @@ type CostRateSnapshot struct {
 	Denominator string `json:"denominator"`
 }
 
+type QualityEvidenceSnapshot struct {
+	EvidenceID      string `json:"evidence_id,omitempty"`
+	TaskClass       string `json:"task_class,omitempty"`
+	Protocol        string `json:"protocol,omitempty"`
+	ToolsScope      string `json:"tools_scope,omitempty"`
+	ReasoningScope  string `json:"reasoning_scope,omitempty"`
+	ExclusionReason string `json:"exclusion_reason,omitempty"`
+}
+
 type CostSnapshot struct {
 	VersionID       string             `json:"version_id,omitempty"`
 	Basis           string             `json:"basis"`
+	Currency        string             `json:"currency"`
 	SchemaCanonical []byte             `json:"schema_canonical"`
 	SchemaDigest    string             `json:"schema_digest"`
 	Rates           []CostRateSnapshot `json:"rates"`
@@ -231,19 +282,21 @@ type ScoreSnapshot struct {
 }
 
 type CandidateDecision struct {
-	BindingID        string             `json:"binding_id"`
-	ChannelID        string             `json:"channel_id"`
-	ChannelVersionID string             `json:"channel_version_id"`
-	PhysicalModelID  string             `json:"physical_model_id"`
-	UpstreamModel    string             `json:"upstream_model"`
-	Priority         int                `json:"priority"`
-	Weight           uint64             `json:"weight"`
-	QualityTier      string             `json:"quality_tier"`
-	Capability       PhysicalCapability `json:"capability"`
-	FilterReason     string             `json:"filter_reason,omitempty"`
-	Reason           string             `json:"reason"`
-	Score            ScoreSnapshot      `json:"score"`
-	CostSnapshot     CostSnapshot       `json:"cost_snapshot"`
+	BindingID          string                  `json:"binding_id"`
+	ChannelID          string                  `json:"channel_id"`
+	ChannelVersionID   string                  `json:"channel_version_id"`
+	PhysicalModelID    string                  `json:"physical_model_id"`
+	UpstreamModel      string                  `json:"upstream_model"`
+	Priority           int                     `json:"priority"`
+	Weight             uint64                  `json:"weight"`
+	QualityTier        string                  `json:"quality_tier"`
+	Capability         PhysicalCapability      `json:"capability"`
+	FilterReason       string                  `json:"filter_reason,omitempty"`
+	Reason             string                  `json:"reason"`
+	Score              ScoreSnapshot           `json:"score"`
+	CostSnapshot       CostSnapshot            `json:"cost_snapshot"`
+	ValuationCostUpper *string                 `json:"valuation_cost_upper,omitempty"`
+	QualityEvidence    QualityEvidenceSnapshot `json:"quality_evidence"`
 }
 
 type RouteDecision struct {
@@ -290,7 +343,7 @@ func supplierBounds(c Candidate) (metering.Bounds, error) {
 }
 
 func costSnapshot(c Candidate, request RequestShape) (CostSnapshot, error) {
-	snapshot := CostSnapshot{VersionID: c.CostQuote.VersionID(), Basis: c.CostQuote.Basis(), Rates: []CostRateSnapshot{}}
+	snapshot := CostSnapshot{VersionID: c.CostQuote.VersionID(), Basis: c.CostQuote.Basis(), Currency: c.CostQuote.Currency(), Rates: []CostRateSnapshot{}}
 	schemaCanonical, err := c.CostQuote.Schema().CanonicalJSON()
 	if err != nil {
 		return snapshot, err
@@ -334,6 +387,25 @@ func costSnapshot(c Candidate, request RequestShape) (CostSnapshot, error) {
 	return snapshot, nil
 }
 
+func economicMarginRate(request RequestShape, cost CostSnapshot) *int64 {
+	decision, err := evaluateEconomicAdmission(request, cost)
+	if err != nil {
+		return nil
+	}
+	if decision.IncomeLower == 0 {
+		zero := int64(0)
+		return &zero
+	}
+	margin := new(big.Int).Sub(big.NewInt(int64(decision.IncomeLower)), big.NewInt(int64(decision.CumulativeCostUpper)))
+	margin.Mul(margin, big.NewInt(10000))
+	margin.Quo(margin, big.NewInt(int64(decision.IncomeLower)))
+	if !margin.IsInt64() {
+		return nil
+	}
+	value := margin.Int64()
+	return &value
+}
+
 func marginRate(cost CostSnapshot, retail int64) *int64 {
 	if cost.UpperAmount == nil {
 		return nil
@@ -359,13 +431,22 @@ func marginRate(cost CostSnapshot, retail int64) *int64 {
 }
 
 func staticCandidateDecision(c Candidate, policy DynamicPolicy, request RequestShape) (CandidateDecision, error) {
-	d := CandidateDecision{BindingID: c.BindingID, ChannelID: c.ChannelID, ChannelVersionID: c.VersionID, PhysicalModelID: c.PhysicalModelID, UpstreamModel: c.Model, Priority: c.Priority, Weight: c.Weight, QualityTier: c.Physical.QualityTier, Capability: c.Physical, Score: ScoreSnapshot{Stats: c.Stats}}
+	d := CandidateDecision{BindingID: c.BindingID, ChannelID: c.ChannelID, ChannelVersionID: c.VersionID, PhysicalModelID: c.PhysicalModelID, UpstreamModel: c.Model, Priority: c.Priority, Weight: c.Weight, QualityTier: c.Physical.QualityTier, Capability: c.Physical, Score: ScoreSnapshot{Stats: c.Stats}, QualityEvidence: c.Quality}
 	cost, err := costSnapshot(c, request)
 	if err != nil {
 		return d, err
 	}
 	d.CostSnapshot = cost
+	if request.Economics != nil {
+		if upper, upperErr := economicCostUpper(request, cost); upperErr == nil {
+			text := upper.String()
+			d.ValuationCostUpper = &text
+		}
+	}
 	d.Score.MarginRate = marginRate(cost, c.RetailAmount)
+	if request.Economics != nil {
+		d.Score.MarginRate = economicMarginRate(request, cost)
+	}
 	if len(request.Preference.Only) > 0 && !selectorAllowed(c, request.Preference.Only) || len(request.Preference.Ignore) > 0 && selectorAllowed(c, request.Preference.Ignore) {
 		d.FilterReason = "not_authorized"
 		return d, nil
@@ -397,11 +478,34 @@ func staticCandidateDecision(c Candidate, policy DynamicPolicy, request RequestS
 			return d, nil
 		}
 	}
+	if request.TaskCandidates != nil && !containsString(request.TaskCandidates, c.PhysicalModelID) {
+		d.FilterReason = "task_not_allowed"
+		return d, nil
+	}
+	if c.Quality.ExclusionReason != "" {
+		d.FilterReason = c.Quality.ExclusionReason
+		return d, nil
+	}
+	if c.Quality.EvidenceID != "" {
+		if c.Quality.TaskClass != request.TaskClass || request.Tools && c.Quality.ToolsScope == "none" || !request.Tools && c.Quality.ToolsScope == "required" || request.Reasoning && c.Quality.ReasoningScope == "none" || !request.Reasoning && c.Quality.ReasoningScope == "required" {
+			d.FilterReason = "quality_scope_mismatch"
+			return d, nil
+		}
+	}
 	if !c.Enabled {
 		d.FilterReason = exclusionReason(c)
 		return d, nil
 	}
 	return d, nil
+}
+
+func containsString(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 func parametersSupported(supported, requested []string) bool {
@@ -420,6 +524,9 @@ func parametersSupported(supported, requested []string) bool {
 func maxPriceExceeded(snapshot CostSnapshot, maximum *MaxPrice) (bool, error) {
 	if maximum == nil || snapshot.Basis == "unknown" {
 		return false, nil
+	}
+	if snapshot.Currency != "" && snapshot.Currency != "CNY" {
+		return true, nil
 	}
 	for _, rate := range snapshot.Rates {
 		var limit *string
@@ -445,6 +552,51 @@ func maxPriceExceeded(snapshot CostSnapshot, maximum *MaxPrice) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func economicCandidateCost(snapshot CostSnapshot) (economics.CostBasis, error) {
+	if snapshot.UpperAmount == nil || snapshot.Basis == "unknown" {
+		return economics.CostBasis{}, economics.ErrUnknownCost
+	}
+	amount, ok := new(big.Int).SetString(*snapshot.UpperAmount, 10)
+	if !ok || !amount.IsInt64() || amount.Sign() < 0 {
+		return economics.CostBasis{}, economics.ErrInvalidMoney
+	}
+	currency := economics.Currency(snapshot.Currency)
+	if currency == "" {
+		currency = economics.CurrencyCNY
+	}
+	return economics.CostBasis{Vector: economics.MoneyVector{currency: economics.Money(amount.Int64())}, Complete: true}, nil
+}
+
+func economicCostUpper(request RequestShape, snapshot CostSnapshot) (economics.Money, error) {
+	if request.Economics == nil {
+		return 0, economics.ErrInvalidSnapshot
+	}
+	candidate, err := economicCandidateCost(snapshot)
+	if err != nil {
+		return 0, err
+	}
+	return request.Economics.FxSnapshot().CostUpperVector(candidate.Vector, request.Economics.CreatedAt())
+}
+
+func evaluateEconomicAdmission(request RequestShape, snapshot CostSnapshot) (economics.AdmissionDecision, error) {
+	if request.Economics == nil {
+		return economics.AdmissionDecision{}, economics.ErrInvalidSnapshot
+	}
+	candidate, err := economicCandidateCost(snapshot)
+	if err != nil {
+		return economics.AdmissionDecision{}, err
+	}
+	return economics.EvaluateAdmission(economics.AdmissionRequest{Snapshot: *request.Economics, PriorCost: request.PriorCost, CandidateCost: candidate}, request.Economics.CreatedAt())
+}
+
+func marginBelowFloorForRequest(snapshot CostSnapshot, retail int64, floor *int64, request RequestShape) bool {
+	if request.Economics == nil {
+		return marginBelowFloor(snapshot, retail, floor)
+	}
+	_, err := evaluateEconomicAdmission(request, snapshot)
+	return err != nil
 }
 
 func marginBelowFloor(snapshot CostSnapshot, retail int64, floor *int64) bool {
@@ -487,6 +639,8 @@ func cloneDecision(in *RouteDecision) *RouteDecision {
 		out.Candidates[i].CostSnapshot.Rates = cloneSlice(in.Candidates[i].CostSnapshot.Rates)
 	}
 	out.Request.Parameters = cloneSlice(in.Request.Parameters)
+	out.Request.TaskCandidates = cloneSlice(in.Request.TaskCandidates)
+	out.Request.PriorCost.Vector = in.Request.PriorCost.Vector.Clone()
 	out.Request.Preference.Order = cloneSlice(in.Request.Preference.Order)
 	out.Request.Preference.Only = cloneSlice(in.Request.Preference.Only)
 	out.Request.Preference.Ignore = cloneSlice(in.Request.Preference.Ignore)
@@ -495,12 +649,20 @@ func cloneDecision(in *RouteDecision) *RouteDecision {
 		sticky.BreakOn = cloneSlice(in.Policy.Stickiness.BreakOn)
 		out.Policy.Stickiness = &sticky
 	}
+	if in.Policy.Execution != nil {
+		execution := *in.Policy.Execution
+		out.Policy.Execution = &execution
+	}
 	return &out
 }
 
 func normalizeRequestShape(shape RequestShape) RequestShape {
 	shape.Parameters = append([]string(nil), shape.Parameters...)
 	sort.Strings(shape.Parameters)
+	if shape.TaskCandidates != nil {
+		shape.TaskCandidates = append([]string{}, shape.TaskCandidates...)
+		sort.Strings(shape.TaskCandidates)
+	}
 	if shape.StatsWindowS == 0 {
 		shape.StatsWindowS = 900
 	}

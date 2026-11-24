@@ -41,3 +41,9 @@
 - `TEST_DATABASE_URL=... go test -race -p=1 ./... -count=1 -timeout=1200s`：全部 77 个 Go 包通过。`internal/billing` 348.838s、`internal/identity` 301.179s、`internal/server` 501.542s、`internal/operations` 84.644s、`migrations` 86.691s、`internal/reporting` 1.677s；保留项目标准包上限，没有降低 bcrypt 成本或增加 SKIP。
 - `go vet ./...`、`go build -trimpath -o bin/moni-aigate ./cmd/moni-aigate`、`go run ./scripts/check-procurement-layout` 通过。
 - 统一架构 reviewed refresh/check 与 `make check` 已通过，最终文件清单与复核理由见 `architecture-manifest.json` 和 `docs/architecture/changes.md`。034.6 约合展示/显示名与真实外部环境验收不能由本片代替。
+
+---
+
+## 2026-11-24：041-P0 口径取代说明
+
+本文保留 034.5 当时的历史实现与验收记录，不再代表当前消费退款及毛利口径。自 `specs/041-profit-hybrid-platform/p0-economic-foundation.md` §7 起，消费退款按原分配边的累计退款计算净付款基准 `floor((charged-cumulative_refunded)×fiat/issued)`； refunded lot 再消费不得重复确认，独立现金退款仍只进入 `cash_refunded`。原 `gross_margin` 仅为当前可显示贡献毛利的兼容别名，当前读模型另列原币 `provider_cost`、暂估/账单确认贡献毛利、成本时点与修订，以及新 offer 的冻结 `fx_snapshot` 折算。本文中“消费退款不冲减付款基准”“仅单一 CNY 才显示毛利”及相应历史数值均按 041-P0 上述规则取代；这不改写或撤销当时已执行的其他钱包、权限与快照验证。

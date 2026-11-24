@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/moni-ai/moni-aigate/internal/billing"
+	"github.com/moni-ai/moni-aigate/internal/economics"
 	"github.com/moni-ai/moni-aigate/internal/identity"
 	"github.com/moni-ai/moni-aigate/internal/provider"
 	"github.com/moni-ai/moni-aigate/internal/routing"
@@ -155,7 +156,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		if v.Physical.MaxConcurrency < maxInflight {
 			maxInflight = v.Physical.MaxConcurrency
 		}
-		candidates = append(candidates, routing.Candidate{BindingID: v.BindingID, PhysicalModelID: v.PhysicalModelID, PolicyVersionID: v.PolicyVersionID, ChannelID: v.ChannelID, VersionID: v.VersionID, CredentialID: v.CredentialID, CredentialWeight: uint64(v.CredentialWeight), CredentialMaxInflight: v.CredentialMaxInflight, Model: v.UpstreamModel, Region: v.Region, HealthKey: v.ChannelID + ":" + v.UpstreamModel, Breaker: v.Breaker, Priority: v.Priority, Weight: uint64(v.Weight), MaxInflight: maxInflight, CostPolicy: v.CostPolicy, CostQuote: v.CostQuote, CostLimits: v.CostLimits, InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, Physical: v.Physical, Stats: v.Stats, ProcurementManaged: v.ProcurementManaged, ProcurementState: v.ProcurementState, ProcurementAvailable: v.ProcurementAvailable, Enabled: reason == "", ExclusionReason: reason, Endpoint: provider.Endpoint{URL: v.URL + suffix, APIKey: v.Secret, Model: v.UpstreamModel, Network: networkPolicy(v.URL, v.AllowedCIDRs)}})
+		candidates = append(candidates, routing.Candidate{BindingID: v.BindingID, PhysicalModelID: v.PhysicalModelID, PolicyVersionID: v.PolicyVersionID, ChannelID: v.ChannelID, VersionID: v.VersionID, CredentialID: v.CredentialID, CredentialWeight: uint64(v.CredentialWeight), CredentialMaxInflight: v.CredentialMaxInflight, Model: v.UpstreamModel, Region: v.Region, HealthKey: v.ChannelID + ":" + v.UpstreamModel, Breaker: v.Breaker, Priority: v.Priority, Weight: uint64(v.Weight), MaxInflight: maxInflight, CostPolicy: v.CostPolicy, CostQuote: v.CostQuote, CostLimits: v.CostLimits, InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, Physical: v.Physical, Quality: v.Quality, Stats: v.Stats, ProcurementManaged: v.ProcurementManaged, ProcurementState: v.ProcurementState, ProcurementAvailable: v.ProcurementAvailable, Enabled: reason == "", ExclusionReason: reason, Endpoint: provider.Endpoint{URL: v.URL + suffix, APIKey: v.Secret, Model: v.UpstreamModel, Network: networkPolicy(v.URL, v.AllowedCIDRs)}})
 	}
 	if len(candidates) == 0 {
 		s.fail(c, 503, "no_available_channel", "没有符合条件的可用渠道")
@@ -174,6 +175,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 	}
 	routeShape.Tools, routeShape.ParallelTools = request.ToolRequirements()
 	routeShape.Parameters = request.RoutingParameters()
+	routeShape.Reasoning = contains(routeShape.Parameters, "reasoning") || contains(routeShape.Parameters, "reasoning_effort")
 	if session := c.GetHeader("X-Moni-Session"); session != "" {
 		if !routing.ValidSessionID(session) {
 			s.fail(c, 400, "invalid_route_session", "路由会话标识无效")
@@ -224,7 +226,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 	if cacheDescriptor != nil {
 		cacheDigest = cacheDescriptor.requestDigest
 	}
-	reservation, e := s.Billing.ReserveWithCache(c.Request.Context(), billing.ReserveInput{Principal: billing.Principal{TenantID: p.TenantID, UserID: p.UserID, KeyID: p.KeyID, ClientIP: p.ClientIP}, RequestID: c.GetString("request_id"), ModelID: model.ID, RequestedModelName: model.RequestedName, IdempotencyKey: c.GetHeader("Idempotency-Key"), RequestHMAC: s.Config.Secrets.Digest(identityBody), ProfileVersion: model.ProfileVersion, RouteRevision: model.Revision, PolicyVersion: "retail-r3", InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, RequestDeadline: deadline, Streaming: request.Stream}, cacheDigest)
+	reservation, e := s.Billing.ReserveWithCache(c.Request.Context(), billing.ReserveInput{Principal: billing.Principal{TenantID: p.TenantID, UserID: p.UserID, KeyID: p.KeyID, ClientIP: p.ClientIP}, RequestID: c.GetString("request_id"), ModelID: model.ID, RequestedModelName: model.RequestedName, IdempotencyKey: c.GetHeader("Idempotency-Key"), RequestHMAC: s.Config.Secrets.Digest(identityBody), ProfileVersion: model.ProfileVersion, RouteRevision: model.Revision, PolicyVersion: "retail-r3", InputUpperBound: request.InputUpperBound, OutputLimit: request.MaxOutputTokens, RequestDeadline: deadline, Streaming: request.Stream, TaskHint: routeShape.TaskHint, ToolsRequired: routeShape.Tools, ReasoningRequired: routeShape.Reasoning}, cacheDigest)
 	if e != nil {
 		releaseAdmission()
 		releaseAdmission = nil
@@ -232,6 +234,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		return
 	}
 	defer s.Billing.EndRequest(reservation.RequestID)
+	routeShape.RequestID = reservation.RequestID
 	if cacheDescriptor != nil {
 		// Cache operations use the same short-stage admission scheduling as the
 		// ordinary completion path; no provider call occurs while holding a ticket.
@@ -275,12 +278,23 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		}
 	}
 	routeShape.RetailAmount = int64(reservation.Amount)
+	if reservation.Economics != nil {
+		routeShape.Economics = reservation.Economics
+		routeShape.TaskClass = string(reservation.Economics.TaskClass())
+		routeShape.TaskCandidates = reservation.Economics.TaskCandidates()
+		routeShape.PriorCost = economics.CostBasis{Vector: economics.MoneyVector{}, Complete: true}
+		execution := reservation.Economics.ExecutionPolicy()
+		policy.Execution = &execution
+	}
 	for i := range candidates {
 		candidates[i].RetailAmount = routeShape.RetailAmount
 	}
 	maxAttempts := 2
 	if !routeShape.Preference.AllowFallbacks {
 		maxAttempts = 1
+	}
+	if reservation.Economics != nil && int64(maxAttempts) > reservation.Economics.MaxOuterAttempts() {
+		maxAttempts = int(reservation.Economics.MaxOuterAttempts())
 	}
 	plan, e := routing.NewDynamicPlan(candidates, maxAttempts, policy, routeShape)
 	if e != nil {
@@ -347,6 +361,9 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 				s.admissionError(c, e)
 			}
 			return
+		}
+		if attempt.Frozen != nil {
+			attempt.Frozen.OuterAttemptID = attemptID
 		}
 		response, err := s.Provider.Do(c.Request.Context(), attempt.Candidate.Endpoint, request)
 		var firstEvent *provider.Event

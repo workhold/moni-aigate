@@ -121,7 +121,10 @@ func (s *Store) PublishCostPrice(ctx context.Context, a PricingActor, c CostPric
 	var out PricingOperationResult[CostPriceView]
 	known := c.Basis == "contract" || c.Basis == "invoice"
 	validRates := known && c.InputRate != nil && c.OutputRate != nil || c.Basis == "unknown" && c.InputRate == nil && c.OutputRate == nil
-	if !pricingID(c.ChannelID) || !validUpstreamModel(c.UpstreamModel) || !pricingID(c.SchemaID) || !pricingDigest(c.SchemaDigest) || c.VariantKey != "default" || !validRates || !validPricingEffective(c.EffectiveAt) || c.ExpectedChannelRevision < 1 {
+	if c.Currency == "" {
+		c.Currency = "CNY"
+	}
+	if !pricingID(c.ChannelID) || !validUpstreamModel(c.UpstreamModel) || !pricingID(c.SchemaID) || !pricingDigest(c.SchemaDigest) || c.VariantKey != "default" || c.Currency != "CNY" && c.Currency != "USD" || !validRates || !validPricingEffective(c.EffectiveAt) || c.ExpectedChannelRevision < 1 {
 		return out, pricingFail("invalid_request")
 	}
 	c.EffectiveAt = c.EffectiveAt.UTC()
@@ -129,7 +132,7 @@ func (s *Store) PublishCostPrice(ctx context.Context, a PricingActor, c CostPric
 	var schema metering.Schema
 	r, replay, e := s.pricingCommand(ctx, pricingCommand{id: c.OperationID, kind: "cost_price.publish", actor: a.UserID, scope: "platform", target: costPriceTarget, replayCheck: func(old PricingOperationReceipt) error {
 		v, ok := old.Result.(*CostPriceView)
-		if !ok || v.ChannelID != c.ChannelID || v.UpstreamModel != c.UpstreamModel || v.SchemaID != c.SchemaID || v.SchemaDigest != c.SchemaDigest || v.Basis != c.Basis {
+		if !ok || v.ChannelID != c.ChannelID || v.UpstreamModel != c.UpstreamModel || v.SchemaID != c.SchemaID || v.SchemaDigest != c.SchemaDigest || v.Basis != c.Basis || v.Currency != c.Currency {
 			return pricingFail("policy_operation_conflict")
 		}
 		return nil
@@ -151,7 +154,7 @@ func (s *Store) PublishCostPrice(ctx context.Context, a PricingActor, c CostPric
 			}
 			rates = raw
 		}
-		return map[string]any{"channel_id": c.ChannelID, "upstream_model": c.UpstreamModel, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": "default", "currency": "CNY", "basis": c.Basis, "rates": rates, "effective_at": pricingStamp(c.EffectiveAt), "expected_channel_revision": pricingUint(c.ExpectedChannelRevision)}, nil
+		return map[string]any{"channel_id": c.ChannelID, "upstream_model": c.UpstreamModel, "schema_id": c.SchemaID, "schema_digest": c.SchemaDigest, "variant_key": "default", "currency": c.Currency, "basis": c.Basis, "rates": rates, "effective_at": pricingStamp(c.EffectiveAt), "expected_channel_revision": pricingUint(c.ExpectedChannelRevision)}, nil
 	}, prepare: func(ctx context.Context, tx pgx.Tx) (pricingWrite, error) {
 		var rev int64
 		if err := tx.QueryRow(ctx, `SELECT management_revision FROM channels WHERE id=$1 FOR UPDATE`, c.ChannelID).Scan(&rev); err != nil {
@@ -164,7 +167,7 @@ func (s *Store) PublishCostPrice(ctx context.Context, a PricingActor, c CostPric
 			return pricingWrite{}, pricingFail("pricing_revision_exhausted")
 		}
 		id := uuid.NewString()
-		v := CostPriceView{ID: id, ChannelID: c.ChannelID, UpstreamModel: c.UpstreamModel, SchemaID: c.SchemaID, SchemaDigest: c.SchemaDigest, VariantKey: "default", Currency: "CNY", Basis: c.Basis, Rates: raw, EffectiveAt: pricingStamp(c.EffectiveAt), ExpectedChannelRevision: pricingUint(rev), ChannelRevision: pricingUint(rev + 1)}
+		v := CostPriceView{ID: id, ChannelID: c.ChannelID, UpstreamModel: c.UpstreamModel, SchemaID: c.SchemaID, SchemaDigest: c.SchemaDigest, VariantKey: "default", Currency: c.Currency, Basis: c.Basis, Rates: raw, EffectiveAt: pricingStamp(c.EffectiveAt), ExpectedChannelRevision: pricingUint(rev), ChannelRevision: pricingUint(rev + 1)}
 		return pricingWrite{resource: id, result: v, apply: func(ctx context.Context, tx pgx.Tx, at time.Time) error {
 			_, err := tx.Exec(ctx, `SELECT meter_insert_token_cost($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, id, c.ChannelID, c.UpstreamModel, c.SchemaID, c.InputRate, c.OutputRate, c.Basis, c.EffectiveAt, a.UserID, c.OperationID, at)
 			return err

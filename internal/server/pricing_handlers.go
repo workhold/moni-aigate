@@ -526,7 +526,7 @@ func (s *Server) publishCostPrice(c *gin.Context) {
 	if !s.pricingWriter(c) {
 		return
 	}
-	obj, ok := pricingBody(c, "operation_id", "channel_id", "upstream_model", "schema_id", "schema_digest", "variant_key", "basis", "input_rate", "output_rate", "effective_at", "expected_channel_revision")
+	obj, ok := pricingBodyOptional(c, []string{"operation_id", "channel_id", "upstream_model", "schema_id", "schema_digest", "variant_key", "basis", "effective_at", "expected_channel_revision"}, "input_rate", "output_rate", "currency")
 	if !ok {
 		s.commerceInvalid(c)
 		return
@@ -538,6 +538,11 @@ func (s *Server) publishCostPrice(c *gin.Context) {
 	digest, f := commerceString(obj["schema_digest"])
 	variant, g := commerceString(obj["variant_key"])
 	basis, h := commerceString(obj["basis"])
+	currency := "CNY"
+	currencyValid := true
+	if raw, exists := obj["currency"]; exists {
+		currency, currencyValid = commerceString(raw)
+	}
 	rev, j := commerceInteger(obj["expected_channel_revision"], true)
 	at, k := commerceExpiry(obj["effective_at"])
 	var in, out *int64
@@ -550,7 +555,7 @@ func (s *Server) publishCostPrice(c *gin.Context) {
 	}
 	in, l := parse(obj["input_rate"])
 	out, m := parse(obj["output_rate"])
-	if !a || !b || !d || !e || !f || !g || !h || !j || !k || !l || !m || variant != "default" || !((basis == "unknown" && in == nil && out == nil) || (basis != "unknown" && in != nil && out != nil)) || at.IsZero() || at.Nanosecond()%1000 != 0 {
+	if !a || !b || !d || !e || !f || !g || !h || !currencyValid || currency != "CNY" && currency != "USD" || !j || !k || !l || !m || variant != "default" || !((basis == "unknown" && in == nil && out == nil) || (basis != "unknown" && in != nil && out != nil)) || at.IsZero() || at.Nanosecond()%1000 != 0 {
 		s.commerceInvalid(c)
 		return
 	}
@@ -559,7 +564,7 @@ func (s *Server) publishCostPrice(c *gin.Context) {
 		return
 	}
 	defer done()
-	v, err := s.Catalog.PublishCostPrice(c.Request.Context(), catalog.PricingActor{UserID: sessionOf(c).User.ID}, catalog.CostPriceCommand{OperationID: op, ChannelID: channel, UpstreamModel: upstream, SchemaID: schema, SchemaDigest: digest, VariantKey: variant, Basis: basis, InputRate: in, OutputRate: out, EffectiveAt: at.UTC(), ExpectedChannelRevision: rev})
+	v, err := s.Catalog.PublishCostPrice(c.Request.Context(), catalog.PricingActor{UserID: sessionOf(c).User.ID}, catalog.CostPriceCommand{OperationID: op, ChannelID: channel, UpstreamModel: upstream, SchemaID: schema, SchemaDigest: digest, VariantKey: variant, Basis: basis, Currency: currency, InputRate: in, OutputRate: out, EffectiveAt: at.UTC(), ExpectedChannelRevision: rev})
 	if err != nil {
 		s.pricingError(c, err)
 		return

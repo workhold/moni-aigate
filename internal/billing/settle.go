@@ -116,6 +116,16 @@ func settleRequest(ctx context.Context, tx pgx.Tx, r financialRequest, mode stri
 	if f.ProtocolOutcome != "completed" && !f.ContentWritten && !clientCancelled {
 		return pendingResult(ctx, tx, r, "delivery_unknown")
 	}
+	snapshot, snapshotErr := requestSnapshotTx(ctx, tx, r.TenantID, r.ID)
+	if snapshotErr == nil {
+		if snapshot.SettlementMode() != "fixed_full_reservation" {
+			return Settlement{}, fail("invalid_settlement_mode", "unsupported offer settlement mode")
+		}
+		return finish(ctx, tx, r, r.Amount, big.NewInt(r.Amount), "charged_fixed_full_reservation")
+	}
+	if !errors.Is(snapshotErr, pgx.ErrNoRows) {
+		return Settlement{}, snapshotErr
+	}
 	raw, err := storedActualAmount(ctx, tx, r.TenantID, r.ID, f.ID, "", metering.Retail)
 	if err != nil {
 		return Settlement{}, err
@@ -169,7 +179,7 @@ func finish(ctx context.Context, tx pgx.Tx, r financialRequest, charge int64, ra
 	}
 	id := uuid.NewString()
 	status := "settled"
-	if reason != "charged_usage" {
+	if reason != "charged_usage" && reason != "charged_fixed_full_reservation" {
 		status = "released"
 	}
 	deltas := map[string]int64{"HELD": -r.Amount, "AVAILABLE": r.Amount - charge}

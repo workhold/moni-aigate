@@ -78,7 +78,7 @@ func TestPhase3MigrationBackfillsLegacyAttemptWithoutScalingFacts(t *testing.T) 
 	sort.Strings(names)
 	ordered := []string{"current_mvp.sql"}
 	for _, name := range names {
-		if name != "current_mvp.sql" && name != "current_015_phase3_dynamic_routing.sql" {
+		if name != "current_mvp.sql" && name != "current_015_phase3_dynamic_routing.sql" && name != "current_016_profit_economics.sql" {
 			ordered = append(ordered, name)
 		}
 	}

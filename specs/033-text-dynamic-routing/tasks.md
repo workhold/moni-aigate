@@ -2,6 +2,8 @@
 
 状态：2026-11-23 基线校正。实现与本地完整验收已完成，验证代码提交 `e7b0de825232b7f10b81f941aa1b5576c845066a`；PR workhold/moni-aigate#31 已在 CI 28/28 全绿后合入 main（merge `d51bd24`）。真实供应商、生产、HA、固定资源性能，以及 041 的场景质量和现金利润资格不在完成声明内。
 
+2026-11-24 [041-P0](../041-profit-hybrid-platform/p0-economic-foundation.md)起，显式 offer 的最低毛利由 Reserve 微法币付款基准、报价币种、保守 FX 和请求累计成本决定；033 原 `(micro-COIN reservation - micro-CNY cost)` 公式仅保留为无 offer 旧路由的数值指标，不能称现金利润。P0 场景证据与服务端单 attempt 不构成 P1 商品或真实/生产资格。
+
 - [x] 3.0 冻结物理/profile、route 请求、CAS、决策/回放和无候选合同（`design.md`）。
 - [x] 3.1 追加 current 迁移：physical、binding、策略、session、decision、统计与 attempt 时间/物理身份；回填并删除旧 attempt 决策列。
 - [x] 3.1 调整 028 attempt supplier bounds/Plan/quote guard，保持零售 reservation 与 settlement 不变。

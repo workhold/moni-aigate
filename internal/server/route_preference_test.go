@@ -8,12 +8,12 @@ import (
 )
 
 func TestChatRouteEnvelopeIsStrictAndDetached(t *testing.T) {
-	raw := []byte(`{"model":"retail-model","messages":[{"role":"user","content":"hello"}],"route":{"order":["physical-a"],"only":["channel-a"],"ignore":["channel-b"],"allow_fallbacks":false,"require_parameters":true,"sort":"price","max_price":{"input":"10","output":"20"},"data_collection":"deny"}}`)
+	raw := []byte(`{"model":"retail-model","messages":[{"role":"user","content":"hello"}],"route":{"order":["physical-a"],"only":["channel-a"],"ignore":["channel-b"],"allow_fallbacks":false,"require_parameters":true,"sort":"price","max_price":{"input":"10","output":"20"},"data_collection":"deny","task_hint":"coding_reasoning"}}`)
 	stripped, shape, err := parseChatRoute(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if shape.Preference.AllowFallbacks || !shape.Preference.RequireParameters || shape.Preference.Sort != "price" || shape.Preference.MaxPrice.Input == nil || *shape.Preference.MaxPrice.Input != "10" || shape.Preference.DataCollection != "deny" {
+	if shape.Preference.AllowFallbacks || !shape.Preference.RequireParameters || shape.Preference.Sort != "price" || shape.Preference.MaxPrice.Input == nil || *shape.Preference.MaxPrice.Input != "10" || shape.Preference.DataCollection != "deny" || shape.TaskHint != "coding_reasoning" {
 		t.Fatalf("route preference=%+v", shape)
 	}
 	var fields map[string]json.RawMessage
@@ -28,6 +28,8 @@ func TestChatRouteEnvelopeIsStrictAndDetached(t *testing.T) {
 		`{"model":"m","route":{"unknown":true}}`,
 		`{"model":"m","route":{"sort":"quality"}}`,
 		`{"model":"m","route":{"allow_fallbacks":null}}`,
+		`{"model":"m","route":{"task_hint":""}}`,
+		`{"model":"m","route":{"task_hint":"unsupported"}}`,
 		`{"model":"m","route":{"only":[]}}`,
 		`{"model":"m","route":{"max_price":{"input":null}}}`,
 		`{"model":"m","route":{"max_price":{"input":"01"}}}`,

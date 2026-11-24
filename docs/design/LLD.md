@@ -200,6 +200,14 @@ ExecutionAdapter 是 provider.Client 外的一次执行薄接缝，DownstreamAdm
 
 AdminConnector 先只读快照和差异草稿，每资源一个日常写者；typed write 必须证明认证、最小权限、幂等、ETag/CAS、operation 查询和 read-back。结果未知锁定原 operation，只读核查。external commercial、inner retry、订阅成本分摊、媒体/Realtime 动态路由和多币种均留后续独立 SDD。
 
+### 4.12 041-P0 物理合同与状态机
+
+[P0 子规格](../../specs/041-profit-hybrid-platform/p0-economic-foundation.md)冻结实际 DDL、错误、ACL 和恢复矩阵。`current_016_profit_economics.sql` 新增版本/证据/生命周期/请求快照与 inner 成本组件，route policy 引用 ExecutionPolicy，binding 引用 QualityEvidence；业务版本不可改删，生命周期以独立 revision 迁移。P0 只实现 test_active 与 withdrawn 的 direct 内部发布，commercial 迁移和未来配置 HTTP 不开放。
+
+`request_economics_snapshots` 以 tenant+request 唯一，绑定 reservation/offer/route，保存规范 JSON 字节、JSONB、SHA-256、微法币向量和 FX 原件。Reserve 固定 price version 并按 funding reservation 边计算收入下界；Routing 使用请求累计成本而非逐候选孤立比较；RecordAttempt/PrepareDispatch 重算 U 并复核较早 outer/inner 成本。数据库 attempt/settlement/dispatch trigger 提供最后屏障。
+
+`fixed_full_reservation` 的收费原因是 `charged_fixed_full_reservation`，要求 confirmed final 和 `raw=charged=R,waived=0`；原无交付、截止和恢复释放仍为零。报表新增 `provider_cost/provisional_gross_margin/bill_confirmed_gross_margin/gross_margin_currency/margin_valuation/cost_as_of/cost_revision/fx_policy_versions` 和 offer/task 维度；旧 `gross_margin` 仅为兼容别名，旧 `known_provider_cost` 仅汇总 CNY，完整金额必须读原币向量。
+
 ## 5. 资金模型与计价
 
 ### 5.1 内部平衡流水

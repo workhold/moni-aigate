@@ -708,6 +708,10 @@ MVP 不开放调价，因此批准时的当前币价就是该来源已记录的�
 
 **034.5 实施补充（2026-11-15）**：每条文本/媒体结算分配边均用 `big.Int`（Go）或 `numeric`（SQL）计算 `floor(charged_amount × fiat_amount / issued_amount)` 的整数微法币，禁止浮点和隐式四舍五入。`grant/opening` 计 0，`unknown`、缺买入版本、缺法币字段均使对应汇总及毛利为 null。JSON 以 `payment_basis`、`cash_refunded` 两个按币种分列的十进制字符串映射返回；CSV 对应 `payment_basis_cny/usd`、`cash_refunded_cny/usd` 列。消费币数继续来自唯一 settlement，`Currency='COIN'`、`AmountUnit='micro_coin'`；`net_revenue` 是 charged−refunded 的币数，**不是**毛利输入。毛利只在全部结算完成、采购成本已知、付款基准无 unknown 且仅含 CNY 时计算（付款基准−已知采购成本）；多币种或供应商币种/汇率缺失均为 null。`cash_refunded` 仅汇总 completed 现金退款且与付款基准分列，不冲减它；其时间窗口和 `tenant_id`（若指定）与报表筛选一致，模型、协议和执行类型筛选不适用于该独立事实。它只填充 summary，model/request 的映射及请求级 CSV 两列保持为空，防止一笔线下退款被重复分摊。每个请求的分配边 charged 合计必须等于唯一 settlement 的 charged，缺失或不完整时毛利同样为 null。
 
+## 041-P0 对供应商币种与净付款基准的受控修订
+
+[041-P0](../041-profit-hybrid-platform/p0-economic-foundation.md)只对新 offer 引入版本化保守 FX、USD/CNY 供应商成本和 Reserve 准入快照，不改变本规格钱包、买入币价、现金退款或既有请求路径。统一 reporting 的消费付款基准现按原分配边的累计净收费冲减消费退款；退款币再次消费只确认当前净消费，独立现金退款仍不进入该冲减。历史 034.5 验证记录保留原口径，并以 041-P0 记录标明替代关系。
+
 ## 11. 对其他规格的影响
 
 | 规格 | 影响 |

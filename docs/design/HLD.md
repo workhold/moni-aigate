@@ -155,6 +155,14 @@ PR-D 已实现最多两个 worker 的 14 片调度、双活动 cluster 的同名
 
 现金经济是实施前置：当前 COIN 预占减 CNY 供应商成本不能宣称现金毛利，且逐候选检查不覆盖两次 attempt 累计成本。首片 test-only 采用 fixed_full_reservation、完整单 CNY 夹具和服务端 ExecutionPolicy 单 outer attempt；USD/CNY 是一等付款/成本货币，商业首发前必须支持原币向量、保守 FX 估值和交叉组合。贡献毛利复用 034.5 reporting，处理消费退款净基准、退款币再次消费去重及 contract provisional/账单确认时点，不新建财务读权威。统一控制台只经 aigate 同源 API，New API/Sub2API 原生后台仅私网 break-glass；external commercial 继续拒绝，041 不表示任何运行能力已实现。
 
+### 4.13 041-P0 经济基础实现
+
+[聚焦子规格](../../specs/041-profit-hybrid-platform/p0-economic-foundation.md)将 R0 拆为当前可实施合同：不可变 ServiceOfferVersion、TaskPolicy、QualityEvidence/QualityPolicy、ExecutionPolicy、EconomicsPolicy 与 FxPolicyVersion 由 `current_016` 追加；内部发布只支持 direct test-active，route/offer 在同一 CAS 事务出生，未开放商品配置 HTTP 或 external commercial。
+
+新 offer 在 Reserve 从原 funding lot 冻结束付款基准、USD/CNY 原币向量、保守 FX 和任务/执行/质量引用；服务端固定单 outer attempt、禁缓存，RecordAttempt 与 PrepareDispatch 重算成本上界并执行请求累计门禁，PrepareDispatch 以 DB 时钟复核商品状态和证据撤回/有效期。收费裁决不变，只有原政策决定收费时才以 `fixed_full_reservation` 消费原预占；释放、唯一结算、unknown 不重放和恢复不生成保持。
+
+贡献毛利继续使用 034.5 reporting：消费退款按原边净额冲减，退款币再消费不重复确认现金，inner 成本进入原采购读模型；contract provisional/as-of、invoice 账单确认、原币和 FX 快照折算分别标识。该能力不表示真实供应商、生产或净利润验收。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |

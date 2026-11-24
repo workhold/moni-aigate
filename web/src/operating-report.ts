@@ -3,24 +3,31 @@ import { money } from './format.ts'
 
 export type OperatingFiatCurrency = 'CNY' | 'USD'
 export type OperatingFiatAmounts = Partial<Record<OperatingFiatCurrency, string>>
+export type OperatingMarginValuation = 'original_currency' | 'fx_snapshot'
+export type OperatingTaskClass = 'coding_non_reasoning' | 'coding_reasoning' | 'reasoning' | 'tool_use' | 'extraction' | 'summarization' | 'translation' | 'general_chat' | 'unknown'
 export interface OperatingTotals {
   request_count: number; unsettled_requests: number; attempt_count: number; unknown_provider_costs: number
   charged: string; refunded: string; net_revenue: string; known_provider_cost: string; gross_margin: string | null
   payment_basis: OperatingFiatAmounts; cash_refunded: OperatingFiatAmounts
+  provider_cost: OperatingFiatAmounts; provisional_gross_margin: string | null; bill_confirmed_gross_margin: string | null
+  gross_margin_currency: OperatingFiatCurrency | null; margin_valuation: OperatingMarginValuation | null
+  cost_as_of: string | null; cost_revision: string; fx_policy_versions: string[]
 }
 export interface OperatingModel extends OperatingTotals { model_id: string; model_name: string }
+export interface OperatingOffer extends OperatingTotals { offer_version_id: string; task_class: OperatingTaskClass }
 export interface OperatingChannel { channel_id: string; channel_name: string; request_count: number; attempt_count: number; unknown_provider_costs: number; known_provider_cost: string }
 export type OperatingProtocol = 'openai_chat' | 'openai_responses' | 'anthropic_messages' | 'openai_embeddings' | 'jina_rerank' | 'gemini_generate_content' | 'image_generation' | 'tts' | 'video_generation' | 'realtime_turn'
 export type OperatingExecutionKind = 'synchronous' | 'asynchronous'
-export interface OperatingRequest extends OperatingTotals { request_id: string; tenant_id: string; tenant_name: string; model_id: string; model_name: string; status: string; billing_status: string; created_at: string; protocol: OperatingProtocol; execution_kind: OperatingExecutionKind; profile_version: string; schema_id: string; schema_digest: string; variant_key: 'default' }
+export interface OperatingRequest extends OperatingTotals { request_id: string; tenant_id: string; tenant_name: string; model_id: string; model_name: string; status: string; billing_status: string; created_at: string; protocol: OperatingProtocol; execution_kind: OperatingExecutionKind; profile_version: string; schema_id: string; schema_digest: string; variant_key: 'default'; offer_version_id: string; task_class: OperatingTaskClass | '' }
 export interface OperatingReport {
   from: string; to: string; as_of: string; currency: 'COIN'; amount_unit: 'micro_coin'; scope: 'request_created_window'
-  summary: OperatingTotals; models: OperatingModel[]; channels: OperatingChannel[]; requests: OperatingRequest[]
+  summary: OperatingTotals; models: OperatingModel[]; channels: OperatingChannel[]; requests: OperatingRequest[]; offer_reports: OperatingOffer[]
 }
 
 const reportProtocols: OperatingProtocol[] = ['openai_chat', 'openai_responses', 'anthropic_messages', 'openai_embeddings', 'jina_rerank', 'gemini_generate_content', 'image_generation', 'tts', 'video_generation', 'realtime_turn']
+const reportTaskClasses: OperatingTaskClass[] = ['coding_non_reasoning', 'coding_reasoning', 'reasoning', 'tool_use', 'extraction', 'summarization', 'translation', 'general_chat', 'unknown']
 const reportModelKeys = ['mock-image-generation', 'mock-tts', 'mock-video-generation', 'mock-realtime']
-const totalFields = ['request_count', 'unsettled_requests', 'attempt_count', 'unknown_provider_costs', 'charged', 'refunded', 'net_revenue', 'known_provider_cost', 'gross_margin', 'payment_basis', 'cash_refunded'] as const
+const totalFields = ['request_count', 'unsettled_requests', 'attempt_count', 'unknown_provider_costs', 'charged', 'refunded', 'net_revenue', 'known_provider_cost', 'gross_margin', 'payment_basis', 'cash_refunded', 'provider_cost', 'provisional_gross_margin', 'bill_confirmed_gross_margin', 'gross_margin_currency', 'margin_valuation', 'cost_as_of', 'cost_revision', 'fx_policy_versions'] as const
 function reportInvalid(): never { throw new Error('经营报表响应含未定义或旧标量字段。') }
 function reportObject(value: unknown, keys: readonly string[]): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return reportInvalid()
@@ -31,27 +38,46 @@ function reportObject(value: unknown, keys: readonly string[]): Record<string, u
 function reportCount(value: unknown): number { if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) return reportInvalid(); return value }
 function reportAmount(value: unknown, nullable = false): string | null { if (nullable && value === null) return null; if (typeof value !== 'string' || !/^-?(0|[1-9][0-9]*)$/.test(value)) return reportInvalid(); return value }
 function reportText(value: unknown): string { if (typeof value !== 'string' || !value) return reportInvalid(); return value }
+function reportString(value: unknown): string { if (typeof value !== 'string') return reportInvalid(); return value }
 function reportTimeValue(value: unknown): string { if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(value) || !Number.isFinite(Date.parse(value))) return reportInvalid(); return value }
-function reportFiatMap(value: unknown): OperatingFiatAmounts {
+function reportNullableTime(value: unknown): string | null { return value === null ? null : reportTimeValue(value) }
+function reportFiatMap(value: unknown, nonNegative = false): OperatingFiatAmounts {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return reportInvalid()
   const result: OperatingFiatAmounts = {}
   for (const [currency, amount] of Object.entries(value)) {
     if (currency !== 'CNY' && currency !== 'USD') return reportInvalid()
-    result[currency] = reportAmount(amount)!
+    const parsed = reportAmount(amount)!
+    if (nonNegative && parsed.startsWith('-')) return reportInvalid()
+    result[currency] = parsed
   }
   return result
 }
+function reportPolicyIDs(value: unknown): string[] {
+  if (!Array.isArray(value)) return reportInvalid()
+  const ids = value.map(reportText)
+  if (new Set(ids).size !== ids.length) return reportInvalid()
+  return ids
+}
 function parseTotals(value: unknown): OperatingTotals {
   const raw = reportObject(value, totalFields)
-  return { request_count: reportCount(raw.request_count), unsettled_requests: reportCount(raw.unsettled_requests), attempt_count: reportCount(raw.attempt_count), unknown_provider_costs: reportCount(raw.unknown_provider_costs), charged: reportAmount(raw.charged)!, refunded: reportAmount(raw.refunded)!, net_revenue: reportAmount(raw.net_revenue)!, known_provider_cost: reportAmount(raw.known_provider_cost)!, gross_margin: reportAmount(raw.gross_margin, true), payment_basis: reportFiatMap(raw.payment_basis), cash_refunded: reportFiatMap(raw.cash_refunded) }
+  const currency = raw.gross_margin_currency === null ? null : raw.gross_margin_currency === 'CNY' || raw.gross_margin_currency === 'USD' ? raw.gross_margin_currency : reportInvalid()
+  const valuation = raw.margin_valuation === null ? null : raw.margin_valuation === 'original_currency' || raw.margin_valuation === 'fx_snapshot' ? raw.margin_valuation : reportInvalid()
+  const result: OperatingTotals = { request_count: reportCount(raw.request_count), unsettled_requests: reportCount(raw.unsettled_requests), attempt_count: reportCount(raw.attempt_count), unknown_provider_costs: reportCount(raw.unknown_provider_costs), charged: reportAmount(raw.charged)!, refunded: reportAmount(raw.refunded)!, net_revenue: reportAmount(raw.net_revenue)!, known_provider_cost: reportAmount(raw.known_provider_cost)!, gross_margin: reportAmount(raw.gross_margin, true), payment_basis: reportFiatMap(raw.payment_basis), cash_refunded: reportFiatMap(raw.cash_refunded), provider_cost: reportFiatMap(raw.provider_cost, true), provisional_gross_margin: reportAmount(raw.provisional_gross_margin, true), bill_confirmed_gross_margin: reportAmount(raw.bill_confirmed_gross_margin, true), gross_margin_currency: currency, margin_valuation: valuation, cost_as_of: reportNullableTime(raw.cost_as_of), cost_revision: reportString(raw.cost_revision), fx_policy_versions: reportPolicyIDs(raw.fx_policy_versions) }
+  const displayable = result.bill_confirmed_gross_margin ?? result.provisional_gross_margin
+  if (result.gross_margin !== displayable || result.bill_confirmed_gross_margin !== null && (result.provisional_gross_margin === null || result.provisional_gross_margin !== result.bill_confirmed_gross_margin)) return reportInvalid()
+  if (displayable === null) {
+    if (currency !== null || valuation !== null || result.fx_policy_versions.length !== 0) return reportInvalid()
+  } else if (currency === null || valuation === null || valuation === 'fx_snapshot' && result.fx_policy_versions.length === 0 || valuation === 'original_currency' && result.fx_policy_versions.length !== 0) return reportInvalid()
+  return result
 }
 export function parseOperatingReport(value: unknown): OperatingReport {
-  const raw = reportObject(value, ['from', 'to', 'as_of', 'currency', 'amount_unit', 'scope', 'summary', 'models', 'channels', 'requests'])
-  if (raw.currency !== 'COIN' || raw.amount_unit !== 'micro_coin' || raw.scope !== 'request_created_window' || !Array.isArray(raw.models) || !Array.isArray(raw.channels) || !Array.isArray(raw.requests) || raw.requests.length > 5000) return reportInvalid()
+  const raw = reportObject(value, ['from', 'to', 'as_of', 'currency', 'amount_unit', 'scope', 'summary', 'models', 'channels', 'requests', 'offer_reports'])
+  if (raw.currency !== 'COIN' || raw.amount_unit !== 'micro_coin' || raw.scope !== 'request_created_window' || !Array.isArray(raw.models) || !Array.isArray(raw.channels) || !Array.isArray(raw.requests) || !Array.isArray(raw.offer_reports) || raw.requests.length > 5000) return reportInvalid()
   const models = raw.models.map(value => { const row = reportObject(value, ['model_id', 'model_name', ...totalFields]); return { ...parseTotals(Object.fromEntries(totalFields.map(key => [key, row[key]]))), model_id: reportText(row.model_id), model_name: reportText(row.model_name) } })
+  const offers = raw.offer_reports.map(value => { const row = reportObject(value, ['offer_version_id', 'task_class', ...totalFields]); if (!reportTaskClasses.includes(row.task_class as OperatingTaskClass)) return reportInvalid(); return { ...parseTotals(Object.fromEntries(totalFields.map(key => [key, row[key]]))), offer_version_id: reportText(row.offer_version_id), task_class: row.task_class as OperatingTaskClass } })
   const channels = raw.channels.map(value => { const row = reportObject(value, ['channel_id', 'channel_name', 'request_count', 'attempt_count', 'unknown_provider_costs', 'known_provider_cost']); return { channel_id: reportText(row.channel_id), channel_name: reportText(row.channel_name), request_count: reportCount(row.request_count), attempt_count: reportCount(row.attempt_count), unknown_provider_costs: reportCount(row.unknown_provider_costs), known_provider_cost: reportAmount(row.known_provider_cost)! } })
-  const requests = raw.requests.map(value => { const row = reportObject(value, ['request_id', 'tenant_id', 'tenant_name', 'model_id', 'model_name', 'status', 'billing_status', 'created_at', 'protocol', 'execution_kind', 'profile_version', 'schema_id', 'schema_digest', 'variant_key', ...totalFields]); if (!reportProtocols.includes(row.protocol as OperatingProtocol) || !['synchronous', 'asynchronous'].includes(String(row.execution_kind)) || row.variant_key !== 'default') return reportInvalid(); if (typeof row.model_id !== 'string' || (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.model_id) && !reportModelKeys.includes(row.model_id))) return reportInvalid(); return { request_id: reportText(row.request_id), tenant_id: reportText(row.tenant_id), tenant_name: reportText(row.tenant_name), model_id: reportText(row.model_id), model_name: reportText(row.model_name), status: reportText(row.status), billing_status: reportText(row.billing_status), created_at: reportTimeValue(row.created_at), protocol: row.protocol as OperatingProtocol, execution_kind: row.execution_kind as OperatingExecutionKind, profile_version: reportText(row.profile_version), schema_id: reportText(row.schema_id), schema_digest: reportText(row.schema_digest), variant_key: 'default' as const, ...parseTotals(Object.fromEntries(totalFields.map(key => [key, row[key]]))) } })
-  return { from: reportTimeValue(raw.from), to: reportTimeValue(raw.to), as_of: reportTimeValue(raw.as_of), currency: 'COIN', amount_unit: 'micro_coin', scope: 'request_created_window', summary: parseTotals(raw.summary), models, channels, requests }
+  const requests = raw.requests.map(value => { const row = reportObject(value, ['request_id', 'tenant_id', 'tenant_name', 'model_id', 'model_name', 'status', 'billing_status', 'created_at', 'protocol', 'execution_kind', 'profile_version', 'schema_id', 'schema_digest', 'variant_key', 'offer_version_id', 'task_class', ...totalFields]); if (!reportProtocols.includes(row.protocol as OperatingProtocol) || !['synchronous', 'asynchronous'].includes(String(row.execution_kind)) || row.variant_key !== 'default') return reportInvalid(); if (typeof row.model_id !== 'string' || (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.model_id) && !reportModelKeys.includes(row.model_id))) return reportInvalid(); const offer = reportString(row.offer_version_id), task = reportString(row.task_class); if (offer === '' && task !== '' || offer !== '' && !reportTaskClasses.includes(task as OperatingTaskClass)) return reportInvalid(); return { request_id: reportText(row.request_id), tenant_id: reportText(row.tenant_id), tenant_name: reportText(row.tenant_name), model_id: reportText(row.model_id), model_name: reportText(row.model_name), status: reportText(row.status), billing_status: reportText(row.billing_status), created_at: reportTimeValue(row.created_at), protocol: row.protocol as OperatingProtocol, execution_kind: row.execution_kind as OperatingExecutionKind, profile_version: reportText(row.profile_version), schema_id: reportText(row.schema_id), schema_digest: reportText(row.schema_digest), variant_key: 'default' as const, offer_version_id: offer, task_class: task as OperatingTaskClass | '', ...parseTotals(Object.fromEntries(totalFields.map(key => [key, row[key]]))) } })
+  return { from: reportTimeValue(raw.from), to: reportTimeValue(raw.to), as_of: reportTimeValue(raw.as_of), currency: 'COIN', amount_unit: 'micro_coin', scope: 'request_created_window', summary: parseTotals(raw.summary), models, channels, requests, offer_reports: offers }
 }
 export interface OperatingFilterDraft { from: string | null; to: string | null; tenant_id: string; model_id: string; protocol: OperatingProtocol | ''; execution_kind: OperatingExecutionKind | '' }
 export interface OperatingFilter { from: string; to: string; tenant_id?: string; model_id?: string; protocol?: OperatingProtocol; execution_kind?: OperatingExecutionKind }
@@ -97,16 +123,26 @@ export function operatingReportPath(filter: OperatingFilter, csv = false): strin
   return `/platform/reports/operations${csv ? '.csv' : ''}?${query}`
 }
 
+export function operatingFiatText(value: string, currency: OperatingFiatCurrency): string {
+  const formatted = money(value)
+  return currency === 'USD' ? formatted.replace('¥', '$') : formatted
+}
 export function operatingFiatMapText(values: OperatingFiatAmounts): string {
   const parts: string[] = []
-  if (values.CNY !== undefined) parts.push(money(values.CNY))
-  if (values.USD !== undefined) parts.push(money(values.USD).replace('¥', '$'))
+  if (values.CNY !== undefined) parts.push(operatingFiatText(values.CNY, 'CNY'))
+  if (values.USD !== undefined) parts.push(operatingFiatText(values.USD, 'USD'))
   return parts.length ? parts.join(' · ') : '—'
 }
 export function operatingMarginKnown(totals: OperatingTotals): boolean {
-  return totals.gross_margin !== null && totals.unsettled_requests === 0 && totals.unknown_provider_costs === 0 && totals.payment_basis.USD === undefined
+  return totals.gross_margin !== null && totals.unsettled_requests === 0 && totals.unknown_provider_costs === 0
 }
-export function operatingMarginText(totals: OperatingTotals): string { return operatingMarginKnown(totals) ? money(totals.gross_margin) : '待核对' }
+function operatingSpecificMarginText(totals: OperatingTotals, value: string | null): string {
+  return operatingMarginKnown(totals) && value !== null && totals.gross_margin_currency !== null ? operatingFiatText(value, totals.gross_margin_currency) : '待核对'
+}
+export function operatingMarginText(totals: OperatingTotals): string { return operatingSpecificMarginText(totals, totals.gross_margin) }
+export function operatingProvisionalMarginText(totals: OperatingTotals): string { return operatingSpecificMarginText(totals, totals.provisional_gross_margin) }
+export function operatingBillConfirmedMarginText(totals: OperatingTotals): string { return operatingSpecificMarginText(totals, totals.bill_confirmed_gross_margin) }
+export function operatingMarginValuationText(totals: OperatingTotals): string { return totals.margin_valuation === 'fx_snapshot' ? 'FX 快照折算' : totals.margin_valuation === 'original_currency' ? '原币计算' : '' }
 export function operatingReportError(error: unknown): string {
   if (error instanceof ApiError && error.code === 'report_range_too_large') return '该范围超过 5,000 个请求，请缩短时间窗口或增加客户 / 模型筛选。'
   return errorText(error)
