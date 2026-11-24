@@ -132,7 +132,7 @@ OpenAI-compatible付费流在上游强制申请usage；客户端的 `stream_opti
 
 `external_relay` 只表示请求经内部网络转发到下游网关；`embedded_adapter` 表示协议/计量适配器已经在 aigate 进程内；`migrated_capability` 表示某个能力已完成切流，但未迁移能力仍可留在原 channel。三种模式可以同时存在于不同 profile，均引用同一 `model_bindings`、`upstream_attempts`、cost snapshot 和统一 settlement。
 
-下游返回值至少要能映射为 `confirmed_final`、`provisional`、`missing` 或 `conflicting` usage，并区分 `not_sent`、`rejected_before_processing`、`processed_or_unknown`。只拿到 HTTP 200 或 `/models` 列表不能发布可售 profile。下游账号池的局部重试只形成一个 aigate channel attempt；若下游无法证明未消费，aigate 不跨 channel 重放。
+下游返回值至少要能映射为 `confirmed_final`、`provisional`、`missing` 或 `conflicting` usage，并区分 `not_sent`、`rejected_before_processing`、`processed_or_unknown`。只拿到 HTTP 200 或 `/models` 列表不能发布可售 profile。041 目标下 external inner generation retry 默认关闭，一个 outer attempt 只代表 aigate 的外层身份，不能用来隐藏未申报 child 生成；未来局部重试必须另冻逐 child 无消费、次数和累计成本证据。若下游无法证明未消费，aigate 不跨 channel 重放。
 
 源码复用不是实现阻塞项。若 `embedded_adapter` 或 `migrated_capability` 直接使用上游源码，组件目录必须保留 LICENSE/NOTICE、来源提交、修改记录和适用的源码提供路径；这类元数据随 `channel_version` 发布，不进入客户 API。
 
@@ -189,6 +189,16 @@ runner report 保存每片/part/合并/整段墙钟、双库证明、PostgreSQL 
 历史多轮完整 workers=2 的失败与清理证据见[workers=2 候选记录](../verification/acceptance-workers-2.md)；workers=1 控制同样在 other 失败，直接时钟采样证明 VM realtime 多次回拨，能够影响重试、批准顺序、价格生效和告警评估，详见[VM 时钟分析](../verification/acceptance-workers-2-clock-analysis.md)。经授权已禁用重复 NTP 源；严格候选 `d9b55f0025bcfe806e5e420128858975cfaa3be6` 后续连续两轮完整 029 均为 41/41、0 FAIL、0 必需 SKIP、100/100 current-MVP 复用，整单 2668.525/2636.994 秒，无 OOM、超时或残留。默认仍保持 serial v1，默认化需独立复核真实证据与推广决策。
 
 去重后的内部合并允许 `source_override=(plan,other_tests)` 复用预检时的内存计划，并在合并进程显式设置/恢复本次 run ID，不放宽 `verify` 的计划/清单/日志/身份/清理要求；外部 standalone v2 仍重新发现。phase1 在有效 runner report 下设置 `VERIFY_CURRENT_MVP_GO_EVIDENCE_V2_ATTESTED=1`、`VERIFY_CURRENT_MVP_RUNNER_REPORT` 和原子输出路径，不再单独执行矩阵合并。`verify-current-mvp.sh` 启动时调用 `verify_current_mvp_attested.py`，对 100 个 current-MVP 与 77 个矩阵唯一测试的并集执行一次完整严格 v2 `verify` 和一次 fresh source；report/manifest digest、双库证明只是附加绑定。批处理成功前禁止 reused，失败后不得由 shell printf/return 掩盖；成功后同一 shell 内各组按实际 spec 数复用，phase1 校验原子输出的 run_id/commit/完整计数后展开矩阵，并向 `go-race` suite 追加批处理 command/log，空命令列表不得显示 PASS；CLI 输入/输出符号链接在解引用前拒绝。standalone 与 serial v1 路径不变。详见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
+
+### 4.11 041 商品、利润与执行证据逻辑接口（设计候选）
+
+[041](../../specs/041-profit-hybrid-platform/design.md)定义逻辑 ServiceOfferVersion、TaskPolicyVersion、QualityEvidence、EconomicsSnapshot、FrozenExecution、ExecutionEvidence 和 DownstreamResource/AdminOperation；这些不是已批准 SQL 或现有 API。商品版本只引用现有 model/profile/price/route/binding/channel/version/physical 权威行并附披露/证据，不能复制费率、绑定或成本。商品与 route revision 同事务 CAS 发布，在途请求保留原快照。
+
+ExecutionAdapter 是 provider.Client 外的一次执行薄接缝，DownstreamAdminConnector 是独立控制面；两者不嵌套。FrozenExecution 固定 outer request/attempt、binding/channel version、physical model、inner pool version/digest、机器凭据/成本/质量引用、亲和键和剩余 deadline。ExecutionEvidence 只追加原 attempt，包含最终账号安全伪名、实际模型、终态、usage/consumption/cost 和有界 inner dispatch；缺失保持 unknown，不创建第二资金事实。
+
+经济快照分离 COIN、付款法币和供应商成本。首片 test-only 采用 fixed_full_reservation、完整单 CNY 夹具和 ExecutionPolicy 服务端单 outer attempt；USD/CNY 是一等付款/成本货币，商业首发前必须支持原币向量、保守 FxPolicyVersion 和交叉组合。第二次安全 fallback 必须重核请求级累计成本。贡献毛利复用 034.5 reporting，处理消费退款净基准、退款币再次消费去重及 contract provisional/账单确认时点，不另建财务读权威。QualityEvidence 按 physical/task/suite/rubric/judge/样本/有效期版本化，quality tier 和 HTTP 成功不代替语义质量。
+
+AdminConnector 先只读快照和差异草稿，每资源一个日常写者；typed write 必须证明认证、最小权限、幂等、ETag/CAS、operation 查询和 read-back。结果未知锁定原 operation，只读核查。external commercial、inner retry、订阅成本分摊、媒体/Realtime 动态路由和多币种均留后续独立 SDD。
 
 ## 5. 资金模型与计价
 
@@ -374,9 +384,9 @@ stateDiagram-v2
 
 本节描述文本协议的现行路由，属于 0/第一阶段。媒体、异步任务和 Realtime 不经过 `routing.Plan`，见本文末“文本与媒体的结构边界”。
 
-候选过滤顺序：模型授权 → 能力/地域/usage profile 匹配 → binding/channel 启用 → 熔断/健康 → 可用并发。每次从尚未尝试的有效候选选择最高优先级池，在池内按正权重随机；候选可以是直接供应商、New API 或 Sub2API channel。主池无剩余候选才降至下一优先级。请求保存route_revision，attempt关联不可变binding的priority/weight与channel/credential版本，平台可查询实际尝试及每个已准入attempt的候选选择/排除理由。未准入attempt的完整失败池解释仍未持久化，旧attempt不补造历史理由；该解释面为部分完成。全部无可用候选快速返回503，不无限排队；不能为了满足重试次数重用已尝试channel。
+候选过滤顺序：模型授权 → 能力/地域/usage profile 匹配 → binding/channel 启用 → 熔断/健康 → 可用并发。每次从尚未尝试的有效候选选择最高优先级池，在池内按正权重随机；候选可以是直接供应商、New API 或 Sub2API channel。主池无剩余候选才降至下一优先级。请求保存route_revision，attempt关联不可变binding的priority/weight与channel/credential版本。**033 已用每次选择一行的不可变 `route_decisions` 持久化完整候选/抽签/统计及无候选失败池，并支持只读回放；本段后续五字段数组描述仅为历史。**旧 revision 不补造历史理由。全部无可用候选快速返回503，不无限排队；不能为了满足重试次数重用已尝试channel。
 
-首版每请求最多两次尝试，第二次只能选择同逻辑模型兼容候选。以下可重试：传输能证明 HTTP 请求未写出；或渠道契约明确该错误为未处理、无消费（如已验证的限流拒绝）。普通 5xx、发送后读超时、连接重置、未知消费默认不可透明重试；“没收到首个字节”不足以证明安全。New API/Sub2API 可以在 channel 内轮换账号，但必须把最终 usage、错误和可能已消费标志汇总给 aigate；下游局部重试不增加客户 attempt 预算。
+首版每请求最多两次尝试，第二次只能选择同逻辑模型兼容候选。以下可重试：传输能证明 HTTP 请求未写出；或渠道契约明确该错误为未处理、无消费（如已验证的限流拒绝）。普通 5xx、发送后读超时、连接重置、未知消费默认不可透明重试；“没收到首个字节”不足以证明安全。New API/Sub2API 可以在固定均质池内轮换账号，但 041 目标下 inner generation retry 默认关闭；未来开放必须返回逐 child 无消费、usage/成本、次数和累计上限，不能只汇总最终 usage。任何局部选择都不增加客户 attempt 预算。
 
 attempt预算覆盖Gateway、适配器、SDK、HTTP客户端和外层反向代理，不能每层各重试两次。首版生成POST使用无自动重放的客户端配置，禁用SDK/Transport可配置的隐式重试、重定向与代理重试；不透传客户 `Idempotency-Key` 使底层擅自将生成POST视为可重试。每次重新派发生成请求都先取得统一attempt额度并持久化；拨号失败数另计，不把一次拨号等同一次供应商消费。必须用真实HTTP Mock与失效连接池回归核实库实际行为，不能仅检查配置名。
 
@@ -448,7 +458,9 @@ sequenceDiagram
 
 公共错误响应是第三个独立出口，不能以“关闭日志/正文trace”代替：只输出本地错误码、通用消息、受控param和request_id；不透传供应商error body、URL、stack、headers或原始exception/status描述。上游headers不批量复制，响应仅允许本地Content-Type/Cache-Control/X-Request-ID及验证过的Retry-After等契约字段；Set-Cookie/Location/认证头/任意供应商调试头均不透传。客户端headers同样按名单构造，客户Key、Cookie、tenant header与内部运营凭据不能送往供应商。
 
-### 9.2 第三阶段文本动态路由的合同缺口
+### 9.2 第三阶段文本动态路由的历史合同缺口（已由 033 关闭）
+
+**2026-11-23 状态校正**：033 已冻结、实施并合入；物理模型、逐候选抽签/统计、完整无候选失败池和只读回放均已进入当前代码。以下清单仅保留原始设计动机，不再作为待实施事项；041 的场景质量和现金利润另见 §4.11。
 
 本节列出第三阶段（见[四阶段路线 §6](phase-roadmap.md#6-第三阶段openrouter-风格文本动态路由)）实施前必须冻结的合同。合同草案见 [033](../../specs/033-text-dynamic-routing/spec.md)，待开发者评审冻结；在冻结前不改动现有路由、计量或资金代码。下列条目是合同要点，字段、DDL 与接口以 033 为准。
 
@@ -542,7 +554,7 @@ SSRF 防护覆盖主调用、探测、模型发现：限制 scheme/port、拒绝
 
 Responses input/output/total需自洽，cached/reasoning是子集；Messages输入计费量包括base+cache_read+cache_creation，保持原生usage字段含义并按统一输入单价收费。临时累计量单调合并，不相加累计值；缺失/null、矛盾或未知非零收费维度不能确认最终量。完整请求/响应范围见[003](../../specs/003-native-protocols/spec.md)及provider fixture。
 
-每次成功准入的选路在Engine同一把锁内生成候选解释，作为 `upstream_attempts.route_decisions` 与attempt同一INSERT持久化：只含channel/version/priority/weight和受控reason，不存URL/秘密/正文。静态停用、隔离、撤凭据、地域，以及动态容量、熔断、已尝试、低优先级和权重未选均可区分。历史字段不可修改；仅平台attempt接口返回。无可用候选而未准入attempt的请求，仍返回明确不可用错误并按001释放，暂不持久完整失败池解释；旧attempt为空数组。
+每次成功准入的选路在Engine同一把锁内生成候选解释。**033 当前实现**以每次选择一行的不可变 `route_decisions` 保存完整 policy/request/candidate/stats/draw，并在无可用候选时由 Release 同事务写 `attempt_id=NULL` 的失败池；ReplayRoute 只读回放。下述 `upstream_attempts.route_decisions` 五字段数组是迁移前历史：只含channel/version/priority/weight和受控reason，不存URL/秘密/正文；旧attempt为空数组不补造历史。
 
 Playground按获授权模型协议生成同源请求，Key只在组件内存，`credentials:omit`，不自动重试。取消通过AbortController关闭真实reader，请求ID可转调用明细；平台角色可查“路由与尝试”，普通客户不请求平台接口。无租户账号显示接入步骤，不伪造模型授权或账单。
 

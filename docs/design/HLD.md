@@ -147,6 +147,14 @@ PR-D 已实现最多两个 worker 的 14 片调度、双活动 cluster 的同名
 
 为消除实测中的重复源码发现，runner 内部合并允许仅使用预检生成的内存 `source_override=(plan,other_tests)`，逐字段匹配后继续全部证据校验并显式绑定本次 run ID。phase1 不再单独执行矩阵合并；current-MVP 启动时通过 `verify_current_mvp_attested.py` 对 100 个 current-MVP 与 77 个矩阵唯一测试执行一次完整严格 v2 校验和一次 fresh source，成功后才允许同一 shell 内各组按实际 spec 数复用。phase1 从绑定 run_id/commit/完整计数的原子批处理输出展开矩阵结果；可变 report/proof 不能替代原始日志、freshness、干净源码或指定 spec 校验，也不存在跨 attempt 的可信 discovery 缓存。standalone v2、外部无 report 的 workers=1 manifest 与 serial v1 保持原检查。去重前完整 029 为 41/41 PASS 但 3554.532 秒；严格候选连续两轮已降为 2668.525/2636.994 秒，实测口径与原始证据见[去重优化与整单墙钟](../verification/acceptance-workers-2-performance.md)。
 
+### 4.12 盈利商品与永久混合执行（041 R0，设计候选）
+
+[041](../../specs/041-profit-hybrid-platform/spec.md)将后续产品目标收敛为质量、隐私和可靠性约束下的成本优化、客户节省和可审计贡献毛利。aigate 独占公网、商品/售价、最终路由、钱包、预占、唯一结算、采购成本与审计；direct、New API、Sub2API 是三类叶子执行器，最多一层 external relay，允许永久混合。New API 承接通用长尾协议/渠道，Sub2API 仅在授权订阅账号、OAuth/session 或账号亲和具有增量价值时启用，普通 API Key 转发不部署。
+
+商品采用不可变版本，支持固定模型、同模型多供应商、品牌动态、任务优化和通用 Auto。K3-Dynamic 等动态商品必须独立披露候选、任务、质量、数据政策和实际模型可见性，不得伪装为固定原厂模型。场景质量需要独立证据，现有 quality tier/HTTP 成功率不构成语义质量。
+
+现金经济是实施前置：当前 COIN 预占减 CNY 供应商成本不能宣称现金毛利，且逐候选检查不覆盖两次 attempt 累计成本。首片 test-only 采用 fixed_full_reservation、完整单 CNY 夹具和服务端 ExecutionPolicy 单 outer attempt；USD/CNY 是一等付款/成本货币，商业首发前必须支持原币向量、保守 FX 估值和交叉组合。贡献毛利复用 034.5 reporting，处理消费退款净基准、退款币再次消费去重及 contract provisional/账单确认时点，不新建财务读权威。统一控制台只经 aigate 同源 API，New API/Sub2API 原生后台仅私网 break-glass；external commercial 继续拒绝，041 不表示任何运行能力已实现。
+
 ## 5. 技术选型与理由
 
 | 层 | 推荐选型 | 原因 / 约束 |

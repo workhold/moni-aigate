@@ -8,5 +8,5 @@
 | 2.2 | 路由版本熔断参数；失败作用域矩阵；首个完整上游事件校验后才提交下游 | 真实 PG + 故障注入矩阵、unknown 仅一次接收、版本隔离和 committed 不切换通过 | 实现、纯 race 与首事件/健康/不可变版本真实 PG 专项已通过 |
 | 2.3 | 复用 023-B Reserve 周期门禁；补安全拒绝字段和控制台可见性 | 并发/边界/重启真实 PG 通过，拒绝无 request/reservation/attempt/上游接收 | 安全错误与控制台、真实 PG 拒绝回滚及完整 periodicbudget race 已通过 |
 | 2.4 | 冻结缓存键、TTL/隐私、无 attempt finalization、迁移与角色 guard | 设计覆盖状态机、接口、故障与恢复；D-032-1=A、D-032-2=同租户授权后共享 | 实施设计、028 扩展和数据库 guard 已实现并通过真实 PG 反例 |
-| 2.5 | PostgreSQL 精确缓存、cache-hit 同价唯一结算、TTL 清理与控制台/报表标识 | 缓存专项真实 PG/race/前端通过，且最终干净提交完整 029 通过 | Store/HTTP 同价命中、无 attempt、TTL/隔离、报表/角色专项通过；完整 029 待运行 |
-| 最终 | 架构正文/manifest/changes 同步；相关 race/前端/main；完整 029 | 所有必需项 PASS，无必需 SKIP；真实供应商/生产仍明确未认证 | 未开始 |
+| 2.5 | PostgreSQL 精确缓存、cache-hit 同价唯一结算、TTL 清理与控制台/报表标识 | 缓存专项真实 PG/race/前端通过，且最终干净提交完整 029 通过 | Store/HTTP 同价命中、无 attempt、TTL/隔离、报表/角色专项通过；`312fa5f` 完整 serial-v1 029 为 41/41、100/100、浏览器 10/10，PR #30 已合入 main |
+| 最终 | 架构正文/manifest/changes 同步；相关 race/前端/main；完整 029 | 所有必需项 PASS，无必需 SKIP；真实供应商/生产仍明确未认证 | 本地实现与完整 029 已完成并随 PR #30 合入；固定资源/三轮性能、真实供应商和生产仍未验收 |

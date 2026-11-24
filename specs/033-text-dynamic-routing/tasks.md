@@ -1,6 +1,6 @@
 # 033 实施任务与验收台账
 
-状态：2026-11-22 实现与本地完整验收完成；最终提交 `e7b0de825232b7f10b81f941aa1b5576c845066a`，PR workhold/moni-aigate#31 待审查与 CI，未自动合并。真实供应商、生产、HA 与性能资格不在完成声明内。
+状态：2026-11-23 基线校正。实现与本地完整验收已完成，验证代码提交 `e7b0de825232b7f10b81f941aa1b5576c845066a`；PR workhold/moni-aigate#31 已在 CI 28/28 全绿后合入 main（merge `d51bd24`）。真实供应商、生产、HA、固定资源性能，以及 041 的场景质量和现金利润资格不在完成声明内。
 
 - [x] 3.0 冻结物理/profile、route 请求、CAS、决策/回放和无候选合同（`design.md`）。
 - [x] 3.1 追加 current 迁移：physical、binding、策略、session、decision、统计与 attempt 时间/物理身份；回填并删除旧 attempt 决策列。

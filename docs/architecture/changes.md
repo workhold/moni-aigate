@@ -8916,3 +8916,55 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/033-text-dynamic-routing/tasks.md`
 
 </details>
+
+## 2026-11-22T17:30:43Z · 3ff023f5ae94
+
+041 R0 仅新增盈利商品、质量/现金经济、叶子执行器与统一控制台设计；修订永久混合目标及032/033状态，不改变运行行为或external commercial门禁
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2632 个源文件；本次 15 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/new-api-roadmap.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/provider-qualification-plan.md`
+- modified `docs/design/upstream-integration-plan.md`
+- modified `specs/032-phase2-text-data-plane/tasks.md`
+- modified `specs/033-text-dynamic-routing/tasks.md`
+- modified `specs/035-external-upstream-integration/spec.md`
+- modified `specs/038-new-api-capability-migration/capability-matrix.md`
+- modified `specs/038-new-api-capability-migration/spec.md`
+- added `specs/041-profit-hybrid-platform/design.md`
+- added `specs/041-profit-hybrid-platform/spec.md`
+- added `specs/041-profit-hybrid-platform/tasks.md`
+
+</details>
+
+## 2026-11-22T17:31:43Z · 206f7f90d119
+
+记录041 R0独立复核、USD/CNY商业首发边界及make check完成；仅设计台账状态变化，无运行实现
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2632 个源文件；本次 1 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `specs/041-profit-hybrid-platform/tasks.md`
+
+</details>
+
+## 2026-11-23T01:18:39Z · 719673289ac1
+
+推送前复核修正微法币scale、USD/CNY资格范围及第二阶段性能未完成状态；仅文档设计，无运行变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2632 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/provider-qualification-plan.md`
+- modified `specs/041-profit-hybrid-platform/design.md`
+
+</details>
