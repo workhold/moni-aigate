@@ -1,6 +1,6 @@
 # 041 实施任务与验收台账
 
-状态：R0 设计候选，未实施；当前只允许文档交付，不改变运行行为、SQL、API、前端、部署或资格。
+状态：R0 已通过 PR #32 合入；P0 聚焦经济基础已实现并完成本地专用环境验收。P1/P2/P3 仍未实施，不授予真实供应商、正式支付、external commercial 或生产资格。
 
 ## R0：总体设计
 
@@ -13,18 +13,19 @@
 - [x] 定义一个 SPA 的三个工作台、AdminConnector 单写者和未知结果状态机。
 - [x] 独立语义复核通过，修正文档冲突/第二事实源/隐性重试/虚假资格；最终窄复核无 blocker/major，随后仅按用户要求澄清 USD/CNY 商业首发范围。
 - [x] 集成人 reviewed architecture refresh/check 与 `make check` 通过；R0 仅文档变更，不声明业务/生产验收。
-- [ ] 用户审查后才创建提交/PR；R0 不自动合入。
+- [x] 用户审查后才创建提交/PR；R0 已通过 PR #32 合入，未自动合入。
 
-## P0：聚焦子规格与经济基础（未实施）
+## P0：聚焦子规格与经济基础（已实现）
 
-- [ ] 冻结 ServiceOfferVersion/TaskPolicy/QualityEvidence/EconomicsSnapshot 的 SQL、HTTP、ACL、故障和恢复合同。
-- [ ] 在 Reserve 冻结束付款基准、经济版本和节省参照；单位错误、未知付款/成本或商业所需 USD/CNY 估值缺失失败关闭。
-- [ ] 实现请求级累计供应商成本门禁；利润敏感商品在实现前固定单 outer attempt。
-- [ ] USD/CNY 均为一等付款与成本货币：保存原币向量，商业首发前完成保守 FxPolicyVersion、USD↔CNY 交叉组合和费用/取整反例；test-only 单 CNY 夹具不构成最终限制。
-- [ ] 复用并扩展现有 034.5 reporting gross_margin：补消费退款净付款基准、退款币再次消费去重、inner 成本和商品/任务维度；不新建利润聚合权威。
-- [ ] 区分 contract provisional/as-of 与账单确认贡献毛利；成本更正和负值可见。
-- [ ] 冻结 fixed_full_reservation 和服务端 ExecutionPolicy；首片 max_outer_attempts=1 写入商品/route/decision/FrozenExecution。
-- [ ] 修正架构/032/033/038 历史状态，保留历史记录而不倒写证据。
+- [x] 冻结 ServiceOfferVersion/TaskPolicy/QualityEvidence/EconomicsSnapshot 的 SQL、HTTP、ACL、故障和恢复合同。
+- [x] 在 Reserve 冻结束付款基准、经济版本和节省参照；单位错误、未知付款/成本或商业所需 USD/CNY 估值缺失失败关闭。
+- [x] 实现请求级累计供应商成本门禁；利润敏感商品在实现前固定单 outer attempt。
+- [x] USD/CNY 均为一等付款与成本货币：保存原币向量，商业首发前完成保守 FxPolicyVersion、USD↔CNY 交叉组合和费用/取整反例；test-only 单 CNY 夹具不构成最终限制。
+- [x] 复用并扩展现有 034.5 reporting gross_margin：补消费退款净付款基准、退款币再次消费去重、inner 成本和商品/任务维度；不新建利润聚合权威。
+- [x] 区分 contract provisional/as-of 与账单确认贡献毛利；成本更正和负值可见。
+- [x] 冻结 fixed_full_reservation 和服务端 ExecutionPolicy；首片 max_outer_attempts=1 写入商品/route/decision/FrozenExecution。
+- [x] 修正架构/032/033/038 历史状态，保留历史记录而不倒写证据。
+- [x] 完成专用 PostgreSQL、全仓 race、真实 main/HTTP、桌面/390px、独立生命周期和完整默认 serial-v1 029；41/41 PASS。详见[验证记录](../../docs/verification/041-p0-economic-foundation.md)。
 
 ## P1：direct-only K3-Dynamic test-only（未实施）
 

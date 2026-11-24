@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-24T11:00:47Z",
-  "review_reason": "041-P0：新增 direct test-only 商品/质量/执行/FX/经济快照、fixed-full 与统一贡献毛利；保留 legacy 边界、历史库兼容、external commercial 拒绝和恢复不生成；已复核模块、请求、数据、ACL、能力与验证链接",
-  "snapshot_sha256": "4a0bfcb61ed77234aac3247861c8f6945fe8892dc330c0b646c73b0ec91f7e9e",
+  "reviewed_at": "2026-11-24T18:43:20Z",
+  "review_reason": "041 P0最终验收归档：实现结构与权限边界此前已同步，本次仅更新验证和任务状态；完整默认serial-v1 029为41/41 PASS，未开放external commercial或生产资格",
+  "snapshot_sha256": "996f8aceb02d758a7f9aab25f5e1f0b2cc8338f5cae711540289a2d6a542907c",
   "architecture_sha256": "eeb8170eccc97fe7fc579e7ec169578e99e839e2cdbb5f1864defff73dbd6a32",
-  "history_sha256": "d13c0ea3cf9932de095ab873c38130b7be89ef5dc4e8978156a206d91e98aca8",
+  "history_sha256": "7428acb9e7eeeff033251b6e90307d6749189722562124ac02ccb6e9865699ce",
   "files": [
     {
       "path": ".dockerignore",
@@ -325,7 +325,7 @@
     },
     {
       "path": "docs/verification/041-p0-economic-foundation.md",
-      "sha256": "d87d93b84b185afa233f5e4dbac3ce9a6a8f3be3cf42371d49485715a0fe3744"
+      "sha256": "c40d2621ac27cfa3bc5cc8d45737404aa5fb1d5f25cdb178d1a03fed6ee1d10d"
     },
     {
       "path": "docs/verification/acceptance-container-runner.md",
@@ -9845,7 +9845,7 @@
     },
     {
       "path": "specs/041-profit-hybrid-platform/tasks.md",
-      "sha256": "f0c18d2223a154383184f24faf1a44142e59903e67306afd49ef3ba5531d937c"
+      "sha256": "cfdfa4e40c630630e3b8c83e3771b7719f0ea7d9a5eb3b7661901b1ac0137329"
     },
     {
       "path": "third_party/README.md",

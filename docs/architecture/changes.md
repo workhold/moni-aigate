@@ -9045,3 +9045,16 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `web/tests/operating-report.test.mjs`
 
 </details>
+
+## 2026-11-24T18:43:20Z · 996f8aceb02d
+
+041 P0最终验收归档：实现结构与权限边界此前已同步，本次仅更新验证和任务状态；完整默认serial-v1 029为41/41 PASS，未开放external commercial或生产资格
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/041-p0-economic-foundation.md`
+- modified `specs/041-profit-hybrid-platform/tasks.md`
+
+</details>

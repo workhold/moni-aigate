@@ -30,10 +30,14 @@
 
 ## 汇总回归与完整验收
 
-- 相关包串行 `go test -p 1 -race`（economics/routecost/routing/catalog/billing/reporting）已完成一轮 PASS；最终 HEAD 仍需在提交前重跑。
-- operations/migrations 历史与当前角色回归：PASS（专用 PG、串行 race）。
-- `make check`、最终架构只读检查：待执行。
-- 适用完整 029（默认 serial-v1、真实 main、桌面与 390px、独立生命周期）：待执行。
+- 实现提交 `7d60bb34738b9a07b48dbf621bb46db4dedf00d8` 的完整 `go test -race -p 1 -count=1 -timeout 1200s -json ./...`：PASS，3326.4 秒；覆盖 economics/routecost/routing/catalog/billing/reporting、operations/migrations 及全部其他 Go 包。
+- `make check`：PASS；包括架构只读校验、采购布局、上游来源、`go vet ./...`、前端 TypeScript 检查和 production build。
+- 完整 029 第三轮运行 `84b4aa26f9e145b5a646b93f79badeda`：**overall PASS，41/41，fail=0，skip=0**。使用默认 serial-v1，未启用 workers=2；汇总为 `/Users/vchive/.cache/moni-aigate-acceptance/041-p0-7d60bb3/full029-r3/summary.json`，原始输出在同目录旁的 `raw-r3`。
+- 本轮 static/frontend、全仓 race、current-MVP、identity lifecycle、mail lifecycle、payment process、preview 启停和 mock deployment 均为 PASS；真实 main 的独立部署及完整 payment Guard-loss 生命周期也在专用环境中通过。
+- 本轮浏览器证据 `/Users/vchive/.cache/moni-aigate-acceptance/041-p0-7d60bb3/browser-final-r3/browser-evidence.json`：PASS、completed=true，桌面与 390px 共 10/10 项通过。
+- 前两轮完整运行未获得全套通过，失败产物分别保留；第三轮从 static 开始完整重跑，未跨轮拼接任何阶段结果。备份恢复脚本产生的本地 JSON 运行产物未纳入本次交付。
+
+上述原始验收产物保留在本机缓存，不作为仓库内伪造的供应商或生产证明。最终文档更新后再次执行语义架构 refresh/只读检查及 `make check`，结果以最终提交和 PR 检查为准。
 
 ## 资格结论
 
