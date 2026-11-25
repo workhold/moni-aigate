@@ -1829,7 +1829,7 @@ README增加Python SDK使用示例，源码/Compose/1Panel步骤已按实际入�
 
 异步 video task 通过现有 media wallet 入口完成当前本地纵向接线。`/v1/tasks` 创建在原文本 request/reservation/attempt/source 引用上建立 `video_generation` media reservation，submit 前标记 media attempt sending，worker 的 submit/observe/cancel/expire 由租户 scoped adapter 调用现有 FinalizeMedia。submission unknown、失败、取消和过期释放冻结，重复观察与 worker lease 重试不生成第二 attempt 或 settlement。`internal/tasks.PostgresStore` 读取 nullable provider/artifact，按 024 的 raw `sha256(canonical)` 保存事件摘要。
 
-图片与 TTS 在结算成功后把受保护 inline bytes 写入不可变 `media_result_artifacts`。读取同时校验 tenant、owner user、API key 和原 request 或 idempotency key，内存缓存只做加速。Realtime 的有数据库入口使用租户绑定的 PostgreSQL persistence 写入 `realtime_sessions`、`realtime_turns` 和 `realtime_events`，事件重复、状态转移和单 inflight 由事务与现有约束保护。经营报表读取媒体请求、唯一媒体结算和全部媒体 attempt，收入只在 request 侧计一次，supplier cost 读取 settlement snapshot，unknown 保留待核对。
+图片与 TTS 在结算成功后把受保护 inline bytes 写入不可变 `media_result_artifacts`。读取同时校验 tenant、owner user、API key 和原 request 或 idempotency key，内存缓存只做加速。TTS 只接受范围包含 `mock-tts` 或 `*` 的 API Key，空范围不放行。Realtime 的有数据库入口使用租户绑定的 PostgreSQL persistence 写入 `realtime_sessions`、`realtime_turns` 和 `realtime_events`，事件重复、状态转移和单 inflight 由事务与现有约束保护。经营报表读取媒体请求、唯一媒体结算和全部媒体 attempt，收入只在 request 侧计一次，supplier cost 读取 settlement snapshot，unknown 保留待核对。
 
 异步制品 metadata 与正文现在共用 `media_task_artifacts`。首次下载正文通过原 provider 后一次性写入，新的 Store 和新的短期 grant 可以在进程重启后读取正文，不会再次调用 provider。mock task adapter 按 task ID 恢复观察，worker/provider 重启只产生一个 attempt 和 settlement。
 
