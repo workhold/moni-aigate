@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T12:20:00Z",
-  "review_reason": "合并 origin/main 215fe3e（042 P0.1 报表 DTO）进 PR #34 dynamic-v2 毛利分支：架构三件套冲突按合并树重新 reviewed refresh，manifest 同时含 042 报表 DTO 与 dynamic-v2 付款基准源码；changes.md 双方追加记录保留。语义复核：042 改动 media/task 报表与任务归属，不触碰 routing/billing 付款基准路径；dynamic-v2 边界文字不变。",
-  "snapshot_sha256": "551bdfafc91f9e47255842c5ff5999926ef326a39c43f41d6077a6dada97ae94",
+  "reviewed_at": "2026-11-25T18:21:54Z",
+  "review_reason": "margin 分支合并 main（agent skills 配置 + magpie 研究文档）；manifest 在合并树重新 reviewed refresh；r3 完整 029 已在该合并树前身 29e3834 通过 41/41",
+  "snapshot_sha256": "39baeaec336ef52b1abe0fd64287989eb86e312c2f95c17b6fffda4583581c5e",
   "architecture_sha256": "32d59b1d2d6a779165b25b8163ed14e7e64dfda205a90fb4f5a1fde890c8ebed",
-  "history_sha256": "e97cb095b8e2dd242ae499f1f2ef03fd35f8e502c5af7fdc3902b442f063ab95",
+  "history_sha256": "4e08c1af38ac8d8e6c4d1a2a95bc59680ac409bc640ce473cee2bf06e9fe5ef8",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "fca67fdf2ab57783e597e27998016a58c7c028d8bab20dd4948072766a985784"
+      "sha256": "7dce44f4c9c7d5e1ed56a27b59f475b99937769ef6774ce9175e783335d39814"
     },
     {
       "path": "Dockerfile",
@@ -8373,11 +8373,11 @@
     },
     {
       "path": "scripts/check-architecture/main.go",
-      "sha256": "3e1cc1bb13aabe5c8d1035c57f92aebeb89de7777ff349b0cb37204039d0f1b5"
+      "sha256": "521842dc7ca3da03a84d4f821203743332ab56e7c3238a681c5e2a535c9c7b4c"
     },
     {
       "path": "scripts/check-architecture/main_test.go",
-      "sha256": "448a074aa1c7bfe74159c77b9e067208bb222e6030685a5f8daf4eda06b08be9"
+      "sha256": "cdeaae625b97328ceab83dde86082691ae742ce4e3d15623c8aef844c9979b09"
     },
     {
       "path": "scripts/check-go-test-evidence.py",

@@ -9151,38 +9151,6 @@ TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或
 
 </details>
 
-## 2026-11-25T09:18:45Z · f950d4b56832
-
-PR #34 rebase 到 main(9fd8dd6) 并与 041-P0 对账：dynamic-v2 普通动态路由最低毛利改用已付 CNY 实付分摊下界（floor(amount*fiat/issued)，与 Reserve 快照写入公式一致，只读资金冻结事实，请求路径不再查币价），第二次尝试计入未证明无消费的第一次供应商上界（缺失失败关闭）；带 request_economics_snapshots 的请求以 Reserve 冻结快照为唯一付款基准权威，网关跳过基准查询，路由引擎走 evaluateEconomicAdmission，两条路径按 economics 是否为空互斥；迁移改号 current_017_margin_basis.sql（route_decisions 算法版本枚举加 dynamic-v2），并新增 basis_kind 全集（paid/grant/opening/unknown/USD）与 ReservationCNYBasis 的专用 PostgreSQL 测试；修复 coin-rate 请求路径隔离守卫与 phase3 前缀夹具排除表。无商业资格、生产或供应商验收声明。
-
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2659 个源文件；本次 24 个源文件变化，架构正文变化：true。
-
-<details><summary>源文件变化</summary>
-
-- modified `README.md`
-- modified `docs/design/HLD.md`
-- modified `docs/design/LLD.md`
-- modified `docs/design/delivery-plan.md`
-- modified `docs/design/phase-roadmap.md`
-- modified `docs/design/upstream-integration-plan.md`
-- added `internal/billing/payment_basis.go`
-- added `internal/billing/payment_basis_integration_test.go`
-- modified `internal/billing/route_decision_store.go`
-- modified `internal/routing/dynamic.go`
-- modified `internal/routing/dynamic_test.go`
-- modified `internal/routing/replay.go`
-- modified `internal/routing/routing.go`
-- modified `internal/routing/selection.go`
-- modified `internal/server/gateway.go`
-- added `migrations/current_017_margin_basis.sql`
-- modified `migrations/phase3_dynamic_routing_postgres_test.go`
-- modified `specs/033-text-dynamic-routing/design.md`
-- modified `specs/033-text-dynamic-routing/spec.md`
-- modified `specs/038-new-api-capability-migration/capability-matrix.md`
-- modified `specs/041-profit-hybrid-platform/design.md`
-- modified `specs/041-profit-hybrid-platform/spec.md`
-- modified `specs/041-profit-hybrid-platform/tasks.md`
-- modified `web/src/components/RouteAttempts.vue`
 ## 2026-11-25T10:55:48Z · ba11249ad6f7
 
 042 P0.1 合并 origin/main 9fd8dd6（PR #35 任务归属与无 scope 语音拒绝）：架构三件套冲突按合并后树重新 reviewed refresh，manifest 快照同时含 #35 与 042 报表 DTO 源码；changes.md 双方追加记录均保留。完整 029 证据仍绑定 fbec003（#35 不属路由/协议/账务/迁移四类且自身 CI 全绿，合并树为两者已验证组合）。
@@ -9202,9 +9170,23 @@ PR #34 rebase 到 main(9fd8dd6) 并与 041-P0 对账：dynamic-v2 普通动态�
 
 </details>
 
-## 2026-11-25T12:20:00Z · 551bdfafc91f
+## 2026-11-25T12:18:50Z · 64520a7d1818
 
-合并 origin/main 215fe3e（042 P0.1 报表 DTO）进 PR #34 dynamic-v2 毛利分支：架构三件套冲突按合并树重新 reviewed refresh，manifest 同时含 042 报表 DTO 与 dynamic-v2 付款基准源码；changes.md 双方追加记录保留。语义复核：042 改动 media/task 报表与任务归属，不触碰 routing/billing 付款基准路径；dynamic-v2 边界文字不变。
+agent-skills setup 分支合并 main（#35 任务鉴权 + #37 报表 DTO）；manifest 在合并树重新 reviewed refresh；另含 check-architecture 对 .claude/launch.json 的精确排除
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2666 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `AGENTS.md`
+- modified `scripts/check-architecture/main.go`
+- modified `scripts/check-architecture/main_test.go`
+
+</details>
+
+## 2026-11-25T18:21:54Z · 39baeaec336e
+
+margin 分支合并 main（agent skills 配置 + magpie 研究文档）；manifest 在合并树重新 reviewed refresh；r3 完整 029 已在该合并树前身 29e3834 通过 41/41
 
 已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2669 个源文件；本次 24 个源文件变化，架构正文变化：true。
 
