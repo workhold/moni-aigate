@@ -9201,3 +9201,38 @@ PR #34 rebase 到 main(9fd8dd6) 并与 041-P0 对账：dynamic-v2 普通动态�
 - modified `internal/tasks/tasks_test.go`
 
 </details>
+
+## 2026-11-25T12:20:00Z · 551bdfafc91f
+
+合并 origin/main 215fe3e（042 P0.1 报表 DTO）进 PR #34 dynamic-v2 毛利分支：架构三件套冲突按合并树重新 reviewed refresh，manifest 同时含 042 报表 DTO 与 dynamic-v2 付款基准源码；changes.md 双方追加记录保留。语义复核：042 改动 media/task 报表与任务归属，不触碰 routing/billing 付款基准路径；dynamic-v2 边界文字不变。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2669 个源文件；本次 24 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- added `internal/billing/payment_basis.go`
+- added `internal/billing/payment_basis_integration_test.go`
+- modified `internal/billing/route_decision_store.go`
+- modified `internal/routing/dynamic.go`
+- modified `internal/routing/dynamic_test.go`
+- modified `internal/routing/replay.go`
+- modified `internal/routing/routing.go`
+- modified `internal/routing/selection.go`
+- modified `internal/server/gateway.go`
+- added `migrations/current_017_margin_basis.sql`
+- modified `migrations/phase3_dynamic_routing_postgres_test.go`
+- modified `specs/033-text-dynamic-routing/design.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/038-new-api-capability-migration/capability-matrix.md`
+- modified `specs/041-profit-hybrid-platform/design.md`
+- modified `specs/041-profit-hybrid-platform/spec.md`
+- modified `specs/041-profit-hybrid-platform/tasks.md`
+- modified `web/src/components/RouteAttempts.vue`
+
+</details>
