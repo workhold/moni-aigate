@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-24T18:43:20Z",
-  "review_reason": "041 P0最终验收归档：实现结构与权限边界此前已同步，本次仅更新验证和任务状态；完整默认serial-v1 029为41/41 PASS，未开放external commercial或生产资格",
-  "snapshot_sha256": "996f8aceb02d758a7f9aab25f5e1f0b2cc8338f5cae711540289a2d6a542907c",
+  "reviewed_at": "2026-11-25T07:28:12Z",
+  "review_reason": "配置 mattpocock agent skills：GitHub Issues tracker、默认 triage 标签、单上下文领域文档；check-architecture 精确排除会话级 .claude/launch.json（同 settings.local.json 先例），无运行行为变化",
+  "snapshot_sha256": "0805bc7b49735b88fe87fb6993e4284130cf6efcdc020e5d59dbe283dc19eaa0",
   "architecture_sha256": "eeb8170eccc97fe7fc579e7ec169578e99e839e2cdbb5f1864defff73dbd6a32",
-  "history_sha256": "7428acb9e7eeeff033251b6e90307d6749189722562124ac02ccb6e9865699ce",
+  "history_sha256": "9523c548b672dc35ae7abac8165b4b6ed609320c50b38bafc3bf4f1004554be3",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "fca67fdf2ab57783e597e27998016a58c7c028d8bab20dd4948072766a985784"
+      "sha256": "7dce44f4c9c7d5e1ed56a27b59f475b99937769ef6774ce9175e783335d39814"
     },
     {
       "path": "Dockerfile",
@@ -8329,11 +8329,11 @@
     },
     {
       "path": "scripts/check-architecture/main.go",
-      "sha256": "3e1cc1bb13aabe5c8d1035c57f92aebeb89de7777ff349b0cb37204039d0f1b5"
+      "sha256": "521842dc7ca3da03a84d4f821203743332ab56e7c3238a681c5e2a535c9c7b4c"
     },
     {
       "path": "scripts/check-architecture/main_test.go",
-      "sha256": "448a074aa1c7bfe74159c77b9e067208bb222e6030685a5f8daf4eda06b08be9"
+      "sha256": "cdeaae625b97328ceab83dde86082691ae742ce4e3d15623c8aef844c9979b09"
     },
     {
       "path": "scripts/check-go-test-evidence.py",

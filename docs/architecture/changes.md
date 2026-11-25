@@ -9058,3 +9058,17 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/041-profit-hybrid-platform/tasks.md`
 
 </details>
+
+## 2026-11-25T07:28:12Z · 0805bc7b4973
+
+配置 mattpocock agent skills：GitHub Issues tracker、默认 triage 标签、单上下文领域文档；check-architecture 精确排除会话级 .claude/launch.json（同 settings.local.json 先例），无运行行为变化
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `AGENTS.md`
+- modified `scripts/check-architecture/main.go`
+- modified `scripts/check-architecture/main_test.go`
+
+</details>

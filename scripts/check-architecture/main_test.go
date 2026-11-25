@@ -79,6 +79,7 @@ func TestRefreshAndReadOnlyCheck(t *testing.T) {
 func TestLocalClaudeSettingsDoNotMoveArchitectureSnapshot(t *testing.T) {
 	root := fixture(t)
 	writeFixture(t, root, ".claude/settings.local.json", "{\"local\":true}\n")
+	writeFixture(t, root, ".claude/launch.json", "{\"servers\":[]}\n")
 	writeFixture(t, root, ".claude/settings.json", "{\"project\":true}\n")
 	refreshFixture(t, root)
 	data, err := os.ReadFile(filepath.Join(root, manifestPath))
@@ -94,6 +95,9 @@ func TestLocalClaudeSettingsDoNotMoveArchitectureSnapshot(t *testing.T) {
 		if file.Path == ".claude/settings.local.json" {
 			t.Fatal("local session settings were recorded as architecture source")
 		}
+		if file.Path == ".claude/launch.json" {
+			t.Fatal("session launch config was recorded as architecture source")
+		}
 		projectCovered = projectCovered || file.Path == ".claude/settings.json"
 	}
 	if !projectCovered {
@@ -102,8 +106,11 @@ func TestLocalClaudeSettingsDoNotMoveArchitectureSnapshot(t *testing.T) {
 	if err := os.Remove(filepath.Join(root, ".claude/settings.local.json")); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Remove(filepath.Join(root, ".claude/launch.json")); err != nil {
+		t.Fatal(err)
+	}
 	if err := run(root, false, false, "", fixedTime, new(bytes.Buffer)); err != nil {
-		t.Fatalf("a clean checkout without local session settings must match: %v", err)
+		t.Fatalf("a clean checkout without local session files must match: %v", err)
 	}
 }
 
