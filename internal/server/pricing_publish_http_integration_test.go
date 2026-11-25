@@ -273,6 +273,12 @@ func TestRestrictedAPPCostPricePublishHTTP(t *testing.T) {
 	if unknownResponse.Code != 201 || !strings.Contains(unknownResponse.Body.String(), `"rates":null`) {
 		t.Fatal("unknown cost publication did not preserve null rates", unknownResponse.Code, unknownResponse.Body.String())
 	}
+	usd := costPriceBody(uuid.NewString(), channel, "provider-model", schema, digest, "contract", "2", "1", "2026-11-06T00:02:30.123456Z", "4")
+	usd["currency"] = "USD"
+	usdResponse := pricingHTTP(t, f.server, "POST", "/api/platform/cost-versions", raw, csrf, usd)
+	if usdResponse.Code != 201 || !strings.Contains(usdResponse.Body.String(), `"currency":"USD"`) {
+		t.Fatal("USD supplier cost publication failed", usdResponse.Code, usdResponse.Body.String())
+	}
 
 	invalid := costPriceBody(uuid.NewString(), channel, "provider-model", schema, strings.Repeat("0", 64), "contract", "1", "0", "2026-11-06T00:03:00.123456Z", "4")
 	requirePricingError(t, pricingHTTP(t, f.server, "POST", "/api/platform/cost-versions", raw, csrf, invalid), 400, "invalid_price")

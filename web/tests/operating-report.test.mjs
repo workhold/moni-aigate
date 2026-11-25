@@ -2,12 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { ApiError } from '../src/api.ts'
 import { money } from '../src/format.ts'
-import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFiatMapText, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../src/operating-report.ts'
+import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingBillConfirmedMarginText, operatingFiatMapText, operatingFilter, operatingMarginKnown, operatingMarginText, operatingMarginValuationText, operatingProvisionalMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../src/operating-report.ts'
 
 const tenant = '11111111-1111-4111-8111-111111111111', model = '22222222-2222-4222-8222-222222222222', schema = '33333333-3333-4333-8333-333333333333'
 const draft = { from: '2026-11-01T08:00:00+08:00', to: '2026-11-02T08:00:00+08:00', tenant_id: '', model_id: '', protocol: '', execution_kind: '' }
-const totals = { request_count: 1, unsettled_requests: 0, attempt_count: 2, unknown_provider_costs: 0, charged: '9007199254740993', refunded: '1', net_revenue: '9007199254740992', known_provider_cost: '2', gross_margin: '9007199254740990', payment_basis: { CNY: '9007199254740992' }, cash_refunded: { CNY: '7', USD: '8' } }
-const report = (amount = totals.charged) => ({ from: '2026-11-01T00:00:00Z', to: '2026-11-02T00:00:00Z', as_of: '2026-11-02T01:00:00Z', currency: 'COIN', amount_unit: 'micro_coin', scope: 'request_created_window', summary: { ...totals, charged: amount }, models: [], channels: [], requests: [] })
+const totals = { request_count: 1, unsettled_requests: 0, attempt_count: 2, unknown_provider_costs: 0, charged: '9007199254740993', refunded: '1', net_revenue: '9007199254740992', known_provider_cost: '2', gross_margin: '9007199254740990', payment_basis: { CNY: '9007199254740992' }, cash_refunded: { CNY: '7', USD: '8' }, provider_cost: { CNY: '2' }, provisional_gross_margin: '9007199254740990', bill_confirmed_gross_margin: null, gross_margin_currency: 'CNY', margin_valuation: 'original_currency', cost_as_of: '2026-11-02T00:30:00Z', cost_revision: 'cost-revision', fx_policy_versions: [] }
+const report = (amount = totals.charged) => ({ from: '2026-11-01T00:00:00Z', to: '2026-11-02T00:00:00Z', as_of: '2026-11-02T01:00:00Z', currency: 'COIN', amount_unit: 'micro_coin', scope: 'request_created_window', summary: { ...totals, charged: amount }, models: [], channels: [], requests: [], offer_reports: [] })
 
 test('operating report parser rejects old token/rate projections and preserves exact report totals', () => {
   const value = parseOperatingReport(report())
@@ -33,8 +33,33 @@ test('operating report parser separates COIN consumption from exact per-currency
   ]) assert.throws(() => parseOperatingReport({ ...report(), summary }), /旧标量|未定义/)
   for (const patch of [{ currency: 'CNY' }, { amount_unit: 'micro_cny' }]) assert.throws(() => parseOperatingReport({ ...report(), ...patch }))
 })
+test('operating report strict P0 parser validates margins, original cost vectors, FX and offer dimensions', () => {
+  const fxTotals = { ...totals, payment_basis: { USD: '100' }, provider_cost: { CNY: '600' }, known_provider_cost: '600', gross_margin: '14', provisional_gross_margin: '14', bill_confirmed_gross_margin: '14', gross_margin_currency: 'USD', margin_valuation: 'fx_snapshot', fx_policy_versions: ['44444444-4444-4444-8444-444444444444'] }
+  const value = parseOperatingReport({ ...report(), summary: fxTotals, offer_reports: [{ offer_version_id: '55555555-5555-4555-8555-555555555555', task_class: 'coding_reasoning', ...fxTotals }] })
+  assert.deepEqual(value.summary.provider_cost, { CNY: '600' })
+  assert.equal(value.offer_reports[0].task_class, 'coding_reasoning')
+  assert.equal(operatingProvisionalMarginText(value.summary), '$0.000014')
+  assert.equal(operatingBillConfirmedMarginText(value.summary), '$0.000014')
+  assert.equal(operatingMarginValuationText(value.summary), 'FX 快照折算')
+  assert.equal(operatingBillConfirmedMarginText(totals), '待核对')
+  const oldTotals = { ...totals }; delete oldTotals.provider_cost
+  const invalid = [
+    oldTotals,
+    { ...totals, provider_cost: { CNY: '-1' } },
+    { ...totals, gross_margin: '0' },
+    { ...totals, provisional_gross_margin: null, bill_confirmed_gross_margin: '1' },
+    { ...totals, margin_valuation: 'fx_snapshot' },
+    { ...totals, fx_policy_versions: ['unexpected-original-policy'] },
+    { ...totals, cost_as_of: 1 },
+    { ...totals, cost_revision: null },
+    { ...totals, fx_policy_versions: 'policy' },
+  ]
+  for (const summary of invalid) assert.throws(() => parseOperatingReport({ ...report(), summary }), /旧标量|未定义/)
+  assert.throws(() => parseOperatingReport({ ...report(), offer_reports: [{ offer_version_id: 'offer', task_class: 'not-a-task', ...totals }] }))
+})
+
 test('operating report parser keeps current media protocols and asynchronous tasks', () => {
-  const value = parseOperatingReport({ ...report(), requests: [{ request_id: 'task', tenant_id: tenant, tenant_name: 'tenant', model_id: 'mock-video-generation', model_name: 'video', status: 'succeeded', billing_status: 'settled', created_at: '2026-11-02T00:00:00Z', protocol: 'video_generation', execution_kind: 'asynchronous', profile_version: '10000000-0000-4000-8000-000000000001', schema_id: schema, schema_digest: 'ab'.repeat(32), variant_key: 'default', ...totals }] })
+  const value = parseOperatingReport({ ...report(), requests: [{ request_id: 'task', tenant_id: tenant, tenant_name: 'tenant', model_id: 'mock-video-generation', model_name: 'video', status: 'succeeded', billing_status: 'settled', created_at: '2026-11-02T00:00:00Z', protocol: 'video_generation', execution_kind: 'asynchronous', profile_version: '10000000-0000-4000-8000-000000000001', schema_id: schema, schema_digest: 'ab'.repeat(32), variant_key: 'default', offer_version_id: '', task_class: '', ...totals }] })
   assert.equal(value.requests[0].protocol, 'video_generation')
   assert.equal(value.requests[0].execution_kind, 'asynchronous')
 })
@@ -125,7 +150,7 @@ test('money remains exact beyond safe integers and unresolved costs or settlemen
   assert.equal(operatingMarginText(totals), '¥9,007,199,254.740990')
   assert.equal(operatingMarginText({ ...totals, gross_margin: '-1000001' }), '−¥1.000001')
   assert.equal(operatingMarginText({ ...totals, request_count: 0, attempt_count: 0, charged: '0', gross_margin: '0' }), '¥0.000000')
-  for (const patch of [{ gross_margin: null }, { unsettled_requests: 1 }, { unknown_provider_costs: 1 }, { payment_basis: { USD: '3' } }]) {
+  for (const patch of [{ gross_margin: null, provisional_gross_margin: null }, { unsettled_requests: 1 }, { unknown_provider_costs: 1 }]) {
     assert.equal(operatingMarginKnown({ ...totals, ...patch }), false)
     assert.equal(operatingMarginText({ ...totals, ...patch }), '待核对')
   }

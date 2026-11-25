@@ -43,7 +43,11 @@ func ReplayRoute(stored *RouteDecision) (*RouteDecision, error) {
 		}
 		candidates[i] = candidate
 	}
-	plan, err := NewDynamicPlan(candidates, 2, stored.Policy, stored.Request)
+	maxAttempts := 2
+	if stored.Policy.Execution != nil {
+		maxAttempts = int(stored.Policy.Execution.MaxOuterAttempts)
+	}
+	plan, err := NewDynamicPlan(candidates, maxAttempts, stored.Policy, stored.Request)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +98,7 @@ func replayCandidate(saved CandidateDecision, stored *RouteDecision) (Candidate,
 			return Candidate{}, err
 		}
 	}
-	quote, err := routecost.NewQuote(routecost.Input{ChannelID: saved.ChannelID, UpstreamModel: saved.UpstreamModel, VersionID: saved.CostSnapshot.VersionID, Basis: saved.CostSnapshot.Basis, VariantKey: "default", Schema: schema, Rates: rates})
+	quote, err := routecost.NewQuote(routecost.Input{ChannelID: saved.ChannelID, UpstreamModel: saved.UpstreamModel, VersionID: saved.CostSnapshot.VersionID, Basis: saved.CostSnapshot.Basis, Currency: saved.CostSnapshot.Currency, VariantKey: "default", Schema: schema, Rates: rates})
 	if err != nil {
 		return Candidate{}, err
 	}
@@ -104,7 +108,7 @@ func replayCandidate(saved CandidateDecision, stored *RouteDecision) (Candidate,
 		Model: saved.UpstreamModel, HealthKey: saved.BindingID + ":replay", Priority: saved.Priority, Weight: saved.Weight,
 		MaxInflight: 1, CredentialMaxInflight: 1, Enabled: saved.FilterReason == "", ExclusionReason: saved.FilterReason,
 		CostPolicy: stored.Policy.CostPolicy, CostQuote: quote, InputUpperBound: stored.Request.InputUpperBound,
-		OutputLimit: stored.Request.OutputLimit, RetailAmount: stored.Request.RetailAmount, Physical: saved.Capability, Stats: saved.Score.Stats,
+		OutputLimit: stored.Request.OutputLimit, RetailAmount: stored.Request.RetailAmount, Physical: saved.Capability, Quality: saved.QualityEvidence, Stats: saved.Score.Stats,
 	}, nil
 }
 

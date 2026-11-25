@@ -2,28 +2,44 @@ package reporting
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moni-ai/moni-aigate/internal/economics"
 )
 
 const requestsSQL = `SELECT r.id,r.tenant_id,t.name,r.model_id,m.public_name,r.status,r.billing_status,r.created_at,
  coalesce(r.protocol,''),coalesce(r.execution_kind,''),coalesce(ms.profile_version,''),coalesce(ms.schema_id,''),coalesce(encode(ms.schema_digest,'hex'),''),coalesce(ms.variant_key,''),
- s.charged_amount::pg_catalog.text,s.refunded_amount::pg_catalog.text,coalesce(fz.source='cache',false)
+ s.charged_amount::pg_catalog.text,s.refunded_amount::pg_catalog.text,coalesce(fz.source='cache',false),
+ coalesce(es.offer_version_id,''),coalesce(es.task_class,''),es.fx_policy_version_id,es.valuation_currency,es.fx_snapshot,es.created_at
  FROM request_records r JOIN tenants t ON t.id=r.tenant_id JOIN models m ON m.id=r.model_id
  LEFT JOIN request_meter_snapshots ms ON ms.tenant_id=r.tenant_id AND ms.request_id=r.id
  LEFT JOIN settlements s ON s.request_id=r.id AND s.tenant_id=r.tenant_id
  LEFT JOIN finalization_records fz ON fz.tenant_id=r.tenant_id AND fz.request_id=r.id AND fz.id=r.latest_finalization_id
+ LEFT JOIN request_economics_snapshots es ON es.tenant_id=r.tenant_id AND es.request_id=r.id
  WHERE r.created_at >= $1 AND r.created_at < $2 AND ($3='' OR r.tenant_id=$3) AND ($4='' OR r.model_id=$4)
  AND ($5='' OR r.protocol=$5) AND ($6='' OR r.execution_kind=$6)
  ORDER BY r.created_at DESC,r.id COLLATE "C" DESC LIMIT 5001`
 
-const attemptsSQL = `SELECT a.id,a.request_id,a.channel_id,c.name,a.cost_status,a.cost_amount::pg_catalog.text
+const attemptsSQL = `SELECT a.id,a.request_id,a.channel_id,c.name,a.cost_status,a.cost_amount::pg_catalog.text,
+ coalesce(cv.currency,'CNY'),CASE WHEN a.latest_cost_correction_id IS NOT NULL THEN pc.created_at ELSE fz.created_at END,
+ coalesce(a.latest_cost_correction_id,a.latest_cost_finalization_id,'')
  FROM upstream_attempts a JOIN channels c ON c.id=a.channel_id
+ LEFT JOIN attempt_meter_snapshots ms ON ms.tenant_id=a.tenant_id AND ms.attempt_id=a.id
+ LEFT JOIN cost_versions cv ON cv.id=ms.cost_version_id
+ LEFT JOIN provider_cost_corrections pc ON pc.tenant_id=a.tenant_id AND pc.id=a.latest_cost_correction_id AND pc.attempt_id=a.id
+ LEFT JOIN finalization_records fz ON fz.tenant_id=a.tenant_id AND fz.id=a.latest_cost_finalization_id AND fz.attempt_id=a.id
  WHERE a.request_id=ANY($1::pg_catalog.text[]) ORDER BY a.request_id COLLATE "C",a.sequence,a.id COLLATE "C"`
+
+const attemptCostComponentsSQL = `SELECT c.tenant_id,c.attempt_id,c.component_id,c.id,c.currency,c.basis,c.amount_micro::pg_catalog.text,c.as_of,c.revision
+ FROM attempt_cost_components c JOIN upstream_attempts a ON a.tenant_id=c.tenant_id AND a.id=c.attempt_id
+ WHERE a.request_id=ANY($1::pg_catalog.text[]) AND c.layer='inner'
+ AND NOT EXISTS(SELECT 1 FROM attempt_cost_components newer WHERE newer.tenant_id=c.tenant_id AND newer.attempt_id=c.attempt_id AND newer.component_id=c.component_id AND newer.revision>c.revision)
+ ORDER BY a.request_id COLLATE "C",c.attempt_id COLLATE "C",c.component_id COLLATE "C"`
 
 const mediaRequestsSQL = `SELECT q.id,q.tenant_id,t.name,q.model_key,q.model_key,q.state,
  CASE WHEN s.id IS NULL THEN q.state ELSE s.status END,q.created_at,q.operation,
@@ -38,7 +54,8 @@ const mediaRequestsSQL = `SELECT q.id,q.tenant_id,t.name,q.model_key,q.model_key
  ORDER BY q.created_at DESC,q.id COLLATE "C" DESC LIMIT 5001`
 
 const mediaAttemptsSQL = `SELECT a.tenant_id,a.id,a.request_id,q.operation,
- CASE WHEN s.supplier_cost_status='known' THEN 'contract' ELSE 'unknown' END,s.supplier_cost_amount::pg_catalog.text
+ CASE WHEN s.supplier_cost_status='known' THEN 'contract' ELSE 'unknown' END,s.supplier_cost_amount::pg_catalog.text,
+ 'CNY',s.created_at,coalesce(s.id,'')
  FROM media_attempts a JOIN media_requests q ON q.tenant_id=a.tenant_id AND q.id=a.request_id
  LEFT JOIN media_settlements s ON s.tenant_id=a.tenant_id AND s.request_id=a.request_id
  WHERE a.request_id=ANY($1::pg_catalog.text[]) AND q.created_at >= $2 AND q.created_at < $3
@@ -46,13 +63,15 @@ const mediaAttemptsSQL = `SELECT a.tenant_id,a.id,a.request_id,q.operation,
  AND ($7='' OR CASE WHEN q.operation='video_generation' THEN 'asynchronous' ELSE 'synchronous' END=$7)
  ORDER BY a.request_id COLLATE "C",a.created_at,a.id COLLATE "C"`
 
-const settlementLotsSQL = `SELECT s.tenant_id,s.settlement_id,s.allocation_index,st.request_id,s.charged_amount,coalesce(f.fiat_currency,''),coalesce(f.fiat_amount,0),l.issued_amount,f.basis_kind,coalesce(f.buy_rate_version_id,'')
+const settlementLotsSQL = `SELECT s.tenant_id,s.settlement_id,s.allocation_index,st.request_id,s.charged_amount,coalesce(f.fiat_currency,''),coalesce(f.fiat_amount,0),l.issued_amount,f.basis_kind,coalesce(f.buy_rate_version_id,''),s.lot_id,
+ (SELECT coalesce(sum(r.amount),0)::pg_catalog.int8 FROM funding_consumption_refund_lots r WHERE r.tenant_id=s.tenant_id AND r.settlement_id=s.settlement_id AND r.allocation_index=s.allocation_index AND r.lot_id=s.lot_id)
  FROM funding_settlement_lots s JOIN settlements st ON st.tenant_id=s.tenant_id AND st.id=s.settlement_id
  JOIN funding_lots l ON l.tenant_id=s.tenant_id AND l.id=s.lot_id
  JOIN funding_receipts f ON f.tenant_id=l.tenant_id AND f.id=l.funding_receipt_id
  WHERE st.request_id=ANY($1::pg_catalog.text[]) ORDER BY s.settlement_id,s.allocation_index`
 
-const mediaSettlementLotsSQL = `SELECT s.tenant_id,s.settlement_id,s.allocation_index,st.request_id,s.charged_amount,coalesce(f.fiat_currency,''),coalesce(f.fiat_amount,0),l.issued_amount,f.basis_kind,coalesce(f.buy_rate_version_id,'')
+const mediaSettlementLotsSQL = `SELECT s.tenant_id,s.settlement_id,s.allocation_index,st.request_id,s.charged_amount,coalesce(f.fiat_currency,''),coalesce(f.fiat_amount,0),l.issued_amount,f.basis_kind,coalesce(f.buy_rate_version_id,''),s.lot_id,
+ (SELECT coalesce(sum(r.amount),0)::pg_catalog.int8 FROM funding_consumption_refund_lots r WHERE r.tenant_id=s.tenant_id AND r.settlement_id=s.settlement_id AND r.allocation_index=s.allocation_index AND r.lot_id=s.lot_id)
  FROM media_settlement_lots s JOIN media_settlements st ON st.tenant_id=s.tenant_id AND st.id=s.settlement_id
  JOIN funding_lots l ON l.tenant_id=s.tenant_id AND l.id=s.lot_id
  JOIN funding_receipts f ON f.tenant_id=l.tenant_id AND f.id=l.funding_receipt_id
@@ -80,9 +99,9 @@ func readSettlementLots(ctx context.Context, tx pgx.Tx, sql string, source factS
 	var result []settlementLotFact
 	for rows.Next() {
 		var tenant, request, currency, basis, buyRate string
-		var settlement string
-		var index, charged, fiat, issued int64
-		if err = rows.Scan(&tenant, &settlement, &index, &request, &charged, &currency, &fiat, &issued, &basis, &buyRate); err != nil {
+		var settlement, lot string
+		var index, charged, refunded, fiat, issued int64
+		if err = rows.Scan(&tenant, &settlement, &index, &request, &charged, &currency, &fiat, &issued, &basis, &buyRate, &lot, &refunded); err != nil {
 			return nil, err
 		}
 		keyID := settlement
@@ -90,7 +109,7 @@ func readSettlementLots(ctx context.Context, tx pgx.Tx, sql string, source factS
 			keyID = tenant + "|" + settlement
 			request = tenant + "|" + request
 		}
-		result = append(result, settlementLotFact{key: sourceKey(source, keyID+"|"+strconv.FormatInt(index, 10)), request: sourceKey(source, request), currency: currency, basisKind: basis, buyRateID: buyRate, charged: charged, fiat: fiat, issued: issued})
+		result = append(result, settlementLotFact{key: sourceKey(source, keyID+"|"+strconv.FormatInt(index, 10)), request: sourceKey(source, request), tenant: tenant, lotID: lot, currency: currency, basisKind: basis, buyRateID: buyRate, charged: charged, refunded: refunded, fiat: fiat, issued: issued})
 	}
 	return result, rows.Err()
 }
@@ -168,10 +187,25 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 	textIDs := make([]string, 0)
 	for rows.Next() {
 		var fact requestFact
+		var fxPolicyID, valuation *string
+		var fxRaw []byte
+		var snapshotCreated *time.Time
 		r := &fact.row
-		if err = rows.Scan(&r.RequestID, &r.TenantID, &r.TenantName, &r.ModelID, &r.ModelName, &r.Status, &r.BillingStatus, &r.CreatedAt, &r.Protocol, &r.ExecutionKind, &r.ProfileVersion, &r.SchemaID, &r.SchemaDigest, &r.VariantKey, &fact.charged, &fact.refunded, &fact.cache); err != nil {
+		if err = rows.Scan(&r.RequestID, &r.TenantID, &r.TenantName, &r.ModelID, &r.ModelName, &r.Status, &r.BillingStatus, &r.CreatedAt, &r.Protocol, &r.ExecutionKind, &r.ProfileVersion, &r.SchemaID, &r.SchemaDigest, &r.VariantKey, &fact.charged, &fact.refunded, &fact.cache, &r.OfferVersionID, &r.TaskClass, &fxPolicyID, &valuation, &fxRaw, &snapshotCreated); err != nil {
 			rows.Close()
 			return Report{}, err
+		}
+		if fxPolicyID != nil || valuation != nil || fxRaw != nil || snapshotCreated != nil || r.OfferVersionID != "" || r.TaskClass != "" {
+			if fxPolicyID == nil || valuation == nil || fxRaw == nil || snapshotCreated == nil {
+				rows.Close()
+				return Report{}, errUnavailable
+			}
+			var fx economics.FxPolicy
+			if err = json.Unmarshal(fxRaw, &fx); err != nil {
+				rows.Close()
+				return Report{}, errUnavailable
+			}
+			fact.economics = &requestEconomicsFact{offerVersionID: r.OfferVersionID, taskClass: r.TaskClass, fxPolicyVersionID: *fxPolicyID, valuationCurrency: economics.Currency(*valuation), fx: fx, createdAt: *snapshotCreated}
 		}
 		fact.key = sourceKey(textFactSource, r.RequestID)
 		fact.source = textFactSource
@@ -214,7 +248,7 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 		}
 		for rows.Next() {
 			var fact attemptFact
-			if err = rows.Scan(&fact.id, &fact.request, &fact.channel, &fact.channelName, &fact.status, &fact.amount); err != nil {
+			if err = rows.Scan(&fact.id, &fact.request, &fact.channel, &fact.channelName, &fact.status, &fact.amount, &fact.currency, &fact.asOf, &fact.revision); err != nil {
 				rows.Close()
 				return Report{}, err
 			}
@@ -237,9 +271,10 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 			return Report{}, err
 		}
 		for rows.Next() {
-			var tenant, id, request, operation, status string
+			var tenant, id, request, operation, status, currency, revision string
 			var amount *string
-			if err = rows.Scan(&tenant, &id, &request, &operation, &status, &amount); err != nil {
+			var costAsOf *time.Time
+			if err = rows.Scan(&tenant, &id, &request, &operation, &status, &amount, &currency, &costAsOf, &revision); err != nil {
 				rows.Close()
 				return Report{}, err
 			}
@@ -250,12 +285,34 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 				channelName: "media/" + operation,
 				status:      status,
 				amount:      amount,
+				currency:    currency,
+				asOf:        costAsOf,
+				revision:    revision,
 				source:      mediaFactSource,
 			})
 			if len(attempts) > 2*len(facts)+MaxRequests*2 {
 				rows.Close()
 				return Report{}, errUnavailable
 			}
+		}
+		rows.Close()
+		if err = rows.Err(); err != nil {
+			return Report{}, err
+		}
+	}
+	innerCosts := make([]attemptCostFact, 0)
+	if len(textIDs) > 0 {
+		rows, err = tx.Query(work, attemptCostComponentsSQL, textIDs)
+		if err != nil {
+			return Report{}, err
+		}
+		for rows.Next() {
+			var fact attemptCostFact
+			if err = rows.Scan(&fact.tenant, &fact.attempt, &fact.component, &fact.id, &fact.currency, &fact.basis, &fact.amount, &fact.asOf, &fact.revision); err != nil {
+				rows.Close()
+				return Report{}, err
+			}
+			innerCosts = append(innerCosts, fact)
 		}
 		rows.Close()
 		if err = rows.Err(); err != nil {
@@ -281,7 +338,7 @@ func Read(ctx context.Context, pool *pgxpool.Pool, filter Filter) (report Report
 	if err != nil {
 		return Report{}, err
 	}
-	report, err = aggregate(filter, asOf, facts, attempts, allocations, refunds)
+	report, err = aggregate(filter, asOf, facts, attempts, innerCosts, allocations, refunds)
 	if err == nil {
 		err = work.Err()
 	}

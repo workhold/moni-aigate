@@ -13,10 +13,10 @@ import (
 // Missing versions retain the original request domain and explicit unknown.
 // Corrupt known rates are never silently downgraded to unknown.
 const attemptCostSelectSQL = `
- SELECT ms.canonical,ms.schema_digest,s.variant_key,coalesce(c.id,''),coalesce(c.basis,'unknown'),c.rates_canonical,c.rates_digest
+ SELECT ms.canonical,ms.schema_digest,s.variant_key,coalesce(c.id,''),coalesce(c.basis,'unknown'),coalesce(c.currency,'CNY'),c.rates_canonical,c.rates_digest
  FROM request_meter_snapshots s JOIN meter_schemas ms ON ms.id=s.schema_id AND ms.schema_digest=s.schema_digest
  CROSS JOIN instant
- LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.rates_canonical,cv.rates_digest FROM cost_versions cv
+ LEFT JOIN LATERAL (SELECT cv.id,cv.basis,cv.currency,cv.rates_canonical,cv.rates_digest FROM cost_versions cv
  WHERE cv.channel_id=$1 AND cv.upstream_model=$2 AND cv.schema_id=s.schema_id AND cv.schema_digest=s.schema_digest
  AND cv.variant_key=s.variant_key AND cv.effective_at<=instant.at
  ORDER BY cv.effective_at DESC,cv.created_at DESC,cv.id DESC LIMIT 1) c ON true
@@ -30,7 +30,7 @@ const bindingCostLimitsSQL = `COALESCE((SELECT jsonb_agg(jsonb_build_object(
 
 func scanCostQuote(row pgx.Row, channel, upstream string) (routecost.Quote, error) {
 	in := routecost.StoredInput{ChannelID: channel, UpstreamModel: upstream}
-	if err := row.Scan(&in.SchemaCanonical, &in.SchemaDigest, &in.VariantKey, &in.VersionID, &in.Basis, &in.RatesCanonical, &in.RatesDigest); err != nil {
+	if err := row.Scan(&in.SchemaCanonical, &in.SchemaDigest, &in.VariantKey, &in.VersionID, &in.Basis, &in.Currency, &in.RatesCanonical, &in.RatesDigest); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return routecost.Quote{}, fail("invalid_meter_snapshot", "original quote domain is missing")
 		}
@@ -71,7 +71,16 @@ func checkAttemptCostQuote(ctx context.Context, tx pgx.Tx, r financialRequest, i
 		return fail("invalid_meter_snapshot", "original route cost limits are invalid")
 	}
 	if !policy.Managed(limits) && !procurement {
-		return nil
+		var offer bool
+		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM request_economics_snapshots WHERE tenant_id=$1 AND request_id=$2)`, r.TenantID, r.ID).Scan(&offer); err != nil {
+			return err
+		}
+		if !offer {
+			return nil
+		}
+		if !cost.Known() {
+			return fail("cost_unknown", "service offer requires known candidate cost")
+		}
 	}
 	if in.CostQuote == nil || !in.CostQuote.Equal(cost) {
 		return fail("cost_quote_stale", "configured procurement quote changed before dispatch")
@@ -98,17 +107,17 @@ func checkDispatchCostQuote(ctx context.Context, tx pgx.Tx, tenant, attempt stri
 	var policy routing.CostPolicy
 	var raw []byte
 	var channel, upstream, request string
-	var procurement bool
+	var procurement, offer bool
 	err := tx.QueryRow(ctx, `SELECT coalesce(p.cost_mode,'manual'),coalesce(p.unknown_cost_policy,'allow'),`+bindingCostLimitsSQL+`,
- a.channel_id,a.upstream_model,a.request_id,EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.attempt_id=a.id)
+ a.channel_id,a.upstream_model,a.request_id,EXISTS(SELECT 1 FROM procurement_reservations pr WHERE pr.attempt_id=a.id),EXISTS(SELECT 1 FROM request_economics_snapshots es WHERE es.tenant_id=a.tenant_id AND es.request_id=a.request_id)
  FROM upstream_attempts a JOIN request_records r ON r.tenant_id=a.tenant_id AND r.id=a.request_id
 	 JOIN route_policy_versions p ON p.model_id=r.model_id AND p.revision=r.route_revision
 	 JOIN model_bindings b ON b.route_policy_version_id=p.id AND b.channel_id=a.channel_id AND b.channel_version_id=a.channel_version_id AND b.upstream_model=a.upstream_model
- WHERE a.tenant_id=$1 AND a.id=$2`, tenant, attempt).Scan(&policy.Mode, &policy.UnknownCostPolicy, &raw, &channel, &upstream, &request, &procurement)
+ WHERE a.tenant_id=$1 AND a.id=$2`, tenant, attempt).Scan(&policy.Mode, &policy.UnknownCostPolicy, &raw, &channel, &upstream, &request, &procurement, &offer)
 	if err != nil {
 		return err
 	}
-	frozen, err := scanCostQuote(tx.QueryRow(ctx, `SELECT ms.canonical,ms.schema_digest,s.variant_key,coalesce(s.cost_version_id,''),s.cost_basis,c.rates_canonical,c.rates_digest
+	frozen, err := scanCostQuote(tx.QueryRow(ctx, `SELECT ms.canonical,ms.schema_digest,s.variant_key,coalesce(s.cost_version_id,''),s.cost_basis,coalesce(c.currency,'CNY'),c.rates_canonical,c.rates_digest
  FROM upstream_attempts a
  JOIN attempt_meter_snapshots s ON s.tenant_id=a.tenant_id AND s.request_id=a.request_id AND s.attempt_id=a.id
  JOIN request_meter_snapshots r ON r.tenant_id=s.tenant_id AND r.request_id=s.request_id AND r.schema_id=s.schema_id AND r.schema_digest=s.schema_digest AND r.variant_key=s.variant_key
@@ -124,14 +133,14 @@ func checkDispatchCostQuote(ctx context.Context, tx pgx.Tx, tenant, attempt stri
 	if err != nil {
 		return fail("invalid_meter_snapshot", "original route cost limits are invalid")
 	}
-	if !policy.Managed(limits) && !procurement {
+	if !policy.Managed(limits) && !procurement && !offer {
 		return nil
 	}
 	current, err := scanCostQuote(tx.QueryRow(ctx, dispatchAttemptCostSQL, channel, upstream, request, at), channel, upstream)
 	if err != nil {
 		return err
 	}
-	if procurement && !current.Known() {
+	if (procurement || offer) && !current.Known() {
 		return fail("cost_unknown", "controlled procurement requires a complete quote")
 	}
 	if !frozen.Equal(current) {

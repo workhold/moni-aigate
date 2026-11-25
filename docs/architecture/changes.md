@@ -8968,3 +8968,93 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/041-profit-hybrid-platform/design.md`
 
 </details>
+
+## 2026-11-24T11:00:47Z · 4a0bfcb61ed7
+
+041-P0：新增 direct test-only 商品/质量/执行/FX/经济快照、fixed-full 与统一贡献毛利；保留 legacy 边界、历史库兼容、external commercial 拒绝和恢复不生成；已复核模块、请求、数据、ACL、能力与验证链接
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 66 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/operating-reports.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/verification/034-5-reporting-wallet-composition.md`
+- added `docs/verification/041-p0-economic-foundation.md`
+- modified `internal/billing/cost_policy.go`
+- added `internal/billing/economics.go`
+- modified `internal/billing/evidence.go`
+- modified `internal/billing/fiat.go`
+- added `internal/billing/profit_economics_integration_test.go`
+- modified `internal/billing/reserve.go`
+- modified `internal/billing/route_decision_store.go`
+- modified `internal/billing/settle.go`
+- modified `internal/billing/types.go`
+- modified `internal/catalog/pricing_publish.go`
+- modified `internal/catalog/pricing_types.go`
+- added `internal/catalog/service_offer.go`
+- added `internal/catalog/service_offer_candidates.go`
+- modified `internal/catalog/store.go`
+- added `internal/economics/admission.go`
+- added `internal/economics/admission_test.go`
+- added `internal/economics/fx.go`
+- added `internal/economics/fx_test.go`
+- added `internal/economics/money.go`
+- added `internal/economics/money_test.go`
+- added `internal/economics/policy.go`
+- added `internal/economics/policy_test.go`
+- added `internal/economics/snapshot.go`
+- added `internal/economics/snapshot_test.go`
+- added `internal/economics/test_helpers_test.go`
+- modified `internal/operations/operations.go`
+- modified `internal/reporting/csv.go`
+- modified `internal/reporting/read.go`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/reporting/types.go`
+- modified `internal/routecost/quote.go`
+- modified `internal/routing/cost_test.go`
+- modified `internal/routing/dynamic.go`
+- added `internal/routing/economic_sort_test.go`
+- added `internal/routing/frozen.go`
+- added `internal/routing/frozen_test.go`
+- modified `internal/routing/replay.go`
+- modified `internal/routing/routing.go`
+- modified `internal/routing/selection.go`
+- modified `internal/server/gateway.go`
+- modified `internal/server/operating_reports_integration_test.go`
+- modified `internal/server/pricing_handlers.go`
+- modified `internal/server/pricing_publish_http_integration_test.go`
+- added `internal/server/profit_economics_integration_test.go`
+- modified `internal/server/route_preference.go`
+- modified `internal/server/route_preference_test.go`
+- modified `internal/testsupport/meterquote/publish.go`
+- added `migrations/current_016_profit_economics.sql`
+- modified `migrations/phase3_dynamic_routing_postgres_test.go`
+- added `migrations/profit_economics_postgres_test.go`
+- modified `specs/032-phase2-text-data-plane/tasks.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/033-text-dynamic-routing/tasks.md`
+- modified `specs/034-virtual-coin/spec.md`
+- modified `specs/038-new-api-capability-migration/spec.md`
+- added `specs/041-profit-hybrid-platform/p0-economic-foundation.md`
+- modified `web/src/components/OperatingReport.vue`
+- modified `web/src/operating-report.ts`
+- modified `web/tests/operating-report.test.mjs`
+
+</details>
+
+## 2026-11-24T18:43:20Z · 996f8aceb02d
+
+041 P0最终验收归档：实现结构与权限边界此前已同步，本次仅更新验证和任务状态；完整默认serial-v1 029为41/41 PASS，未开放external commercial或生产资格
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 2 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/verification/041-p0-economic-foundation.md`
+- modified `specs/041-profit-hybrid-platform/tasks.md`
+
+</details>

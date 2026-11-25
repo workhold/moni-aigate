@@ -23,12 +23,14 @@ var (
 type Quote struct {
 	valid                             bool
 	channel, upstream, version, basis string
+	currency                          string
 	schema                            metering.Schema
 	rates                             metering.Rates
 	schemaDigest, ratesDigest         [32]byte
 }
 type Input struct {
 	ChannelID, UpstreamModel, VersionID, Basis, VariantKey string
+	Currency                                               string
 	Schema                                                 metering.Schema
 	Rates                                                  metering.Rates
 }
@@ -38,7 +40,13 @@ func NewQuote(in Input) (Quote, error) {
 	if err != nil || in.ChannelID == "" || in.UpstreamModel == "" || in.VariantKey != "default" {
 		return Quote{}, ErrInvalidQuote
 	}
-	q := Quote{valid: true, channel: in.ChannelID, upstream: in.UpstreamModel, version: in.VersionID, basis: in.Basis, schema: in.Schema, schemaDigest: sd}
+	if in.Currency == "" {
+		in.Currency = "CNY"
+	}
+	if in.Currency != "CNY" && in.Currency != "USD" {
+		return Quote{}, ErrInvalidQuote
+	}
+	q := Quote{valid: true, channel: in.ChannelID, upstream: in.UpstreamModel, version: in.VersionID, basis: in.Basis, currency: in.Currency, schema: in.Schema, schemaDigest: sd}
 	raw, rateErr := in.Rates.CanonicalJSON()
 	if in.Basis == "unknown" {
 		if rateErr == nil {
@@ -64,8 +72,8 @@ func NewQuote(in Input) (Quote, error) {
 
 // StoredInput is the exact SQL storage projection, separate from parsed inputs.
 type StoredInput struct {
-	ChannelID, UpstreamModel, VersionID, Basis, VariantKey     string
-	SchemaCanonical, SchemaDigest, RatesCanonical, RatesDigest []byte
+	ChannelID, UpstreamModel, VersionID, Basis, VariantKey, Currency string
+	SchemaCanonical, SchemaDigest, RatesCanonical, RatesDigest       []byte
 }
 
 // ParseStoredQuote verifies canonical bytes as well as their schema-bound
@@ -80,7 +88,7 @@ func ParseStoredQuote(in StoredInput) (Quote, error) {
 	if !bytes.Equal(canonical, in.SchemaCanonical) || !bytes.Equal(digest[:], in.SchemaDigest) {
 		return Quote{}, ErrInvalidQuote
 	}
-	parsed := Input{ChannelID: in.ChannelID, UpstreamModel: in.UpstreamModel, VersionID: in.VersionID, Basis: in.Basis, VariantKey: in.VariantKey, Schema: schema}
+	parsed := Input{ChannelID: in.ChannelID, UpstreamModel: in.UpstreamModel, VersionID: in.VersionID, Basis: in.Basis, VariantKey: in.VariantKey, Currency: in.Currency, Schema: schema}
 	if in.Basis == "unknown" {
 		if in.RatesCanonical != nil || in.RatesDigest != nil {
 			return Quote{}, ErrInvalidQuote
@@ -102,6 +110,7 @@ func (q Quote) Valid() bool             { return q.valid }
 func (q Quote) Known() bool             { return q.valid && q.basis != "unknown" }
 func (q Quote) VersionID() string       { return q.version }
 func (q Quote) Basis() string           { return q.basis }
+func (q Quote) Currency() string        { return q.currency }
 func (q Quote) Schema() metering.Schema { return q.schema }
 func (q Quote) Rates() (metering.Rates, error) {
 	if !q.Valid() {
@@ -113,7 +122,7 @@ func (q Quote) Rates() (metering.Rates, error) {
 	return q.rates, nil
 }
 func (q Quote) Equal(other Quote) bool {
-	return q.valid && other.valid && q.channel == other.channel && q.upstream == other.upstream && q.version == other.version && q.basis == other.basis && q.schemaDigest == other.schemaDigest && q.ratesDigest == other.ratesDigest
+	return q.valid && other.valid && q.channel == other.channel && q.upstream == other.upstream && q.version == other.version && q.basis == other.basis && q.currency == other.currency && q.schemaDigest == other.schemaDigest && q.ratesDigest == other.ratesDigest
 }
 func (q Quote) Matches(channel, upstream string) bool {
 	return q.valid && q.channel == channel && q.upstream == upstream

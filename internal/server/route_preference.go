@@ -18,6 +18,7 @@ type routePreferenceWire struct {
 	Sort              string            `json:"sort"`
 	MaxPrice          *routing.MaxPrice `json:"max_price"`
 	DataCollection    string            `json:"data_collection"`
+	TaskHint          string            `json:"task_hint"`
 }
 
 func parseChatRoute(raw []byte) ([]byte, routing.RequestShape, error) {
@@ -80,6 +81,10 @@ func parseChatRoute(raw []byte) ([]byte, routing.RequestShape, error) {
 	if _, exists := routeObject["data_collection"]; exists && wire.DataCollection == "" {
 		return nil, shape, routing.ErrInvalidPolicy
 	}
+	if _, exists := routeObject["task_hint"]; exists && wire.TaskHint == "" {
+		return nil, shape, routing.ErrInvalidPolicy
+	}
+	shape.TaskHint = wire.TaskHint
 	if err := shape.Validate(); err != nil {
 		return nil, shape, err
 	}

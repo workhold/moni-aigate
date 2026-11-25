@@ -124,7 +124,7 @@ func (e *Engine) acquirePlan(p *Plan, sequence int) (Candidate, uint64, *RouteDe
 					}
 				}
 			}
-			if reason == "" && marginBelowFloor(explanation.CostSnapshot, candidate.RetailAmount, p.policy.MinMarginRate) {
+			if reason == "" && marginBelowFloorForRequest(explanation.CostSnapshot, candidate.RetailAmount, p.policy.MinMarginRate, p.request) {
 				reason = "margin_below_floor"
 			}
 			if reason != "" {
@@ -292,7 +292,7 @@ func (e *Engine) acquirePlan(p *Plan, sequence int) (Candidate, uint64, *RouteDe
 			weight = sumGroupWeights(groups, pool)
 		}
 	} else if groups[pool[0]].candidate.CostPolicy.Mode == "cost_first" {
-		cheapest, err := cheapestGroups(groups, pool)
+		cheapest, err := cheapestGroups(groups, pool, p.request)
 		if err != nil {
 			return Candidate{}, 0, nil, err
 		}
@@ -304,7 +304,7 @@ func (e *Engine) acquirePlan(p *Plan, sequence int) (Candidate, uint64, *RouteDe
 	}
 	if stickyIndex < 0 && len(p.request.Preference.Order) == 0 {
 		var err error
-		pool, err = sortPreference(groups, pool, p.request.Preference.Sort, p.policy.CostPolicy.Mode == "cost_first")
+		pool, err = sortPreference(groups, pool, p.request.Preference.Sort, p.policy.CostPolicy.Mode == "cost_first", p.request)
 		if err != nil {
 			return Candidate{}, 0, nil, err
 		}
@@ -395,30 +395,54 @@ func sumGroupWeights(groups []selectionGroup, pool []int) uint64 {
 	return total
 }
 
-func cheapestGroups(groups []selectionGroup, pool []int) ([]int, error) {
+func compareFrozenCost(left, right Candidate, request RequestShape) (int, error) {
+	if request.Economics != nil {
+		leftSnapshot, err := costSnapshot(left, request)
+		if err != nil {
+			return 0, err
+		}
+		rightSnapshot, err := costSnapshot(right, request)
+		if err != nil {
+			return 0, err
+		}
+		leftCost, err := economicCostUpper(request, leftSnapshot)
+		if err != nil {
+			return 0, err
+		}
+		rightCost, err := economicCostUpper(request, rightSnapshot)
+		if err != nil {
+			return 0, err
+		}
+		return int(leftCost - rightCost), nil
+	}
+	leftBounds, err := supplierBounds(left)
+	if err != nil {
+		return 0, err
+	}
+	rightBounds, err := supplierBounds(right)
+	if err != nil {
+		return 0, err
+	}
+	leftRates, err := left.CostQuote.Rates()
+	if err != nil {
+		return 0, err
+	}
+	rightRates, err := right.CostQuote.Rates()
+	if err != nil {
+		return 0, err
+	}
+	return metering.CompareExactCost(leftBounds, leftRates, rightBounds, rightRates)
+}
+
+func cheapestGroups(groups []selectionGroup, pool []int, request RequestShape) ([]int, error) {
 	var lowest *Candidate
 	cheapest := []int{}
 	for _, i := range pool {
 		candidate := groups[i].candidate
-		bounds, err := supplierBounds(candidate)
-		if err != nil {
-			return nil, err
-		}
-		rates, err := candidate.CostQuote.Rates()
-		if err != nil {
-			return nil, err
-		}
 		comparison := -1
 		if lowest != nil {
-			other, err := supplierBounds(*lowest)
-			if err != nil {
-				return nil, err
-			}
-			otherRates, err := lowest.CostQuote.Rates()
-			if err != nil {
-				return nil, err
-			}
-			comparison, err = metering.CompareExactCost(bounds, rates, other, otherRates)
+			var err error
+			comparison, err = compareFrozenCost(candidate, *lowest, request)
 			if err != nil {
 				return nil, err
 			}
@@ -434,7 +458,7 @@ func cheapestGroups(groups []selectionGroup, pool []int) ([]int, error) {
 	return cheapest, nil
 }
 
-func sortPreference(groups []selectionGroup, pool []int, preference string, costFirst bool) ([]int, error) {
+func sortPreference(groups []selectionGroup, pool []int, preference string, costFirst bool, request RequestShape) ([]int, error) {
 	if preference == "" || preference == "price" && costFirst || len(pool) < 2 {
 		return pool, nil
 	}
@@ -444,7 +468,7 @@ func sortPreference(groups []selectionGroup, pool []int, preference string, cost
 			best = append(best, i)
 			continue
 		}
-		comparison, known, err := comparePreference(groups[i].candidate, groups[best[0]].candidate, preference)
+		comparison, known, err := comparePreference(groups[i].candidate, groups[best[0]].candidate, preference, request)
 		if err != nil {
 			return nil, err
 		}
@@ -485,25 +509,9 @@ func preferenceExclusion(preference string) string {
 }
 
 // comparePreference compares only frozen, sufficiently sampled statistics.
-func comparePreference(left, right Candidate, preference string) (comparison int, known bool, err error) {
+func comparePreference(left, right Candidate, preference string, request RequestShape) (comparison int, known bool, err error) {
 	if preference == "price" {
-		leftBounds, err := supplierBounds(left)
-		if err != nil {
-			return 0, false, err
-		}
-		rightBounds, err := supplierBounds(right)
-		if err != nil {
-			return 0, false, err
-		}
-		leftRates, err := left.CostQuote.Rates()
-		if err != nil {
-			return 0, false, err
-		}
-		rightRates, err := right.CostQuote.Rates()
-		if err != nil {
-			return 0, false, err
-		}
-		comparison, err = metering.CompareExactCost(leftBounds, leftRates, rightBounds, rightRates)
+		comparison, err = compareFrozenCost(left, right, request)
 		return comparison, true, err
 	}
 	var leftValue, rightValue *int64

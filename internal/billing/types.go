@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moni-ai/moni-aigate/internal/economics"
 	"github.com/moni-ai/moni-aigate/internal/routecost"
 	"github.com/moni-ai/moni-aigate/internal/routing"
 )
@@ -60,18 +61,21 @@ type ReserveInput struct {
 	InputUpperBound, OutputLimit                                                                       int64
 	RequestDeadline                                                                                    time.Time
 	Streaming                                                                                          bool
+	TaskHint                                                                                           string
+	ToolsRequired, ReasoningRequired                                                                   bool
 }
 type Reservation struct {
-	ID                    string    `json:"id"`
-	RequestID             string    `json:"request_id"`
-	TenantID              string    `json:"tenant_id"`
-	Amount                Money     `json:"amount"`
-	Status                string    `json:"status"`
-	Deadline              time.Time `json:"deadline"`
-	PriceVersionID        string    `json:"price_version_id"`
-	PricingGroupID        *string   `json:"pricing_group_id"`
-	TenantPricingRevision int64     `json:"tenant_pricing_revision,string"`
-	RetailPricedAt        time.Time `json:"retail_priced_at"`
+	ID                    string                       `json:"id"`
+	RequestID             string                       `json:"request_id"`
+	TenantID              string                       `json:"tenant_id"`
+	Amount                Money                        `json:"amount"`
+	Status                string                       `json:"status"`
+	Deadline              time.Time                    `json:"deadline"`
+	PriceVersionID        string                       `json:"price_version_id"`
+	PricingGroupID        *string                      `json:"pricing_group_id"`
+	TenantPricingRevision int64                        `json:"tenant_pricing_revision,string"`
+	RetailPricedAt        time.Time                    `json:"retail_priced_at"`
+	Economics             *economics.EconomicsSnapshot `json:"-"`
 }
 type CreditInput struct {
 	IdempotencyKey string    `json:"-"`

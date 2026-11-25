@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/economics"
 	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/pricing"
@@ -77,6 +78,13 @@ func (s *Store) reserve(ctx context.Context, in ReserveInput, cacheDigest []byte
 		if len(cacheDigest) != 0 && !validCacheDigest(cacheDigest) || cacheTTL == 0 && len(cacheDigest) != 0 {
 			return fail("invalid_cache", "cache request digest does not match the route revision")
 		}
+		offer, err := loadOfferEconomicsTx(ctx, tx, in.ModelID, in.RouteRevision)
+		if err != nil {
+			return err
+		}
+		if offer != nil && len(cacheDigest) != 0 {
+			return fail("cache_disabled", "profit-sensitive offers disable cache execution")
+		}
 		var storedCacheDigest any
 		if cacheTTL > 0 && len(cacheDigest) == 32 {
 			storedCacheDigest = bytes.Clone(cacheDigest)
@@ -120,6 +128,9 @@ func (s *Store) reserve(ctx context.Context, in ReserveInput, cacheDigest []byte
 		}
 		if selected == nil {
 			return fail("price_unavailable", "no effective model price")
+		}
+		if offer != nil && selected.VersionID != offer.priceVersionID {
+			return fail("price_version_changed", "service offer requires its frozen price version")
 		}
 		price := selected.VersionID
 		pricedAt := now
@@ -220,6 +231,23 @@ func (s *Store) reserve(ctx context.Context, in ReserveInput, cacheDigest []byte
 		}
 		if err = applyFundingReserveTx(ctx, tx, result, journal, lotPlan); err != nil {
 			return err
+		}
+		if offer != nil {
+			var hint *economics.TaskClass
+			if in.TaskHint != "" {
+				value := economics.TaskClass(in.TaskHint)
+				hint = &value
+			}
+			tools, reasoning := "none", "none"
+			if in.ToolsRequired {
+				tools = "required"
+			}
+			if in.ReasoningRequired {
+				reasoning = "required"
+			}
+			if err = insertRequestEconomicsTx(ctx, tx, &result, offer, hint, requestQualityScope{protocol: protocol, tools: tools, reasoning: reasoning}, admission.At, lotPlan.allocations); err != nil {
+				return err
+			}
 		}
 		if err = periodicbudget.RecordCustomerReserveTx(ctx, tx, controls, admission, result.RequestID); err != nil {
 			return periodicError(err)

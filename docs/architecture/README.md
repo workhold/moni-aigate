@@ -111,6 +111,8 @@ PR-2 侧栏收口按[导航子规格](../../specs/038-new-api-capability-migrati
 
 2026-11-23 [041 盈利商品与混合执行平台 R0](../../specs/041-profit-hybrid-platform/spec.md)为**设计候选，未实施**：后续目标从 New API 全量内收改为核心自研、长尾复用、选择性内收和永久混合。aigate 计划独占商品、质量、现金经济、最终路由与商业事实，direct/New API/Sub2API 为最多一层 relay 的叶子执行器；一个 aigate SPA 计划统一供应与执行、商品与路由、请求与利润管理，下游原生后台仅私网 break-glass。当前 COIN/CNY 最低毛利不能称现金利润，场景质量证据和请求级累计成本仍缺失；首片目标为 direct-only、coding_non_reasoning、单 attempt 的 K3-Dynamic test-only。New API/Sub2API external commercial 继续由现有门禁拒绝，本节不改变运行代码、SQL、API、部署或真实资格。
 
+2026-11-24 [041-P0 经济基础](../../specs/041-profit-hybrid-platform/p0-economic-foundation.md)进入当前实现：[`current_016_profit_economics.sql`](../../migrations/current_016_profit_economics.sql)追加不可变 offer/task/quality/execution/economics/FX 版本、生命周期和请求经济快照；[`internal/economics`](../../internal/economics)提供微法币原币向量、精确保守 FX 与请求累计成本核。内部 `PublishServiceOffer` 只发布 direct test-active 商品，未注册商品/质量/FX 管理 HTTP；新请求在 Reserve 冻结束付款基准，在 RecordAttempt/PrepareDispatch 重算候选成本并复核累计门禁，发送前按 DB 时钟复核 offer/证据，收费分支可固定全额消费原 reservation。034.5 报表扩展净消费退款、退款币再消费、inner 成本和 provisional/账单确认/FX 折算标签。external commercial、真实供应商、正式支付、生产资格和通用多币种仍未开放。
+
 ```mermaid
 flowchart LR
     Customer[客户应用] --> Gateway[moni-aigate\n唯一公网入口]
@@ -190,6 +192,10 @@ flowchart TD
     Server --> Provider[六种协议 / 受控网络]
     Server --> Billing[唯一账务事务 / 客户与采购]
     Billing --> Pricing[分组售价 / 原报价快照]
+    Catalog --> Offers[041-P0 不可变商品 / 任务 / 质量 / 执行版本]
+    Billing --> Economics[经济快照 / 微法币向量 / 保守FX与累计成本]
+    Offers --> DB
+    Economics --> DB
     Billing --> PB[客户与采购周期预算]
     Billing --> TextCache[032 同租户精确响应缓存\nTTL 正文与 cache-hit finalization]
     TextCache --> DB
@@ -647,25 +653,25 @@ sequenceDiagram
     S->>K: AuthorizedModel 读取授权模型、profile 与路由 revision
     K-->>S: 模型权限、profile 与路由版本
     S->>S: Parse 校验协议与输入/输出硬界
-    S->>K: CandidateSnapshot 读取路由绑定与当前 CostQuote
+    S->>K: CandidateSnapshot 读取路由绑定、CostQuote与P0质量预过滤
     K-->>S: 候选与报价快照
     S->>R: NewPlan 冻结候选与报价，尚未选择渠道
     R-->>S: 冻结的路由 plan
     S->>S: acquireKeyRuntime 获取最新 Key 运行许可
     S->>S: admission.acquire 等待准入队列
-    S->>B: T0 Reserve（售价快照、客户双scope周期准入、单次钱包预占）
+    S->>B: T0 Reserve（售价、周期准入、钱包预占；P0另冻付款/FX/执行快照）
     B-->>S: 持久请求 + reservation
     S->>R: plan.Start 实际筛选/比价，获取渠道/凭据双容量租约
     R-->>S: 完整版本身份、CostQuote 与解释
-    S->>B: RecordAttempt（报价冻结、累计与周期采购完整U预占）
-    S->>B: PrepareDispatch，全部锁后以同At复核三scope/时限/报价，提交 sending
+    S->>B: RecordAttempt（报价冻结、采购U预占、P0请求累计成本复核）
+    S->>B: PrepareDispatch，全部锁后复核三scope/时限/报价及P0商品/质量/累计门禁，提交 sending
     B-->>S: 持久发送授权
     S->>S: 事务外再检查实例 Guard
-    S->>U: 事务外发送，最多两次安全 attempt
+    S->>U: 事务外发送；legacy最多两次安全 attempt，P0服务端固定一次
     U-->>S: JSON / SSE + 最终 usage
     S-->>C: 流式内容；成功终态等待财务完成
     S->>B: T1.9 固化终结证据；采购held转spent或保留unknown
-    S->>B: T2 唯一结算 / 释放回原预算窗 / 待核对
+    S->>B: T2 唯一结算 / 释放 / 待核对；P0收费分支固定全额消费原预占
     B-->>S: 资金结果
     S-->>C: 成功终态或可查询的失败
     W->>B: 客户恢复与独立采购恢复；消费 outbox 更新统计
@@ -757,6 +763,18 @@ sequenceDiagram
 `GET /api/coin-display`只公开当前version、显示名、币种和比例；admin通过`GET/PUT /api/platform/coin-display-settings`及operation回查管理最近50版。[展示服务](../../internal/billing/coin_display.go)以独立advisory lock串行CAS，写操作要求近期再认证、CSRF、operation幂等、二次确认和`coin_display.updated`审计；异意图与过期revision冲突，未知结果只读核查，不自动重试。[HTTP](../../internal/server/coin_display_handlers.go)不进入模型请求处理器，真实网关测试将展示表改名后仍完成请求与结算。
 
 前端[公开配置模块](../../web/src/coin-display.ts)和[管理页](../../web/src/components/CoinDisplaySettings.vue)分别严格解析安全DTO与历史/命令。[`coin()`](../../web/src/format.ts)以BigInt向零截断计算约合，显示版本与“仅供参考”；[MetricMoney](../../web/src/components/MetricMoney.vue)保留基础金额样式。读取失败只保留默认“币”且不显示约合，配置不写localStorage。会计币价、请求、预占、结算、退款、报表付款基准与canonical均不读取展示比例。详见[展示架构](coin-display.md)与[034.6验证](../verification/034-6-coin-display.md)。
+
+### 041-P0 商品、经济快照与贡献毛利
+
+[聚焦合同](../../specs/041-profit-hybrid-platform/p0-economic-foundation.md)冻结 SQL/API/ACL/恢复边界。当前只暴露内部 `catalog.PublishServiceOffer` 和既有请求/报表接口，不注册未来配置管理路由。版本表只引用既有 model/profile/price/route/binding/channel/physical/cost 权威；route 与 offer 在同一 model 锁/CAS 事务发布，binding 固定质量证据，route 固定 ExecutionPolicy。生命周期指针与不可变版本分离，撤回只影响新准入，不阻断历史财务收尾。
+
+Reserve 从原 funding reservation lot/receipt 计算付费基准下界，grant/opening 为已知零，unknown/缺版本/分配不完整失败；`request_economics_snapshots` 同时保存规范字节、JSONB 投影与 SHA-256，并冻结 USD/CNY 原币向量、FX 报价、执行/任务/质量版本。FX 只在显式有向报价和有效期内使用，收入向下、成本向上加费用缓冲；同币种为恒等转换。没有实际换汇事实只能标 `fx_snapshot` 折算贡献毛利。
+
+`cost_versions.currency` 与现有定价 operation 支持 CNY/USD；计量 canonical 和历史人民币数值不改写。Route decision 固化执行政策、任务候选、报价币种与成本上界；RecordAttempt/PrepareDispatch 从原报价及 physical bounds 重算 U，并把较早 outer 实际/保留成本和最新 inner 成本纳入请求级门禁。P0 数据库与 Plan 都固定一个 outer attempt，缓存关闭，unknown 成本/付款/FX 失败关闭，SafeToRetry 与 committed/恢复不重放不变。
+
+034.5 的同一 [`reporting.Read`](../../internal/reporting/read.go) RR 只读管线按原分配边累计消费退款，使用 `floor((charged-refunded)×fiat/issued)`；退款币再消费只确认当前净消费，lot 超原收款即失败而非截断。outer 当前成本指针与 `attempt_cost_components` 最新 inner 修订进入原币成本向量；contract 只标暂估，全部相关成本 invoice 才标账单确认，成本更正可下降或为负。请求增加 offer/task 维度，CSV 只追加列，前端严格区分暂估、账单确认和 FX 折算，不显示净利润。
+
+新表 APP 仅获必要 SELECT/INSERT，生命周期只有受控状态列 UPDATE；版本、快照、成本组件和撤回历史禁止改删，projection 无新表权限。后台恢复与报表没有模型执行权限。真实供应商、external commercial、生产及配置管理 UI 均不在本片资格范围。
 
 ### 029/031 验收合同冻结与计数
 
@@ -1148,6 +1166,14 @@ erDiagram
     channel_credentials ||--o{ channel_version_credentials : participates
     channel_versions ||--o{ model_bindings : binds
     route_policy_versions ||--o{ model_bindings : groups
+    route_policy_versions ||--o| service_offer_versions : publishes
+    service_offer_versions ||--|| service_offer_states : lifecycle
+    service_offer_versions ||--o{ service_offer_lifecycle_events : audits
+    quality_evidence |o--o{ model_bindings : qualifies_scenario
+    quality_evidence ||--o| quality_evidence_withdrawals : withdraws
+    execution_policy_versions |o--o{ route_policy_versions : limits
+    economics_policy_versions |o--o{ service_offer_versions : values
+    fx_policy_versions ||--o{ fx_policy_rates : quotes
     model_capability_versions ||--o{ channel_profile_release_evidence : scopes
     channel_versions ||--o{ channel_profile_release_evidence : qualifies
     channel_profile_release_evidence ||--o{ channel_profile_release_evidence_credentials : covers
@@ -1157,6 +1183,8 @@ erDiagram
     api_keys ||--o{ request_records : authorizes
     request_records ||--|| reservations : reserves
     request_records ||--o{ upstream_attempts : attempts
+    request_records ||--o| request_economics_snapshots : freezes_economics
+    upstream_attempts ||--o{ attempt_cost_components : inner_costs
     request_records ||--o{ metering_events : measures
     upstream_attempts |o--o{ metering_events : identifies
     metering_events ||--o{ finalization_records : evidences
@@ -1338,7 +1366,8 @@ T3初版的billing/PB→maintenancetrust依赖曾将固定catalog初始化带入
 | 经营报表与CSV | 026已接平台HTTP/控制台，限定专项验收见记录 | 最长31天/5000请求；消费收入一次、全部尝试成本、退款净额，未知成本或未结算时毛利待核对；独立于累计钱包异步投影，[架构](operating-reports.md)、[验证](../verification/operating-reports.md) |
 | 资金来源与钱包开账 | 027已实现现行四写入口、正式023、CLI、HTTP与控制台，专项验收见记录 | 六表来源与开账原件，非现金opening、FIFO和逆序消费退款；新库策略，无历史无损升级或真实原路现金退款；[架构](wallet-sources.md)、[验证](../verification/wallet-sources.md) |
 | 成本感知自动路由 | 018 已实现，限定本地验收通过 | 最高优先级内保守 big.Int 比价、未知拒绝、两维采购单价上限，候选/attempt/sending 报价同步；[规格](../../specs/018-cost-aware-routing/spec.md)、[真实 PG/浏览器/预览证据](../verification/cost-aware-routing.md) |
-| 文本动态路由 | 033 已实现并完成本地完整 029；真实供应商、生产与场景质量/现金利润仍独立 | `current_015_phase3_dynamic_routing.sql`、物理模型、完整候选决策、auto、统计排序、粘性、毛利字段和只读回放已进入当前代码；仅 Chat 接受 route 偏好，媒体/任务/Realtime 不参与。见[规格](../../specs/033-text-dynamic-routing/spec.md)与[验证](../verification/phase3-dynamic-routing.md)；041 动态商品/场景质量/现金毛利为后续设计候选 |
+| 文本动态路由 | 033 已实现并完成本地完整 029；真实供应商与生产资格仍独立 | `current_015_phase3_dynamic_routing.sql`、物理模型、完整候选决策、auto、统计排序、粘性、旧数值型毛利字段和只读回放已进入当前代码；仅 Chat 接受 route 偏好，媒体/任务/Realtime 不参与。见[规格](../../specs/033-text-dynamic-routing/spec.md)与[验证](../verification/phase3-dynamic-routing.md)；P0 场景质量/现金经济基础见下项，旧指标不称现金利润 |
+| 041-P0 经济基础 | direct test-only 内部接缝已实现；配置管理HTTP、真实供应商、external commercial与生产资格未开放 | 不可变 offer/task/quality/execution/economics/FX、Reserve 快照、fixed-full、单attempt、累计成本与统一贡献毛利报表；见[合同](../../specs/041-profit-hybrid-platform/p0-economic-foundation.md)、[迁移](../../migrations/current_016_profit_economics.sql)与[P0验证](../verification/041-p0-economic-foundation.md) |
 | 媒体/任务/Realtime 路由 | 不参与路由（前三阶段） | 单 profile、单 adapter；`media_*` 表无 channel/binding；与文本共享钱包与账务；媒体动态路由需另立 SDD，见[HLD 结构边界](../design/HLD.md#文本与媒体的结构边界和路由范围2026-11-10) |
 | 共享采购账户/预算 | 019已实现，限定本地验收通过 | [冻结合同](../../specs/019-procurement-accounts/contract.md)；跨渠道/Key/租户共享累计预算、逐attempt预占、未知占用和双人更正；周期硬预算已由023-B扩展；余额仅人工证据，供应商余额/账单自动同步待后续 |
 | 公开模型目录 | 020已实现，限定本地验收通过 | 默认私有、安全DTO、当前价、筛选/分页、独立准入与admin公开CAS；[020验证](../verification/public-catalog.md) |

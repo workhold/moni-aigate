@@ -83,6 +83,17 @@ type Totals struct {
 	PaymentBasis         map[string]string `json:"payment_basis"`
 	CashRefunded         map[string]string `json:"cash_refunded"`
 	GrossMargin          *string           `json:"gross_margin"`
+
+	// P0 keeps the legacy scalar fields above while exposing the exact original
+	// currency vector and the evidence state of both contribution margins.
+	ProviderCost             map[string]string `json:"provider_cost"`
+	ProvisionalGrossMargin   *string           `json:"provisional_gross_margin"`
+	BillConfirmedGrossMargin *string           `json:"bill_confirmed_gross_margin"`
+	GrossMarginCurrency      *string           `json:"gross_margin_currency"`
+	MarginValuation          *string           `json:"margin_valuation"`
+	CostAsOf                 *time.Time        `json:"cost_as_of"`
+	CostRevision             string            `json:"cost_revision"`
+	FxPolicyVersions         []string          `json:"fx_policy_versions"`
 }
 
 type ModelReport struct {
@@ -116,6 +127,14 @@ type RequestRow struct {
 	SchemaDigest   string    `json:"schema_digest"`
 	VariantKey     string    `json:"variant_key"`
 	Totals
+	OfferVersionID string `json:"offer_version_id"`
+	TaskClass      string `json:"task_class"`
+}
+
+type OfferReport struct {
+	OfferVersionID string `json:"offer_version_id"`
+	TaskClass      string `json:"task_class"`
+	Totals
 }
 
 type Report struct {
@@ -129,4 +148,7 @@ type Report struct {
 	Models     []ModelReport   `json:"models"`
 	Channels   []ChannelReport `json:"channels"`
 	Requests   []RequestRow    `json:"requests"`
+	// OfferReports contains only requests bound to an immutable P0 offer. Legacy
+	// and media requests remain visible in the other dimensions.
+	OfferReports []OfferReport `json:"offer_reports"`
 }

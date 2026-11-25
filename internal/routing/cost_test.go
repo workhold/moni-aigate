@@ -16,11 +16,15 @@ import (
 
 // Per-million fixture input only; production selectors never reconstruct it.
 func testCostQuote(channel, model, version, basis string, input, output int64) routecost.Quote {
+	return testCostQuoteCurrency(channel, model, version, basis, input, output, "CNY")
+}
+
+func testCostQuoteCurrency(channel, model, version, basis string, input, output int64, currency string) routecost.Quote {
 	s, err := metering.ParseSchema([]byte(`{"schema_id":"10000000-0000-4000-8000-000000000001","version":"1","dimensions":[{"dimension":"text_input_token","unit":"token","maximum_quantity":"9223372036854775807"},{"dimension":"text_output_token","unit":"token","maximum_quantity":"9223372036854775807"}],"retail_dimensions":["text_input_token","text_output_token"],"supplier_dimensions":["text_input_token","text_output_token"]}`))
 	if err != nil {
 		panic(err)
 	}
-	in := routecost.Input{ChannelID: channel, UpstreamModel: model, VersionID: version, Basis: basis, VariantKey: "default", Schema: s}
+	in := routecost.Input{ChannelID: channel, UpstreamModel: model, VersionID: version, Basis: basis, VariantKey: "default", Currency: currency, Schema: s}
 	if basis != "unknown" {
 		in.Rates, err = metering.ManagementTokenRates(s, metering.Supplier, input, output)
 		if err != nil {

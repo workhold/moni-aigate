@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/moni-ai/moni-aigate/internal/economics"
 	"github.com/moni-ai/moni-aigate/internal/metering"
 	"github.com/moni-ai/moni-aigate/internal/periodicbudget"
 	"github.com/moni-ai/moni-aigate/internal/routecost"
@@ -93,6 +94,24 @@ func (s *Store) RecordAttempt(ctx context.Context, in AttemptInput) (Attempt, er
 			return err
 		}
 		if err = checkAttemptCostQuote(ctx, tx, r, in, cost); err != nil {
+			return err
+		}
+		var expected economics.MoneyVector
+		var offer bool
+		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM request_economics_snapshots WHERE tenant_id=$1 AND request_id=$2)`, in.TenantID, in.RequestID).Scan(&offer); err != nil {
+			return err
+		}
+		if offer && cost.Known() {
+			var outputBound int64
+			if err = tx.QueryRow(ctx, `SELECT output_bound FROM request_meter_snapshots WHERE tenant_id=$1 AND request_id=$2`, in.TenantID, in.RequestID).Scan(&outputBound); err != nil {
+				return err
+			}
+			expected, err = conservativeCostVector(cost, binding.capability.InputUpperBound, outputBound)
+			if err != nil {
+				return err
+			}
+		}
+		if err = checkCumulativeCostTx(ctx, tx, in.TenantID, in.RequestID, in.Sequence, in.RouteDecision, expected); err != nil {
 			return err
 		}
 		err = tx.QueryRow(ctx, "INSERT INTO upstream_attempts(id,tenant_id,request_id,sequence,channel_id,channel_version_id,credential_id,upstream_model) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(request_id,sequence) DO NOTHING RETURNING id,request_id,sequence,delivery_state,cost_status", uuid.NewString(), in.TenantID, in.RequestID, in.Sequence, in.ChannelID, in.ChannelVersionID, in.CredentialID, in.UpstreamModel).Scan(&result.ID, &result.RequestID, &result.Sequence, &result.DeliveryState, &result.CostStatus)
@@ -269,6 +288,20 @@ func (s *Store) PrepareDispatch(ctx context.Context, in DispatchInput) error {
 			return err
 		}
 		if err = checkDispatchCostQuote(ctx, tx, in.TenantID, in.AttemptID, at); err != nil {
+			return err
+		}
+		decision, err := routeDecisionForAttemptTx(ctx, tx, in.TenantID, in.AttemptID)
+		if err == nil {
+			var offer bool
+			if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM request_economics_snapshots WHERE tenant_id=$1 AND request_id=$2)`, in.TenantID, request).Scan(&offer); err == nil && offer {
+				var expected economics.MoneyVector
+				expected, err = frozenAttemptCostVectorTx(ctx, tx, in.TenantID, in.AttemptID)
+				if err == nil {
+					err = checkCumulativeCostTx(ctx, tx, in.TenantID, request, decision.Sequence, decision, expected)
+				}
+			}
+		}
+		if err != nil {
 			return err
 		}
 		_, err = tx.Exec(ctx, "UPDATE request_records SET status='dispatching' WHERE id=$1", request)

@@ -200,6 +200,8 @@ CREATE UNIQUE INDEX route_decisions_request_sequence ON route_decisions(request_
 
 最低毛利：`1 - 保守供应商成本 / 客户冻结售价` 低于 `min_margin_rate` 时排除。成本未知时按 `unknown_cost_policy`：`deny` 排除，`allow` 保留但标注。
 
+**041-P0 修订**：该原始公式只适用于无 ServiceOfferVersion 的 legacy 数值指标，不能称现金毛利。显式 P0 offer 使用[经济基础子规格](../041-profit-hybrid-platform/p0-economic-foundation.md)的净付款基准下界、USD/CNY 原币向量、保守 FX 与较早 outer/inner 累计成本；服务端 ExecutionPolicy 固定单 attempt，不能依赖 `allow_fallbacks=false`。
+
 ### 4.2 排序
 
 只在剩余候选内：

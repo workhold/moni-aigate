@@ -57,3 +57,13 @@ flowchart LR
 027及034.2的六类来源入账与非现金opening都不直接进入settlement消费币数；034.5只把原结算分配边join到共享lot/receipt以计算付款基准，请求charged仍只从唯一settlement读取，因此多lot不会重复计消费。实际023后来源/CSV及四来源305入账但经营消费0的历史证据见[来源验证](../verification/wallet-sources.md)；034.5的真实付费、赠送、unknown、USD、现金退款及跨租户负控见[本片验证](../verification/034-5-reporting-wallet-composition.md)。
 
 028已经从原request不可变快照读取protocol/execution_kind/profile/schema/variant，筛选、JSON、CSV及前端沿同一合同工作；不能从当前model profile推断历史。当前媒体接缝继续使用同一只读RR快照，把media_requests与media_settlements映射为请求事实，把media_attempts映射为全部attempt事实；媒体操作可通过protocol筛选，video_generation使用asynchronous执行类型。金额继续读原settlement和全部attempt投影，不从向量或`media.raw_amount`重算，也不因人工客户量确认而把上游未知成本改成0。任务生成归原提交request，实时按收费轮次request；poll/下载/heartbeat不增加收入或生成attempt。媒体 supplier cost 只从结算时冻结的 known/unknown 快照读取，失败、取消、缺失或未知消费仍进入未知成本并使毛利为null。跨维度数量若另行汇总须按schema/dimension/unit/side分组，不把Token、图片、字符和时长相加。实施范围见[028消费者清单](../../specs/028-unified-metering-media/u-consumer-inventory.md)与[阶段出口](../../specs/028-unified-metering-media/tasks.md)。
+
+## 041-P0 净付款、成本时点与原币向量
+
+2026-11-24 起，同一 `reporting.Read` 管线扩展 041-P0，不新增利润数据库或第二读权威。文本/媒体分配边同时读取 lot ID 和累计 `funding_consumption_refund_lots`，以 `floor((charged-cumulative_refunded)×fiat/issued)` 计算净付款基准；按边重算而不是从 gross 逐笔减去向下取整退款。退款币回到原 lot 后再次消费形成新请求的正常边，原请求已被冲减；每 lot 净消费超过 issued 或净基准超过原 receipt 付款时整份报表失败，不截断坏事实。独立现金退款仍只进入 `cash_refunded`。
+
+outer 继续读取 `upstream_attempts` 的当前成本指针；`attempt_cost_components` 的每 component 最高 revision 作为 inner 成本加入原采购报表，但不增加 outer attempt 数或客户收费。`provider_cost` 和 `payment_basis` 分别保存 CNY/USD 原币向量，兼容 `known_provider_cost` 只保留 CNY 标量。任何 outer/inner 未知、未结算或付款分配不完整均使贡献毛利为空。
+
+contract 成本产生 `provisional_gross_margin`，全部相关成本为 invoice 才产生 `bill_confirmed_gross_margin`；`cost_as_of/cost_revision` 跟随最新观察/更正，负值保留。同币种标 `original_currency`；交叉币种仅使用新 offer 的请求冻结 FX，标 `fx_snapshot` 并列出政策 ID，不能称实收现金毛利。请求增加 offer/task 字段，`offer_reports` 复用同一聚合器；CSV 在原25列后追加新字段，前端以暂估/账单确认/FX折算标签显示，绝不称净利润。
+
+权限、31天/5000请求、5秒只读事务与现有平台角色不变。数据库配置写入、external commercial、真实供应商账单同步和生产资格仍由各自 SDD 门禁控制。

@@ -7,7 +7,7 @@ import RouteAttempts from './RouteAttempts.vue'
 import { request } from '../api'
 import { coin, integer, label, money, shortId, time } from '../format'
 import { session } from '../session'
-import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingFiatMapText, operatingFilter, operatingMarginKnown, operatingMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../operating-report'
+import { createOperatingReportState, defaultOperatingFilter, fetchOperatingCSV, operatingBillConfirmedMarginText, operatingFiatMapText, operatingFilter, operatingMarginValuationText, operatingProvisionalMarginText, operatingReportPath, parseOperatingReport, saveOperatingCSV } from '../operating-report'
 import type { OperatingReport } from '../operating-report'
 
 const route = useRoute(), flow = createOperatingReportState()
@@ -71,8 +71,8 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
         <p class="report-note">默认最近 7 天，单次最多 31 天、5,000 个请求。修改筛选会清除旧结果，点击查询后读取新范围。</p>
         <el-alert v-if="state.error" :title="state.error" type="error" :closable="false" show-icon />
         <el-alert v-if="state.downloadError" :title="state.downloadError" type="error" :closable="false" show-icon />
-        <p class="report-note">消费币数、消费退回与净消费币数使用 COIN；付款基准、采购成本、现金退款与毛利使用各自法币。毛利按付款基准减完整采购成本计算，不再使用净消费币数；任一看不到付款基准、存在多币种、未结算或未知成本时均为待核对。</p>
-        <p class="report-note">JSON 与 CSV 的金额均为整数微单位：1 COIN = 1,000,000 微币，1 元 / 美元 = 1,000,000 微法币。现金退款是独立线下事实，不冲减付款基准，只在汇总展示；请求级 CSV 的现金退款列留空，避免重复分摊。每次导出读取独立快照。</p>
+        <p class="report-note">消费币数、消费退回与净消费币数使用 COIN；付款基准按原分配边的累计消费退款净额计算，采购成本保留 CNY / USD 原币。暂估贡献毛利含合同成本，账单确认贡献毛利要求相关成本均为账单；跨币种只在冻结快照支持时按收入下界、成本上界折算并标注 FX 快照。</p>
+        <p class="report-note">JSON 与 CSV 的金额均为整数微单位：1 COIN = 1,000,000 微币，1 元 / 美元 = 1,000,000 微法币。现金退款是独立线下事实，不冲减消费付款基准，只在汇总展示；请求级 CSV 的现金退款列留空，避免重复分摊。每次导出读取独立快照。</p>
       </template>
     </section>
 
@@ -81,19 +81,21 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
       <p v-else-if="!report && !state.error" class="report-note">尚未查询当前筛选范围。</p>
       <template v-if="report">
         <p class="report-snapshot">请求创建窗口：<span :title="report.from">{{ time(report.from) }}</span> ≤ 创建时间 &lt; <span :title="report.to">{{ time(report.to) }}</span><br>统计快照：<span :title="report.as_of">{{ time(report.as_of) }}</span> · COIN 消费 / CNY、USD 法币 · 以下分页均来自该次快照</p>
-        <el-alert v-if="report.summary.gross_margin === null" type="warning" :closable="false" show-icon :title="`毛利待核对：${integer(report.summary.unsettled_requests)} 个未结算请求、${integer(report.summary.unknown_provider_costs)} 次未知采购成本；unknown 付款基准、多币种或分配不完整也不会按零计算。`" />
+        <el-alert v-if="report.summary.gross_margin === null" type="warning" :closable="false" show-icon :title="`贡献毛利待核对：${integer(report.summary.unsettled_requests)} 个未结算请求、${integer(report.summary.unknown_provider_costs)} 项未知采购成本；unknown 付款基准、分配不完整、缺少冻结 FX 或估值币种不一致也不会按零计算。`" />
         <div class="metric-grid report-metrics">
           <div class="metric-card"><div class="metric-label">客户消费币数</div><MetricMoney unit="COIN" :value="report.summary.charged" /><div class="metric-note">已结算 COIN，非现金收款</div></div>
           <div class="metric-card"><div class="metric-label">消费退回币数</div><MetricMoney unit="COIN" :value="report.summary.refunded" /><div class="metric-note">所选请求截至快照退回的钱包币</div></div>
           <div class="metric-card"><div class="metric-label">净消费币数</div><MetricMoney unit="COIN" :value="report.summary.net_revenue" /><div class="metric-note">消费币数减消费退回，不是毛利</div></div>
           <div class="metric-card"><div class="metric-label">客户付款基准</div><div class="metric-value metric-fiat">{{ operatingFiatMapText(report.summary.payment_basis) }}</div><div class="metric-note">按结算分配边折算，分币种列示</div></div>
           <div class="metric-card"><div class="metric-label">已线下退还法币</div><div class="metric-value metric-fiat">{{ operatingFiatMapText(report.summary.cash_refunded) }}</div><div class="metric-note">仅 completed 现金退款，不冲减付款基准</div></div>
-          <div class="metric-card"><div class="metric-label">已知采购成本（CNY）</div><MetricMoney unit="CNY" :value="report.summary.known_provider_cost" /><div class="metric-note">所有尝试的合同或账单成本</div></div>
-          <div class="metric-card"><div class="metric-label">毛利参考（CNY）</div><MetricMoney v-if="operatingMarginKnown(report.summary)" unit="CNY" :value="report.summary.gross_margin" /><div v-else class="metric-value text-warning">待核对</div><div class="metric-note">CNY 付款基准减完整采购成本</div></div>
+          <div class="metric-card"><div class="metric-label">采购成本（原币）</div><div class="metric-value metric-fiat">{{ operatingFiatMapText(report.summary.provider_cost) }}</div><div class="metric-note">所有 outer 当前成本与 inner 最新修订，按原币列示</div></div>
+          <div class="metric-card"><div class="metric-label">暂估贡献毛利</div><div class="metric-value metric-fiat">{{ operatingProvisionalMarginText(report.summary) }}</div><div class="metric-note">{{ operatingMarginValuationText(report.summary) || '付款基准、成本或覆盖范围待核对' }}</div></div>
+          <div class="metric-card"><div class="metric-label">账单确认贡献毛利</div><div class="metric-value metric-fiat">{{ operatingBillConfirmedMarginText(report.summary) }}</div><div class="metric-note">{{ report.summary.bill_confirmed_gross_margin === null ? '仍有合同或未知成本' : operatingMarginValuationText(report.summary) }}</div></div>
           <div class="metric-card"><div class="metric-label">请求 / 上游尝试</div><div class="metric-value">{{ integer(report.summary.request_count) }} / {{ integer(report.summary.attempt_count) }}</div><div class="metric-note">一次结算消费，所有尝试成本均计入</div></div>
           <div class="metric-card"><div class="metric-label">未结算请求</div><div class="metric-value" :class="{ 'text-warning': report.summary.unsettled_requests }">{{ integer(report.summary.unsettled_requests) }}</div><div class="metric-note">尚无结算事实的请求</div></div>
-          <div class="metric-card"><div class="metric-label">未知采购成本尝试</div><div class="metric-value" :class="{ 'text-warning': report.summary.unknown_provider_costs }">{{ integer(report.summary.unknown_provider_costs) }}</div><div class="metric-note">待取得合同或账单成本事实</div></div>
+          <div class="metric-card"><div class="metric-label">未知采购成本项</div><div class="metric-value" :class="{ 'text-warning': report.summary.unknown_provider_costs }">{{ integer(report.summary.unknown_provider_costs) }}</div><div class="metric-note">待取得合同或账单成本事实</div></div>
         </div>
+        <p v-if="report.summary.margin_valuation === 'fx_snapshot'" class="report-note">FX 快照折算政策版本：<span class="mono">{{ report.summary.fx_policy_versions.join(' · ') }}</span></p>
         <el-empty v-if="report.summary.request_count === 0" description="当前创建时间窗口及筛选范围没有请求" />
 
         <section class="panel"><div class="panel-header"><div><h3 class="panel-title">按模型汇总</h3><p class="panel-subtitle">每个客户请求仅计一次消费币数，付款基准按来源分配，采购成本包含该请求的全部尝试。</p></div></div>
@@ -104,9 +106,23 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
             <el-table-column label="消费退回" min-width="165"><template #default="{ row }">{{ coin(row.refunded) }}</template></el-table-column>
             <el-table-column label="净消费币数" min-width="165"><template #default="{ row }">{{ coin(row.net_revenue) }}</template></el-table-column>
             <el-table-column label="付款基准" min-width="190"><template #default="{ row }">{{ operatingFiatMapText(row.payment_basis) }}</template></el-table-column>
-            <el-table-column label="已知采购成本（CNY）" min-width="185"><template #default="{ row }">{{ money(row.known_provider_cost) }}</template></el-table-column>
+            <el-table-column label="采购成本（原币）" min-width="185"><template #default="{ row }">{{ operatingFiatMapText(row.provider_cost) }}</template></el-table-column>
             <el-table-column label="未结算 / 未知成本" min-width="155"><template #default="{ row }">{{ integer(row.unsettled_requests) }} / {{ integer(row.unknown_provider_costs) }}</template></el-table-column>
-            <el-table-column label="毛利参考（CNY）" min-width="175"><template #default="{ row }"><span :class="{ 'text-warning': !operatingMarginKnown(row) }">{{ operatingMarginText(row) }}</span></template></el-table-column>
+            <el-table-column label="暂估贡献毛利" min-width="175"><template #default="{ row }"><div>{{ operatingProvisionalMarginText(row) }}</div><div class="muted small-text">{{ operatingMarginValuationText(row) }}</div></template></el-table-column>
+            <el-table-column label="账单确认贡献毛利" min-width="195"><template #default="{ row }">{{ operatingBillConfirmedMarginText(row) }}</template></el-table-column>
+          </el-table>
+        </section>
+
+        <section class="panel"><div class="panel-header"><div><h3 class="panel-title">按商品 / 任务汇总</h3><p class="panel-subtitle">仅包含绑定不可变商品版本的请求，按商品版本与任务类别汇总；旧请求和媒体请求不虚构商品维度。</p></div></div>
+          <el-table :data="report.offer_reports" empty-text="当前范围没有商品请求" aria-label="经营报表商品任务汇总">
+            <el-table-column label="商品版本" min-width="180"><template #default="{ row }"><span class="mono" :title="row.offer_version_id">{{ shortId(row.offer_version_id) }}</span></template></el-table-column>
+            <el-table-column label="任务类别" min-width="170"><template #default="{ row }"><span class="mono">{{ row.task_class }}</span></template></el-table-column>
+            <el-table-column label="请求 / 尝试" min-width="125"><template #default="{ row }">{{ integer(row.request_count) }} / {{ integer(row.attempt_count) }}</template></el-table-column>
+            <el-table-column label="净消费币数" min-width="155"><template #default="{ row }">{{ coin(row.net_revenue) }}</template></el-table-column>
+            <el-table-column label="净付款基准" min-width="180"><template #default="{ row }">{{ operatingFiatMapText(row.payment_basis) }}</template></el-table-column>
+            <el-table-column label="采购成本（原币）" min-width="180"><template #default="{ row }">{{ operatingFiatMapText(row.provider_cost) }}</template></el-table-column>
+            <el-table-column label="暂估贡献毛利" min-width="175"><template #default="{ row }"><div>{{ operatingProvisionalMarginText(row) }}</div><div class="muted small-text">{{ operatingMarginValuationText(row) }}</div></template></el-table-column>
+            <el-table-column label="账单确认贡献毛利" min-width="195"><template #default="{ row }">{{ operatingBillConfirmedMarginText(row) }}</template></el-table-column>
           </el-table>
         </section>
 
@@ -115,8 +131,8 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
             <el-table-column label="渠道" min-width="210"><template #default="{ row }"><div>{{ row.channel_name }}</div><div class="mono muted small-text" :title="row.channel_id">{{ shortId(row.channel_id) }}</div></template></el-table-column>
             <el-table-column label="关联请求" min-width="110"><template #default="{ row }">{{ integer(row.request_count) }}</template></el-table-column>
             <el-table-column label="尝试次数" min-width="110"><template #default="{ row }">{{ integer(row.attempt_count) }}</template></el-table-column>
-            <el-table-column label="已知采购成本（CNY）" min-width="190"><template #default="{ row }">{{ money(row.known_provider_cost) }}</template></el-table-column>
-            <el-table-column label="未知成本尝试" min-width="140"><template #default="{ row }"><span :class="{ 'text-warning': row.unknown_provider_costs }">{{ integer(row.unknown_provider_costs) }}</span></template></el-table-column>
+            <el-table-column label="已知采购成本（CNY 兼容字段）" min-width="190"><template #default="{ row }">{{ money(row.known_provider_cost) }}</template></el-table-column>
+            <el-table-column label="未知成本项" min-width="140"><template #default="{ row }"><span :class="{ 'text-warning': row.unknown_provider_costs }">{{ integer(row.unknown_provider_costs) }}</span></template></el-table-column>
           </el-table>
         </section>
 
@@ -124,14 +140,16 @@ onBeforeUnmount(() => { flow.dispose(); attemptsOpen.value = false; attemptsRequ
           <el-table :data="requests" empty-text="当前范围没有请求明细" aria-label="经营报表请求明细">
             <el-table-column label="请求 / 创建时间" min-width="195"><template #default="{ row }"><el-button link type="primary" class="mono" :title="row.request_id" @click="showAttempts(row.request_id)">{{ shortId(row.request_id) }}</el-button><div class="muted small-text">{{ time(row.created_at) }}</div></template></el-table-column>
             <el-table-column label="客户 / 模型" min-width="195"><template #default="{ row }"><div :title="row.tenant_id">{{ row.tenant_name || shortId(row.tenant_id) }}</div><div class="muted small-text" :title="row.model_id">{{ row.model_name || shortId(row.model_id) }}</div></template></el-table-column>
+            <el-table-column label="商品 / 任务" min-width="175"><template #default="{ row }"><div v-if="row.offer_version_id" class="mono" :title="row.offer_version_id">{{ shortId(row.offer_version_id) }}</div><div v-if="row.task_class" class="muted small-text">{{ row.task_class }}</div><span v-else>—</span></template></el-table-column>
             <el-table-column label="请求 / 收费状态" min-width="140"><template #default="{ row }"><div>{{ label(row.status) }}</div><div class="muted small-text">{{ label(row.billing_status) }}</div></template></el-table-column>
             <el-table-column label="消费币数" min-width="165"><template #default="{ row }">{{ coin(row.charged) }}</template></el-table-column>
             <el-table-column label="消费退回" min-width="165"><template #default="{ row }">{{ coin(row.refunded) }}</template></el-table-column>
             <el-table-column label="净消费币数" min-width="165"><template #default="{ row }">{{ coin(row.net_revenue) }}</template></el-table-column>
             <el-table-column label="付款基准" min-width="190"><template #default="{ row }">{{ operatingFiatMapText(row.payment_basis) }}</template></el-table-column>
             <el-table-column label="尝试 / 未知成本" min-width="140"><template #default="{ row }">{{ integer(row.attempt_count) }} / {{ integer(row.unknown_provider_costs) }}</template></el-table-column>
-            <el-table-column label="已知采购成本（CNY）" min-width="185"><template #default="{ row }">{{ money(row.known_provider_cost) }}</template></el-table-column>
-            <el-table-column label="毛利参考（CNY）" min-width="175"><template #default="{ row }"><span :class="{ 'text-warning': !operatingMarginKnown(row) }">{{ operatingMarginText(row) }}</span></template></el-table-column>
+            <el-table-column label="采购成本（原币）" min-width="185"><template #default="{ row }">{{ operatingFiatMapText(row.provider_cost) }}</template></el-table-column>
+            <el-table-column label="暂估贡献毛利" min-width="180"><template #default="{ row }"><div>{{ operatingProvisionalMarginText(row) }}</div><div class="muted small-text">{{ operatingMarginValuationText(row) }}</div></template></el-table-column>
+            <el-table-column label="账单确认贡献毛利 / 成本时点" min-width="225"><template #default="{ row }"><div>{{ operatingBillConfirmedMarginText(row) }}</div><div v-if="row.cost_as_of" class="muted small-text" :title="row.cost_revision">{{ time(row.cost_as_of) }}</div></template></el-table-column>
           </el-table>
           <div class="table-footer"><span>共 {{ integer(report.requests.length) }} 个请求 · 当前快照内每页 {{ pageSize }} 条</span><el-pagination v-model:current-page="page" :page-size="pageSize" :total="report.requests.length" layout="prev, pager, next" small /></div>
         </section>

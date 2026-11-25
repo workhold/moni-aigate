@@ -53,6 +53,7 @@ type Candidate struct {
 	RetailAmount          int64
 	Physical              PhysicalCapability
 	Stats                 StatsSnapshot
+	Quality               QualityEvidenceSnapshot
 	ProcurementManaged    bool
 	ProcurementState      string
 	ProcurementAvailable  string
@@ -87,7 +88,7 @@ func candidateKey(c Candidate) string {
 
 func exclusionReason(c Candidate) string {
 	switch c.ExclusionReason {
-	case "not_authorized", "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden", "capability_missing", "quality_below_floor", "context_too_small", "tools_unsupported", "output_limit_too_small", "capacity_full", "circuit_open", "half_open_busy", "quarantined", "cost_unknown", "cost_limit_exceeded", "margin_below_floor", "procurement_paused", "procurement_budget_exceeded", "procurement_bound_invalid", "procurement_budget_unavailable", "already_tried":
+	case "not_authorized", "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden", "capability_missing", "quality_below_floor", "context_too_small", "tools_unsupported", "output_limit_too_small", "capacity_full", "circuit_open", "half_open_busy", "quarantined", "cost_unknown", "cost_limit_exceeded", "margin_below_floor", "procurement_paused", "procurement_budget_exceeded", "procurement_bound_invalid", "procurement_budget_unavailable", "task_not_allowed", "offer_inactive", "quality_evidence_missing", "quality_evidence_withdrawn", "quality_evidence_expired", "quality_scope_mismatch", "already_tried":
 		return c.ExclusionReason
 	default:
 		return "disabled"
@@ -121,7 +122,7 @@ func NewDynamicPlan(candidates []Candidate, maxAttempts int, policy DynamicPolic
 }
 
 func newPlan(candidates []Candidate, maxAttempts int, policy DynamicPolicy, request RequestShape) (*Plan, error) {
-	if maxAttempts < 1 || maxAttempts > 2 || len(candidates) == 0 || policy.Validate() != nil || request.Validate() != nil {
+	if maxAttempts < 1 || maxAttempts > 2 || len(candidates) == 0 || policy.Validate() != nil || request.Validate() != nil || policy.Execution != nil && int64(maxAttempts) > policy.Execution.MaxOuterAttempts {
 		return nil, ErrInvalidPolicy
 	}
 	p := &Plan{max: maxAttempts, tried: map[string]bool{}, policy: policy, request: request}
@@ -224,7 +225,7 @@ func (p *Plan) Start(ctx context.Context, engine *Engine, admit AdmitFunc) (*Att
 	if err != nil {
 		return nil, err
 	}
-	a := &Attempt{Candidate: clone(c), Sequence: p.attempts + 1, engine: engine, candidate: clone(c), generation: generation}
+	a := &Attempt{Candidate: clone(c), Sequence: p.attempts + 1, Frozen: frozenExecution(ctx, p, c, p.attempts+1), engine: engine, candidate: clone(c), generation: generation}
 	defer func() {
 		// Admission can panic after capacity/half-open acquisition. Until
 		// ownership transfers to the caller, every exit returns that lease.
@@ -394,6 +395,7 @@ func (e *Engine) acquire(candidates []Candidate, tried map[string]bool) (Candida
 type Attempt struct {
 	Candidate  Candidate
 	Sequence   int
+	Frozen     *FrozenExecution
 	engine     *Engine
 	once       sync.Once
 	candidate  Candidate
