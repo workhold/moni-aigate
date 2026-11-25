@@ -47,7 +47,7 @@
 | NA-14 | Realtime、Responses WebSocket 等长连接；参考 `relay/channel`、`router/relay-router.go` | 单 turn Realtime 为 mock 验收；多 turn、真实 WS 供应商和完整恢复未完成。[029](../029-phase1-acceptance/spec.md) | **M5/P3**：先冻结会话/轮次/事件权限、持续预占、断线和终态结算；不参与文本动态路由，不以一次 WS 连接证明资格 |
 | NA-15 | OAuth/OIDC、Passkey、第三方登录与账号绑定；参考 `router/api-router.go`、`controller` | `postponed`：密码、会话、可选 TOTP、恢复码和邮箱恢复已有；第三方身份未实现。[身份验收](../../docs/verification/self-service-identity.md) | **M5/P3**：独立冻结身份源、绑定/解绑、账号冲突、MFA 和全会话撤销；复用 `session.ts`/Security，不绕过现有角色与租户门禁 |
 | NA-17 | 签到赠额、邀请奖励/分佣；参考 `router/api-router.go` | `out_of_scope`：不是网关核心能力，现有路线明确排除。[路线 §4.1](../../docs/design/phase-roadmap.md#41-能力分类) | 不迁移上游签到/邀请页面、API 或其赠额/分佣账务；不影响现有人工赠送与双审兑换券。未来如需改变，必须先重新决定产品范围和反滥用/资金合同 |
-| NA-18 | 扩展/插件、迁移工具、多实例与部署；参考 `README.md`、`router/api-router.go` | Compose 单机、备份恢复和 current-only 迁移已有；通用插件/MCP、New API 数据迁移和多活动实例不属于当前能力。[当前 MVP](../../docs/verification/current-mvp.md)、[备份恢复](../../docs/verification/backup-restore.md) | 生产部署走 025/第四阶段；多活动实例 HA 走独立扩容合同，不在四阶段内承诺。不导入下游客户/quota/钱包，不开放触碰路由、计量、结算或恢复的插件。下游退役按 profile 证据执行 |
+| NA-18 | 扩展/插件、迁移工具、多实例与部署；参考 `README.md`、`router/api-router.go` | Compose 单机、备份恢复和 current-only 迁移已有；通用插件/MCP、New API 数据迁移和多活动实例不属于当前能力。[当前 MVP](../../docs/verification/current-mvp.md)、[备份恢复](../../docs/verification/backup-restore.md) | 生产部署走 025/第四阶段；多活动实例 HA 走独立扩容合同，不在四阶段内承诺。不导入下游客户/quota/钱包，不开放触碰路由、计量、结算或恢复的插件。单项能力可按 profile 证据下线，未选中的长尾保持 external |
 
 ## 6. 首批台账展开顺序
 

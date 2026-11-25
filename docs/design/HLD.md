@@ -6,7 +6,7 @@
 
 已确认用途：对外提供 API 的商业运营平台。推荐从可控试运营版本开始，保障客户调用、余额与账单闭环；New API 与 Sub2API 先作为可统一部署的外部上游，再按 profile 逐项内收，不要求一次覆盖它们的全部功能。
 
-阶段顺序以[四阶段路线](phase-roadmap.md)为准：0 阶段先完成统一部署与 New API/Sub2API 外部 channel 接入，第一阶段完成固定版本 New API 核心业务闭环，第二阶段参考 Bifrost 补文本数据面，第三阶段在 aigate 内实现跨 direct/new_api/sub2api 的文本动态路由，第四阶段做真实供应商认证、生产验证和已迁移能力的下游退役。真实供应商兼容不是 0/第一阶段的全部完成条件；deterministic mock 和外部 channel 证据必须分开标注。
+阶段顺序以[四阶段路线](phase-roadmap.md)为准：0 阶段先完成统一部署与 New API/Sub2API 外部 channel 接入，第一阶段完成固定版本 New API 核心业务闭环，第二阶段参考 Bifrost 补文本数据面，第三阶段在 aigate 内实现跨 direct/new_api/sub2api 的文本动态路由，第四阶段做真实供应商认证和生产验证。2026-11-23 起按 [041](../../specs/041-profit-hybrid-platform/spec.md) 选择性内收，合格长尾 external 永久共存，不以 New API/Sub2API 整体退役为完成条件。0 阶段不是当前施工项。真实供应商兼容不是 0/第一阶段的全部完成条件；deterministic mock 和外部 channel 证据必须分开标注。
 
 前提：首版单地域、单活动应用实例；租户可为个人或企业；一个租户一个 CNY 预付费钱包；平台运营上游渠道，不允许客户上传供应商 Key；邀请开户和人工核款入账。对外正式扩大经营前，需要另行确定服务条款、支付与退款规则以及真实容量。
 
@@ -261,7 +261,7 @@ v0.1 人工核款：运营记录真实收款凭证和外部业务号 → 不同�
 | 第一阶段 | 固定版本 New API 核心业务闭环；文本基础渠道路由；共享钱包与结算；协议、媒体、任务、Realtime 用 deterministic mock 验收 | 验收清单逐项有专用 PostgreSQL、mock 和至少一个外部 channel 证据；不要求所有真实供应商认证 |
 | 第二阶段 | Bifrost 风格文本数据面：低延迟、失败分类与故障切换、预算治理、缓存设计、压测；逐项内收下游实现 | 合同、实现与同条件压测记录 |
 | 第三阶段 | 在 aigate 内实现 OpenRouter 风格文本动态路由，候选包含 direct/new_api/sub2api；物理模型、质量档位、评分、最低毛利、会话粘性、路由回放 | 三类切换逐类验收，决策可回放；下游账号路由保持局部 |
-| 第四阶段 | 真实供应商逐一认证、真实 usage 与成本、正式支付、生产部署、性能和已迁移能力的下游退役；1Panel 等面板适配为可选项 | 每个可售 profile 有真实账号证据；生产门禁通过；可退役能力完成切流 |
+| 第四阶段 | 真实供应商逐一认证、真实 usage 与成本、正式支付、生产部署和性能；按 041 选择性内收，合格长尾 external 永久共存。1Panel 等面板适配为可选项 | 每个可售 profile 有真实账号证据；生产门禁通过；只有已选择下线的单项能力完成切流 |
 | 扩容 | 多活动实例、共享限流、日志分库等 | 容量实测证明有需要且故障语义补全；不在四阶段内承诺 |
 
 2026-11-14 实现边界：0 阶段已落地 current-only 的 channel kind/integration mode、OpenAI-compatible external relay、统一 usage/错误/成本/safe-to-retry、channel probe 证据和 route revision 回退，并以 direct/new_api/sub2api deterministic fixture 验证唯一结算与不重放。真实本地 New API（`e449cc7`）与 Sub2API（`10ba8f9`）三服务三库 Compose 拓扑也已通过 JSON/SSE、唯一结算、receipt 和 revision 回退验收；供应商出口仍为 deterministic mock。1Panel、真实凭据、真实 usage/成本与逐 profile 认证尚未完成，不能记作生产或供应商验收。详见[验证记录](../verification/phase0-external-upstream.md)。
