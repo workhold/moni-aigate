@@ -9058,3 +9058,22 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/041-profit-hybrid-platform/tasks.md`
 
 </details>
+
+## 2026-11-25T07:24:56Z · e72294a7665b
+
+042 P0.1 窄修复：经营报表前端解析器新增封闭三态元数据联合（完整文本快照/媒体空三元组/无快照文本），允许 protocol/execution_kind 显式缺失标记；媒体空三元组是 026/028 线路合同既有事实，不再整页报错。只校准读端解析合同，无模块、数据、权限、迁移结构变化；新增 specs/042 与前后端/PG/API 测试。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2657 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/operating-reports.md`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/server/operating_reports_integration_test.go`
+- added `specs/042-operations-report-metadata-states/spec.md`
+- modified `web/src/operating-report.ts`
+- added `web/tests/operating-report-matrix.test.mjs`
+- modified `web/tests/operating-report.test.mjs`
+
+</details>

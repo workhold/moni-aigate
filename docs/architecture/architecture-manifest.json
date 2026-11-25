@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-24T18:43:20Z",
-  "review_reason": "041 P0最终验收归档：实现结构与权限边界此前已同步，本次仅更新验证和任务状态；完整默认serial-v1 029为41/41 PASS，未开放external commercial或生产资格",
-  "snapshot_sha256": "996f8aceb02d758a7f9aab25f5e1f0b2cc8338f5cae711540289a2d6a542907c",
-  "architecture_sha256": "eeb8170eccc97fe7fc579e7ec169578e99e839e2cdbb5f1864defff73dbd6a32",
-  "history_sha256": "7428acb9e7eeeff033251b6e90307d6749189722562124ac02ccb6e9865699ce",
+  "reviewed_at": "2026-11-25T07:24:56Z",
+  "review_reason": "042 P0.1 窄修复：经营报表前端解析器新增封闭三态元数据联合（完整文本快照/媒体空三元组/无快照文本），允许 protocol/execution_kind 显式缺失标记；媒体空三元组是 026/028 线路合同既有事实，不再整页报错。只校准读端解析合同，无模块、数据、权限、迁移结构变化；新增 specs/042 与前后端/PG/API 测试。",
+  "snapshot_sha256": "e72294a7665b9a07b539c5878d3893e4ca4554d5e4c9d01d0f0335c365fbbd6a",
+  "architecture_sha256": "ba36775dd45e5b3ab699d60ef64cc937a8555ca5ee8b7cf65d6b5622356931be",
+  "history_sha256": "d78015a6ce912291d9550f7da43107ddd5f871eb517b37ce96041db34fc5bcc5",
   "files": [
     {
       "path": ".dockerignore",
@@ -129,7 +129,7 @@
     },
     {
       "path": "docs/architecture/operating-reports.md",
-      "sha256": "94debea26ed016f09f8acaab519ccdb2d6c114614ada8d30c62fca92af3fb29c"
+      "sha256": "ec71165fe9dcd553cb7034df6925e03556d961d76abd6f3415368c3010061b43"
     },
     {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
@@ -7101,7 +7101,7 @@
     },
     {
       "path": "internal/reporting/read_postgres_test.go",
-      "sha256": "f00d221b0c3ae3fe656619f9ccebe9f1c41f51f59a65df7fb9aac10df0e472f1"
+      "sha256": "d0be0a63b069cd7cdc6330d1236fa7b21439a16defb38ce42292b04b583cd504"
     },
     {
       "path": "internal/reporting/report.go",
@@ -7109,7 +7109,7 @@
     },
     {
       "path": "internal/reporting/report_test.go",
-      "sha256": "3c8695219503e50ba5fef730128328acdadb25713ccb4e2209618b7496c2d1dc"
+      "sha256": "bbaa4e22a03667e6920dc56d37f3e66dc161d94179692acbc8d7af3f97a17351"
     },
     {
       "path": "internal/reporting/types.go",
@@ -7521,7 +7521,7 @@
     },
     {
       "path": "internal/server/operating_reports_integration_test.go",
-      "sha256": "bf5ea98ca18b4f4cd518bb626ef8d9d5f47470cf978d5b04e8000c97f5d3d10f"
+      "sha256": "547933283df60a665539940544dbb9db43ba3f5103380e9c671e58f82ab6dc76"
     },
     {
       "path": "internal/server/operating_reports_test.go",
@@ -9848,6 +9848,10 @@
       "sha256": "cfdfa4e40c630630e3b8c83e3771b7719f0ea7d9a5eb3b7661901b1ac0137329"
     },
     {
+      "path": "specs/042-operations-report-metadata-states/spec.md",
+      "sha256": "15ed6e24078744ac9f6a28777d1ad38eeba8c37f0d9557ad02288fafd302ea00"
+    },
+    {
       "path": "third_party/README.md",
       "sha256": "0e3cb2e34f81a488dda0c093cc3e5e24ff36b9bbda9350b9d4cddce99e9ee68a"
     },
@@ -10177,7 +10181,7 @@
     },
     {
       "path": "web/src/operating-report.ts",
-      "sha256": "32b4856375217e9ef896e98e64dd592e3f3a6ddc2439e519d173e263cf7196e2"
+      "sha256": "853c411261b9b69e8c6d3eff0653e41d3a57b8e2186966671810bc5c6aa6462d"
     },
     {
       "path": "web/src/payments-journal.ts",
@@ -10500,8 +10504,12 @@
       "sha256": "f32856c6088015a0b525d6b7881c8032e584836d392487a856ac22a43e1a689e"
     },
     {
+      "path": "web/tests/operating-report-matrix.test.mjs",
+      "sha256": "98d8db9c8ce4dccf80a8ea0e97a5f25ce0d2eafdd6f3aa153ba7ddcd6eec7440"
+    },
+    {
       "path": "web/tests/operating-report.test.mjs",
-      "sha256": "53f5a90152dfcaba44d668e34bc232960459bd6a32431aa5420c53f7db536dbf"
+      "sha256": "4658c7e9a7b6b95a4f1e448420de3e95818c8dcf593e1b7af27cee51a04fcde8"
     },
     {
       "path": "web/tests/payments-indexeddb.browser.mjs",

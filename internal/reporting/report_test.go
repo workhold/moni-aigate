@@ -453,8 +453,13 @@ func TestCSVExactNumbersQuotedTextAndFormulaProtection(t *testing.T) {
 		}
 	}
 	at := time.Date(2026, 11, 4, 10, 0, 0, 123456000, time.FixedZone("+08", 8*60*60))
-	r := Report{Requests: []RequestRow{{RequestID: "r", TenantID: "t", TenantName: " \t=SUM(1,2)", ModelID: "m", ModelName: "model,\"quoted\"\nline", CreatedAt: at, Status: "completed", BillingStatus: "settled", OfferVersionID: "offer", TaskClass: "coding_reasoning", Totals: Totals{Charged: "9007199254740993", Refunded: "0", NetRevenue: "9007199254740993", AttemptCount: 2, KnownProviderCost: "9007199254740994", GrossMargin: text("-1"), ProviderCost: map[string]string{"CNY": "9007199254740994"}, ProvisionalGrossMargin: text("-1"), GrossMarginCurrency: text("CNY"), MarginValuation: text("original_currency"), CostAsOf: &at, CostRevision: "cost-revision"}},
-		{RequestID: "pending", CreatedAt: at, Totals: Totals{Charged: "0", Refunded: "0", NetRevenue: "0", KnownProviderCost: "0", UnknownProviderCosts: 1}}}}
+	profile, schemaID, digest := "11111111-1111-4111-8111-111111111111", "33333333-3333-4333-8333-333333333333", strings.Repeat("ab", 32)
+	zeroTotals := Totals{Charged: "0", Refunded: "0", NetRevenue: "0", KnownProviderCost: "0", UnknownProviderCosts: 1}
+	r := Report{Requests: []RequestRow{{RequestID: "r", TenantID: "t", TenantName: " \t=SUM(1,2)", ModelID: "m", ModelName: "model,\"quoted\"\nline", CreatedAt: at, Status: "completed", BillingStatus: "settled", Protocol: "openai_chat", ExecutionKind: "synchronous", ProfileVersion: profile, SchemaID: schemaID, SchemaDigest: digest, VariantKey: "default", OfferVersionID: "offer", TaskClass: "coding_reasoning", Totals: Totals{Charged: "9007199254740993", Refunded: "0", NetRevenue: "9007199254740993", AttemptCount: 2, KnownProviderCost: "9007199254740994", GrossMargin: text("-1"), ProviderCost: map[string]string{"CNY": "9007199254740994"}, ProvisionalGrossMargin: text("-1"), GrossMarginCurrency: text("CNY"), MarginValuation: text("original_currency"), CostAsOf: &at, CostRevision: "cost-revision"}},
+		{RequestID: "pending", CreatedAt: at, Protocol: "tts", ExecutionKind: "synchronous", ProfileVersion: profile, Totals: zeroTotals},
+		{RequestID: "snapshotless", CreatedAt: at, ExecutionKind: "synchronous", Totals: zeroTotals},
+		{RequestID: "execution-absent", CreatedAt: at, Protocol: "openai_chat", Totals: zeroTotals},
+		{RequestID: "fully-absent", CreatedAt: at, Totals: zeroTotals}}}
 	var out bytes.Buffer
 	if err := WriteCSV(&out, r); err != nil {
 		t.Fatal(err)
@@ -463,10 +468,22 @@ func TestCSVExactNumbersQuotedTextAndFormulaProtection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 3 || len(rows[0]) != 36 || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[2][14] != "" ||
+	if len(rows) != 6 || len(rows[0]) != 36 || rows[1][2] != "' \t=SUM(1,2)" || rows[1][4] != "model,\"quoted\"\nline" || rows[1][5] != "2026-11-04T02:00:00.123456Z" || rows[1][8] != "9007199254740993" || rows[1][14] != "-1" || rows[5][14] != "" ||
 		!reflect.DeepEqual(rows[0][25:], []string{"offer_version_id", "task_class", "provider_cost_cny", "provider_cost_usd", "cost_as_of", "cost_revision", "provisional_gross_margin", "bill_confirmed_gross_margin", "gross_margin_currency", "margin_valuation", "fx_policy_versions"}) ||
-		rows[1][25] != "offer" || rows[1][26] != "coding_reasoning" || rows[1][27] != "9007199254740994" || rows[1][29] != "2026-11-04T02:00:00.123456Z" || rows[1][30] != "cost-revision" || rows[1][31] != "-1" || rows[1][32] != "" || rows[1][33] != "CNY" || rows[1][34] != "original_currency" || rows[2][31] != "" {
+		rows[1][25] != "offer" || rows[1][26] != "coding_reasoning" || rows[1][27] != "9007199254740994" || rows[1][29] != "2026-11-04T02:00:00.123456Z" || rows[1][30] != "cost-revision" || rows[1][31] != "-1" || rows[1][32] != "" || rows[1][33] != "CNY" || rows[1][34] != "original_currency" || rows[5][31] != "" {
 		t.Fatal("CSV precision/escaping/appended P0 columns differ", rows)
+	}
+	for _, row := range rows {
+		if len(row) != 36 {
+			t.Fatal("CSV metadata changed the fixed column count", row)
+		}
+	}
+	if !reflect.DeepEqual(rows[1][19:25], []string{"openai_chat", "synchronous", profile, schemaID, digest, "default"}) ||
+		!reflect.DeepEqual(rows[2][19:25], []string{"tts", "synchronous", profile, "", "", ""}) ||
+		!reflect.DeepEqual(rows[3][19:25], []string{"", "synchronous", "", "", "", ""}) ||
+		!reflect.DeepEqual(rows[4][19:25], []string{"openai_chat", "", "", "", "", ""}) ||
+		!reflect.DeepEqual(rows[5][19:25], []string{"", "", "", "", "", ""}) {
+		t.Fatal("CSV complete/empty metadata was not preserved", rows)
 	}
 	want := errors.New("writer unavailable")
 	if err := WriteCSV(failingWriter{want}, r); !errors.Is(err, want) {
