@@ -9058,3 +9058,18 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `specs/041-profit-hybrid-platform/tasks.md`
 
 </details>
+
+## 2026-11-25T05:46:42Z · 9e9b7f6ab018
+
+HTTP 任务提交只允许任务所属主体触发供应商调用。其他 API Key 不能凭任务 ID 提交。后台 worker 仍可提交已准备任务。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/server.go`
+- modified `internal/server/task_handlers.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+
+</details>

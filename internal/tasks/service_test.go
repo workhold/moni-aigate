@@ -69,6 +69,22 @@ func (s *beforeWithTaskStore) WithTask(ctx context.Context, id ID, fn func(TaskT
 	return s.Store.WithTask(ctx, id, fn)
 }
 
+func TestSubmitAsDoesNotStartAnotherOwnersTask(t *testing.T) {
+	adapter := &fakeTaskAdapter{}
+	service, _, input, refs, owner := serviceFixture(t, adapter)
+	if _, err := service.Create(context.Background(), input, refs); err != nil {
+		t.Fatal(err)
+	}
+	foreign := owner
+	foreign.SubjectID = testID(9)
+	if _, err := service.SubmitAs(context.Background(), foreign, input.TaskID, testBase.Add(time.Second)); !errors.Is(err, ErrForbidden) || adapter.submitN.Load() != 0 {
+		t.Fatalf("foreign submit calls=%d err=%v", adapter.submitN.Load(), err)
+	}
+	if _, err := service.SubmitAs(context.Background(), owner, input.TaskID, testBase.Add(time.Second)); err != nil || adapter.submitN.Load() != 1 {
+		t.Fatalf("owner submit calls=%d err=%v", adapter.submitN.Load(), err)
+	}
+}
+
 func TestServiceSubmitReplaysIdentityWhenCompetitorWinsClaimWindow(t *testing.T) {
 	adapter := &fakeTaskAdapter{}
 	service, store, input, refs, _ := serviceFixture(t, adapter)

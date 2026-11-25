@@ -208,7 +208,8 @@ func (s *Server) submitTask(c *gin.Context) {
 		s.fail(c, 503, "unavailable", "任务服务未就绪")
 		return
 	}
-	task, err := service.Submit(c.Request.Context(), id, time.Now().UTC())
+	actor := tasks.Actor{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID), Permission: tasks.PermissionTaskRead}
+	task, err := service.SubmitAs(c.Request.Context(), actor, id, time.Now().UTC())
 	if err != nil {
 		s.error(c, err)
 		return

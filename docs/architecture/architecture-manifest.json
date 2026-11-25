@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-24T18:43:20Z",
-  "review_reason": "041 P0最终验收归档：实现结构与权限边界此前已同步，本次仅更新验证和任务状态；完整默认serial-v1 029为41/41 PASS，未开放external commercial或生产资格",
-  "snapshot_sha256": "996f8aceb02d758a7f9aab25f5e1f0b2cc8338f5cae711540289a2d6a542907c",
-  "architecture_sha256": "eeb8170eccc97fe7fc579e7ec169578e99e839e2cdbb5f1864defff73dbd6a32",
-  "history_sha256": "7428acb9e7eeeff033251b6e90307d6749189722562124ac02ccb6e9865699ce",
+  "reviewed_at": "2026-11-25T05:46:42Z",
+  "review_reason": "HTTP 任务提交只允许任务所属主体触发供应商调用。其他 API Key 不能凭任务 ID 提交。后台 worker 仍可提交已准备任务。",
+  "snapshot_sha256": "9e9b7f6ab0184405922bc08a87d71eb632abff74faacdf68eceecc6413faf3a3",
+  "architecture_sha256": "76b05566d8efb45896df08a2ac46aa838a7ec3d0cfb25e31d917208c1e178b72",
+  "history_sha256": "66ceff565ec443332a7885c7fcd9760fca7f403ec5df309439876da4e6723799",
   "files": [
     {
       "path": ".dockerignore",
@@ -7757,7 +7757,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "ea7d2b4f0ad663ba8d14b7eb350bc0348c2b25cec1cdf17cc9d6624bb90647b7"
+      "sha256": "c388e358e37db7079f148f5ce5f265b2b0b0e67f445fd9a1e83b8dbd6cc70038"
     },
     {
       "path": "internal/server/static.go",
@@ -7769,7 +7769,7 @@
     },
     {
       "path": "internal/server/task_handlers.go",
-      "sha256": "287b7ddae991ed7e98e14ac44ba41d4a28a5428ebdda4d3f0aa502763721a2b1"
+      "sha256": "9324a43356f94bde054f945fe0b894cab1c9b048c3b9bb019c4fe570c47152e4"
     },
     {
       "path": "internal/server/task_media_billing.go",
@@ -7833,11 +7833,11 @@
     },
     {
       "path": "internal/tasks/service.go",
-      "sha256": "4ea831f95b2e1388c5a181afd02e05cf195a38c1481390031cc5611181ef83d4"
+      "sha256": "10aa2effca785847a10215808311c9a8dea75391fe8499e66338b662eb2a3964"
     },
     {
       "path": "internal/tasks/service_test.go",
-      "sha256": "b86993d33518f846de8a798e450f26e86315777b267d8867cfe33aa1380e0d19"
+      "sha256": "a242604a200bfe7f5a4132ba6dc7996e5c7dfda83550fc330ddd44a017ea84e1"
     },
     {
       "path": "internal/tasks/state.go",
