@@ -198,7 +198,7 @@ CREATE UNIQUE INDEX route_decisions_request_sequence ON route_decisions(request_
 
 按顺序过滤：授权（平台模型、租户、成员、Key、`only`/`ignore`）→ 地域 → 能力（上下文、工具、参数满足、`require_parameters`）→ 质量档位下限 → 渠道与 binding 状态 → 凭据状态 → 容量与熔断 → 采购预算与暂停 → 采购成本未知策略 → `max_price` → 成本上限 → **最低毛利**。每个被排除的候选都记入当次决策的 `candidates` 数组。
 
-最低毛利：同一币种下，`1 - 保守供应商成本 / 客户冻结售价` 低于 `min_margin_rate` 时排除，原因是 `margin_below_floor`。成本未知时按 `unknown_cost_policy`：`deny` 排除，`allow` 保留但标注。`dynamic-v2` 的最低毛利比较已付 CNY 下界和供应商 CNY 上限。赠送、未知、开账或缺少冻结币价的预占没有这个下界，失败关闭为 `margin_basis_unavailable`。第二次尝试把第一次已记下的供应商上限加进新的上限；第一次成本未知时失败关闭为 `cumulative_cost_unavailable`。`quality_score` 不能抬高 `quality_tier`，也不能代替场景质量证据。`dynamic-v1` 历史决策仍按原数值比较回放。
+最低毛利：同一币种下，`1 - 保守供应商成本 / 客户冻结售价` 低于 `min_margin_rate` 时排除，原因是 `margin_below_floor`。成本未知时按 `unknown_cost_policy`：`deny` 排除，`allow` 保留但标注。`dynamic-v2` 的最低毛利比较已付 CNY 下界和供应商 CNY 上限。下界是各已付 CNY 收据按实付金额分摊到本次预占后的向下取整，不是牌价。赠送和开账贡献 0，不抹掉同一次预占里已经证明的已付部分；未知来源、USD 或缺少冻结币价则整笔失败关闭为 `margin_basis_unavailable`。第二次尝试把第一次仍可能保留的供应商上限加进新的上限；已证明未发送或无消费时先前上限记 0。第一次成本未知时失败关闭为 `cumulative_cost_unavailable`。`quality_score` 不能抬高 `quality_tier`，也不能代替场景质量证据。`dynamic-v1` 历史决策仍按原数值比较回放。
 
 **041-P0 修订**：该原始公式只适用于无 ServiceOfferVersion 的 legacy 数值指标，不能称现金毛利。显式 P0 offer 使用[经济基础子规格](../041-profit-hybrid-platform/p0-economic-foundation.md)的净付款基准下界、USD/CNY 原币向量、保守 FX 与较早 outer/inner 累计成本；服务端 ExecutionPolicy 固定单 attempt，不能依赖 `allow_fallbacks=false`。
 

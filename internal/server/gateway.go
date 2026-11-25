@@ -398,6 +398,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 			_, persistErr := s.finalize(p.KeyID, f, false)
 			attempt.Finish(outcome(c.Request.Context(), err))
 			if persistErr == nil && plan.CanRetry(c.Request.Context(), err) {
+				attempt.NoteNoSupplierConsumption()
 				var pe *provider.Error
 				if errors.As(err, &pe) && pe.RetryAfter > 0 {
 					wait := pe.RetryAfter

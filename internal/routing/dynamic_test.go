@@ -400,14 +400,24 @@ func TestConservativeCNYPaymentUsesPaidLotsOnly(t *testing.T) {
 	if amount != 0 || !covered {
 		t.Fatalf("zero reservation %+v %v", amount, covered)
 	}
-	amount, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Basis: "paid", FiatCurrency: "CNY", RateNum: 1, RateDen: 2}})
+	paid := PaidLot{Coin: 10, ReceiptCoin: 10, FiatAmount: 5, Basis: "paid", FiatCurrency: "CNY", RateNum: 1, RateDen: 1}
+	amount, covered = ConservativeCNYPayment(10, []PaidLot{paid})
 	if amount != 5 || !covered {
-		t.Fatalf("floored basis %+v %v", amount, covered)
+		t.Fatalf("discounted fiat basis %+v %v", amount, covered)
 	}
-	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Basis: "grant", FiatCurrency: "CNY", RateNum: 1, RateDen: 1}}); covered {
+	paid.Coin, paid.ReceiptCoin, paid.FiatAmount = 40, 100, 50
+	grant := PaidLot{Coin: 60, Basis: "grant"}
+	amount, covered = ConservativeCNYPayment(100, []PaidLot{paid, grant})
+	if amount != 20 || !covered {
+		t.Fatalf("mixed paid and grant basis %+v %v", amount, covered)
+	}
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Basis: "grant"}}); covered {
 		t.Fatal("grant coins were treated as paid CNY")
 	}
-	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 4, Basis: "paid", FiatCurrency: "CNY", RateNum: 1, RateDen: 1}}); covered {
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, ReceiptCoin: 10, FiatAmount: 10, Basis: "paid", FiatCurrency: "USD", RateNum: 1, RateDen: 1}}); covered {
+		t.Fatal("USD payment was converted without an FX policy")
+	}
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 4, ReceiptCoin: 4, FiatAmount: 4, Basis: "paid", FiatCurrency: "CNY", RateNum: 1, RateDen: 1}}); covered {
 		t.Fatal("partial allocation covered the reservation")
 	}
 }
@@ -438,6 +448,36 @@ func TestDynamicSecondAttemptAddsPriorSupplierCost(t *testing.T) {
 	if !errors.Is(err, ErrUnavailable) || decisionReason(t, plan, "binding-second") != "margin_below_floor" {
 		t.Fatalf("second attempt ignored prior cost: %+v %v", plan.LastDecision(), err)
 	}
+}
+
+func TestDynamicNoConsumptionDoesNotCarrySupplierUpper(t *testing.T) {
+	first := dynamicCandidate("cleared", "standard")
+	second := dynamicCandidate("next", "standard")
+	first.Priority = 10
+	first.CostQuote = testCostQuote("cleared", first.Model, "quote-cleared", "contract", 1000000, 1000000)
+	second.CostQuote = testCostQuote("next", second.Model, "quote-next", "contract", 1000000, 1000000)
+	policy := DefaultDynamicPolicy()
+	floor := int64(0)
+	policy.MinMarginRate = &floor
+	request := dynamicRequest()
+	request.PaymentAmount = 200
+	request.PaymentCurrency = "CNY"
+	plan, err := NewDynamicPlan([]Candidate{first, second}, 2, policy, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(Config{})
+	attempt, err := plan.Start(context.Background(), engine, func(context.Context, Candidate, int) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	attempt.Finish(Failure)
+	attempt.NoteNoSupplierConsumption()
+	next, err := plan.Start(context.Background(), engine, func(context.Context, Candidate, int) error { return nil })
+	if err != nil || next.Candidate.BindingID != "binding-next" {
+		t.Fatalf("proven no-consumption still blocked the next attempt: %+v %v", plan.LastDecision(), err)
+	}
+	next.Finish(Neutral)
 }
 
 func TestDynamicQualityScoreCannotRaiseTier(t *testing.T) {

@@ -97,16 +97,17 @@ func exclusionReason(c Candidate) string {
 
 type AdmitFunc func(context.Context, Candidate, int) error
 type Plan struct {
-	mu            sync.Mutex
-	candidates    []Candidate
-	max, attempts int
-	tried         map[string]bool
-	committed     bool
-	active        bool
-	policy        DynamicPolicy
-	request       RequestShape
-	algorithm     string
-	lastDecision  *RouteDecision
+	mu              sync.Mutex
+	candidates      []Candidate
+	max, attempts   int
+	tried           map[string]bool
+	committed       bool
+	active          bool
+	policy          DynamicPolicy
+	request         RequestShape
+	algorithm       string
+	priorCostWaived bool
+	lastDecision    *RouteDecision
 }
 
 func NewPlan(candidates []Candidate, maxAttempts int) (*Plan, error) {
@@ -221,9 +222,16 @@ func (p *Plan) Start(ctx context.Context, engine *Engine, admit AdmitFunc) (*Att
 	if engine == nil || admit == nil {
 		return nil, ErrInvalidPolicy
 	}
-	if p.attempts > 0 && p.algorithm != "dynamic-v1" {
-		amount, currency, unknown := priorSupplierCost(p.lastDecision)
-		p.request.PriorSupplierAmount, p.request.PriorSupplierCurrency, p.request.PriorSupplierUnknown = amount, currency, unknown
+	// Prior-supplier accounting is a plain dynamic-v2 concern. Offer-backed plans
+	// keep cumulative cost under the Reserve-frozen economics snapshot authority.
+	if p.attempts > 0 && p.algorithm != "dynamic-v1" && p.request.Economics == nil {
+		if p.priorCostWaived {
+			p.request.PriorSupplierAmount, p.request.PriorSupplierCurrency, p.request.PriorSupplierUnknown = "0", "CNY", false
+			p.priorCostWaived = false
+		} else {
+			amount, currency, unknown := priorSupplierCost(p.lastDecision)
+			p.request.PriorSupplierAmount, p.request.PriorSupplierCurrency, p.request.PriorSupplierUnknown = amount, currency, unknown
+		}
 	}
 	c, generation, decision, err := engine.acquirePlan(p, p.attempts+1)
 	p.lastDecision = cloneDecision(decision)
@@ -406,6 +414,17 @@ type Attempt struct {
 	candidate  Candidate
 	generation uint64
 	plan       *Plan
+}
+
+// NoteNoSupplierConsumption records that this attempt proved it did not consume supplier budget.
+// The next attempt then keeps a zero prior cost instead of the unused quote upper bound.
+func (a *Attempt) NoteNoSupplierConsumption() {
+	if a == nil || a.plan == nil {
+		return
+	}
+	a.plan.mu.Lock()
+	a.plan.priorCostWaived = true
+	a.plan.mu.Unlock()
 }
 
 func (a *Attempt) Finish(outcome Outcome) {
