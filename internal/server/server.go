@@ -411,6 +411,10 @@ func (s *Server) error(c *gin.Context, e error) {
 		s.fail(c, 409, "key_budget_below_usage", "累计额度不能低于当前已消费和冻结金额之和")
 		return
 	}
+	if errors.Is(e, tasks.ErrForbidden) || errors.Is(e, tasks.ErrNotFound) {
+		s.fail(c, 404, "task_not_found", "任务不存在")
+		return
+	}
 	if errors.Is(e, identity.ErrForbidden) {
 		s.fail(c, 403, "forbidden", "没有访问权限")
 		return

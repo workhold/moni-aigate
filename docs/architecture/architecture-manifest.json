@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T10:51:44Z",
-  "review_reason": "042 P0.1 验收归档：新增只读浏览器验收脚本 scripts/p01_report_metadata_browser.py、验证记录 docs/verification/p01-operations-report-metadata.md 与六场景截图/观察证据（预览于隔离镜像 moni-aigate:phase1-browser-fbec003e5b2f、专库 phase1qa schema）。实现代码无变化；完整 029 r2 于干净 fbec003 41/41 PASS。",
-  "snapshot_sha256": "479e0208feb8c192d07dbde04331037b214299820b3c919de704882984db14a8",
-  "architecture_sha256": "ba36775dd45e5b3ab699d60ef64cc937a8555ca5ee8b7cf65d6b5622356931be",
-  "history_sha256": "86c1aaad09f7ad2c25f641f8f56d0c64f4a3473aed912669fb27d4deaf36dcc8",
+  "reviewed_at": "2026-11-25T10:55:48Z",
+  "review_reason": "042 P0.1 合并 origin/main 9fd8dd6（PR #35 任务归属与无 scope 语音拒绝）：架构三件套冲突按合并后树重新 reviewed refresh，manifest 快照同时含 #35 与 042 报表 DTO 源码；changes.md 双方追加记录均保留。完整 029 证据仍绑定 fbec003（#35 不属路由/协议/账务/迁移四类且自身 CI 全绿，合并树为两者已验证组合）。",
+  "snapshot_sha256": "ba11249ad6f7da7b59ef4a362ab53760d0ba6106a42869bf6af20f39ad479fa1",
+  "architecture_sha256": "5985d4bca36063f779c0210088ff84324c43d5d20846f68b5480e3f6301eeeef",
+  "history_sha256": "6cf249c263c2f609911d0e525949e5a7202adb7bce40711d6210392fffdaa548",
   "files": [
     {
       "path": ".dockerignore",
@@ -7505,7 +7505,7 @@
     },
     {
       "path": "internal/server/media_handlers.go",
-      "sha256": "7c3f8c7f33c297e7ba5ad7e88be00b058e671aaf084412b52d64718f0bfeca68"
+      "sha256": "f8c6f4c3b73f652f5f44e8242e301febb82c384812ed00ccb869973204db3eef"
     },
     {
       "path": "internal/server/media_provider_runtime.go",
@@ -7785,7 +7785,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "ea7d2b4f0ad663ba8d14b7eb350bc0348c2b25cec1cdf17cc9d6624bb90647b7"
+      "sha256": "3b97eb216465199ce4e2ebfc2d4f15cb7add7cf982e5f0f88c1a096d30894d6e"
     },
     {
       "path": "internal/server/static.go",
@@ -7796,8 +7796,12 @@
       "sha256": "4d9edf07b787d522ce66c3587b6f515c059a019f9cb5fd16af126a15a5960faf"
     },
     {
+      "path": "internal/server/task_error_test.go",
+      "sha256": "d7a806ff79938a5049af9df60e81542d0cc07ea1b8c99501a81bdf3f70cae5b8"
+    },
+    {
       "path": "internal/server/task_handlers.go",
-      "sha256": "287b7ddae991ed7e98e14ac44ba41d4a28a5428ebdda4d3f0aa502763721a2b1"
+      "sha256": "9feea1d7a8521baa27c557de8b32c1a84ebc68d72801c53135ab808b90a218ff"
     },
     {
       "path": "internal/server/task_media_billing.go",
@@ -7821,7 +7825,7 @@
     },
     {
       "path": "internal/server/tts_handlers_test.go",
-      "sha256": "389c43b88fd31f749420623a5c675bb1b1054760596966b3b1b274f2f3435ba7"
+      "sha256": "e5dd03c51e66c65f75bad96a87706bde9337e3ba32dbc35bf318eb0b8b6786cc"
     },
     {
       "path": "internal/server/tts_wav.go",
@@ -7861,11 +7865,11 @@
     },
     {
       "path": "internal/tasks/service.go",
-      "sha256": "4ea831f95b2e1388c5a181afd02e05cf195a38c1481390031cc5611181ef83d4"
+      "sha256": "e20ad931f4dbe59b6b958637a48c6b237321936271d3ae5274bf4e200c68d5d7"
     },
     {
       "path": "internal/tasks/service_test.go",
-      "sha256": "b86993d33518f846de8a798e450f26e86315777b267d8867cfe33aa1380e0d19"
+      "sha256": "a70c9f1b39b1bb56d54478869c524c34379563db0d27c6eea1f7a7beaf11bd6f"
     },
     {
       "path": "internal/tasks/state.go",
@@ -7877,7 +7881,7 @@
     },
     {
       "path": "internal/tasks/tasks_test.go",
-      "sha256": "7fa40c93d16d8d086420866a7c4ac5a787399e8f7c7ff9ffb84deaaf3efc9c42"
+      "sha256": "a3ce9ca6a4be9a8b87efef9dde8664ffdebbb4d8af7788a21a9ad9921ad0455f"
     },
     {
       "path": "internal/tasks/types.go",

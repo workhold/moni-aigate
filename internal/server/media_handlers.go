@@ -94,7 +94,7 @@ func mediaScopeAllowed(p identity.Principal, model string) bool {
 			return true
 		}
 	}
-	return len(p.Scopes) == 0
+	return false
 }
 
 func validMediaModel(p identity.Principal, model string) bool {

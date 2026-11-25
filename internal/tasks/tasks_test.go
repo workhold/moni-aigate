@@ -187,6 +187,11 @@ func TestDownloadIsAuthorizedBoundedAndReadOnly(t *testing.T) {
 	if _, err := task.Download(wrongTenant, grant, testBase.Add(5*time.Second)); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("expected tenant isolation, got %v", err)
 	}
+	otherUser := owner
+	otherUser.SubjectID = testID(99)
+	if _, err := task.Status(otherUser); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("same-tenant user read another task: %v", err)
+	}
 	late, err := task.Expire(testBase.Add(3 * time.Hour))
 	if err != nil {
 		t.Fatal(err)
