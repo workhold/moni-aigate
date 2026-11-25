@@ -9183,3 +9183,38 @@ agent-skills setup 分支合并 main（#35 任务鉴权 + #37 报表 DTO）；ma
 - modified `scripts/check-architecture/main_test.go`
 
 </details>
+
+## 2026-11-25T18:21:54Z · 39baeaec336e
+
+margin 分支合并 main（agent skills 配置 + magpie 研究文档）；manifest 在合并树重新 reviewed refresh；r3 完整 029 已在该合并树前身 29e3834 通过 41/41
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2669 个源文件；本次 24 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- added `internal/billing/payment_basis.go`
+- added `internal/billing/payment_basis_integration_test.go`
+- modified `internal/billing/route_decision_store.go`
+- modified `internal/routing/dynamic.go`
+- modified `internal/routing/dynamic_test.go`
+- modified `internal/routing/replay.go`
+- modified `internal/routing/routing.go`
+- modified `internal/routing/selection.go`
+- modified `internal/server/gateway.go`
+- added `migrations/current_017_margin_basis.sql`
+- modified `migrations/phase3_dynamic_routing_postgres_test.go`
+- modified `specs/033-text-dynamic-routing/design.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/038-new-api-capability-migration/capability-matrix.md`
+- modified `specs/041-profit-hybrid-platform/design.md`
+- modified `specs/041-profit-hybrid-platform/spec.md`
+- modified `specs/041-profit-hybrid-platform/tasks.md`
+- modified `web/src/components/RouteAttempts.vue`
+
+</details>

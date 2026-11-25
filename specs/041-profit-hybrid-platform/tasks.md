@@ -17,6 +17,8 @@
 
 ## P0：聚焦子规格与经济基础（已实现）
 
+2026-11-25 路由门禁先收口跨币种最低毛利：`dynamic-v2` 普通动态路由用已付 CNY 实付分摊下界与供应商 CNY 上限比较，赠送/开账记 0，未知来源与 USD 整笔失败关闭；承接 P0 EconomicsSnapshot 的商品请求继续以 Reserve 冻结快照为唯一付款基准权威。USD 交叉估值、场景质量证据和贡献毛利读模型仍未实施。
+
 - [x] 冻结 ServiceOfferVersion/TaskPolicy/QualityEvidence/EconomicsSnapshot 的 SQL、HTTP、ACL、故障和恢复合同。
 - [x] 在 Reserve 冻结束付款基准、经济版本和节省参照；单位错误、未知付款/成本或商业所需 USD/CNY 估值缺失失败关闭。
 - [x] 实现请求级累计供应商成本门禁；利润敏感商品在实现前固定单 outer attempt。

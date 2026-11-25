@@ -6,7 +6,7 @@
 
 | 阶段 | 目标 | 参考来源 | 完成定义 |
 | --- | --- | --- | --- |
-| 0 阶段（当前） | 统一部署与外部上游接入：aigate 作为唯一公网入口，把 New API、Sub2API 和直接供应商登记为 channel | [New API 与 Sub2API 上游接入路线](upstream-integration-plan.md)；New API 固定提交 `e449cc7` 仅作为能力基线 | Compose/部署脚本拓扑（1Panel 等面板可选）、独立数据库、channel probe、Chat/SSE/usage/错误/成本合同和唯一结算链路通过；外部 relay 可回退 |
+| 0 阶段 | 统一部署与外部上游接入：aigate 作为唯一公网入口，把 New API、Sub2API 和直接供应商登记为 channel | [New API 与 Sub2API 上游接入路线](upstream-integration-plan.md)；New API 固定提交 `e449cc7` 仅作为能力基线 | Compose/部署脚本拓扑（1Panel 等面板可选）、独立数据库、channel probe、Chat/SSE/usage/错误/成本合同和唯一结算链路通过；外部 relay 可回退 |
 | 第一阶段 | 固定版本 New API 核心业务能力闭环，加模型别名、分组倍率、基础文本路由与共享钱包结算；允许通过外部 channel 或已许可源码模块交付 | New API 固定提交 `e449cc700eb569cdfc2199cb73e97de46944f43c` 的公开产品能力 | [029 验收清单](../../specs/029-phase1-acceptance/spec.md)逐项有专用 PostgreSQL、deterministic mock 和至少一个外部 channel 证据 |
 | 第二阶段 | 文本 Go 数据面：低延迟、失败分类与故障切换、预算治理、缓存设计、真实压测；先在 aigate 统一合同，再逐项内收下游实现 | Bifrost 开源仓库的机制（固定提交见[海外研究](../research/ecosystem-overseas.md)）与已许可上游源码 | [032](../../specs/032-phase2-text-data-plane/spec.md) 能力有合同、实现和同条件压测记录 |
 | 第三阶段 | aigate 文本动态路由：在 direct/new_api/sub2api channel 之间按模型、供应商、价格与性能偏好选择；下游账号池只做局部选择 | OpenRouter 公开文档与产品行为；New API/Sub2API 的公开路由行为 | [033](../../specs/033-text-dynamic-routing/spec.md) 路由决策可记录、可回放，三类切换逐类验收 |
@@ -14,7 +14,7 @@
 
 阶段按顺序推进。后一阶段可以提前做设计和纯算法，但不能把它算作前一阶段的完成条件，也不能反过来阻塞前一阶段收口。
 
-**2026-11-23 目标修订：**032/033 已进入当前代码路径，后续不再以 New API 全量能力内收为目标，而按[041 R0](../../specs/041-profit-hybrid-platform/spec.md)推进质量约束下的成本优化、显式动态商品和贡献毛利，允许 direct/New API/Sub2API 永久混合。041 是后续设计，不提前完成固定资源性能、真实供应商或第四阶段生产资格。
+**2026-11-23 目标修订：**032/033 已进入当前代码路径，后续不再以 New API 全量能力内收为目标，而按[041 R0](../../specs/041-profit-hybrid-platform/spec.md)推进质量约束下的成本优化、显式动态商品和贡献毛利，允许 direct/New API/Sub2API 永久混合。041 是后续设计，不提前完成固定资源性能、真实供应商或第四阶段生产资格。0 阶段不再标记为当前施工项。第四阶段只对已经内收并具备证据的单项能力切流；合格长尾 external 可以永久保留，New API/Sub2API 整体退役不是完成条件。
 
 **2026-11-16 当前结果：**第一阶段已在提交 `2634329bb3befd52749a2c8afb08b3260b6180d1` 上完成 029 全部 41 项整单验收，具备内测条件；这不扩大真实供应商、正式支付商或生产认证范围。032 及后续阶段仍按各自合同推进。
 
@@ -184,7 +184,7 @@ Bifrost 是 Apache-2.0 开源仓库，可以参考其源码机制。它的 Enter
 - **会话粘性**：路由会话按 `(tenant_id, session_id)` 隔离，与登录会话 `session_families` 分开。
 - **跨模型切换与预占**：auto 商品的客户预占界等于其逻辑模型 profile 的界（`Reserve` 要求预占界等于该 profile 的界），与最终选中哪个物理模型无关；候选模型能力不足时在硬过滤阶段排除；路由切换不改变客户预占上界。auto 只有一个售价，按请求时冻结的价格结算。
 - **评分输入**：模型能力、质量门槛、上下文长度、工具能力、延迟、成功率、当前供应商成本、缓存与上下文重传成本、会话粘性、最低毛利、租户与 Key 权限。不能只按最低价格选择。
-- **最低毛利保护**：成本未知时不当作 0，按策略排除或拒绝。
+- **最低毛利保护**：成本未知时不当作 0，按策略排除或拒绝。零售预占与供应商成本币种不一致时失败关闭，不把 COIN 和 CNY 直接相减；普通动态路由用已付 CNY 实付分摊下界，带 041-P0 快照的商品请求以 Reserve 冻结付款基准为唯一权威。
 
 ### 6.3 验收
 

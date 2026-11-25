@@ -24,7 +24,7 @@ func ReplayRoute(stored *RouteDecision) (*RouteDecision, error) {
 	if stored.AlgorithmVersion == "legacy-v1" {
 		return cloneDecision(stored), nil
 	}
-	if stored.AlgorithmVersion != DynamicAlgorithmVersion || stored.Policy.Validate() != nil || stored.Request.Validate() != nil {
+	if stored.AlgorithmVersion != "dynamic-v1" && stored.AlgorithmVersion != DynamicAlgorithmVersion || stored.Policy.Validate() != nil || stored.Request.Validate() != nil {
 		return nil, ErrInvalidPolicy
 	}
 	raw, err := json.Marshal(stored.Candidates)
@@ -51,6 +51,7 @@ func ReplayRoute(stored *RouteDecision) (*RouteDecision, error) {
 	if err != nil {
 		return nil, err
 	}
+	plan.algorithm = stored.AlgorithmVersion
 	draw, err := strconv.ParseUint(stored.Draw, 10, 64)
 	if err != nil || strconv.FormatUint(draw, 10) != stored.Draw {
 		return nil, ErrInvalidPolicy

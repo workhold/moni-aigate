@@ -86,6 +86,8 @@ USD/CNY 合同统一使用 `Money{currency, amount_micro}`：内部数值固定�
 
 `margin_admission_status=pass` 只说明保守准入，不代表 realized margin。第二次 attempt 必须将已发生/保留成本加入新候选保守上限；首片由 ExecutionPolicy 禁止第二次。
 
+**付款基准双路径边界（2026-11-25，`dynamic-v2`）**：`request_economics_snapshots` 只覆盖显式 P0 offer（test_active、`fixed_full_reservation`、单 attempt）的请求；普通 033 动态路由在 Reserve 不产生快照。为避免同一请求出现两个付款基准事实源，现行裁决是：快照存在时它是唯一权威，网关不执行已付 CNY 查询，路由引擎的 `marginExclusion` 直接走 `evaluateEconomicAdmission`（快照收入下界 + FX + 服务端累计成本复核）；快照不存在时唯一权威是网关请求时的 `ReservationCNYBasis` 查询（CNY-only、只读资金冻结事实、`floor(amount×fiat/issued)` 与快照写入公式一致、未知/USD/开账/赠送之外的 basis 失败关闭），引擎内按冻结路由决策的供应商上界做第二次尝试累计。两条路径按 `route_shape.economics` 是否为空互斥选择，不互为回退；`margin_below_floor` 仍表示快照路径的准入拒绝，`margin_basis_unavailable`/`cumulative_cost_unavailable` 表示普通路径的基准不可证。USD/CNY 交叉估值只在快照路径实现；普通路径的 USD 付款整笔失败关闭，等后续冻结通用估值合同时再收口。
+
 贡献毛利**复用并扩展现有 034.5 reporting gross_margin 管线**，不新建付款基准或利润聚合权威：
 
 1. 原 funding-settlement-lot 分配边提供 charged payment basis；消费退款按原分配边及 funding-consumption-refund-lot 事实冲减，冻结比例、取整和余数规则。

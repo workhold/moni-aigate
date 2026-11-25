@@ -278,13 +278,27 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		}
 	}
 	routeShape.RetailAmount = int64(reservation.Amount)
+	routeShape.RetailCurrency = "COIN"
 	if reservation.Economics != nil {
+		// A P0 service offer owns admission through its Reserve-frozen economics
+		// snapshot; the gateway must not compute a second payment basis for it.
 		routeShape.Economics = reservation.Economics
 		routeShape.TaskClass = string(reservation.Economics.TaskClass())
 		routeShape.TaskCandidates = reservation.Economics.TaskCandidates()
 		routeShape.PriorCost = economics.CostBasis{Vector: economics.MoneyVector{}, Complete: true}
 		execution := reservation.Economics.ExecutionPolicy()
 		policy.Execution = &execution
+	} else if policy.MinMarginRate != nil {
+		basis, covered, basisErr := s.Billing.ReservationCNYBasis(c.Request.Context(), p.TenantID, reservation.ID, int64(reservation.Amount))
+		if basisErr != nil {
+			_, _ = s.Billing.Release(c.Request.Context(), billing.ReleaseInput{TenantID: p.TenantID, RequestID: reservation.RequestID, Reason: "platform_failure"})
+			s.fail(c, 503, "payment_basis_unavailable", "已付法币基准当前不可用")
+			return
+		}
+		if covered {
+			routeShape.PaymentAmount = basis
+			routeShape.PaymentCurrency = "CNY"
+		}
 	}
 	for i := range candidates {
 		candidates[i].RetailAmount = routeShape.RetailAmount
@@ -384,6 +398,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 			_, persistErr := s.finalize(p.KeyID, f, false)
 			attempt.Finish(outcome(c.Request.Context(), err))
 			if persistErr == nil && plan.CanRetry(c.Request.Context(), err) {
+				attempt.NoteNoSupplierConsumption()
 				var pe *provider.Error
 				if errors.As(err, &pe) && pe.RetryAfter > 0 {
 					wait := pe.RetryAfter

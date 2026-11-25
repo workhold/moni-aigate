@@ -165,7 +165,7 @@ CREATE UNIQUE INDEX route_decisions_request_sequence ON route_decisions(request_
 
 ### 2.7 原因枚举
 
-硬约束排除：`not_authorized`、`region_forbidden`、`capability_missing`、`quality_below_floor`、`context_too_small`、`tools_unsupported`、`output_limit_too_small`、`disabled`、`channel_quarantined`、`binding_isolated`、`credential_revoked`、`capacity_full`、`circuit_open`、`half_open_busy`、`cost_unknown`、`cost_limit_exceeded`、`margin_below_floor`、`procurement_paused`、`procurement_budget_exceeded`、`procurement_bound_invalid`、`procurement_budget_unavailable`。
+硬约束排除：`not_authorized`、`region_forbidden`、`capability_missing`、`quality_below_floor`、`context_too_small`、`tools_unsupported`、`output_limit_too_small`、`disabled`、`channel_quarantined`、`binding_isolated`、`credential_revoked`、`capacity_full`、`circuit_open`、`half_open_busy`、`cost_unknown`、`cost_limit_exceeded`、`margin_below_floor`、`margin_basis_unavailable`、`cumulative_cost_unavailable`、`procurement_paused`、`procurement_budget_exceeded`、`procurement_bound_invalid`、`procurement_budget_unavailable`。
 
 排序阶段：`selected`、`lower_priority`、`higher_cost`、`lower_score`、`weighted_not_selected`、`sticky_override`、`already_tried`。
 
@@ -198,9 +198,11 @@ CREATE UNIQUE INDEX route_decisions_request_sequence ON route_decisions(request_
 
 按顺序过滤：授权（平台模型、租户、成员、Key、`only`/`ignore`）→ 地域 → 能力（上下文、工具、参数满足、`require_parameters`）→ 质量档位下限 → 渠道与 binding 状态 → 凭据状态 → 容量与熔断 → 采购预算与暂停 → 采购成本未知策略 → `max_price` → 成本上限 → **最低毛利**。每个被排除的候选都记入当次决策的 `candidates` 数组。
 
-最低毛利：`1 - 保守供应商成本 / 客户冻结售价` 低于 `min_margin_rate` 时排除。成本未知时按 `unknown_cost_policy`：`deny` 排除，`allow` 保留但标注。
+最低毛利：同一币种下，`1 - 保守供应商成本 / 客户冻结售价` 低于 `min_margin_rate` 时排除，原因是 `margin_below_floor`。成本未知时按 `unknown_cost_policy`：`deny` 排除，`allow` 保留但标注。`dynamic-v2` 的最低毛利比较已付 CNY 下界和供应商上限。下界是各已付 CNY 收据按实付金额分摊到本次预占后的向下取整，不是牌价；它只读取 027/034 在资金时冻结的分配与收据事实（金额、`basis_kind`、法币币种与实付），请求路径不做币价查询。赠送和开账贡献 0，不抹掉同一次预占里已经证明的已付部分；未知来源、USD 或不一致的分配边则整笔失败关闭为 `margin_basis_unavailable`。第二次尝试把第一次仍可能保留的供应商上限加进新的上限；已证明未发送或无消费时先前上限记 0。第一次成本未知时失败关闭为 `cumulative_cost_unavailable`。`quality_score` 不能抬高 `quality_tier`，也不能代替场景质量证据。`dynamic-v1` 历史决策仍按原数值比较回放。
 
 **041-P0 修订**：该原始公式只适用于无 ServiceOfferVersion 的 legacy 数值指标，不能称现金毛利。显式 P0 offer 使用[经济基础子规格](../041-profit-hybrid-platform/p0-economic-foundation.md)的净付款基准下界、USD/CNY 原币向量、保守 FX 与较早 outer/inner 累计成本；服务端 ExecutionPolicy 固定单 attempt，不能依赖 `allow_fallbacks=false`。
+
+**付款基准唯一权威（2026-11-25）**：一个请求只有一个生效的付款基准事实源。Reserve 已冻结 `request_economics_snapshots` 的商品请求（`route_shape.economics` 非空）一律以该快照及其 FX 为唯一权威，网关不再执行 `ReservationCNYBasis` 查询，路由引擎也不读取 paid-CNY 请求字段；累计成本由服务端在 dispatch 事务按快照复核。无快照的普通动态路由（033 路径）以网关请求时查询的已付 CNY 分摊下界为唯一权威，`dynamic-v2` 引擎内做上界累计。两条路径互斥且不互为回退；快照缺失时按普通路由处理，普通路由不得读快照。USD/CNY 交叉估值仍只在 041 P0 快照路径存在。
 
 ### 4.2 排序
 

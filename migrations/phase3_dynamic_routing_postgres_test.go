@@ -78,7 +78,10 @@ func TestPhase3MigrationBackfillsLegacyAttemptWithoutScalingFacts(t *testing.T) 
 	sort.Strings(names)
 	ordered := []string{"current_mvp.sql"}
 	for _, name := range names {
-		if name != "current_mvp.sql" && name != "current_015_phase3_dynamic_routing.sql" && name != "current_016_profit_economics.sql" {
+		// 015 backfills route_decisions from this prefix fixture, so it and every
+		// later change that assumes installed route tables (016 profit economics,
+		// 017 margin basis) apply after the fixture inserts its legacy attempt.
+		if name != "current_mvp.sql" && name != "current_015_phase3_dynamic_routing.sql" && name != "current_016_profit_economics.sql" && name != "current_017_margin_basis.sql" {
 			ordered = append(ordered, name)
 		}
 	}

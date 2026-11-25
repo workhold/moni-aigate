@@ -22,7 +22,7 @@ func healthBreak(reason string) bool {
 }
 
 func costBreak(reason string) bool {
-	return reason == "cost_unknown" || reason == "cost_limit_exceeded" || reason == "margin_below_floor" || reason == "procurement_paused" || reason == "procurement_budget_exceeded" || reason == "procurement_bound_invalid" || reason == "procurement_budget_unavailable"
+	return reason == "cost_unknown" || reason == "cost_limit_exceeded" || reason == "margin_below_floor" || reason == "margin_basis_unavailable" || reason == "cumulative_cost_unavailable" || reason == "procurement_paused" || reason == "procurement_budget_exceeded" || reason == "procurement_bound_invalid" || reason == "procurement_budget_unavailable"
 }
 
 func stickyBreak(policy DynamicPolicy, kind string) bool {
@@ -41,7 +41,7 @@ func (e *Engine) acquirePlan(p *Plan, sequence int) (Candidate, uint64, *RouteDe
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	now := e.config.Now()
-	record := &RouteDecision{Sequence: sequence, Draw: "0", Degradation: "none", AlgorithmVersion: DynamicAlgorithmVersion, Policy: p.policy, Request: p.request, Candidates: []CandidateDecision{}}
+	record := &RouteDecision{Sequence: sequence, Draw: "0", Degradation: "none", AlgorithmVersion: p.algorithm, Policy: p.policy, Request: p.request, Candidates: []CandidateDecision{}}
 	if len(p.candidates) > 0 {
 		record.PolicyVersionID = p.candidates[0].PolicyVersionID
 	}
@@ -124,8 +124,8 @@ func (e *Engine) acquirePlan(p *Plan, sequence int) (Candidate, uint64, *RouteDe
 					}
 				}
 			}
-			if reason == "" && marginBelowFloorForRequest(explanation.CostSnapshot, candidate.RetailAmount, p.policy.MinMarginRate, p.request) {
-				reason = "margin_below_floor"
+			if reason == "" {
+				reason = marginExclusionForRequest(explanation.CostSnapshot, candidate.RetailAmount, p.policy.MinMarginRate, p.request, p.algorithm)
 			}
 			if reason != "" {
 				if group.explanation.FilterReason == "" {

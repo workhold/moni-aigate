@@ -14,7 +14,7 @@ import (
 	"github.com/moni-ai/moni-aigate/internal/metering"
 )
 
-const DynamicAlgorithmVersion = "dynamic-v1"
+const DynamicAlgorithmVersion = "dynamic-v2"
 
 type ScoringPolicy struct {
 	Auto             bool `json:"auto"`
@@ -129,25 +129,31 @@ type StickyTarget struct {
 }
 
 type RequestShape struct {
-	InputUpperBound int64                        `json:"input_upper_bound"`
-	OutputLimit     int64                        `json:"output_limit"`
-	RetailAmount    int64                        `json:"retail_amount"`
-	UsageSemantics  string                       `json:"usage_semantics,omitempty"`
-	Tools           bool                         `json:"tools"`
-	ParallelTools   bool                         `json:"parallel_tools"`
-	Parameters      []string                     `json:"parameters"`
-	Preference      RoutePreference              `json:"preference"`
-	SessionID       string                       `json:"session_id,omitempty"`
-	Sticky          *StickyTarget                `json:"sticky,omitempty"`
-	TaskClass       string                       `json:"task_class,omitempty"`
-	TaskHint        string                       `json:"task_hint,omitempty"`
-	TaskCandidates  []string                     `json:"task_candidates"`
-	Reasoning       bool                         `json:"reasoning"`
-	Economics       *economics.EconomicsSnapshot `json:"economics,omitempty"`
-	RequestID       string                       `json:"request_id,omitempty"`
-	PriorCost       economics.CostBasis          `json:"prior_cost"`
-	StatsWindowS    int64                        `json:"stats_window_s"`
-	StatsMinSamples int64                        `json:"stats_min_samples"`
+	InputUpperBound       int64                        `json:"input_upper_bound"`
+	OutputLimit           int64                        `json:"output_limit"`
+	RetailAmount          int64                        `json:"retail_amount"`
+	RetailCurrency        string                       `json:"retail_currency,omitempty"`
+	PaymentAmount         int64                        `json:"payment_amount,omitempty"`
+	PaymentCurrency       string                       `json:"payment_currency,omitempty"`
+	PriorSupplierAmount   string                       `json:"prior_supplier_amount,omitempty"`
+	PriorSupplierCurrency string                       `json:"prior_supplier_currency,omitempty"`
+	PriorSupplierUnknown  bool                         `json:"prior_supplier_unknown,omitempty"`
+	UsageSemantics        string                       `json:"usage_semantics,omitempty"`
+	Tools                 bool                         `json:"tools"`
+	ParallelTools         bool                         `json:"parallel_tools"`
+	Parameters            []string                     `json:"parameters"`
+	Preference            RoutePreference              `json:"preference"`
+	SessionID             string                       `json:"session_id,omitempty"`
+	Sticky                *StickyTarget                `json:"sticky,omitempty"`
+	TaskClass             string                       `json:"task_class,omitempty"`
+	TaskHint              string                       `json:"task_hint,omitempty"`
+	TaskCandidates        []string                     `json:"task_candidates"`
+	Reasoning             bool                         `json:"reasoning"`
+	Economics             *economics.EconomicsSnapshot `json:"economics,omitempty"`
+	RequestID             string                       `json:"request_id,omitempty"`
+	PriorCost             economics.CostBasis          `json:"prior_cost"`
+	StatsWindowS          int64                        `json:"stats_window_s"`
+	StatsMinSamples       int64                        `json:"stats_min_samples"`
 }
 
 func (r RequestShape) Validate() error {
@@ -195,6 +201,21 @@ func (r RequestShape) Validate() error {
 		if _, err := r.Economics.CanonicalJSON(); err != nil || r.PriorCost.Vector == nil || r.PriorCost.Vector.Validate() != nil {
 			return ErrInvalidPolicy
 		}
+	}
+	// dynamic-v2 basis fields. Retail stays COIN; the proven income basis is CNY
+	// only, and the prior supplier amount is a canonical nonnegative fiat micro
+	// upper bound. An unknown prior forbids carrying any amount.
+	if r.RetailCurrency != "" && r.RetailCurrency != "COIN" || r.PaymentCurrency != "" && r.PaymentCurrency != "CNY" || r.PaymentAmount < 0 {
+		return ErrInvalidPolicy
+	}
+	if r.PaymentAmount != 0 && r.PaymentCurrency != "CNY" {
+		return ErrInvalidPolicy
+	}
+	if r.PriorSupplierCurrency != "" && r.PriorSupplierCurrency != "CNY" || r.PriorSupplierAmount != "" && !canonicalNonnegative(r.PriorSupplierAmount) {
+		return ErrInvalidPolicy
+	}
+	if r.PriorSupplierUnknown && (r.PriorSupplierAmount != "" || r.PriorSupplierCurrency != "") {
+		return ErrInvalidPolicy
 	}
 	for i, id := range r.TaskCandidates {
 		if id == "" || i > 0 && r.TaskCandidates[i-1] >= id {
@@ -406,7 +427,14 @@ func economicMarginRate(request RequestShape, cost CostSnapshot) *int64 {
 	return &value
 }
 
-func marginRate(cost CostSnapshot, retail int64) *int64 {
+func comparableMargin(cost CostSnapshot, incomeCurrency string) bool {
+	return cost.Currency != "" && incomeCurrency != "" && cost.Currency == incomeCurrency
+}
+
+func marginRate(cost CostSnapshot, retail int64, retailCurrency string) *int64 {
+	if !comparableMargin(cost, retailCurrency) {
+		return nil
+	}
 	if cost.UpperAmount == nil {
 		return nil
 	}
@@ -443,7 +471,9 @@ func staticCandidateDecision(c Candidate, policy DynamicPolicy, request RequestS
 			d.ValuationCostUpper = &text
 		}
 	}
-	d.Score.MarginRate = marginRate(cost, c.RetailAmount)
+	// Known supplier rates are still fiat (CNY or USD). Retail is COIN, so the
+	// plain display rate stays nil unless a request proves a matching income basis.
+	d.Score.MarginRate = marginRate(cost, c.RetailAmount, request.RetailCurrency)
 	if request.Economics != nil {
 		d.Score.MarginRate = economicMarginRate(request, cost)
 	}
@@ -472,6 +502,7 @@ func staticCandidateDecision(c Candidate, policy DynamicPolicy, request RequestS
 		case request.Preference.RequireParameters && !parametersSupported(c.Physical.SupportedParameters, request.Parameters):
 			d.FilterReason = "capability_missing"
 		case qualityRank(c.Physical.QualityTier) < qualityRank(policy.QualityFloor):
+			// quality_score is an optional offline number. It cannot raise a tier or stand in for scenario evidence.
 			d.FilterReason = "quality_below_floor"
 		}
 		if d.FilterReason != "" {
@@ -591,12 +622,139 @@ func evaluateEconomicAdmission(request RequestShape, snapshot CostSnapshot) (eco
 	return economics.EvaluateAdmission(economics.AdmissionRequest{Snapshot: *request.Economics, PriorCost: request.PriorCost, CandidateCost: candidate}, request.Economics.CreatedAt())
 }
 
-func marginBelowFloorForRequest(snapshot CostSnapshot, retail int64, floor *int64, request RequestShape) bool {
-	if request.Economics == nil {
-		return marginBelowFloor(snapshot, retail, floor)
+// priorSupplierCost returns the frozen supplier upper bound of the last
+// selected candidate. It is the conservative amount that the next attempt must
+// still assume was consumed when the previous attempt may have sent upstream.
+func priorSupplierCost(decision *RouteDecision) (amount, currency string, unknown bool) {
+	if decision == nil || decision.SelectedBindingID == "" {
+		return "", "", true
 	}
-	_, err := evaluateEconomicAdmission(request, snapshot)
-	return err != nil
+	for _, candidate := range decision.Candidates {
+		if candidate.BindingID != decision.SelectedBindingID || candidate.FilterReason != "" {
+			continue
+		}
+		if candidate.CostSnapshot.Currency == "" || candidate.CostSnapshot.UpperAmount == nil || *candidate.CostSnapshot.UpperAmount == "" {
+			return "", "", true
+		}
+		return *candidate.CostSnapshot.UpperAmount, candidate.CostSnapshot.Currency, false
+	}
+	return "", "", true
+}
+
+// PaidLot is one funding allocation of the current reservation with the frozen
+// facts of its funding receipt.
+type PaidLot struct {
+	Coin         int64
+	Issued       int64
+	Fiat         int64
+	Basis        string
+	FiatCurrency string
+}
+
+// ConservativeCNYPayment is the paid-CNY lower bound of one reservation.
+// Each paid CNY lot contributes its own floored share of the receipt's fiat amount,
+// not the list rate. Grant and opening coins contribute nothing. Unknown, USD,
+// or an inconsistent paid lot leaves the basis uncovered. A positive reservation
+// whose proven cash is zero is also uncovered. The formula matches the Reserve
+// economics snapshot writer (floor(amount*fiat/issued) per paid allocation).
+func ConservativeCNYPayment(reservationCoin int64, lots []PaidLot) (int64, bool) {
+	if reservationCoin < 0 {
+		return 0, false
+	}
+	if reservationCoin == 0 && len(lots) == 0 {
+		return 0, true
+	}
+	var coins int64
+	total := big.NewInt(0)
+	for _, lot := range lots {
+		if lot.Coin <= 0 || coins > math.MaxInt64-lot.Coin {
+			return 0, false
+		}
+		coins += lot.Coin
+		switch lot.Basis {
+		case "grant", "opening":
+		case "paid":
+			if lot.FiatCurrency != "CNY" || lot.Fiat <= 0 || lot.Issued <= 0 || lot.Coin > lot.Issued {
+				return 0, false
+			}
+			share := new(big.Int).Mul(big.NewInt(lot.Coin), big.NewInt(lot.Fiat))
+			share.Quo(share, big.NewInt(lot.Issued))
+			total.Add(total, share)
+			if !total.IsInt64() {
+				return 0, false
+			}
+		default:
+			return 0, false
+		}
+	}
+	if coins != reservationCoin || reservationCoin > 0 && total.Sign() == 0 {
+		return 0, false
+	}
+	return total.Int64(), true
+}
+
+func withPriorSupplier(snapshot CostSnapshot, request RequestShape) CostSnapshot {
+	if request.PriorSupplierAmount == "" || request.PriorSupplierAmount == "0" {
+		return snapshot
+	}
+	if snapshot.Currency == "" || snapshot.UpperAmount == nil || request.PriorSupplierCurrency != snapshot.Currency {
+		snapshot.Currency = "mixed"
+		return snapshot
+	}
+	upper, ok := new(big.Int).SetString(*snapshot.UpperAmount, 10)
+	prior, pok := new(big.Int).SetString(request.PriorSupplierAmount, 10)
+	if !ok || !pok || prior.Sign() < 0 {
+		snapshot.Currency = "mixed"
+		return snapshot
+	}
+	sum := new(big.Int).Add(upper, prior)
+	if !sum.IsInt64() {
+		snapshot.Currency = "mixed"
+		return snapshot
+	}
+	text := sum.String()
+	snapshot.UpperAmount = &text
+	return snapshot
+}
+
+// marginExclusion is the plain dynamic-v2 minimum margin gate: paid-CNY income
+// lower bound against the candidate supplier upper bound plus the still
+// unwaived prior supplier upper bound. v1 keeps the historical numeric compare.
+func marginExclusion(snapshot CostSnapshot, request RequestShape, floor *int64, algorithm string) string {
+	if floor == nil {
+		return ""
+	}
+	amount, currency := request.RetailAmount, request.RetailCurrency
+	if algorithm != "dynamic-v1" {
+		if request.PriorSupplierUnknown {
+			return "cumulative_cost_unavailable"
+		}
+		amount, currency = request.PaymentAmount, request.PaymentCurrency
+		snapshot = withPriorSupplier(snapshot, request)
+		if snapshot.Currency == "mixed" {
+			return "cumulative_cost_unavailable"
+		}
+	}
+	if algorithm != "dynamic-v1" && !comparableMargin(snapshot, currency) {
+		return "margin_basis_unavailable"
+	}
+	if marginBelowFloor(snapshot, amount, floor) {
+		return "margin_below_floor"
+	}
+	return ""
+}
+
+// marginExclusionForRequest keeps one authority per request. A Reserve economics
+// snapshot (P0 service offer) owns admission via its frozen payment basis and FX;
+// a plain dynamic route uses the request's paid-CNY basis from the gateway query.
+func marginExclusionForRequest(snapshot CostSnapshot, retail int64, floor *int64, request RequestShape, algorithm string) string {
+	if request.Economics == nil {
+		return marginExclusion(snapshot, request, floor, algorithm)
+	}
+	if _, err := evaluateEconomicAdmission(request, snapshot); err != nil {
+		return "margin_below_floor"
+	}
+	return ""
 }
 
 func marginBelowFloor(snapshot CostSnapshot, retail int64, floor *int64) bool {
