@@ -88,7 +88,7 @@ func candidateKey(c Candidate) string {
 
 func exclusionReason(c Candidate) string {
 	switch c.ExclusionReason {
-	case "not_authorized", "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden", "capability_missing", "quality_below_floor", "context_too_small", "tools_unsupported", "output_limit_too_small", "capacity_full", "circuit_open", "half_open_busy", "quarantined", "cost_unknown", "cost_limit_exceeded", "margin_below_floor", "procurement_paused", "procurement_budget_exceeded", "procurement_bound_invalid", "procurement_budget_unavailable", "task_not_allowed", "offer_inactive", "quality_evidence_missing", "quality_evidence_withdrawn", "quality_evidence_expired", "quality_scope_mismatch", "already_tried":
+	case "not_authorized", "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden", "capability_missing", "quality_below_floor", "context_too_small", "tools_unsupported", "output_limit_too_small", "capacity_full", "circuit_open", "half_open_busy", "quarantined", "cost_unknown", "cost_limit_exceeded", "margin_below_floor", "margin_basis_unavailable", "cumulative_cost_unavailable", "procurement_paused", "procurement_budget_exceeded", "procurement_bound_invalid", "procurement_budget_unavailable", "task_not_allowed", "offer_inactive", "quality_evidence_missing", "quality_evidence_withdrawn", "quality_evidence_expired", "quality_scope_mismatch", "already_tried":
 		return c.ExclusionReason
 	default:
 		return "disabled"
@@ -105,6 +105,7 @@ type Plan struct {
 	active        bool
 	policy        DynamicPolicy
 	request       RequestShape
+	algorithm     string
 	lastDecision  *RouteDecision
 }
 
@@ -125,7 +126,7 @@ func newPlan(candidates []Candidate, maxAttempts int, policy DynamicPolicy, requ
 	if maxAttempts < 1 || maxAttempts > 2 || len(candidates) == 0 || policy.Validate() != nil || request.Validate() != nil || policy.Execution != nil && int64(maxAttempts) > policy.Execution.MaxOuterAttempts {
 		return nil, ErrInvalidPolicy
 	}
-	p := &Plan{max: maxAttempts, tried: map[string]bool{}, policy: policy, request: request}
+	p := &Plan{max: maxAttempts, tried: map[string]bool{}, policy: policy, request: request, algorithm: DynamicAlgorithmVersion}
 	type channelPolicy struct {
 		candidate   Candidate
 		credentials map[string]bool

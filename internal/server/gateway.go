@@ -278,6 +278,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 		}
 	}
 	routeShape.RetailAmount = int64(reservation.Amount)
+	routeShape.RetailCurrency = "COIN"
 	if reservation.Economics != nil {
 		routeShape.Economics = reservation.Economics
 		routeShape.TaskClass = string(reservation.Economics.TaskClass())

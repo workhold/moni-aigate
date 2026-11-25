@@ -70,7 +70,7 @@ func TestDynamicHardFiltersPrecedePriorityAndScores(t *testing.T) {
 		}(), "capability_missing"},
 		{"quality", func(c *Candidate) { c.Physical.QualityTier = "economy" }, DynamicPolicy{CostPolicy: DefaultCostPolicy(), QualityFloor: "standard"}, dynamicRequest(), "quality_below_floor"},
 		{"max_price", func(c *Candidate) {}, DefaultDynamicPolicy(), func() RequestShape { r := dynamicRequest(); r.Preference.MaxPrice = &MaxPrice{Input: &input}; return r }(), "cost_limit_exceeded"},
-		{"margin", func(c *Candidate) {}, DefaultDynamicPolicy(), func() RequestShape { r := dynamicRequest(); r.RetailAmount = 100; return r }(), "margin_below_floor"},
+		{"margin", func(c *Candidate) {}, DefaultDynamicPolicy(), func() RequestShape { r := dynamicRequest(); r.RetailAmount = 100; r.RetailCurrency = "CNY"; return r }(), "margin_below_floor"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -100,6 +100,7 @@ func TestDynamicHardFiltersPrecedePriorityAndScores(t *testing.T) {
 					}
 				}
 				tc.request.RetailAmount = 100
+				tc.request.RetailCurrency = "CNY"
 			}
 			plan, attempt := startDynamic(t, []Candidate{blocked, fallback}, tc.policy, tc.request, 0)
 			defer attempt.Finish(Neutral)
@@ -329,6 +330,7 @@ func TestDynamicZeroRetailPositiveMarginFloorFailsClosed(t *testing.T) {
 	policy.MinMarginRate = &floor
 	request := dynamicRequest()
 	request.RetailAmount = 0
+	request.RetailCurrency = "CNY"
 	plan, err := NewDynamicPlan([]Candidate{candidate}, 1, policy, request)
 	if err != nil {
 		t.Fatal(err)
@@ -336,6 +338,49 @@ func TestDynamicZeroRetailPositiveMarginFloorFailsClosed(t *testing.T) {
 	_, err = plan.Start(context.Background(), NewEngine(Config{}), func(context.Context, Candidate, int) error { return nil })
 	if !errors.Is(err, ErrUnavailable) || decisionReason(t, plan, "binding-free") != "margin_below_floor" {
 		t.Fatalf("zero retail bypassed margin floor: %+v %v", plan.LastDecision(), err)
+	}
+}
+
+func TestDynamicMarginRefusesCoinAgainstSupplierCNY(t *testing.T) {
+	candidate := dynamicCandidate("coin", "standard")
+	candidate.CostQuote = testCostQuote("coin", candidate.Model, "quote-coin", "contract", 0, 0)
+	policy := DefaultDynamicPolicy()
+	floor := int64(0)
+	policy.MinMarginRate = &floor
+	request := dynamicRequest()
+	request.RetailAmount = 100
+	request.RetailCurrency = "COIN"
+	plan, err := NewDynamicPlan([]Candidate{candidate}, 1, policy, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = plan.Start(context.Background(), NewEngine(Config{}), func(context.Context, Candidate, int) error { return nil })
+	if !errors.Is(err, ErrUnavailable) || decisionReason(t, plan, "binding-coin") != "margin_basis_unavailable" || plan.LastDecision().AlgorithmVersion != DynamicAlgorithmVersion {
+		t.Fatalf("cross-currency margin was treated as cash profit: %+v %v", plan.LastDecision(), err)
+	}
+}
+
+func TestDynamicV1ReplayKeepsNumericMargin(t *testing.T) {
+	candidate := dynamicCandidate("legacy", "standard")
+	candidate.CostQuote = testCostQuote("legacy", candidate.Model, "quote-legacy", "contract", 0, 0)
+	policy := DefaultDynamicPolicy()
+	floor := int64(0)
+	policy.MinMarginRate = &floor
+	request := dynamicRequest()
+	request.RetailAmount = 100
+	request.RetailCurrency = "COIN"
+	plan, err := NewDynamicPlan([]Candidate{candidate}, 1, policy, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan.algorithm = "dynamic-v1"
+	_, err = plan.Start(context.Background(), NewEngine(Config{}), func(context.Context, Candidate, int) error { return nil })
+	if err != nil || plan.LastDecision().AlgorithmVersion != "dynamic-v1" || plan.LastDecision().SelectedBindingID != "binding-legacy" {
+		t.Fatalf("historical numeric margin changed: %+v %v", plan.LastDecision(), err)
+	}
+	replayed, err := ReplayRoute(plan.LastDecision())
+	if err != nil || replayed.SelectedBindingID != "binding-legacy" {
+		t.Fatalf("v1 replay=%+v %v", replayed, err)
 	}
 }
 

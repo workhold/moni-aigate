@@ -16,7 +16,7 @@ const unadmitted = computed(() => decisions.value.filter((decision) => !decision
 let generation = 0
 const reasons: Record<string, string> = {
   selected: '本次选中', sticky_override: '安全会话粘性命中', weighted_not_selected: '同优先级按权重未选中', lower_priority: '优先级低于当前候选池', lower_score: '排序偏好低于当前候选', disabled: '渠道或物理模型未启用', already_tried: '本请求已尝试', capacity_full: '并发容量已满', quarantined: '渠道健康隔离', circuit_open: '熔断中', half_open_busy: '半开探测名额已占用', channel_quarantined: '渠道被平台隔离', credential_revoked: '凭据已撤销', binding_isolated: '模型绑定已隔离', region_forbidden: '不符合密钥地域限制', not_authorized: '不在本次授权或 only/ignore 范围',
-  capability_missing: '物理模型能力或请求参数不满足', context_too_small: '物理上下文不足', output_limit_too_small: '物理输出上限不足', tools_unsupported: '物理模型不支持所需工具', quality_below_floor: '低于质量档位门槛', margin_below_floor: '低于最低毛利率',
+  capability_missing: '物理模型能力或请求参数不满足', context_too_small: '物理上下文不足', output_limit_too_small: '物理输出上限不足', tools_unsupported: '物理模型不支持所需工具', quality_below_floor: '低于质量档位门槛', margin_below_floor: '低于同一币种的最低毛利率', margin_basis_unavailable: '最低毛利缺少同一币种的付款基准',
   cost_unknown: '采购报价未知或不完整', cost_limit_exceeded: '采购单价超过请求或绑定上限', higher_cost: '同优先级采购比较成本较高', procurement_paused: '共享采购账户暂停或异常', procurement_budget_exceeded: '共享采购预算不足', procurement_bound_invalid: '采购绑定或计量硬界无效', procurement_budget_unavailable: '采购预算当前不可用',
 }
 function reason(value: string) { return reasons[value] || '未识别的筛选原因' }
