@@ -9059,11 +9059,122 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 
 </details>
 
-## 2026-11-25T07:28:12Z · 0805bc7b4973
+## 2026-11-25T07:24:56Z · e72294a7665b
 
-配置 mattpocock agent skills：GitHub Issues tracker、默认 triage 标签、单上下文领域文档；check-architecture 精确排除会话级 .claude/launch.json（同 settings.local.json 先例），无运行行为变化
+042 P0.1 窄修复：经营报表前端解析器新增封闭三态元数据联合（完整文本快照/媒体空三元组/无快照文本），允许 protocol/execution_kind 显式缺失标记；媒体空三元组是 026/028 线路合同既有事实，不再整页报错。只校准读端解析合同，无模块、数据、权限、迁移结构变化；新增 specs/042 与前后端/PG/API 测试。
 
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 3 个源文件变化，架构正文变化：false。
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2657 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/architecture/operating-reports.md`
+- modified `internal/reporting/read_postgres_test.go`
+- modified `internal/reporting/report_test.go`
+- modified `internal/server/operating_reports_integration_test.go`
+- added `specs/042-operations-report-metadata-states/spec.md`
+- modified `web/src/operating-report.ts`
+- added `web/tests/operating-report-matrix.test.mjs`
+- modified `web/tests/operating-report.test.mjs`
+
+</details>
+
+## 2026-11-25T10:51:44Z · 479e0208feb8
+
+042 P0.1 验收归档：新增只读浏览器验收脚本 scripts/p01_report_metadata_browser.py、验证记录 docs/verification/p01-operations-report-metadata.md 与六场景截图/观察证据（预览于隔离镜像 moni-aigate:phase1-browser-fbec003e5b2f、专库 phase1qa schema）。实现代码无变化；完整 029 r2 于干净 fbec003 41/41 PASS。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2665 个源文件；本次 8 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/assets/p01-report-metadata/after-001/p01-browser-evidence.json`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-illegal-media-fabricated-snapshot.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-illegal-text-partial-triple.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-mixed-390.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-mixed-desktop.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-pure-chat-desktop.png`
+- added `docs/verification/p01-operations-report-metadata.md`
+- added `scripts/p01_report_metadata_browser.py`
+
+## 2026-11-25T05:46:42Z · 9e9b7f6ab018
+
+HTTP 任务提交只允许任务所属主体触发供应商调用。其他 API Key 不能凭任务 ID 提交。后台 worker 仍可提交已准备任务。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/server.go`
+- modified `internal/server/task_handlers.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+
+</details>
+
+## 2026-11-25T05:49:36Z · df5fad64a203
+
+任务状态查询只允许任务所属主体，同租户其他 API Key 不再获得租户级读取权限。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/task_handlers.go`
+- modified `internal/tasks/tasks_test.go`
+
+</details>
+
+## 2026-11-25T06:00:30Z · 3536fd2d91b1
+
+任务取消在已请求状态下仍校验所属主体；不存在与无权访问返回同一条任务不存在响应。无模块结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2656 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/server.go`
+- added `internal/server/task_error_test.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+
+</details>
+
+## 2026-11-25T06:03:13Z · a596f493052a
+
+TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或 * 的 Key 可以调用。无模块结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2656 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/media_handlers.go`
+- modified `internal/server/tts_handlers_test.go`
+
+</details>
+
+## 2026-11-25T10:55:48Z · ba11249ad6f7
+
+042 P0.1 合并 origin/main 9fd8dd6（PR #35 任务归属与无 scope 语音拒绝）：架构三件套冲突按合并后树重新 reviewed refresh，manifest 快照同时含 #35 与 042 报表 DTO 源码；changes.md 双方追加记录均保留。完整 029 证据仍绑定 fbec003（#35 不属路由/协议/账务/迁移四类且自身 CI 全绿，合并树为两者已验证组合）。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2666 个源文件；本次 8 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/media_handlers.go`
+- modified `internal/server/server.go`
+- added `internal/server/task_error_test.go`
+- modified `internal/server/task_handlers.go`
+- modified `internal/server/tts_handlers_test.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+- modified `internal/tasks/tasks_test.go`
+
+</details>
+
+## 2026-11-25T12:18:50Z · 64520a7d1818
+
+agent-skills setup 分支合并 main（#35 任务鉴权 + #37 报表 DTO）；manifest 在合并树重新 reviewed refresh；另含 check-architecture 对 .claude/launch.json 的精确排除
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2666 个源文件；本次 3 个源文件变化，架构正文变化：false。
 
 <details><summary>源文件变化</summary>
 

@@ -1,0 +1,64 @@
+{
+  "base_url": "http://127.0.0.1:18081",
+  "commit": "fbec003e5b2fbb59e2207754cd8fdd51b0ab0a7a",
+  "scenarios": {
+    "mixed_unfiltered_desktop": {
+      "status": "PASS",
+      "observation": {
+        "scrollWidth": 1440,
+        "bodyScrollWidth": 1440,
+        "viewport": 1440,
+        "rows": 21
+      },
+      "metrics": {
+        "客户消费币数": "0\n.000042 币",
+        "消费退回币数": "0\n.000000 币",
+        "净消费币数": "0\n.000042 币",
+        "客户付款基准": "¥0.000042",
+        "已线下退还法币": "—",
+        "采购成本（原币）": "¥0.000074",
+        "暂估贡献毛利": "待核对",
+        "账单确认贡献毛利": "待核对",
+        "请求 / 上游尝试": "21 / 32",
+        "未结算请求": "3",
+        "未知采购成本项": "10"
+      },
+      "requests_total": "共 21 个请求 · 当前快照内每页 50 条\n1"
+    },
+    "media_empty_triple_visible": {
+      "status": "PASS",
+      "observation": {
+        "rows": 21,
+        "mockImage": true
+      }
+    },
+    "pure_chat_filter": {
+      "status": "PASS",
+      "rows": 9,
+      "error": false
+    },
+    "mixed_unfiltered_390": {
+      "status": "PASS",
+      "observation": {
+        "scrollWidth": 390,
+        "bodyScrollWidth": 390,
+        "viewport": 390,
+        "error": false,
+        "rows": 21
+      }
+    },
+    "illegal_rejected_text_partial_triple": {
+      "status": "PASS",
+      "error_text": "经营报表响应含未定义或旧标量字段。",
+      "amount_metrics_visible": 0,
+      "injection": "client-side fetch shim injected the illegal row into the operations response at the network boundary"
+    },
+    "illegal_rejected_media_fabricated_snapshot": {
+      "status": "PASS",
+      "error_text": "经营报表响应含未定义或旧标量字段。",
+      "amount_metrics_visible": 0,
+      "injection": "client-side fetch shim injected the illegal row into the operations response at the network boundary"
+    }
+  },
+  "completed_at": "2026-11-25T07:49:22Z"
+}

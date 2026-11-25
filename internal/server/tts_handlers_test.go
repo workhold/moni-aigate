@@ -48,6 +48,30 @@ func TestSynthesizeSpeechReturnsWAVAndReplaysWithoutProviderCall(t *testing.T) {
 	}
 }
 
+func TestSpeechScopeDoesNotFailOpen(t *testing.T) {
+	adapter := newDefaultMediaAdapter().(*provider.MockMediaAdapter)
+	server := &Server{MediaAdapter: adapter}
+	body := []byte(`{"model":"mock-tts","input":"hello","voice":"alloy","response_format":"wav"}`)
+	for _, principal := range []identity.Principal{
+		{TenantID: "tenant-1", KeyID: "key-empty"},
+		{TenantID: "tenant-1", KeyID: "key-other", Scopes: []string{"00000000-0000-4000-8000-000000000001"}},
+	} {
+		context, recorder := speechHandlerContext(body, "speech-scope-"+principal.KeyID, principal)
+		server.synthesizeSpeech(context)
+		if recorder.Code != http.StatusBadRequest {
+			t.Fatalf("scope %v status=%d body=%s", principal.Scopes, recorder.Code, recorder.Body.String())
+		}
+	}
+	if len(adapter.SpeechRequests()) != 0 {
+		t.Fatalf("unauthorized speech reached provider: %d", len(adapter.SpeechRequests()))
+	}
+	allowed, recorder := speechHandlerContext(body, "speech-scope-wildcard", identity.Principal{TenantID: "tenant-1", KeyID: "key-wild", Scopes: []string{"*"}})
+	server.synthesizeSpeech(allowed)
+	if recorder.Code != http.StatusOK || len(adapter.SpeechRequests()) != 1 {
+		t.Fatalf("wildcard status=%d calls=%d", recorder.Code, len(adapter.SpeechRequests()))
+	}
+}
+
 func TestSynthesizeSpeechRejectsUnsupportedFormatAndIdempotencyConflict(t *testing.T) {
 	server := &Server{MediaAdapter: newDefaultMediaAdapter()}
 	principal := identity.Principal{TenantID: "tenant-1", KeyID: "key-1", Scopes: []string{ttsModelKey}}

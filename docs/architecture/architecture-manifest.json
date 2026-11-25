@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T07:28:12Z",
-  "review_reason": "配置 mattpocock agent skills：GitHub Issues tracker、默认 triage 标签、单上下文领域文档；check-architecture 精确排除会话级 .claude/launch.json（同 settings.local.json 先例），无运行行为变化",
-  "snapshot_sha256": "0805bc7b49735b88fe87fb6993e4284130cf6efcdc020e5d59dbe283dc19eaa0",
-  "architecture_sha256": "eeb8170eccc97fe7fc579e7ec169578e99e839e2cdbb5f1864defff73dbd6a32",
-  "history_sha256": "9523c548b672dc35ae7abac8165b4b6ed609320c50b38bafc3bf4f1004554be3",
+  "reviewed_at": "2026-11-25T12:18:50Z",
+  "review_reason": "agent-skills setup 分支合并 main（#35 任务鉴权 + #37 报表 DTO）；manifest 在合并树重新 reviewed refresh；另含 check-architecture 对 .claude/launch.json 的精确排除",
+  "snapshot_sha256": "64520a7d1818aa8ed8249a41738f635fbeb1aa4ac59c6a2372a15c105bd18c9e",
+  "architecture_sha256": "5985d4bca36063f779c0210088ff84324c43d5d20846f68b5480e3f6301eeeef",
+  "history_sha256": "1914b80c7a34540ff41e906dd844091faf79a14f7a80a736180ed7738d90e0ef",
   "files": [
     {
       "path": ".dockerignore",
@@ -129,7 +129,7 @@
     },
     {
       "path": "docs/architecture/operating-reports.md",
-      "sha256": "94debea26ed016f09f8acaab519ccdb2d6c114614ada8d30c62fca92af3fb29c"
+      "sha256": "ec71165fe9dcd553cb7034df6925e03556d961d76abd6f3415368c3010061b43"
     },
     {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
@@ -738,6 +738,30 @@
     {
       "path": "docs/verification/assets/operations-alerts-024-mobile.png",
       "sha256": "d75adbbe17237186401af87d63d2f25a3b3710ad16575df69f6aaaf885b7de04"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/p01-browser-evidence.json",
+      "sha256": "066234e0b15926ced7f54f46d549d89a2ea9414476f0b3c1f9bfdd2e67f688dc"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-illegal-media-fabricated-snapshot.png",
+      "sha256": "3a45278ee9748e96da8429631d03de3c93f779869f232bf7c965050e39054eaa"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-illegal-text-partial-triple.png",
+      "sha256": "3a45278ee9748e96da8429631d03de3c93f779869f232bf7c965050e39054eaa"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-mixed-390.png",
+      "sha256": "7e1e75f99ff20e6b8704e843b9d8667894d849ae4ace4d92888181230814c795"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-mixed-desktop.png",
+      "sha256": "865e000ca22bb52bb66ecdad7c3be66546be1b0725a7a4d219c18503da19edb5"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-pure-chat-desktop.png",
+      "sha256": "63eca2a7cf23b7649e55ec4e2c9274a9ed52bef2a050e20d66e96f5a3f79924a"
     },
     {
       "path": "docs/verification/assets/payment-application-022-mobile.png",
@@ -1562,6 +1586,10 @@
     {
       "path": "docs/verification/overall-delivery-inventory.md",
       "sha256": "940b18ff783145d463bfff9c1f737544d4307fa81b30b7fc23ac94b83a7699e2"
+    },
+    {
+      "path": "docs/verification/p01-operations-report-metadata.md",
+      "sha256": "62a0c23ac77053d3fde8548d69083c13f55e88ea4eb47e5b1b855446d8423da5"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -7101,7 +7129,7 @@
     },
     {
       "path": "internal/reporting/read_postgres_test.go",
-      "sha256": "f00d221b0c3ae3fe656619f9ccebe9f1c41f51f59a65df7fb9aac10df0e472f1"
+      "sha256": "d0be0a63b069cd7cdc6330d1236fa7b21439a16defb38ce42292b04b583cd504"
     },
     {
       "path": "internal/reporting/report.go",
@@ -7109,7 +7137,7 @@
     },
     {
       "path": "internal/reporting/report_test.go",
-      "sha256": "3c8695219503e50ba5fef730128328acdadb25713ccb4e2209618b7496c2d1dc"
+      "sha256": "bbaa4e22a03667e6920dc56d37f3e66dc161d94179692acbc8d7af3f97a17351"
     },
     {
       "path": "internal/reporting/types.go",
@@ -7477,7 +7505,7 @@
     },
     {
       "path": "internal/server/media_handlers.go",
-      "sha256": "7c3f8c7f33c297e7ba5ad7e88be00b058e671aaf084412b52d64718f0bfeca68"
+      "sha256": "f8c6f4c3b73f652f5f44e8242e301febb82c384812ed00ccb869973204db3eef"
     },
     {
       "path": "internal/server/media_provider_runtime.go",
@@ -7521,7 +7549,7 @@
     },
     {
       "path": "internal/server/operating_reports_integration_test.go",
-      "sha256": "bf5ea98ca18b4f4cd518bb626ef8d9d5f47470cf978d5b04e8000c97f5d3d10f"
+      "sha256": "547933283df60a665539940544dbb9db43ba3f5103380e9c671e58f82ab6dc76"
     },
     {
       "path": "internal/server/operating_reports_test.go",
@@ -7757,7 +7785,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "ea7d2b4f0ad663ba8d14b7eb350bc0348c2b25cec1cdf17cc9d6624bb90647b7"
+      "sha256": "3b97eb216465199ce4e2ebfc2d4f15cb7add7cf982e5f0f88c1a096d30894d6e"
     },
     {
       "path": "internal/server/static.go",
@@ -7768,8 +7796,12 @@
       "sha256": "4d9edf07b787d522ce66c3587b6f515c059a019f9cb5fd16af126a15a5960faf"
     },
     {
+      "path": "internal/server/task_error_test.go",
+      "sha256": "d7a806ff79938a5049af9df60e81542d0cc07ea1b8c99501a81bdf3f70cae5b8"
+    },
+    {
       "path": "internal/server/task_handlers.go",
-      "sha256": "287b7ddae991ed7e98e14ac44ba41d4a28a5428ebdda4d3f0aa502763721a2b1"
+      "sha256": "9feea1d7a8521baa27c557de8b32c1a84ebc68d72801c53135ab808b90a218ff"
     },
     {
       "path": "internal/server/task_media_billing.go",
@@ -7793,7 +7825,7 @@
     },
     {
       "path": "internal/server/tts_handlers_test.go",
-      "sha256": "389c43b88fd31f749420623a5c675bb1b1054760596966b3b1b274f2f3435ba7"
+      "sha256": "e5dd03c51e66c65f75bad96a87706bde9337e3ba32dbc35bf318eb0b8b6786cc"
     },
     {
       "path": "internal/server/tts_wav.go",
@@ -7833,11 +7865,11 @@
     },
     {
       "path": "internal/tasks/service.go",
-      "sha256": "4ea831f95b2e1388c5a181afd02e05cf195a38c1481390031cc5611181ef83d4"
+      "sha256": "e20ad931f4dbe59b6b958637a48c6b237321936271d3ae5274bf4e200c68d5d7"
     },
     {
       "path": "internal/tasks/service_test.go",
-      "sha256": "b86993d33518f846de8a798e450f26e86315777b267d8867cfe33aa1380e0d19"
+      "sha256": "a70c9f1b39b1bb56d54478869c524c34379563db0d27c6eea1f7a7beaf11bd6f"
     },
     {
       "path": "internal/tasks/state.go",
@@ -7849,7 +7881,7 @@
     },
     {
       "path": "internal/tasks/tasks_test.go",
-      "sha256": "7fa40c93d16d8d086420866a7c4ac5a787399e8f7c7ff9ffb84deaaf3efc9c42"
+      "sha256": "a3ce9ca6a4be9a8b87efef9dde8664ffdebbb4d8af7788a21a9ad9921ad0455f"
     },
     {
       "path": "internal/tasks/types.go",
@@ -8486,6 +8518,10 @@
     {
       "path": "scripts/online-dependency-qa/dependencies_test.go",
       "sha256": "c3c1ee3596d006e8d79557e60a18cd5cf4d3afcb893625aed24715d0de96d80a"
+    },
+    {
+      "path": "scripts/p01_report_metadata_browser.py",
+      "sha256": "196aac4c1fd2486272356f7cb413c799bd7c9fb3e2d49e2bbcb62e3983e8a9f2"
     },
     {
       "path": "scripts/payment-application-qa/README.md",
@@ -9848,6 +9884,10 @@
       "sha256": "cfdfa4e40c630630e3b8c83e3771b7719f0ea7d9a5eb3b7661901b1ac0137329"
     },
     {
+      "path": "specs/042-operations-report-metadata-states/spec.md",
+      "sha256": "15ed6e24078744ac9f6a28777d1ad38eeba8c37f0d9557ad02288fafd302ea00"
+    },
+    {
       "path": "third_party/README.md",
       "sha256": "0e3cb2e34f81a488dda0c093cc3e5e24ff36b9bbda9350b9d4cddce99e9ee68a"
     },
@@ -10177,7 +10217,7 @@
     },
     {
       "path": "web/src/operating-report.ts",
-      "sha256": "32b4856375217e9ef896e98e64dd592e3f3a6ddc2439e519d173e263cf7196e2"
+      "sha256": "853c411261b9b69e8c6d3eff0653e41d3a57b8e2186966671810bc5c6aa6462d"
     },
     {
       "path": "web/src/payments-journal.ts",
@@ -10500,8 +10540,12 @@
       "sha256": "f32856c6088015a0b525d6b7881c8032e584836d392487a856ac22a43e1a689e"
     },
     {
+      "path": "web/tests/operating-report-matrix.test.mjs",
+      "sha256": "98d8db9c8ce4dccf80a8ea0e97a5f25ce0d2eafdd6f3aa153ba7ddcd6eec7440"
+    },
+    {
       "path": "web/tests/operating-report.test.mjs",
-      "sha256": "53f5a90152dfcaba44d668e34bc232960459bd6a32431aa5420c53f7db536dbf"
+      "sha256": "4658c7e9a7b6b95a4f1e448420de3e95818c8dcf593e1b7af27cee51a04fcde8"
     },
     {
       "path": "web/tests/payments-indexeddb.browser.mjs",

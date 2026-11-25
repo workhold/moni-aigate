@@ -48,7 +48,7 @@ flowchart LR
 
 [HTTP](../../internal/server/operating_reports.go)拒绝重复/未知参数，非法筛选400、请求上限422、数据库/超时503；所有响应no-store，错误不输出SQL/cause。CSV先在内存完整生成再发送，固定文件名、UTF-8与nosniff；[CSV编码](../../internal/reporting/csv.go)保留COIN与法币整数微单位、分币种付款基准列，未知毛利留空，对文本前导空白/control后的公式前缀转义。每次导出独立新快照，可能与旧屏幕的`as_of`不同。
 
-[OperatingReport](../../web/src/components/OperatingReport.vue)嵌入[ReportsView](../../web/src/views/ReportsView.vue)，默认最近7天，请求明细按同一返回快照本地分页并复用RouteAttempts下钻。[状态模块](../../web/src/operating-report.ts)只接受`currency=COIN`、`amount_unit=micro_coin`及严格的CNY/USD字符串映射，消费用COIN格式化，付款基准/采购成本/现金退款/毛利用法币格式化；筛选、路由、身份变化和卸载时废弃旧结果，只接受当前generation/sequence的响应。下载验证CSV类型与认证事件，失败不保存错误文件，object URL使用后回收。启用034.6约合时仅在COIN格式化结果上附加展示版本与“仅供参考”，付款基准、采购成本、现金退款和毛利不套用该展示比例。
+[OperatingReport](../../web/src/components/OperatingReport.vue)嵌入[ReportsView](../../web/src/views/ReportsView.vue)，默认最近7天，请求明细按同一返回快照本地分页并复用RouteAttempts下钻。[状态模块](../../web/src/operating-report.ts)只接受`currency=COIN`、`amount_unit=micro_coin`及严格的CNY/USD字符串映射，消费用COIN格式化，付款基准/采购成本/现金退款/毛利用法币格式化；筛选、路由、身份变化和卸载时废弃旧结果，只接受当前generation/sequence的响应。下载验证CSV类型与认证事件，失败不保存错误文件，object URL使用后回收。启用034.6约合时仅在COIN格式化结果上附加展示版本与“仅供参考”，付款基准、采购成本、现金退款和毛利不套用该展示比例。请求行计量元数据按042封闭三态联合解析——完整文本快照、媒体空`schema_id/schema_digest/variant_key`三元组（`profile_version`为`media_requests`的非零UUID）、防御性无快照文本（四元组同时为空）；`protocol/execution_kind`各自独立允许`''`缺失标记或既有闭集值，任何部分三元组、伪造媒体快照、半快照或未知非空枚举仍整表拒绝，不跳行、不补造`default`或从当前模型推断schema（[042规格](../../specs/042-operations-report-metadata-states/spec.md)）。
 
 模块已接入默认平台HTTP/控制台；原始026结果见[历史验证记录](../verification/operating-reports.md)，034.5当前结果见[本片验证记录](../verification/034-5-reporting-wallet-composition.md)。正式供应商账单同步、法定会计收入、现金流、异步报表、生产容量及性能不属于本片。
 
