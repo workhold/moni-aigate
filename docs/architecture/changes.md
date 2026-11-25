@@ -9114,22 +9114,3 @@ TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或
 - modified `internal/server/tts_handlers_test.go`
 
 </details>
-
-## 2026-11-25T04:53:19Z · 6f2c8a0b5c69
-
-最低毛利改用已付 CNY 收据的实付分摊下界。赠送记 0。已证明无消费的尝试不把报价上限带入下一次。
-
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2634 个源文件；本次 8 个源文件变化，架构正文变化：true。
-
-<details><summary>源文件变化</summary>
-
-- modified `internal/billing/payment_basis.go`
-- modified `internal/routing/dynamic.go`
-- modified `internal/routing/dynamic_test.go`
-- modified `internal/routing/routing.go`
-- modified `internal/server/gateway.go`
-- modified `specs/033-text-dynamic-routing/spec.md`
-- modified `specs/041-profit-hybrid-platform/spec.md`
-- modified `specs/041-profit-hybrid-platform/tasks.md`
-
-</details>
