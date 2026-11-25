@@ -176,7 +176,7 @@ func excluded(name string, dir bool) bool {
 	}
 	base := path.Base(name)
 	privateEnv := base == ".env" || (strings.HasPrefix(base, ".env.") && base != ".env.example")
-	return name == ".claude/settings.local.json" || name == "web/dist" || strings.HasPrefix(name, "web/dist/") || strings.HasPrefix(name, "docs/architecture/.architecture-") || strings.HasSuffix(name, ".tsbuildinfo") || strings.HasSuffix(name, ".DS_Store") || strings.HasSuffix(name, ".pyc") || (!dir && privateEnv)
+	return name == ".claude/settings.local.json" || name == ".claude/launch.json" || name == "web/dist" || strings.HasPrefix(name, "web/dist/") || strings.HasPrefix(name, "docs/architecture/.architecture-") || strings.HasSuffix(name, ".tsbuildinfo") || strings.HasSuffix(name, ".DS_Store") || strings.HasSuffix(name, ".pyc") || (!dir && privateEnv)
 }
 
 func covered(name string) bool {

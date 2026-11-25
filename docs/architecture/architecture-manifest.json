@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T10:55:48Z",
-  "review_reason": "042 P0.1 合并 origin/main 9fd8dd6（PR #35 任务归属与无 scope 语音拒绝）：架构三件套冲突按合并后树重新 reviewed refresh，manifest 快照同时含 #35 与 042 报表 DTO 源码；changes.md 双方追加记录均保留。完整 029 证据仍绑定 fbec003（#35 不属路由/协议/账务/迁移四类且自身 CI 全绿，合并树为两者已验证组合）。",
-  "snapshot_sha256": "ba11249ad6f7da7b59ef4a362ab53760d0ba6106a42869bf6af20f39ad479fa1",
+  "reviewed_at": "2026-11-25T12:18:50Z",
+  "review_reason": "agent-skills setup 分支合并 main（#35 任务鉴权 + #37 报表 DTO）；manifest 在合并树重新 reviewed refresh；另含 check-architecture 对 .claude/launch.json 的精确排除",
+  "snapshot_sha256": "64520a7d1818aa8ed8249a41738f635fbeb1aa4ac59c6a2372a15c105bd18c9e",
   "architecture_sha256": "5985d4bca36063f779c0210088ff84324c43d5d20846f68b5480e3f6301eeeef",
-  "history_sha256": "6cf249c263c2f609911d0e525949e5a7202adb7bce40711d6210392fffdaa548",
+  "history_sha256": "1914b80c7a34540ff41e906dd844091faf79a14f7a80a736180ed7738d90e0ef",
   "files": [
     {
       "path": ".dockerignore",
@@ -37,7 +37,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "fca67fdf2ab57783e597e27998016a58c7c028d8bab20dd4948072766a985784"
+      "sha256": "7dce44f4c9c7d5e1ed56a27b59f475b99937769ef6774ce9175e783335d39814"
     },
     {
       "path": "Dockerfile",
@@ -8361,11 +8361,11 @@
     },
     {
       "path": "scripts/check-architecture/main.go",
-      "sha256": "3e1cc1bb13aabe5c8d1035c57f92aebeb89de7777ff349b0cb37204039d0f1b5"
+      "sha256": "521842dc7ca3da03a84d4f821203743332ab56e7c3238a681c5e2a535c9c7b4c"
     },
     {
       "path": "scripts/check-architecture/main_test.go",
-      "sha256": "448a074aa1c7bfe74159c77b9e067208bb222e6030685a5f8daf4eda06b08be9"
+      "sha256": "cdeaae625b97328ceab83dde86082691ae742ce4e3d15623c8aef844c9979b09"
     },
     {
       "path": "scripts/check-go-test-evidence.py",

@@ -9169,3 +9169,17 @@ TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或
 - modified `internal/tasks/tasks_test.go`
 
 </details>
+
+## 2026-11-25T12:18:50Z · 64520a7d1818
+
+agent-skills setup 分支合并 main（#35 任务鉴权 + #37 报表 DTO）；manifest 在合并树重新 reviewed refresh；另含 check-architecture 对 .claude/launch.json 的精确排除
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2666 个源文件；本次 3 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- modified `AGENTS.md`
+- modified `scripts/check-architecture/main.go`
+- modified `scripts/check-architecture/main_test.go`
+
+</details>

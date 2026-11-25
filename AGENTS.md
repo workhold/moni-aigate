@@ -25,3 +25,17 @@ SHA-256 清单检测源文件与设计的增加、修改和删除，不依赖 Gi
 - 数据库迁移只追加，不修改已应用 SQL；应用、投影与迁移角色分离。生产与测试凭据不写入仓库和日志。
 - 先运行与变更相关的有意义测试；涉及商业链路时使用专用 PostgreSQL 测试库。跳过数据库测试不能标为商业验收完成。
 - `make check` 与 `make verify-mvp` 包含只读架构检查。并行阶段可先运行专项测试，待集成稳定后刷新架构快照并执行最终检查。
+
+## Agent skills
+
+### Issue tracker
+
+工单与规格发布到 GitHub Issues（`workhold/moni-aigate`）；本 checkout 无 GitHub remote，`gh` 操作需显式带 `-R workhold/moni-aigate`。See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+使用默认五个 triage 标签：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+单上下文布局：根 `GLOSSARY.md` + `docs/adr/`，按需惰性创建；与 `specs/` SDD 体系互补，不重复规格内容。See `docs/agents/domain.md`.
