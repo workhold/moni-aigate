@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T06:03:13Z",
-  "review_reason": "TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或 * 的 Key 可以调用。无模块结构变化。",
-  "snapshot_sha256": "a596f493052a941800b2c3a98ab6508a1d2323dedb5f9a69ea2f07b7516198bd",
-  "architecture_sha256": "f8219d188cb556fb0a2708f4be1acf3f9a23904e0176fa3bfbd6e0a3ebcb4f65",
-  "history_sha256": "4f50eef421f0cb945bca6253324b67a2c72a0126a9284955f809a9dd6a2ce8b6",
+  "reviewed_at": "2026-11-25T09:18:45Z",
+  "review_reason": "PR #34 rebase 到 main(9fd8dd6) 并与 041-P0 对账：dynamic-v2 普通动态路由最低毛利改用已付 CNY 实付分摊下界（floor(amount*fiat/issued)，与 Reserve 快照写入公式一致，只读资金冻结事实，请求路径不再查币价），第二次尝试计入未证明无消费的第一次供应商上界（缺失失败关闭）；带 request_economics_snapshots 的请求以 Reserve 冻结快照为唯一付款基准权威，网关跳过基准查询，路由引擎走 evaluateEconomicAdmission，两条路径按 economics 是否为空互斥；迁移改号 current_017_margin_basis.sql（route_decisions 算法版本枚举加 dynamic-v2），并新增 basis_kind 全集（paid/grant/opening/unknown/USD）与 ReservationCNYBasis 的专用 PostgreSQL 测试；修复 coin-rate 请求路径隔离守卫与 phase3 前缀夹具排除表。无商业资格、生产或供应商验收声明。",
+  "snapshot_sha256": "f950d4b56832910605a72d9180920942dbf002a2b2b8db994b8e0447bcf46c75",
+  "architecture_sha256": "ef0c50b3d1c3658c235ec393c2d96dfccc346e8a186afc3dae1ab7760d8f0ec8",
+  "history_sha256": "a4fd8aff7635ef22820c455bd64cc3c2e17a6c6c710c665203f165d1e594e58f",
   "files": [
     {
       "path": ".dockerignore",
@@ -49,7 +49,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "5ced67e35f7247063d8cff4791d396671894551683d3ce42f4952bb92d8359bc"
+      "sha256": "009eac4d7d578ecb08bfde0d67dda25c67b176d3b1d15b1a36f1fb53cd652676"
     },
     {
       "path": "cmd/moni-aigate/main.go",
@@ -189,15 +189,15 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "b92e6f48d798944c3c026e7a7ce8c5ddace0997907eec52b60ddea63c1586c78"
+      "sha256": "e6949d6a814b53ff0a3e60f7ad286f2b6831a3a4649b383fafd97aa7c4d58846"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "51cc878ebb33a08c60cd982407b162f497f076986c8f5b7c60f320f5fdc89249"
+      "sha256": "324db289f239649ed053d99d48c066e72e07fabaf07e9b828688dde22e601ae5"
     },
     {
       "path": "docs/design/delivery-plan.md",
-      "sha256": "5f41222d1356e54fec9ccddc8d417175d38a39753a8744087bf3589fc04b48ce"
+      "sha256": "527190bc16821fd119f91f2e8b20d812448592fef758fbf8e75030d08462f2f6"
     },
     {
       "path": "docs/design/direction-review-2026-11-14.md",
@@ -237,7 +237,7 @@
     },
     {
       "path": "docs/design/phase-roadmap.md",
-      "sha256": "61e04ba1db06e04c8ee59db1368b3f05bcf58025f790abd415691940acc74f2d"
+      "sha256": "9482edb92b5e12f4288e88c02b4c255045a46df674c5ca8cb5f61b69ee18ea4f"
     },
     {
       "path": "docs/design/procurement-accounts.md",
@@ -261,7 +261,7 @@
     },
     {
       "path": "docs/design/upstream-integration-plan.md",
-      "sha256": "f91a1f12ffb79795534d0ef152bd59c7e97b31591b2129a844d829c8f5abe994"
+      "sha256": "e7f1e2ec88aa6dd4d886b469c7edf4eb0c941d7e8290272789a9d9efc357ff43"
     },
     {
       "path": "docs/research/dependency-provenance.md",
@@ -3296,6 +3296,14 @@
       "sha256": "f050238367703786575a3f52bf1775bb7e6ed9446dc579e07aa2af0c5f049bec"
     },
     {
+      "path": "internal/billing/payment_basis.go",
+      "sha256": "1cd5e3219b2c1098874a05db6442d97ab346e3a292112c61bfabf47aa6c20ae6"
+    },
+    {
+      "path": "internal/billing/payment_basis_integration_test.go",
+      "sha256": "5365b429ac6ad7cf4021b3b876437922683c5c556885df032576e528e7b106aa"
+    },
+    {
       "path": "internal/billing/periodic_budget.go",
       "sha256": "60a60a3484acdf640e1d8715458ee60e12147ebdc55fec195dd904f7d7f785c2"
     },
@@ -3417,7 +3425,7 @@
     },
     {
       "path": "internal/billing/route_decision_store.go",
-      "sha256": "8560cddc0a2e2423c3455b00058f49b462e498a1401929000a1e692189487320"
+      "sha256": "7bc9f6538e672829804df3adf66f85c0df4b9187b8ebb91fc2ced57d8a8cf15e"
     },
     {
       "path": "internal/billing/route_decision_store_integration_test.go",
@@ -7141,11 +7149,11 @@
     },
     {
       "path": "internal/routing/dynamic.go",
-      "sha256": "9b26979b03c548731ddd6c800deae959544cad73fb7354b0f405670108410e8b"
+      "sha256": "745517ecc839eacaca5e689618abd14283222eb19406c52a9b07e7accdb1cc16"
     },
     {
       "path": "internal/routing/dynamic_test.go",
-      "sha256": "59a2e29fda27aae1fc1539ffaf84db601918e59c6a1a677e0f0fc6dd75b8ecf1"
+      "sha256": "a5306269e5a7c417b801296758f780300f7173da5678163721567511cbe4132a"
     },
     {
       "path": "internal/routing/economic_sort_test.go",
@@ -7173,11 +7181,11 @@
     },
     {
       "path": "internal/routing/replay.go",
-      "sha256": "10f75111551a33193b4affc3d310d3d392bf5e4edee049c6fa4619a3b50a74e7"
+      "sha256": "2ab78dba72986e3cff3240564eb5030b831745433239be828a2e24afd86311b3"
     },
     {
       "path": "internal/routing/routing.go",
-      "sha256": "da93a1820f0bab03cee5098e9c4d0841a97f087043499c364d012c4e8965f89d"
+      "sha256": "c1808793bc415e583238d9aac53f8db6f0a27b346a320e07496696650ad3d3c1"
     },
     {
       "path": "internal/routing/routing_test.go",
@@ -7185,7 +7193,7 @@
     },
     {
       "path": "internal/routing/selection.go",
-      "sha256": "a7217e7e8e2f96c8ea05d705b32a217068f716290bf5cdff28acab0c72d2a78e"
+      "sha256": "26884ce51b10547fe6bc1527152627295e9ac8405d0ba61491ffa52bc3d2729d"
     },
     {
       "path": "internal/security/client_ip.go",
@@ -7405,7 +7413,7 @@
     },
     {
       "path": "internal/server/gateway.go",
-      "sha256": "55e4b4dc8961e5597ad17701802e3e47605363c7cf2ed44c1ef61e7ed2c83e88"
+      "sha256": "92500d622e243bbef113170c6fbbe8737c9ea1695bec1880bf4a00d0417344ce"
     },
     {
       "path": "internal/server/gateway_cache_integration_test.go",
@@ -8120,6 +8128,10 @@
       "sha256": "f458f490bd75b38138be318785cdfe80e042fd12752c78a513f40f9b2abfc7cb"
     },
     {
+      "path": "migrations/current_017_margin_basis.sql",
+      "sha256": "9940a131f07b22263b42d927b9455f292e849e12f44a44526d98699f63b8c83f"
+    },
+    {
       "path": "migrations/current_mvp.sql",
       "sha256": "c3aba37f5fa194bf6f66018e25d1124fe3fd2ab886969d4349d440e85d35381e"
     },
@@ -8149,7 +8161,7 @@
     },
     {
       "path": "migrations/phase3_dynamic_routing_postgres_test.go",
-      "sha256": "0ec05c7b1b8fae8198189e4c7d0cf7a4eac045185e3c360d025fa01415d3c709"
+      "sha256": "38ccbbba1938a6da95c5ebe088c6ee4bf25fc547d01fa57dc4ddea9ab8169f5f"
     },
     {
       "path": "migrations/profit_economics_postgres_test.go",
@@ -9773,7 +9785,7 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/design.md",
-      "sha256": "198b02f6e97f4f7ce124cac5a2c02076efaba837974d19f287d71f0d43d07ad4"
+      "sha256": "919351b579b374fb5bfae52b0617e708a9fc2843eb2b62ddc68733422c2ad6fe"
     },
     {
       "path": "specs/033-text-dynamic-routing/implementation-freeze.md",
@@ -9781,7 +9793,7 @@
     },
     {
       "path": "specs/033-text-dynamic-routing/spec.md",
-      "sha256": "ad94a40474b39f6c08829906afc13070f6d30b5f291173ddda6772b5c5866087"
+      "sha256": "5de304ac9a777971cb4436cd35cd80d609a191e56fae14c30fd16d833bed142d"
     },
     {
       "path": "specs/033-text-dynamic-routing/tasks.md",
@@ -9801,7 +9813,7 @@
     },
     {
       "path": "specs/038-new-api-capability-migration/capability-matrix.md",
-      "sha256": "4f0436aded417f87340d153a0e13d71fa8e7f9c738f638b62e32075aca533e51"
+      "sha256": "8f3585a2493f39db437ce8529ff3852ca219cc11aec71769e1229cce9f6d3231"
     },
     {
       "path": "specs/038-new-api-capability-migration/navigation-refinement.md",
@@ -9837,7 +9849,7 @@
     },
     {
       "path": "specs/041-profit-hybrid-platform/design.md",
-      "sha256": "dbdbdcddd37e5b8f7bc9ff735cd9c750e82c27bff5c492b10ae9f535ffc3b156"
+      "sha256": "a43106a5a34ad28557b7df7f911ace6f9bf4cb612c20d2f41661a36463657e93"
     },
     {
       "path": "specs/041-profit-hybrid-platform/p0-economic-foundation.md",
@@ -9845,11 +9857,11 @@
     },
     {
       "path": "specs/041-profit-hybrid-platform/spec.md",
-      "sha256": "42669433c63a2679f5a81c40173e8fe026e45853cfe731d289b220d61e4669d3"
+      "sha256": "0c7d91008da96846091eb9c052350e5e3c9724b0d10566d5205446dc5889581e"
     },
     {
       "path": "specs/041-profit-hybrid-platform/tasks.md",
-      "sha256": "cfdfa4e40c630630e3b8c83e3771b7719f0ea7d9a5eb3b7661901b1ac0137329"
+      "sha256": "931a8aad6cbf9fd329a899ec60bc1e6d05b4c665af7f629015b8b808d73c7e68"
     },
     {
       "path": "third_party/README.md",
@@ -10077,7 +10089,7 @@
     },
     {
       "path": "web/src/components/RouteAttempts.vue",
-      "sha256": "e387b9efd41c01657a06832f5f4d091b6f1f4cc3465133139658caa274ecd6ac"
+      "sha256": "dd6089a1baaa3b4ce89123c4d32e7b17e80b2b59cdba11111eccb6203c352d80"
     },
     {
       "path": "web/src/components/RouteEditor.vue",

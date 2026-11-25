@@ -9114,3 +9114,38 @@ TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或
 - modified `internal/server/tts_handlers_test.go`
 
 </details>
+
+## 2026-11-25T09:18:45Z · f950d4b56832
+
+PR #34 rebase 到 main(9fd8dd6) 并与 041-P0 对账：dynamic-v2 普通动态路由最低毛利改用已付 CNY 实付分摊下界（floor(amount*fiat/issued)，与 Reserve 快照写入公式一致，只读资金冻结事实，请求路径不再查币价），第二次尝试计入未证明无消费的第一次供应商上界（缺失失败关闭）；带 request_economics_snapshots 的请求以 Reserve 冻结快照为唯一付款基准权威，网关跳过基准查询，路由引擎走 evaluateEconomicAdmission，两条路径按 economics 是否为空互斥；迁移改号 current_017_margin_basis.sql（route_decisions 算法版本枚举加 dynamic-v2），并新增 basis_kind 全集（paid/grant/opening/unknown/USD）与 ReservationCNYBasis 的专用 PostgreSQL 测试；修复 coin-rate 请求路径隔离守卫与 phase3 前缀夹具排除表。无商业资格、生产或供应商验收声明。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2659 个源文件；本次 24 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `README.md`
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `docs/design/delivery-plan.md`
+- modified `docs/design/phase-roadmap.md`
+- modified `docs/design/upstream-integration-plan.md`
+- added `internal/billing/payment_basis.go`
+- added `internal/billing/payment_basis_integration_test.go`
+- modified `internal/billing/route_decision_store.go`
+- modified `internal/routing/dynamic.go`
+- modified `internal/routing/dynamic_test.go`
+- modified `internal/routing/replay.go`
+- modified `internal/routing/routing.go`
+- modified `internal/routing/selection.go`
+- modified `internal/server/gateway.go`
+- added `migrations/current_017_margin_basis.sql`
+- modified `migrations/phase3_dynamic_routing_postgres_test.go`
+- modified `specs/033-text-dynamic-routing/design.md`
+- modified `specs/033-text-dynamic-routing/spec.md`
+- modified `specs/038-new-api-capability-migration/capability-matrix.md`
+- modified `specs/041-profit-hybrid-platform/design.md`
+- modified `specs/041-profit-hybrid-platform/spec.md`
+- modified `specs/041-profit-hybrid-platform/tasks.md`
+- modified `web/src/components/RouteAttempts.vue`
+
+</details>
