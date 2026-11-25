@@ -9077,3 +9077,22 @@ PR-D 去重：runner 内部合并复用预检 plan/other discovery，phase1 在�
 - modified `web/tests/operating-report.test.mjs`
 
 </details>
+
+## 2026-11-25T10:51:44Z · 479e0208feb8
+
+042 P0.1 验收归档：新增只读浏览器验收脚本 scripts/p01_report_metadata_browser.py、验证记录 docs/verification/p01-operations-report-metadata.md 与六场景截图/观察证据（预览于隔离镜像 moni-aigate:phase1-browser-fbec003e5b2f、专库 phase1qa schema）。实现代码无变化；完整 029 r2 于干净 fbec003 41/41 PASS。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2665 个源文件；本次 8 个源文件变化，架构正文变化：false。
+
+<details><summary>源文件变化</summary>
+
+- added `docs/verification/assets/p01-report-metadata/after-001/p01-browser-evidence.json`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-illegal-media-fabricated-snapshot.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-illegal-text-partial-triple.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-mixed-390.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-mixed-desktop.png`
+- added `docs/verification/assets/p01-report-metadata/after-001/report-pure-chat-desktop.png`
+- added `docs/verification/p01-operations-report-metadata.md`
+- added `scripts/p01_report_metadata_browser.py`
+
+</details>

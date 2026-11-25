@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T07:24:56Z",
-  "review_reason": "042 P0.1 窄修复：经营报表前端解析器新增封闭三态元数据联合（完整文本快照/媒体空三元组/无快照文本），允许 protocol/execution_kind 显式缺失标记；媒体空三元组是 026/028 线路合同既有事实，不再整页报错。只校准读端解析合同，无模块、数据、权限、迁移结构变化；新增 specs/042 与前后端/PG/API 测试。",
-  "snapshot_sha256": "e72294a7665b9a07b539c5878d3893e4ca4554d5e4c9d01d0f0335c365fbbd6a",
+  "reviewed_at": "2026-11-25T10:51:44Z",
+  "review_reason": "042 P0.1 验收归档：新增只读浏览器验收脚本 scripts/p01_report_metadata_browser.py、验证记录 docs/verification/p01-operations-report-metadata.md 与六场景截图/观察证据（预览于隔离镜像 moni-aigate:phase1-browser-fbec003e5b2f、专库 phase1qa schema）。实现代码无变化；完整 029 r2 于干净 fbec003 41/41 PASS。",
+  "snapshot_sha256": "479e0208feb8c192d07dbde04331037b214299820b3c919de704882984db14a8",
   "architecture_sha256": "ba36775dd45e5b3ab699d60ef64cc937a8555ca5ee8b7cf65d6b5622356931be",
-  "history_sha256": "d78015a6ce912291d9550f7da43107ddd5f871eb517b37ce96041db34fc5bcc5",
+  "history_sha256": "86c1aaad09f7ad2c25f641f8f56d0c64f4a3473aed912669fb27d4deaf36dcc8",
   "files": [
     {
       "path": ".dockerignore",
@@ -738,6 +738,30 @@
     {
       "path": "docs/verification/assets/operations-alerts-024-mobile.png",
       "sha256": "d75adbbe17237186401af87d63d2f25a3b3710ad16575df69f6aaaf885b7de04"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/p01-browser-evidence.json",
+      "sha256": "066234e0b15926ced7f54f46d549d89a2ea9414476f0b3c1f9bfdd2e67f688dc"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-illegal-media-fabricated-snapshot.png",
+      "sha256": "3a45278ee9748e96da8429631d03de3c93f779869f232bf7c965050e39054eaa"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-illegal-text-partial-triple.png",
+      "sha256": "3a45278ee9748e96da8429631d03de3c93f779869f232bf7c965050e39054eaa"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-mixed-390.png",
+      "sha256": "7e1e75f99ff20e6b8704e843b9d8667894d849ae4ace4d92888181230814c795"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-mixed-desktop.png",
+      "sha256": "865e000ca22bb52bb66ecdad7c3be66546be1b0725a7a4d219c18503da19edb5"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-pure-chat-desktop.png",
+      "sha256": "63eca2a7cf23b7649e55ec4e2c9274a9ed52bef2a050e20d66e96f5a3f79924a"
     },
     {
       "path": "docs/verification/assets/payment-application-022-mobile.png",
@@ -1562,6 +1586,10 @@
     {
       "path": "docs/verification/overall-delivery-inventory.md",
       "sha256": "940b18ff783145d463bfff9c1f737544d4307fa81b30b7fc23ac94b83a7699e2"
+    },
+    {
+      "path": "docs/verification/p01-operations-report-metadata.md",
+      "sha256": "62a0c23ac77053d3fde8548d69083c13f55e88ea4eb47e5b1b855446d8423da5"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -8486,6 +8514,10 @@
     {
       "path": "scripts/online-dependency-qa/dependencies_test.go",
       "sha256": "c3c1ee3596d006e8d79557e60a18cd5cf4d3afcb893625aed24715d0de96d80a"
+    },
+    {
+      "path": "scripts/p01_report_metadata_browser.py",
+      "sha256": "196aac4c1fd2486272356f7cb413c799bd7c9fb3e2d49e2bbcb62e3983e8a9f2"
     },
     {
       "path": "scripts/payment-application-qa/README.md",
