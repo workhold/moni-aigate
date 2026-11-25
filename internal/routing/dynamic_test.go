@@ -73,7 +73,7 @@ func TestDynamicHardFiltersPrecedePriorityAndScores(t *testing.T) {
 		{"margin", func(c *Candidate) {}, DefaultDynamicPolicy(), func() RequestShape {
 			r := dynamicRequest()
 			r.RetailAmount = 100
-			r.RetailCurrency = "CNY"
+			r.RetailCurrency = "COIN"
 			r.PaymentAmount = 100
 			r.PaymentCurrency = "CNY"
 			return r
@@ -107,7 +107,7 @@ func TestDynamicHardFiltersPrecedePriorityAndScores(t *testing.T) {
 					}
 				}
 				tc.request.RetailAmount = 100
-				tc.request.RetailCurrency = "CNY"
+				tc.request.RetailCurrency = "COIN"
 				tc.request.PaymentAmount = 100
 				tc.request.PaymentCurrency = "CNY"
 			}
@@ -339,7 +339,7 @@ func TestDynamicZeroRetailPositiveMarginFloorFailsClosed(t *testing.T) {
 	policy.MinMarginRate = &floor
 	request := dynamicRequest()
 	request.RetailAmount = 0
-	request.RetailCurrency = "CNY"
+	request.RetailCurrency = "COIN"
 	request.PaymentAmount = 0
 	request.PaymentCurrency = "CNY"
 	plan, err := NewDynamicPlan([]Candidate{candidate}, 1, policy, request)
@@ -400,12 +400,12 @@ func TestConservativeCNYPaymentUsesPaidLotsOnly(t *testing.T) {
 	if amount != 0 || !covered {
 		t.Fatalf("zero reservation %+v %v", amount, covered)
 	}
-	paid := PaidLot{Coin: 10, ReceiptCoin: 10, FiatAmount: 5, Basis: "paid", FiatCurrency: "CNY", RateNum: 1, RateDen: 1}
+	paid := PaidLot{Coin: 10, Issued: 10, Fiat: 5, Basis: "paid", FiatCurrency: "CNY"}
 	amount, covered = ConservativeCNYPayment(10, []PaidLot{paid})
 	if amount != 5 || !covered {
 		t.Fatalf("discounted fiat basis %+v %v", amount, covered)
 	}
-	paid.Coin, paid.ReceiptCoin, paid.FiatAmount = 40, 100, 50
+	paid.Coin, paid.Issued, paid.Fiat = 40, 100, 50
 	grant := PaidLot{Coin: 60, Basis: "grant"}
 	amount, covered = ConservativeCNYPayment(100, []PaidLot{paid, grant})
 	if amount != 20 || !covered {
@@ -414,11 +414,23 @@ func TestConservativeCNYPaymentUsesPaidLotsOnly(t *testing.T) {
 	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Basis: "grant"}}); covered {
 		t.Fatal("grant coins were treated as paid CNY")
 	}
-	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, ReceiptCoin: 10, FiatAmount: 10, Basis: "paid", FiatCurrency: "USD", RateNum: 1, RateDen: 1}}); covered {
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Basis: "opening"}}); covered {
+		t.Fatal("opening coins were treated as paid CNY")
+	}
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Basis: "unknown"}}); covered {
+		t.Fatal("unknown basis coins were treated as paid CNY")
+	}
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Issued: 10, Fiat: 10, Basis: "paid", FiatCurrency: "USD"}}); covered {
 		t.Fatal("USD payment was converted without an FX policy")
 	}
-	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 4, ReceiptCoin: 4, FiatAmount: 4, Basis: "paid", FiatCurrency: "CNY", RateNum: 1, RateDen: 1}}); covered {
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 4, Issued: 4, Fiat: 4, Basis: "paid", FiatCurrency: "CNY"}}); covered {
 		t.Fatal("partial allocation covered the reservation")
+	}
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 11, Issued: 10, Fiat: 10, Basis: "paid", FiatCurrency: "CNY"}}); covered {
+		t.Fatal("allocation above the issued lot covered the reservation")
+	}
+	if _, covered = ConservativeCNYPayment(10, []PaidLot{{Coin: 10, Issued: 10, Fiat: 0, Basis: "paid", FiatCurrency: "CNY"}}); covered {
+		t.Fatal("paid lot without fiat covered the reservation")
 	}
 }
 

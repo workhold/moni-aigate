@@ -202,6 +202,21 @@ func (r RequestShape) Validate() error {
 			return ErrInvalidPolicy
 		}
 	}
+	// dynamic-v2 basis fields. Retail stays COIN; the proven income basis is CNY
+	// only, and the prior supplier amount is a canonical nonnegative fiat micro
+	// upper bound. An unknown prior forbids carrying any amount.
+	if r.RetailCurrency != "" && r.RetailCurrency != "COIN" || r.PaymentCurrency != "" && r.PaymentCurrency != "CNY" || r.PaymentAmount < 0 {
+		return ErrInvalidPolicy
+	}
+	if r.PaymentAmount != 0 && r.PaymentCurrency != "CNY" {
+		return ErrInvalidPolicy
+	}
+	if r.PriorSupplierCurrency != "" && r.PriorSupplierCurrency != "CNY" || r.PriorSupplierAmount != "" && !canonicalNonnegative(r.PriorSupplierAmount) {
+		return ErrInvalidPolicy
+	}
+	if r.PriorSupplierUnknown && (r.PriorSupplierAmount != "" || r.PriorSupplierCurrency != "") {
+		return ErrInvalidPolicy
+	}
 	for i, id := range r.TaskCandidates {
 		if id == "" || i > 0 && r.TaskCandidates[i-1] >= id {
 			return ErrInvalidPolicy
