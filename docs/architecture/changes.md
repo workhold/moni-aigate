@@ -9073,3 +9073,16 @@ HTTP 任务提交只允许任务所属主体触发供应商调用。其他 API K
 - modified `internal/tasks/service_test.go`
 
 </details>
+
+## 2026-11-25T05:49:36Z · df5fad64a203
+
+任务状态查询只允许任务所属主体，同租户其他 API Key 不再获得租户级读取权限。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2655 个源文件；本次 2 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/task_handlers.go`
+- modified `internal/tasks/tasks_test.go`
+
+</details>

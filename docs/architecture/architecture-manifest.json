@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T05:46:42Z",
-  "review_reason": "HTTP 任务提交只允许任务所属主体触发供应商调用。其他 API Key 不能凭任务 ID 提交。后台 worker 仍可提交已准备任务。",
-  "snapshot_sha256": "9e9b7f6ab0184405922bc08a87d71eb632abff74faacdf68eceecc6413faf3a3",
-  "architecture_sha256": "76b05566d8efb45896df08a2ac46aa838a7ec3d0cfb25e31d917208c1e178b72",
-  "history_sha256": "66ceff565ec443332a7885c7fcd9760fca7f403ec5df309439876da4e6723799",
+  "reviewed_at": "2026-11-25T05:49:36Z",
+  "review_reason": "任务状态查询只允许任务所属主体，同租户其他 API Key 不再获得租户级读取权限。",
+  "snapshot_sha256": "df5fad64a2038bd9542917be7207e5591f3e73f375f7085084020189f64cad83",
+  "architecture_sha256": "cc32b847de40c47a6fcf9f0c6076f21a25e228e16935659087d67b28ecb34c9e",
+  "history_sha256": "11be8966947623555b0d02cdad04b06c5fca72beef5153ef834506a1895ab6a0",
   "files": [
     {
       "path": ".dockerignore",
@@ -7769,7 +7769,7 @@
     },
     {
       "path": "internal/server/task_handlers.go",
-      "sha256": "9324a43356f94bde054f945fe0b894cab1c9b048c3b9bb019c4fe570c47152e4"
+      "sha256": "9feea1d7a8521baa27c557de8b32c1a84ebc68d72801c53135ab808b90a218ff"
     },
     {
       "path": "internal/server/task_media_billing.go",
@@ -7849,7 +7849,7 @@
     },
     {
       "path": "internal/tasks/tasks_test.go",
-      "sha256": "7fa40c93d16d8d086420866a7c4ac5a787399e8f7c7ff9ffb84deaaf3efc9c42"
+      "sha256": "a3ce9ca6a4be9a8b87efef9dde8664ffdebbb4d8af7788a21a9ad9921ad0455f"
     },
     {
       "path": "internal/tasks/types.go",

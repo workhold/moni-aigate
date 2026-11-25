@@ -183,7 +183,7 @@ func (s *Server) taskStatus(c *gin.Context) {
 		s.error(c, err)
 		return
 	}
-	actor := tasks.Actor{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID), Permission: tasks.PermissionTaskRead | tasks.PermissionResultDownload | tasks.PermissionTenantRead}
+	actor := tasks.Actor{TenantID: tasks.ID(p.TenantID), SubjectID: tasks.ID(p.UserID), Permission: tasks.PermissionTaskRead | tasks.PermissionResultDownload}
 	view, err := task.Status(actor)
 	if err != nil {
 		s.error(c, err)
