@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T06:03:13Z",
-  "review_reason": "TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或 * 的 Key 可以调用。无模块结构变化。",
-  "snapshot_sha256": "a596f493052a941800b2c3a98ab6508a1d2323dedb5f9a69ea2f07b7516198bd",
-  "architecture_sha256": "f8219d188cb556fb0a2708f4be1acf3f9a23904e0176fa3bfbd6e0a3ebcb4f65",
-  "history_sha256": "4f50eef421f0cb945bca6253324b67a2c72a0126a9284955f809a9dd6a2ce8b6",
+  "reviewed_at": "2026-11-25T10:55:48Z",
+  "review_reason": "042 P0.1 合并 origin/main 9fd8dd6（PR #35 任务归属与无 scope 语音拒绝）：架构三件套冲突按合并后树重新 reviewed refresh，manifest 快照同时含 #35 与 042 报表 DTO 源码；changes.md 双方追加记录均保留。完整 029 证据仍绑定 fbec003（#35 不属路由/协议/账务/迁移四类且自身 CI 全绿，合并树为两者已验证组合）。",
+  "snapshot_sha256": "ba11249ad6f7da7b59ef4a362ab53760d0ba6106a42869bf6af20f39ad479fa1",
+  "architecture_sha256": "5985d4bca36063f779c0210088ff84324c43d5d20846f68b5480e3f6301eeeef",
+  "history_sha256": "6cf249c263c2f609911d0e525949e5a7202adb7bce40711d6210392fffdaa548",
   "files": [
     {
       "path": ".dockerignore",
@@ -129,7 +129,7 @@
     },
     {
       "path": "docs/architecture/operating-reports.md",
-      "sha256": "94debea26ed016f09f8acaab519ccdb2d6c114614ada8d30c62fca92af3fb29c"
+      "sha256": "ec71165fe9dcd553cb7034df6925e03556d961d76abd6f3415368c3010061b43"
     },
     {
       "path": "docs/architecture/periodic-budget-prefix-install.md",
@@ -738,6 +738,30 @@
     {
       "path": "docs/verification/assets/operations-alerts-024-mobile.png",
       "sha256": "d75adbbe17237186401af87d63d2f25a3b3710ad16575df69f6aaaf885b7de04"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/p01-browser-evidence.json",
+      "sha256": "066234e0b15926ced7f54f46d549d89a2ea9414476f0b3c1f9bfdd2e67f688dc"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-illegal-media-fabricated-snapshot.png",
+      "sha256": "3a45278ee9748e96da8429631d03de3c93f779869f232bf7c965050e39054eaa"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-illegal-text-partial-triple.png",
+      "sha256": "3a45278ee9748e96da8429631d03de3c93f779869f232bf7c965050e39054eaa"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-mixed-390.png",
+      "sha256": "7e1e75f99ff20e6b8704e843b9d8667894d849ae4ace4d92888181230814c795"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-mixed-desktop.png",
+      "sha256": "865e000ca22bb52bb66ecdad7c3be66546be1b0725a7a4d219c18503da19edb5"
+    },
+    {
+      "path": "docs/verification/assets/p01-report-metadata/after-001/report-pure-chat-desktop.png",
+      "sha256": "63eca2a7cf23b7649e55ec4e2c9274a9ed52bef2a050e20d66e96f5a3f79924a"
     },
     {
       "path": "docs/verification/assets/payment-application-022-mobile.png",
@@ -1562,6 +1586,10 @@
     {
       "path": "docs/verification/overall-delivery-inventory.md",
       "sha256": "940b18ff783145d463bfff9c1f737544d4307fa81b30b7fc23ac94b83a7699e2"
+    },
+    {
+      "path": "docs/verification/p01-operations-report-metadata.md",
+      "sha256": "62a0c23ac77053d3fde8548d69083c13f55e88ea4eb47e5b1b855446d8423da5"
     },
     {
       "path": "docs/verification/payment-application-022-browser.json",
@@ -7101,7 +7129,7 @@
     },
     {
       "path": "internal/reporting/read_postgres_test.go",
-      "sha256": "f00d221b0c3ae3fe656619f9ccebe9f1c41f51f59a65df7fb9aac10df0e472f1"
+      "sha256": "d0be0a63b069cd7cdc6330d1236fa7b21439a16defb38ce42292b04b583cd504"
     },
     {
       "path": "internal/reporting/report.go",
@@ -7109,7 +7137,7 @@
     },
     {
       "path": "internal/reporting/report_test.go",
-      "sha256": "3c8695219503e50ba5fef730128328acdadb25713ccb4e2209618b7496c2d1dc"
+      "sha256": "bbaa4e22a03667e6920dc56d37f3e66dc161d94179692acbc8d7af3f97a17351"
     },
     {
       "path": "internal/reporting/types.go",
@@ -7521,7 +7549,7 @@
     },
     {
       "path": "internal/server/operating_reports_integration_test.go",
-      "sha256": "bf5ea98ca18b4f4cd518bb626ef8d9d5f47470cf978d5b04e8000c97f5d3d10f"
+      "sha256": "547933283df60a665539940544dbb9db43ba3f5103380e9c671e58f82ab6dc76"
     },
     {
       "path": "internal/server/operating_reports_test.go",
@@ -8490,6 +8518,10 @@
     {
       "path": "scripts/online-dependency-qa/dependencies_test.go",
       "sha256": "c3c1ee3596d006e8d79557e60a18cd5cf4d3afcb893625aed24715d0de96d80a"
+    },
+    {
+      "path": "scripts/p01_report_metadata_browser.py",
+      "sha256": "196aac4c1fd2486272356f7cb413c799bd7c9fb3e2d49e2bbcb62e3983e8a9f2"
     },
     {
       "path": "scripts/payment-application-qa/README.md",
@@ -9852,6 +9884,10 @@
       "sha256": "cfdfa4e40c630630e3b8c83e3771b7719f0ea7d9a5eb3b7661901b1ac0137329"
     },
     {
+      "path": "specs/042-operations-report-metadata-states/spec.md",
+      "sha256": "15ed6e24078744ac9f6a28777d1ad38eeba8c37f0d9557ad02288fafd302ea00"
+    },
+    {
       "path": "third_party/README.md",
       "sha256": "0e3cb2e34f81a488dda0c093cc3e5e24ff36b9bbda9350b9d4cddce99e9ee68a"
     },
@@ -10181,7 +10217,7 @@
     },
     {
       "path": "web/src/operating-report.ts",
-      "sha256": "32b4856375217e9ef896e98e64dd592e3f3a6ddc2439e519d173e263cf7196e2"
+      "sha256": "853c411261b9b69e8c6d3eff0653e41d3a57b8e2186966671810bc5c6aa6462d"
     },
     {
       "path": "web/src/payments-journal.ts",
@@ -10504,8 +10540,12 @@
       "sha256": "f32856c6088015a0b525d6b7881c8032e584836d392487a856ac22a43e1a689e"
     },
     {
+      "path": "web/tests/operating-report-matrix.test.mjs",
+      "sha256": "98d8db9c8ce4dccf80a8ea0e97a5f25ce0d2eafdd6f3aa153ba7ddcd6eec7440"
+    },
+    {
       "path": "web/tests/operating-report.test.mjs",
-      "sha256": "53f5a90152dfcaba44d668e34bc232960459bd6a32431aa5420c53f7db536dbf"
+      "sha256": "4658c7e9a7b6b95a4f1e448420de3e95818c8dcf593e1b7af27cee51a04fcde8"
     },
     {
       "path": "web/tests/payments-indexeddb.browser.mjs",

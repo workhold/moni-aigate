@@ -58,10 +58,107 @@ test('operating report strict P0 parser validates margins, original cost vectors
   assert.throws(() => parseOperatingReport({ ...report(), offer_reports: [{ offer_version_id: 'offer', task_class: 'not-a-task', ...totals }] }))
 })
 
-test('operating report parser keeps current media protocols and asynchronous tasks', () => {
-  const value = parseOperatingReport({ ...report(), requests: [{ request_id: 'task', tenant_id: tenant, tenant_name: 'tenant', model_id: 'mock-video-generation', model_name: 'video', status: 'succeeded', billing_status: 'settled', created_at: '2026-11-02T00:00:00Z', protocol: 'video_generation', execution_kind: 'asynchronous', profile_version: '10000000-0000-4000-8000-000000000001', schema_id: schema, schema_digest: 'ab'.repeat(32), variant_key: 'default', offer_version_id: '', task_class: '', ...totals }] })
-  assert.equal(value.requests[0].protocol, 'video_generation')
-  assert.equal(value.requests[0].execution_kind, 'asynchronous')
+const completeSnapshot = { profile_version: '10000000-0000-4000-8000-000000000001', schema_id: schema, schema_digest: 'ab'.repeat(32), variant_key: 'default' }
+const absentSnapshot = { profile_version: '', schema_id: '', schema_digest: '', variant_key: '' }
+const textRow = { request_id: 'request-one', tenant_id: tenant, tenant_name: 'tenant', model_id: model, model_name: 'text', status: 'succeeded', billing_status: 'settled', created_at: '2026-11-02T00:00:00Z', protocol: 'openai_chat', execution_kind: 'synchronous', offer_version_id: '', task_class: '', ...completeSnapshot, ...totals }
+const mediaRow = metadata => ({ ...textRow, request_id: 'media', tenant_name: 'media-tenant', model_id: 'mock-image-generation', model_name: 'image', protocol: 'image_generation', execution_kind: 'synchronous', offer_version_id: '', task_class: '', ...metadata, profile_version: '11111111-1111-4111-8111-111111111111' })
+const snapshotlessTextRow = () => ({ ...textRow, ...absentSnapshot, request_id: 'historical', protocol: '', execution_kind: 'synchronous' })
+
+test('operating report parser preserves real media absence without inventing a schema', () => {
+  const cases = [
+    ['image_generation', 'synchronous', 'mock-image-generation', '11111111-1111-4111-8111-111111111111'],
+    ['tts', 'synchronous', 'mock-tts', '22222222-2222-4222-8222-222222222222'],
+    ['video_generation', 'asynchronous', 'mock-video-generation', '33333333-3333-4333-8333-333333333333'],
+    ['realtime_turn', 'synchronous', 'mock-realtime', '44444444-4444-4444-8444-444444444444'],
+  ]
+  const requests = cases.map(([protocol, execution_kind, model_id, profile_version]) => ({ ...mediaRow(absentSnapshot), request_id: protocol, model_id, model_name: protocol, protocol, execution_kind, profile_version }))
+  const value = parseOperatingReport({ ...report(), requests })
+  assert.equal(value.requests.length, 4)
+  for (const [index, [protocol, execution_kind, , profile_version]] of cases.entries()) {
+    const row = value.requests[index]
+    assert.equal(row.protocol, protocol)
+    assert.equal(row.execution_kind, execution_kind)
+    assert.equal(row.profile_version, profile_version)
+    assert.deepEqual({ schema_id: row.schema_id, schema_digest: row.schema_digest, variant_key: row.variant_key }, { schema_id: '', schema_digest: '', variant_key: '' })
+    // P0 fields survive the media path unchanged.
+    assert.deepEqual(row.payment_basis, totals.payment_basis)
+    assert.deepEqual(row.provider_cost, totals.provider_cost)
+    assert.equal(row.provisional_gross_margin, totals.provisional_gross_margin)
+    assert.equal(row.bill_confirmed_gross_margin, totals.bill_confirmed_gross_margin)
+  }
+})
+
+test('operating report mixes complete, snapshotless historical and media rows atomically', () => {
+  const fullyAbsent = { ...snapshotlessTextRow(), request_id: 'fully-absent', protocol: '', execution_kind: '' }
+  const knownTextMissing = { ...snapshotlessTextRow(), request_id: 'known-text-missing', protocol: 'openai_chat', execution_kind: 'synchronous' }
+  const value = parseOperatingReport({ ...report(), requests: [textRow, snapshotlessTextRow(), fullyAbsent, knownTextMissing, mediaRow(absentSnapshot)] })
+  assert.equal(value.requests.length, 5)
+  assert.deepEqual(value.requests.map(row => [row.schema_id, row.schema_digest, row.variant_key]), [
+    [schema, 'ab'.repeat(32), 'default'], ['', '', ''], ['', '', ''], ['', '', ''], ['', '', ''],
+  ])
+  assert.equal(value.requests[0].profile_version, completeSnapshot.profile_version)
+  assert.equal(value.requests[0].variant_key, 'default')
+  assert.equal(value.requests[1].protocol, '')
+  assert.equal(value.requests[1].execution_kind, 'synchronous')
+  assert.equal(value.requests[2].execution_kind, '')
+  assert.equal(value.requests[4].offer_version_id, '')
+  assert.equal(value.summary.charged, totals.charged)
+})
+
+test('operating report rejects every partial or malformed schema identity', () => {
+  const digest = 'ab'.repeat(32)
+  const partials = [
+    { schema_id: '', schema_digest: '', variant_key: 'default' },
+    { schema_id: schema, schema_digest: '', variant_key: '' },
+    { schema_id: '', schema_digest: digest, variant_key: '' },
+    { schema_id: schema, schema_digest: digest, variant_key: '' },
+    { schema_id: schema, schema_digest: '', variant_key: 'default' },
+    { schema_id: '', schema_digest: digest, variant_key: 'default' },
+  ]
+  for (const base of [textRow, mediaRow(absentSnapshot)]) {
+    for (const patch of partials) assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...base, ...patch }] }))
+  }
+  for (const schema_id of ['00000000-0000-0000-0000-000000000000', 'AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA', ` ${schema}`, 'not-a-uuid']) {
+    assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...textRow, schema_id }] }))
+  }
+  for (const schema_digest of ['a'.repeat(63), 'a'.repeat(65), 'AB'.repeat(32), 'g'.repeat(64)]) {
+    assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...textRow, schema_digest }] }))
+  }
+  for (const variant_key of ['legacy', 'other', 'DEFAULT', ' default']) {
+    assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...textRow, variant_key }] }))
+  }
+  for (const field of ['schema_id', 'schema_digest', 'variant_key', 'profile_version']) {
+    for (const value of [undefined, null, 0, false, [], {}]) {
+      assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...textRow, [field]: value }] }), undefined, `${field}=${String(value)}`)
+    }
+    const row = { ...textRow }
+    delete row[field]
+    assert.throws(() => parseOperatingReport({ ...report(), requests: [row] }), undefined, `missing ${field}`)
+  }
+  for (const base of [textRow, mediaRow(absentSnapshot)]) {
+    for (const profile_version of [' ', 'not-a-uuid', '00000000-0000-0000-0000-000000000000', 'AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA']) {
+      assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...base, profile_version }] }))
+    }
+  }
+  assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...textRow, profile_version: '' }] }), undefined, 'complete triple requires a populated profile')
+  assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...mediaRow(absentSnapshot), profile_version: '' }] }), undefined, 'media requires a populated profile')
+  assert.throws(() => parseOperatingReport({ ...report(), requests: [mediaRow(completeSnapshot)] }), undefined, 'media cannot fabricate a complete text snapshot')
+  assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...textRow, schema_id: '', schema_digest: '', variant_key: '' }] }), undefined, 'text cannot retain a profile without its snapshot')
+  assert.throws(() => parseOperatingReport({ ...report(), requests: [textRow, mediaRow(absentSnapshot), { ...snapshotlessTextRow(), schema_id: schema }] }), undefined, 'one malformed row rejects the whole report')
+})
+
+test('operating report response enums allow only explicit absence or known values', () => {
+  for (const base of [textRow, mediaRow(absentSnapshot)]) {
+    for (const protocol of ['legacy', 'unknown', 'OPENAI_CHAT', ' ', null, 0, false, ['openai_chat']]) {
+      assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...base, protocol }] }))
+    }
+    for (const execution_kind of ['legacy', 'unknown', 'SYNCHRONOUS', ' ', null, 0, false, ['synchronous']]) {
+      assert.throws(() => parseOperatingReport({ ...report(), requests: [{ ...base, execution_kind }] }))
+    }
+  }
+  for (const protocol of ['openai_chat', 'openai_responses', 'anthropic_messages', 'openai_embeddings', 'jina_rerank', 'gemini_generate_content']) {
+    assert.equal(parseOperatingReport({ ...report(), requests: [{ ...textRow, protocol }] }).requests[0].protocol, protocol)
+  }
 })
 
 test('default seven day window and explicit timezone/UUID filters produce one exact GET query', () => {
