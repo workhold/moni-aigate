@@ -65,6 +65,20 @@ func (s *Service) Status(ctx context.Context, actor Actor, id ID) (Snapshot, err
 // Submit persists prepared -> submitting before making the one provider call.
 // Any adapter error is conservatively recorded as submission_unknown. This
 // records uncertainty and never manufactures a successful provider fact.
+// SubmitAs is the caller-facing submit. The worker keeps Submit so a prepared
+// task can still be sent without a customer session. A foreign key must not
+// start or observe another tenant's provider submission.
+func (s *Service) SubmitAs(ctx context.Context, actor Actor, id ID, now time.Time) (Task, error) {
+	task, _, err := s.store.Snapshot(ctx, id)
+	if err != nil {
+		return Task{}, err
+	}
+	if _, err = task.Status(actor); err != nil {
+		return Task{}, err
+	}
+	return s.Submit(ctx, id, now)
+}
+
 func (s *Service) Submit(ctx context.Context, id ID, now time.Time) (Task, error) {
 	task, refs, err := s.store.Snapshot(ctx, id)
 	if err != nil {
@@ -222,6 +236,9 @@ func (s *Service) Cancel(ctx context.Context, actor Actor, id ID, now time.Time)
 		return Task{}, err
 	}
 	if task.cancel == CancelRequested {
+		if err = task.authorizeCancel(actor); err != nil {
+			return Task{}, err
+		}
 		return task, nil
 	}
 	requested, err := task.RequestCancel(actor, now)
