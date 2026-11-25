@@ -72,7 +72,7 @@ request 的 retail/supplier bounds 仍按逻辑 profile 出生；attempt retail 
 
 ## 8. 回放与读取
 
-`routing.ReplayRoute` 只消费一条不可变 DecisionRecord 内的 policy/request/draw/candidates，重跑同一纯选择算法并逐字段比较 selected 与原因序列。迁移的旧记录标记 `algorithm_version=legacy-v1`，只回放已冻结的候选/结果，不伪称能重建当时未保存的随机或统计输入。2026-11-20 起的记录为 `dynamic-v1`。2026-11-25 起新决策为 `dynamic-v2`：最低毛利只在零售币种与供应商成本币种相同时做数值比较，否则失败关闭。`dynamic-v1` 回放保持当时的数值比较，同一版本的输入仍逐字节一致。
+`routing.ReplayRoute` 只消费一条不可变 DecisionRecord 内的 policy/request/draw/candidates，重跑同一纯选择算法并逐字段比较 selected 与原因序列。迁移的旧记录标记 `algorithm_version=legacy-v1`，只回放已冻结的候选/结果，不伪称能重建当时未保存的随机或统计输入。2026-11-20 起的记录为 `dynamic-v1`。2026-11-25 起新决策为 `dynamic-v2`：最低毛利用已付 CNY 实付分摊下界与供应商上限比较，币种不一致或基准不可证时失败关闭；第二次尝试带上尚未证明无消费的第一次供应商上限。带 P0 经济快照的请求继续由快照准入裁决，回放同样按快照判定。`dynamic-v1` 回放保持当时的数值比较，同一版本的输入仍逐字节一致。
 
 `moni-aigate route-replay --request <id>` 使用只读 DB 查询，输出每行 sequence、选中路径和候选原因；不写 route decision、不创建 attempt、不派发、不触碰资金。平台 attempts 接口和 RouteAttempts.vue 改读新表；无 attempt 的失败池也按请求展示。客户响应 model 始终回显原始请求名；physical ID 默认仅平台可见，客户详情只显示服务档位标签，physical 的显式展示开关才允许显示物理名。
 
