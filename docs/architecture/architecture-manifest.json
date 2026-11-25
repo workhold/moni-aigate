@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T05:49:36Z",
-  "review_reason": "任务状态查询只允许任务所属主体，同租户其他 API Key 不再获得租户级读取权限。",
-  "snapshot_sha256": "df5fad64a2038bd9542917be7207e5591f3e73f375f7085084020189f64cad83",
-  "architecture_sha256": "cc32b847de40c47a6fcf9f0c6076f21a25e228e16935659087d67b28ecb34c9e",
-  "history_sha256": "11be8966947623555b0d02cdad04b06c5fca72beef5153ef834506a1895ab6a0",
+  "reviewed_at": "2026-11-25T06:00:30Z",
+  "review_reason": "任务取消在已请求状态下仍校验所属主体；不存在与无权访问返回同一条任务不存在响应。无模块结构变化。",
+  "snapshot_sha256": "3536fd2d91b15374bf7880f855237c92697fef79bd42955a4299a64e007190e7",
+  "architecture_sha256": "f46e1552d8a5d09decd92daff4c129e4588393561faa2e644a5827eb3b8ced29",
+  "history_sha256": "aa82c67958a8a08c214c755e56b76c2fed188c24bf580c05062fde1e73d76ded",
   "files": [
     {
       "path": ".dockerignore",
@@ -7757,7 +7757,7 @@
     },
     {
       "path": "internal/server/server.go",
-      "sha256": "c388e358e37db7079f148f5ce5f265b2b0b0e67f445fd9a1e83b8dbd6cc70038"
+      "sha256": "3b97eb216465199ce4e2ebfc2d4f15cb7add7cf982e5f0f88c1a096d30894d6e"
     },
     {
       "path": "internal/server/static.go",
@@ -7766,6 +7766,10 @@
     {
       "path": "internal/server/strict_json.go",
       "sha256": "4d9edf07b787d522ce66c3587b6f515c059a019f9cb5fd16af126a15a5960faf"
+    },
+    {
+      "path": "internal/server/task_error_test.go",
+      "sha256": "d7a806ff79938a5049af9df60e81542d0cc07ea1b8c99501a81bdf3f70cae5b8"
     },
     {
       "path": "internal/server/task_handlers.go",
@@ -7833,11 +7837,11 @@
     },
     {
       "path": "internal/tasks/service.go",
-      "sha256": "10aa2effca785847a10215808311c9a8dea75391fe8499e66338b662eb2a3964"
+      "sha256": "e20ad931f4dbe59b6b958637a48c6b237321936271d3ae5274bf4e200c68d5d7"
     },
     {
       "path": "internal/tasks/service_test.go",
-      "sha256": "a242604a200bfe7f5a4132ba6dc7996e5c7dfda83550fc330ddd44a017ea84e1"
+      "sha256": "a70c9f1b39b1bb56d54478869c524c34379563db0d27c6eea1f7a7beaf11bd6f"
     },
     {
       "path": "internal/tasks/state.go",

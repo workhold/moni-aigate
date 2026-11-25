@@ -236,6 +236,9 @@ func (s *Service) Cancel(ctx context.Context, actor Actor, id ID, now time.Time)
 		return Task{}, err
 	}
 	if task.cancel == CancelRequested {
+		if err = task.authorizeCancel(actor); err != nil {
+			return Task{}, err
+		}
 		return task, nil
 	}
 	requested, err := task.RequestCancel(actor, now)

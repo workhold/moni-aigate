@@ -9086,3 +9086,18 @@ HTTP 任务提交只允许任务所属主体触发供应商调用。其他 API K
 - modified `internal/tasks/tasks_test.go`
 
 </details>
+
+## 2026-11-25T06:00:30Z · 3536fd2d91b1
+
+任务取消在已请求状态下仍校验所属主体；不存在与无权访问返回同一条任务不存在响应。无模块结构变化。
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2656 个源文件；本次 4 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `internal/server/server.go`
+- added `internal/server/task_error_test.go`
+- modified `internal/tasks/service.go`
+- modified `internal/tasks/service_test.go`
+
+</details>

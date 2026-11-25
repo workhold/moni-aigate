@@ -85,6 +85,45 @@ func TestSubmitAsDoesNotStartAnotherOwnersTask(t *testing.T) {
 	}
 }
 
+func TestCancelPendingDoesNotRevealAnotherOwnersTask(t *testing.T) {
+	adapter := &fakeTaskAdapter{}
+	service, store, input, refs, owner := serviceFixture(t, adapter)
+	if _, err := service.Create(context.Background(), input, refs); err != nil {
+		t.Fatal(err)
+	}
+	worker := Actor{TenantID: testID(2), SubjectID: testID(4), Permission: PermissionTaskObserve}
+	if err := store.WithTask(context.Background(), input.TaskID, func(tx TaskTx) error {
+		task, err := tx.Task().BeginSubmit(testBase.Add(time.Second))
+		if err != nil {
+			return err
+		}
+		task, err = task.Observe(worker, testBase.Add(2*time.Second), event(t, testID(11), task.ID(), EventSubmissionAccepted, 1, "provider-task-1", nil, ""))
+		if err != nil {
+			return err
+		}
+		task, err = task.RequestCancel(owner, testBase.Add(3*time.Second))
+		if err != nil {
+			return err
+		}
+		return tx.SaveTask(task)
+	}); err != nil {
+		t.Fatal(err)
+	}
+	foreign := owner
+	foreign.SubjectID = testID(9)
+	task, err := service.Cancel(context.Background(), foreign, input.TaskID, testBase.Add(4*time.Second))
+	if !errors.Is(err, ErrForbidden) || task.ID() != "" {
+		t.Fatalf("foreign cancel leaked task=%s err=%v", task.ID(), err)
+	}
+	if _, err = service.Cancel(context.Background(), owner, input.TaskID, testBase.Add(4*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	missing, err := service.Cancel(context.Background(), foreign, testID(99), testBase.Add(4*time.Second))
+	if !errors.Is(err, ErrNotFound) || missing.ID() != "" {
+		t.Fatalf("missing cancel task=%s err=%v", missing.ID(), err)
+	}
+}
+
 func TestServiceSubmitReplaysIdentityWhenCompetitorWinsClaimWindow(t *testing.T) {
 	adapter := &fakeTaskAdapter{}
 	service, store, input, refs, _ := serviceFixture(t, adapter)
