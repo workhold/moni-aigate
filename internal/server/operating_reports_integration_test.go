@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/moni-ai/moni-aigate/internal/billing"
 	"github.com/moni-ai/moni-aigate/internal/reporting"
+	"golang.org/x/net/websocket"
 )
 
 func TestOperatingReportPostgresCommercialFlowAndAuthorization(t *testing.T) {
@@ -169,6 +170,158 @@ func TestOperatingReportPostgresCommercialFlowAndAuthorization(t *testing.T) {
 		}
 	})
 	if f.posts.Load() != 2 {
+		t.Fatal("report triggered model call")
+	}
+}
+
+// One real text settlement and one real realtime media turn share one
+// operations response. The text row must keep its complete meter snapshot and
+// the media row its explicit empty schema triple, in both JSON and CSV, with
+// all 041 P0 fields intact. Media facts come from the production realtime
+// lifecycle; no fixture disables or bypasses a guard to fabricate them.
+func TestOperatingReportMixedMetadataRealLifecycle(t *testing.T) {
+	f := newGatewayFixture(t, []http.HandlerFunc{gatewaySuccess(t)}, nil)
+	ctx := context.Background()
+	response := f.request(t, ctx, false, false)
+	_, _ = io.Copy(io.Discard, response.Body)
+	_ = response.Body.Close()
+	if response.StatusCode != 200 {
+		t.Fatal("text request failed", response.StatusCode)
+	}
+	textRequestID := response.Header.Get("X-Request-ID")
+
+	// Realtime turn through the production WebSocket flow (real media request).
+	unauthorized, err := http.NewRequest(http.MethodGet, f.http.URL+"/v1/realtime?model=retail-model", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unauthorizedResponse, err := f.http.Client().Do(unauthorized)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = io.Copy(io.Discard, unauthorizedResponse.Body)
+	_ = unauthorizedResponse.Body.Close()
+	if unauthorizedResponse.StatusCode != http.StatusUnauthorized {
+		t.Fatal("realtime boundary changed", unauthorizedResponse.StatusCode)
+	}
+	wsURL := "ws" + strings.TrimPrefix(f.http.URL, "http") + "/v1/realtime?model=retail-model"
+	wsConfig, err := websocket.NewConfig(wsURL, "http://console.test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	wsConfig.Header = http.Header{"Authorization": []string{"Bearer " + f.token}}
+	conn, err := websocket.DialConfig(wsConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	if err = conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if created := readRealtimeEvent(t, conn); created.Type != "session.created" {
+		t.Fatalf("session event=%+v", created)
+	}
+	sendRealtimeEvent(t, conn, `{"event_id":"11111111-1111-4111-8111-111111111201","type":"input.text","data":{"text":"hello"}}`)
+	if accepted := readRealtimeEvent(t, conn); accepted.Type != "event.accepted" {
+		t.Fatalf("input acknowledgement=%+v", accepted)
+	}
+	sendRealtimeEvent(t, conn, `{"event_id":"11111111-1111-4111-8111-111111111202","type":"response.create","data":{}}`)
+	for _, want := range []string{"event.accepted", "response.created", "response.delta", "response.done"} {
+		if event := readRealtimeEvent(t, conn); event.Type != want {
+			t.Fatalf("expected %s, got %+v", want, event)
+		}
+	}
+
+	var textCreated, mediaCreated time.Time
+	postsBeforeReads := f.posts.Load()
+	if err = f.pool.QueryRow(ctx, "SELECT created_at FROM request_records WHERE id=$1", textRequestID).Scan(&textCreated); err != nil {
+		t.Fatal(err)
+	}
+	if err = f.pool.QueryRow(ctx, "SELECT created_at FROM media_requests WHERE tenant_id=$1 AND operation='realtime_turn'", f.tenant).Scan(&mediaCreated); err != nil {
+		t.Fatal(err)
+	}
+	from := textCreated.Add(-time.Hour)
+	to := mediaCreated.Add(time.Hour)
+	params := url.Values{"from": {from.Format(time.RFC3339Nano)}, "to": {to.Format(time.RFC3339Nano)}}
+	admin, _ := authUser(t, f.server, f.pool, "admin")
+	adminSession, _ := authSession(t, f.server, f.pool, admin, "", false, true)
+
+	w := authHTTP(t, f.server, "GET", "/api/platform/reports/operations?"+params.Encode(), adminSession, "", "", nil)
+	if w.Code != 200 {
+		t.Fatal("read failed", w.Code, w.Body.String())
+	}
+	var envelope struct {
+		Data struct {
+			Summary reporting.Totals `json:"summary"`
+			Reports []struct {
+				RequestID     string `json:"request_id"`
+				Protocol      string `json:"protocol"`
+				ExecutionKind string `json:"execution_kind"`
+				Profile       string `json:"profile_version"`
+				SchemaID      string `json:"schema_id"`
+				SchemaDigest  string `json:"schema_digest"`
+				VariantKey    string `json:"variant_key"`
+				OfferID       string `json:"offer_version_id"`
+				TaskClass     string `json:"task_class"`
+				Charged       string `json:"charged"`
+				PaymentBasis  map[string]string `json:"payment_basis"`
+				ProviderCost  map[string]string `json:"provider_cost"`
+			} `json:"requests"`
+		} `json:"data"`
+	}
+	if err = json.Unmarshal(w.Body.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if len(envelope.Data.Reports) != 2 || envelope.Data.Summary.RequestCount != 2 {
+		t.Fatalf("mixed response did not keep both rows: %+v", envelope.Data)
+	}
+	text, media := envelope.Data.Reports[0], envelope.Data.Reports[1]
+	if text.Protocol == "realtime_turn" {
+		text, media = media, text
+	}
+	if text.RequestID != textRequestID || text.Protocol != "openai_chat" || text.ExecutionKind != "synchronous" ||
+		text.Profile == "" || text.SchemaID == "" || len(text.SchemaDigest) != 64 || text.VariantKey != "default" || text.OfferID != "" {
+		t.Fatalf("text row lost its complete snapshot: %+v", text)
+	}
+	if media.Protocol != "realtime_turn" || media.ExecutionKind != "synchronous" ||
+		media.Profile == "" || media.SchemaID != "" || media.SchemaDigest != "" || media.VariantKey != "" || media.OfferID != "" {
+		t.Fatalf("media row did not keep the explicit empty triple: %+v", media)
+	}
+	if _, err = uuid.Parse(media.Profile); err != nil {
+		t.Fatalf("media profile is not a UUID: %q", media.Profile)
+	}
+	for _, row := range envelope.Data.Reports {
+		if row.PaymentBasis == nil || row.ProviderCost == nil || row.Charged == "" {
+			t.Fatalf("P0 amount fields missing on a row: %+v", row)
+		}
+	}
+
+	csvResponse := authHTTP(t, f.server, "GET", "/api/platform/reports/operations.csv?"+params.Encode(), adminSession, "", "", nil)
+	if csvResponse.Code != 200 {
+		t.Fatal("csv read failed", csvResponse.Code, csvResponse.Body.String())
+	}
+	rows, err := csv.NewReader(strings.NewReader(csvResponse.Body.String())).ReadAll()
+	if err != nil || len(rows) != 3 {
+		t.Fatalf("csv rows: %v, %v", rows, err)
+	}
+	metadata := map[string][]string{}
+	for _, row := range rows[1:] {
+		if len(row) != len(rows[0]) {
+			t.Fatal("csv column count changed", row)
+		}
+		metadata[row[0]] = row[19:25]
+	}
+	if got := metadata[textRequestID]; len(got) != 6 || got[0] != "openai_chat" || got[1] != "synchronous" || got[2] == "" || got[3] == "" || len(got[4]) != 64 || got[5] != "default" {
+		t.Fatalf("csv text metadata changed: %v", got)
+	}
+	var mediaID string
+	if err = f.pool.QueryRow(ctx, "SELECT id FROM media_requests WHERE tenant_id=$1 AND operation='realtime_turn'", f.tenant).Scan(&mediaID); err != nil {
+		t.Fatal(err)
+	}
+	if got := metadata[mediaID]; len(got) != 6 || got[0] != "realtime_turn" || got[1] != "synchronous" || got[2] == "" || got[3] != "" || got[4] != "" || got[5] != "" {
+		t.Fatalf("csv media metadata changed: %v", got)
+	}
+	if f.posts.Load() != postsBeforeReads {
 		t.Fatal("report triggered model call")
 	}
 }

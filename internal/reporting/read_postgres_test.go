@@ -122,6 +122,12 @@ func TestPostgresReadOperatingReportRangeLimit(t *testing.T) {
 	if err != nil || len(report.Requests) != 5000 || report.Summary.RequestCount != 5000 || report.Summary.UnsettledRequests != 5000 || report.Summary.GrossMargin != nil {
 		t.Fatal("5000-request positive control rejected or undercounted", err)
 	}
+	// The reduced reader fixture proves wire absence only; production snapshot guards are separate.
+	for _, row := range report.Requests {
+		if row.Protocol != "" || row.ExecutionKind != "" || row.ProfileVersion != "" || row.SchemaID != "" || row.SchemaDigest != "" || row.VariantKey != "" {
+			t.Fatalf("snapshotless text wire absence was not preserved: %+v", row)
+		}
+	}
 }
 
 func TestPostgresReadOperatingReportScopesAndNumeric100(t *testing.T) {
@@ -307,6 +313,11 @@ VALUES($1,$2,$3,'completed',$4),($1,$5,$3,'failed',$4 + interval '1 microsecond'
 	}
 	if len(report.Requests) != 3 || report.Requests[0].RequestID != third || report.Requests[0].Protocol != "video_generation" || report.Requests[0].ExecutionKind != "asynchronous" {
 		t.Fatalf("media request facts missing or misclassified: %+v", report.Requests)
+	}
+	for _, row := range report.Requests {
+		if row.ProfileVersion != profile || row.SchemaID != "" || row.SchemaDigest != "" || row.VariantKey != "" {
+			t.Fatalf("media profile or empty schema triple changed: %+v", row)
+		}
 	}
 	if len(report.Channels) != 3 {
 		t.Fatalf("media attempts did not stay in operation buckets: %+v", report.Channels)
