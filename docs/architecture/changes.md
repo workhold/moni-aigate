@@ -9114,29 +9114,3 @@ TTS 空 API Key 范围不再放行语音合成；只有范围包含 mock-tts 或
 - modified `internal/server/tts_handlers_test.go`
 
 </details>
-
-## 2026-11-25T04:15:52Z · 9dd35a18e4ee
-
-dynamic-v2 在零售 COIN 与供应商 CNY 不一致时拒绝最低毛利比较。dynamic-v1 历史回放保持原数值比较。付款基准和贡献毛利读模型仍未实施。
-
-已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2633 个源文件；本次 15 个源文件变化，架构正文变化：true。
-
-<details><summary>源文件变化</summary>
-
-- modified `docs/design/LLD.md`
-- modified `docs/design/phase-roadmap.md`
-- modified `internal/billing/route_decision_store.go`
-- modified `internal/routing/dynamic.go`
-- modified `internal/routing/dynamic_test.go`
-- modified `internal/routing/replay.go`
-- modified `internal/routing/routing.go`
-- modified `internal/routing/selection.go`
-- modified `internal/server/gateway.go`
-- added `migrations/current_016_margin_basis.sql`
-- modified `specs/033-text-dynamic-routing/design.md`
-- modified `specs/033-text-dynamic-routing/spec.md`
-- modified `specs/041-profit-hybrid-platform/spec.md`
-- modified `specs/041-profit-hybrid-platform/tasks.md`
-- modified `web/src/components/RouteAttempts.vue`
-
-</details>

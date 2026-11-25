@@ -487,6 +487,7 @@ func staticCandidateDecision(c Candidate, policy DynamicPolicy, request RequestS
 		case request.Preference.RequireParameters && !parametersSupported(c.Physical.SupportedParameters, request.Parameters):
 			d.FilterReason = "capability_missing"
 		case qualityRank(c.Physical.QualityTier) < qualityRank(policy.QualityFloor):
+			// quality_score is an optional offline number. It cannot raise a tier or stand in for scenario evidence.
 			d.FilterReason = "quality_below_floor"
 		}
 		if d.FilterReason != "" {
@@ -604,6 +605,25 @@ func evaluateEconomicAdmission(request RequestShape, snapshot CostSnapshot) (eco
 		return economics.AdmissionDecision{}, err
 	}
 	return economics.EvaluateAdmission(economics.AdmissionRequest{Snapshot: *request.Economics, PriorCost: request.PriorCost, CandidateCost: candidate}, request.Economics.CreatedAt())
+}
+
+// priorSupplierCost returns the frozen supplier upper bound of the last
+// selected candidate. It is the conservative amount that the next attempt must
+// still assume was consumed when the previous attempt may have sent upstream.
+func priorSupplierCost(decision *RouteDecision) (amount, currency string, unknown bool) {
+	if decision == nil || decision.SelectedBindingID == "" {
+		return "", "", true
+	}
+	for _, candidate := range decision.Candidates {
+		if candidate.BindingID != decision.SelectedBindingID || candidate.FilterReason != "" {
+			continue
+		}
+		if candidate.CostSnapshot.Currency == "" || candidate.CostSnapshot.UpperAmount == nil || *candidate.CostSnapshot.UpperAmount == "" {
+			return "", "", true
+		}
+		return *candidate.CostSnapshot.UpperAmount, candidate.CostSnapshot.Currency, false
+	}
+	return "", "", true
 }
 
 // PaidLot is one funding allocation of the current reservation with the frozen

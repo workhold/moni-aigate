@@ -221,6 +221,10 @@ func (p *Plan) Start(ctx context.Context, engine *Engine, admit AdmitFunc) (*Att
 	if engine == nil || admit == nil {
 		return nil, ErrInvalidPolicy
 	}
+	if p.attempts > 0 && p.algorithm != "dynamic-v1" {
+		amount, currency, unknown := priorSupplierCost(p.lastDecision)
+		p.request.PriorSupplierAmount, p.request.PriorSupplierCurrency, p.request.PriorSupplierUnknown = amount, currency, unknown
+	}
 	c, generation, decision, err := engine.acquirePlan(p, p.attempts+1)
 	p.lastDecision = cloneDecision(decision)
 	if err != nil {

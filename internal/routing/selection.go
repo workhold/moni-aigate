@@ -22,7 +22,7 @@ func healthBreak(reason string) bool {
 }
 
 func costBreak(reason string) bool {
-	return reason == "cost_unknown" || reason == "cost_limit_exceeded" || reason == "margin_below_floor" || reason == "margin_basis_unavailable" || reason == "procurement_paused" || reason == "procurement_budget_exceeded" || reason == "procurement_bound_invalid" || reason == "procurement_budget_unavailable"
+	return reason == "cost_unknown" || reason == "cost_limit_exceeded" || reason == "margin_below_floor" || reason == "margin_basis_unavailable" || reason == "cumulative_cost_unavailable" || reason == "procurement_paused" || reason == "procurement_budget_exceeded" || reason == "procurement_bound_invalid" || reason == "procurement_budget_unavailable"
 }
 
 func stickyBreak(policy DynamicPolicy, kind string) bool {
