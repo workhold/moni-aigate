@@ -29,6 +29,8 @@ func TestProviderFailureAttributionUsesCodesNotBare403(t *testing.T) {
 		{"rate_429", 429, `{"error":{"code":"rate_limit_exceeded"}}`, ClassRateLimit, false},
 		{"policy", 400, `{"error":{"code":"content_policy_violation"}}`, ClassPolicy, false},
 		{"server_not_caller", 500, `{"error":{"code":"invalid_api_key"}}`, ClassUpstream, false},
+		{"overloaded_529", 529, `{"error":{"type":"overloaded_error"}}`, ClassOverloaded, false},
+		{"overloaded_529_ignores_body_codes", 529, `{"error":{"code":"invalid_api_key"}}`, ClassOverloaded, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

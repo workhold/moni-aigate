@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "coverage": "source-and-design-v1",
-  "reviewed_at": "2026-11-25T18:21:54Z",
-  "review_reason": "margin 分支合并 main（agent skills 配置 + magpie 研究文档）；manifest 在合并树重新 reviewed refresh；r3 完整 029 已在该合并树前身 29e3834 通过 41/41",
-  "snapshot_sha256": "39baeaec336ef52b1abe0fd64287989eb86e312c2f95c17b6fffda4583581c5e",
-  "architecture_sha256": "32d59b1d2d6a779165b25b8163ed14e7e64dfda205a90fb4f5a1fde890c8ebed",
-  "history_sha256": "4e08c1af38ac8d8e6c4d1a2a95bc59680ac409bc640ce473cee2bf06e9fe5ef8",
+  "reviewed_at": "2026-11-26T04:42:48Z",
+  "review_reason": "043 路由健康归因修正案落地：provider 529→overloaded 分类、routing 归因账本/成功近因/凭据级冷却/固定短休、gateway 接线，billing 路由决策理由白名单登记 credential_cooldown；无新模块、依赖、迁移或装配变化，健康仍为进程内状态，重试资格/结算/对外错误码不变；specs/043 新增，HLD/LLD §8 与统一架构正文同步，故障注入矩阵与全仓 race 已复核",
+  "snapshot_sha256": "05a14e7a32881593782746d202d8ca10a0986aa7074e8035bbb42dfda3bef97e",
+  "architecture_sha256": "150c8dbe46901c6280ba254256c3bc721c7190fa8b7803fe1368ca2c16edd563",
+  "history_sha256": "c6831c501e5dbc23422e5ad54a138dc6e8465e5dcf36638cbe9df4d94cf3428b",
   "files": [
     {
       "path": ".dockerignore",
@@ -189,11 +189,11 @@
     },
     {
       "path": "docs/design/HLD.md",
-      "sha256": "e6949d6a814b53ff0a3e60f7ad286f2b6831a3a4649b383fafd97aa7c4d58846"
+      "sha256": "31cc4208919b9e84a6ce192aa278a0890a1485b9a9193f750c967d4f7996564c"
     },
     {
       "path": "docs/design/LLD.md",
-      "sha256": "324db289f239649ed053d99d48c066e72e07fabaf07e9b828688dde22e601ae5"
+      "sha256": "9ff8ea5d82dfdc635d9c2f8edccad547d5c131d7417d86994d9a8483b3e7fece"
     },
     {
       "path": "docs/design/delivery-plan.md",
@@ -3453,7 +3453,7 @@
     },
     {
       "path": "internal/billing/route_decision_store.go",
-      "sha256": "7bc9f6538e672829804df3adf66f85c0df4b9187b8ebb91fc2ced57d8a8cf15e"
+      "sha256": "b7aef0794dad15a0ff6e6c393cd8c31ed19f11639faefa16108e47c2817a774c"
     },
     {
       "path": "internal/billing/route_decision_store_integration_test.go",
@@ -6953,11 +6953,11 @@
     },
     {
       "path": "internal/provider/classification.go",
-      "sha256": "a17036624ab6fc627b428281646460a349cbab708df8ad09ef22735c07eb8691"
+      "sha256": "1af6a66d3ea01130bcd432d0709875e708fce56c9c08161639bffcbc21834ea6"
     },
     {
       "path": "internal/provider/classification_test.go",
-      "sha256": "b0717a44ed720463932d74d3e3f520e273d2669f6af7b27e762b60f483ca5669"
+      "sha256": "31c71d7e1492566703dd4a45a6b709f57deaa645a150feefe539fea909784648"
     },
     {
       "path": "internal/provider/client.go",
@@ -7085,7 +7085,7 @@
     },
     {
       "path": "internal/provider/types.go",
-      "sha256": "8d57a5f97f3a84a9f4e6ae8d260b96d0d09c4bf10240f503944e60e76b26b6af"
+      "sha256": "facc8f21ea926528f15c1428810bf9e2acb6cccdb875b5fcecae93dfc778c8b4"
     },
     {
       "path": "internal/provider/usage.go",
@@ -7160,6 +7160,10 @@
       "sha256": "58047b46d15150699f28de42a2fc8e21bf140fe1a5f0bb3b64f9a2af4e64c7f3"
     },
     {
+      "path": "internal/routing/attribution_test.go",
+      "sha256": "93ffdad2c3bffe0c4ef0d5f7fb318ff6749fcbe08eff4832ecee3b38c6fc38af"
+    },
+    {
       "path": "internal/routing/breaker_config_test.go",
       "sha256": "5492d2f1468b57c6b80b73181d9febdf17e61c5f6e694fa3099e32e7fba0138b"
     },
@@ -7213,7 +7217,7 @@
     },
     {
       "path": "internal/routing/routing.go",
-      "sha256": "c1808793bc415e583238d9aac53f8db6f0a27b346a320e07496696650ad3d3c1"
+      "sha256": "57e27f201776e429e135df90c2414771073386b18b62d7c71059356045b6aa15"
     },
     {
       "path": "internal/routing/routing_test.go",
@@ -7221,7 +7225,7 @@
     },
     {
       "path": "internal/routing/selection.go",
-      "sha256": "26884ce51b10547fe6bc1527152627295e9ac8405d0ba61491ffa52bc3d2729d"
+      "sha256": "2df0b3ecc0c5efc6e8bba299405625fd6cc0437cf7c5920d57c4893b1ffa899f"
     },
     {
       "path": "internal/security/client_ip.go",
@@ -7441,7 +7445,7 @@
     },
     {
       "path": "internal/server/gateway.go",
-      "sha256": "92500d622e243bbef113170c6fbbe8737c9ea1695bec1880bf4a00d0417344ce"
+      "sha256": "cff8d245797ff80bd7ee5283027716ae791275e0547478a7cf514995e12fa104"
     },
     {
       "path": "internal/server/gateway_cache_integration_test.go",
@@ -7452,8 +7456,12 @@
       "sha256": "22c830a3450c574b3f2b5bc5a6fee1a745704bd03240d0a96020b19e8cd9ba14"
     },
     {
+      "path": "internal/server/gateway_health_attribution_integration_test.go",
+      "sha256": "4d8106c1d246f536af8e09327ea07e89d4a98f9ea6d08c854fa3d13b4c0d30da"
+    },
+    {
       "path": "internal/server/gateway_integration_test.go",
-      "sha256": "7e6cc400491486ffa53e8dd670a4b44d83ad093c487978b152e9a6183af59032"
+      "sha256": "46d2245f4599fb0914cb5d3253f5642a030a782ced628b66d7aae4a65c137afa"
     },
     {
       "path": "internal/server/gateway_quota_integration_test.go",
@@ -9898,6 +9906,18 @@
     {
       "path": "specs/042-operations-report-metadata-states/spec.md",
       "sha256": "15ed6e24078744ac9f6a28777d1ad38eeba8c37f0d9557ad02288fafd302ea00"
+    },
+    {
+      "path": "specs/043-circuit-health-attribution/design.md",
+      "sha256": "94b8bf95e8ad38a31aabb8e4df7522df5985756678f85cc3ca969ca7d061d8ed"
+    },
+    {
+      "path": "specs/043-circuit-health-attribution/spec.md",
+      "sha256": "01652d53ad9b4e5f061bc539f7466374ce72d69aee3e1c70ac742673b5116e32"
+    },
+    {
+      "path": "specs/043-circuit-health-attribution/tasks.md",
+      "sha256": "aafcbd7e27459f548d8e42f99c72f112ae8140b885c419b5efcd50ab4ee48784"
     },
     {
       "path": "third_party/README.md",

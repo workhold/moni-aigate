@@ -18,7 +18,7 @@ type selectionGroup struct {
 }
 
 func healthBreak(reason string) bool {
-	return reason == "channel_quarantined" || reason == "quarantined" || reason == "circuit_open" || reason == "half_open_busy"
+	return reason == "channel_quarantined" || reason == "quarantined" || reason == "circuit_open" || reason == "half_open_busy" || reason == "credential_cooldown"
 }
 
 func costBreak(reason string) bool {
@@ -99,6 +99,11 @@ func (e *Engine) acquirePlan(p *Plan, sequence int) (Candidate, uint64, *RouteDe
 						reason = "half_open_busy"
 					}
 				}
+			}
+			// 043: a rate-limited credential cools down alone; its pool
+			// siblings stay eligible for the same channel+model.
+			if reason == "" && e.credentialCooling(candidate.ChannelID, candidate.Model, candidate.CredentialID, now) {
+				reason = "credential_cooldown"
 			}
 			procurementReason := ProcurementExclusion(candidate)
 			if reason == "" && procurementReason != "" {

@@ -396,7 +396,7 @@ func (s *Server) inferenceNamed(c *gin.Context, protocol, pathModel string, stre
 			reason := transportReason(c.Request.Context(), err)
 			f := billing.FinalizationInput{ID: uuid.NewString(), TenantID: p.TenantID, RequestID: reservation.RequestID, AttemptID: attemptID, Source: "adapter", SourceEventID: attemptID + ":final", Usage: billing.Usage{Status: "missing"}, ProtocolOutcome: "failed", TransportEndReason: reason, DeliveryStage: "none"}
 			_, persistErr := s.finalize(p.KeyID, f, false)
-			attempt.Finish(outcome(c.Request.Context(), err))
+			attempt.FinishWithFailure(outcome(c.Request.Context(), err), failureDetail(err))
 			if persistErr == nil && plan.CanRetry(c.Request.Context(), err) {
 				attempt.NoteNoSupplierConsumption()
 				var pe *provider.Error
@@ -541,9 +541,21 @@ func outcome(ctx context.Context, e error) routing.Outcome {
 		switch pe.Class {
 		case provider.ClassCaller, provider.ClassCancelled, provider.ClassConfiguration, provider.ClassRateLimit, provider.ClassModel, provider.ClassQuota, provider.ClassPolicy, provider.ClassRejected:
 			return routing.Neutral
+		case provider.ClassOverloaded:
+			return routing.Overloaded
 		}
 	}
 	return routing.Failure
+}
+
+// failureDetail exposes only the machine signals (failure class and upstream
+// HTTP status) that 043 attribution compares. Error text is never carried.
+func failureDetail(e error) routing.FailureDetail {
+	var pe *provider.Error
+	if errors.As(e, &pe) {
+		return routing.FailureDetail{Class: pe.Class, UpstreamStatus: pe.UpstreamStatus}
+	}
+	return routing.FailureDetail{}
 }
 func (s *Server) providerError(c *gin.Context, e error) {
 	var pe *provider.Error
@@ -817,7 +829,9 @@ func (s *Server) applyProviderHealth(candidate routing.Candidate, err error) {
 		if duration > 5*time.Minute {
 			duration = 5 * time.Minute
 		}
-		s.Routing.Cooldown(candidate.HealthKey, duration)
+		// 043: a throttled credential cools down alone; the channel+model
+		// pool stays available to its other members.
+		s.Routing.CredentialCooldown(candidate.ChannelID, candidate.Model, candidate.CredentialID, duration)
 		return
 	}
 	if e.Class != provider.ClassCredential && e.Class != provider.ClassQuota {
