@@ -9218,3 +9218,29 @@ margin 分支合并 main（agent skills 配置 + magpie 研究文档）；manife
 - modified `web/src/components/RouteAttempts.vue`
 
 </details>
+
+## 2026-11-26T04:42:48Z · 05a14e7a3288
+
+043 路由健康归因修正案落地：provider 529→overloaded 分类、routing 归因账本/成功近因/凭据级冷却/固定短休、gateway 接线，billing 路由决策理由白名单登记 credential_cooldown；无新模块、依赖、迁移或装配变化，健康仍为进程内状态，重试资格/结算/对外错误码不变；specs/043 新增，HLD/LLD §8 与统一架构正文同步，故障注入矩阵与全仓 race 已复核
+
+已显式复核统一架构正文、能力状态和源码链接。快照覆盖 2674 个源文件；本次 15 个源文件变化，架构正文变化：true。
+
+<details><summary>源文件变化</summary>
+
+- modified `docs/design/HLD.md`
+- modified `docs/design/LLD.md`
+- modified `internal/billing/route_decision_store.go`
+- modified `internal/provider/classification.go`
+- modified `internal/provider/classification_test.go`
+- modified `internal/provider/types.go`
+- added `internal/routing/attribution_test.go`
+- modified `internal/routing/routing.go`
+- modified `internal/routing/selection.go`
+- modified `internal/server/gateway.go`
+- added `internal/server/gateway_health_attribution_integration_test.go`
+- modified `internal/server/gateway_integration_test.go`
+- added `specs/043-circuit-health-attribution/design.md`
+- added `specs/043-circuit-health-attribution/spec.md`
+- added `specs/043-circuit-health-attribution/tasks.md`
+
+</details>

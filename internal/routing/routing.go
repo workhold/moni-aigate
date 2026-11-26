@@ -88,7 +88,7 @@ func candidateKey(c Candidate) string {
 
 func exclusionReason(c Candidate) string {
 	switch c.ExclusionReason {
-	case "not_authorized", "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden", "capability_missing", "quality_below_floor", "context_too_small", "tools_unsupported", "output_limit_too_small", "capacity_full", "circuit_open", "half_open_busy", "quarantined", "cost_unknown", "cost_limit_exceeded", "margin_below_floor", "margin_basis_unavailable", "cumulative_cost_unavailable", "procurement_paused", "procurement_budget_exceeded", "procurement_bound_invalid", "procurement_budget_unavailable", "task_not_allowed", "offer_inactive", "quality_evidence_missing", "quality_evidence_withdrawn", "quality_evidence_expired", "quality_scope_mismatch", "already_tried":
+	case "not_authorized", "disabled", "channel_quarantined", "credential_revoked", "binding_isolated", "region_forbidden", "capability_missing", "quality_below_floor", "context_too_small", "tools_unsupported", "output_limit_too_small", "capacity_full", "circuit_open", "half_open_busy", "quarantined", "credential_cooldown", "cost_unknown", "cost_limit_exceeded", "margin_below_floor", "margin_basis_unavailable", "cumulative_cost_unavailable", "procurement_paused", "procurement_budget_exceeded", "procurement_bound_invalid", "procurement_budget_unavailable", "task_not_allowed", "offer_inactive", "quality_evidence_missing", "quality_evidence_withdrawn", "quality_evidence_expired", "quality_scope_mismatch", "already_tried":
 		return c.ExclusionReason
 	default:
 		return "disabled"
@@ -277,7 +277,28 @@ const (
 	Failure    Outcome = "failure"
 	Neutral    Outcome = "neutral"
 	Quarantine Outcome = "quarantine"
+	// Overloaded marks an upstream 529: the provider is busy, which is not an
+	// account or channel defect. It applies a fixed short rest on the
+	// channel+model and never contributes to the circuit ladder.
+	Overloaded Outcome = "overloaded"
 )
+
+// Attribution windows for the 043 amendment. Fixed bounded constants, not
+// route-version fields: circuit parameters stay versioned, these do not.
+const (
+	attributionWindow    = 60 * time.Second
+	successRecencyWindow = 5 * time.Minute
+	overloadedRest       = 30 * time.Second
+	attributionLedgerMax = 64
+)
+
+// FailureDetail carries the machine signals (failure class and upstream HTTP
+// status) needed to attribute a counted failure. It never contains error text,
+// URLs or credentials.
+type FailureDetail struct {
+	Class          provider.FailureClass
+	UpstreamStatus int
+}
 
 type BreakerConfig struct {
 	FailureThreshold int
@@ -316,13 +337,34 @@ type health struct {
 	until      time.Time
 	probes     int
 	generation uint64
+	successAt  time.Time     // Last Success at this key (043 attribution).
+	ledger     []attribEntry // Recent attributable upstream failures.
 }
+
+// attribEntry is one counted bare-5xx failure that a later identical rejection
+// from a different credential of the same channel+model may withdraw.
+type attribEntry struct {
+	class        provider.FailureClass
+	status       int
+	credentialID string
+	at           time.Time
+}
+
+// cooldownKey scopes the 043 credential cooldown to one pool member of one
+// channel+model. It is admission filtering, separate from the health state.
+type cooldownKey struct {
+	channelID    string
+	model        string
+	credentialID string
+}
+
 type Engine struct {
 	mu                 sync.Mutex
 	config             Config
 	health             map[string]*health
 	inflight           map[string]int
 	credentialInflight map[credentialLeaseKey]int
+	credentialCooldown map[cooldownKey]time.Time
 }
 
 type credentialLeaseKey struct {
@@ -371,7 +413,7 @@ func NewEngine(c Config) *Engine {
 	if c.RandN == nil {
 		c.RandN = rand.Uint64N
 	}
-	return &Engine{config: c, health: map[string]*health{}, inflight: map[string]int{}, credentialInflight: map[credentialLeaseKey]int{}}
+	return &Engine{config: c, health: map[string]*health{}, inflight: map[string]int{}, credentialInflight: map[credentialLeaseKey]int{}, credentialCooldown: map[cooldownKey]time.Time{}}
 }
 func key(c Candidate) string {
 	if c.HealthKey != "" {
@@ -428,6 +470,14 @@ func (a *Attempt) NoteNoSupplierConsumption() {
 }
 
 func (a *Attempt) Finish(outcome Outcome) {
+	a.FinishWithFailure(outcome, FailureDetail{})
+}
+
+// FinishWithFailure carries the machine signals of an upstream failure so the
+// 043 attribution can withdraw a counted failure when an identical
+// class+status rejection is reproduced by another credential of the same
+// channel+model. The detail never changes retry eligibility or billing.
+func (a *Attempt) FinishWithFailure(outcome Outcome, detail FailureDetail) {
 	a.once.Do(func() {
 		defer func() {
 			if a.plan != nil {
@@ -461,20 +511,32 @@ func (a *Attempt) Finish(outcome Outcome) {
 			h.probes--
 		}
 		breaker := e.breaker(a.candidate)
+		now := e.config.Now()
 		switch outcome {
 		case Success:
 			h.state = Closed
 			h.failures = 0
 			h.until = time.Time{}
+			h.successAt = now
 			if half {
 				h.probes = 0
 				h.generation++
 			}
 		case Failure:
+			if attributed(h, detail, a.candidate.CredentialID, now) {
+				// Request-shaped rejection: no ladder count, no rest. The
+				// paired entry and its earlier increment are withdrawn inside
+				// attributed; a half-open probe keeps its returned token.
+				break
+			}
+			if attributable(detail) {
+				h.pruneLedger(now)
+				h.ledger = append(h.ledger, attribEntry{class: detail.Class, status: detail.UpstreamStatus, credentialID: a.candidate.CredentialID, at: now})
+			}
 			h.failures++
 			if half || h.failures >= breaker.FailureThreshold {
 				h.state = Open
-				h.until = e.config.Now().Add(breaker.OpenDuration)
+				h.until = now.Add(breaker.OpenDuration)
 				h.probes = 0
 				h.generation++
 			}
@@ -482,10 +544,67 @@ func (a *Attempt) Finish(outcome Outcome) {
 			h.state = Quarantined
 			h.probes = 0
 			h.generation++
+		case Overloaded:
+			// Provider-busy rest: fixed, short, outside the ladder, in memory
+			// only. It must not manufacture failure history.
+			h.state = Open
+			h.until = now.Add(overloadedRest)
+			h.probes = 0
+			h.generation++
 		case Neutral: // In particular, a cancelled half-open customer request
 			// releases its token without falsely proving success or failure.
 		}
 	})
+}
+
+func attributable(detail FailureDetail) bool {
+	return detail.Class == provider.ClassUpstream && detail.UpstreamStatus > 0
+}
+
+// attributed implements the 043 rule: a bare-5xx failure is the request's own
+// fault when the same channel+model saw the identical failure class and
+// upstream status from a different credential within the attribution window
+// while the channel also answered another request successfully recently. It
+// consumes the paired entry and withdraws its earlier ladder increment. An
+// open breaker is untouchable here: every open bumps the generation, so any
+// completion that still lands belongs to the same generation and finds the
+// breaker closed or half-open; a half-open probe keeps its returned token.
+func attributed(h *health, detail FailureDetail, credentialID string, now time.Time) bool {
+	if !attributable(detail) {
+		return false
+	}
+	h.pruneLedger(now)
+	match := -1
+	for i, entry := range h.ledger {
+		if entry.class == detail.Class && entry.status == detail.UpstreamStatus && entry.credentialID != credentialID {
+			match = i
+			break
+		}
+	}
+	if match < 0 {
+		return false
+	}
+	if h.successAt.IsZero() || now.Sub(h.successAt) > successRecencyWindow {
+		return false
+	}
+	h.ledger = append(h.ledger[:match], h.ledger[match+1:]...)
+	if h.failures > 0 {
+		h.failures--
+	}
+	return true
+}
+
+func (h *health) pruneLedger(now time.Time) {
+	kept := h.ledger[:0]
+	for _, entry := range h.ledger {
+		if now.Sub(entry.at) <= attributionWindow {
+			kept = append(kept, entry)
+		}
+	}
+	h.ledger = kept
+	if len(h.ledger) > attributionLedgerMax {
+		h.ledger = append([]attribEntry(nil), h.ledger[len(h.ledger)-attributionLedgerMax:]...)
+	}
 }
 
 // SetQuarantined mirrors an authoritative persisted operating state. The caller
@@ -514,6 +633,32 @@ func (e *Engine) Cooldown(healthKey string, d time.Duration) {
 		h.probes = 0
 		h.generation++
 	}
+}
+
+// CredentialCooldown rests one pool member (channel+model+credential) for the
+// bounded rate-limit duration derived by the gateway. It is member-level
+// admission filtering and never touches the channel-level health state, so a
+// single throttled credential cannot cool the whole channel+model pool.
+func (e *Engine) CredentialCooldown(channelID, model, credentialID string, d time.Duration) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if channelID == "" || model == "" || credentialID == "" || d <= 0 {
+		return
+	}
+	e.credentialCooldown[cooldownKey{channelID: channelID, model: model, credentialID: credentialID}] = e.config.Now().Add(d)
+}
+
+func (e *Engine) credentialCooling(channelID, model, credentialID string, now time.Time) bool {
+	k := cooldownKey{channelID: channelID, model: model, credentialID: credentialID}
+	until, ok := e.credentialCooldown[k]
+	if !ok {
+		return false
+	}
+	if !now.Before(until) {
+		delete(e.credentialCooldown, k)
+		return false
+	}
+	return true
 }
 func (e *Engine) Snapshot(healthKey, channelID string) HealthSnapshot {
 	e.mu.Lock()

@@ -164,7 +164,10 @@ func newGatewayFixtureProfileConfigured(t *testing.T, handlers []http.HandlerFun
 				if r.Header.Get("X-Api-Key") != "local-fixture-secret" || r.Header.Get("Authorization") != "" || r.Header.Get("Anthropic-Version") != "2023-06-01" {
 					t.Error("native provider authorization was not translated")
 				}
-			} else if r.Header.Get("Authorization") != "Bearer local-fixture-secret" || r.Header.Get("X-Api-Key") != "" {
+			} else if a := r.Header.Get("Authorization"); a != "Bearer local-fixture-secret" && a != "Bearer "+attributionSecondarySecret || r.Header.Get("X-Api-Key") != "" {
+				// The second secret belongs to the two-member credential pool
+				// fixture (gateway_health_attribution_integration_test.go);
+				// each bearer must match a secret configured on the channel.
 				t.Error("provider authorization was not translated")
 			}
 			handler(w, r)

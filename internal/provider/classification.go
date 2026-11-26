@@ -22,6 +22,11 @@ func classifyUpstream(status int, raw []byte) (FailureClass, bool) {
 		class = ClassRejected
 	case 429:
 		class = ClassRateLimit
+	case 529:
+		// Provider overload is a machine status signal: fixed short rest on the
+		// channel+model, never part of the circuit ladder. Consumption and the
+		// customer-facing code mapping are unchanged.
+		class = ClassOverloaded
 	}
 	if status >= 500 {
 		return class, false

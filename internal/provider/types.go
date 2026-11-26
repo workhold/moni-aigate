@@ -202,6 +202,7 @@ const (
 	ClassQuota         FailureClass = "quota"
 	ClassPolicy        FailureClass = "policy"
 	ClassRejected      FailureClass = "rejected"
+	ClassOverloaded    FailureClass = "overloaded"
 )
 
 type Consumption string
